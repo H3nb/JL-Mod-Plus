@@ -248,8 +248,8 @@
     <string name="config_gamepad_calibration_phase_unknown">Status tidak tersedia</string>
     <string name="config_gamepad_diagnosis_capabilities">Kemampuan pengontrol yang terhubung:</string>
     <string name="config_gamepad_diagnosis_descriptor">Deskriptor: %1$s</string>
-    <string name="config_gamepad_diagnosis_signature">Signature: %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">Sumbu %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
+    <string name="config_gamepad_diagnosis_signature">Identitas pengontrol: %1$s</string>
+    <string name="config_gamepad_diagnosis_axis">Sumbu %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(tidak ada pengontrol yang terhubung)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Sampel input sengaja tidak dikirim ke MIDlet.</string>
     <string name="config_select_screen_size">Pilih ukuran layar</string>
@@ -724,14 +724,14 @@
     <string name="config_help_shader">Menerapkan shader pada frame MIDlet sebelum ditampilkan.</string>
     <string name="config_help_shader_tuning">Kontrol yang tersedia bergantung pada shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Menjadwalkan penyajian frame secara asinkron. Dapat meningkatkan performa pada perangkat tertentu.</string>
-    <string name="config_help_force_fullscreen">Memulai layar Canvas Java ME tanpa bilah perintah. Game dapat mengubah mode ini.</string>
+    <string name="config_help_force_fullscreen">Memulai layar Canvas Java ME tanpa bilah perintah softkey. Game dapat mengubah mode ini.</string>
     <string name="config_help_fps_limit">Menetapkan batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) memakai refresh rate maksimum layar.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan emulasi</string>
     <string name="PREF_TIMING_MODE">Sumber waktu</string>
     <string name="config_timing_mode_full_guest">Waktu emulasi</string>
     <string name="config_timing_mode_real_wall">Waktu sistem</string>
     <string name="config_help_emulation_speed">Mengatur kecepatan clock MIDlet dan jeda yang didukung. Audio dan UI Android tetap berjalan pada kecepatan normal.</string>
-    <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
+    <string name="config_help_timing_mode">Menentukan apakah MIDlet menggunakan waktu emulasi atau waktu sistem. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
     <string name="reconversion_done_with_warning">Konversi kompatibilitas selesai dengan peringatan.</string>
@@ -795,7 +795,7 @@
     <string name="preset_update_summary">Ganti %1$s dengan pengaturan MIDlet ini dan tata letak kontrol virtualnya jika tersedia. Perubahan ini akan berlaku untuk MIDlet lain yang menggunakan profil ini saat dijalankan lagi.</string>
     <string name="preset_update_confirm">Perbarui</string>
     <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya dari profil tersebut.</string>
-    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan karena tidak tersedia, tidak lengkap, atau tidak dapat dibaca. Bawaan JL-Mod akan digunakan untuk MIDlet baru.</string>
+    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan. Profil mungkin tidak tersedia, tidak lengkap, atau tidak dapat dibaca. Bawaan JL-Mod kini menjadi profil bawaan untuk MIDlet baru.</string>
     <string name="preset_discard_changes_title">Buang perubahan?</string>
     <string name="preset_discard_changes_summary">Draf profil ini belum disimpan.</string>
     <string name="preset_continue_editing">Lanjut mengedit</string>

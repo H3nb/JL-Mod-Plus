@@ -1,0 +1,325 @@
+# Unresolved configuration and controls language review
+
+Snapshot: 13 October 2026, PR 169. This records unaccepted resource identities,
+not replacement translation text or a second runtime catalog. Android XML
+remains authoritative. The accepted checkpoint is described in
+[localization progress](localization-progress.md).
+
+## Reasons and scope
+
+- `kk`: 101 missing technical or consequential messages need competent Kazakh
+  sentence-level review. Accepted labels and simple statements are retained.
+- `or`, `si`: 123 missing messages per locale need competent Odia/Sinhala
+  technical grammar and idiom review. Vocabulary evidence and known UI labels
+  do not establish conditional or consequence-bearing sentence correctness.
+- `sat`: all 269 selected identities need competent Santali Ol Chiki review:
+  264 are missing, and five existing declarations remain unchanged and
+  unaccepted. No English fallback or guessed prose was counted as translation.
+
+The gaps include profile ownership/following, update direction and next-start
+conditions, partial-save success, destructive-operation retention, calibration
+preservation/sampling, and guest/system timing. Resolving them requires both
+product semantics and reliable target-language judgment. Public
+[Mozilla Santali terminology](https://pontoon.mozilla.org/sat/terminology/)
+can support term choices, but does not certify these new product sentences.
+
+Santali also retains 215 unresolved cases from the earlier batches; they are
+separate from this 269-key selection. The combined 484 review cases do not
+represent its entire missing catalog.
+
+## Existing Santali declarations needing review
+
+- `layout_edit_finish`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of finish-editing action; must not imply save completion.
+- `layout_edit_finished`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of virtual-controls editing-complete status; cannot certify its editing-mode wording or whether it implies persistence.
+- `layout_switch`: Existing Ol Chiki label retained unchanged. Canonical action now chooses a control layout including D-pad/analog, not only switching key layout; competent Santali revision required.
+- `mapping_dialog_key_not_specified`: Existing Ol Chiki label retained unchanged. Canonical empty state means no physical inputs assigned, not an unspecified key; competent Santali revision required.
+- `mapping_dialog_title`: Existing Ol Chiki label retained unchanged. Canonical capture title accepts a key or controller button, not only a key; competent Santali revision required.
+
+## Exact unresolved identities
+
+Each list below applies to exactly the named locales. Re-export the current
+canonical resources before writing; do not infer acceptance from key presence.
+
+### `kk`, `or`, `sat`, `si` — 101 identities
+
+```text
+config_analog_stick_summary
+config_controller_help_body_compact
+config_delete_app_data_summary
+config_gamepad_calibrate_summary
+config_gamepad_calibration_cancelled
+config_gamepad_calibration_issue_invalid_constraints
+config_gamepad_calibration_issue_non_finite
+config_gamepad_calibration_issue_rest_outside_range
+config_gamepad_calibration_issue_rest_too_noisy
+config_gamepad_calibration_neutral_instructions
+config_gamepad_calibration_no_analog_ranges
+config_gamepad_calibration_no_supported_ranges
+config_gamepad_calibration_review_instructions
+config_gamepad_calibration_save_failed
+config_gamepad_calibration_start
+config_gamepad_calibration_stick_instructions
+config_gamepad_calibration_trigger_instructions
+config_gamepad_calibration_waiting_controller
+config_gamepad_calibration_waiting_samples
+config_gamepad_diagnosis_samples_not_sent
+config_gamepad_diagnosis_source_explicit
+config_gamepad_opaque_summary
+config_gamepad_pointer_cursor
+config_gamepad_stick_directions
+config_gamepad_unsupported_summary
+config_help_emulation_speed
+config_help_encoding
+config_help_filter
+config_help_font_aa
+config_help_font_dimensions
+config_help_font_presets
+config_help_font_sizes
+config_help_font_sizes_long
+config_help_force_fullscreen
+config_help_fps_limit
+config_help_graphics_mode
+config_help_immediate
+config_help_key_layout
+config_help_key_mapping
+config_help_lock_custom_resolution_ratio
+config_help_orientation
+config_help_parallel_redraw
+config_help_reset_layout
+config_help_scale_ratio
+config_help_scale_type
+config_help_screen_gravity
+config_help_screen_padding
+config_help_screen_size
+config_help_shader
+config_help_shader_tuning
+config_help_skin
+config_help_skip_resume
+config_help_soundbank
+config_help_system_properties
+config_help_system_properties_long
+config_help_timing_mode
+config_help_timing_unavailable
+config_help_touch_input
+config_help_vk_alpha
+config_help_vk_background
+config_help_vk_button_shape
+config_help_vk_feedback
+config_help_vk_force_opacity
+config_help_vk_foreground
+config_help_vk_hide_delay
+config_help_vk_outline
+config_help_vk_selected_background
+config_help_vk_selected_foreground
+config_message_delete_app_data
+config_message_reset_profile_settings
+config_message_reset_settings
+config_reset_all_settings_summary
+config_virtual_controls_preview_hint
+config_warning_filter_shader
+mapping_dialog_add_input
+mapping_dialog_message
+preset_apply_failed_summary
+preset_based_on_modified
+preset_default_policy_summary
+preset_discard_changes_summary
+preset_includes_keyboard_layout
+preset_keyboard_layout_unavailable
+preset_save_help
+preset_saved_unlinked_warning
+preset_unavailable_summary
+preset_update_summary
+profile_apply_layout_keeps_settings
+profile_apply_settings_keeps_layout
+profile_apply_whole_follows
+profile_apply_whole_without_layout
+profile_create_summary
+profile_default_fallback_notice
+profile_delete_template_message
+profile_follows_updates
+profile_template_operation_failed
+runtime_preset_local_explanation
+runtime_preset_update_explanation
+runtime_preset_update_failed
+runtime_preset_update_unlinked
+runtime_virtual_controls_edit_guide_message
+virtual_controls_save_failed
+```
+
+### `or`, `sat`, `si` — 22 identities
+
+```text
+config_background_immersive
+config_background_immersive_help
+config_background_theme_help
+config_color_picker_hint
+config_color_picker_invalid
+config_display_performance
+config_gamepad_calibration_issue_no_channels
+config_gamepad_calibration_phase_neutral
+config_gamepad_calibration_profile
+config_gamepad_diagnosis_capabilities
+config_gamepad_diagnosis_signature
+config_help_background
+config_help_background_custom_color
+config_help_generic_color
+config_help_virtual_keyboard
+config_lock_custom_resolution_ratio
+config_system_properties_info
+layout_edit_finished
+layout_edit_save_changes
+preset_builtin_summary
+profile_template_summary
+saved_keyboard_layout_summary
+```
+
+### `sat` — 146 identities
+
+```text
+config_analog_stick
+config_analog_stick_off
+config_background_custom
+config_background_custom_color
+config_background_mode
+config_background_theme
+config_basic_display
+config_basic_input
+config_color_picker_hex
+config_color_picker_hue
+config_color_picker_saturation_value
+config_color_picker_title
+config_controls_key_input
+config_controls_maintenance
+config_controls_virtual_keyboard
+config_controls_virtual_keyboard_colors
+config_current_screen_size
+config_current_value
+config_custom_resolution
+config_decrease_value
+config_delete_app_data
+config_destination_audio
+config_destination_controls
+config_destination_general
+config_destination_graphics
+config_destination_system
+config_display_appearance
+config_display_rendering
+config_display_text
+config_edit_system_properties
+config_font_sizes
+config_font_sizes_value
+config_gamepad_calibrate
+config_gamepad_calibration_issue_insufficient_samples
+config_gamepad_calibration_issue_invalid_range
+config_gamepad_calibration_next
+config_gamepad_calibration_phase_cancelled
+config_gamepad_calibration_phase_committed
+config_gamepad_calibration_phase_review
+config_gamepad_calibration_phase_stick_range
+config_gamepad_calibration_phase_trigger_range
+config_gamepad_calibration_phase_unknown
+config_gamepad_calibration_rejected
+config_gamepad_calibration_saved
+config_gamepad_diagnosis_analog_settings
+config_gamepad_diagnosis_axis
+config_gamepad_diagnosis_descriptor
+config_gamepad_diagnosis_device
+config_gamepad_diagnosis_header
+config_gamepad_diagnosis_left_stick
+config_gamepad_diagnosis_mode
+config_gamepad_diagnosis_no_controller
+config_gamepad_diagnosis_notice
+config_gamepad_diagnosis_pointer
+config_gamepad_diagnosis_right_stick
+config_gamepad_diagnosis_source_controller
+config_gamepad_diagnosis_source_default
+config_gamepad_diagnosis_triggers
+config_gamepad_directions_eight
+config_gamepad_directions_four
+config_gamepad_directions_numeric_v2
+config_gamepad_keypad_title
+config_gamepad_mapping_help_title
+config_gamepad_pointer_joystick
+config_gamepad_pointer_off
+config_gamepad_status_disabled
+config_gamepad_status_enabled
+config_gamepad_stick_pointer
+config_gamepad_stick_unassigned
+config_gamepad_test
+config_increase_value
+config_maintenance
+config_reset_all_settings
+config_screen_size
+config_select_screen_size
+config_swap_screen_size
+config_system_properties_value
+config_system_timing
+config_timing_mode_full_guest
+config_timing_mode_real_wall
+config_virtual_controls_color_preview
+config_virtual_controls_preview_normal
+config_virtual_controls_preview_pressed
+layout_edit_continue
+layout_edit_discard
+layout_edit_done
+layout_edit_finish
+layout_switch
+mapping_dialog_assigned_inputs
+mapping_dialog_key_not_specified
+mapping_dialog_remove
+mapping_dialog_title
+preset_application_settings
+preset_apply
+preset_builtin
+preset_change_default
+preset_choose_parts
+preset_continue_editing
+preset_custom_configuration
+preset_default_picker_title
+preset_discard_changes
+preset_discard_changes_title
+preset_edit_title
+preset_invalid_name
+preset_manage
+preset_manager_default_section
+preset_manager_keyboard_section
+preset_manager_presets_section
+preset_name
+preset_name_exists
+preset_picker_title
+preset_save_as
+preset_unavailable_section
+preset_update
+preset_update_confirm
+preset_update_title
+preset_use
+preset_virtual_keyboard_off
+preset_virtual_keyboard_on
+presets
+profile_apply_layout_only
+profile_apply_settings_only
+profile_apply_whole
+profile_builtin_settings
+profile_create_title
+profile_custom
+profile_default_badge_short
+profile_more_actions
+profile_name_exists
+profile_rename_title
+runtime_apply
+runtime_layout_apply_title
+runtime_preset_apply_destination
+runtime_preset_save_destination
+runtime_preset_this_midlet_only
+runtime_preset_update_destination
+runtime_virtual_controls_analog
+runtime_virtual_controls_dpad
+runtime_virtual_controls_edit
+runtime_virtual_controls_edit_guide_dont_show_again
+runtime_virtual_controls_edit_guide_title
+runtime_virtual_controls_show_controls
+runtime_virtual_controls_switch_layout
+runtime_virtual_controls_template_analog_standard
+runtime_virtual_controls_template_dpad_standard
+runtime_virtual_controls_title
+```

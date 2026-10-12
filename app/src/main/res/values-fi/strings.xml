@@ -28,7 +28,7 @@
     <string name="help_message">&#8226; Suodattimen käyttöönotto saattaa joissakin tapauksissa huomattavasti vähentää suorituskykyä. Ota se pois käytöstä, jos peli on liian hidas.&lt;BR&gt;&#8226; Kuvan välkkymisen voi korjata laittamalla päälle \"Välittömän käsittelytilan\" asetuksista.</string>
     <string name="layout_edit_finish">Lopeta muokkaustila</string>
     <string name="layout_edit_finished">Muokkaustila päättynyt</string>
-    <string name="layout_switch">Vaihda näppäinasettelu</string>
+    <string name="layout_switch">Valitse ohjainten asettelu</string>
     <string name="licenses">Lisenssit</string>
     <string name="message_delete">Poistetaanko tämä sovellus, sen asetukset ja tallennustiedot? Tämä poistaa myös sen Kirjasto-merkinnän.</string>
     <string name="more">Lisää</string>
@@ -148,7 +148,7 @@
     <string name="mapping_dialog_assigned_inputs">Määritetyt syötteet</string>
     <string name="mapping_dialog_add_input">Voit määrittää useamman kuin yhden fyysisen syötteen.</string>
     <string name="mapping_dialog_remove">Poista</string>
-    <string name="mapping_dialog_title">Paina näppäintä</string>
+    <string name="mapping_dialog_title">Paina näppäintä tai painiketta</string>
     <string name="message_reset_layout">Palautetaanko virtuaaliohjainten asettelu oletukseksi?</string>
     <string name="midlet_name"><b>Nimi: </b></string>
     <string name="midlet_size"><b>Koko: </b></string>
@@ -247,7 +247,7 @@
     <string name="config_destination_controls">Ohjaimet</string>
     <string name="config_gamepad_test">Testaa ohjainta</string>
     <string name="config_gamepad_calibrate">Kalibroi ohjain</string>
-    <string name="config_gamepad_calibrate_summary">Mittaa sauvojen ja liipaisinten alueet kalibrointia varten.</string>
+    <string name="config_gamepad_calibrate_summary">Mittaa yhdistetyn ohjaimen neutraaliasennon sekä sauvojen ja liipaisinten alueet.</string>
     <string name="config_gamepad_stick_directions">Digitaaliset suunnat</string>
     <string name="config_gamepad_stick_unassigned">Ei määritetty</string>
     <string name="config_gamepad_stick_pointer">Osoittimen lähde</string>
@@ -270,7 +270,7 @@
     <string name="config_gamepad_calibration_phase_cancelled">Peruutettu</string>
     <string name="config_gamepad_calibration_waiting_controller">Yhdistä ohjain, jossa on tuettu analoginen sauva tai liipaisin. Kalibrointi alkaa, kun liikutat sauvaa tai painat liipaisinta ensimmäisen kerran; nykyinen kalibrointi säilyy muuttumattomana tallennukseen asti.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Tämä ohjain ei ilmoita tuettua analogisen sauvan tai liipaisimen aluetta.</string>
-    <string name="config_gamepad_calibration_start">Pidä kaikki sauvat ja liipaisimet neutraalissa, kunnes neutraaliajastin päättyy. Liikuta sitten jokainen sauva koko alueensa läpi ja paina Seuraava.</string>
+    <string name="config_gamepad_calibration_start">Pidä kaikki sauvat keskellä ja kaikki liipaisimet vapautettuina, kunnes neutraaliajastin päättyy.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibrointia ei voitu tallentaa. Nykyinen kalibrointi säilyy muuttumattomana.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tuettuja analogisia alueita ei löytynyt.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrointi hylätty: %1$s</string>
@@ -282,7 +282,7 @@
     <string name="config_gamepad_calibration_cancelled">Kalibrointi peruutettu. Aiempi kalibrointi säilyy muuttumattomana.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrointi odottaa ohjainnäytteitä.</string>
     <string name="config_gamepad_diagnosis_header">Ohjaindiagnostiikka</string>
-    <string name="config_gamepad_diagnosis_mode">Käytössä: %1$s · Lähde: %2$s</string>
+    <string name="config_gamepad_diagnosis_mode">Tila: %1$s · Lähde: %2$s</string>
     <string name="config_gamepad_diagnosis_notice">Huomautus: %1$s</string>
     <string name="config_gamepad_diagnosis_analog_settings">Analogiset asetukset:</string>
     <string name="config_gamepad_diagnosis_left_stick">Vasen sauva</string>
@@ -297,16 +297,16 @@
     <string name="config_gamepad_diagnosis_device">%1$s (#%2$d)</string>
     <string name="config_gamepad_calibration_issue_no_channels">ei tuettuja kanavia</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">virheelliset kalibrointirajoitteet</string>
-    <string name="config_gamepad_calibration_issue_non_finite">ääretön näyte</string>
+    <string name="config_gamepad_calibration_issue_non_finite">näyte ei ole äärellinen luku</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">riittämättömät näytteet</string>
     <string name="config_gamepad_calibration_issue_invalid_range">virheellinen alue</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">lepoarvo alueen ulkopuolella</string>
-    <string name="config_gamepad_calibration_issue_rest_too_noisy">lepoasento on liian kohinainen</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">lepoasento ei ole riittävän vakaa</string>
     <string name="config_gamepad_calibration_phase_unknown">Tila ei ole käytettävissä</string>
     <string name="config_gamepad_diagnosis_capabilities">Yhdistetyn ohjaimen ominaisuudet:</string>
-    <string name="config_gamepad_diagnosis_descriptor">Kuvaaja: %1$s</string>
-    <string name="config_gamepad_diagnosis_signature">Allekirjoitus: %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">Akseli %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
+    <string name="config_gamepad_diagnosis_descriptor">Kuvaustunniste: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Tunniste: %1$s</string>
+    <string name="config_gamepad_diagnosis_axis">Akseli %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(ei yhdistettyä ohjainta)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Syötenäytteitä ei tarkoituksella lähetetä MIDlet-sovellukselle.</string>
     <string name="config_destination_system">Järjestelmä</string>
@@ -669,16 +669,16 @@
         <item quantity="other">%1$d valittua Kirjaston sovellusta ei ole enää käytettävissä.</item>
     </plurals>
     <string name="config_destination_general">Perus</string>
-    <string name="config_basic_display">Näyttö &amp; ikkuna</string>
+    <string name="config_basic_display">MIDlet-näyttö</string>
     <string name="config_basic_input">Syöttö</string>
     <string name="config_display_appearance">Ulkoasu</string>
     <string name="config_display_rendering">Renderöinti</string>
     <string name="config_display_performance">Suorituskyky &amp; diagnostiikka</string>
     <string name="config_display_text">Teksti &amp; fontit</string>
     <string name="config_system_timing">Ajoitus &amp; yhteensopivuus</string>
-    <string name="config_controls_key_input">Näppäinsyöttö</string>
+    <string name="config_controls_key_input">Fyysinen syöttö</string>
     <string name="config_controls_virtual_keyboard">Virtuaaliohjaimet</string>
-    <string name="config_controls_virtual_keyboard_colors">Virtuaaliohjainten ulkoasu</string>
+    <string name="config_controls_virtual_keyboard_colors">Virtuaaliohjainten värit</string>
     <string name="config_controls_maintenance">Virtuaaliohjainten asettelu</string>
     <string name="config_current_value">Nykyinen arvo</string>
     <string name="config_maintenance">Nollaus &amp; tiedot</string>
@@ -699,8 +699,8 @@
     <string name="profile_template_operation_failed">Profiilitoimintoa ei voitu viimeistellä.</string>
     <string name="config_help_screen_size">Asettaa MIDlet-sovellukselle tarjottavan virtuaalisen näytön tarkkuuden.</string>
     <string name="config_help_orientation">Valitsee näytön suunnan MIDlet-sovelluksen ajon aikana.</string>
-    <string name="config_help_scale_type">Valitsee, miten MIDlet-näyttö sovitetaan käytettävissä olevaan alueeseen. Näytön kuvasuhde voidaan säilyttää tai ohittaa.</string>
-    <string name="config_help_scale_ratio">Muuttaa näytettyä kokoa muuttamatta MIDlet-sovelluksen virtuaalista tarkkuutta.</string>
+    <string name="config_help_scale_type">Valitse, miten peli sovitetaan näyttöön. Valitse Manuaalinen asettaaksesi mukautetun skaalan.</string>
+    <string name="config_help_scale_ratio" formatted="false">Säätää näytettyä kokoa välillä 1%–1000%. Arvolla 100% peli käyttää alkuperäistä kokoaan; suuremmat arvot voivat ulottua näytön ulkopuolelle.</string>
     <string name="config_help_lock_custom_resolution_ratio">Säilyttää leveys-/korkeussuhteen mukautettua tarkkuutta muokatessa.</string>
     <string name="config_help_virtual_keyboard">Näyttää kosketusohjaimet tälle MIDlet-sovellukselle.</string>
     <string name="config_help_touch_input">Antaa MIDlet-sovelluksen vastaanottaa kosketusnäyttötapahtumia.</string>
@@ -709,32 +709,32 @@
     <string name="config_background_custom">Mukautettu</string>
     <string name="config_background_theme">Teema</string>
     <string name="config_background_immersive">Uppoava</string>
-    <string name="config_background_theme_help">Käyttää JL-Mod Plus -teeman taustaa.</string>
+    <string name="config_background_theme_help">Käyttää JL-Mod Plus -teeman väriä MIDlet-näytön ympärillä.</string>
     <string name="config_background_immersive_help">Täyttää käyttämättömän tilan MIDlet-näytöstä näytteistetyillä väreillä.</string>
     <string name="config_background_custom_color">Taustaväri</string>
     <string name="config_help_background_custom_color">Asettaa MIDlet-näytön ympärillä olevan käyttämättömän tilan värin.</string>
     <string name="config_help_skin">Näyttää valinnaisen kuvan tai kehyksen MIDlet-näytön ympärillä.</string>
     <string name="config_help_screen_gravity">Sijoittaa MIDlet-näytön, kun käyttämätöntä tilaa jää.</string>
     <string name="config_help_screen_padding">Lisää tilaa MIDlet-näytön ja näyttöalueen reunan väliin.</string>
-    <string name="config_help_filter">Pehmentää MIDlet-näyttöä, kun sitä suurennetaan tai pienennetään.</string>
+    <string name="config_help_filter">Käyttää lineaarista suodatusta MIDlet-näytön pehmentämiseen skaalauksen aikana.</string>
     <string name="config_help_immediate">Käsittelee MIDlet-tapahtumat heti jonottamisen sijaan. Tämä voi parantaa reagointia, mutta tehdä joistakin MIDlet-sovelluksista epävakaita.</string>
-    <string name="config_help_graphics_mode">Valitsee MIDlet-näytön renderöintitilan. Jotkin tilat voivat vaikuttaa suorituskykyyn ja yhteensopivuuteen.</string>
-    <string name="config_help_shader">Käyttää visuaalista tehostetta MIDlet-näyttöön.</string>
-    <string name="config_help_shader_tuning">Säätää valitun shaderin asetuksia.</string>
-    <string name="config_help_parallel_redraw">Piirtää näytön rinnakkain uudelleen, kun sitä tuetaan. Tämä voi parantaa suorituskykyä joissakin kokoonpanoissa.</string>
-    <string name="config_help_force_fullscreen">Käynnistää MIDlet Canvas -näytöt koko näytön tilassa. MIDlet voi muuttaa tätä tilaa.</string>
-    <string name="config_help_fps_limit">Rajoittaa kuvataajuutta.</string>
+    <string name="config_help_graphics_mode">Valitsee MIDlet-näytön renderöintitavan. Laitteistokiihdytys voi parantaa suorituskykyä, mutta yhteensopivuus vaihtelee laitteittain.</string>
+    <string name="config_help_shader">Käyttää shaderia MIDlet-ruutuun ennen sen näyttämistä.</string>
+    <string name="config_help_shader_tuning">Käytettävissä olevat säätimet riippuvat valitusta shaderista.</string>
+    <string name="config_help_parallel_redraw">Ajastaa ruutujen esittämisen asynkronisesti. Tämä voi parantaa suorituskykyä joillakin laitteilla.</string>
+    <string name="config_help_force_fullscreen">Käynnistää Java ME Canvas -näytöt ilman toimintanäppäinten komentopalkkia. Pelit voivat muuttaa tätä tilaa.</string>
+    <string name="config_help_fps_limit">Asettaa FPS-rajan emulointinopeudella 1×. Todellinen raja seuraa emulointinopeutta; 0 (Enimmäinen) käyttää näytön suurinta virkistystaajuutta.</string>
     <string name="PREF_EMULATION_SPEED">Emulointinopeus</string>
     <string name="PREF_TIMING_MODE">Kellotila</string>
-    <string name="config_timing_mode_full_guest">Emuloitu kello</string>
-    <string name="config_timing_mode_real_wall">Reaaliaikainen kello</string>
+    <string name="config_timing_mode_full_guest">Emulointiaika</string>
+    <string name="config_timing_mode_real_wall">Järjestelmäaika</string>
     <string name="config_help_emulation_speed">Muuttaa MIDlet-sovelluksen kellonopeutta ja tuettuja viiveitä. Android-ääni ja -käyttöliittymä pysyvät normaaleina.</string>
-    <string name="config_help_timing_mode">Valitsee, käyttääkö MIDlet emuloitua vai todellista päivämäärää ja aikaa. Viiveet seuraavat edelleen emulointinopeutta.</string>
-    <string name="config_help_timing_unavailable">Tämä MIDlet ei tue ajoitusta. Asenna tai muunna se uudelleen emulointinopeuden käyttöön ottamiseksi.</string>
+    <string name="config_help_timing_mode">Valitsee, käyttääkö MIDlet emulointiaikaa vai järjestelmäaikaa. Suhteelliset viiveet seuraavat edelleen emulointinopeutta.</string>
+    <string name="config_help_timing_unavailable">Aika-asetukset eivät ole käytettävissä tässä MIDlet-asennuksessa. Asenna tai muunna MIDlet uudelleen ottaaksesi ne käyttöön.</string>
     <string name="reconverting_wait">Tämä MIDlet tarvitsee kertaluonteisen yhteensopivuusmuunnoksen ennen käynnistystä. Odota…</string>
     <string name="reconversion_error">MIDlet-sovellusta ei voitu muuntaa automaattisesti. %1$s</string>
     <string name="config_help_generic_color">Asettaa tämän visuaalisen elementin värin.</string>
-    <string name="config_help_encoding">Valitsee MIDlet-sovellukselle ilmoitettavan merkistökoodauksen.</string>
+    <string name="config_help_encoding">Valitsee microedition.encoding-ominaisuutena ilmoitettavan merkistökoodauksen.</string>
     <string name="config_edit_system_properties">Muokkaa järjestelmäominaisuuksia</string>
     <string name="config_help_system_properties">Asettaa MIDlet-sovellukselle ilmoitettavat Java ME -lisäominaisuudet.</string>
     <string name="config_help_system_properties_long">Muokkaa yksi ominaisuus riviä kohden muodossa ”nimi: arvo”. Virheelliset arvot voivat vaikuttaa yhteensopivuuteen.</string>
@@ -748,7 +748,7 @@
     <string name="config_help_font_aa">Pehmentää renderöidyn tekstin reunoja.</string>
     <string name="config_help_key_layout">Valitsee MIDlet-sovelluksen käyttämän näppäinkoodiasettelun.</string>
     <string name="config_help_key_mapping">Määrittää Android-näppäimet ja -painikkeet J2ME-näppäimistötoiminnoille.</string>
-    <string name="config_help_vk_button_shape">Asettaa virtuaaliohjainten painikkeiden muodon.</string>
+    <string name="config_help_vk_button_shape">Asettaa näppäimistön painikkeiden muodon. D-pad ja analoginen sauva säilyttävät omat muotonsa.</string>
     <string name="config_help_vk_feedback">Värisee virtuaaliohjainten painalluksista, kun värinä on käytössä asetuksissa.</string>
     <string name="config_help_vk_alpha">Asettaa ohjainten peittävyyden: 0 = täysin läpinäkyvä; 255 = täysin peittävä.</string>
     <string name="config_help_vk_force_opacity">Tekee MIDlet-näytön ulkopuolisista ohjaimista peittäviä. Näytön päällä olevat ohjaimet käyttävät määritettyä peittävyyttä.</string>
@@ -759,7 +759,7 @@
     <string name="config_help_vk_selected_background">Asettaa painikkeen värin painettaessa.</string>
     <string name="config_help_vk_outline">Asettaa virtuaaliohjainten painikkeiden ääriviivan värin.</string>
     <string name="config_help_reset_layout">Palauttaa virtuaaliohjainten asettelun muuttamatta muita MIDlet-asetuksia.</string>
-    <string name="config_help_skip_resume">Ohittaa MIDlet-sovelluksen jatkamiskutsun siihen palattaessa. Käytä vain, jos MIDlet epäonnistuu jatkamisen jälkeen.</string>
+    <string name="config_help_skip_resume">Ensimmäisen onnistuneen startApp()-kutsun jälkeen ohittaa myöhemmät kutsut MIDlet-sovelluksen jatkuessa. Käytä vain sovelluksille, jotka epäonnistuvat jatkamisen yhteydessä.</string>
     <string name="config_help_soundbank">Valitsee MIDI-toistossa käytettävän soundbankin.</string>
     <string name="profile_create_title">Luo profiili</string>
     <string name="profile_rename_title">Nimeä profiili uudelleen</string>
@@ -816,7 +816,7 @@
     <string name="profile_apply_layout_only">Vain virtuaaliohjainten asettelu</string>
     <string name="profile_apply_layout_keeps_settings">Säilytä tämän MIDlet-sovelluksen asetukset; käytä mukautettua määritystä.</string>
     <string name="config_analog_stick">Analoginen sauva</string>
-    <string name="config_analog_stick_summary">Valitse, miten ensisijainen analoginen sauva lähettää liikkeen tähän MIDlet-sovellukseen. Gamepad-painikkeet käyttävät Näppäinmääritystä.</string>
+    <string name="config_analog_stick_summary">Valitse ensisijaiselle analogiselle sauvalle Pois, 4-suuntainen, 8-suuntainen tai numeronäppäimistö. Ohjaimen painikkeet käyttävät näppäinmäärityksiä.</string>
     <string name="config_analog_stick_off">Pois</string>
     <string name="config_controller_help_body_compact">Gamepad-painikkeet käyttävät samaa Näppäinmääritystä kuin näppäimistöt ja puhelinnäppäimet. Analoginen sauva -asetus ohjaa vain sauvan suuntatulostetta MIDlet-sovellukselle. Android-järjestelmän Takaisin säilyttää normaalin isäntätoimintansa, ja mikä tahansa M:ään määritetty fyysinen painike avaa runtime-MIDlet-valikon.</string>
     <string name="library_metadata_edit_title">Muokkaa metatietoja</string>
@@ -934,10 +934,10 @@
     <string name="runtime_virtual_controls_edit_guide_message">Vedä ohjaimia siirtääksesi niitä. Muuta painikkeiden leveyttä tai korkeutta liikuttamalla kahta sormea vaaka- tai pystysuunnassa tai molempia diagonaalisesti. Nipistä muuttaaksesi D-padin tai analogisen sauvan kokoa suhteellisesti. Napauta Valmis, kun olet valmis.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Älä näytä uudelleen</string>
     <string name="runtime_virtual_controls_switch_layout">Valitse asettelumalli</string>
-    <string name="runtime_virtual_controls_show_controls">Näytä ohjaimet</string>
+    <string name="runtime_virtual_controls_show_controls">Valitse näkyvät ohjaimet</string>
     <string name="runtime_virtual_controls_template_dpad_standard">Vakio-D-pad</string>
     <string name="runtime_virtual_controls_template_analog_standard">Vakioanalogisauva</string>
-    <string name="config_gamepad_directions_numeric_v2">Numeerinen</string>
+    <string name="config_gamepad_directions_numeric_v2">Numeronäppäimistö</string>
     <string name="library_collections_unavailable_title">Kokoelmat eivät ole käytettävissä</string>
     <string name="library_load_failed_message">Kirjastoa ei voitu ladata. Yritä uudelleen.</string>
     <string name="bulk_install_prepare_failed">Valittuja sovelluksia ei voitu valmistella asennusta varten.</string>

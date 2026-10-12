@@ -26,10 +26,10 @@
     <string name="help_message">&#8226; Aktivering af filtrering kan i nogle tilfælde reducere ydeevnen. Deaktiver denne indstilling, hvis spillet er for langsomt.&lt;BR&gt;&#8226; Problemer med flimmer kan rettes ved aktivering af indstillingen \"Omgående behandlingstilstand\".</string>
     <string name="layout_edit_finish">Afslut redigeringstilstand</string>
     <string name="layout_edit_finished">Redigeringstilstand afsluttet</string>
-    <string name="layout_switch">Skift tastelayout</string>
+    <string name="layout_switch">Vælg kontrollayout</string>
     <string name="licenses">Licenser</string>
     <string name="mapping_dialog_message">Tryk på en fysisk tast eller knap for at tildele den til denne kontrol.</string>
-    <string name="mapping_dialog_title">Tryk på en tast</string>
+    <string name="mapping_dialog_title">Tryk på en tast eller knap</string>
     <string name="message_delete">Slet denne app, dens indstillinger og gemte data? Dette fjerner også dens post i Biblioteket.</string>
     <string name="more">Mere</string>
     <string name="no_data_for_display">Ingen apps at vise</string>
@@ -151,7 +151,7 @@
     <string name="loading_info">Indlæser oplysninger…</string>
     <string name="mapping_dialog_key_not_specified">Ingen input tildelt.</string>
     <string name="mapping_dialog_assigned_inputs">Tildelte input</string>
-    <string name="mapping_dialog_add_input">Du kan tildele mere end én fysisk input.</string>
+    <string name="mapping_dialog_add_input">Du kan tildele mere end ét fysisk input.</string>
     <string name="mapping_dialog_remove">Fjern</string>
     <string name="message_reset_layout">Nulstil layoutet for virtuelle kontroller til standard?</string>
     <string name="midlet_name"><b>Navn: </b></string>
@@ -249,7 +249,7 @@
     <string name="config_destination_controls">Kontroller</string>
     <string name="config_gamepad_test">Test controller</string>
     <string name="config_gamepad_calibrate">Kalibrer controller</string>
-    <string name="config_gamepad_calibrate_summary">Måler stick- og triggerområder til kalibrering.</string>
+    <string name="config_gamepad_calibrate_summary">Måler den tilsluttede controllers neutralposition og områderne for dens sticks og triggere.</string>
     <string name="config_gamepad_stick_directions">Digitale retninger</string>
     <string name="config_gamepad_stick_unassigned">Ikke tildelt</string>
     <string name="config_gamepad_stick_pointer">Markørkilde</string>
@@ -272,7 +272,7 @@
     <string name="config_gamepad_calibration_phase_cancelled">Annulleret</string>
     <string name="config_gamepad_calibration_waiting_controller">Tilslut en controller med en understøttet analog stick eller trigger. Kalibreringen begynder, når du første gang bevæger en stick eller trykker på en trigger; den eksisterende kalibrering forbliver uændret, indtil du gemmer.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Denne controller rapporterer ikke et understøttet analogt stick- eller triggerområde.</string>
-    <string name="config_gamepad_calibration_start">Hold alle sticks og triggere neutrale, indtil neutral-timeren er færdig. Bevæg derefter hver stick gennem hele dens område og tryk på Næste.</string>
+    <string name="config_gamepad_calibration_start">Hold alle sticks centreret og alle triggere sluppet, indtil neutral-timeren er færdig.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibreringen kunne ikke gemmes. Den eksisterende kalibrering forbliver uændret.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Ingen understøttede analoge områder fundet.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrering afvist: %1$s</string>
@@ -284,7 +284,7 @@
     <string name="config_gamepad_calibration_cancelled">Kalibrering annulleret. Den tidligere kalibrering er uændret.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibreringen venter på controllerprøver.</string>
     <string name="config_gamepad_diagnosis_header">Controllerdiagnostik</string>
-    <string name="config_gamepad_diagnosis_mode">Aktiveret: %1$s · Kilde: %2$s</string>
+    <string name="config_gamepad_diagnosis_mode">Status: %1$s · Kilde: %2$s</string>
     <string name="config_gamepad_diagnosis_notice">Bemærkning: %1$s</string>
     <string name="config_gamepad_diagnosis_analog_settings">Analoge indstillinger:</string>
     <string name="config_gamepad_diagnosis_left_stick">Venstre stick</string>
@@ -303,12 +303,12 @@
     <string name="config_gamepad_calibration_issue_insufficient_samples">utilstrækkelige prøver</string>
     <string name="config_gamepad_calibration_issue_invalid_range">ugyldigt område</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">hvileværdi uden for område</string>
-    <string name="config_gamepad_calibration_issue_rest_too_noisy">hvilepositionen er for støjende</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">hvilepositionen er ikke stabil nok</string>
     <string name="config_gamepad_calibration_phase_unknown">Status ikke tilgængelig</string>
     <string name="config_gamepad_diagnosis_capabilities">Tilsluttet controllers egenskaber:</string>
     <string name="config_gamepad_diagnosis_descriptor">Deskriptor: %1$s</string>
     <string name="config_gamepad_diagnosis_signature">Signatur: %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">Akse %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
+    <string name="config_gamepad_diagnosis_axis">Akse %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(ingen tilsluttet controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Inputprøver sendes med vilje ikke til MIDlet.</string>
     <string name="config_destination_system">System</string>
@@ -669,16 +669,16 @@
         <item quantity="other">%1$d valgte apps fra Biblioteket er ikke længere tilgængelige.</item>
     </plurals>
     <string name="config_destination_general">Basis</string>
-    <string name="config_basic_display">Skærm &amp; vindue</string>
+    <string name="config_basic_display">MIDlet-skærm</string>
     <string name="config_basic_input">Input</string>
     <string name="config_display_appearance">Udseende</string>
     <string name="config_display_rendering">Gengivelse</string>
     <string name="config_display_performance">Ydelse &amp; diagnostik</string>
     <string name="config_display_text">Tekst &amp; skrifttyper</string>
     <string name="config_system_timing">Timing &amp; kompatibilitet</string>
-    <string name="config_controls_key_input">Tastinput</string>
+    <string name="config_controls_key_input">Fysisk input</string>
     <string name="config_controls_virtual_keyboard">Virtuelle kontroller</string>
-    <string name="config_controls_virtual_keyboard_colors">Udseende for virtuelle kontroller</string>
+    <string name="config_controls_virtual_keyboard_colors">Farver på virtuelle kontroller</string>
     <string name="config_controls_maintenance">Layout for virtuelle kontroller</string>
     <string name="config_current_value">Aktuel værdi</string>
     <string name="config_maintenance">Nulstil &amp; data</string>
@@ -699,8 +699,8 @@
     <string name="profile_template_operation_failed">Profilhandlingen kunne ikke fuldføres.</string>
     <string name="config_help_screen_size">Indstiller den virtuelle skærmopløsning, som MIDlet får.</string>
     <string name="config_help_orientation">Vælger skærmretningen, mens MIDlet kører.</string>
-    <string name="config_help_scale_type">Vælger, hvordan MIDlet-skærmen passer til det tilgængelige område. Skærmforholdet kan bevares eller ignoreres.</string>
-    <string name="config_help_scale_ratio">Ændrer den viste størrelse uden at ændre den virtuelle opløsning for MIDlet.</string>
+    <string name="config_help_scale_type">Vælg, hvordan spillet passer til skærmen. Vælg Manuel for at indstille en brugerdefineret skalering.</string>
+    <string name="config_help_scale_ratio" formatted="false">Justerer den viste størrelse fra 1% til 1000%. Ved 100% bruger spillet sin oprindelige størrelse; større værdier kan gå ud over skærmen.</string>
     <string name="config_help_lock_custom_resolution_ratio">Bevarer bredde-/højdeforholdet, mens den brugerdefinerede opløsning redigeres.</string>
     <string name="config_help_virtual_keyboard">Viser berøringskontroller for denne MIDlet.</string>
     <string name="config_help_touch_input">Lader MIDlet modtage berøringshændelser.</string>
@@ -709,32 +709,32 @@
     <string name="config_background_custom">Brugerdefineret</string>
     <string name="config_background_theme">Tema</string>
     <string name="config_background_immersive">Opslugende</string>
-    <string name="config_background_theme_help">Bruger baggrunden fra JL-Mod Plus-temaet.</string>
+    <string name="config_background_theme_help">Bruger JL-Mod Plus-temaets farve omkring MIDlet-skærmen.</string>
     <string name="config_background_immersive_help">Udfylder ubrugt plads med farver, der samples fra MIDlet-skærmen.</string>
     <string name="config_background_custom_color">Baggrundsfarve</string>
     <string name="config_help_background_custom_color">Indstiller farven på ubrugt plads omkring MIDlet-skærmen.</string>
     <string name="config_help_skin">Viser et valgfrit billede eller en ramme omkring MIDlet-skærmen.</string>
     <string name="config_help_screen_gravity">Placerer MIDlet-skærmen, når der er ubrugt plads tilbage.</string>
     <string name="config_help_screen_padding">Tilføjer afstand mellem MIDlet-skærmen og kanten af visningsområdet.</string>
-    <string name="config_help_filter">Udjævner MIDlet-skærmen, når den forstørres eller formindskes.</string>
+    <string name="config_help_filter">Bruger lineær filtrering til at udjævne MIDlet-skærmen under skalering.</string>
     <string name="config_help_immediate">Behandler MIDlet-hændelser straks i stedet for at sætte dem i kø. Det kan forbedre responsen, men gøre nogle MIDlet-programmer ustabile.</string>
-    <string name="config_help_graphics_mode">Vælger gengivelsestilstanden for MIDlet-skærmen. Nogle tilstande kan påvirke ydelse og kompatibilitet.</string>
-    <string name="config_help_shader">Anvender en visuel effekt på MIDlet-skærmen.</string>
-    <string name="config_help_shader_tuning">Justerer indstillingerne for den valgte shader.</string>
-    <string name="config_help_parallel_redraw">Gentegner skærmen parallelt, når det understøttes. Det kan forbedre ydelsen i nogle konfigurationer.</string>
-    <string name="config_help_force_fullscreen">Start MIDlet Canvas-skærme i fuldskærmstilstand. MIDlet kan ændre denne tilstand.</string>
-    <string name="config_help_fps_limit">Begrænser billedhastigheden.</string>
+    <string name="config_help_graphics_mode">Vælger gengivelsesmetoden for MIDlet-skærmen. Hardwareacceleration kan forbedre ydelsen, men kompatibiliteten varierer fra enhed til enhed.</string>
+    <string name="config_help_shader">Anvender en shader på MIDlet-billedet, før det vises.</string>
+    <string name="config_help_shader_tuning">De tilgængelige kontroller afhænger af den valgte shader.</string>
+    <string name="config_help_parallel_redraw">Planlægger visning af billeder asynkront. Det kan forbedre ydelsen på nogle enheder.</string>
+    <string name="config_help_force_fullscreen">Starter Java ME Canvas-skærme uden softkey-kommandolinjen. Spil kan ændre denne tilstand.</string>
+    <string name="config_help_fps_limit">Indstiller FPS-grænsen ved 1× emuleringshastighed. Den effektive grænse følger emuleringshastigheden; 0 (Maksimum) bruger skærmens maksimale opdateringsfrekvens.</string>
     <string name="PREF_EMULATION_SPEED">Emuleringshastighed</string>
     <string name="PREF_TIMING_MODE">Urtilstand</string>
-    <string name="config_timing_mode_full_guest">Emuleret ur</string>
-    <string name="config_timing_mode_real_wall">Virkeligt ur</string>
+    <string name="config_timing_mode_full_guest">Emuleringstid</string>
+    <string name="config_timing_mode_real_wall">Systemtid</string>
     <string name="config_help_emulation_speed">Ændrer urhastigheden for MIDlet og understøttede forsinkelser. Android-lyd og -UI forbliver normale.</string>
-    <string name="config_help_timing_mode">Vælger, om MIDlet bruger emuleret eller virkelig dato og tid. Forsinkelser følger stadig emuleringshastigheden.</string>
-    <string name="config_help_timing_unavailable">Denne MIDlet mangler timingunderstøttelse. Geninstaller eller rekonvertér den for at aktivere emuleringshastighed.</string>
+    <string name="config_help_timing_mode">Vælger, om MIDlet bruger emuleringstid eller systemtid. Relative forsinkelser følger stadig emuleringshastigheden.</string>
+    <string name="config_help_timing_unavailable">Tidsindstillinger er ikke tilgængelige for denne MIDlet-installation. Geninstaller eller rekonvertér MIDlet for at aktivere dem.</string>
     <string name="reconverting_wait">Denne MIDlet kræver en engangskonvertering for kompatibilitet, før den kan starte. Vent venligst…</string>
     <string name="reconversion_error">MIDlet kunne ikke konverteres automatisk. %1$s</string>
     <string name="config_help_generic_color">Indstiller farven på dette visuelle element.</string>
-    <string name="config_help_encoding">Vælger den tegnkodning, der rapporteres til MIDlet.</string>
+    <string name="config_help_encoding">Vælger den tegnkodning, der rapporteres som microedition.encoding.</string>
     <string name="config_edit_system_properties">Rediger systemegenskaber</string>
     <string name="config_help_system_properties">Indstiller avancerede Java ME-egenskaber, der rapporteres til MIDlet.</string>
     <string name="config_help_system_properties_long">Rediger én egenskab pr. linje som “navn: værdi”. Forkerte værdier kan påvirke kompatibiliteten.</string>
@@ -748,7 +748,7 @@
     <string name="config_help_font_aa">Udjævner kanterne på gengivet tekst.</string>
     <string name="config_help_key_layout">Vælger det tastekodelayout, som MIDlet bruger.</string>
     <string name="config_help_key_mapping">Tildeler Android-taster og -knapper til J2ME-tastaturhandlinger.</string>
-    <string name="config_help_vk_button_shape">Indstiller formen på knapper til virtuelle kontroller.</string>
+    <string name="config_help_vk_button_shape">Indstiller formen på tastaturknapper. D-pad og analog stick beholder deres egne former.</string>
     <string name="config_help_vk_feedback">Vibrerer ved tryk på virtuelle kontroller, når vibration er aktiveret i Indstillinger.</string>
     <string name="config_help_vk_alpha">Indstiller de virtuelle kontrollers opacitet: 0 = helt gennemsigtige; 255 = helt uigennemsigtige.</string>
     <string name="config_help_vk_force_opacity">Gør kontroller uden for MIDlet-skærmen ugennemsigtige. Kontroller over skærmen bruger den indstillede gennemsigtighed.</string>
@@ -759,7 +759,7 @@
     <string name="config_help_vk_selected_background">Indstiller knappens farve, mens den er trykket.</string>
     <string name="config_help_vk_outline">Indstiller konturfarven på knapper til virtuelle kontroller.</string>
     <string name="config_help_reset_layout">Gendanner layoutet for virtuelle kontroller uden at ændre andre MIDlet-indstillinger.</string>
-    <string name="config_help_skip_resume">Springer genoptagelses-callbacken for MIDlet over, når du vender tilbage til den. Brug kun dette, hvis MIDlet fejler efter genoptagelse.</string>
+    <string name="config_help_skip_resume">Efter det første vellykkede startApp() springes senere kald over, når MIDlet genoptages. Brug kun dette til MIDlet-programmer, der fejler ved genoptagelse.</string>
     <string name="config_help_soundbank">Vælger den soundbank, der bruges til MIDI-afspilning.</string>
     <string name="profile_create_title">Opret profil</string>
     <string name="profile_rename_title">Omdøb profil</string>
@@ -816,7 +816,7 @@
     <string name="profile_apply_layout_only">Kun layout for virtuelle kontroller</string>
     <string name="profile_apply_layout_keeps_settings">Behold indstillingerne for denne MIDlet; brug en brugerdefineret konfiguration.</string>
     <string name="config_analog_stick">Analog stick</string>
-    <string name="config_analog_stick_summary">Vælg, hvordan den primære analoge stick sender bevægelse til denne MIDlet. Gamepad-knapper bruger Tastetildeling.</string>
+    <string name="config_analog_stick_summary">Vælg Fra, 4-vejs, 8-vejs eller numerisk tastatur til den primære analoge stick. Controllerknapper bruger tastetildelinger.</string>
     <string name="config_analog_stick_off">Fra</string>
     <string name="config_controller_help_body_compact">Gamepad-knapper bruger samme Tastetildeling som tastaturer og telefontaster. Indstillingen Analog stick styrer kun retningsoutput fra sticken til MIDlet. Android Tilbage beholder sin normale værtsadfærd, og enhver fysisk knap tildelt M åbner runtime-MIDlet-menuen.</string>
     <string name="library_metadata_edit_title">Rediger metadata</string>
@@ -934,10 +934,10 @@
     <string name="runtime_virtual_controls_edit_guide_message">Træk kontroller for at flytte dem. For knapper skal du bevæge to fingre vandret eller lodret for at ændre bredde eller højde, eller diagonalt for at ændre begge. Knib for at ændre D-pad eller analog stick proportionalt. Tryk på Færdig, når du er klar.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Vis ikke igen</string>
     <string name="runtime_virtual_controls_switch_layout">Vælg layoutskabelon</string>
-    <string name="runtime_virtual_controls_show_controls">Vis kontroller</string>
+    <string name="runtime_virtual_controls_show_controls">Vælg synlige kontroller</string>
     <string name="runtime_virtual_controls_template_dpad_standard">Standard-D-pad</string>
     <string name="runtime_virtual_controls_template_analog_standard">Standard analog stick</string>
-    <string name="config_gamepad_directions_numeric_v2">Numerisk</string>
+    <string name="config_gamepad_directions_numeric_v2">Numerisk tastatur</string>
     <string name="library_collections_unavailable_title">Samlinger ikke tilgængelige</string>
     <string name="library_load_failed_message">Biblioteket kunne ikke indlæses. Prøv igen.</string>
     <string name="bulk_install_prepare_failed">De valgte apps kunne ikke klargøres til installation.</string>

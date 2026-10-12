@@ -47,12 +47,12 @@
     <string name="invalid_resolution_not_saved">Résolution invalide. Les modifications n’ont pas été enregistrées.</string>
     <string name="layout_edit_finish">Terminer le mode édition</string>
     <string name="layout_edit_finished">Mode édition terminé</string>
-    <string name="layout_switch">Changer la disposition des touches</string>
+    <string name="layout_switch">Choisir la disposition des commandes</string>
     <string name="licenses">Autorisations</string>
     <string name="loading_info">chargement infos…</string>
     <string name="mapping_dialog_key_not_specified">Aucune entrée attribuée.</string>
     <string name="mapping_dialog_message">Appuyez sur une touche ou un bouton physique pour l’attribuer à cette commande.</string>
-    <string name="mapping_dialog_title">Appuyez sur une touche</string>
+    <string name="mapping_dialog_title">Appuyez sur une touche ou un bouton</string>
     <string name="message_delete">Supprimer cette application, ses paramètres et ses données de sauvegarde ? Son entrée de Bibliothèque sera également supprimée.</string>
     <string name="midlet_name"><b>Nom : </b></string>
     <string name="midlet_size"><b>Taille: </b></string>
@@ -206,7 +206,7 @@
     <string name="file_picker_selection_unavailable">L’élément sélectionné n’est plus disponible.</string>
     <string name="layout_edit_done">✓ Terminé</string>
     <string name="layout_edit_save_changes">Enregistrer les modifications des commandes virtuelles ?</string>
-    <string name="layout_edit_discard">Ignorer</string>
+    <string name="layout_edit_discard">Abandonner</string>
     <string name="layout_edit_continue">Continuer la modification</string>
     <string name="virtual_controls_save_failed">Impossible d’enregistrer les commandes virtuelles. Réessayez.</string>
     <string name="runtime_preset_save_destination">Enregistrer dans</string>
@@ -285,7 +285,7 @@
     <string name="profile_custom">Personnalisé</string>
     <string name="config_gamepad_test">Tester la manette</string>
     <string name="config_gamepad_calibrate">Étalonner la manette</string>
-    <string name="config_gamepad_calibrate_summary">Mesure les plages des sticks et des gâchettes pour l’étalonnage.</string>
+    <string name="config_gamepad_calibrate_summary">Mesure la position neutre et les plages des sticks et des gâchettes de la manette connectée.</string>
     <string name="config_gamepad_stick_directions">Directions numériques</string>
     <string name="config_gamepad_stick_unassigned">Non attribué</string>
     <string name="config_gamepad_stick_pointer">Source du pointeur</string>
@@ -307,7 +307,7 @@
     <string name="config_gamepad_calibration_phase_cancelled">Annulé</string>
     <string name="config_gamepad_calibration_waiting_controller">Connectez une manette avec un stick analogique ou une gâchette pris en charge. L’étalonnage commence au premier mouvement d’un stick ou à la première pression d’une gâchette ; l’étalonnage existant reste inchangé jusqu’à l’enregistrement.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Cette manette ne signale aucune plage de stick analogique ou de gâchette prise en charge.</string>
-    <string name="config_gamepad_calibration_start">Maintenez tous les sticks et gâchettes au neutre jusqu’à la fin du minuteur. Déplacez ensuite chaque stick sur toute sa plage et appuyez sur Suivant.</string>
+    <string name="config_gamepad_calibration_start">Maintenez tous les sticks centrés et toutes les gâchettes relâchées jusqu’à la fin du minuteur de position neutre.</string>
     <string name="config_gamepad_calibration_save_failed">Impossible d’enregistrer l’étalonnage. L’étalonnage existant reste inchangé.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Aucune plage analogique prise en charge trouvée.</string>
     <string name="config_gamepad_calibration_rejected">Étalonnage refusé : %1$s</string>
@@ -319,7 +319,7 @@
     <string name="config_gamepad_calibration_cancelled">Étalonnage annulé. L’étalonnage précédent reste inchangé.</string>
     <string name="config_gamepad_calibration_waiting_samples">L’étalonnage attend des échantillons de la manette.</string>
     <string name="config_gamepad_diagnosis_header">Diagnostic de la manette</string>
-    <string name="config_gamepad_diagnosis_mode">Activé : %1$s · Source : %2$s</string>
+    <string name="config_gamepad_diagnosis_mode">État : %1$s · Source : %2$s</string>
     <string name="config_gamepad_diagnosis_notice">Avis : %1$s</string>
     <string name="config_gamepad_diagnosis_analog_settings">Réglages analogiques :</string>
     <string name="config_gamepad_diagnosis_left_stick">Stick gauche</string>
@@ -338,12 +338,12 @@
     <string name="config_gamepad_calibration_issue_insufficient_samples">échantillons insuffisants</string>
     <string name="config_gamepad_calibration_issue_invalid_range">plage invalide</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">valeur de repos hors plage</string>
-    <string name="config_gamepad_calibration_issue_rest_too_noisy">la position de repos est trop bruitée</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">la position de repos n’est pas assez stable</string>
     <string name="config_gamepad_calibration_phase_unknown">État indisponible</string>
     <string name="config_gamepad_diagnosis_capabilities">Capacités de la manette connectée :</string>
     <string name="config_gamepad_diagnosis_descriptor">Descripteur : %1$s</string>
     <string name="config_gamepad_diagnosis_signature">Signature : %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">Axe %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
+    <string name="config_gamepad_diagnosis_axis">Axe %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(aucune manette connectée)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Les échantillons d’entrée ne sont volontairement pas envoyés au MIDlet.</string>
     <string name="pref_title_emulation">Émulation</string>
@@ -676,16 +676,16 @@
         <item quantity="other">%1$d applications sélectionnées de la Bibliothèque ne sont plus disponibles.</item>
     </plurals>
     <string name="config_destination_general">Général</string>
-    <string name="config_basic_display">Écran et fenêtre</string>
+    <string name="config_basic_display">Écran du MIDlet</string>
     <string name="config_basic_input">Entrée</string>
     <string name="config_display_appearance">Apparence</string>
     <string name="config_display_rendering">Rendu</string>
     <string name="config_display_performance">Performances et diagnostic</string>
     <string name="config_display_text">Texte et polices</string>
     <string name="config_system_timing">Temps et compatibilité</string>
-    <string name="config_controls_key_input">Entrée des touches</string>
+    <string name="config_controls_key_input">Entrée physique</string>
     <string name="config_controls_virtual_keyboard">Commandes virtuelles</string>
-    <string name="config_controls_virtual_keyboard_colors">Apparence des commandes virtuelles</string>
+    <string name="config_controls_virtual_keyboard_colors">Couleurs des commandes virtuelles</string>
     <string name="config_controls_maintenance">Disposition des commandes virtuelles</string>
     <string name="config_current_value">Valeur actuelle</string>
     <string name="config_maintenance">Réinitialisation et données</string>
@@ -706,8 +706,8 @@
     <string name="profile_template_operation_failed">Impossible de terminer l’opération du profil.</string>
     <string name="config_help_screen_size">Définit la résolution d’écran virtuelle présentée au MIDlet.</string>
     <string name="config_help_orientation">Choisit l’orientation de l’écran pendant l’exécution du MIDlet.</string>
-    <string name="config_help_scale_type">Choisit comment l’écran du MIDlet s’adapte à la zone disponible. Les proportions peuvent être conservées ou ignorées.</string>
-    <string name="config_help_scale_ratio">Modifie la taille affichée sans changer la résolution virtuelle du MIDlet.</string>
+    <string name="config_help_scale_type">Choisissez comment le jeu s’adapte à l’écran. Sélectionnez Manuel pour définir une échelle personnalisée.</string>
+    <string name="config_help_scale_ratio" formatted="false">Ajuste la taille affichée de 1% à 1000%. À 100%, le jeu utilise sa taille d’origine ; les valeurs supérieures peuvent dépasser l’écran.</string>
     <string name="config_help_lock_custom_resolution_ratio">Conserve le rapport largeur/hauteur lors de la modification de la résolution personnalisée.</string>
     <string name="config_help_virtual_keyboard">Affiche des commandes tactiles pour ce MIDlet.</string>
     <string name="config_help_touch_input">Permet au MIDlet de recevoir des événements tactiles.</string>
@@ -716,32 +716,32 @@
     <string name="config_background_custom">Personnalisé</string>
     <string name="config_background_theme">Thème</string>
     <string name="config_background_immersive">Immersif</string>
-    <string name="config_background_theme_help">Utilise l’arrière-plan du thème JL-Mod Plus.</string>
+    <string name="config_background_theme_help">Utilise la couleur du thème JL-Mod Plus autour de l’écran du MIDlet.</string>
     <string name="config_background_immersive_help">Remplit l’espace inutilisé avec des couleurs échantillonnées depuis l’écran du MIDlet.</string>
     <string name="config_background_custom_color">Couleur d’arrière-plan</string>
     <string name="config_help_background_custom_color">Définit la couleur de l’espace inutilisé autour de l’écran du MIDlet.</string>
     <string name="config_help_skin">Affiche une image ou un cadre facultatif autour de l’écran du MIDlet.</string>
     <string name="config_help_screen_gravity">Positionne l’écran du MIDlet lorsqu’il reste de l’espace inutilisé.</string>
     <string name="config_help_screen_padding">Ajoute un espace entre l’écran du MIDlet et le bord de la zone d’affichage.</string>
-    <string name="config_help_filter">Lisse l’écran du MIDlet lorsqu’il est agrandi ou réduit.</string>
+    <string name="config_help_filter">Utilise le filtrage linéaire pour lisser l’écran du MIDlet lors de sa mise à l’échelle.</string>
     <string name="config_help_immediate">Traite les événements du MIDlet immédiatement au lieu de les mettre en file. Cela peut améliorer la réactivité mais déstabiliser certains MIDlets.</string>
-    <string name="config_help_graphics_mode">Choisit le mode de rendu de l’écran du MIDlet. Certains modes peuvent affecter les performances et la compatibilité.</string>
-    <string name="config_help_shader">Applique un effet visuel à l’écran du MIDlet.</string>
-    <string name="config_help_shader_tuning">Règle les paramètres du shader sélectionné.</string>
-    <string name="config_help_parallel_redraw">Redessine l’écran en parallèle lorsque cela est pris en charge. Cela peut améliorer les performances dans certaines configurations.</string>
-    <string name="config_help_force_fullscreen">Démarre les écrans Canvas du MIDlet en plein écran. Le MIDlet peut modifier ce mode.</string>
-    <string name="config_help_fps_limit">Limite la fréquence d’images.</string>
+    <string name="config_help_graphics_mode">Choisit le mode de rendu de l’écran du MIDlet. L’accélération matérielle peut améliorer les performances, mais la compatibilité varie selon l’appareil.</string>
+    <string name="config_help_shader">Applique un shader à l’image du MIDlet avant son affichage.</string>
+    <string name="config_help_shader_tuning">Les commandes disponibles dépendent du shader sélectionné.</string>
+    <string name="config_help_parallel_redraw">Planifie l’affichage des images de manière asynchrone. Cela peut améliorer les performances sur certains appareils.</string>
+    <string name="config_help_force_fullscreen">Démarre les écrans Canvas Java ME sans la barre de commandes des touches de fonction. Les jeux peuvent modifier ce mode.</string>
+    <string name="config_help_fps_limit">Définit la limite de FPS à une vitesse d’émulation de 1×. La limite effective suit la vitesse d’émulation ; 0 (Maximum) utilise la fréquence de rafraîchissement maximale de l’écran.</string>
     <string name="PREF_EMULATION_SPEED">Vitesse d’émulation</string>
     <string name="PREF_TIMING_MODE">Mode d’horloge</string>
-    <string name="config_timing_mode_full_guest">Horloge émulée</string>
-    <string name="config_timing_mode_real_wall">Horloge réelle</string>
+    <string name="config_timing_mode_full_guest">Temps d’émulation</string>
+    <string name="config_timing_mode_real_wall">Temps système</string>
     <string name="config_help_emulation_speed">Modifie la vitesse d’horloge du MIDlet et les délais pris en charge. L’audio et l’interface Android restent normaux.</string>
-    <string name="config_help_timing_mode">Choisit si le MIDlet utilise une date et une heure émulées ou réelles. Les délais suivent toujours la vitesse d’émulation.</string>
-    <string name="config_help_timing_unavailable">Ce MIDlet ne prend pas en charge la temporisation. Réinstallez-le ou reconvertissez-le pour activer la vitesse d’émulation.</string>
+    <string name="config_help_timing_mode">Choisit si le MIDlet utilise le temps d’émulation ou le temps système. Les délais relatifs restent ajustés à la vitesse d’émulation.</string>
+    <string name="config_help_timing_unavailable">Les paramètres de temps ne sont pas disponibles pour cette installation du MIDlet. Réinstallez ou reconvertissez le MIDlet pour les activer.</string>
     <string name="reconverting_wait">Ce MIDlet nécessite une conversion de compatibilité unique avant de démarrer. Veuillez patienter…</string>
     <string name="reconversion_error">Le MIDlet n’a pas pu être converti automatiquement.\n\n%1$s</string>
     <string name="config_help_generic_color">Définit la couleur de cet élément visuel.</string>
-    <string name="config_help_encoding">Choisit l’encodage de caractères signalé au MIDlet.</string>
+    <string name="config_help_encoding">Choisit l’encodage de caractères signalé par microedition.encoding.</string>
     <string name="config_edit_system_properties">Modifier les propriétés système</string>
     <string name="config_help_system_properties">Définit les propriétés Java ME avancées signalées au MIDlet.</string>
     <string name="config_help_system_properties_long">Modifiez une propriété par ligne sous la forme « nom : valeur ». Des valeurs incorrectes peuvent affecter la compatibilité.</string>
@@ -755,7 +755,7 @@
     <string name="config_help_font_aa">Lisse les bords du texte rendu.</string>
     <string name="config_help_key_layout">Choisit la disposition des codes de touches utilisée par le MIDlet.</string>
     <string name="config_help_key_mapping">Associe les touches et boutons Android aux actions du pavé J2ME.</string>
-    <string name="config_help_vk_button_shape">Définit la forme des boutons des commandes virtuelles.</string>
+    <string name="config_help_vk_button_shape">Définit la forme des boutons du pavé. La croix directionnelle et le stick analogique conservent leurs propres formes.</string>
     <string name="config_help_vk_feedback">Fait vibrer l’appareil lors d’un appui sur les commandes virtuelles si la vibration est activée dans les Paramètres.</string>
     <string name="config_help_vk_alpha">Définit l’opacité des commandes : 0 = entièrement transparentes ; 255 = entièrement opaques.</string>
     <string name="config_help_vk_force_opacity">Rend opaques les commandes hors de l’écran du MIDlet. Les commandes superposées à l’écran utilisent l’opacité configurée.</string>
@@ -766,7 +766,7 @@
     <string name="config_help_vk_selected_background">Définit la couleur du bouton lorsqu’il est pressé.</string>
     <string name="config_help_vk_outline">Définit la couleur du contour des boutons des commandes virtuelles.</string>
     <string name="config_help_reset_layout">Restaure la disposition des commandes virtuelles sans modifier les autres paramètres du MIDlet.</string>
-    <string name="config_help_skip_resume">Ignore le rappel de reprise du MIDlet lorsque vous y revenez. À utiliser uniquement si le MIDlet échoue après la reprise.</string>
+    <string name="config_help_skip_resume">Après le premier appel réussi à startApp(), ignore les appels suivants lors de la reprise du MIDlet. À utiliser uniquement pour les MIDlets qui échouent à la reprise.</string>
     <string name="config_help_soundbank">Choisit la banque de sons utilisée pour la lecture MIDI.</string>
     <string name="profile_create_title">Créer un profil</string>
     <string name="profile_rename_title">Renommer le profil</string>
@@ -823,7 +823,7 @@
     <string name="profile_apply_layout_only">Disposition des commandes virtuelles uniquement</string>
     <string name="profile_apply_layout_keeps_settings">Conserve les paramètres de ce MIDlet ; utilise une configuration personnalisée.</string>
     <string name="config_analog_stick">Stick analogique</string>
-    <string name="config_analog_stick_summary">Choisissez comment le stick analogique principal envoie les mouvements à ce MIDlet. Les boutons de la manette utilisent les Attributions de touches.</string>
+    <string name="config_analog_stick_summary">Choisissez Désactivé, 4 directions, 8 directions ou pavé numérique pour le stick analogique principal. Les boutons de la manette utilisent les attributions de touches.</string>
     <string name="config_analog_stick_off">Désactivé</string>
     <string name="config_controller_help_body_compact">Les boutons de la manette utilisent les mêmes Attributions de touches que les claviers et les touches du téléphone. L’option Stick analogique contrôle uniquement la sortie directionnelle du stick pour le MIDlet. Retour Android conserve son comportement hôte normal et tout bouton physique attribué à M ouvre le menu MIDlet d’exécution.</string>
     <string name="library_metadata_edit_title">Modifier les métadonnées</string>
@@ -941,10 +941,10 @@
     <string name="runtime_virtual_controls_edit_guide_message">Faites glisser les commandes pour les déplacer. Pour les boutons, déplacez deux doigts horizontalement ou verticalement pour modifier la largeur ou la hauteur, ou en diagonale pour modifier les deux. Pincez pour redimensionner proportionnellement la croix directionnelle ou le stick analogique. Appuyez sur Terminé lorsque vous avez fini.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Ne plus afficher</string>
     <string name="runtime_virtual_controls_switch_layout">Choisir un modèle de disposition</string>
-    <string name="runtime_virtual_controls_show_controls">Afficher les commandes</string>
+    <string name="runtime_virtual_controls_show_controls">Choisir les commandes visibles</string>
     <string name="runtime_virtual_controls_template_dpad_standard">Croix directionnelle standard</string>
     <string name="runtime_virtual_controls_template_analog_standard">Stick analogique standard</string>
-    <string name="config_gamepad_directions_numeric_v2">Numérique</string>
+    <string name="config_gamepad_directions_numeric_v2">Pavé numérique</string>
     <string name="library_collections_unavailable_title">Collections indisponibles</string>
     <string name="library_load_failed_message">La Bibliothèque n’a pas pu être chargée. Réessayez.</string>
     <string name="bulk_install_prepare_failed">Les applications sélectionnées n’ont pas pu être préparées pour l’installation.</string>

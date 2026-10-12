@@ -32,10 +32,10 @@
     <string name="identity_filter">Snel (geen filter)</string>
     <string name="layout_edit_finish">Voltooi de bewerkingsmodus</string>
     <string name="layout_edit_finished">Bewerkingsmodus voltooid</string>
-    <string name="layout_switch">Wissel keylayout</string>
+    <string name="layout_switch">Bedieningsindeling kiezen</string>
     <string name="licenses">Licenties</string>
     <string name="mapping_dialog_message">Druk op een fysieke toets of knop om deze aan deze bediening toe te wijzen.</string>
-    <string name="mapping_dialog_title">Druk op een toets</string>
+    <string name="mapping_dialog_title">Druk op een toets of knop</string>
     <string name="message_delete">Deze app, instellingen en opgeslagen gegevens verwijderen? Hiermee wordt ook de vermelding in de Bibliotheek verwijderd.</string>
     <string name="more">Meer</string>
     <string name="no_data_for_display">Geen apps om te tonen</string>
@@ -258,7 +258,7 @@
     <string name="config_destination_controls">Bediening</string>
     <string name="config_gamepad_test">Controller testen</string>
     <string name="config_gamepad_calibrate">Controller kalibreren</string>
-    <string name="config_gamepad_calibrate_summary">Meet stick- en triggerbereiken voor kalibratie.</string>
+    <string name="config_gamepad_calibrate_summary">Meet de neutrale positie en de stick- en triggerbereiken van de verbonden controller.</string>
     <string name="config_gamepad_stick_directions">Digitale richtingen</string>
     <string name="config_gamepad_stick_unassigned">Niet toegewezen</string>
     <string name="config_gamepad_stick_pointer">Aanwijzerbron</string>
@@ -281,7 +281,7 @@
     <string name="config_gamepad_calibration_phase_cancelled">Geannuleerd</string>
     <string name="config_gamepad_calibration_waiting_controller">Verbind een controller met een ondersteunde analoge stick of trigger. Kalibratie begint wanneer je voor het eerst een stick beweegt of een trigger indrukt; de bestaande kalibratie blijft ongewijzigd totdat je opslaat.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Deze controller meldt geen ondersteund bereik voor analoge sticks of triggers.</string>
-    <string name="config_gamepad_calibration_start">Houd alle sticks en triggers neutraal totdat de neutraaltimer is voltooid. Beweeg daarna elke stick door het volledige bereik en druk op Volgende.</string>
+    <string name="config_gamepad_calibration_start">Houd alle sticks gecentreerd en alle triggers los totdat de neutraaltimer is voltooid.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibratie kon niet worden opgeslagen. De bestaande kalibratie blijft ongewijzigd.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Geen ondersteunde analoge bereiken gevonden.</string>
     <string name="config_gamepad_calibration_rejected">Kalibratie geweigerd: %1$s</string>
@@ -293,7 +293,7 @@
     <string name="config_gamepad_calibration_cancelled">Kalibratie geannuleerd. De vorige kalibratie blijft ongewijzigd.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibratie wacht op controllersamples.</string>
     <string name="config_gamepad_diagnosis_header">Controllerdiagnose</string>
-    <string name="config_gamepad_diagnosis_mode">Ingeschakeld: %1$s · Bron: %2$s</string>
+    <string name="config_gamepad_diagnosis_mode">Status: %1$s · Bron: %2$s</string>
     <string name="config_gamepad_diagnosis_notice">Melding: %1$s</string>
     <string name="config_gamepad_diagnosis_analog_settings">Analoge instellingen:</string>
     <string name="config_gamepad_diagnosis_left_stick">Linker stick</string>
@@ -312,12 +312,12 @@
     <string name="config_gamepad_calibration_issue_insufficient_samples">onvoldoende samples</string>
     <string name="config_gamepad_calibration_issue_invalid_range">ongeldig bereik</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">rustwaarde buiten bereik</string>
-    <string name="config_gamepad_calibration_issue_rest_too_noisy">rustpositie is te onrustig</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">rustpositie is niet stabiel genoeg</string>
     <string name="config_gamepad_calibration_phase_unknown">Status niet beschikbaar</string>
     <string name="config_gamepad_diagnosis_capabilities">Mogelijkheden van verbonden controller:</string>
     <string name="config_gamepad_diagnosis_descriptor">Descriptor: %1$s</string>
     <string name="config_gamepad_diagnosis_signature">Signatuur: %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">As %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
+    <string name="config_gamepad_diagnosis_axis">As %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(geen verbonden controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Invoersamples worden bewust niet naar de MIDlet gestuurd.</string>
     <string name="config_destination_system">Systeem</string>
@@ -669,16 +669,16 @@
         <item quantity="other">%1$d geselecteerde apps uit de Bibliotheek zijn niet meer beschikbaar.</item>
     </plurals>
     <string name="config_destination_general">Basis</string>
-    <string name="config_basic_display">Scherm &amp; venster</string>
+    <string name="config_basic_display">MIDlet-scherm</string>
     <string name="config_basic_input">Invoer</string>
     <string name="config_display_appearance">Uiterlijk</string>
     <string name="config_display_rendering">Rendering</string>
     <string name="config_display_performance">Prestaties &amp; diagnostiek</string>
     <string name="config_display_text">Tekst &amp; lettertypen</string>
     <string name="config_system_timing">Tijd &amp; compatibiliteit</string>
-    <string name="config_controls_key_input">Toetsinvoer</string>
+    <string name="config_controls_key_input">Fysieke invoer</string>
     <string name="config_controls_virtual_keyboard">Virtuele bediening</string>
-    <string name="config_controls_virtual_keyboard_colors">Uiterlijk virtuele bediening</string>
+    <string name="config_controls_virtual_keyboard_colors">Kleuren van virtuele bediening</string>
     <string name="config_controls_maintenance">Indeling virtuele bediening</string>
     <string name="config_current_value">Huidige waarde</string>
     <string name="config_maintenance">Resetten &amp; gegevens</string>
@@ -699,8 +699,8 @@
     <string name="profile_template_operation_failed">De profielbewerking kon niet worden voltooid.</string>
     <string name="config_help_screen_size">Stelt de virtuele schermresolutie in die aan de MIDlet wordt aangeboden.</string>
     <string name="config_help_orientation">Kiest de schermoriëntatie terwijl de MIDlet draait.</string>
-    <string name="config_help_scale_type">Kiest hoe het MIDlet-scherm in de beschikbare ruimte past. De schermverhouding kan worden behouden of genegeerd.</string>
-    <string name="config_help_scale_ratio">Wijzigt de weergegeven grootte zonder de virtuele resolutie van de MIDlet te veranderen.</string>
+    <string name="config_help_scale_type">Kies hoe het spel op het scherm past. Selecteer Handmatig om een aangepaste schaal in te stellen.</string>
+    <string name="config_help_scale_ratio" formatted="false">Past de weergegeven grootte aan van 1% tot 1000%. Bij 100% gebruikt het spel de oorspronkelijke grootte; hogere waarden kunnen buiten het scherm vallen.</string>
     <string name="config_help_lock_custom_resolution_ratio">Behoudt de breedte-/hoogteverhouding tijdens het bewerken van de aangepaste resolutie.</string>
     <string name="config_help_virtual_keyboard">Toont aanraakbediening voor deze MIDlet.</string>
     <string name="config_help_touch_input">Laat de MIDlet touchscreengebeurtenissen ontvangen.</string>
@@ -709,32 +709,32 @@
     <string name="config_background_custom">Aangepast</string>
     <string name="config_background_theme">Thema</string>
     <string name="config_background_immersive">Meeslepend</string>
-    <string name="config_background_theme_help">Gebruikt de achtergrond van het JL-Mod Plus-thema.</string>
+    <string name="config_background_theme_help">Gebruikt de kleur van het JL-Mod Plus-thema rond het MIDlet-scherm.</string>
     <string name="config_background_immersive_help">Vult ongebruikte ruimte met kleuren die uit het MIDlet-scherm worden bemonsterd.</string>
     <string name="config_background_custom_color">Achtergrondkleur</string>
     <string name="config_help_background_custom_color">Stelt de kleur in van ongebruikte ruimte rond het MIDlet-scherm.</string>
     <string name="config_help_skin">Toont optioneel een afbeelding of kader rond het MIDlet-scherm.</string>
     <string name="config_help_screen_gravity">Plaatst het MIDlet-scherm wanneer er ongebruikte ruimte overblijft.</string>
     <string name="config_help_screen_padding">Voegt ruimte toe tussen het MIDlet-scherm en de rand van het weergavegebied.</string>
-    <string name="config_help_filter">Maakt het MIDlet-scherm vloeiender wanneer het wordt vergroot of verkleind.</string>
+    <string name="config_help_filter">Gebruikt lineaire filtering om het MIDlet-scherm bij schalen vloeiender te maken.</string>
     <string name="config_help_immediate">Verwerkt MIDlet-gebeurtenissen direct in plaats van ze in een wachtrij te zetten. Dit kan de respons verbeteren, maar sommige MIDlet-apps instabiel maken.</string>
-    <string name="config_help_graphics_mode">Kiest de renderingmodus voor het MIDlet-scherm. Sommige modi kunnen prestaties en compatibiliteit beïnvloeden.</string>
-    <string name="config_help_shader">Past een visueel effect toe op het MIDlet-scherm.</string>
-    <string name="config_help_shader_tuning">Past instellingen van de geselecteerde shader aan.</string>
-    <string name="config_help_parallel_redraw">Tekent het scherm parallel opnieuw wanneer ondersteund. Dit kan de prestaties in sommige configuraties verbeteren.</string>
-    <string name="config_help_force_fullscreen">Start MIDlet Canvas-schermen in volledig-schermmodus. De MIDlet kan deze modus wijzigen.</string>
-    <string name="config_help_fps_limit">Begrenst de framesnelheid.</string>
+    <string name="config_help_graphics_mode">Kiest de renderingmethode voor het MIDlet-scherm. Hardwareversnelling kan de prestaties verbeteren, maar de compatibiliteit verschilt per apparaat.</string>
+    <string name="config_help_shader">Past een shader toe op het MIDlet-frame voordat het wordt weergegeven.</string>
+    <string name="config_help_shader_tuning">De beschikbare bedieningselementen hangen af van de geselecteerde shader.</string>
+    <string name="config_help_parallel_redraw">Plant de weergave van frames asynchroon. Dit kan de prestaties op sommige apparaten verbeteren.</string>
+    <string name="config_help_force_fullscreen">Start Java ME Canvas-schermen zonder de opdrachtbalk voor softkeys. Spellen kunnen deze modus wijzigen.</string>
+    <string name="config_help_fps_limit">Stelt de FPS-limiet in bij 1× emulatiesnelheid. De effectieve limiet volgt de emulatiesnelheid; 0 (Maximum) gebruikt de maximale vernieuwingsfrequentie van het scherm.</string>
     <string name="PREF_EMULATION_SPEED">Emulatiesnelheid</string>
     <string name="PREF_TIMING_MODE">Klokmodus</string>
-    <string name="config_timing_mode_full_guest">Geëmuleerde klok</string>
-    <string name="config_timing_mode_real_wall">Werkelijke klok</string>
+    <string name="config_timing_mode_full_guest">Emulatietijd</string>
+    <string name="config_timing_mode_real_wall">Systeemtijd</string>
     <string name="config_help_emulation_speed">Wijzigt de kloksnelheid van de MIDlet en ondersteunde vertragingen. Android-audio en -UI blijven normaal.</string>
-    <string name="config_help_timing_mode">Kiest of de MIDlet geëmuleerde of echte datum en tijd gebruikt. Vertragingen blijven de emulatiesnelheid volgen.</string>
-    <string name="config_help_timing_unavailable">Deze MIDlet ondersteunt geen timing. Installeer of converteer hem opnieuw om emulatiesnelheid in te schakelen.</string>
+    <string name="config_help_timing_mode">Kiest of de MIDlet emulatietijd of systeemtijd gebruikt. Relatieve vertragingen blijven met de emulatiesnelheid schalen.</string>
+    <string name="config_help_timing_unavailable">Tijdinstellingen zijn niet beschikbaar voor deze MIDlet-installatie. Installeer of converteer de MIDlet opnieuw om ze in te schakelen.</string>
     <string name="reconverting_wait">Deze MIDlet heeft vóór de start een eenmalige compatibiliteitsconversie nodig. Even geduld…</string>
     <string name="reconversion_error">De MIDlet kon niet automatisch worden geconverteerd. %1$s</string>
     <string name="config_help_generic_color">Stelt de kleur van dit visuele element in.</string>
-    <string name="config_help_encoding">Kiest de tekencodering die aan de MIDlet wordt gemeld.</string>
+    <string name="config_help_encoding">Kiest de tekencodering die als microedition.encoding wordt gemeld.</string>
     <string name="config_edit_system_properties">Systeemeigenschappen bewerken</string>
     <string name="config_help_system_properties">Stelt geavanceerde Java ME-eigenschappen in die aan de MIDlet worden gemeld.</string>
     <string name="config_help_system_properties_long">Bewerk één eigenschap per regel als “naam: waarde”. Onjuiste waarden kunnen de compatibiliteit beïnvloeden.</string>
@@ -748,7 +748,7 @@
     <string name="config_help_font_aa">Maakt randen van gerenderde tekst vloeiender.</string>
     <string name="config_help_key_layout">Kiest de toetscode-indeling die door de MIDlet wordt gebruikt.</string>
     <string name="config_help_key_mapping">Wijst Android-toetsen en -knoppen toe aan J2ME-toetsenblokacties.</string>
-    <string name="config_help_vk_button_shape">Stelt de vorm van knoppen voor virtuele bediening in.</string>
+    <string name="config_help_vk_button_shape">Stelt de vorm van toetsenblokknoppen in. De D-pad en analoge stick behouden hun eigen vormen.</string>
     <string name="config_help_vk_feedback">Trilt bij het indrukken van virtuele bedieningselementen wanneer trillen is ingeschakeld in Instellingen.</string>
     <string name="config_help_vk_alpha">Stelt de dekking van de bedieningselementen in: 0 = volledig transparant; 255 = volledig ondoorzichtig.</string>
     <string name="config_help_vk_force_opacity">Maakt bediening buiten het MIDlet-scherm ondoorzichtig. Bediening boven het scherm gebruikt de ingestelde dekking.</string>
@@ -759,7 +759,7 @@
     <string name="config_help_vk_selected_background">Stelt de knopkleur in terwijl deze is ingedrukt.</string>
     <string name="config_help_vk_outline">Stelt de omlijningskleur van knoppen voor virtuele bediening in.</string>
     <string name="config_help_reset_layout">Herstelt de indeling van virtuele bediening zonder andere MIDlet-instellingen te wijzigen.</string>
-    <string name="config_help_skip_resume">Slaat de hervattingscallback van de MIDlet over wanneer je ernaar terugkeert. Gebruik dit alleen als de MIDlet na hervatten niet goed werkt.</string>
+    <string name="config_help_skip_resume">Slaat na de eerste geslaagde startApp() latere aanroepen bij het hervatten van de MIDlet over. Gebruik dit alleen voor MIDlet-apps die bij hervatten niet goed werken.</string>
     <string name="config_help_soundbank">Kiest de soundbank die voor MIDI-weergave wordt gebruikt.</string>
     <string name="profile_create_title">Profiel maken</string>
     <string name="profile_rename_title">Profiel hernoemen</string>
@@ -816,7 +816,7 @@
     <string name="profile_apply_layout_only">Alleen indeling van virtuele bediening</string>
     <string name="profile_apply_layout_keeps_settings">Behoud de instellingen van deze MIDlet; gebruik een aangepaste configuratie.</string>
     <string name="config_analog_stick">Analoge stick</string>
-    <string name="config_analog_stick_summary">Kies hoe de primaire analoge stick beweging naar deze MIDlet stuurt. Gamepadknoppen gebruiken Toetstoewijzing.</string>
+    <string name="config_analog_stick_summary">Kies Uit, 4-richtingen, 8-richtingen of numeriek toetsenblok voor de primaire analoge stick. Controllerknoppen gebruiken toetstoewijzingen.</string>
     <string name="config_analog_stick_off">Uit</string>
     <string name="config_controller_help_body_compact">Gamepadknoppen gebruiken dezelfde Toetstoewijzing als toetsenborden en telefoontoetsen. De optie Analoge stick bepaalt alleen de richtingsuitvoer van de stick voor de MIDlet. Android Terug behoudt normaal hostgedrag en elke fysieke knop die aan M is toegewezen opent het runtime-MIDlet-menu.</string>
     <string name="library_metadata_edit_title">Metadata bewerken</string>
@@ -934,10 +934,10 @@
     <string name="runtime_virtual_controls_edit_guide_message">Sleep bediening om deze te verplaatsen. Beweeg voor knoppen twee vingers horizontaal of verticaal om breedte of hoogte te wijzigen, of diagonaal om beide te wijzigen. Knijp om de D-pad of analoge stick proportioneel te schalen. Tik op Gereed wanneer je klaar bent.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Niet opnieuw tonen</string>
     <string name="runtime_virtual_controls_switch_layout">Indelingssjabloon kiezen</string>
-    <string name="runtime_virtual_controls_show_controls">Bediening tonen</string>
+    <string name="runtime_virtual_controls_show_controls">Zichtbare bediening kiezen</string>
     <string name="runtime_virtual_controls_template_dpad_standard">Standaard-D-pad</string>
     <string name="runtime_virtual_controls_template_analog_standard">Standaard analoge stick</string>
-    <string name="config_gamepad_directions_numeric_v2">Numeriek</string>
+    <string name="config_gamepad_directions_numeric_v2">Numeriek toetsenblok</string>
     <string name="library_collections_unavailable_title">Collecties niet beschikbaar</string>
     <string name="library_load_failed_message">De Bibliotheek kon niet worden geladen. Probeer opnieuw.</string>
     <string name="bulk_install_prepare_failed">De geselecteerde apps konden niet worden voorbereid voor installatie.</string>
