@@ -13,6 +13,7 @@ import java.io.IOException
 import java.util.Locale
 import io.github.h3nb.jlmodplus.jar.Descriptor
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
 
@@ -40,6 +41,7 @@ internal class BulkSourceDiscovery(
     private var skippedEntries = 0
 
     fun discover(sources: List<File>): Result {
+        cleanupStaleStages(stagingRoot)
         sources.distinctBy { it.absolutePath }.forEach { source ->
             checkActive()
             visit(source)
@@ -84,7 +86,9 @@ internal class BulkSourceDiscovery(
                     files.add(target)
                     if (depth == 1 && renamedJarTarget == null) {
                         val expected = File(source.parentFile, source.nameWithoutExtension + ".jar")
-                        renamedLocalJars[expected.canonicalPath] = target
+                        if (!expected.isFile) {
+                            renamedLocalJars[expected.canonicalPath] = target
+                        }
                     }
                     return
                 }
@@ -229,6 +233,19 @@ internal class BulkSourceDiscovery(
     }
 
     private companion object {
+        private const val STALE_STAGE_MILLIS = 24L * 60 * 60 * 1000
+        private val staleCleanupAttempted = AtomicBoolean()
+
+        fun cleanupStaleStages(stage: File) {
+            val parent = stage.parentFile ?: return
+            if (parent.name != "bulk-discovery" || !staleCleanupAttempted.compareAndSet(false, true)) {
+                return
+            }
+            val cutoff = System.currentTimeMillis() - STALE_STAGE_MILLIS
+            parent.listFiles()?.filter { it.isDirectory && it.lastModified() in 1 until cutoff }
+                ?.forEach(File::deleteRecursively)
+        }
+
         const val MAX_ARCHIVE_DEPTH = 2
         const val MAX_ARCHIVE_ENTRIES = 10_000
         const val MAX_MANIFEST_BYTES = 256 * 1024L
