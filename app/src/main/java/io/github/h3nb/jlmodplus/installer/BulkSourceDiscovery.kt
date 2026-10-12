@@ -71,12 +71,13 @@ internal class BulkSourceDiscovery(
         }
     }
 
-    private fun inspectArchive(source: File, depth: Int) {
+    private fun inspectArchive(source: File, depth: Int, renamedJarTarget: File? = null) {
         checkActive()
         try {
             ZipFile(source).use { archive ->
                 if (containsMidletManifest(archive)) {
-                    val target = stagedFile("archive-${archiveSequence++}", source.nameWithoutExtension + ".jar")
+                    val target = renamedJarTarget
+                        ?: stagedFile("archive-${archiveSequence++}", source.nameWithoutExtension + ".jar")
                     copyBounded(source, target)
                     files.add(target)
                     return
@@ -114,7 +115,11 @@ internal class BulkSourceDiscovery(
                             }
                         }
                         if (extension == "zip") {
-                            inspectArchive(destination, depth + 1)
+                            val renamed = stagedFile(
+                                targetDirectory,
+                                name.substringBeforeLast('.') + ".jar",
+                            )
+                            inspectArchive(destination, depth + 1, renamed)
                             destination.delete()
                         } else {
                             files.add(destination)
