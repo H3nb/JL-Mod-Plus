@@ -132,6 +132,29 @@ class BulkSourceDiscoveryTest {
     }
 
     @Test
+    fun archiveJadPairIsOneInstallUnitNotTwo() = tempRoot { root ->
+        val jad = (
+            "MIDlet-Name: Demo\nMIDlet-Vendor: Test\nMIDlet-Version: 1.0\n" +
+                "MIDlet-Jar-URL: Demo.jar\nMIDlet-Jar-Size: 1024\n"
+            ).toByteArray()
+        val pack = File(root, "Games.zip").apply {
+            writeBytes(zip("Demo.jad" to jad, "Demo.zip" to midletJar()))
+        }
+        val sources = BulkSourceDiscovery(File(root, "stage")).discover(listOf(pack)).files
+        val jadSource = sources.single { it.extension == "jad" }
+        val zipSource = sources.single { it.extension == "zip" }
+        val resolution = BulkInstallPlanner.resolveJadReference(
+            jadSource, "Demo.jar", null, setOf(zipSource.canonicalPath),
+        )
+        val units = BulkInstallPlanner.normalizeResolvedSources(
+            sources, BulkSourceOrigin.ExplicitSelection, mapOf(jadSource to resolution),
+        )
+        assertEquals(1, units.size)
+        assertEquals(BulkSourceKind.JadJarPair, units.single().kind)
+        assertEquals(listOf(jadSource, zipSource), units.single().sourceFiles)
+    }
+
+    @Test
     fun pairsAdjacentJadWithJarRenamedZipWithoutTouchingOriginals() = tempRoot { root ->
         val source = File(root, "Demo.zip").apply { writeBytes(midletJar()) }
         val jad = File(root, "Demo.jad").apply {
