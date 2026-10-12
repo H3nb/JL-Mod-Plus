@@ -24,6 +24,14 @@ import java.util.Locale;
 
 public class MidletLocaleResolverTest {
 	@Test
+	public void configuredLocaleOverridesMatchRuntimePrecedence() {
+		assertEquals("en-US", MidletLocaleResolver.withSystemProperties(
+				"id-ID", "other: example\\nmicroedition.locale: fr-FR\\nmicroedition.locale: en-US"));
+		assertEquals("id-ID", MidletLocaleResolver.withSystemProperties("id-ID", "other: true"));
+		assertEquals("", MidletLocaleResolver.withSystemProperties("id-ID", "microedition.locale: "));
+	}
+
+	@Test
 	public void explicitRegionWinsOverSystemRegion() {
 		assertEquals("fr-CA", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("fr-CA"),
