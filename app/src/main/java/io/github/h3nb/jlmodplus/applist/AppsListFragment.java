@@ -1081,7 +1081,8 @@ public class AppsListFragment extends Fragment {
     private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {
         LibraryAppRow cachedRow = cachedRowsByDatabaseId.get(row.getId());
         LibraryAppUiItem cachedItem = cachedUiItemsByDatabaseId.get(row.getId());
-        String displayDescription = localizedDescriptions.getOrDefault(row.getId(), row.getDescription());
+        String displayDescription = localizedDescriptions.get(row.getId());
+        if (displayDescription == null) displayDescription = row.getDescription();
         if (cachedItem != null && row.equals(cachedRow)
                 && displayDescription.equals(cachedItem.getDescription())) {
             rowsByUiId.put(cachedItem.getId(), row);
