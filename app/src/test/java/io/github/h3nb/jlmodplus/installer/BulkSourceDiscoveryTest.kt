@@ -70,7 +70,7 @@ class BulkSourceDiscoveryTest {
         val source = File(root, "Bounce Tales.zip").apply { writeBytes(midletJar("Bounce Tales")) }
         val result = BulkSourceDiscovery(File(root, "stage")).discover(listOf(source))
         assertEquals(1, result.files.size)
-        assertEquals("Bounce Tales.jar", result.files.single().name)
+        assertEquals(source.canonicalFile, result.files.single())
         assertTrue(result.files.single().isFile)
         assertFalse(result.files.any { it.name.endsWith(".class") })
     }
@@ -88,7 +88,7 @@ class BulkSourceDiscoveryTest {
             ))
         }
         val result = BulkSourceDiscovery(File(root, "stage")).discover(listOf(source))
-        assertEquals(setOf("Asphalt.jar", "Bounce.jar"), result.files.map { it.name }.toSet())
+        assertEquals(setOf("Asphalt.jar", "Bounce.zip"), result.files.map { it.name }.toSet())
         assertEquals(0, result.unreadableArchives)
     }
 
@@ -106,8 +106,10 @@ class BulkSourceDiscoveryTest {
         }
         val found = BulkSourceDiscovery(File(root, "stage")).discover(listOf(source)).files
         val jadFile = found.single { it.extension == "jad" }
-        val jarFile = found.single { it.extension == "jar" }
-        val resolution = BulkInstallPlanner.resolveJadReference(jadFile, "Demo.jar", null)
+        val jarFile = found.single { it.extension == "zip" }
+        val resolution = BulkInstallPlanner.resolveJadReference(
+            jadFile, "Demo.jar", null, setOf(jarFile.canonicalPath),
+        )
         assertEquals(BulkInstallPlanner.JadResolution.Local(jarFile.canonicalFile), resolution)
     }
 
@@ -121,12 +123,15 @@ class BulkSourceDiscoveryTest {
             )
         }
         val found = BulkSourceDiscovery(File(root, "stage")).discover(listOf(root)).files
-        val copiedJad = found.single { it.extension == "jad" }
-        val copiedJar = found.single { it.extension == "jar" }
-        assertFalse(jad.canonicalFile == copiedJad.canonicalFile)
-        assertEquals(BulkInstallPlanner.JadResolution.Local(copiedJar.canonicalFile),
-            BulkInstallPlanner.resolveJadReference(copiedJad, "Demo.jar", null))
-        assertTrue(source.exists())
+        val foundJad = found.single { it.extension == "jad" }
+        val foundJar = found.single { it.extension == "zip" }
+        assertEquals(jad.canonicalFile, foundJad)
+        assertEquals(source.canonicalFile, foundJar)
+        assertEquals(BulkInstallPlanner.JadResolution.Local(foundJar.canonicalFile),
+            BulkInstallPlanner.resolveJadReference(
+                foundJad, "Demo.jar", null, setOf(foundJar.canonicalPath),
+            ))
+        assertFalse(File(root, "stage").exists())
     }
 
     @Test
@@ -143,6 +148,20 @@ class BulkSourceDiscoveryTest {
         assertEquals(1, result.unreadableArchives)
         assertTrue(result.skippedArchiveEntries >= 1)
         assertFalse(File(root, "escape.jar").exists())
+    }
+
+    @Test
+    fun thousandsOfRenamedMidletsRequireNoStagingCopies() = tempRoot { root ->
+        val games = File(root, "Collection").apply { mkdirs() }
+        val bytes = midletJar()
+        repeat(1200) { index ->
+            File(games, "game-$index.zip").writeBytes(bytes)
+        }
+        val stage = File(root, "stage")
+        val result = BulkSourceDiscovery(stage).discover(listOf(games))
+        assertEquals(1200, result.files.size)
+        assertEquals(0, result.unreadableArchives)
+        assertFalse(stage.exists())
     }
 
     @Test(expected = CancellationException::class)

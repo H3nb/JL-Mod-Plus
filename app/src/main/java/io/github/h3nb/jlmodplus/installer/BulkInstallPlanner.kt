@@ -22,7 +22,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.jar.Descriptor
 
 object BulkInstallPlanner {
-    private val supportedExtensions = setOf("jar", "jad", "kjx")
+    private val supportedExtensions = setOf("jar", "jad", "kjx", "zip")
     private val hardDiscoveryFailures = setOf(
         BulkInstallStatus.RemoteSourceUnsupported,
         BulkInstallStatus.SourceError,
@@ -99,7 +99,11 @@ object BulkInstallPlanner {
             )
         }
 
-        val installer = AppInstaller(null, Uri.fromFile(unit.primaryFile), library)
+        val installer = if (unit.kind == BulkSourceKind.JadJarPair && unit.jarFile != null) {
+            AppInstaller(unit.primaryFile, unit.jarFile, library, InstallerScratch())
+        } else {
+            AppInstaller(null, Uri.fromFile(unit.primaryFile), library)
+        }
         installer.setReadOnlySourceInspection()
         return try {
             val installerStatus = Single.create<Int>(installer::loadInfo).blockingGet()
@@ -194,11 +198,16 @@ object BulkInstallPlanner {
     private fun normalizeSources(
         files: List<File>,
         origin: BulkSourceOrigin,
-    ): List<BulkSourceUnit> = normalizeResolvedSources(
-        files,
-        origin,
-        files.filter { extension(it) == "jad" }.associateWith(::resolveJad),
-    )
+    ): List<BulkSourceUnit> {
+        val renamedJars = files.asSequence().filter { extension(it) == "zip" }
+            .map(::canonicalPath).toHashSet()
+        return normalizeResolvedSources(
+            files,
+            origin,
+            files.filter { extension(it) == "jad" }
+                .associateWith { resolveJad(it, renamedJars) },
+        )
+    }
 
     /** Groups resolved sources without changing resolution or installer policy. */
     internal fun normalizeResolvedSources(
@@ -207,7 +216,7 @@ object BulkInstallPlanner {
         resolutions: Map<File, JadResolution>,
     ): List<BulkSourceUnit> {
         val jads = files.filter { extension(it) == "jad" }
-        val jars = files.filter { extension(it) == "jar" }
+        val jars = files.filter { extension(it) == "jar" || extension(it) == "zip" }
         val kjx = files.filter { extension(it) == "kjx" }
         val jarByCanonicalPath = jars.associateBy { canonicalPath(it) }
         val consumedJarPaths = HashSet<String>()
@@ -327,18 +336,23 @@ object BulkInstallPlanner {
         ) : JadResolution
     }
 
-    private fun resolveJad(jad: File): JadResolution {
+    private fun resolveJad(jad: File, renamedJars: Set<String>): JadResolution {
         return try {
             val descriptor = Descriptor(jad, true)
             val jarUrl = descriptor.jarUrl
-            resolveJadReference(jad, jarUrl, jarUrl?.toUri()?.scheme)
+            resolveJadReference(jad, jarUrl, jarUrl?.toUri()?.scheme, renamedJars)
         } catch (error: Throwable) {
             JadResolution.Error(diagnosticDetail = boundedMessage(error))
         }
     }
 
     /** The scheme is supplied by Android's existing URI parser; raw references stay exact. */
-    internal fun resolveJadReference(jad: File, jarUrl: String?, scheme: String?): JadResolution {
+    internal fun resolveJadReference(
+        jad: File,
+        jarUrl: String?,
+        scheme: String?,
+        renamedJars: Set<String> = emptySet(),
+    ): JadResolution {
         if (jarUrl == null) return JadResolution.Error(BulkInstallReviewReason.JadMissingJarUrl)
         if (scheme != null) {
             return if (scheme.equals("http", true) || scheme.equals("https", true)) {
@@ -350,7 +364,15 @@ object BulkInstallPlanner {
         val parent = jad.parentFile
             ?: return JadResolution.Error(BulkInstallReviewReason.JadMissingParentDirectory)
         var jar = File(parent, jarUrl)
-        if (!jar.isFile) jar = File(parent, jad.nameWithoutExtension + ".jar")
+        if (!jar.isFile) {
+            val fallback = File(parent, jad.nameWithoutExtension + ".jar")
+            if (fallback.isFile) {
+                jar = fallback
+            } else if (jarUrl.endsWith(".jar", ignoreCase = true)) {
+                val zipped = File(parent, jarUrl.dropLast(4) + ".zip")
+                if (zipped.isFile && canonicalPath(zipped) in renamedJars) jar = zipped
+            }
+        }
         if (!jar.isFile) {
             return JadResolution.Error(BulkInstallReviewReason.ReferencedJarMissing(jarUrl))
         }
