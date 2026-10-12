@@ -68,7 +68,7 @@ internal fun LibraryMetadataEditorScreen(
 ) {
     var title by rememberSaveable(app.id) { mutableStateOf(app.title) }
     var vendor by rememberSaveable(app.id) { mutableStateOf(app.author) }
-    var description by rememberSaveable(app.id) { mutableStateOf(app.description) }
+    var description by rememberSaveable(app.id) { mutableStateOf(app.defaultDescription) }
     val valid = title.trim().isNotEmpty()
 
     BackHandler(onBack = onBack)
