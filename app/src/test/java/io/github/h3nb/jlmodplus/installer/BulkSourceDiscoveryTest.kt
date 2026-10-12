@@ -116,8 +116,8 @@ class BulkSourceDiscoveryTest {
         val source = File(root, "Demo.zip").apply { writeBytes(midletJar()) }
         val jad = File(root, "Demo.jad").apply {
             writeText(
-                "MIDlet-Name: Demo\\nMIDlet-Vendor: Test\\nMIDlet-Version: 1.0\\n" +
-                    "MIDlet-Jar-URL: Demo.jar\\nMIDlet-Jar-Size: 1024\\n",
+                "MIDlet-Name: Demo\nMIDlet-Vendor: Test\nMIDlet-Version: 1.0\n" +
+                    "MIDlet-Jar-URL: Demo.jar\nMIDlet-Jar-Size: 1024\n",
             )
         }
         val found = BulkSourceDiscovery(File(root, "stage")).discover(listOf(root)).files
