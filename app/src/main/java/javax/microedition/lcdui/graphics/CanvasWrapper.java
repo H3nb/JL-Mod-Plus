@@ -102,11 +102,23 @@ public class CanvasWrapper {
 	}
 
 	public void fillPath(Path path) {
-		canvas.drawPath(path, fillPaint);
+		boolean wasAntialiased = fillPaint.isAntiAlias();
+		fillPaint.setAntiAlias(true);
+		try {
+			canvas.drawPath(path, fillPaint);
+		} finally {
+			fillPaint.setAntiAlias(wasAntialiased);
+		}
 	}
 
 	public void drawPath(Path path) {
-		canvas.drawPath(path, drawPaint);
+		boolean wasAntialiased = drawPaint.isAntiAlias();
+		drawPaint.setAntiAlias(true);
+		try {
+			canvas.drawPath(path, drawPaint);
+		} finally {
+			drawPaint.setAntiAlias(wasAntialiased);
+		}
 	}
 
 	public int clipToPath(Path path) {

@@ -1867,7 +1867,7 @@ private fun AnalogColorSample(
             Surface(
                 modifier = Modifier
                     .offset(x = if (pressed) 11.dp else 0.dp, y = if (pressed) (-7).dp else 0.dp)
-                     .size(31.dp),
+                    .size(31.dp),
                 shape = CircleShape,
                 color = if (pressed) selectedBackground else background,
                 border = BorderStroke(1.dp, outline),
