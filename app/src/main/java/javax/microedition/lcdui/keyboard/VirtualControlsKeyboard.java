@@ -1481,7 +1481,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float thumbY = centerY + (rawThumbY - centerY) * 0.47f;
 		int base = VirtualControlAppearance.background(settings, false);
 		int outline = VirtualControlAppearance.outline(settings);
-		int thumbColor = VirtualControlAppearance.background(settings, active);
+		int thumbColor = VirtualControlAppearance.analogThumb(settings, active);
 		int indicator = VirtualControlAppearance.foreground(settings, active);
 
 		int layer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f, alpha);

@@ -34,6 +34,17 @@ public class VirtualControlAppearanceTest {
 		assertEquals(0xFFFFFF, VirtualControlAppearance.foreground(profile, false));
 		assertEquals(0x000000, VirtualControlAppearance.foreground(profile, true));
 		assertEquals(0x18A0F0, VirtualControlAppearance.outline(profile));
+		assertEquals(0xFF0000, VirtualControlAppearance.analogThumb(profile, true));
+	}
+
+	@Test
+	public void idleAnalogThumbDerivesFromConfiguredColors() {
+		ProfileModel profile = new ProfileModel();
+		profile.vkBgColor = 0x000000;
+		profile.vkOutlineColor = 0xFFFFFF;
+		profile.vkBgColorSelected = 0x369ABC;
+		assertEquals(0x2E2E2E, VirtualControlAppearance.analogThumb(profile, false));
+		assertEquals(0x369ABC, VirtualControlAppearance.analogThumb(profile, true));
 	}
 
 	@Test

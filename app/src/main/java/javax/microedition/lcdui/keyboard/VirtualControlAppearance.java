@@ -31,6 +31,17 @@ final class VirtualControlAppearance {
 		return profile.vkOutlineColor & 0xFFFFFF;
 	}
 
+	/** Lift the idle thumb slightly from its base; the pressed color remains user-selected. */
+	static int analogThumb(ProfileModel profile, boolean active) {
+		if (active) return background(profile, true);
+		int base = background(profile, false);
+		int edge = outline(profile);
+		int red = Math.round(((base >> 16) & 255) * 0.82f + ((edge >> 16) & 255) * 0.18f);
+		int green = Math.round(((base >> 8) & 255) * 0.82f + ((edge >> 8) & 255) * 0.18f);
+		int blue = Math.round((base & 255) * 0.82f + (edge & 255) * 0.18f);
+		return (red << 16) | (green << 8) | blue;
+	}
+
 	static int opacity(int configured, boolean editing, boolean forceOpaqueOutsideGuest) {
 		if (editing || forceOpaqueOutsideGuest) return 255;
 		return Math.max(0, Math.min(255, configured));

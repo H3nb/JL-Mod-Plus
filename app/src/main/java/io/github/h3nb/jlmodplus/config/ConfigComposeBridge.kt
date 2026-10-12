@@ -93,6 +93,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.platform.ComposeView
@@ -1869,7 +1870,7 @@ private fun AnalogColorSample(
                     .offset(x = if (pressed) 11.dp else 0.dp, y = if (pressed) (-7).dp else 0.dp)
                     .size(31.dp),
                 shape = CircleShape,
-                color = if (pressed) selectedBackground else background,
+                color = if (pressed) selectedBackground else lerp(background, outline, 0.18f),
                 border = BorderStroke(1.dp, outline),
             ) {
                 Box(contentAlignment = Alignment.Center) {
