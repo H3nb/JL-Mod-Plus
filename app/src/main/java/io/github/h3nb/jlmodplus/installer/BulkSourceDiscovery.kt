@@ -7,6 +7,8 @@
  */
 package io.github.h3nb.jlmodplus.installer
 
+import java.io.ByteArrayOutputStream
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -154,11 +156,22 @@ internal class BulkSourceDiscovery(
         if (entry.size > MAX_MANIFEST_BYTES) return false
         return try {
             archive.getInputStream(entry).use { input ->
-                val manifest = Manifest(input).mainAttributes
+                val content = ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (content.size() <= MAX_MANIFEST_BYTES) {
+                    checkActive()
+                    val count = input.read(buffer, 0, minOf(buffer.size, (MAX_MANIFEST_BYTES + 1 - content.size()).toInt()))
+                    if (count < 0) break
+                    if (count > 0) content.write(buffer, 0, count)
+                }
+                if (content.size() > MAX_MANIFEST_BYTES) return false
+                val manifest = Manifest(ByteArrayInputStream(content.toByteArray())).mainAttributes
                 !manifest.getValue("MIDlet-Name").isNullOrBlank() &&
                     !manifest.getValue("MIDlet-Vendor").isNullOrBlank() &&
                     !manifest.getValue("MIDlet-Version").isNullOrBlank()
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: IOException) {
             false
         }

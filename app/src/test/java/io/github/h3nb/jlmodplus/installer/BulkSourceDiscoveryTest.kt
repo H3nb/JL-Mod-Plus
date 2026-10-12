@@ -76,6 +76,24 @@ class BulkSourceDiscoveryTest {
     }
 
     @Test
+    fun oversizedMidletManifestIsIgnoredWithoutStoppingOtherGames() = tempRoot { root ->
+        val oversized = zip(
+            "META-INF/MANIFEST.MF" to (
+                "Manifest-Version: 1.0\r\n" +
+                    "MIDlet-Name: Huge\r\n" +
+                    "MIDlet-Vendor: Test\r\n" +
+                    "MIDlet-Version: 1.0\r\n" +
+                    "MIDlet-Description: " + "x".repeat(300_000) + "\r\n\r\n"
+                ).toByteArray(),
+        )
+        val container = File(root, "Pack.zip").apply {
+            writeBytes(zip("Huge.zip" to oversized, "Valid.jar" to midletJar()))
+        }
+        val discovered = BulkSourceDiscovery(File(root, "stage")).discover(listOf(container))
+        assertEquals(listOf("Valid.jar"), discovered.files.map { it.name })
+    }
+
+    @Test
     fun findsCollectionEntriesAndNestedArchiveGames() = tempRoot { root ->
         val source = File(root, "Collection.zip").apply {
             writeBytes(zip(

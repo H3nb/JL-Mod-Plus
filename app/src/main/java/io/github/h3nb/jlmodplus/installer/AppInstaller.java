@@ -139,8 +139,13 @@ public class AppInstaller {
             this.generation = generation;
             this.workdir = workdir;
             for (LibraryAppRow app : apps) {
-                bySource.computeIfAbsent(key(app.getSourceTitle(), app.getSourceVendor()),
-                        ignored -> new ArrayList<>()).add(app);
+                String identity = key(app.getSourceTitle(), app.getSourceVendor());
+                List<LibraryAppRow> matches = bySource.get(identity);
+                if (matches == null) {
+                    matches = new ArrayList<>();
+                    bySource.put(identity, matches);
+                }
+                matches.add(app);
                 storageKeys.add(app.getStorageKey());
             }
         }
