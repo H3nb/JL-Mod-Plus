@@ -7,7 +7,6 @@ package io.github.h3nb.jlmodplus.memory;
 
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.function.LongPredicate;
 
 /**
  * Runtime-local, bounded explicit-edit history. IDs encode logical owner slots, not addresses.
@@ -37,11 +36,16 @@ final class ManagedMemoryMutationJournal {
 
 	void clear() { lastEdit.clear(); }
 
+	/** Compatible with Android API 23 without core library desugaring. */
+	interface CandidateRetention {
+		boolean contains(long id);
+	}
+
 	/** Release only targets absent from Results, search Undo history and Watch. */
-	void pruneCandidates(LongPredicate retained) {
+	void pruneCandidates(CandidateRetention retained) {
 		java.util.Iterator<Long> ids = lastEdit.keySet().iterator();
 		while (ids.hasNext()) {
-			if (!retained.test(ids.next())) ids.remove();
+			if (!retained.contains(ids.next())) ids.remove();
 		}
 	}
 
