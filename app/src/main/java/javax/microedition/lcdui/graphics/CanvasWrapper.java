@@ -21,6 +21,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.graphics.Region;
@@ -97,6 +98,24 @@ public class CanvasWrapper {
 	}
 
 	public void restoreAlphaLayer(int saveCount) {
+		canvas.restoreToCount(saveCount);
+	}
+
+	public void fillPath(Path path) {
+		canvas.drawPath(path, fillPaint);
+	}
+
+	public void drawPath(Path path) {
+		canvas.drawPath(path, drawPaint);
+	}
+
+	public int clipToPath(Path path) {
+		int saved = canvas.save();
+		canvas.clipPath(path);
+		return saved;
+	}
+
+	public void restoreClip(int saveCount) {
 		canvas.restoreToCount(saveCount);
 	}
 
