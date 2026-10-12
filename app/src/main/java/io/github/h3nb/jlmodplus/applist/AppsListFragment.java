@@ -109,6 +109,10 @@ public class AppsListFragment extends Fragment {
             new FilePickerResultContract(),
             this::onFilesPicked);
 
+    private final ActivityResultLauncher<Intent> openFolderLauncher = registerForActivityResult(
+            new FilePickerResultContract(),
+            this::onFolderPicked);
+
     private final ActivityResultLauncher<Intent> importBundleLauncher = registerForActivityResult(
             new FilePickerResultContract(),
             uris -> onImportBundlePicked(uris.isEmpty() ? null : uris.get(0)));
@@ -447,7 +451,15 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onInstall() {
                 openFileLauncher.launch(createFilePickerIntent(true, false, null,
-                        ".jad", ".jar", ".kjx"));
+                        ".jad", ".jar", ".kjx", ".zip"));
+            }
+
+            @Override
+            public void onInstallFolder() {
+                Intent intent = createFilePickerIntent(false, false,
+                        getString(R.string.bulk_install_choose_folder));
+                intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_DIR);
+                openFolderLauncher.launch(intent);
             }
 
             @Override
@@ -1193,7 +1205,7 @@ public class AppsListFragment extends Fragment {
         if (first.getPath() != null) {
             preferences.edit().putString(PREF_LAST_PATH, first.getPath()).apply();
         }
-        if (uris.size() == 1) {
+        if (uris.size() == 1 && !first.getPath().toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
             Activity activity = requireActivity();
             if (activity instanceof MainActivity) {
                 // A single JAR/JAD is the established single-app flow. Do not make the user
@@ -1210,6 +1222,21 @@ public class AppsListFragment extends Fragment {
         }
         manager.beginTransaction()
                 .add(BulkInstallerDialog.newFiles(uris), BulkInstallerDialog.TAG)
+                .commitAllowingStateLoss();
+    }
+
+    private void onFolderPicked(List<Uri> uris) {
+        if (uris == null || uris.isEmpty() || !isAdded()) return;
+        Uri folder = uris.get(0);
+        if (folder.getPath() == null) return;
+        preferences.edit().putString(PREF_LAST_PATH, folder.getPath()).apply();
+        FragmentManager manager = getParentFragmentManager();
+        if (manager.isDestroyed() ||
+                manager.findFragmentByTag(BulkInstallerDialog.TAG) != null) {
+            return;
+        }
+        manager.beginTransaction()
+                .add(BulkInstallerDialog.newFiles(List.of(folder)), BulkInstallerDialog.TAG)
                 .commitAllowingStateLoss();
     }
 
