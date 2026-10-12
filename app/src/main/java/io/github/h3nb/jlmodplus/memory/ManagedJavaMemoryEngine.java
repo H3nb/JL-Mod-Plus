@@ -2857,7 +2857,12 @@ final class ManagedJavaMemoryEngine {
 				Class<?> component = value.getClass().getComponentType();
 				int arrayType = ManagedJavaValue.typeForClass(component);
 				if (ManagedJavaValue.isSupportedType(arrayType)
-						&& (groupPlan != null ? groupPlan.type == arrayType : plan.accepts(arrayType))) {
+						&& (groupPlan != null ? groupPlan.type == arrayType : plan.accepts(arrayType))
+						&& pendingArrayReferences.size() < maxProvenanceBytes / TRAVERSAL_ENTRY_BYTES
+						&& revision.withinStorageBudget(limits,
+								checkedAdd(transientStorageBytes, TRAVERSAL_ENTRY_BYTES))) {
+					// A direct-reference label is optional. Never exhaust the scan budget or
+					// evict search history merely to capture diagnostic provenance.
 					reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES);
 					pendingArrayReferences.put(value, new ArrayReference(source.field, parent));
 				}
