@@ -1037,4 +1037,8 @@
     <string name="bulk_install_choose_folder">Folder</string>
     <string name="bulk_install_unreadable_archives">Arsip tidak dapat dibaca: %1$d</string>
     <string name="bulk_install_skipped_entries">Entri arsip dilewati: %1$d</string>
+    <string name="bulk_install_filter_all">Semua</string>
+    <string name="bulk_install_filter_selected">Dipilih</string>
+    <string name="bulk_install_filter_review">Tinjau</string>
+    <string name="bulk_install_empty_filter">Tidak ada game yang sesuai.</string>
 </resources>
