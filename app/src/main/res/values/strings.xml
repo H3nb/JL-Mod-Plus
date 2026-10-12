@@ -745,6 +745,10 @@
     <string name="config_controls_key_input">Physical input</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
+    <string name="config_virtual_controls_color_preview">Color preview</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Pressed</string>
+    <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
     <string name="config_controls_maintenance">Virtual controls layout</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
@@ -819,7 +823,7 @@
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
     <string name="config_help_key_layout">Chooses the key code layout reported to the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
-    <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
+    <string name="config_help_vk_button_shape">Sets the shape of keypad buttons. The D-pad and analog stick keep their own shapes.</string>
     <string name="config_help_vk_feedback">Vibrates on virtual-control presses when vibration is enabled in Settings.</string>
     <string name="config_help_vk_alpha">Sets control opacity: 0 = fully transparent; 255 = fully opaque.</string>
     <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>
@@ -1114,6 +1118,14 @@
     <string name="updates_debug_build">This is a debug build. GitHub release APKs are installed separately.</string>
     <string name="updates_link_copied">No browser is available. The release link was copied.</string>
     <string name="updates_browser_unavailable">No browser is available to open the release.</string>
+    <string name="bulk_install_choose_files">Files</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_unreadable_archives">Unreadable archives: %1$d</string>
+    <string name="bulk_install_skipped_entries">Skipped archive entries: %1$d</string>
+    <string name="bulk_install_filter_all">All</string>
+    <string name="bulk_install_filter_selected">Selected</string>
+    <string name="bulk_install_filter_review">Review</string>
+    <string name="bulk_install_empty_filter">No matching games.</string>
     <string name="memory_editor_remove_candidates_title">Remove selected results?</string>
     <string name="memory_editor_remove_candidates_description">Remove only hides results without writing to game memory. Revert &amp; remove restores the last confirmed edit when the current value matches; conflicting results remain.</string>
     <string name="memory_editor_revert_and_remove">Revert &amp; remove</string>

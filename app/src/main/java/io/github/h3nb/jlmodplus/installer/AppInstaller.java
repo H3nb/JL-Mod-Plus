@@ -38,9 +38,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -90,6 +94,8 @@ public class AppInstaller {
     private final File resolvedJar;
 
     private volatile boolean cancelled;
+    private boolean useSourceDirectly;
+    private InspectionIndex inspectionIndex;
     private Uri uri;
     private Descriptor manifest;
     private Descriptor newDesc;
@@ -117,6 +123,48 @@ public class AppInstaller {
     private Progress progress = ignored -> {};
 
     void setProgress(Progress progress) { this.progress = progress; }
+    /** Use direct input only for preflight or for sources already copied into request-owned scratch. */
+    void setUseSourceDirectly() { useSourceDirectly = true; }
+
+    /** Read-only Library projection for one batch review; never used to authorize an installation. */
+    void setInspectionIndex(InspectionIndex index) { inspectionIndex = index; }
+
+    static final class InspectionIndex {
+        private final long generation;
+        private final File workdir;
+        private final Map<String, List<LibraryAppRow>> bySource = new HashMap<>();
+        private final Set<String> storageKeys = new HashSet<>();
+
+        InspectionIndex(long generation, File workdir, List<LibraryAppRow> apps) {
+            this.generation = generation;
+            this.workdir = workdir;
+            for (LibraryAppRow app : apps) {
+                String identity = key(app.getSourceTitle(), app.getSourceVendor());
+                List<LibraryAppRow> matches = bySource.get(identity);
+                if (matches == null) {
+                    matches = new ArrayList<>();
+                    bySource.put(identity, matches);
+                }
+                matches.add(app);
+                storageKeys.add(app.getStorageKey());
+            }
+        }
+
+        List<LibraryAppRow> candidates(String title, String vendor) {
+            List<LibraryAppRow> matches = bySource.get(key(title, vendor));
+            return matches == null ? Collections.emptyList() : matches;
+        }
+
+        private void verify(long generation, File workdir) throws IOException {
+            if (this.generation != generation || !this.workdir.equals(workdir)) {
+                throw new InstallerFailure("Batch review Library generation changed");
+            }
+        }
+
+        private static String key(String title, String vendor) {
+            return title + '\0' + vendor;
+        }
+    }
     Stage getStage() { return stage; }
     boolean hasPublished() { return published; }
     private void stage(Stage next) { stage = next; progress.update(next); }
@@ -258,10 +306,12 @@ public class AppInstaller {
                 return;
             }
         } else {
-            srcJar = scratch.copy(srcFile, "reviewed.jar");
+            srcJar = useSourceDirectly ? srcFile : scratch.copy(srcFile, "reviewed.jar");
             newDesc = loadManifest(srcJar);
         }
-        if (srcJar != null && resolvedJar == null) srcJar = scratch.copy(srcJar, "reviewed.jar");
+        if (srcJar != null && resolvedJar == null && !useSourceDirectly) {
+            srcJar = scratch.copy(srcJar, "reviewed.jar");
+        }
         emitLoadedStatus(emitter, checkDescriptor());
     }
 
@@ -396,6 +446,9 @@ public class AppInstaller {
     }
     /** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
     void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
+        if (inspectionIndex != null) {
+            throw new InstallerFailure("Read-only batch review cannot publish an installation");
+        }
         checkCancelled();
         defaultProfileFallbackName = null;
         conversionResult = null;
@@ -666,7 +719,7 @@ public class AppInstaller {
             jar = new File(dir, name.substring(0, name.length() - 4) + ".jar");
             if (!jar.exists()) throw new ConverterException("Jar-file not found for url: " + jarUrl);
         }
-        srcJar = scratch.copy(jar, "reviewed.jar");
+        srcJar = useSourceDirectly ? jar : scratch.copy(jar, "reviewed.jar");
         manifest = loadManifest(srcJar);
         return manifest.equals(newDesc);
     }
@@ -687,11 +740,16 @@ public class AppInstaller {
         String vendor = newDesc.getVendor();
         List<LibraryAppRow> candidates;
         try {
-            candidates = libraryViewModel.findBySourceIdentity(
-                    expectedGeneration,
-                    expectedWorkdir,
-                    name,
-                    vendor);
+            if (inspectionIndex != null) {
+                inspectionIndex.verify(expectedGeneration, expectedWorkdir);
+                candidates = inspectionIndex.candidates(name, vendor);
+            } else {
+                candidates = libraryViewModel.findBySourceIdentity(
+                        expectedGeneration,
+                        expectedWorkdir,
+                        name,
+                        vendor);
+            }
         } catch (IllegalStateException e) {
             throw new IOException("Library generation changed while matching installer identity", e);
         }
@@ -705,7 +763,8 @@ public class AppInstaller {
         if (currentApp == null) {
             Set<String> indexedStorageKeys;
             try {
-                indexedStorageKeys = libraryViewModel.storageKeys(expectedGeneration, expectedWorkdir);
+                indexedStorageKeys = inspectionIndex != null ? inspectionIndex.storageKeys
+                        : libraryViewModel.storageKeys(expectedGeneration, expectedWorkdir);
             } catch (IllegalStateException e) {
                 throw new IOException("Library generation changed while selecting installer storage key", e);
             }

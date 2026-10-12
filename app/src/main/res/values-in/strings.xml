@@ -674,6 +674,10 @@
     <string name="config_controls_key_input">Input fisik</string>
     <string name="config_controls_virtual_keyboard">Kontrol virtual</string>
     <string name="config_controls_virtual_keyboard_colors">Warna kontrol virtual</string>
+    <string name="config_virtual_controls_color_preview">Pratinjau warna</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Ditekan</string>
+    <string name="config_virtual_controls_preview_hint">Ketuk untuk melihat warna saat ditekan. Pratinjau menggunakan opasitas yang dipilih.</string>
     <string name="config_controls_maintenance">Tata letak kontrol virtual</string>
     <string name="config_current_value">Nilai saat ini</string>
     <string name="config_screen_size">Ukuran layar</string>
@@ -750,7 +754,7 @@
     <string name="config_help_font_aa">Menghaluskan tepi teks yang dirender.</string>
     <string name="config_help_key_layout">Menentukan skema kode tombol yang dilaporkan ke MIDlet.</string>
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke aksi keypad Java ME.</string>
-    <string name="config_help_vk_button_shape">Menentukan bentuk tombol kontrol virtual.</string>
+    <string name="config_help_vk_button_shape">Menentukan bentuk tombol keypad. D-pad dan stik analog tetap menggunakan bentuk masing-masing.</string>
     <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Pengaturan.</string>
     <string name="config_help_vk_alpha">Mengatur opasitas kontrol virtual: 0 = transparan sepenuhnya; 255 = buram sepenuhnya.</string>
     <string name="config_help_vk_force_opacity">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
@@ -1033,6 +1037,14 @@
     <string name="updates_debug_build">Ini build debug. APK rilis GitHub terpasang secara terpisah.</string>
     <string name="updates_link_copied">Tidak ada browser. Tautan rilis disalin.</string>
     <string name="updates_browser_unavailable">Tidak ada browser untuk membuka rilis.</string>
+    <string name="bulk_install_choose_files">File</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_unreadable_archives">Arsip tidak dapat dibaca: %1$d</string>
+    <string name="bulk_install_skipped_entries">Entri arsip dilewati: %1$d</string>
+    <string name="bulk_install_filter_all">Semua</string>
+    <string name="bulk_install_filter_selected">Dipilih</string>
+    <string name="bulk_install_filter_review">Tinjau</string>
+    <string name="bulk_install_empty_filter">Tidak ada game yang sesuai.</string>
     <string name="memory_editor_remove_candidates_title">Hapus hasil yang dipilih?</string>
     <string name="memory_editor_remove_candidates_description">Hapus hanya mengeluarkan hasil tanpa menulis ke memori game. Pulihkan dan hapus mengembalikan nilai sebelum perubahan terakhir jika nilai saat ini masih cocok; hasil yang berkonflik tetap ada.</string>
     <string name="memory_editor_revert_and_remove">Pulihkan dan hapus</string>

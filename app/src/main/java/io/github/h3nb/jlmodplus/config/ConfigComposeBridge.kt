@@ -16,6 +16,9 @@ package io.github.h3nb.jlmodplus.config
 
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
@@ -33,6 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -82,8 +86,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -1620,6 +1632,7 @@ private fun InputSection(
     }
     ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard_colors)) {
         if (form.showKeyboard) {
+            VirtualControlsColorPreview(form)
             ConfigColorPreference(
                 title = stringResource(R.string.PREF_VK_FORE),
                 description = stringResource(R.string.config_help_vk_foreground),
@@ -1659,6 +1672,229 @@ private fun InputSection(
             destructive = true,
             onClick = { onRequestAction(ConfigAction.ResetLayout) },
         )
+    }
+}
+
+@Composable
+private fun VirtualControlsColorPreview(form: ConfigFormState) {
+    var pressed by rememberSaveable { mutableStateOf(false) }
+    val background = parseColor(form.vkBackground)
+    val foreground = parseColor(form.vkForeground)
+    val selectedBackground = parseColor(form.vkSelectedBackground)
+    val selectedForeground = parseColor(form.vkSelectedForeground)
+    val outline = parseColor(form.vkOutline)
+    val previewOpacity = form.vkAlpha.coerceIn(0, 255) / 255f
+    val keyShape = when (form.vkButtonShape) {
+        0 -> CircleShape
+        1 -> RectangleShape
+        else -> MaterialTheme.shapes.small
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("virtual_controls_color_preview")
+            .clickable(role = Role.Button) { pressed = !pressed }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.config_virtual_controls_color_preview),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(
+                text = stringResource(
+                    if (pressed) R.string.config_virtual_controls_preview_pressed
+                    else R.string.config_virtual_controls_preview_normal,
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(previewOpacity),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(width = 52.dp, height = 40.dp),
+                shape = keyShape,
+                color = if (pressed) selectedBackground else background,
+                border = BorderStroke(1.dp, outline),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "L",
+                        color = if (pressed) selectedForeground else foreground,
+                    )
+                }
+            }
+            DpadColorSample(
+                background, foreground, selectedBackground, selectedForeground,
+                outline, pressed,
+            )
+            AnalogColorSample(
+                background, foreground, selectedBackground, selectedForeground,
+                outline, pressed,
+            )
+        }
+        Text(
+            text = stringResource(R.string.config_virtual_controls_preview_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun DpadColorSample(
+    background: Color,
+    foreground: Color,
+    selectedBackground: Color,
+    selectedForeground: Color,
+    outline: Color,
+    pressed: Boolean,
+) {
+    Canvas(modifier = Modifier.size(72.dp)) {
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val r = minOf(cx, cy)
+        val a = r * 0.34f
+        val corner = r * 0.16f
+        val inset = r * 0.09f
+        val cross = Path().apply {
+            moveTo(cx - a + corner, cy - r)
+            lineTo(cx + a - corner, cy - r)
+            quadraticBezierTo(cx + a, cy - r, cx + a, cy - r + corner)
+            lineTo(cx + a, cy - a - inset)
+            quadraticBezierTo(cx + a, cy - a, cx + a + inset, cy - a)
+            lineTo(cx + r - corner, cy - a)
+            quadraticBezierTo(cx + r, cy - a, cx + r, cy - a + corner)
+            lineTo(cx + r, cy + a - corner)
+            quadraticBezierTo(cx + r, cy + a, cx + r - corner, cy + a)
+            lineTo(cx + a + inset, cy + a)
+            quadraticBezierTo(cx + a, cy + a, cx + a, cy + a + inset)
+            lineTo(cx + a, cy + r - corner)
+            quadraticBezierTo(cx + a, cy + r, cx + a - corner, cy + r)
+            lineTo(cx - a + corner, cy + r)
+            quadraticBezierTo(cx - a, cy + r, cx - a, cy + r - corner)
+            lineTo(cx - a, cy + a + inset)
+            quadraticBezierTo(cx - a, cy + a, cx - a - inset, cy + a)
+            lineTo(cx - r + corner, cy + a)
+            quadraticBezierTo(cx - r, cy + a, cx - r, cy + a - corner)
+            lineTo(cx - r, cy - a + corner)
+            quadraticBezierTo(cx - r, cy - a, cx - r + corner, cy - a)
+            lineTo(cx - a - inset, cy - a)
+            quadraticBezierTo(cx - a, cy - a, cx - a, cy - a - inset)
+            lineTo(cx - a, cy - r + corner)
+            quadraticBezierTo(cx - a, cy - r, cx - a + corner, cy - r)
+            close()
+        }
+        drawPath(cross, background)
+        if (pressed) {
+            val inset = r * 0.045f
+            drawRoundRect(
+                selectedBackground,
+                topLeft = Offset(cx - a + inset, cy - r + inset),
+                size = ComposeSize(2f * (a - inset), r - inset - r * 0.235f),
+                cornerRadius = CornerRadius(r * 0.095f),
+            )
+        }
+        drawPath(cross, outline, style = Stroke(maxOf(1.dp.toPx(), r * 0.012f)))
+        drawCircle(background, r * 0.175f, Offset(cx, cy))
+        drawCircle(
+            lerp(background, outline, 0.45f),
+            r * 0.175f, Offset(cx, cy),
+            style = Stroke(maxOf(1.dp.toPx(), r * 0.012f)),
+        )
+
+        val arrow = r * 0.11f
+        for (direction in 0..3) {
+            val x = when (direction) {
+                2 -> cx - r * 0.61f
+                3 -> cx + r * 0.61f
+                else -> cx
+            }
+            val y = when (direction) {
+                0 -> cy - r * 0.61f
+                1 -> cy + r * 0.61f
+                else -> cy
+            }
+            val triangle = Path().apply {
+                when (direction) {
+                    0 -> {
+                        moveTo(x, y - arrow)
+                        lineTo(x - arrow, y + arrow)
+                        lineTo(x + arrow, y + arrow)
+                    }
+                    1 -> {
+                        moveTo(x, y + arrow)
+                        lineTo(x - arrow, y - arrow)
+                        lineTo(x + arrow, y - arrow)
+                    }
+                    2 -> {
+                        moveTo(x - arrow, y)
+                        lineTo(x + arrow, y - arrow)
+                        lineTo(x + arrow, y + arrow)
+                    }
+                    else -> {
+                        moveTo(x + arrow, y)
+                        lineTo(x - arrow, y - arrow)
+                        lineTo(x - arrow, y + arrow)
+                    }
+                }
+                close()
+            }
+            drawPath(triangle, if (pressed && direction == 0) selectedForeground else foreground)
+        }
+    }
+}
+
+@Composable
+private fun AnalogColorSample(
+    background: Color,
+    foreground: Color,
+    selectedBackground: Color,
+    selectedForeground: Color,
+    outline: Color,
+    pressed: Boolean,
+) {
+    Surface(
+        modifier = Modifier.size(72.dp),
+        shape = CircleShape,
+        color = background,
+        border = BorderStroke(1.dp, outline),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = lerp(background, outline, 0.075f),
+            ) {}
+            Surface(
+                modifier = Modifier
+                    .offset(x = if (pressed) 11.dp else 0.dp, y = if (pressed) (-7).dp else 0.dp)
+                    .size(31.dp),
+                shape = CircleShape,
+                color = if (pressed) selectedBackground else lerp(background, outline, 0.18f),
+                border = BorderStroke(1.dp, lerp(background, outline, 0.56f)),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Surface(
+                        modifier = Modifier.size(6.dp),
+                        shape = CircleShape,
+                        color = if (pressed) selectedForeground else foreground,
+                    ) {}
+                }
+            }
+        }
     }
 }
 

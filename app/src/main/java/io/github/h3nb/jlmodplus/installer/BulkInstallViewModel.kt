@@ -16,6 +16,8 @@ import androidx.lifecycle.viewModelScope
 import io.reactivex.Single
 import java.io.File
 import java.util.Locale
+import java.security.MessageDigest
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +63,7 @@ class BulkInstallViewModel : ViewModel() {
     private val closeRequested = AtomicBoolean()
     private var bundleImport: LibraryUniversalBundleStager.PreparedBundle? = null
     private var previousResults: List<BulkInstallResult> = emptyList()
+    private var sourceStage: File? = null
 
     fun reviewUnfinished(library: LibraryViewModel) {
         val finished = mutableState.value as? State.Finished ?: return
@@ -92,25 +95,43 @@ class BulkInstallViewModel : ViewModel() {
             try {
                 val job = coroutineContext[Job]
                 val plan = withContext(Dispatchers.IO) {
-                    val files = uriStrings.mapNotNull { value ->
+                    val sources = uriStrings.mapNotNull { value ->
                         value.toUri().path?.let(::File)
                     }
-                    BulkInstallPlanner.planExplicit(files, library) { job?.isActive == true }
-                }
-                val boundedPlan = if (omittedSourcesWarning != null) {
-                    plan.copy(
-                        warnings = plan.warnings + omittedSourcesWarning,
+                    val stage = File(
+                        library.getApplication<Application>().cacheDir,
+                        "bulk-discovery/${UUID.randomUUID()}",
                     )
-                } else {
-                    plan
+                    sourceStage = stage
+                    val discovery = BulkSourceDiscovery(stage) { job?.isActive == true }
+                        .discover(sources)
+                    val planned = BulkInstallPlanner.planExplicit(discovery.files, library) {
+                        job?.isActive == true
+                    }
+                    val app = library.getApplication<Application>()
+                    planned.copy(warnings = planned.warnings + listOfNotNull(
+                        discovery.unreadableArchives.takeIf { it > 0 }?.let {
+                            app.getString(R.string.bulk_install_unreadable_archives, it)
+                        },
+                        discovery.skippedArchiveEntries.takeIf { it > 0 }?.let {
+                            app.getString(R.string.bulk_install_skipped_entries, it)
+                        },
+                    ))
                 }
-                mutableState.value = State.Review(boundedPlan)
+                mutableState.value = State.Review(if (omittedSourcesWarning == null) {
+                    plan
+                } else {
+                    plan.copy(warnings = plan.warnings + omittedSourcesWarning)
+                })
             } catch (_: CancellationException) {
+                cleanupSourceStage()
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
+                cleanupSourceStage()
                 mutableState.value = State.Error(boundedMessage(error))
             } finally {
                 planningJob = null
+                if (closeRequested.get()) cleanupSourceStage()
             }
         }
     }
@@ -421,6 +442,7 @@ class BulkInstallViewModel : ViewModel() {
                 executionJob = null
                 if (closeRequested.get()) {
                     cleanupBundleImport()
+                    cleanupSourceStage()
                 }
             }
         }
@@ -464,11 +486,18 @@ class BulkInstallViewModel : ViewModel() {
         val scratch = InstallerScratch()
         var installer: AppInstaller? = null
         try {
+            val copiedDigests = ArrayList<ByteArray>(item.unit.sourceFiles.size)
             val copiedSources = item.unit.sourceFiles.mapIndexed { index, source ->
-                val extension = source.extension.lowercase(Locale.ROOT).ifBlank { "bin" }
-                scratch.copy(source, "source-$index.$extension")
+                // Only MIDlet-compatible ZIP sources reach the planner. Stage them with
+                // the JAR suffix expected by existing converter paths, without another copy.
+                val extension = source.extension.lowercase(Locale.ROOT)
+                    .ifBlank { "bin" }.let { if (it == "zip") "jar" else it }
+                val digest = MessageDigest.getInstance("SHA-256")
+                scratch.copy(source, "source-$index.$extension", digest).also {
+                    copiedDigests.add(digest.digest())
+                }
             }
-            if (BulkInstallPlanner.fingerprint(copiedSources) != item.sourceFingerprint) {
+            if (BulkInstallPlanner.fingerprintFromDigests(copiedDigests) != item.sourceFingerprint) {
                 return BulkInstallResult(
                     item.id,
                     item.name,
@@ -505,6 +534,7 @@ class BulkInstallViewModel : ViewModel() {
                 AppInstaller(source, resolvedJar, library, scratch)
             }
             installer = activeInstaller
+            if (item.unit.reinstallAppId == null) activeInstaller.setUseSourceDirectly()
             activeInstaller.setProgress { stage ->
                 val running = mutableState.value as? State.Running
                 if (running != null) mutableState.value = running.copy(stageLabel = when (stage) {
@@ -722,13 +752,20 @@ class BulkInstallViewModel : ViewModel() {
         BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
 
     fun close() {
-        planningJob?.cancel()
-        planningJob = null
-        cancelRequested.set(true)
         closeRequested.set(true)
+        cancelRequested.set(true)
+        val planning = planningJob != null
+        planningJob?.cancel()
         if (executionJob == null) {
             cleanupBundleImport()
+            if (!planning) cleanupSourceStage()
         }
+    }
+
+    @Synchronized
+    private fun cleanupSourceStage() {
+        sourceStage?.deleteRecursively()
+        sourceStage = null
     }
 
     @Synchronized

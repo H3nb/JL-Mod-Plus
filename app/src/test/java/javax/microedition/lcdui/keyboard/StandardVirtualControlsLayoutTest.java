@@ -22,7 +22,7 @@ public class StandardVirtualControlsLayoutTest {
 	private static final float EPS = 4.0f;
 
 	@Test
-	public void portraitReferenceUsesFreeBottomDeck() {
+	public void portraitReferenceUsesBottomAnchoredDeck() {
 		float width = 709.0f;
 		float height = 1536.0f;
 		float guestBottom = 944.0f;
@@ -37,15 +37,15 @@ public class StandardVirtualControlsLayoutTest {
 		assertEquals(101.0f, layout.keySize, EPS);
 		assertEquals(143.0f, layout.movementRadius, EPS);
 		assertEquals(177.0f, layout.movementCenterX, EPS);
-		assertEquals(1270.0f, layout.movementCenterY, EPS);
+		assertEquals(1311.0f, layout.movementCenterY, EPS);
 		assertEquals(111.0f, layout.shoulderLeftX, EPS);
 		assertEquals(598.0f, layout.shoulderRightX, EPS);
-		assertEquals(1006.0f, layout.shoulderCenterY, EPS);
+		assertEquals(1098.0f, layout.shoulderCenterY, EPS);
 		assertEquals(521.0f, layout.actionCenterX, EPS);
-		assertEquals(1221.0f, layout.actionCenterY, EPS);
+		assertEquals(1262.0f, layout.actionCenterY, EPS);
 		assertEquals(412.0f, layout.bottomLeftX, EPS);
 		assertEquals(630.0f, layout.bottomRightX, EPS);
-		assertEquals(1338.0f, layout.bottomRowY, EPS);
+		assertEquals(1379.0f, layout.bottomRowY, EPS);
 
 		assertTrue(layout.movementCenterY - layout.movementRadius > guestBottom);
 		assertTrue(layout.shoulderCenterY - layout.shoulderHeight * 0.5f > guestBottom);
@@ -111,6 +111,38 @@ public class StandardVirtualControlsLayoutTest {
 		assertTrue(layout.bottomRightX + layout.keySize * 0.5f <= width);
 		assertTrue(layout.bottomRowY + layout.keySize * 0.5f <= height);
 		assertActionRow(layout, 0.0f, width);
+	}
+
+
+	@Test
+	public void portraitGeometryDoesNotMoveWithGuestViewport() {
+		StandardVirtualControlsLayout free = StandardVirtualControlsLayout.resolve(
+				0f, 0f, 709f, 1536f, 0f, 0f, 709f, 800f);
+		StandardVirtualControlsLayout smallGuest = StandardVirtualControlsLayout.resolve(
+				0f, 0f, 709f, 1536f, 177f, 0f, 531f, 473f);
+		StandardVirtualControlsLayout overlay = StandardVirtualControlsLayout.resolve(
+				0f, 0f, 709f, 1536f, 0f, 0f, 709f, 1536f);
+
+		assertEquals(StandardVirtualControlsLayout.Placement.BOTTOM_DECK, free.placement);
+		assertEquals(StandardVirtualControlsLayout.Placement.COMPACT_OVERLAY, overlay.placement);
+		for (StandardVirtualControlsLayout other : new StandardVirtualControlsLayout[] {
+				smallGuest, overlay }) {
+			assertEquals(free.movementCenterY, other.movementCenterY, 0.01f);
+			assertEquals(free.shoulderCenterY, other.shoulderCenterY, 0.01f);
+			assertEquals(free.actionCenterY, other.actionCenterY, 0.01f);
+			assertEquals(free.keySize, other.keySize, 0.01f);
+		}
+	}
+
+	@Test
+	public void portraitFitsButtonsInNarrowAndShortHost() {
+		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
+				0f, 0f, 360f, 480f, 0f, 0f, 360f, 480f);
+		assertEquals(StandardVirtualControlsLayout.Placement.COMPACT_OVERLAY, layout.placement);
+		assertTrue(layout.movementCenterY - layout.movementRadius >= 0f);
+		assertTrue(layout.bottomRowY + layout.keySize * 0.5f <= 480f);
+		assertTrue(layout.shoulderCenterY - layout.shoulderHeight * 0.5f >= 0f);
+		assertActionRow(layout, 0f, 360f);
 	}
 
 	private static void assertActionRow(StandardVirtualControlsLayout layout, float left, float right) {

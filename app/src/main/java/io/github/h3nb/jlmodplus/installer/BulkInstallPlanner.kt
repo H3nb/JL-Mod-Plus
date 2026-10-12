@@ -22,7 +22,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.jar.Descriptor
 
 object BulkInstallPlanner {
-    private val supportedExtensions = setOf("jar", "jad", "kjx")
+    private val supportedExtensions = setOf("jar", "jad", "kjx", "zip")
     private val hardDiscoveryFailures = setOf(
         BulkInstallStatus.RemoteSourceUnsupported,
         BulkInstallStatus.SourceError,
@@ -50,6 +50,16 @@ object BulkInstallPlanner {
 
     fun fingerprint(files: List<File>): String = sourceFingerprint(files)
 
+    /** Same fingerprint composition as sourceFingerprint, using digests collected during copy. */
+    internal fun fingerprintFromDigests(digests: List<ByteArray>): String {
+        val fingerprint = MessageDigest.getInstance("SHA-256")
+        for (digest in digests) {
+            fingerprint.update(digest)
+            fingerprint.update(0.toByte())
+        }
+        return fingerprint.digest().joinToString("") { "%02x".format(it) }
+    }
+
     private fun inspectAndFinalize(
         units: List<BulkSourceUnit>,
         generation: LibraryGenerationToken,
@@ -57,9 +67,17 @@ object BulkInstallPlanner {
         warnings: List<String>,
         isActive: () -> Boolean,
     ): BulkInstallPlan {
+        // Plan-local digests share reads between source identity and JAR fingerprinting.
+        val digestCache = HashMap<String, ByteArray>()
+        val inspectionIndex = AppInstaller.InspectionIndex(
+            generation.generation, generation.emulatorDir.canonicalFile, library.getAllApps(),
+        )
+        check(library.isReadyGeneration(generation.generation, generation.emulatorDir)) {
+            "Library generation changed during batch review"
+        }
         val inspected = units.map { unit ->
             checkActive(isActive)
-            inspect(unit, generation, library)
+            inspect(unit, generation, library, inspectionIndex, digestCache, isActive)
         }
         checkActive(isActive)
         val deduplicated = markSemanticDuplicates(inspected)
@@ -76,6 +94,9 @@ object BulkInstallPlanner {
         unit: BulkSourceUnit,
         generation: LibraryGenerationToken,
         library: LibraryViewModel,
+        inspectionIndex: AppInstaller.InspectionIndex,
+        digestCache: MutableMap<String, ByteArray>,
+        isActive: () -> Boolean,
     ): BulkInstallItem {
         val discoveryStatus = unit.discoveryStatus
         if (discoveryStatus in hardDiscoveryFailures) {
@@ -85,7 +106,7 @@ object BulkInstallPlanner {
                 name = unit.primaryFile.name,
                 vendor = "",
                 version = "",
-                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles) }.getOrDefault(""),
+                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles, digestCache, isActive) }.getOrDefault(""),
                 status = requireNotNull(discoveryStatus),
                 preflightStatus = requireNotNull(discoveryStatus),
                 action = BulkInstallAction.Skip,
@@ -95,17 +116,18 @@ object BulkInstallPlanner {
             )
         }
 
-        val installer = AppInstaller(null, Uri.fromFile(unit.primaryFile), library)
+        val installer = if (unit.kind == BulkSourceKind.JadJarPair && unit.jarFile != null) {
+            AppInstaller(unit.primaryFile, unit.jarFile, library, InstallerScratch())
+        } else {
+            AppInstaller(null, Uri.fromFile(unit.primaryFile), library)
+        }
+        installer.setUseSourceDirectly()
+        installer.setInspectionIndex(inspectionIndex)
         return try {
             val installerStatus = Single.create<Int>(installer::loadInfo).blockingGet()
             val descriptor = requireNotNull(installer.newDescriptor) { "Installer returned no descriptor" }
             val jar = installer.jar
-            val candidates = library.findBySourceIdentity(
-                generation.generation,
-                generation.emulatorDir,
-                descriptor.name,
-                descriptor.vendor,
-            )
+            val candidates = inspectionIndex.candidates(descriptor.name, descriptor.vendor)
             val authoritativeStatus = if (candidates.size > 1) {
                 BulkInstallStatus.AmbiguousInstalledMatch
             } else {
@@ -125,8 +147,8 @@ object BulkInstallPlanner {
                 version = descriptor.version,
                 installedVersion = installer.currentVersion,
                 descriptorAttributes = HashMap(descriptor.attrs),
-                sourceFingerprint = sourceFingerprint(unit.sourceFiles),
-                jarFingerprint = jar?.takeIf(File::isFile)?.let(::hashFile),
+                sourceFingerprint = sourceFingerprint(unit.sourceFiles, digestCache, isActive),
+                jarFingerprint = jar?.takeIf(File::isFile)?.let { hashFile(it, digestCache, isActive) },
                 status = displayStatus,
                 preflightStatus = authoritativeStatus,
                 action = defaults.first,
@@ -134,6 +156,8 @@ object BulkInstallPlanner {
                 reviewReason = inspectionReviewReason(unit, authoritativeStatus, candidates.size),
                 diagnosticDetail = unit.diagnosticDetail,
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Throwable) {
             BulkInstallItem(
                 id = unit.id,
@@ -141,7 +165,7 @@ object BulkInstallPlanner {
                 name = unit.primaryFile.name,
                 vendor = "",
                 version = "",
-                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles) }.getOrDefault(""),
+                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles, digestCache, isActive) }.getOrDefault(""),
                 status = BulkInstallStatus.SourceError,
                 preflightStatus = BulkInstallStatus.SourceError,
                 action = BulkInstallAction.Skip,
@@ -187,11 +211,16 @@ object BulkInstallPlanner {
     private fun normalizeSources(
         files: List<File>,
         origin: BulkSourceOrigin,
-    ): List<BulkSourceUnit> = normalizeResolvedSources(
-        files,
-        origin,
-        files.filter { extension(it) == "jad" }.associateWith(::resolveJad),
-    )
+    ): List<BulkSourceUnit> {
+        val renamedJars = files.asSequence().filter { extension(it) == "zip" }
+            .map(::canonicalPath).toHashSet()
+        return normalizeResolvedSources(
+            files,
+            origin,
+            files.filter { extension(it) == "jad" }
+                .associateWith { resolveJad(it, renamedJars) },
+        )
+    }
 
     /** Groups resolved sources without changing resolution or installer policy. */
     internal fun normalizeResolvedSources(
@@ -200,7 +229,7 @@ object BulkInstallPlanner {
         resolutions: Map<File, JadResolution>,
     ): List<BulkSourceUnit> {
         val jads = files.filter { extension(it) == "jad" }
-        val jars = files.filter { extension(it) == "jar" }
+        val jars = files.filter { extension(it) == "jar" || extension(it) == "zip" }
         val kjx = files.filter { extension(it) == "kjx" }
         val jarByCanonicalPath = jars.associateBy { canonicalPath(it) }
         val consumedJarPaths = HashSet<String>()
@@ -320,18 +349,23 @@ object BulkInstallPlanner {
         ) : JadResolution
     }
 
-    private fun resolveJad(jad: File): JadResolution {
+    private fun resolveJad(jad: File, renamedJars: Set<String>): JadResolution {
         return try {
             val descriptor = Descriptor(jad, true)
             val jarUrl = descriptor.jarUrl
-            resolveJadReference(jad, jarUrl, jarUrl?.toUri()?.scheme)
+            resolveJadReference(jad, jarUrl, jarUrl?.toUri()?.scheme, renamedJars)
         } catch (error: Throwable) {
             JadResolution.Error(diagnosticDetail = boundedMessage(error))
         }
     }
 
     /** The scheme is supplied by Android's existing URI parser; raw references stay exact. */
-    internal fun resolveJadReference(jad: File, jarUrl: String?, scheme: String?): JadResolution {
+    internal fun resolveJadReference(
+        jad: File,
+        jarUrl: String?,
+        scheme: String?,
+        renamedJars: Set<String> = emptySet(),
+    ): JadResolution {
         if (jarUrl == null) return JadResolution.Error(BulkInstallReviewReason.JadMissingJarUrl)
         if (scheme != null) {
             return if (scheme.equals("http", true) || scheme.equals("https", true)) {
@@ -343,7 +377,15 @@ object BulkInstallPlanner {
         val parent = jad.parentFile
             ?: return JadResolution.Error(BulkInstallReviewReason.JadMissingParentDirectory)
         var jar = File(parent, jarUrl)
-        if (!jar.isFile) jar = File(parent, jad.nameWithoutExtension + ".jar")
+        if (!jar.isFile) {
+            val fallback = File(parent, jad.nameWithoutExtension + ".jar")
+            if (fallback.isFile) {
+                jar = fallback
+            } else if (jarUrl.endsWith(".jar", ignoreCase = true)) {
+                val zipped = File(parent, jarUrl.dropLast(4) + ".zip")
+                if (zipped.isFile && canonicalPath(zipped) in renamedJars) jar = zipped
+            }
+        }
         if (!jar.isFile) {
             return JadResolution.Error(BulkInstallReviewReason.ReferencedJarMissing(jarUrl))
         }
@@ -361,7 +403,6 @@ object BulkInstallPlanner {
                 return@map item
             }
             val key = buildString {
-                append(item.unit.kind.name).append('\u0000')
                 item.descriptorAttributes.toSortedMap().forEach { (name, value) ->
                     append(name).append('=').append(value).append('\u0001')
                 }
@@ -399,17 +440,25 @@ object BulkInstallPlanner {
 
         grouped.values.forEach { group ->
             if (group.size <= 1) return@forEach
-            val maxima = group.filter { candidate ->
-                group.none { other -> compareVersions(other.value.version, candidate.value.version) > 0 }
+            // A running maximum avoids quadratic every-pair comparisons in large collections.
+            var maximumVersion = group.first().value.version
+            val maxima = ArrayList<IndexedValue<BulkInstallItem>>()
+            maxima.add(group.first())
+            for (index in 1 until group.size) {
+                val candidate = group[index]
+                when (compareVersions(candidate.value.version, maximumVersion)) {
+                    1 -> {
+                        maximumVersion = candidate.value.version
+                        maxima.clear()
+                        maxima.add(candidate)
+                    }
+                    0 -> maxima.add(candidate)
+                }
             }
             if (maxima.size > 1) {
                 val semanticKeys = maxima
                     .map {
-                        Triple(
-                            it.value.unit.kind,
-                            it.value.descriptorAttributes,
-                            it.value.jarFingerprint,
-                        )
+                        it.value.descriptorAttributes to it.value.jarFingerprint
                     }
                     .distinct()
                 if (semanticKeys.size > 1) {
@@ -423,7 +472,7 @@ object BulkInstallPlanner {
                     }
                 }
             }
-            val maxVersion = maxima.firstOrNull()?.value?.version ?: return@forEach
+            val maxVersion = maximumVersion
             group.filter { compareVersions(it.value.version, maxVersion) < 0 }.forEach { indexedItem ->
                 replacements[indexedItem.index] = indexedItem.value.copy(
                     status = BulkInstallStatus.OlderBatchCandidate,
@@ -452,29 +501,46 @@ object BulkInstallPlanner {
     private fun requireReadyGeneration(library: LibraryViewModel): LibraryGenerationToken =
         requireNotNull(library.readyGeneration()) { "Library is not READY" }
 
-    private fun sourceFingerprint(files: List<File>): String {
+    private fun sourceFingerprint(
+        files: List<File>,
+        digestCache: MutableMap<String, ByteArray>? = null,
+        isActive: () -> Boolean = { true },
+    ): String {
         val digest = MessageDigest.getInstance("SHA-256")
         files.forEach { file ->
-            digest.update(hashFileBytes(file))
+            checkActive(isActive)
+            digest.update(hashFileBytes(file, digestCache, isActive))
             digest.update(0.toByte())
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun hashFile(file: File): String =
-        hashFileBytes(file).joinToString("") { "%02x".format(it) }
+    private fun hashFile(
+        file: File,
+        digestCache: MutableMap<String, ByteArray>,
+        isActive: () -> Boolean,
+    ): String = hashFileBytes(file, digestCache, isActive).joinToString("") { "%02x".format(it) }
 
-    private fun hashFileBytes(file: File): ByteArray {
+    private fun hashFileBytes(
+        file: File,
+        digestCache: MutableMap<String, ByteArray>?,
+        isActive: () -> Boolean,
+    ): ByteArray {
+        val path = if (digestCache == null) null else file.canonicalPath
+        if (path != null) digestCache?.get(path)?.let { return it }
         val digest = MessageDigest.getInstance("SHA-256")
         FileInputStream(file).use { input ->
-            val buffer = ByteArray(16 * 1024)
+            val buffer = ByteArray(32 * 1024)
             while (true) {
+                checkActive(isActive)
                 val read = input.read(buffer)
                 if (read < 0) break
                 if (read > 0) digest.update(buffer, 0, read)
             }
         }
-        return digest.digest()
+        return digest.digest().also { bytes ->
+            if (path != null) digestCache?.put(path, bytes)
+        }
     }
 
     private fun canonicalReadableFile(file: File): File? = try {

@@ -28,6 +28,60 @@ class BulkInstallPlannerTest {
     }
 
     @Test
+    fun equivalentJarAndJadJarPackagingDoesNotCreateDuplicateInstallations() {
+        val jarOnly = item("original")
+        val paired = item("paired").copy(
+            unit = item("paired").unit.copy(kind = BulkSourceKind.JadJarPair),
+        )
+        val checked = BulkInstallPlanner.markSemanticDuplicates(listOf(jarOnly, paired))
+        assertEquals(BulkInstallStatus.Duplicate, checked[1].status)
+        assertFalse(checked[1].selected)
+
+        val grouped = BulkInstallPlanner.applyBatchVersionGrouping(listOf(jarOnly, paired))
+        assertEquals(BulkInstallStatus.New, grouped[0].status)
+        assertEquals(BulkInstallStatus.New, grouped[1].status)
+    }
+
+    @Test
+    fun batchInspectionIndexMatchesSourceIdentityNotCustomMetadata() {
+        fun row(id: Long, title: String, vendor: String) =
+            io.github.h3nb.jlmodplus.librarydb.LibraryAppRow(
+                id = id,
+                storageKey = "game-$id",
+                sourceTitle = title,
+                sourceVendor = vendor,
+                sourceVersion = "1.0",
+                title = "Custom $title",
+                vendor = "Custom $vendor",
+                version = "1.0",
+                description = "",
+                favorite = false,
+                addedAt = null,
+                lastPlayedAt = null,
+                iconRevision = 0,
+            )
+        val apps = listOf(row(1, "Game", "Vendor"), row(2, "Game", "Vendor"),
+            row(3, "Game", "Another"), row(4, "Other", "Vendor"))
+        val index = AppInstaller.InspectionIndex(1L, File("/tmp/inspect"), apps)
+        assertEquals(listOf(1L, 2L),
+            index.candidates("Game", "Vendor").map { it.id })
+        assertEquals(listOf(3L), index.candidates("Game", "Another").map { it.id })
+        assertTrue(index.candidates("Custom Game", "Vendor").isEmpty())
+        assertTrue(index.candidates("Missing", "Vendor").isEmpty())
+    }
+
+    @Test
+    fun largeVersionGroupRetainsOneMaximumWithoutQuadraticPairChecks() {
+        val candidates = (1..2000).map { version ->
+            item("version-$version", "1.$version", "hash-$version")
+        }
+        val grouped = BulkInstallPlanner.applyBatchVersionGrouping(candidates)
+        assertEquals(1, grouped.count { it.status == BulkInstallStatus.New })
+        assertEquals("1.2000", grouped.single { it.status == BulkInstallStatus.New }.version)
+        assertEquals(1999, grouped.count { it.status == BulkInstallStatus.OlderBatchCandidate })
+    }
+
+    @Test
     fun inspectionReasonsCarryMatchCountAndPreserveDiscoveryConflictPrecedence() {
         val unit = item("source").unit
         assertEquals(BulkInstallReviewReason.AmbiguousInstalledMatch(3),
@@ -153,6 +207,37 @@ class BulkInstallPlannerTest {
         val singleMaximum = BulkInstallPlanner.applyBatchVersionGrouping(listOf(first, older))
         assertEquals(first, singleMaximum[0])
         assertEquals(result[2], singleMaximum[1])
+    }
+
+    @Test
+    fun composingDigestsDuringCopyMatchesOrdinarySourceFingerprint() {
+        val root = Files.createTempDirectory("bulk-digest-composition").toFile()
+        try {
+            val jad = root.resolve("game.jad").apply { writeBytes(byteArrayOf(3, 2, 1)) }
+            val jar = root.resolve("game.jar").apply { writeBytes(ByteArray(4097) { (it % 251).toByte() }) }
+            val digests = listOf(jad, jar).map { source ->
+                val hash = java.security.MessageDigest.getInstance("SHA-256")
+                source.inputStream().use { input ->
+                    val bytes = ByteArray(101)
+                    while (true) {
+                        val read = input.read(bytes)
+                        if (read < 0) break
+                        hash.update(bytes, 0, read)
+                    }
+                }
+                hash.digest()
+            }
+            assertEquals(
+                BulkInstallPlanner.fingerprint(listOf(jad, jar)),
+                BulkInstallPlanner.fingerprintFromDigests(digests),
+            )
+            assertNotEquals(
+                BulkInstallPlanner.fingerprintFromDigests(digests),
+                BulkInstallPlanner.fingerprintFromDigests(digests.reversed()),
+            )
+        } finally {
+            root.deleteRecursively()
+        }
     }
 
     @Test
