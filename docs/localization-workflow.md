@@ -1,4 +1,4 @@
-# AI-assisted localization workflow
+# Localization workflow
 
 Read [AGENTS.md](../AGENTS.md) for repository authority, the
 [localization contract](localization.md) for product meaning and resource
@@ -17,7 +17,7 @@ describes execution, not a replacement semantic contract.
   findings. The matrix exporter reuses that inventory; it does not parse or
   rewrite the resource XML itself.
 - Generated reports under `build/reports/localization/` are temporary and
-  ignored by Git. An AI or spreadsheet can use them for side-by-side work.
+  ignored by Git. Translators and review tools can use them for side-by-side work.
 - Existing reviewed strings are a stability baseline. Preserve them unless
   evidence supports a semantic, linguistic, accessibility, or consistency fix.
 
@@ -60,11 +60,11 @@ an existing empty string is not missing. Plurals retain each locale's actual
 quantity categories. The data is an analysis view: flattened text is not
 an XML round-trip representation, approval record, or safe import patch.
 
-For large campaigns, parallelize independent **target languages or feature
-batches** using the same established semantic context. Limit output to
-cohesive batches so models do not omit rows or truncate responses. Do not
-run automatic translation against game/MIDlet-authored labels, user-provided
-names, stable machine identifiers, or diagnostic evidence.
+For large campaigns, divide work into independent **target languages or feature
+batches** using the same established semantic context. Batch size must fit the
+chosen translation method without omissions, lost context, or truncated output.
+Do not translate game/MIDlet-authored labels, user-provided names, stable machine
+identifiers, or diagnostic evidence.
 
 ## Translation quality
 
@@ -99,8 +99,9 @@ names, stable machine identifiers, or diagnostic evidence.
    consistent within each locale?
 2. Run a targeted second language/semantic review for consequential
    dialogs, permissions, irreversible operations, errors, and technically
-   ambiguous controls. AI is an accepted primary translator and reviewer,
-   but a fluent-looking result or model confidence is not proof of quality.
+   ambiguous controls. Contributions may be written or reviewed by people
+   or automated tools; acceptance depends on the resulting text and supporting
+   evidence, not the translator's identity or an unverified confidence score.
 3. Modify the affected `strings.xml` elements directly using a small,
    reviewable patch. Never feed the flattened matrix back as if it were
    lossless Android XML; retain markup, comments, resource order, and

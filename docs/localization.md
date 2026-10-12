@@ -353,8 +353,8 @@ See [Build and validation](development.md#localization-inventory) for the actual
 commands and ignored report paths. Findings do not fail the command; unreadable
 input, malformed XML, unsupported locale forms, or execution/usage errors do.
 The tool supplies no semantic/language/dead-resource verdicts, equality judgment,
-AI dependency, resource repairs, or CI enforcement. Those decisions remain in
-separate semantic and language review under this contract.
+translation-service dependency, resource repairs, or CI enforcement. Those
+decisions remain in separate semantic and language review under this contract.
 
 ## Initial semantic glossary
 
@@ -388,22 +388,24 @@ scoped TODO or `NEEDS_CONTEXT` rather than extending the glossary by guesswork.
 
 ## Translation matrix and operational workflow
 
-Use the [AI-assisted localization workflow](localization-workflow.md) for
+Use the [localization workflow](localization-workflow.md) for
 context-based batching, read-only cross-language matrix export, target-language
 quality review, and safe integration into Android resources. The matrix derives
 from the existing deterministic inventory and is not a second source of truth,
 a committed copy of translations, or an input to the Android build.
 
-## AI-assisted workflow
+## Translation and review workflow
 
-AI assistance is optional and non-authoritative. Implementation, applicable
-specifications, verified runtime behavior, and explicit project contracts remain
-authoritative. Runtime correctness must not depend on a model, provider, API, or
-orchestration mode.
+Translations may be prepared and reviewed by human contributors, automated tools,
+or both. Neither a translation's origin nor its apparent fluency establishes
+correctness. Implementation, applicable specifications, verified runtime behavior,
+and explicit project contracts remain authoritative. Runtime correctness must not
+depend on a translation provider, model, API, or orchestration mode.
 
-Choose review depth and division by task requirements rather than model names or
-capability tiers. One capable agent may perform all roles; split work only when
-parallel or specialized review materially improves quality or efficiency.
+Choose review depth and division by task requirements rather than a prescribed
+number or type of reviewers. One qualified contributor or agent may perform all
+roles; split work only when parallel or specialized review materially improves
+quality or efficiency.
 
 | Role | Responsibility |
 | --- | --- |
@@ -419,7 +421,7 @@ against shared evidence rather than reviewer identity. Record concise
 verdicts and supporting evidence, and revisit affected locale renderings whenever
 source meaning, UI role, resource type, or parameter contracts change.
 
-Execution-specific model, provider, reasoning-effort, or tool choices belong in
+Execution-specific translator, tool, provider, or review choices belong in
 transient task handoffs rather than this repository contract. They may change
 without documentation edits as long as the roles, evidence requirements, and
 acceptance criteria above are preserved.
@@ -439,4 +441,4 @@ Review vocabulary:
 
 These are workflow labels, not runtime resource metadata. Use them when an
 explicit audit record is useful; they do not require an audit database, fixed
-review sequence, or AI integration.
+review sequence, or translation-service integration.

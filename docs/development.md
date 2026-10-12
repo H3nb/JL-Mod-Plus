@@ -63,7 +63,7 @@ under that root's `build/` directory.
 It reads repository-owned values XML without modifying resources. Missing
 translations, fragmentation, and other findings still return success; unreadable
 input, malformed XML, unsupported locale forms, and execution/usage errors return
-non-zero. It performs no semantic review, repairs, AI calls, or CI enforcement.
+non-zero. It performs no semantic review, repairs, translation, or CI enforcement.
 See the [inventory scope and limitations](localization.md#deterministic-inventory)
 before interpreting coverage or placeholder findings. Android builds are not
 required for changes confined to this tool and its documentation/tests.
@@ -79,7 +79,7 @@ python -B -m unittest discover -s scripts/tests -p test_localization_matrix.py -
 
 The default output is `build/reports/localization/matrix.json` (ignored by
 Git). The exporter uses the inventory parser, does not modify Android resource
-files, and does not attest linguistic quality. See the [AI-assisted localization
+files, and does not attest linguistic quality. See the [localization
 workflow](localization-workflow.md) for grouped key selection, preservation of
 plurals, and applying reviewed translations.
 
