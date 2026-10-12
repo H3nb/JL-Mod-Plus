@@ -93,6 +93,10 @@ internal class BulkSourceDiscovery(
                     return
                 }
 
+                if (depth > MAX_ARCHIVE_DEPTH) {
+                    skippedEntries++
+                    return
+                }
                 val targetDirectory = "archive-${archiveSequence++}"
                 var entries = 0
                 val iterator = archive.entries()
@@ -107,10 +111,6 @@ internal class BulkSourceDiscovery(
                     val name = entry.name
                     val extension = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
                     if (extension !in SUPPORTED_ARCHIVE_ENTRIES) continue
-                    if (extension == "zip" && depth >= MAX_ARCHIVE_DEPTH) {
-                        skippedEntries++
-                        continue
-                    }
                     val destination = try {
                         stagedFile(targetDirectory, name)
                     } catch (_: IOException) {
