@@ -164,6 +164,10 @@ public class Descriptor {
 		String[] lines = source.split("[\\n\\r]+");
 		for (int i = lines.length - 1; i > 0; i--) {
 			String line = lines[i];
+			if (!line.isEmpty() && line.charAt(0) == ' ') {
+				lines[i - 1] += line.substring(1);
+				continue;
+			}
 			int separatorIdx = line.indexOf(SEPARATOR);
 			if (separatorIdx == -1) {
 				if (line.isEmpty()) {
