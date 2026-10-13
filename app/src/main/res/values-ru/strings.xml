@@ -20,7 +20,7 @@
     <string name="action_lock_orientation">Заблокировать поворот экрана</string>
     <string name="action_reinstall">Переустановить</string>
     <string name="action_settings">Настройки</string>
-    <string name="alert_map_menu">Клавиша меню (M) не назначена.\nЭто может помешать открыть параметры эмулятора.</string>
+    <string name="alert_map_menu">Клавиша меню (M) не назначена.\nЭто может помешать открыть меню MIDlet во время выполнения.</string>
     <string name="alert_msg_workdir_not_exists">Рабочая папка не найдена:\n%1$s\nСоздать её или выбрать другую?</string>
     <string name="CANCEL_CMD">Отмена</string>
     <string name="change">Изменить</string>
@@ -42,7 +42,7 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Остановить этот MIDlet? Несохранённые изменения могут быть потеряны.</string>
     <string name="help">Помощь</string>
     <string name="help_message">&#8226; Включение фильтрации в некоторых случаях может значительно снизить производительность. Отключите её, если приложение работает слишком медленно.&lt;BR&gt;&#8226; Режим немедленной обработки обходит обычную очередь событий Java ME. Он может повысить отзывчивость, но способен вызвать непредсказуемое поведение.</string>
-    <string name="identity_filter">Быстрый (без фильтра)</string>
+    <string name="identity_filter">Нет (самый быстрый)</string>
     <string name="install">Установить</string>
     <string name="install_done">Приложение установлено.</string>
     <string name="install_jar_non_matched_jad">Это приложение отличается от описанного в JAD.\nИгнорировать JAD и всё равно установить приложение?</string>
@@ -58,7 +58,7 @@
     <string name="message_delete">Удалить это приложение, его настройки и сохранённые данные? Запись приложения также будет удалена из Библиотеки.</string>
     <string name="midlet_name"><b>Название:</b> </string>
     <string name="midlet_size"><b>Размер:</b> </string>
-    <string name="midlet_vendor"><b>Разработчик: </b></string>
+    <string name="midlet_vendor"><b>"Издатель: "</b></string>
     <string name="midlet_version"><b>Версия:</b> </string>
     <string name="more">Подробнее</string>
     <string name="msg_error_loading_shader">Шейдер не поддерживается. Используется шейдер по умолчанию.</string>
@@ -67,11 +67,11 @@
     <string name="msg_press_again_to_close">Нажмите ещё раз, чтобы закрыть</string>
     <string name="no_data_for_display">Нет приложений для отображения</string>
     <string name="not_saved_exists">Уже существует</string>
-    <string name="parallel_screen_redrawing">Параллельное обновление экрана</string>
+    <string name="parallel_screen_redrawing">Асинхронное обновление экрана</string>
     <string name="permission_request_failed">Приложению требуется разрешение на запись в хранилище.</string>
-    <string name="pref_app_sort_date">Дата</string>
+    <string name="pref_app_sort_date">Дата добавления</string>
     <string name="pref_app_sort_name">Имя</string>
-    <string name="pref_app_sort_vendor">Разработчик</string>
+    <string name="pref_app_sort_vendor">Издатель</string>
     <string name="pref_apps_view">Вид библиотеки</string>
     <string name="library_view_list">Список</string>
     <string name="library_view_grid">Сетка</string>
@@ -92,7 +92,7 @@
     <string name="library_show_list_description_summary">Показывать описание MIDlet под названием и версией.</string>
     <string name="library_enhanced_icons_title">Улучшенные значки</string>
     <string name="library_enhanced_icons_summary">Изменять размер и цвет значков, чтобы они выглядели более единообразно в Библиотеке.</string>
-    <string name="pref_audio_title">Аудио</string>
+    <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">Овал</string>
     <string name="pref_button_shape_rect">Прямоугольник</string>
     <string name="pref_button_shape_round">Скруглённый прямоугольник</string>
@@ -103,13 +103,13 @@
     <string name="pref_enable_actionbar_title">Показывать панель инструментов среды выполнения</string>
     <string name="pref_enable_statusbar_title">Показывать системную строку состояния</string>
     <string name="pref_encoding_title">Кодировка</string>
-    <string name="PREF_FILTER">Фильтр изображения</string>
+    <string name="PREF_FILTER">Линейная фильтрация</string>
     <string name="PREF_FONT_ANTI_ALIASING">Сглаживание</string>
     <string name="PREF_FONT_LARGE">Большой</string>
     <string name="PREF_FONT_MEDIUM">Средний</string>
     <string name="PREF_FONT_SIZE_IN_SP">Использовать масштаб шрифта Android</string>
     <string name="PREF_FONT_SMALL">Малый</string>
-    <string name="PREF_FORCE_FULLSCREEN">Использовать полноэкранный режим</string>
+    <string name="PREF_FORCE_FULLSCREEN">Запускать без панели команд</string>
     <string name="pref_graphics_hw_gles">Аппаратное ускорение (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Аппаратное ускорение (Surface)</string>
     <string name="pref_graphics_hw_view">Аппаратное ускорение (Window)</string>
@@ -121,7 +121,7 @@
     <string name="PREF_LIMIT_FPS">Ограничение частоты кадров</string>
     <string name="pref_map_keys">Назначения клавиш</string>
     <string name="pref_mascot_summary">Показывать сообщение при использовании Mascot Capsule 3D.</string>
-    <string name="pref_mascot_title">Обнаруживать Mascot Capsule 3D</string>
+    <string name="pref_mascot_title">Уведомление Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Ориентация экрана</string>
     <string name="pref_orientation_auto">Автоматически</string>
     <string name="pref_orientation_default">По умолчанию</string>
@@ -138,8 +138,8 @@
     <string name="pref_screen_scale_type">Масштабирование</string>
     <string name="pref_screen_scale_type_fill">Заполнить (без учёта пропорций)</string>
     <string name="pref_screen_scale_type_fit">Вписать</string>
-    <string name="pref_screen_scale_type_none">Как есть</string>
-    <string name="pref_screenshot_summary">Отключать масштабирование и фильтрацию для снимков экрана.</string>
+    <string name="pref_screen_scale_type_none">Вручную</string>
+    <string name="pref_screenshot_summary">Сохраняет кадр MIDlet в его виртуальном разрешении до масштабирования, линейной фильтрации и шейдера экрана.</string>
     <string name="pref_screenshot_title">Необработанный скриншот</string>
     <string name="PREF_SHADER_FILTER">Шейдер экрана</string>
     <string name="pref_skin_not_set">Не выбран</string>
@@ -151,7 +151,7 @@
     <string name="pref_theme_night">Тёмная</string>
     <string name="pref_theme_system">Следовать настройкам системы</string>
     <string name="pref_theme_title">Тема</string>
-    <string name="pref_title_emulation">Эмуляция</string>
+    <string name="pref_title_emulation">Жизненный цикл MIDlet</string>
     <string name="PREF_TOUCH_INPUT">Сенсорный ввод</string>
     <string name="PREF_UNIT_MS">мс</string>
     <string name="pref_vibration_title">Включить вибрацию</string>
@@ -218,7 +218,7 @@
     <string name="midlet_failure_recovery_message">MIDlet неожиданно остановился. Диагностическая информация сохранена локально. JL-Mod Plus можно продолжать использовать.</string>
     <string name="midlet_failure_recovery_message_named">«%1$s» неожиданно остановился. Диагностическая информация сохранена локально. JL-Mod Plus можно продолжать использовать.</string>
     <string name="crash_report_bundle_failed">Не удалось подготовить диагностический пакет.</string>
-    <string name="crash_report_locate_failed">Нет системного файлового менеджера, с помощью которого можно найти диагностический пакет.</string>
+    <string name="crash_report_locate_failed">Нет системного средства выбора файлов, с помощью которого можно найти диагностический пакет.</string>
     <string name="crash_report_bundle_cleanup_failed">Диагностический отчёт удалён, но JL-Mod Plus не удалось удалить созданный для него пакет.</string>
     <string name="crash_report_github_unavailable">Нет приложения, способного открыть форму создания обращения на GitHub.</string>
     <string name="crash_report_delete_failed">Не удалось полностью удалить отчёт.</string>
@@ -422,7 +422,7 @@
     <string name="pref_app_sort_descending">По убыванию</string>
     <string name="pref_enable_statusbar_summary">Оставлять системную строку состояния видимой. При включении область выреза дисплея отключается.</string>
     <string name="pref_language">Язык</string>
-    <string name="pref_skip_resume_call">Пропускать обратный вызов возобновления MIDlet</string>
+    <string name="pref_skip_resume_call">Пропускать startApp() при возобновлении</string>
     <string name="pref_soundbank_title">Банк звуков MIDI</string>
     <string name="config_destination_graphics">Экран</string>
     <string name="config_destination_audio">Аудио</string>
@@ -533,7 +533,7 @@
     </plurals>
     <string name="crash_report_bundle_preparing">Подготовка диагностического пакета…</string>
     <string name="crash_report_bundle_ready_title">Диагностический пакет готов</string>
-    <string name="crash_report_bundle_ready_message">%1$s\n\nСохранено в Загрузки → JL-Mod Plus Diagnostics.\n\nПеред отправкой отчёта GitHub попросит загрузить этот файл. Диагностический пакет будет опубликован вместе с вашим обращением.</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nСохранено в Загрузки → JL-Mod Plus Diagnostics.\n\nПрикрепите этот файл перед отправкой обращения на GitHub. Диагностический пакет станет общедоступным после прикрепления к обращению.</string>
     <string name="locate_bundle">Найти пакет</string>
     <string name="open_github">Открыть GitHub</string>
     <string name="crash_report_delete_title">Удалить диагностический отчёт?</string>
@@ -858,7 +858,7 @@
     <string name="config_help_parallel_redraw">Планирует вывод кадров асинхронно. Это может повысить производительность на некоторых устройствах.</string>
     <string name="config_help_fps_limit">Задаёт ограничение FPS при скорости эмуляции 1×. Фактический предел зависит от скорости эмуляции; 0 (Максимум) использует максимальную частоту обновления дисплея.</string>
     <string name="PREF_EMULATION_SPEED">Скорость эмуляции</string>
-    <string name="PREF_TIMING_MODE">Режим часов</string>
+    <string name="PREF_TIMING_MODE">Источник времени</string>
     <string name="config_timing_mode_full_guest">Время эмуляции</string>
     <string name="config_timing_mode_real_wall">Системное время</string>
     <string name="config_help_emulation_speed">Изменяет скорость часов MIDlet и поддерживаемые задержки. Аудио и интерфейс Android работают с обычной скоростью.</string>
@@ -949,7 +949,7 @@
     <string name="library_metadata_icon">Значок</string>
     <string name="library_metadata_change_icon">Изменить значок</string>
     <string name="library_metadata_name">Название</string>
-    <string name="library_metadata_vendor">Разработчик</string>
+    <string name="library_metadata_vendor">Издатель</string>
     <string name="library_metadata_description">Описание</string>
     <string name="library_metadata_reset_to_original">Восстановить исходное</string>
     <string name="library_metadata_save">Сохранить</string>
@@ -959,7 +959,7 @@
     <string name="library_reinstall_source_missing">Сохранённый JAR для переустановки недоступен.</string>
     <string name="library_action_select">Выбрать</string>
     <string name="perf_overlay_title">Оверлей производительности</string>
-    <string name="perf_overlay_help">Показывает выбранные показатели среды выполнения.</string>
+    <string name="perf_overlay_help">Показывает выбранные показатели производительности и диагностики поверх экрана MIDlet.</string>
     <string name="perf_overlay_preset">Предустановка оверлея</string>
     <string name="perf_overlay_preset_help">Примените предустановку или настройте набор показателей.</string>
     <string name="perf_overlay_minimal">Минимальный</string>
@@ -967,7 +967,7 @@
     <string name="perf_overlay_debug">Отладочный</string>
     <string name="perf_overlay_custom">Пользовательский</string>
     <string name="perf_overlay_parameters">Параметры оверлея</string>
-    <string name="perf_overlay_parameters_help">Выберите отображаемые параметры.</string>
+    <string name="perf_overlay_parameters_help">Выберите показатели. FPS считает кадры, полученные рендерером; GFPS — все публикации кадров гостевой системы.</string>
     <plurals name="perf_overlay_selected">
         <item quantity="one">Выбран %1$d параметр</item>
         <item quantity="few">Выбрано %1$d параметра</item>
@@ -987,19 +987,19 @@
     <string name="perf_overlay_group_queue">Ввод и очередь</string>
     <string name="perf_overlay_group_resources">Ресурсы</string>
     <string name="perf_overlay_group_runtime">Сведения о среде выполнения</string>
-    <string name="perf_overlay_fps">Кадров в секунду (FPS)</string>
+    <string name="perf_overlay_fps">Кадры рендерера в секунду (FPS)</string>
     <string name="perf_overlay_cap">Ограничение FPS (CAP)</string>
-    <string name="perf_overlay_speed">Скорость эмуляции (SPD)</string>
-    <string name="perf_overlay_interval">Интервал кадров (GFI)</string>
-    <string name="perf_overlay_p95">95-й процентиль интервала кадров (GP95)</string>
-    <string name="perf_overlay_max">Максимальный интервал кадров (GMAX)</string>
-    <string name="perf_overlay_coalesced">Объединённые кадры (COAL)</string>
+    <string name="perf_overlay_speed">Заданная скорость эмуляции (SPD)</string>
+    <string name="perf_overlay_interval">Интервал кадров гостевой системы (GFI)</string>
+    <string name="perf_overlay_p95">95-й процентиль интервала гостевой системы (GP95)</string>
+    <string name="perf_overlay_max">Максимальный интервал гостевой системы (GMAX)</string>
+    <string name="perf_overlay_coalesced">Кадры, заменённые до отрисовки (COAL)</string>
     <string name="perf_overlay_paint">Время рисования (PAINT)</string>
     <string name="perf_overlay_copy">Время копирования буфера (COPY)</string>
     <string name="perf_overlay_submit">Время отправки отрисовки (SUB)</string>
     <string name="perf_overlay_input_queue">Время в очереди ввода (INQ)</string>
     <string name="perf_overlay_frame_queue">Время в очереди кадров (FRQ)</string>
-    <string name="perf_overlay_cpu">Использование CPU (CPU)</string>
+    <string name="perf_overlay_cpu">Использование CPU процессом (CPU, в эквивалентах ядер)</string>
     <string name="perf_overlay_ram">Использование RAM (RAM)</string>
     <string name="perf_overlay_java">Использование кучи Java (JAVA)</string>
     <string name="perf_overlay_native">Использование нативной кучи (NATIVE)</string>
@@ -1025,7 +1025,7 @@
     <string name="pref_accent_pink">Розовый</string>
     <string name="runtime_invalid_intent">Недопустимый запрос запуска: путь к MIDlet отсутствует.</string>
     <string name="runtime_storage_in_use">Хранилище MIDlet уже используется другой средой выполнения.</string>
-    <string name="runtime_storage_unavailable">Не удалось зарезервировать хранилище MIDlet.</string>
+    <string name="runtime_storage_unavailable">Не удалось подготовить хранилище MIDlet.</string>
     <string name="runtime_no_midlets">В этом приложении не найдено MIDlet.</string>
     <string name="library_selection_checkbox_description">Выбрать %1$s</string>
     <string name="library_selection_checked">Выбрано</string>

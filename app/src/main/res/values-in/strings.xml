@@ -23,7 +23,7 @@
     <string name="action_reinstall">Instal ulang</string>
     <string name="action_settings">Pengaturan</string>
     <string name="message_reset_layout">Atur ulang tata letak kontrol virtual ke bawaan?</string>
-    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nOpsi emulator mungkin tidak dapat diakses.</string>
+    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nMenu runtime MIDlet mungkin tidak dapat diakses.</string>
     <string name="alert_msg_workdir_not_exists">Direktori kerja tidak ditemukan di:\n\'%1$s\'.\nBuat direktori tersebut atau pilih direktori lain?</string>
     <string name="CANCEL_CMD">Batal</string>
     <string name="change">Ubah</string>

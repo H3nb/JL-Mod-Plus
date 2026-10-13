@@ -569,4 +569,13 @@
         <item quantity="one">%1$d තෝරා ඇත</item>
         <item quantity="other">%1$d තෝරා ඇත</item>
     </plurals>
+    <string name="PREF_UNIT_MS">ms</string>
+    <string name="pref_audio_title">MIDI</string>
+    <string name="pref_app_sort_name">නම</string>
+    <string name="pref_app_sort_vendor">සැපයුම්කරු</string>
+    <string name="pref_orientation_auto">ස්වයංක්‍රීය</string>
+    <string name="pref_vk_type_custom">අභිරුචි</string>
+    <string name="perf_overlay_custom">අභිරුචි</string>
+    <string name="settings_section_profiles">පැතිකඩ</string>
+    <string name="crash_report_list_subtitle">%1$s · %2$s</string>
 </resources>

@@ -630,4 +630,16 @@
         <item quantity="one">%1$d таңдалған</item>
         <item quantity="other">%1$d таңдалған</item>
     </plurals>
+    <string name="PREF_FONT_LARGE">Үлкен</string>
+    <string name="PREF_FONT_MEDIUM">Орташа</string>
+    <string name="PREF_FONT_SMALL">Кіші</string>
+    <string name="PREF_HEIGHT">Биіктік</string>
+    <string name="PREF_WIDTH">Ені</string>
+    <string name="pref_app_sort_name">Атауы</string>
+    <string name="pref_audio_title">MIDI</string>
+    <string name="pref_app_sort_vendor">Жеткізуші</string>
+    <string name="pref_vk_type_custom">Арнайы</string>
+    <string name="perf_overlay_custom">Арнайы</string>
+    <string name="settings_section_profiles">Профильдер</string>
+    <string name="crash_report_list_subtitle">%1$s · %2$s</string>
 </resources>

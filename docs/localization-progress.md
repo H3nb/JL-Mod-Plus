@@ -65,14 +65,14 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 8,758 to **6,152** in the
-Memory Editor checkpoint (11,502 before installer, 18,070 before controls, and
-25,122 before the 12 October checkpoint).
-Twelve catalogs now cover all 977 resources: da, de, es, fi, fr, id, it, nl,
-pt, pt-BR, ru, sv. **Coverage does not establish full language-quality review.**
-Existing content outside the documented batches still needs review, including
-within those complete catalogs. No claim of whole-catalog linguistic
-certification is made.
+Missing localized declarations decreased from 6,152 to **2,111** in the
+settings/performance/runtime checkpoint (8,758 before Memory Editor, 11,502
+before installer, 18,070 before controls, and 25,122 before 12 October).
+Thirty-five catalogs cover all 977 resources; the four incomplete catalogs are
+Kazakh (401 missing), Odia (428), Santali (817), and Sinhala (465).
+**Resource presence does not establish language certification.** The remaining
+existing-language uncertainty is documented separately from missing declarations.
+Full app/UI verification and final CI are still pending.
 
 Santali remains a material blocker. Its earlier 215 unresolved batch entries require
 competent standard Santali Ol Chiki review; CLDR/script documentation does not
@@ -167,6 +167,84 @@ Accepted subsets do not certify the remaining technical or consequential prose.
 Every accepted change uses the existing hash-guarded plain-text batch applier;
 no catalog is regenerated and no scratch matrix or proposal is committed.
 
+## Settings, performance and runtime checkpoint
+
+The remaining 175 presentation/settings/performance identities and 51 runtime/
+diagnostics/miscellaneous identities were processed across all 39 catalogs. The
+combined 226-resource selection has four plurals. This checkpoint adds **4,041**
+declarations and revises **967** existing declarations relative to `14a23ef`:
+
+| Selection | Identities | Additions | Existing revisions |
+| --- | ---: | ---: | ---: |
+| Presentation, settings and performance | 175 | 2,908 | 908 |
+| Runtime, diagnostics and remaining copy | 51 | 1,133 | 59 |
+
+- Complete batch coverage and semantic/language review in 35 locales. Kazakh has
+  26 accepted/200 unresolved identities, Odia 25/201, Sinhala 9/217, and Santali
+  0/226. Reliable repeated labels and raw formatter displays do not certify
+  technical prose. Exact [settings/runtime gaps](localization-unresolved-settings-runtime.md)
+  comprise 710 missing and 134 existing declarations needing competent review.
+- Corrected widespread stale synchronous/parallel redraw labels to asynchronous
+  presentation, pixel/resolution wording to Android font scaling, forced-fullscreen
+  wording to startup without the command bar, and general Audio wording to MIDI.
+- Corrected virtual-controls versus keyboard terms, opacity versus transparency,
+  pressed/base/outline colors, key-code versus visual layout, added-date versus
+  other sorting dates, and backend/shape/default/manual distinctions. Retained
+  correct existing text and eight proposed case/spacing/synonym changes.
+- Raw screenshot summaries retain virtual resolution before scaling, linear
+  filtering and shader processing. Status-bar/cutout summaries retain reciprocal
+  side effects, compatible Canvas content and runtime-toolbar scope; resume labels
+  retain literal `startApp()` and do not imply skipping initial startup.
+- Performance labels distinguish renderer consumption, all MIDlet frame
+  publications and physical refresh; configured speed, frame interval percentiles/
+  maxima, input/frame queues, submission duration, core equivalents, heap usage
+  and thermal severity retain their actual measurement domains. Diagnostic
+  abbreviations remain unchanged. See [metric definitions](performance-overlay.md).
+- Diagnostic messages retain public exposure on attachment, attach-before-submit,
+  permanent local report/generated-bundle deletion, uploaded copies unaffected,
+  partial batch deletion and secondary cleanup after primary success. The real
+  `JL-Mod Plus Diagnostics` folder name remains literal in every accepted locale.
+- Runtime copy preserves another runtime's storage reservation, failed stop before
+  replacement, request/list/installation/storage distinctions, callback nesting,
+  locally saved diagnostic evidence, and continued app usability.
+- All new and revised language was read vertically and consequential messages
+  compared horizontally. Regional variants remain distinct. Existing English,
+  application code, localization tooling/tests, dependencies and screenshots are
+  unchanged; supported changes use the established applier and fresh file hashes.
+
+## Earlier complete-catalog quality extension
+
+The earlier common/core review covered 28 locales. Extended vertical and
+consequential review across all 257 earlier Library/core identities in the
+remaining eleven previously near-complete catalogs: da, de, es, fi, fr, it, nl,
+pt, pt-BR, ru and sv. This adds no declarations and makes **42** material
+revisions; all existing plural forms and correct earlier translations remain.
+
+- Corrected nine stale help messages that promised flicker repair and omitted
+  normal Java ME event-queue bypass and possible instability. Preserved the
+  literal HTML `<BR>` separator; it is escaped string text, not child markup.
+- Corrected virtual-controls reset scope, mapping-overlay close versus discarding
+  assignments, IME keyboard access, generic action/name-entry wording, French
+  license versus permission terms, untranslated German Create, and Danish folder
+  terminology. Included-data replacement, collection membership, deletion scope,
+  optional restore/recovery and update conditions received a separate reread.
+- Cross-feature comparison of the same `MIDlet-Vendor`/`source_vendor` value
+  found developer/seller labels. Corrected the Russian Library label in this
+  extension; five additional sort/descriptor/Library labels in Russian, Hindi,
+  Simplified Chinese and Traditional Chinese use already reviewed provider or
+  publisher terminology for the same field. Raw vendor values are unchanged.
+  The styled Russian descriptor label retains bold markup and trailing separation.
+- One existing Odia Library vendor label remains explicitly unaccepted pending
+  competent review, separately from the 226-resource gaps. No guessed replacement
+  was submitted. This is documented in the [metadata-field uncertainty](localization-unresolved-settings-runtime.md#additional-existing-metadata-field-uncertainty).
+
+The full checkpoint therefore adds **4,041** declarations and revises **1,014**
+existing declarations: 967 in the remaining feature selection, 42 in this
+quality extension, and five targeted cross-feature field labels. All canonical
+identities have now been processed through feature-group reviews, including the
+broader earlier-core pass for the eleven catalogs. This is textual semantic and
+language review, not independent native-speaker certification or visual approval.
+
 ## Earlier validation evidence
 
 - All 30 focused Python localization tests passed.
@@ -245,6 +323,30 @@ Full app build/tests/lint, representative visual verification, and final CI are
 pending. This intermediate resource checkpoint uses the user's explicit
 `[skip ci]` exception. Keep the PR Draft while material scope remains incomplete.
 
+## Settings/runtime checkpoint validation
+
+- Inventory: 977 canonical identities / 39 catalogs / 2,111 missing declarations;
+  35 catalogs have full presence. Remaining missing declarations are kk401,
+  or428, sat817 and si465. No duplicate identities, type mismatches, extra
+  resources, localized invariant overrides or clear string argument mismatches.
+- Changed string/plural forms preserve their argument/type contracts and locale
+  quantities; literal HTML separators, raw metadata and stable folder names remain.
+  Existing report-only formatter uncertainties are not declared resolved.
+- All 40 English/localized strings catalogs passed matching-AGP AAPT2 compilation
+  and a resource-only link. Compiled Russian descriptor text retains its bold
+  span/trailing space without visible quote wrappers.
+- Declaration-level diff confirms exactly 4,041 additions and 1,014 revisions,
+  selected identities and byte-for-byte unchanged English. Whitespace and document
+  links passed. Existing 30 passing localization-tool tests remain applicable:
+  scripts/tests and their inputs were unchanged, so this checkpoint uses targeted
+  checks on the new resource inputs without repeating those fixture tests.
+- No application code, tooling/tests, dependency/build/workflow files or screenshot
+  baselines changed. Scratch matrices/proposals/helpers/artifacts are uncommitted.
+
+Full app build/tests/lint, representative visual verification and final CI remain
+pending. This intermediate resource checkpoint uses the user's explicit `[skip ci]`
+exception. Keep the PR Draft while material scope remains incomplete.
+
 ## Exact next unfinished work
 
 The processed controls selection is:
@@ -271,11 +373,17 @@ The Memory Editor selection is 109 `memory_editor_` identities, complete in
 unresolved. Resolve its exact deferred keys when competent language judgment is
 available; preserve runtime identity, write/readback, undo conditions, partial
 operations, and arithmetic-sequence semantics.
-The next broad feature batch is display/graphics/audio/performance followed by
-runtime lifecycle/compatibility, permissions/errors, and uncaptured resources.
-Rebuild membership from the current inventory, exclude previously reviewed
-configuration/controls keys explicitly, and inspect current feature contracts and
-callers. Continue reviewing all existing translations vertically and horizontally.
-Re-export current inventory and matrices rather than using stale scratch proposals. Finish representative
-long-text/RTL/narrow UI checks and relevant final Android CI only when cumulative
-resources are ready. Do not merge without explicit user instruction.
+The presentation/settings selection covers `pref_`, `PREF_`, `perf_overlay_`,
+`settings_`, plus nine explicit graphics/screenshot labels, excluding earlier
+selected controls keys. The 51 runtime/diagnostic/miscellaneous identities were
+the exact remainder outside earlier groups. Canonical resource membership must
+still be rebuilt from current inventory before writes; prefix matching alone is
+not evidence of exhaustive language review.
+
+Next, resolve the documented missing and uncertain existing Kazakh/Odia/Sinhala/
+Santali cases when competent review is available, without counting guessed prose
+or English fallback. Check terminology across feature groups and complete
+representative long-text/RTL/narrow-screen/script rendering and relevant app
+build/tests/lint. Obtain one meaningful final CI validation of the final relevant
+resource state; the earlier CI success cannot validate these checkpoints. Keep
+the PR Draft and do not merge without explicit user instruction.
