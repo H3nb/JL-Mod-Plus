@@ -544,4 +544,174 @@
         <item quantity="other">%1$d eienskappe</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Pas die vertoonde grootte van 1% tot 1000% aan. By 100% gebruik die speletjie sy oorspronklike grootte; groter waardes kan buite die skerm strek.</string>
+    <string name="bulk_install_action_jar_only">Installeer slegs JAR</string>
+    <string name="bulk_install_action_separate_copy">Installeer as aparte kopie</string>
+    <string name="bulk_install_cancel">Kanselleer</string>
+    <string name="bulk_install_cancel_requested">Sal ná die huidige toepassing stop…</string>
+    <string name="bulk_install_cancelled">Grootmaatinstallasie gestop</string>
+    <string name="bulk_install_choose_files">Lêers</string>
+    <string name="bulk_install_choose_folder">Vouer</string>
+    <string name="bulk_install_clear">Maak keuse skoon</string>
+    <string name="bulk_install_close">Sluit</string>
+    <string name="bulk_install_complete">Grootmaatinstallasie voltooi</string>
+    <string name="bulk_install_empty">Geen ondersteunde toepassings is gevind nie.</string>
+    <string name="bulk_install_empty_filter">Geen speletjies wat ooreenstem nie.</string>
+    <string name="bulk_install_fatal">Grootmaatinstallasie gestop. Hersien die onvoltooide items voordat jy weer probeer.</string>
+    <string name="bulk_install_filter_all">Alles</string>
+    <string name="bulk_install_filter_review">Hersien</string>
+    <string name="bulk_install_filter_selected">Gekies</string>
+    <string name="bulk_install_install_count">Installeer %1$d</string>
+    <string name="bulk_install_installed_version">Geïnstalleer: %1$s</string>
+    <string name="bulk_install_library_changed">Die Biblioteek het ná hersiening verander. Sluit hierdie groep en kies die bronne weer.</string>
+    <string name="bulk_install_planning">Gaan gekose toepassings na…</string>
+    <string name="bulk_install_prepare_failed">Die gekose toepassings kon nie vir installasie voorberei word nie.</string>
+    <string name="bulk_install_reason_conflicting_jads">JAD-lêers met verskillende eienskappe verwys na dieselfde JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Hierdie bron dupliseer \'n ander bron in hierdie groep.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">Die JAD en JAR identifiseer verskillende toepassings.</string>
+    <string name="bulk_install_reason_jar_not_found">Die JAR waarna die JAD verwys, is nie gevind nie: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">MIDlet-Jar-URL ontbreek in die JAD.</string>
+    <string name="bulk_install_reason_missing_parent">Die JAD het geen ouervouer nie.</string>
+    <string name="bulk_install_reason_older_candidate">\'n Nuwer weergawe van hierdie toepassing is in dieselfde groep.</string>
+    <string name="bulk_install_reason_remote_jar">Grootmaatinstallasie kan nie afgeleë JAR-lêers aflaai nie.</string>
+    <string name="bulk_install_reason_source_error">Hierdie bron kon nie vir installasie voorberei word nie.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">Die JAD verwys na \'n JAR met \'n URI-skema wat nie ondersteun word nie: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Verskeie toepassingsvariante het dieselfde weergawe.</string>
+    <string name="bulk_install_recommended">Aanbeveel</string>
+    <string name="bulk_install_reinstall_source_missing">Die gestoorde JAR is nie vir herinstallasie beskikbaar nie.</string>
+    <string name="bulk_install_result_failed">Misluk</string>
+    <string name="bulk_install_result_installed">Geïnstalleer</string>
+    <string name="bulk_install_result_reinstalled">Weer geïnstalleer</string>
+    <string name="bulk_install_result_restored">Herstel</string>
+    <string name="bulk_install_result_skipped">Oorgeslaan</string>
+    <string name="bulk_install_result_updated">Bygewerk</string>
+    <string name="bulk_install_skipped_entries">Oorgeslane argiefinskrywings: %1$d</string>
+    <string name="bulk_install_source">Bron: %1$s</string>
+    <string name="bulk_install_source_changed">Die bronlêer het ná hersiening verander. Kies die lêers weer.</string>
+    <string name="bulk_install_source_unavailable">\'n Vereiste bronlêer is nie meer beskikbaar nie. Kies die lêers weer.</string>
+    <string name="bulk_install_status_ambiguous">Stem met verskeie geïnstalleerde toepassings ooreen</string>
+    <string name="bulk_install_status_conflict">Konflik in groep</string>
+    <string name="bulk_install_status_downgrade">Ouer weergawe</string>
+    <string name="bulk_install_status_duplicate">Duplikaat</string>
+    <string name="bulk_install_status_error">Ongeldige bron</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR stem nie ooreen nie</string>
+    <string name="bulk_install_status_new">Nuut</string>
+    <string name="bulk_install_status_older_batch">Ouer weergawe in groep</string>
+    <string name="bulk_install_status_reinstall">Dieselfde weergawe, moontlike variant</string>
+    <string name="bulk_install_status_remote">Afgeleë bron nie ondersteun nie</string>
+    <string name="bulk_install_status_same">Reeds geïnstalleer</string>
+    <string name="bulk_install_status_update">Opdatering</string>
+    <string name="bulk_install_target_unverified">Die herinstallasieteiken kon nie bevestig word nie. Sluit hierdie groep en kies die toepassing weer.</string>
+    <string name="bulk_install_title">Grootmaatinstallasie</string>
+    <string name="bulk_install_unreadable_archives">Onleesbare argiewe: %1$d</string>
+    <string name="converting_wait">Besig om JAR om te skakel…</string>
+    <string name="install">Installeer</string>
+    <string name="install_done">Toepassing geïnstalleer.</string>
+    <string name="install_done_with_warning">Toepassing met waarskuwings geïnstalleer.</string>
+    <string name="install_jar_non_matched_jad">Hierdie toepassing verskil van dié wat in die JAD beskryf word.\nIgnoreer die JAD en installeer in elk geval?</string>
+    <string name="installer_ambiguous">Verskeie geïnstalleerde toepassings stem met hierdie toepassing ooreen. Installeer \'n aparte kopie? Bestaande toepassings en hul data sal behou word.</string>
+    <string name="installer_cancel_pending">Sal by die volgende veilige punt stop…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProbleem: Java-klaslêer kon nie gelees word nie.\nAksie: Tydens omskakeling oorgeslaan.</string>
+    <string name="installer_copy_details">Kopieer besonderhede</string>
+    <string name="installer_error_message">Die gekose toepassing kon nie geïnstalleer word nie. Kies \'n geldige MIDlet-lêer en probeer weer.</string>
+    <string name="installer_existing_data_preserved">Bestaande instellings en gestoorde speldata sal behou word.</string>
+    <string name="installer_failed_conversion">Die toepassing kon nie omgeskakel word nie. Maak seker die lêer is volledig en word ondersteun, en probeer dan weer.</string>
+    <string name="installer_failed_download">Die toepassing kon nie afgelaai word nie. Gaan die verbinding en aflaaiskakel na en probeer dan weer.</string>
+    <string name="installer_failed_storage">Installasie kon nie voltooi word nie. Probeer weer.</string>
+    <string name="installer_hide_details">Versteek besonderhede</string>
+    <string name="installer_needs_recovery">Toepassingslêers is gestoor, maar die Biblioteek kon nie klaar bywerk nie. Verfris die Biblioteek voordat jy weer probeer.</string>
+    <string name="installer_not_processed">Nie verwerk nie</string>
+    <string name="installer_partial_restore">Toepassing geïnstalleer; data of instellings kon nie herstel word nie</string>
+    <string name="installer_refresh_library">Verfris Biblioteek</string>
+    <string name="installer_removed_leftovers">Toepassing verwyder; sommige instellings of gestoorde speldata kon nie uitgevee word nie.</string>
+    <string name="installer_retry_remaining">Hersien onvoltooide items</string>
+    <string name="installer_separate_copy">Installeer aparte kopie</string>
+    <string name="installer_show_details">Wys besonderhede</string>
+    <string name="installer_stage_download">Laai toepassing af…</string>
+    <string name="installer_stage_save">Stoor toepassing…</string>
+    <string name="installer_stage_wait">Wag vir \'n ander bewerking…</string>
+    <string name="installer_title">MIDlet-installeerder</string>
+    <string name="reconversion_done_with_warning">Versoenbaarheidsomskakeling met waarskuwings voltooi.</string>
+    <string name="reconversion_error">Die MIDlet kon nie outomaties omgeskakel word nie.\n\n%1$s</string>
+    <string name="reconversion_error_summary">Die MIDlet kon nie outomaties omgeskakel word nie.</string>
+    <string name="reconverting_wait">Hierdie MIDlet benodig \'n eenmalige versoenbaarheidsomskakeling voordat dit kan begin. Besig om om te skakel…</string>
+    <string name="reinstall">Hierdie toepassing is reeds geïnstalleer. Herinstalleer dit?</string>
+    <string name="reinstall_newest">Werk hierdie toepassing na weergawe %1$s by?\n\nTans geïnstalleer: %2$s</string>
+    <string name="reinstall_older">Vervang hierdie toepassing met weergawe %1$s?\n\nTans geïnstalleer: %2$s\nDie ouer weergawe werk moontlik nie korrek met bestaande data nie.</string>
+    <string name="warn_install_from_net">Die lêer sal van die internet afgelaai word.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d vereis hersiening</item>
+        <item quantity="other">%1$d vereis hersiening</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d misluk</item>
+        <item quantity="other">%1$d misluk</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d toepassing gevind</item>
+        <item quantity="other">%1$d toepassings gevind</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d geïnstalleer</item>
+        <item quantity="other">%1$d geïnstalleer</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">%1$d bykomende lêer is uitgelaat om die hersiening responsief te hou.</item>
+        <item quantity="other">%1$d bykomende lêers is uitgelaat om die hersiening responsief te hou.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d gereed</item>
+        <item quantity="other">%1$d gereed</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d geïnstalleerde toepassing stem met hierdie bron ooreen.</item>
+        <item quantity="other">%1$d geïnstalleerde toepassings stem met hierdie bron ooreen.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d gekose toepassing in die Biblioteek is nie meer beskikbaar nie.</item>
+        <item quantity="other">%1$d gekose toepassings in die Biblioteek is nie meer beskikbaar nie.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d weer geïnstalleer</item>
+        <item quantity="other">%1$d weer geïnstalleer</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d herstel</item>
+        <item quantity="other">%1$d herstel</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">%1$d toepassing uit %2$d verwerk</item>
+        <item quantity="other">%1$d toepassings uit %2$d verwerk</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d gekies</item>
+        <item quantity="other">%1$d gekies</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Reeds geïnstalleer of duplikaat: %1$d</item>
+        <item quantity="other">Reeds geïnstalleer of duplikate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d oorgeslaan</item>
+        <item quantity="other">%1$d oorgeslaan</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d bygewerk</item>
+        <item quantity="other">%1$d bygewerk</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d waarskuwing</item>
+        <item quantity="other">%1$d waarskuwings</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">%1$d bykomende omskakelingsprobleem word nie gewys nie.</item>
+        <item quantity="other">%1$d bykomende omskakelingsprobleme word nie gewys nie.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d Java-klaslêer is oorgeslaan omdat dit nie gelees kon word nie. Funksies wat dit gebruik, werk moontlik nie.</item>
+        <item quantity="other">%1$d Java-klaslêers is oorgeslaan omdat hulle nie gelees kon word nie. Funksies wat hulle gebruik, werk moontlik nie.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Naam: "</b></string>
+    <string name="midlet_size"><b>"Grootte: "</b></string>
+    <string name="midlet_vendor"><b>"Verskaffer: "</b></string>
+    <string name="midlet_version"><b>"Weergawe: "</b></string>
 </resources>

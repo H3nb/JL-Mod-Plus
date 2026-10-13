@@ -44,7 +44,7 @@
     <string name="message_delete">Bu uygulama, ayarları ve kayıt verileri silinsin mi? Kitaplık girdisi de kaldırılacaktır.</string>
     <string name="midlet_name"><b>İsim: </b></string>
     <string name="midlet_size"><b>Boyut: </b></string>
-    <string name="midlet_vendor"><b>Sahibi: </b></string>
+    <string name="midlet_vendor"><b>"Yayıncı: "</b></string>
     <string name="midlet_version"><b>Sürüm: </b></string>
     <string name="more">Diğer</string>
     <string name="no_data_for_display">Gösterilecek uygulama yok</string>
@@ -131,8 +131,8 @@
     <string name="pref_vk_type_phone_arrows">Telefon (oklar)</string>
     <string name="pref_wakelock_title">Ekranı açık tut</string>
     <string name="PREF_WIDTH">Genişlik</string>
-    <string name="reinstall">Uygulama zaten yüklü.\n\nYeniden yüklemek istiyor musunuz?\nTüm veriler kaydedilecek.</string>
-    <string name="reinstall_newest">Bu uygulama %1$s sürümüne güncellensin mi?\n\nŞu anda yüklü: %2$s\nTüm veriler kaydedilecek.</string>
+    <string name="reinstall">Bu uygulama zaten yüklü. Yeniden yüklensin mi?\nMevcut ayarlar ve kayıt verileri korunacak.</string>
+    <string name="reinstall_newest">Bu uygulama %1$s sürümüne güncellensin mi?\n\nŞu anda yüklü: %2$s\nMevcut ayarlar ve kayıt verileri korunacak.</string>
     <string name="reinstall_older">Bu uygulama %1$s sürümüyle değiştirilsin mi?\n\nŞu anda yüklü: %2$s\nEski sürüm, kayıtlı verilerle düzgün çalışmayabilir.</string>
     <string name="reset">Sıfırla</string>
     <string name="RESET_LAYOUT_CMD">Sanal kontrol düzenini sıfırla</string>
@@ -647,4 +647,162 @@
         <item quantity="other">%1$d özellik</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Görüntülenen boyutu %1 ile %1000 arasında ayarlar. %100\'de oyun özgün boyutunu kullanır; daha büyük değerler ekranın dışına taşabilir.</string>
+    <string name="bulk_install_action_jar_only">Yalnızca JAR yükle</string>
+    <string name="bulk_install_action_separate_copy">Ayrı kopya olarak yükle</string>
+    <string name="bulk_install_cancel">İptal</string>
+    <string name="bulk_install_cancel_requested">Geçerli uygulamadan sonra durduruluyor…</string>
+    <string name="bulk_install_cancelled">Toplu yükleme durduruldu</string>
+    <string name="bulk_install_choose_files">Dosyalar</string>
+    <string name="bulk_install_choose_folder">Klasör</string>
+    <string name="bulk_install_clear">Seçimi temizle</string>
+    <string name="bulk_install_close">Kapat</string>
+    <string name="bulk_install_complete">Toplu yükleme tamamlandı</string>
+    <string name="bulk_install_empty">Desteklenen uygulama bulunamadı.</string>
+    <string name="bulk_install_empty_filter">Eşleşen oyun yok.</string>
+    <string name="bulk_install_fatal">Toplu yükleme durduruldu. Tekrar denemeden önce tamamlanmayan öğeleri inceleyin.</string>
+    <string name="bulk_install_filter_all">Tümü</string>
+    <string name="bulk_install_filter_review">İncele</string>
+    <string name="bulk_install_filter_selected">Seçilenler</string>
+    <string name="bulk_install_install_count">%1$d yükle</string>
+    <string name="bulk_install_installed_version">Yüklü: %1$s</string>
+    <string name="bulk_install_library_changed">Kitaplık incelemeden sonra değişti. Bu grubu kapatıp kaynakları yeniden seçin.</string>
+    <string name="bulk_install_planning">Seçilen uygulamalar kontrol ediliyor…</string>
+    <string name="bulk_install_prepare_failed">Seçilen uygulamalar yükleme için hazırlanamadı.</string>
+    <string name="bulk_install_reason_conflicting_jads">Farklı özniteliklere sahip JAD dosyaları aynı JAR dosyasına başvuruyor.</string>
+    <string name="bulk_install_reason_duplicate_source">Bu kaynak, bu gruptaki başka bir kaynağın kopyası.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD ve JAR farklı uygulamaları tanımlıyor.</string>
+    <string name="bulk_install_reason_jar_not_found">JAD dosyasının başvurduğu JAR bulunamadı: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD dosyasında MIDlet-Jar-URL eksik.</string>
+    <string name="bulk_install_reason_missing_parent">JAD dosyasının üst dizini yok.</string>
+    <string name="bulk_install_reason_older_candidate">Bu uygulamanın daha yeni bir sürümü aynı grupta bulunuyor.</string>
+    <string name="bulk_install_reason_remote_jar">Toplu yükleme uzak JAR dosyalarını indiremez.</string>
+    <string name="bulk_install_reason_source_error">Bu kaynak yükleme için hazırlanamadı.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD, desteklenmeyen bir URI şemasıyla JAR dosyasına başvuruyor: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Birden fazla uygulama varyantı aynı sürüme sahip.</string>
+    <string name="bulk_install_recommended">Önerilen</string>
+    <string name="bulk_install_reinstall_source_missing">Kaydedilmiş JAR yeniden yükleme için kullanılamıyor.</string>
+    <string name="bulk_install_result_failed">Başarısız</string>
+    <string name="bulk_install_result_installed">Yüklendi</string>
+    <string name="bulk_install_result_reinstalled">Yeniden yüklendi</string>
+    <string name="bulk_install_result_restored">Geri yüklendi</string>
+    <string name="bulk_install_result_skipped">Atlandı</string>
+    <string name="bulk_install_result_updated">Güncellendi</string>
+    <string name="bulk_install_skipped_entries">Atlanan arşiv girdileri: %1$d</string>
+    <string name="bulk_install_source">Kaynak: %1$s</string>
+    <string name="bulk_install_source_changed">Kaynak dosya incelemeden sonra değişti. Dosyaları yeniden seçin.</string>
+    <string name="bulk_install_source_unavailable">Gerekli bir kaynak dosya artık kullanılamıyor. Dosyaları yeniden seçin.</string>
+    <string name="bulk_install_status_ambiguous">Birden fazla yüklü uygulamayla eşleşiyor</string>
+    <string name="bulk_install_status_conflict">Grup çakışması</string>
+    <string name="bulk_install_status_downgrade">Eski sürüm</string>
+    <string name="bulk_install_status_duplicate">Yinelenen</string>
+    <string name="bulk_install_status_error">Geçersiz kaynak</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR uyuşmazlığı</string>
+    <string name="bulk_install_status_new">Yeni</string>
+    <string name="bulk_install_status_older_batch">Gruptaki eski sürüm</string>
+    <string name="bulk_install_status_reinstall">Aynı sürüm, olası varyant</string>
+    <string name="bulk_install_status_remote">Uzak kaynak desteklenmiyor</string>
+    <string name="bulk_install_status_same">Zaten yüklü</string>
+    <string name="bulk_install_status_update">Güncelleme</string>
+    <string name="bulk_install_target_unverified">Yeniden yükleme hedefi doğrulanamadı. Bu grubu kapatıp uygulamayı yeniden seçin.</string>
+    <string name="bulk_install_title">Toplu yükleme</string>
+    <string name="bulk_install_unreadable_archives">Okunamayan arşivler: %1$d</string>
+    <string name="install_done_with_warning">Uygulama uyarılarla yüklendi.</string>
+    <string name="installer_ambiguous">Birden fazla yüklü uygulama bu uygulamayla eşleşiyor. Ayrı bir kopya yüklensin mi? Mevcut uygulamalar ve verileri korunacak.</string>
+    <string name="installer_cancel_pending">Bir sonraki güvenli noktada durduruluyor…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nSorun: Java sınıf dosyası okunamadı.\nİşlem: Dönüştürme sırasında atlandı.</string>
+    <string name="installer_copy_details">Ayrıntıları kopyala</string>
+    <string name="installer_error_message">Seçilen uygulama yüklenemedi. Geçerli bir MIDlet dosyası seçip tekrar deneyin.</string>
+    <string name="installer_existing_data_preserved">Mevcut ayarlar ve kayıt verileri korunacak.</string>
+    <string name="installer_failed_conversion">Uygulama dönüştürülemedi. Dosyanın eksiksiz ve destekleniyor olduğunu kontrol edip tekrar deneyin.</string>
+    <string name="installer_failed_download">Uygulama indirilemedi. Bağlantıyı ve indirme bağlantısını kontrol edip tekrar deneyin.</string>
+    <string name="installer_failed_storage">Yükleme tamamlanamadı. Tekrar deneyin.</string>
+    <string name="installer_hide_details">Ayrıntıları gizle</string>
+    <string name="installer_needs_recovery">Uygulama dosyaları kaydedildi, ancak Kitaplık güncellemesi tamamlanamadı. Tekrar denemeden önce Kitaplığı yenileyin.</string>
+    <string name="installer_not_processed">İşlenmedi</string>
+    <string name="installer_partial_restore">Uygulama yüklendi; veriler veya ayarlar geri yüklenemedi</string>
+    <string name="installer_refresh_library">Kitaplığı yenile</string>
+    <string name="installer_removed_leftovers">Uygulama kaldırıldı; bazı ayarlar veya kayıt verileri silinemedi.</string>
+    <string name="installer_retry_remaining">Tamamlanmayan öğeleri incele</string>
+    <string name="installer_separate_copy">Ayrı kopya yükle</string>
+    <string name="installer_show_details">Ayrıntıları göster</string>
+    <string name="installer_stage_download">Uygulama indiriliyor…</string>
+    <string name="installer_stage_save">Uygulama kaydediliyor…</string>
+    <string name="installer_stage_wait">Başka bir işlem bekleniyor…</string>
+    <string name="installer_title">MIDlet yükleyicisi</string>
+    <string name="reconversion_done_with_warning">Uyumluluk dönüştürmesi uyarılarla tamamlandı.</string>
+    <string name="reconversion_error">MIDlet otomatik olarak dönüştürülemedi.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet otomatik olarak dönüştürülemedi.</string>
+    <string name="reconverting_wait">Bu MIDlet\'in başlatılmadan önce bir defalık uyumluluk dönüştürmesine ihtiyacı var. Dönüştürülüyor…</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">İnceleme gerekiyor: %1$d</item>
+        <item quantity="other">İnceleme gerekiyor: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Başarısız: %1$d</item>
+        <item quantity="other">Başarısız: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d uygulama bulundu</item>
+        <item quantity="other">%1$d uygulama bulundu</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Yüklendi: %1$d</item>
+        <item quantity="other">Yüklendi: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">İncelemenin hızlı yanıt vermesi için %1$d ek dosya dışarıda bırakıldı.</item>
+        <item quantity="other">İncelemenin hızlı yanıt vermesi için %1$d ek dosya dışarıda bırakıldı.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Hazır: %1$d</item>
+        <item quantity="other">Hazır: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d yüklü uygulama bu kaynakla eşleşiyor.</item>
+        <item quantity="other">%1$d yüklü uygulama bu kaynakla eşleşiyor.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">Kitaplıktan seçilen %1$d uygulama artık kullanılamıyor.</item>
+        <item quantity="other">Kitaplıktan seçilen %1$d uygulama artık kullanılamıyor.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Yeniden yüklendi: %1$d</item>
+        <item quantity="other">Yeniden yüklendi: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Geri yüklendi: %1$d</item>
+        <item quantity="other">Geri yüklendi: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">%2$d uygulamadan %1$d işlendi</item>
+        <item quantity="other">%2$d uygulamadan %1$d işlendi</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Seçildi: %1$d</item>
+        <item quantity="other">Seçildi: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Zaten yüklü veya yinelenen: %1$d</item>
+        <item quantity="other">Zaten yüklü veya yinelenen: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Atlandı: %1$d</item>
+        <item quantity="other">Atlandı: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Güncellendi: %1$d</item>
+        <item quantity="other">Güncellendi: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d uyarı</item>
+        <item quantity="other">%1$d uyarı</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">%1$d ek dönüştürme sorunu gösterilmiyor.</item>
+        <item quantity="other">%1$d ek dönüştürme sorunu gösterilmiyor.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d Java sınıf dosyası okunamadığı için atlandı. Bu dosyayı kullanan özellikler çalışmayabilir.</item>
+        <item quantity="other">%1$d Java sınıf dosyası okunamadığı için atlandı. Bunları kullanan özellikler çalışmayabilir.</item>
+    </plurals>
 </resources>

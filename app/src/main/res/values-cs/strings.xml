@@ -661,4 +661,198 @@
         <item quantity="other">%1$d vlastností</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Upraví velikost zobrazení od 1% do 1000%. Při 100% se hra zobrazí v původní velikosti; vyšší hodnoty mohou přesáhnout obrazovku.</string>
+    <string name="bulk_install_action_jar_only">Nainstalovat pouze JAR</string>
+    <string name="bulk_install_action_separate_copy">Nainstalovat jako samostatnou kopii</string>
+    <string name="bulk_install_cancel">Zrušit</string>
+    <string name="bulk_install_cancel_requested">Zastavování po aktuální aplikaci…</string>
+    <string name="bulk_install_cancelled">Hromadná instalace zastavena</string>
+    <string name="bulk_install_choose_files">Soubory</string>
+    <string name="bulk_install_choose_folder">Složka</string>
+    <string name="bulk_install_clear">Zrušit výběr</string>
+    <string name="bulk_install_close">Zavřít</string>
+    <string name="bulk_install_complete">Hromadná instalace dokončena</string>
+    <string name="bulk_install_empty">Nebyly nalezeny žádné podporované aplikace.</string>
+    <string name="bulk_install_empty_filter">Žádné odpovídající hry.</string>
+    <string name="bulk_install_fatal">Hromadná instalace zastavena. Před dalším pokusem zkontrolujte nedokončené položky.</string>
+    <string name="bulk_install_filter_all">Všechny</string>
+    <string name="bulk_install_filter_review">Ke kontrole</string>
+    <string name="bulk_install_filter_selected">Vybrané</string>
+    <string name="bulk_install_install_count">Nainstalovat %1$d</string>
+    <string name="bulk_install_installed_version">Nainstalovaná verze: %1$s</string>
+    <string name="bulk_install_library_changed">Knihovna se po kontrole změnila. Zavřete tuto dávku a znovu vyberte zdroje.</string>
+    <string name="bulk_install_planning">Kontrola vybraných aplikací…</string>
+    <string name="bulk_install_prepare_failed">Vybrané aplikace se nepodařilo připravit k instalaci.</string>
+    <string name="bulk_install_reason_conflicting_jads">Soubory JAD s různými atributy odkazují na stejný JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Tento zdroj je duplicitou jiného zdroje v této dávce.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD a JAR označují různé aplikace.</string>
+    <string name="bulk_install_reason_jar_not_found">JAR, na který odkazuje JAD, nebyl nalezen: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">V JAD chybí MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">JAD nemá nadřazenou složku.</string>
+    <string name="bulk_install_reason_older_candidate">Novější verze této aplikace je ve stejné dávce.</string>
+    <string name="bulk_install_reason_remote_jar">Hromadná instalace nemůže stahovat vzdálené soubory JAR.</string>
+    <string name="bulk_install_reason_source_error">Tento zdroj se nepodařilo připravit k instalaci.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD odkazuje na JAR pomocí nepodporovaného schématu URI: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Více variant aplikace má stejnou verzi.</string>
+    <string name="bulk_install_recommended">Doporučené</string>
+    <string name="bulk_install_reinstall_source_missing">Uložený JAR není dostupný pro přeinstalaci.</string>
+    <string name="bulk_install_result_failed">Neúspěšné</string>
+    <string name="bulk_install_result_installed">Nainstalováno</string>
+    <string name="bulk_install_result_reinstalled">Přeinstalováno</string>
+    <string name="bulk_install_result_restored">Obnoveno</string>
+    <string name="bulk_install_result_skipped">Přeskočeno</string>
+    <string name="bulk_install_result_updated">Aktualizováno</string>
+    <string name="bulk_install_skipped_entries">Přeskočené položky archivů: %1$d</string>
+    <string name="bulk_install_source">Zdroj: %1$s</string>
+    <string name="bulk_install_source_changed">Zdrojový soubor se po kontrole změnil. Znovu vyberte soubory.</string>
+    <string name="bulk_install_source_unavailable">Požadovaný zdrojový soubor již není dostupný. Znovu vyberte soubory.</string>
+    <string name="bulk_install_status_ambiguous">Odpovídá více nainstalovaným aplikacím</string>
+    <string name="bulk_install_status_conflict">Konflikt v dávce</string>
+    <string name="bulk_install_status_downgrade">Starší verze</string>
+    <string name="bulk_install_status_duplicate">Duplicita</string>
+    <string name="bulk_install_status_error">Neplatný zdroj</string>
+    <string name="bulk_install_status_mismatch">Neshoda JAD a JAR</string>
+    <string name="bulk_install_status_new">Nová</string>
+    <string name="bulk_install_status_older_batch">Starší verze v dávce</string>
+    <string name="bulk_install_status_reinstall">Stejná verze, možná varianta</string>
+    <string name="bulk_install_status_remote">Vzdálený zdroj není podporován</string>
+    <string name="bulk_install_status_same">Již nainstalováno</string>
+    <string name="bulk_install_status_update">Aktualizace</string>
+    <string name="bulk_install_target_unverified">Cíl přeinstalace se nepodařilo ověřit. Zavřete tuto dávku a znovu vyberte aplikaci.</string>
+    <string name="bulk_install_title">Hromadná instalace</string>
+    <string name="bulk_install_unreadable_archives">Nečitelné archivy: %1$d</string>
+    <string name="install_done_with_warning">Aplikace nainstalována s varováními.</string>
+    <string name="installer_ambiguous">Této aplikaci odpovídá několik nainstalovaných aplikací. Nainstalovat samostatnou kopii? Stávající aplikace a jejich data zůstanou zachována.</string>
+    <string name="installer_cancel_pending">Zastavování v nejbližším bezpečném bodě…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProblém: soubor třídy Java nebylo možné přečíst.\nAkce: přeskočeno během převodu.</string>
+    <string name="installer_copy_details">Kopírovat podrobnosti</string>
+    <string name="installer_error_message">Vybranou aplikaci se nepodařilo nainstalovat. Vyberte platný soubor MIDletu a zkuste to znovu.</string>
+    <string name="installer_existing_data_preserved">Stávající nastavení a uložená herní data zůstanou zachována.</string>
+    <string name="installer_failed_conversion">Aplikaci se nepodařilo převést. Ověřte, že je soubor úplný a podporovaný, a zkuste to znovu.</string>
+    <string name="installer_failed_download">Aplikaci se nepodařilo stáhnout. Zkontrolujte připojení a odkaz ke stažení a zkuste to znovu.</string>
+    <string name="installer_failed_storage">Instalaci se nepodařilo dokončit. Zkuste to znovu.</string>
+    <string name="installer_hide_details">Skrýt podrobnosti</string>
+    <string name="installer_needs_recovery">Soubory aplikace byly uloženy, ale aktualizaci Knihovny se nepodařilo dokončit. Před dalším pokusem obnovte Knihovnu.</string>
+    <string name="installer_not_processed">Nezpracováno</string>
+    <string name="installer_partial_restore">Aplikace nainstalována; data nebo nastavení se nepodařilo obnovit</string>
+    <string name="installer_refresh_library">Obnovit Knihovnu</string>
+    <string name="installer_removed_leftovers">Aplikace odstraněna; některá nastavení nebo uložená herní data se nepodařilo smazat.</string>
+    <string name="installer_retry_remaining">Zkontrolovat nedokončené položky</string>
+    <string name="installer_separate_copy">Nainstalovat samostatnou kopii</string>
+    <string name="installer_show_details">Zobrazit podrobnosti</string>
+    <string name="installer_stage_download">Stahování aplikace…</string>
+    <string name="installer_stage_save">Ukládání aplikace…</string>
+    <string name="installer_stage_wait">Čekání na jinou operaci…</string>
+    <string name="installer_title">Instalátor MIDletů</string>
+    <string name="reconversion_done_with_warning">Převod pro kompatibilitu dokončen s varováními.</string>
+    <string name="reconversion_error">MIDlet se nepodařilo automaticky převést.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet se nepodařilo automaticky převést.</string>
+    <string name="reconverting_wait">Tento MIDlet vyžaduje před spuštěním jednorázový převod pro kompatibilitu. Probíhá převod…</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">Ke kontrole: %1$d</item>
+        <item quantity="few">Ke kontrole: %1$d</item>
+        <item quantity="many">Ke kontrole: %1$d</item>
+        <item quantity="other">Ke kontrole: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Neúspěšné: %1$d</item>
+        <item quantity="few">Neúspěšné: %1$d</item>
+        <item quantity="many">Neúspěšné: %1$d</item>
+        <item quantity="other">Neúspěšné: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Nalezena %1$d aplikace</item>
+        <item quantity="few">Nalezeny %1$d aplikace</item>
+        <item quantity="many">Nalezeno %1$d aplikace</item>
+        <item quantity="other">Nalezeno %1$d aplikací</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Nainstalované: %1$d</item>
+        <item quantity="few">Nainstalované: %1$d</item>
+        <item quantity="many">Nainstalované: %1$d</item>
+        <item quantity="other">Nainstalované: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Další %1$d soubor byl vynechán, aby kontrola zůstala svižná.</item>
+        <item quantity="few">Další %1$d soubory byly vynechány, aby kontrola zůstala svižná.</item>
+        <item quantity="many">Dalších %1$d souboru bylo vynecháno, aby kontrola zůstala svižná.</item>
+        <item quantity="other">Dalších %1$d souborů bylo vynecháno, aby kontrola zůstala svižná.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Připravené: %1$d</item>
+        <item quantity="few">Připravené: %1$d</item>
+        <item quantity="many">Připravené: %1$d</item>
+        <item quantity="other">Připravené: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">Tomuto zdroji odpovídá %1$d nainstalovaná aplikace.</item>
+        <item quantity="few">Tomuto zdroji odpovídají %1$d nainstalované aplikace.</item>
+        <item quantity="many">Tomuto zdroji odpovídá %1$d nainstalované aplikace.</item>
+        <item quantity="other">Tomuto zdroji odpovídá %1$d nainstalovaných aplikací.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d vybraná aplikace z Knihovny již není dostupná.</item>
+        <item quantity="few">%1$d vybrané aplikace z Knihovny již nejsou dostupné.</item>
+        <item quantity="many">%1$d vybrané aplikace z Knihovny již není dostupné.</item>
+        <item quantity="other">%1$d vybraných aplikací z Knihovny již není dostupných.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Přeinstalované: %1$d</item>
+        <item quantity="few">Přeinstalované: %1$d</item>
+        <item quantity="many">Přeinstalované: %1$d</item>
+        <item quantity="other">Přeinstalované: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Obnovené: %1$d</item>
+        <item quantity="few">Obnovené: %1$d</item>
+        <item quantity="many">Obnovené: %1$d</item>
+        <item quantity="other">Obnovené: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Zpracována %1$d aplikace z %2$d</item>
+        <item quantity="few">Zpracovány %1$d aplikace z %2$d</item>
+        <item quantity="many">Zpracováno %1$d aplikace z %2$d</item>
+        <item quantity="other">Zpracováno %1$d aplikací z %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Vybrané: %1$d</item>
+        <item quantity="few">Vybrané: %1$d</item>
+        <item quantity="many">Vybrané: %1$d</item>
+        <item quantity="other">Vybrané: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Již nainstalované nebo duplicitní: %1$d</item>
+        <item quantity="few">Již nainstalované nebo duplicitní: %1$d</item>
+        <item quantity="many">Již nainstalované nebo duplicitní: %1$d</item>
+        <item quantity="other">Již nainstalované nebo duplicitní: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Přeskočené: %1$d</item>
+        <item quantity="few">Přeskočené: %1$d</item>
+        <item quantity="many">Přeskočené: %1$d</item>
+        <item quantity="other">Přeskočené: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Aktualizované: %1$d</item>
+        <item quantity="few">Aktualizované: %1$d</item>
+        <item quantity="many">Aktualizované: %1$d</item>
+        <item quantity="other">Aktualizované: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">Varování: %1$d</item>
+        <item quantity="few">Varování: %1$d</item>
+        <item quantity="many">Varování: %1$d</item>
+        <item quantity="other">Varování: %1$d</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Další %1$d problém s převodem není zobrazen.</item>
+        <item quantity="few">Další %1$d problémy s převodem nejsou zobrazeny.</item>
+        <item quantity="many">Dalších %1$d problému s převodem není zobrazeno.</item>
+        <item quantity="other">Dalších %1$d problémů s převodem není zobrazeno.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d soubor třídy Java byl přeskočen, protože jej nebylo možné přečíst. Funkce, které jej používají, nemusí fungovat.</item>
+        <item quantity="few">%1$d soubory tříd Java byly přeskočeny, protože je nebylo možné přečíst. Funkce, které je používají, nemusí fungovat.</item>
+        <item quantity="many">%1$d souboru tříd Java bylo přeskočeno, protože je nebylo možné přečíst. Funkce, které je používají, nemusí fungovat.</item>
+        <item quantity="other">%1$d souborů tříd Java bylo přeskočeno, protože je nebylo možné přečíst. Funkce, které je používají, nemusí fungovat.</item>
+    </plurals>
 </resources>

@@ -9,7 +9,7 @@
     <string name="CANCEL_CMD">취소</string>
     <string name="close">닫기</string>
     <string name="CONFIRMATION_REQUIRED">확인이 필요함</string>
-    <string name="converting_wait">Jar 변환 중…</string>
+    <string name="converting_wait">JAR 변환 중…</string>
     <string name="create_apps_dir_failed">다음 경로에 작업 디렉터리를 준비하지 못했습니다:\n%1$s\n다른 디렉터리를 선택하세요.</string>
     <string name="default_label">%1$s (기본)</string>
     <string name="edit">편집</string>
@@ -614,4 +614,155 @@
         <item quantity="other">속성 %1$d개</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">표시 크기를 1%에서 1000%까지 조정합니다. 100%에서는 게임이 원래 크기로 표시되며, 값이 더 크면 화면을 벗어날 수 있습니다.</string>
+    <string name="bulk_install_action_jar_only">JAR만 설치</string>
+    <string name="bulk_install_action_separate_copy">별도 사본으로 설치</string>
+    <string name="bulk_install_cancel">취소</string>
+    <string name="bulk_install_cancel_requested">현재 앱 처리 후 중지합니다…</string>
+    <string name="bulk_install_cancelled">일괄 설치 중지됨</string>
+    <string name="bulk_install_choose_files">파일</string>
+    <string name="bulk_install_choose_folder">폴더</string>
+    <string name="bulk_install_clear">선택 지우기</string>
+    <string name="bulk_install_close">닫기</string>
+    <string name="bulk_install_complete">일괄 설치 완료</string>
+    <string name="bulk_install_empty">지원되는 앱을 찾을 수 없습니다.</string>
+    <string name="bulk_install_empty_filter">일치하는 게임이 없습니다.</string>
+    <string name="bulk_install_fatal">일괄 설치가 중지되었습니다. 다시 시도하기 전에 완료되지 않은 항목을 검토하세요.</string>
+    <string name="bulk_install_filter_all">전체</string>
+    <string name="bulk_install_filter_review">검토</string>
+    <string name="bulk_install_filter_selected">선택됨</string>
+    <string name="bulk_install_install_count">%1$d개 설치</string>
+    <string name="bulk_install_installed_version">설치됨: %1$s</string>
+    <string name="bulk_install_library_changed">검토 후 라이브러리가 변경되었습니다. 이 일괄 작업을 닫고 원본을 다시 선택하세요.</string>
+    <string name="bulk_install_planning">선택한 앱 확인 중…</string>
+    <string name="bulk_install_prepare_failed">선택한 앱의 설치를 준비할 수 없습니다.</string>
+    <string name="bulk_install_reason_conflicting_jads">속성이 다른 JAD 파일이 같은 JAR를 참조합니다.</string>
+    <string name="bulk_install_reason_duplicate_source">이 원본은 이 일괄 작업의 다른 원본과 중복됩니다.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD와 JAR가 서로 다른 앱을 나타냅니다.</string>
+    <string name="bulk_install_reason_jar_not_found">JAD에서 참조하는 JAR를 찾을 수 없습니다: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD에 MIDlet-Jar-URL이 없습니다.</string>
+    <string name="bulk_install_reason_missing_parent">JAD에 상위 디렉터리가 없습니다.</string>
+    <string name="bulk_install_reason_older_candidate">같은 일괄 작업에 이 앱의 더 최신 버전이 있습니다.</string>
+    <string name="bulk_install_reason_remote_jar">일괄 설치에서는 원격 JAR 파일을 다운로드할 수 없습니다.</string>
+    <string name="bulk_install_reason_source_error">이 원본의 설치를 준비할 수 없습니다.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD에서 지원되지 않는 URI 스킴으로 JAR를 참조합니다: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">여러 앱 변형의 버전이 같습니다.</string>
+    <string name="bulk_install_recommended">권장</string>
+    <string name="bulk_install_reinstall_source_missing">저장된 JAR를 재설치에 사용할 수 없습니다.</string>
+    <string name="bulk_install_result_failed">실패</string>
+    <string name="bulk_install_result_installed">설치됨</string>
+    <string name="bulk_install_result_reinstalled">재설치됨</string>
+    <string name="bulk_install_result_restored">복원됨</string>
+    <string name="bulk_install_result_skipped">건너뜀</string>
+    <string name="bulk_install_result_updated">업데이트됨</string>
+    <string name="bulk_install_skipped_entries">건너뛴 압축 파일 항목: %1$d개</string>
+    <string name="bulk_install_source">원본: %1$s</string>
+    <string name="bulk_install_source_changed">검토 후 원본 파일이 변경되었습니다. 파일을 다시 선택하세요.</string>
+    <string name="bulk_install_source_unavailable">필요한 원본 파일을 더 이상 사용할 수 없습니다. 파일을 다시 선택하세요.</string>
+    <string name="bulk_install_status_ambiguous">설치된 여러 앱과 일치</string>
+    <string name="bulk_install_status_conflict">일괄 작업 내 충돌</string>
+    <string name="bulk_install_status_downgrade">이전 버전</string>
+    <string name="bulk_install_status_duplicate">중복</string>
+    <string name="bulk_install_status_error">잘못된 원본</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR 불일치</string>
+    <string name="bulk_install_status_new">새 앱</string>
+    <string name="bulk_install_status_older_batch">일괄 작업의 이전 버전</string>
+    <string name="bulk_install_status_reinstall">같은 버전, 변형일 수 있음</string>
+    <string name="bulk_install_status_remote">원격 원본 지원 안 됨</string>
+    <string name="bulk_install_status_same">이미 설치됨</string>
+    <string name="bulk_install_status_update">업데이트</string>
+    <string name="bulk_install_target_unverified">재설치 대상을 확인할 수 없습니다. 이 일괄 작업을 닫고 앱을 다시 선택하세요.</string>
+    <string name="bulk_install_title">일괄 설치</string>
+    <string name="bulk_install_unreadable_archives">읽을 수 없는 압축 파일: %1$d개</string>
+    <string name="install">설치</string>
+    <string name="install_done">앱이 설치되었습니다.</string>
+    <string name="install_done_with_warning">앱이 설치되었지만 경고가 있습니다.</string>
+    <string name="install_jar_non_matched_jad">이 앱은 JAD에 설명된 앱과 다릅니다.\nJAD를 무시하고 설치할까요?</string>
+    <string name="installer_ambiguous">설치된 여러 앱이 이 앱과 일치합니다. 별도 사본을 설치할까요? 기존 앱과 데이터는 유지됩니다.</string>
+    <string name="installer_cancel_pending">다음 안전한 시점에 중지합니다…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\n문제: Java 클래스 파일을 읽을 수 없습니다.\n처리: 변환 중 건너뛰었습니다.</string>
+    <string name="installer_copy_details">세부 정보 복사</string>
+    <string name="installer_error_message">선택한 앱을 설치할 수 없습니다. 올바른 MIDlet 파일을 선택하고 다시 시도하세요.</string>
+    <string name="installer_existing_data_preserved">기존 설정과 저장 데이터는 유지됩니다.</string>
+    <string name="installer_failed_conversion">앱을 변환할 수 없습니다. 파일이 완전하고 지원되는 형식인지 확인한 후 다시 시도하세요.</string>
+    <string name="installer_failed_download">앱을 다운로드할 수 없습니다. 연결과 다운로드 링크를 확인한 후 다시 시도하세요.</string>
+    <string name="installer_failed_storage">설치를 완료할 수 없습니다. 다시 시도하세요.</string>
+    <string name="installer_hide_details">세부 정보 숨기기</string>
+    <string name="installer_needs_recovery">앱 파일은 저장되었지만 라이브러리 업데이트를 완료할 수 없습니다. 다시 시도하기 전에 라이브러리를 새로고침하세요.</string>
+    <string name="installer_not_processed">처리되지 않음</string>
+    <string name="installer_partial_restore">앱은 설치됨; 데이터 또는 설정을 복원할 수 없음</string>
+    <string name="installer_refresh_library">라이브러리 새로고침</string>
+    <string name="installer_removed_leftovers">앱이 제거되었지만 일부 설정 또는 저장 데이터를 삭제할 수 없습니다.</string>
+    <string name="installer_retry_remaining">완료되지 않은 항목 검토</string>
+    <string name="installer_separate_copy">별도 사본 설치</string>
+    <string name="installer_show_details">세부 정보 표시</string>
+    <string name="installer_stage_download">앱 다운로드 중…</string>
+    <string name="installer_stage_save">앱 저장 중…</string>
+    <string name="installer_stage_wait">다른 작업 대기 중…</string>
+    <string name="installer_title">MIDlet 설치 프로그램</string>
+    <string name="reconversion_done_with_warning">호환성 변환이 완료되었지만 경고가 있습니다.</string>
+    <string name="reconversion_error">MIDlet을 자동으로 변환할 수 없습니다.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet을 자동으로 변환할 수 없습니다.</string>
+    <string name="reconverting_wait">이 MIDlet을 시작하려면 한 번의 호환성 변환이 필요합니다. 변환 중…</string>
+    <string name="reinstall">이 앱은 이미 설치되어 있습니다. 재설치할까요?</string>
+    <string name="reinstall_newest">이 앱을 버전 %1$s(으)로 업데이트할까요?\n\n현재 설치된 버전: %2$s</string>
+    <string name="reinstall_older">이 앱을 버전 %1$s(으)로 대체할까요?\n\n현재 설치된 버전: %2$s\n이전 버전은 기존 데이터로 올바르게 작동하지 않을 수 있습니다.</string>
+    <string name="warn_install_from_net">인터넷에서 파일을 다운로드합니다.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other">%1$d개 검토 필요</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">%1$d개 실패</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">앱 %1$d개 발견</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">%1$d개 설치됨</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">검토 화면의 응답성을 유지하기 위해 추가 파일 %1$d개를 검토 대상에서 제외했습니다.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other">%1$d개 준비됨</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">설치된 앱 %1$d개가 이 원본과 일치합니다.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">선택한 라이브러리 앱 %1$d개를 더 이상 사용할 수 없습니다.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">%1$d개 재설치됨</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">%1$d개 복원됨</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="other">앱 %2$d개 중 %1$d개 처리됨</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">%1$d개 선택됨</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">이미 설치됨 또는 중복: %1$d개</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">%1$d개 건너뜀</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">%1$d개 업데이트됨</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other">경고 %1$d개</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">추가 변환 문제 %1$d개가 표시되지 않았습니다.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">Java 클래스 파일 %1$d개를 읽을 수 없어 건너뛰었습니다. 해당 파일을 사용하는 기능이 작동하지 않을 수 있습니다.</item>
+    </plurals>
+    <string name="midlet_name"><b>"이름: "</b></string>
+    <string name="midlet_size"><b>"크기: "</b></string>
+    <string name="midlet_vendor"><b>"공급업체: "</b></string>
+    <string name="midlet_version"><b>"버전: "</b></string>
 </resources>

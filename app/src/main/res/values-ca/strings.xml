@@ -549,4 +549,192 @@
         <item quantity="other">%1$d propietats</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Ajusta la mida mostrada de l\'1% al 1000%. Al 100%, el joc fa servir la mida original; els valors més grans poden sobresortir de la pantalla.</string>
+    <string name="bulk_install_action_jar_only">Instal·la només el JAR</string>
+    <string name="bulk_install_action_separate_copy">Instal·la com a còpia separada</string>
+    <string name="bulk_install_cancel">Cancel·la</string>
+    <string name="bulk_install_cancel_requested">S\'aturarà després de l\'aplicació actual…</string>
+    <string name="bulk_install_cancelled">S\'ha aturat la instal·lació massiva</string>
+    <string name="bulk_install_choose_files">Fitxers</string>
+    <string name="bulk_install_choose_folder">Carpeta</string>
+    <string name="bulk_install_clear">Esborra la selecció</string>
+    <string name="bulk_install_close">Tanca</string>
+    <string name="bulk_install_complete">S\'ha completat la instal·lació massiva</string>
+    <string name="bulk_install_empty">No s\'ha trobat cap aplicació compatible.</string>
+    <string name="bulk_install_empty_filter">No hi ha cap joc que coincideixi.</string>
+    <string name="bulk_install_fatal">S\'ha aturat la instal·lació massiva. Reviseu els elements pendents abans de tornar-ho a provar.</string>
+    <string name="bulk_install_filter_all">Totes</string>
+    <string name="bulk_install_filter_review">Revisió</string>
+    <string name="bulk_install_filter_selected">Seleccionades</string>
+    <string name="bulk_install_install_count">Instal·la %1$d</string>
+    <string name="bulk_install_installed_version">Instal·lada: %1$s</string>
+    <string name="bulk_install_library_changed">La Biblioteca ha canviat després de la revisió. Tanqueu aquest lot i torneu a seleccionar els orígens.</string>
+    <string name="bulk_install_planning">S\'estan comprovant les aplicacions seleccionades…</string>
+    <string name="bulk_install_prepare_failed">No s\'han pogut preparar les aplicacions seleccionades per a la instal·lació.</string>
+    <string name="bulk_install_reason_conflicting_jads">Hi ha fitxers JAD amb atributs diferents que fan referència al mateix JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Aquest origen duplica un altre origen d\'aquest lot.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">El JAD i el JAR identifiquen aplicacions diferents.</string>
+    <string name="bulk_install_reason_jar_not_found">No s\'ha trobat el JAR al qual fa referència el JAD: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">Falta MIDlet-Jar-URL al JAD.</string>
+    <string name="bulk_install_reason_missing_parent">El JAD no té cap directori pare.</string>
+    <string name="bulk_install_reason_older_candidate">Hi ha una versió més nova d\'aquesta aplicació en el mateix lot.</string>
+    <string name="bulk_install_reason_remote_jar">La instal·lació massiva no pot baixar fitxers JAR remots.</string>
+    <string name="bulk_install_reason_source_error">No s\'ha pogut preparar aquest origen per a la instal·lació.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">El JAD fa referència a un JAR amb un esquema d\'URI no compatible: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Hi ha diverses variants d\'aplicació amb la mateixa versió.</string>
+    <string name="bulk_install_recommended">Recomanades</string>
+    <string name="bulk_install_reinstall_source_missing">El JAR desat no està disponible per a la reinstal·lació.</string>
+    <string name="bulk_install_result_failed">Ha fallat</string>
+    <string name="bulk_install_result_installed">Instal·lada</string>
+    <string name="bulk_install_result_reinstalled">Reinstal·lada</string>
+    <string name="bulk_install_result_restored">Restaurada</string>
+    <string name="bulk_install_result_skipped">Omesa</string>
+    <string name="bulk_install_result_updated">Actualitzada</string>
+    <string name="bulk_install_skipped_entries">Entrades d\'arxiu omeses: %1$d</string>
+    <string name="bulk_install_source">Origen: %1$s</string>
+    <string name="bulk_install_source_changed">El fitxer d\'origen ha canviat després de la revisió. Torneu a seleccionar els fitxers.</string>
+    <string name="bulk_install_source_unavailable">Un fitxer d\'origen necessari ja no està disponible. Torneu a seleccionar els fitxers.</string>
+    <string name="bulk_install_status_ambiguous">Coincideix amb diverses aplicacions instal·lades</string>
+    <string name="bulk_install_status_conflict">Conflicte dins del lot</string>
+    <string name="bulk_install_status_downgrade">Versió anterior</string>
+    <string name="bulk_install_status_duplicate">Duplicada</string>
+    <string name="bulk_install_status_error">Origen no vàlid</string>
+    <string name="bulk_install_status_mismatch">Discrepància entre JAD i JAR</string>
+    <string name="bulk_install_status_new">Nova</string>
+    <string name="bulk_install_status_older_batch">Versió anterior dins del lot</string>
+    <string name="bulk_install_status_reinstall">Mateixa versió, possible variant</string>
+    <string name="bulk_install_status_remote">Origen remot no compatible</string>
+    <string name="bulk_install_status_same">Ja instal·lada</string>
+    <string name="bulk_install_status_update">Actualització</string>
+    <string name="bulk_install_target_unverified">No s\'ha pogut verificar la destinació de la reinstal·lació. Tanqueu aquest lot i torneu a seleccionar l\'aplicació.</string>
+    <string name="bulk_install_title">Instal·lació massiva</string>
+    <string name="bulk_install_unreadable_archives">Arxius que no es poden llegir: %1$d</string>
+    <string name="converting_wait">S\'està convertint el JAR…</string>
+    <string name="install">Instal·la</string>
+    <string name="install_done">S\'ha instal·lat l\'aplicació.</string>
+    <string name="install_done_with_warning">S\'ha instal·lat l\'aplicació amb advertiments.</string>
+    <string name="install_jar_non_matched_jad">Aquesta aplicació és diferent de la descrita al JAD.\nVoleu ignorar el JAD i instal·lar-la igualment?</string>
+    <string name="installer_ambiguous">Diverses aplicacions instal·lades coincideixen amb aquesta aplicació. Voleu instal·lar-ne una còpia separada? Es conservaran les aplicacions existents i les seves dades.</string>
+    <string name="installer_cancel_pending">S\'aturarà al següent punt segur…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProblema: no s\'ha pogut llegir el fitxer de classe Java.\nAcció: s\'ha omès durant la conversió.</string>
+    <string name="installer_copy_details">Copia els detalls</string>
+    <string name="installer_error_message">No s\'ha pogut instal·lar l\'aplicació seleccionada. Trieu un fitxer MIDlet vàlid i torneu-ho a provar.</string>
+    <string name="installer_existing_data_preserved">Es conservaran la configuració existent i les dades de les partides desades.</string>
+    <string name="installer_failed_conversion">No s\'ha pogut convertir l\'aplicació. Comproveu que el fitxer sigui complet i compatible i torneu-ho a provar.</string>
+    <string name="installer_failed_download">No s\'ha pogut baixar l\'aplicació. Comproveu la connexió i l\'enllaç de baixada i torneu-ho a provar.</string>
+    <string name="installer_failed_storage">No s\'ha pogut completar la instal·lació. Torneu-ho a provar.</string>
+    <string name="installer_hide_details">Amaga els detalls</string>
+    <string name="installer_needs_recovery">S\'han desat els fitxers de l\'aplicació, però la Biblioteca no ha pogut acabar d\'actualitzar-se. Actualitzeu la Biblioteca abans de tornar-ho a provar.</string>
+    <string name="installer_not_processed">No processada</string>
+    <string name="installer_partial_restore">Aplicació instal·lada; no s\'han pogut restaurar les dades o la configuració</string>
+    <string name="installer_refresh_library">Actualitza la Biblioteca</string>
+    <string name="installer_removed_leftovers">S\'ha eliminat l\'aplicació; no s\'han pogut suprimir algunes dades de partides desades o de configuració.</string>
+    <string name="installer_retry_remaining">Revisa els elements pendents</string>
+    <string name="installer_separate_copy">Instal·la una còpia separada</string>
+    <string name="installer_show_details">Mostra els detalls</string>
+    <string name="installer_stage_download">S\'està baixant l\'aplicació…</string>
+    <string name="installer_stage_save">S\'està desant l\'aplicació…</string>
+    <string name="installer_stage_wait">S\'està esperant una altra operació…</string>
+    <string name="installer_title">Instal·lador de MIDlets</string>
+    <string name="reconversion_done_with_warning">S\'ha completat la conversió de compatibilitat amb advertiments.</string>
+    <string name="reconversion_error">No s\'ha pogut convertir automàticament el MIDlet.\n\n%1$s</string>
+    <string name="reconversion_error_summary">No s\'ha pogut convertir automàticament el MIDlet.</string>
+    <string name="reconverting_wait">Aquest MIDlet necessita una conversió de compatibilitat que només es fa una vegada abans de poder iniciar-se. S\'està convertint…</string>
+    <string name="reinstall">Aquesta aplicació ja està instal·lada. Voleu reinstal·lar-la?</string>
+    <string name="reinstall_newest">Voleu actualitzar aquesta aplicació a la versió %1$s?\n\nVersió instal·lada: %2$s</string>
+    <string name="reinstall_older">Voleu substituir aquesta aplicació per la versió %1$s?\n\nVersió instal·lada: %2$s\nLa versió anterior pot no funcionar correctament amb les dades existents.</string>
+    <string name="warn_install_from_net">El fitxer es baixarà d\'internet.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d necessita revisió</item>
+        <item quantity="many">%1$d necessiten revisió</item>
+        <item quantity="other">%1$d necessiten revisió</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d ha fallat</item>
+        <item quantity="many">%1$d han fallat</item>
+        <item quantity="other">%1$d han fallat</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">S\'ha trobat %1$d aplicació</item>
+        <item quantity="many">S\'han trobat %1$d aplicacions</item>
+        <item quantity="other">S\'han trobat %1$d aplicacions</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d instal·lada</item>
+        <item quantity="many">%1$d instal·lades</item>
+        <item quantity="other">%1$d instal·lades</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">S\'ha omès %1$d fitxer addicional per mantenir la revisió àgil.</item>
+        <item quantity="many">S\'han omès %1$d fitxers addicionals per mantenir la revisió àgil.</item>
+        <item quantity="other">S\'han omès %1$d fitxers addicionals per mantenir la revisió àgil.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d preparada</item>
+        <item quantity="many">%1$d preparades</item>
+        <item quantity="other">%1$d preparades</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d aplicació instal·lada coincideix amb aquest origen.</item>
+        <item quantity="many">%1$d aplicacions instal·lades coincideixen amb aquest origen.</item>
+        <item quantity="other">%1$d aplicacions instal·lades coincideixen amb aquest origen.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d aplicació seleccionada de la Biblioteca ja no està disponible.</item>
+        <item quantity="many">%1$d aplicacions seleccionades de la Biblioteca ja no estan disponibles.</item>
+        <item quantity="other">%1$d aplicacions seleccionades de la Biblioteca ja no estan disponibles.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d reinstal·lada</item>
+        <item quantity="many">%1$d reinstal·lades</item>
+        <item quantity="other">%1$d reinstal·lades</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d restaurada</item>
+        <item quantity="many">%1$d restaurades</item>
+        <item quantity="other">%1$d restaurades</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">S\'ha processat %1$d aplicació de %2$d</item>
+        <item quantity="many">S\'han processat %1$d aplicacions de %2$d</item>
+        <item quantity="other">S\'han processat %1$d aplicacions de %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d seleccionada</item>
+        <item quantity="many">%1$d seleccionades</item>
+        <item quantity="other">%1$d seleccionades</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Ja instal·lada o duplicada: %1$d</item>
+        <item quantity="many">Ja instal·lades o duplicades: %1$d</item>
+        <item quantity="other">Ja instal·lades o duplicades: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d omesa</item>
+        <item quantity="many">%1$d omeses</item>
+        <item quantity="other">%1$d omeses</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d actualitzada</item>
+        <item quantity="many">%1$d actualitzades</item>
+        <item quantity="other">%1$d actualitzades</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d advertiment</item>
+        <item quantity="many">%1$d advertiments</item>
+        <item quantity="other">%1$d advertiments</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">No es mostra %1$d problema addicional de conversió.</item>
+        <item quantity="many">No es mostren %1$d problemes addicionals de conversió.</item>
+        <item quantity="other">No es mostren %1$d problemes addicionals de conversió.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">S\'ha omès %1$d fitxer de classe Java perquè no s\'ha pogut llegir. Les funcions que el fan servir poden no funcionar.</item>
+        <item quantity="many">S\'han omès %1$d fitxers de classe Java perquè no s\'han pogut llegir. Les funcions que els fan servir poden no funcionar.</item>
+        <item quantity="other">S\'han omès %1$d fitxers de classe Java perquè no s\'han pogut llegir. Les funcions que els fan servir poden no funcionar.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Nom: "</b></string>
+    <string name="midlet_size"><b>"Mida: "</b></string>
+    <string name="midlet_vendor"><b>"Proveïdor: "</b></string>
+    <string name="midlet_version"><b>"Versió: "</b></string>
 </resources>

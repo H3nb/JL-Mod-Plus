@@ -637,7 +637,7 @@
     <string name="bulk_install_planning">A verificar aplicações selecionadas…</string>
     <string name="bulk_install_empty">Não foram encontradas aplicações suportadas.</string>
     <string name="bulk_install_recommended">Recomendado</string>
-    <string name="bulk_install_clear">Limpar</string>
+    <string name="bulk_install_clear">Limpar seleção</string>
     <string name="bulk_install_install_count">Instalar %1$d</string>
     <string name="bulk_install_cancel">Cancelar</string>
     <string name="bulk_install_close">Fechar</string>
@@ -662,8 +662,8 @@
     <string name="bulk_install_status_update">Atualização</string>
     <string name="bulk_install_status_downgrade">Versão anterior</string>
     <string name="bulk_install_status_same">Já instalada</string>
-    <string name="bulk_install_status_reinstall">Variante / reinstalação</string>
-    <string name="bulk_install_status_ambiguous">Várias correspondências instaladas</string>
+    <string name="bulk_install_status_reinstall">Mesma versão, possível variante</string>
+    <string name="bulk_install_status_ambiguous">Corresponde a várias aplicações instaladas</string>
     <string name="bulk_install_status_mismatch">Incompatibilidade JAD/JAR</string>
     <string name="bulk_install_status_duplicate">Duplicado</string>
     <string name="bulk_install_status_older_batch">Candidato mais antigo do lote</string>
@@ -738,7 +738,7 @@
     <string name="config_help_emulation_speed">Altera a velocidade do relógio do MIDlet e os atrasos suportados. O áudio e a UI do Android permanecem normais.</string>
     <string name="config_help_timing_mode">Escolhe se o MIDlet usa o tempo de emulação ou o tempo do sistema. Os atrasos relativos continuam a acompanhar a velocidade de emulação.</string>
     <string name="config_help_timing_unavailable">As definições de tempo não estão disponíveis para esta instalação do MIDlet. Reinstale ou reconverta o MIDlet para as ativar.</string>
-    <string name="reconverting_wait">Este MIDlet necessita de uma conversão de compatibilidade única antes de iniciar. Aguarde…</string>
+    <string name="reconverting_wait">Este MIDlet necessita de uma conversão de compatibilidade única antes de iniciar. A converter…</string>
     <string name="reconversion_error">Não foi possível converter o MIDlet automaticamente.\n\n%1$s</string>
     <string name="config_help_generic_color">Define a cor deste elemento visual.</string>
     <string name="config_help_encoding">Escolhe a codificação de caracteres comunicada como microedition.encoding.</string>
@@ -980,7 +980,7 @@
     <string name="bulk_install_reason_remote_jar">A instalação em lote não pode transferir ficheiros JAR remotos.</string>
     <string name="bulk_install_reason_missing_jar_url">No JAD falta MIDlet-Jar-URL.</string>
     <string name="bulk_install_reason_unsupported_uri_scheme">O JAD faz referência a um JAR através de um esquema URI não suportado: %1$s.</string>
-    <string name="bulk_install_reason_missing_parent">O JAD não tem diretório principal.</string>
+    <string name="bulk_install_reason_missing_parent">O JAD não tem diretório pai.</string>
     <string name="bulk_install_reason_jar_not_found">O JAR referenciado pelo JAD não foi encontrado: %1$s.</string>
     <string name="bulk_install_reason_duplicate_source">Esta origem duplica outra origem neste lote.</string>
     <string name="bulk_install_reason_version_conflict">Várias variantes da aplicação são comparadas como a mesma versão.</string>

@@ -13,7 +13,7 @@
     <string name="choose">ବାଛନ୍ତୁ</string>
     <string name="close">ବନ୍ଦ କରନ୍ତୁ</string>
     <string name="cmd_menu">ମେନ୍ୟୁ</string>
-    <string name="converting_wait">JAR କୁ ରୂପାନ୍ତର କରିବା…</string>
+    <string name="converting_wait">JAR ରୂପାନ୍ତର ହେଉଛି…</string>
     <string name="create">ସୃଷ୍ଟି କରନ୍ତୁ</string>
     <string name="create_apps_dir_failed">ଏହି ସ୍ଥାନରେ କାର୍ଯ୍ୟ ଡିରେକ୍ଟୋରି ପ୍ରସ୍ତୁତ କରାଯାଇପାରିଲା ନାହିଁ:\n%1$s\nଅନ୍ୟ ଏକ ଡିରେକ୍ଟୋରି ବାଛନ୍ତୁ।</string>
     <string name="default_label">%1$s (ଡିଫଲ୍ଟ)</string>
@@ -33,7 +33,7 @@
     <string name="message_delete">ଏହି ଆପ୍, ଏହାର ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ବିଲୋପ କରିବେ? ଏହା ଲାଇବ୍ରେରିରୁ ଏହାର ଏଣ୍ଟ୍ରି ମଧ୍ୟ ହଟାଇବ।</string>
     <string name="midlet_name"><b>ନାମ: </b></string>
     <string name="midlet_size"><b>ଆକାର: </b></string>
-    <string name="midlet_vendor"><b>ବିକ୍ରେତା: </b></string>
+    <string name="midlet_vendor"><b>"ପ୍ରକାଶକ: "</b></string>
     <string name="midlet_version"><b>ସଂସ୍କରଣ: </b></string>
     <string name="more">ଅଧିକ</string>
     <string name="no_data_for_display">ଦେଖାଇବା ପାଇଁ କୌଣସି ଆପ୍ ନାହିଁ</string>
@@ -467,5 +467,100 @@
     <plurals name="config_system_properties_value">
         <item quantity="one">%1$dଟି ପ୍ରପର୍ଟି</item>
         <item quantity="other">%1$dଟି ପ୍ରପର୍ଟି</item>
+    </plurals>
+    <string name="bulk_install_action_jar_only">କେବଳ JAR ସଂସ୍ଥାପନ କରନ୍ତୁ</string>
+    <string name="bulk_install_action_separate_copy">ଅଲଗା କପି ଭାବେ ସଂସ୍ଥାପନ କରନ୍ତୁ</string>
+    <string name="bulk_install_cancel">ବାତିଲ୍ କରନ୍ତୁ</string>
+    <string name="bulk_install_choose_files">ଫାଇଲ୍</string>
+    <string name="bulk_install_choose_folder">ଫୋଲ୍ଡର୍</string>
+    <string name="bulk_install_clear">ଚୟନ ହଟାନ୍ତୁ</string>
+    <string name="bulk_install_close">ବନ୍ଦ କରନ୍ତୁ</string>
+    <string name="bulk_install_empty">କୌଣସି ସମର୍ଥିତ ଆପ୍ ମିଳିଲା ନାହିଁ।</string>
+    <string name="bulk_install_empty_filter">କୌଣସି ମେଳ ଖାଉଥିବା ଗେମ୍ ନାହିଁ।</string>
+    <string name="bulk_install_filter_all">ସମସ୍ତ</string>
+    <string name="bulk_install_filter_review">ସମୀକ୍ଷା</string>
+    <string name="bulk_install_filter_selected">ଚୟନିତ</string>
+    <string name="bulk_install_install_count">%1$dଟି ସଂସ୍ଥାପନ କରନ୍ତୁ</string>
+    <string name="bulk_install_installed_version">ସଂସ୍ଥାପିତ: %1$s</string>
+    <string name="bulk_install_recommended">ସୁପାରିସ କରାଯାଇଛି</string>
+    <string name="bulk_install_result_failed">ବିଫଳ</string>
+    <string name="bulk_install_result_installed">ସଂସ୍ଥାପିତ ହୋଇଛି</string>
+    <string name="bulk_install_result_reinstalled">ପୁନଃସଂସ୍ଥାପିତ ହୋଇଛି</string>
+    <string name="bulk_install_result_restored">ପୁନରୁଦ୍ଧାର ହୋଇଛି</string>
+    <string name="bulk_install_result_skipped">ଛାଡ଼ି ଦିଆଯାଇଛି</string>
+    <string name="bulk_install_result_updated">ଅପଡେଟ୍ ହୋଇଛି</string>
+    <string name="bulk_install_skipped_entries">ଛାଡ଼ି ଦିଆଯାଇଥିବା ଆର୍କାଇଭ୍ ଏଣ୍ଟ୍ରି: %1$d</string>
+    <string name="bulk_install_source">ଉତ୍ସ: %1$s</string>
+    <string name="bulk_install_status_conflict">ବ୍ୟାଚ୍‌ରେ ବିରୋଧ</string>
+    <string name="bulk_install_status_downgrade">ପୁରୁଣା ସଂସ୍କରଣ</string>
+    <string name="bulk_install_status_duplicate">ନକଲ</string>
+    <string name="bulk_install_status_error">ଅବୈଧ ଉତ୍ସ</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR ଅମେଳ</string>
+    <string name="bulk_install_status_new">ନୂଆ</string>
+    <string name="bulk_install_status_older_batch">ବ୍ୟାଚ୍‌ରେ ପୁରୁଣା ସଂସ୍କରଣ</string>
+    <string name="bulk_install_status_remote">ଦୂରବର୍ତ୍ତୀ ଉତ୍ସ ସମର୍ଥିତ ନୁହେଁ</string>
+    <string name="bulk_install_status_same">ପୂର୍ବରୁ ସଂସ୍ଥାପିତ</string>
+    <string name="bulk_install_status_update">ଅପଡେଟ୍</string>
+    <string name="bulk_install_title">ଏକାଥରେ ସଂସ୍ଥାପନ</string>
+    <string name="bulk_install_unreadable_archives">ପଢ଼ି ହେଉନଥିବା ଆର୍କାଇଭ୍: %1$d</string>
+    <string name="install_done_with_warning">ଆପ୍ ଚେତାବନୀ ସହିତ ସଂସ୍ଥାପିତ ହୋଇଛି।</string>
+    <string name="installer_copy_details">ବିବରଣୀ କପି କରନ୍ତୁ</string>
+    <string name="installer_hide_details">ବିବରଣୀ ଲୁଚାନ୍ତୁ</string>
+    <string name="installer_not_processed">ପ୍ରକ୍ରିୟାକରଣ ହୋଇନାହିଁ</string>
+    <string name="installer_refresh_library">ଲାଇବ୍ରେରୀ ରିଫ୍ରେସ୍ କରନ୍ତୁ</string>
+    <string name="installer_retry_remaining">ଅସମାପ୍ତ ଆଇଟମ୍ ସମୀକ୍ଷା କରନ୍ତୁ</string>
+    <string name="installer_separate_copy">ଅଲଗା କପି ସଂସ୍ଥାପନ କରନ୍ତୁ</string>
+    <string name="installer_show_details">ବିବରଣୀ ଦେଖାନ୍ତୁ</string>
+    <string name="installer_stage_download">ଆପ୍ ଡାଉନଲୋଡ୍ ହେଉଛି…</string>
+    <string name="installer_stage_save">ଆପ୍ ସଞ୍ଚୟ ହେଉଛି…</string>
+    <string name="installer_stage_wait">ଅନ୍ୟ ଏକ କାର୍ଯ୍ୟ ପାଇଁ ଅପେକ୍ଷା…</string>
+    <string name="installer_title">MIDlet ସଂସ୍ଥାପକ</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$dଟିର ସମୀକ୍ଷା ଆବଶ୍ୟକ</item>
+        <item quantity="other">%1$dଟିର ସମୀକ୍ଷା ଆବଶ୍ୟକ</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$dଟି ବିଫଳ</item>
+        <item quantity="other">%1$dଟି ବିଫଳ</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$dଟି ଆପ୍ ମିଳିଛି</item>
+        <item quantity="other">%1$dଟି ଆପ୍ ମିଳିଛି</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$dଟି ସଂସ୍ଥାପିତ ହୋଇଛି</item>
+        <item quantity="other">%1$dଟି ସଂସ୍ଥାପିତ ହୋଇଛି</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$dଟି ପ୍ରସ୍ତୁତ</item>
+        <item quantity="other">%1$dଟି ପ୍ରସ୍ତୁତ</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$dଟି ପୁନଃସଂସ୍ଥାପିତ ହୋଇଛି</item>
+        <item quantity="other">%1$dଟି ପୁନଃସଂସ୍ଥାପିତ ହୋଇଛି</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$dଟି ପୁନରୁଦ୍ଧାର ହୋଇଛି</item>
+        <item quantity="other">%1$dଟି ପୁନରୁଦ୍ଧାର ହୋଇଛି</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$dଟି ଚୟନିତ</item>
+        <item quantity="other">%1$dଟି ଚୟନିତ</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">ପୂର୍ବରୁ ସଂସ୍ଥାପିତ କିମ୍ବା ନକଲ: %1$d</item>
+        <item quantity="other">ପୂର୍ବରୁ ସଂସ୍ଥାପିତ କିମ୍ବା ନକଲ: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$dଟି ଛାଡ଼ି ଦିଆଯାଇଛି</item>
+        <item quantity="other">%1$dଟି ଛାଡ଼ି ଦିଆଯାଇଛି</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$dଟି ଅପଡେଟ୍ ହୋଇଛି</item>
+        <item quantity="other">%1$dଟି ଅପଡେଟ୍ ହୋଇଛି</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$dଟି ଚେତାବନୀ</item>
+        <item quantity="other">%1$dଟି ଚେତାବନୀ</item>
     </plurals>
 </resources>

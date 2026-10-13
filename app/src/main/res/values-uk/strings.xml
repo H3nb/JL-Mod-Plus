@@ -32,7 +32,7 @@
     <string name="identity_filter">Швидко (без фільтрів)</string>
     <string name="install">встановити</string>
     <string name="install_done">Додаток успішно встановлено!</string>
-    <string name="install_jar_non_matched_jad">Цей додаток відрізняється від описаної в JAD.\nІгнорувати JAD і все одно встановити?</string>
+    <string name="install_jar_non_matched_jad">Цей додаток відрізняється від описаного в JAD.\nІгнорувати JAD і все одно встановити?</string>
     <string name="invalid_resolution_not_saved">Недійсні розміри: не збережено!</string>
     <string name="layout_edit_finish">Завершити режим редагування</string>
     <string name="layout_edit_finished">Режим редагування завершено</string>
@@ -659,4 +659,198 @@
         <item quantity="other">%1$d властивості</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Змінює відображуваний розмір від 1% до 1000%. За 100% гра використовує початковий розмір; більші значення можуть виходити за межі екрана.</string>
+    <string name="bulk_install_action_jar_only">Установити лише JAR</string>
+    <string name="bulk_install_action_separate_copy">Установити як окрему копію</string>
+    <string name="bulk_install_cancel">Скасувати</string>
+    <string name="bulk_install_cancel_requested">Зупинення після поточного застосунку…</string>
+    <string name="bulk_install_cancelled">Пакетне встановлення зупинено</string>
+    <string name="bulk_install_choose_files">Файли</string>
+    <string name="bulk_install_choose_folder">Папка</string>
+    <string name="bulk_install_clear">Очистити вибір</string>
+    <string name="bulk_install_close">Закрити</string>
+    <string name="bulk_install_complete">Пакетне встановлення завершено</string>
+    <string name="bulk_install_empty">Підтримуваних застосунків не знайдено.</string>
+    <string name="bulk_install_empty_filter">Немає відповідних ігор.</string>
+    <string name="bulk_install_fatal">Пакетне встановлення зупинено. Перегляньте незавершені елементи перед повторною спробою.</string>
+    <string name="bulk_install_filter_all">Усі</string>
+    <string name="bulk_install_filter_review">Для перевірки</string>
+    <string name="bulk_install_filter_selected">Вибрані</string>
+    <string name="bulk_install_install_count">Установити %1$d</string>
+    <string name="bulk_install_installed_version">Установлена версія: %1$s</string>
+    <string name="bulk_install_library_changed">Бібліотека змінилася після перевірки. Закрийте цей пакет і виберіть джерела знову.</string>
+    <string name="bulk_install_planning">Перевірка вибраних застосунків…</string>
+    <string name="bulk_install_prepare_failed">Не вдалося підготувати вибрані застосунки до встановлення.</string>
+    <string name="bulk_install_reason_conflicting_jads">Файли JAD із різними атрибутами посилаються на той самий JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Це джерело дублює інше джерело в цьому пакеті.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD і JAR описують різні застосунки.</string>
+    <string name="bulk_install_reason_jar_not_found">Не знайдено JAR, на який посилається JAD: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">У JAD немає MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">JAD не має батьківського каталогу.</string>
+    <string name="bulk_install_reason_older_candidate">Новіша версія цього застосунку є в тому самому пакеті.</string>
+    <string name="bulk_install_reason_remote_jar">Пакетне встановлення не може завантажувати віддалені файли JAR.</string>
+    <string name="bulk_install_reason_source_error">Не вдалося підготувати це джерело до встановлення.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD посилається на JAR через непідтримувану схему URI: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Кілька варіантів застосунку мають однакову версію.</string>
+    <string name="bulk_install_recommended">Рекомендовані</string>
+    <string name="bulk_install_reinstall_source_missing">Збережений JAR недоступний для перевстановлення.</string>
+    <string name="bulk_install_result_failed">Невдало</string>
+    <string name="bulk_install_result_installed">Установлено</string>
+    <string name="bulk_install_result_reinstalled">Перевстановлено</string>
+    <string name="bulk_install_result_restored">Відновлено</string>
+    <string name="bulk_install_result_skipped">Пропущено</string>
+    <string name="bulk_install_result_updated">Оновлено</string>
+    <string name="bulk_install_skipped_entries">Пропущені записи архівів: %1$d</string>
+    <string name="bulk_install_source">Джерело: %1$s</string>
+    <string name="bulk_install_source_changed">Вихідний файл змінився після перевірки. Виберіть файли знову.</string>
+    <string name="bulk_install_source_unavailable">Потрібний вихідний файл уже недоступний. Виберіть файли знову.</string>
+    <string name="bulk_install_status_ambiguous">Відповідає кільком установленим застосункам</string>
+    <string name="bulk_install_status_conflict">Конфлікт у пакеті</string>
+    <string name="bulk_install_status_downgrade">Старіша версія</string>
+    <string name="bulk_install_status_duplicate">Дублікат</string>
+    <string name="bulk_install_status_error">Некоректне джерело</string>
+    <string name="bulk_install_status_mismatch">Невідповідність JAD/JAR</string>
+    <string name="bulk_install_status_new">Новий</string>
+    <string name="bulk_install_status_older_batch">Старіша версія в пакеті</string>
+    <string name="bulk_install_status_reinstall">Та сама версія, можливий варіант</string>
+    <string name="bulk_install_status_remote">Віддалене джерело не підтримується</string>
+    <string name="bulk_install_status_same">Уже встановлено</string>
+    <string name="bulk_install_status_update">Оновлення</string>
+    <string name="bulk_install_target_unverified">Не вдалося перевірити ціль перевстановлення. Закрийте цей пакет і виберіть застосунок знову.</string>
+    <string name="bulk_install_title">Пакетне встановлення</string>
+    <string name="bulk_install_unreadable_archives">Нечитабельні архіви: %1$d</string>
+    <string name="install_done_with_warning">Застосунок установлено з попередженнями.</string>
+    <string name="installer_ambiguous">Кілька встановлених застосунків відповідають цьому застосунку. Установити окрему копію? Наявні застосунки та їхні дані збережуться.</string>
+    <string name="installer_cancel_pending">Зупинення в наступній безпечній точці…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nПроблема: не вдалося прочитати файл класу Java.\nДія: пропущено під час перетворення.</string>
+    <string name="installer_copy_details">Копіювати подробиці</string>
+    <string name="installer_error_message">Не вдалося встановити вибраний застосунок. Виберіть коректний файл MIDlet і повторіть спробу.</string>
+    <string name="installer_existing_data_preserved">Наявні налаштування та збереження ігор залишаться.</string>
+    <string name="installer_failed_conversion">Не вдалося перетворити застосунок. Перевірте, чи файл повний і підтримується, та повторіть спробу.</string>
+    <string name="installer_failed_download">Не вдалося завантажити застосунок. Перевірте з’єднання та посилання для завантаження й повторіть спробу.</string>
+    <string name="installer_failed_storage">Не вдалося завершити встановлення. Повторіть спробу.</string>
+    <string name="installer_hide_details">Приховати подробиці</string>
+    <string name="installer_needs_recovery">Файли застосунку збережено, але оновлення бібліотеки не вдалося завершити. Оновіть бібліотеку перед повторною спробою.</string>
+    <string name="installer_not_processed">Не оброблено</string>
+    <string name="installer_partial_restore">Застосунок установлено; не вдалося відновити дані або налаштування</string>
+    <string name="installer_refresh_library">Оновити бібліотеку</string>
+    <string name="installer_removed_leftovers">Застосунок видалено; деякі налаштування або збереження ігор не вдалося видалити.</string>
+    <string name="installer_retry_remaining">Переглянути незавершені елементи</string>
+    <string name="installer_separate_copy">Установити окрему копію</string>
+    <string name="installer_show_details">Показати подробиці</string>
+    <string name="installer_stage_download">Завантаження застосунку…</string>
+    <string name="installer_stage_save">Збереження застосунку…</string>
+    <string name="installer_stage_wait">Очікування іншої операції…</string>
+    <string name="installer_title">Інсталятор MIDlet</string>
+    <string name="reconversion_done_with_warning">Перетворення для сумісності завершено з попередженнями.</string>
+    <string name="reconversion_error">Не вдалося автоматично перетворити MIDlet.\n\n%1$s</string>
+    <string name="reconversion_error_summary">Не вдалося автоматично перетворити MIDlet.</string>
+    <string name="reconverting_wait">Перед запуском цей MIDlet потребує одноразового перетворення для сумісності. Перетворення…</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">Потребують перевірки: %1$d</item>
+        <item quantity="few">Потребують перевірки: %1$d</item>
+        <item quantity="many">Потребують перевірки: %1$d</item>
+        <item quantity="other">Потребують перевірки: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Невдалі: %1$d</item>
+        <item quantity="few">Невдалі: %1$d</item>
+        <item quantity="many">Невдалі: %1$d</item>
+        <item quantity="other">Невдалі: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Знайдено %1$d застосунок</item>
+        <item quantity="few">Знайдено %1$d застосунки</item>
+        <item quantity="many">Знайдено %1$d застосунків</item>
+        <item quantity="other">Знайдено %1$d застосунку</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Установлено: %1$d</item>
+        <item quantity="few">Установлено: %1$d</item>
+        <item quantity="many">Установлено: %1$d</item>
+        <item quantity="other">Установлено: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Ще %1$d файл не включено, щоб перегляд залишався швидким.</item>
+        <item quantity="few">Ще %1$d файли не включено, щоб перегляд залишався швидким.</item>
+        <item quantity="many">Ще %1$d файлів не включено, щоб перегляд залишався швидким.</item>
+        <item quantity="other">Ще %1$d файлу не включено, щоб перегляд залишався швидким.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Готові: %1$d</item>
+        <item quantity="few">Готові: %1$d</item>
+        <item quantity="many">Готові: %1$d</item>
+        <item quantity="other">Готові: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d установлений застосунок відповідає цьому джерелу.</item>
+        <item quantity="few">%1$d установлені застосунки відповідають цьому джерелу.</item>
+        <item quantity="many">%1$d установлених застосунків відповідають цьому джерелу.</item>
+        <item quantity="other">%1$d установленого застосунку відповідає цьому джерелу.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d вибраний застосунок із бібліотеки вже недоступний.</item>
+        <item quantity="few">%1$d вибрані застосунки з бібліотеки вже недоступні.</item>
+        <item quantity="many">%1$d вибраних застосунків із бібліотеки вже недоступні.</item>
+        <item quantity="other">%1$d вибраного застосунку з бібліотеки вже недоступно.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Перевстановлено: %1$d</item>
+        <item quantity="few">Перевстановлено: %1$d</item>
+        <item quantity="many">Перевстановлено: %1$d</item>
+        <item quantity="other">Перевстановлено: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Відновлено: %1$d</item>
+        <item quantity="few">Відновлено: %1$d</item>
+        <item quantity="many">Відновлено: %1$d</item>
+        <item quantity="other">Відновлено: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Оброблено %1$d застосунок із %2$d</item>
+        <item quantity="few">Оброблено %1$d застосунки із %2$d</item>
+        <item quantity="many">Оброблено %1$d застосунків із %2$d</item>
+        <item quantity="other">Оброблено %1$d застосунку із %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Вибрано: %1$d</item>
+        <item quantity="few">Вибрано: %1$d</item>
+        <item quantity="many">Вибрано: %1$d</item>
+        <item quantity="other">Вибрано: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Уже встановлені або дублікати: %1$d</item>
+        <item quantity="few">Уже встановлені або дублікати: %1$d</item>
+        <item quantity="many">Уже встановлені або дублікати: %1$d</item>
+        <item quantity="other">Уже встановлені або дублікати: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Пропущено: %1$d</item>
+        <item quantity="few">Пропущено: %1$d</item>
+        <item quantity="many">Пропущено: %1$d</item>
+        <item quantity="other">Пропущено: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Оновлено: %1$d</item>
+        <item quantity="few">Оновлено: %1$d</item>
+        <item quantity="many">Оновлено: %1$d</item>
+        <item quantity="other">Оновлено: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">Попередження: %1$d</item>
+        <item quantity="few">Попередження: %1$d</item>
+        <item quantity="many">Попередження: %1$d</item>
+        <item quantity="other">Попередження: %1$d</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Ще %1$d проблему перетворення не показано.</item>
+        <item quantity="few">Ще %1$d проблеми перетворення не показано.</item>
+        <item quantity="many">Ще %1$d проблем перетворення не показано.</item>
+        <item quantity="other">Ще %1$d проблеми перетворення не показано.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">Пропущено %1$d файл класу Java, оскільки його не вдалося прочитати. Функції, що використовують його, можуть не працювати.</item>
+        <item quantity="few">Пропущено %1$d файли класів Java, оскільки їх не вдалося прочитати. Функції, що використовують їх, можуть не працювати.</item>
+        <item quantity="many">Пропущено %1$d файлів класів Java, оскільки їх не вдалося прочитати. Функції, що використовують їх, можуть не працювати.</item>
+        <item quantity="other">Пропущено %1$d файлу класу Java, оскільки його не вдалося прочитати. Функції, що використовують його, можуть не працювати.</item>
+    </plurals>
 </resources>

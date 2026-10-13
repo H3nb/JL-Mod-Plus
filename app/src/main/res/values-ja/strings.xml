@@ -33,7 +33,7 @@
     <string name="message_delete">このアプリとその設定、セーブデータを削除しますか？ライブラリの項目も削除されます。</string>
     <string name="midlet_name"><b>名前: </b></string>
     <string name="midlet_size"><b>サイズ: </b></string>
-    <string name="midlet_vendor"><b>作者: </b></string>
+    <string name="midlet_vendor"><b>"提供元: "</b></string>
     <string name="midlet_version"><b>バージョン: </b></string>
     <string name="more">その他</string>
     <string name="no_data_for_display">表示するアプリがありません</string>
@@ -597,4 +597,149 @@
         <item quantity="other">%1$d 個のプロパティ</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">表示サイズを1%から1000%に調整します。100%ではゲームを元のサイズで表示し、大きい値では画面からはみ出す場合があります。</string>
+    <string name="bulk_install_action_jar_only">JAR のみインストール</string>
+    <string name="bulk_install_action_separate_copy">別のコピーとしてインストール</string>
+    <string name="bulk_install_cancel">キャンセル</string>
+    <string name="bulk_install_cancel_requested">現在のアプリの処理後に停止します…</string>
+    <string name="bulk_install_cancelled">一括インストールを停止しました</string>
+    <string name="bulk_install_choose_files">ファイル</string>
+    <string name="bulk_install_choose_folder">フォルダー</string>
+    <string name="bulk_install_clear">選択をクリア</string>
+    <string name="bulk_install_close">閉じる</string>
+    <string name="bulk_install_complete">一括インストール完了</string>
+    <string name="bulk_install_empty">対応するアプリが見つかりませんでした。</string>
+    <string name="bulk_install_empty_filter">一致するゲームがありません。</string>
+    <string name="bulk_install_fatal">一括インストールを停止しました。再試行する前に、未完了の項目を確認してください。</string>
+    <string name="bulk_install_filter_all">すべて</string>
+    <string name="bulk_install_filter_review">確認</string>
+    <string name="bulk_install_filter_selected">選択済み</string>
+    <string name="bulk_install_install_count">%1$d 件をインストール</string>
+    <string name="bulk_install_installed_version">インストール済み：%1$s</string>
+    <string name="bulk_install_library_changed">確認後にライブラリが変更されました。この一括処理を閉じて、ソースを選び直してください。</string>
+    <string name="bulk_install_planning">選択したアプリを確認しています…</string>
+    <string name="bulk_install_prepare_failed">選択したアプリのインストールを準備できませんでした。</string>
+    <string name="bulk_install_reason_conflicting_jads">属性が異なる JAD ファイルが同じ JAR を参照しています。</string>
+    <string name="bulk_install_reason_duplicate_source">このソースは、この一括処理内の別のソースと重複しています。</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD と JAR は異なるアプリを示しています。</string>
+    <string name="bulk_install_reason_jar_not_found">JAD が参照する JAR が見つかりませんでした：%1$s。</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD に MIDlet-Jar-URL がありません。</string>
+    <string name="bulk_install_reason_missing_parent">JAD に親ディレクトリがありません。</string>
+    <string name="bulk_install_reason_older_candidate">同じ一括処理内に、このアプリの新しいバージョンがあります。</string>
+    <string name="bulk_install_reason_remote_jar">一括インストールではリモートの JAR ファイルをダウンロードできません。</string>
+    <string name="bulk_install_reason_source_error">このソースのインストールを準備できませんでした。</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD は未対応の URI スキームで JAR を参照しています：%1$s。</string>
+    <string name="bulk_install_reason_version_conflict">複数のアプリの別版が同じバージョンを持っています。</string>
+    <string name="bulk_install_recommended">おすすめ</string>
+    <string name="bulk_install_reinstall_source_missing">保存済みの JAR を再インストールに使用できません。</string>
+    <string name="bulk_install_result_failed">失敗</string>
+    <string name="bulk_install_result_installed">インストール済み</string>
+    <string name="bulk_install_result_reinstalled">再インストール済み</string>
+    <string name="bulk_install_result_restored">復元済み</string>
+    <string name="bulk_install_result_skipped">スキップ</string>
+    <string name="bulk_install_result_updated">更新済み</string>
+    <string name="bulk_install_skipped_entries">スキップしたアーカイブ内の項目：%1$d</string>
+    <string name="bulk_install_source">ソース：%1$s</string>
+    <string name="bulk_install_source_changed">確認後にソースファイルが変更されました。ファイルを選び直してください。</string>
+    <string name="bulk_install_source_unavailable">必要なソースファイルが利用できなくなりました。ファイルを選び直してください。</string>
+    <string name="bulk_install_status_ambiguous">複数のインストール済みアプリに一致</string>
+    <string name="bulk_install_status_conflict">一括処理内の競合</string>
+    <string name="bulk_install_status_downgrade">古いバージョン</string>
+    <string name="bulk_install_status_duplicate">重複</string>
+    <string name="bulk_install_status_error">無効なソース</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR の不一致</string>
+    <string name="bulk_install_status_new">新規</string>
+    <string name="bulk_install_status_older_batch">一括処理内の古いバージョン</string>
+    <string name="bulk_install_status_reinstall">同じバージョン、別版の可能性あり</string>
+    <string name="bulk_install_status_remote">リモートソースは未対応</string>
+    <string name="bulk_install_status_same">インストール済み</string>
+    <string name="bulk_install_status_update">更新</string>
+    <string name="bulk_install_target_unverified">再インストール先を確認できませんでした。この一括処理を閉じて、アプリを選び直してください。</string>
+    <string name="bulk_install_title">一括インストール</string>
+    <string name="bulk_install_unreadable_archives">読み取れないアーカイブ：%1$d</string>
+    <string name="install_done">アプリをインストールしました。</string>
+    <string name="install_done_with_warning">アプリをインストールしましたが、警告があります。</string>
+    <string name="install_jar_non_matched_jad">このアプリは JAD に記載されたアプリと異なります。\nJAD を無視してインストールしますか？</string>
+    <string name="installer_ambiguous">複数のインストール済みアプリがこのアプリに一致します。別のコピーをインストールしますか？既存のアプリとデータは保持されます。</string>
+    <string name="installer_cancel_pending">次の安全な時点で停止します…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\n問題：Java クラスファイルを読み取れませんでした。\n処置：変換時にスキップしました。</string>
+    <string name="installer_copy_details">詳細をコピー</string>
+    <string name="installer_error_message">選択したアプリをインストールできませんでした。有効な MIDlet ファイルを選び、もう一度お試しください。</string>
+    <string name="installer_existing_data_preserved">既存の設定とセーブデータは保持されます。</string>
+    <string name="installer_failed_conversion">アプリを変換できませんでした。ファイルが完全で、対応する形式であることを確認し、もう一度お試しください。</string>
+    <string name="installer_failed_download">アプリをダウンロードできませんでした。接続とダウンロードリンクを確認し、もう一度お試しください。</string>
+    <string name="installer_failed_storage">インストールを完了できませんでした。もう一度お試しください。</string>
+    <string name="installer_hide_details">詳細を非表示</string>
+    <string name="installer_needs_recovery">アプリのファイルは保存されましたが、ライブラリの更新を完了できませんでした。再試行する前にライブラリを更新してください。</string>
+    <string name="installer_not_processed">未処理</string>
+    <string name="installer_partial_restore">アプリはインストール済み、データまたは設定を復元できませんでした</string>
+    <string name="installer_refresh_library">ライブラリを更新</string>
+    <string name="installer_removed_leftovers">アプリは削除されましたが、一部の設定またはセーブデータを削除できませんでした。</string>
+    <string name="installer_retry_remaining">未完了の項目を確認</string>
+    <string name="installer_separate_copy">別のコピーをインストール</string>
+    <string name="installer_show_details">詳細を表示</string>
+    <string name="installer_stage_download">アプリをダウンロードしています…</string>
+    <string name="installer_stage_save">アプリを保存しています…</string>
+    <string name="installer_stage_wait">別の操作の完了を待っています…</string>
+    <string name="installer_title">MIDlet インストーラー</string>
+    <string name="reconversion_done_with_warning">互換性のための変換が完了しましたが、警告があります。</string>
+    <string name="reconversion_error">MIDlet を自動変換できませんでした。\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet を自動変換できませんでした。</string>
+    <string name="reconverting_wait">この MIDlet を起動するには、一度だけ互換性のための変換が必要です。変換しています…</string>
+    <string name="reinstall">このアプリはすでにインストールされています。再インストールしますか？</string>
+    <string name="reinstall_newest">このアプリをバージョン %1$s に更新しますか？\n\n現在インストール済み：%2$s</string>
+    <string name="reinstall_older">このアプリをバージョン %1$s で置き換えますか？\n\n現在インストール済み：%2$s\n古いバージョンは既存のデータで正しく動作しない場合があります。</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other">%1$d 件の確認が必要</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">%1$d 件失敗</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">%1$d 個のアプリが見つかりました</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">%1$d 件インストール済み</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">確認画面の応答性を保つため、追加の %1$d 個のファイルを確認対象から除外しました。</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other">%1$d 件準備完了</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">%1$d 個のインストール済みアプリがこのソースに一致します。</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">選択したライブラリのアプリのうち、%1$d 個が利用できなくなりました。</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">%1$d 件再インストール済み</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">%1$d 件復元済み</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="other">%2$d 個中 %1$d 個のアプリを処理しました</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">%1$d 件選択済み</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">インストール済みまたは重複：%1$d 件</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">%1$d 件スキップ</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">%1$d 件更新済み</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other">%1$d 件の警告</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">追加の %1$d 件の変換の問題は表示されていません。</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">%1$d 個の Java クラスファイルを読み取れなかったため、スキップしました。これらを使用する機能が動作しない場合があります。</item>
+    </plurals>
 </resources>

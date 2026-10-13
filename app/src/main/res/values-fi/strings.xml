@@ -630,7 +630,7 @@
     <string name="bulk_install_planning">Tarkistetaan valittuja sovelluksia…</string>
     <string name="bulk_install_empty">Tuettuja sovelluksia ei löytynyt.</string>
     <string name="bulk_install_recommended">Suositeltu</string>
-    <string name="bulk_install_clear">Tyhjennä</string>
+    <string name="bulk_install_clear">Tyhjennä valinta</string>
     <string name="bulk_install_install_count">Asenna %1$d</string>
     <string name="bulk_install_cancel">Peruuta</string>
     <string name="bulk_install_close">Sulje</string>
@@ -655,8 +655,8 @@
     <string name="bulk_install_status_update">Päivitys</string>
     <string name="bulk_install_status_downgrade">Vanhempi versio</string>
     <string name="bulk_install_status_same">Jo asennettu</string>
-    <string name="bulk_install_status_reinstall">Muunnelma / uudelleenasennus</string>
-    <string name="bulk_install_status_ambiguous">Useita asennettuja osumia</string>
+    <string name="bulk_install_status_reinstall">Sama versio, mahdollinen muunnelma</string>
+    <string name="bulk_install_status_ambiguous">Vastaa useita asennettuja sovelluksia</string>
     <string name="bulk_install_status_mismatch">JAD/JAR eivät täsmää</string>
     <string name="bulk_install_status_duplicate">Kaksoiskappale</string>
     <string name="bulk_install_status_older_batch">Vanhempi eräehdokas</string>
@@ -731,8 +731,8 @@
     <string name="config_help_emulation_speed">Muuttaa MIDlet-sovelluksen kellonopeutta ja tuettuja viiveitä. Android-ääni ja -käyttöliittymä pysyvät normaaleina.</string>
     <string name="config_help_timing_mode">Valitsee, käyttääkö MIDlet emulointiaikaa vai järjestelmäaikaa. Suhteelliset viiveet seuraavat edelleen emulointinopeutta.</string>
     <string name="config_help_timing_unavailable">Aika-asetukset eivät ole käytettävissä tässä MIDlet-asennuksessa. Asenna tai muunna MIDlet uudelleen ottaaksesi ne käyttöön.</string>
-    <string name="reconverting_wait">Tämä MIDlet tarvitsee kertaluonteisen yhteensopivuusmuunnoksen ennen käynnistystä. Odota…</string>
-    <string name="reconversion_error">MIDlet-sovellusta ei voitu muuntaa automaattisesti. %1$s</string>
+    <string name="reconverting_wait">Tämä MIDlet tarvitsee kertaluonteisen yhteensopivuusmuunnoksen ennen käynnistystä. Muunnetaan…</string>
+    <string name="reconversion_error">MIDlet-sovellusta ei voitu muuntaa automaattisesti.\n\n%1$s</string>
     <string name="config_help_generic_color">Asettaa tämän visuaalisen elementin värin.</string>
     <string name="config_help_encoding">Valitsee microedition.encoding-ominaisuutena ilmoitettavan merkistökoodauksen.</string>
     <string name="config_edit_system_properties">Muokkaa järjestelmäominaisuuksia</string>

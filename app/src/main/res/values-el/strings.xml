@@ -543,4 +543,174 @@
         <item quantity="other">%1$d ιδιότητες</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Προσαρμόζει το εμφανιζόμενο μέγεθος από 1% έως 1000%. Στο 100%, το παιχνίδι χρησιμοποιεί το αρχικό του μέγεθος· μεγαλύτερες τιμές μπορεί να εκτείνονται πέρα από την οθόνη.</string>
+    <string name="bulk_install_action_jar_only">Εγκατάσταση μόνο του JAR</string>
+    <string name="bulk_install_action_separate_copy">Εγκατάσταση ως ξεχωριστό αντίγραφο</string>
+    <string name="bulk_install_cancel">Ακύρωση</string>
+    <string name="bulk_install_cancel_requested">Διακοπή μετά την τρέχουσα εφαρμογή…</string>
+    <string name="bulk_install_cancelled">Η μαζική εγκατάσταση διακόπηκε</string>
+    <string name="bulk_install_choose_files">Αρχεία</string>
+    <string name="bulk_install_choose_folder">Φάκελος</string>
+    <string name="bulk_install_clear">Εκκαθάριση επιλογής</string>
+    <string name="bulk_install_close">Κλείσιμο</string>
+    <string name="bulk_install_complete">Η μαζική εγκατάσταση ολοκληρώθηκε</string>
+    <string name="bulk_install_empty">Δεν βρέθηκαν υποστηριζόμενες εφαρμογές.</string>
+    <string name="bulk_install_empty_filter">Δεν υπάρχουν παιχνίδια που ταιριάζουν.</string>
+    <string name="bulk_install_fatal">Η μαζική εγκατάσταση διακόπηκε. Ελέγξτε τα ημιτελή στοιχεία πριν δοκιμάσετε ξανά.</string>
+    <string name="bulk_install_filter_all">Όλες</string>
+    <string name="bulk_install_filter_review">Έλεγχος</string>
+    <string name="bulk_install_filter_selected">Επιλεγμένες</string>
+    <string name="bulk_install_install_count">Εγκατάσταση %1$d</string>
+    <string name="bulk_install_installed_version">Εγκατεστημένη: %1$s</string>
+    <string name="bulk_install_library_changed">Η Βιβλιοθήκη άλλαξε μετά τον έλεγχο. Κλείστε αυτή την παρτίδα και επιλέξτε ξανά τις πηγές.</string>
+    <string name="bulk_install_planning">Έλεγχος επιλεγμένων εφαρμογών…</string>
+    <string name="bulk_install_prepare_failed">Δεν ήταν δυνατή η προετοιμασία των επιλεγμένων εφαρμογών για εγκατάσταση.</string>
+    <string name="bulk_install_reason_conflicting_jads">Αρχεία JAD με διαφορετικά γνωρίσματα παραπέμπουν στο ίδιο JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Αυτή η πηγή είναι διπλότυπο άλλης πηγής στην παρτίδα.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">Το JAD και το JAR προσδιορίζουν διαφορετικές εφαρμογές.</string>
+    <string name="bulk_install_reason_jar_not_found">Δεν βρέθηκε το JAR στο οποίο παραπέμπει το JAD: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">Λείπει το MIDlet-Jar-URL από το JAD.</string>
+    <string name="bulk_install_reason_missing_parent">Το JAD δεν έχει γονικό κατάλογο.</string>
+    <string name="bulk_install_reason_older_candidate">Υπάρχει νεότερη έκδοση αυτής της εφαρμογής στην ίδια παρτίδα.</string>
+    <string name="bulk_install_reason_remote_jar">Η μαζική εγκατάσταση δεν μπορεί να κατεβάσει απομακρυσμένα αρχεία JAR.</string>
+    <string name="bulk_install_reason_source_error">Δεν ήταν δυνατή η προετοιμασία αυτής της πηγής για εγκατάσταση.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">Το JAD παραπέμπει σε JAR με μη υποστηριζόμενο σχήμα URI: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Πολλές παραλλαγές εφαρμογής έχουν την ίδια έκδοση.</string>
+    <string name="bulk_install_recommended">Προτεινόμενες</string>
+    <string name="bulk_install_reinstall_source_missing">Το αποθηκευμένο JAR δεν είναι διαθέσιμο για επανεγκατάσταση.</string>
+    <string name="bulk_install_result_failed">Απέτυχε</string>
+    <string name="bulk_install_result_installed">Εγκαταστάθηκε</string>
+    <string name="bulk_install_result_reinstalled">Επανεγκαταστάθηκε</string>
+    <string name="bulk_install_result_restored">Επαναφέρθηκε</string>
+    <string name="bulk_install_result_skipped">Παραλείφθηκε</string>
+    <string name="bulk_install_result_updated">Ενημερώθηκε</string>
+    <string name="bulk_install_skipped_entries">Παραλειφθείσες καταχωρίσεις αρχειοθήκης: %1$d</string>
+    <string name="bulk_install_source">Πηγή: %1$s</string>
+    <string name="bulk_install_source_changed">Το αρχείο πηγής άλλαξε μετά τον έλεγχο. Επιλέξτε ξανά τα αρχεία.</string>
+    <string name="bulk_install_source_unavailable">Ένα απαιτούμενο αρχείο πηγής δεν είναι πλέον διαθέσιμο. Επιλέξτε ξανά τα αρχεία.</string>
+    <string name="bulk_install_status_ambiguous">Αντιστοιχεί σε πολλές εγκατεστημένες εφαρμογές</string>
+    <string name="bulk_install_status_conflict">Σύγκρουση στην παρτίδα</string>
+    <string name="bulk_install_status_downgrade">Παλαιότερη έκδοση</string>
+    <string name="bulk_install_status_duplicate">Διπλότυπο</string>
+    <string name="bulk_install_status_error">Μη έγκυρη πηγή</string>
+    <string name="bulk_install_status_mismatch">Ασυμφωνία JAD/JAR</string>
+    <string name="bulk_install_status_new">Νέα</string>
+    <string name="bulk_install_status_older_batch">Παλαιότερη έκδοση στην παρτίδα</string>
+    <string name="bulk_install_status_reinstall">Ίδια έκδοση, πιθανή παραλλαγή</string>
+    <string name="bulk_install_status_remote">Απομακρυσμένη πηγή μη υποστηριζόμενη</string>
+    <string name="bulk_install_status_same">Ήδη εγκατεστημένη</string>
+    <string name="bulk_install_status_update">Ενημέρωση</string>
+    <string name="bulk_install_target_unverified">Δεν ήταν δυνατή η επαλήθευση του στόχου επανεγκατάστασης. Κλείστε αυτή την παρτίδα και επιλέξτε ξανά την εφαρμογή.</string>
+    <string name="bulk_install_title">Μαζική εγκατάσταση</string>
+    <string name="bulk_install_unreadable_archives">Μη αναγνώσιμες αρχειοθήκες: %1$d</string>
+    <string name="converting_wait">Μετατροπή JAR…</string>
+    <string name="install">Εγκατάσταση</string>
+    <string name="install_done">Η εφαρμογή εγκαταστάθηκε.</string>
+    <string name="install_done_with_warning">Η εφαρμογή εγκαταστάθηκε με προειδοποιήσεις.</string>
+    <string name="install_jar_non_matched_jad">Αυτή η εφαρμογή διαφέρει από εκείνη που περιγράφεται στο JAD.\nΝα αγνοηθεί το JAD και να γίνει εγκατάσταση ούτως ή άλλως;</string>
+    <string name="installer_ambiguous">Πολλές εγκατεστημένες εφαρμογές αντιστοιχούν σε αυτή την εφαρμογή. Να εγκατασταθεί ξεχωριστό αντίγραφο; Οι υπάρχουσες εφαρμογές και τα δεδομένα τους θα διατηρηθούν.</string>
+    <string name="installer_cancel_pending">Διακοπή στο επόμενο ασφαλές σημείο…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nΠρόβλημα: δεν ήταν δυνατή η ανάγνωση του αρχείου κλάσης Java.\nΕνέργεια: παραλείφθηκε κατά τη μετατροπή.</string>
+    <string name="installer_copy_details">Αντιγραφή λεπτομερειών</string>
+    <string name="installer_error_message">Δεν ήταν δυνατή η εγκατάσταση της επιλεγμένης εφαρμογής. Επιλέξτε έγκυρο αρχείο MIDlet και δοκιμάστε ξανά.</string>
+    <string name="installer_existing_data_preserved">Οι υπάρχουσες ρυθμίσεις και τα αποθηκευμένα δεδομένα παιχνιδιών θα διατηρηθούν.</string>
+    <string name="installer_failed_conversion">Δεν ήταν δυνατή η μετατροπή της εφαρμογής. Ελέγξτε ότι το αρχείο είναι πλήρες και υποστηρίζεται και δοκιμάστε ξανά.</string>
+    <string name="installer_failed_download">Δεν ήταν δυνατή η λήψη της εφαρμογής. Ελέγξτε τη σύνδεση και τον σύνδεσμο λήψης και δοκιμάστε ξανά.</string>
+    <string name="installer_failed_storage">Δεν ήταν δυνατή η ολοκλήρωση της εγκατάστασης. Δοκιμάστε ξανά.</string>
+    <string name="installer_hide_details">Απόκρυψη λεπτομερειών</string>
+    <string name="installer_needs_recovery">Τα αρχεία της εφαρμογής αποθηκεύτηκαν, αλλά η ενημέρωση της Βιβλιοθήκης δεν ολοκληρώθηκε. Ανανεώστε τη Βιβλιοθήκη πριν δοκιμάσετε ξανά.</string>
+    <string name="installer_not_processed">Δεν υποβλήθηκε σε επεξεργασία</string>
+    <string name="installer_partial_restore">Η εφαρμογή εγκαταστάθηκε· δεν ήταν δυνατή η επαναφορά δεδομένων ή ρυθμίσεων</string>
+    <string name="installer_refresh_library">Ανανέωση Βιβλιοθήκης</string>
+    <string name="installer_removed_leftovers">Η εφαρμογή αφαιρέθηκε· δεν ήταν δυνατή η διαγραφή ορισμένων ρυθμίσεων ή αποθηκευμένων δεδομένων παιχνιδιών.</string>
+    <string name="installer_retry_remaining">Έλεγχος ημιτελών στοιχείων</string>
+    <string name="installer_separate_copy">Εγκατάσταση ξεχωριστού αντιγράφου</string>
+    <string name="installer_show_details">Εμφάνιση λεπτομερειών</string>
+    <string name="installer_stage_download">Λήψη εφαρμογής…</string>
+    <string name="installer_stage_save">Αποθήκευση εφαρμογής…</string>
+    <string name="installer_stage_wait">Αναμονή για άλλη ενέργεια…</string>
+    <string name="installer_title">Πρόγραμμα εγκατάστασης MIDlet</string>
+    <string name="reconversion_done_with_warning">Η μετατροπή συμβατότητας ολοκληρώθηκε με προειδοποιήσεις.</string>
+    <string name="reconversion_error">Δεν ήταν δυνατή η αυτόματη μετατροπή του MIDlet.\n\n%1$s</string>
+    <string name="reconversion_error_summary">Δεν ήταν δυνατή η αυτόματη μετατροπή του MIDlet.</string>
+    <string name="reconverting_wait">Αυτό το MIDlet χρειάζεται μια εφάπαξ μετατροπή συμβατότητας πριν μπορέσει να ξεκινήσει. Μετατροπή…</string>
+    <string name="reinstall">Αυτή η εφαρμογή είναι ήδη εγκατεστημένη. Να επανεγκατασταθεί;</string>
+    <string name="reinstall_newest">Να ενημερωθεί αυτή η εφαρμογή στην έκδοση %1$s;\n\nΤρέχουσα εγκατεστημένη έκδοση: %2$s</string>
+    <string name="reinstall_older">Να αντικατασταθεί αυτή η εφαρμογή με την έκδοση %1$s;\n\nΤρέχουσα εγκατεστημένη έκδοση: %2$s\nΗ παλαιότερη έκδοση ενδέχεται να μη λειτουργεί σωστά με τα υπάρχοντα δεδομένα.</string>
+    <string name="warn_install_from_net">Το αρχείο θα ληφθεί από το διαδίκτυο.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d χρειάζεται έλεγχο</item>
+        <item quantity="other">%1$d χρειάζονται έλεγχο</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d απέτυχε</item>
+        <item quantity="other">%1$d απέτυχαν</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Βρέθηκε %1$d εφαρμογή</item>
+        <item quantity="other">Βρέθηκαν %1$d εφαρμογές</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d εγκαταστάθηκε</item>
+        <item quantity="other">%1$d εγκαταστάθηκαν</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Παραλείφθηκε %1$d επιπλέον αρχείο ώστε ο έλεγχος να παραμένει γρήγορος.</item>
+        <item quantity="other">Παραλείφθηκαν %1$d επιπλέον αρχεία ώστε ο έλεγχος να παραμένει γρήγορος.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d έτοιμη</item>
+        <item quantity="other">%1$d έτοιμες</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d εγκατεστημένη εφαρμογή αντιστοιχεί σε αυτή την πηγή.</item>
+        <item quantity="other">%1$d εγκατεστημένες εφαρμογές αντιστοιχούν σε αυτή την πηγή.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d επιλεγμένη εφαρμογή της Βιβλιοθήκης δεν είναι πλέον διαθέσιμη.</item>
+        <item quantity="other">%1$d επιλεγμένες εφαρμογές της Βιβλιοθήκης δεν είναι πλέον διαθέσιμες.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d επανεγκαταστάθηκε</item>
+        <item quantity="other">%1$d επανεγκαταστάθηκαν</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d επαναφέρθηκε</item>
+        <item quantity="other">%1$d επαναφέρθηκαν</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Έγινε επεξεργασία %1$d εφαρμογής από %2$d</item>
+        <item quantity="other">Έγινε επεξεργασία %1$d εφαρμογών από %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d επιλεγμένη</item>
+        <item quantity="other">%1$d επιλεγμένες</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Ήδη εγκατεστημένη ή διπλότυπη: %1$d</item>
+        <item quantity="other">Ήδη εγκατεστημένες ή διπλότυπες: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d παραλείφθηκε</item>
+        <item quantity="other">%1$d παραλείφθηκαν</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d ενημερώθηκε</item>
+        <item quantity="other">%1$d ενημερώθηκαν</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d προειδοποίηση</item>
+        <item quantity="other">%1$d προειδοποιήσεις</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Δεν εμφανίζεται %1$d επιπλέον πρόβλημα μετατροπής.</item>
+        <item quantity="other">Δεν εμφανίζονται %1$d επιπλέον προβλήματα μετατροπής.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">Παραλείφθηκε %1$d αρχείο κλάσης Java επειδή δεν ήταν δυνατή η ανάγνωσή του. Λειτουργίες που το χρησιμοποιούν ενδέχεται να μη λειτουργούν.</item>
+        <item quantity="other">Παραλείφθηκαν %1$d αρχεία κλάσεων Java επειδή δεν ήταν δυνατή η ανάγνωσή τους. Λειτουργίες που τα χρησιμοποιούν ενδέχεται να μη λειτουργούν.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Όνομα: "</b></string>
+    <string name="midlet_size"><b>"Μέγεθος: "</b></string>
+    <string name="midlet_vendor"><b>"Προμηθευτής: "</b></string>
+    <string name="midlet_version"><b>"Έκδοση: "</b></string>
 </resources>

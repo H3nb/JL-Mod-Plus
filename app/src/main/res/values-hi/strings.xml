@@ -17,7 +17,7 @@
     <string name="close">बंद करें</string>
     <string name="cmd_menu">मेन्यू</string>
     <string name="CONFIRMATION_REQUIRED">पुष्टि आवश्यक है</string>
-    <string name="converting_wait">जार में परिवर्तित …</string>
+    <string name="converting_wait">JAR कन्वर्ट किया जा रहा है…</string>
     <string name="create">बनाएँ</string>
     <string name="create_apps_dir_failed">इस स्थान पर कार्य निर्देशिका तैयार नहीं हो सकी:\n%1$s\nदूसरी निर्देशिका चुनें।</string>
     <string name="default_label">%1$s (डिफ़ॉल्ट)</string>
@@ -44,7 +44,7 @@
     <string name="message_delete">यह ऐप, इसकी सेटिंग और सहेजा गया गेम डेटा मिटाएँ? इससे लाइब्रेरी में इसकी प्रविष्टि भी हट जाएगी।</string>
     <string name="midlet_name"><b>नाम: </b></string>
     <string name="midlet_size"><b>आकार: </b></string>
-    <string name="midlet_vendor"><b>विक्रेता: </b></string>
+    <string name="midlet_vendor"><b>"प्रकाशक: "</b></string>
     <string name="midlet_version"><b>संस्करण: </b></string>
     <string name="more">और</string>
     <string name="no_data_for_display">दिखाने के लिए कोई ऐप नहीं</string>
@@ -135,7 +135,7 @@
     <string name="PREF_WIDTH">चौड़ाई</string>
     <string name="reinstall">ऐप्लिकेशन पहले से इंस्टॉल है।\n\nक्या आप इसे फिर से इंस्टॉल करना चाहते हैं?\nसारा डेटा सहेजा जाएगा। </string>
     <string name="reinstall_newest">इस ऐप को संस्करण %1$s में अपडेट करें?\n\nवर्तमान में स्थापित: %2$s\nसभी डेटा सहेजा जाएगा।</string>
-    <string name="reinstall_older">इस ऐप को संस्करण %1$s से बदलें?\n\nवर्तमान में स्थापित: %2$s\nपुराना संस्करण रिकॉर्ड किए गए डेटा के साथ ठीक से काम नहीं कर रहा है।</string>
+    <string name="reinstall_older">इस ऐप को संस्करण %1$s से बदलें?\n\nमौजूदा इंस्टॉल किया गया संस्करण: %2$s\nहो सकता है कि पुराना संस्करण मौजूदा डेटा के साथ सही ढंग से काम न करे।</string>
     <string name="reset">रीसेट</string>
     <string name="RESET_LAYOUT_CMD">वर्चुअल कंट्रोल का लेआउट रीसेट करें</string>
     <string name="retry">फिर कोशिश करें</string>
@@ -649,4 +649,162 @@
         <item quantity="other">%1$d प्रॉपर्टी</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">दिखाए जाने वाले आकार को 1% से 1000% तक बदलता है। 100% पर गेम अपने मूल आकार में दिखता है; बड़े मानों पर वह स्क्रीन से बाहर जा सकता है।</string>
+    <string name="bulk_install_action_jar_only">केवल JAR इंस्टॉल करें</string>
+    <string name="bulk_install_action_separate_copy">अलग कॉपी के रूप में इंस्टॉल करें</string>
+    <string name="bulk_install_cancel">रद्द करें</string>
+    <string name="bulk_install_cancel_requested">इस समय प्रोसेस किए जा रहे ऐप के बाद रोका जा रहा है…</string>
+    <string name="bulk_install_cancelled">एक साथ इंस्टॉल करने की प्रक्रिया रोक दी गई</string>
+    <string name="bulk_install_choose_files">फ़ाइलें</string>
+    <string name="bulk_install_choose_folder">फ़ोल्डर</string>
+    <string name="bulk_install_clear">चयन हटाएँ</string>
+    <string name="bulk_install_close">बंद करें</string>
+    <string name="bulk_install_complete">एक साथ इंस्टॉल करने की प्रक्रिया पूरी हुई</string>
+    <string name="bulk_install_empty">कोई समर्थित ऐप नहीं मिला।</string>
+    <string name="bulk_install_empty_filter">कोई मेल खाता गेम नहीं मिला।</string>
+    <string name="bulk_install_fatal">एक साथ इंस्टॉल करने की प्रक्रिया रोक दी गई। फिर से कोशिश करने से पहले अधूरे आइटम की समीक्षा करें।</string>
+    <string name="bulk_install_filter_all">सभी</string>
+    <string name="bulk_install_filter_review">समीक्षा</string>
+    <string name="bulk_install_filter_selected">चुने गए</string>
+    <string name="bulk_install_install_count">%1$d इंस्टॉल करें</string>
+    <string name="bulk_install_installed_version">इंस्टॉल किया गया: %1$s</string>
+    <string name="bulk_install_library_changed">समीक्षा के बाद लाइब्रेरी बदल गई। इस बैच को बंद करें और स्रोत फिर से चुनें।</string>
+    <string name="bulk_install_planning">चुने गए ऐप जाँचे जा रहे हैं…</string>
+    <string name="bulk_install_prepare_failed">चुने गए ऐप को इंस्टॉल करने के लिए तैयार नहीं किया जा सका।</string>
+    <string name="bulk_install_reason_conflicting_jads">अलग-अलग विशेषताओं वाली JAD फ़ाइलें एक ही JAR का संदर्भ देती हैं।</string>
+    <string name="bulk_install_reason_duplicate_source">यह स्रोत इस बैच के किसी अन्य स्रोत की डुप्लिकेट है।</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD और JAR अलग-अलग ऐप की पहचान करते हैं।</string>
+    <string name="bulk_install_reason_jar_not_found">JAD में संदर्भित JAR नहीं मिला: %1$s।</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD में MIDlet-Jar-URL नहीं है।</string>
+    <string name="bulk_install_reason_missing_parent">JAD की कोई पैरेंट डायरेक्टरी नहीं है।</string>
+    <string name="bulk_install_reason_older_candidate">इस ऐप का नया संस्करण इसी बैच में है।</string>
+    <string name="bulk_install_reason_remote_jar">एक साथ इंस्टॉल करते समय दूरस्थ JAR फ़ाइलें डाउनलोड नहीं की जा सकती हैं।</string>
+    <string name="bulk_install_reason_source_error">इस स्रोत को इंस्टॉल करने के लिए तैयार नहीं किया जा सका।</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD, JAR का संदर्भ देने के लिए असमर्थित URI स्कीम का उपयोग करता है: %1$s।</string>
+    <string name="bulk_install_reason_version_conflict">ऐप के कई अलग रूपों का संस्करण समान है।</string>
+    <string name="bulk_install_recommended">सुझाए गए</string>
+    <string name="bulk_install_reinstall_source_missing">फिर से इंस्टॉल करने के लिए सहेजा गया JAR उपलब्ध नहीं है।</string>
+    <string name="bulk_install_result_failed">विफल</string>
+    <string name="bulk_install_result_installed">इंस्टॉल किया गया</string>
+    <string name="bulk_install_result_reinstalled">फिर से इंस्टॉल किया गया</string>
+    <string name="bulk_install_result_restored">बहाल किया गया</string>
+    <string name="bulk_install_result_skipped">छोड़ दिया गया</string>
+    <string name="bulk_install_result_updated">अपडेट किया गया</string>
+    <string name="bulk_install_skipped_entries">छोड़ी गई आर्काइव प्रविष्टियाँ: %1$d</string>
+    <string name="bulk_install_source">स्रोत: %1$s</string>
+    <string name="bulk_install_source_changed">समीक्षा के बाद स्रोत फ़ाइल बदल गई। फ़ाइलें फिर से चुनें।</string>
+    <string name="bulk_install_source_unavailable">ज़रूरी स्रोत फ़ाइल अब उपलब्ध नहीं है। फ़ाइलें फिर से चुनें।</string>
+    <string name="bulk_install_status_ambiguous">कई इंस्टॉल किए गए ऐप से मेल खाता है</string>
+    <string name="bulk_install_status_conflict">बैच में टकराव</string>
+    <string name="bulk_install_status_downgrade">पुराना संस्करण</string>
+    <string name="bulk_install_status_duplicate">डुप्लिकेट</string>
+    <string name="bulk_install_status_error">अमान्य स्रोत</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR मेल नहीं खाते</string>
+    <string name="bulk_install_status_new">नया</string>
+    <string name="bulk_install_status_older_batch">बैच में पुराना संस्करण</string>
+    <string name="bulk_install_status_reinstall">समान संस्करण, संभवतः अलग रूप</string>
+    <string name="bulk_install_status_remote">दूरस्थ स्रोत समर्थित नहीं है</string>
+    <string name="bulk_install_status_same">पहले से इंस्टॉल है</string>
+    <string name="bulk_install_status_update">अपडेट</string>
+    <string name="bulk_install_target_unverified">फिर से इंस्टॉल किए जाने वाले ऐप की पुष्टि नहीं की जा सकी। इस बैच को बंद करें और ऐप फिर से चुनें।</string>
+    <string name="bulk_install_title">एक साथ इंस्टॉल करें</string>
+    <string name="bulk_install_unreadable_archives">पढ़े नहीं जा सकने वाले आर्काइव: %1$d</string>
+    <string name="install_done_with_warning">ऐप चेतावनियों के साथ इंस्टॉल किया गया।</string>
+    <string name="installer_ambiguous">कई इंस्टॉल किए गए ऐप इस ऐप से मेल खाते हैं। अलग कॉपी इंस्टॉल करें? मौजूदा ऐप और उनका डेटा रखा जाएगा।</string>
+    <string name="installer_cancel_pending">अगले सुरक्षित बिंदु पर रोका जा रहा है…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nसमस्या: Java क्लास फ़ाइल पढ़ी नहीं जा सकी।\nकार्रवाई: कन्वर्ज़न के दौरान छोड़ दी गई।</string>
+    <string name="installer_copy_details">विवरण कॉपी करें</string>
+    <string name="installer_error_message">चुना गया ऐप इंस्टॉल नहीं किया जा सका। मान्य MIDlet फ़ाइल चुनें और फिर से कोशिश करें।</string>
+    <string name="installer_existing_data_preserved">मौजूदा सेटिंग और सहेजा गया डेटा रखा जाएगा।</string>
+    <string name="installer_failed_conversion">ऐप कन्वर्ट नहीं किया जा सका। जाँचें कि फ़ाइल पूरी है और समर्थित है, फिर से कोशिश करें।</string>
+    <string name="installer_failed_download">ऐप डाउनलोड नहीं किया जा सका। कनेक्शन और डाउनलोड लिंक जाँचें, फिर से कोशिश करें।</string>
+    <string name="installer_failed_storage">इंस्टॉलेशन पूरा नहीं किया जा सका। फिर से कोशिश करें।</string>
+    <string name="installer_hide_details">विवरण छिपाएँ</string>
+    <string name="installer_needs_recovery">ऐप की फ़ाइलें सहेजी गईं, लेकिन लाइब्रेरी अपडेट पूरी नहीं कर सकी। फिर से कोशिश करने से पहले लाइब्रेरी रिफ़्रेश करें।</string>
+    <string name="installer_not_processed">प्रोसेस नहीं किया गया</string>
+    <string name="installer_partial_restore">ऐप इंस्टॉल किया गया; डेटा या सेटिंग बहाल नहीं की जा सकीं</string>
+    <string name="installer_refresh_library">लाइब्रेरी रिफ़्रेश करें</string>
+    <string name="installer_removed_leftovers">ऐप हटाया गया; कुछ सेटिंग या सहेजा गया डेटा मिटाया नहीं जा सका।</string>
+    <string name="installer_retry_remaining">अधूरे आइटम की समीक्षा करें</string>
+    <string name="installer_separate_copy">अलग कॉपी इंस्टॉल करें</string>
+    <string name="installer_show_details">विवरण दिखाएँ</string>
+    <string name="installer_stage_download">ऐप डाउनलोड किया जा रहा है…</string>
+    <string name="installer_stage_save">ऐप सहेजा जा रहा है…</string>
+    <string name="installer_stage_wait">दूसरी कार्रवाई का इंतज़ार है…</string>
+    <string name="installer_title">MIDlet इंस्टॉलर</string>
+    <string name="reconversion_done_with_warning">संगतता के लिए कन्वर्ज़न चेतावनियों के साथ पूरा हुआ।</string>
+    <string name="reconversion_error">MIDlet अपने-आप कन्वर्ट नहीं किया जा सका।\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet अपने-आप कन्वर्ट नहीं किया जा सका।</string>
+    <string name="reconverting_wait">इस MIDlet को शुरू होने से पहले संगतता के लिए एक बार कन्वर्ट करना ज़रूरी है। कन्वर्ट किया जा रहा है…</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d की समीक्षा ज़रूरी है</item>
+        <item quantity="other">%1$d की समीक्षा ज़रूरी है</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d विफल</item>
+        <item quantity="other">%1$d विफल</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d ऐप मिला</item>
+        <item quantity="other">%1$d ऐप मिले</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d इंस्टॉल किया गया</item>
+        <item quantity="other">%1$d इंस्टॉल किए गए</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">समीक्षा को धीमा होने से बचाने के लिए %1$d अतिरिक्त फ़ाइल शामिल नहीं की गई।</item>
+        <item quantity="other">समीक्षा को धीमा होने से बचाने के लिए %1$d अतिरिक्त फ़ाइलें शामिल नहीं की गईं।</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d तैयार</item>
+        <item quantity="other">%1$d तैयार</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d इंस्टॉल किया गया ऐप इस स्रोत से मेल खाता है।</item>
+        <item quantity="other">%1$d इंस्टॉल किए गए ऐप इस स्रोत से मेल खाते हैं।</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">लाइब्रेरी का %1$d चुना गया ऐप अब उपलब्ध नहीं है।</item>
+        <item quantity="other">लाइब्रेरी के %1$d चुने गए ऐप अब उपलब्ध नहीं हैं।</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d फिर से इंस्टॉल किया गया</item>
+        <item quantity="other">%1$d फिर से इंस्टॉल किए गए</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d बहाल किया गया</item>
+        <item quantity="other">%1$d बहाल किए गए</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">कुल %2$d ऐप में से %1$d प्रोसेस किया गया</item>
+        <item quantity="other">कुल %2$d ऐप में से %1$d प्रोसेस किए गए</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d चुना गया</item>
+        <item quantity="other">%1$d चुने गए</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">पहले से इंस्टॉल या डुप्लिकेट: %1$d</item>
+        <item quantity="other">पहले से इंस्टॉल या डुप्लिकेट: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d छोड़ दिया गया</item>
+        <item quantity="other">%1$d छोड़ दिए गए</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d अपडेट किया गया</item>
+        <item quantity="other">%1$d अपडेट किए गए</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d चेतावनी</item>
+        <item quantity="other">%1$d चेतावनियाँ</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">कन्वर्ज़न की %1$d अतिरिक्त समस्या नहीं दिखाई गई है।</item>
+        <item quantity="other">कन्वर्ज़न की %1$d अतिरिक्त समस्याएँ नहीं दिखाई गई हैं।</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d Java क्लास फ़ाइल पढ़ी नहीं जा सकी, इसलिए उसे छोड़ दिया गया। हो सकता है कि उसका उपयोग करने वाली सुविधाएँ काम न करें।</item>
+        <item quantity="other">%1$d Java क्लास फ़ाइलें पढ़ी नहीं जा सकीं, इसलिए उन्हें छोड़ दिया गया। हो सकता है कि उनका उपयोग करने वाली सुविधाएँ काम न करें।</item>
+    </plurals>
 </resources>

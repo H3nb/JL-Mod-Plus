@@ -421,4 +421,107 @@
         <item quantity="one">ගුණාංග %1$d</item>
         <item quantity="other">ගුණාංග %1$d</item>
     </plurals>
+    <string name="bulk_install_action_jar_only">JAR පමණක් ස්ථාපනය කරන්න</string>
+    <string name="bulk_install_action_separate_copy">වෙනම පිටපතක් ලෙස ස්ථාපනය කරන්න</string>
+    <string name="bulk_install_cancel">අවලංගු කරන්න</string>
+    <string name="bulk_install_choose_files">ගොනු</string>
+    <string name="bulk_install_choose_folder">ෆෝල්ඩරය</string>
+    <string name="bulk_install_clear">තේරීම හිස් කරන්න</string>
+    <string name="bulk_install_close">වසන්න</string>
+    <string name="bulk_install_empty">සහාය දක්වන යෙදුම් කිසිවක් හමු නොවීය.</string>
+    <string name="bulk_install_empty_filter">ගැළපෙන ක්‍රීඩා නොමැත.</string>
+    <string name="bulk_install_filter_all">සියල්ල</string>
+    <string name="bulk_install_filter_review">සමාලෝචනය</string>
+    <string name="bulk_install_filter_selected">තෝරා ඇත</string>
+    <string name="bulk_install_install_count">%1$dක් ස්ථාපනය කරන්න</string>
+    <string name="bulk_install_installed_version">ස්ථාපිත: %1$s</string>
+    <string name="bulk_install_recommended">නිර්දේශිත</string>
+    <string name="bulk_install_result_failed">අසාර්ථකයි</string>
+    <string name="bulk_install_result_installed">ස්ථාපනය කර ඇත</string>
+    <string name="bulk_install_result_reinstalled">නැවත ස්ථාපනය කර ඇත</string>
+    <string name="bulk_install_result_restored">ප්‍රතිසාධනය කර ඇත</string>
+    <string name="bulk_install_result_skipped">මඟ හැර ඇත</string>
+    <string name="bulk_install_result_updated">යාවත්කාලීන කර ඇත</string>
+    <string name="bulk_install_skipped_entries">මඟ හැරුණු සංරක්ෂිත ඇතුළත් කිරීම්: %1$d</string>
+    <string name="bulk_install_source">මූලාශ්‍රය: %1$s</string>
+    <string name="bulk_install_status_conflict">කණ්ඩායමේ ගැටුම</string>
+    <string name="bulk_install_status_downgrade">පැරණි අනුවාදය</string>
+    <string name="bulk_install_status_duplicate">අනුපිටපත</string>
+    <string name="bulk_install_status_error">වලංගු නොවන මූලාශ්‍රය</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR නොගැළපීම</string>
+    <string name="bulk_install_status_new">නව</string>
+    <string name="bulk_install_status_older_batch">කණ්ඩායමේ පැරණි අනුවාදය</string>
+    <string name="bulk_install_status_remote">දුරස්ථ මූලාශ්‍රයට සහාය නොදක්වයි</string>
+    <string name="bulk_install_status_same">දැනටමත් ස්ථාපනය කර ඇත</string>
+    <string name="bulk_install_status_update">යාවත්කාලීනය</string>
+    <string name="bulk_install_title">එකවර ස්ථාපනය</string>
+    <string name="bulk_install_unreadable_archives">කියවිය නොහැකි සංරක්ෂිත: %1$d</string>
+    <string name="converting_wait">JAR පරිවර්තනය කරමින්…</string>
+    <string name="install">ස්ථාපනය කරන්න</string>
+    <string name="install_done">යෙදුම ස්ථාපනය කර ඇත.</string>
+    <string name="install_done_with_warning">අනතුරු ඇඟවීම් සහිතව යෙදුම ස්ථාපනය කර ඇත.</string>
+    <string name="installer_copy_details">විස්තර පිටපත් කරන්න</string>
+    <string name="installer_hide_details">විස්තර සඟවන්න</string>
+    <string name="installer_not_processed">සැකසී නැත</string>
+    <string name="installer_refresh_library">පුස්තකාලය නැවුම් කරන්න</string>
+    <string name="installer_retry_remaining">අවසන් නොකළ අයිතම සමාලෝචනය කරන්න</string>
+    <string name="installer_separate_copy">වෙනම පිටපතක් ස්ථාපනය කරන්න</string>
+    <string name="installer_show_details">විස්තර පෙන්වන්න</string>
+    <string name="installer_stage_download">යෙදුම බාගත කරමින්…</string>
+    <string name="installer_stage_save">යෙදුම සුරකිමින්…</string>
+    <string name="installer_stage_wait">වෙනත් ක්‍රියාවක් සඳහා රැඳී සිටිමින්…</string>
+    <string name="installer_title">MIDlet ස්ථාපකය</string>
+    <string name="warn_install_from_net">ගොනුව අන්තර්ජාලයෙන් බාගත කෙරේ.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$dක් සමාලෝචනය කළ යුතුයි</item>
+        <item quantity="other">%1$dක් සමාලෝචනය කළ යුතුයි</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$dක් අසාර්ථකයි</item>
+        <item quantity="other">%1$dක් අසාර්ථකයි</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">යෙදුම් %1$dක් හමු විය</item>
+        <item quantity="other">යෙදුම් %1$dක් හමු විය</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$dක් ස්ථාපනය කර ඇත</item>
+        <item quantity="other">%1$dක් ස්ථාපනය කර ඇත</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$dක් සූදානම්</item>
+        <item quantity="other">%1$dක් සූදානම්</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$dක් නැවත ස්ථාපනය කර ඇත</item>
+        <item quantity="other">%1$dක් නැවත ස්ථාපනය කර ඇත</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$dක් ප්‍රතිසාධනය කර ඇත</item>
+        <item quantity="other">%1$dක් ප්‍රතිසාධනය කර ඇත</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$dක් තෝරා ඇත</item>
+        <item quantity="other">%1$dක් තෝරා ඇත</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">දැනටමත් ස්ථාපිත හෝ අනුපිටපත්: %1$d</item>
+        <item quantity="other">දැනටමත් ස්ථාපිත හෝ අනුපිටපත්: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$dක් මඟ හැර ඇත</item>
+        <item quantity="other">%1$dක් මඟ හැර ඇත</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$dක් යාවත්කාලීන කර ඇත</item>
+        <item quantity="other">%1$dක් යාවත්කාලීන කර ඇත</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">අනතුරු ඇඟවීම් %1$dක්</item>
+        <item quantity="other">අනතුරු ඇඟවීම් %1$dක්</item>
+    </plurals>
+    <string name="midlet_name"><b>"නම: "</b></string>
+    <string name="midlet_size"><b>"ප්‍රමාණය: "</b></string>
+    <string name="midlet_vendor"><b>"ප්‍රකාශකයා: "</b></string>
+    <string name="midlet_version"><b>"අනුවාදය: "</b></string>
 </resources>

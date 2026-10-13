@@ -772,7 +772,7 @@
     <string name="bulk_install_planning">Проверка выбранных приложений…</string>
     <string name="bulk_install_empty">Поддерживаемые приложения не найдены.</string>
     <string name="bulk_install_recommended">Рекомендуется</string>
-    <string name="bulk_install_clear">Очистить</string>
+    <string name="bulk_install_clear">Очистить выбор</string>
     <string name="bulk_install_install_count">Установить: %1$d</string>
     <string name="bulk_install_cancel">Отмена</string>
     <string name="bulk_install_close">Закрыть</string>
@@ -791,8 +791,8 @@
     <string name="bulk_install_status_update">Обновление</string>
     <string name="bulk_install_status_downgrade">Более старая версия</string>
     <string name="bulk_install_status_same">Уже установлено</string>
-    <string name="bulk_install_status_reinstall">Вариант / переустановка</string>
-    <string name="bulk_install_status_ambiguous">Несколько совпадений среди установленных</string>
+    <string name="bulk_install_status_reinstall">Та же версия, возможен другой вариант</string>
+    <string name="bulk_install_status_ambiguous">Соответствует нескольким установленным приложениям</string>
     <string name="bulk_install_status_mismatch">Несоответствие JAD/JAR</string>
     <string name="bulk_install_status_duplicate">Дубликат</string>
     <string name="bulk_install_status_older_batch">Более старая версия в пакете</string>
@@ -864,7 +864,7 @@
     <string name="config_help_emulation_speed">Изменяет скорость часов MIDlet и поддерживаемые задержки. Аудио и интерфейс Android работают с обычной скоростью.</string>
     <string name="config_help_timing_mode">Выбирает, использует ли MIDlet время эмуляции или системное время. Относительные задержки по-прежнему масштабируются со скоростью эмуляции.</string>
     <string name="config_help_timing_unavailable">Настройки времени недоступны для этой установки MIDlet. Переустановите или преобразуйте MIDlet заново, чтобы включить их.</string>
-    <string name="reconverting_wait">Перед запуском этому MIDlet требуется однократное преобразование совместимости. Подождите…</string>
+    <string name="reconverting_wait">Перед запуском этому MIDlet требуется однократное преобразование для совместимости. Преобразование…</string>
     <string name="reconversion_error">Не удалось автоматически преобразовать MIDlet.
 
 %1$s</string>

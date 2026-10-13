@@ -630,7 +630,7 @@
     <string name="bulk_install_planning">Kontrollerar valda applikationer…</string>
     <string name="bulk_install_empty">Inga applikationer som stöds hittades.</string>
     <string name="bulk_install_recommended">Rekommenderad</string>
-    <string name="bulk_install_clear">Rensa</string>
+    <string name="bulk_install_clear">Rensa markering</string>
     <string name="bulk_install_install_count">Installera %1$d</string>
     <string name="bulk_install_cancel">Avbryt</string>
     <string name="bulk_install_close">Stäng</string>
@@ -655,8 +655,8 @@
     <string name="bulk_install_status_update">Uppdatering</string>
     <string name="bulk_install_status_downgrade">Äldre version</string>
     <string name="bulk_install_status_same">Redan installerad</string>
-    <string name="bulk_install_status_reinstall">Variant / ominstallation</string>
-    <string name="bulk_install_status_ambiguous">Flera installerade träffar</string>
+    <string name="bulk_install_status_reinstall">Samma version, möjlig variant</string>
+    <string name="bulk_install_status_ambiguous">Matchar flera installerade appar</string>
     <string name="bulk_install_status_mismatch">JAD/JAR matchar inte</string>
     <string name="bulk_install_status_duplicate">Dubblett</string>
     <string name="bulk_install_status_older_batch">Äldre batchkandidat</string>
@@ -731,8 +731,8 @@
     <string name="config_help_emulation_speed">Ändrar MIDlet-appens klockhastighet och stödda fördröjningar. Android-ljud och -UI förblir normala.</string>
     <string name="config_help_timing_mode">Väljer om MIDlet-appen använder emuleringstid eller systemtid. Relativa fördröjningar skalas fortfarande med emuleringshastigheten.</string>
     <string name="config_help_timing_unavailable">Tidsinställningar är inte tillgängliga för denna MIDlet-installation. Installera om eller konvertera om MIDlet-appen för att aktivera dem.</string>
-    <string name="reconverting_wait">Den här MIDlet-appen behöver en engångskonvertering för kompatibilitet innan den kan starta. Vänta…</string>
-    <string name="reconversion_error">MIDlet-appen kunde inte konverteras automatiskt. %1$s</string>
+    <string name="reconverting_wait">Den här MIDlet-appen behöver en engångskonvertering för kompatibilitet innan den kan starta. Konverterar…</string>
+    <string name="reconversion_error">MIDlet-appen kunde inte konverteras automatiskt.\n\n%1$s</string>
     <string name="config_help_generic_color">Ställer in färgen på det här visuella elementet.</string>
     <string name="config_help_encoding">Väljer den teckenkodning som rapporteras som microedition.encoding.</string>
     <string name="config_edit_system_properties">Redigera systemegenskaper</string>

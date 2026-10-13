@@ -591,4 +591,173 @@
         <item quantity="other">%1$dটি প্রপার্টি</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">দেখানো আকার 1% থেকে 1000% পর্যন্ত বদলায়। 100% হলে গেম তার মূল আকার ব্যবহার করে; বড় মানে স্ক্রিনের বাইরে চলে যেতে পারে।</string>
+    <string name="bulk_install_action_jar_only">শুধু JAR ইনস্টল করুন</string>
+    <string name="bulk_install_action_separate_copy">আলাদা কপি হিসেবে ইনস্টল করুন</string>
+    <string name="bulk_install_cancel">বাতিল করুন</string>
+    <string name="bulk_install_cancel_requested">বর্তমান অ্যাপটির পরে থামানো হচ্ছে…</string>
+    <string name="bulk_install_cancelled">একসঙ্গে ইনস্টল করার প্রক্রিয়া থামানো হয়েছে</string>
+    <string name="bulk_install_choose_files">ফাইল</string>
+    <string name="bulk_install_choose_folder">ফোল্ডার</string>
+    <string name="bulk_install_clear">নির্বাচন মুছুন</string>
+    <string name="bulk_install_close">বন্ধ করুন</string>
+    <string name="bulk_install_complete">একসঙ্গে ইনস্টল করার প্রক্রিয়া শেষ হয়েছে</string>
+    <string name="bulk_install_empty">কোনো সমর্থিত অ্যাপ পাওয়া যায়নি।</string>
+    <string name="bulk_install_empty_filter">কোনো মিলে যাওয়া গেম নেই।</string>
+    <string name="bulk_install_fatal">একসঙ্গে ইনস্টল করার প্রক্রিয়া থামানো হয়েছে। আবার চেষ্টা করার আগে অসমাপ্ত আইটেমগুলি পর্যালোচনা করুন।</string>
+    <string name="bulk_install_filter_all">সব</string>
+    <string name="bulk_install_filter_review">পর্যালোচনা</string>
+    <string name="bulk_install_filter_selected">নির্বাচিত</string>
+    <string name="bulk_install_install_count">%1$dটি ইনস্টল করুন</string>
+    <string name="bulk_install_installed_version">ইনস্টল করা আছে: %1$s</string>
+    <string name="bulk_install_library_changed">পর্যালোচনার পরে লাইব্রেরি বদলে গেছে। এই ব্যাচ বন্ধ করে উৎসগুলি আবার বেছে নিন।</string>
+    <string name="bulk_install_planning">নির্বাচিত অ্যাপগুলি পরীক্ষা করা হচ্ছে…</string>
+    <string name="bulk_install_prepare_failed">নির্বাচিত অ্যাপগুলি ইনস্টল করার জন্য প্রস্তুত করা যায়নি।</string>
+    <string name="bulk_install_reason_conflicting_jads">ভিন্ন বৈশিষ্ট্যযুক্ত JAD ফাইলগুলি একই JAR-কে নির্দেশ করে।</string>
+    <string name="bulk_install_reason_duplicate_source">এই উৎসটি এই ব্যাচের অন্য একটি উৎসের অনুলিপি।</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD ও JAR ভিন্ন অ্যাপ শনাক্ত করে।</string>
+    <string name="bulk_install_reason_jar_not_found">JAD-এ উল্লেখ করা JAR পাওয়া যায়নি: %1$s।</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD-এ MIDlet-Jar-URL নেই।</string>
+    <string name="bulk_install_reason_missing_parent">JAD-এর কোনো প্যারেন্ট ডিরেক্টরি নেই।</string>
+    <string name="bulk_install_reason_older_candidate">এই অ্যাপের আরও নতুন সংস্করণ একই ব্যাচে আছে।</string>
+    <string name="bulk_install_reason_remote_jar">একসঙ্গে ইনস্টল করার প্রক্রিয়ায় দূরবর্তী JAR ফাইল ডাউনলোড করা যায় না।</string>
+    <string name="bulk_install_reason_source_error">এই উৎসটি ইনস্টল করার জন্য প্রস্তুত করা যায়নি।</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD একটি অসমর্থিত URI স্কিম ব্যবহার করে JAR-কে নির্দেশ করে: %1$s।</string>
+    <string name="bulk_install_reason_version_conflict">একই সংস্করণের অ্যাপের একাধিক ভিন্ন রূপ আছে।</string>
+    <string name="bulk_install_recommended">প্রস্তাবিত</string>
+    <string name="bulk_install_reinstall_source_missing">আবার ইনস্টল করার জন্য সংরক্ষিত JAR পাওয়া যাচ্ছে না।</string>
+    <string name="bulk_install_result_failed">ব্যর্থ</string>
+    <string name="bulk_install_result_installed">ইনস্টল করা হয়েছে</string>
+    <string name="bulk_install_result_reinstalled">আবার ইনস্টল করা হয়েছে</string>
+    <string name="bulk_install_result_restored">পুনরুদ্ধার করা হয়েছে</string>
+    <string name="bulk_install_result_skipped">বাদ দেওয়া হয়েছে</string>
+    <string name="bulk_install_result_updated">আপডেট করা হয়েছে</string>
+    <string name="bulk_install_skipped_entries">বাদ দেওয়া আর্কাইভ এন্ট্রি: %1$d</string>
+    <string name="bulk_install_source">উৎস: %1$s</string>
+    <string name="bulk_install_source_changed">পর্যালোচনার পরে উৎস ফাইল বদলে গেছে। ফাইলগুলি আবার বেছে নিন।</string>
+    <string name="bulk_install_source_unavailable">প্রয়োজনীয় একটি উৎস ফাইল আর পাওয়া যাচ্ছে না। ফাইলগুলি আবার বেছে নিন।</string>
+    <string name="bulk_install_status_ambiguous">একাধিক ইনস্টল করা অ্যাপের সঙ্গে মিলে যায়</string>
+    <string name="bulk_install_status_conflict">ব্যাচে দ্বন্দ্ব</string>
+    <string name="bulk_install_status_downgrade">পুরোনো সংস্করণ</string>
+    <string name="bulk_install_status_duplicate">অনুলিপি</string>
+    <string name="bulk_install_status_error">অবৈধ উৎস</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR অমিল</string>
+    <string name="bulk_install_status_new">নতুন</string>
+    <string name="bulk_install_status_older_batch">ব্যাচে পুরোনো সংস্করণ</string>
+    <string name="bulk_install_status_reinstall">একই সংস্করণ, সম্ভবত ভিন্ন রূপ</string>
+    <string name="bulk_install_status_remote">দূরবর্তী উৎস সমর্থিত নয়</string>
+    <string name="bulk_install_status_same">ইতিমধ্যেই ইনস্টল করা আছে</string>
+    <string name="bulk_install_status_update">আপডেট</string>
+    <string name="bulk_install_target_unverified">আবার ইনস্টল করার লক্ষ্য অ্যাপটি যাচাই করা যায়নি। এই ব্যাচ বন্ধ করে অ্যাপটি আবার বেছে নিন।</string>
+    <string name="bulk_install_title">একসঙ্গে ইনস্টল করুন</string>
+    <string name="bulk_install_unreadable_archives">অপাঠ্য আর্কাইভ: %1$d</string>
+    <string name="install">ইনস্টল করুন</string>
+    <string name="install_done">অ্যাপ ইনস্টল করা হয়েছে।</string>
+    <string name="install_done_with_warning">সতর্কতাসহ অ্যাপ ইনস্টল করা হয়েছে।</string>
+    <string name="install_jar_non_matched_jad">এই অ্যাপটি JAD-এ বর্ণিত অ্যাপ থেকে আলাদা।\nJAD উপেক্ষা করে তবুও ইনস্টল করবেন?</string>
+    <string name="installer_ambiguous">একাধিক ইনস্টল করা অ্যাপ এই অ্যাপটির সঙ্গে মিলে যায়। আলাদা কপি ইনস্টল করবেন? বর্তমান অ্যাপ ও তাদের ডেটা রাখা হবে।</string>
+    <string name="installer_cancel_pending">পরবর্তী নিরাপদ পর্যায়ে থামানো হচ্ছে…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nসমস্যা: Java ক্লাস ফাইল পড়া যায়নি।\nব্যবস্থা: রূপান্তরের সময় বাদ দেওয়া হয়েছে।</string>
+    <string name="installer_copy_details">বিবরণ কপি করুন</string>
+    <string name="installer_error_message">নির্বাচিত অ্যাপ ইনস্টল করা যায়নি। বৈধ MIDlet ফাইল বেছে নিয়ে আবার চেষ্টা করুন।</string>
+    <string name="installer_existing_data_preserved">বর্তমান সেটিংস ও সেভ করা ডেটা রাখা হবে।</string>
+    <string name="installer_failed_conversion">অ্যাপ রূপান্তর করা যায়নি। ফাইলটি সম্পূর্ণ ও সমর্থিত কি না পরীক্ষা করে আবার চেষ্টা করুন।</string>
+    <string name="installer_failed_download">অ্যাপ ডাউনলোড করা যায়নি। সংযোগ ও ডাউনলোড লিংক পরীক্ষা করে আবার চেষ্টা করুন।</string>
+    <string name="installer_failed_storage">ইনস্টলেশন শেষ করা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="installer_hide_details">বিবরণ লুকান</string>
+    <string name="installer_needs_recovery">অ্যাপের ফাইলগুলি সংরক্ষিত হয়েছে, কিন্তু লাইব্রেরির আপডেট শেষ করা যায়নি। আবার চেষ্টা করার আগে লাইব্রেরি রিফ্রেশ করুন।</string>
+    <string name="installer_not_processed">প্রক্রিয়া করা হয়নি</string>
+    <string name="installer_partial_restore">অ্যাপ ইনস্টল করা হয়েছে; ডেটা বা সেটিংস পুনরুদ্ধার করা যায়নি</string>
+    <string name="installer_refresh_library">লাইব্রেরি রিফ্রেশ করুন</string>
+    <string name="installer_removed_leftovers">অ্যাপ সরানো হয়েছে; কিছু সেটিংস বা সেভ করা ডেটা মোছা যায়নি।</string>
+    <string name="installer_retry_remaining">অসমাপ্ত আইটেমগুলি পর্যালোচনা করুন</string>
+    <string name="installer_separate_copy">আলাদা কপি ইনস্টল করুন</string>
+    <string name="installer_show_details">বিবরণ দেখান</string>
+    <string name="installer_stage_download">অ্যাপ ডাউনলোড করা হচ্ছে…</string>
+    <string name="installer_stage_save">অ্যাপ সংরক্ষণ করা হচ্ছে…</string>
+    <string name="installer_stage_wait">অন্য একটি কাজের অপেক্ষায়…</string>
+    <string name="installer_title">MIDlet ইনস্টলার</string>
+    <string name="reconversion_done_with_warning">সামঞ্জস্যের জন্য রূপান্তর সতর্কতাসহ শেষ হয়েছে।</string>
+    <string name="reconversion_error">MIDlet স্বয়ংক্রিয়ভাবে রূপান্তর করা যায়নি।\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet স্বয়ংক্রিয়ভাবে রূপান্তর করা যায়নি।</string>
+    <string name="reconverting_wait">এই MIDlet চালু হওয়ার আগে সামঞ্জস্যের জন্য একবার রূপান্তর করতে হবে। রূপান্তর করা হচ্ছে…</string>
+    <string name="reinstall">এই অ্যাপ ইতিমধ্যেই ইনস্টল করা আছে। আবার ইনস্টল করবেন?</string>
+    <string name="reinstall_newest">এই অ্যাপটি %1$s সংস্করণে আপডেট করবেন?\n\nবর্তমানে ইনস্টল করা আছে: %2$s</string>
+    <string name="reinstall_older">এই অ্যাপটি %1$s সংস্করণ দিয়ে প্রতিস্থাপন করবেন?\n\nবর্তমানে ইনস্টল করা আছে: %2$s\nপুরোনো সংস্করণটি বর্তমান ডেটার সঙ্গে ঠিকভাবে কাজ নাও করতে পারে।</string>
+    <string name="warn_install_from_net">ফাইলটি ইন্টারনেট থেকে ডাউনলোড করা হবে।</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$dটি পর্যালোচনা করা দরকার</item>
+        <item quantity="other">%1$dটি পর্যালোচনা করা দরকার</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$dটি ব্যর্থ</item>
+        <item quantity="other">%1$dটি ব্যর্থ</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$dটি অ্যাপ পাওয়া গেছে</item>
+        <item quantity="other">%1$dটি অ্যাপ পাওয়া গেছে</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$dটি ইনস্টল করা হয়েছে</item>
+        <item quantity="other">%1$dটি ইনস্টল করা হয়েছে</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">পর্যালোচনায় দ্রুত সাড়া পাওয়া নিশ্চিত করতে %1$dটি অতিরিক্ত ফাইল অন্তর্ভুক্ত করা হয়নি।</item>
+        <item quantity="other">পর্যালোচনায় দ্রুত সাড়া পাওয়া নিশ্চিত করতে %1$dটি অতিরিক্ত ফাইল অন্তর্ভুক্ত করা হয়নি।</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$dটি প্রস্তুত</item>
+        <item quantity="other">%1$dটি প্রস্তুত</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$dটি ইনস্টল করা অ্যাপ এই উৎসের সঙ্গে মিলে যায়।</item>
+        <item quantity="other">%1$dটি ইনস্টল করা অ্যাপ এই উৎসের সঙ্গে মিলে যায়।</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">লাইব্রেরির %1$dটি নির্বাচিত অ্যাপ আর পাওয়া যাচ্ছে না।</item>
+        <item quantity="other">লাইব্রেরির %1$dটি নির্বাচিত অ্যাপ আর পাওয়া যাচ্ছে না।</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$dটি আবার ইনস্টল করা হয়েছে</item>
+        <item quantity="other">%1$dটি আবার ইনস্টল করা হয়েছে</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$dটি পুনরুদ্ধার করা হয়েছে</item>
+        <item quantity="other">%1$dটি পুনরুদ্ধার করা হয়েছে</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">মোট %2$dটি অ্যাপের মধ্যে %1$dটি প্রক্রিয়া করা হয়েছে</item>
+        <item quantity="other">মোট %2$dটি অ্যাপের মধ্যে %1$dটি প্রক্রিয়া করা হয়েছে</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$dটি নির্বাচিত</item>
+        <item quantity="other">%1$dটি নির্বাচিত</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">ইতিমধ্যেই ইনস্টল করা আছে বা অনুলিপি: %1$d</item>
+        <item quantity="other">ইতিমধ্যেই ইনস্টল করা আছে বা অনুলিপি: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$dটি বাদ দেওয়া হয়েছে</item>
+        <item quantity="other">%1$dটি বাদ দেওয়া হয়েছে</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$dটি আপডেট করা হয়েছে</item>
+        <item quantity="other">%1$dটি আপডেট করা হয়েছে</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$dটি সতর্কতা</item>
+        <item quantity="other">%1$dটি সতর্কতা</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">রূপান্তরের %1$dটি অতিরিক্ত সমস্যা দেখানো হয়নি।</item>
+        <item quantity="other">রূপান্তরের %1$dটি অতিরিক্ত সমস্যা দেখানো হয়নি।</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$dটি Java ক্লাস ফাইল পড়া যায়নি বলে বাদ দেওয়া হয়েছে। এটি ব্যবহার করে এমন সুবিধাগুলি কাজ নাও করতে পারে।</item>
+        <item quantity="other">%1$dটি Java ক্লাস ফাইল পড়া যায়নি বলে বাদ দেওয়া হয়েছে। এগুলি ব্যবহার করে এমন সুবিধাগুলি কাজ নাও করতে পারে।</item>
+    </plurals>
+    <string name="midlet_name"><b>"নাম: "</b></string>
+    <string name="midlet_size"><b>"আকার: "</b></string>
+    <string name="midlet_vendor"><b>"প্রকাশক: "</b></string>
+    <string name="midlet_version"><b>"সংস্করণ: "</b></string>
 </resources>

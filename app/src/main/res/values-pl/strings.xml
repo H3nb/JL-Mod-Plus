@@ -605,4 +605,209 @@
         <item quantity="other">%1$d właściwości</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Dostosowuje rozmiar wyświetlania od 1% do 1000%. Przy 100% gra zachowuje oryginalny rozmiar; wyższe wartości mogą spowodować wyjście poza ekran.</string>
+    <string name="bulk_install_action_jar_only">Zainstaluj tylko JAR</string>
+    <string name="bulk_install_action_separate_copy">Zainstaluj jako osobną kopię</string>
+    <string name="bulk_install_cancel">Anuluj</string>
+    <string name="bulk_install_cancel_requested">Zatrzymywanie po bieżącej aplikacji…</string>
+    <string name="bulk_install_cancelled">Instalacja zbiorcza zatrzymana</string>
+    <string name="bulk_install_choose_files">Pliki</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_clear">Wyczyść wybór</string>
+    <string name="bulk_install_close">Zamknij</string>
+    <string name="bulk_install_complete">Instalacja zbiorcza zakończona</string>
+    <string name="bulk_install_empty">Nie znaleziono obsługiwanych aplikacji.</string>
+    <string name="bulk_install_empty_filter">Brak pasujących gier.</string>
+    <string name="bulk_install_fatal">Instalacja zbiorcza zatrzymana. Sprawdź niedokończone elementy przed ponowną próbą.</string>
+    <string name="bulk_install_filter_all">Wszystkie</string>
+    <string name="bulk_install_filter_review">Do sprawdzenia</string>
+    <string name="bulk_install_filter_selected">Wybrane</string>
+    <string name="bulk_install_install_count">Zainstaluj %1$d</string>
+    <string name="bulk_install_installed_version">Zainstalowana wersja: %1$s</string>
+    <string name="bulk_install_library_changed">Biblioteka zmieniła się po przeglądzie. Zamknij tę partię i ponownie wybierz źródła.</string>
+    <string name="bulk_install_planning">Sprawdzanie wybranych aplikacji…</string>
+    <string name="bulk_install_prepare_failed">Nie udało się przygotować wybranych aplikacji do instalacji.</string>
+    <string name="bulk_install_reason_conflicting_jads">Pliki JAD z różnymi atrybutami odwołują się do tego samego pliku JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">To źródło powiela inne źródło w tej partii.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD i JAR opisują różne aplikacje.</string>
+    <string name="bulk_install_reason_jar_not_found">Nie znaleziono pliku JAR wskazanego przez JAD: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">W pliku JAD brakuje MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">Plik JAD nie ma katalogu nadrzędnego.</string>
+    <string name="bulk_install_reason_older_candidate">Nowsza wersja tej aplikacji znajduje się w tej samej partii.</string>
+    <string name="bulk_install_reason_remote_jar">Instalacja zbiorcza nie może pobierać zdalnych plików JAR.</string>
+    <string name="bulk_install_reason_source_error">Nie udało się przygotować tego źródła do instalacji.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">Plik JAD odwołuje się do JAR przy użyciu nieobsługiwanego schematu URI: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Wiele wariantów aplikacji ma tę samą wersję.</string>
+    <string name="bulk_install_recommended">Zalecane</string>
+    <string name="bulk_install_reinstall_source_missing">Zapisany JAR jest niedostępny do ponownej instalacji.</string>
+    <string name="bulk_install_result_failed">Niepowodzenie</string>
+    <string name="bulk_install_result_installed">Zainstalowano</string>
+    <string name="bulk_install_result_reinstalled">Zainstalowano ponownie</string>
+    <string name="bulk_install_result_restored">Przywrócono</string>
+    <string name="bulk_install_result_skipped">Pominięto</string>
+    <string name="bulk_install_result_updated">Zaktualizowano</string>
+    <string name="bulk_install_skipped_entries">Pominięte wpisy w archiwach: %1$d</string>
+    <string name="bulk_install_source">Źródło: %1$s</string>
+    <string name="bulk_install_source_changed">Plik źródłowy zmienił się po przeglądzie. Ponownie wybierz pliki.</string>
+    <string name="bulk_install_source_unavailable">Wymagany plik źródłowy jest już niedostępny. Ponownie wybierz pliki.</string>
+    <string name="bulk_install_status_ambiguous">Pasuje do wielu zainstalowanych aplikacji</string>
+    <string name="bulk_install_status_conflict">Konflikt w partii</string>
+    <string name="bulk_install_status_downgrade">Starsza wersja</string>
+    <string name="bulk_install_status_duplicate">Duplikat</string>
+    <string name="bulk_install_status_error">Nieprawidłowe źródło</string>
+    <string name="bulk_install_status_mismatch">Niezgodność JAD/JAR</string>
+    <string name="bulk_install_status_new">Nowa</string>
+    <string name="bulk_install_status_older_batch">Starsza wersja w partii</string>
+    <string name="bulk_install_status_reinstall">Ta sama wersja, możliwy wariant</string>
+    <string name="bulk_install_status_remote">Źródło zdalne nie jest obsługiwane</string>
+    <string name="bulk_install_status_same">Już zainstalowana</string>
+    <string name="bulk_install_status_update">Aktualizacja</string>
+    <string name="bulk_install_target_unverified">Nie udało się zweryfikować celu ponownej instalacji. Zamknij tę partię i ponownie wybierz aplikację.</string>
+    <string name="bulk_install_title">Instalacja zbiorcza</string>
+    <string name="bulk_install_unreadable_archives">Nieczytelne archiwa: %1$d</string>
+    <string name="install">Zainstaluj</string>
+    <string name="install_done">Aplikacja zainstalowana.</string>
+    <string name="install_done_with_warning">Aplikacja zainstalowana z ostrzeżeniami.</string>
+    <string name="install_jar_non_matched_jad">Ta aplikacja różni się od opisanej w JAD.\nZignorować JAD i mimo to zainstalować?</string>
+    <string name="installer_ambiguous">Kilka zainstalowanych aplikacji pasuje do tej aplikacji. Zainstalować osobną kopię? Istniejące aplikacje i ich dane zostaną zachowane.</string>
+    <string name="installer_cancel_pending">Zatrzymywanie w następnym bezpiecznym punkcie…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProblem: nie można było odczytać pliku klasy Java.\nDziałanie: pominięto podczas konwersji.</string>
+    <string name="installer_copy_details">Kopiuj szczegóły</string>
+    <string name="installer_error_message">Nie udało się zainstalować wybranej aplikacji. Wybierz prawidłowy plik MIDletu i spróbuj ponownie.</string>
+    <string name="installer_existing_data_preserved">Istniejące ustawienia i zapisy gry zostaną zachowane.</string>
+    <string name="installer_failed_conversion">Nie udało się przekonwertować aplikacji. Sprawdź, czy plik jest kompletny i obsługiwany, a następnie spróbuj ponownie.</string>
+    <string name="installer_failed_download">Nie udało się pobrać aplikacji. Sprawdź połączenie i link do pobrania, a następnie spróbuj ponownie.</string>
+    <string name="installer_failed_storage">Nie udało się ukończyć instalacji. Spróbuj ponownie.</string>
+    <string name="installer_hide_details">Ukryj szczegóły</string>
+    <string name="installer_needs_recovery">Pliki aplikacji zostały zapisane, ale nie udało się zakończyć aktualizacji biblioteki. Odśwież bibliotekę przed ponowną próbą.</string>
+    <string name="installer_not_processed">Nieprzetworzone</string>
+    <string name="installer_partial_restore">Aplikacja zainstalowana; nie udało się przywrócić danych lub ustawień</string>
+    <string name="installer_refresh_library">Odśwież bibliotekę</string>
+    <string name="installer_removed_leftovers">Aplikacja usunięta; nie udało się usunąć części ustawień lub zapisów gry.</string>
+    <string name="installer_retry_remaining">Sprawdź niedokończone elementy</string>
+    <string name="installer_separate_copy">Zainstaluj osobną kopię</string>
+    <string name="installer_show_details">Pokaż szczegóły</string>
+    <string name="installer_stage_download">Pobieranie aplikacji…</string>
+    <string name="installer_stage_save">Zapisywanie aplikacji…</string>
+    <string name="installer_stage_wait">Oczekiwanie na inną operację…</string>
+    <string name="installer_title">Instalator MIDletów</string>
+    <string name="reconversion_done_with_warning">Konwersja zgodności zakończona z ostrzeżeniami.</string>
+    <string name="reconversion_error">Nie udało się automatycznie przekonwertować MIDletu.\n\n%1$s</string>
+    <string name="reconversion_error_summary">Nie udało się automatycznie przekonwertować MIDletu.</string>
+    <string name="reconverting_wait">Ten MIDlet wymaga jednorazowej konwersji zgodności przed uruchomieniem. Konwertowanie…</string>
+    <string name="reinstall">Ta aplikacja jest już zainstalowana. Zainstalować ponownie?</string>
+    <string name="reinstall_newest">Zaktualizować tę aplikację do wersji %1$s?\n\nObecnie zainstalowana: %2$s</string>
+    <string name="reinstall_older">Zastąpić tę aplikację wersją %1$s?\n\nObecnie zainstalowana: %2$s\nStarsza wersja może nie działać poprawnie z istniejącymi danymi.</string>
+    <string name="warn_install_from_net">Plik zostanie pobrany z internetu.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">Do sprawdzenia: %1$d</item>
+        <item quantity="few">Do sprawdzenia: %1$d</item>
+        <item quantity="many">Do sprawdzenia: %1$d</item>
+        <item quantity="other">Do sprawdzenia: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Nieudane: %1$d</item>
+        <item quantity="few">Nieudane: %1$d</item>
+        <item quantity="many">Nieudane: %1$d</item>
+        <item quantity="other">Nieudane: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Znaleziono %1$d aplikację</item>
+        <item quantity="few">Znaleziono %1$d aplikacje</item>
+        <item quantity="many">Znaleziono %1$d aplikacji</item>
+        <item quantity="other">Znaleziono %1$d aplikacji</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Zainstalowane: %1$d</item>
+        <item quantity="few">Zainstalowane: %1$d</item>
+        <item quantity="many">Zainstalowane: %1$d</item>
+        <item quantity="other">Zainstalowane: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Pominięto %1$d dodatkowy plik, aby przegląd działał sprawnie.</item>
+        <item quantity="few">Pominięto %1$d dodatkowe pliki, aby przegląd działał sprawnie.</item>
+        <item quantity="many">Pominięto %1$d dodatkowych plików, aby przegląd działał sprawnie.</item>
+        <item quantity="other">Pominięto %1$d dodatkowego pliku, aby przegląd działał sprawnie.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Gotowe: %1$d</item>
+        <item quantity="few">Gotowe: %1$d</item>
+        <item quantity="many">Gotowe: %1$d</item>
+        <item quantity="other">Gotowe: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d zainstalowana aplikacja pasuje do tego źródła.</item>
+        <item quantity="few">%1$d zainstalowane aplikacje pasują do tego źródła.</item>
+        <item quantity="many">%1$d zainstalowanych aplikacji pasuje do tego źródła.</item>
+        <item quantity="other">%1$d zainstalowanej aplikacji pasuje do tego źródła.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d wybrana aplikacja z biblioteki jest już niedostępna.</item>
+        <item quantity="few">%1$d wybrane aplikacje z biblioteki są już niedostępne.</item>
+        <item quantity="many">%1$d wybranych aplikacji z biblioteki jest już niedostępnych.</item>
+        <item quantity="other">%1$d wybranej aplikacji z biblioteki jest już niedostępne.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Zainstalowane ponownie: %1$d</item>
+        <item quantity="few">Zainstalowane ponownie: %1$d</item>
+        <item quantity="many">Zainstalowane ponownie: %1$d</item>
+        <item quantity="other">Zainstalowane ponownie: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Przywrócone: %1$d</item>
+        <item quantity="few">Przywrócone: %1$d</item>
+        <item quantity="many">Przywrócone: %1$d</item>
+        <item quantity="other">Przywrócone: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Przetworzono %1$d aplikację z %2$d</item>
+        <item quantity="few">Przetworzono %1$d aplikacje z %2$d</item>
+        <item quantity="many">Przetworzono %1$d aplikacji z %2$d</item>
+        <item quantity="other">Przetworzono %1$d aplikacji z %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Wybrane: %1$d</item>
+        <item quantity="few">Wybrane: %1$d</item>
+        <item quantity="many">Wybrane: %1$d</item>
+        <item quantity="other">Wybrane: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Już zainstalowane lub powielone: %1$d</item>
+        <item quantity="few">Już zainstalowane lub powielone: %1$d</item>
+        <item quantity="many">Już zainstalowane lub powielone: %1$d</item>
+        <item quantity="other">Już zainstalowane lub powielone: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Pominięte: %1$d</item>
+        <item quantity="few">Pominięte: %1$d</item>
+        <item quantity="many">Pominięte: %1$d</item>
+        <item quantity="other">Pominięte: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Zaktualizowane: %1$d</item>
+        <item quantity="few">Zaktualizowane: %1$d</item>
+        <item quantity="many">Zaktualizowane: %1$d</item>
+        <item quantity="other">Zaktualizowane: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">Ostrzeżenia: %1$d</item>
+        <item quantity="few">Ostrzeżenia: %1$d</item>
+        <item quantity="many">Ostrzeżenia: %1$d</item>
+        <item quantity="other">Ostrzeżenia: %1$d</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Nie pokazano %1$d dodatkowego problemu z konwersją.</item>
+        <item quantity="few">Nie pokazano %1$d dodatkowych problemów z konwersją.</item>
+        <item quantity="many">Nie pokazano %1$d dodatkowych problemów z konwersją.</item>
+        <item quantity="other">Nie pokazano %1$d dodatkowego problemu z konwersją.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">Pominięto %1$d plik klasy Java, ponieważ nie można było go odczytać. Funkcje, które go używają, mogą nie działać.</item>
+        <item quantity="few">Pominięto %1$d pliki klas Java, ponieważ nie można było ich odczytać. Funkcje, które ich używają, mogą nie działać.</item>
+        <item quantity="many">Pominięto %1$d plików klas Java, ponieważ nie można było ich odczytać. Funkcje, które ich używają, mogą nie działać.</item>
+        <item quantity="other">Pominięto %1$d pliku klasy Java, ponieważ nie można było go odczytać. Funkcje, które go używają, mogą nie działać.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Nazwa: "</b></string>
+    <string name="midlet_size"><b>"Rozmiar: "</b></string>
+    <string name="midlet_vendor"><b>"Wydawca: "</b></string>
+    <string name="midlet_version"><b>"Wersja: "</b></string>
 </resources>

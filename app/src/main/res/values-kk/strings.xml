@@ -8,7 +8,7 @@
     <string name="change">Өзгерту</string>
     <string name="choose">Таңдау</string>
     <string name="close">Жабу</string>
-    <string name="converting_wait">JAR файлды түрлендіруде…</string>
+    <string name="converting_wait">JAR түрлендірілуде…</string>
     <string name="create">Жасау</string>
     <string name="default_label">%1$s (әдепкі)</string>
     <string name="edit">Өңдеу</string>
@@ -25,7 +25,7 @@
     <string name="message_delete">Бұл қолданбаны, оның баптауларын және ойынның сақталған деректерін жою керек пе? Кітапханадағы жазбасы да жойылады.</string>
     <string name="midlet_name"><b>Аты: </b></string>
     <string name="midlet_size"><b>Өлшемі: </b></string>
-    <string name="midlet_vendor"><b>Сатушы: </b></string>
+    <string name="midlet_vendor"><b>"Баспагер: "</b></string>
     <string name="midlet_version"><b>Нұсқа: </b></string>
     <string name="more">Тағы</string>
     <string name="no_data_for_display">Көрсетілетін қолданбалар жоқ</string>
@@ -488,5 +488,101 @@
     <plurals name="config_system_properties_value">
         <item quantity="one">%1$d қасиет</item>
         <item quantity="other">%1$d қасиет</item>
+    </plurals>
+    <string name="bulk_install_action_jar_only">Тек JAR орнату</string>
+    <string name="bulk_install_action_separate_copy">Бөлек көшірме ретінде орнату</string>
+    <string name="bulk_install_cancel">Бас тарту</string>
+    <string name="bulk_install_choose_files">Файлдар</string>
+    <string name="bulk_install_choose_folder">Қалта</string>
+    <string name="bulk_install_clear">Таңдауды тазалау</string>
+    <string name="bulk_install_close">Жабу</string>
+    <string name="bulk_install_empty">Қолдау көрсетілетін қолданбалар табылмады.</string>
+    <string name="bulk_install_empty_filter">Сәйкес ойындар жоқ.</string>
+    <string name="bulk_install_filter_all">Барлығы</string>
+    <string name="bulk_install_filter_review">Тексеру</string>
+    <string name="bulk_install_filter_selected">Таңдалған</string>
+    <string name="bulk_install_install_count">%1$d орнату</string>
+    <string name="bulk_install_installed_version">Орнатылған: %1$s</string>
+    <string name="bulk_install_recommended">Ұсынылған</string>
+    <string name="bulk_install_result_failed">Сәтсіз</string>
+    <string name="bulk_install_result_installed">Орнатылды</string>
+    <string name="bulk_install_result_reinstalled">Қайта орнатылды</string>
+    <string name="bulk_install_result_restored">Қалпына келтірілді</string>
+    <string name="bulk_install_result_skipped">Өткізіп жіберілді</string>
+    <string name="bulk_install_result_updated">Жаңартылды</string>
+    <string name="bulk_install_skipped_entries">Өткізіп жіберілген мұрағат жазбалары: %1$d</string>
+    <string name="bulk_install_source">Көз: %1$s</string>
+    <string name="bulk_install_status_conflict">Топтағы қайшылық</string>
+    <string name="bulk_install_status_downgrade">Ескі нұсқа</string>
+    <string name="bulk_install_status_duplicate">Көшірме</string>
+    <string name="bulk_install_status_error">Жарамсыз көз</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR сәйкессіздігі</string>
+    <string name="bulk_install_status_new">Жаңа</string>
+    <string name="bulk_install_status_older_batch">Топтағы ескі нұсқа</string>
+    <string name="bulk_install_status_reinstall">Бірдей нұсқа, басқа түрі болуы мүмкін</string>
+    <string name="bulk_install_status_remote">Қашықтағы көзге қолдау көрсетілмейді</string>
+    <string name="bulk_install_status_same">Орнатылған</string>
+    <string name="bulk_install_status_update">Жаңарту</string>
+    <string name="bulk_install_title">Топтап орнату</string>
+    <string name="bulk_install_unreadable_archives">Оқылмайтын мұрағаттар: %1$d</string>
+    <string name="install_done_with_warning">Қолданба ескертулермен орнатылды.</string>
+    <string name="installer_copy_details">Мәліметтерді көшіру</string>
+    <string name="installer_hide_details">Мәліметтерді жасыру</string>
+    <string name="installer_not_processed">Өңделмеді</string>
+    <string name="installer_refresh_library">Кітапхананы жаңарту</string>
+    <string name="installer_retry_remaining">Аяқталмаған элементтерді тексеру</string>
+    <string name="installer_separate_copy">Бөлек көшірмені орнату</string>
+    <string name="installer_show_details">Мәліметтерді көрсету</string>
+    <string name="installer_stage_download">Қолданба жүктелуде…</string>
+    <string name="installer_stage_save">Қолданба сақталуда…</string>
+    <string name="installer_stage_wait">Басқа әрекет күтілуде…</string>
+    <string name="installer_title">MIDlet орнатушысы</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d тексеруді қажет етеді</item>
+        <item quantity="other">%1$d тексеруді қажет етеді</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d сәтсіз</item>
+        <item quantity="other">%1$d сәтсіз</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d қолданба табылды</item>
+        <item quantity="other">%1$d қолданба табылды</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d орнатылды</item>
+        <item quantity="other">%1$d орнатылды</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d дайын</item>
+        <item quantity="other">%1$d дайын</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d қайта орнатылды</item>
+        <item quantity="other">%1$d қайта орнатылды</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d қалпына келтірілді</item>
+        <item quantity="other">%1$d қалпына келтірілді</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d таңдалды</item>
+        <item quantity="other">%1$d таңдалды</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Орнатылған немесе көшірме: %1$d</item>
+        <item quantity="other">Орнатылған немесе көшірме: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d өткізіп жіберілді</item>
+        <item quantity="other">%1$d өткізіп жіберілді</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d жаңартылды</item>
+        <item quantity="other">%1$d жаңартылды</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d ескерту</item>
+        <item quantity="other">%1$d ескерту</item>
     </plurals>
 </resources>

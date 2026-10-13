@@ -555,4 +555,192 @@
         <item quantity="other">%1$d מאפיינים</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">מתאים את גודל התצוגה מ־1% עד 1000%. ב־100% המשחק משתמש בגודלו המקורי; ערכים גדולים יותר עשויים לחרוג מהמסך.</string>
+    <string name="bulk_install_action_jar_only">התקנת JAR בלבד</string>
+    <string name="bulk_install_action_separate_copy">התקנה כעותק נפרד</string>
+    <string name="bulk_install_cancel">ביטול</string>
+    <string name="bulk_install_cancel_requested">מפסיק אחרי היישום הנוכחי…</string>
+    <string name="bulk_install_cancelled">ההתקנה המרוכזת נעצרה</string>
+    <string name="bulk_install_choose_files">קבצים</string>
+    <string name="bulk_install_choose_folder">תיקייה</string>
+    <string name="bulk_install_clear">ניקוי הבחירה</string>
+    <string name="bulk_install_close">סגירה</string>
+    <string name="bulk_install_complete">ההתקנה המרוכזת הסתיימה</string>
+    <string name="bulk_install_empty">לא נמצאו יישומים נתמכים.</string>
+    <string name="bulk_install_empty_filter">אין משחקים תואמים.</string>
+    <string name="bulk_install_fatal">ההתקנה המרוכזת נעצרה. בדקו את הפריטים שלא הושלמו לפני ניסיון נוסף.</string>
+    <string name="bulk_install_filter_all">הכול</string>
+    <string name="bulk_install_filter_review">לבדיקה</string>
+    <string name="bulk_install_filter_selected">נבחרו</string>
+    <string name="bulk_install_install_count">התקנת %1$d</string>
+    <string name="bulk_install_installed_version">מותקן: %1$s</string>
+    <string name="bulk_install_library_changed">הספרייה השתנתה אחרי הבדיקה. סגרו את קבוצת ההתקנה הזאת ובחרו שוב את המקורות.</string>
+    <string name="bulk_install_planning">בודק את היישומים שנבחרו…</string>
+    <string name="bulk_install_prepare_failed">לא ניתן להכין את היישומים שנבחרו להתקנה.</string>
+    <string name="bulk_install_reason_conflicting_jads">קובצי JAD עם מאפיינים שונים מפנים לאותו JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">המקור הזה זהה למקור אחר בקבוצת ההתקנה הזאת.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">ה־JAD וה־JAR מזהים יישומים שונים.</string>
+    <string name="bulk_install_reason_jar_not_found">ה־JAR שאליו מפנה ה־JAD לא נמצא: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">ב־JAD חסר MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">ל־JAD אין תיקיית אב.</string>
+    <string name="bulk_install_reason_older_candidate">גרסה חדשה יותר של היישום הזה נמצאת באותה קבוצת התקנה.</string>
+    <string name="bulk_install_reason_remote_jar">התקנה מרוכזת אינה יכולה להוריד קובצי JAR מרוחקים.</string>
+    <string name="bulk_install_reason_source_error">לא ניתן להכין את המקור הזה להתקנה.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">ה־JAD מפנה ל־JAR באמצעות סכמת URI שאינה נתמכת: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">כמה וריאנטים של היישום נושאים את אותו מספר גרסה.</string>
+    <string name="bulk_install_recommended">מומלץ</string>
+    <string name="bulk_install_reinstall_source_missing">ה־JAR השמור אינו זמין להתקנה מחדש.</string>
+    <string name="bulk_install_result_failed">נכשל</string>
+    <string name="bulk_install_result_installed">הותקן</string>
+    <string name="bulk_install_result_reinstalled">הותקן מחדש</string>
+    <string name="bulk_install_result_restored">שוחזר</string>
+    <string name="bulk_install_result_skipped">דולג</string>
+    <string name="bulk_install_result_updated">עודכן</string>
+    <string name="bulk_install_skipped_entries">פריטי ארכיון שדולגו: %1$d</string>
+    <string name="bulk_install_source">מקור: %1$s</string>
+    <string name="bulk_install_source_changed">קובץ המקור השתנה אחרי הבדיקה. בחרו שוב את הקבצים.</string>
+    <string name="bulk_install_source_unavailable">קובץ מקור נדרש אינו זמין עוד. בחרו שוב את הקבצים.</string>
+    <string name="bulk_install_status_ambiguous">תואם לכמה יישומים מותקנים</string>
+    <string name="bulk_install_status_conflict">התנגשות בקבוצת ההתקנה</string>
+    <string name="bulk_install_status_downgrade">גרסה ישנה יותר</string>
+    <string name="bulk_install_status_duplicate">כפילות</string>
+    <string name="bulk_install_status_error">מקור לא תקין</string>
+    <string name="bulk_install_status_mismatch">אי־התאמה בין JAD ל־JAR</string>
+    <string name="bulk_install_status_new">חדש</string>
+    <string name="bulk_install_status_older_batch">גרסה ישנה יותר בקבוצת ההתקנה</string>
+    <string name="bulk_install_status_reinstall">אותה גרסה, ייתכן וריאנט שונה</string>
+    <string name="bulk_install_status_remote">מקור מרוחק אינו נתמך</string>
+    <string name="bulk_install_status_same">כבר מותקן</string>
+    <string name="bulk_install_status_update">עדכון</string>
+    <string name="bulk_install_target_unverified">לא ניתן לאמת את יעד ההתקנה מחדש. סגרו את קבוצת ההתקנה הזאת ובחרו שוב את היישום.</string>
+    <string name="bulk_install_title">התקנה מרוכזת</string>
+    <string name="bulk_install_unreadable_archives">ארכיונים שאינם ניתנים לקריאה: %1$d</string>
+    <string name="converting_wait">ממיר JAR…</string>
+    <string name="install">התקנה</string>
+    <string name="install_done">היישום הותקן.</string>
+    <string name="install_done_with_warning">היישום הותקן עם אזהרות.</string>
+    <string name="install_jar_non_matched_jad">היישום הזה שונה מזה שמתואר ב־JAD.\nלהתעלם מה־JAD ולהתקין בכל זאת?</string>
+    <string name="installer_ambiguous">כמה יישומים מותקנים תואמים ליישום הזה. להתקין עותק נפרד? היישומים הקיימים והנתונים שלהם יישמרו.</string>
+    <string name="installer_cancel_pending">מפסיק בנקודת העצירה הבטוחה הבאה…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nבעיה: לא ניתן לקרוא את קובץ מחלקת Java.\nפעולה: דולג במהלך ההמרה.</string>
+    <string name="installer_copy_details">העתקת פרטים</string>
+    <string name="installer_error_message">לא ניתן להתקין את היישום שנבחר. בחרו קובץ MIDlet תקין ונסו שוב.</string>
+    <string name="installer_existing_data_preserved">ההגדרות ונתוני השמירה הקיימים יישמרו.</string>
+    <string name="installer_failed_conversion">לא ניתן להמיר את היישום. ודאו שהקובץ שלם ונתמך ונסו שוב.</string>
+    <string name="installer_failed_download">לא ניתן להוריד את היישום. בדקו את החיבור ואת קישור ההורדה ונסו שוב.</string>
+    <string name="installer_failed_storage">לא ניתן להשלים את ההתקנה. נסו שוב.</string>
+    <string name="installer_hide_details">הסתרת פרטים</string>
+    <string name="installer_needs_recovery">קובצי היישום נשמרו, אך לא ניתן להשלים את עדכון הספרייה. רעננו את הספרייה לפני ניסיון נוסף.</string>
+    <string name="installer_not_processed">לא בוצע עיבוד</string>
+    <string name="installer_partial_restore">היישום הותקן; לא ניתן לשחזר נתונים או הגדרות</string>
+    <string name="installer_refresh_library">רענון הספרייה</string>
+    <string name="installer_removed_leftovers">היישום הוסר; לא ניתן למחוק חלק מההגדרות או מנתוני השמירה.</string>
+    <string name="installer_retry_remaining">בדיקת פריטים שלא הושלמו</string>
+    <string name="installer_separate_copy">התקנת עותק נפרד</string>
+    <string name="installer_show_details">הצגת פרטים</string>
+    <string name="installer_stage_download">מוריד יישום…</string>
+    <string name="installer_stage_save">שומר יישום…</string>
+    <string name="installer_stage_wait">ממתין לפעולה אחרת…</string>
+    <string name="installer_title">מתקין MIDlet</string>
+    <string name="reconversion_done_with_warning">המרת התאימות הסתיימה עם אזהרות.</string>
+    <string name="reconversion_error">לא ניתן להמיר את ה־MIDlet אוטומטית.\n\n%1$s</string>
+    <string name="reconversion_error_summary">לא ניתן להמיר את ה־MIDlet אוטומטית.</string>
+    <string name="reconverting_wait">ה־MIDlet הזה זקוק להמרת תאימות חד־פעמית לפני הפעלתו. ממיר…</string>
+    <string name="reinstall">היישום הזה כבר מותקן. להתקין אותו מחדש?</string>
+    <string name="reinstall_newest">לעדכן את היישום הזה לגרסה %1$s?\n\nמותקן כעת: %2$s</string>
+    <string name="reinstall_older">להחליף את היישום הזה בגרסה %1$s?\n\nמותקן כעת: %2$s\nייתכן שהגרסה הישנה יותר לא תעבוד כראוי עם הנתונים הקיימים.</string>
+    <string name="warn_install_from_net">הקובץ יורד מהאינטרנט.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">דורש בדיקה: %1$d</item>
+        <item quantity="two">דורשים בדיקה: %1$d</item>
+        <item quantity="other">דורשים בדיקה: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">נכשל: %1$d</item>
+        <item quantity="two">נכשלו: %1$d</item>
+        <item quantity="other">נכשלו: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">נמצא יישום אחד (%1$d)</item>
+        <item quantity="two">נמצאו %1$d יישומים</item>
+        <item quantity="other">נמצאו %1$d יישומים</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">הותקן: %1$d</item>
+        <item quantity="two">הותקנו: %1$d</item>
+        <item quantity="other">הותקנו: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">קובץ נוסף (%1$d) הושמט כדי לשמור על תגובתיות הבדיקה.</item>
+        <item quantity="two">%1$d קבצים נוספים הושמטו כדי לשמור על תגובתיות הבדיקה.</item>
+        <item quantity="other">%1$d קבצים נוספים הושמטו כדי לשמור על תגובתיות הבדיקה.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">מוכן: %1$d</item>
+        <item quantity="two">מוכנים: %1$d</item>
+        <item quantity="other">מוכנים: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">יישום מותקן אחד (%1$d) תואם למקור הזה.</item>
+        <item quantity="two">%1$d יישומים מותקנים תואמים למקור הזה.</item>
+        <item quantity="other">%1$d יישומים מותקנים תואמים למקור הזה.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">יישום אחד (%1$d) שנבחר בספרייה אינו זמין עוד.</item>
+        <item quantity="two">%1$d יישומים שנבחרו בספרייה אינם זמינים עוד.</item>
+        <item quantity="other">%1$d יישומים שנבחרו בספרייה אינם זמינים עוד.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">הותקן מחדש: %1$d</item>
+        <item quantity="two">הותקנו מחדש: %1$d</item>
+        <item quantity="other">הותקנו מחדש: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">שוחזר: %1$d</item>
+        <item quantity="two">שוחזרו: %1$d</item>
+        <item quantity="other">שוחזרו: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">הושלם עיבוד של יישום אחד (%1$d) מתוך %2$d</item>
+        <item quantity="two">הושלם עיבוד של %1$d יישומים מתוך %2$d</item>
+        <item quantity="other">הושלם עיבוד של %1$d יישומים מתוך %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">נבחר: %1$d</item>
+        <item quantity="two">נבחרו: %1$d</item>
+        <item quantity="other">נבחרו: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">כבר מותקן או כפול: %1$d</item>
+        <item quantity="two">כבר מותקנים או כפולים: %1$d</item>
+        <item quantity="other">כבר מותקנים או כפולים: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">דולג: %1$d</item>
+        <item quantity="two">דולגו: %1$d</item>
+        <item quantity="other">דולגו: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">עודכן: %1$d</item>
+        <item quantity="two">עודכנו: %1$d</item>
+        <item quantity="other">עודכנו: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">אזהרה אחת (%1$d)</item>
+        <item quantity="two">%1$d אזהרות</item>
+        <item quantity="other">%1$d אזהרות</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">בעיית המרה נוספת (%1$d) אינה מוצגת.</item>
+        <item quantity="two">%1$d בעיות המרה נוספות אינן מוצגות.</item>
+        <item quantity="other">%1$d בעיות המרה נוספות אינן מוצגות.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">קובץ מחלקת Java אחד (%1$d) דולג משום שלא ניתן לקרוא אותו. ייתכן שתכונות שמשתמשות בו לא יפעלו.</item>
+        <item quantity="two">%1$d קובצי מחלקות Java דולגו משום שלא ניתן לקרוא אותם. ייתכן שתכונות שמשתמשות בהם לא יפעלו.</item>
+        <item quantity="other">%1$d קובצי מחלקות Java דולגו משום שלא ניתן לקרוא אותם. ייתכן שתכונות שמשתמשות בהם לא יפעלו.</item>
+    </plurals>
+    <string name="midlet_name"><b>"שם: "</b></string>
+    <string name="midlet_size"><b>"גודל: "</b></string>
+    <string name="midlet_vendor"><b>"מפרסם: "</b></string>
+    <string name="midlet_version"><b>"גרסה: "</b></string>
 </resources>

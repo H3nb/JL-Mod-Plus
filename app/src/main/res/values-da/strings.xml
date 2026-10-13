@@ -630,7 +630,7 @@
     <string name="bulk_install_planning">Kontrollerer valgte applikationer…</string>
     <string name="bulk_install_empty">Ingen understøttede applikationer blev fundet.</string>
     <string name="bulk_install_recommended">Anbefalet</string>
-    <string name="bulk_install_clear">Ryd</string>
+    <string name="bulk_install_clear">Ryd valg</string>
     <string name="bulk_install_install_count">Installer %1$d</string>
     <string name="bulk_install_cancel">Annuller</string>
     <string name="bulk_install_close">Luk</string>
@@ -655,8 +655,8 @@
     <string name="bulk_install_status_update">Opdatering</string>
     <string name="bulk_install_status_downgrade">Ældre version</string>
     <string name="bulk_install_status_same">Allerede installeret</string>
-    <string name="bulk_install_status_reinstall">Variant / geninstallation</string>
-    <string name="bulk_install_status_ambiguous">Flere installerede matches</string>
+    <string name="bulk_install_status_reinstall">Samme version, mulig variant</string>
+    <string name="bulk_install_status_ambiguous">Matcher flere installerede apps</string>
     <string name="bulk_install_status_mismatch">JAD/JAR stemmer ikke overens</string>
     <string name="bulk_install_status_duplicate">Dublet</string>
     <string name="bulk_install_status_older_batch">Ældre batchkandidat</string>
@@ -731,8 +731,8 @@
     <string name="config_help_emulation_speed">Ændrer urhastigheden for MIDlet og understøttede forsinkelser. Android-lyd og -UI forbliver normale.</string>
     <string name="config_help_timing_mode">Vælger, om MIDlet bruger emuleringstid eller systemtid. Relative forsinkelser følger stadig emuleringshastigheden.</string>
     <string name="config_help_timing_unavailable">Tidsindstillinger er ikke tilgængelige for denne MIDlet-installation. Geninstaller eller rekonvertér MIDlet for at aktivere dem.</string>
-    <string name="reconverting_wait">Denne MIDlet kræver en engangskonvertering for kompatibilitet, før den kan starte. Vent venligst…</string>
-    <string name="reconversion_error">MIDlet kunne ikke konverteres automatisk. %1$s</string>
+    <string name="reconverting_wait">Denne MIDlet kræver en engangskonvertering for kompatibilitet, før den kan starte. Konverterer…</string>
+    <string name="reconversion_error">MIDlet kunne ikke konverteres automatisk.\n\n%1$s</string>
     <string name="config_help_generic_color">Indstiller farven på dette visuelle element.</string>
     <string name="config_help_encoding">Vælger den tegnkodning, der rapporteres som microedition.encoding.</string>
     <string name="config_edit_system_properties">Rediger systemegenskaber</string>
@@ -980,7 +980,7 @@
     <string name="bulk_install_reason_remote_jar">Masseinstallation kan ikke downloade eksterne JAR-filer.</string>
     <string name="bulk_install_reason_missing_jar_url">JAD mangler MIDlet-Jar-URL.</string>
     <string name="bulk_install_reason_unsupported_uri_scheme">JAD henviser til en JAR med et ikke-understøttet URI-skema: %1$s.</string>
-    <string name="bulk_install_reason_missing_parent">JAD har ingen overordnet map.</string>
+    <string name="bulk_install_reason_missing_parent">JAD har ingen overordnet mappe.</string>
     <string name="bulk_install_reason_jar_not_found">Den JAR, som JAD henviser til, blev ikke fundet: %1$s.</string>
     <string name="bulk_install_reason_duplicate_source">Denne kilde er en dublet af en anden kilde i denne batch.</string>
     <string name="bulk_install_reason_version_conflict">Flere appvarianter sammenlignes som samme version.</string>

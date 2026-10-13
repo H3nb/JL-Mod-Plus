@@ -637,7 +637,7 @@
     <string name="bulk_install_planning">Controllo applicazioni selezionate…</string>
     <string name="bulk_install_empty">Nessuna applicazione supportata trovata.</string>
     <string name="bulk_install_recommended">Consigliato</string>
-    <string name="bulk_install_clear">Pulisci</string>
+    <string name="bulk_install_clear">Cancella selezione</string>
     <string name="bulk_install_install_count">Installa %1$d</string>
     <string name="bulk_install_cancel">Annulla</string>
     <string name="bulk_install_close">Chiudi</string>
@@ -662,8 +662,8 @@
     <string name="bulk_install_status_update">Aggiornamento</string>
     <string name="bulk_install_status_downgrade">Versione precedente</string>
     <string name="bulk_install_status_same">Già installata</string>
-    <string name="bulk_install_status_reinstall">Variante / reinstallazione</string>
-    <string name="bulk_install_status_ambiguous">Più corrispondenze installate</string>
+    <string name="bulk_install_status_reinstall">Stessa versione, possibile variante</string>
+    <string name="bulk_install_status_ambiguous">Corrisponde a più app installate</string>
     <string name="bulk_install_status_mismatch">Discrepanza JAD/JAR</string>
     <string name="bulk_install_status_duplicate">Duplicato</string>
     <string name="bulk_install_status_older_batch">Candidato batch precedente</string>
@@ -738,7 +738,7 @@
     <string name="config_help_emulation_speed">Modifica la velocità dell’orologio del MIDlet e i ritardi supportati. Audio e UI Android restano normali.</string>
     <string name="config_help_timing_mode">Sceglie se il MIDlet usa il tempo di emulazione o il tempo di sistema. I ritardi relativi continuano a essere scalati in base alla velocità di emulazione.</string>
     <string name="config_help_timing_unavailable">Le impostazioni del tempo non sono disponibili per questa installazione del MIDlet. Reinstalla o riconverti il MIDlet per abilitarle.</string>
-    <string name="reconverting_wait">Questo MIDlet richiede una conversione di compatibilità una tantum prima di avviarsi. Attendi…</string>
+    <string name="reconverting_wait">Questo MIDlet richiede una conversione di compatibilità una tantum prima di avviarsi. Conversione in corso…</string>
     <string name="reconversion_error">Non è stato possibile convertire automaticamente il MIDlet.\n\n%1$s</string>
     <string name="config_help_generic_color">Imposta il colore di questo elemento visivo.</string>
     <string name="config_help_encoding">Sceglie la codifica dei caratteri comunicata come microedition.encoding.</string>

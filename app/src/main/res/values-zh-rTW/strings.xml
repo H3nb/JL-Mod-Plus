@@ -10,7 +10,7 @@
     <string name="CANCEL_CMD">取消</string>
     <string name="close">關閉</string>
     <string name="CONFIRMATION_REQUIRED">需要確認</string>
-    <string name="converting_wait">正在安裝…</string>
+    <string name="converting_wait">正在轉換 JAR…</string>
     <string name="error">錯誤</string>
     <string name="exit">結束</string>
     <string name="FORCE_CLOSE_CONFIRMATION">要停止此 MIDlet 嗎？未儲存的變更可能會遺失。</string>
@@ -585,4 +585,155 @@
         <item quantity="other">%1$d 項屬性</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">將顯示大小調整為 1% 到 1000%。100% 時遊戲以原始大小顯示；較大的數值可能使畫面超出螢幕。</string>
+    <string name="bulk_install_action_jar_only">僅安裝 JAR</string>
+    <string name="bulk_install_action_separate_copy">安裝為獨立副本</string>
+    <string name="bulk_install_cancel">取消</string>
+    <string name="bulk_install_cancel_requested">將在目前應用程式處理完後停止…</string>
+    <string name="bulk_install_cancelled">批次安裝已停止</string>
+    <string name="bulk_install_choose_files">檔案</string>
+    <string name="bulk_install_choose_folder">資料夾</string>
+    <string name="bulk_install_clear">清除選取</string>
+    <string name="bulk_install_close">關閉</string>
+    <string name="bulk_install_complete">批次安裝完成</string>
+    <string name="bulk_install_empty">找不到支援的應用程式。</string>
+    <string name="bulk_install_empty_filter">沒有符合的遊戲。</string>
+    <string name="bulk_install_fatal">批次安裝已停止。再次嘗試前，請檢查未完成的項目。</string>
+    <string name="bulk_install_filter_all">全部</string>
+    <string name="bulk_install_filter_review">檢查</string>
+    <string name="bulk_install_filter_selected">已選取</string>
+    <string name="bulk_install_install_count">安裝 %1$d 項</string>
+    <string name="bulk_install_installed_version">已安裝：%1$s</string>
+    <string name="bulk_install_library_changed">檢查後應用程式庫已變更。請關閉此批次並重新選取來源。</string>
+    <string name="bulk_install_planning">正在檢查所選應用程式…</string>
+    <string name="bulk_install_prepare_failed">無法為所選應用程式準備安裝。</string>
+    <string name="bulk_install_reason_conflicting_jads">屬性不同的 JAD 檔案參照同一個 JAR。</string>
+    <string name="bulk_install_reason_duplicate_source">此來源與此批次中的另一個來源重複。</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD 和 JAR 指向不同的應用程式。</string>
+    <string name="bulk_install_reason_jar_not_found">找不到 JAD 參照的 JAR：%1$s。</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD 缺少 MIDlet-Jar-URL。</string>
+    <string name="bulk_install_reason_missing_parent">JAD 沒有上層目錄。</string>
+    <string name="bulk_install_reason_older_candidate">同一批次中有此應用程式的較新版本。</string>
+    <string name="bulk_install_reason_remote_jar">批次安裝無法下載遠端 JAR 檔案。</string>
+    <string name="bulk_install_reason_source_error">無法為此來源準備安裝。</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD 使用不支援的 URI 配置參照 JAR：%1$s。</string>
+    <string name="bulk_install_reason_version_conflict">多個應用程式變體具有相同的版本號碼。</string>
+    <string name="bulk_install_recommended">建議</string>
+    <string name="bulk_install_reinstall_source_missing">已儲存的 JAR 無法用於重新安裝。</string>
+    <string name="bulk_install_result_failed">失敗</string>
+    <string name="bulk_install_result_installed">已安裝</string>
+    <string name="bulk_install_result_reinstalled">已重新安裝</string>
+    <string name="bulk_install_result_restored">已還原</string>
+    <string name="bulk_install_result_skipped">已略過</string>
+    <string name="bulk_install_result_updated">已更新</string>
+    <string name="bulk_install_skipped_entries">略過的封存項目：%1$d</string>
+    <string name="bulk_install_source">來源：%1$s</string>
+    <string name="bulk_install_source_changed">檢查後來源檔案已變更。請重新選取檔案。</string>
+    <string name="bulk_install_source_unavailable">必要的來源檔案已無法使用。請重新選取檔案。</string>
+    <string name="bulk_install_status_ambiguous">符合多個已安裝應用程式</string>
+    <string name="bulk_install_status_conflict">批次衝突</string>
+    <string name="bulk_install_status_downgrade">較舊版本</string>
+    <string name="bulk_install_status_duplicate">重複</string>
+    <string name="bulk_install_status_error">無效來源</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR 不符</string>
+    <string name="bulk_install_status_new">新應用程式</string>
+    <string name="bulk_install_status_older_batch">批次中的較舊版本</string>
+    <string name="bulk_install_status_reinstall">相同版本，可能是變體</string>
+    <string name="bulk_install_status_remote">不支援遠端來源</string>
+    <string name="bulk_install_status_same">已安裝</string>
+    <string name="bulk_install_status_update">更新</string>
+    <string name="bulk_install_target_unverified">無法確認重新安裝的目標。請關閉此批次並重新選取應用程式。</string>
+    <string name="bulk_install_title">批次安裝</string>
+    <string name="bulk_install_unreadable_archives">無法讀取的封存檔：%1$d</string>
+    <string name="install">安裝</string>
+    <string name="install_done">應用程式已安裝。</string>
+    <string name="install_done_with_warning">應用程式已安裝，但有警告。</string>
+    <string name="install_jar_non_matched_jad">此應用程式與 JAD 描述的應用程式不同。\n要忽略 JAD 並繼續安裝嗎？</string>
+    <string name="installer_ambiguous">多個已安裝應用程式符合此應用程式。要安裝獨立副本嗎？現有應用程式及其資料將保留。</string>
+    <string name="installer_cancel_pending">將在下一個安全時機停止…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\n問題：無法讀取 Java 類別檔案。\n處理方式：轉換時已略過。</string>
+    <string name="installer_copy_details">複製詳細資訊</string>
+    <string name="installer_error_message">無法安裝所選應用程式。請選擇有效的 MIDlet 檔案並再試一次。</string>
+    <string name="installer_existing_data_preserved">現有設定和存檔資料將保留。</string>
+    <string name="installer_failed_conversion">無法轉換應用程式。請檢查檔案是否完整且受支援，然後再試一次。</string>
+    <string name="installer_failed_download">無法下載應用程式。請檢查連線和下載連結，然後再試一次。</string>
+    <string name="installer_failed_storage">無法完成安裝。請再試一次。</string>
+    <string name="installer_hide_details">隱藏詳細資訊</string>
+    <string name="installer_needs_recovery">應用程式檔案已儲存，但應用程式庫未能完成更新。請先重新整理應用程式庫，再試一次。</string>
+    <string name="installer_not_processed">未處理</string>
+    <string name="installer_partial_restore">應用程式已安裝；無法還原資料或設定</string>
+    <string name="installer_refresh_library">重新整理應用程式庫</string>
+    <string name="installer_removed_leftovers">應用程式已移除；部分設定或存檔資料無法刪除。</string>
+    <string name="installer_retry_remaining">檢查未完成的項目</string>
+    <string name="installer_separate_copy">安裝獨立副本</string>
+    <string name="installer_show_details">顯示詳細資訊</string>
+    <string name="installer_stage_download">正在下載應用程式…</string>
+    <string name="installer_stage_save">正在儲存應用程式…</string>
+    <string name="installer_stage_wait">正在等待其他操作…</string>
+    <string name="installer_title">MIDlet 安裝程式</string>
+    <string name="reconversion_done_with_warning">相容性轉換已完成，但有警告。</string>
+    <string name="reconversion_error">無法自動轉換 MIDlet。\n\n%1$s</string>
+    <string name="reconversion_error_summary">無法自動轉換 MIDlet。</string>
+    <string name="reconverting_wait">此 MIDlet 啟動前需要進行一次相容性轉換。正在轉換…</string>
+    <string name="reinstall">此應用程式已安裝。要重新安裝嗎？</string>
+    <string name="reinstall_newest">將此應用程式更新至版本 %1$s？\n\n目前已安裝：%2$s</string>
+    <string name="reinstall_older">以版本 %1$s 取代此應用程式？\n\n目前已安裝：%2$s\n較舊版本可能無法正常使用現有資料。</string>
+    <string name="warn_install_from_net">檔案將從網際網路下載。</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other">%1$d 項需要檢查</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">%1$d 項失敗</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">找到 %1$d 個應用程式</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">已安裝 %1$d 項</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">為讓檢查介面保持順暢，另外 %1$d 個檔案未納入檢查。</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other">%1$d 項已就緒</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">%1$d 個已安裝應用程式符合此來源。</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">所選應用程式庫應用程式中，%1$d 個已無法使用。</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">已重新安裝 %1$d 項</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">已還原 %1$d 項</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="other">已處理 %1$d 個應用程式，共 %2$d 個</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">已選取 %1$d 項</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">已安裝或重複：%1$d 項</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">已略過 %1$d 項</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">已更新 %1$d 項</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other">%1$d 則警告</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">另外 %1$d 個轉換問題未顯示。</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">有 %1$d 個 Java 類別檔案因無法讀取而被略過。使用這些類別檔案的功能可能無法正常運作。</item>
+    </plurals>
+    <string name="midlet_name"><b>"名稱： "</b></string>
+    <string name="midlet_size"><b>"大小： "</b></string>
+    <string name="midlet_vendor"><b>"廠商： "</b></string>
+    <string name="midlet_version"><b>"版本： "</b></string>
 </resources>

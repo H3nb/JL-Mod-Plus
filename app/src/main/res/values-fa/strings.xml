@@ -11,7 +11,7 @@
     <string name="choose">انتخاب</string>
     <string name="close">بستن</string>
     <string name="CONFIRMATION_REQUIRED">تأیید لازم است</string>
-    <string name="converting_wait">در حال تبدیل فایل جاوا …</string>
+    <string name="converting_wait">در حال تبدیل JAR…</string>
     <string name="error">خطا</string>
     <string name="exit">خروج</string>
     <string name="FORCE_CLOSE_CONFIRMATION">این MIDlet متوقف شود؟ تغییرات ذخیره‌نشده ممکن است از دست بروند.</string>
@@ -602,4 +602,171 @@
         <item quantity="other">%1$d ویژگی</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">اندازهٔ نمایش را از ۱٪ تا ۱۰۰۰٪ تنظیم می‌کند. در ۱۰۰٪، بازی با اندازهٔ اصلی نمایش داده می‌شود؛ مقادیر بزرگ‌تر ممکن است از صفحه بیرون بزنند.</string>
+    <string name="bulk_install_action_jar_only">نصب فقط JAR</string>
+    <string name="bulk_install_action_separate_copy">نصب به‌عنوان نسخهٔ جداگانه</string>
+    <string name="bulk_install_cancel">لغو</string>
+    <string name="bulk_install_cancel_requested">پس از برنامهٔ فعلی متوقف می‌شود…</string>
+    <string name="bulk_install_cancelled">نصب گروهی متوقف شد</string>
+    <string name="bulk_install_choose_files">فایل‌ها</string>
+    <string name="bulk_install_choose_folder">پوشه</string>
+    <string name="bulk_install_clear">پاک کردن انتخاب</string>
+    <string name="bulk_install_close">بستن</string>
+    <string name="bulk_install_complete">نصب گروهی پایان یافت</string>
+    <string name="bulk_install_empty">هیچ برنامهٔ پشتیبانی‌شده‌ای یافت نشد.</string>
+    <string name="bulk_install_empty_filter">هیچ بازی منطبقی وجود ندارد.</string>
+    <string name="bulk_install_fatal">نصب گروهی متوقف شد. پیش از تلاش دوباره، موارد ناتمام را بررسی کنید.</string>
+    <string name="bulk_install_filter_all">همه</string>
+    <string name="bulk_install_filter_review">بازبینی</string>
+    <string name="bulk_install_filter_selected">انتخاب‌شده</string>
+    <string name="bulk_install_install_count">نصب %1$d</string>
+    <string name="bulk_install_installed_version">نصب‌شده: %1$s</string>
+    <string name="bulk_install_library_changed">کتابخانه پس از بازبینی تغییر کرده است. این گروه را ببندید و منابع را دوباره انتخاب کنید.</string>
+    <string name="bulk_install_planning">در حال بررسی برنامه‌های انتخاب‌شده…</string>
+    <string name="bulk_install_prepare_failed">برنامه‌های انتخاب‌شده برای نصب آماده نشدند.</string>
+    <string name="bulk_install_reason_conflicting_jads">فایل‌های JAD با ویژگی‌های متفاوت به یک JAR یکسان اشاره می‌کنند.</string>
+    <string name="bulk_install_reason_duplicate_source">این منبع تکرار منبع دیگری در این گروه است.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD و JAR برنامه‌های متفاوتی را معرفی می‌کنند.</string>
+    <string name="bulk_install_reason_jar_not_found">فایل JAR که JAD به آن اشاره می‌کند یافت نشد: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD فاقد MIDlet-Jar-URL است.</string>
+    <string name="bulk_install_reason_missing_parent">JAD پوشهٔ والد ندارد.</string>
+    <string name="bulk_install_reason_older_candidate">نسخهٔ جدیدتری از این برنامه در همین گروه وجود دارد.</string>
+    <string name="bulk_install_reason_remote_jar">نصب گروهی نمی‌تواند فایل‌های JAR راه‌دور را دانلود کند.</string>
+    <string name="bulk_install_reason_source_error">این منبع برای نصب آماده نشد.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD با یک طرح URI پشتیبانی‌نشده به JAR اشاره می‌کند: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">چند گونه از برنامه دارای نسخهٔ یکسان هستند.</string>
+    <string name="bulk_install_recommended">پیشنهادشده</string>
+    <string name="bulk_install_reinstall_source_missing">JAR ذخیره‌شده برای نصب مجدد در دسترس نیست.</string>
+    <string name="bulk_install_result_failed">ناموفق</string>
+    <string name="bulk_install_result_installed">نصب‌شده</string>
+    <string name="bulk_install_result_reinstalled">دوباره نصب‌شده</string>
+    <string name="bulk_install_result_restored">بازیابی‌شده</string>
+    <string name="bulk_install_result_skipped">نادیده‌گرفته‌شده</string>
+    <string name="bulk_install_result_updated">به‌روزشده</string>
+    <string name="bulk_install_skipped_entries">موارد نادیده‌گرفته‌شدهٔ بایگانی: %1$d</string>
+    <string name="bulk_install_source">منبع: %1$s</string>
+    <string name="bulk_install_source_changed">فایل منبع پس از بازبینی تغییر کرده است. فایل‌ها را دوباره انتخاب کنید.</string>
+    <string name="bulk_install_source_unavailable">یک فایل منبع ضروری دیگر در دسترس نیست. فایل‌ها را دوباره انتخاب کنید.</string>
+    <string name="bulk_install_status_ambiguous">با چند برنامهٔ نصب‌شده مطابقت دارد</string>
+    <string name="bulk_install_status_conflict">تعارض در گروه</string>
+    <string name="bulk_install_status_downgrade">نسخهٔ قدیمی‌تر</string>
+    <string name="bulk_install_status_duplicate">تکراری</string>
+    <string name="bulk_install_status_error">منبع نامعتبر</string>
+    <string name="bulk_install_status_mismatch">عدم تطابق JAD/JAR</string>
+    <string name="bulk_install_status_new">جدید</string>
+    <string name="bulk_install_status_older_batch">نسخهٔ قدیمی‌تر در گروه</string>
+    <string name="bulk_install_status_reinstall">نسخهٔ یکسان، احتمالاً گونه‌ای متفاوت</string>
+    <string name="bulk_install_status_remote">منبع راه‌دور پشتیبانی نمی‌شود</string>
+    <string name="bulk_install_status_same">از قبل نصب‌شده</string>
+    <string name="bulk_install_status_update">به‌روزرسانی</string>
+    <string name="bulk_install_target_unverified">برنامهٔ هدف برای نصب مجدد تأیید نشد. این گروه را ببندید و برنامه را دوباره انتخاب کنید.</string>
+    <string name="bulk_install_title">نصب گروهی</string>
+    <string name="bulk_install_unreadable_archives">بایگانی‌های خوانده‌نشدنی: %1$d</string>
+    <string name="install_done_with_warning">برنامه با هشدارهایی نصب شد.</string>
+    <string name="install_jar_non_matched_jad">این برنامه با برنامهٔ توصیف‌شده در JAD متفاوت است.\nJAD نادیده گرفته شود و با این حال نصب شود؟</string>
+    <string name="installer_ambiguous">چند برنامهٔ نصب‌شده با این برنامه مطابقت دارند. نسخه‌ای جداگانه نصب شود؟ برنامه‌های موجود و داده‌هایشان حفظ می‌شوند.</string>
+    <string name="installer_cancel_pending">در نقطهٔ امن بعدی متوقف می‌شود…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nمشکل: فایل کلاس Java خوانده نشد.\nاقدام: هنگام تبدیل نادیده گرفته شد.</string>
+    <string name="installer_copy_details">کپی جزئیات</string>
+    <string name="installer_error_message">برنامهٔ انتخاب‌شده نصب نشد. یک فایل MIDlet معتبر انتخاب کنید و دوباره تلاش کنید.</string>
+    <string name="installer_existing_data_preserved">تنظیمات و داده‌های ذخیرهٔ بازی موجود حفظ می‌شوند.</string>
+    <string name="installer_failed_conversion">برنامه تبدیل نشد. کامل و پشتیبانی‌شده بودن فایل را بررسی کنید، سپس دوباره تلاش کنید.</string>
+    <string name="installer_failed_download">برنامه دانلود نشد. اتصال و پیوند دانلود را بررسی کنید، سپس دوباره تلاش کنید.</string>
+    <string name="installer_failed_storage">نصب تکمیل نشد. دوباره تلاش کنید.</string>
+    <string name="installer_hide_details">پنهان کردن جزئیات</string>
+    <string name="installer_needs_recovery">فایل‌های برنامه ذخیره شدند، اما به‌روزرسانی کتابخانه تکمیل نشد. پیش از تلاش دوباره، کتابخانه را تازه‌سازی کنید.</string>
+    <string name="installer_not_processed">پردازش‌نشده</string>
+    <string name="installer_partial_restore">برنامه نصب شد؛ داده‌ها یا تنظیمات بازیابی نشدند</string>
+    <string name="installer_refresh_library">تازه‌سازی کتابخانه</string>
+    <string name="installer_removed_leftovers">برنامه حذف شد؛ برخی تنظیمات یا داده‌های ذخیرهٔ بازی حذف نشدند.</string>
+    <string name="installer_retry_remaining">بازبینی موارد ناتمام</string>
+    <string name="installer_separate_copy">نصب نسخهٔ جداگانه</string>
+    <string name="installer_show_details">نمایش جزئیات</string>
+    <string name="installer_stage_download">در حال دانلود برنامه…</string>
+    <string name="installer_stage_save">در حال ذخیرهٔ برنامه…</string>
+    <string name="installer_stage_wait">در انتظار عملیات دیگری…</string>
+    <string name="installer_title">نصب‌کنندهٔ MIDlet</string>
+    <string name="reconversion_done_with_warning">تبدیل سازگاری با هشدارهایی پایان یافت.</string>
+    <string name="reconversion_error">MIDlet به‌صورت خودکار تبدیل نشد.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet به‌صورت خودکار تبدیل نشد.</string>
+    <string name="reconverting_wait">این MIDlet پیش از اجرا به یک بار تبدیل سازگاری نیاز دارد. در حال تبدیل…</string>
+    <string name="reinstall">این برنامه از قبل نصب شده است. دوباره نصب شود؟</string>
+    <string name="reinstall_newest">این برنامه به نسخهٔ %1$s به‌روزرسانی شود؟\n\nنسخهٔ نصب‌شدهٔ فعلی: %2$s</string>
+    <string name="reinstall_older">این برنامه با نسخهٔ %1$s جایگزین شود؟\n\nنسخهٔ نصب‌شدهٔ فعلی: %2$s\nممکن است نسخهٔ قدیمی‌تر با داده‌های موجود درست کار نکند.</string>
+    <string name="warn_install_from_net">فایل از اینترنت دانلود خواهد شد.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">نیازمند بازبینی: %1$d</item>
+        <item quantity="other">نیازمند بازبینی: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">ناموفق: %1$d</item>
+        <item quantity="other">ناموفق: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d برنامه یافت شد</item>
+        <item quantity="other">%1$d برنامه یافت شد</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">نصب‌شده: %1$d</item>
+        <item quantity="other">نصب‌شده: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">برای حفظ پاسخ‌گویی بازبینی، %1$d فایل اضافی کنار گذاشته شد.</item>
+        <item quantity="other">برای حفظ پاسخ‌گویی بازبینی، %1$d فایل اضافی کنار گذاشته شد.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">آماده: %1$d</item>
+        <item quantity="other">آماده: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d برنامهٔ نصب‌شده با این منبع مطابقت دارد.</item>
+        <item quantity="other">%1$d برنامهٔ نصب‌شده با این منبع مطابقت دارد.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d برنامهٔ انتخاب‌شده در کتابخانه دیگر در دسترس نیست.</item>
+        <item quantity="other">%1$d برنامهٔ انتخاب‌شده در کتابخانه دیگر در دسترس نیست.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">دوباره نصب‌شده: %1$d</item>
+        <item quantity="other">دوباره نصب‌شده: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">بازیابی‌شده: %1$d</item>
+        <item quantity="other">بازیابی‌شده: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">%1$d برنامه از %2$d پردازش شد</item>
+        <item quantity="other">%1$d برنامه از %2$d پردازش شد</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">انتخاب‌شده: %1$d</item>
+        <item quantity="other">انتخاب‌شده: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">از قبل نصب‌شده یا تکراری: %1$d</item>
+        <item quantity="other">از قبل نصب‌شده یا تکراری: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">نادیده‌گرفته‌شده: %1$d</item>
+        <item quantity="other">نادیده‌گرفته‌شده: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">به‌روزشده: %1$d</item>
+        <item quantity="other">به‌روزشده: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d هشدار</item>
+        <item quantity="other">%1$d هشدار</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">%1$d مشکل اضافی تبدیل نمایش داده نمی‌شود.</item>
+        <item quantity="other">%1$d مشکل اضافی تبدیل نمایش داده نمی‌شود.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d فایل کلاس Java به‌دلیل خوانده نشدن نادیده گرفته شد. ممکن است قابلیت‌هایی که از این فایل استفاده می‌کنند کار نکنند.</item>
+        <item quantity="other">%1$d فایل کلاس Java به‌دلیل خوانده نشدن نادیده گرفته شد. ممکن است قابلیت‌هایی که از این فایل‌ها استفاده می‌کنند کار نکنند.</item>
+    </plurals>
+    <string name="midlet_name"><b>"نام: "</b></string>
+    <string name="midlet_size"><b>"اندازه: "</b></string>
+    <string name="midlet_vendor"><b>"ناشر: "</b></string>
+    <string name="midlet_version"><b>"نسخه: "</b></string>
 </resources>

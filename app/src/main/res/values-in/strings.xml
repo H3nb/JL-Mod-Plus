@@ -733,7 +733,7 @@
     <string name="config_help_emulation_speed">Mengatur kecepatan clock MIDlet dan jeda yang didukung. Audio dan UI Android tetap berjalan pada kecepatan normal.</string>
     <string name="config_help_timing_mode">Menentukan apakah MIDlet menggunakan waktu emulasi atau waktu sistem. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
-    <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
+    <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Mengonversi…</string>
     <string name="reconversion_done_with_warning">Konversi kompatibilitas selesai dengan peringatan.</string>
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 

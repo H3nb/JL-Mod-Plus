@@ -39,9 +39,9 @@
     <string name="mapping_dialog_title">Nhấn phím hoặc nút</string>
     <string name="message_delete">Xóa ứng dụng này cùng cài đặt và dữ liệu lưu? Mục tương ứng trong thư viện cũng sẽ bị xóa.</string>
     <string name="midlet_name"><b>Tên: </b></string>
-    <string name="midlet_size"><b>K. Thước: </b></string>
+    <string name="midlet_size"><b>"Kích thước: "</b></string>
     <string name="midlet_vendor"><b>Nhà cung cấp: </b></string>
-    <string name="midlet_version"><b>Ph. bản: </b></string>
+    <string name="midlet_version"><b>"Phiên bản: "</b></string>
     <string name="more">Thêm</string>
     <string name="no_data_for_display">Không có ứng dụng để hiển thị</string>
     <string name="not_saved_exists">Đã tồn tại</string>
@@ -123,9 +123,9 @@
     <string name="pref_vk_type_phone_arrows">Điện thoại(mũi tên)</string>
     <string name="pref_wakelock_title">Giữ màn hình mở</string>
     <string name="PREF_WIDTH">Chiều rộng</string>
-    <string name="reinstall">Ứng dụng đã cài đặt.\n\nBạn có muốn cài đặt lại không?\nTất cả dữ liệu sẽ được lưu.</string>
-    <string name="reinstall_newest">Cập nhật ứng dụng này cho ph. bản %1$s?\n\nHiện đã cài đặt: %2$s\nTất cả dữ liệu sẽ được lưu.</string>
-    <string name="reinstall_older">Thay thế ứng dụng này bằng ph. bản %1$s?\n\nHiện đã cài đặt: %2$s\nPh. bản cũ có thể không hoạt động chính xác với dữ liệu được ghi lại.</string>
+    <string name="reinstall">Ứng dụng này đã được cài đặt. Cài đặt lại?</string>
+    <string name="reinstall_newest">Cập nhật ứng dụng này lên phiên bản %1$s?\n\nHiện đã cài đặt: %2$s</string>
+    <string name="reinstall_older">Thay thế ứng dụng này bằng phiên bản %1$s?\n\nHiện đã cài đặt: %2$s\nPhiên bản cũ hơn có thể không hoạt động đúng với dữ liệu hiện có.</string>
     <string name="reset">Thiết lập lại</string>
     <string name="RESET_LAYOUT_CMD">Đặt lại bố cục điều khiển ảo</string>
     <string name="retry">thử lại</string>
@@ -637,4 +637,162 @@
         <item quantity="other">%1$d thuộc tính</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Điều chỉnh kích thước hiển thị từ 1% đến 1000%. Ở 100%, trò chơi dùng kích thước gốc; giá trị lớn hơn có thể khiến nội dung vượt ra ngoài màn hình.</string>
+    <string name="bulk_install_action_jar_only">Chỉ cài đặt JAR</string>
+    <string name="bulk_install_action_separate_copy">Cài đặt thành bản sao riêng</string>
+    <string name="bulk_install_cancel">Hủy</string>
+    <string name="bulk_install_cancel_requested">Sẽ dừng sau ứng dụng hiện tại…</string>
+    <string name="bulk_install_cancelled">Đã dừng cài đặt hàng loạt</string>
+    <string name="bulk_install_choose_files">Tệp</string>
+    <string name="bulk_install_choose_folder">Thư mục</string>
+    <string name="bulk_install_clear">Xóa lựa chọn</string>
+    <string name="bulk_install_close">Đóng</string>
+    <string name="bulk_install_complete">Cài đặt hàng loạt hoàn tất</string>
+    <string name="bulk_install_empty">Không tìm thấy ứng dụng được hỗ trợ.</string>
+    <string name="bulk_install_empty_filter">Không có trò chơi phù hợp.</string>
+    <string name="bulk_install_fatal">Đã dừng cài đặt hàng loạt. Xem lại các mục chưa hoàn tất trước khi thử lại.</string>
+    <string name="bulk_install_filter_all">Tất cả</string>
+    <string name="bulk_install_filter_review">Xem lại</string>
+    <string name="bulk_install_filter_selected">Đã chọn</string>
+    <string name="bulk_install_install_count">Cài đặt %1$d mục</string>
+    <string name="bulk_install_installed_version">Đã cài đặt: %1$s</string>
+    <string name="bulk_install_library_changed">Thư viện đã thay đổi sau khi xem lại. Đóng đợt cài đặt này và chọn lại các nguồn.</string>
+    <string name="bulk_install_planning">Đang kiểm tra các ứng dụng đã chọn…</string>
+    <string name="bulk_install_prepare_failed">Không thể chuẩn bị cài đặt các ứng dụng đã chọn.</string>
+    <string name="bulk_install_reason_conflicting_jads">Các tệp JAD có thuộc tính khác nhau tham chiếu đến cùng một JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Nguồn này trùng với một nguồn khác trong đợt cài đặt.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD và JAR xác định các ứng dụng khác nhau.</string>
+    <string name="bulk_install_reason_jar_not_found">Không tìm thấy JAR được JAD tham chiếu: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD thiếu MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">JAD không có thư mục cha.</string>
+    <string name="bulk_install_reason_older_candidate">Có phiên bản mới hơn của ứng dụng này trong cùng đợt cài đặt.</string>
+    <string name="bulk_install_reason_remote_jar">Cài đặt hàng loạt không thể tải xuống tệp JAR từ xa.</string>
+    <string name="bulk_install_reason_source_error">Không thể chuẩn bị cài đặt từ nguồn này.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD tham chiếu đến JAR bằng lược đồ URI không được hỗ trợ: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Nhiều biến thể ứng dụng có cùng phiên bản.</string>
+    <string name="bulk_install_recommended">Đề xuất</string>
+    <string name="bulk_install_reinstall_source_missing">JAR đã lưu không khả dụng để cài đặt lại.</string>
+    <string name="bulk_install_result_failed">Thất bại</string>
+    <string name="bulk_install_result_installed">Đã cài đặt</string>
+    <string name="bulk_install_result_reinstalled">Đã cài đặt lại</string>
+    <string name="bulk_install_result_restored">Đã khôi phục</string>
+    <string name="bulk_install_result_skipped">Đã bỏ qua</string>
+    <string name="bulk_install_result_updated">Đã cập nhật</string>
+    <string name="bulk_install_skipped_entries">Mục trong tệp nén đã bỏ qua: %1$d</string>
+    <string name="bulk_install_source">Nguồn: %1$s</string>
+    <string name="bulk_install_source_changed">Tệp nguồn đã thay đổi sau khi xem lại. Chọn lại các tệp.</string>
+    <string name="bulk_install_source_unavailable">Một tệp nguồn cần thiết không còn khả dụng. Chọn lại các tệp.</string>
+    <string name="bulk_install_status_ambiguous">Khớp với nhiều ứng dụng đã cài đặt</string>
+    <string name="bulk_install_status_conflict">Xung đột trong đợt cài đặt</string>
+    <string name="bulk_install_status_downgrade">Phiên bản cũ hơn</string>
+    <string name="bulk_install_status_duplicate">Trùng lặp</string>
+    <string name="bulk_install_status_error">Nguồn không hợp lệ</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR không khớp</string>
+    <string name="bulk_install_status_new">Mới</string>
+    <string name="bulk_install_status_older_batch">Phiên bản cũ hơn trong đợt cài đặt</string>
+    <string name="bulk_install_status_reinstall">Cùng phiên bản, có thể là biến thể</string>
+    <string name="bulk_install_status_remote">Không hỗ trợ nguồn từ xa</string>
+    <string name="bulk_install_status_same">Đã cài đặt</string>
+    <string name="bulk_install_status_update">Cập nhật</string>
+    <string name="bulk_install_target_unverified">Không thể xác minh ứng dụng cần cài đặt lại. Đóng đợt cài đặt này và chọn lại ứng dụng.</string>
+    <string name="bulk_install_title">Cài đặt hàng loạt</string>
+    <string name="bulk_install_unreadable_archives">Tệp nén không đọc được: %1$d</string>
+    <string name="install_done_with_warning">Đã cài đặt ứng dụng nhưng có cảnh báo.</string>
+    <string name="installer_ambiguous">Nhiều ứng dụng đã cài đặt khớp với ứng dụng này. Cài đặt bản sao riêng? Các ứng dụng hiện có và dữ liệu của chúng sẽ được giữ lại.</string>
+    <string name="installer_cancel_pending">Sẽ dừng tại điểm an toàn tiếp theo…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nVấn đề: Không đọc được tệp lớp Java.\nXử lý: Đã bỏ qua khi chuyển đổi.</string>
+    <string name="installer_copy_details">Sao chép chi tiết</string>
+    <string name="installer_error_message">Không thể cài đặt ứng dụng đã chọn. Chọn tệp MIDlet hợp lệ và thử lại.</string>
+    <string name="installer_existing_data_preserved">Cài đặt hiện có và dữ liệu lưu sẽ được giữ lại.</string>
+    <string name="installer_failed_conversion">Không thể chuyển đổi ứng dụng. Kiểm tra tệp có đầy đủ và được hỗ trợ hay không, rồi thử lại.</string>
+    <string name="installer_failed_download">Không thể tải xuống ứng dụng. Kiểm tra kết nối và liên kết tải xuống, rồi thử lại.</string>
+    <string name="installer_failed_storage">Không thể hoàn tất cài đặt. Hãy thử lại.</string>
+    <string name="installer_hide_details">Ẩn chi tiết</string>
+    <string name="installer_needs_recovery">Đã lưu các tệp ứng dụng, nhưng thư viện không thể hoàn tất cập nhật. Làm mới thư viện trước khi thử lại.</string>
+    <string name="installer_not_processed">Chưa xử lý</string>
+    <string name="installer_partial_restore">Đã cài đặt ứng dụng; không thể khôi phục dữ liệu hoặc cài đặt</string>
+    <string name="installer_refresh_library">Làm mới thư viện</string>
+    <string name="installer_removed_leftovers">Đã xóa ứng dụng; không thể xóa một số cài đặt hoặc dữ liệu lưu.</string>
+    <string name="installer_retry_remaining">Xem lại các mục chưa hoàn tất</string>
+    <string name="installer_separate_copy">Cài đặt bản sao riêng</string>
+    <string name="installer_show_details">Hiện chi tiết</string>
+    <string name="installer_stage_download">Đang tải xuống ứng dụng…</string>
+    <string name="installer_stage_save">Đang lưu ứng dụng…</string>
+    <string name="installer_stage_wait">Đang chờ thao tác khác…</string>
+    <string name="installer_title">Trình cài đặt MIDlet</string>
+    <string name="reconversion_done_with_warning">Đã hoàn tất chuyển đổi tương thích nhưng có cảnh báo.</string>
+    <string name="reconversion_error">Không thể tự động chuyển đổi MIDlet.\n\n%1$s</string>
+    <string name="reconversion_error_summary">Không thể tự động chuyển đổi MIDlet.</string>
+    <string name="reconverting_wait">MIDlet này cần chuyển đổi tương thích một lần trước khi khởi động. Đang chuyển đổi…</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d mục cần xem lại</item>
+        <item quantity="other">%1$d mục cần xem lại</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d mục thất bại</item>
+        <item quantity="other">%1$d mục thất bại</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Tìm thấy %1$d ứng dụng</item>
+        <item quantity="other">Tìm thấy %1$d ứng dụng</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Đã cài đặt %1$d mục</item>
+        <item quantity="other">Đã cài đặt %1$d mục</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Đã bỏ bớt %1$d tệp bổ sung khỏi phần xem lại để giao diện phản hồi nhanh.</item>
+        <item quantity="other">Đã bỏ bớt %1$d tệp bổ sung khỏi phần xem lại để giao diện phản hồi nhanh.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d mục sẵn sàng</item>
+        <item quantity="other">%1$d mục sẵn sàng</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">Có %1$d ứng dụng đã cài đặt khớp với nguồn này.</item>
+        <item quantity="other">Có %1$d ứng dụng đã cài đặt khớp với nguồn này.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">Có %1$d ứng dụng đã chọn trong thư viện không còn khả dụng.</item>
+        <item quantity="other">Có %1$d ứng dụng đã chọn trong thư viện không còn khả dụng.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Đã cài đặt lại %1$d mục</item>
+        <item quantity="other">Đã cài đặt lại %1$d mục</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Đã khôi phục %1$d mục</item>
+        <item quantity="other">Đã khôi phục %1$d mục</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Đã xử lý %1$d ứng dụng trong tổng số %2$d</item>
+        <item quantity="other">Đã xử lý %1$d ứng dụng trong tổng số %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Đã chọn %1$d mục</item>
+        <item quantity="other">Đã chọn %1$d mục</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Đã cài đặt hoặc trùng lặp: %1$d</item>
+        <item quantity="other">Đã cài đặt hoặc trùng lặp: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Đã bỏ qua %1$d mục</item>
+        <item quantity="other">Đã bỏ qua %1$d mục</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Đã cập nhật %1$d mục</item>
+        <item quantity="other">Đã cập nhật %1$d mục</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d cảnh báo</item>
+        <item quantity="other">%1$d cảnh báo</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Có %1$d vấn đề chuyển đổi bổ sung không được hiển thị.</item>
+        <item quantity="other">Có %1$d vấn đề chuyển đổi bổ sung không được hiển thị.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">Đã bỏ qua %1$d tệp lớp Java vì không đọc được. Các tính năng dùng những tệp này có thể không hoạt động.</item>
+        <item quantity="other">Đã bỏ qua %1$d tệp lớp Java vì không đọc được. Các tính năng dùng những tệp này có thể không hoạt động.</item>
+    </plurals>
 </resources>

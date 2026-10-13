@@ -543,4 +543,174 @@
         <item quantity="other">%1$d egenskaper</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Justerer visningsstørrelsen fra 1% til 1000%. Ved 100% bruker spillet sin opprinnelige størrelse; større verdier kan strekke seg utenfor skjermen.</string>
+    <string name="bulk_install_action_jar_only">Installer bare JAR</string>
+    <string name="bulk_install_action_separate_copy">Installer som separat kopi</string>
+    <string name="bulk_install_cancel">Avbryt</string>
+    <string name="bulk_install_cancel_requested">Stopper etter gjeldende app…</string>
+    <string name="bulk_install_cancelled">Masseinstallasjon stoppet</string>
+    <string name="bulk_install_choose_files">Filer</string>
+    <string name="bulk_install_choose_folder">Mappe</string>
+    <string name="bulk_install_clear">Tøm utvalg</string>
+    <string name="bulk_install_close">Lukk</string>
+    <string name="bulk_install_complete">Masseinstallasjon fullført</string>
+    <string name="bulk_install_empty">Ingen støttede apper ble funnet.</string>
+    <string name="bulk_install_empty_filter">Ingen samsvarende spill.</string>
+    <string name="bulk_install_fatal">Masseinstallasjonen stoppet. Gjennomgå de uferdige elementene før du prøver igjen.</string>
+    <string name="bulk_install_filter_all">Alle</string>
+    <string name="bulk_install_filter_review">Gjennomgang</string>
+    <string name="bulk_install_filter_selected">Valgte</string>
+    <string name="bulk_install_install_count">Installer %1$d</string>
+    <string name="bulk_install_installed_version">Installert: %1$s</string>
+    <string name="bulk_install_library_changed">Bibliotek ble endret etter gjennomgangen. Lukk denne gruppen og velg kildene på nytt.</string>
+    <string name="bulk_install_planning">Kontrollerer valgte apper…</string>
+    <string name="bulk_install_prepare_failed">De valgte appene kunne ikke klargjøres for installasjon.</string>
+    <string name="bulk_install_reason_conflicting_jads">JAD-filer med ulike attributter viser til samme JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Denne kilden er en kopi av en annen kilde i denne gruppen.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD og JAR identifiserer ulike apper.</string>
+    <string name="bulk_install_reason_jar_not_found">JAR-filen som JAD viser til, ble ikke funnet: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD mangler MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">JAD har ingen overordnet mappe.</string>
+    <string name="bulk_install_reason_older_candidate">En nyere versjon av denne appen finnes i samme gruppe.</string>
+    <string name="bulk_install_reason_remote_jar">Masseinstallasjon kan ikke laste ned eksterne JAR-filer.</string>
+    <string name="bulk_install_reason_source_error">Denne kilden kunne ikke klargjøres for installasjon.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD viser til en JAR med et URI-skjema som ikke støttes: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Flere appvarianter har samme versjon.</string>
+    <string name="bulk_install_recommended">Anbefalte</string>
+    <string name="bulk_install_reinstall_source_missing">Lagret JAR er utilgjengelig for ny installasjon.</string>
+    <string name="bulk_install_result_failed">Mislyktes</string>
+    <string name="bulk_install_result_installed">Installert</string>
+    <string name="bulk_install_result_reinstalled">Installert på nytt</string>
+    <string name="bulk_install_result_restored">Gjenopprettet</string>
+    <string name="bulk_install_result_skipped">Hoppet over</string>
+    <string name="bulk_install_result_updated">Oppdatert</string>
+    <string name="bulk_install_skipped_entries">Arkivoppføringer hoppet over: %1$d</string>
+    <string name="bulk_install_source">Kilde: %1$s</string>
+    <string name="bulk_install_source_changed">Kildefilen ble endret etter gjennomgangen. Velg filene på nytt.</string>
+    <string name="bulk_install_source_unavailable">En nødvendig kildefil er ikke lenger tilgjengelig. Velg filene på nytt.</string>
+    <string name="bulk_install_status_ambiguous">Samsvarer med flere installerte apper</string>
+    <string name="bulk_install_status_conflict">Konflikt i gruppen</string>
+    <string name="bulk_install_status_downgrade">Eldre versjon</string>
+    <string name="bulk_install_status_duplicate">Duplikat</string>
+    <string name="bulk_install_status_error">Ugyldig kilde</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR samsvarer ikke</string>
+    <string name="bulk_install_status_new">Ny</string>
+    <string name="bulk_install_status_older_batch">Eldre versjon i gruppen</string>
+    <string name="bulk_install_status_reinstall">Samme versjon, mulig variant</string>
+    <string name="bulk_install_status_remote">Ekstern kilde støttes ikke</string>
+    <string name="bulk_install_status_same">Allerede installert</string>
+    <string name="bulk_install_status_update">Oppdatering</string>
+    <string name="bulk_install_target_unverified">Målet for ny installasjon kunne ikke bekreftes. Lukk denne gruppen og velg appen på nytt.</string>
+    <string name="bulk_install_title">Masseinstallasjon</string>
+    <string name="bulk_install_unreadable_archives">Uleselige arkiver: %1$d</string>
+    <string name="converting_wait">Konverterer JAR…</string>
+    <string name="install">Installer</string>
+    <string name="install_done">App installert.</string>
+    <string name="install_done_with_warning">App installert med advarsler.</string>
+    <string name="install_jar_non_matched_jad">Denne appen avviker fra den som er beskrevet i JAD.\nIgnorere JAD og installere likevel?</string>
+    <string name="installer_ambiguous">Flere installerte apper samsvarer med denne appen. Installere en separat kopi? Eksisterende apper og dataene deres beholdes.</string>
+    <string name="installer_cancel_pending">Stopper ved neste sikre punkt…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProblem: Java-klassefilen kunne ikke leses.\nHandling: Hoppet over under konvertering.</string>
+    <string name="installer_copy_details">Kopier detaljer</string>
+    <string name="installer_error_message">Den valgte appen kunne ikke installeres. Velg en gyldig MIDlet-fil og prøv igjen.</string>
+    <string name="installer_existing_data_preserved">Eksisterende innstillinger og lagrede spilldata beholdes.</string>
+    <string name="installer_failed_conversion">Appen kunne ikke konverteres. Kontroller at filen er fullstendig og støttet, og prøv igjen.</string>
+    <string name="installer_failed_download">Appen kunne ikke lastes ned. Kontroller tilkoblingen og nedlastingslenken, og prøv igjen.</string>
+    <string name="installer_failed_storage">Installasjonen kunne ikke fullføres. Prøv igjen.</string>
+    <string name="installer_hide_details">Skjul detaljer</string>
+    <string name="installer_needs_recovery">Appfilene ble lagret, men Bibliotek kunne ikke fullføre oppdateringen. Oppdater Bibliotek før du prøver igjen.</string>
+    <string name="installer_not_processed">Ikke behandlet</string>
+    <string name="installer_partial_restore">App installert; data eller innstillinger kunne ikke gjenopprettes</string>
+    <string name="installer_refresh_library">Oppdater Bibliotek</string>
+    <string name="installer_removed_leftovers">App fjernet; enkelte innstillinger eller lagrede spilldata kunne ikke slettes.</string>
+    <string name="installer_retry_remaining">Gjennomgå uferdige elementer</string>
+    <string name="installer_separate_copy">Installer separat kopi</string>
+    <string name="installer_show_details">Vis detaljer</string>
+    <string name="installer_stage_download">Laster ned app…</string>
+    <string name="installer_stage_save">Lagrer app…</string>
+    <string name="installer_stage_wait">Venter på en annen operasjon…</string>
+    <string name="installer_title">MIDlet-installasjon</string>
+    <string name="reconversion_done_with_warning">Kompatibilitetskonvertering fullført med advarsler.</string>
+    <string name="reconversion_error">MIDlet-en kunne ikke konverteres automatisk.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet-en kunne ikke konverteres automatisk.</string>
+    <string name="reconverting_wait">Denne MIDlet-en trenger en kompatibilitetskonvertering én gang før den kan starte. Konverterer…</string>
+    <string name="reinstall">Denne appen er allerede installert. Installere den på nytt?</string>
+    <string name="reinstall_newest">Oppdatere denne appen til versjon %1$s?\n\nInstallert nå: %2$s</string>
+    <string name="reinstall_older">Erstatte denne appen med versjon %1$s?\n\nInstallert nå: %2$s\nDen eldre versjonen fungerer kanskje ikke riktig med eksisterende data.</string>
+    <string name="warn_install_from_net">Filen lastes ned fra internett.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d trenger gjennomgang</item>
+        <item quantity="other">%1$d trenger gjennomgang</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d mislyktes</item>
+        <item quantity="other">%1$d mislyktes</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d app funnet</item>
+        <item quantity="other">%1$d apper funnet</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d installert</item>
+        <item quantity="other">%1$d installert</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">%1$d ekstra fil ble utelatt for å holde gjennomgangen responsiv.</item>
+        <item quantity="other">%1$d ekstra filer ble utelatt for å holde gjennomgangen responsiv.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d klar</item>
+        <item quantity="other">%1$d klare</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d installert app samsvarer med denne kilden.</item>
+        <item quantity="other">%1$d installerte apper samsvarer med denne kilden.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d valgt app i Bibliotek er ikke lenger tilgjengelig.</item>
+        <item quantity="other">%1$d valgte apper i Bibliotek er ikke lenger tilgjengelige.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d installert på nytt</item>
+        <item quantity="other">%1$d installert på nytt</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d gjenopprettet</item>
+        <item quantity="other">%1$d gjenopprettet</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Behandlet %1$d app av %2$d</item>
+        <item quantity="other">Behandlet %1$d apper av %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d valgt</item>
+        <item quantity="other">%1$d valgt</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Allerede installert eller duplikat: %1$d</item>
+        <item quantity="other">Allerede installert eller duplikater: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d hoppet over</item>
+        <item quantity="other">%1$d hoppet over</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d oppdatert</item>
+        <item quantity="other">%1$d oppdatert</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d advarsel</item>
+        <item quantity="other">%1$d advarsler</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">%1$d ekstra konverteringsproblem vises ikke.</item>
+        <item quantity="other">%1$d ekstra konverteringsproblemer vises ikke.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d Java-klassefil ble hoppet over fordi den ikke kunne leses. Funksjoner som bruker den, fungerer kanskje ikke.</item>
+        <item quantity="other">%1$d Java-klassefiler ble hoppet over fordi de ikke kunne leses. Funksjoner som bruker dem, fungerer kanskje ikke.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Navn: "</b></string>
+    <string name="midlet_size"><b>"Størrelse: "</b></string>
+    <string name="midlet_vendor"><b>"Leverandør: "</b></string>
+    <string name="midlet_version"><b>"Versjon: "</b></string>
 </resources>

@@ -572,4 +572,155 @@
         <item quantity="other">%1$d คุณสมบัติ</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">ปรับขนาดการแสดงผลจาก 1% ถึง 1000% ที่ 100% เกมจะใช้ขนาดเดิม ค่าที่สูงกว่านี้อาจทำให้ภาพเกินขอบหน้าจอ</string>
+    <string name="bulk_install_action_jar_only">ติดตั้งเฉพาะ JAR</string>
+    <string name="bulk_install_action_separate_copy">ติดตั้งเป็นสำเนาแยก</string>
+    <string name="bulk_install_cancel">ยกเลิก</string>
+    <string name="bulk_install_cancel_requested">จะหยุดหลังจากประมวลผลแอปปัจจุบัน…</string>
+    <string name="bulk_install_cancelled">หยุดการติดตั้งหลายแอปแล้ว</string>
+    <string name="bulk_install_choose_files">ไฟล์</string>
+    <string name="bulk_install_choose_folder">โฟลเดอร์</string>
+    <string name="bulk_install_clear">ล้างการเลือก</string>
+    <string name="bulk_install_close">ปิด</string>
+    <string name="bulk_install_complete">การติดตั้งหลายแอปเสร็จสิ้น</string>
+    <string name="bulk_install_empty">ไม่พบแอปที่รองรับ</string>
+    <string name="bulk_install_empty_filter">ไม่มีเกมที่ตรงกัน</string>
+    <string name="bulk_install_fatal">หยุดการติดตั้งหลายแอปแล้ว ตรวจสอบรายการที่ยังไม่เสร็จก่อนลองอีกครั้ง</string>
+    <string name="bulk_install_filter_all">ทั้งหมด</string>
+    <string name="bulk_install_filter_review">ตรวจสอบ</string>
+    <string name="bulk_install_filter_selected">เลือกแล้ว</string>
+    <string name="bulk_install_install_count">ติดตั้ง %1$d รายการ</string>
+    <string name="bulk_install_installed_version">ติดตั้งแล้ว: %1$s</string>
+    <string name="bulk_install_library_changed">คลังแอปเปลี่ยนแปลงหลังการตรวจสอบ ปิดชุดการติดตั้งนี้แล้วเลือกแหล่งที่มาใหม่</string>
+    <string name="bulk_install_planning">กำลังตรวจสอบแอปที่เลือก…</string>
+    <string name="bulk_install_prepare_failed">เตรียมแอปที่เลือกสำหรับติดตั้งไม่ได้</string>
+    <string name="bulk_install_reason_conflicting_jads">ไฟล์ JAD ที่มีคุณสมบัติต่างกันอ้างอิง JAR เดียวกัน</string>
+    <string name="bulk_install_reason_duplicate_source">แหล่งที่มานี้ซ้ำกับแหล่งที่มาอื่นในชุดการติดตั้งนี้</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD และ JAR ระบุแอปต่างกัน</string>
+    <string name="bulk_install_reason_jar_not_found">ไม่พบ JAR ที่ JAD อ้างอิง: %1$s</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD ไม่มี MIDlet-Jar-URL</string>
+    <string name="bulk_install_reason_missing_parent">JAD ไม่มีไดเรกทอรีแม่</string>
+    <string name="bulk_install_reason_older_candidate">มีเวอร์ชันใหม่กว่าของแอปนี้ในชุดการติดตั้งเดียวกัน</string>
+    <string name="bulk_install_reason_remote_jar">การติดตั้งหลายแอปไม่สามารถดาวน์โหลดไฟล์ JAR จากระยะไกลได้</string>
+    <string name="bulk_install_reason_source_error">เตรียมแหล่งที่มานี้สำหรับติดตั้งไม่ได้</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD อ้างอิง JAR โดยใช้สคีม URI ที่ไม่รองรับ: %1$s</string>
+    <string name="bulk_install_reason_version_conflict">แอปหลายแบบมีหมายเลขเวอร์ชันเดียวกัน</string>
+    <string name="bulk_install_recommended">แนะนำ</string>
+    <string name="bulk_install_reinstall_source_missing">JAR ที่บันทึกไว้ไม่พร้อมให้ติดตั้งใหม่</string>
+    <string name="bulk_install_result_failed">ไม่สำเร็จ</string>
+    <string name="bulk_install_result_installed">ติดตั้งแล้ว</string>
+    <string name="bulk_install_result_reinstalled">ติดตั้งใหม่แล้ว</string>
+    <string name="bulk_install_result_restored">กู้คืนแล้ว</string>
+    <string name="bulk_install_result_skipped">ข้ามแล้ว</string>
+    <string name="bulk_install_result_updated">อัปเดตแล้ว</string>
+    <string name="bulk_install_skipped_entries">รายการในไฟล์บีบอัดที่ข้าม: %1$d</string>
+    <string name="bulk_install_source">แหล่งที่มา: %1$s</string>
+    <string name="bulk_install_source_changed">ไฟล์ต้นฉบับเปลี่ยนแปลงหลังการตรวจสอบ เลือกไฟล์ใหม่</string>
+    <string name="bulk_install_source_unavailable">ไฟล์ต้นฉบับที่จำเป็นไม่พร้อมใช้งานแล้ว เลือกไฟล์ใหม่</string>
+    <string name="bulk_install_status_ambiguous">ตรงกับหลายแอปที่ติดตั้งแล้ว</string>
+    <string name="bulk_install_status_conflict">ขัดแย้งภายในชุดการติดตั้ง</string>
+    <string name="bulk_install_status_downgrade">เวอร์ชันเก่ากว่า</string>
+    <string name="bulk_install_status_duplicate">ซ้ำ</string>
+    <string name="bulk_install_status_error">แหล่งที่มาไม่ถูกต้อง</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR ไม่ตรงกัน</string>
+    <string name="bulk_install_status_new">ใหม่</string>
+    <string name="bulk_install_status_older_batch">เวอร์ชันเก่ากว่าในชุดการติดตั้ง</string>
+    <string name="bulk_install_status_reinstall">เวอร์ชันเดียวกัน อาจเป็นคนละแบบ</string>
+    <string name="bulk_install_status_remote">ไม่รองรับแหล่งที่มาระยะไกล</string>
+    <string name="bulk_install_status_same">ติดตั้งแล้ว</string>
+    <string name="bulk_install_status_update">อัปเดต</string>
+    <string name="bulk_install_target_unverified">ตรวจสอบแอปเป้าหมายที่จะติดตั้งใหม่ไม่ได้ ปิดชุดการติดตั้งนี้แล้วเลือกแอปใหม่</string>
+    <string name="bulk_install_title">ติดตั้งหลายแอป</string>
+    <string name="bulk_install_unreadable_archives">ไฟล์บีบอัดที่อ่านไม่ได้: %1$d</string>
+    <string name="install">ติดตั้ง</string>
+    <string name="install_done">ติดตั้งแอปแล้ว</string>
+    <string name="install_done_with_warning">ติดตั้งแอปแล้ว แต่มีคำเตือน</string>
+    <string name="install_jar_non_matched_jad">แอปนี้ต่างจากแอปที่อธิบายใน JAD\nละเว้น JAD แล้วติดตั้งต่อหรือไม่?</string>
+    <string name="installer_ambiguous">มีหลายแอปที่ติดตั้งแล้วตรงกับแอปนี้ ติดตั้งสำเนาแยกหรือไม่? แอปเดิมและข้อมูลจะคงอยู่</string>
+    <string name="installer_cancel_pending">จะหยุดเมื่อถึงจุดปลอดภัยถัดไป…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nปัญหา: อ่านไฟล์คลาส Java ไม่ได้\nการดำเนินการ: ข้ามระหว่างการแปลง</string>
+    <string name="installer_copy_details">คัดลอกรายละเอียด</string>
+    <string name="installer_error_message">ติดตั้งแอปที่เลือกไม่ได้ เลือกไฟล์ MIDlet ที่ถูกต้องแล้วลองอีกครั้ง</string>
+    <string name="installer_existing_data_preserved">การตั้งค่าเดิมและข้อมูลเซฟจะคงอยู่</string>
+    <string name="installer_failed_conversion">แปลงแอปไม่ได้ ตรวจสอบว่าไฟล์ครบถ้วนและรองรับ แล้วลองอีกครั้ง</string>
+    <string name="installer_failed_download">ดาวน์โหลดแอปไม่ได้ ตรวจสอบการเชื่อมต่อและลิงก์ดาวน์โหลด แล้วลองอีกครั้ง</string>
+    <string name="installer_failed_storage">ติดตั้งไม่เสร็จสมบูรณ์ ลองอีกครั้ง</string>
+    <string name="installer_hide_details">ซ่อนรายละเอียด</string>
+    <string name="installer_needs_recovery">บันทึกไฟล์แอปแล้ว แต่คลังแอปอัปเดตไม่เสร็จ ให้รีเฟรชคลังแอปก่อนลองอีกครั้ง</string>
+    <string name="installer_not_processed">ยังไม่ประมวลผล</string>
+    <string name="installer_partial_restore">ติดตั้งแอปแล้ว แต่กู้คืนข้อมูลหรือการตั้งค่าไม่ได้</string>
+    <string name="installer_refresh_library">รีเฟรชคลังแอป</string>
+    <string name="installer_removed_leftovers">นำแอปออกแล้ว แต่ลบการตั้งค่าหรือข้อมูลเซฟบางส่วนไม่ได้</string>
+    <string name="installer_retry_remaining">ตรวจสอบรายการที่ยังไม่เสร็จ</string>
+    <string name="installer_separate_copy">ติดตั้งสำเนาแยก</string>
+    <string name="installer_show_details">แสดงรายละเอียด</string>
+    <string name="installer_stage_download">กำลังดาวน์โหลดแอป…</string>
+    <string name="installer_stage_save">กำลังบันทึกแอป…</string>
+    <string name="installer_stage_wait">กำลังรอการดำเนินการอื่น…</string>
+    <string name="installer_title">ตัวติดตั้ง MIDlet</string>
+    <string name="reconversion_done_with_warning">แปลงเพื่อความเข้ากันได้เสร็จแล้ว แต่มีคำเตือน</string>
+    <string name="reconversion_error">แปลง MIDlet อัตโนมัติไม่ได้\n\n%1$s</string>
+    <string name="reconversion_error_summary">แปลง MIDlet อัตโนมัติไม่ได้</string>
+    <string name="reconverting_wait">MIDlet นี้ต้องแปลงเพื่อความเข้ากันได้หนึ่งครั้งก่อนเริ่มทำงาน กำลังแปลง…</string>
+    <string name="reinstall">แอปนี้ติดตั้งแล้ว ติดตั้งใหม่หรือไม่?</string>
+    <string name="reinstall_newest">อัปเดตแอปนี้เป็นเวอร์ชัน %1$s หรือไม่?\n\nติดตั้งอยู่: %2$s</string>
+    <string name="reinstall_older">แทนที่แอปนี้ด้วยเวอร์ชัน %1$s หรือไม่?\n\nติดตั้งอยู่: %2$s\nเวอร์ชันเก่ากว่าอาจทำงานกับข้อมูลเดิมได้ไม่ถูกต้อง</string>
+    <string name="warn_install_from_net">ไฟล์จะถูกดาวน์โหลดจากอินเทอร์เน็ต</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other">ต้องตรวจสอบ %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">ไม่สำเร็จ %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">พบ %1$d แอป</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">ติดตั้งแล้ว %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">ไม่รวมไฟล์เพิ่มเติม %1$d ไฟล์ในการตรวจสอบ เพื่อให้หน้าตรวจสอบตอบสนองได้รวดเร็ว</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other">พร้อม %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">มีแอปที่ติดตั้งแล้ว %1$d แอปตรงกับแหล่งที่มานี้</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">แอปที่เลือกในคลังแอป %1$d แอปไม่พร้อมใช้งานแล้ว</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">ติดตั้งใหม่แล้ว %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">กู้คืนแล้ว %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="other">ประมวลผลแล้ว %1$d แอปจากทั้งหมด %2$d แอป</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">เลือกแล้ว %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">ติดตั้งแล้วหรือซ้ำ: %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">ข้ามแล้ว %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">อัปเดตแล้ว %1$d รายการ</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other">คำเตือน %1$d รายการ</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">ยังมีปัญหาในการแปลงอีก %1$d รายการที่ไม่ได้แสดง</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">ข้ามไฟล์คลาส Java %1$d ไฟล์เพราะอ่านไม่ได้ ฟีเจอร์ที่ใช้ไฟล์เหล่านี้อาจไม่ทำงาน</item>
+    </plurals>
+    <string name="midlet_name"><b>"ชื่อ: "</b></string>
+    <string name="midlet_size"><b>"ขนาด: "</b></string>
+    <string name="midlet_vendor"><b>"ผู้เผยแพร่: "</b></string>
+    <string name="midlet_version"><b>"เวอร์ชัน: "</b></string>
 </resources>

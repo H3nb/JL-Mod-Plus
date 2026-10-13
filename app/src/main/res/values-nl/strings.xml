@@ -630,7 +630,7 @@
     <string name="bulk_install_planning">Geselecteerde applicaties controleren…</string>
     <string name="bulk_install_empty">Geen ondersteunde applicaties gevonden.</string>
     <string name="bulk_install_recommended">Aanbevolen</string>
-    <string name="bulk_install_clear">Wissen</string>
+    <string name="bulk_install_clear">Selectie wissen</string>
     <string name="bulk_install_install_count">%1$d installeren</string>
     <string name="bulk_install_cancel">Annuleren</string>
     <string name="bulk_install_close">Sluiten</string>
@@ -655,8 +655,8 @@
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Oudere versie</string>
     <string name="bulk_install_status_same">Al geïnstalleerd</string>
-    <string name="bulk_install_status_reinstall">Variant / opnieuw installeren</string>
-    <string name="bulk_install_status_ambiguous">Meerdere geïnstalleerde overeenkomsten</string>
+    <string name="bulk_install_status_reinstall">Dezelfde versie, mogelijke variant</string>
+    <string name="bulk_install_status_ambiguous">Komt overeen met meerdere geïnstalleerde apps</string>
     <string name="bulk_install_status_mismatch">JAD/JAR komen niet overeen</string>
     <string name="bulk_install_status_duplicate">Duplicaat</string>
     <string name="bulk_install_status_older_batch">Oudere batchkandidaat</string>
@@ -731,8 +731,8 @@
     <string name="config_help_emulation_speed">Wijzigt de kloksnelheid van de MIDlet en ondersteunde vertragingen. Android-audio en -UI blijven normaal.</string>
     <string name="config_help_timing_mode">Kiest of de MIDlet emulatietijd of systeemtijd gebruikt. Relatieve vertragingen blijven met de emulatiesnelheid schalen.</string>
     <string name="config_help_timing_unavailable">Tijdinstellingen zijn niet beschikbaar voor deze MIDlet-installatie. Installeer of converteer de MIDlet opnieuw om ze in te schakelen.</string>
-    <string name="reconverting_wait">Deze MIDlet heeft vóór de start een eenmalige compatibiliteitsconversie nodig. Even geduld…</string>
-    <string name="reconversion_error">De MIDlet kon niet automatisch worden geconverteerd. %1$s</string>
+    <string name="reconverting_wait">Deze MIDlet heeft vóór de start een eenmalige compatibiliteitsconversie nodig. Converteren…</string>
+    <string name="reconversion_error">De MIDlet kon niet automatisch worden geconverteerd.\n\n%1$s</string>
     <string name="config_help_generic_color">Stelt de kleur van dit visuele element in.</string>
     <string name="config_help_encoding">Kiest de tekencodering die als microedition.encoding wordt gemeld.</string>
     <string name="config_edit_system_properties">Systeemeigenschappen bewerken</string>

@@ -549,4 +549,192 @@
         <item quantity="other">%1$d својстава</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Подешава приказану величину од 1% до 1000%. При 100%, игра користи оригиналну величину; веће вредности могу да изађу изван екрана.</string>
+    <string name="bulk_install_action_jar_only">Инсталирај само JAR</string>
+    <string name="bulk_install_action_separate_copy">Инсталирај као засебну копију</string>
+    <string name="bulk_install_cancel">Откажи</string>
+    <string name="bulk_install_cancel_requested">Заустављање после тренутне апликације…</string>
+    <string name="bulk_install_cancelled">Групна инсталација је заустављена</string>
+    <string name="bulk_install_choose_files">Датотеке</string>
+    <string name="bulk_install_choose_folder">Фасцикла</string>
+    <string name="bulk_install_clear">Очисти избор</string>
+    <string name="bulk_install_close">Затвори</string>
+    <string name="bulk_install_complete">Групна инсталација је завршена</string>
+    <string name="bulk_install_empty">Нису пронађене подржане апликације.</string>
+    <string name="bulk_install_empty_filter">Нема игара које одговарају.</string>
+    <string name="bulk_install_fatal">Групна инсталација је заустављена. Прегледајте недовршене ставке пре поновног покушаја.</string>
+    <string name="bulk_install_filter_all">Све</string>
+    <string name="bulk_install_filter_review">Преглед</string>
+    <string name="bulk_install_filter_selected">Изабране</string>
+    <string name="bulk_install_install_count">Инсталирај %1$d</string>
+    <string name="bulk_install_installed_version">Инсталирано: %1$s</string>
+    <string name="bulk_install_library_changed">Библиотека се променила после прегледа. Затворите ову групу и поново изаберите изворе.</string>
+    <string name="bulk_install_planning">Провера изабраних апликација…</string>
+    <string name="bulk_install_prepare_failed">Изабране апликације нису могле да се припреме за инсталацију.</string>
+    <string name="bulk_install_reason_conflicting_jads">JAD датотеке са различитим атрибутима упућују на исти JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Овај извор је дупликат другог извора у овој групи.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD и JAR означавају различите апликације.</string>
+    <string name="bulk_install_reason_jar_not_found">JAR на који упућује JAD није пронађен: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">У JAD-у недостаје MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">JAD нема надређени директоријум.</string>
+    <string name="bulk_install_reason_older_candidate">Новија верзија ове апликације је у истој групи.</string>
+    <string name="bulk_install_reason_remote_jar">Групна инсталација не може да преузима удаљене JAR датотеке.</string>
+    <string name="bulk_install_reason_source_error">Овај извор није могао да се припреми за инсталацију.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD упућује на JAR преко неподржане URI шеме: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Више варијанти апликације има исту верзију.</string>
+    <string name="bulk_install_recommended">Препоручене</string>
+    <string name="bulk_install_reinstall_source_missing">Сачувани JAR није доступан за поновну инсталацију.</string>
+    <string name="bulk_install_result_failed">Неуспешно</string>
+    <string name="bulk_install_result_installed">Инсталирано</string>
+    <string name="bulk_install_result_reinstalled">Поново инсталирано</string>
+    <string name="bulk_install_result_restored">Враћено</string>
+    <string name="bulk_install_result_skipped">Прескочено</string>
+    <string name="bulk_install_result_updated">Ажурирано</string>
+    <string name="bulk_install_skipped_entries">Прескочене ставке архиве: %1$d</string>
+    <string name="bulk_install_source">Извор: %1$s</string>
+    <string name="bulk_install_source_changed">Изворна датотека се променила после прегледа. Поново изаберите датотеке.</string>
+    <string name="bulk_install_source_unavailable">Потребна изворна датотека више није доступна. Поново изаберите датотеке.</string>
+    <string name="bulk_install_status_ambiguous">Одговара већем броју инсталираних апликација</string>
+    <string name="bulk_install_status_conflict">Сукоб у групи</string>
+    <string name="bulk_install_status_downgrade">Старија верзија</string>
+    <string name="bulk_install_status_duplicate">Дупликат</string>
+    <string name="bulk_install_status_error">Неважећи извор</string>
+    <string name="bulk_install_status_mismatch">Неслагање JAD/JAR</string>
+    <string name="bulk_install_status_new">Нова</string>
+    <string name="bulk_install_status_older_batch">Старија верзија у групи</string>
+    <string name="bulk_install_status_reinstall">Иста верзија, могућа варијанта</string>
+    <string name="bulk_install_status_remote">Удаљени извор није подржан</string>
+    <string name="bulk_install_status_same">Већ инсталирана</string>
+    <string name="bulk_install_status_update">Ажурирање</string>
+    <string name="bulk_install_target_unverified">Циљ поновне инсталације није могао да се провери. Затворите ову групу и поново изаберите апликацију.</string>
+    <string name="bulk_install_title">Групна инсталација</string>
+    <string name="bulk_install_unreadable_archives">Нечитљиве архиве: %1$d</string>
+    <string name="converting_wait">Конвертовање JAR-а…</string>
+    <string name="install">Инсталирај</string>
+    <string name="install_done">Апликација је инсталирана.</string>
+    <string name="install_done_with_warning">Апликација је инсталирана са упозорењима.</string>
+    <string name="install_jar_non_matched_jad">Ова апликација се разликује од оне описане у JAD-у.\nЗанемарити JAD и ипак инсталирати?</string>
+    <string name="installer_ambiguous">Више инсталираних апликација одговара овој апликацији. Инсталирати засебну копију? Постојеће апликације и њихови подаци биће задржани.</string>
+    <string name="installer_cancel_pending">Заустављање на следећој безбедној тачки…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nПроблем: датотека Java класе није могла да се прочита.\nРадња: прескочена током конверзије.</string>
+    <string name="installer_copy_details">Копирај детаље</string>
+    <string name="installer_error_message">Изабрана апликација није могла да се инсталира. Изаберите важећу MIDlet датотеку и покушајте поново.</string>
+    <string name="installer_existing_data_preserved">Постојећа подешавања и сачувани подаци игара биће задржани.</string>
+    <string name="installer_failed_conversion">Апликација није могла да се конвертује. Проверите да ли је датотека потпуна и подржана, па покушајте поново.</string>
+    <string name="installer_failed_download">Апликација није могла да се преузме. Проверите везу и линк за преузимање, па покушајте поново.</string>
+    <string name="installer_failed_storage">Инсталација није могла да се заврши. Покушајте поново.</string>
+    <string name="installer_hide_details">Сакриј детаље</string>
+    <string name="installer_needs_recovery">Датотеке апликације су сачуване, али ажурирање Библиотеке није могло да се заврши. Освежите Библиотеку пре поновног покушаја.</string>
+    <string name="installer_not_processed">Није обрађено</string>
+    <string name="installer_partial_restore">Апликација је инсталирана; подаци или подешавања нису могли да се врате</string>
+    <string name="installer_refresh_library">Освежи Библиотеку</string>
+    <string name="installer_removed_leftovers">Апликација је уклоњена; нека подешавања или сачувани подаци игара нису могли да се обришу.</string>
+    <string name="installer_retry_remaining">Прегледај недовршене ставке</string>
+    <string name="installer_separate_copy">Инсталирај засебну копију</string>
+    <string name="installer_show_details">Прикажи детаље</string>
+    <string name="installer_stage_download">Преузимање апликације…</string>
+    <string name="installer_stage_save">Чување апликације…</string>
+    <string name="installer_stage_wait">Чекање друге радње…</string>
+    <string name="installer_title">MIDlet инсталатер</string>
+    <string name="reconversion_done_with_warning">Конверзија за компатибилност је завршена са упозорењима.</string>
+    <string name="reconversion_error">MIDlet није могао аутоматски да се конвертује.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet није могао аутоматски да се конвертује.</string>
+    <string name="reconverting_wait">Овај MIDlet захтева једнократну конверзију за компатибилност пре покретања. Конвертовање…</string>
+    <string name="reinstall">Ова апликација је већ инсталирана. Поново је инсталирати?</string>
+    <string name="reinstall_newest">Ажурирати ову апликацију на верзију %1$s?\n\nТренутно инсталирана: %2$s</string>
+    <string name="reinstall_older">Заменити ову апликацију верзијом %1$s?\n\nТренутно инсталирана: %2$s\nСтарија верзија можда неће исправно радити са постојећим подацима.</string>
+    <string name="warn_install_from_net">Датотека ће бити преузета са интернета.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d захтева преглед</item>
+        <item quantity="few">%1$d захтевају преглед</item>
+        <item quantity="other">%1$d захтева преглед</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d неуспешна</item>
+        <item quantity="few">%1$d неуспешне</item>
+        <item quantity="other">%1$d неуспешних</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Пронађена је %1$d апликација</item>
+        <item quantity="few">Пронађене су %1$d апликације</item>
+        <item quantity="other">Пронађено је %1$d апликација</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d инсталирана</item>
+        <item quantity="few">%1$d инсталиране</item>
+        <item quantity="other">%1$d инсталираних</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">%1$d додатна датотека је изостављена да би преглед остао одзиван.</item>
+        <item quantity="few">%1$d додатне датотеке су изостављене да би преглед остао одзиван.</item>
+        <item quantity="other">%1$d додатних датотека је изостављено да би преглед остао одзиван.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d спремна</item>
+        <item quantity="few">%1$d спремне</item>
+        <item quantity="other">%1$d спремних</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d инсталирана апликација одговара овом извору.</item>
+        <item quantity="few">%1$d инсталиране апликације одговарају овом извору.</item>
+        <item quantity="other">%1$d инсталираних апликација одговара овом извору.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d изабрана апликација из Библиотеке више није доступна.</item>
+        <item quantity="few">%1$d изабране апликације из Библиотеке више нису доступне.</item>
+        <item quantity="other">%1$d изабраних апликација из Библиотеке више није доступно.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d поново инсталирана</item>
+        <item quantity="few">%1$d поново инсталиране</item>
+        <item quantity="other">%1$d поново инсталираних</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d враћена</item>
+        <item quantity="few">%1$d враћене</item>
+        <item quantity="other">%1$d враћених</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Обрађена је %1$d апликација од %2$d</item>
+        <item quantity="few">Обрађене су %1$d апликације од %2$d</item>
+        <item quantity="other">Обрађено је %1$d апликација од %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d изабрана</item>
+        <item quantity="few">%1$d изабране</item>
+        <item quantity="other">%1$d изабраних</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Већ инсталирана или дупликат: %1$d</item>
+        <item quantity="few">Већ инсталиране или дупликати: %1$d</item>
+        <item quantity="other">Већ инсталиране или дупликати: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d прескочена</item>
+        <item quantity="few">%1$d прескочене</item>
+        <item quantity="other">%1$d прескочених</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d ажурирана</item>
+        <item quantity="few">%1$d ажуриране</item>
+        <item quantity="other">%1$d ажурираних</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d упозорење</item>
+        <item quantity="few">%1$d упозорења</item>
+        <item quantity="other">%1$d упозорења</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">%1$d додатни проблем конверзије није приказан.</item>
+        <item quantity="few">%1$d додатна проблема конверзије нису приказана.</item>
+        <item quantity="other">%1$d додатних проблема конверзије није приказано.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d датотека Java класе је прескочена јер није могла да се прочита. Функције које је користе можда неће радити.</item>
+        <item quantity="few">%1$d датотеке Java класа су прескочене јер нису могле да се прочитају. Функције које их користе можда неће радити.</item>
+        <item quantity="other">%1$d датотека Java класа је прескочено јер нису могле да се прочитају. Функције које их користе можда неће радити.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Назив: "</b></string>
+    <string name="midlet_size"><b>"Величина: "</b></string>
+    <string name="midlet_vendor"><b>"Издавач: "</b></string>
+    <string name="midlet_version"><b>"Верзија: "</b></string>
 </resources>

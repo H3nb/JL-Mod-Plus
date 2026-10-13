@@ -65,8 +65,9 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 18,070 to **11,502** in this
-checkpoint (25,122 before the 12 October checkpoint).
+Missing localized declarations decreased from 11,502 to **8,758** in the
+installer checkpoint (18,070 before controls and 25,122 before the 12 October
+checkpoint).
 Twelve catalogs now cover all 977 resources: da, de, es, fi, fr, id, it, nl,
 pt, pt-BR, ru, sv. **Coverage does not establish full language-quality review.**
 Existing content outside the documented batches still needs review, including
@@ -86,6 +87,43 @@ and Sinhala also need competent review of the 347 explicitly deferred controls
 messages. Continue achievable work in other feature groups without counting
 those gaps as accepted translation or silently dropping their locales.
 
+## Installer and bulk-installation checkpoint
+
+The 116-resource installer/bulk-installation/reconversion selection, including
+18 plurals and four styled descriptor labels, was processed across 39 catalogs.
+This checkpoint adds **2,744** declarations and revises **83** existing
+declarations relative to `5697f31`. Canonical English, application code, and
+localization tooling are unchanged.
+
+- The batch is complete and reviewed in 35 locales. Kazakh has 68 accepted
+  identities and 48 unresolved; Odia and Sinhala each have 67 accepted and 49
+  unresolved. Reliable labels/count messages do not certify technical prose.
+- Santali retains three reliable isolated labels; 104 missing declarations and
+  nine existing entries remain explicitly unresolved. No new Santali text was
+  fabricated. See [exact installer gaps](localization-unresolved-installer.md).
+- Corrected conversions mislabeled as installation or reading JAD, metadata
+  vendor mislabeled as seller/owner/author, and incomplete same-version/possible
+  variant and ambiguous installed-app classification. Clear selection no longer
+  suggests deleting apps/files in the affected catalogs.
+- Corrected omitted downgrade/data-compatibility risk and overbroad all-data-save
+  promises. Preserved ordinary replacement's settings/save-data retention,
+  separate-copy preservation, installed-but-restore-failed outcomes, and
+  saved-files-but-Library-update-failed recovery before retry.
+- Preserved single cancellation at the next safe point versus bulk cancellation
+  after the current app. Processed/total counts do not claim successful installs;
+  warning/omitted-detail plurals distinguish source Java class files from apps,
+  instances, and diagnostics not shown. Feature failure remains a possibility.
+- Reconfirmed remote JAR restrictions apply to bulk installation, not all single
+  installs. Retained raw names, versions, URI schemes, JAR paths, and exact
+  `MIDlet-Jar-URL` notation. Regional vocabulary and plural grammar remain distinct.
+- The existing applier handles supported plain-text changes. Direct descriptor
+  label edits preserve bold markup/attributes and explicit trailing separation;
+  no catalog is regenerated and no temporary proposals are committed.
+
+There are 259 explicitly unresolved installer review cases: 247 missing and 12
+existing declarations. These are tracked separately from earlier feature batches;
+per-batch review counts must not be treated as a deduplicated whole-catalog total.
+
 ## Earlier validation evidence
 
 - All 30 focused Python localization tests passed.
@@ -104,7 +142,7 @@ those gaps as accepted translation or silently dropping their locales.
   this checkpoint. This intermediate commit uses the user's explicit `[skip ci]`
   exception; final resource state still needs actual full CI evidence.
 
-## Current checkpoint validation
+## Controls checkpoint validation
 
 - All 30 focused Python localization tests passed.
 - Inventory: 977 source identities / 39 catalogs / 11,502 missing declarations;
@@ -126,6 +164,25 @@ verification, and final CI remain pending. The intermediate resource commit uses
 `[skip ci]` under the user's explicit exception; the earlier full CI success is
 not evidence for these changes. Keep the PR Draft while material scope remains.
 
+## Installer checkpoint validation
+
+- All 30 focused Python localization tests passed.
+- Inventory: 977 source identities / 39 catalogs / 8,758 missing declarations;
+  no duplicates, type mismatches, extra resources, localized invariant overrides,
+  or clear string argument mismatches. Every changed plural form preserves its
+  indexed count arguments, including processed and total arguments together.
+- All 40 English/localized strings catalogs passed matching-AGP AAPT2 compilation
+  and a resource-only link. Styled descriptor labels retain bold markup and
+  supplied metadata remains outside translation text.
+- Declaration-level diff confirms exactly 2,744 additions and 83 revisions,
+  confined to the selected identities. Canonical English is byte-for-byte
+  unchanged. Whitespace and documentation links passed; temporary matrices,
+  proposals, helper scripts, and validation artifacts are not committed.
+
+Full application build/tests/lint, representative visual verification, and final
+CI remain pending. Use `[skip ci]` for this intermediate checkpoint under the
+user's explicit exception; resource-only compilation is not a full app test.
+
 ## Exact next unfinished work
 
 The processed controls selection is:
@@ -141,10 +198,17 @@ contracts. Preserve profile-following/detachment, settings/data retention,
 calibration preservation, Controller Signature versus Profile, Flat/Fuzz,
 physical versus virtual input, FPS/timing conditions and partial-save outcomes.
 Resolve the exact deferred controls messages when reliable language review is
-available. The next broad feature batch is installer/bulk installation; rebuild
-its membership from the current inventory and verify planning/install/retention
-semantics before translating. Continue the remaining batches afterward (Memory
-Editor, display/audio/performance, runtime/errors/permissions), then review all
+available, including the exact installer gaps in the linked review record.
+The installer selection is `installer_`, `install_`, `bulk_install_`, `reinstall_`,
+`reconversion_`, plus `install`, `reinstall`, `reconverting_wait`, `converting_wait`,
+`warn_install_from_net`, and the four `midlet_name/size/vendor/version` labels.
+It contains 116 identities, complete in 35 languages and partially accepted in
+the same three, with Santali limited to retained isolated labels.
+The next broad feature batch is Memory Editor. Rebuild its membership from the
+current inventory and inspect the engine/presentation contract, especially write
+confirmation, value changes, undo conditions, and partial operations. Continue
+display/audio/performance, runtime/errors/permissions, and uncaptured resources,
+then review all
 existing translations vertically and horizontally. Re-export current inventory
 and matrices rather than using stale scratch proposals. Finish representative
 long-text/RTL/narrow UI checks and relevant final Android CI only when cumulative

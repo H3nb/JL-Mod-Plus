@@ -598,4 +598,191 @@
         <item quantity="other">%1$d proprietăți</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Ajustează dimensiunea afișată de la 1% la 1000%. La 100%, jocul folosește dimensiunea originală; valorile mai mari pot depăși ecranul.</string>
+    <string name="bulk_install_action_jar_only">Instalează doar JAR</string>
+    <string name="bulk_install_action_separate_copy">Instalează ca o copie separată</string>
+    <string name="bulk_install_cancel">Anulează</string>
+    <string name="bulk_install_cancel_requested">Se oprește după aplicația curentă…</string>
+    <string name="bulk_install_cancelled">Instalarea în lot s-a oprit</string>
+    <string name="bulk_install_choose_files">Fișiere</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_clear">Golește selecția</string>
+    <string name="bulk_install_close">Închide</string>
+    <string name="bulk_install_complete">Instalarea în lot s-a încheiat</string>
+    <string name="bulk_install_empty">Nu s-au găsit aplicații acceptate.</string>
+    <string name="bulk_install_empty_filter">Niciun joc corespunzător.</string>
+    <string name="bulk_install_fatal">Instalarea în lot s-a oprit. Verifică elementele neterminate înainte de a încerca din nou.</string>
+    <string name="bulk_install_filter_all">Toate</string>
+    <string name="bulk_install_filter_review">De verificat</string>
+    <string name="bulk_install_filter_selected">Selectate</string>
+    <string name="bulk_install_install_count">Instalează %1$d</string>
+    <string name="bulk_install_installed_version">Versiune instalată: %1$s</string>
+    <string name="bulk_install_library_changed">Biblioteca s-a schimbat după verificare. Închide acest lot și selectează din nou sursele.</string>
+    <string name="bulk_install_planning">Se verifică aplicațiile selectate…</string>
+    <string name="bulk_install_prepare_failed">Aplicațiile selectate nu au putut fi pregătite pentru instalare.</string>
+    <string name="bulk_install_reason_conflicting_jads">Fișiere JAD cu atribute diferite fac referire la același JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Această sursă dublează o altă sursă din acest lot.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD și JAR identifică aplicații diferite.</string>
+    <string name="bulk_install_reason_jar_not_found">Nu s-a găsit fișierul JAR indicat de JAD: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">Din JAD lipsește MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">JAD nu are un director părinte.</string>
+    <string name="bulk_install_reason_older_candidate">O versiune mai nouă a acestei aplicații se află în același lot.</string>
+    <string name="bulk_install_reason_remote_jar">Instalarea în lot nu poate descărca fișiere JAR de la distanță.</string>
+    <string name="bulk_install_reason_source_error">Această sursă nu a putut fi pregătită pentru instalare.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD indică un JAR folosind o schemă URI neacceptată: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Mai multe variante ale aplicației au aceeași versiune.</string>
+    <string name="bulk_install_recommended">Recomandate</string>
+    <string name="bulk_install_reinstall_source_missing">JAR-ul salvat nu este disponibil pentru reinstalare.</string>
+    <string name="bulk_install_result_failed">Eșuată</string>
+    <string name="bulk_install_result_installed">Instalată</string>
+    <string name="bulk_install_result_reinstalled">Reinstalată</string>
+    <string name="bulk_install_result_restored">Restaurată</string>
+    <string name="bulk_install_result_skipped">Omisă</string>
+    <string name="bulk_install_result_updated">Actualizată</string>
+    <string name="bulk_install_skipped_entries">Intrări de arhivă omise: %1$d</string>
+    <string name="bulk_install_source">Sursă: %1$s</string>
+    <string name="bulk_install_source_changed">Fișierul sursă s-a schimbat după verificare. Selectează din nou fișierele.</string>
+    <string name="bulk_install_source_unavailable">Un fișier sursă necesar nu mai este disponibil. Selectează din nou fișierele.</string>
+    <string name="bulk_install_status_ambiguous">Corespunde mai multor aplicații instalate</string>
+    <string name="bulk_install_status_conflict">Conflict în lot</string>
+    <string name="bulk_install_status_downgrade">Versiune mai veche</string>
+    <string name="bulk_install_status_duplicate">Duplicat</string>
+    <string name="bulk_install_status_error">Sursă nevalidă</string>
+    <string name="bulk_install_status_mismatch">Nepotrivire JAD/JAR</string>
+    <string name="bulk_install_status_new">Nouă</string>
+    <string name="bulk_install_status_older_batch">Versiune mai veche în lot</string>
+    <string name="bulk_install_status_reinstall">Aceeași versiune, posibilă variantă</string>
+    <string name="bulk_install_status_remote">Sursa la distanță nu este acceptată</string>
+    <string name="bulk_install_status_same">Deja instalată</string>
+    <string name="bulk_install_status_update">Actualizare</string>
+    <string name="bulk_install_target_unverified">Ținta reinstalării nu a putut fi verificată. Închide acest lot și selectează din nou aplicația.</string>
+    <string name="bulk_install_title">Instalare în lot</string>
+    <string name="bulk_install_unreadable_archives">Arhive ilizibile: %1$d</string>
+    <string name="install">Instalează</string>
+    <string name="install_done">Aplicație instalată.</string>
+    <string name="install_done_with_warning">Aplicație instalată cu avertismente.</string>
+    <string name="install_jar_non_matched_jad">Această aplicație diferă de cea descrisă în JAD.\nIgnori JAD și instalezi totuși?</string>
+    <string name="installer_ambiguous">Mai multe aplicații instalate corespund acestei aplicații. Instalezi o copie separată? Aplicațiile existente și datele lor vor fi păstrate.</string>
+    <string name="installer_cancel_pending">Se oprește la următorul punct sigur…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProblemă: fișierul de clasă Java nu a putut fi citit.\nAcțiune: omis în timpul conversiei.</string>
+    <string name="installer_copy_details">Copiază detaliile</string>
+    <string name="installer_error_message">Aplicația selectată nu a putut fi instalată. Alege un fișier MIDlet valid și încearcă din nou.</string>
+    <string name="installer_existing_data_preserved">Setările existente și datele de joc salvate vor fi păstrate.</string>
+    <string name="installer_failed_conversion">Aplicația nu a putut fi convertită. Verifică dacă fișierul este complet și acceptat, apoi încearcă din nou.</string>
+    <string name="installer_failed_download">Aplicația nu a putut fi descărcată. Verifică conexiunea și linkul de descărcare, apoi încearcă din nou.</string>
+    <string name="installer_failed_storage">Instalarea nu a putut fi finalizată. Încearcă din nou.</string>
+    <string name="installer_hide_details">Ascunde detaliile</string>
+    <string name="installer_needs_recovery">Fișierele aplicației au fost salvate, dar actualizarea bibliotecii nu a putut fi încheiată. Reîmprospătează biblioteca înainte de a încerca din nou.</string>
+    <string name="installer_not_processed">Neprocesată</string>
+    <string name="installer_partial_restore">Aplicație instalată; datele sau setările nu au putut fi restaurate</string>
+    <string name="installer_refresh_library">Reîmprospătează biblioteca</string>
+    <string name="installer_removed_leftovers">Aplicație eliminată; unele setări sau date de joc salvate nu au putut fi șterse.</string>
+    <string name="installer_retry_remaining">Verifică elementele neterminate</string>
+    <string name="installer_separate_copy">Instalează o copie separată</string>
+    <string name="installer_show_details">Afișează detaliile</string>
+    <string name="installer_stage_download">Se descarcă aplicația…</string>
+    <string name="installer_stage_save">Se salvează aplicația…</string>
+    <string name="installer_stage_wait">Se așteaptă o altă operație…</string>
+    <string name="installer_title">Instalator MIDlet</string>
+    <string name="reconversion_done_with_warning">Conversia pentru compatibilitate s-a încheiat cu avertismente.</string>
+    <string name="reconversion_error">MIDletul nu a putut fi convertit automat.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDletul nu a putut fi convertit automat.</string>
+    <string name="reconverting_wait">Acest MIDlet necesită o singură conversie pentru compatibilitate înainte de pornire. Se convertește…</string>
+    <string name="reinstall">Această aplicație este deja instalată. O reinstalezi?</string>
+    <string name="reinstall_newest">Actualizezi această aplicație la versiunea %1$s?\n\nInstalată în prezent: %2$s</string>
+    <string name="reinstall_older">Înlocuiești această aplicație cu versiunea %1$s?\n\nInstalată în prezent: %2$s\nVersiunea mai veche s-ar putea să nu funcționeze corect cu datele existente.</string>
+    <string name="warn_install_from_net">Fișierul va fi descărcat de pe internet.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">De verificat: %1$d</item>
+        <item quantity="few">De verificat: %1$d</item>
+        <item quantity="other">De verificat: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Eșuate: %1$d</item>
+        <item quantity="few">Eșuate: %1$d</item>
+        <item quantity="other">Eșuate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d aplicație găsită</item>
+        <item quantity="few">%1$d aplicații găsite</item>
+        <item quantity="other">%1$d de aplicații găsite</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Instalate: %1$d</item>
+        <item quantity="few">Instalate: %1$d</item>
+        <item quantity="other">Instalate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Încă %1$d fișier a fost omis pentru ca verificarea să rămână rapidă.</item>
+        <item quantity="few">Încă %1$d fișiere au fost omise pentru ca verificarea să rămână rapidă.</item>
+        <item quantity="other">Încă %1$d de fișiere au fost omise pentru ca verificarea să rămână rapidă.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Pregătite: %1$d</item>
+        <item quantity="few">Pregătite: %1$d</item>
+        <item quantity="other">Pregătite: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d aplicație instalată corespunde acestei surse.</item>
+        <item quantity="few">%1$d aplicații instalate corespund acestei surse.</item>
+        <item quantity="other">%1$d de aplicații instalate corespund acestei surse.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d aplicație selectată din bibliotecă nu mai este disponibilă.</item>
+        <item quantity="few">%1$d aplicații selectate din bibliotecă nu mai sunt disponibile.</item>
+        <item quantity="other">%1$d de aplicații selectate din bibliotecă nu mai sunt disponibile.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Reinstalate: %1$d</item>
+        <item quantity="few">Reinstalate: %1$d</item>
+        <item quantity="other">Reinstalate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Restaurate: %1$d</item>
+        <item quantity="few">Restaurate: %1$d</item>
+        <item quantity="other">Restaurate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">S-a procesat %1$d aplicație din %2$d</item>
+        <item quantity="few">S-au procesat %1$d aplicații din %2$d</item>
+        <item quantity="other">S-au procesat %1$d de aplicații din %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Selectate: %1$d</item>
+        <item quantity="few">Selectate: %1$d</item>
+        <item quantity="other">Selectate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Deja instalate sau duplicate: %1$d</item>
+        <item quantity="few">Deja instalate sau duplicate: %1$d</item>
+        <item quantity="other">Deja instalate sau duplicate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Omise: %1$d</item>
+        <item quantity="few">Omise: %1$d</item>
+        <item quantity="other">Omise: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Actualizate: %1$d</item>
+        <item quantity="few">Actualizate: %1$d</item>
+        <item quantity="other">Actualizate: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">Avertismente: %1$d</item>
+        <item quantity="few">Avertismente: %1$d</item>
+        <item quantity="other">Avertismente: %1$d</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Încă %1$d problemă de conversie nu este afișată.</item>
+        <item quantity="few">Încă %1$d probleme de conversie nu sunt afișate.</item>
+        <item quantity="other">Încă %1$d de probleme de conversie nu sunt afișate.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d fișier de clasă Java a fost omis deoarece nu a putut fi citit. Funcțiile care îl folosesc s-ar putea să nu funcționeze.</item>
+        <item quantity="few">%1$d fișiere de clase Java au fost omise deoarece nu au putut fi citite. Funcțiile care le folosesc s-ar putea să nu funcționeze.</item>
+        <item quantity="other">%1$d de fișiere de clase Java au fost omise deoarece nu au putut fi citite. Funcțiile care le folosesc s-ar putea să nu funcționeze.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Nume: "</b></string>
+    <string name="midlet_size"><b>"Dimensiune: "</b></string>
+    <string name="midlet_vendor"><b>"Furnizor: "</b></string>
+    <string name="midlet_version"><b>"Versiune: "</b></string>
 </resources>

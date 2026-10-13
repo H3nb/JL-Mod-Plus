@@ -26,7 +26,7 @@
     <string name="identity_filter">Бързо (без филтър)</string>
     <string name="install">инсталиране</string>
     <string name="install_done">Приложението е инсталирано успешно!</string>
-    <string name="install_jar_non_matched_jad">Приложението се различава от посоченото във JAD.\nИгнорирай и продължи?</string>
+    <string name="install_jar_non_matched_jad">Това приложение се различава от описаното в JAD.\nДа се пренебрегне ли JAD и да се инсталира въпреки това?</string>
     <string name="invalid_resolution_not_saved">Невалидна резолюция: не е запазено!</string>
     <string name="layout_edit_finish">Завърши режим на редактиране</string>
     <string name="layout_edit_finished">Редактирането на виртуалните контроли е завършено.</string>
@@ -630,4 +630,165 @@
         <item quantity="other">%1$d свойства</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Регулира показвания размер от 1% до 1000%. При 100% играта използва оригиналния си размер; по-големи стойности може да излизат извън екрана.</string>
+    <string name="bulk_install_action_jar_only">Инсталиране само на JAR</string>
+    <string name="bulk_install_action_separate_copy">Инсталиране като отделно копие</string>
+    <string name="bulk_install_cancel">Отказ</string>
+    <string name="bulk_install_cancel_requested">Спиране след текущото приложение…</string>
+    <string name="bulk_install_cancelled">Груповото инсталиране е спряно</string>
+    <string name="bulk_install_choose_files">Файлове</string>
+    <string name="bulk_install_choose_folder">Папка</string>
+    <string name="bulk_install_clear">Изчистване на избора</string>
+    <string name="bulk_install_close">Затваряне</string>
+    <string name="bulk_install_complete">Груповото инсталиране приключи</string>
+    <string name="bulk_install_empty">Не са намерени поддържани приложения.</string>
+    <string name="bulk_install_empty_filter">Няма съответстващи игри.</string>
+    <string name="bulk_install_fatal">Груповото инсталиране е спряно. Прегледайте незавършените елементи, преди да опитате отново.</string>
+    <string name="bulk_install_filter_all">Всички</string>
+    <string name="bulk_install_filter_review">За преглед</string>
+    <string name="bulk_install_filter_selected">Избрани</string>
+    <string name="bulk_install_install_count">Инсталиране на %1$d</string>
+    <string name="bulk_install_installed_version">Инсталирана версия: %1$s</string>
+    <string name="bulk_install_library_changed">Библиотеката се промени след прегледа. Затворете тази група и изберете източниците отново.</string>
+    <string name="bulk_install_planning">Проверка на избраните приложения…</string>
+    <string name="bulk_install_prepare_failed">Избраните приложения не могат да бъдат подготвени за инсталиране.</string>
+    <string name="bulk_install_reason_conflicting_jads">JAD файлове с различни атрибути сочат към един и същ JAR.</string>
+    <string name="bulk_install_reason_duplicate_source">Този източник дублира друг източник в тази група.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD и JAR описват различни приложения.</string>
+    <string name="bulk_install_reason_jar_not_found">JAR, посочен в JAD, не е намерен: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">В JAD липсва MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">JAD няма родителска директория.</string>
+    <string name="bulk_install_reason_older_candidate">По-нова версия на това приложение е в същата група.</string>
+    <string name="bulk_install_reason_remote_jar">Груповото инсталиране не може да изтегля отдалечени JAR файлове.</string>
+    <string name="bulk_install_reason_source_error">Този източник не може да бъде подготвен за инсталиране.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD сочи към JAR чрез неподдържана URI схема: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Няколко варианта на приложението имат една и съща версия.</string>
+    <string name="bulk_install_recommended">Препоръчани</string>
+    <string name="bulk_install_reinstall_source_missing">Запазеният JAR е недостъпен за преинсталиране.</string>
+    <string name="bulk_install_result_failed">Неуспешно</string>
+    <string name="bulk_install_result_installed">Инсталирано</string>
+    <string name="bulk_install_result_reinstalled">Преинсталирано</string>
+    <string name="bulk_install_result_restored">Възстановено</string>
+    <string name="bulk_install_result_skipped">Пропуснато</string>
+    <string name="bulk_install_result_updated">Актуализирано</string>
+    <string name="bulk_install_skipped_entries">Пропуснати записи в архиви: %1$d</string>
+    <string name="bulk_install_source">Източник: %1$s</string>
+    <string name="bulk_install_source_changed">Изходният файл се промени след прегледа. Изберете файловете отново.</string>
+    <string name="bulk_install_source_unavailable">Необходим изходен файл вече е недостъпен. Изберете файловете отново.</string>
+    <string name="bulk_install_status_ambiguous">Съответства на няколко инсталирани приложения</string>
+    <string name="bulk_install_status_conflict">Конфликт в групата</string>
+    <string name="bulk_install_status_downgrade">По-стара версия</string>
+    <string name="bulk_install_status_duplicate">Дубликат</string>
+    <string name="bulk_install_status_error">Невалиден източник</string>
+    <string name="bulk_install_status_mismatch">Несъответствие между JAD и JAR</string>
+    <string name="bulk_install_status_new">Ново</string>
+    <string name="bulk_install_status_older_batch">По-стара версия в групата</string>
+    <string name="bulk_install_status_reinstall">Същата версия, възможен вариант</string>
+    <string name="bulk_install_status_remote">Отдалеченият източник не се поддържа</string>
+    <string name="bulk_install_status_same">Вече инсталирано</string>
+    <string name="bulk_install_status_update">Актуализация</string>
+    <string name="bulk_install_target_unverified">Приложението за преинсталиране не може да бъде проверено. Затворете тази група и изберете приложението отново.</string>
+    <string name="bulk_install_title">Групово инсталиране</string>
+    <string name="bulk_install_unreadable_archives">Нечетими архиви: %1$d</string>
+    <string name="install_done_with_warning">Приложението е инсталирано с предупреждения.</string>
+    <string name="installer_ambiguous">Няколко инсталирани приложения съответстват на това приложение. Да се инсталира ли отделно копие? Съществуващите приложения и данните им ще се запазят.</string>
+    <string name="installer_cancel_pending">Спиране при следващата безопасна точка…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nПроблем: файлът с Java клас не може да бъде прочетен.\nДействие: пропуснат при преобразуването.</string>
+    <string name="installer_copy_details">Копиране на подробностите</string>
+    <string name="installer_error_message">Избраното приложение не може да бъде инсталирано. Изберете валиден MIDlet файл и опитайте отново.</string>
+    <string name="installer_existing_data_preserved">Съществуващите настройки и запазени данни от игри ще се запазят.</string>
+    <string name="installer_failed_conversion">Приложението не може да бъде преобразувано. Проверете дали файлът е пълен и поддържан, след което опитайте отново.</string>
+    <string name="installer_failed_download">Приложението не може да бъде изтеглено. Проверете връзката и адреса за изтегляне, след което опитайте отново.</string>
+    <string name="installer_failed_storage">Инсталирането не може да бъде завършено. Опитайте отново.</string>
+    <string name="installer_hide_details">Скриване на подробностите</string>
+    <string name="installer_needs_recovery">Файловете на приложението са запазени, но Библиотеката не успя да завърши обновяването. Обновете Библиотеката, преди да опитате отново.</string>
+    <string name="installer_not_processed">Необработено</string>
+    <string name="installer_partial_restore">Приложението е инсталирано; данните или настройките не могат да бъдат възстановени</string>
+    <string name="installer_refresh_library">Обновяване на Библиотеката</string>
+    <string name="installer_removed_leftovers">Приложението е премахнато; някои настройки или запазени данни от игри не могат да бъдат изтрити.</string>
+    <string name="installer_retry_remaining">Преглед на незавършените елементи</string>
+    <string name="installer_separate_copy">Инсталиране на отделно копие</string>
+    <string name="installer_show_details">Показване на подробностите</string>
+    <string name="installer_stage_download">Изтегляне на приложението…</string>
+    <string name="installer_stage_save">Запазване на приложението…</string>
+    <string name="installer_stage_wait">Изчакване на друга операция…</string>
+    <string name="installer_title">Инсталатор на MIDlet</string>
+    <string name="reconversion_done_with_warning">Преобразуването за съвместимост приключи с предупреждения.</string>
+    <string name="reconversion_error">MIDlet не може да бъде преобразуван автоматично.\n\n%1$s</string>
+    <string name="reconversion_error_summary">MIDlet не може да бъде преобразуван автоматично.</string>
+    <string name="reconverting_wait">Този MIDlet се нуждае от еднократно преобразуване за съвместимост, преди да може да стартира. Преобразуване…</string>
+    <string name="reinstall">Това приложение вече е инсталирано. Да се преинсталира ли?</string>
+    <string name="reinstall_newest">Да се актуализира ли това приложение до версия %1$s?\n\nТекуща инсталирана версия: %2$s</string>
+    <string name="reinstall_older">Да се замени ли това приложение с версия %1$s?\n\nТекуща инсталирана версия: %2$s\nПо-старата версия може да не работи правилно със съществуващите данни.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">За преглед: %1$d</item>
+        <item quantity="other">За преглед: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Неуспешни: %1$d</item>
+        <item quantity="other">Неуспешни: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Намерено е %1$d приложение</item>
+        <item quantity="other">Намерени са %1$d приложения</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Инсталирани: %1$d</item>
+        <item quantity="other">Инсталирани: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Още %1$d файл е пропуснат, за да остане прегледът бърз.</item>
+        <item quantity="other">Още %1$d файла са пропуснати, за да остане прегледът бърз.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Готови: %1$d</item>
+        <item quantity="other">Готови: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d инсталирано приложение съответства на този източник.</item>
+        <item quantity="other">%1$d инсталирани приложения съответстват на този източник.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d избрано приложение от Библиотеката вече е недостъпно.</item>
+        <item quantity="other">%1$d избрани приложения от Библиотеката вече са недостъпни.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Преинсталирани: %1$d</item>
+        <item quantity="other">Преинсталирани: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Възстановени: %1$d</item>
+        <item quantity="other">Възстановени: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Обработено е %1$d приложение от %2$d</item>
+        <item quantity="other">Обработени са %1$d приложения от %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Избрани: %1$d</item>
+        <item quantity="other">Избрани: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Вече инсталирани или дублирани: %1$d</item>
+        <item quantity="other">Вече инсталирани или дублирани: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Пропуснати: %1$d</item>
+        <item quantity="other">Пропуснати: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Актуализирани: %1$d</item>
+        <item quantity="other">Актуализирани: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">Предупреждения: %1$d</item>
+        <item quantity="other">Предупреждения: %1$d</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Още %1$d проблем при преобразуването не е показан.</item>
+        <item quantity="other">Още %1$d проблема при преобразуването не са показани.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d файл с Java клас е пропуснат, защото не може да бъде прочетен. Функциите, които го използват, може да не работят.</item>
+        <item quantity="other">%1$d файла с Java класове са пропуснати, защото не могат да бъдат прочетени. Функциите, които ги използват, може да не работят.</item>
+    </plurals>
 </resources>

@@ -611,4 +611,173 @@
         <item quantity="other">%1$d tulajdonság</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">1% és 1000% között módosítja a megjelenített méretet. 100% esetén a játék az eredeti méretét használja; nagyobb értékeknél túlnyúlhat a képernyőn.</string>
+    <string name="bulk_install_action_jar_only">Csak a JAR telepítése</string>
+    <string name="bulk_install_action_separate_copy">Telepítés külön példányként</string>
+    <string name="bulk_install_cancel">Mégse</string>
+    <string name="bulk_install_cancel_requested">Leállítás a jelenlegi alkalmazás után…</string>
+    <string name="bulk_install_cancelled">A csoportos telepítés leállt</string>
+    <string name="bulk_install_choose_files">Fájlok</string>
+    <string name="bulk_install_choose_folder">Mappa</string>
+    <string name="bulk_install_clear">Kijelölés törlése</string>
+    <string name="bulk_install_close">Bezárás</string>
+    <string name="bulk_install_complete">A csoportos telepítés befejeződött</string>
+    <string name="bulk_install_empty">Nem találhatók támogatott alkalmazások.</string>
+    <string name="bulk_install_empty_filter">Nincsenek megfelelő játékok.</string>
+    <string name="bulk_install_fatal">A csoportos telepítés leállt. Újabb próbálkozás előtt tekintse át a befejezetlen elemeket.</string>
+    <string name="bulk_install_filter_all">Összes</string>
+    <string name="bulk_install_filter_review">Ellenőrzés</string>
+    <string name="bulk_install_filter_selected">Kiválasztott</string>
+    <string name="bulk_install_install_count">%1$d telepítése</string>
+    <string name="bulk_install_installed_version">Telepített verzió: %1$s</string>
+    <string name="bulk_install_library_changed">A Könyvtár az ellenőrzés óta megváltozott. Zárja be ezt a csoportot, és válassza ki újra a forrásokat.</string>
+    <string name="bulk_install_planning">Kiválasztott alkalmazások ellenőrzése…</string>
+    <string name="bulk_install_prepare_failed">A kiválasztott alkalmazásokat nem sikerült előkészíteni a telepítéshez.</string>
+    <string name="bulk_install_reason_conflicting_jads">Eltérő attribútumú JAD-fájlok ugyanarra a JAR-ra hivatkoznak.</string>
+    <string name="bulk_install_reason_duplicate_source">Ez a forrás egy másik forrás ismétlődése ebben a csoportban.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">A JAD és a JAR eltérő alkalmazásokat azonosít.</string>
+    <string name="bulk_install_reason_jar_not_found">A JAD által hivatkozott JAR nem található: %1$s.</string>
+    <string name="bulk_install_reason_missing_jar_url">A JAD-ból hiányzik a MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_missing_parent">A JAD-nak nincs szülőkönyvtára.</string>
+    <string name="bulk_install_reason_older_candidate">Ennek az alkalmazásnak egy újabb verziója ugyanebben a csoportban szerepel.</string>
+    <string name="bulk_install_reason_remote_jar">A csoportos telepítés nem tud távoli JAR-fájlokat letölteni.</string>
+    <string name="bulk_install_reason_source_error">Ezt a forrást nem sikerült előkészíteni a telepítéshez.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">A JAD nem támogatott URI-sémával hivatkozik egy JAR-ra: %1$s.</string>
+    <string name="bulk_install_reason_version_conflict">Több alkalmazásváltozat verziószáma megegyezik.</string>
+    <string name="bulk_install_recommended">Ajánlott</string>
+    <string name="bulk_install_reinstall_source_missing">A mentett JAR nem érhető el az újratelepítéshez.</string>
+    <string name="bulk_install_result_failed">Sikertelen</string>
+    <string name="bulk_install_result_installed">Telepítve</string>
+    <string name="bulk_install_result_reinstalled">Újratelepítve</string>
+    <string name="bulk_install_result_restored">Visszaállítva</string>
+    <string name="bulk_install_result_skipped">Kihagyva</string>
+    <string name="bulk_install_result_updated">Frissítve</string>
+    <string name="bulk_install_skipped_entries">Kihagyott archívumbejegyzések: %1$d</string>
+    <string name="bulk_install_source">Forrás: %1$s</string>
+    <string name="bulk_install_source_changed">A forrásfájl az ellenőrzés óta megváltozott. Válassza ki újra a fájlokat.</string>
+    <string name="bulk_install_source_unavailable">Egy szükséges forrásfájl már nem érhető el. Válassza ki újra a fájlokat.</string>
+    <string name="bulk_install_status_ambiguous">Több telepített alkalmazásnak felel meg</string>
+    <string name="bulk_install_status_conflict">Ütközés a csoportban</string>
+    <string name="bulk_install_status_downgrade">Régebbi verzió</string>
+    <string name="bulk_install_status_duplicate">Ismétlődő</string>
+    <string name="bulk_install_status_error">Érvénytelen forrás</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR-eltérés</string>
+    <string name="bulk_install_status_new">Új</string>
+    <string name="bulk_install_status_older_batch">Régebbi verzió a csoportban</string>
+    <string name="bulk_install_status_reinstall">Azonos verzió, lehetséges változat</string>
+    <string name="bulk_install_status_remote">Távoli forrás nem támogatott</string>
+    <string name="bulk_install_status_same">Már telepítve</string>
+    <string name="bulk_install_status_update">Frissítés</string>
+    <string name="bulk_install_target_unverified">Az újratelepítés célját nem sikerült ellenőrizni. Zárja be ezt a csoportot, és válassza ki újra az alkalmazást.</string>
+    <string name="bulk_install_title">Csoportos telepítés</string>
+    <string name="bulk_install_unreadable_archives">Olvashatatlan archívumok: %1$d</string>
+    <string name="install">Telepítés</string>
+    <string name="install_done">Alkalmazás telepítve.</string>
+    <string name="install_done_with_warning">Alkalmazás telepítve figyelmeztetésekkel.</string>
+    <string name="install_jar_non_matched_jad">Ez az alkalmazás eltér a JAD-ban leírttól.\nFigyelmen kívül hagyja a JAD-ot, és mégis telepíti?</string>
+    <string name="installer_ambiguous">Több telepített alkalmazás felel meg ennek az alkalmazásnak. Külön példányként telepíti? A meglévő alkalmazások és adataik megmaradnak.</string>
+    <string name="installer_cancel_pending">Leállítás a következő biztonságos pontnál…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProbléma: a Java-osztályfájl nem volt olvasható.\nMűvelet: kihagyva a konvertálás során.</string>
+    <string name="installer_copy_details">Részletek másolása</string>
+    <string name="installer_error_message">A kiválasztott alkalmazást nem sikerült telepíteni. Válasszon érvényes MIDlet-fájlt, és próbálja újra.</string>
+    <string name="installer_existing_data_preserved">A meglévő beállítások és játékmentések megmaradnak.</string>
+    <string name="installer_failed_conversion">Az alkalmazást nem sikerült konvertálni. Ellenőrizze, hogy a fájl teljes és támogatott, majd próbálja újra.</string>
+    <string name="installer_failed_download">Az alkalmazást nem sikerült letölteni. Ellenőrizze a kapcsolatot és a letöltési hivatkozást, majd próbálja újra.</string>
+    <string name="installer_failed_storage">A telepítést nem sikerült befejezni. Próbálja újra.</string>
+    <string name="installer_hide_details">Részletek elrejtése</string>
+    <string name="installer_needs_recovery">Az alkalmazás fájljai mentve, de a Könyvtár frissítését nem sikerült befejezni. Újabb próbálkozás előtt frissítse a Könyvtárat.</string>
+    <string name="installer_not_processed">Nincs feldolgozva</string>
+    <string name="installer_partial_restore">Az alkalmazás telepítve; az adatokat vagy beállításokat nem sikerült visszaállítani</string>
+    <string name="installer_refresh_library">Könyvtár frissítése</string>
+    <string name="installer_removed_leftovers">Az alkalmazás eltávolítva; egyes beállításokat vagy játékmentéseket nem sikerült törölni.</string>
+    <string name="installer_retry_remaining">Befejezetlen elemek áttekintése</string>
+    <string name="installer_separate_copy">Külön példány telepítése</string>
+    <string name="installer_show_details">Részletek megjelenítése</string>
+    <string name="installer_stage_download">Alkalmazás letöltése…</string>
+    <string name="installer_stage_save">Alkalmazás mentése…</string>
+    <string name="installer_stage_wait">Várakozás egy másik műveletre…</string>
+    <string name="installer_title">MIDlet-telepítő</string>
+    <string name="reconversion_done_with_warning">A kompatibilitási konvertálás figyelmeztetésekkel befejeződött.</string>
+    <string name="reconversion_error">A MIDletet nem sikerült automatikusan konvertálni.\n\n%1$s</string>
+    <string name="reconversion_error_summary">A MIDletet nem sikerült automatikusan konvertálni.</string>
+    <string name="reconverting_wait">Ezen a MIDleten indítás előtt egyszeri kompatibilitási konvertálást kell elvégezni. Konvertálás…</string>
+    <string name="reinstall">Ez az alkalmazás már telepítve van. Újratelepíti?</string>
+    <string name="reinstall_newest">Frissíti ezt az alkalmazást a(z) %1$s verzióra?\n\nJelenleg telepített: %2$s</string>
+    <string name="reinstall_older">Lecseréli ezt az alkalmazást a(z) %1$s verzióra?\n\nJelenleg telepített: %2$s\nA régebbi verzió nem feltétlenül működik megfelelően a meglévő adatokkal.</string>
+    <string name="warn_install_from_net">A fájl az internetről lesz letöltve.</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">Ellenőrzést igényel: %1$d</item>
+        <item quantity="other">Ellenőrzést igényel: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Sikertelen: %1$d</item>
+        <item quantity="other">Sikertelen: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d alkalmazás található</item>
+        <item quantity="other">%1$d alkalmazás található</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Telepítve: %1$d</item>
+        <item quantity="other">Telepítve: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">További %1$d fájl kimaradt, hogy az áttekintés gyors maradjon.</item>
+        <item quantity="other">További %1$d fájl kimaradt, hogy az áttekintés gyors maradjon.</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Készen áll: %1$d</item>
+        <item quantity="other">Készen áll: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d telepített alkalmazás felel meg ennek a forrásnak.</item>
+        <item quantity="other">%1$d telepített alkalmazás felel meg ennek a forrásnak.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d kiválasztott könyvtárbeli alkalmazás már nem érhető el.</item>
+        <item quantity="other">%1$d kiválasztott könyvtárbeli alkalmazás már nem érhető el.</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Újratelepítve: %1$d</item>
+        <item quantity="other">Újratelepítve: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Visszaállítva: %1$d</item>
+        <item quantity="other">Visszaállítva: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="one">%1$d alkalmazás feldolgozva, összesen: %2$d</item>
+        <item quantity="other">%1$d alkalmazás feldolgozva, összesen: %2$d</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Kiválasztva: %1$d</item>
+        <item quantity="other">Kiválasztva: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Már telepített vagy ismétlődő: %1$d</item>
+        <item quantity="other">Már telepített vagy ismétlődő: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Kihagyva: %1$d</item>
+        <item quantity="other">Kihagyva: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Frissítve: %1$d</item>
+        <item quantity="other">Frissítve: %1$d</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">Figyelmeztetések: %1$d</item>
+        <item quantity="other">Figyelmeztetések: %1$d</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">További %1$d konvertálási probléma nem jelenik meg.</item>
+        <item quantity="other">További %1$d konvertálási probléma nem jelenik meg.</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d Java-osztályfájl kimaradt, mert nem volt olvasható. Az ezt használó funkciók nem feltétlenül működnek.</item>
+        <item quantity="other">%1$d Java-osztályfájl kimaradt, mert nem volt olvasható. Az ezeket használó funkciók nem feltétlenül működnek.</item>
+    </plurals>
+    <string name="midlet_name"><b>"Név: "</b></string>
+    <string name="midlet_size"><b>"Méret: "</b></string>
+    <string name="midlet_vendor"><b>"Kiadó: "</b></string>
+    <string name="midlet_version"><b>"Verzió: "</b></string>
 </resources>

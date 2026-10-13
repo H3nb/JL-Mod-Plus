@@ -28,7 +28,7 @@
     <string name="close">Terminer</string>
     <string name="cmd_menu">Menu</string>
     <string name="CONFIRMATION_REQUIRED">Confirmation requise</string>
-    <string name="converting_wait">Conversion JAD…</string>
+    <string name="converting_wait">Conversion JAR…</string>
     <string name="create">Créer</string>
     <string name="create_apps_dir_failed">Impossible de préparer le dossier de travail à l’emplacement :\n%1$s\nChoisissez un autre dossier.</string>
     <string name="default_label">%1$s (par défaut)</string>
@@ -56,7 +56,7 @@
     <string name="message_delete">Supprimer cette application, ses paramètres et ses données de sauvegarde ? Son entrée de Bibliothèque sera également supprimée.</string>
     <string name="midlet_name"><b>Nom : </b></string>
     <string name="midlet_size"><b>Taille: </b></string>
-    <string name="midlet_vendor"><b>Vendeur : </b></string>
+    <string name="midlet_vendor"><b>"Éditeur : "</b></string>
     <string name="midlet_version"><b>Version : </b></string>
     <string name="more">Plus</string>
     <string name="no_data_for_display">Aucune application à afficher</string>
@@ -144,7 +144,7 @@
     <string name="PREF_WIDTH">Largeur</string>
     <string name="reinstall">Cette application est déjà installée. La réinstaller ?</string>
     <string name="reinstall_newest">Mettre à jour cette application vers la version %1$s ?\n\nVersion actuellement installée : %2$s</string>
-    <string name="reinstall_older">Remplacer cette application par la version %1$s ?\n\nActuellement installé: %2$s\nUne version plus ancienne pourrait ne pas fonctionner correctement avec les données enregistrées.</string>
+    <string name="reinstall_older">Remplacer cette application par la version %1$s ?\n\nVersion actuellement installée : %2$s\nUne version plus ancienne pourrait ne pas fonctionner correctement avec les données enregistrées.</string>
     <string name="reset">Restaurer</string>
     <string name="RESET_LAYOUT_CMD">Réinitialiser disposition du clavier</string>
     <string name="retry">réessayer</string>
@@ -637,7 +637,7 @@
     <string name="bulk_install_planning">Vérification des applications sélectionnées…</string>
     <string name="bulk_install_empty">Aucune application prise en charge trouvée.</string>
     <string name="bulk_install_recommended">Recommandé</string>
-    <string name="bulk_install_clear">Effacer</string>
+    <string name="bulk_install_clear">Effacer la sélection</string>
     <string name="bulk_install_install_count">Installer %1$d</string>
     <string name="bulk_install_cancel">Annuler</string>
     <string name="bulk_install_close">Fermer</string>
@@ -662,8 +662,8 @@
     <string name="bulk_install_status_update">Mise à jour</string>
     <string name="bulk_install_status_downgrade">Ancienne version</string>
     <string name="bulk_install_status_same">Déjà installée</string>
-    <string name="bulk_install_status_reinstall">Variante / réinstallation</string>
-    <string name="bulk_install_status_ambiguous">Plusieurs correspondances installées</string>
+    <string name="bulk_install_status_reinstall">Même version, variante possible</string>
+    <string name="bulk_install_status_ambiguous">Correspond à plusieurs applications installées</string>
     <string name="bulk_install_status_mismatch">Discordance JAD/JAR</string>
     <string name="bulk_install_status_duplicate">Doublon</string>
     <string name="bulk_install_status_older_batch">Candidat de lot plus ancien</string>
@@ -738,7 +738,7 @@
     <string name="config_help_emulation_speed">Modifie la vitesse d’horloge du MIDlet et les délais pris en charge. L’audio et l’interface Android restent normaux.</string>
     <string name="config_help_timing_mode">Choisit si le MIDlet utilise le temps d’émulation ou le temps système. Les délais relatifs restent ajustés à la vitesse d’émulation.</string>
     <string name="config_help_timing_unavailable">Les paramètres de temps ne sont pas disponibles pour cette installation du MIDlet. Réinstallez ou reconvertissez le MIDlet pour les activer.</string>
-    <string name="reconverting_wait">Ce MIDlet nécessite une conversion de compatibilité unique avant de démarrer. Veuillez patienter…</string>
+    <string name="reconverting_wait">Ce MIDlet nécessite une conversion de compatibilité unique avant de démarrer. Conversion en cours…</string>
     <string name="reconversion_error">Le MIDlet n’a pas pu être converti automatiquement.\n\n%1$s</string>
     <string name="config_help_generic_color">Définit la couleur de cet élément visuel.</string>
     <string name="config_help_encoding">Choisit l’encodage de caractères signalé par microedition.encoding.</string>

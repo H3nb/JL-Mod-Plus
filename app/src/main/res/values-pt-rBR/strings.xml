@@ -143,7 +143,7 @@
     <string name="PREF_WIDTH">Largura</string>
     <string name="reinstall">Este aplicativo já está instalado. Reinstalar?</string>
     <string name="reinstall_newest">Atualizar este aplicativo para a versão %1$s?\n\nInstalado atualmente: %2$s</string>
-    <string name="reinstall_older">Substituir este aplicativo pela versão %1$s?\n\nInstalada atualmente: %2$s\nA versão mais antiga pode não funcionar corretamente com os dados registrados.</string>
+    <string name="reinstall_older">Substituir este aplicativo pela versão %1$s?\n\nVersão instalada atualmente: %2$s\nA versão mais antiga pode não funcionar corretamente com os dados registrados.</string>
     <string name="reset">Redefinir</string>
     <string name="RESET_LAYOUT_CMD">Redefinir layout das teclas</string>
     <string name="retry">tentar novamente</string>
@@ -637,7 +637,7 @@
     <string name="bulk_install_planning">Verificando aplicativos selecionados…</string>
     <string name="bulk_install_empty">Nenhum aplicativo compatível foi encontrado.</string>
     <string name="bulk_install_recommended">Recomendado</string>
-    <string name="bulk_install_clear">Limpar</string>
+    <string name="bulk_install_clear">Limpar seleção</string>
     <string name="bulk_install_install_count">Instalar %1$d</string>
     <string name="bulk_install_cancel">Cancelar</string>
     <string name="bulk_install_close">Fechar</string>
@@ -662,8 +662,8 @@
     <string name="bulk_install_status_update">Atualização</string>
     <string name="bulk_install_status_downgrade">Versão anterior</string>
     <string name="bulk_install_status_same">Já instalado</string>
-    <string name="bulk_install_status_reinstall">Variante / reinstalação</string>
-    <string name="bulk_install_status_ambiguous">Várias correspondências instaladas</string>
+    <string name="bulk_install_status_reinstall">Mesma versão, possível variante</string>
+    <string name="bulk_install_status_ambiguous">Corresponde a vários aplicativos instalados</string>
     <string name="bulk_install_status_mismatch">Incompatibilidade JAD/JAR</string>
     <string name="bulk_install_status_duplicate">Duplicado</string>
     <string name="bulk_install_status_older_batch">Candidato mais antigo do lote</string>
@@ -738,7 +738,7 @@
     <string name="config_help_emulation_speed">Altera a velocidade do relógio do MIDlet e os atrasos compatíveis. O áudio e a interface do Android permanecem normais.</string>
     <string name="config_help_timing_mode">Escolhe se o MIDlet usa o tempo de emulação ou o tempo do sistema. Os atrasos relativos continuam acompanhando a velocidade de emulação.</string>
     <string name="config_help_timing_unavailable">As configurações de tempo não estão disponíveis para esta instalação do MIDlet. Reinstale ou reconverta o MIDlet para ativá-las.</string>
-    <string name="reconverting_wait">Este MIDlet precisa de uma conversão de compatibilidade única antes de iniciar. Aguarde…</string>
+    <string name="reconverting_wait">Este MIDlet precisa de uma conversão de compatibilidade única antes de iniciar. Convertendo…</string>
     <string name="reconversion_error">Não foi possível converter o MIDlet automaticamente.\n\n%1$s</string>
     <string name="config_help_generic_color">Define a cor deste elemento visual.</string>
     <string name="config_help_encoding">Escolhe a codificação de caracteres informada como microedition.encoding.</string>

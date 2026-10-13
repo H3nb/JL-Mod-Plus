@@ -17,7 +17,7 @@
     <string name="close">关闭</string>
     <string name="cmd_menu">菜单</string>
     <string name="CONFIRMATION_REQUIRED">需要确认</string>
-    <string name="converting_wait">正在安装…</string>
+    <string name="converting_wait">正在转换 JAR…</string>
     <string name="create">创建</string>
     <string name="create_apps_dir_failed">无法在以下路径准备工作目录：\n%1$s\n请选择其他目录。</string>
     <string name="default_label">%1$s (默认)</string>
@@ -133,9 +133,9 @@
     <string name="pref_vk_type_phone_arrows">手机（带箭头按键）</string>
     <string name="pref_wakelock_title">保持屏幕常亮</string>
     <string name="PREF_WIDTH">宽度</string>
-    <string name="reinstall">应用已经安装。\n\n 您想要重新安装吗？\n 所有数据将被保存。</string>
-    <string name="reinstall_newest">更新此应用到版本 %1$s？\n\n目前已安装版本： %2$s\n所有数据将被保存。</string>
-    <string name="reinstall_older">将此应用替换为旧版本 %1$s 吗？\n\n 目前已安装： %2$s\n 旧版本可能无法正常使用现有的存档数据。</string>
+    <string name="reinstall">此应用已安装。要重新安装吗？</string>
+    <string name="reinstall_newest">将此应用更新到版本 %1$s？\n\n当前已安装：%2$s</string>
+    <string name="reinstall_older">用版本 %1$s 替换此应用？\n\n当前已安装：%2$s\n较旧版本可能无法正常使用现有数据。</string>
     <string name="reset">重置</string>
     <string name="RESET_LAYOUT_CMD">重置虚拟控件布局</string>
     <string name="retry">重试</string>
@@ -643,4 +643,144 @@
         <item quantity="other">%1$d 项属性</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">将显示大小调整为 1% 到 1000%。100% 时游戏以原始大小显示；更大的数值可能使画面超出屏幕。</string>
+    <string name="bulk_install_action_jar_only">仅安装 JAR</string>
+    <string name="bulk_install_action_separate_copy">安装为独立副本</string>
+    <string name="bulk_install_cancel">取消</string>
+    <string name="bulk_install_cancel_requested">将在当前应用处理完后停止…</string>
+    <string name="bulk_install_cancelled">批量安装已停止</string>
+    <string name="bulk_install_choose_files">文件</string>
+    <string name="bulk_install_choose_folder">文件夹</string>
+    <string name="bulk_install_clear">清除选择</string>
+    <string name="bulk_install_close">关闭</string>
+    <string name="bulk_install_complete">批量安装完成</string>
+    <string name="bulk_install_empty">未找到支持的应用。</string>
+    <string name="bulk_install_empty_filter">没有匹配的游戏。</string>
+    <string name="bulk_install_fatal">批量安装已停止。重试前，请检查未完成的项目。</string>
+    <string name="bulk_install_filter_all">全部</string>
+    <string name="bulk_install_filter_review">检查</string>
+    <string name="bulk_install_filter_selected">已选择</string>
+    <string name="bulk_install_install_count">安装 %1$d 项</string>
+    <string name="bulk_install_installed_version">已安装：%1$s</string>
+    <string name="bulk_install_library_changed">检查后应用库发生了变化。请关闭此批次并重新选择来源。</string>
+    <string name="bulk_install_planning">正在检查所选应用…</string>
+    <string name="bulk_install_prepare_failed">无法为所选应用准备安装。</string>
+    <string name="bulk_install_reason_conflicting_jads">属性不同的 JAD 文件引用了同一个 JAR。</string>
+    <string name="bulk_install_reason_duplicate_source">此来源与此批次中的另一个来源重复。</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD 和 JAR 指向不同的应用。</string>
+    <string name="bulk_install_reason_jar_not_found">未找到 JAD 引用的 JAR：%1$s。</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD 缺少 MIDlet-Jar-URL。</string>
+    <string name="bulk_install_reason_missing_parent">JAD 没有父目录。</string>
+    <string name="bulk_install_reason_older_candidate">同一批次中有此应用的更新版本。</string>
+    <string name="bulk_install_reason_remote_jar">批量安装无法下载远程 JAR 文件。</string>
+    <string name="bulk_install_reason_source_error">无法为此来源准备安装。</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD 使用不支持的 URI 方案引用 JAR：%1$s。</string>
+    <string name="bulk_install_reason_version_conflict">多个应用变体具有相同的版本号。</string>
+    <string name="bulk_install_recommended">推荐</string>
+    <string name="bulk_install_reinstall_source_missing">已保存的 JAR 不可用于重新安装。</string>
+    <string name="bulk_install_result_failed">失败</string>
+    <string name="bulk_install_result_installed">已安装</string>
+    <string name="bulk_install_result_reinstalled">已重新安装</string>
+    <string name="bulk_install_result_restored">已恢复</string>
+    <string name="bulk_install_result_skipped">已跳过</string>
+    <string name="bulk_install_result_updated">已更新</string>
+    <string name="bulk_install_skipped_entries">跳过的归档条目：%1$d</string>
+    <string name="bulk_install_source">来源：%1$s</string>
+    <string name="bulk_install_source_changed">检查后源文件发生了变化。请重新选择文件。</string>
+    <string name="bulk_install_source_unavailable">必需的源文件已不可用。请重新选择文件。</string>
+    <string name="bulk_install_status_ambiguous">匹配多个已安装应用</string>
+    <string name="bulk_install_status_conflict">批次冲突</string>
+    <string name="bulk_install_status_downgrade">较旧版本</string>
+    <string name="bulk_install_status_duplicate">重复</string>
+    <string name="bulk_install_status_error">无效来源</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR 不匹配</string>
+    <string name="bulk_install_status_new">新应用</string>
+    <string name="bulk_install_status_older_batch">批次中的较旧版本</string>
+    <string name="bulk_install_status_reinstall">相同版本，可能是变体</string>
+    <string name="bulk_install_status_remote">不支持远程来源</string>
+    <string name="bulk_install_status_same">已安装</string>
+    <string name="bulk_install_status_update">更新</string>
+    <string name="bulk_install_target_unverified">无法确认重新安装的目标。请关闭此批次并重新选择应用。</string>
+    <string name="bulk_install_title">批量安装</string>
+    <string name="bulk_install_unreadable_archives">无法读取的归档：%1$d</string>
+    <string name="install_done_with_warning">应用已安装，但有警告。</string>
+    <string name="installer_ambiguous">多个已安装应用与此应用匹配。要安装独立副本吗？现有应用及其数据将保留。</string>
+    <string name="installer_cancel_pending">将在下一个安全时机停止…</string>
+    <string name="installer_conversion_skipped_entry">%1$s\n问题：无法读取 Java 类文件。\n操作：转换时已跳过。</string>
+    <string name="installer_copy_details">复制详情</string>
+    <string name="installer_error_message">无法安装所选应用。请选择有效的 MIDlet 文件并重试。</string>
+    <string name="installer_existing_data_preserved">现有设置和存档数据将保留。</string>
+    <string name="installer_failed_conversion">无法转换应用。请检查文件是否完整且受支持，然后重试。</string>
+    <string name="installer_failed_download">无法下载应用。请检查网络连接和下载链接，然后重试。</string>
+    <string name="installer_failed_storage">无法完成安装。请重试。</string>
+    <string name="installer_hide_details">隐藏详情</string>
+    <string name="installer_needs_recovery">应用文件已保存，但应用库未能完成更新。请先刷新应用库，再重试。</string>
+    <string name="installer_not_processed">未处理</string>
+    <string name="installer_partial_restore">应用已安装；无法恢复数据或设置</string>
+    <string name="installer_refresh_library">刷新应用库</string>
+    <string name="installer_removed_leftovers">应用已移除；部分设置或存档数据无法删除。</string>
+    <string name="installer_retry_remaining">检查未完成的项目</string>
+    <string name="installer_separate_copy">安装独立副本</string>
+    <string name="installer_show_details">显示详情</string>
+    <string name="installer_stage_download">正在下载应用…</string>
+    <string name="installer_stage_save">正在保存应用…</string>
+    <string name="installer_stage_wait">正在等待其他操作…</string>
+    <string name="installer_title">MIDlet 安装器</string>
+    <string name="reconversion_done_with_warning">兼容性转换已完成，但有警告。</string>
+    <string name="reconversion_error">无法自动转换 MIDlet。\n\n%1$s</string>
+    <string name="reconversion_error_summary">无法自动转换 MIDlet。</string>
+    <string name="reconverting_wait">此 MIDlet 启动前需要进行一次兼容性转换。正在转换…</string>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other">%1$d 项需要检查</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">%1$d 项失败</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">找到 %1$d 个应用</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">已安装 %1$d 项</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">为保持检查界面响应流畅，另有 %1$d 个文件未纳入检查。</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other">%1$d 项已就绪</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">%1$d 个已安装应用与此来源匹配。</item>
+    </plurals>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">所选应用库应用中，%1$d 个已不可用。</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">已重新安装 %1$d 项</item>
+    </plurals>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">已恢复 %1$d 项</item>
+    </plurals>
+    <plurals name="bulk_install_running">
+        <item quantity="other">已处理 %1$d 个应用，共 %2$d 个</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">已选择 %1$d 项</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">已安装或重复：%1$d 项</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">已跳过 %1$d 项</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">已更新 %1$d 项</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other">%1$d 条警告</item>
+    </plurals>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">另有 %1$d 个转换问题未显示。</item>
+    </plurals>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">有 %1$d 个 Java 类文件因无法读取而被跳过。使用这些类文件的功能可能无法正常工作。</item>
+    </plurals>
 </resources>
