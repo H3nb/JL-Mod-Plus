@@ -492,7 +492,7 @@
     <string name="memory_editor_unfreeze">Dégeler</string>
     <string name="memory_editor_cancelled">Opération annulée.</string>
     <string name="memory_editor_resource_limit">L’Éditeur de mémoire a atteint une limite de ressources sûre. Essayez un type de données ou une valeur de recherche plus précise.</string>
-    <string name="memory_editor_identity_unsafe">La valeur ou l’état de recherche sélectionné n’a pas pu être vérifiée. Actualisez les résultats ou rouvrez l’Inspecteur, puis réessayez.</string>
+    <string name="memory_editor_identity_unsafe">Impossible de vérifier la valeur sélectionnée ou l’état de recherche. Actualisez les résultats ou rouvrez l’Inspecteur, puis réessayez.</string>
     <string name="memory_editor_safety_limit">Trop de valeurs sont sélectionnées pour cette opération. Sélectionnez-en moins et réessayez.</string>
     <string name="memory_editor_invalid_request">La valeur ou l’opération est invalide.</string>
     <string name="memory_editor_freeze_paused">Suspendu par sécurité</string>
@@ -504,8 +504,8 @@
     <string name="memory_editor_predicate_increased_by">Augmentée de</string>
     <string name="memory_editor_predicate_decreased_by">Diminuée de</string>
     <string name="memory_editor_predicate_changed_by">Modifiée de</string>
-    <string name="memory_editor_predicate_increased_range">Augmentée d’une plage</string>
-    <string name="memory_editor_predicate_decreased_range">Diminuée d’une plage</string>
+    <string name="memory_editor_predicate_increased_range">Augmentation comprise dans une plage</string>
+    <string name="memory_editor_predicate_decreased_range">Diminution comprise dans une plage</string>
     <string name="memory_editor_inspector">Inspecteur</string>
     <string name="memory_editor_inspect_memory">Inspecter la mémoire voisine</string>
     <string name="memory_editor_inspector_loading">Vérification du résultat et lecture de la mémoire voisine…</string>
@@ -515,13 +515,13 @@
     <string name="memory_editor_select_result_value">Sélectionner cette valeur de résultat</string>
     <string name="memory_editor_freeze_after_edit">Geler après application</string>
     <string name="memory_editor_freeze_after_edit_help">Utilise la valeur de remplacement comme verrou et ajoute automatiquement les candidats à la surveillance.</string>
-    <string name="memory_editor_expression_single_hint">Saisissez une valeur ou utilisez ; pour rechercher ensemble des valeurs groupées.</string>
+    <string name="memory_editor_expression_single_hint">Saisissez une valeur ou séparez les valeurs du groupe par des points-virgules (;).</string>
     <string name="memory_editor_expression_group_needs_type">Choisissez un type de données précis pour la recherche groupée.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="one">Recherche groupée · %1$d valeur · même propriétaire Java géré</item>
-        <item quantity="other">Recherche groupée · %1$d valeurs · même propriétaire Java géré</item>
+        <item quantity="one">Recherche groupée · %1$d valeur · même objet Java</item>
+        <item quantity="other">Recherche groupée · %1$d valeurs · même objet Java</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Exemples : 500 · 500;1000. La recherche groupée utilise 2 à 8 valeurs d’un même propriétaire Java géré.</string>
+    <string name="memory_editor_expression_query_help">Exemples : 500 ou 500;1000. La recherche groupée cherche 2 à 8 valeurs dans le même objet Java.</string>
     <string name="memory_editor_keypad_clear">Effacer</string>
     <string name="memory_editor_peek_underlay">Maintenez appuyé pour voir le MIDlet sous-jacent</string>
     <string name="memory_editor_peek_underlay_active">Affichage du MIDlet sous-jacent</string>

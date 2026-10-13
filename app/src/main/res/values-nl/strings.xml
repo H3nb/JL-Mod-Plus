@@ -533,8 +533,8 @@
     <string name="memory_editor_predicate_increased_by">Toegenomen met</string>
     <string name="memory_editor_predicate_decreased_by">Afgenomen met</string>
     <string name="memory_editor_predicate_changed_by">Gewijzigd met</string>
-    <string name="memory_editor_predicate_increased_range">Toegenomen binnen bereik</string>
-    <string name="memory_editor_predicate_decreased_range">Afgenomen binnen bereik</string>
+    <string name="memory_editor_predicate_increased_range">Toename binnen bereik</string>
+    <string name="memory_editor_predicate_decreased_range">Afname binnen bereik</string>
     <string name="memory_editor_inspector">Inspector</string>
     <string name="memory_editor_inspect_memory">Geheugen in de buurt inspecteren</string>
     <string name="memory_editor_inspector_loading">Resultaat verifiëren en geheugen in de buurt lezen…</string>
@@ -544,13 +544,13 @@
     <string name="memory_editor_select_result_value">Dit resultaat selecteren</string>
     <string name="memory_editor_freeze_after_edit">Bevriezen na toepassen</string>
     <string name="memory_editor_freeze_after_edit_help">Gebruikt de vervangingswaarde als vergrendeling en voegt kandidaten automatisch toe aan Volgen.</string>
-    <string name="memory_editor_expression_single_hint">Voer één waarde in of gebruik ; om groepswaarden samen te zoeken.</string>
+    <string name="memory_editor_expression_single_hint">Voer één waarde in of scheid groepswaarden met puntkomma’s (;).</string>
     <string name="memory_editor_expression_group_needs_type">Kies een specifiek gegevenstype voor Groepszoeken.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="one">Groepszoeken · %1$d waarde · dezelfde Managed Java-eigenaar</item>
-        <item quantity="other">Groepszoeken · %1$d waarden · dezelfde Managed Java-eigenaar</item>
+        <item quantity="one">Groepszoeken · %1$d waarde · hetzelfde Java-object</item>
+        <item quantity="other">Groepszoeken · %1$d waarden · hetzelfde Java-object</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Voorbeelden: 500 · 500;1000. Groepszoeken gebruikt 2–8 waarden van één Managed Java-eigenaar.</string>
+    <string name="memory_editor_expression_query_help">Voorbeelden: 500 of 500;1000. Groepszoeken zoekt naar 2–8 waarden in hetzelfde Java-object.</string>
     <string name="memory_editor_keypad_clear">Wissen</string>
     <string name="memory_editor_peek_underlay">Ingedrukt houden om de MIDlet eronder te zien</string>
     <string name="memory_editor_peek_underlay_active">De MIDlet eronder wordt weergegeven</string>

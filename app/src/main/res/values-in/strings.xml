@@ -1052,7 +1052,7 @@
     <string name="memory_editor_revert_remove_outcome">Dipulihkan: %1$d. Dihapus: %2$d. Konflik: %3$d. Belum terkonfirmasi: %4$d. Belum dicoba: %5$d.</string>
     <string name="memory_editor_set_all">Samakan nilai</string>
     <string name="memory_editor_increment_start">Nilai awal</string>
-    <string name="memory_editor_edit_batch_type_notice">Hanya tipe data yang sesuai yang akan diubah.</string>
+    <string name="memory_editor_edit_batch_type_notice">Hanya nilai dengan tipe data yang sesuai yang akan diubah.</string>
     <string name="memory_editor_write_confirmed">%1$d nilai dikonfirmasi melalui pembacaan ulang memori.</string>
     <string name="memory_editor_candidate_untraced">Array #%1$d[%2$d] · Sumber belum terlacak</string>
     <string name="memory_editor_candidate_static">%1$s · %2$s</string>

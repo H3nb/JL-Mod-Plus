@@ -1,0 +1,269 @@
+# Unresolved Memory Editor language review
+
+Snapshot: 13 October 2026, PR 169. The 109-resource selection consists of
+`memory_editor_` resources in the current canonical inventory. This document
+records unaccepted review cases; it is not a translation catalog. See
+[progress](localization-progress.md), [controls gaps](localization-unresolved-controls.md),
+and [installer gaps](localization-unresolved-installer.md).
+
+## Scope and review limitation
+
+Kazakh, Odia, and Sinhala each have 33 accepted identities and **76 missing
+declarations** requiring competent language review. Santali has **109 missing
+declarations**, with no new or retained Memory Editor translation accepted.
+All 337 unresolved cases are missing declarations; no existing text was changed
+or counted as accepted in these cases.
+
+Reliable labels, simple states and four count messages in the accepted subsets
+do not certify technical or consequential prose. Runtime meaning is established
+from [managed-memory identity](memory-editor-identity.md) and current engine and
+presentation callers. The blocker is trustworthy target-language grammar and
+terminology, including full conditions and consequences. No fallback English or
+guessed Ol Chiki prose is counted as completed translation.
+
+## Kazakh, Odia and Sinhala — exact deferred keys
+
+Every list below applies to each of `kk`, `or`, and `si`. All keys are absent in
+these locales and require competent sentence-level review.
+
+### Group-search input and scope
+
+Must preserve same-Java-object group search and semicolon syntax.
+
+```text
+memory_editor_expression_group_hint
+memory_editor_expression_group_needs_type
+memory_editor_expression_query_help
+memory_editor_expression_single_hint
+```
+
+### Other actions and technical states
+
+Other actions, technical states and explanations: target-language phrasing confidence is insufficient for acceptance.
+
+```text
+memory_editor_add_to_watch
+memory_editor_bubble
+memory_editor_bubble_content_description
+memory_editor_cancelled
+memory_editor_change_amount
+memory_editor_clear_selection
+memory_editor_close
+memory_editor_edit_batch_help
+memory_editor_edit_batch_no_common_type
+memory_editor_edit_batch_type_notice
+memory_editor_engine_reconnecting
+memory_editor_engine_unavailable
+memory_editor_inspect_memory
+memory_editor_inspector
+memory_editor_inspector_empty
+memory_editor_inspector_loading
+memory_editor_inspector_no_rows
+memory_editor_invalid_request
+memory_editor_no_runtime
+memory_editor_peek_underlay
+memory_editor_peek_underlay_active
+memory_editor_predicate_between
+memory_editor_predicate_changed_by
+memory_editor_predicate_decreased_by
+memory_editor_predicate_decreased_range
+memory_editor_predicate_increased_by
+memory_editor_predicate_increased_range
+memory_editor_replacement
+memory_editor_safety_limit
+memory_editor_search_complete
+memory_editor_search_known_values
+memory_editor_search_progress
+memory_editor_search_unknown_values
+memory_editor_searching
+memory_editor_unsupported
+memory_editor_working
+```
+
+### Runtime identity, provenance and safety pauses
+
+Requires reliable terminology for Java identity/provenance and safety-paused writes; cannot infer native memory or automatic rebinding.
+
+```text
+memory_editor_candidate_ambiguous
+memory_editor_candidate_lost
+memory_editor_candidate_moved
+memory_editor_candidate_relocating
+memory_editor_candidate_untraced
+memory_editor_freeze
+memory_editor_freeze_after_edit
+memory_editor_freeze_after_edit_help
+memory_editor_freeze_paused
+memory_editor_identity_unsafe
+memory_editor_no_candidates
+memory_editor_path_changed
+memory_editor_path_incomplete
+memory_editor_reference_instance
+memory_editor_reference_static
+memory_editor_resource_limit
+memory_editor_source_unknown
+memory_editor_unfreeze
+```
+
+### Arithmetic-sequence assignment
+
+Requires the arithmetic-sequence operation, not an adjustment to existing values.
+
+```text
+memory_editor_increment_invalid
+memory_editor_increment_preview
+memory_editor_increment_start
+memory_editor_increment_step
+memory_editor_incremental_edit
+memory_editor_set_all
+```
+
+### Search history and Inspector refresh
+
+Must distinguish search history or inspected snapshot from edits and game saves.
+
+```text
+memory_editor_no_search_history
+memory_editor_refresh_snapshot
+memory_editor_undo
+```
+
+### Writes, removal and partial outcomes
+
+Must preserve partial changes, readback confirmation, conditional last-confirmed-edit rollback, and distinct outcome counters as applicable.
+
+```text
+memory_editor_partial_write
+memory_editor_remove_candidates_description
+memory_editor_remove_candidates_title
+memory_editor_revert_and_remove
+memory_editor_revert_remove_commit_failed
+memory_editor_revert_remove_outcome
+memory_editor_write_confirmed
+memory_editor_write_failure_outcome
+memory_editor_write_outcome
+```
+
+## Santali — exact deferred keys
+
+All 109 keys below are absent. Competent standard Santali/Ol Chiki judgment
+is unavailable for these meanings, including labels and complex explanations.
+Dictionaries or script/plural data alone do not establish grammar. The same
+runtime distinctions above must be preserved; no text was manufactured.
+
+```text
+memory_editor_add_to_watch
+memory_editor_apply
+memory_editor_bubble
+memory_editor_bubble_content_description
+memory_editor_cancelled
+memory_editor_candidate_ambiguous
+memory_editor_candidate_instance
+memory_editor_candidate_lost
+memory_editor_candidate_moved
+memory_editor_candidate_relocating
+memory_editor_candidate_static
+memory_editor_candidate_untraced
+memory_editor_candidates
+memory_editor_change_amount
+memory_editor_clear_selection
+memory_editor_close
+memory_editor_edit
+memory_editor_edit_batch
+memory_editor_edit_batch_help
+memory_editor_edit_batch_no_common_type
+memory_editor_edit_batch_type_notice
+memory_editor_engine_reconnecting
+memory_editor_engine_unavailable
+memory_editor_expression_group_hint
+memory_editor_expression_group_needs_type
+memory_editor_expression_query_help
+memory_editor_expression_single_hint
+memory_editor_freeze
+memory_editor_freeze_after_edit
+memory_editor_freeze_after_edit_help
+memory_editor_freeze_paused
+memory_editor_identity_unsafe
+memory_editor_increment_invalid
+memory_editor_increment_preview
+memory_editor_increment_start
+memory_editor_increment_step
+memory_editor_incremental_edit
+memory_editor_inspect_memory
+memory_editor_inspector
+memory_editor_inspector_empty
+memory_editor_inspector_loading
+memory_editor_inspector_no_rows
+memory_editor_invalid_request
+memory_editor_keypad_clear
+memory_editor_max_change
+memory_editor_max_value
+memory_editor_min_change
+memory_editor_min_value
+memory_editor_new_search
+memory_editor_next_results_page_action
+memory_editor_next_scan
+memory_editor_next_scan_result
+memory_editor_no_candidates
+memory_editor_no_results
+memory_editor_no_runtime
+memory_editor_no_search_history
+memory_editor_no_watch
+memory_editor_partial_write
+memory_editor_path_changed
+memory_editor_path_incomplete
+memory_editor_peek_underlay
+memory_editor_peek_underlay_active
+memory_editor_predicate_between
+memory_editor_predicate_changed
+memory_editor_predicate_changed_by
+memory_editor_predicate_decreased
+memory_editor_predicate_decreased_by
+memory_editor_predicate_decreased_range
+memory_editor_predicate_increased
+memory_editor_predicate_increased_by
+memory_editor_predicate_increased_range
+memory_editor_predicate_unchanged
+memory_editor_previous_results_page_action
+memory_editor_reference_instance
+memory_editor_reference_static
+memory_editor_refresh
+memory_editor_refresh_snapshot
+memory_editor_remove
+memory_editor_remove_candidates_description
+memory_editor_remove_candidates_title
+memory_editor_replacement
+memory_editor_resource_limit
+memory_editor_results
+memory_editor_revert_and_remove
+memory_editor_revert_remove_commit_failed
+memory_editor_revert_remove_outcome
+memory_editor_safety_limit
+memory_editor_save
+memory_editor_search_complete
+memory_editor_search_hint
+memory_editor_search_known_values
+memory_editor_search_progress
+memory_editor_search_tab
+memory_editor_search_unknown_values
+memory_editor_searching
+memory_editor_select_result_value
+memory_editor_select_visible
+memory_editor_selected
+memory_editor_set_all
+memory_editor_source_unknown
+memory_editor_type_auto
+memory_editor_undo
+memory_editor_unfreeze
+memory_editor_unsupported
+memory_editor_watch
+memory_editor_working
+memory_editor_write_confirmed
+memory_editor_write_failure_outcome
+memory_editor_write_outcome
+```
+
+Re-export current source and target resources before resolving these keys.
+Preserve write/readback counter roles, conditional undo, conflicts, partial
+success, safety pauses, reference identity, same-object group scope, and the
+arithmetic sequence with zero or negative steps.

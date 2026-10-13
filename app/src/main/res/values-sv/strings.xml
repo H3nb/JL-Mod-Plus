@@ -533,8 +533,8 @@
     <string name="memory_editor_predicate_increased_by">Ökat med</string>
     <string name="memory_editor_predicate_decreased_by">Minskat med</string>
     <string name="memory_editor_predicate_changed_by">Ändrat med</string>
-    <string name="memory_editor_predicate_increased_range">Ökat inom intervall</string>
-    <string name="memory_editor_predicate_decreased_range">Minskat inom intervall</string>
+    <string name="memory_editor_predicate_increased_range">Ökningens storlek inom intervall</string>
+    <string name="memory_editor_predicate_decreased_range">Minskningens storlek inom intervall</string>
     <string name="memory_editor_inspector">Inspector</string>
     <string name="memory_editor_inspect_memory">Inspektera närliggande minne</string>
     <string name="memory_editor_inspector_loading">Verifierar resultatet och läser närliggande minne…</string>
@@ -544,13 +544,13 @@
     <string name="memory_editor_select_result_value">Välj detta resultat</string>
     <string name="memory_editor_freeze_after_edit">Frys efter tillämpning</string>
     <string name="memory_editor_freeze_after_edit_help">Använder ersättningsvärdet som lås och lägger automatiskt till kandidaterna i Bevakning.</string>
-    <string name="memory_editor_expression_single_hint">Ange ett värde eller använd ; för att söka gruppvärden tillsammans.</string>
+    <string name="memory_editor_expression_single_hint">Ange ett värde eller skilj gruppvärden med semikolon (;).</string>
     <string name="memory_editor_expression_group_needs_type">Välj en specifik datatyp för Gruppsökning.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="one">Gruppsökning · %1$d värde · samma Managed Java-ägare</item>
-        <item quantity="other">Gruppsökning · %1$d värden · samma Managed Java-ägare</item>
+        <item quantity="one">Gruppsökning · %1$d värde · samma Java-objekt</item>
+        <item quantity="other">Gruppsökning · %1$d värden · samma Java-objekt</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Exempel: 500 · 500;1000. Gruppsökning använder 2–8 värden från en Managed Java-ägare.</string>
+    <string name="memory_editor_expression_query_help">Exempel: 500 eller 500;1000. Gruppsökning söker efter 2–8 värden i samma Java-objekt.</string>
     <string name="memory_editor_keypad_clear">Rensa</string>
     <string name="memory_editor_peek_underlay">Håll ned för att se MIDlet under</string>
     <string name="memory_editor_peek_underlay_active">Visar MIDlet under</string>

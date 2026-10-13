@@ -524,4 +524,49 @@
     <string name="midlet_size"><b>"ප්‍රමාණය: "</b></string>
     <string name="midlet_vendor"><b>"ප්‍රකාශකයා: "</b></string>
     <string name="midlet_version"><b>"අනුවාදය: "</b></string>
+    <string name="memory_editor_apply">යොදන්න</string>
+    <string name="memory_editor_edit">සංස්කරණය කරන්න</string>
+    <string name="memory_editor_keypad_clear">මකන්න</string>
+    <string name="memory_editor_max_change">උපරිම වෙනස</string>
+    <string name="memory_editor_max_value">උපරිම අගය</string>
+    <string name="memory_editor_min_change">අවම වෙනස</string>
+    <string name="memory_editor_min_value">අවම අගය</string>
+    <string name="memory_editor_new_search">නව සෙවීම</string>
+    <string name="memory_editor_next_results_page_action">ඊළඟ ප්‍රතිඵල පිටුව</string>
+    <string name="memory_editor_next_scan">ඊළඟ ස්කෑන් කිරීම</string>
+    <string name="memory_editor_next_scan_result">ඊළඟ ස්කෑන් ප්‍රතිඵල: %1$d → %2$d</string>
+    <string name="memory_editor_no_results">ප්‍රතිඵල නැත</string>
+    <string name="memory_editor_no_watch">නිරීක්ෂණ ලැයිස්තුව හිස්ය</string>
+    <string name="memory_editor_predicate_changed">වෙනස් වී ඇත</string>
+    <string name="memory_editor_predicate_decreased">අඩු වී ඇත</string>
+    <string name="memory_editor_predicate_increased">වැඩි වී ඇත</string>
+    <string name="memory_editor_predicate_unchanged">වෙනස් වී නැත</string>
+    <string name="memory_editor_previous_results_page_action">පෙර ප්‍රතිඵල පිටුව</string>
+    <string name="memory_editor_refresh">යළි පූරණය කරන්න</string>
+    <string name="memory_editor_remove">ඉවත් කරන්න</string>
+    <string name="memory_editor_save">යොදන්න</string>
+    <string name="memory_editor_search_hint">අගය</string>
+    <string name="memory_editor_search_tab">සෙවීම</string>
+    <string name="memory_editor_select_result_value">මෙම ප්‍රතිඵලය තෝරන්න</string>
+    <string name="memory_editor_select_visible">පෙනෙන ප්‍රතිඵල තෝරන්න</string>
+    <string name="memory_editor_type_auto">ස්වයංක්‍රීය</string>
+    <string name="memory_editor_watch">නිරීක්ෂණය</string>
+    <string name="memory_editor_candidate_static">%1$s · %2$s</string>
+    <string name="memory_editor_candidate_instance">%1$s · %2$s · ඉලක්කය #%3$d</string>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one">ගැළපිය හැකි අගයන් %1$d</item>
+        <item quantity="other">ගැළපිය හැකි අගයන් %1$d</item>
+    </plurals>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">අගයන් %1$d සංස්කරණය කරන්න</item>
+        <item quantity="other">අගයන් %1$d සංස්කරණය කරන්න</item>
+    </plurals>
+    <plurals name="memory_editor_results">
+        <item quantity="one">ප්‍රතිඵල %1$d</item>
+        <item quantity="other">ප්‍රතිඵල %1$d</item>
+    </plurals>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">%1$d තෝරා ඇත</item>
+        <item quantity="other">%1$d තෝරා ඇත</item>
+    </plurals>
 </resources>

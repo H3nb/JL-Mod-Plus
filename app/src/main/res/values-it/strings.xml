@@ -504,8 +504,8 @@
     <string name="memory_editor_predicate_increased_by">Aumentato di</string>
     <string name="memory_editor_predicate_decreased_by">Diminuito di</string>
     <string name="memory_editor_predicate_changed_by">Cambiato di</string>
-    <string name="memory_editor_predicate_increased_range">Aumentato di un intervallo</string>
-    <string name="memory_editor_predicate_decreased_range">Diminuito di un intervallo</string>
+    <string name="memory_editor_predicate_increased_range">Entità dell’aumento in un intervallo</string>
+    <string name="memory_editor_predicate_decreased_range">Entità della diminuzione in un intervallo</string>
     <string name="memory_editor_inspector">Inspector</string>
     <string name="memory_editor_inspect_memory">Ispeziona memoria vicina</string>
     <string name="memory_editor_inspector_loading">Verifica del risultato e lettura della memoria vicina…</string>
@@ -515,13 +515,13 @@
     <string name="memory_editor_select_result_value">Seleziona questo valore risultante</string>
     <string name="memory_editor_freeze_after_edit">Blocca dopo l’applicazione</string>
     <string name="memory_editor_freeze_after_edit_help">Usa il valore sostitutivo come blocco e aggiunge automaticamente i candidati al monitoraggio.</string>
-    <string name="memory_editor_expression_single_hint">Inserisci un valore oppure usa ; per cercare insieme valori di gruppo.</string>
+    <string name="memory_editor_expression_single_hint">Inserisci un valore oppure separa i valori del gruppo con punti e virgola (;).</string>
     <string name="memory_editor_expression_group_needs_type">Scegli un tipo di dati specifico per la ricerca di gruppo.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="one">Ricerca di gruppo · %1$d valore · stesso proprietario Java gestito</item>
-        <item quantity="other">Ricerca di gruppo · %1$d valori · stesso proprietario Java gestito</item>
+        <item quantity="one">Ricerca di gruppo · %1$d valore · stesso oggetto Java</item>
+        <item quantity="other">Ricerca di gruppo · %1$d valori · stesso oggetto Java</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Esempi: 500 · 500;1000. La ricerca di gruppo usa 2–8 valori dello stesso proprietario Java gestito.</string>
+    <string name="memory_editor_expression_query_help">Esempi: 500 o 500;1000. La ricerca di gruppo cerca 2–8 valori nello stesso oggetto Java.</string>
     <string name="memory_editor_keypad_clear">Cancella</string>
     <string name="memory_editor_peek_underlay">Tieni premuto per vedere il MIDlet sottostante</string>
     <string name="memory_editor_peek_underlay_active">Visualizzazione del MIDlet sottostante</string>

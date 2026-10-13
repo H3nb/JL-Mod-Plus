@@ -642,7 +642,7 @@
     <string name="memory_editor_close">Закрыть редактор памяти</string>
     <string name="memory_editor_searching">Поиск в памяти…</string>
     <string name="memory_editor_working">Применение операции…</string>
-    <string name="memory_editor_search_progress">Просканировано %1$d из %2$d МиБ</string>
+    <string name="memory_editor_search_progress">Просканировано %1$d из %2$d MiB</string>
     <string name="memory_editor_candidate_moved">Адрес обновлён</string>
     <string name="memory_editor_candidate_relocating">Повторная проверка</string>
     <string name="memory_editor_candidate_ambiguous">Неоднозначно — запись приостановлена</string>
@@ -666,15 +666,15 @@
     <string name="memory_editor_inspector_empty">Выберите результат, чтобы просмотреть память рядом.</string>
     <string name="memory_editor_inspector_no_rows">Рядом с выбранным результатом нет доступной для просмотра памяти.</string>
     <string name="memory_editor_freeze_after_edit_help">Фиксирует новое значение и автоматически добавляет кандидатов в Наблюдение.</string>
-    <string name="memory_editor_expression_single_hint">Введите одно значение или используйте ; для совместного поиска группы значений.</string>
+    <string name="memory_editor_expression_single_hint">Введите одно значение или разделите значения группы точками с запятой (;).</string>
     <string name="memory_editor_expression_group_needs_type">Выберите конкретный тип данных для группового поиска.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="one">Групповой поиск · %1$d значение · один владелец Managed Java</item>
-        <item quantity="few">Групповой поиск · %1$d значения · один владелец Managed Java</item>
-        <item quantity="many">Групповой поиск · %1$d значений · один владелец Managed Java</item>
-        <item quantity="other">Групповой поиск · %1$d значения · один владелец Managed Java</item>
+        <item quantity="one">Групповой поиск · %1$d значение · один объект Java</item>
+        <item quantity="few">Групповой поиск · %1$d значения · один объект Java</item>
+        <item quantity="many">Групповой поиск · %1$d значений · один объект Java</item>
+        <item quantity="other">Групповой поиск · %1$d значения · один объект Java</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Примеры: 500 · 500;1000. Групповой поиск использует 2–8 значений одного владельца Managed Java.</string>
+    <string name="memory_editor_expression_query_help">Примеры: 500 или 500;1000. Групповой поиск ищет 2–8 значений в одном объекте Java.</string>
     <string name="memory_editor_keypad_clear">Очистить</string>
     <string name="memory_editor_peek_underlay">Нажмите и удерживайте, чтобы увидеть MIDlet под окном</string>
     <string name="memory_editor_peek_underlay_active">Показан MIDlet под окном</string>

@@ -65,9 +65,9 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 11,502 to **8,758** in the
-installer checkpoint (18,070 before controls and 25,122 before the 12 October
-checkpoint).
+Missing localized declarations decreased from 8,758 to **6,152** in the
+Memory Editor checkpoint (11,502 before installer, 18,070 before controls, and
+25,122 before the 12 October checkpoint).
 Twelve catalogs now cover all 977 resources: da, de, es, fi, fr, id, it, nl,
 pt, pt-BR, ru, sv. **Coverage does not establish full language-quality review.**
 Existing content outside the documented batches still needs review, including
@@ -85,7 +85,10 @@ The controls selection adds 269 unresolved review cases, for **484** across the
 documented batches; this is not its total missing-catalog count. Kazakh, Odia,
 and Sinhala also need competent review of the 347 explicitly deferred controls
 messages. Continue achievable work in other feature groups without counting
-those gaps as accepted translation or silently dropping their locales.
+those gaps as accepted translation or silently dropping their locales. The
+installer selection records another 113 unresolved Santali cases and Memory
+Editor records 109; counts from separate batches do not establish total catalog
+coverage or language certification.
 
 ## Installer and bulk-installation checkpoint
 
@@ -123,6 +126,46 @@ localization tooling are unchanged.
 There are 259 explicitly unresolved installer review cases: 247 missing and 12
 existing declarations. These are tracked separately from earlier feature batches;
 per-batch review counts must not be treated as a deduplicated whole-catalog total.
+
+## Memory Editor checkpoint
+
+The 109-resource `memory_editor_` selection, including six plurals, was processed
+across all 39 catalogs. This checkpoint adds **2,606** localized declarations and
+revises **57** existing declarations relative to `c554868`. Canonical English,
+application code, localization scripts/tests, and build dependencies are unchanged.
+
+- Complete batch coverage and semantic/language review in 35 locales. Kazakh,
+  Odia, and Sinhala each have 33 accepted labels/simple states/count identities
+  and 76 unresolved missing declarations. Santali has 109 unresolved missing
+  declarations and no new text accepted. See [exact Memory Editor gaps](localization-unresolved-memory.md).
+- Corrected existing group-search hints/help to require values in the same Java
+  object, clarified semicolon separation and delta-range predicates, corrected
+  Indonesian batch type wording, Finnish Freeze trigger, French identity grammar,
+  and Russian MiB units. Retained already correct translations.
+- Cross-language review corrected eight new batch notices that incorrectly said
+  data types would change; only values with matching types change. Clarified
+  arithmetic-sequence/common-difference terminology without requiring positive
+  steps, including Japanese, Thai, Vietnamese, Afrikaans and Greek. Czech retry
+  wording explicitly refreshes the view.
+- Separately reviewed remove/revert and partial outcomes: remove hides results
+  without memory writes; revert undoes only the last confirmed edit when the
+  current value matches the written value, retaining conflicts. Failed removal
+  can follow completed restoration; game-changed values are not overwritten.
+- Preserved momentary memory-readback confirmation and all five distinct write
+  counters, including the separate failure explanation. Cancellation and partial
+  completion do not promise rollback or zero writes. Search Undo remains distinct
+  from edits and game saves; Inspector refresh rereads inspected data.
+- Retained monitoring/Freeze safety pauses, runtime-bound target identity and
+  reference provenance. Untraced source does not assert no source exists, and raw
+  field/array/owner IDs and localized reference-kind arguments keep their roles.
+- Per-language vertical review and consequential horizontal comparison covered
+  every selected identity and relevant plural grammar. This is not independent
+  native-speaker certification or rendered Android UI verification.
+
+All 337 explicitly unresolved Memory Editor review cases are missing declarations.
+Accepted subsets do not certify the remaining technical or consequential prose.
+Every accepted change uses the existing hash-guarded plain-text batch applier;
+no catalog is regenerated and no scratch matrix or proposal is committed.
 
 ## Earlier validation evidence
 
@@ -183,6 +226,25 @@ Full application build/tests/lint, representative visual verification, and final
 CI remain pending. Use `[skip ci]` for this intermediate checkpoint under the
 user's explicit exception; resource-only compilation is not a full app test.
 
+## Memory Editor checkpoint validation
+
+- All 30 focused Python localization tests passed.
+- Inventory: 977 source identities / 39 catalogs / 6,152 missing declarations;
+  no duplicates, type mismatches, extra resources, localized invariant overrides,
+  or clear string argument mismatches. Changed string and plural forms preserve
+  indexed argument/type contracts and locale quantity categories.
+- All 40 English/localized strings catalogs passed matching-AGP AAPT2 compilation
+  and a resource-only link. This does not validate application interaction or
+  target-language visual fit.
+- Declaration-level diff confirms exactly 2,606 additions and 57 revisions within
+  the 109 selected identities. Canonical English remains byte-for-byte unchanged;
+  diff/whitespace and documentation-link checks passed. No unrelated files,
+  screenshot baselines, generated matrices, or temporary helpers are committed.
+
+Full app build/tests/lint, representative visual verification, and final CI are
+pending. This intermediate resource checkpoint uses the user's explicit
+`[skip ci]` exception. Keep the PR Draft while material scope remains incomplete.
+
 ## Exact next unfinished work
 
 The processed controls selection is:
@@ -204,12 +266,16 @@ The installer selection is `installer_`, `install_`, `bulk_install_`, `reinstall
 `warn_install_from_net`, and the four `midlet_name/size/vendor/version` labels.
 It contains 116 identities, complete in 35 languages and partially accepted in
 the same three, with Santali limited to retained isolated labels.
-The next broad feature batch is Memory Editor. Rebuild its membership from the
-current inventory and inspect the engine/presentation contract, especially write
-confirmation, value changes, undo conditions, and partial operations. Continue
-display/audio/performance, runtime/errors/permissions, and uncaptured resources,
-then review all
-existing translations vertically and horizontally. Re-export current inventory
-and matrices rather than using stale scratch proposals. Finish representative
+The Memory Editor selection is 109 `memory_editor_` identities, complete in
+35 languages and partially accepted in the same three, with all Santali entries
+unresolved. Resolve its exact deferred keys when competent language judgment is
+available; preserve runtime identity, write/readback, undo conditions, partial
+operations, and arithmetic-sequence semantics.
+The next broad feature batch is display/graphics/audio/performance followed by
+runtime lifecycle/compatibility, permissions/errors, and uncaptured resources.
+Rebuild membership from the current inventory, exclude previously reviewed
+configuration/controls keys explicitly, and inspect current feature contracts and
+callers. Continue reviewing all existing translations vertically and horizontally.
+Re-export current inventory and matrices rather than using stale scratch proposals. Finish representative
 long-text/RTL/narrow UI checks and relevant final Android CI only when cumulative
 resources are ready. Do not merge without explicit user instruction.

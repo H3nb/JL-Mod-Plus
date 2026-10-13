@@ -533,8 +533,8 @@
     <string name="memory_editor_predicate_increased_by">Kasvanut määrällä</string>
     <string name="memory_editor_predicate_decreased_by">Pienentynyt määrällä</string>
     <string name="memory_editor_predicate_changed_by">Muuttunut määrällä</string>
-    <string name="memory_editor_predicate_increased_range">Kasvanut alueella</string>
-    <string name="memory_editor_predicate_decreased_range">Pienentynyt alueella</string>
+    <string name="memory_editor_predicate_increased_range">Kasvun määrä välillä</string>
+    <string name="memory_editor_predicate_decreased_range">Pienenemisen määrä välillä</string>
     <string name="memory_editor_inspector">Inspector</string>
     <string name="memory_editor_inspect_memory">Tarkastele läheistä muistia</string>
     <string name="memory_editor_inspector_loading">Vahvistetaan tulosta ja luetaan läheistä muistia…</string>
@@ -542,15 +542,15 @@
     <string name="memory_editor_inspector_no_rows">Läheistä muistia ei ole käytettävissä tarkasteltavaksi.</string>
     <string name="memory_editor_refresh_snapshot">Päivitä tilannekuva</string>
     <string name="memory_editor_select_result_value">Valitse tämä tulos</string>
-    <string name="memory_editor_freeze_after_edit">Jäädytä käytön jälkeen</string>
+    <string name="memory_editor_freeze_after_edit">Jäädytä arvon asettamisen jälkeen</string>
     <string name="memory_editor_freeze_after_edit_help">Käyttää korvaavaa arvoa lukituksena ja lisää ehdokkaat automaattisesti seurantaan.</string>
-    <string name="memory_editor_expression_single_hint">Anna yksi arvo tai käytä merkkiä ; hakeaksesi ryhmäarvoja yhdessä.</string>
+    <string name="memory_editor_expression_single_hint">Anna yksi arvo tai erota ryhmän arvot puolipisteillä (;).</string>
     <string name="memory_editor_expression_group_needs_type">Valitse tietty tietotyyppi ryhmähakua varten.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="one">Ryhmähaku · %1$d arvo · sama Managed Java -omistaja</item>
-        <item quantity="other">Ryhmähaku · %1$d arvoa · sama Managed Java -omistaja</item>
+        <item quantity="one">Ryhmähaku · %1$d arvo · sama Java-objekti</item>
+        <item quantity="other">Ryhmähaku · %1$d arvoa · sama Java-objekti</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Esimerkit: 500 · 500;1000. Ryhmähaku käyttää 2–8 arvoa yhdeltä Managed Java -omistajalta.</string>
+    <string name="memory_editor_expression_query_help">Esimerkit: 500 tai 500;1000. Ryhmähaku etsii 2–8 arvoa samasta Java-objektista.</string>
     <string name="memory_editor_keypad_clear">Tyhjennä</string>
     <string name="memory_editor_peek_underlay">Pidä painettuna nähdäksesi alla olevan MIDlet-sovelluksen</string>
     <string name="memory_editor_peek_underlay_active">Näytetään alla oleva MIDlet</string>

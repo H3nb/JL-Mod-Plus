@@ -563,4 +563,49 @@
         <item quantity="one">%1$dଟି ଚେତାବନୀ</item>
         <item quantity="other">%1$dଟି ଚେତାବନୀ</item>
     </plurals>
+    <string name="memory_editor_apply">ପ୍ରୟୋଗ କରନ୍ତୁ</string>
+    <string name="memory_editor_edit">ସମ୍ପାଦନା କରନ୍ତୁ</string>
+    <string name="memory_editor_keypad_clear">ସଫା କରନ୍ତୁ</string>
+    <string name="memory_editor_max_change">ସର୍ବାଧିକ ପରିବର୍ତ୍ତନ</string>
+    <string name="memory_editor_max_value">ସର୍ବାଧିକ ମୂଲ୍ୟ</string>
+    <string name="memory_editor_min_change">ସର୍ବନିମ୍ନ ପରିବର୍ତ୍ତନ</string>
+    <string name="memory_editor_min_value">ସର୍ବନିମ୍ନ ମୂଲ୍ୟ</string>
+    <string name="memory_editor_new_search">ନୂଆ ସନ୍ଧାନ</string>
+    <string name="memory_editor_next_results_page_action">ଫଳାଫଳର ପରବର୍ତ୍ତୀ ପୃଷ୍ଠା</string>
+    <string name="memory_editor_next_scan">ପରବର୍ତ୍ତୀ ସ୍କାନ୍</string>
+    <string name="memory_editor_next_scan_result">ପରବର୍ତ୍ତୀ ସ୍କାନ୍‌ର ଫଳାଫଳ: %1$d → %2$d</string>
+    <string name="memory_editor_no_results">କୌଣସି ଫଳାଫଳ ନାହିଁ</string>
+    <string name="memory_editor_no_watch">ନିରୀକ୍ଷଣ ତାଲିକା ଖାଲି ଅଛି</string>
+    <string name="memory_editor_predicate_changed">ପରିବର୍ତ୍ତିତ</string>
+    <string name="memory_editor_predicate_decreased">କମିଛି</string>
+    <string name="memory_editor_predicate_increased">ବଢ଼ିଛି</string>
+    <string name="memory_editor_predicate_unchanged">ଅପରିବର୍ତ୍ତିତ</string>
+    <string name="memory_editor_previous_results_page_action">ଫଳାଫଳର ପୂର୍ବବର୍ତ୍ତୀ ପୃଷ୍ଠା</string>
+    <string name="memory_editor_refresh">ରିଫ୍ରେଶ୍ କରନ୍ତୁ</string>
+    <string name="memory_editor_remove">ହଟାନ୍ତୁ</string>
+    <string name="memory_editor_save">ପ୍ରୟୋଗ କରନ୍ତୁ</string>
+    <string name="memory_editor_search_hint">ମୂଲ୍ୟ</string>
+    <string name="memory_editor_search_tab">ସନ୍ଧାନ</string>
+    <string name="memory_editor_select_result_value">ଏହି ଫଳାଫଳ ବାଛନ୍ତୁ</string>
+    <string name="memory_editor_select_visible">ଦୃଶ୍ୟମାନ ଫଳାଫଳ ବାଛନ୍ତୁ</string>
+    <string name="memory_editor_type_auto">ସ୍ୱୟଂଚାଳିତ</string>
+    <string name="memory_editor_watch">ନିରୀକ୍ଷଣ</string>
+    <string name="memory_editor_candidate_static">%1$s · %2$s</string>
+    <string name="memory_editor_candidate_instance">%1$s · %2$s · ଲକ୍ଷ୍ୟ #%3$d</string>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one">%1$dଟି ସମ୍ଭାବ୍ୟ ମେଳ</item>
+        <item quantity="other">%1$dଟି ସମ୍ଭାବ୍ୟ ମେଳ</item>
+    </plurals>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">%1$dଟି ମୂଲ୍ୟ ସମ୍ପାଦନା କରନ୍ତୁ</item>
+        <item quantity="other">%1$dଟି ମୂଲ୍ୟ ସମ୍ପାଦନା କରନ୍ତୁ</item>
+    </plurals>
+    <plurals name="memory_editor_results">
+        <item quantity="one">%1$dଟି ଫଳାଫଳ</item>
+        <item quantity="other">%1$dଟି ଫଳାଫଳ</item>
+    </plurals>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">%1$dଟି ବଛାଯାଇଛି</item>
+        <item quantity="other">%1$dଟି ବଛାଯାଇଛି</item>
+    </plurals>
 </resources>

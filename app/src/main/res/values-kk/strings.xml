@@ -585,4 +585,49 @@
         <item quantity="one">%1$d ескерту</item>
         <item quantity="other">%1$d ескерту</item>
     </plurals>
+    <string name="memory_editor_apply">Қолдану</string>
+    <string name="memory_editor_edit">Өңдеу</string>
+    <string name="memory_editor_keypad_clear">Тазалау</string>
+    <string name="memory_editor_max_change">Ең үлкен өзгеріс</string>
+    <string name="memory_editor_max_value">Ең үлкен мән</string>
+    <string name="memory_editor_min_change">Ең кіші өзгеріс</string>
+    <string name="memory_editor_min_value">Ең кіші мән</string>
+    <string name="memory_editor_new_search">Жаңа іздеу</string>
+    <string name="memory_editor_next_results_page_action">Нәтижелердің келесі беті</string>
+    <string name="memory_editor_next_scan">Келесі сканерлеу</string>
+    <string name="memory_editor_next_scan_result">Келесі сканерлеу нәтижелері: %1$d → %2$d</string>
+    <string name="memory_editor_no_results">Нәтиже жоқ</string>
+    <string name="memory_editor_no_watch">Бақылау тізімі бос</string>
+    <string name="memory_editor_predicate_changed">Өзгерген</string>
+    <string name="memory_editor_predicate_decreased">Азайған</string>
+    <string name="memory_editor_predicate_increased">Артқан</string>
+    <string name="memory_editor_predicate_unchanged">Өзгермеген</string>
+    <string name="memory_editor_previous_results_page_action">Нәтижелердің алдыңғы беті</string>
+    <string name="memory_editor_refresh">Жаңарту</string>
+    <string name="memory_editor_remove">Алып тастау</string>
+    <string name="memory_editor_save">Қолдану</string>
+    <string name="memory_editor_search_hint">Мән</string>
+    <string name="memory_editor_search_tab">Іздеу</string>
+    <string name="memory_editor_select_result_value">Осы нәтижені таңдау</string>
+    <string name="memory_editor_select_visible">Көрінетіндерді таңдау</string>
+    <string name="memory_editor_type_auto">Автоматты</string>
+    <string name="memory_editor_watch">Бақылау</string>
+    <string name="memory_editor_candidate_static">%1$s · %2$s</string>
+    <string name="memory_editor_candidate_instance">%1$s · %2$s · нысана #%3$d</string>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one">%1$d ықтимал сәйкестік</item>
+        <item quantity="other">%1$d ықтимал сәйкестік</item>
+    </plurals>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">%1$d мәнді өңдеу</item>
+        <item quantity="other">%1$d мәнді өңдеу</item>
+    </plurals>
+    <plurals name="memory_editor_results">
+        <item quantity="one">%1$d нәтиже</item>
+        <item quantity="other">%1$d нәтиже</item>
+    </plurals>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">%1$d таңдалған</item>
+        <item quantity="other">%1$d таңдалған</item>
+    </plurals>
 </resources>
