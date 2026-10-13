@@ -1,5 +1,10 @@
 # Unresolved configuration and controls language review
 
+This is a historical feature checkpoint. Active remaining identities and counts
+are consolidated in [current language-review gaps](localization-language-review.md)
+after the deferred-language recovery; do not treat resolved entries below as
+current blockers.
+
 Snapshot: 13 October 2026, PR 169. This records unaccepted resource identities,
 not replacement translation text or a second runtime catalog. Android XML
 remains authoritative. The accepted checkpoint is described in

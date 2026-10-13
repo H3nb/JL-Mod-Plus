@@ -1,5 +1,10 @@
 # Unresolved installer language review
 
+This is a historical feature checkpoint. Active remaining identities and counts
+are consolidated in [current language-review gaps](localization-language-review.md)
+after the deferred-language recovery; do not treat resolved entries below as
+current blockers.
+
 Snapshot: 13 October 2026, PR 169. These are unaccepted review cases in the
 116-resource installer/bulk-installation selection, not a second translation
 catalog. See [progress](localization-progress.md) and the separate

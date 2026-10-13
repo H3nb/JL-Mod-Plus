@@ -160,4 +160,17 @@
     <string name="library_icon_ratio_portrait">3:4</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
+    <string name="bulk_install_cancel">ᱵᱟᱹᱰᱨᱟᱹ</string>
+    <string name="bulk_install_close">ᱵᱚᱸᱫᱚᱭ ᱢᱮ</string>
+    <string name="config_analog_stick_off">ᱵᱚᱸᱫᱚ</string>
+    <string name="config_background_custom">ᱠᱩᱥᱤᱭᱟᱜ</string>
+    <string name="config_destination_general">ᱥᱟᱫᱷᱟᱨᱚᱱ</string>
+    <string name="config_gamepad_pointer_off">ᱵᱚᱸᱫᱚ</string>
+    <string name="mapping_dialog_remove">ᱚᱪᱚᱜᱽ ᱢᱮ</string>
+    <string name="memory_editor_remove">ᱚᱪᱚᱜᱽ ᱢᱮ</string>
+    <string name="memory_editor_search_tab">ᱥᱮᱸᱫᱽᱨᱟ</string>
+    <string name="perf_overlay_custom">ᱠᱩᱥᱤᱭᱟᱜ</string>
+    <string name="perf_overlay_standard">ᱢᱟᱱᱚᱠ</string>
+    <string name="profile_custom">ᱠᱩᱥᱤᱭᱟᱜ</string>
+    <string name="settings_section_language">ᱯᱟᱹᱨᱥᱤ</string>
 </resources>

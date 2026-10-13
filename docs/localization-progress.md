@@ -65,14 +65,19 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 6,152 to **2,111** in the
-settings/performance/runtime checkpoint (8,758 before Memory Editor, 11,502
+Missing localized declarations decreased from 2,111 to **1,492** in the
+deferred-language recovery checkpoint (6,152 before settings/runtime,
+8,758 before Memory Editor, 11,502
 before installer, 18,070 before controls, and 25,122 before 12 October).
 Thirty-five catalogs cover all 977 resources; the four incomplete catalogs are
-Kazakh (401 missing), Odia (428), Santali (817), and Sinhala (465).
+Kazakh (41 missing), Odia (327), Santali (804), and Sinhala (320).
 **Resource presence does not establish language certification.** The remaining
 existing-language uncertainty is documented separately from missing declarations.
 Full app/UI verification and final CI are still pending.
+
+The [current language-review record](localization-language-review.md) lists every
+remaining missing identity and the active deferred existing cases. Earlier
+per-feature counts below are historical snapshots, superseded by that record.
 
 Santali remains a material blocker. Its earlier 215 unresolved batch entries require
 competent standard Santali Ol Chiki review; CLDR/script documentation does not
@@ -347,43 +352,79 @@ Full app build/tests/lint, representative visual verification and final CI remai
 pending. This intermediate resource checkpoint uses the user's explicit `[skip ci]`
 exception. Keep the PR Draft while material scope remains incomplete.
 
+## Deferred-language recovery checkpoint
+
+Added **619** declarations and revised **24** existing declarations relative to
+`8df5bcd`. Independent language review and a separate integration semantic pass
+covered previously deferred settings, controls, installer, Memory Editor and
+runtime cases. Correct existing text was retained.
+
+| Locale | Added | Revised | Accepted recovery identities | Still unaccepted in recovery selection |
+| --- | ---: | ---: | ---: | ---: |
+| Kazakh | 360 | 18 | 383 | 42 |
+| Odia | 101 | 6 | 109 | 341 |
+| Sinhala | 145 | 0 | 145 | 320 |
+| Santali | 13 | 0 | 17 | 6 |
+
+- Kazakh completes the earlier deferred installer and Memory Editor selections.
+  Consequential messages retain controller calibration, settings/data retention,
+  next-launch profile propagation, partial success, readback and conditional undo.
+  A second semantic pass corrected the batch-edit notice: matching values change,
+  rather than their data types. Opacity, detailed calibration and pipeline metrics
+  remain explicitly unaccepted where technical terminology could not be established.
+- Odia corrects software-provider metadata rather than seller wording, rounded
+  rectangle corners, dimensions, date-added sorting and vibration. Pressed-state
+  label/symbol colors explicitly belong to the pressed button. New simple report
+  plurals retain count parameters and standard numeric classifier usage.
+- Sinhala adds reviewed settings/control labels and bounded messages. Review
+  corrected button outlines, pressed-state color scope, keep-screen-on wording,
+  safety-paused enforcement and restoration of an earlier search.
+- Santali adds thirteen unchanged isolated labels attested in actual Mozilla
+  Ol Chiki software contexts with matching action/option/heading roles. Four
+  existing labels were kept. Five existing variants were preserved without a
+  new correctness claim; file-picker Search remains missing because pane-title
+  evidence did not establish its action role. No technical prose was manufactured.
+
+The [current language-review record](localization-language-review.md) consolidates
+all 1,492 missing identities and 128 recorded deferred existing cases: one Kazakh,
+14 Odia and 113 Santali. Separate historical batch counts must not be summed as
+current gaps or treated as whole-catalog language certification. Remaining
+uncertainty and reference evidence are explicitly documented.
+
+## Deferred-language recovery validation
+
+- Inventory: 977 canonical identities / 39 catalogs / 1,492 missing declarations /
+  35 full-presence catalogs. No duplicates, resource-type mismatches, extras,
+  localized invariant overrides or clear string argument mismatches. The 61
+  report-only ambiguous/disabled formatter comparisons are not declared resolved;
+  the added literal-percent scale help preserves canonical disabled formatting.
+- Changed strings and plural forms passed the existing hash-guarded applier's
+  identity, plain-text, argument/type and quantity checks. Dry-run preceded writes.
+- All 40 English/localized strings catalogs passed matching-AGP AAPT2 compilation
+  and resource-only linking for the cumulative current resource state.
+- Declaration-level diff confirms exactly 619 additions and 24 revisions in the
+  accepted recovery selections; no removed identities and byte-identical English.
+  Whitespace and documentation-link checks passed.
+- Earlier 30 passing localization-tool fixture tests remain applicable: tooling,
+  tests and fixtures are unchanged. Targeted checks validate the new resource
+  inputs. Application code, build/dependencies/workflows and screenshot baselines
+  are unchanged; generated matrices, reference corpora and helpers are uncommitted.
+
+This intermediate checkpoint uses the user's explicit `[skip ci]` exception.
+Full app build/tests/lint, rendered UI review and final CI remain pending. The
+successful earlier CI run on `0064a004` does not validate these resource changes.
+
 ## Exact next unfinished work
 
-The processed controls selection is:
-`config_` except the two already-reviewed `config_missing_app_storage_` strings;
-`preset_`, `profile_`, `mapping_dialog_`, `layout_edit_`, `runtime_preset_`,
-`runtime_layout_`, `runtime_virtual_controls_`; plus `presets`,
-`virtual_controls_save_failed`, `layout_switch`, `runtime_apply`, and
-`saved_keyboard_layout_summary`. This is 269 identities; it is complete in
-35 languages and partially accepted in three, with Santali still unresolved.
+Continue from [current language-review gaps](localization-language-review.md),
+not historical missing counts. Resolve the remaining 41 Kazakh, 327 Odia,
+320 Sinhala and 804 Santali missing declarations, plus the recorded uncertain
+existing translations, with competent language judgment. Preserve the verified
+feature contracts for profile following, controller identity/calibration,
+physical versus virtual input, data retention, partial installation/write/save
+outcomes, conditional undo, timing/metrics and local versus public diagnostics.
 
-Read `docs/preset-config-contract.md`, verified callers, and existing localization
-contracts. Preserve profile-following/detachment, settings/data retention,
-calibration preservation, Controller Signature versus Profile, Flat/Fuzz,
-physical versus virtual input, FPS/timing conditions and partial-save outcomes.
-Resolve the exact deferred controls messages when reliable language review is
-available, including the exact installer gaps in the linked review record.
-The installer selection is `installer_`, `install_`, `bulk_install_`, `reinstall_`,
-`reconversion_`, plus `install`, `reinstall`, `reconverting_wait`, `converting_wait`,
-`warn_install_from_net`, and the four `midlet_name/size/vendor/version` labels.
-It contains 116 identities, complete in 35 languages and partially accepted in
-the same three, with Santali limited to retained isolated labels.
-The Memory Editor selection is 109 `memory_editor_` identities, complete in
-35 languages and partially accepted in the same three, with all Santali entries
-unresolved. Resolve its exact deferred keys when competent language judgment is
-available; preserve runtime identity, write/readback, undo conditions, partial
-operations, and arithmetic-sequence semantics.
-The presentation/settings selection covers `pref_`, `PREF_`, `perf_overlay_`,
-`settings_`, plus nine explicit graphics/screenshot labels, excluding earlier
-selected controls keys. The 51 runtime/diagnostic/miscellaneous identities were
-the exact remainder outside earlier groups. Canonical resource membership must
-still be rebuilt from current inventory before writes; prefix matching alone is
-not evidence of exhaustive language review.
-
-Next, resolve the documented missing and uncertain existing Kazakh/Odia/Sinhala/
-Santali cases when competent review is available, without counting guessed prose
-or English fallback. Check terminology across feature groups and complete
-representative long-text/RTL/narrow-screen/script rendering and relevant app
-build/tests/lint. Obtain one meaningful final CI validation of the final relevant
-resource state; the earlier CI success cannot validate these checkpoints. Keep
-the PR Draft and do not merge without explicit user instruction.
+Check cross-feature terminology and representative long-text, narrow-screen,
+RTL and script rendering. Complete relevant app build/tests/lint and obtain one
+meaningful final CI validation corresponding to the final relevant resource
+state. Keep PR 169 Draft; no merge is authorized.

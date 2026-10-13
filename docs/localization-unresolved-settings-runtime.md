@@ -1,5 +1,10 @@
 # Unresolved settings and runtime language review
 
+This is a historical feature checkpoint. Active remaining identities and counts
+are consolidated in [current language-review gaps](localization-language-review.md)
+after the deferred-language recovery; do not treat resolved entries below as
+current blockers.
+
 Snapshot: 13 October 2026, PR 169. This records unaccepted review cases in
 the 175-resource presentation/settings/performance and 51-resource runtime/
 diagnostics selections. It is not another translation catalog. See

@@ -1,5 +1,10 @@
 # Unresolved Memory Editor language review
 
+This is a historical feature checkpoint. Active remaining identities and counts
+are consolidated in [current language-review gaps](localization-language-review.md)
+after the deferred-language recovery; do not treat resolved entries below as
+current blockers.
+
 Snapshot: 13 October 2026, PR 169. The 109-resource selection consists of
 `memory_editor_` resources in the current canonical inventory. This document
 records unaccepted review cases; it is not a translation catalog. See
