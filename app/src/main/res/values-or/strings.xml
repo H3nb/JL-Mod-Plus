@@ -47,9 +47,9 @@
     <string name="pref_button_shape_round">ଗୋଲାକାର କୋଣ ଥିବା ଆୟତକ୍ଷେତ୍ର</string>
     <string name="pref_button_shape_title">ବଟନ୍ ଆକୃତି</string>
     <string name="pref_emulator_dir">ୱାର୍କିଂ ଡିରେକ୍ଟୋରୀ</string>
-    <string name="pref_enable_actionbar_summary">ଫୁଲ୍ ସ୍କ୍ରିନ୍ ପ୍ରୟୋଗଗୁଡ଼ିକରେ</string>
-    <string name="pref_enable_actionbar_title">ଆକ୍ସନ୍ ବାର୍ ସକ୍ଷମ କରନ୍ତୁ</string>
-    <string name="pref_enable_statusbar_title">ଷ୍ଟାଟସ୍ ବାର୍ ସକ୍ଷମ କରନ୍ତୁ</string>
+    <string name="pref_enable_actionbar_summary">MIDlet Canvas ସ୍କ୍ରିନ୍‌ରେ ରନ୍‌ଟାଇମ୍ ଟୁଲ୍‌ବାର୍ ଦୃଶ୍ୟମାନ ରଖନ୍ତୁ।</string>
+    <string name="pref_enable_actionbar_title">ରନ୍‌ଟାଇମ୍ ଟୁଲ୍‌ବାର୍ ଦେଖାନ୍ତୁ</string>
+    <string name="pref_enable_statusbar_title">ସିଷ୍ଟମ୍ ଷ୍ଟାଟସ୍ ବାର୍ ଦେଖାନ୍ତୁ</string>
     <string name="pref_encoding_title">ଏନକୋଡିଂ</string>
     <string name="PREF_FONT_LARGE">ବଡ଼</string>
     <string name="PREF_FONT_MEDIUM">ମଧ୍ୟମ</string>
@@ -64,7 +64,7 @@
     <string name="pref_screenshot_summary">ସ୍କ୍ରିନସଟ୍ ପାଇଁ ସ୍କେଲିଂ ଏବଂ ଫିଲ୍ଟରିଂ ଅକ୍ଷମ କରନ୍ତୁ</string>
     <string name="pref_screenshot_title">କଞ୍ଚା ସ୍କ୍ରିନସଟ୍</string>
     <string name="pref_theme_auto_battery">ସ୍ଵତଃ, ବ୍ୟାଟେରୀ ସେଭର୍ ଦ୍ୱାରା</string>
-    <string name="pref_theme_auto_time">ସ୍ଵତଃ, ଦିନ ର ସମୟ ସୁଦ୍ଧା</string>
+    <string name="pref_theme_auto_time">ସ୍ୱୟଂଚାଳିତ (ଦିନର ସମୟ ଅନୁଯାୟୀ)</string>
     <string name="pref_theme_light">ହାଲୁକା</string>
     <string name="pref_theme_night">ଗାଢ଼</string>
     <string name="pref_theme_system">ସିଷ୍ଟମ୍ ସେଟିଂକୁ ଅନୁସରଣ କରିବା</string>
@@ -725,4 +725,29 @@
         <item quantity="one">%1$dଟି ନିଦାନ ରିପୋର୍ଟ ବିଲୋପ କରିବେ?</item>
         <item quantity="other">%1$dଟି ନିଦାନ ରିପୋର୍ଟ ବିଲୋପ କରିବେ?</item>
     </plurals>
+    <string name="PREF_EMULATION_SPEED">ଏମୁଲେସନ୍ ବେଗ</string>
+    <string name="PREF_FONT_SIZE_IN_SP">Android ଫଣ୍ଟ୍ ସ୍କେଲ୍ ବ୍ୟବହାର କରନ୍ତୁ</string>
+    <string name="PREF_FORCE_FULLSCREEN">କମାଣ୍ଡ ବାର୍ ବିନା ଆରମ୍ଭ କରନ୍ତୁ</string>
+    <string name="PREF_IMMEDIATE">ତୁରନ୍ତ ପ୍ରକ୍ରିୟାକରଣ</string>
+    <string name="PREF_LAYOUT">କୀ କୋଡ୍ ବିନ୍ୟାସ</string>
+    <string name="PREF_LIMIT_FPS">ଫ୍ରେମ୍ ହାର ସୀମା</string>
+    <string name="PREF_SCALE_RATIO">ସ୍କେଲ୍</string>
+    <string name="PREF_SHADER_FILTER">ସ୍କ୍ରିନ୍ ଶେଡର୍</string>
+    <string name="PREF_TIMING_MODE">ସମୟ ଉତ୍ସ</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ଦେଖାନ୍ତୁ</string>
+    <string name="PREF_VK_HIDE_DELAY">ସ୍ୱୟଂଚାଳିତ ଭାବେ ଲୁଚାଇବାର ବିଳମ୍ବ</string>
+    <string name="pref_apps_view">ବିନ୍ୟାସ</string>
+    <string name="pref_graphics_mode_title">ଗ୍ରାଫିକ୍ସ ମୋଡ୍</string>
+    <string name="pref_mascot_summary">Mascot Capsule 3D ବ୍ୟବହୃତ ହେଲେ ଏକ ସନ୍ଦେଶ ଦେଖାନ୍ତୁ।</string>
+    <string name="pref_mascot_title">Mascot Capsule 3D ସୂଚନା</string>
+    <string name="pref_orientation_land">ଲ୍ୟାଣ୍ଡସ୍କେପ୍</string>
+    <string name="pref_orientation_port">ପୋର୍ଟ୍ରେଟ୍</string>
+    <string name="pref_screen_scale_type">ସ୍କେଲିଂ ମୋଡ୍</string>
+    <string name="pref_screen_scale_type_fill">ୱିଣ୍ଡୋ ପୂରଣ କରନ୍ତୁ (ପ୍ରସ୍ଥ ଓ ଉଚ୍ଚତାର ଅନୁପାତକୁ ଅଣଦେଖା କରନ୍ତୁ)</string>
+    <string name="pref_screen_scale_type_fit">ୱିଣ୍ଡୋରେ ଖାପ ଖୁଆନ୍ତୁ</string>
+    <string name="pref_skip_resume_call">ପୁନଃ ଚାଲୁ ହେବାବେଳେ startApp() ଛାଡ଼ନ୍ତୁ</string>
+    <string name="pref_soundbank_title">MIDI ସାଉଣ୍ଡବ୍ୟାଙ୍କ୍</string>
+    <string name="pref_title_emulation">MIDlet ଜୀବନଚକ୍ର</string>
+    <string name="pref_vk_type_phone">ଫୋନ୍ କୀପ୍ୟାଡ୍</string>
+    <string name="pref_vk_type_phone_arrows">ଫୋନ୍ କୀପ୍ୟାଡ୍ (ତୀର ଚିହ୍ନ)</string>
 </resources>

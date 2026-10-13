@@ -9,13 +9,13 @@ translation catalog. Re-export the inventory before writing.
 
 | Locale | Missing declarations | Unaccepted existing cases in deferred feature selections |
 | --- | ---: | ---: |
-| `kk` | 41 | 1 |
-| `or` | 327 | 14 |
-| `si` | 320 | 0 |
+| `kk` | 5 | 0 |
+| `or` | 302 | 7 |
+| `si` | 300 | 0 |
 | `sat` | 804 | 113 |
 
 The 39 catalogs contain 977 canonical identities; 35 have full resource presence.
-There are **1,492 missing declarations**. Existing-case counts above are a
+There are **1,411 missing declarations**. Existing-case counts above are a
 deduplicated continuation of the recorded deferred selections, not a claim that
 all other existing text has native-speaker certification.
 
@@ -40,11 +40,43 @@ These support terminology and unchanged isolated labels; they do not certify
 new technical prose, visual fit, or arbitrary borrowing across grammatical roles.
 No reference corpus or second translation catalog is committed.
 
-The remaining Kazakh cases need stronger technical/lexical judgment, including
-opacity, calibration input properties, cursor behavior and pipeline metrics.
+The remaining Kazakh cases are four compound accent-color names and the
+non-finite calibration-sample label. Full hue names must retain their nuance;
+non-finite must cover NaN/Infinity rather than incomplete or out-of-range samples.
 Odia/Sinhala still need reliable whole-message grammar and idiom for the deferred
 conditions and consequences. Santali needs competent standard Ol Chiki review;
 dictionary fragments, script tables and plural rules cannot establish its prose.
+
+## Technical recovery follow-up
+
+A further bounded review adds 81 declarations and revises six existing strings:
+Kazakh 36 additions/two revisions, Odia 25/four, and Sinhala 20/no revisions.
+Kazakh opacity terminology is corroborated by actual
+[GIMP](https://github.com/GNOME/gimp/blob/master/po/kk.po) and
+[KWin](https://github.com/KDE/kwin/blob/master/po/kk/kwin.po) UI contexts;
+[GNOME System Monitor](https://github.com/GNOME/gnome-system-monitor/blob/master/po/kk.po)
+supports processor/process terminology. New clauses received separate grammatical
+and semantic review; reference terms alone do not certify them.
+
+Kazakh now preserves continuous neutral holding for both sticks and triggers,
+publication versus renderer-consumption rates/intervals, percentile statistics,
+core-equivalent units, submission timing and callback nesting depth. The fallback
+notice uses the exact established built-in profile name. Odia resolves runtime
+Canvas toolbar scope, system status-bar ownership, Android font scale, initial
+command-bar suppression and time-of-day theme selection. Sinhala resolves
+settings/data retention, whole versus partial profile application, loss of future
+following and local-save/source-update partial outcomes. Three compound Sinhala
+condition/next-start messages remain unaccepted after independent review; they
+were not imported from the draft.
+
+Five Kazakh cases remain:
+
+- `pref_accent_coral`: Full Coral peach hue name needs competent terminology review.
+- `pref_accent_rose`: Full Berry rose hue name needs competent terminology review.
+- `pref_accent_teal`: Full Jade teal hue name needs competent terminology review.
+- `pref_accent_violet`: Full Orchid violet hue name needs competent terminology review.
+- `config_gamepad_calibration_issue_non_finite`: Need natural concise sample wording
+  covering NaN and Infinity, without conflating non-finite with incomplete or out-of-range.
 
 ## Exact missing identities
 
@@ -57,71 +89,24 @@ Library/core groups; the same competence limitation applies to every listed key.
 Missing isolated labels require role/orthography evidence rather than invented
 word assembly. These lists are exhaustive for resource presence.
 
-### `kk` — 41 missing
+### `kk` — 5 missing
 
 ```text
-config_analog_stick_summary
-config_controller_help_body_compact
-config_gamepad_calibrate_summary
-config_gamepad_calibration_issue_invalid_constraints
 config_gamepad_calibration_issue_non_finite
-config_gamepad_calibration_issue_rest_outside_range
-config_gamepad_calibration_issue_rest_too_noisy
-config_gamepad_calibration_neutral_instructions
-config_gamepad_calibration_no_analog_ranges
-config_gamepad_calibration_no_supported_ranges
-config_gamepad_calibration_start
-config_gamepad_calibration_stick_instructions
-config_gamepad_calibration_trigger_instructions
-config_gamepad_calibration_waiting_controller
-config_gamepad_calibration_waiting_samples
-config_gamepad_diagnosis_samples_not_sent
-config_gamepad_diagnosis_source_explicit
-config_gamepad_pointer_cursor
-config_gamepad_stick_directions
-config_help_vk_alpha
-config_help_vk_force_opacity
-config_virtual_controls_preview_hint
-msg_immediate_mode_disabled
-perf_overlay_coalesced
-perf_overlay_cpu
-perf_overlay_fps
-perf_overlay_group_pipeline
-perf_overlay_guest_fps
-perf_overlay_interval
-perf_overlay_max
-perf_overlay_p95
-perf_overlay_parameters_help
-perf_overlay_render_interval
-perf_overlay_render_max
-perf_overlay_render_p95
-perf_overlay_submit
 pref_accent_coral
 pref_accent_rose
 pref_accent_teal
 pref_accent_violet
-runtime_virtual_controls_edit_guide_message
 ```
 
-### `or` — 327 missing
+### `or` — 302 missing
 
 ```text
-PREF_EMULATION_SPEED
 PREF_FILTER
 PREF_FONT_ANTI_ALIASING
-PREF_FONT_SIZE_IN_SP
-PREF_FORCE_FULLSCREEN
-PREF_IMMEDIATE
-PREF_LAYOUT
-PREF_LIMIT_FPS
-PREF_SCALE_RATIO
-PREF_SHADER_FILTER
-PREF_TIMING_MODE
-PREF_VIRTUAL_KEYBOARD_OPTIONS
 PREF_VK_ALPHA
 PREF_VK_FEEDBACK
 PREF_VK_FORCE_OPACITY
-PREF_VK_HIDE_DELAY
 SIZE_PRESETS
 SWAP_SIZES
 bulk_install_cancel_requested
@@ -369,26 +354,12 @@ pref_accent_sapphire
 pref_accent_teal
 pref_accent_title
 pref_accent_violet
-pref_apps_view
 pref_enable_statusbar_summary
-pref_graphics_mode_title
-pref_mascot_summary
-pref_mascot_title
-pref_orientation_land
-pref_orientation_port
 pref_screen_padding_title
-pref_screen_scale_type
-pref_screen_scale_type_fill
-pref_screen_scale_type_fit
 pref_skin_title
-pref_skip_resume_call
-pref_soundbank_title
-pref_title_emulation
 pref_use_display_cutout_summary
 pref_use_display_cutout_title
 pref_vk_save_alert
-pref_vk_type_phone
-pref_vk_type_phone_arrows
 preset_apply_failed_summary
 preset_based_on_modified
 preset_builtin_summary
@@ -435,7 +406,7 @@ take_screenshot
 virtual_controls_save_failed
 ```
 
-### `si` — 320 missing
+### `si` — 300 missing
 
 ```text
 PREF_EMULATION_SPEED
@@ -483,7 +454,6 @@ config_background_immersive
 config_background_immersive_help
 config_color_picker_hint
 config_controller_help_body_compact
-config_delete_app_data_summary
 config_display_performance
 config_gamepad_calibrate_summary
 config_gamepad_calibration_cancelled
@@ -550,10 +520,6 @@ config_help_vk_outline
 config_help_vk_selected_background
 config_help_vk_selected_foreground
 config_lock_custom_resolution_ratio
-config_message_delete_app_data
-config_message_reset_profile_settings
-config_message_reset_settings
-config_reset_all_settings_summary
 config_virtual_controls_preview_hint
 config_warning_filter_shader
 crash_report_bundle_cleanup_failed
@@ -725,32 +691,17 @@ pref_title_emulation
 pref_use_display_cutout_summary
 pref_use_display_cutout_title
 pref_vk_save_alert
-preset_apply_failed_summary
-preset_builtin_summary
-preset_includes_keyboard_layout
-preset_keyboard_layout_unavailable
 preset_save_help
-preset_saved_unlinked_warning
 preset_update_summary
 process_exit_recovery_message
 process_exit_recovery_message_midlet
 process_exit_recovery_message_named
 process_exit_recovery_title
-profile_apply_layout_keeps_settings
-profile_apply_settings_keeps_layout
-profile_apply_whole_follows
-profile_apply_whole_without_layout
-profile_default_fallback_notice
-profile_delete_template_message
-profile_follows_updates
 reconversion_done_with_warning
 reconverting_wait
 reinstall_newest
 reinstall_older
-runtime_preset_local_explanation
 runtime_preset_update_explanation
-runtime_preset_update_failed
-runtime_preset_update_unlinked
 runtime_replacement_failed
 runtime_storage_in_use
 runtime_virtual_controls_edit_guide_message
@@ -1574,25 +1525,19 @@ virtual_controls_save_failed
 Existing text is preserved. The reasons below identify current deferred cases;
 they do not constitute proposed replacements.
 
-### `kk` — 1 existing
+### `kk` — 0 existing
 
-- `PREF_VK_ALPHA`: NEEDS_LANGUAGE_REVIEW: Existing Айқынсыздық may denote obscurity; cannot establish the conventional Kazakh opacity term without risking inversion into transparency. Existing retained.
 
-### `or` — 14 existing
+All previously recorded deferred existing cases in this selection are resolved.
+
+### `or` — 7 existing
 
 - `alert_map_menu`: NEEDS_LANGUAGE_REVIEW: Cannot verify a natural standard Odia complete rendering of “Menu key (M) is not assigned.\nThis may prevent access to the runtime MIDlet menu.”, especially the exact runtime/diagnostic condition without a stronger success claim. Preserve existing bytes if present.
 - `alert_msg_workdir_not_exists`: NEEDS_LANGUAGE_REVIEW: Cannot verify a natural standard Odia complete rendering of “Working directory not found:\n%1$s\nCreate it or choose another directory?”, especially the exact runtime/diagnostic condition without a stronger success claim. Preserve existing bytes if present.
 - `install_jar_non_matched_jad`: NEEDS_LANGUAGE_REVIEW: Cannot establish a reliable standard Odia complete rendering of This app differs from the one described in the JAD.\nIgnore the JAD and install anyway?. Missing judgment concerns the stated install/conversion phase, retention condition, cancellation boundary or recovery consequence. Preserve existing text if present.
 - `invalid_resolution_not_saved`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Invalid resolution. Changes were not saved.. Existing text is preserved byte-for-byte.
 - `permission_request_failed`: NEEDS_LANGUAGE_REVIEW: Cannot verify a natural standard Odia complete rendering of “This app requires storage write permission.”, especially the exact runtime/diagnostic condition without a stronger success claim. Preserve existing bytes if present.
-- `pref_enable_actionbar_summary`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Keep the runtime toolbar visible on MIDlet Canvas screens.. Existing text is preserved byte-for-byte.
-- `pref_enable_actionbar_title`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Show runtime toolbar. Existing text is preserved byte-for-byte.
-- `pref_enable_statusbar_title`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Show system status bar. Existing text is preserved byte-for-byte.
 - `pref_screenshot_summary`: NEEDS_LANGUAGE_REVIEW: Existing wording incorrectly instructs disabling scaling/filtering. Need competent whole-message Odia for saving the MIDlet frame at virtual resolution before scaling, filtering and shader processing. Preserve existing XML pending that judgment.
-- `pref_screenshot_title`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Raw screenshot. Existing text is preserved byte-for-byte.
-- `pref_theme_auto_battery`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Automatic (Battery Saver). Existing text is preserved byte-for-byte.
-- `pref_theme_auto_time`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Automatic (time of day). Existing text is preserved byte-for-byte.
-- `pref_theme_system`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Follow system settings. Existing text is preserved byte-for-byte.
 - `reinstall`: NEEDS_LANGUAGE_REVIEW: Cannot establish a reliable standard Odia complete rendering of This app is already installed. Reinstall it?. Missing judgment concerns the stated install/conversion phase, retention condition, cancellation boundary or recovery consequence. Preserve existing text if present.
 
 ### `sat` — 113 existing

@@ -65,12 +65,12 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 2,111 to **1,492** in the
-deferred-language recovery checkpoint (6,152 before settings/runtime,
-8,758 before Memory Editor, 11,502
-before installer, 18,070 before controls, and 25,122 before 12 October).
+Missing localized declarations decreased from 1,492 to **1,411** in the
+technical recovery checkpoint (2,111 before deferred-language recovery,
+6,152 before settings/runtime, 8,758 before Memory Editor, 11,502 before
+installer, 18,070 before controls, and 25,122 before 12 October).
 Thirty-five catalogs cover all 977 resources; the four incomplete catalogs are
-Kazakh (41 missing), Odia (327), Santali (804), and Sinhala (320).
+Kazakh (5 missing), Odia (302), Santali (804), and Sinhala (300).
 **Resource presence does not establish language certification.** The remaining
 existing-language uncertainty is documented separately from missing declarations.
 Full app/UI verification and final CI are still pending.
@@ -414,11 +414,69 @@ This intermediate checkpoint uses the user's explicit `[skip ci]` exception.
 Full app build/tests/lint, rendered UI review and final CI remain pending. The
 successful earlier CI run on `0064a004` does not validate these resource changes.
 
+## Technical recovery checkpoint
+
+Added **81** declarations and revised **six** existing declarations relative to
+`7bdb8e6`. All proposals received independent language/semantic review, followed
+by integration review. Acceptance remained bounded; three Sinhala compound
+messages proposed in the draft were withheld after independent review.
+
+| Locale | Added | Revised | Accepted identities including retained text | Unaccepted in this selection |
+| --- | ---: | ---: | ---: | ---: |
+| Kazakh | 36 | 2 | 38 | 5 |
+| Odia | 25 | 4 | 32 | 12 |
+| Sinhala | 20 | 0 | 20 | 3 |
+
+- Kazakh corrects opacity terminology using actual GIMP/KWin software contexts,
+  with transparent/opaque endpoints and inside/outside-screen scope retained.
+  Calibrating sticks/triggers remain neutral throughout the timer; full traversal,
+  first-input start and unchanged previous calibration until save are explicit.
+  Metrics distinguish MIDlet publication from renderer consumption, preserve
+  percentile/max statistics, process core equivalents and submission duration.
+  Callback depth is not queue fullness. The fallback notice uses the exact
+  existing built-in profile display name.
+- Odia corrects runtime toolbar scope on MIDlet Canvas screens, system status-bar
+  ownership and time-of-day theme wording. Added labels preserve Android font
+  scale, initial command-bar suppression, emulation timing, virtual controls,
+  scaling aspect-ratio exclusion, MIDI soundbank and resume-call scope. Correct
+  existing raw-screenshot and automatic-theme labels were retained.
+- Sinhala adds destructive/reset confirmations with correct settings/data
+  retention, profile application/following distinctions and partial-save/update
+  warnings. Three longer conditional/next-start constructions remain explicitly
+  unaccepted; target grammar was not inferred from correct placeholder syntax.
+
+The current inventory has **1,411 missing declarations**: Kazakh 5, Odia 302,
+Sinhala 300, Santali 804. There are **120 recorded deferred existing cases**,
+seven Odia and 113 Santali. Kazakh's remaining keys are four compound color names
+and the non-finite sample label. Exact identities and language limitations remain
+in the [current review record](localization-language-review.md). Santali is still
+in scope; no new Santali prose was accepted in this checkpoint.
+
+## Technical recovery validation
+
+- Exact declaration diff: 81 additions/six revisions within accepted selections;
+  no removed identities, canonical English byte-identical, unrelated declarations
+  unchanged. XML/identity/placeholder checks and applier dry-run preceded writes.
+- Inventory retains 977 canonical identities/39 catalogs/35 full-presence catalogs,
+  with no duplicates, resource-type mismatches, extras, invariant overrides or clear
+  string argument mismatches. The same 61 report-only formatter comparisons remain.
+- AAPT2 compiled the three changed strings catalogs, reused prior compilation
+  evidence for 37 byte-identical catalogs, and successfully resource-linked the
+  cumulative 40-catalog state. This is not full app or rendered UI validation.
+- Whitespace and documentation links passed. Localization tooling/tests/fixtures
+  remain unchanged, so earlier 30 passing fixture tests remain applicable. No
+  application code, build/dependency/workflow or screenshot-baseline changes.
+  Temporary references, proposals and helpers are not committed.
+
+This intermediate checkpoint uses the user's explicit `[skip ci]` exception.
+Full app build/tests/lint, representative UI review and final CI remain pending;
+prior successful CI on `0064a004` does not validate this resource state.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
-not historical missing counts. Resolve the remaining 41 Kazakh, 327 Odia,
-320 Sinhala and 804 Santali missing declarations, plus the recorded uncertain
+not historical missing counts. Resolve the remaining 5 Kazakh, 302 Odia,
+300 Sinhala and 804 Santali missing declarations, plus the recorded uncertain
 existing translations, with competent language judgment. Preserve the verified
 feature contracts for profile following, controller identity/calibration,
 physical versus virtual input, data retention, partial installation/write/save

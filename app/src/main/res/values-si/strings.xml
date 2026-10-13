@@ -723,4 +723,24 @@
     <string name="runtime_no_midlets">මෙම යෙදුම තුළ MIDlet හමු නොවීය.</string>
     <string name="runtime_storage_unavailable">MIDlet ගබඩාව සූදානම් කළ නොහැකි විය.</string>
     <string name="saved">%1$s සුරකින ලදී</string>
+    <string name="config_delete_app_data_summary">සුරැකි දෑ ඇතුළුව මෙම MIDlet හි දත්ත ස්ථිරවම මකන්න. එහි සැකසුම් රඳවා ගනු ඇත.</string>
+    <string name="config_message_delete_app_data">මෙම MIDlet විසින් සාදන ලද සියලු දත්ත සහ සුරැකි දෑ ස්ථිරවම මකන්නද? MIDlet සැකසුම් මකා නොදැමේ.</string>
+    <string name="config_message_reset_profile_settings">මෙම පැතිකඩේ සැකසුම් සහ අතථ්‍ය පාලක ඒවායේ පෙරනිමි අගයන්ට යළි සකසන්නද? සුරැකීමට පෙර තවදුරටත් සංස්කරණය කිරීමට හෝ අවලංගු කිරීමට හැකිය.</string>
+    <string name="config_message_reset_settings">මෙම MIDlet හි සැකසුම් සහ අතථ්‍ය පාලක ඒවායේ පෙරනිමි අගයන්ට යළි සකසන්නද? MIDlet දත්ත මකා නොදැමේ.</string>
+    <string name="config_reset_all_settings_summary">මෙම MIDlet හි දත්ත මැකීමෙන් තොරව එහි සැකසුම් සහ අතථ්‍ය පාලක ඒවායේ පෙරනිමි අගයන්ට යළි සකසන්න.</string>
+    <string name="preset_apply_failed_summary">මෙම පැතිකඩ යෙදීමට නොහැකි විය. මූලාශ්‍රය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
+    <string name="preset_builtin_summary">යෙදුමට ඇතුළත් MIDlet සැකසුම් සහ අතථ්‍ය පාලක.</string>
+    <string name="preset_includes_keyboard_layout">අතථ්‍ය පාලක පිරිසැලසුම ඇතුළත් වේ.</string>
+    <string name="preset_keyboard_layout_unavailable">අතථ්‍ය පාලක පිරිසැලසුම ලබා ගත නොහැක.</string>
+    <string name="preset_saved_unlinked_warning">පැතිකඩ සුරකින ලදී, නමුත් මෙම MIDlet වෙත එහි ඉදිරි යාවත්කාලීන නොලැබෙනු ඇත.</string>
+    <string name="profile_apply_layout_keeps_settings">මෙම MIDlet හි සැකසුම් රඳවා ගන්න; අභිරුචි වින්‍යාසයක් භාවිත කරන්න.</string>
+    <string name="profile_apply_settings_keeps_layout">මෙම MIDlet හි පිරිසැලසුම රඳවා ගන්න; අභිරුචි වින්‍යාසයක් භාවිත කරන්න.</string>
+    <string name="profile_apply_whole_follows">සැකසුම් සහ පිරිසැලසුම ප්‍රතිස්ථාපනය කරන්න; ඉදිරි යාවත්කාලීන ලබා ගන්න.</string>
+    <string name="profile_apply_whole_without_layout">සැකසුම් ප්‍රතිස්ථාපනය කර, මෙම MIDlet හි පිරිසැලසුම ඉවත් කර, ඉදිරි යාවත්කාලීන ලබා ගන්න.</string>
+    <string name="profile_default_fallback_notice">පෙරනිමි පැතිකඩ “%1$s” භාවිත කිරීමට නොහැකි විය. එය නොතිබීම, අසම්පූර්ණ වීම හෝ කියවිය නොහැකි වීම ඊට හේතු විය හැකිය. නව MIDlet සඳහා පෙරනිමිය දැන් JL-Mod පෙරනිමි සැකසුම් වේ.</string>
+    <string name="profile_delete_template_message">“%1$s” පැතිකඩ මකන්නද? එය භාවිත කරන MIDlet වල වත්මන් සැකසුම් රඳවා ගනු ඇත, නමුත් ඒවාට ඉදිරි යාවත්කාලීන නොලැබෙනු ඇත.</string>
+    <string name="profile_follows_updates">පැතිකඩේ ඉදිරි යාවත්කාලීන ලැබෙනු ඇත.</string>
+    <string name="runtime_preset_local_explanation">මෙම MIDlet හි අතථ්‍ය පාලක පමණක් වෙනස් වනු ඇත.</string>
+    <string name="runtime_preset_update_failed">මෙම MIDlet සඳහා සුරකින ලදී, නමුත් %1$s යාවත්කාලීන කිරීමට නොහැකි විය.</string>
+    <string name="runtime_preset_update_unlinked">%1$s යාවත්කාලීන කරන ලදී, නමුත් මෙම MIDlet වෙත එහි ඉදිරි යාවත්කාලීන නොලැබෙනු ඇත.</string>
 </resources>

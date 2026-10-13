@@ -54,7 +54,7 @@
     <string name="PREF_SHADER_FILTER">Шейдер:</string>
     <string name="PREF_SYS_PROPS">Жүйелік қасиеттер</string>
     <string name="PREF_UNIT_MS">мс</string>
-    <string name="PREF_VK_ALPHA">Айқынсыздық: </string>
+    <string name="PREF_VK_ALPHA">Мөлдірсіздік</string>
     <string name="pref_vk_hide_hint">Сөндірілген</string>
     <string name="PREF_VK_SEL_BACK">Басылған батырманың түсі</string>
     <string name="PREF_VK_SEL_FORE">Басылған батырмадағы жазулар мен таңбалардың түсі</string>
@@ -820,7 +820,7 @@
     <string name="profile_apply_whole_follows">Баптаулар мен орналасуды ауыстыру; кейінгі жаңартуларды алу.</string>
     <string name="profile_apply_whole_without_layout">Баптауларды ауыстыру, жергілікті орналасуды жою және жаңартуларды алу.</string>
     <string name="profile_create_summary">Басқа MIDlet бағдарламалары үшін қайта пайдалануға болатын конфигурацияны сақтау.</string>
-    <string name="profile_default_fallback_notice">Әдепкі «%1$s» профилін қолдану мүмкін болмады. Ол жоқ, толық емес немесе оқылмайтын болуы мүмкін. Жаңа MIDlet бағдарламалары үшін енді JL-Mod әдепкі баптаулары қолданылады.</string>
+    <string name="profile_default_fallback_notice">Әдепкі «%1$s» профилін қолдану мүмкін болмады. Ол жоқ, толық емес немесе оқылмайтын болуы мүмкін. Жаңа MIDlet бағдарламалары үшін енді «JL-Mod әдепкі параметрлері» қолданылады.</string>
     <string name="profile_delete_template_message">«%1$s» профилін жою керек пе? Оны қолданатын MIDlet бағдарламалары қазіргі баптауларын сақтайды, бірақ кейінгі жаңартуларды алмайды.</string>
     <string name="profile_follows_updates">Профильдің кейінгі жаңартуларын алады.</string>
     <string name="profile_template_operation_failed">Профиль әрекетін аяқтау мүмкін болмады.</string>
@@ -1038,4 +1038,40 @@
         <item quantity="one">%1$d таңдалды</item>
         <item quantity="other">%1$d таңдалды</item>
     </plurals>
+    <string name="perf_overlay_coalesced">Рендерер қабылдамай тұрып ауыстырылған кадрлар (COAL)</string>
+    <string name="perf_overlay_cpu">Үрдістің процессорды пайдалануы (CPU, ядро эквиваленттерімен)</string>
+    <string name="perf_overlay_fps">Рендерердің секундына қабылдаған кадрлары (FPS)</string>
+    <string name="perf_overlay_group_pipeline">Өңдеу кезеңдерінің уақыты</string>
+    <string name="perf_overlay_guest_fps">MIDlet бағдарламасының секундына жариялаған кадрлары (GFPS)</string>
+    <string name="perf_overlay_interval">MIDlet кадрларының жариялану аралығы (GFI)</string>
+    <string name="perf_overlay_max">MIDlet кадрларының жариялану аралығының ең үлкен мәні (GMAX)</string>
+    <string name="perf_overlay_p95">MIDlet кадрларының жариялану аралығының 95-процентилі (GP95)</string>
+    <string name="perf_overlay_parameters_help">Көрсеткіштерді таңдаңыз. FPS рендерер қабылдаған кадрларды санайды; GFPS MIDlet бағдарламасы жариялаған барлық кадрларды санайды.</string>
+    <string name="perf_overlay_render_interval">Рендерердің кадрларды қабылдау аралығы (RFI)</string>
+    <string name="perf_overlay_render_max">Рендерердің кадрларды қабылдау аралығының ең үлкен мәні (RMAX)</string>
+    <string name="perf_overlay_render_p95">Рендерердің кадрларды қабылдау аралығының 95-процентилі (RP95)</string>
+    <string name="perf_overlay_submit">Рендерингке жіберу ұзақтығы (SUB)</string>
+    <string name="config_analog_stick_summary">Негізгі аналогтік стик үшін «Өшірулі», 4 бағыт, 8 бағыт немесе сандық пернетақтаны таңдаңыз. Контроллер түймелері пернелерге тағайындауларды пайдаланады.</string>
+    <string name="config_controller_help_body_compact">Контроллер түймелері пернетақта мен телефон пернелерімен бірдей тағайындауларды пайдаланады. Аналогтік стик MIDlet бағдарламасына тек бағыттық енгізу деректерін жібереді. Android жүйесінің «Артқа» түймесі әдеттегідей жұмыс істейді; M пернесіне тағайындалған кез келген физикалық түйме іске қосылған MIDlet мәзірін ашады.</string>
+    <string name="config_gamepad_calibrate_summary">Қосылған контроллердің бейтарап күйін және оның стиктері мен триггерлерінің диапазондарын өлшейді.</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">калибрлеу шектеулері жарамсыз</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">тыныш күйдегі мән диапазоннан тыс</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">тыныш күй жеткілікті тұрақты емес</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Бейтарап күй таймері аяқталғанша барлық анықталған стиктерді орталық күйде, ал барлық анықталған триггерлерді босатылған күйде ұстап тұрыңыз.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Бұл контроллер қолдау көрсетілетін аналогтік стик немесе триггер диапазондарын бермейді.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Қолдау көрсетілетін аналогтік диапазондар табылмады.</string>
+    <string name="config_gamepad_calibration_start">Бейтарап күй таймері аяқталғанша әр стикті орталық күйде, ал әр триггерді босатылған күйде ұстап тұрыңыз.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Әр анықталған стикті екі бағытты да қамтып, толық диапазоны бойынша жылжытыңыз, содан кейін «Келесі» түймесін басыңыз.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Әр анықталған триггерді босатып, толық басыңыз, содан кейін нәтижелерді қарау үшін «Келесі» түймесін басыңыз.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Қолдау көрсетілетін аналогтік стигі немесе триггері бар контроллерді қосыңыз. Калибрлеу стикті алғаш жылжытқанда немесе триггерді басқанда басталады; сақтағанға дейін бұрынғы калибрлеу өзгермейді.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Калибрлеу контроллерден өлшеу мәндерін күтуде.</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Енгізу үлгілері MIDlet бағдарламасына әдейі жіберілмейді.</string>
+    <string name="config_gamepad_diagnosis_source_explicit">тікелей көрсетілген</string>
+    <string name="config_gamepad_pointer_cursor">Пропорционалды меңзер</string>
+    <string name="config_gamepad_stick_directions">Дискретті бағыттар</string>
+    <string name="config_help_vk_alpha">Басқару элементтерінің мөлдірсіздігін орнатады: 0 = толығымен мөлдір; 255 = толығымен мөлдір емес.</string>
+    <string name="config_help_vk_force_opacity">MIDlet экранынан тыс басқару элементтерін мөлдір емес етеді. Экран үстіндегі басқару элементтері бапталған мөлдірсіздікті пайдаланады.</string>
+    <string name="config_virtual_controls_preview_hint">Басылған күйдегі түстерді алдын ала көру үшін түртіңіз. Үлгі таңдалған мөлдірсіздікті пайдаланады.</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Басқару элементтерін жылжыту үшін сүйреңіз. Түймелердің енін немесе биіктігін өзгерту үшін екі саусақты көлденең немесе тігінен, ал екеуін де өзгерту үшін қиғаш жылжытыңыз. D-pad немесе аналогтік стик өлшемін пропорционалды өзгерту үшін екі саусақты жақындатыңыз немесе алыстатыңыз. Аяқтаған соң «Дайын» түймесін түртіңіз.</string>
+    <string name="msg_immediate_mode_disabled">Оқиғалардың кері шақырулары тым терең кірістірілгендіктен, дереу өңдеу өшірілді.</string>
 </resources>
