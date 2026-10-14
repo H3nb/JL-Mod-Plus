@@ -316,65 +316,65 @@ localization objective remains all 39 catalogs.
 ### `sat` — 76 existing
 
 - `FORCE_CLOSE_CONFIRMATION`: 15 October rewrite now names stopping the MIDlet and possible loss of unsaved changes; the earlier unsupported data-corruption claim was removed. Fluent Santali grammar and register review remain open.
-- `PREF_FORCE_FULLSCREEN`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `PREF_FORCE_FULLSCREEN`: Revised against canonical English on 15 October: Removes obsolete force-fullscreen claim; identifies launch without command bar. Standard Santali grammar/idiom review remains open.
 - `PREF_IMMEDIATE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_LAYOUT`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_LIMIT_FPS`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `PREF_LAYOUT`: Revised against canonical English on 15 October: Names key-code layout rather than generic layout. Standard Santali grammar/idiom review remains open.
+- `PREF_LIMIT_FPS`: Revised against canonical English on 15 October: Uses frame-rate limit rather than a malformed FPS imperative. Standard Santali grammar/idiom review remains open.
 - `PREF_SCALE_RATIO`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_SYS_PROPS`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_TOUCH_INPUT`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VIRTUAL_KEYBOARD_OPTIONS`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_ALPHA`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_BACK`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `PREF_VIRTUAL_KEYBOARD_OPTIONS`: Revised against canonical English on 15 October: Names displaying virtual controls rather than a virtual keyboard. Standard Santali grammar/idiom review remains open.
+- `PREF_VK_ALPHA`: Revised against canonical English on 15 October: Removes obsolete trailing colon in the opacity label. Standard Santali grammar/idiom review remains open.
+- `PREF_VK_BACK`: Revised against canonical English on 15 October: Includes button **color**, previously missing. Standard Santali grammar/idiom review remains open.
 - `PREF_VK_FEEDBACK`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_VK_FORCE_OPACITY`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_FORE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_HIDE_DELAY`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_OUTLINE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_SEL_BACK`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_SEL_FORE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `RESET_LAYOUT_CMD`: Existing text names key layout rather than the explicitly scoped virtual controls layout. Correct standard Santali wording is unresolved.
+- `PREF_VK_FORE`: Revised against canonical English on 15 October: Identifies label/symbol color rather than only labels. Standard Santali grammar/idiom review remains open.
+- `PREF_VK_HIDE_DELAY`: Revised against canonical English on 15 October: Names automatic hide delay, not an imperative with trailing colon. Standard Santali grammar/idiom review remains open.
+- `PREF_VK_OUTLINE`: Revised against canonical English on 15 October: Includes outline **color**. Standard Santali grammar/idiom review remains open.
+- `PREF_VK_SEL_BACK`: Revised against canonical English on 15 October: Identifies color of a **pressed** button, not unexplained '(P)'. Standard Santali grammar/idiom review remains open.
+- `PREF_VK_SEL_FORE`: Revised against canonical English on 15 October: Identifies pressed label/symbol color, not unexplained '(P)'. Standard Santali grammar/idiom review remains open.
+- `RESET_LAYOUT_CMD`: Revised against canonical English on 15 October: Names virtual-controls layout rather than key layout. Standard Santali grammar/idiom review remains open.
 - `action_lock_orientation`: Existing compound wording cannot be certified as screen rotation lock rather than lock screen orientation without competent Santali review.
 - `alert_map_menu`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `alert_msg_workdir_not_exists`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `converting_wait`: Existing Ol Chiki progress text retained; requires competent Santali verification of JAR conversion phase grammar.
-- `create_apps_dir_failed`: Existing wording/argument differs from current working-directory preparation failure with explicit %1$s and supported recovery. Cannot safely correct complete text.
+- `create_apps_dir_failed`: Revised against canonical English on 15 October: Restores the exact `%1$s` format argument and the working-directory failure/recovery action; removes bogus quoting. Standard Santali grammar/idiom review remains open.
 - `install_done`: Existing Ol Chiki success sentence retained; requires competent Santali review of completed installation result and register.
 - `install_jar_non_matched_jad`: 15 October rewrite separates the mismatch from the choice to ignore JAD and install, restoring canonical line breaks. Fluent Santali verification of the two affected objects/decision remains open.
 - `invalid_resolution_not_saved`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `layout_edit_finish`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of finish-editing action; must not imply save completion.
 - `layout_edit_finished`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of virtual-controls editing-complete status; cannot certify its editing-mode wording or whether it implies persistence.
-- `layout_switch`: Existing Ol Chiki label retained unchanged. Canonical action now chooses a control layout including D-pad/analog, not only switching key layout; competent Santali revision required.
+- `layout_switch`: Revised against canonical English on 15 October: Uses the same translated label as `runtime_virtual_controls_switch_layout` for the identical English action. Standard Santali grammar/idiom review remains open.
 - `loading_info`: Existing abbreviated information/loading wording cannot be certified as natural current standard Santali UI.
-- `mapping_dialog_key_not_specified`: Existing Ol Chiki label retained unchanged. Canonical empty state means no physical inputs assigned, not an unspecified key; competent Santali revision required.
-- `mapping_dialog_title`: Existing Ol Chiki label retained unchanged. Canonical capture title accepts a key or controller button, not only a key; competent Santali revision required.
+- `mapping_dialog_key_not_specified`: Revised against canonical English on 15 October: States that no physical inputs are assigned, not merely unspecified. Standard Santali grammar/idiom review remains open.
+- `mapping_dialog_title`: Revised against canonical English on 15 October: Names both key and button as valid capture input. Standard Santali grammar/idiom review remains open.
 - `midlet_vendor`: Existing Ol Chiki vendor label retained; appears to use a merchant/trader term, and software publisher/vendor meaning requires competent Santali review.
-- `no_data_for_display`: Existing text names no data rather than no apps. Correct scope needs standard Santali wording.
+- `no_data_for_display`: Revised against canonical English on 15 October: Specifies there are no apps to show, rather than no generic data. Standard Santali grammar/idiom review remains open.
 - `parallel_screen_redrawing`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `permission_request_failed`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
-- `pref_app_sort_date`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_app_sort_date`: Revised against canonical English on 15 October: Includes the date's *added* role, not generic date. Standard Santali grammar/idiom review remains open.
 - `pref_app_sort_vendor`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_button_shape_round`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_category_experimental`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_category_experimental`: Revised against canonical English on 15 October: Removes unsupported additional experimentation instructions. Standard Santali grammar/idiom review remains open.
 - `pref_emulator_dir`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_enable_actionbar_summary`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_enable_actionbar_summary`: Revised against canonical English on 15 October: Restores MIDlet Canvas, runtime toolbar and visibility contract. Standard Santali grammar/idiom review remains open.
 - `pref_enable_actionbar_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_enable_statusbar_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_graphics_hw_gles`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_graphics_hw_surface`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_graphics_hw_view`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_graphics_mode_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_graphics_hw_surface`: Revised against canonical English on 15 October: Keeps technical renderer discriminator `Surface` verbatim. Standard Santali grammar/idiom review remains open.
+- `pref_graphics_hw_view`: Revised against canonical English on 15 October: Keeps technical renderer discriminator `Window` verbatim. Standard Santali grammar/idiom review remains open.
+- `pref_graphics_mode_title`: Revised against canonical English on 15 October: Removes extraneous colon. Standard Santali grammar/idiom review remains open.
 - `pref_map_keys`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_mascot_summary`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_mascot_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_mascot_summary`: Revised against canonical English on 15 October: Restores omitted condition `Mascot Capsule 3D`. Standard Santali grammar/idiom review remains open.
+- `pref_mascot_title`: Revised against canonical English on 15 October: Preserves exact product name `Mascot Capsule 3D`. Standard Santali grammar/idiom review remains open.
 - `pref_screen_scale_type_fill`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_screen_scale_type_fit`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_scale_type_none`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screenshot_summary`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_screen_scale_type_none`: Revised against canonical English on 15 October: Uses the existing manual-scaling term from `config_help_scale_type`. Standard Santali grammar/idiom review remains open.
+- `pref_screenshot_summary`: Revised against canonical English on 15 October: Restores saving a MIDlet frame at virtual resolution *before* scaling/filter/shader, not an instruction to turn these off. Standard Santali grammar/idiom review remains open.
 - `pref_theme_auto_battery`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_theme_auto_time`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_theme_system`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_vibration_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_vibration_title`: Revised against canonical English on 15 October: Names vibration rather than an additional show/enable command. Standard Santali grammar/idiom review remains open.
 - `pref_vk_hide_hint`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_save_alert`: 15 October rewrite names the *custom virtual controls layout* rather than a custom keyboard, and removes an unsupported extra line break. Fluent Santali review remains open.
 - `pref_vk_type_arrows`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
@@ -382,15 +382,15 @@ localization objective remains all 39 catalogs.
 - `pref_vk_type_custom`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_type_numbers`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_type_numbers_arrows`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_vk_type_phone`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_vk_type_phone_arrows`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_vk_type_phone`: Revised against canonical English on 15 October: Identifies phone **keypad**, rather than phone only. Standard Santali grammar/idiom review remains open.
+- `pref_vk_type_phone_arrows`: Revised against canonical English on 15 October: Identifies phone **keypad** with arrows. Standard Santali grammar/idiom review remains open.
 - `pref_wakelock_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `reinstall`: Existing Ol Chiki prose retained; competent review needed for reinstall decision, preservation clause, and Android newline rendering.
 - `reinstall_newest`: Existing Ol Chiki prose retained; competent review needed for target/current version roles and preserved-data clause.
-- `reinstall_older`: Existing Ol Chiki prose retained; competent review needed for downgrade target/current roles and possible failure with retained data.
+- `reinstall_older`: Revised against canonical English on 15 October: Restores requested/current version roles and *may not work* compatibility warning, without extra newline or retained-data promise. Standard Santali grammar/idiom review remains open.
 - `saved`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `take_screenshot`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `warn_install_from_net`: Existing Ol Chiki sentence retained; requires competent review of future download, rather than completed download.
+- `warn_install_from_net`: Revised against canonical English on 15 October: Uses future download status rather than reporting a completed download. Standard Santali grammar/idiom review remains open.
 
 ## Santali isolated-label evidence
 
@@ -437,6 +437,40 @@ verification. All 39 locale catalogs remain at complete resource presence.
 The post-cleanup resource validation is
 [Android CI #38602008299](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38602008299);
 its eventual verdict must be checked.
+
+## Existing Santali catalog cross-feature semantic corrections — 15 October
+
+Resource [commit `9f546a55`](https://github.com/H3nb/JL-Mod-Plus/commit/9f546a55ef380c877b0f9ca1533242ddc34ee572)
+revises **32 already-present Santali strings** after comparing canonical
+English semantics and reusing existing app terminology. No string identity,
+required formatter argument, literal newline or plural structure was added,
+deleted or altered. All 39 supported catalogs retain **977/977** declaration
+presence.
+
+These were not arbitrary style changes: the old translations frequently
+dropped the affected UI object (color, virtual controls, MIDlet Canvas),
+missed a distinguishing modifier (key code, date added, phone keypad,
+pressed state), translated technical `Surface`/`Window` names as ordinary
+nouns, or changed a future download into a completed one. The earlier
+working-directory failure also used unindexed `%s` and added spurious
+quotes to the supplied path; it now uses the canonical indexed `%1$s`
+and appropriate recovery copy. The downgrade prompt now matches
+the canonical version/compatibility contract.
+
+| Correction group | Keys addressed |
+| --- | ---: |
+| Controls/labels | 15 |
+| Colors and virtual-control states | 7 |
+| Technical/system references | 7 |
+| Installer and storage semantics | 3 |
+
+These are **evidence-based semantic repairs**, not independent validation by
+a fluent Santali speaker. Keep all 32 keys within the existing **76
+pending native-language checks**; do not reduce that count solely because
+source meaning was repaired. Review language morphology, grammar, script
+orthography, natural register and UI fitting in context. The resource
+commit triggers [Android CI #38654421339](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38654421339);
+record the verified conclusion separately.
 
 ## Resume point
 
