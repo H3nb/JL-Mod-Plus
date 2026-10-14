@@ -138,10 +138,11 @@ where applicable, preserve resource arguments, and leave higher-risk
 technical instructions or loss-of-data warnings in the open review set.
 
 Structural identity and format-argument comparisons against the English
-catalog pass for all 197 additions. No native-speaker certification,
-Android build, instrumented rendering, or full linguistic review is
-claimed for this follow-up. The prior passing Android CI applies to the
-earlier resource commit, not this newly changed XML. Santali plural
+catalog pass for all 197 additions. No native-speaker certification, representative manual rendering,
+or full linguistic review is claimed for this follow-up. The new
+[Android CI run](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38580930757)
+passes build/tests, screenshot validation, lint, and the build gate for
+resource commit `b27171938`; this verifies tooling, not target-language prose. Santali plural
 resources remain missing; CLDR cardinal rules require one/two/other
 grammar and are not interchangeable with English plurals.
 
@@ -748,5 +749,7 @@ long-text, narrow-screen, RTL and script rendering. Previous resource checkpoint
 `d6616507f` passes [cumulative Android CI](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38573678907),
 including build/tests, lint and screenshot validation; local rendering evidence
 is in [the progress record](localization-progress.md). The later Santali resource addition
-`b27171938` needs corresponding Android validation. Passing checks do not resolve the remaining
+`b27171938` passes [Android CI](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38580930757),
+but still requires competent linguistic review and representative manual
+rendering for long or consequential strings. Passing checks do not resolve the remaining
 language judgments. Keep PR 169 Draft; no merge is authorized.
