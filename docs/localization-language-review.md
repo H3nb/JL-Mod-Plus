@@ -327,33 +327,33 @@ localization objective remains all 39 catalogs.
 - `PREF_VK_ALPHA`: Revised against canonical English on 15 October: Removes obsolete trailing colon in the opacity label. Standard Santali grammar/idiom review remains open.
 - `PREF_VK_BACK`: Revised against canonical English on 15 October: Includes button **color**, previously missing. Standard Santali grammar/idiom review remains open.
 - `PREF_VK_FEEDBACK`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_VK_FORCE_OPACITY`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `PREF_VK_FORCE_OPACITY`: 15 October source-meaning fix: Clarified that *controls* (not only keys) remain opaque *outside the MIDlet screen*; previous text did not state the required spatial condition. Fluent Santali review still required.
 - `PREF_VK_FORE`: Revised against canonical English on 15 October: Identifies label/symbol color rather than only labels. Standard Santali grammar/idiom review remains open.
 - `PREF_VK_HIDE_DELAY`: Revised against canonical English on 15 October: Names automatic hide delay, not an imperative with trailing colon. Standard Santali grammar/idiom review remains open.
 - `PREF_VK_OUTLINE`: Revised against canonical English on 15 October: Includes outline **color**. Standard Santali grammar/idiom review remains open.
 - `PREF_VK_SEL_BACK`: Revised against canonical English on 15 October: Identifies color of a **pressed** button, not unexplained '(P)'. Standard Santali grammar/idiom review remains open.
 - `PREF_VK_SEL_FORE`: Revised against canonical English on 15 October: Identifies pressed label/symbol color, not unexplained '(P)'. Standard Santali grammar/idiom review remains open.
 - `RESET_LAYOUT_CMD`: Revised against canonical English on 15 October: Names virtual-controls layout rather than key layout. Standard Santali grammar/idiom review remains open.
-- `action_lock_orientation`: Existing compound wording cannot be certified as screen rotation lock rather than lock screen orientation without competent Santali review.
-- `alert_map_menu`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
+- `action_lock_orientation`: 15 October source-meaning fix: Clarified the operation as locking screen rotation, instead of ambiguous screen locking. Fluent Santali review still required.
+- `alert_map_menu`: 15 October source-meaning fix: Restored the conditional warning: unassigned Menu key (M) may prevent access to the *runtime MIDlet menu*. Removed unrelated emulator-options wording. Fluent Santali review still required.
 - `alert_msg_workdir_not_exists`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `converting_wait`: Existing Ol Chiki progress text retained; requires competent Santali verification of JAR conversion phase grammar.
 - `create_apps_dir_failed`: Revised against canonical English on 15 October: Restores the exact `%1$s` format argument and the working-directory failure/recovery action; removes bogus quoting. Standard Santali grammar/idiom review remains open.
 - `install_done`: Existing Ol Chiki success sentence retained; requires competent Santali review of completed installation result and register.
 - `install_jar_non_matched_jad`: 15 October rewrite separates the mismatch from the choice to ignore JAD and install, restoring canonical line breaks. Fluent Santali verification of the two affected objects/decision remains open.
 - `invalid_resolution_not_saved`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `layout_edit_finish`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of finish-editing action; must not imply save completion.
-- `layout_edit_finished`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of virtual-controls editing-complete status; cannot certify its editing-mode wording or whether it implies persistence.
+- `layout_edit_finish`: 15 October source-meaning fix: Names the action of finishing editing without implying changes were saved. Fluent Santali review still required.
+- `layout_edit_finished`: 15 October source-meaning fix: Identifies completed editing of *virtual controls*, without asserting persistent save completion. Fluent Santali review still required.
 - `layout_switch`: Revised against canonical English on 15 October: Uses the same translated label as `runtime_virtual_controls_switch_layout` for the identical English action. Standard Santali grammar/idiom review remains open.
 - `loading_info`: Existing abbreviated information/loading wording cannot be certified as natural current standard Santali UI.
 - `mapping_dialog_key_not_specified`: Revised against canonical English on 15 October: States that no physical inputs are assigned, not merely unspecified. Standard Santali grammar/idiom review remains open.
 - `mapping_dialog_title`: Revised against canonical English on 15 October: Names both key and button as valid capture input. Standard Santali grammar/idiom review remains open.
-- `midlet_vendor`: Existing Ol Chiki vendor label retained; appears to use a merchant/trader term, and software publisher/vendor meaning requires competent Santali review.
+- `midlet_vendor`: 15 October source-meaning fix: Replaced merchant/trader interpretation with provisional Ol Chiki transliteration of technical MIDlet-Vendor field; see matching sort and library metadata labels. A fluent Santali reviewer should choose the most natural software publisher/vendor term.
 - `no_data_for_display`: Revised against canonical English on 15 October: Specifies there are no apps to show, rather than no generic data. Standard Santali grammar/idiom review remains open.
 - `parallel_screen_redrawing`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `permission_request_failed`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `pref_app_sort_date`: Revised against canonical English on 15 October: Includes the date's *added* role, not generic date. Standard Santali grammar/idiom review remains open.
-- `pref_app_sort_vendor`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_app_sort_vendor`: 15 October source-meaning fix: Now uses the same provisional technical vendor term as `midlet_vendor` and `library_metadata_vendor`, rather than a retail-selling word. Fluent Santali review still required.
 - `pref_button_shape_round`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_category_experimental`: Revised against canonical English on 15 October: Removes unsupported additional experimentation instructions. Standard Santali grammar/idiom review remains open.
 - `pref_emulator_dir`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
@@ -471,6 +471,37 @@ source meaning was repaired. Review language morphology, grammar, script
 orthography, natural register and UI fitting in context. The resource
 commit triggers [Android CI #38654421339](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38654421339);
 record the verified conclusion separately.
+
+## Santali runtime access, display controls and vendor-field semantics — 15 October
+
+[Resource commit `423c62c5`](https://github.com/H3nb/JL-Mod-Plus/commit/423c62c5f9cb46512556039185817bd4bcd274ef)
+repairs **eight existing Santali strings** in three related UI contexts:
+
+- **MIDlet menu / state:** `alert_map_menu` now clearly distinguishes the
+  unassigned Menu key `(M)` from its potential effect on access to the
+  *runtime MIDlet menu*, not an unrelated emulator options page.
+- **Virtual controls / orientation:** `PREF_VK_FORCE_OPACITY` names the
+  controls, opacity, and *outside the MIDlet screen* condition.
+  `action_lock_orientation` names screen-rotation lock. The
+  `layout_edit_finish` and `layout_edit_finished` messages retain
+  the distinction between finishing an edit action and having already
+  saved changes.
+- **Publisher/vendor metadata:** `midlet_vendor`,
+  `pref_app_sort_vendor` and `library_metadata_vendor` now share a
+  provisional borrowed Santali Ol Chiki rendering of the technical
+  MIDlet-Vendor concept. This avoids the earlier merchant/seller wording,
+  which could misidentify the application publisher. **A native speaker
+  must still determine whether this technical loan is preferable to a
+  standard Santali software-publisher expression.**
+
+No XML IDs, markup, format placeholders, or line-break contracts changed.
+The whole catalogue remains at **977/977** resource presence, with the
+previous **76 existing-quality cases** still open (including the seven
+in that queue corrected here); `library_metadata_vendor` is a consistency
+fix outside the deferred list. The subsequent
+[Android CI #38655118238](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38655118238)
+checks the resource commit. Do not equate a passing build with
+language fluency or review sign-off.
 
 ## Resume point
 
