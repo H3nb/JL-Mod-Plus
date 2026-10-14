@@ -1,6 +1,6 @@
 # Current localization language-review gaps
 
-Snapshot: 14 October 2026, PR 169, following Kazakh/Odia/Sinhala completion
+Snapshot: 15 October 2026, PR 169, following Kazakh/Odia/Sinhala completion
 and further evidenced Santali recovery. This record supersedes the active counts
 in earlier per-feature snapshots; their historical evidence remains valid.
 Android XML remains the translation catalog. Re-export the inventory before writing.
@@ -177,6 +177,14 @@ well. The translation-batch source itself was damaged at `T0225`
 `1{1}o 1000%`; the damaged translations were **not** imported. Use
 canonical English (`formatted="false"`) for subsequent translation.
 
+## CLDR-aware Santali plural completion — 15 October
+
+Resource commit [`f075df46d`](https://github.com/H3nb/JL-Mod-Plus/commit/f075df46de1ca41f232778cf77dfb90dbc0d7d1e) adds **all 34 formerly missing Santali plural resources**, each with `one`, `two`, and `other` variants, and 21 additional contextual UI strings. For noun-bearing dual-count forms, the distinct two-item candidate uses the CLDR-attested Santali `ᱠᱤᱱ` construction; count-only statuses retain the same phrasing when no noun requires inflection. See [CLDR cardinal categories](https://unicode.org/cldr/charts/49/supplemental/language_plural_rules.html). Both English-derived formatting arguments and quantity declarations have been checked for every variant.
+
+Coverage now reaches **890 of 977** translatable identities. **87 strings** remain missing, **zero plurals** remain missing; the older **76 deferred existing translations** are still pending competent linguistic review. The dual forms here are **linguistically plausible candidates, not native-speaker-certified wording**; review noun agreement in context with fluent Santali speakers before declaring quality complete. The input/proposal errors around `config_help_scale_ratio` (`T0225`, literal `%` signs) remain excluded.
+
+The resource commit is tested through [Android CI #38599807318](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38599807318); record its result when complete. Documentation-only commits use `[skip ci]`. Keep PR #169 Draft; no merge is authorized.
+
 ## Exact missing identities
 
 Every key below is missing in the current XML and remains
@@ -188,45 +196,18 @@ identities are not declared impossible to translate. Isolated labels still requi
 matching UI-role and orthographic judgment. The lists are exhaustive for resource
 presence, not a claim that every missing identity received the same reference test.
 
-### `sat` — 142 missing
+### `sat` — 87 missing
 
 ```
-bulk_install_attention_count
-bulk_install_failed_count
-bulk_install_fatal
-bulk_install_found
-bulk_install_installed_count
-bulk_install_library_changed
-bulk_install_omitted_sources
-bulk_install_prepare_failed
-bulk_install_ready_count
-bulk_install_reason_ambiguous_match
-bulk_install_reason_conflicting_jads
-bulk_install_reason_duplicate_source
-bulk_install_reason_jad_jar_mismatch
-bulk_install_reason_unsupported_uri_scheme
-bulk_install_reinstall_missing_apps
-bulk_install_reinstalled_count
-bulk_install_restored_count
-bulk_install_running
-bulk_install_selected
-bulk_install_skipped_count
-bulk_install_skipped_result_count
-bulk_install_source_changed
-bulk_install_target_unverified
-bulk_install_updated_count
-bulk_install_warning_count
 config_analog_stick_summary
 config_controller_help_body_compact
 config_gamepad_calibrate_summary
 config_gamepad_calibration_issue_insufficient_samples
 config_gamepad_calibration_issue_invalid_constraints
-config_gamepad_calibration_issue_no_channels
 config_gamepad_calibration_issue_non_finite
 config_gamepad_calibration_issue_rest_outside_range
 config_gamepad_calibration_neutral_instructions
 config_gamepad_calibration_no_analog_ranges
-config_gamepad_calibration_no_supported_ranges
 config_gamepad_calibration_review_instructions
 config_gamepad_calibration_save_failed
 config_gamepad_calibration_start
@@ -254,61 +235,36 @@ config_message_reset_settings
 config_missing_app_storage_generic
 config_missing_app_storage_named
 config_reset_all_settings_summary
-config_system_properties_value
 config_warning_filter_shader
 crash_report_bundle_cleanup_failed
-crash_report_bundle_failed
 crash_report_bundle_ready_message
-crash_report_delete_failed
 crash_report_delete_message
 crash_reports_batch_delete_message
-crash_reports_batch_delete_title
-crash_reports_bundle_cleanup_failed
-crash_reports_copied
-crash_reports_delete_failed
-crash_reports_selected_count
-file_picker_navigate_back
-file_picker_parent_folder
-file_picker_selected_count
 installer_ambiguous
-installer_conversion_omitted_details
 installer_conversion_skipped_entry
-installer_conversion_warning_summary
 installer_needs_recovery
 installer_partial_restore
 installer_removed_leftovers
-library_bulk_delete_confirmation
-library_bulk_delete_result
-library_collection_member_count
-library_import_done_with_warning
 library_import_invalid_bundle
 library_import_restore_existing
-library_selection_count
-memory_editor_candidates
-memory_editor_edit_batch
 memory_editor_edit_batch_help
 memory_editor_edit_batch_no_common_type
 memory_editor_edit_batch_type_notice
-memory_editor_expression_group_hint
 memory_editor_expression_query_help
 memory_editor_freeze_after_edit_help
 memory_editor_identity_unsafe
 memory_editor_partial_write
 memory_editor_remove_candidates_description
 memory_editor_resource_limit
-memory_editor_results
 memory_editor_revert_remove_commit_failed
 memory_editor_revert_remove_outcome
 memory_editor_safety_limit
-memory_editor_search_complete
-memory_editor_selected
 memory_editor_write_failure_outcome
 memory_editor_write_outcome
 midlet_failure_recovery_message
 midlet_failure_recovery_message_named
 msg_immediate_mode_disabled
 perf_overlay_parameters_help
-perf_overlay_selected
 pref_use_display_cutout_summary
 pref_use_display_cutout_title
 preset_save_as
@@ -328,10 +284,7 @@ runtime_preset_update_explanation
 runtime_preset_update_failed
 runtime_preset_update_unlinked
 runtime_replacement_failed
-runtime_storage_in_use
-runtime_storage_unavailable
 runtime_virtual_controls_edit_guide_message
-updates_debug_build
 updates_not_installable
 ```
 
@@ -450,7 +403,7 @@ does not imply certification of the rest of the Santali catalog.
 
 ## Resume point
 
-Resolve the 142 remaining keys above with competent language review and the existing
+Resolve the 87 remaining keys above with competent language review and the existing
 feature contracts, then check cross-feature consistency and representative
 long-text, narrow-screen, RTL and script rendering. Previous resource checkpoint
 `d6616507f` passes [cumulative Android CI](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38573678907),
