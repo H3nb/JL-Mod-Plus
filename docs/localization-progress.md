@@ -687,6 +687,26 @@ Recorded per-key rationale is in
 validates the new resource commit; verify its eventual outcome.
 Use `[skip ci]` only for documentation-only updates.
 
+## Santali runtime/menu semantics and publisher terminology — 15 October
+
+The next resource [commit `423c62c5`](https://github.com/H3nb/JL-Mod-Plus/commit/423c62c5f9cb46512556039185817bd4bcd274ef)
+repairs **eight existing Santali strings**: `alert_map_menu`,
+`PREF_VK_FORCE_OPACITY`, `action_lock_orientation`,
+`layout_edit_finish`, `layout_edit_finished`, `midlet_vendor`,
+`pref_app_sort_vendor`, and `library_metadata_vendor`.
+The edits clarify the distinction between Menu key assignment and access
+to runtime MIDlet menu, opacity outside the MIDlet display, locking
+rotation rather than locking the screen, and editing completion rather
+than actual persistence. The three software vendor labels now use one
+provisional technical loanword instead of two inconsistent merchant/
+retailer terms; request native Santali preference review.
+
+No declaration, format-argument or XML inline-markup identity changed.
+The translated inventory stays at **977/977**; all **76 deferred
+existing review cases** stay open pending fluent review. Verify the
+actual result of [Android CI #38655118238](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38655118238)
+for the resource commit. Documentation-only changes use `[skip ci]`.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
