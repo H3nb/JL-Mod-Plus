@@ -26,13 +26,13 @@
     <string name="error">ᱵᱷᱩᱞ</string>
     <string name="error_name">ᱧᱩᱛᱩᱢ ᱟᱫᱮᱨ ᱢᱮ!</string>
     <string name="exit">ᱵᱟᱹᱰᱨᱟᱹ</string>
-    <string name="FORCE_CLOSE_CONFIRMATION">ᱮᱯ ᱡᱩᱨ ᱛᱮ ᱵᱚᱸᱫ ᱞᱮᱠᱷᱟᱱ ᱰᱟᱴᱟ ᱠᱚ ᱚᱴᱟᱝ ᱚᱜᱼᱟ ᱟᱨ ᱵᱟᱝ ᱯᱩᱨᱟᱹ ᱠᱷᱟᱨᱟᱯᱚᱜᱼᱟ!\nᱢᱟᱲᱟᱝ ᱥᱮᱫ ᱞᱟᱦᱟᱜ ᱟᱢ ᱥᱮ?</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">ᱱᱚᱶᱟ MIDlet ᱵᱚᱸᱫ ᱟ? ᱵᱟᱝ ᱥᱟᱧᱪᱟᱣ ᱟᱠᱟᱱ ᱵᱚᱫᱚᱞ ᱠᱚ ᱟᱫᱚᱜ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ᱾</string>
     <string name="help">ᱜᱚᱲᱚ</string>
     <string name="help_message">&#8226; ᱞᱤᱱᱤᱭᱟᱨ ᱯᱷᱤᱞᱴᱚᱨᱤᱝ ᱫᱚ ᱛᱤᱱᱟᱹᱜ ᱜᱟᱱ MIDlets ᱨᱮ ᱠᱟᱹᱢᱤᱦᱚᱨᱟ ᱟᱹᱰᱤ ᱠᱚᱢ ᱫᱟᱲᱮᱭᱟᱜᱼᱟᱭ ᱾ ᱡᱩᱫᱤ MIDlet ᱟᱹᱰᱤ ᱵᱟᱹᱭ ᱵᱟᱹᱭ ᱜᱮᱭᱟ ᱛᱚᱵᱮ ᱱᱚᱣᱟ ᱵᱚᱸᱫᱚᱭ ᱢᱮ ᱾&lt;BR&gt;&#8226; ᱞᱚᱜᱚᱱ ᱠᱟᱹᱢᱤ ᱢᱳᱰ: MIDlet ᱤᱵᱷᱮᱱᱴ ᱠᱚ ᱯᱨᱚᱥᱮᱥᱤᱝ ᱥᱚᱡᱷᱮ ᱥᱟᱫᱷᱟᱨᱚᱱ Java ME ᱤᱵᱷᱮᱱᱴ ᱛᱷᱟᱨ ᱵᱟᱹᱜᱤᱭᱟᱜᱼᱟ ᱾ MIDlets ᱞᱚᱜᱚᱱ ᱛᱮᱞᱟ ᱮᱢ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ, ᱢᱮᱱᱠᱷᱟᱱ ᱛᱤᱱᱟᱹᱜ ᱜᱟᱱ ᱫᱚ ᱵᱟᱝ ᱛᱷᱤᱨᱟᱜ ᱦᱩᱭ ᱫᱟᱲᱮᱭᱟᱜ ᱾</string>
     <string name="identity_filter">ᱡᱟᱦᱱᱟᱜ ᱵᱟᱝ (ᱡᱚᱛᱚ ᱠᱷᱚᱱ ᱩᱥᱟᱹᱨᱟ)</string>
     <string name="install">ᱵᱚᱦᱟᱞ</string>
     <string name="install_done">ᱮᱯᱞᱤᱠᱮᱥᱚᱱ ᱨᱟᱹᱥ ᱞᱮᱠᱷᱟᱛᱮ ᱵᱚᱦᱟᱞ ᱮᱱᱟ!</string>
-    <string name="install_jar_non_matched_jad">ᱟᱢᱟᱜ ᱮᱯ ᱫᱚ ᱵᱟᱛᱟᱣ ᱠᱟᱱ JAD ᱠᱷᱚᱱ ᱵᱷᱮᱜᱟᱨ ᱜᱮᱭᱟ ᱾ JAD ᱫᱚ ᱚᱲᱟᱜ ᱠᱟᱛᱮ ᱡᱮᱞᱠᱟ ᱛᱮ ᱵᱚᱦᱟᱞ ᱟᱢ ᱥᱮ ?</string>
+    <string name="install_jar_non_matched_jad">ᱱᱚᱶᱟ ᱮᱯ ᱫᱚ JAD ᱨᱮ ᱚᱞ ᱟᱠᱟᱱ ᱮᱯ ᱠᱷᱚᱱ ᱵᱷᱮᱜᱟᱨ ᱠᱟᱱᱟ᱾\nJAD ᱵᱟᱹᱜᱤ ᱠᱟᱛᱮ ᱤᱱᱥᱴᱚᱞ ᱢᱮ?</string>
     <string name="invalid_resolution_not_saved">ᱵᱷᱩᱞ ᱨᱤᱡᱚᱞᱭᱩᱥᱚᱱ ᱠᱚ : ᱵᱟᱝ ᱥᱟᱧᱪᱟᱣ ᱞᱮᱱᱟ !</string>
     <string name="layout_edit_finish">ᱥᱟᱯᱲᱟᱣ ᱢᱤᱰ ᱪᱟᱵᱟᱭᱢᱮ</string>
     <string name="layout_edit_finished">ᱥᱟᱯᱲᱟᱣ ᱢᱳᱰ ᱪᱟᱵᱟᱮᱱᱟ</string>
@@ -120,7 +120,7 @@
     <string name="PREF_VK_HIDE_DELAY">ᱰᱤᱞᱭ ᱩᱠᱩᱭᱢᱮ: </string>
     <string name="pref_vk_hide_hint">ᱵᱚᱸᱫ ᱮᱱᱟ</string>
     <string name="PREF_VK_OUTLINE">ᱟᱩᱴᱞᱟᱭᱤᱱ</string>
-    <string name="pref_vk_save_alert">ᱠᱚᱥᱴᱚᱢ ᱠᱤᱵᱚᱰ ᱫᱚ ᱱᱤᱛᱚᱜᱟᱜ ᱥᱟᱞᱟᱜ ᱵᱚᱫᱚᱞᱚᱼᱟ\nᱥᱟᱸᱪᱟᱣᱼᱟ ᱥᱮ?</string>
+    <string name="pref_vk_save_alert">ᱢᱮᱱᱟᱜ ᱠᱚᱥᱴᱚᱢ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱭᱟᱣᱩᱴ ᱱᱤᱛᱚᱜᱟᱜ ᱛᱮ ᱵᱚᱫᱚᱞᱟ?</string>
     <string name="PREF_VK_SEL_BACK">ᱵᱩᱛᱟᱹᱢᱠᱚ (P)</string>
     <string name="PREF_VK_SEL_FORE">ᱞᱮᱣᱮᱞᱠᱚ (P)</string>
     <string name="pref_vk_type_arrows">ᱥᱟᱨ</string>
@@ -132,8 +132,8 @@
     <string name="pref_vk_type_phone_arrows">ᱯᱷᱚᱱ (ᱥᱟᱨᱠᱚ)</string>
     <string name="pref_wakelock_title">ᱥᱠᱨᱤᱱ ᱚᱱ ᱠᱟᱜ ᱢᱮ</string>
     <string name="PREF_WIDTH">ᱪᱚᱣᱲᱟ</string>
-    <string name="reinstall">ᱮᱯ ᱫᱚ ᱢᱟᱲᱟᱝ ᱠᱷᱚᱱ ᱵᱚᱦᱟᱞ ᱮᱱᱟ ᱾ \n\n ᱟᱢ ᱪᱮᱫ ᱫᱩᱦᱲᱟᱹ ᱵᱚᱦᱟᱞ ᱥᱮᱱᱟᱢ ᱠᱟᱱᱟ ᱥᱮ ? \n ᱡᱷᱚᱛᱚ ᱰᱟᱴᱟ ᱥᱟᱺᱪᱟᱣᱜᱼᱟ ᱾</string>
-    <string name="reinstall_newest">ᱱᱚᱶᱟ ᱮᱯ ᱫᱚ %1$s ᱛᱮ ᱦᱟᱹᱞᱤᱭᱟᱹᱠᱼᱟ ᱥᱮ ? \n\n ᱱᱤᱛᱚᱜ ᱵᱚᱦᱟᱞ ᱠᱟᱱᱟ : %2$s\n ᱡᱷᱚᱛᱚ ᱰᱟᱴᱟ ᱥᱟᱺᱪᱟᱣᱜᱼᱟ ᱾</string>
+    <string name="reinstall">ᱱᱚᱶᱟ ᱮᱯ ᱢᱟᱲᱟᱝ ᱠᱷᱚᱱ ᱜᱮ ᱤᱱᱥᱴᱚᱞ ᱢᱮᱱᱟᱜᱼᱟ᱾ ᱫᱚᱦᱲᱟ ᱤᱱᱥᱴᱚᱞᱟ?</string>
+    <string name="reinstall_newest">ᱱᱚᱶᱟ ᱮᱯ %1$s ᱵᱷᱟᱨᱥᱚᱱ ᱛᱮ ᱟᱯᱰᱮᱴᱟ?\n\nᱱᱤᱛᱚᱜ ᱤᱱᱥᱴᱚᱞ ᱟᱠᱟᱱ: %2$s</string>
     <string name="reinstall_older">ᱱᱚᱶᱟ ᱮᱯ ᱫᱚ %1$s ᱦᱟᱹᱞᱤᱭᱟᱹᱠ ᱥᱟᱞᱟᱜ ᱵᱚᱫᱚᱞ ᱟᱢ ᱥᱮ? \n\n ᱱᱤᱛᱚᱜ ᱵᱚᱦᱟᱞ ᱠᱟᱱᱟ : %2$s\n ᱢᱟᱨᱮ ᱦᱟᱹᱞᱤᱭᱟᱹᱠ ᱫᱚ ᱨᱮᱠᱚᱰ ᱠᱟᱱ ᱰᱟᱴᱟ ᱥᱟᱞᱟᱜ ᱵᱟᱭ ᱠᱟᱹᱢᱤ ᱫᱟᱲᱮᱭᱟᱜᱼᱟᱭ ᱾</string>
     <string name="reset">ᱨᱤᱥᱮᱴ</string>
     <string name="RESET_LAYOUT_CMD">ᱪᱟᱹᱵᱤᱞᱮᱭᱟᱩᱴ ᱨᱤᱥᱮᱴ ᱢᱮ</string>
@@ -672,7 +672,7 @@
     <string name="preset_apply">ᱮᱯᱞᱟᱭ ᱢᱮ</string>
     <string name="preset_apply_failed_summary">ᱱᱚᱶᱟ ᱯᱨᱳᱯᱷᱟᱭᱤᱞ ᱵᱟᱝ ᱮᱯᱞᱟᱭ ᱫᱟᱲᱮᱭᱟᱫᱼᱟ᱾ ᱥᱳᱨᱥ ᱧᱮᱞ ᱢᱮ ᱟᱨ ᱟᱨᱦᱚᱸ ᱪᱮᱥᱴᱟᱭ ᱢᱮ᱾</string>
     <string name="preset_based_on_modified">ᱱᱚᱶᱟ MIDlet ᱨᱮᱭᱟᱜ ᱱᱤᱛᱚᱜᱟᱜ ᱠᱚᱱᱯᱷᱤᱜᱟᱨᱮᱥᱚᱱ %1$s ᱠᱷᱚᱱ ᱵᱷᱮᱜᱟᱨ ᱜᱮᱭᱟ᱾</string>
-    <string name="preset_builtin">JL-Mod ᱰᱤᱯᱷᱚᱞᱴᱥ</string>
+    <string name="preset_builtin">JL-Mod Defaults</string>
     <string name="preset_builtin_summary">ᱵᱤᱞᱴ-ᱤᱱ MIDlet ᱥᱮᱴᱤᱝᱥ ᱟᱨ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱠᱚ᱾</string>
     <string name="preset_change_default">ᱵᱚᱫᱚᱞ ᱢᱮ</string>
     <string name="preset_choose_parts">ᱪᱮᱫ ᱮᱯᱞᱟᱭ ᱦᱩᱭᱩᱜᱼᱟ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
@@ -700,7 +700,7 @@
     <string name="profile_apply_layout_keeps_settings">ᱱᱚᱣᱟ MIDlet ᱨᱮᱱᱟᱜ ᱥᱟᱡᱟᱣ ᱫᱚᱦᱚᱭ ᱢᱮ; ᱢᱤᱫ ᱠᱩᱥᱤ ᱠᱚᱱᱯᱷᱤᱜᱽᱨᱮᱥᱚᱱ ᱵᱮᱵᱷᱟᱨ ᱢᱮ᱾</string>
     <string name="profile_apply_layout_only">ᱠᱷᱟᱹᱞᱤ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱣᱟᱣᱩᱴ</string>
     <string name="profile_apply_settings_keeps_layout">ᱱᱚᱣᱟ MIDlet ᱨᱮᱱᱟᱜ ᱞᱮᱣᱟᱣᱩᱴ ᱫᱚᱦᱚᱭ ᱢᱮ; ᱢᱤᱫ ᱠᱩᱥᱤ ᱠᱚᱱᱯᱷᱤᱜᱽᱨᱮᱥᱚᱱ ᱵᱮᱵᱷᱟᱨ ᱢᱮ᱾</string>
-    <string name="profile_builtin_settings">JL-Mod ᱰᱤᱯᱷᱚᱞᱴᱥ</string>
+    <string name="profile_builtin_settings">JL-Mod Defaults</string>
     <string name="profile_create_summary">ᱮᱴᱟᱜ MIDlet ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱢᱤᱫ ᱫᱚᱦᱲᱟ ᱵᱮᱵᱷᱟᱨ ᱜᱟᱱᱚᱜ ᱥᱮᱴᱟᱯ ᱥᱟᱧᱪᱟᱣ ᱢᱮ᱾</string>
     <string name="profile_default_badge_short">ᱱᱟᱣᱟ MIDlet ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱢᱩᱬ</string>
     <string name="profile_follows_updates">ᱦᱤᱡᱩᱜ ᱠᱟᱱ ᱯᱨᱳᱯᱷᱟᱭᱤᱞ ᱟᱯᱰᱮᱴ ᱠᱚᱭ ᱯᱟᱸᱡᱟᱭᱟ᱾</string>
