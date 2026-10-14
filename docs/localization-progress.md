@@ -639,6 +639,28 @@ validates the **final resource commit**; document its actual conclusion
 separately, rather than assuming success. Do not merge PR #169 on resource
 presence alone.
 
+## Existing Santali labels/confirmations cleanup — 15 October
+
+Resource commit [`fa0ee515`](https://github.com/H3nb/JL-Mod-Plus/commit/fa0ee515aeb6d7d45b2551bd7e4d311987915204)
+revises seven existing Santali strings whose meanings or invariant data
+differed from canonical English. Both built-in profile labels now keep
+`JL-Mod Defaults` unchanged. The stop warning removes a claim of data
+corruption; the JAD mismatch confirmation identifies ignoring JAD only;
+the virtual-controls confirmation names the actual layout; reinstall
+and update prompts no longer add unverified data-retention guarantees.
+The two version arguments and original structural newline counts
+remain intact.
+
+The complete **977/977 Santali resource inventory is unchanged**. The
+76 previously deferred existing cases still require fluent native
+Santali verification (including the revised but as-yet unverified
+messages), as do machine-assisted completion candidates. Do not close
+the language-quality backlog on the basis of format checks.
+Full-presence [Android CI #38601105978](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38601105978)
+passed all four jobs. Targeted-resource cleanup is separately
+validated by [Android CI #38602008299](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38602008299);
+record its actual conclusion once available.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
