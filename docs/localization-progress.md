@@ -65,13 +65,13 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 1,411 to **663** in the
-14 October completion checkpoint (1,492 before technical recovery,
+Missing localized declarations decreased from 1,411 to **466** after
+an additional 197 Santali labels and simple UI/status strings on 14 October (1,492 before technical recovery,
 2,111 before deferred-language recovery,
 6,152 before settings/runtime, 8,758 before Memory Editor, 11,502 before
 installer, 18,070 before controls, and 25,122 before 12 October).
 Thirty-eight catalogs cover all 977 resources. Santali is the remaining
-incomplete catalog (663 missing), with 76 recorded deferred existing cases.
+incomplete catalog (466 missing), with 76 recorded deferred existing cases.
 **Resource presence does not establish language certification.** The remaining
 existing-language uncertainty is documented separately from missing declarations.
 Local app/resource, representative UI and cumulative remote CI validation pass
@@ -532,10 +532,26 @@ assembly, app/dexlib tests and instrumentation compilation are included. This
 documentation-only follow-up changes no executable/resource input; no repeat CI
 run is needed on identical validated inputs.
 
+## Santali contextual UI recovery — 14 October follow-up
+
+Resource commit `b271719389686d75b5e97dbf4d101aa59bc3a8fd` adds 197
+previously missing Santali UI identities and retains all previously
+accepted translations unchanged. All 197 keys exist in the canonical
+English catalog; the integration check rejected no formatter mismatch,
+duplicate key, or XML-special-character defect. The missing count is
+now **466**, comprising 432 strings and 34 plurals. The 76 deferred
+existing Santali reviews remain open.
+
+This is a bounded UI/control-label recovery, not a native-speaker
+certification. The earlier successful cumulative Android CI validates
+`d6616507f` and does **not** certify these additional resource changes.
+Complete Android resource/build/lint and representative display checks
+are still needed. Do not mark the PR ready to merge.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
-not historical missing counts. Resolve the remaining 663 Santali missing
+not historical missing counts. Resolve the remaining 466 Santali missing
 declarations and 76 deferred existing cases with competent language judgment.
 The prioritized `message_delete`, `about_message`, and `help_message` defects
 are corrected. Continue the exact remaining controller, installer, profile,
