@@ -315,7 +315,7 @@ localization objective remains all 39 catalogs.
 
 ### `sat` — 76 existing
 
-- `FORCE_CLOSE_CONFIRMATION`: Existing wording refers to app forced closure/data corruption; current text names MIDlet stop and only potential unsaved-change loss. Cannot certify or safely correct Santali wording.
+- `FORCE_CLOSE_CONFIRMATION`: 15 October rewrite now names stopping the MIDlet and possible loss of unsaved changes; the earlier unsupported data-corruption claim was removed. Fluent Santali grammar and register review remain open.
 - `PREF_FORCE_FULLSCREEN`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_IMMEDIATE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_LAYOUT`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
@@ -340,7 +340,7 @@ localization objective remains all 39 catalogs.
 - `converting_wait`: Existing Ol Chiki progress text retained; requires competent Santali verification of JAR conversion phase grammar.
 - `create_apps_dir_failed`: Existing wording/argument differs from current working-directory preparation failure with explicit %1$s and supported recovery. Cannot safely correct complete text.
 - `install_done`: Existing Ol Chiki success sentence retained; requires competent Santali review of completed installation result and register.
-- `install_jar_non_matched_jad`: Existing Ol Chiki confirmation retained; competent Santali review must preserve mismatch identity and decision to ignore only the JAD.
+- `install_jar_non_matched_jad`: 15 October rewrite separates the mismatch from the choice to ignore JAD and install, restoring canonical line breaks. Fluent Santali verification of the two affected objects/decision remains open.
 - `invalid_resolution_not_saved`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `layout_edit_finish`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of finish-editing action; must not imply save completion.
 - `layout_edit_finished`: Existing Ol Chiki label retained unchanged. Requires competent Santali verification of virtual-controls editing-complete status; cannot certify its editing-mode wording or whether it implies persistence.
@@ -376,7 +376,7 @@ localization objective remains all 39 catalogs.
 - `pref_theme_system`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vibration_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_hide_hint`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_vk_save_alert`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
+- `pref_vk_save_alert`: 15 October rewrite names the *custom virtual controls layout* rather than a custom keyboard, and removes an unsupported extra line break. Fluent Santali review remains open.
 - `pref_vk_type_arrows`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_type_arrows_numbers`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_type_custom`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
@@ -414,6 +414,29 @@ alone was insufficient. Existing Settings/Close/Save/Custom variants were retain
 corpus differences alone do not establish a material defect. Existing Light is
 also attested in the reference theme tooltip and was kept. This bounded check
 does not imply certification of the rest of the Santali catalog.
+
+## Earlier-catalog targeted semantic cleanup — 15 October
+
+A further Santali [resource commit `fa0ee515`](https://github.com/H3nb/JL-Mod-Plus/commit/fa0ee515aeb6d7d45b2551bd7e4d311987915204)
+corrects **seven already-present declarations** without altering resource
+identity or argument contracts. The built-in profile names
+`profile_builtin_settings` and `preset_builtin` now retain the exact
+`JL-Mod Defaults` identifier. `FORCE_CLOSE_CONFIRMATION` no longer claims
+data corruption and instead identifies possible *unsaved-change* loss.
+`install_jar_non_matched_jad` distinguishes JAD mismatch from the choice
+to ignore only the JAD; `pref_vk_save_alert` now specifies the custom
+virtual-controls *layout*, not an unrelated keyboard. `reinstall` and
+`reinstall_newest` no longer promise unrelated data preservation beyond
+the canonical confirmation copy. The latter retains two version arguments
+and original line-break contract.
+
+These changes address identifiable **source-meaning defects** and
+formatting, **not** a native-speaker certification; the related entries
+stay in the 76-case existing-quality review until fluent linguistic
+verification. All 39 locale catalogs remain at complete resource presence.
+The post-cleanup resource validation is
+[Android CI #38602008299](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38602008299);
+its eventual verdict must be checked.
 
 ## Resume point
 
