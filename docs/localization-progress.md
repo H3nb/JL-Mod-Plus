@@ -543,9 +543,11 @@ now **466**, comprising 432 strings and 34 plurals. The 76 deferred
 existing Santali reviews remain open.
 
 This is a bounded UI/control-label recovery, not a native-speaker
-certification. The earlier successful cumulative Android CI validates
-`d6616507f` and does **not** certify these additional resource changes.
-Complete Android resource/build/lint and representative display checks
+certification. The earlier cumulative CI validates `d6616507f`. A separate
+[Android CI run](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38580930757)
+validates the newer resource commit `b27171938`: **Build and tests**,
+**Screenshot validation**, **Lint**, and the final **build** gate all pass.
+Representative manual display checks and fluent target-language review
 are still needed. Do not mark the PR ready to merge.
 
 ## Exact next unfinished work
