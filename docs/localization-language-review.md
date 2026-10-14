@@ -12,10 +12,10 @@ Android XML remains the translation catalog. Re-export the inventory before writ
 | `kk` | 0 | 0 |
 | `or` | 0 | 0 |
 | `si` | 0 | 0 |
-| `sat` | 663 | 76 |
+| `sat` | 466 | 76 |
 
 The 39 catalogs contain 977 canonical identities; 38 have full resource presence.
-There are **663 missing declarations**, all Santali. Existing-case counts are a
+There are **466 missing declarations**, all Santali. Existing-case counts are a
 deduplicated continuation of recorded deferred selections, not whole-catalog
 native-speaker certification. Santali remains in the requested product scope.
 
@@ -128,6 +128,23 @@ untranslatable. They identify why these proposals could not be accepted. Continu
 bounded contextual review rather than treating correct script or a plausible
 reverse translation as proof of target-language accuracy.
 
+## Further Santali catalog recovery — 14 October
+
+A follow-up resource commit (`b27171938`) adds **197** Santali string
+declarations across About, file selection, Library, controller labels,
+diagnostic reports, installation states, Memory Editor controls, virtual
+controls and Updates. The new entries use existing reviewed UI vocabulary
+where applicable, preserve resource arguments, and leave higher-risk
+technical instructions or loss-of-data warnings in the open review set.
+
+Structural identity and format-argument comparisons against the English
+catalog pass for all 197 additions. No native-speaker certification,
+Android build, instrumented rendering, or full linguistic review is
+claimed for this follow-up. The prior passing Android CI applies to the
+earlier resource commit, not this newly changed XML. Santali plural
+resources remain missing; CLDR cardinal rules require one/two/other
+grammar and are not interchangeable with English plurals.
+
 ## Exact missing identities
 
 Every key below is missing in the current XML and remains
@@ -139,44 +156,25 @@ identities are not declared impossible to translate. Isolated labels still requi
 matching UI-role and orthographic judgment. The lists are exhaustive for resource
 presence, not a claim that every missing identity received the same reference test.
 
-### `sat` — 663 missing
+### `sat` — 466 missing
 
 ```text
 PREF_EMULATION_SPEED
 PREF_TIMING_MODE
 PREF_UNIT_MS
-about_build_label
-about_build_title
 about_compatibility
 about_evolution
 about_github_browser_unavailable
 about_github_link_copied
 about_lineage
-about_lineage_title
-about_links_title
-about_maintainer
-about_revision_label
-about_subtitle
-about_version
-bulk_install_action_jar_only
-bulk_install_action_separate_copy
 bulk_install_attention_count
 bulk_install_cancel_requested
-bulk_install_cancelled
-bulk_install_choose_files
-bulk_install_choose_folder
-bulk_install_clear
-bulk_install_complete
 bulk_install_empty
 bulk_install_empty_filter
 bulk_install_failed_count
 bulk_install_fatal
-bulk_install_filter_review
-bulk_install_filter_selected
 bulk_install_found
-bulk_install_install_count
 bulk_install_installed_count
-bulk_install_installed_version
 bulk_install_library_changed
 bulk_install_omitted_sources
 bulk_install_planning
@@ -198,37 +196,23 @@ bulk_install_reinstall_missing_apps
 bulk_install_reinstall_source_missing
 bulk_install_reinstalled_count
 bulk_install_restored_count
-bulk_install_result_failed
-bulk_install_result_installed
-bulk_install_result_reinstalled
 bulk_install_result_restored
-bulk_install_result_skipped
-bulk_install_result_updated
 bulk_install_running
 bulk_install_selected
 bulk_install_skipped_count
 bulk_install_skipped_entries
 bulk_install_skipped_result_count
-bulk_install_source
 bulk_install_source_changed
 bulk_install_source_unavailable
 bulk_install_status_ambiguous
 bulk_install_status_conflict
-bulk_install_status_downgrade
-bulk_install_status_duplicate
-bulk_install_status_error
 bulk_install_status_mismatch
 bulk_install_status_older_batch
 bulk_install_status_reinstall
-bulk_install_status_remote
-bulk_install_status_same
-bulk_install_status_update
 bulk_install_target_unverified
-bulk_install_title
 bulk_install_unreadable_archives
 bulk_install_updated_count
 bulk_install_warning_count
-clear_report_selection
 config_analog_stick_summary
 config_background_immersive
 config_background_immersive_help
@@ -245,11 +229,8 @@ config_controls_key_input
 config_controls_maintenance
 config_controls_virtual_keyboard
 config_controls_virtual_keyboard_colors
-config_current_screen_size
-config_decrease_value
 config_delete_app_data
 config_delete_app_data_summary
-config_destination_graphics
 config_display_performance
 config_display_rendering
 config_edit_system_properties
@@ -267,13 +248,9 @@ config_gamepad_calibration_issue_rest_too_noisy
 config_gamepad_calibration_neutral_instructions
 config_gamepad_calibration_no_analog_ranges
 config_gamepad_calibration_no_supported_ranges
-config_gamepad_calibration_phase_cancelled
-config_gamepad_calibration_phase_committed
 config_gamepad_calibration_phase_neutral
-config_gamepad_calibration_phase_review
 config_gamepad_calibration_phase_stick_range
 config_gamepad_calibration_phase_trigger_range
-config_gamepad_calibration_phase_unknown
 config_gamepad_calibration_profile
 config_gamepad_calibration_rejected
 config_gamepad_calibration_review_instructions
@@ -284,35 +261,17 @@ config_gamepad_calibration_stick_instructions
 config_gamepad_calibration_trigger_instructions
 config_gamepad_calibration_waiting_controller
 config_gamepad_calibration_waiting_samples
-config_gamepad_diagnosis_analog_settings
 config_gamepad_diagnosis_axis
 config_gamepad_diagnosis_capabilities
 config_gamepad_diagnosis_descriptor
 config_gamepad_diagnosis_device
-config_gamepad_diagnosis_header
 config_gamepad_diagnosis_mode
-config_gamepad_diagnosis_no_controller
-config_gamepad_diagnosis_notice
-config_gamepad_diagnosis_pointer
 config_gamepad_diagnosis_samples_not_sent
 config_gamepad_diagnosis_signature
-config_gamepad_diagnosis_source_controller
 config_gamepad_diagnosis_source_explicit
 config_gamepad_diagnosis_triggers
-config_gamepad_directions_eight
-config_gamepad_directions_four
 config_gamepad_directions_numeric_v2
-config_gamepad_keypad_title
-config_gamepad_mapping_help_title
 config_gamepad_opaque_summary
-config_gamepad_pointer_cursor
-config_gamepad_pointer_joystick
-config_gamepad_status_disabled
-config_gamepad_status_enabled
-config_gamepad_stick_directions
-config_gamepad_stick_pointer
-config_gamepad_stick_unassigned
-config_gamepad_test
 config_gamepad_unsupported_summary
 config_help_background
 config_help_background_custom_color
@@ -361,7 +320,6 @@ config_help_vk_hide_delay
 config_help_vk_outline
 config_help_vk_selected_background
 config_help_vk_selected_foreground
-config_increase_value
 config_lock_custom_resolution_ratio
 config_maintenance
 config_message_delete_app_data
@@ -371,123 +329,73 @@ config_missing_app_storage_generic
 config_missing_app_storage_named
 config_reset_all_settings
 config_reset_all_settings_summary
-config_select_screen_size
 config_swap_screen_size
 config_system_properties_info
 config_system_properties_value
 config_virtual_controls_preview_hint
 config_warning_filter_shader
-copy_selected_reports
 crash_report_bundle_cleanup_failed
 crash_report_bundle_failed
 crash_report_bundle_preparing
 crash_report_bundle_ready_message
 crash_report_bundle_ready_title
-crash_report_copied
 crash_report_delete_failed
 crash_report_delete_message
 crash_report_delete_title
 crash_report_github_unavailable
-crash_report_java_report
-crash_report_list_subtitle
 crash_report_locate_failed
 crash_report_midlet_failure
-crash_report_process_exit
 crash_report_unavailable
-crash_reports
 crash_reports_batch_delete_message
 crash_reports_batch_delete_title
 crash_reports_bundle_cleanup_failed
 crash_reports_copied
 crash_reports_delete_failed
-crash_reports_empty
-crash_reports_loading
 crash_reports_selected_count
-delete_selected_reports
 diagnostic_reason_anr
 diagnostic_reason_java_crash
 diagnostic_reason_native_crash
 diagnostic_reason_signal
 diagnostic_reason_unknown
-diagnostic_report
-dismiss_mapping
-file_picker_create_folder_failed
-file_picker_empty
-file_picker_empty_folder
-file_picker_folder_exists
-file_picker_invalid_folder_name
-file_picker_load_failed
 file_picker_navigate_back
-file_picker_no_matches
 file_picker_parent_folder
-file_picker_permission_denied
 file_picker_permission_message
-file_picker_permission_required
-file_picker_select_all
-file_picker_select_app_bundle
 file_picker_selected_count
-file_picker_selection_unavailable
 file_picker_sort_modified_newest
 file_picker_sort_modified_oldest
 file_picker_storage_volume
-file_picker_unselect_all
-fps_limit_maximum
 install_done_with_warning
 installer_ambiguous
 installer_cancel_pending
 installer_conversion_omitted_details
 installer_conversion_skipped_entry
 installer_conversion_warning_summary
-installer_copy_details
 installer_error_message
 installer_existing_data_preserved
 installer_failed_conversion
 installer_failed_download
 installer_failed_storage
-installer_hide_details
 installer_needs_recovery
-installer_not_processed
 installer_partial_restore
-installer_refresh_library
 installer_removed_leftovers
 installer_retry_remaining
-installer_separate_copy
-installer_show_details
-installer_stage_download
-installer_stage_save
 installer_stage_wait
-installer_title
-layout_edit_continue
-layout_edit_done
 layout_edit_save_changes
 library_action_about_summary
 library_action_crash_reports_summary
-library_action_export_bundle
 library_action_help_summary
-library_action_import_bundle
 library_action_import_bundle_summary
 library_action_licenses_summary
 library_action_save_log_summary
 library_action_settings_summary
-library_back
-library_bulk_delete_apps
 library_bulk_delete_confirmation
 library_bulk_delete_result
-library_bulk_export_apps
-library_bulk_share_apps
 library_collapse_description
 library_collection_manage_apps_summary
 library_collection_member_count
-library_collection_members_empty
 library_collection_ready_empty_message
-library_collection_remove
-library_collection_remove_from_current
 library_collection_select_message
 library_collections_empty_message
-library_collections_empty_title
-library_collections_unavailable_title
-library_description_less
-library_description_more
 library_donation_browser_unavailable
 library_donation_continue
 library_donation_link_copied
@@ -498,52 +406,26 @@ library_donation_title
 library_enhanced_icons_summary
 library_enhanced_icons_title
 library_expand_description
-library_export_chooser_title
-library_export_progress
-library_favorite_coming_soon
 library_filter_recently_opened
-library_grid_spacing_compact
-library_grid_spacing_none
-library_grid_spacing_spacious
-library_grid_spacing_standard
-library_grid_spacing_title
-library_hide_grid_titles
 library_hide_grid_titles_summary
-library_icon_ratio_title
 library_icon_shape_square
-library_import_done
 library_import_done_with_warning
 library_import_invalid_bundle
-library_import_preparing
 library_import_restore_existing
-library_import_restoring
 library_indexing_current
 library_indexing_progress
-library_load_error_title
 library_load_failed_message
 library_metadata_reset_to_original
-library_no_matches
 library_play_stats_summary
 library_reinstall_source_missing
-library_remove_from_favorites_action
-library_selection_checkbox_description
-library_selection_checked
 library_selection_count
-library_selection_unchecked
-library_show_list_description
 library_show_list_description_summary
 library_transfer_unavailable
 licenses_unavailable
-loading_apps
-locate_bundle
 log_save_failed
 log_save_started
 mapping_dialog_add_input
-mapping_dialog_assigned_inputs
 mapping_dialog_message
-memory_editor_add_to_watch
-memory_editor_bubble
-memory_editor_cancelled
 memory_editor_candidate_ambiguous
 memory_editor_candidate_instance
 memory_editor_candidate_lost
@@ -551,7 +433,6 @@ memory_editor_candidate_relocating
 memory_editor_candidate_static
 memory_editor_candidate_untraced
 memory_editor_candidates
-memory_editor_change_amount
 memory_editor_edit_batch
 memory_editor_edit_batch_help
 memory_editor_edit_batch_no_common_type
@@ -562,10 +443,8 @@ memory_editor_expression_group_hint
 memory_editor_expression_group_needs_type
 memory_editor_expression_query_help
 memory_editor_expression_single_hint
-memory_editor_freeze
 memory_editor_freeze_after_edit
 memory_editor_freeze_after_edit_help
-memory_editor_freeze_paused
 memory_editor_identity_unsafe
 memory_editor_increment_invalid
 memory_editor_increment_preview
@@ -574,27 +453,17 @@ memory_editor_inspector_empty
 memory_editor_inspector_loading
 memory_editor_inspector_no_rows
 memory_editor_invalid_request
-memory_editor_max_change
-memory_editor_min_change
-memory_editor_next_results_page_action
 memory_editor_next_scan_result
 memory_editor_no_candidates
 memory_editor_no_runtime
 memory_editor_no_search_history
-memory_editor_no_watch
 memory_editor_partial_write
 memory_editor_path_changed
 memory_editor_path_incomplete
 memory_editor_peek_underlay
 memory_editor_peek_underlay_active
-memory_editor_predicate_changed_by
-memory_editor_predicate_decreased_by
 memory_editor_predicate_decreased_range
-memory_editor_predicate_increased_by
 memory_editor_predicate_increased_range
-memory_editor_previous_results_page_action
-memory_editor_reference_instance
-memory_editor_reference_static
 memory_editor_remove_candidates_description
 memory_editor_remove_candidates_title
 memory_editor_resource_limit
@@ -604,16 +473,9 @@ memory_editor_revert_remove_commit_failed
 memory_editor_revert_remove_outcome
 memory_editor_safety_limit
 memory_editor_search_complete
-memory_editor_search_known_values
 memory_editor_search_progress
-memory_editor_search_unknown_values
-memory_editor_searching
 memory_editor_selected
-memory_editor_source_unknown
-memory_editor_type_auto
-memory_editor_unfreeze
 memory_editor_unsupported
-memory_editor_watch
 memory_editor_working
 memory_editor_write_confirmed
 memory_editor_write_failure_outcome
@@ -627,9 +489,7 @@ midlet_running_notification_text
 midlet_running_notification_title
 msg_error_loading_shader
 msg_immediate_mode_disabled
-msg_no_matches
 msg_press_again_to_close
-open_github
 perf_overlay_bottom_left
 perf_overlay_bottom_right
 perf_overlay_cap
@@ -673,21 +533,12 @@ perf_overlay_title
 perf_overlay_top_left
 perf_overlay_top_right
 pref_accent_amber
-pref_accent_blue
-pref_accent_classic_blue
 pref_accent_coral
-pref_accent_green
-pref_accent_indigo
 pref_accent_rose
 pref_accent_sapphire
 pref_accent_teal
-pref_accent_title
 pref_accent_violet
-pref_apps_view
-pref_audio_title
 pref_enable_statusbar_summary
-pref_screen_padding_title
-pref_skin_title
 pref_skip_resume_call
 pref_title_emulation
 pref_use_display_cutout_summary
@@ -727,7 +578,6 @@ preset_virtual_keyboard_on
 process_exit_recovery_message
 process_exit_recovery_message_midlet
 process_exit_recovery_message_named
-process_exit_recovery_title
 profile_apply_layout_keeps_settings
 profile_apply_layout_only
 profile_apply_settings_keeps_layout
@@ -749,50 +599,24 @@ reconversion_error_summary
 reconverting_wait
 remove_screen_preset
 removed
-report_on_github
-runtime_apply
 runtime_installation_changed
 runtime_invalid_intent
-runtime_layout_apply_title
 runtime_midlet_list_failed
 runtime_no_midlets
-runtime_preset_apply_destination
 runtime_preset_local_explanation
-runtime_preset_save_destination
-runtime_preset_this_midlet_only
-runtime_preset_update_destination
 runtime_preset_update_explanation
 runtime_preset_update_failed
 runtime_preset_update_unlinked
 runtime_replacement_failed
 runtime_storage_in_use
 runtime_storage_unavailable
-runtime_virtual_controls_dpad
-runtime_virtual_controls_edit
-runtime_virtual_controls_edit_guide_dont_show_again
 runtime_virtual_controls_edit_guide_message
-runtime_virtual_controls_edit_guide_title
-runtime_virtual_controls_show_controls
-runtime_virtual_controls_switch_layout
-runtime_virtual_controls_template_analog_standard
-runtime_virtual_controls_template_dpad_standard
-runtime_virtual_controls_title
 saved_keyboard_layout_summary
 screenshot_save_failed
 screenshot_saved_path
-select_all_reports
-settings_profiles_summary
-settings_section_midlet_runtime
 updates_automatic
-updates_available
-updates_browser_unavailable
-updates_build_code
-updates_channel
-updates_current
 updates_debug_build
 updates_failed
-updates_installed_version
-updates_last_checked
 updates_link_copied
 updates_more_available
 updates_more_summary
@@ -800,10 +624,6 @@ updates_no_release
 updates_not_checked
 updates_not_installable
 updates_notice
-updates_preview
-updates_stable
-updates_view_release
-view_reports
 virtual_controls_save_failed
 ```
 
@@ -924,9 +744,9 @@ does not imply certification of the rest of the Santali catalog.
 
 Resolve the remaining keys above with competent language review and the existing
 feature contracts, then check cross-feature consistency and representative
-long-text, narrow-screen, RTL and script rendering. Current resource checkpoint
+long-text, narrow-screen, RTL and script rendering. Previous resource checkpoint
 `d6616507f` passes [cumulative Android CI](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38573678907),
 including build/tests, lint and screenshot validation; local rendering evidence
-is in [the progress record](localization-progress.md). Future resource changes
-need corresponding validation. Passing checks do not resolve the remaining
+is in [the progress record](localization-progress.md). The later Santali resource addition
+`b27171938` needs corresponding Android validation. Passing checks do not resolve the remaining
 language judgments. Keep PR 169 Draft; no merge is authorized.
