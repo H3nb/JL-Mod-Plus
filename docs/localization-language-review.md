@@ -12,10 +12,10 @@ Android XML remains the translation catalog. Re-export the inventory before writ
 | `kk` | 0 | 0 |
 | `or` | 0 | 0 |
 | `si` | 0 | 0 |
-| `sat` | 466 | 76 |
+| `sat` | 0 | 76 |
 
-The 39 catalogs contain 977 canonical identities; 38 have full resource presence.
-There are **466 missing declarations**, all Santali. Existing-case counts are a
+The 39 catalogs contain 977 canonical identities; all 39 now have full resource presence.
+There are **zero missing declarations**; Santali linguistic QA remains unfinished. Existing-case counts are a
 deduplicated continuation of recorded deferred selections, not whole-catalog
 native-speaker certification. Santali remains in the requested product scope.
 
@@ -160,7 +160,7 @@ for known vocabulary/semantic problems. This is **source-checked machine-referen
 recovery, not native-speaker linguistic certification** or proof of every
 sentence's pragmatics. CI is tracked separately.
 
-The current inventory is **835/977 Santali declarations**, with **142 missing**
+At the earlier checkpoint inventory reached **835/977** Santali declarations, with **142 missing**
 (108 strings and 34 plural resources). The existing 76 deferred translation
 reviews remain distinct and open. Newly present strings in previously identified
 semantic-risk areas still require competent language review rather than automatic
@@ -181,22 +181,36 @@ canonical English (`formatted="false"`) for subsequent translation.
 
 Resource commit [`f075df46d`](https://github.com/H3nb/JL-Mod-Plus/commit/f075df46de1ca41f232778cf77dfb90dbc0d7d1e) adds **all 34 formerly missing Santali plural resources**, each with `one`, `two`, and `other` variants, and 21 additional contextual UI strings. For noun-bearing dual-count forms, the distinct two-item candidate uses the CLDR-attested Santali `ᱠᱤᱱ` construction; count-only statuses retain the same phrasing when no noun requires inflection. See [CLDR cardinal categories](https://unicode.org/cldr/charts/49/supplemental/language_plural_rules.html). Both English-derived formatting arguments and quantity declarations have been checked for every variant.
 
-Coverage now reaches **890 of 977** translatable identities. **87 strings** remain missing, **zero plurals** remain missing; the older **76 deferred existing translations** are still pending competent linguistic review. The dual forms here are **linguistically plausible candidates, not native-speaker-certified wording**; review noun agreement in context with fluent Santali speakers before declaring quality complete. The input/proposal errors around `config_help_scale_ratio` (`T0225`, literal `%` signs) remain excluded.
+At the plural checkpoint, coverage reached **890 of 977** translatable identities. **87 strings** remained missing at that checkpoint, **zero plurals** were missing; the older **76 deferred existing translations** are still pending competent linguistic review. The dual forms here are **linguistically plausible candidates, not native-speaker-certified wording**; review noun agreement in context with fluent Santali speakers before declaring quality complete. The input/proposal errors around `config_help_scale_ratio` (`T0225`, literal `%` signs) remain excluded.
 
-The resource commit is tested through [Android CI #38599807318](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38599807318); record its result when complete. Documentation-only commits use `[skip ci]`. Keep PR #169 Draft; no merge is authorized.
+The plural resource commit passed all jobs of [Android CI #38599807318](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38599807318). Documentation-only commits use `[skip ci]`. Keep PR #169 Draft; no merge is authorized.
 
-## Exact missing identities
+## Complete resource presence; pending Santali language-quality review
 
-Every key below is missing in the current XML and remains
-`NEEDS_LANGUAGE_REVIEW`, with no accepted proposal in the current recovery.
-Reliable standard Santali Ol Chiki whole-message grammar and technical meaning
-still need review. Tested reference failures are identified above; the list also
-contains identities outside those bounded reference selections. Those untested
-identities are not declared impossible to translate. Isolated labels still require
-matching UI-role and orthographic judgment. The lists are exhaustive for resource
-presence, not a claim that every missing identity received the same reference test.
+All **977 canonical translatable Android identities** now have Santali Ol Chiki
+declarations: **zero missing `<string>` and `<plurals>` resources**.
+This records presence only, **not native-speaker-certified translation quality**.
 
-### `sat` — 87 missing
+The [final resource completion commit](https://github.com/H3nb/JL-Mod-Plus/commit/1d3a80d32c6b3f76f83bb439596d82665bf746ce)
+adds the remaining **87 strings** after English-key and formatting checks.
+It restores literal `1%`, `100%`, and `1000%` in the separately handled
+`config_help_scale_ratio` with `formatted="false"`, and distinguishes
+`non-finite` numerical samples with `NaN/±∞`. The established
+`JL-Mod Defaults` profile identity, GitHub name, and diagnostic download
+destination remain unchanged. Exact format indices, declared string names,
+line-break contracts (including literal blank lines), and XML escaping were
+validated before the resource write.
+
+The following **87 keys are PRESENT**, not missing, but require careful
+contextual and fluent Santali language review. Prioritize negation, data
+retention and deletion, unsuccessful or partial outcomes, calibration bounds
+and unchanged previous state, profile propagation, Memory Editor writes/undo,
+diagnostic public exposure, and runtime timing semantics. Review also the
+recent 324 machine-reference strings, 34 newly added dual-form plurals and
+21 contextual strings: having multiple AI references is not linguistic
+certification. The 76 previously deferred existing cases remain listed below.
+
+### Newly present 87-string language-review queue
 
 ```
 config_analog_stick_summary
@@ -403,7 +417,10 @@ does not imply certification of the rest of the Santali catalog.
 
 ## Resume point
 
-Resolve the 87 remaining keys above with competent language review and the existing
+All 977 Santali declarations are present; keep PR #169 Draft. The full-resource completion CI run is [Android CI #38601105978](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38601105978). Its conclusion requires a separate status check.
+
+Review the 87 present candidates above, the 76 deferred existing cases and
+prior machine-reference work with competent Santali language judgment and
 feature contracts, then check cross-feature consistency and representative
 long-text, narrow-screen, RTL and script rendering. Previous resource checkpoint
 `d6616507f` passes [cumulative Android CI](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38573678907),
