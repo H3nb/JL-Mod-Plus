@@ -661,6 +661,32 @@ passed all four jobs. Targeted-resource cleanup is separately
 validated by [Android CI #38602008299](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38602008299);
 record its actual conclusion once available.
 
+## Focused Santali legacy-copy repair — 15 October
+
+Resource commit [`9f546a55`](https://github.com/H3nb/JL-Mod-Plus/commit/9f546a55ef380c877b0f9ca1533242ddc34ee572)
+revises **32 pre-existing Santali UI translations** that diverged from the
+current canonical English contracts. Changes include:
+
+- Explicit identity and qualifiers for the key-code layout, virtual controls,
+  button color/pressed states, input assignment, scaling, and date added.
+- Preservation of technical identities such as `Surface`, `Window`,
+  `Mascot Capsule 3D`, `MIDlet Canvas`, and screenshot preprocessing order.
+- Repair of storage error/recovery text, including `%1$s` path formatting and
+  the downgrade version/compatibility warning. Future remote download
+  is no longer expressed as an already-completed action.
+- Reuse of the exact existing `Choose control layout` rendering instead of
+  inconsistent key-only terminology.
+
+The **977/977 Santali coverage** and **76 deferred existing linguistic
+reviews** are unchanged. The 32 revised entries remain in that pending
+language review list; correcting a demonstrable missing modifier or
+formatting mismatch is not proof of fluent standard Santali grammar.
+Recorded per-key rationale is in
+[the consolidated language-review file](localization-language-review.md).
+[Android CI run #38654421339](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38654421339)
+validates the new resource commit; verify its eventual outcome.
+Use `[skip ci]` only for documentation-only updates.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
