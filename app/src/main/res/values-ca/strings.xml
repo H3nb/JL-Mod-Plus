@@ -1095,6 +1095,7 @@
     <plurals name="perf_overlay_selected">
         <item quantity="one">%d paràmetre seleccionat</item>
         <item quantity="other">%d paràmetres seleccionats</item>
+        <item quantity="many">Paràmetres seleccionats: %d</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Vols suprimir %1$d informe de diagnòstic?</item>

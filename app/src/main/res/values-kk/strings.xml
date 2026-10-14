@@ -1074,4 +1074,9 @@
     <string name="config_virtual_controls_preview_hint">Басылған күйдегі түстерді алдын ала көру үшін түртіңіз. Үлгі таңдалған мөлдірсіздікті пайдаланады.</string>
     <string name="runtime_virtual_controls_edit_guide_message">Басқару элементтерін жылжыту үшін сүйреңіз. Түймелердің енін немесе биіктігін өзгерту үшін екі саусақты көлденең немесе тігінен, ал екеуін де өзгерту үшін қиғаш жылжытыңыз. D-pad немесе аналогтік стик өлшемін пропорционалды өзгерту үшін екі саусақты жақындатыңыз немесе алыстатыңыз. Аяқтаған соң «Дайын» түймесін түртіңіз.</string>
     <string name="msg_immediate_mode_disabled">Оқиғалардың кері шақырулары тым терең кірістірілгендіктен, дереу өңдеу өшірілді.</string>
+    <string name="config_gamepad_calibration_issue_non_finite">ақырлы емес мәні бар үлгі</string>
+    <string name="pref_accent_coral">Маржан реңкті шабдалы түсі</string>
+    <string name="pref_accent_rose">Жидек реңкті қызғылт</string>
+    <string name="pref_accent_teal">Нефрит реңкті көкшіл жасыл</string>
+    <string name="pref_accent_violet">Орхидея реңкті күлгін</string>
 </resources>

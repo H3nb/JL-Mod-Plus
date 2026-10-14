@@ -217,7 +217,7 @@
     <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Kalibrasi sebelumnya tidak berubah.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ditemukan rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: %1$s</string>
-    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik tetap di tengah dan trigger dilepas sampai penghitung waktu netral selesai.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik yang terdeteksi tetap di tengah dan semua trigger yang terdeteksi dalam keadaan dilepas sampai penghitung waktu netral selesai.</string>
     <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang terdeteksi hingga batas penuh ke segala arah, lalu tekan Berikutnya.</string>
     <string name="config_gamepad_calibration_trigger_instructions">Lepaskan lalu tekan penuh setiap trigger yang terdeteksi, kemudian tekan Berikutnya untuk meninjau.</string>
     <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Menyimpan hanya akan mengganti kalibrasi pengontrol ini.</string>

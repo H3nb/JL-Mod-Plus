@@ -487,7 +487,7 @@
     <string name="config_gamepad_diagnosis_pointer">وضع المؤشر</string>
     <string name="config_gamepad_diagnosis_right_stick">العصا اليمنى</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">عدم إرسال عينات الإدخال إلى MIDlet مقصود.</string>
-    <string name="config_gamepad_diagnosis_signature">التوقيع: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">بصمة تعريف وحدة التحكم: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">وحدة التحكم</string>
     <string name="config_gamepad_diagnosis_source_default">افتراضي</string>
     <string name="config_gamepad_diagnosis_source_explicit">صريح</string>

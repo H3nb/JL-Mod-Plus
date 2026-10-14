@@ -255,19 +255,21 @@ def apply_batch(repo_root, batch, apply=False):
     if apply and proposed != current:
         if path.read_bytes() != current:
             raise ValueError("Target changed after validation")
-        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=".localization-", delete=False) as output:
-            temporary = Path(output.name)
-            try:
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=path.parent, prefix=".localization-", delete=False) as output:
+                temporary = Path(output.name)
                 output.write(proposed)
                 output.flush()
                 os.fsync(output.fileno())
-                os.chmod(temporary, path.stat().st_mode)
-                if path.read_bytes() != current:
-                    raise ValueError("Target changed after validation")
-                if sha256((repo_root / "app/src/main/res/values/strings.xml").read_bytes()) != batch["source_sha256"]:
-                    raise ValueError("Canonical source changed after validation")
-                os.replace(temporary, path)
-            finally:
+            os.chmod(temporary, path.stat().st_mode)
+            if path.read_bytes() != current:
+                raise ValueError("Target changed after validation")
+            if sha256((repo_root / "app/src/main/res/values/strings.xml").read_bytes()) != batch["source_sha256"]:
+                raise ValueError("Canonical source changed after validation")
+            os.replace(temporary, path)
+        finally:
+            if temporary is not None:
                 temporary.unlink(missing_ok=True)
     return {"file": path.relative_to(repo_root).as_posix(), "changed": proposed != current,
             "applied": apply and proposed != current, "result_sha256": sha256(proposed)}

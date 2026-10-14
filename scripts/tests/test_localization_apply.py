@@ -57,15 +57,19 @@ class ApplyTest(unittest.TestCase):
 
     def test_plural_categories_preserve_existing_item_attributes_and_comments(self):
         self.source = self.xml("values", '<plurals name="count"><item quantity="one">%1$d item</item><item quantity="other">%1$d items</item></plurals>')
-        self.target = self.xml("values-in", '<plurals name="count">\n<!-- retain plural comment -->\n<item quantity="other" product="default">%1$d lama</item>\n    </plurals>')
-        batch = self.batch(plurals={"count": {"one": "%1$d benda", "other": "%1$d benda"}}, revisions={"count": "Correct noun"})
-        apply.apply_batch(self.root, batch, True)
-        data = self.target.read_bytes()
-        self.assertIn(b'<!-- retain plural comment -->', data)
-        self.assertIn(b'<item quantity="other" product="default">%1$d benda</item>', data)
-        self.assertIn(b'<item quantity="one">%1$d benda</item>\n    </plurals>', data)
-        self.assertNotIn(b'\n    \n', data)
-        self.assertFalse(apply.apply_batch(self.root, batch, True)["changed"])
+        for newline in (b"\n", b"\r\n"):
+            with self.subTest(newline=newline):
+                self.target = self.xml("values-in", '<plurals name="count">\n<!-- retain plural comment -->\n<item quantity="other" product="default">%1$d lama</item>\n    </plurals>')
+                fixture = self.target.read_bytes().replace(b"\r\n", b"\n")
+                self.target.write_bytes(fixture.replace(b"\n", newline))
+                batch = self.batch(plurals={"count": {"one": "%1$d benda", "other": "%1$d benda"}}, revisions={"count": "Correct noun"})
+                apply.apply_batch(self.root, batch, True)
+                data = self.target.read_bytes()
+                self.assertIn(b'<!-- retain plural comment -->', data)
+                self.assertIn(b'<item quantity="other" product="default">%1$d benda</item>', data)
+                self.assertIn(b'<item quantity="one">%1$d benda</item>' + newline + b'    </plurals>', data)
+                self.assertNotIn(newline + b'    ' + newline, data)
+                self.assertFalse(apply.apply_batch(self.root, batch, True)["changed"])
 
     def test_source_and_target_hashes_prevent_stale_writes(self):
         batch = self.batch({"label": "Baru"})

@@ -470,6 +470,7 @@
     <plurals name="memory_editor_edit_batch">
         <item quantity="one">Editar %1$d valor</item>
         <item quantity="other">Editar %1$d valores</item>
+        <item quantity="many">Editar %1$d de valores</item>
     </plurals>
     <string name="memory_editor_edit_batch_help">Aplica o valor de substituição aos alvos selecionados compatíveis com o tipo de dados escolhido. Monitorizar e Congelar não estão disponíveis para edições em lote.</string>
     <string name="memory_editor_edit_batch_no_common_type">Os resultados selecionados não suportam o tipo de dados escolhido. Edite os resultados compatíveis separadamente.</string>
@@ -520,6 +521,7 @@
     <plurals name="memory_editor_expression_group_hint">
         <item quantity="one">Pesquisa de grupo · %1$d valor · mesmo objeto Java</item>
         <item quantity="other">Pesquisa de grupo · %1$d valores · mesmo objeto Java</item>
+        <item quantity="many">Pesquisa de grupo · %1$d de valores · mesmo objeto Java</item>
     </plurals>
     <string name="memory_editor_expression_query_help">Exemplos: 500 ou 500;1000. A pesquisa de grupo procura 2–8 valores no mesmo objeto Java.</string>
     <string name="memory_editor_keypad_clear">Limpar</string>
@@ -536,102 +538,127 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d selecionado</item>
         <item quantity="other">%1$d selecionados</item>
+        <item quantity="many">%1$d selecionados</item>
     </plurals>
     <plurals name="crash_reports_copied">
         <item quantity="one">%1$d relatório copiado</item>
         <item quantity="other">%1$d relatórios copiados</item>
+        <item quantity="many">%1$d de relatórios copiados</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Eliminar %1$d relatório de diagnóstico?</item>
         <item quantity="other">Eliminar %1$d relatórios de diagnóstico?</item>
+        <item quantity="many">Eliminar %1$d de relatórios de diagnóstico?</item>
     </plurals>
     <plurals name="memory_editor_results">
         <item quantity="one">%1$d resultado</item>
         <item quantity="other">%1$d resultados</item>
+        <item quantity="many">%1$d de resultados</item>
     </plurals>
     <plurals name="memory_editor_candidates">
         <item quantity="one">%1$d candidato</item>
         <item quantity="other">%1$d candidatos</item>
+        <item quantity="many">%1$d de candidatos</item>
     </plurals>
     <plurals name="memory_editor_search_complete">
         <item quantity="one">Pesquisa concluída · %1$d candidato</item>
         <item quantity="other">Pesquisa concluída · %1$d candidatos</item>
+        <item quantity="many">Pesquisa concluída · %1$d de candidatos</item>
     </plurals>
     <plurals name="memory_editor_selected">
         <item quantity="one">%1$d selecionado</item>
         <item quantity="other">%1$d selecionados</item>
+        <item quantity="many">%1$d selecionados</item>
     </plurals>
     <plurals name="file_picker_selected_count">
         <item quantity="one">%1$d selecionado</item>
         <item quantity="other">%1$d selecionados</item>
+        <item quantity="many">%1$d selecionados</item>
     </plurals>
     <plurals name="library_selection_count">
         <item quantity="one">%1$d aplicação</item>
         <item quantity="other">%1$d aplicações</item>
+        <item quantity="many">%1$d de aplicações</item>
     </plurals>
     <plurals name="library_collection_member_count">
         <item quantity="one">%1$d aplicação</item>
         <item quantity="other">%1$d aplicações</item>
+        <item quantity="many">%1$d de aplicações</item>
     </plurals>
     <plurals name="bulk_install_found">
         <item quantity="one">%1$d aplicação encontrada</item>
         <item quantity="other">%1$d aplicações encontradas</item>
+        <item quantity="many">%1$d de aplicações encontradas</item>
     </plurals>
     <plurals name="bulk_install_selected">
         <item quantity="one">%1$d selecionado</item>
         <item quantity="other">%1$d selecionados</item>
+        <item quantity="many">%1$d selecionados</item>
     </plurals>
     <plurals name="bulk_install_ready_count">
         <item quantity="one">%1$d pronta</item>
         <item quantity="other">%1$d prontas</item>
+        <item quantity="many">%1$d prontas</item>
     </plurals>
     <plurals name="bulk_install_skipped_count">
         <item quantity="one">Já instalada ou duplicada: %1$d</item>
         <item quantity="other">Já instaladas ou duplicadas: %1$d</item>
+        <item quantity="many">Já instaladas ou duplicadas: %1$d</item>
     </plurals>
     <plurals name="bulk_install_attention_count">
         <item quantity="one">%1$d precisa de revisão</item>
         <item quantity="other">%1$d precisam de revisão</item>
+        <item quantity="many">%1$d precisam de revisão</item>
     </plurals>
     <plurals name="bulk_install_installed_count">
         <item quantity="one">%1$d instalada</item>
         <item quantity="other">%1$d instaladas</item>
+        <item quantity="many">%1$d instaladas</item>
     </plurals>
     <plurals name="bulk_install_updated_count">
         <item quantity="one">%1$d atualizada</item>
         <item quantity="other">%1$d atualizadas</item>
+        <item quantity="many">%1$d atualizadas</item>
     </plurals>
     <plurals name="bulk_install_reinstalled_count">
         <item quantity="one">%1$d reinstalada</item>
         <item quantity="other">%1$d reinstaladas</item>
+        <item quantity="many">%1$d reinstaladas</item>
     </plurals>
     <plurals name="bulk_install_skipped_result_count">
         <item quantity="one">%1$d ignorada</item>
         <item quantity="other">%1$d ignoradas</item>
+        <item quantity="many">%1$d ignoradas</item>
     </plurals>
     <plurals name="bulk_install_failed_count">
         <item quantity="one">%1$d falhou</item>
         <item quantity="other">%1$d falharam</item>
+        <item quantity="many">%1$d falharam</item>
     </plurals>
     <plurals name="bulk_install_warning_count">
         <item quantity="one">%1$d aviso</item>
         <item quantity="other">%1$d avisos</item>
+        <item quantity="many">%1$d de avisos</item>
     </plurals>
     <plurals name="bulk_install_omitted_sources">
         <item quantity="one">Foi omitido %1$d ficheiro adicional para manter a revisão responsiva.</item>
         <item quantity="other">Foram omitidos %1$d ficheiros adicionais para manter a revisão responsiva.</item>
+        <item quantity="many">Foram omitidos %1$d de ficheiros adicionais para manter a revisão responsiva.</item>
     </plurals>
     <plurals name="config_system_properties_value">
         <item quantity="one">%1$d propriedade</item>
         <item quantity="other">%1$d propriedades</item>
+        <item quantity="many">%1$d de propriedades</item>
     </plurals>
     <plurals name="library_bulk_delete_confirmation">
         <item quantity="one">Eliminar %1$d aplicação? Serão removidos os ficheiros, definições, dados guardados e entradas do catálogo.</item>
         <item quantity="other">Eliminar %1$d aplicações? Serão removidos os ficheiros, definições, dados guardados e entradas do catálogo.</item>
+        <item quantity="many">Eliminar %1$d de aplicações? Serão removidos os ficheiros, definições, dados guardados e entradas do catálogo.</item>
     </plurals>
     <plurals name="library_bulk_delete_result">
         <item quantity="one">%1$d aplicação eliminada; %2$d falharam.</item>
         <item quantity="other">%1$d aplicações eliminadas; %2$d falharam.</item>
+        <item quantity="many">Aplicações eliminadas: %1$d; falhas: %2$d.</item>
     </plurals>
     <string name="bulk_install_title">Instalação em lote</string>
     <string name="bulk_install_planning">A verificar aplicações selecionadas…</string>
@@ -644,6 +671,7 @@
     <plurals name="bulk_install_running">
         <item quantity="one">Processada %1$d aplicação de %2$d</item>
         <item quantity="other">Processadas %1$d aplicações de %2$d</item>
+        <item quantity="many">Aplicações processadas: %1$d de %2$d</item>
     </plurals>
     <string name="bulk_install_cancel_requested">A parar após a aplicação atual…</string>
     <string name="bulk_install_complete">Instalação em lote concluída</string>
@@ -674,6 +702,7 @@
     <plurals name="bulk_install_reinstall_missing_apps">
         <item quantity="one">%1$d aplicação selecionada da Biblioteca já não está disponível.</item>
         <item quantity="other">%1$d aplicações selecionadas da Biblioteca já não estão disponíveis.</item>
+        <item quantity="many">%1$d de aplicações selecionadas da Biblioteca já não estão disponíveis.</item>
     </plurals>
     <string name="config_destination_general">Básico</string>
     <string name="config_basic_display">Ecrã do MIDlet</string>
@@ -857,6 +886,7 @@
     <plurals name="perf_overlay_selected">
         <item quantity="one">%d parâmetro selecionado</item>
         <item quantity="other">%d parâmetros selecionados</item>
+        <item quantity="many">%d de parâmetros selecionados</item>
     </plurals>
     <string name="perf_overlay_position">Posição da sobreposição</string>
     <string name="perf_overlay_position_help">Escolha um canto.</string>
@@ -970,10 +1000,12 @@
     <plurals name="bulk_install_restored_count">
         <item quantity="one">%1$d restaurada</item>
         <item quantity="other">%1$d restauradas</item>
+        <item quantity="many">%1$d restauradas</item>
     </plurals>
     <plurals name="bulk_install_reason_ambiguous_match">
         <item quantity="one">%1$d aplicação instalada corresponde a esta origem.</item>
         <item quantity="other">%1$d aplicações instaladas correspondem a esta origem.</item>
+        <item quantity="many">%1$d de aplicações instaladas correspondem a esta origem.</item>
     </plurals>
     <string name="bulk_install_reason_jad_jar_mismatch">O JAD e o JAR identificam aplicações diferentes.</string>
     <string name="bulk_install_reason_conflicting_jads">Ficheiros JAD com atributos diferentes referenciam o mesmo JAR.</string>
@@ -1074,9 +1106,11 @@
     <plurals name="installer_conversion_omitted_details">
         <item quantity="one">Não é mostrado %1$d problema adicional de conversão.</item>
         <item quantity="other">Não são mostrados %1$d problemas adicionais de conversão.</item>
+        <item quantity="many">Não são mostrados %1$d de problemas adicionais de conversão.</item>
     </plurals>
     <plurals name="installer_conversion_warning_summary">
         <item quantity="one">Foi ignorado %1$d ficheiro de classe Java porque não foi possível lê-lo. As funcionalidades que o utilizam poderão não funcionar.</item>
         <item quantity="other">Foram ignorados %1$d ficheiros de classe Java porque não foi possível lê-los. As funcionalidades que os utilizam poderão não funcionar.</item>
+        <item quantity="many">Foram ignorados %1$d de ficheiros de classe Java porque não foi possível lê-los. As funcionalidades que os utilizam poderão não funcionar.</item>
     </plurals>
 </resources>

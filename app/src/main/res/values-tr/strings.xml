@@ -910,21 +910,27 @@
     <string name="memory_editor_write_outcome">Doğrulanan yazmalar: %1$d. Doğrulanmayan: %2$d. Atlanan: %3$d. Denenmeyen: %4$d. Tür nedeniyle atlanan: %5$d.</string>
     <plurals name="memory_editor_candidates">
         <item quantity="other">%1$d aday</item>
+        <item quantity="one">%1$d aday</item>
     </plurals>
     <plurals name="memory_editor_edit_batch">
         <item quantity="other">%1$d değeri düzenle</item>
+        <item quantity="one">%1$d değeri düzenle</item>
     </plurals>
     <plurals name="memory_editor_expression_group_hint">
         <item quantity="other">Grup araması · %1$d değer · aynı Java nesnesi</item>
+        <item quantity="one">Grup araması · %1$d değer · aynı Java nesnesi</item>
     </plurals>
     <plurals name="memory_editor_results">
         <item quantity="other">%1$d sonuç</item>
+        <item quantity="one">%1$d sonuç</item>
     </plurals>
     <plurals name="memory_editor_search_complete">
         <item quantity="other">Arama bitti · %1$d aday</item>
+        <item quantity="one">Arama bitti · %1$d aday</item>
     </plurals>
     <plurals name="memory_editor_selected">
         <item quantity="other">%1$d seçili</item>
+        <item quantity="one">%1$d seçili</item>
     </plurals>
     <string name="PREF_EMULATION_SPEED">Öykünme hızı</string>
     <string name="PREF_TIMING_MODE">Zaman kaynağı</string>
@@ -1059,14 +1065,18 @@
     <string name="runtime_storage_unavailable">MIDlet depolama alanı hazırlanamadı.</string>
     <plurals name="perf_overlay_selected">
         <item quantity="other">%d parametre seçildi</item>
+        <item quantity="one">%d parametre seçildi</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">%1$d tanılama raporu silinsin mi?</item>
+        <item quantity="one">%1$d tanılama raporu silinsin mi?</item>
     </plurals>
     <plurals name="crash_reports_copied">
         <item quantity="other">%1$d rapor kopyalandı</item>
+        <item quantity="one">%1$d rapor kopyalandı</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="other">%1$d seçildi</item>
+        <item quantity="one">%1$d seçildi</item>
     </plurals>
 </resources>

@@ -1127,20 +1127,24 @@
         <item quantity="one">Vybrán %d parametr</item>
         <item quantity="few">Vybrány %d parametry</item>
         <item quantity="other">Vybráno %d parametrů</item>
+        <item quantity="many">Vybráno %d parametru</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Odstranit %1$d diagnostický report?</item>
         <item quantity="few">Odstranit %1$d diagnostické reporty?</item>
         <item quantity="other">Odstranit %1$d diagnostických reportů?</item>
+        <item quantity="many">Odstranit %1$d diagnostického reportu?</item>
     </plurals>
     <plurals name="crash_reports_copied">
         <item quantity="one">%1$d report zkopírován do schránky</item>
         <item quantity="few">%1$d reporty zkopírovány do schránky</item>
         <item quantity="other">%1$d reportů zkopírováno do schránky</item>
+        <item quantity="many">%1$d reportu zkopírováno do schránky</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">Vybrán %1$d</item>
         <item quantity="few">Vybrány %1$d</item>
         <item quantity="other">Vybráno %1$d</item>
+        <item quantity="many">Vybráno %1$d</item>
     </plurals>
 </resources>

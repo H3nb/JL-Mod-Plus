@@ -1,9 +1,9 @@
 # Localization implementation checkpoint — PR 169
 
-Snapshot: 13 October 2026. Continue only on `localization/ai-matrix-workflow`;
+Snapshot: 14 October 2026. Continue only on `localization/ai-matrix-workflow`;
 base `alpha`. The PR remains Draft and is not ready to merge.
 
-## Accepted work
+## Earlier accepted work
 
 - Library, Collections, file picker, and Updates: 174 canonical resources
   reviewed across all 39 existing catalogs; complete in 38 locales. Santali
@@ -65,35 +65,30 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 1,492 to **1,411** in the
-technical recovery checkpoint (2,111 before deferred-language recovery,
+Missing localized declarations decreased from 1,411 to **663** in the
+14 October completion checkpoint (1,492 before technical recovery,
+2,111 before deferred-language recovery,
 6,152 before settings/runtime, 8,758 before Memory Editor, 11,502 before
 installer, 18,070 before controls, and 25,122 before 12 October).
-Thirty-five catalogs cover all 977 resources; the four incomplete catalogs are
-Kazakh (5 missing), Odia (302), Santali (804), and Sinhala (300).
+Thirty-eight catalogs cover all 977 resources. Santali is the remaining
+incomplete catalog (663 missing), with 76 recorded deferred existing cases.
 **Resource presence does not establish language certification.** The remaining
 existing-language uncertainty is documented separately from missing declarations.
-Full app/UI verification and final CI are still pending.
+Local app/resource and representative UI validation are recorded below;
+cumulative remote CI validation is pending for this checkpoint.
 
 The [current language-review record](localization-language-review.md) lists every
 remaining missing identity and the active deferred existing cases. Earlier
 per-feature counts below are historical snapshots, superseded by that record.
 
-Santali remains a material blocker. Its earlier 215 unresolved batch entries require
-competent standard Santali Ol Chiki review; CLDR/script documentation does not
-establish trustworthy technical prose. Do not manufacture text, mark fallback
-English as translation, or assume stale existing About/help/destructive warnings
-are correct. Re-export the batches to enumerate exact identities; unresolved
-existing core keys include About descriptions/provenance, help, stop/delete
-warnings, storage recovery and diagnostic text.
-The controls selection adds 269 unresolved review cases, for **484** across the
-documented batches; this is not its total missing-catalog count. Kazakh, Odia,
-and Sinhala also need competent review of the 347 explicitly deferred controls
-messages. Continue achievable work in other feature groups without counting
-those gaps as accepted translation or silently dropping their locales. The
-installer selection records another 113 unresolved Santali cases and Memory
-Editor records 109; counts from separate batches do not establish total catalog
-coverage or language certification.
+Santali remains a material blocker. The current consolidated identity lists,
+rather than historical per-feature totals, define the unfinished work. CLDR,
+script rendering and plausible machine output do not establish trustworthy
+technical prose. The current recovery corrects the stale About, Help and deletion
+consequences; other stop warnings, storage recovery, diagnostics, controller,
+installer, profile and Memory Editor messages still require competent whole-text
+review. Continue achievable recovery without counting unresolved cases as
+accepted translations or silently dropping Santali from the requested scope.
 
 ## Installer and bulk-installation checkpoint
 
@@ -445,7 +440,7 @@ messages proposed in the draft were withheld after independent review.
   warnings. Three longer conditional/next-start constructions remain explicitly
   unaccepted; target grammar was not inferred from correct placeholder syntax.
 
-The current inventory has **1,411 missing declarations**: Kazakh 5, Odia 302,
+At this technical recovery checkpoint, the inventory had **1,411 missing declarations**: Kazakh 5, Odia 302,
 Sinhala 300, Santali 804. There are **120 recorded deferred existing cases**,
 seven Odia and 113 Santali. Kazakh's remaining keys are four compound color names
 and the non-finite sample label. Exact identities and language limitations remain
@@ -472,12 +467,76 @@ This intermediate checkpoint uses the user's explicit `[skip ci]` exception.
 Full app build/tests/lint, representative UI review and final CI remain pending;
 prior successful CI on `0064a004` does not validate this resource state.
 
+## 14 October cumulative quality validation
+
+This checkpoint adds **748 declarations**, revises **23 existing strings**
+and extends 185 existing plural declarations with reviewed quantity forms
+relative to `de2efd71`. Santali contributes 141 additions and
+14 corrections, including all three prioritized stale messages.
+Kazakh, Odia and Sinhala now have all 977 canonical resource identities. Their
+completion preserves mathematical non-finiteness, compound color identities,
+controller calibration, profile following at next start, supported settings,
+installer/data-retention scope and conditional Memory Editor outcomes. Odia's
+seven recorded existing cases were corrected. Santali recovery continues with
+aligned Mozilla software resources and independently reviewed Google Translate
+English-to-Santali references; resource presence does not certify language quality.
+
+The cumulative review revisited 19 consequential identities across all 39
+catalogs, retaining prior accepted feature reviews as its baseline. Arabic
+controller diagnosis now describes an identifying fingerprint; Indonesian neutral
+calibration instructions retain the scope of detected sticks and triggers.
+
+Android lint exposed missing plural categories. Added 185 reviewed quantity
+forms in Catalan, Czech, Spanish, French, Italian, European/Brazilian Portuguese
+and Turkish, preserving every existing form and argument. CLDR category rules
+and complete target-language count constructions were checked separately;
+million/decimal categories are not copied blindly from English.
+
+The reviewed-batch applier failed atomic replacement on Windows because its
+temporary file was still open. It now closes the file before replacement and
+cleanup, retaining both source/target stale-state guards. The existing plural
+preservation fixture checks LF and CRLF explicitly. All 30 localization-tool
+tests pass on Windows.
+
+Local native-disabled Android APK assembly, app/dexlib JVM tests and resource
+compilation/linking passed. The app reports 1,264 tests with no failures/errors
+and one skipped test; dexlib reports 20 tests with no failures/errors/skips.
+After plural repair, the earlier local app/dexlib lint run passes: the app report
+has no errors or missing-quantity findings, with 82 warnings and two hints
+remaining. The additional rerun on the final Santali snapshot is still pending
+at this resource checkpoint.
+This validates host/resource inputs and does not certify native MIDlet execution.
+
+A temporary Android rendering probe exercised production adaptive dialogs on a
+320dp-wide API 36 display at 1.3 font scale. Seventeen cases covered controller
+identity/calibration, conditional Memory Editor writes/undo, profile linkage,
+deletion, installer/data replacement, public diagnostic attachments and cutouts,
+including the corrected Santali About, Help, deletion and partial-restore text.
+Odia, Sinhala, Ol Chiki, Arabic/Persian RTL and Japanese/Chinese/Korean glyphs,
+long-text scrolling, final text/action visibility and formatted arguments were
+visually inspected. No credible clipping, missing glyph or bidirectional defect
+was observed. Help's encoded HTML paragraph break was also checked in the probe.
+This is scoped rendering evidence, not full feature/device testing.
+The probe and generated images remain outside committed sources; screenshot
+baselines are unchanged.
+
+The refreshed remote record includes failed validation
+[38514764068](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38514764068) on
+`de2efd71`: build/tests and screenshot validation passed, while lint failed on
+the missing plural categories repaired here. Earlier successful CI does not
+validate this changed resource state. One cumulative CI validation will follow
+the reviewed resource checkpoint; no per-batch remote runs are required.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
-not historical missing counts. Resolve the remaining 5 Kazakh, 302 Odia,
-300 Sinhala and 804 Santali missing declarations, plus the recorded uncertain
-existing translations, with competent language judgment. Preserve the verified
+not historical missing counts. Resolve the remaining 663 Santali missing
+declarations and 76 deferred existing cases with competent language judgment.
+The prioritized `message_delete`, `about_message`, and `help_message` defects
+are corrected. Continue the exact remaining controller, installer, profile,
+Memory Editor, runtime and diagnostic identities in the current review record.
+Kazakh, Odia and Sinhala have no remaining missing identities.
+Preserve the verified
 feature contracts for profile following, controller identity/calibration,
 physical versus virtual input, data retention, partial installation/write/save
 outcomes, conditional undo, timing/metrics and local versus public diagnostics.

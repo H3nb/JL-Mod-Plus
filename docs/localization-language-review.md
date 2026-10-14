@@ -1,717 +1,145 @@
 # Current localization language-review gaps
 
-Snapshot: 13 October 2026, PR 169, following the deferred-language recovery
-checkpoint. This record supersedes the active counts in earlier per-feature gap
-snapshots; their historical evidence remains valid. Android XML remains the
-translation catalog. Re-export the inventory before writing.
+Snapshot: 14 October 2026, PR 169, following Kazakh/Odia/Sinhala completion
+and further evidenced Santali recovery. This record supersedes the active counts
+in earlier per-feature snapshots; their historical evidence remains valid.
+Android XML remains the translation catalog. Re-export the inventory before writing.
 
 ## Current coverage
 
 | Locale | Missing declarations | Unaccepted existing cases in deferred feature selections |
 | --- | ---: | ---: |
-| `kk` | 5 | 0 |
-| `or` | 302 | 7 |
-| `si` | 300 | 0 |
-| `sat` | 804 | 113 |
+| `kk` | 0 | 0 |
+| `or` | 0 | 0 |
+| `si` | 0 | 0 |
+| `sat` | 663 | 76 |
 
-The 39 catalogs contain 977 canonical identities; 35 have full resource presence.
-There are **1,411 missing declarations**. Existing-case counts above are a
-deduplicated continuation of the recorded deferred selections, not a claim that
-all other existing text has native-speaker certification.
+The 39 catalogs contain 977 canonical identities; 38 have full resource presence.
+There are **663 missing declarations**, all Santali. Existing-case counts are a
+deduplicated continuation of recorded deferred selections, not whole-catalog
+native-speaker certification. Santali remains in the requested product scope.
 
-## Review evidence and limits
+## Completion and review evidence
 
-Drafting and independent target-language review were followed by integration
-review of conditions, negation, affected objects, partial outcomes and terminology.
-Kazakh now covers the previously deferred installer and Memory Editor selections.
-The accepted prose preserves data retention, controller calibration, profile
-updates at next launch, conditional undo, readback and partial operations.
-Integration review corrected a Kazakh batch notice to say that matching values
-change, and attached Odia pressed-color labels to the button. Existing acceptable
-text was retained; no fallback English is counted as translation.
+This checkpoint adds 748 declarations against `de2efd71`: five Kazakh,
+302 Odia, 300 Sinhala, and 141 Santali. Separate drafting, target-language review
+and integration review preserve conditions, negation, affected objects, partial
+outcomes and terminology.
+All seven deferred existing Odia cases were corrected. Santali `midlet_version`
+was corrected and unchanged `pref_app_sort_name` was corroborated. Further
+whole-message and font/display review reduces the deferred existing selection
+from 113 to 76; reviewed unchanged entries retain their original bytes.
 
-Actual localized software context was compared with the Mozilla preferences
-catalogs: [Kazakh](https://github.com/mozilla-l10n/firefox-l10n/blob/main/kk/browser/browser/preferences/preferences.ftl),
-[Odia](https://github.com/mozilla-l10n/firefox-l10n/blob/main/or/browser/browser/preferences/preferences.ftl),
-[Sinhala](https://github.com/mozilla-l10n/firefox-l10n/blob/main/si/browser/browser/preferences/preferences.ftl),
-and [Santali](https://github.com/mozilla-l10n/firefox-l10n/blob/main/sat/browser/browser/preferences/preferences.ftl),
-aligned against the [English source](https://github.com/mozilla-firefox/firefox/blob/main/browser/locales/en-US/browser/preferences/preferences.ftl).
-These support terminology and unchanged isolated labels; they do not certify
-new technical prose, visual fit, or arbitrary borrowing across grammatical roles.
-No reference corpus or second translation catalog is committed.
+- Kazakh retains the full coral/peach, berry/rose, jade/blue-green and
+  orchid/violet identities. `config_gamepad_calibration_issue_non_finite`
+  explicitly describes a sample whose value is not finite, including NaN and
+  infinity. Mathematical use of `ақырлы` is corroborated by this
+  [university mathematics text](https://www.ektu.kz/files/DistanceEducation/Resource/695554/%D0%95%D1%80%D0%BA%D0%B0%D1%80%D0%B0%20%D0%90%D0%B9%D0%B4%D0%BE%D1%81%20%D0%96%D0%BE%D0%BB%D0%B4%D1%8B%D0%B1%D0%B0%D0%B9%D1%83%D0%BB%D1%8B%20%D0%BC%D0%B0%D1%82%D0%B5%D0%BC%D0%B0%D1%82%D0%B8%D0%BA%D0%B0-2.pdf).
+  The five complete phrases received independent review; a terminology source
+  alone is not certification of new wording.
+- Odia/Sinhala complete the deferred controls, installer, Memory Editor,
+  settings/performance, profiles and runtime selections. Counts, quantities,
+  next-start relationships, supported-setting scope, neutral holding, numeric
+  non-finiteness and conditional readback/revert outcomes remain explicit.
+  Odia raw-screenshot wording now describes virtual-resolution capture before
+  scale/filter/shader processing. Sinhala integration review corrected blue hue
+  spelling, on-screen versus physically-above-screen placement, and recipient
+  grammar in next-start profile clauses.
+- All 39 catalogs were revisited against the current English source for a
+  targeted 19-identity consequential selection: deletion/data retention,
+  bundled-only replacement, partial restore, deferred cancellation, profile
+  following at next start, controller identity/neutral/non-finite input,
+  conditional undo and partial writes, type-compatible batch changes, public
+  diagnostic attachment, and display-cutout/status-bar interaction. Prior
+  accepted feature reviews remain the baseline. This is cumulative risk review,
+  not a claim that every existing sentence received a new independent audit.
+- Arabic diagnosis now names the controller's identifying fingerprint. Its
+  caller supplies `ControllerCapabilityCache.buildSignature` (descriptor plus
+  sorted capability ranges), not a signing operation. Indonesian neutral
+  instructions now retain the detected-channel scope for both sticks and
+  triggers throughout the timer.
 
-The remaining Kazakh cases are four compound accent-color names and the
-non-finite calibration-sample label. Full hue names must retain their nuance;
-non-finite must cover NaN/Infinity rather than incomplete or out-of-range samples.
-Odia/Sinhala still need reliable whole-message grammar and idiom for the deferred
-conditions and consequences. Santali needs competent standard Ol Chiki review;
-dictionary fragments, script tables and plural rules cannot establish its prose.
+Actual software terminology was checked against Mozilla
+[Odia](https://github.com/mozilla-l10n/firefox-l10n/blob/main/or/browser/browser/preferences/preferences.ftl)
+and [Sinhala](https://github.com/mozilla-l10n/firefox-l10n/blob/main/si/browser/browser/preferences/preferences.ftl)
+resources. Sinhala opacity terminology is also attested in Xfce's UI resources.
+[Unicode CLDR cardinal rules](https://github.com/unicode-org/cldr/blob/main/common/supplemental/plurals.xml)
+support category selection; complete count constructions still require language
+judgment. The new Odia/Sinhala plurals use count constructions valid in both
+`one` and `other`, including Sinhala's integer zero in `one`.
 
-## Technical recovery follow-up
+Santali adds 47 complete attested labels/actions/statuses from
+[Firefox desktop](https://github.com/mozilla-l10n/firefox-l10n/tree/25ac5fffb285324e734e31a4f35e6f2e1bc7b0b6/sat)
+and [Firefox Android](https://github.com/mozilla-l10n/android-l10n/blob/2270e00c1d1dbe2df7d35095133643de7d605d2d/mozilla-mobile/fenix/app/src/main/res/values-sat/strings.xml),
+aligned against English and the app's UI role. Examples include Search as an
+action, Edit/Manage profiles, Select/Deselect all, Undo, collection labels,
+version, and checking for updates. A postal-address translation was rejected
+for a memory address; an Update action was rejected for an installer status;
+Add to new collection was rejected where existing collections are supported.
+Conflicting profile/theme terminology did not justify replacing accepted text.
+No technical sentence was assembled from dictionary fragments or fallback English.
 
-A further bounded review adds 81 declarations and revises six existing strings:
-Kazakh 36 additions/two revisions, Odia 25/four, and Sinhala 20/no revisions.
-Kazakh opacity terminology is corroborated by actual
-[GIMP](https://github.com/GNOME/gimp/blob/master/po/kk.po) and
-[KWin](https://github.com/KDE/kwin/blob/master/po/kk/kwin.po) UI contexts;
-[GNOME System Monitor](https://github.com/GNOME/gnome-system-monitor/blob/master/po/kk.po)
-supports processor/process terminology. New clauses received separate grammatical
-and semantic review; reference terms alone do not certify them.
+## Google-assisted Santali review
 
-Kazakh now preserves continuous neutral holding for both sticks and triggers,
-publication versus renderer-consumption rates/intervals, percentile statistics,
-core-equivalent units, submission timing and callback nesting depth. The fallback
-notice uses the exact established built-in profile name. Odia resolves runtime
-Canvas toolbar scope, system status-bar ownership, Android font scale, initial
-command-bar suppression and time-of-day theme selection. Sinhala resolves
-settings/data retention, whole versus partial profile application, loss of future
-following and local-save/source-update partial outcomes. Three compound Sinhala
-condition/next-start messages remain unaccepted after independent review; they
-were not imported from the draft.
+[Google Translate, English to Santali (Ol Chiki)](https://translate.google.com/?sl=en&tl=sat&op=translate)
+helped recover 94 further missing declarations and correct 13 existing
+messages/labels, alongside actual Mozilla software wording,
+current callers and independent whole-message review. Its output and reverse
+translation were not automatic acceptance criteria. Literal product names,
+format arguments, feature labels and supported-operation scope were checked
+against the current catalog.
 
-Five Kazakh cases remain:
+The deletion question now includes the app, its settings, saved data and
+Library entry. The initial reference turned save data into an instruction to
+save it and was rejected; complete contextual English references resolved that
+relationship. Final review removed a games-only qualifier so utility MIDlet data
+is covered as well. About now covers Library organization, controls, display, audio,
+performance and free/open-source status. Help retains linear-filtering slowdown
+and disabling it when necessary, plus event-queue bypass, possible faster response
+and possible instability. Its explanation is associated with the actual displayed
+Immediate Processing label. The old flicker-correction promise is removed.
 
-- `pref_accent_coral`: Full Coral peach hue name needs competent terminology review.
-- `pref_accent_rose`: Full Berry rose hue name needs competent terminology review.
-- `pref_accent_teal`: Full Jade teal hue name needs competent terminology review.
-- `pref_accent_violet`: Full Orchid violet hue name needs competent terminology review.
-- `config_gamepad_calibration_issue_non_finite`: Need natural concise sample wording
-  covering NaN and Infinity, without conflating non-finite with incomplete or out-of-range.
+Ten font/display corrections restore linear filtering, character encoding,
+screen placement, font presets, Android font scale and omitted qualifiers.
+Twenty-two positively reviewed existing font/display labels remain unchanged.
+The partial bundle-restore failure message keeps installation success, failed
+bundle-data restoration and a restore-only retry question. Reviewed terminology
+refinements preserve complete sentence constructions; they do not assemble new
+technical prose from a glossary.
+
+Specific unsuccessful references remain evidence for the corresponding gaps:
+
+| Identity | Required meaning and review limitation |
+| --- | --- |
+| `file_picker_parent_folder` | The containing filesystem directory; reference names mother/father instead. |
+| `file_picker_sort_modified_newest`, `file_picker_sort_modified_oldest` | Modification time and the appropriate ordering; reference uses shown rather than changed and can omit the newest qualifier. |
+| `library_filter_recently_opened` | Previously played apps; reference describes ongoing play. |
+| `config_gamepad_calibration_cancelled`, `config_gamepad_calibration_save_failed`, `config_gamepad_calibration_saved`, `config_gamepad_calibration_waiting_samples` | Calibration, preserving prior calibration on cancellation/failure and waiting for numerical controller samples; reference substitutes sharing/division for calibration. |
+| `config_gamepad_calibration_issue_non_finite` | Numerical NaN/infinity rather than missing/incomplete samples; a phonetic non-finite label does not establish the mathematical concept in Santali. |
+| `config_gamepad_calibration_neutral_instructions`, `config_gamepad_calibration_start` | Hold the relevant sticks centered and triggers released throughout the timer; reference confuses controller sticks with hanging/sticking and leaves channel/temporal relationships uncertain. |
+| `config_gamepad_diagnosis_signature` | Device-identification fingerprint, descriptor and capabilities; reference uses a handwritten signature and corrupts the literal formatter argument. |
+| `library_import_restore_existing` | Only bundled settings/save components replace their corresponding existing data; a reverse reference appears plausible but competent judgment of the full target-language affected-object relationship remains unavailable. |
+| `memory_editor_edit_batch_help` | Apply only to targets compatible with the selected type; named Watch/Freeze operations are unavailable; reference target terminology and Watch versus View remain uncertain. |
+| `memory_editor_remove_candidates_description` | Hide without game-memory writes; undo the last confirmed edit only on a current-value match and retain conflicts; reference negates the undo clause and corrupts the conflicting-result consequence. |
+| `memory_editor_revert_remove_commit_failed` | Values may already be restored despite result-removal failure; refresh/retry never overwrites game-changed values; reference omits the restored-value outcome. |
+
+These observations do not imply that every remaining Santali message is
+untranslatable. They identify why these proposals could not be accepted. Continue
+bounded contextual review rather than treating correct script or a plausible
+reverse translation as proof of target-language accuracy.
 
 ## Exact missing identities
 
-Each key below is missing in the current XML and has status
-`NEEDS_LANGUAGE_REVIEW`. For Kazakh/Odia/Sinhala, all are in the remaining
-deferred controls, installer, Memory Editor, settings/performance or runtime
-selections. The blocker is reliable target-language judgment of the complete
-message in the corresponding product contract. Santali also includes earlier
-Library/core groups; the same competence limitation applies to every listed key.
-Missing isolated labels require role/orthography evidence rather than invented
-word assembly. These lists are exhaustive for resource presence.
+Every key below is missing in the current XML and remains
+`NEEDS_LANGUAGE_REVIEW`, with no accepted proposal in the current recovery.
+Reliable standard Santali Ol Chiki whole-message grammar and technical meaning
+still need review. Tested reference failures are identified above; the list also
+contains identities outside those bounded reference selections. Those untested
+identities are not declared impossible to translate. Isolated labels still require
+matching UI-role and orthographic judgment. The lists are exhaustive for resource
+presence, not a claim that every missing identity received the same reference test.
 
-### `kk` — 5 missing
-
-```text
-config_gamepad_calibration_issue_non_finite
-pref_accent_coral
-pref_accent_rose
-pref_accent_teal
-pref_accent_violet
-```
-
-### `or` — 302 missing
-
-```text
-PREF_FILTER
-PREF_FONT_ANTI_ALIASING
-PREF_VK_ALPHA
-PREF_VK_FEEDBACK
-PREF_VK_FORCE_OPACITY
-SIZE_PRESETS
-SWAP_SIZES
-bulk_install_cancel_requested
-bulk_install_cancelled
-bulk_install_complete
-bulk_install_fatal
-bulk_install_library_changed
-bulk_install_omitted_sources
-bulk_install_reason_ambiguous_match
-bulk_install_reason_conflicting_jads
-bulk_install_reason_duplicate_source
-bulk_install_reason_jar_not_found
-bulk_install_reason_missing_parent
-bulk_install_reason_older_candidate
-bulk_install_reason_remote_jar
-bulk_install_reason_unsupported_uri_scheme
-bulk_install_reason_version_conflict
-bulk_install_reinstall_missing_apps
-bulk_install_reinstall_source_missing
-bulk_install_running
-bulk_install_source_changed
-bulk_install_source_unavailable
-bulk_install_status_ambiguous
-bulk_install_status_reinstall
-bulk_install_target_unverified
-config_analog_stick_summary
-config_background_immersive
-config_background_immersive_help
-config_background_theme_help
-config_color_picker_hint
-config_controller_help_body_compact
-config_delete_app_data_summary
-config_gamepad_calibrate_summary
-config_gamepad_calibration_cancelled
-config_gamepad_calibration_issue_invalid_constraints
-config_gamepad_calibration_issue_no_channels
-config_gamepad_calibration_issue_non_finite
-config_gamepad_calibration_issue_rest_outside_range
-config_gamepad_calibration_issue_rest_too_noisy
-config_gamepad_calibration_neutral_instructions
-config_gamepad_calibration_no_analog_ranges
-config_gamepad_calibration_no_supported_ranges
-config_gamepad_calibration_phase_neutral
-config_gamepad_calibration_profile
-config_gamepad_calibration_review_instructions
-config_gamepad_calibration_save_failed
-config_gamepad_calibration_start
-config_gamepad_calibration_stick_instructions
-config_gamepad_calibration_trigger_instructions
-config_gamepad_calibration_waiting_controller
-config_gamepad_calibration_waiting_samples
-config_gamepad_diagnosis_capabilities
-config_gamepad_diagnosis_samples_not_sent
-config_gamepad_diagnosis_signature
-config_gamepad_diagnosis_source_explicit
-config_gamepad_opaque_summary
-config_gamepad_pointer_cursor
-config_gamepad_stick_directions
-config_gamepad_unsupported_summary
-config_help_background
-config_help_background_custom_color
-config_help_emulation_speed
-config_help_encoding
-config_help_filter
-config_help_font_aa
-config_help_font_dimensions
-config_help_font_presets
-config_help_font_sizes
-config_help_font_sizes_long
-config_help_force_fullscreen
-config_help_fps_limit
-config_help_graphics_mode
-config_help_immediate
-config_help_key_layout
-config_help_key_mapping
-config_help_lock_custom_resolution_ratio
-config_help_orientation
-config_help_parallel_redraw
-config_help_reset_layout
-config_help_scale_ratio
-config_help_scale_type
-config_help_screen_gravity
-config_help_screen_padding
-config_help_screen_size
-config_help_shader
-config_help_skin
-config_help_skip_resume
-config_help_soundbank
-config_help_system_properties
-config_help_system_properties_long
-config_help_timing_mode
-config_help_timing_unavailable
-config_help_touch_input
-config_help_virtual_keyboard
-config_help_vk_alpha
-config_help_vk_background
-config_help_vk_button_shape
-config_help_vk_feedback
-config_help_vk_force_opacity
-config_help_vk_foreground
-config_help_vk_hide_delay
-config_help_vk_outline
-config_help_vk_selected_background
-config_help_vk_selected_foreground
-config_lock_custom_resolution_ratio
-config_message_delete_app_data
-config_message_reset_profile_settings
-config_message_reset_settings
-config_reset_all_settings_summary
-config_virtual_controls_preview_hint
-config_warning_filter_shader
-crash_report_bundle_cleanup_failed
-crash_report_bundle_ready_message
-crash_report_delete_failed
-crash_report_delete_message
-crash_report_github_unavailable
-crash_report_locate_failed
-crash_report_midlet_failure
-crash_report_process_exit
-crash_reports_batch_delete_message
-crash_reports_bundle_cleanup_failed
-crash_reports_delete_failed
-identity_filter
-installer_ambiguous
-installer_cancel_pending
-installer_conversion_omitted_details
-installer_conversion_skipped_entry
-installer_conversion_warning_summary
-installer_error_message
-installer_existing_data_preserved
-installer_failed_conversion
-installer_failed_download
-installer_needs_recovery
-installer_partial_restore
-installer_removed_leftovers
-layout_edit_finished
-layout_edit_save_changes
-mapping_dialog_message
-memory_editor_add_to_watch
-memory_editor_bubble
-memory_editor_bubble_content_description
-memory_editor_candidate_ambiguous
-memory_editor_candidate_lost
-memory_editor_candidate_moved
-memory_editor_candidate_relocating
-memory_editor_candidate_untraced
-memory_editor_close
-memory_editor_edit_batch_help
-memory_editor_edit_batch_no_common_type
-memory_editor_edit_batch_type_notice
-memory_editor_engine_reconnecting
-memory_editor_engine_unavailable
-memory_editor_expression_group_hint
-memory_editor_expression_query_help
-memory_editor_freeze
-memory_editor_freeze_after_edit
-memory_editor_freeze_after_edit_help
-memory_editor_freeze_paused
-memory_editor_identity_unsafe
-memory_editor_increment_invalid
-memory_editor_increment_preview
-memory_editor_increment_step
-memory_editor_incremental_edit
-memory_editor_inspect_memory
-memory_editor_inspector
-memory_editor_inspector_empty
-memory_editor_inspector_loading
-memory_editor_inspector_no_rows
-memory_editor_no_candidates
-memory_editor_no_runtime
-memory_editor_partial_write
-memory_editor_path_changed
-memory_editor_path_incomplete
-memory_editor_peek_underlay
-memory_editor_peek_underlay_active
-memory_editor_predicate_changed_by
-memory_editor_predicate_decreased_by
-memory_editor_predicate_decreased_range
-memory_editor_predicate_increased_by
-memory_editor_predicate_increased_range
-memory_editor_reference_instance
-memory_editor_reference_static
-memory_editor_refresh_snapshot
-memory_editor_remove_candidates_description
-memory_editor_resource_limit
-memory_editor_revert_and_remove
-memory_editor_revert_remove_commit_failed
-memory_editor_revert_remove_outcome
-memory_editor_safety_limit
-memory_editor_search_complete
-memory_editor_search_progress
-memory_editor_set_all
-memory_editor_source_unknown
-memory_editor_undo
-memory_editor_unfreeze
-memory_editor_unsupported
-memory_editor_write_confirmed
-memory_editor_write_failure_outcome
-memory_editor_write_outcome
-midlet_failure_recovery_message
-midlet_failure_recovery_message_named
-midlet_failure_recovery_title
-midlet_running_notification_channel
-msg_error_loading_shader
-msg_immediate_mode_disabled
-parallel_screen_redrawing
-perf_overlay_cap
-perf_overlay_coalesced
-perf_overlay_copy
-perf_overlay_cpu
-perf_overlay_debug
-perf_overlay_display
-perf_overlay_fps
-perf_overlay_frame_queue
-perf_overlay_group_pipeline
-perf_overlay_group_queue
-perf_overlay_group_timing
-perf_overlay_guest_fps
-perf_overlay_help
-perf_overlay_input_queue
-perf_overlay_interval
-perf_overlay_max
-perf_overlay_p95
-perf_overlay_paint
-perf_overlay_parameters
-perf_overlay_parameters_help
-perf_overlay_position
-perf_overlay_preset
-perf_overlay_preset_help
-perf_overlay_render_interval
-perf_overlay_render_max
-perf_overlay_render_p95
-perf_overlay_renderer
-perf_overlay_selected
-perf_overlay_speed
-perf_overlay_submit
-perf_overlay_thermal
-perf_overlay_title
-pref_accent_amber
-pref_accent_coral
-pref_accent_green
-pref_accent_indigo
-pref_accent_rose
-pref_accent_sapphire
-pref_accent_teal
-pref_accent_title
-pref_accent_violet
-pref_enable_statusbar_summary
-pref_screen_padding_title
-pref_skin_title
-pref_use_display_cutout_summary
-pref_use_display_cutout_title
-pref_vk_save_alert
-preset_apply_failed_summary
-preset_based_on_modified
-preset_builtin_summary
-preset_default_policy_summary
-preset_discard_changes_summary
-preset_includes_keyboard_layout
-preset_keyboard_layout_unavailable
-preset_save_help
-preset_saved_unlinked_warning
-preset_unavailable_summary
-preset_update_summary
-process_exit_recovery_message
-process_exit_recovery_message_midlet
-process_exit_recovery_message_named
-process_exit_recovery_title
-profile_apply_layout_keeps_settings
-profile_apply_settings_keeps_layout
-profile_apply_whole_follows
-profile_apply_whole_without_layout
-profile_create_summary
-profile_default_fallback_notice
-profile_delete_template_message
-profile_follows_updates
-reconversion_done_with_warning
-reconverting_wait
-reinstall_newest
-reinstall_older
-runtime_installation_changed
-runtime_invalid_intent
-runtime_preset_local_explanation
-runtime_preset_update_explanation
-runtime_preset_update_failed
-runtime_preset_update_unlinked
-runtime_replacement_failed
-runtime_storage_in_use
-runtime_virtual_controls_edit_guide_message
-saved_keyboard_layout_summary
-settings_profiles_summary
-settings_section_appearance
-settings_section_library_appearance
-settings_section_midlet_runtime
-shader_tuning
-take_screenshot
-virtual_controls_save_failed
-```
-
-### `si` — 300 missing
-
-```text
-PREF_EMULATION_SPEED
-PREF_FILTER
-PREF_FONT_ANTI_ALIASING
-PREF_FORCE_FULLSCREEN
-PREF_IMMEDIATE
-PREF_LAYOUT
-PREF_LIMIT_FPS
-PREF_SCALE_RATIO
-PREF_SHADER_FILTER
-PREF_SYS_PROPS
-PREF_TIMING_MODE
-PREF_VIRTUAL_KEYBOARD_OPTIONS
-PREF_VK_ALPHA
-PREF_VK_FEEDBACK
-PREF_VK_FORCE_OPACITY
-PREF_VK_HIDE_DELAY
-SIZE_PRESETS
-alert_map_menu
-alert_msg_workdir_not_exists
-bulk_install_cancel_requested
-bulk_install_cancelled
-bulk_install_complete
-bulk_install_fatal
-bulk_install_library_changed
-bulk_install_omitted_sources
-bulk_install_reason_ambiguous_match
-bulk_install_reason_conflicting_jads
-bulk_install_reason_duplicate_source
-bulk_install_reason_jar_not_found
-bulk_install_reason_missing_parent
-bulk_install_reason_older_candidate
-bulk_install_reason_remote_jar
-bulk_install_reason_unsupported_uri_scheme
-bulk_install_reason_version_conflict
-bulk_install_reinstall_missing_apps
-bulk_install_reinstall_source_missing
-bulk_install_running
-bulk_install_status_ambiguous
-bulk_install_status_reinstall
-bulk_install_target_unverified
-config_analog_stick_summary
-config_background_immersive
-config_background_immersive_help
-config_color_picker_hint
-config_controller_help_body_compact
-config_display_performance
-config_gamepad_calibrate_summary
-config_gamepad_calibration_cancelled
-config_gamepad_calibration_issue_invalid_constraints
-config_gamepad_calibration_issue_no_channels
-config_gamepad_calibration_issue_non_finite
-config_gamepad_calibration_issue_rest_outside_range
-config_gamepad_calibration_issue_rest_too_noisy
-config_gamepad_calibration_neutral_instructions
-config_gamepad_calibration_no_analog_ranges
-config_gamepad_calibration_no_supported_ranges
-config_gamepad_calibration_phase_neutral
-config_gamepad_calibration_profile
-config_gamepad_calibration_review_instructions
-config_gamepad_calibration_save_failed
-config_gamepad_calibration_start
-config_gamepad_calibration_stick_instructions
-config_gamepad_calibration_trigger_instructions
-config_gamepad_calibration_waiting_controller
-config_gamepad_calibration_waiting_samples
-config_gamepad_diagnosis_capabilities
-config_gamepad_diagnosis_samples_not_sent
-config_gamepad_diagnosis_signature
-config_gamepad_diagnosis_source_explicit
-config_gamepad_opaque_summary
-config_gamepad_pointer_cursor
-config_gamepad_stick_directions
-config_gamepad_unsupported_summary
-config_help_emulation_speed
-config_help_encoding
-config_help_filter
-config_help_font_presets
-config_help_font_sizes_long
-config_help_force_fullscreen
-config_help_fps_limit
-config_help_graphics_mode
-config_help_immediate
-config_help_key_layout
-config_help_key_mapping
-config_help_lock_custom_resolution_ratio
-config_help_parallel_redraw
-config_help_reset_layout
-config_help_scale_ratio
-config_help_scale_type
-config_help_screen_padding
-config_help_screen_size
-config_help_shader
-config_help_skip_resume
-config_help_soundbank
-config_help_system_properties
-config_help_system_properties_long
-config_help_timing_mode
-config_help_timing_unavailable
-config_help_touch_input
-config_help_virtual_keyboard
-config_help_vk_alpha
-config_help_vk_background
-config_help_vk_button_shape
-config_help_vk_feedback
-config_help_vk_force_opacity
-config_help_vk_foreground
-config_help_vk_hide_delay
-config_help_vk_outline
-config_help_vk_selected_background
-config_help_vk_selected_foreground
-config_lock_custom_resolution_ratio
-config_virtual_controls_preview_hint
-config_warning_filter_shader
-crash_report_bundle_cleanup_failed
-crash_report_bundle_failed
-crash_report_bundle_preparing
-crash_report_bundle_ready_message
-crash_report_bundle_ready_title
-crash_report_delete_message
-crash_report_delete_title
-crash_report_github_unavailable
-crash_report_java_report
-crash_report_locate_failed
-crash_report_midlet_failure
-crash_report_process_exit
-crash_reports
-crash_reports_batch_delete_message
-crash_reports_batch_delete_title
-crash_reports_bundle_cleanup_failed
-crash_reports_copied
-crash_reports_delete_failed
-crash_reports_empty
-crash_reports_loading
-crash_reports_selected_count
-diagnostic_report
-identity_filter
-install_jar_non_matched_jad
-installer_ambiguous
-installer_cancel_pending
-installer_conversion_omitted_details
-installer_conversion_skipped_entry
-installer_conversion_warning_summary
-installer_failed_conversion
-installer_needs_recovery
-installer_partial_restore
-installer_removed_leftovers
-layout_edit_finished
-layout_edit_save_changes
-mapping_dialog_add_input
-mapping_dialog_message
-memory_editor_add_to_watch
-memory_editor_bubble
-memory_editor_bubble_content_description
-memory_editor_candidate_ambiguous
-memory_editor_candidate_lost
-memory_editor_candidate_moved
-memory_editor_candidate_relocating
-memory_editor_candidate_untraced
-memory_editor_close
-memory_editor_edit_batch_help
-memory_editor_edit_batch_no_common_type
-memory_editor_edit_batch_type_notice
-memory_editor_engine_reconnecting
-memory_editor_engine_unavailable
-memory_editor_expression_group_hint
-memory_editor_expression_query_help
-memory_editor_freeze
-memory_editor_freeze_after_edit
-memory_editor_freeze_after_edit_help
-memory_editor_identity_unsafe
-memory_editor_increment_invalid
-memory_editor_incremental_edit
-memory_editor_inspect_memory
-memory_editor_inspector
-memory_editor_inspector_empty
-memory_editor_inspector_loading
-memory_editor_inspector_no_rows
-memory_editor_no_candidates
-memory_editor_no_runtime
-memory_editor_partial_write
-memory_editor_path_changed
-memory_editor_path_incomplete
-memory_editor_predicate_changed_by
-memory_editor_predicate_decreased_by
-memory_editor_predicate_decreased_range
-memory_editor_predicate_increased_by
-memory_editor_predicate_increased_range
-memory_editor_reference_instance
-memory_editor_reference_static
-memory_editor_refresh_snapshot
-memory_editor_remove_candidates_description
-memory_editor_resource_limit
-memory_editor_revert_and_remove
-memory_editor_revert_remove_commit_failed
-memory_editor_revert_remove_outcome
-memory_editor_search_complete
-memory_editor_search_progress
-memory_editor_searching
-memory_editor_set_all
-memory_editor_source_unknown
-memory_editor_undo
-memory_editor_unfreeze
-memory_editor_working
-memory_editor_write_confirmed
-memory_editor_write_failure_outcome
-memory_editor_write_outcome
-midlet_failure_recovery_message
-midlet_failure_recovery_message_named
-midlet_running_notification_channel
-msg_error_loading_shader
-msg_immediate_mode_disabled
-parallel_screen_redrawing
-perf_overlay_cap
-perf_overlay_coalesced
-perf_overlay_copy
-perf_overlay_cpu
-perf_overlay_debug
-perf_overlay_display
-perf_overlay_fps
-perf_overlay_frame_queue
-perf_overlay_group_pipeline
-perf_overlay_group_queue
-perf_overlay_group_rate
-perf_overlay_group_resources
-perf_overlay_group_runtime
-perf_overlay_group_timing
-perf_overlay_guest_fps
-perf_overlay_help
-perf_overlay_input_queue
-perf_overlay_interval
-perf_overlay_java
-perf_overlay_max
-perf_overlay_native
-perf_overlay_p95
-perf_overlay_paint
-perf_overlay_parameters
-perf_overlay_parameters_help
-perf_overlay_position
-perf_overlay_preset
-perf_overlay_preset_help
-perf_overlay_ram
-perf_overlay_render_interval
-perf_overlay_render_max
-perf_overlay_render_p95
-perf_overlay_renderer
-perf_overlay_selected
-perf_overlay_speed
-perf_overlay_submit
-perf_overlay_thermal
-perf_overlay_title
-pref_accent_amber
-pref_accent_blue
-pref_accent_classic_blue
-pref_accent_coral
-pref_accent_cyan
-pref_accent_green
-pref_accent_indigo
-pref_accent_rose
-pref_accent_sapphire
-pref_accent_teal
-pref_accent_violet
-pref_emulator_dir
-pref_enable_actionbar_summary
-pref_enable_actionbar_title
-pref_enable_statusbar_summary
-pref_enable_statusbar_title
-pref_graphics_mode_title
-pref_map_keys
-pref_screen_padding_title
-pref_screen_scale_type
-pref_screen_scale_type_fill
-pref_screen_scale_type_fit
-pref_screenshot_summary
-pref_screenshot_title
-pref_skin_title
-pref_skip_resume_call
-pref_soundbank_title
-pref_theme_auto_battery
-pref_title_emulation
-pref_use_display_cutout_summary
-pref_use_display_cutout_title
-pref_vk_save_alert
-preset_save_help
-preset_update_summary
-process_exit_recovery_message
-process_exit_recovery_message_midlet
-process_exit_recovery_message_named
-process_exit_recovery_title
-reconversion_done_with_warning
-reconverting_wait
-reinstall_newest
-reinstall_older
-runtime_preset_update_explanation
-runtime_replacement_failed
-runtime_storage_in_use
-runtime_virtual_controls_edit_guide_message
-saved_keyboard_layout_summary
-settings_section_midlet_runtime
-shader_tuning
-virtual_controls_save_failed
-```
-
-### `sat` — 804 missing
+### `sat` — 663 missing
 
 ```text
 PREF_EMULATION_SPEED
@@ -730,8 +158,6 @@ about_maintainer
 about_revision_label
 about_subtitle
 about_version
-about_version_label
-action_back
 bulk_install_action_jar_only
 bulk_install_action_separate_copy
 bulk_install_attention_count
@@ -745,7 +171,6 @@ bulk_install_empty
 bulk_install_empty_filter
 bulk_install_failed_count
 bulk_install_fatal
-bulk_install_filter_all
 bulk_install_filter_review
 bulk_install_filter_selected
 bulk_install_found
@@ -769,7 +194,6 @@ bulk_install_reason_remote_jar
 bulk_install_reason_source_error
 bulk_install_reason_unsupported_uri_scheme
 bulk_install_reason_version_conflict
-bulk_install_recommended
 bulk_install_reinstall_missing_apps
 bulk_install_reinstall_source_missing
 bulk_install_reinstalled_count
@@ -794,7 +218,6 @@ bulk_install_status_downgrade
 bulk_install_status_duplicate
 bulk_install_status_error
 bulk_install_status_mismatch
-bulk_install_status_new
 bulk_install_status_older_batch
 bulk_install_status_reinstall
 bulk_install_status_remote
@@ -806,43 +229,30 @@ bulk_install_unreadable_archives
 bulk_install_updated_count
 bulk_install_warning_count
 clear_report_selection
-config_analog_stick
 config_analog_stick_summary
-config_background_custom_color
 config_background_immersive
 config_background_immersive_help
-config_background_mode
 config_background_theme
 config_background_theme_help
 config_basic_display
-config_basic_input
 config_color_picker_hex
 config_color_picker_hint
 config_color_picker_hue
 config_color_picker_invalid
 config_color_picker_saturation_value
-config_color_picker_title
 config_controller_help_body_compact
 config_controls_key_input
 config_controls_maintenance
 config_controls_virtual_keyboard
 config_controls_virtual_keyboard_colors
 config_current_screen_size
-config_current_value
-config_custom_resolution
 config_decrease_value
 config_delete_app_data
 config_delete_app_data_summary
-config_destination_audio
-config_destination_controls
 config_destination_graphics
-config_destination_system
-config_display_appearance
 config_display_performance
 config_display_rendering
-config_display_text
 config_edit_system_properties
-config_font_sizes
 config_font_sizes_value
 config_gamepad_calibrate
 config_gamepad_calibrate_summary
@@ -855,7 +265,6 @@ config_gamepad_calibration_issue_non_finite
 config_gamepad_calibration_issue_rest_outside_range
 config_gamepad_calibration_issue_rest_too_noisy
 config_gamepad_calibration_neutral_instructions
-config_gamepad_calibration_next
 config_gamepad_calibration_no_analog_ranges
 config_gamepad_calibration_no_supported_ranges
 config_gamepad_calibration_phase_cancelled
@@ -881,16 +290,13 @@ config_gamepad_diagnosis_capabilities
 config_gamepad_diagnosis_descriptor
 config_gamepad_diagnosis_device
 config_gamepad_diagnosis_header
-config_gamepad_diagnosis_left_stick
 config_gamepad_diagnosis_mode
 config_gamepad_diagnosis_no_controller
 config_gamepad_diagnosis_notice
 config_gamepad_diagnosis_pointer
-config_gamepad_diagnosis_right_stick
 config_gamepad_diagnosis_samples_not_sent
 config_gamepad_diagnosis_signature
 config_gamepad_diagnosis_source_controller
-config_gamepad_diagnosis_source_default
 config_gamepad_diagnosis_source_explicit
 config_gamepad_diagnosis_triggers
 config_gamepad_directions_eight
@@ -965,20 +371,12 @@ config_missing_app_storage_generic
 config_missing_app_storage_named
 config_reset_all_settings
 config_reset_all_settings_summary
-config_screen_size
 config_select_screen_size
 config_swap_screen_size
 config_system_properties_info
 config_system_properties_value
-config_system_timing
-config_timing_mode_full_guest
-config_timing_mode_real_wall
-config_virtual_controls_color_preview
 config_virtual_controls_preview_hint
-config_virtual_controls_preview_normal
-config_virtual_controls_preview_pressed
 config_warning_filter_shader
-copy_report
 copy_selected_reports
 crash_report_bundle_cleanup_failed
 crash_report_bundle_failed
@@ -1005,7 +403,6 @@ crash_reports_delete_failed
 crash_reports_empty
 crash_reports_loading
 crash_reports_selected_count
-delete_report
 delete_selected_reports
 diagnostic_reason_anr
 diagnostic_reason_java_crash
@@ -1014,17 +411,10 @@ diagnostic_reason_signal
 diagnostic_reason_unknown
 diagnostic_report
 dismiss_mapping
-edit_preset
-file_picker_create_folder
 file_picker_create_folder_failed
-file_picker_create_folder_title
-file_picker_current_folder
 file_picker_empty
 file_picker_empty_folder
-file_picker_file
 file_picker_folder_exists
-file_picker_folder_name
-file_picker_grant_access
 file_picker_invalid_folder_name
 file_picker_load_failed
 file_picker_navigate_back
@@ -1033,21 +423,12 @@ file_picker_parent_folder
 file_picker_permission_denied
 file_picker_permission_message
 file_picker_permission_required
-file_picker_retry
-file_picker_search
 file_picker_select_all
 file_picker_select_app_bundle
-file_picker_select_file
-file_picker_select_folder
-file_picker_select_icon
 file_picker_selected_count
 file_picker_selection_unavailable
-file_picker_sort
 file_picker_sort_modified_newest
 file_picker_sort_modified_oldest
-file_picker_sort_name_ascending
-file_picker_sort_name_descending
-file_picker_sort_type
 file_picker_storage_volume
 file_picker_unselect_all
 fps_limit_maximum
@@ -1077,7 +458,6 @@ installer_stage_save
 installer_stage_wait
 installer_title
 layout_edit_continue
-layout_edit_discard
 layout_edit_done
 layout_edit_save_changes
 library_action_about_summary
@@ -1089,42 +469,29 @@ library_action_import_bundle_summary
 library_action_licenses_summary
 library_action_save_log_summary
 library_action_settings_summary
-library_action_share_app
-library_add_to_favorites_action
 library_back
-library_bulk_add_collection
 library_bulk_delete_apps
 library_bulk_delete_confirmation
 library_bulk_delete_result
 library_bulk_export_apps
 library_bulk_share_apps
 library_collapse_description
-library_collection_add_app
-library_collection_add_apps
-library_collection_manage_apps
 library_collection_manage_apps_summary
 library_collection_member_count
 library_collection_members_empty
-library_collection_name
-library_collection_new
 library_collection_ready_empty_message
 library_collection_remove
 library_collection_remove_from_current
 library_collection_select_message
-library_collection_select_title
 library_collections_empty_message
 library_collections_empty_title
 library_collections_unavailable_title
 library_description_less
 library_description_more
-library_destination_apps
-library_destination_collections
-library_donation_action
 library_donation_browser_unavailable
 library_donation_continue
 library_donation_link_copied
 library_donation_message
-library_donation_not_now
 library_donation_provider_note
 library_donation_summary
 library_donation_title
@@ -1134,9 +501,6 @@ library_expand_description
 library_export_chooser_title
 library_export_progress
 library_favorite_coming_soon
-library_filter_all
-library_filter_favorites
-library_filter_recently_added
 library_filter_recently_opened
 library_grid_spacing_compact
 library_grid_spacing_none
@@ -1146,45 +510,29 @@ library_grid_spacing_title
 library_hide_grid_titles
 library_hide_grid_titles_summary
 library_icon_ratio_title
-library_icon_shape_round
 library_icon_shape_square
-library_icon_shape_title
 library_import_done
 library_import_done_with_warning
 library_import_invalid_bundle
 library_import_preparing
 library_import_restore_existing
-library_import_restore_failed
 library_import_restoring
 library_indexing_current
 library_indexing_progress
 library_load_error_title
 library_load_failed_message
-library_metadata_change_icon
-library_metadata_description
-library_metadata_edit_title
-library_metadata_icon
 library_metadata_reset_to_original
 library_no_matches
 library_play_stats_summary
 library_reinstall_source_missing
 library_remove_from_favorites_action
-library_retry
-library_search_clear
-library_search_placeholder
 library_selection_checkbox_description
 library_selection_checked
 library_selection_count
-library_selection_select_all
 library_selection_unchecked
-library_selection_unselect_all
-library_share_chooser_title
 library_show_list_description
 library_show_list_description_summary
-library_sort
 library_transfer_unavailable
-library_view_grid
-library_view_list
 licenses_unavailable
 loading_apps
 locate_bundle
@@ -1193,24 +541,17 @@ log_save_started
 mapping_dialog_add_input
 mapping_dialog_assigned_inputs
 mapping_dialog_message
-memory_editor
 memory_editor_add_to_watch
-memory_editor_apply
 memory_editor_bubble
-memory_editor_bubble_content_description
 memory_editor_cancelled
 memory_editor_candidate_ambiguous
 memory_editor_candidate_instance
 memory_editor_candidate_lost
-memory_editor_candidate_moved
 memory_editor_candidate_relocating
 memory_editor_candidate_static
 memory_editor_candidate_untraced
 memory_editor_candidates
 memory_editor_change_amount
-memory_editor_clear_selection
-memory_editor_close
-memory_editor_edit
 memory_editor_edit_batch
 memory_editor_edit_batch_help
 memory_editor_edit_batch_no_common_type
@@ -1228,26 +569,16 @@ memory_editor_freeze_paused
 memory_editor_identity_unsafe
 memory_editor_increment_invalid
 memory_editor_increment_preview
-memory_editor_increment_start
-memory_editor_increment_step
 memory_editor_incremental_edit
-memory_editor_inspect_memory
-memory_editor_inspector
 memory_editor_inspector_empty
 memory_editor_inspector_loading
 memory_editor_inspector_no_rows
 memory_editor_invalid_request
-memory_editor_keypad_clear
 memory_editor_max_change
-memory_editor_max_value
 memory_editor_min_change
-memory_editor_min_value
-memory_editor_new_search
 memory_editor_next_results_page_action
-memory_editor_next_scan
 memory_editor_next_scan_result
 memory_editor_no_candidates
-memory_editor_no_results
 memory_editor_no_runtime
 memory_editor_no_search_history
 memory_editor_no_watch
@@ -1256,44 +587,30 @@ memory_editor_path_changed
 memory_editor_path_incomplete
 memory_editor_peek_underlay
 memory_editor_peek_underlay_active
-memory_editor_predicate_between
-memory_editor_predicate_changed
 memory_editor_predicate_changed_by
-memory_editor_predicate_decreased
 memory_editor_predicate_decreased_by
 memory_editor_predicate_decreased_range
-memory_editor_predicate_increased
 memory_editor_predicate_increased_by
 memory_editor_predicate_increased_range
-memory_editor_predicate_unchanged
 memory_editor_previous_results_page_action
 memory_editor_reference_instance
 memory_editor_reference_static
-memory_editor_refresh
-memory_editor_refresh_snapshot
 memory_editor_remove_candidates_description
 memory_editor_remove_candidates_title
-memory_editor_replacement
 memory_editor_resource_limit
 memory_editor_results
 memory_editor_revert_and_remove
 memory_editor_revert_remove_commit_failed
 memory_editor_revert_remove_outcome
 memory_editor_safety_limit
-memory_editor_save
 memory_editor_search_complete
-memory_editor_search_hint
 memory_editor_search_known_values
 memory_editor_search_progress
 memory_editor_search_unknown_values
 memory_editor_searching
-memory_editor_select_result_value
-memory_editor_select_visible
 memory_editor_selected
-memory_editor_set_all
 memory_editor_source_unknown
 memory_editor_type_auto
-memory_editor_undo
 memory_editor_unfreeze
 memory_editor_unsupported
 memory_editor_watch
@@ -1319,9 +636,7 @@ perf_overlay_cap
 perf_overlay_coalesced
 perf_overlay_copy
 perf_overlay_cpu
-perf_overlay_debug
 perf_overlay_display
-perf_overlay_done
 perf_overlay_fps
 perf_overlay_frame_queue
 perf_overlay_group_pipeline
@@ -1336,7 +651,6 @@ perf_overlay_input_queue
 perf_overlay_interval
 perf_overlay_java
 perf_overlay_max
-perf_overlay_minimal
 perf_overlay_native
 perf_overlay_p95
 perf_overlay_paint
@@ -1362,31 +676,22 @@ pref_accent_amber
 pref_accent_blue
 pref_accent_classic_blue
 pref_accent_coral
-pref_accent_cyan
 pref_accent_green
 pref_accent_indigo
-pref_accent_orange
-pref_accent_pink
 pref_accent_rose
 pref_accent_sapphire
 pref_accent_teal
 pref_accent_title
 pref_accent_violet
-pref_app_sort_ascending
-pref_app_sort_descending
 pref_apps_view
 pref_audio_title
 pref_enable_statusbar_summary
-pref_language
 pref_screen_padding_title
-pref_skin_not_set
 pref_skin_title
 pref_skip_resume_call
-pref_soundbank_title
 pref_title_emulation
 pref_use_display_cutout_summary
 pref_use_display_cutout_title
-preset_application_settings
 preset_apply
 preset_apply_failed_summary
 preset_based_on_modified
@@ -1398,33 +703,27 @@ preset_continue_editing
 preset_custom_configuration
 preset_default_picker_title
 preset_default_policy_summary
-preset_discard_changes
 preset_discard_changes_summary
 preset_discard_changes_title
 preset_edit_title
 preset_includes_keyboard_layout
 preset_invalid_name
 preset_keyboard_layout_unavailable
-preset_manage
 preset_manager_default_section
 preset_manager_keyboard_section
 preset_manager_presets_section
-preset_name
 preset_name_exists
 preset_picker_title
 preset_save_as
 preset_save_help
 preset_saved_unlinked_warning
-preset_unavailable_section
 preset_unavailable_summary
 preset_update
-preset_update_confirm
 preset_update_summary
 preset_update_title
 preset_use
 preset_virtual_keyboard_off
 preset_virtual_keyboard_on
-presets
 process_exit_recovery_message
 process_exit_recovery_message_midlet
 process_exit_recovery_message_named
@@ -1432,20 +731,16 @@ process_exit_recovery_title
 profile_apply_layout_keeps_settings
 profile_apply_layout_only
 profile_apply_settings_keeps_layout
-profile_apply_settings_only
-profile_apply_whole
 profile_apply_whole_follows
 profile_apply_whole_without_layout
 profile_builtin_settings
 profile_create_summary
-profile_create_title
 profile_default_badge_short
 profile_default_fallback_notice
 profile_delete_template_message
 profile_follows_updates
 profile_more_actions
 profile_name_exists
-profile_rename_title
 profile_template_operation_failed
 profile_template_summary
 reconversion_done_with_warning
@@ -1472,7 +767,6 @@ runtime_preset_update_unlinked
 runtime_replacement_failed
 runtime_storage_in_use
 runtime_storage_unavailable
-runtime_virtual_controls_analog
 runtime_virtual_controls_dpad
 runtime_virtual_controls_edit
 runtime_virtual_controls_edit_guide_dont_show_again
@@ -1488,18 +782,12 @@ screenshot_save_failed
 screenshot_saved_path
 select_all_reports
 settings_profiles_summary
-settings_section_appearance
-settings_section_library_appearance
 settings_section_midlet_runtime
-settings_section_profiles
-settings_section_storage
 updates_automatic
 updates_available
 updates_browser_unavailable
 updates_build_code
 updates_channel
-updates_check
-updates_checking
 updates_current
 updates_debug_build
 updates_failed
@@ -1514,49 +802,30 @@ updates_not_installable
 updates_notice
 updates_preview
 updates_stable
-updates_title
 updates_view_release
 view_reports
 virtual_controls_save_failed
 ```
 
-## Existing declarations still requiring review
+## Corrected Santali semantic blockers
 
-Existing text is preserved. The reasons below identify current deferred cases;
-they do not constitute proposed replacements.
+The three previously prioritized existing resources now have reviewed complete
+corrections: `message_delete`, `about_message`, and `help_message`. Their precise
+contracts and reference failures are recorded above. The remaining deferred
+existing list still includes known stale meanings and uncertain grammar; none is
+certified merely because its XML is present. No language was removed and the
+localization objective remains all 39 catalogs.
 
-### `kk` — 0 existing
+## Deferred existing translations
 
-
-All previously recorded deferred existing cases in this selection are resolved.
-
-### `or` — 7 existing
-
-- `alert_map_menu`: NEEDS_LANGUAGE_REVIEW: Cannot verify a natural standard Odia complete rendering of “Menu key (M) is not assigned.\nThis may prevent access to the runtime MIDlet menu.”, especially the exact runtime/diagnostic condition without a stronger success claim. Preserve existing bytes if present.
-- `alert_msg_workdir_not_exists`: NEEDS_LANGUAGE_REVIEW: Cannot verify a natural standard Odia complete rendering of “Working directory not found:\n%1$s\nCreate it or choose another directory?”, especially the exact runtime/diagnostic condition without a stronger success claim. Preserve existing bytes if present.
-- `install_jar_non_matched_jad`: NEEDS_LANGUAGE_REVIEW: Cannot establish a reliable standard Odia complete rendering of This app differs from the one described in the JAD.\nIgnore the JAD and install anyway?. Missing judgment concerns the stated install/conversion phase, retention condition, cancellation boundary or recovery consequence. Preserve existing text if present.
-- `invalid_resolution_not_saved`: NEEDS_LANGUAGE_REVIEW: Need independent standard Odia wording/grammar judgment for Invalid resolution. Changes were not saved.. Existing text is preserved byte-for-byte.
-- `permission_request_failed`: NEEDS_LANGUAGE_REVIEW: Cannot verify a natural standard Odia complete rendering of “This app requires storage write permission.”, especially the exact runtime/diagnostic condition without a stronger success claim. Preserve existing bytes if present.
-- `pref_screenshot_summary`: NEEDS_LANGUAGE_REVIEW: Existing wording incorrectly instructs disabling scaling/filtering. Need competent whole-message Odia for saving the MIDlet frame at virtual resolution before scaling, filtering and shader processing. Preserve existing XML pending that judgment.
-- `reinstall`: NEEDS_LANGUAGE_REVIEW: Cannot establish a reliable standard Odia complete rendering of This app is already installed. Reinstall it?. Missing judgment concerns the stated install/conversion phase, retention condition, cancellation boundary or recovery consequence. Preserve existing text if present.
-
-### `sat` — 113 existing
+### `sat` — 76 existing
 
 - `FORCE_CLOSE_CONFIRMATION`: Existing wording refers to app forced closure/data corruption; current text names MIDlet stop and only potential unsaved-change loss. Cannot certify or safely correct Santali wording.
-- `PREF_FILTER`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_FONT_ANTI_ALIASING`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_FONT_LARGE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_FONT_MEDIUM`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_FONT_SIZE_IN_SP`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_FONT_SMALL`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_FORCE_FULLSCREEN`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_HEIGHT`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_IMMEDIATE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_LAYOUT`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_LIMIT_FPS`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_ORIENTATION`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_SCALE_RATIO`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_SHADER_FILTER`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_SYS_PROPS`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_TOUCH_INPUT`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_VIRTUAL_KEYBOARD_OPTIONS`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
@@ -1569,18 +838,12 @@ All previously recorded deferred existing cases in this selection are resolved.
 - `PREF_VK_OUTLINE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_VK_SEL_BACK`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `PREF_VK_SEL_FORE`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `PREF_WIDTH`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `RESET_LAYOUT_CMD`: Existing text names key layout rather than the explicitly scoped virtual controls layout. Correct standard Santali wording is unresolved.
-- `SIZE_PRESETS`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `SWAP_SIZES`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `about_message`: Existing description omits current Library/controls/audio/performance and free/open-source scope and makes legacy broad compatibility claims. Full rewrite needs competent Santali review.
 - `action_lock_orientation`: Existing compound wording cannot be certified as screen rotation lock rather than lock screen orientation without competent Santali review.
 - `alert_map_menu`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `alert_msg_workdir_not_exists`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `converting_wait`: Existing Ol Chiki progress text retained; requires competent Santali verification of JAR conversion phase grammar.
 - `create_apps_dir_failed`: Existing wording/argument differs from current working-directory preparation failure with explicit %1$s and supported recovery. Cannot safely correct complete text.
-- `help_message`: Existing text omits Java ME event queue bypass/instability caution and claims flicker correction. Technical caution needs competent Santali review.
-- `identity_filter`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `install_done`: Existing Ol Chiki success sentence retained; requires competent Santali review of completed installation result and register.
 - `install_jar_non_matched_jad`: Existing Ol Chiki confirmation retained; competent Santali review must preserve mismatch identity and decision to ignore only the JAD.
 - `invalid_resolution_not_saved`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
@@ -1590,53 +853,32 @@ All previously recorded deferred existing cases in this selection are resolved.
 - `loading_info`: Existing abbreviated information/loading wording cannot be certified as natural current standard Santali UI.
 - `mapping_dialog_key_not_specified`: Existing Ol Chiki label retained unchanged. Canonical empty state means no physical inputs assigned, not an unspecified key; competent Santali revision required.
 - `mapping_dialog_title`: Existing Ol Chiki label retained unchanged. Canonical capture title accepts a key or controller button, not only a key; competent Santali revision required.
-- `message_delete`: Existing confirmation omits settings/save-data deletion and removal of Library entry. Full consequence wording needs competent Santali review.
 - `midlet_vendor`: Existing Ol Chiki vendor label retained; appears to use a merchant/trader term, and software publisher/vendor meaning requires competent Santali review.
-- `midlet_version`: Existing Ol Chiki label retained; competent review must establish the MIDlet-Version metadata meaning rather than a generic updated/current adjective.
 - `no_data_for_display`: Existing text names no data rather than no apps. Correct scope needs standard Santali wording.
 - `parallel_screen_redrawing`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `permission_request_failed`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `pref_app_sort_date`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_app_sort_name`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_app_sort_vendor`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_button_shape_oval`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_button_shape_rect`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_button_shape_round`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_button_shape_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_category_experimental`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_emulator_dir`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_enable_actionbar_summary`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_enable_actionbar_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_enable_statusbar_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_encoding_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_graphics_hw_gles`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_graphics_hw_surface`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_graphics_hw_view`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_graphics_mode_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_graphics_software`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_map_keys`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_mascot_summary`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_mascot_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_orientation_auto`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_orientation_default`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_orientation_land`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_orientation_port`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_gravity`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_gravity_bottom`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_gravity_center`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_gravity_left`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_gravity_right`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_gravity_top`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screen_scale_type`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_screen_scale_type_fill`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_screen_scale_type_fit`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_screen_scale_type_none`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_screenshot_summary`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_screenshot_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_theme_auto_battery`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_theme_auto_time`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_theme_system`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `pref_theme_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vibration_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_hide_hint`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `pref_vk_save_alert`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
@@ -1652,7 +894,6 @@ All previously recorded deferred existing cases in this selection are resolved.
 - `reinstall_newest`: Existing Ol Chiki prose retained; competent review needed for target/current version roles and preserved-data clause.
 - `reinstall_older`: Existing Ol Chiki prose retained; competent review needed for downgrade target/current roles and possible failure with retained data.
 - `saved`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
-- `shader_tuning`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `take_screenshot`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
 - `warn_install_from_net`: Existing Ol Chiki sentence retained; requires competent review of future download, rather than completed download.
 
