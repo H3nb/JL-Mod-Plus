@@ -65,15 +65,16 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 1,411 to **142** after
-197 Santali labels/simple statuses and a further 324 source-checked Santali
-single-string candidates on 14 October (466 after the 197-string checkpoint,
+Missing localized declarations decreased from 1,411 to **87** after
+197 Santali labels/simple statuses, 324 source-checked Santali single-string
+candidates on 14 October, and 34 plurals plus 21 contextual strings on
+15 October (142 after the 324-string checkpoint, 466 after the earlier 197-string checkpoint,
 1,492 before technical recovery,
 2,111 before deferred-language recovery,
 6,152 before settings/runtime, 8,758 before Memory Editor, 11,502 before
 installer, 18,070 before controls, and 25,122 before 12 October).
 Thirty-eight catalogs cover all 977 resources. Santali is the remaining
-incomplete catalog (142 missing: 108 strings and 34 plurals), with 76 recorded deferred existing cases.
+incomplete catalog (87 missing strings; no missing plurals), with 76 recorded deferred existing cases.
 **Resource presence does not establish language certification.** The remaining
 existing-language uncertainty is documented separately from missing declarations.
 Local app/resource, representative UI and cumulative remote CI validation pass
@@ -84,7 +85,7 @@ The [current language-review record](localization-language-review.md) lists ever
 remaining missing identity and the active deferred existing cases. Earlier
 per-feature counts below are historical snapshots, superseded by that record.
 
-Santali remains a material blocker. The current consolidated identity lists,
+Santali remains a material language-review blocker. The current consolidated identity lists,
 rather than historical per-feature totals, define the unfinished work. CLDR,
 script rendering and plausible machine output do not establish trustworthy
 technical prose. The current recovery corrects the stale About, Help and deletion
@@ -579,10 +580,39 @@ with already-present Santali plurals. Current CI on the resource commit is
 [Android CI 38592902203](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38592902203);
 record the actual conclusion after it completes.
 
+## 15 October Santali plural and contextual strings checkpoint
+
+Resource commit [`f075df46d`](https://github.com/H3nb/JL-Mod-Plus/commit/f075df46de1ca41f232778cf77dfb90dbc0d7d1e)
+adds 34 complete `<plurals>` declarations and 21 contextual `<string>`
+declarations. Each Santali plural supplies Android's CLDR cardinal
+`one`, `two`, `other` forms; noun-bearing dual forms use tentative
+Santali dual inflection while count-only statuses remain unchanged when
+the wording has no inflected noun. For all 102 quantity items, the
+format-argument contracts were checked against English, including the
+unindexed `%d` variant in the Performance overlay.
+
+**Santali coverage: 890/977 (91.1%)**, with **87 missing strings and no
+missing plurals**. The 76 previously recorded deferred existing
+language-quality cases have not been closed. The candidate wording
+still requires full contextual and competent Santali linguistic review;
+an Android build cannot certify grammatical or semantic correctness.
+This checkpoint deliberately retains complex controller calibration,
+memory writes/undo, data-loss, timing, profile propagation and diagnostic
+messages for further focused review rather than assuming that three
+machine-provided translation references form a reliable vote.
+
+The newly added parent-folder labels refer to the containing folder
+rather than root, correcting a proven reference error. The malformed
+T0225 percentage-escaping batch source remains rejected; canonical
+`formatted="false"` English `1% to 1000%` is unchanged and untranslated.
+An actual resource CI run is
+[Android CI #38599807318](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38599807318).
+Do not mark PR #169 ready or merge without further language QA.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
-not historical missing counts. Resolve the remaining 142 Santali missing
+not historical missing counts. Resolve the remaining 87 Santali missing
 declarations and 76 deferred existing cases with competent language judgment.
 The prioritized `message_delete`, `about_message`, and `help_message` defects
 are corrected. Continue the exact remaining controller, installer, profile,
