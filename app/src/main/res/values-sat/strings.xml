@@ -6,10 +6,10 @@
     <string name="action_context_rename">ᱫᱚᱦᱲᱟ ᱧᱩᱛᱩᱢ</string>
     <string name="action_context_shortcut">ᱥᱚᱴᱠᱚᱴ ᱥᱮᱞᱮᱫᱽ ᱢᱮ</string>
     <string name="action_keyboard_ime">ᱠᱮᱭᱵᱚᱰ (IME)</string>
-    <string name="action_lock_orientation">ᱠᱩᱞᱩᱯ ᱥᱤᱨᱤᱱ ᱟᱹᱪᱩᱨ</string>
+    <string name="action_lock_orientation">ᱥᱠᱨᱤᱱ ᱟᱹᱪᱩᱨ ᱞᱚᱠ ᱢᱮ</string>
     <string name="action_reinstall">ᱫᱩᱦᱲᱟᱹᱵᱚᱦᱟᱞ</string>
     <string name="action_settings">ᱥᱟᱡᱟᱣᱠᱚ</string>
-    <string name="alert_map_menu">ᱢᱮᱱᱩ ᱪᱟᱹᱵᱤ (M) ᱫᱚ ᱵᱟᱝ ᱪᱤᱱᱦᱟᱹᱯ ᱠᱟᱱᱟ !\n ᱱᱚᱶᱟ ᱮᱢᱩᱞᱮᱴᱚᱨ ᱠᱚᱣᱟᱜ ᱵᱟᱪᱷᱟᱣ ᱟᱫᱮᱨ ᱵᱟᱝ ᱮᱢᱟᱭ</string>
+    <string name="alert_map_menu">ᱢᱮᱱᱩ ᱠᱤ (M) ᱫᱚ ᱵᱟᱝ ᱟᱥᱟᱭᱤᱱ ᱟᱠᱟᱱᱟ᱾\nᱱᱚᱶᱟ ᱠᱷᱟᱹᱛᱤᱨ runtime MIDlet ᱢᱮᱱᱩ ᱛᱮ ᱵᱚᱞᱚ ᱨᱮ ᱵᱟᱹᱫᱷᱟ ᱦᱩᱭ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ᱾</string>
     <string name="alert_msg_workdir_not_exists">ᱡᱟᱭᱜᱟ ᱨᱮ ᱠᱟᱹᱢᱤ ᱰᱟᱭᱨᱮᱠᱴᱚᱨᱭ ᱵᱟᱹᱱᱩᱜᱼᱟ : \n%1$s ᱾ \nᱟᱢ ᱮᱪᱫ ᱛᱮᱭᱟᱨ ᱥᱮᱱᱟᱢ ᱠᱟᱱᱟ ᱥᱮ ᱟᱨᱵᱟᱝᱠᱷᱟᱱ ᱮᱴᱟᱜ ᱵᱟᱪᱷᱟᱣᱟᱢ ᱥᱮ ?</string>
     <string name="CANCEL_CMD">ᱵᱟᱹᱰᱨᱟᱹ</string>
     <string name="change">ᱵᱚᱫᱚᱞ</string>
@@ -34,8 +34,8 @@
     <string name="install_done">ᱮᱯᱞᱤᱠᱮᱥᱚᱱ ᱨᱟᱹᱥ ᱞᱮᱠᱷᱟᱛᱮ ᱵᱚᱦᱟᱞ ᱮᱱᱟ!</string>
     <string name="install_jar_non_matched_jad">ᱱᱚᱶᱟ ᱮᱯ ᱫᱚ JAD ᱨᱮ ᱚᱞ ᱟᱠᱟᱱ ᱮᱯ ᱠᱷᱚᱱ ᱵᱷᱮᱜᱟᱨ ᱠᱟᱱᱟ᱾\nJAD ᱵᱟᱹᱜᱤ ᱠᱟᱛᱮ ᱤᱱᱥᱴᱚᱞ ᱢᱮ?</string>
     <string name="invalid_resolution_not_saved">ᱵᱷᱩᱞ ᱨᱤᱡᱚᱞᱭᱩᱥᱚᱱ ᱠᱚ : ᱵᱟᱝ ᱥᱟᱧᱪᱟᱣ ᱞᱮᱱᱟ !</string>
-    <string name="layout_edit_finish">ᱥᱟᱯᱲᱟᱣ ᱢᱤᱰ ᱪᱟᱵᱟᱭᱢᱮ</string>
-    <string name="layout_edit_finished">ᱥᱟᱯᱲᱟᱣ ᱢᱳᱰ ᱪᱟᱵᱟᱮᱱᱟ</string>
+    <string name="layout_edit_finish">ᱥᱟᱯᱲᱟᱣ ᱢᱩᱪᱟᱹᱫ ᱢᱮ</string>
+    <string name="layout_edit_finished">ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱥᱟᱯᱲᱟᱣ ᱯᱩᱨᱟᱹᱣ ᱮᱱᱟ᱾</string>
     <string name="layout_switch">ᱠᱚᱱᱴᱨᱚᱞ ᱞᱮᱟᱩᱴ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
     <string name="licenses">ᱞᱟᱭᱥᱮᱱᱥ ᱠᱚ</string>
     <string name="loading_info">ᱵᱤᱵ ᱞᱟᱫᱮᱜ ᱠᱟᱱᱟ …</string>
@@ -44,7 +44,7 @@
     <string name="message_delete">ᱱᱚᱣᱟ ᱮᱯ ᱫᱚ ᱱᱚᱣᱟ ᱨᱮᱭᱟᱜ ᱥᱟᱡᱟᱣ ᱠᱚ ᱟᱨ ᱥᱮᱵᱷᱰ ᱰᱟᱴᱟ ᱥᱟᱶ ᱢᱤᱫ ᱥᱟᱶᱛᱮ ᱢᱮᱴᱟᱣ ᱢᱮ? ᱱᱚᱣᱟ ᱫᱚ ᱞᱟᱭᱵᱨᱮᱨᱤ ᱠᱷᱚᱱ ᱮᱯ ᱨᱮᱭᱟᱜ ᱵᱚᱞᱚᱱ ᱦᱚᱸ ᱚᱪᱚᱜᱼᱟᱭ ᱾</string>
     <string name="midlet_name"><b>ᱧᱩᱛᱩᱢ : </b></string>
     <string name="midlet_size"><b>ᱢᱟᱯ : </b></string>
-    <string name="midlet_vendor"><b>ᱵᱮᱯᱟᱨᱤᱭᱟᱹ : </b></string>
+    <string name="midlet_vendor"><b>ᱵᱷᱮᱱᱰᱟᱨ: </b></string>
     <string name="midlet_version"><b>ᱵᱷᱟᱹᱨᱥᱚᱱ : </b></string>
     <string name="more">ᱵᱟᱹᱲᱛᱤ</string>
     <string name="no_data_for_display">ᱩᱫᱩᱜ ᱞᱟᱹᱜᱤᱫ ᱡᱟᱦᱟᱸᱱ ᱮᱯ ᱵᱟᱹᱱᱩᱜᱼᱟ᱾</string>
@@ -53,7 +53,7 @@
     <string name="permission_request_failed">ᱱᱚᱶᱟ ᱮᱯ ᱫᱚ ᱫᱚᱦᱚ ᱚᱞ ᱯᱟᱹᱨᱢᱤᱥᱚᱱ ᱛᱟᱭ ᱫᱚᱨᱠᱟᱨ</string>
     <string name="pref_app_sort_date">ᱥᱮᱞᱮᱫ ᱟᱠᱟᱱ ᱢᱟᱦᱟᱸ</string>
     <string name="pref_app_sort_name">ᱧᱩᱛᱩᱢ</string>
-    <string name="pref_app_sort_vendor">ᱟᱹᱠᱷᱨᱤᱧᱤᱡ</string>
+    <string name="pref_app_sort_vendor">ᱵᱷᱮᱱᱰᱟᱨ</string>
     <string name="pref_button_shape_oval">ᱚᱱᱰᱟᱠᱟᱨ</string>
     <string name="pref_button_shape_rect">ᱟᱹᱭᱟᱹᱛ</string>
     <string name="pref_button_shape_round">ᱜᱤᱞᱟᱹᱭ ᱟᱹᱭᱟᱹᱛ</string>
@@ -115,7 +115,7 @@
     <string name="PREF_VK_ALPHA">ᱚᱯᱟᱥᱤᱴᱤ</string>
     <string name="PREF_VK_BACK">ᱵᱩᱛᱟᱹᱢ ᱨᱚᱝ</string>
     <string name="PREF_VK_FEEDBACK">ᱦᱟᱯᱟᱴᱤᱠ ᱯᱷᱤᱰᱵᱽᱮᱠ</string>
-    <string name="PREF_VK_FORCE_OPACITY">ᱚᱯᱼᱥᱠᱨᱤᱱ ᱪᱟᱹᱵᱤᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱚᱯᱟᱥᱤᱴᱭ ᱡᱩᱨ ᱮᱢ ᱢᱮ</string>
+    <string name="PREF_VK_FORCE_OPACITY">MIDlet ᱥᱠᱨᱤᱱ ᱵᱟᱦᱨᱮ ᱠᱚᱱᱴᱨᱳᱞ ᱠᱚ ᱚᱯᱟᱠ ᱫᱚᱦᱚᱭ ᱢᱮ</string>
     <string name="PREF_VK_FORE">ᱞᱮᱵᱮᱞ ᱟᱨ ᱥᱤᱢᱵᱚᱞ ᱨᱚᱝ</string>
     <string name="PREF_VK_HIDE_DELAY">ᱟᱡᱛᱮ ᱩᱠᱩ ᱞᱟᱦᱟᱣ ᱚᱠᱛᱚ</string>
     <string name="pref_vk_hide_hint">ᱵᱚᱸᱫ ᱮᱱᱟ</string>
@@ -156,7 +156,7 @@
     <string name="library_destination_more">ᱵᱟᱹᱲᱛᱤ</string>
     <string name="library_metadata_name">ᱧᱩᱛᱩᱢ</string>
     <string name="library_metadata_save">ᱥᱟᱺᱪᱟᱣ</string>
-    <string name="library_metadata_vendor">ᱟᱹᱠᱷᱨᱤᱧᱤᱡ</string>
+    <string name="library_metadata_vendor">ᱵᱷᱮᱱᱰᱟᱨ</string>
     <string name="library_icon_ratio_portrait">3:4</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
