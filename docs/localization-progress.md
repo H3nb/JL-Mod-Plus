@@ -65,13 +65,15 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 ## Coverage and quality
 
 The inventory has 977 canonical translatable resources and 39 target catalogs.
-Missing localized declarations decreased from 1,411 to **466** after
-an additional 197 Santali labels and simple UI/status strings on 14 October (1,492 before technical recovery,
+Missing localized declarations decreased from 1,411 to **142** after
+197 Santali labels/simple statuses and a further 324 source-checked Santali
+single-string candidates on 14 October (466 after the 197-string checkpoint,
+1,492 before technical recovery,
 2,111 before deferred-language recovery,
 6,152 before settings/runtime, 8,758 before Memory Editor, 11,502 before
 installer, 18,070 before controls, and 25,122 before 12 October).
 Thirty-eight catalogs cover all 977 resources. Santali is the remaining
-incomplete catalog (466 missing), with 76 recorded deferred existing cases.
+incomplete catalog (142 missing: 108 strings and 34 plurals), with 76 recorded deferred existing cases.
 **Resource presence does not establish language certification.** The remaining
 existing-language uncertainty is documented separately from missing declarations.
 Local app/resource, representative UI and cumulative remote CI validation pass
@@ -550,10 +552,37 @@ validates the newer resource commit `b27171938`: **Build and tests**,
 Representative manual display checks and fluent target-language review
 are still needed. Do not mark the PR ready to merge.
 
+## Santali cross-reference candidate recovery — 14 October follow-up II
+
+Resource commit [`0b440ea9e`](https://github.com/H3nb/JL-Mod-Plus/commit/0b440ea9e81a0334b78242791ad01c79130635e6)
+adds **324 Santali single-string declarations** following comparison of user-supplied
+Gemini 3.1 Pro, Gemini 3.8 Flash and Google Translate reference outputs.
+Technical integration checks require matching canonical English identities, keep
+exact indexed format-argument contracts, preserve invariant identifiers and
+line-break counts, safely escape XML, and reject duplicate declarations.
+Existing accepted resource text remains byte-for-byte unchanged.
+
+This reduces missing Santali declarations from **466 to 142** (remaining
+**108 strings + 34 plurals**), reaching **835/977** catalog resource presence.
+The 76 prior deferred existing-quality cases are still unresolved.
+Source-reference acceptance is not qualified native-speaker linguistic review:
+particularly review all consequences of deletion/data retention, controller
+calibration, profile propagation, Memory Editor state transitions and diagnostics.
+No full linguistic certification or merge authorization is claimed.
+
+The user-generated translation input at T0225 mis-parsed literal percentages
+in `config_help_scale_ratio`; it was deliberately excluded and must be
+translated from the canonical English `formatted="false"` source. Santali
+CLDR cardinal plurals are `one`, `two`, and `other`; the 34 missing plural
+resources require review using target-language dual forms, including reconciliation
+with already-present Santali plurals. Current CI on the resource commit is
+[Android CI 38592902203](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38592902203);
+record the actual conclusion after it completes.
+
 ## Exact next unfinished work
 
 Continue from [current language-review gaps](localization-language-review.md),
-not historical missing counts. Resolve the remaining 466 Santali missing
+not historical missing counts. Resolve the remaining 142 Santali missing
 declarations and 76 deferred existing cases with competent language judgment.
 The prioritized `message_delete`, `about_message`, and `help_message` defects
 are corrected. Continue the exact remaining controller, installer, profile,
