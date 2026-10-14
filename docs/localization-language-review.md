@@ -924,6 +924,9 @@ does not imply certification of the rest of the Santali catalog.
 
 Resolve the remaining keys above with competent language review and the existing
 feature contracts, then check cross-feature consistency and representative
-long-text, narrow-screen, RTL and script rendering. Full app build/tests/lint and
-one meaningful final CI run must correspond to the final relevant resource state.
-Keep PR 169 Draft; no merge is authorized.
+long-text, narrow-screen, RTL and script rendering. Current resource checkpoint
+`d6616507f` passes [cumulative Android CI](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38573678907),
+including build/tests, lint and screenshot validation; local rendering evidence
+is in [the progress record](localization-progress.md). Future resource changes
+need corresponding validation. Passing checks do not resolve the remaining
+language judgments. Keep PR 169 Draft; no merge is authorized.

@@ -74,8 +74,9 @@ Thirty-eight catalogs cover all 977 resources. Santali is the remaining
 incomplete catalog (663 missing), with 76 recorded deferred existing cases.
 **Resource presence does not establish language certification.** The remaining
 existing-language uncertainty is documented separately from missing declarations.
-Local app/resource and representative UI validation are recorded below;
-cumulative remote CI validation is pending for this checkpoint.
+Local app/resource, representative UI and cumulative remote CI validation pass
+for the reviewed resource checkpoint recorded below. Santali completion remains
+unfinished.
 
 The [current language-review record](localization-language-review.md) lists every
 remaining missing identity and the active deferred existing cases. Earlier
@@ -501,10 +502,9 @@ tests pass on Windows.
 Local native-disabled Android APK assembly, app/dexlib JVM tests and resource
 compilation/linking passed. The app reports 1,264 tests with no failures/errors
 and one skipped test; dexlib reports 20 tests with no failures/errors/skips.
-After plural repair, the earlier local app/dexlib lint run passes: the app report
-has no errors or missing-quantity findings, with 82 warnings and two hints
-remaining. The additional rerun on the final Santali snapshot is still pending
-at this resource checkpoint.
+The cumulative final-snapshot build/tests/lint command passed in 9m 40s.
+App/dexlib lint passes: the app report has no errors or missing-quantity findings,
+with 82 warnings and two hints remaining.
 This validates host/resource inputs and does not certify native MIDlet execution.
 
 A temporary Android rendering probe exercised production adaptive dialogs on a
@@ -524,8 +524,13 @@ The refreshed remote record includes failed validation
 [38514764068](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38514764068) on
 `de2efd71`: build/tests and screenshot validation passed, while lint failed on
 the missing plural categories repaired here. Earlier successful CI does not
-validate this changed resource state. One cumulative CI validation will follow
-the reviewed resource checkpoint; no per-batch remote runs are required.
+validate this changed resource state. The one subsequent cumulative validation
+[38573678907](https://github.com/H3nb/JL-Mod-Plus/actions/runs/38573678907)
+passes **Build and tests, Screenshot validation, Lint and the final build gate**
+on resource commit `d6616507f1b0eccba771c33470df8c6eaa317b56`. Native arm64 APK
+assembly, app/dexlib tests and instrumentation compilation are included. This
+documentation-only follow-up changes no executable/resource input; no repeat CI
+run is needed on identical validated inputs.
 
 ## Exact next unfinished work
 
@@ -541,7 +546,8 @@ feature contracts for profile following, controller identity/calibration,
 physical versus virtual input, data retention, partial installation/write/save
 outcomes, conditional undo, timing/metrics and local versus public diagnostics.
 
-Check cross-feature terminology and representative long-text, narrow-screen,
-RTL and script rendering. Complete relevant app build/tests/lint and obtain one
-meaningful final CI validation corresponding to the final relevant resource
-state. Keep PR 169 Draft; no merge is authorized.
+Continue cross-feature language review and validate future resource changes with
+relevant XML/build/tests/lint and representative rendering checks. Batch further
+work before another meaningful cumulative CI run; do not rerun unchanged inputs.
+Current passing validation does not resolve the remaining Santali language scope.
+Keep PR 169 Draft; no merge is authorized.
