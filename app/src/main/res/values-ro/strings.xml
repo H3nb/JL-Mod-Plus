@@ -14,7 +14,6 @@
     <string name="exit">Ieșire</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Oprești acest MIDlet? Modificările nesalvate se pot pierde.</string>
     <string name="help">Ajutor</string>
-    <string name="help_message">• Filtrarea liniară poate reduce semnificativ performanța unor MIDlet-uri. Dezactiveaz-o dacă MIDlet-ul este prea lent.&lt;BR&gt;• Procesarea imediată ocolește coada normală de evenimente Java ME. Poate îmbunătăți viteza de răspuns, dar poate face unele MIDlet-uri instabile.</string>
     <string name="layout_edit_finish">Termină modul de editare</string>
     <string name="layout_edit_finished">Modul de editare a fost terminat</string>
     <string name="layout_switch">Alegeți aranjamentul comenzilor</string>
@@ -83,10 +82,8 @@
     <string name="about_lineage">JL-Mod Plus este un fork independent al JL-Mod de woesss (Yury Kharchenko). JL-Mod se bazează pe J2ME Loader de Nikita Shakarun, ale cărui origini se află în J2meLoader de NaikSoftware.</string>
     <string name="about_lineage_title">Originile proiectului</string>
     <string name="about_links_title">Proiect și licențe</string>
-    <string name="about_maintainer">Responsabil de întreținere: %1$s</string>
     <string name="about_revision_label">Revizia codului sursă</string>
     <string name="about_subtitle">Emulator Java ME pentru Android</string>
-    <string name="about_version">Versiunea %1$s</string>
     <string name="about_version_label">Versiune</string>
     <string name="action_back">Înapoi</string>
     <string name="action_keyboard_ime">Tastatură (IME)</string>
@@ -174,11 +171,9 @@
     <string name="library_action_about_summary">Prezentarea proiectului, informații despre compilare și linkuri.</string>
     <string name="library_action_crash_reports_summary">Consultă rapoartele de diagnostic salvate.</string>
     <string name="library_action_export_bundle">Exportă pachetul aplicației</string>
-    <string name="library_action_help_summary">Instrucțiuni de utilizare și comenzi uzuale.</string>
     <string name="library_action_import_bundle">Importă pachetul aplicației</string>
     <string name="library_action_import_bundle_summary">Restaurează fișierul JAR exportat, setările aplicației și datele salvate.</string>
     <string name="library_action_licenses_summary">Notificări ale terților și condiții de licențiere incluse în aplicație.</string>
-    <string name="library_action_save_log_summary">Salvează jurnalele recente ale JL-Mod Plus pentru depanare.</string>
     <string name="library_action_select">Selectează</string>
     <string name="library_action_settings_summary">Configurează comportamentul general și aspectul.</string>
     <string name="library_action_share_app">Partajează aplicația</string>
@@ -198,7 +193,6 @@
     <string name="library_collection_name">Numele colecției</string>
     <string name="library_collection_new">Colecție nouă</string>
     <string name="library_collection_ready_empty_message">Creează colecții pentru a organiza aplicațiile fără a le muta fișierele.</string>
-    <string name="library_collection_remove">Elimină din colecție</string>
     <string name="library_collection_remove_from_current">Elimină din colecție</string>
     <string name="library_collection_select_message">Alege o colecție pentru a-i vedea aplicațiile.</string>
     <string name="library_collection_select_title">Selectează o colecție</string>
@@ -684,7 +678,6 @@
     <string name="installer_stage_wait">Se așteaptă o altă operație…</string>
     <string name="installer_title">Instalator MIDlet</string>
     <string name="reconversion_done_with_warning">Conversia pentru compatibilitate s-a încheiat cu avertismente.</string>
-    <string name="reconversion_error">MIDletul nu a putut fi convertit automat.\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDletul nu a putut fi convertit automat.</string>
     <string name="reconverting_wait">Acest MIDlet necesită o singură conversie pentru compatibilitate înainte de pornire. Se convertește…</string>
     <string name="reinstall">Această aplicație este deja instalată. O reinstalezi?</string>
@@ -801,7 +794,6 @@
     <string name="memory_editor_clear_selection">Șterge selecția</string>
     <string name="memory_editor_close">Închide editorul de memorie</string>
     <string name="memory_editor_edit">Editează</string>
-    <string name="memory_editor_edit_batch_help">Aplică valoarea de înlocuire țintelor selectate compatibile cu tipul de date ales. Monitorizarea și Blocarea nu sunt disponibile pentru editări în lot.</string>
     <string name="memory_editor_edit_batch_no_common_type">Rezultatele selectate nu acceptă tipul de date ales. Editează separat rezultatele compatibile.</string>
     <string name="memory_editor_edit_batch_type_notice">Vor fi modificate doar valorile cu tipul de date corespunzător.</string>
     <string name="memory_editor_engine_reconnecting">Editorul de memorie se reconectează…</string>
@@ -815,7 +807,7 @@
     <string name="memory_editor_freeze_paused">Suspendat din motive de siguranță</string>
     <string name="memory_editor_identity_unsafe">Valoarea selectată sau starea căutării nu a putut fi verificată. Reîmprospătează rezultatele sau redeschide Inspectorul, apoi încearcă din nou.</string>
     <string name="memory_editor_increment_invalid">Folosește un singur tip întreg și valori din intervalul său.</string>
-    <string name="memory_editor_increment_preview">Previzualizare: %1$s (număr de valori: %2$d)</string>
+    <string name="memory_editor_increment_preview">Previzualizare: %1$s</string>
     <string name="memory_editor_increment_start">Valoare inițială</string>
     <string name="memory_editor_increment_step">Pas</string>
     <string name="memory_editor_incremental_edit">Secvență cu pas</string>
@@ -978,11 +970,7 @@
     <string name="pref_accent_blue">Albastru implicit</string>
     <string name="pref_accent_classic_blue">Albastru clasic</string>
     <string name="pref_accent_coral">Coral cu nuanță de piersică</string>
-    <string name="pref_accent_cyan">Cian</string>
     <string name="pref_accent_green">Verde smarald</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_orange">Portocaliu</string>
-    <string name="pref_accent_pink">Roz</string>
     <string name="pref_accent_rose">Roz de fructe de pădure</string>
     <string name="pref_accent_sapphire">Albastru safir</string>
     <string name="pref_accent_teal">Turcoaz de jad</string>
