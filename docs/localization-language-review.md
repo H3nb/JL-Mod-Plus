@@ -550,3 +550,21 @@ Resource names, placeholder indices, plural declarations, and other text are
 unchanged. The `library_filter_recently_opened` / **Recently played** wording
 remains a product-meaning decision pending confirmation of the filter's actual
 behavior; no speculative global rewrite was made.
+
+### Expanded saved-data terminology sweep (same review day)
+
+Reviewing nearby status strings after the first targeted commit uncovered the
+same game-only scope error outside the confirmation dialogs. A follow-up patch
+corrects **62 additional translations in 16 locales**: Afrikaans, Bengali,
+Bulgarian, Czech, Greek, Hindi, Hungarian, Kazakh, Norwegian, Odia, Persian,
+Polish, Romanian, Serbian, Sinhala and Vietnamese. The affected resource
+families are Library bundle import summaries/progress, MIDlet-data deletion
+warnings (which continue to retain settings), installer preservation of prior
+data and partial-removal outcomes. Not every locale required every correction.
+
+The audit compared the target prose with each canonical English message,
+rather than blindly removing every mention of games: game-memory and other
+explicitly game-specific references remain intact. The changes preserve the
+original conditions, deleted/retained objects, resource identities and format
+arguments. These semantic corrections do not replace competent native-speaker
+review of the complete catalog or alter the open Santali QA queue.

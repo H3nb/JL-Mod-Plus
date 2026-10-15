@@ -177,7 +177,7 @@
     <string name="library_action_export_bundle">Eksportuj pakiet aplikacji</string>
     <string name="library_action_help_summary">Wskazówki dotyczące obsługi i typowe elementy sterowania.</string>
     <string name="library_action_import_bundle">Importuj pakiet aplikacji</string>
-    <string name="library_action_import_bundle_summary">Przywróć wyeksportowany plik JAR, ustawienia aplikacji i zapisane dane gry.</string>
+    <string name="library_action_import_bundle_summary">Przywróć wyeksportowany plik JAR, ustawienia aplikacji i zapisane dane.</string>
     <string name="library_action_licenses_summary">Informacje o komponentach innych firm i warunki licencji dołączone do aplikacji.</string>
     <string name="library_action_save_log_summary">Zapisz ostatnie dzienniki JL-Mod Plus, aby pomóc w rozwiązywaniu problemów.</string>
     <string name="library_action_select">Zaznacz</string>
@@ -249,7 +249,7 @@
     <string name="library_import_preparing">Odczytywanie pakietu aplikacji…</string>
     <string name="library_import_restore_existing">Ta aplikacja jest już zainstalowana. Ustawienia lub zapisane dane zawarte w pakiecie zastąpią odpowiednie istniejące dane.</string>
     <string name="library_import_restore_failed">Aplikacja jest zainstalowana, ale nie udało się przywrócić danych jej pakietu. Ponowić przywracanie?</string>
-    <string name="library_import_restoring">Przywracanie ustawień aplikacji i zapisanych danych gry…</string>
+    <string name="library_import_restoring">Przywracanie ustawień aplikacji i zapisanych danych…</string>
     <string name="library_indexing_current">Skanowanie %1$s</string>
     <string name="library_indexing_progress">Indeksowanie biblioteki… %1$d/%2$d</string>
     <string name="library_load_error_title">Biblioteka niedostępna</string>
@@ -363,7 +363,7 @@
     <string name="config_custom_resolution">Własna rozdzielczość</string>
     <string name="config_decrease_value">Zmniejsz wartość</string>
     <string name="config_delete_app_data">Usuń dane MIDletu</string>
-    <string name="config_delete_app_data_summary">Trwale usuwa dane tego MIDletu, w tym zapisy gry. Jego ustawienia zostaną zachowane.</string>
+    <string name="config_delete_app_data_summary">Trwale usuwa dane tego MIDletu, w tym zapisane dane. Jego ustawienia zostaną zachowane.</string>
     <string name="config_destination_audio">Dźwięk</string>
     <string name="config_destination_controls">Sterowanie</string>
     <string name="config_destination_general">Ogólne</string>
@@ -490,7 +490,7 @@
     <string name="config_increase_value">Zwiększ wartość</string>
     <string name="config_lock_custom_resolution_ratio">Zablokuj proporcje</string>
     <string name="config_maintenance">Resetowanie i dane</string>
-    <string name="config_message_delete_app_data">Trwale usunąć wszystkie zapisy gry i dane utworzone przez ten MIDlet? Ustawienia MIDletu nie zostaną usunięte.</string>
+    <string name="config_message_delete_app_data">Trwale usunąć wszystkie zapisane dane i pozostałe dane utworzone przez ten MIDlet? Ustawienia MIDletu nie zostaną usunięte.</string>
     <string name="config_message_reset_profile_settings">Przywrócić domyślne ustawienia i sterowanie wirtualne tego profilu? Przed zapisaniem nadal możesz je edytować lub anulować zmiany.</string>
     <string name="config_message_reset_settings">Przywrócić domyślne ustawienia i sterowanie wirtualne tego MIDletu? Dane MIDletu nie zostaną usunięte.</string>
     <string name="config_reset_all_settings">Zresetuj wszystkie ustawienia</string>
@@ -673,7 +673,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nProblem: nie można było odczytać pliku klasy Java.\nDziałanie: pominięto podczas konwersji.</string>
     <string name="installer_copy_details">Kopiuj szczegóły</string>
     <string name="installer_error_message">Nie udało się zainstalować wybranej aplikacji. Wybierz prawidłowy plik MIDletu i spróbuj ponownie.</string>
-    <string name="installer_existing_data_preserved">Istniejące ustawienia i zapisy gry zostaną zachowane.</string>
+    <string name="installer_existing_data_preserved">Istniejące ustawienia i zapisane dane zostaną zachowane.</string>
     <string name="installer_failed_conversion">Nie udało się przekonwertować aplikacji. Sprawdź, czy plik jest kompletny i obsługiwany, a następnie spróbuj ponownie.</string>
     <string name="installer_failed_download">Nie udało się pobrać aplikacji. Sprawdź połączenie i link do pobrania, a następnie spróbuj ponownie.</string>
     <string name="installer_failed_storage">Nie udało się ukończyć instalacji. Spróbuj ponownie.</string>
@@ -682,7 +682,7 @@
     <string name="installer_not_processed">Nieprzetworzone</string>
     <string name="installer_partial_restore">Aplikacja zainstalowana; nie udało się przywrócić danych lub ustawień</string>
     <string name="installer_refresh_library">Odśwież bibliotekę</string>
-    <string name="installer_removed_leftovers">Aplikacja usunięta; nie udało się usunąć części ustawień lub zapisów gry.</string>
+    <string name="installer_removed_leftovers">Aplikacja usunięta; nie udało się usunąć części ustawień lub zapisanych danych.</string>
     <string name="installer_retry_remaining">Sprawdź niedokończone elementy</string>
     <string name="installer_separate_copy">Zainstaluj osobną kopię</string>
     <string name="installer_show_details">Pokaż szczegóły</string>

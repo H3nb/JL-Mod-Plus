@@ -300,7 +300,7 @@
     <string name="config_custom_resolution">Pasgemaakte resolusie</string>
     <string name="config_decrease_value">Verlaag waarde</string>
     <string name="config_delete_app_data">Vee MIDlet-data uit</string>
-    <string name="config_delete_app_data_summary">Vee hierdie MIDlet se data, insluitend gestoorde speletjies, permanent uit. Sy instellings word behou.</string>
+    <string name="config_delete_app_data_summary">Vee hierdie MIDlet se data, insluitend gestoorde data, permanent uit. Sy instellings word behou.</string>
     <string name="config_destination_audio">Oudio</string>
     <string name="config_destination_controls">Beheerknoppies</string>
     <string name="config_destination_general">Algemeen</string>
@@ -427,7 +427,7 @@
     <string name="config_increase_value">Verhoog waarde</string>
     <string name="config_lock_custom_resolution_ratio">Sluit aspekverhouding</string>
     <string name="config_maintenance">Herstel en data</string>
-    <string name="config_message_delete_app_data">Vee alle gestoorde speletjies en data wat hierdie MIDlet geskep het permanent uit? MIDlet-instellings sal nie uitgevee word nie.</string>
+    <string name="config_message_delete_app_data">Vee alle gestoorde data en ander data wat hierdie MIDlet geskep het permanent uit? MIDlet-instellings sal nie uitgevee word nie.</string>
     <string name="config_message_reset_profile_settings">Herstel hierdie profiel se instellings en virtuele beheerknoppies na hul verstekwaardes? Jy kan steeds wysig of kanselleer voordat jy stoor.</string>
     <string name="config_message_reset_settings">Herstel hierdie MIDlet se instellings en virtuele beheerknoppies na hul verstekwaardes? MIDlet-data sal nie uitgevee word nie.</string>
     <string name="config_reset_all_settings">Herstel alle instellings</string>
@@ -613,7 +613,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nProbleem: Java-klaslêer kon nie gelees word nie.\nAksie: Tydens omskakeling oorgeslaan.</string>
     <string name="installer_copy_details">Kopieer besonderhede</string>
     <string name="installer_error_message">Die gekose toepassing kon nie geïnstalleer word nie. Kies \'n geldige MIDlet-lêer en probeer weer.</string>
-    <string name="installer_existing_data_preserved">Bestaande instellings en gestoorde speldata sal behou word.</string>
+    <string name="installer_existing_data_preserved">Bestaande instellings en gestoorde data sal behou word.</string>
     <string name="installer_failed_conversion">Die toepassing kon nie omgeskakel word nie. Maak seker die lêer is volledig en word ondersteun, en probeer dan weer.</string>
     <string name="installer_failed_download">Die toepassing kon nie afgelaai word nie. Gaan die verbinding en aflaaiskakel na en probeer dan weer.</string>
     <string name="installer_failed_storage">Installasie kon nie voltooi word nie. Probeer weer.</string>
@@ -622,7 +622,7 @@
     <string name="installer_not_processed">Nie verwerk nie</string>
     <string name="installer_partial_restore">Toepassing geïnstalleer; data of instellings kon nie herstel word nie</string>
     <string name="installer_refresh_library">Verfris Biblioteek</string>
-    <string name="installer_removed_leftovers">Toepassing verwyder; sommige instellings of gestoorde speldata kon nie uitgevee word nie.</string>
+    <string name="installer_removed_leftovers">Toepassing verwyder; sommige instellings of gestoorde data kon nie uitgevee word nie.</string>
     <string name="installer_retry_remaining">Hersien onvoltooide items</string>
     <string name="installer_separate_copy">Installeer aparte kopie</string>
     <string name="installer_show_details">Wys besonderhede</string>

@@ -175,7 +175,7 @@
     <string name="library_action_export_bundle">অ্যাপ বান্ডল রপ্তানি করুন</string>
     <string name="library_action_help_summary">ব্যবহারের নির্দেশনা ও সাধারণ নিয়ন্ত্রণ।</string>
     <string name="library_action_import_bundle">অ্যাপ বান্ডল আমদানি করুন</string>
-    <string name="library_action_import_bundle_summary">রপ্তানি করা JAR, অ্যাপের সেটিংস ও সংরক্ষিত গেম ডেটা পুনরুদ্ধার করুন।</string>
+    <string name="library_action_import_bundle_summary">রপ্তানি করা JAR, অ্যাপের সেটিংস ও সংরক্ষিত ডেটা পুনরুদ্ধার করুন।</string>
     <string name="library_action_licenses_summary">অ্যাপের সঙ্গে থাকা তৃতীয় পক্ষের বিজ্ঞপ্তি ও লাইসেন্সের শর্তাবলি।</string>
     <string name="library_action_save_log_summary">সমস্যা নির্ণয়ের জন্য JL-Mod Plus-এর সাম্প্রতিক লগ সংরক্ষণ করুন।</string>
     <string name="library_action_select">নির্বাচন করুন</string>
@@ -247,7 +247,7 @@
     <string name="library_import_preparing">অ্যাপ বান্ডল পড়া হচ্ছে…</string>
     <string name="library_import_restore_existing">এই অ্যাপটি আগে থেকেই ইনস্টল করা আছে। বান্ডলে অন্তর্ভুক্ত যেকোনো সেটিংস বা সংরক্ষিত ডেটা সংশ্লিষ্ট বিদ্যমান ডেটার জায়গায় বসবে।</string>
     <string name="library_import_restore_failed">অ্যাপটি ইনস্টল করা আছে, কিন্তু বান্ডলের ডেটা পুনরুদ্ধার করা যায়নি। আবার পুনরুদ্ধারের চেষ্টা করবেন?</string>
-    <string name="library_import_restoring">অ্যাপের সেটিংস ও সংরক্ষিত গেম ডেটা পুনরুদ্ধার হচ্ছে…</string>
+    <string name="library_import_restoring">অ্যাপের সেটিংস ও সংরক্ষিত ডেটা পুনরুদ্ধার হচ্ছে…</string>
     <string name="library_indexing_current">%1$s স্ক্যান হচ্ছে</string>
     <string name="library_indexing_progress">লাইব্রেরির সূচি তৈরি হচ্ছে… %1$d/%2$d</string>
     <string name="library_load_error_title">লাইব্রেরি উপলব্ধ নেই</string>
@@ -351,7 +351,7 @@
     <string name="config_custom_resolution">কাস্টম রেজোলিউশন</string>
     <string name="config_decrease_value">মান কমান</string>
     <string name="config_delete_app_data">MIDlet-এর ডেটা মুছুন</string>
-    <string name="config_delete_app_data_summary">সেভ করা গেমসহ এই MIDlet-এর ডেটা স্থায়ীভাবে মুছুন। এর সেটিংস রাখা হবে।</string>
+    <string name="config_delete_app_data_summary">সংরক্ষিত ডেটাসহ এই MIDlet-এর ডেটা স্থায়ীভাবে মুছুন। এর সেটিংস রাখা হবে।</string>
     <string name="config_destination_audio">অডিও</string>
     <string name="config_destination_controls">কন্ট্রোল</string>
     <string name="config_destination_general">সাধারণ</string>
@@ -478,7 +478,7 @@
     <string name="config_increase_value">মান বাড়ান</string>
     <string name="config_lock_custom_resolution_ratio">প্রস্থ ও উচ্চতার অনুপাত লক করুন</string>
     <string name="config_maintenance">রিসেট ও ডেটা</string>
-    <string name="config_message_delete_app_data">এই MIDlet-এর তৈরি সব সেভ করা গেম ও ডেটা স্থায়ীভাবে মুছবেন? MIDlet-এর সেটিংস মোছা হবে না।</string>
+    <string name="config_message_delete_app_data">এই MIDlet-এর তৈরি সব সংরক্ষিত ডেটা ও অন্যান্য তথ্য স্থায়ীভাবে মুছবেন? MIDlet-এর সেটিংস মোছা হবে না।</string>
     <string name="config_message_reset_profile_settings">এই প্রোফাইলের সেটিংস ও ভার্চুয়াল কন্ট্রোল ডিফল্টে রিসেট করবেন? সংরক্ষণের আগে এখনও সম্পাদনা বা বাতিল করতে পারবেন।</string>
     <string name="config_message_reset_settings">এই MIDlet-এর সেটিংস ও ভার্চুয়াল কন্ট্রোল ডিফল্টে রিসেট করবেন? MIDlet-এর ডেটা মোছা হবে না।</string>
     <string name="config_reset_all_settings">সব সেটিংস রিসেট করুন</string>

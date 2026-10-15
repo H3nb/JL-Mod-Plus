@@ -195,7 +195,7 @@
     <string name="library_action_export_bundle">Alkalmazáscsomag exportálása</string>
     <string name="library_action_help_summary">Használati útmutató és gyakori vezérlők.</string>
     <string name="library_action_import_bundle">Alkalmazáscsomag importálása</string>
-    <string name="library_action_import_bundle_summary">Exportált JAR-fájl, alkalmazásbeállítások és mentett játékadatok visszaállítása.</string>
+    <string name="library_action_import_bundle_summary">Exportált JAR-fájl, alkalmazásbeállítások és mentett adatok visszaállítása.</string>
     <string name="library_action_licenses_summary">Az alkalmazáshoz mellékelt, harmadik féltől származó közlemények és licencfeltételek.</string>
     <string name="library_action_save_log_summary">A JL-Mod Plus legutóbbi naplóinak mentése hibaelhárításhoz.</string>
     <string name="library_action_select">Kijelölés</string>
@@ -267,7 +267,7 @@
     <string name="library_import_preparing">Alkalmazáscsomag beolvasása…</string>
     <string name="library_import_restore_existing">Ez az alkalmazás már telepítve van. A csomagban szereplő beállítások vagy mentett adatok felülírják a megfelelő meglévő adatokat.</string>
     <string name="library_import_restore_failed">Az alkalmazás telepítve van, de a csomag adatait nem sikerült visszaállítani. Újrapróbálja a visszaállítást?</string>
-    <string name="library_import_restoring">Alkalmazásbeállítások és mentett játékadatok visszaállítása…</string>
+    <string name="library_import_restoring">Alkalmazásbeállítások és mentett adatok visszaállítása…</string>
     <string name="library_indexing_current">%1$s vizsgálata</string>
     <string name="library_indexing_progress">Az alkalmazástár indexelése… %1$d/%2$d</string>
     <string name="library_load_error_title">Az alkalmazástár nem érhető el</string>
@@ -679,7 +679,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nProbléma: a Java-osztályfájl nem volt olvasható.\nMűvelet: kihagyva a konvertálás során.</string>
     <string name="installer_copy_details">Részletek másolása</string>
     <string name="installer_error_message">A kiválasztott alkalmazást nem sikerült telepíteni. Válasszon érvényes MIDlet-fájlt, és próbálja újra.</string>
-    <string name="installer_existing_data_preserved">A meglévő beállítások és játékmentések megmaradnak.</string>
+    <string name="installer_existing_data_preserved">A meglévő beállítások és mentett adatok megmaradnak.</string>
     <string name="installer_failed_conversion">Az alkalmazást nem sikerült konvertálni. Ellenőrizze, hogy a fájl teljes és támogatott, majd próbálja újra.</string>
     <string name="installer_failed_download">Az alkalmazást nem sikerült letölteni. Ellenőrizze a kapcsolatot és a letöltési hivatkozást, majd próbálja újra.</string>
     <string name="installer_failed_storage">A telepítést nem sikerült befejezni. Próbálja újra.</string>
@@ -688,7 +688,7 @@
     <string name="installer_not_processed">Nincs feldolgozva</string>
     <string name="installer_partial_restore">Az alkalmazás telepítve; az adatokat vagy beállításokat nem sikerült visszaállítani</string>
     <string name="installer_refresh_library">Könyvtár frissítése</string>
-    <string name="installer_removed_leftovers">Az alkalmazás eltávolítva; egyes beállításokat vagy játékmentéseket nem sikerült törölni.</string>
+    <string name="installer_removed_leftovers">Az alkalmazás eltávolítva; egyes beállításokat vagy mentett adatokat nem sikerült törölni.</string>
     <string name="installer_retry_remaining">Befejezetlen elemek áttekintése</string>
     <string name="installer_separate_copy">Külön példány telepítése</string>
     <string name="installer_show_details">Részletek megjelenítése</string>

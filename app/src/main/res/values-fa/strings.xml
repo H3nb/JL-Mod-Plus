@@ -186,7 +186,7 @@
     <string name="library_action_export_bundle">صدور بستهٔ برنامه</string>
     <string name="library_action_help_summary">راهنمای استفاده و کنترل‌های رایج.</string>
     <string name="library_action_import_bundle">وارد کردن بستهٔ برنامه</string>
-    <string name="library_action_import_bundle_summary">بازیابی فایل JAR صادرشده، تنظیمات برنامه و داده‌های ذخیرهٔ بازی.</string>
+    <string name="library_action_import_bundle_summary">بازیابی فایل JAR صادرشده، تنظیمات برنامه و داده‌های ذخیره‌شده.</string>
     <string name="library_action_licenses_summary">اطلاعیه‌های اشخاص ثالث و شرایط مجوز همراه برنامه.</string>
     <string name="library_action_save_log_summary">ذخیرهٔ گزارش رخدادهای اخیر JL-Mod Plus برای عیب‌یابی.</string>
     <string name="library_action_select">انتخاب</string>
@@ -258,7 +258,7 @@
     <string name="library_import_preparing">در حال خواندن بستهٔ برنامه…</string>
     <string name="library_import_restore_existing">این برنامه از قبل نصب است. تنظیمات یا داده‌های ذخیره‌شدهٔ موجود در بسته جایگزین داده‌های فعلیِ متناظر خواهند شد.</string>
     <string name="library_import_restore_failed">برنامه نصب است، اما بازیابی داده‌های بسته ممکن نشد. بازیابی دوباره انجام شود؟</string>
-    <string name="library_import_restoring">در حال بازیابی تنظیمات برنامه و داده‌های ذخیرهٔ بازی…</string>
+    <string name="library_import_restoring">در حال بازیابی تنظیمات برنامه و داده‌های ذخیره‌شده…</string>
     <string name="library_indexing_current">در حال بررسی %1$s</string>
     <string name="library_indexing_progress">در حال نمایه‌سازی کتابخانه… %1$d/%2$d</string>
     <string name="library_load_error_title">کتابخانه در دسترس نیست</string>
@@ -362,7 +362,7 @@
     <string name="config_custom_resolution">وضوح سفارشی</string>
     <string name="config_decrease_value">کاهش مقدار</string>
     <string name="config_delete_app_data">حذف داده‌های MIDlet</string>
-    <string name="config_delete_app_data_summary">داده‌های این MIDlet، از جمله ذخیره‌های بازی، را برای همیشه حذف می‌کند. تنظیمات آن حفظ می‌شوند.</string>
+    <string name="config_delete_app_data_summary">داده‌های این MIDlet، از جمله داده‌های ذخیره‌شده، را برای همیشه حذف می‌کند. تنظیمات آن حفظ می‌شوند.</string>
     <string name="config_destination_audio">صدا</string>
     <string name="config_destination_controls">کنترل‌ها</string>
     <string name="config_destination_general">عمومی</string>
@@ -489,7 +489,7 @@
     <string name="config_increase_value">افزایش مقدار</string>
     <string name="config_lock_custom_resolution_ratio">قفل نسبت تصویر</string>
     <string name="config_maintenance">بازنشانی و داده‌ها</string>
-    <string name="config_message_delete_app_data">همهٔ ذخیره‌های بازی و داده‌های ایجادشده توسط این MIDlet برای همیشه حذف شوند؟ تنظیمات MIDlet حذف نمی‌شوند.</string>
+    <string name="config_message_delete_app_data">همهٔ داده‌های ذخیره‌شده و سایر داده‌های ایجادشده توسط این MIDlet برای همیشه حذف شوند؟ تنظیمات MIDlet حذف نمی‌شوند.</string>
     <string name="config_message_reset_profile_settings">تنظیمات و کنترل‌های مجازی این پروفایل به حالت پیش‌فرض بازنشانی شوند؟ پیش از ذخیره کردن هنوز می‌توانید ویرایش یا لغو کنید.</string>
     <string name="config_message_reset_settings">تنظیمات و کنترل‌های مجازی این MIDlet به حالت پیش‌فرض بازنشانی شوند؟ داده‌های MIDlet حذف نمی‌شوند.</string>
     <string name="config_reset_all_settings">بازنشانی همهٔ تنظیمات</string>
@@ -668,7 +668,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nمشکل: فایل کلاس Java خوانده نشد.\nاقدام: هنگام تبدیل نادیده گرفته شد.</string>
     <string name="installer_copy_details">کپی جزئیات</string>
     <string name="installer_error_message">برنامهٔ انتخاب‌شده نصب نشد. یک فایل MIDlet معتبر انتخاب کنید و دوباره تلاش کنید.</string>
-    <string name="installer_existing_data_preserved">تنظیمات و داده‌های ذخیرهٔ بازی موجود حفظ می‌شوند.</string>
+    <string name="installer_existing_data_preserved">تنظیمات و داده‌های ذخیره‌شده موجود حفظ می‌شوند.</string>
     <string name="installer_failed_conversion">برنامه تبدیل نشد. کامل و پشتیبانی‌شده بودن فایل را بررسی کنید، سپس دوباره تلاش کنید.</string>
     <string name="installer_failed_download">برنامه دانلود نشد. اتصال و پیوند دانلود را بررسی کنید، سپس دوباره تلاش کنید.</string>
     <string name="installer_failed_storage">نصب تکمیل نشد. دوباره تلاش کنید.</string>
@@ -677,7 +677,7 @@
     <string name="installer_not_processed">پردازش‌نشده</string>
     <string name="installer_partial_restore">برنامه نصب شد؛ داده‌ها یا تنظیمات بازیابی نشدند</string>
     <string name="installer_refresh_library">تازه‌سازی کتابخانه</string>
-    <string name="installer_removed_leftovers">برنامه حذف شد؛ برخی تنظیمات یا داده‌های ذخیرهٔ بازی حذف نشدند.</string>
+    <string name="installer_removed_leftovers">برنامه حذف شد؛ برخی تنظیمات یا داده‌های ذخیره‌شده حذف نشدند.</string>
     <string name="installer_retry_remaining">بازبینی موارد ناتمام</string>
     <string name="installer_separate_copy">نصب نسخهٔ جداگانه</string>
     <string name="installer_show_details">نمایش جزئیات</string>

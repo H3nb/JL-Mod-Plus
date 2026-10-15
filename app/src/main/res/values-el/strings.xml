@@ -612,7 +612,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nΠρόβλημα: δεν ήταν δυνατή η ανάγνωση του αρχείου κλάσης Java.\nΕνέργεια: παραλείφθηκε κατά τη μετατροπή.</string>
     <string name="installer_copy_details">Αντιγραφή λεπτομερειών</string>
     <string name="installer_error_message">Δεν ήταν δυνατή η εγκατάσταση της επιλεγμένης εφαρμογής. Επιλέξτε έγκυρο αρχείο MIDlet και δοκιμάστε ξανά.</string>
-    <string name="installer_existing_data_preserved">Οι υπάρχουσες ρυθμίσεις και τα αποθηκευμένα δεδομένα παιχνιδιών θα διατηρηθούν.</string>
+    <string name="installer_existing_data_preserved">Οι υπάρχουσες ρυθμίσεις και τα αποθηκευμένα δεδομένα θα διατηρηθούν.</string>
     <string name="installer_failed_conversion">Δεν ήταν δυνατή η μετατροπή της εφαρμογής. Ελέγξτε ότι το αρχείο είναι πλήρες και υποστηρίζεται και δοκιμάστε ξανά.</string>
     <string name="installer_failed_download">Δεν ήταν δυνατή η λήψη της εφαρμογής. Ελέγξτε τη σύνδεση και τον σύνδεσμο λήψης και δοκιμάστε ξανά.</string>
     <string name="installer_failed_storage">Δεν ήταν δυνατή η ολοκλήρωση της εγκατάστασης. Δοκιμάστε ξανά.</string>
@@ -621,7 +621,7 @@
     <string name="installer_not_processed">Δεν υποβλήθηκε σε επεξεργασία</string>
     <string name="installer_partial_restore">Η εφαρμογή εγκαταστάθηκε· δεν ήταν δυνατή η επαναφορά δεδομένων ή ρυθμίσεων</string>
     <string name="installer_refresh_library">Ανανέωση Βιβλιοθήκης</string>
-    <string name="installer_removed_leftovers">Η εφαρμογή αφαιρέθηκε· δεν ήταν δυνατή η διαγραφή ορισμένων ρυθμίσεων ή αποθηκευμένων δεδομένων παιχνιδιών.</string>
+    <string name="installer_removed_leftovers">Η εφαρμογή αφαιρέθηκε· δεν ήταν δυνατή η διαγραφή ορισμένων ρυθμίσεων ή αποθηκευμένων δεδομένων.</string>
     <string name="installer_retry_remaining">Έλεγχος ημιτελών στοιχείων</string>
     <string name="installer_separate_copy">Εγκατάσταση ξεχωριστού αντιγράφου</string>
     <string name="installer_show_details">Εμφάνιση λεπτομερειών</string>

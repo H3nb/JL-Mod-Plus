@@ -299,7 +299,7 @@
     <string name="config_custom_resolution">Egendefinert oppløsning</string>
     <string name="config_decrease_value">Reduser verdi</string>
     <string name="config_delete_app_data">Slett MIDlet-data</string>
-    <string name="config_delete_app_data_summary">Slett denne MIDlet-ens data permanent, inkludert lagrede spill. Innstillingene beholdes.</string>
+    <string name="config_delete_app_data_summary">Slett denne MIDlet-ens data permanent, inkludert lagrede data. Innstillingene beholdes.</string>
     <string name="config_destination_audio">Lyd</string>
     <string name="config_destination_controls">Kontroller</string>
     <string name="config_destination_general">Generelt</string>
@@ -426,7 +426,7 @@
     <string name="config_increase_value">Øk verdi</string>
     <string name="config_lock_custom_resolution_ratio">Lås sideforhold</string>
     <string name="config_maintenance">Tilbakestilling og data</string>
-    <string name="config_message_delete_app_data">Slett alle lagrede spill og data opprettet av denne MIDlet-en permanent? MIDlet-innstillingene slettes ikke.</string>
+    <string name="config_message_delete_app_data">Slett alle lagrede data og andre data opprettet av denne MIDlet-en permanent? MIDlet-innstillingene slettes ikke.</string>
     <string name="config_message_reset_profile_settings">Tilbakestill denne profilens innstillinger og virtuelle kontroller til standardverdiene? Du kan fortsatt redigere eller avbryte før du lagrer.</string>
     <string name="config_message_reset_settings">Tilbakestill denne MIDlet-ens innstillinger og virtuelle kontroller til standardverdiene? MIDlet-data slettes ikke.</string>
     <string name="config_reset_all_settings">Tilbakestill alle innstillinger</string>
@@ -612,7 +612,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nProblem: Java-klassefilen kunne ikke leses.\nHandling: Hoppet over under konvertering.</string>
     <string name="installer_copy_details">Kopier detaljer</string>
     <string name="installer_error_message">Den valgte appen kunne ikke installeres. Velg en gyldig MIDlet-fil og prøv igjen.</string>
-    <string name="installer_existing_data_preserved">Eksisterende innstillinger og lagrede spilldata beholdes.</string>
+    <string name="installer_existing_data_preserved">Eksisterende innstillinger og lagrede data beholdes.</string>
     <string name="installer_failed_conversion">Appen kunne ikke konverteres. Kontroller at filen er fullstendig og støttet, og prøv igjen.</string>
     <string name="installer_failed_download">Appen kunne ikke lastes ned. Kontroller tilkoblingen og nedlastingslenken, og prøv igjen.</string>
     <string name="installer_failed_storage">Installasjonen kunne ikke fullføres. Prøv igjen.</string>
@@ -621,7 +621,7 @@
     <string name="installer_not_processed">Ikke behandlet</string>
     <string name="installer_partial_restore">App installert; data eller innstillinger kunne ikke gjenopprettes</string>
     <string name="installer_refresh_library">Oppdater Bibliotek</string>
-    <string name="installer_removed_leftovers">App fjernet; enkelte innstillinger eller lagrede spilldata kunne ikke slettes.</string>
+    <string name="installer_removed_leftovers">App fjernet; enkelte innstillinger eller lagrede data kunne ikke slettes.</string>
     <string name="installer_retry_remaining">Gjennomgå uferdige elementer</string>
     <string name="installer_separate_copy">Installer separat kopi</string>
     <string name="installer_show_details">Vis detaljer</string>

@@ -176,7 +176,7 @@
     <string name="library_action_export_bundle">Exportă pachetul aplicației</string>
     <string name="library_action_help_summary">Instrucțiuni de utilizare și comenzi uzuale.</string>
     <string name="library_action_import_bundle">Importă pachetul aplicației</string>
-    <string name="library_action_import_bundle_summary">Restaurează fișierul JAR exportat, setările aplicației și datele de joc salvate.</string>
+    <string name="library_action_import_bundle_summary">Restaurează fișierul JAR exportat, setările aplicației și datele salvate.</string>
     <string name="library_action_licenses_summary">Notificări ale terților și condiții de licențiere incluse în aplicație.</string>
     <string name="library_action_save_log_summary">Salvează jurnalele recente ale JL-Mod Plus pentru depanare.</string>
     <string name="library_action_select">Selectează</string>
@@ -248,7 +248,7 @@
     <string name="library_import_preparing">Se citește pachetul aplicației…</string>
     <string name="library_import_restore_existing">Această aplicație este deja instalată. Orice setări sau date salvate incluse în pachet vor înlocui datele existente corespunzătoare.</string>
     <string name="library_import_restore_failed">Aplicația este instalată, dar datele pachetului său nu au putut fi restaurate. Reîncerci restaurarea?</string>
-    <string name="library_import_restoring">Se restaurează setările aplicației și datele de joc salvate…</string>
+    <string name="library_import_restoring">Se restaurează setările aplicației și datele salvate…</string>
     <string name="library_indexing_current">Se scanează %1$s</string>
     <string name="library_indexing_progress">Se indexează biblioteca… %1$d/%2$d</string>
     <string name="library_load_error_title">Bibliotecă indisponibilă</string>
@@ -666,7 +666,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nProblemă: fișierul de clasă Java nu a putut fi citit.\nAcțiune: omis în timpul conversiei.</string>
     <string name="installer_copy_details">Copiază detaliile</string>
     <string name="installer_error_message">Aplicația selectată nu a putut fi instalată. Alege un fișier MIDlet valid și încearcă din nou.</string>
-    <string name="installer_existing_data_preserved">Setările existente și datele de joc salvate vor fi păstrate.</string>
+    <string name="installer_existing_data_preserved">Setările existente și datele salvate vor fi păstrate.</string>
     <string name="installer_failed_conversion">Aplicația nu a putut fi convertită. Verifică dacă fișierul este complet și acceptat, apoi încearcă din nou.</string>
     <string name="installer_failed_download">Aplicația nu a putut fi descărcată. Verifică conexiunea și linkul de descărcare, apoi încearcă din nou.</string>
     <string name="installer_failed_storage">Instalarea nu a putut fi finalizată. Încearcă din nou.</string>
@@ -675,7 +675,7 @@
     <string name="installer_not_processed">Neprocesată</string>
     <string name="installer_partial_restore">Aplicație instalată; datele sau setările nu au putut fi restaurate</string>
     <string name="installer_refresh_library">Reîmprospătează biblioteca</string>
-    <string name="installer_removed_leftovers">Aplicație eliminată; unele setări sau date de joc salvate nu au putut fi șterse.</string>
+    <string name="installer_removed_leftovers">Aplicație eliminată; unele setări sau date salvate nu au putut fi șterse.</string>
     <string name="installer_retry_remaining">Verifică elementele neterminate</string>
     <string name="installer_separate_copy">Instalează o copie separată</string>
     <string name="installer_show_details">Afișează detaliile</string>

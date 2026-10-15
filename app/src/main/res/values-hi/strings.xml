@@ -234,7 +234,7 @@
     <string name="library_action_export_bundle">ऐप बंडल निर्यात करें</string>
     <string name="library_action_help_summary">उपयोग के निर्देश और सामान्य नियंत्रण।</string>
     <string name="library_action_import_bundle">ऐप बंडल आयात करें</string>
-    <string name="library_action_import_bundle_summary">निर्यात किया गया JAR, ऐप की सेटिंग और सहेजा गया गेम डेटा पुनर्स्थापित करें।</string>
+    <string name="library_action_import_bundle_summary">निर्यात किया गया JAR, ऐप की सेटिंग और सहेजा गया डेटा पुनर्स्थापित करें।</string>
     <string name="library_action_licenses_summary">ऐप में शामिल तृतीय-पक्ष सूचनाएँ और लाइसेंस की शर्तें।</string>
     <string name="library_action_save_log_summary">समस्या का पता लगाने के लिए JL-Mod Plus के हाल के लॉग सहेजें।</string>
     <string name="library_action_select">चुनें</string>
@@ -306,7 +306,7 @@
     <string name="library_import_preparing">ऐप बंडल पढ़ा जा रहा है…</string>
     <string name="library_import_restore_existing">यह ऐप पहले से इंस्टॉल है। बंडल में शामिल कोई भी सेटिंग या सहेजा गया डेटा, उससे संबंधित मौजूदा डेटा की जगह लेगा।</string>
     <string name="library_import_restore_failed">ऐप इंस्टॉल है, लेकिन बंडल का डेटा पुनर्स्थापित नहीं हो सका। फिर से पुनर्स्थापित करें?</string>
-    <string name="library_import_restoring">ऐप की सेटिंग और सहेजा गया गेम डेटा पुनर्स्थापित हो रहा है…</string>
+    <string name="library_import_restoring">ऐप की सेटिंग और सहेजा गया डेटा पुनर्स्थापित हो रहा है…</string>
     <string name="library_indexing_current">%1$s स्कैन हो रहा है</string>
     <string name="library_indexing_progress">लाइब्रेरी की अनुक्रमणिका बन रही है… %1$d/%2$d</string>
     <string name="library_load_error_title">लाइब्रेरी उपलब्ध नहीं</string>
@@ -410,7 +410,7 @@
     <string name="config_custom_resolution">कस्टम रिज़ॉल्यूशन</string>
     <string name="config_decrease_value">मान घटाएँ</string>
     <string name="config_delete_app_data">MIDlet का डेटा मिटाएँ</string>
-    <string name="config_delete_app_data_summary">सहेजे गए गेम सहित इस MIDlet का डेटा हमेशा के लिए मिटाएँ। इसकी सेटिंग रखी जाएँगी।</string>
+    <string name="config_delete_app_data_summary">सहेजे गए डेटा सहित इस MIDlet का डेटा हमेशा के लिए मिटाएँ। इसकी सेटिंग रखी जाएँगी।</string>
     <string name="config_destination_audio">ऑडियो</string>
     <string name="config_destination_controls">कंट्रोल</string>
     <string name="config_destination_general">सामान्य</string>
@@ -537,7 +537,7 @@
     <string name="config_increase_value">मान बढ़ाएँ</string>
     <string name="config_lock_custom_resolution_ratio">आस्पेक्ट अनुपात लॉक करें</string>
     <string name="config_maintenance">रीसेट और डेटा</string>
-    <string name="config_message_delete_app_data">इस MIDlet द्वारा बनाया गया सभी डेटा और सहेजे गए गेम हमेशा के लिए मिटाएँ? MIDlet की सेटिंग नहीं मिटाई जाएँगी।</string>
+    <string name="config_message_delete_app_data">इस MIDlet द्वारा बनाए गए सभी सेव और अन्य डेटा हमेशा के लिए मिटाएँ? MIDlet की सेटिंग नहीं मिटाई जाएँगी।</string>
     <string name="config_message_reset_profile_settings">इस प्रोफ़ाइल की सेटिंग और वर्चुअल कंट्रोल को उनके डिफ़ॉल्ट पर रीसेट करें? सहेजने से पहले आप अभी भी बदलाव कर सकते हैं या रद्द कर सकते हैं।</string>
     <string name="config_message_reset_settings">इस MIDlet की सेटिंग और वर्चुअल कंट्रोल को उनके डिफ़ॉल्ट पर रीसेट करें? MIDlet का डेटा नहीं मिटाया जाएगा।</string>
     <string name="config_reset_all_settings">सभी सेटिंग रीसेट करें</string>

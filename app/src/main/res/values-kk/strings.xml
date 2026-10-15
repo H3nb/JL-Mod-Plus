@@ -171,7 +171,7 @@
     <string name="library_action_export_bundle">Қолданба пакетін экспорттау</string>
     <string name="library_action_help_summary">Пайдалану нұсқаулығы және негізгі басқару элементтері.</string>
     <string name="library_action_import_bundle">Қолданба пакетін импорттау</string>
-    <string name="library_action_import_bundle_summary">Экспортталған JAR, қолданба баптаулары және ойынның сақталған деректерін қалпына келтіру.</string>
+    <string name="library_action_import_bundle_summary">Экспортталған JAR файлын, қолданба баптауларын және сақталған деректерді қалпына келтіру.</string>
     <string name="library_action_licenses_summary">Қолданбаға қосылған үшінші тарап ескертулері мен лицензия шарттары.</string>
     <string name="library_action_save_log_summary">Ақауларды анықтау үшін JL-Mod Plus жүйесінің соңғы журналдарын сақтау.</string>
     <string name="library_action_select">Таңдау</string>
@@ -243,7 +243,7 @@
     <string name="library_import_preparing">Қолданба пакеті оқылуда…</string>
     <string name="library_import_restore_existing">Бұл қолданба бұрыннан орнатылған. Пакетке кіретін баптаулар немесе сақталған деректер тиісті қолданыстағы деректерді алмастырады.</string>
     <string name="library_import_restore_failed">Қолданба орнатылған, бірақ оның пакеттегі деректерін қалпына келтіру мүмкін болмады. Қалпына келтіруді қайталау керек пе?</string>
-    <string name="library_import_restoring">Қолданба баптаулары мен ойынның сақталған деректері қалпына келтірілуде…</string>
+    <string name="library_import_restoring">Қолданба баптаулары мен сақталған деректер қалпына келтірілуде…</string>
     <string name="library_indexing_current">%1$s сканерленуде</string>
     <string name="library_indexing_progress">Кітапхана индекстелуде… %1$d/%2$d</string>
     <string name="library_load_error_title">Кітапхана қолжетімді емес</string>
@@ -751,7 +751,7 @@
     <string name="settings_section_midlet_runtime">MIDlet орындалу ортасы</string>
     <string name="settings_section_storage">Сақтау орны</string>
     <string name="take_screenshot">Скриншот түсіру</string>
-    <string name="config_delete_app_data_summary">Осы MIDlet деректерін, соның ішінде сақталған ойындарды біржола жою. Баптаулары сақталады.</string>
+    <string name="config_delete_app_data_summary">Осы MIDlet деректерін, соның ішінде сақталған деректерді біржола жою. Баптаулары сақталады.</string>
     <string name="config_gamepad_calibration_cancelled">Калибрлеуден бас тартылды. Бұрынғы калибрлеу өзгерген жоқ.</string>
     <string name="config_gamepad_calibration_review_instructions">Тексеруге дайын. Сақтау тек осы контроллердің калибрлеуін ауыстырады.</string>
     <string name="config_gamepad_calibration_save_failed">Калибрлеуді сақтау мүмкін болмады. Бұрынғы калибрлеу өзгерген жоқ.</string>
@@ -798,7 +798,7 @@
     <string name="config_help_vk_outline">Виртуалды басқару батырмаларының жиек түсін орнатады.</string>
     <string name="config_help_vk_selected_background">Батырма басылып тұрғанда оның түсін орнатады.</string>
     <string name="config_help_vk_selected_foreground">Виртуалды басқару батырмасы басылып тұрғанда жазулар мен таңбалардың түсін орнатады.</string>
-    <string name="config_message_delete_app_data">Осы MIDlet жасаған барлық сақталған ойындар мен деректерді біржола жою керек пе? MIDlet баптаулары жойылмайды.</string>
+    <string name="config_message_delete_app_data">Осы MIDlet жасаған барлық сақталған деректер мен басқа деректерді біржола жою керек пе? MIDlet баптаулары жойылмайды.</string>
     <string name="config_message_reset_profile_settings">Осы профильдің баптаулары мен виртуалды басқару элементтерін әдепкі мәндеріне қайтару керек пе? Сақтағанға дейін оларды әлі де өңдеуге немесе бас тартуға болады.</string>
     <string name="config_message_reset_settings">Осы MIDlet баптаулары мен виртуалды басқару элементтерін әдепкі мәндеріне қайтару керек пе? MIDlet деректері жойылмайды.</string>
     <string name="config_reset_all_settings_summary">MIDlet деректерін жоймай, оның баптаулары мен виртуалды басқару элементтерін әдепкі мәндеріне қайтару.</string>
@@ -855,13 +855,13 @@
     <string name="installer_ambiguous">Бірнеше орнатылған қолданба осы қолданбаға сәйкес келеді. Бөлек көшірмесін орнату керек пе? Бұрынғы қолданбалар мен олардың деректері сақталады.</string>
     <string name="installer_cancel_pending">Келесі қауіпсіз нүктеде тоқтатылуда…</string>
     <string name="installer_error_message">Таңдалған қолданбаны орнату мүмкін болмады. Жарамды MIDlet файлын таңдап, әрекетті қайталаңыз.</string>
-    <string name="installer_existing_data_preserved">Бұрынғы баптаулар мен сақталған ойын деректері сақталады.</string>
+    <string name="installer_existing_data_preserved">Бұрынғы баптаулар мен сақталған деректер сақталады.</string>
     <string name="installer_failed_conversion">Қолданбаны түрлендіру мүмкін болмады. Файлдың толық екенін және оған қолдау көрсетілетінін тексеріп, әрекетті қайталаңыз.</string>
     <string name="installer_failed_download">Қолданбаны жүктеп алу мүмкін болмады. Байланыс пен жүктеу сілтемесін тексеріп, әрекетті қайталаңыз.</string>
     <string name="installer_failed_storage">Орнатуды аяқтау мүмкін болмады. Әрекетті қайталаңыз.</string>
     <string name="installer_needs_recovery">Қолданба файлдары сақталды, бірақ Кітапхананы жаңарту аяқталмады. Әрекетті қайталамас бұрын Кітапхананы жаңартыңыз.</string>
     <string name="installer_partial_restore">Қолданба орнатылды; деректерді немесе баптауларды қалпына келтіру мүмкін болмады</string>
-    <string name="installer_removed_leftovers">Қолданба жойылды; кейбір баптауларды немесе сақталған ойын деректерін жою мүмкін болмады.</string>
+    <string name="installer_removed_leftovers">Қолданба жойылды; кейбір баптауларды немесе сақталған деректерді жою мүмкін болмады.</string>
     <string name="reconversion_done_with_warning">Үйлесімділік үшін түрлендіру ескертулермен аяқталды.</string>
     <string name="reconversion_error_summary">MIDlet бағдарламасын автоматты түрде түрлендіру мүмкін болмады.</string>
     <string name="reconverting_wait">Осы MIDlet іске қосылуы үшін бір реттік үйлесімділік түрлендіруі қажет. Түрлендірілуде…</string>

@@ -398,7 +398,7 @@
     <string name="config_custom_resolution">Độ phân giải tùy chỉnh</string>
     <string name="config_decrease_value">Giảm giá trị</string>
     <string name="config_delete_app_data">Xóa dữ liệu MIDlet</string>
-    <string name="config_delete_app_data_summary">Xóa vĩnh viễn dữ liệu của MIDlet này, bao gồm dữ liệu lưu trò chơi. Cài đặt của MIDlet vẫn được giữ lại.</string>
+    <string name="config_delete_app_data_summary">Xóa vĩnh viễn dữ liệu của MIDlet này, bao gồm dữ liệu đã lưu. Cài đặt của MIDlet vẫn được giữ lại.</string>
     <string name="config_destination_audio">Âm thanh</string>
     <string name="config_destination_controls">Điều khiển</string>
     <string name="config_destination_general">Chung</string>
@@ -525,7 +525,7 @@
     <string name="config_increase_value">Tăng giá trị</string>
     <string name="config_lock_custom_resolution_ratio">Khóa tỷ lệ khung hình</string>
     <string name="config_maintenance">Đặt lại và dữ liệu</string>
-    <string name="config_message_delete_app_data">Xóa vĩnh viễn mọi dữ liệu lưu trò chơi và dữ liệu do MIDlet này tạo? Cài đặt MIDlet sẽ không bị xóa.</string>
+    <string name="config_message_delete_app_data">Xóa vĩnh viễn mọi dữ liệu đã lưu và dữ liệu khác do MIDlet này tạo? Cài đặt MIDlet sẽ không bị xóa.</string>
     <string name="config_message_reset_profile_settings">Đặt lại cài đặt và điều khiển ảo của hồ sơ này về mặc định? Bạn vẫn có thể chỉnh sửa hoặc hủy trước khi lưu.</string>
     <string name="config_message_reset_settings">Đặt lại cài đặt và điều khiển ảo của MIDlet này về mặc định? Dữ liệu MIDlet sẽ không bị xóa.</string>
     <string name="config_reset_all_settings">Đặt lại mọi cài đặt</string>

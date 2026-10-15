@@ -390,7 +390,7 @@
     <string name="config_custom_resolution">Персонализирана разделителна способност</string>
     <string name="config_decrease_value">Намаляване на стойността</string>
     <string name="config_delete_app_data">Изтриване на данните на MIDlet</string>
-    <string name="config_delete_app_data_summary">Изтрива окончателно данните на този MIDlet, включително запазените игри. Настройките му ще се запазят.</string>
+    <string name="config_delete_app_data_summary">Изтрива окончателно данните на този MIDlet, включително запазените данни. Настройките му ще се запазят.</string>
     <string name="config_destination_audio">Звук</string>
     <string name="config_destination_controls">Управление</string>
     <string name="config_destination_general">Общи</string>
@@ -517,7 +517,7 @@
     <string name="config_increase_value">Увеличаване на стойността</string>
     <string name="config_lock_custom_resolution_ratio">Заключване на съотношението на страните</string>
     <string name="config_maintenance">Нулиране и данни</string>
-    <string name="config_message_delete_app_data">Да се изтрият ли окончателно всички запазени игри и данни, създадени от този MIDlet? Настройките на MIDlet няма да бъдат изтрити.</string>
+    <string name="config_message_delete_app_data">Да се изтрият ли окончателно всички запазени данни и други данни, създадени от този MIDlet? Настройките на MIDlet няма да бъдат изтрити.</string>
     <string name="config_message_reset_profile_settings">Да се възстановят ли настройките и виртуалните контроли на този профил до стойностите по подразбиране? Можете да продължите редактирането или да отмените преди запазване.</string>
     <string name="config_message_reset_settings">Да се възстановят ли настройките и виртуалните контроли на този MIDlet до стойностите по подразбиране? Данните на MIDlet няма да бъдат изтрити.</string>
     <string name="config_reset_all_settings">Нулиране на всички настройки</string>
@@ -695,7 +695,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nПроблем: файлът с Java клас не може да бъде прочетен.\nДействие: пропуснат при преобразуването.</string>
     <string name="installer_copy_details">Копиране на подробностите</string>
     <string name="installer_error_message">Избраното приложение не може да бъде инсталирано. Изберете валиден MIDlet файл и опитайте отново.</string>
-    <string name="installer_existing_data_preserved">Съществуващите настройки и запазени данни от игри ще се запазят.</string>
+    <string name="installer_existing_data_preserved">Съществуващите настройки и запазени данни ще се запазят.</string>
     <string name="installer_failed_conversion">Приложението не може да бъде преобразувано. Проверете дали файлът е пълен и поддържан, след което опитайте отново.</string>
     <string name="installer_failed_download">Приложението не може да бъде изтеглено. Проверете връзката и адреса за изтегляне, след което опитайте отново.</string>
     <string name="installer_failed_storage">Инсталирането не може да бъде завършено. Опитайте отново.</string>
@@ -704,7 +704,7 @@
     <string name="installer_not_processed">Необработено</string>
     <string name="installer_partial_restore">Приложението е инсталирано; данните или настройките не могат да бъдат възстановени</string>
     <string name="installer_refresh_library">Обновяване на Библиотеката</string>
-    <string name="installer_removed_leftovers">Приложението е премахнато; някои настройки или запазени данни от игри не могат да бъдат изтрити.</string>
+    <string name="installer_removed_leftovers">Приложението е премахнато; някои настройки или запазени данни не могат да бъдат изтрити.</string>
     <string name="installer_retry_remaining">Преглед на незавършените елементи</string>
     <string name="installer_separate_copy">Инсталиране на отделно копие</string>
     <string name="installer_show_details">Показване на подробностите</string>

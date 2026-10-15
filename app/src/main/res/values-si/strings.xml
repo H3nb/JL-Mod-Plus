@@ -124,7 +124,7 @@
     <string name="library_action_export_bundle">යෙදුම් බණ්ඩලය නිර්යාත කරන්න</string>
     <string name="library_action_help_summary">භාවිත මඟපෙන්වීම සහ පොදු පාලක.</string>
     <string name="library_action_import_bundle">යෙදුම් බණ්ඩලය ආයාත කරන්න</string>
-    <string name="library_action_import_bundle_summary">නිර්යාත කළ JAR, යෙදුම් සැකසුම් සහ සුරැකි ක්‍රීඩා දත්ත ප්‍රතිස්ථාපනය කරන්න.</string>
+    <string name="library_action_import_bundle_summary">නිර්යාත කළ JAR, යෙදුම් සැකසුම් සහ සුරැකි දත්ත ප්‍රතිස්ථාපනය කරන්න.</string>
     <string name="library_action_licenses_summary">යෙදුම සමඟ ඇතුළත් තෙවන පාර්ශ්ව දැන්වීම් සහ බලපත්‍ර කොන්දේසි.</string>
     <string name="library_action_save_log_summary">ගැටලු විසඳීමට JL-Mod Plus හි මෑත ලොග් සුරකින්න.</string>
     <string name="library_action_select">තෝරන්න</string>
@@ -196,7 +196,7 @@
     <string name="library_import_preparing">යෙදුම් බණ්ඩලය කියවමින්…</string>
     <string name="library_import_restore_existing">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. බණ්ඩලයේ ඇතුළත් ඕනෑම සැකසුම් හෝ සුරැකි දත්ත මඟින් ඊට අදාළ දැනට පවතින දත්ත ප්‍රතිස්ථාපනය වේ.</string>
     <string name="library_import_restore_failed">යෙදුම ස්ථාපනය කර ඇතත්, එහි බණ්ඩල් දත්ත ප්‍රතිස්ථාපනය කිරීමට නොහැකි විය. ප්‍රතිස්ථාපනයට නැවත උත්සාහ කරන්නද?</string>
-    <string name="library_import_restoring">යෙදුම් සැකසුම් සහ සුරැකි ක්‍රීඩා දත්ත ප්‍රතිස්ථාපනය කරමින්…</string>
+    <string name="library_import_restoring">යෙදුම් සැකසුම් සහ සුරැකි දත්ත ප්‍රතිස්ථාපනය කරමින්…</string>
     <string name="library_indexing_current">%1$s පරිලෝකනය කරමින්</string>
     <string name="library_indexing_progress">පුස්තකාලය සුචිගත කරමින්… %1$d/%2$d</string>
     <string name="library_load_error_title">පුස්තකාලය ලබා ගත නොහැක</string>

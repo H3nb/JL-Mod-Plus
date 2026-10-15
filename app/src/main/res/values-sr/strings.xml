@@ -304,7 +304,7 @@
     <string name="config_custom_resolution">Прилагођена резолуција</string>
     <string name="config_decrease_value">Смањи вредност</string>
     <string name="config_delete_app_data">Обриши податке MIDlet-а</string>
-    <string name="config_delete_app_data_summary">Трајно брише податке овог MIDlet-а, укључујући сачуване игре. Подешавања се задржавају.</string>
+    <string name="config_delete_app_data_summary">Трајно брише податке овог MIDlet-а, укључујући сачуване податке. Подешавања се задржавају.</string>
     <string name="config_destination_audio">Звук</string>
     <string name="config_destination_controls">Контроле</string>
     <string name="config_destination_general">Опште</string>
@@ -431,7 +431,7 @@
     <string name="config_increase_value">Повећај вредност</string>
     <string name="config_lock_custom_resolution_ratio">Закључај однос страница</string>
     <string name="config_maintenance">Ресетовање и подаци</string>
-    <string name="config_message_delete_app_data">Трајно обрисати све сачуване игре и податке које је направио овај MIDlet? Подешавања MIDlet-а неће бити обрисана.</string>
+    <string name="config_message_delete_app_data">Трајно обрисати све сачуване податке и остале податке које је направио овај MIDlet? Подешавања MIDlet-а неће бити обрисана.</string>
     <string name="config_message_reset_profile_settings">Вратити подешавања и виртуалне контроле овог профила на подразумеване вредности? И даље можете да уређујете или откажете пре чувања.</string>
     <string name="config_message_reset_settings">Вратити подешавања и виртуалне контроле овог MIDlet-а на подразумеване вредности? Подаци MIDlet-а неће бити обрисани.</string>
     <string name="config_reset_all_settings">Ресетуј сва подешавања</string>

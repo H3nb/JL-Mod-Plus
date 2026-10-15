@@ -173,7 +173,7 @@
     <string name="library_action_export_bundle">ଆପ୍ ବଣ୍ଡଲ୍ ରପ୍ତାନି କରନ୍ତୁ</string>
     <string name="library_action_help_summary">ବ୍ୟବହାର ନିର୍ଦ୍ଦେଶ ଓ ସାଧାରଣ ନିୟନ୍ତ୍ରଣ।</string>
     <string name="library_action_import_bundle">ଆପ୍ ବଣ୍ଡଲ୍ ଆମଦାନି କରନ୍ତୁ</string>
-    <string name="library_action_import_bundle_summary">ରପ୍ତାନି ହୋଇଥିବା JAR, ଆପ୍ ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ପୁନରୁଦ୍ଧାର କରନ୍ତୁ।</string>
+    <string name="library_action_import_bundle_summary">ରପ୍ତାନି ହୋଇଥିବା JAR, ଆପ୍ ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଡାଟା ପୁନରୁଦ୍ଧାର କରନ୍ତୁ।</string>
     <string name="library_action_licenses_summary">ଆପ୍‌ରେ ଥିବା ତୃତୀୟ ପକ୍ଷର ବିଜ୍ଞପ୍ତି ଓ ଲାଇସେନ୍ସ ସର୍ତ୍ତ।</string>
     <string name="library_action_save_log_summary">ସମସ୍ୟାର ସମାଧାନ ପାଇଁ JL-Mod Plus ର ସାମ୍ପ୍ରତିକ ଲଗ୍ ସଞ୍ଚୟ କରନ୍ତୁ।</string>
     <string name="library_action_select">ବାଛନ୍ତୁ</string>
@@ -245,7 +245,7 @@
     <string name="library_import_preparing">ଆପ୍ ବଣ୍ଡଲ୍ ପଢ଼ାଯାଉଛି…</string>
     <string name="library_import_restore_existing">ଏହି ଆପ୍ ପୂର୍ବରୁ ଇନଷ୍ଟଲ୍ ହୋଇଛି। ବଣ୍ଡଲ୍‌ରେ ଥିବା କୌଣସି ସେଟିଂସ୍ କିମ୍ବା ସଞ୍ଚିତ ଡାଟା ସମ୍ପୃକ୍ତ ବର୍ତ୍ତମାନର ଡାଟାକୁ ବଦଳାଇବ।</string>
     <string name="library_import_restore_failed">ଆପ୍ ଇନଷ୍ଟଲ୍ ହୋଇଛି, କିନ୍ତୁ ଏହାର ବଣ୍ଡଲ୍ ଡାଟା ପୁନରୁଦ୍ଧାର କରାଯାଇପାରିଲା ନାହିଁ। ପୁନରୁଦ୍ଧାର ପାଇଁ ପୁଣି ଚେଷ୍ଟା କରିବେ?</string>
-    <string name="library_import_restoring">ଆପ୍ ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ପୁନରୁଦ୍ଧାର ହେଉଛି…</string>
+    <string name="library_import_restoring">ଆପ୍ ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଡାଟା ପୁନରୁଦ୍ଧାର ହେଉଛି…</string>
     <string name="library_indexing_current">%1$s ସ୍କାନ୍ ହେଉଛି</string>
     <string name="library_indexing_progress">ଲାଇବ୍ରେରିର ସୂଚୀ ତିଆରି ହେଉଛି… %1$d/%2$d</string>
     <string name="library_load_error_title">ଲାଇବ୍ରେରି ଉପଲବ୍ଧ ନାହିଁ</string>
@@ -763,7 +763,7 @@
     <string name="config_background_theme_help">MIDlet ସ୍କ୍ରିନ୍ ଚାରିପଟେ JL-Mod Plus ଥିମ୍‌ର ରଙ୍ଗ ବ୍ୟବହାର କରେ।</string>
     <string name="config_color_picker_hint">ରଙ୍ଗ ବାଛିବା ସ୍ଥାନରେ ଆଙ୍ଗୁଠି ଟାଣନ୍ତୁ କିମ୍ବା ଛଅ ଅଙ୍କର RGB ମୂଲ୍ୟ ଲେଖନ୍ତୁ।</string>
     <string name="config_controller_help_body_compact">କଣ୍ଟ୍ରୋଲର୍ ବଟନ୍‌ଗୁଡ଼ିକ କୀବୋର୍ଡ୍ ଓ ଫୋନ୍ କୀ ପରି ସମାନ କୀ ମ୍ୟାପିଂ ବ୍ୟବହାର କରନ୍ତି। ଆନାଲଗ୍ ଷ୍ଟିକ୍ MIDlet କୁ କେବଳ ଦିଗ ସମ୍ବନ୍ଧୀୟ ଇନପୁଟ୍ ପଠାଏ। Android ର ପଛକୁ ଯିବା କାର୍ଯ୍ୟ ସ୍ୱାଭାବିକ ଭାବେ କାମ କରେ; M ସହିତ ମ୍ୟାପ୍ ହୋଇଥିବା ଯେକୌଣସି ଭୌତିକ ବଟନ୍ ରନ୍‌ଟାଇମ୍ MIDlet ମେନ୍ୟୁ ଖୋଲେ।</string>
-    <string name="config_delete_app_data_summary">ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ସହିତ ଏହି MIDlet ର ଡାଟା ସ୍ଥାୟୀ ଭାବେ ବିଲୋପ କରନ୍ତୁ। ଏହାର ସେଟିଂସ୍ ରଖାଯିବ।</string>
+    <string name="config_delete_app_data_summary">ସଞ୍ଚିତ ଡାଟା ସହିତ ଏହି MIDlet ର ଡାଟା ସ୍ଥାୟୀ ଭାବେ ବିଲୋପ କରନ୍ତୁ। ଏହାର ସେଟିଂସ୍ ରଖାଯିବ।</string>
     <string name="config_gamepad_calibrate_summary">ସଂଯୁକ୍ତ କଣ୍ଟ୍ରୋଲର୍‌ର ନିରପେକ୍ଷ ସ୍ଥିତି ଏବଂ ଏହାର ଷ୍ଟିକ୍ ଓ ଟ୍ରିଗର୍‌ର ପରିସର ମାପେ।</string>
     <string name="config_gamepad_calibration_cancelled">କାଲିବ୍ରେସନ୍ ବାତିଲ୍ ହୋଇଛି। ପୂର୍ବ କାଲିବ୍ରେସନ୍ ଅପରିବର୍ତ୍ତିତ ଅଛି।</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">କାଲିବ୍ରେସନ୍‌ର ସୀମା ସର୍ତ୍ତଗୁଡ଼ିକ ଅବୈଧ</string>
@@ -837,7 +837,7 @@
     <string name="config_help_vk_selected_background">ବଟନ୍ ଦବାଯାଇଥିବା ସମୟରେ ତାହାର ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
     <string name="config_help_vk_selected_foreground">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବଟନ୍ ଦବାଯାଇଥିବା ସମୟରେ ଲେବଲ୍ ଓ ପ୍ରତୀକର ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
     <string name="config_lock_custom_resolution_ratio">ଆସ୍ପେକ୍ଟ୍ ରେସିଓ ଲକ୍ କରନ୍ତୁ</string>
-    <string name="config_message_delete_app_data">ଏହି MIDlet ସୃଷ୍ଟି କରିଥିବା ସମସ୍ତ ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ଓ ଅନ୍ୟ ଡାଟା ସ୍ଥାୟୀ ଭାବେ ବିଲୋପ କରିବେ? MIDlet ସେଟିଂସ୍ ବିଲୋପ ହେବ ନାହିଁ।</string>
+    <string name="config_message_delete_app_data">ଏହି MIDlet ସୃଷ୍ଟି କରିଥିବା ସମସ୍ତ ସଞ୍ଚିତ ଡାଟା ଓ ଅନ୍ୟ ଡାଟା ସ୍ଥାୟୀ ଭାବେ ବିଲୋପ କରିବେ? MIDlet ସେଟିଂସ୍ ବିଲୋପ ହେବ ନାହିଁ।</string>
     <string name="config_message_reset_profile_settings">ଏହି ପ୍ରୋଫାଇଲ୍‌ର ସେଟିଂସ୍ ଓ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣକୁ ସେଗୁଡ଼ିକର ଡିଫଲ୍ଟ ସ୍ଥିତିକୁ ଫେରାଇବେ? ସଞ୍ଚୟ ପୂର୍ବରୁ ଆପଣ ତଥାପି ସମ୍ପାଦନା କିମ୍ବା ବାତିଲ୍ କରିପାରିବେ।</string>
     <string name="config_message_reset_settings">ଏହି MIDlet ର ସେଟିଂସ୍ ଓ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣକୁ ସେଗୁଡ଼ିକର ଡିଫଲ୍ଟ ସ୍ଥିତିକୁ ଫେରାଇବେ? MIDlet ଡାଟା ବିଲୋପ ହେବ ନାହିଁ।</string>
     <string name="config_reset_all_settings_summary">ଏହି MIDlet ର ଡାଟା ବିଲୋପ ନ କରି ଏହାର ସେଟିଂସ୍ ଓ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣକୁ ଡିଫଲ୍ଟ ସ୍ଥିତିକୁ ଫେରାନ୍ତୁ।</string>
@@ -877,12 +877,12 @@
     <string name="installer_cancel_pending">ପରବର୍ତ୍ତୀ ସୁରକ୍ଷିତ ପର୍ଯ୍ୟାୟରେ ବନ୍ଦ ହେବ…</string>
     <string name="installer_conversion_skipped_entry">%1$s\nସମସ୍ୟା: Java କ୍ଲାସ୍ ଫାଇଲ୍ ପଢ଼ାଯାଇପାରିଲା ନାହିଁ।\nକାର୍ଯ୍ୟ: ରୂପାନ୍ତର ସମୟରେ ଏଡ଼ାଇ ଦିଆଗଲା।</string>
     <string name="installer_error_message">ଚୟନିତ ଆପ୍ଲିକେସନ୍ ସଂସ୍ଥାପନ କରାଯାଇପାରିଲା ନାହିଁ। ଏକ ବୈଧ MIDlet ଫାଇଲ୍ ବାଛି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
-    <string name="installer_existing_data_preserved">ବର୍ତ୍ତମାନର ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ରଖାଯିବ।</string>
+    <string name="installer_existing_data_preserved">ବର୍ତ୍ତମାନର ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଡାଟା ରଖାଯିବ।</string>
     <string name="installer_failed_conversion">ଆପ୍ଲିକେସନ୍ ରୂପାନ୍ତର କରାଯାଇପାରିଲା ନାହିଁ। ଫାଇଲ୍ ସମ୍ପୂର୍ଣ୍ଣ ଓ ସମର୍ଥିତ କି ନାହିଁ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="installer_failed_download">ଆପ୍ଲିକେସନ୍ ଡାଉନଲୋଡ୍ କରାଯାଇପାରିଲା ନାହିଁ। ସଂଯୋଗ ଓ ଡାଉନଲୋଡ୍ ଲିଙ୍କ୍ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="installer_needs_recovery">ଆପ୍ଲିକେସନ୍ ଫାଇଲ୍‌ଗୁଡ଼ିକ ସଞ୍ଚିତ ହୋଇଛି, କିନ୍ତୁ ଲାଇବ୍ରେରି ଅପଡେଟ୍ ସମାପ୍ତ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା ପୂର୍ବରୁ ଲାଇବ୍ରେରି ରିଫ୍ରେଶ୍ କରନ୍ତୁ।</string>
     <string name="installer_partial_restore">ଆପ୍ ସଂସ୍ଥାପିତ ହୋଇଛି; ଡାଟା କିମ୍ବା ସେଟିଂସ୍ ପୁନଃସ୍ଥାପନ ହୋଇପାରିଲା ନାହିଁ</string>
-    <string name="installer_removed_leftovers">ଆପ୍ ହଟାଯାଇଛି; କିଛି ସେଟିଂସ୍ କିମ୍ବା ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ବିଲୋପ କରାଯାଇପାରିଲା ନାହିଁ।</string>
+    <string name="installer_removed_leftovers">ଆପ୍ ହଟାଯାଇଛି; କିଛି ସେଟିଂସ୍ କିମ୍ବା ସଞ୍ଚିତ ଡାଟା ବିଲୋପ କରାଯାଇପାରିଲା ନାହିଁ।</string>
     <string name="midlet_failure_recovery_message">MIDlet ଅପ୍ରତ୍ୟାଶିତ ଭାବେ ବନ୍ଦ ହୋଇଛି। ନିଦାନ ସୂଚନା ଏହି ଡିଭାଇସ୍‌ରେ ସଞ୍ଚିତ ହୋଇଛି। ଆପଣ JL-Mod Plus ବ୍ୟବହାର ଜାରି ରଖିପାରିବେ।</string>
     <string name="midlet_failure_recovery_message_named">“%1$s” ଅପ୍ରତ୍ୟାଶିତ ଭାବେ ବନ୍ଦ ହୋଇଛି। ନିଦାନ ସୂଚନା ଏହି ଡିଭାଇସ୍‌ରେ ସଞ୍ଚିତ ହୋଇଛି। ଆପଣ JL-Mod Plus ବ୍ୟବହାର ଜାରି ରଖିପାରିବେ।</string>
     <string name="midlet_failure_recovery_title">MIDlet ଅପ୍ରତ୍ୟାଶିତ ଭାବେ ବନ୍ଦ ହୋଇଛି</string>

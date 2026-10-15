@@ -726,7 +726,7 @@
     <string name="installer_conversion_skipped_entry">%1$s\nProblém: soubor třídy Java nebylo možné přečíst.\nAkce: přeskočeno během převodu.</string>
     <string name="installer_copy_details">Kopírovat podrobnosti</string>
     <string name="installer_error_message">Vybranou aplikaci se nepodařilo nainstalovat. Vyberte platný soubor MIDletu a zkuste to znovu.</string>
-    <string name="installer_existing_data_preserved">Stávající nastavení a uložená herní data zůstanou zachována.</string>
+    <string name="installer_existing_data_preserved">Stávající nastavení a uložená data zůstanou zachována.</string>
     <string name="installer_failed_conversion">Aplikaci se nepodařilo převést. Ověřte, že je soubor úplný a podporovaný, a zkuste to znovu.</string>
     <string name="installer_failed_download">Aplikaci se nepodařilo stáhnout. Zkontrolujte připojení a odkaz ke stažení a zkuste to znovu.</string>
     <string name="installer_failed_storage">Instalaci se nepodařilo dokončit. Zkuste to znovu.</string>
@@ -735,7 +735,7 @@
     <string name="installer_not_processed">Nezpracováno</string>
     <string name="installer_partial_restore">Aplikace nainstalována; data nebo nastavení se nepodařilo obnovit</string>
     <string name="installer_refresh_library">Obnovit Knihovnu</string>
-    <string name="installer_removed_leftovers">Aplikace odstraněna; některá nastavení nebo uložená herní data se nepodařilo smazat.</string>
+    <string name="installer_removed_leftovers">Aplikace odstraněna; některá nastavení nebo uložená data se nepodařilo smazat.</string>
     <string name="installer_retry_remaining">Zkontrolovat nedokončené položky</string>
     <string name="installer_separate_copy">Nainstalovat samostatnou kopii</string>
     <string name="installer_show_details">Zobrazit podrobnosti</string>
