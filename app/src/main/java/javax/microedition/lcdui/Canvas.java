@@ -1896,6 +1896,8 @@ public abstract class Canvas extends Displayable {
 			return viewCallbacks == this;
 		}
 
+		// MIDP Canvas dispatches positional pointer events, not a single Android click.
+		@SuppressLint("ClickableViewAccessibility")
 		private void detachFromCanvas() {
 			mView.getHolder().removeCallback(this);
 			mView.setOnTouchListener(null);
