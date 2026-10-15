@@ -14,11 +14,9 @@
     <string name="about_lineage">JL-Mod Plus er en uavhengig forgrening av JL-Mod av woesss (Yury Kharchenko). JL-Mod er basert på J2ME Loader av Nikita Shakarun, som har sitt opphav i J2meLoader fra NaikSoftware.</string>
     <string name="about_lineage_title">Prosjektets opphav</string>
     <string name="about_links_title">Prosjekt og lisenser</string>
-    <string name="about_maintainer">Vedlikeholder: %1$s</string>
     <string name="about_message">Kjør klassiske apper og spill, organiser MIDlet-er i Bibliotek og juster kontroller, skjerm, lyd og ytelse. JL-Mod Plus er gratis og har åpen kildekode.</string>
     <string name="about_revision_label">Kildekoderevisjon</string>
     <string name="about_subtitle">Java ME-emulator for Android</string>
-    <string name="about_version">Versjon %1$s</string>
     <string name="about_version_label">Versjon</string>
     <string name="action_back">Tilbake</string>
     <string name="action_context_delete">Slett</string>
@@ -55,7 +53,6 @@
     <string name="error_name">Skriv inn et navn.</string>
     <string name="exit">Avslutt</string>
     <string name="help">Hjelp</string>
-    <string name="help_message">• Lineær filtrering kan redusere ytelsen betydelig for noen MIDlet-er. Slå den av hvis MIDlet-en er for treg.&lt;BR&gt;• Umiddelbar behandling omgår den vanlige Java ME-hendelseskøen. Det kan gi raskere respons, men kan gjøre noen MIDlet-er ustabile.</string>
     <string name="licenses">Lisenser</string>
     <string name="licenses_unavailable">Lisensdetaljer er utilgjengelige.</string>
     <string name="loading_apps">Laster apper</string>
@@ -121,11 +118,9 @@
     <string name="library_action_about_summary">Prosjektoversikt, bygginformasjon og lenker.</string>
     <string name="library_action_crash_reports_summary">Se lagrede diagnoserapporter.</string>
     <string name="library_action_export_bundle">Eksporter apppakke</string>
-    <string name="library_action_help_summary">Bruksveiledning og vanlige kontroller.</string>
     <string name="library_action_import_bundle">Importer apppakke</string>
     <string name="library_action_import_bundle_summary">Gjenopprett en eksportert JAR, appinnstillinger og lagrede data.</string>
     <string name="library_action_licenses_summary">Tredjepartsmerknader og lisensvilkår som følger med appen.</string>
-    <string name="library_action_save_log_summary">Lagre nylige JL-Mod Plus-logger for feilsøking.</string>
     <string name="library_action_select">Velg</string>
     <string name="library_action_settings_summary">Konfigurer global oppførsel og utseende.</string>
     <string name="library_action_share_app">Del app</string>
@@ -145,7 +140,6 @@
     <string name="library_collection_name">Samlingsnavn</string>
     <string name="library_collection_new">Ny samling</string>
     <string name="library_collection_ready_empty_message">Opprett samlinger for å organisere apper uten å flytte filene deres.</string>
-    <string name="library_collection_remove">Fjern fra samling</string>
     <string name="library_collection_remove_from_current">Fjern fra samling</string>
     <string name="library_collection_select_message">Velg en samling for å se appene i den.</string>
     <string name="library_collection_select_title">Velg en samling</string>
@@ -630,7 +624,6 @@
     <string name="installer_stage_wait">Venter på en annen operasjon…</string>
     <string name="installer_title">MIDlet-installasjon</string>
     <string name="reconversion_done_with_warning">Kompatibilitetskonvertering fullført med advarsler.</string>
-    <string name="reconversion_error">MIDlet-en kunne ikke konverteres automatisk.\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet-en kunne ikke konverteres automatisk.</string>
     <string name="reconverting_wait">Denne MIDlet-en trenger en kompatibilitetskonvertering én gang før den kan starte. Konverterer…</string>
     <string name="reinstall">Denne appen er allerede installert. Installere den på nytt?</string>
@@ -729,7 +722,6 @@
     <string name="memory_editor_clear_selection">Tøm utvalg</string>
     <string name="memory_editor_close">Lukk Minneeditor</string>
     <string name="memory_editor_edit">Rediger</string>
-    <string name="memory_editor_edit_batch_help">Bruker erstatningsverdien på valgte mål som er kompatible med valgt datatype. Overvåking og Frys er utilgjengelige ved grupperedigering.</string>
     <string name="memory_editor_edit_batch_no_common_type">De valgte resultatene støtter ikke valgt datatype. Rediger kompatible resultater hver for seg.</string>
     <string name="memory_editor_edit_batch_type_notice">Bare verdier med samsvarende datatype endres.</string>
     <string name="memory_editor_engine_reconnecting">Minneeditor kobler til på nytt…</string>
@@ -743,7 +735,7 @@
     <string name="memory_editor_freeze_paused">Satt på pause av sikkerhetshensyn</string>
     <string name="memory_editor_identity_unsafe">Den valgte verdien eller søketilstanden kunne ikke bekreftes. Oppdater resultatene eller åpne Inspektør på nytt, og prøv igjen.</string>
     <string name="memory_editor_increment_invalid">Bruk én heltallstype og verdier innenfor dens område.</string>
-    <string name="memory_editor_increment_preview">Forhåndsvisning: %1$s (antall verdier: %2$d)</string>
+    <string name="memory_editor_increment_preview">Forhåndsvisning: %1$s</string>
     <string name="memory_editor_increment_start">Startverdi</string>
     <string name="memory_editor_increment_step">Trinn</string>
     <string name="memory_editor_incremental_edit">Aritmetisk følge</string>
@@ -927,11 +919,7 @@
     <string name="pref_accent_blue">Standardblå</string>
     <string name="pref_accent_classic_blue">Klassisk blå</string>
     <string name="pref_accent_coral">Korallfersken</string>
-    <string name="pref_accent_cyan">Cyan</string>
     <string name="pref_accent_green">Smaragdgrønn</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_orange">Oransje</string>
-    <string name="pref_accent_pink">Rosa</string>
     <string name="pref_accent_rose">Bærrosa</string>
     <string name="pref_accent_sapphire">Safirblå</string>
     <string name="pref_accent_teal">Jadeturkis</string>
