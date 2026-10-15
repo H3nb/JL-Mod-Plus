@@ -13,7 +13,6 @@
     <string name="exit">ออก</string>
     <string name="FORCE_CLOSE_CONFIRMATION">หยุด MIDlet นี้หรือไม่ การเปลี่ยนแปลงที่ยังไม่ได้บันทึกอาจสูญหาย</string>
     <string name="help">ช่วยเหลือ</string>
-    <string name="help_message">• การกรองแบบเชิงเส้นอาจลดประสิทธิภาพของ MIDlet บางรายการอย่างมาก ปิดฟังก์ชันนี้หาก MIDlet ทำงานช้าเกินไป&lt;BR&gt;• การประมวลผลทันทีจะข้ามคิวเหตุการณ์ Java ME ปกติ ซึ่งอาจช่วยให้ตอบสนองเร็วขึ้น แต่ก็อาจทำให้ MIDlet บางรายการทำงานไม่เสถียร</string>
     <string name="layout_edit_finish">เสร็จสิ้นโหมดแก้ไข</string>
     <string name="layout_edit_finished">เสร็จสิ้นโหมดแก้ไข</string>
     <string name="layout_switch">เลือกรูปแบบการจัดวางตัวควบคุม</string>
@@ -67,10 +66,8 @@
     <string name="about_lineage">JL-Mod Plus เป็นโครงการที่แยกมาพัฒนาอย่างอิสระจาก JL-Mod ของ woesss (Yury Kharchenko) โดย JL-Mod มีพื้นฐานมาจาก J2ME Loader ของ Nikita Shakarun ซึ่งมีต้นกำเนิดจาก J2meLoader ของ NaikSoftware</string>
     <string name="about_lineage_title">ต้นกำเนิดโครงการ</string>
     <string name="about_links_title">โครงการและสัญญาอนุญาต</string>
-    <string name="about_maintainer">ผู้ดูแล: %1$s</string>
     <string name="about_revision_label">ฉบับแก้ไขของซอร์สโค้ด</string>
     <string name="about_subtitle">โปรแกรมจำลอง Java ME สำหรับ Android</string>
-    <string name="about_version">เวอร์ชัน %1$s</string>
     <string name="about_version_label">เวอร์ชัน</string>
     <string name="action_back">ย้อนกลับ</string>
     <string name="action_keyboard_ime">แป้นพิมพ์ (IME)</string>
@@ -160,11 +157,9 @@
     <string name="library_action_about_summary">ภาพรวมโครงการ ข้อมูลบิลด์ และลิงก์</string>
     <string name="library_action_crash_reports_summary">ดูรายงานการวินิจฉัยที่บันทึกไว้</string>
     <string name="library_action_export_bundle">ส่งออกชุดข้อมูลแอป</string>
-    <string name="library_action_help_summary">คำแนะนำการใช้งานและการควบคุมทั่วไป</string>
     <string name="library_action_import_bundle">นำเข้าชุดข้อมูลแอป</string>
     <string name="library_action_import_bundle_summary">กู้คืน JAR การตั้งค่าแอป และข้อมูลเซฟที่ส่งออกไว้</string>
     <string name="library_action_licenses_summary">ประกาศของบุคคลที่สามและเงื่อนไขสัญญาอนุญาตที่มาพร้อมกับแอป</string>
-    <string name="library_action_save_log_summary">บันทึกล็อกล่าสุดของ JL-Mod Plus เพื่อแก้ไขปัญหา</string>
     <string name="library_action_select">เลือก</string>
     <string name="library_action_settings_summary">กำหนดพฤติกรรมและรูปลักษณ์โดยรวม</string>
     <string name="library_action_share_app">แชร์แอป</string>
@@ -184,7 +179,6 @@
     <string name="library_collection_name">ชื่อคอลเล็กชัน</string>
     <string name="library_collection_new">คอลเล็กชันใหม่</string>
     <string name="library_collection_ready_empty_message">สร้างคอลเล็กชันเพื่อจัดระเบียบแอปโดยไม่ต้องย้ายไฟล์</string>
-    <string name="library_collection_remove">นำออกจากคอลเล็กชัน</string>
     <string name="library_collection_remove_from_current">นำออกจากคอลเล็กชัน</string>
     <string name="library_collection_select_message">เลือกคอลเล็กชันเพื่อดูแอปในคอลเล็กชันนั้น</string>
     <string name="library_collection_select_title">เลือกคอลเล็กชัน</string>
@@ -658,7 +652,6 @@
     <string name="installer_stage_wait">กำลังรอการดำเนินการอื่น…</string>
     <string name="installer_title">ตัวติดตั้ง MIDlet</string>
     <string name="reconversion_done_with_warning">แปลงเพื่อความเข้ากันได้เสร็จแล้ว แต่มีคำเตือน</string>
-    <string name="reconversion_error">แปลง MIDlet อัตโนมัติไม่ได้\n\n%1$s</string>
     <string name="reconversion_error_summary">แปลง MIDlet อัตโนมัติไม่ได้</string>
     <string name="reconverting_wait">MIDlet นี้ต้องแปลงเพื่อความเข้ากันได้หนึ่งครั้งก่อนเริ่มทำงาน กำลังแปลง…</string>
     <string name="reinstall">แอปนี้ติดตั้งแล้ว ติดตั้งใหม่หรือไม่?</string>
@@ -739,7 +732,6 @@
     <string name="memory_editor_clear_selection">ยกเลิกการเลือก</string>
     <string name="memory_editor_close">ปิดตัวแก้ไขหน่วยความจำ</string>
     <string name="memory_editor_edit">แก้ไข</string>
-    <string name="memory_editor_edit_batch_help">ใช้ค่าแทนที่กับเป้าหมายที่เลือกซึ่งเข้ากันได้กับชนิดข้อมูลที่ระบุ การแก้ไขแบบกลุ่มไม่รองรับการเฝ้าดูและการตรึงค่า</string>
     <string name="memory_editor_edit_batch_no_common_type">ผลลัพธ์ที่เลือกไม่รองรับชนิดข้อมูลที่ระบุ โปรดแก้ไขผลลัพธ์ที่เข้ากันได้แยกกัน</string>
     <string name="memory_editor_edit_batch_type_notice">จะเปลี่ยนเฉพาะค่าที่มีชนิดข้อมูลตรงกัน</string>
     <string name="memory_editor_engine_reconnecting">กำลังเชื่อมต่อตัวแก้ไขหน่วยความจำอีกครั้ง…</string>
@@ -753,7 +745,7 @@
     <string name="memory_editor_freeze_paused">หยุดชั่วคราวเพื่อความปลอดภัย</string>
     <string name="memory_editor_identity_unsafe">ไม่สามารถตรวจสอบค่าที่เลือกหรือสถานะการค้นหาได้ โปรดรีเฟรชผลลัพธ์หรือเปิดตัวตรวจสอบอีกครั้ง แล้วลองใหม่</string>
     <string name="memory_editor_increment_invalid">ใช้ชนิดจำนวนเต็มเพียงชนิดเดียว และค่าที่อยู่ในช่วงของชนิดนั้น</string>
-    <string name="memory_editor_increment_preview">ตัวอย่าง: %1$s (%2$d ค่า)</string>
+    <string name="memory_editor_increment_preview">ตัวอย่าง: %1$s</string>
     <string name="memory_editor_increment_start">ค่าเริ่มต้น</string>
     <string name="memory_editor_increment_step">ผลต่างร่วม</string>
     <string name="memory_editor_incremental_edit">ตั้งค่าตามลำดับเลขคณิต</string>
@@ -911,11 +903,7 @@
     <string name="pref_accent_blue">สีฟ้าเริ่มต้น</string>
     <string name="pref_accent_classic_blue">สีฟ้าคลาสสิก</string>
     <string name="pref_accent_coral">สีพีชปะการัง</string>
-    <string name="pref_accent_cyan">สีไซแอน</string>
     <string name="pref_accent_green">สีเขียวมรกต</string>
-    <string name="pref_accent_indigo">สีคราม</string>
-    <string name="pref_accent_orange">สีส้ม</string>
-    <string name="pref_accent_pink">สีชมพู</string>
     <string name="pref_accent_rose">สีกุหลาบเบอร์รี</string>
     <string name="pref_accent_sapphire">สีน้ำเงินแซฟไฟร์</string>
     <string name="pref_accent_teal">สีเขียวน้ำเงินหยก</string>
