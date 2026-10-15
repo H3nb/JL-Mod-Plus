@@ -14,7 +14,6 @@
     <string name="exit">Wyjście</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Zatrzymać ten MIDlet? Niezapisane zmiany mogą zostać utracone.</string>
     <string name="help">Pomoc</string>
-    <string name="help_message">• Filtrowanie liniowe może znacznie obniżyć wydajność niektórych MIDletów. Wyłącz je, jeśli MIDlet działa zbyt wolno.&lt;BR&gt;• Natychmiastowe przetwarzanie omija standardową kolejkę zdarzeń Java ME. Może poprawić szybkość reakcji, ale może też powodować niestabilność niektórych MIDletów.</string>
     <string name="layout_edit_finish">Zakończ tryb edycji</string>
     <string name="layout_edit_finished">Tryb edycji został zakończony</string>
     <string name="layout_switch">Zmień układ przycisków</string>
@@ -84,10 +83,8 @@
     <string name="about_lineage">JL-Mod Plus to niezależny fork projektu JL-Mod, którego autorem jest woesss (Yury Kharchenko). JL-Mod bazuje na J2ME Loader, którego autorem jest Nikita Shakarun. J2ME Loader wywodzi się z projektu J2meLoader od NaikSoftware.</string>
     <string name="about_lineage_title">Pochodzenie projektu</string>
     <string name="about_links_title">Projekt i licencje</string>
-    <string name="about_maintainer">Opiekun projektu: %1$s</string>
     <string name="about_revision_label">Rewizja kodu źródłowego</string>
     <string name="about_subtitle">Emulator Java ME dla Androida</string>
-    <string name="about_version">Wersja %1$s</string>
     <string name="about_version_label">Wersja</string>
     <string name="action_back">Wstecz</string>
     <string name="action_keyboard_ime">Klawiatura (IME)</string>
@@ -175,11 +172,9 @@
     <string name="library_action_about_summary">Informacje o projekcie i kompilacji oraz odnośniki.</string>
     <string name="library_action_crash_reports_summary">Przeglądaj zapisane raporty diagnostyczne.</string>
     <string name="library_action_export_bundle">Eksportuj pakiet aplikacji</string>
-    <string name="library_action_help_summary">Wskazówki dotyczące obsługi i typowe elementy sterowania.</string>
     <string name="library_action_import_bundle">Importuj pakiet aplikacji</string>
     <string name="library_action_import_bundle_summary">Przywróć wyeksportowany plik JAR, ustawienia aplikacji i zapisane dane.</string>
     <string name="library_action_licenses_summary">Informacje o komponentach innych firm i warunki licencji dołączone do aplikacji.</string>
-    <string name="library_action_save_log_summary">Zapisz ostatnie dzienniki JL-Mod Plus, aby pomóc w rozwiązywaniu problemów.</string>
     <string name="library_action_select">Zaznacz</string>
     <string name="library_action_settings_summary">Skonfiguruj ogólne działanie i wygląd.</string>
     <string name="library_action_share_app">Udostępnij aplikację</string>
@@ -199,7 +194,6 @@
     <string name="library_collection_name">Nazwa kolekcji</string>
     <string name="library_collection_new">Nowa kolekcja</string>
     <string name="library_collection_ready_empty_message">Twórz kolekcje, aby porządkować aplikacje bez przenoszenia ich plików.</string>
-    <string name="library_collection_remove">Usuń z kolekcji</string>
     <string name="library_collection_remove_from_current">Usuń z kolekcji</string>
     <string name="library_collection_select_message">Wybierz kolekcję, aby zobaczyć jej aplikacje.</string>
     <string name="library_collection_select_title">Wybierz kolekcję</string>
@@ -691,7 +685,6 @@
     <string name="installer_stage_wait">Oczekiwanie na inną operację…</string>
     <string name="installer_title">Instalator MIDletów</string>
     <string name="reconversion_done_with_warning">Konwersja zgodności zakończona z ostrzeżeniami.</string>
-    <string name="reconversion_error">Nie udało się automatycznie przekonwertować MIDletu.\n\n%1$s</string>
     <string name="reconversion_error_summary">Nie udało się automatycznie przekonwertować MIDletu.</string>
     <string name="reconverting_wait">Ten MIDlet wymaga jednorazowej konwersji zgodności przed uruchomieniem. Konwertowanie…</string>
     <string name="reinstall">Ta aplikacja jest już zainstalowana. Zainstalować ponownie?</string>
@@ -826,7 +819,6 @@
     <string name="memory_editor_clear_selection">Wyczyść zaznaczenie</string>
     <string name="memory_editor_close">Zamknij edytor pamięci</string>
     <string name="memory_editor_edit">Edytuj</string>
-    <string name="memory_editor_edit_batch_help">Stosuje wartość zastępczą do wybranych celów zgodnych z wybranym typem danych. Obserwacja i Zamrażanie są niedostępne przy edycji zbiorczej.</string>
     <string name="memory_editor_edit_batch_no_common_type">Wybrane wyniki nie obsługują wybranego typu danych. Edytuj zgodne wyniki osobno.</string>
     <string name="memory_editor_edit_batch_type_notice">Zmienione zostaną tylko wartości o zgodnym typie danych.</string>
     <string name="memory_editor_engine_reconnecting">Edytor pamięci łączy się ponownie…</string>
@@ -840,7 +832,7 @@
     <string name="memory_editor_freeze_paused">Wstrzymano ze względów bezpieczeństwa</string>
     <string name="memory_editor_identity_unsafe">Nie można zweryfikować wybranej wartości lub stanu wyszukiwania. Odśwież wyniki lub ponownie otwórz Inspektor i spróbuj jeszcze raz.</string>
     <string name="memory_editor_increment_invalid">Użyj jednego typu całkowitego i wartości mieszczących się w jego zakresie.</string>
-    <string name="memory_editor_increment_preview">Podgląd: %1$s (liczba wartości: %2$d)</string>
+    <string name="memory_editor_increment_preview">Podgląd: %1$s</string>
     <string name="memory_editor_increment_start">Wartość początkowa</string>
     <string name="memory_editor_increment_step">Krok</string>
     <string name="memory_editor_incremental_edit">Sekwencja z krokiem</string>
@@ -1010,11 +1002,7 @@
     <string name="pref_accent_blue">Domyślny niebieski</string>
     <string name="pref_accent_classic_blue">Klasyczny niebieski</string>
     <string name="pref_accent_coral">Koralowa brzoskwinia</string>
-    <string name="pref_accent_cyan">Cyjan</string>
     <string name="pref_accent_green">Szmaragdowa zieleń</string>
-    <string name="pref_accent_indigo">Indygo</string>
-    <string name="pref_accent_orange">Pomarańczowy</string>
-    <string name="pref_accent_pink">Różowy</string>
     <string name="pref_accent_rose">Jagodowy róż</string>
     <string name="pref_accent_sapphire">Szafirowy błękit</string>
     <string name="pref_accent_teal">Jadeitowy turkus</string>
