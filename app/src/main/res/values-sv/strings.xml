@@ -13,7 +13,6 @@
     <string name="pref_app_sort_name">Namn</string>
     <string name="pref_orientation_default">Standard</string>
     <string name="pref_theme_title">Tema</string>
-    <string name="about_maintainer">Underhållare: %1$s</string>
     <string name="about_message">Starta klassiska appar och spel, organisera MIDlet-program i biblioteket och anpassa kontroller, visning, ljud och prestanda. JL-Mod Plus är gratis och har öppen källkod.</string>
     <string name="about_subtitle">Java ME-emulator för Android</string>
     <string name="about_compatibility">Kompatibiliteten beror på MIDlet-programmet, enheten och vilka Java ME-API:er som stöds. Vissa appar kan fungera annorlunda än på de ursprungliga telefonerna.</string>
@@ -52,7 +51,6 @@
     <string name="runtime_replacement_failed">Den körande MIDlet kunde inte stoppas. Försök öppna den nya MIDlet igen.</string>
     <string name="error_name">Ange ett namn.</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Stoppa denna MIDlet? Osparade ändringar kan gå förlorade.</string>
-    <string name="help_message">&#8226; Filtrering kan i vissa fall minska prestandan kraftigt. Inaktivera alternativet om appen är för långsam.&lt;BR&gt;&#8226; Omedelbart bearbetningsläge kringgår den normala Java ME-händelsekön. Det kan förbättra responsen men orsaka oförutsägbart beteende.</string>
     <string name="identity_filter">Ingen (snabbast)</string>
     <string name="install">Installera</string>
     <string name="install_done">App installerad.</string>
@@ -435,7 +433,6 @@
     <string name="library_collection_members_empty">Inga appar i den här samlingen.</string>
     <string name="library_collection_select_title">Välj en samling</string>
     <string name="library_collection_select_message">Välj en samling för att visa dess appar.</string>
-    <string name="library_collection_remove">Ta bort från samling</string>
     <string name="library_collection_remove_from_current">Ta bort från samling</string>
     <string name="library_no_matches">Inga träffar för \"%1$s\"</string>
     <string name="library_action_share_app">Dela app</string>
@@ -496,7 +493,6 @@
         <item quantity="one">Redigera %1$d värde</item>
         <item quantity="other">Redigera %1$d värden</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Använder ersättningsvärdet på valda mål som är kompatibla med den valda datatypen. Bevakning och Frys är inte tillgängliga för batchredigering.</string>
     <string name="memory_editor_edit_batch_no_common_type">De valda resultaten stöder inte den valda datatypen. Redigera kompatibla resultat separat.</string>
     <string name="memory_editor_save">Tillämpa</string>
     <string name="memory_editor_replacement">Ersättningsvärde</string>
@@ -732,7 +728,6 @@
     <string name="config_help_timing_mode">Väljer om MIDlet-appen använder emuleringstid eller systemtid. Relativa fördröjningar skalas fortfarande med emuleringshastigheten.</string>
     <string name="config_help_timing_unavailable">Tidsinställningar är inte tillgängliga för denna MIDlet-installation. Installera om eller konvertera om MIDlet-appen för att aktivera dem.</string>
     <string name="reconverting_wait">Den här MIDlet-appen behöver en engångskonvertering för kompatibilitet innan den kan starta. Konverterar…</string>
-    <string name="reconversion_error">MIDlet-appen kunde inte konverteras automatiskt.\n\n%1$s</string>
     <string name="config_help_generic_color">Ställer in färgen på det här visuella elementet.</string>
     <string name="config_help_encoding">Väljer den teckenkodning som rapporteras som microedition.encoding.</string>
     <string name="config_edit_system_properties">Redigera systemegenskaper</string>
@@ -898,10 +893,6 @@
     <string name="pref_accent_amber">Bärnsten</string>
     <string name="pref_accent_rose">Ros</string>
     <string name="pref_accent_violet">Violett</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_cyan">Cyan</string>
-    <string name="pref_accent_orange">Orange</string>
-    <string name="pref_accent_pink">Rosa</string>
     <string name="runtime_invalid_intent">Ogiltig startbegäran: MIDlet-sökvägen saknas.</string>
     <string name="runtime_storage_in_use">MIDlet-lagringen används redan av en annan runtime.</string>
     <string name="runtime_installation_changed">MIDlet-installationen kunde inte förberedas för start.</string>
@@ -915,10 +906,8 @@
     <string name="library_selection_unchecked">Inte vald</string>
     <string name="library_action_settings_summary">Konfigurera globalt beteende och utseende.</string>
     <string name="library_action_crash_reports_summary">Granska sparade diagnostikrapporter.</string>
-    <string name="library_action_save_log_summary">Spara de senaste JL-Mod Plus-loggarna för felsökning.</string>
     <string name="library_action_about_summary">Projektöversikt, bygginformation och länkar.</string>
     <string name="library_action_licenses_summary">Tredjepartsmeddelanden och licensvillkor som ingår i appen.</string>
-    <string name="library_action_help_summary">Användningshjälp och vanliga kontroller.</string>
     <string name="library_bulk_delete_apps">Ta bort appar</string>
     <string name="library_bulk_add_collection">Lägg till i samling</string>
     <string name="library_bulk_share_apps">Dela appar</string>
@@ -948,7 +937,6 @@
     <string name="memory_editor_write_failure_outcome">%1$s\nBekräftade skrivningar: %2$d. Obekräftade: %3$d. Överhoppade: %4$d. Inte försökt: %5$d. Överhoppade på grund av typ: %6$d.</string>
     <string name="memory_editor_next_scan_result">Resultat för nästa sökning: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Automatisk</string>
-    <string name="about_version">Version %1$s</string>
     <string name="screenshot_save_failed">Skärmbilden kunde inte sparas.</string>
     <string name="screenshot_saved_path">Skärmbild sparad i %1$s</string>
     <string name="log_save_started">Loggsparning startad.</string>
@@ -1009,7 +997,7 @@
     <string name="memory_editor_change_amount">Ändringens storlek</string>
     <string name="memory_editor_edit_batch_type_notice">Endast värden med matchande datatyper ändras.</string>
     <string name="memory_editor_increment_invalid">Använd en enda heltalstyp och värden inom dess intervall.</string>
-    <string name="memory_editor_increment_preview">Förhandsvisning: %1$s (%2$d värden)</string>
+    <string name="memory_editor_increment_preview">Förhandsvisning: %1$s</string>
     <string name="memory_editor_increment_start">Startvärde</string>
     <string name="memory_editor_increment_step">Steg</string>
     <string name="memory_editor_incremental_edit">Stegvis</string>
