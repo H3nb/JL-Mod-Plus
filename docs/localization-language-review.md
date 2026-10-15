@@ -568,3 +568,38 @@ explicitly game-specific references remain intact. The changes preserve the
 original conditions, deleted/retained objects, resource identities and format
 arguments. These semantic corrections do not replace competent native-speaker
 review of the complete catalog or alter the open Santali QA queue.
+
+### Cross-screen controller fingerprint consistency and structural audit
+
+The diagnostic and calibration screens expose the **same** controller identity,
+constructed from its descriptor/capability information, not a cryptographic
+signature or a handwritten name. After fixing eight diagnostic labels, the
+matching `config_gamepad_calibration_profile` label still used misleading
+literal "signature" terminology. The same eight locales—Spanish, Italian,
+Thai, Turkish, Greek, Serbian, Simplified Chinese and Traditional Chinese—now
+reuse their reviewed diagnostic identification label on the calibration screen.
+The indexed `%1$s` argument is unchanged.
+
+Follow-up inventory across all 39 locale catalogs found **943 single-string
+and 34 plural-resource declarations in every catalog** against 977 canonical
+identities. A targeted placeholder comparison found no definitive argument
+contract regression. Special cases are the **literal percent signs** in
+`config_help_scale_ratio` (marked `formatted="false"`) and an equivalent
+unindexed `%d` versus `%1$d` rendering of `perf_overlay_selected` in Russian;
+these are not automatic failures. Arabic includes all six CLDR cardinal
+categories, Russian and Polish all four configured categories, and Santali
+`one`/`two`/`other` in each of their 34 plural resources. Native-speaker
+review of Santali plural morphology is still open.
+
+Inspection of the Library view's `RecentlyPlayed` filter confirms that it
+sorts by `lastPlayedAt` and includes only rows with recorded play sessions.
+Differences between "Recently played" and "Recently opened" translations
+are a product-wording consistency question, not evidence that the filter uses
+import time. Do not bulk-replace these terms without confirming the desired
+UI vocabulary across non-game MIDlets.
+
+Diagnostic-publication and deletion messages were spot-checked across a
+representative group of locales. Their public-attachment warning, local-only
+removal, previously uploaded files, partial write effects, and batch-edit type
+restrictions were preserved in reviewed examples. This targeted evidence is
+not a fluency certification for all 39 languages or every UI string.

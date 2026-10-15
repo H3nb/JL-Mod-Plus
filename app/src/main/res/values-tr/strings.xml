@@ -442,7 +442,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">Çubuk aralığı</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Tetik aralığı</string>
     <string name="config_gamepad_calibration_phase_unknown">Durum kullanılamıyor</string>
-    <string name="config_gamepad_calibration_profile">Kontrolcü imzası: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Oyun kumandası tanımlayıcısı: %1$s</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasyon reddedildi: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">İncelemeye hazır. Kaydetme yalnızca bu kontrolcünün kalibrasyonunu değiştirir.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibrasyon kaydedilemedi. Mevcut kalibrasyon değişmedi.</string>

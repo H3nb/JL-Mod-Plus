@@ -296,7 +296,7 @@
     <string name="config_gamepad_pointer_off">Desactivado</string>
     <string name="config_gamepad_pointer_cursor">Cursor proporcional</string>
     <string name="config_gamepad_pointer_joystick">Joystick táctil</string>
-    <string name="config_gamepad_calibration_profile">Firma del mando: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Identificador del mando: %1$s</string>
     <string name="config_gamepad_calibration_phase_neutral">Esperando posición neutra</string>
     <string name="config_gamepad_calibration_phase_stick_range">Rango del stick</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Rango del gatillo</string>

@@ -333,7 +333,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">Εύρος μοχλού</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Εύρος σκανδάλης</string>
     <string name="config_gamepad_calibration_phase_unknown">Μη διαθέσιμη κατάσταση</string>
-    <string name="config_gamepad_calibration_profile">Υπογραφή χειριστηρίου: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Αναγνωριστικό χειριστηρίου: %1$s</string>
     <string name="config_gamepad_calibration_rejected">Η βαθμονόμηση απορρίφθηκε: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">Έτοιμο για έλεγχο. Η αποθήκευση αντικαθιστά μόνο τη βαθμονόμηση αυτού του χειριστηρίου.</string>
     <string name="config_gamepad_calibration_save_failed">Δεν ήταν δυνατή η αποθήκευση της βαθμονόμησης. Η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη.</string>

@@ -338,7 +338,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">Опсег палице</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Опсег окидача</string>
     <string name="config_gamepad_calibration_phase_unknown">Статус није доступан</string>
-    <string name="config_gamepad_calibration_profile">Потпис контролера: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Идентификатор контролера: %1$s</string>
     <string name="config_gamepad_calibration_rejected">Калибрација је одбијена: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">Спремно за преглед. Чување замењује само калибрацију овог контролера.</string>
     <string name="config_gamepad_calibration_save_failed">Калибрација није могла да се сачува. Постојећа калибрација остаје непромењена.</string>

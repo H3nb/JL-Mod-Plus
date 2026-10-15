@@ -380,7 +380,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">搖桿範圍</string>
     <string name="config_gamepad_calibration_phase_trigger_range">扳機範圍</string>
     <string name="config_gamepad_calibration_phase_unknown">無法取得狀態</string>
-    <string name="config_gamepad_calibration_profile">控制器簽章：%1$s</string>
+    <string name="config_gamepad_calibration_profile">控制器識別資訊：%1$s</string>
     <string name="config_gamepad_calibration_rejected">校正遭拒：%1$s</string>
     <string name="config_gamepad_calibration_review_instructions">可以檢查校正了。儲存只會取代此控制器的校正。</string>
     <string name="config_gamepad_calibration_save_failed">無法儲存校正。原有校正保持不變。</string>

@@ -285,7 +285,7 @@
     <string name="config_gamepad_pointer_off">Disattivato</string>
     <string name="config_gamepad_pointer_cursor">Cursore proporzionale</string>
     <string name="config_gamepad_pointer_joystick">Joystick touch</string>
-    <string name="config_gamepad_calibration_profile">Firma controller: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Identificativo del controller: %1$s</string>
     <string name="config_gamepad_calibration_phase_neutral">In attesa della posizione neutra</string>
     <string name="config_gamepad_calibration_phase_stick_range">Intervallo stick</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Intervallo grilletto</string>

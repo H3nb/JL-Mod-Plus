@@ -367,7 +367,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">ช่วงก้าน</string>
     <string name="config_gamepad_calibration_phase_trigger_range">ช่วงทริกเกอร์</string>
     <string name="config_gamepad_calibration_phase_unknown">ไม่สามารถดูสถานะได้</string>
-    <string name="config_gamepad_calibration_profile">ลายเซ็นคอนโทรลเลอร์: %1$s</string>
+    <string name="config_gamepad_calibration_profile">ข้อมูลระบุตัวตนของคอนโทรลเลอร์: %1$s</string>
     <string name="config_gamepad_calibration_rejected">ปฏิเสธการปรับเทียบ: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">พร้อมให้ตรวจสอบแล้ว การบันทึกจะแทนที่เฉพาะค่าปรับเทียบของคอนโทรลเลอร์นี้</string>
     <string name="config_gamepad_calibration_save_failed">บันทึกค่าปรับเทียบไม่ได้ ค่าปรับเทียบเดิมไม่เปลี่ยนแปลง</string>
