@@ -28,7 +28,6 @@
     <string name="error_name">Naam invoeren!</string>
     <string name="exit">Verlaten</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Deze MIDlet stoppen? Niet-opgeslagen wijzigingen kunnen verloren gaan.</string>
-    <string name="help_message">• Lineaire filtering kan de prestaties van sommige MIDlet-apps aanzienlijk verminderen. Schakel deze uit als de MIDlet-app te traag is.&lt;BR&gt;• Directe verwerking omzeilt de normale Java ME-gebeurteniswachtrij. Dit kan de respons verbeteren, maar sommige MIDlet-apps instabiel maken.</string>
     <string name="identity_filter">Geen (snelst)</string>
     <string name="layout_edit_finish">Voltooi de bewerkingsmodus</string>
     <string name="layout_edit_finished">Bewerkingsmodus voltooid</string>
@@ -109,7 +108,6 @@
     <string name="SIZE_PRESETS">Voorinstellingen lettergrootte</string>
     <string name="SWAP_SIZES">Afmetingen wisselen</string>
     <string name="take_screenshot">Screenshot maken</string>
-    <string name="about_maintainer">Onderhouder: %1$s</string>
     <string name="about_lineage">JL-Mod Plus is een onafhankelijke fork van JL-Mod van woesss (Yury Kharchenko). JL-Mod is gebaseerd op J2ME Loader van Nikita Shakarun, waarvan de oorsprong teruggaat tot J2meLoader van NaikSoftware.</string>
     <string name="action_back">Terug</string>
     <string name="action_keyboard_ime">Toetsenbord (IME)</string>
@@ -435,7 +433,6 @@
     <string name="library_collection_members_empty">Geen apps in deze collectie.</string>
     <string name="library_collection_select_title">Selecteer een collectie</string>
     <string name="library_collection_select_message">Kies een collectie om de apps erin te bekijken.</string>
-    <string name="library_collection_remove">Uit collectie verwijderen</string>
     <string name="library_collection_remove_from_current">Uit collectie verwijderen</string>
     <string name="library_no_matches">Geen resultaten voor \"%1$s\"</string>
     <string name="library_action_share_app">App delen</string>
@@ -496,7 +493,6 @@
         <item quantity="one">%1$d waarde bewerken</item>
         <item quantity="other">%1$d waarden bewerken</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Past de vervangingswaarde toe op geselecteerde doelen die compatibel zijn met het gekozen gegevenstype. Volgen en Bevriezen zijn niet beschikbaar voor batchbewerkingen.</string>
     <string name="memory_editor_edit_batch_no_common_type">De geselecteerde resultaten ondersteunen het gekozen gegevenstype niet. Bewerk compatibele resultaten afzonderlijk.</string>
     <string name="memory_editor_save">Toepassen</string>
     <string name="memory_editor_replacement">Vervangingswaarde</string>
@@ -732,7 +728,6 @@
     <string name="config_help_timing_mode">Kiest of de MIDlet emulatietijd of systeemtijd gebruikt. Relatieve vertragingen blijven met de emulatiesnelheid schalen.</string>
     <string name="config_help_timing_unavailable">Tijdinstellingen zijn niet beschikbaar voor deze MIDlet-installatie. Installeer of converteer de MIDlet opnieuw om ze in te schakelen.</string>
     <string name="reconverting_wait">Deze MIDlet heeft vóór de start een eenmalige compatibiliteitsconversie nodig. Converteren…</string>
-    <string name="reconversion_error">De MIDlet kon niet automatisch worden geconverteerd.\n\n%1$s</string>
     <string name="config_help_generic_color">Stelt de kleur van dit visuele element in.</string>
     <string name="config_help_encoding">Kiest de tekencodering die als microedition.encoding wordt gemeld.</string>
     <string name="config_edit_system_properties">Systeemeigenschappen bewerken</string>
@@ -898,10 +893,6 @@
     <string name="pref_accent_amber">Amber</string>
     <string name="pref_accent_rose">Roze</string>
     <string name="pref_accent_violet">Violet</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_cyan">Cyaan</string>
-    <string name="pref_accent_orange">Oranje</string>
-    <string name="pref_accent_pink">Roze</string>
     <string name="runtime_invalid_intent">Ongeldig startverzoek: het MIDlet-pad ontbreekt.</string>
     <string name="runtime_storage_in_use">MIDlet-opslag is al in gebruik door een andere runtime.</string>
     <string name="runtime_installation_changed">De MIDlet-installatie kon niet worden voorbereid voor starten.</string>
@@ -915,10 +906,8 @@
     <string name="library_selection_unchecked">Niet geselecteerd</string>
     <string name="library_action_settings_summary">Configureer globaal gedrag en uiterlijk.</string>
     <string name="library_action_crash_reports_summary">Bekijk opgeslagen diagnostische rapporten.</string>
-    <string name="library_action_save_log_summary">Sla recente JL-Mod Plus-logboeken op voor probleemoplossing.</string>
     <string name="library_action_about_summary">Projectoverzicht, buildinformatie en links.</string>
     <string name="library_action_licenses_summary">Meldingen van derden en licentievoorwaarden die bij de app zijn inbegrepen.</string>
-    <string name="library_action_help_summary">Gebruiksinstructies en veelgebruikte bediening.</string>
     <string name="library_bulk_delete_apps">Apps verwijderen</string>
     <string name="library_bulk_add_collection">Toevoegen aan collectie</string>
     <string name="library_bulk_share_apps">Apps delen</string>
@@ -948,7 +937,6 @@
     <string name="memory_editor_write_failure_outcome">%1$s\nBevestigde schrijfbewerkingen: %2$d. Onbevestigd: %3$d. Overgeslagen: %4$d. Niet geprobeerd: %5$d. Overgeslagen wegens type: %6$d.</string>
     <string name="memory_editor_next_scan_result">Resultaten volgende scan: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Automatisch</string>
-    <string name="about_version">Versie %1$s</string>
     <string name="screenshot_save_failed">Screenshot kon niet worden opgeslagen.</string>
     <string name="screenshot_saved_path">Screenshot opgeslagen in %1$s</string>
     <string name="log_save_started">Opslaan van logboek gestart.</string>
@@ -1009,7 +997,7 @@
     <string name="memory_editor_change_amount">Wijzigingsbedrag</string>
     <string name="memory_editor_edit_batch_type_notice">Alleen waarden met overeenkomende gegevenstypen worden gewijzigd.</string>
     <string name="memory_editor_increment_invalid">Gebruik één type geheel getal en waarden binnen het bereik daarvan.</string>
-    <string name="memory_editor_increment_preview">Voorbeeld: %1$s (%2$d waarden)</string>
+    <string name="memory_editor_increment_preview">Voorbeeld: %1$s</string>
     <string name="memory_editor_increment_start">Beginwaarde</string>
     <string name="memory_editor_increment_step">Stap</string>
     <string name="memory_editor_incremental_edit">Incrementeel</string>
