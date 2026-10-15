@@ -1008,7 +1008,7 @@
     <string name="memory_editor_path_incomplete">Referencestien overskrider inspektionsgrænsen.</string>
     <string name="memory_editor_reference_instance">Instansreference</string>
     <string name="memory_editor_reference_static">Statisk reference</string>
-    <string name="memory_editor_remove_candidates_description">Fjern skjuler kun resultater uden at skrive til spillets hukommelse. Fortryd og fjern fortryder den senest bekræftede ændring, når den aktuelle værdi stemmer overens; resultater med konflikter beholdes.</string>
+    <string name="memory_editor_remove_candidates_description">Fjern: Fjerner de valgte resultater fra søgelisten. Værdierne i spillets hukommelse ændres ikke.\n\nFortryd og fjern: Gendanner også værdierne fra før den senest bekræftede ændring, men kun hvis de aktuelle værdier stadig svarer til de skrevne. Resultater med konflikter bliver på listen.</string>
     <string name="memory_editor_remove_candidates_title">Fjern valgte resultater?</string>
     <string name="memory_editor_revert_and_remove">Fortryd og fjern</string>
     <string name="memory_editor_revert_remove_commit_failed">Værdier kan være gendannet, men resultaterne kunne ikke fjernes. Opdater, og prøv igen; værdier ændret af spillet overskrives ikke.</string>

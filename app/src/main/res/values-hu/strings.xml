@@ -847,7 +847,7 @@
     <string name="memory_editor_refresh">Frissítés</string>
     <string name="memory_editor_refresh_snapshot">Pillanatkép frissítése</string>
     <string name="memory_editor_remove">Eltávolítás</string>
-    <string name="memory_editor_remove_candidates_description">Az Eltávolítás csak elrejti a találatokat, nem ír a játék memóriájába. A Visszaállítás és eltávolítás az utolsó megerősített szerkesztést vonja vissza, ha az aktuális érték egyezik a beírt értékkel; az ütköző találatok megmaradnak.</string>
+    <string name="memory_editor_remove_candidates_description">Eltávolítás: Eltávolítja a kijelölt találatokat a keresési listából. A játék memóriájában lévő értékek nem változnak.\n\nVisszaállítás és eltávolítás: A legutóbbi megerősített szerkesztés előtti értékeket is visszaállítja, de csak akkor, ha az aktuális értékek még egyeznek a beírt értékekkel. Az ütköző találatok a listában maradnak.</string>
     <string name="memory_editor_remove_candidates_title">Eltávolítja a kijelölt találatokat?</string>
     <string name="memory_editor_replacement">Csereérték</string>
     <string name="memory_editor_resource_limit">A memóriaszerkesztő elérte a biztonságos erőforráskorlátot. Próbáljon konkrétabb adattípust vagy keresési értéket.</string>

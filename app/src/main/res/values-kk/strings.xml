@@ -911,7 +911,7 @@
     <string name="memory_editor_reference_instance">Данаға сілтеме</string>
     <string name="memory_editor_reference_static">Статикалық сілтеме</string>
     <string name="memory_editor_refresh_snapshot">Жадтың ағымдағы күйін жаңарту</string>
-    <string name="memory_editor_remove_candidates_description">Жою нәтижелерді ғана жасырады және ойын жадына ештеңе жазбайды. Қайтару және жою қазіргі мән жазылған мәнге сәйкес келгенде соңғы расталған өзгерісті кері қайтарады; қайшылықты нәтижелер қалады.</string>
+    <string name="memory_editor_remove_candidates_description">Алып тастау: Таңдалған нәтижелерді іздеу тізімінен алып тастайды. Ойын жадындағы мәндер өзгермейді.\n\nҚайтару және жою: Соңғы расталған түзетуден бұрынғы мәндерді де қалпына келтіреді, бірақ ағымдағы мәндер жазылған мәндермен әлі сәйкес келсе ғана. Қайшылықты нәтижелер тізімде қалады.</string>
     <string name="memory_editor_remove_candidates_title">Таңдалған нәтижелерді жою керек пе?</string>
     <string name="memory_editor_replacement">Ауыстыру мәні</string>
     <string name="memory_editor_resource_limit">Жад өңдегіші қауіпсіз ресурс шегіне жетті. Нақтырақ дерек түрін немесе іздеу мәнін қолданып көріңіз.</string>

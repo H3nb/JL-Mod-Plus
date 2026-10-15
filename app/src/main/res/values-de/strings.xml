@@ -1009,7 +1009,7 @@
     <string name="memory_editor_path_incomplete">Der Referenzpfad überschreitet die Inspektionsgrenze.</string>
     <string name="memory_editor_reference_instance">Instanzreferenz</string>
     <string name="memory_editor_reference_static">Statische Referenz</string>
-    <string name="memory_editor_remove_candidates_description">Entfernen blendet nur Ergebnisse aus, ohne in den Spielspeicher zu schreiben. Rückgängig machen und entfernen macht die letzte bestätigte Änderung rückgängig, wenn der aktuelle Wert übereinstimmt; Ergebnisse mit Konflikten bleiben erhalten.</string>
+    <string name="memory_editor_remove_candidates_description">Entfernen: Entfernt die ausgewählten Treffer aus der Suchliste. Die Werte im Spielspeicher bleiben unverändert.\n\nRückgängig machen und entfernen: Stellt außerdem die Werte vor der letzten bestätigten Änderung wieder her, aber nur, wenn die aktuellen Werte noch mit den geschriebenen übereinstimmen. Ergebnisse mit Konflikten bleiben in der Liste.</string>
     <string name="memory_editor_remove_candidates_title">Ausgewählte Ergebnisse entfernen?</string>
     <string name="memory_editor_revert_and_remove">Rückgängig machen und entfernen</string>
     <string name="memory_editor_revert_remove_commit_failed">Werte wurden möglicherweise wiederhergestellt, aber Ergebnisse konnten nicht entfernt werden. Aktualisiere und versuche es erneut; vom Spiel geänderte Werte werden nicht überschrieben.</string>

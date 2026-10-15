@@ -805,7 +805,7 @@
     <string name="memory_editor_refresh">רענון</string>
     <string name="memory_editor_refresh_snapshot">רענון תמונת המצב</string>
     <string name="memory_editor_remove">הסרה</string>
-    <string name="memory_editor_remove_candidates_description">הסרה רק מסתירה תוצאות ואינה כותבת לזיכרון המשחק. ביטול עריכה והסרה מבטל את העריכה האחרונה שאומתה רק כשהערך הנוכחי תואם לערך שנכתב; תוצאות עם התנגשויות נשארות.</string>
+    <string name="memory_editor_remove_candidates_description">הסרה: מסיר את התוצאות שנבחרו מרשימת החיפוש. הערכים בזיכרון המשחק אינם משתנים.\n\nביטול עריכה והסרה: משחזר גם את הערכים מלפני העריכה האחרונה שאושרה, אך רק אם הערכים הנוכחיים עדיין תואמים לערכים שנכתבו. תוצאות עם התנגשויות נשארות ברשימה.</string>
     <string name="memory_editor_remove_candidates_title">להסיר את התוצאות שנבחרו?</string>
     <string name="memory_editor_replacement">הערך החלופי</string>
     <string name="memory_editor_resource_limit">עורך הזיכרון הגיע למגבלת משאבים בטוחה. יש לנסות סוג נתונים או ערך לחיפוש ממוקדים יותר.</string>

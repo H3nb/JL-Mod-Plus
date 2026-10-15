@@ -780,7 +780,7 @@
     <string name="memory_editor_refresh">Oppdater</string>
     <string name="memory_editor_refresh_snapshot">Oppdater øyeblikksbilde</string>
     <string name="memory_editor_remove">Fjern</string>
-    <string name="memory_editor_remove_candidates_description">Fjern skjuler bare resultater uten å skrive til spillminnet. Angre redigering og fjern angrer den siste bekreftede redigeringen når gjeldende verdi samsvarer med den skrevne verdien; resultater med konflikter beholdes.</string>
+    <string name="memory_editor_remove_candidates_description">Fjern: Fjerner de valgte resultatene fra søkelisten. Verdiene i spillminnet forblir uendret.\n\nAngre redigering og fjern: Gjenoppretter også verdiene fra før siste bekreftede redigering, men bare hvis de gjeldende verdiene fortsatt samsvarer med de skrevne. Resultater med konflikter blir værende i listen.</string>
     <string name="memory_editor_remove_candidates_title">Fjerne valgte resultater?</string>
     <string name="memory_editor_replacement">Erstatningsverdi</string>
     <string name="memory_editor_resource_limit">Minneeditor nådde en sikker ressursgrense. Prøv en mer spesifikk datatype eller søkeverdi.</string>

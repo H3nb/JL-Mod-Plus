@@ -1072,7 +1072,7 @@
     <string name="memory_editor_path_incomplete">Путь ссылок превышает предел проверки.</string>
     <string name="memory_editor_reference_instance">Ссылка на экземпляр</string>
     <string name="memory_editor_reference_static">Статическая ссылка</string>
-    <string name="memory_editor_remove_candidates_description">Удаление только скрывает результаты, не записывая данные в память игры. Отменить и удалить отменяет последнее подтверждённое изменение, если текущее значение совпадает; результаты с конфликтами остаются.</string>
+    <string name="memory_editor_remove_candidates_description">Удалить: Убирает выбранные результаты из списка поиска. Значения в памяти игры не изменяются.\n\nОтменить и удалить: Также восстанавливает значения, которые были до последнего подтверждённого изменения, но только если текущие значения всё ещё совпадают с записанными. Результаты с конфликтами остаются в списке.</string>
     <string name="memory_editor_remove_candidates_title">Удалить выбранные результаты?</string>
     <string name="memory_editor_revert_and_remove">Отменить и удалить</string>
     <string name="memory_editor_revert_remove_commit_failed">Значения могли быть восстановлены, но удалить результаты не удалось. Обновите и повторите попытку; значения, изменённые игрой, не будут перезаписаны.</string>

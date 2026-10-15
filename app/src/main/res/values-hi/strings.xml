@@ -874,7 +874,7 @@
     <string name="memory_editor_refresh">रीफ़्रेश करें</string>
     <string name="memory_editor_refresh_snapshot">स्नैपशॉट रीफ़्रेश करें</string>
     <string name="memory_editor_remove">हटाएँ</string>
-    <string name="memory_editor_remove_candidates_description">हटाने से केवल परिणाम छिपते हैं; गेम की मेमोरी में कुछ नहीं लिखा जाता। वापस करें और हटाएँ केवल अंतिम पुष्ट संपादन को वापस करता है, जब मौजूदा मान लिखे गए मान से मेल खाता हो; टकराव वाले परिणाम बने रहते हैं।</string>
+    <string name="memory_editor_remove_candidates_description">हटाएँ: चुने गए परिणामों को खोज सूची से हटाता है। गेम मेमोरी में मौजूद मान नहीं बदलते।\n\nवापस करें और हटाएँ: अंतिम पुष्टि किए गए बदलाव से पहले के मान भी बहाल करता है, लेकिन तभी जब वर्तमान मान अभी भी लिखे गए मानों से मेल खाते हों। जिन परिणामों को सुरक्षित रूप से बहाल नहीं किया जा सकता, वे सूची में बने रहते हैं।</string>
     <string name="memory_editor_remove_candidates_title">चयनित परिणाम हटाएँ?</string>
     <string name="memory_editor_replacement">बदलने वाला मान</string>
     <string name="memory_editor_resource_limit">मेमोरी एडिटर संसाधनों की सुरक्षित सीमा तक पहुँच गया। अधिक विशिष्ट डेटा प्रकार या खोज मान आज़माएँ।</string>

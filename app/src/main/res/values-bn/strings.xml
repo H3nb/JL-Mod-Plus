@@ -827,7 +827,7 @@
     <string name="memory_editor_refresh">রিফ্রেশ করুন</string>
     <string name="memory_editor_refresh_snapshot">স্ন্যাপশট রিফ্রেশ করুন</string>
     <string name="memory_editor_remove">সরান</string>
-    <string name="memory_editor_remove_candidates_description">সরালে শুধু ফলাফল লুকানো হয়; গেমের মেমোরিতে কিছু লেখা হয় না। ফিরিয়ে এনে সরান কেবল শেষ নিশ্চিত সম্পাদনাটি ফিরিয়ে আনে, যখন বর্তমান মান লেখা মানের সঙ্গে মেলে; বিরোধপূর্ণ ফলাফল থেকে যায়।</string>
+    <string name="memory_editor_remove_candidates_description">সরান: নির্বাচিত ফলাফলগুলো অনুসন্ধানের তালিকা থেকে সরায়। গেমের মেমোরিতে থাকা মান বদলায় না।\n\nফিরিয়ে এনে সরান: শেষ নিশ্চিত সম্পাদনার আগের মানও ফিরিয়ে আনে, তবে কেবল বর্তমান মানগুলো সর্বশেষ লেখা মানের সঙ্গে মিললে। বিরোধপূর্ণ ফলাফল তালিকায় থেকে যায়।</string>
     <string name="memory_editor_remove_candidates_title">নির্বাচিত ফলাফল সরাবেন?</string>
     <string name="memory_editor_replacement">প্রতিস্থাপন মান</string>
     <string name="memory_editor_resource_limit">মেমোরি এডিটর সম্পদের নিরাপদ সীমায় পৌঁছেছে। আরও নির্দিষ্ট ডেটার ধরন বা অনুসন্ধান মান ব্যবহার করে দেখুন।</string>

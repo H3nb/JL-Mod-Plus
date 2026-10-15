@@ -1040,7 +1040,7 @@
     <string name="memory_editor_path_incomplete">Il percorso dei riferimenti supera il limite di ispezione.</string>
     <string name="memory_editor_reference_instance">Riferimento di istanza</string>
     <string name="memory_editor_reference_static">Riferimento statico</string>
-    <string name="memory_editor_remove_candidates_description">Rimuovi nasconde solo i risultati senza scrivere nella memoria del gioco. Annulla e rimuovi annulla l’ultima modifica confermata se il valore attuale corrisponde; i risultati in conflitto vengono mantenuti.</string>
+    <string name="memory_editor_remove_candidates_description">Rimuovi: Rimuove i risultati selezionati dall’elenco di ricerca. I valori nella memoria del gioco non cambiano.\n\nAnnulla e rimuovi: Ripristina anche i valori precedenti all’ultima modifica confermata, ma solo se quelli attuali corrispondono ancora ai valori scritti. I risultati in conflitto restano nell’elenco.</string>
     <string name="memory_editor_remove_candidates_title">Rimuovere i risultati selezionati?</string>
     <string name="memory_editor_revert_and_remove">Annulla e rimuovi</string>
     <string name="memory_editor_revert_remove_commit_failed">I valori potrebbero essere stati ripristinati, ma non è stato possibile rimuovere i risultati. Aggiorna e riprova; i valori modificati dal gioco non verranno sovrascritti.</string>

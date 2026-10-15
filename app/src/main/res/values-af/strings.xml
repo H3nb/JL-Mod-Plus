@@ -781,7 +781,7 @@
     <string name="memory_editor_refresh">Verfris</string>
     <string name="memory_editor_refresh_snapshot">Verfris momentopname</string>
     <string name="memory_editor_remove">Verwyder</string>
-    <string name="memory_editor_remove_candidates_description">Verwyder versteek slegs resultate sonder om na spelgeheue te skryf. Maak wysiging ongedaan en verwyder maak die laaste bevestigde wysiging ongedaan wanneer die huidige waarde met die geskryfde waarde ooreenstem; botsende resultate bly behoue.</string>
+    <string name="memory_editor_remove_candidates_description">Verwyder: Verwyder die gekose resultate uit die soeklys. Die waardes in die speletjie se geheue bly onveranderd.\n\nMaak wysiging ongedaan en verwyder: Herstel ook die waardes van voor die laaste bevestigde wysiging, maar slegs as die huidige waardes nog met die geskryfde waardes ooreenstem. Resultate met konflikte bly in die lys.</string>
     <string name="memory_editor_remove_candidates_title">Verwyder gekose resultate?</string>
     <string name="memory_editor_replacement">Vervangingswaarde</string>
     <string name="memory_editor_resource_limit">Geheueredigeerder het \'n veilige hulpbronperk bereik. Probeer \'n meer spesifieke datatipe of soekwaarde.</string>

@@ -804,7 +804,7 @@
     <string name="memory_editor_refresh">Освежи</string>
     <string name="memory_editor_refresh_snapshot">Освежи снимак стања</string>
     <string name="memory_editor_remove">Уклони</string>
-    <string name="memory_editor_remove_candidates_description">Уклони само скрива резултате без уписивања у меморију игре. Поништи измену и уклони поништава последњу потврђену измену када се тренутна вредност подудара са уписаном вредношћу; резултати са сукобима остају.</string>
+    <string name="memory_editor_remove_candidates_description">Уклони: Уклања изабране резултате са листе претраге. Вредности у меморији игре остају непромењене.\n\nПоништи измену и уклони: Враћа и вредности од пре последње потврђене измене, али само ако се тренутне вредности и даље подударају са уписаним. Резултати са сукобима остају на листи.</string>
     <string name="memory_editor_remove_candidates_title">Уклонити изабране резултате?</string>
     <string name="memory_editor_replacement">Заменска вредност</string>
     <string name="memory_editor_resource_limit">Уређивач меморије је достигао безбедно ограничење ресурса. Покушајте са одређенијим типом података или вредношћу претраге.</string>

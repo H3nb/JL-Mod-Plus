@@ -1032,7 +1032,7 @@
     <string name="bulk_install_filter_review">Tinjau</string>
     <string name="bulk_install_empty_filter">Tidak ada game yang sesuai.</string>
     <string name="memory_editor_remove_candidates_title">Hapus hasil yang dipilih?</string>
-    <string name="memory_editor_remove_candidates_description">Hapus hanya mengeluarkan hasil tanpa menulis ke memori game. Pulihkan dan hapus mengembalikan nilai sebelum perubahan terakhir yang telah dikonfirmasi jika nilai saat ini masih cocok; hasil yang berkonflik tetap ada.</string>
+    <string name="memory_editor_remove_candidates_description">Hapus: Mengeluarkan hasil terpilih dari daftar pencarian. Nilainya di memori game tidak berubah.\n\nPulihkan dan hapus: Juga mengembalikan nilai sebelum perubahan terakhir yang dikonfirmasi, tetapi hanya jika nilai saat ini masih sama dengan nilai hasil perubahan tersebut. Hasil yang berkonflik tetap berada dalam daftar.</string>
     <string name="memory_editor_revert_and_remove">Pulihkan dan hapus</string>
     <string name="memory_editor_revert_remove_commit_failed">Nilai mungkin sudah dipulihkan, tetapi hasil belum bisa dihapus. Segarkan lalu coba lagi; nilai yang diubah game tidak akan ditimpa.</string>
     <string name="memory_editor_revert_remove_outcome">Dipulihkan: %1$d. Dihapus: %2$d. Konflik: %3$d. Belum terkonfirmasi: %4$d. Belum dicoba: %5$d.</string>

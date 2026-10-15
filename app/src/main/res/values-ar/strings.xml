@@ -970,7 +970,7 @@
     <string name="memory_editor_refresh">تحديث</string>
     <string name="memory_editor_refresh_snapshot">تحديث اللقطة</string>
     <string name="memory_editor_remove">إزالة</string>
-    <string name="memory_editor_remove_candidates_description">الإزالة تخفي النتائج فقط دون الكتابة إلى ذاكرة اللعبة. التراجع والإزالة يلغي آخر تعديل مؤكّد إذا كانت القيمة الحالية تطابق القيمة المكتوبة؛ وتبقى النتائج المتعارضة.</string>
+    <string name="memory_editor_remove_candidates_description">إزالة: يزيل النتائج المحددة من قائمة البحث دون تغيير القيم في ذاكرة اللعبة.\n\nتراجع وإزالة: يعيد أيضًا القيم التي سبقت آخر تعديل مؤكّد، ولكن فقط إذا كانت القيم الحالية لا تزال تطابق القيم التي كُتبت. تبقى النتائج المتعارضة في القائمة.</string>
     <string name="memory_editor_remove_candidates_title">إزالة النتائج المحددة؟</string>
     <string name="memory_editor_replacement">القيمة البديلة</string>
     <string name="memory_editor_resource_limit">بلغ محرر الذاكرة حدًا آمنًا للموارد. جرّب نوع بيانات أو قيمة بحث أكثر تحديدًا.</string>

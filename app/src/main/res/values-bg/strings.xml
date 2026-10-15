@@ -858,7 +858,7 @@
     <string name="memory_editor_refresh">Обновяване</string>
     <string name="memory_editor_refresh_snapshot">Обновяване на моментната снимка</string>
     <string name="memory_editor_remove">Премахване</string>
-    <string name="memory_editor_remove_candidates_description">Премахване само скрива резултатите, без да записва в паметта на играта. Отмяна и премахване отменя последната потвърдена промяна, ако текущата стойност съвпада със записаната; резултатите с конфликт остават.</string>
+    <string name="memory_editor_remove_candidates_description">Премахване: Премахва избраните резултати от списъка с търсенето. Стойностите в паметта на играта не се променят.\n\nОтмяна и премахване: Също възстановява стойностите отпреди последната потвърдена промяна, но само ако текущите стойности още съвпадат със записаните. Резултатите с конфликти остават в списъка.</string>
     <string name="memory_editor_remove_candidates_title">Премахване на избраните резултати?</string>
     <string name="memory_editor_replacement">Заместваща стойност</string>
     <string name="memory_editor_resource_limit">Редакторът на паметта достигна безопасния лимит на ресурсите. Опитайте с по-конкретен тип данни или стойност за търсене.</string>

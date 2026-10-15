@@ -1040,7 +1040,7 @@
     <string name="memory_editor_path_incomplete">O caminho de referências excede o limite de inspeção.</string>
     <string name="memory_editor_reference_instance">Referência de instância</string>
     <string name="memory_editor_reference_static">Referência estática</string>
-    <string name="memory_editor_remove_candidates_description">Remover apenas oculta os resultados, sem escrever na memória do jogo. Reverter e remover desfaz a última edição confirmada quando o valor atual corresponde; os resultados em conflito são mantidos.</string>
+    <string name="memory_editor_remove_candidates_description">Remover: Remove os resultados selecionados da lista de pesquisa. Os valores na memória do jogo não são alterados.\n\nReverter e remover: Também repõe os valores anteriores à última edição confirmada, mas apenas se os valores atuais ainda corresponderem aos que foram escritos. Os resultados com conflitos permanecem na lista.</string>
     <string name="memory_editor_remove_candidates_title">Remover os resultados selecionados?</string>
     <string name="memory_editor_revert_and_remove">Reverter e remover</string>
     <string name="memory_editor_revert_remove_commit_failed">Os valores podem ter sido restaurados, mas não foi possível remover os resultados. Atualize e tente novamente; os valores alterados pelo jogo não serão substituídos.</string>

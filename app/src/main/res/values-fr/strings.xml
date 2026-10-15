@@ -1040,7 +1040,7 @@
     <string name="memory_editor_path_incomplete">Le chemin de référence dépasse la limite d’inspection.</string>
     <string name="memory_editor_reference_instance">Référence d’instance</string>
     <string name="memory_editor_reference_static">Référence statique</string>
-    <string name="memory_editor_remove_candidates_description">Supprimer masque uniquement les résultats sans écrire dans la mémoire du jeu. Annuler et supprimer annule la dernière modification confirmée si la valeur actuelle correspond ; les résultats en conflit sont conservés.</string>
+    <string name="memory_editor_remove_candidates_description">Supprimer: Retire les résultats sélectionnés de la liste de recherche. Les valeurs dans la mémoire du jeu restent inchangées.\n\nAnnuler et supprimer: Restaure aussi les valeurs antérieures à la dernière modification confirmée, mais seulement si les valeurs actuelles correspondent toujours à celles écrites. Les résultats en conflit restent dans la liste.</string>
     <string name="memory_editor_remove_candidates_title">Supprimer les résultats sélectionnés ?</string>
     <string name="memory_editor_revert_and_remove">Annuler et supprimer</string>
     <string name="memory_editor_revert_remove_commit_failed">Les valeurs ont peut-être été restaurées, mais les résultats n’ont pas pu être retirés. Actualisez et réessayez ; les valeurs modifiées par le jeu ne seront pas écrasées.</string>

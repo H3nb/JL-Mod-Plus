@@ -852,7 +852,7 @@
     <string name="memory_editor_refresh">Reîmprospătează</string>
     <string name="memory_editor_refresh_snapshot">Reîmprospătează instantaneul</string>
     <string name="memory_editor_remove">Elimină</string>
-    <string name="memory_editor_remove_candidates_description">Eliminarea doar ascunde rezultatele, fără a scrie în memoria jocului. Revenire și eliminare anulează ultima editare confirmată dacă valoarea curentă corespunde celei scrise; rezultatele cu conflicte rămân.</string>
+    <string name="memory_editor_remove_candidates_description">Elimină: Elimină rezultatele selectate din lista de căutare. Valorile din memoria jocului nu se modifică.\n\nRevenire și eliminare: Restabilește și valorile dinaintea ultimei editări confirmate, dar numai dacă valorile actuale corespund încă celor scrise. Rezultatele cu conflicte rămân în listă.</string>
     <string name="memory_editor_remove_candidates_title">Elimini rezultatele selectate?</string>
     <string name="memory_editor_replacement">Valoare de înlocuire</string>
     <string name="memory_editor_resource_limit">Editorul de memorie a atins limita sigură de resurse. Încearcă un tip de date sau o valoare de căutare mai specifică.</string>

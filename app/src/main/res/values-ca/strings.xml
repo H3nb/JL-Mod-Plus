@@ -804,7 +804,7 @@
     <string name="memory_editor_refresh">Actualitza</string>
     <string name="memory_editor_refresh_snapshot">Actualitza la instantània</string>
     <string name="memory_editor_remove">Elimina</string>
-    <string name="memory_editor_remove_candidates_description">Elimina només amaga els resultats sense escriure a la memòria del joc. Reverteix i elimina desfà l\'última edició confirmada quan el valor actual coincideix amb el valor escrit; els resultats amb conflictes es conserven.</string>
+    <string name="memory_editor_remove_candidates_description">Elimina: Treu els resultats seleccionats de la llista de cerca. Els valors de la memòria del joc no canvien.\n\nReverteix i elimina: També restaura els valors anteriors a l\'última edició confirmada, però només si els valors actuals encara coincideixen amb els escrits. Els resultats amb conflictes es mantenen a la llista.</string>
     <string name="memory_editor_remove_candidates_title">Voleu eliminar els resultats seleccionats?</string>
     <string name="memory_editor_replacement">Valor de substitució</string>
     <string name="memory_editor_resource_limit">L\'Editor de memòria ha arribat a un límit segur de recursos. Proveu un tipus de dades o un valor de cerca més específic.</string>

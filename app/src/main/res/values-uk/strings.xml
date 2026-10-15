@@ -920,7 +920,7 @@
     <string name="memory_editor_refresh">Оновити</string>
     <string name="memory_editor_refresh_snapshot">Оновити знімок</string>
     <string name="memory_editor_remove">Вилучити</string>
-    <string name="memory_editor_remove_candidates_description">Вилучення лише приховує результати без запису в пам’ять гри. Відкотити й вилучити скасовує останнє підтверджене редагування, якщо поточне значення збігається із записаним; результати з конфліктами залишаються.</string>
+    <string name="memory_editor_remove_candidates_description">Вилучити: Прибирає вибрані результати зі списку пошуку. Значення в пам’яті гри не змінюються.\n\nВідкотити й вилучити: Також відновлює значення, які були до останнього підтвердженого редагування, але лише якщо поточні значення досі збігаються із записаними. Результати з конфліктами залишаються у списку.</string>
     <string name="memory_editor_remove_candidates_title">Вилучити вибрані результати?</string>
     <string name="memory_editor_replacement">Значення заміни</string>
     <string name="memory_editor_resource_limit">Редактор пам’яті досяг безпечного ліміту ресурсів. Спробуйте конкретніший тип даних або значення для пошуку.</string>

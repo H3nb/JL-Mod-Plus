@@ -1008,7 +1008,7 @@
     <string name="memory_editor_path_incomplete">Viittauspolku ylittää tarkastelurajan.</string>
     <string name="memory_editor_reference_instance">Instanssiviittaus</string>
     <string name="memory_editor_reference_static">Staattinen viittaus</string>
-    <string name="memory_editor_remove_candidates_description">Poista piilottaa vain tulokset kirjoittamatta pelin muistiin. Kumoa ja poista kumoaa viimeisimmän vahvistetun muokkauksen, jos nykyinen arvo täsmää; ristiriitaiset tulokset säilyvät.</string>
+    <string name="memory_editor_remove_candidates_description">Poista: Poistaa valitut tulokset hakulistasta. Pelimuistin arvot eivät muutu.\n\nKumoa ja poista: Palauttaa myös viimeistä vahvistettua muokkausta edeltävät arvot, mutta vain jos nykyiset arvot vastaavat yhä kirjoitettuja arvoja. Ristiriitaiset tulokset jäävät listaan.</string>
     <string name="memory_editor_remove_candidates_title">Poistetaanko valitut tulokset?</string>
     <string name="memory_editor_revert_and_remove">Kumoa ja poista</string>
     <string name="memory_editor_revert_remove_commit_failed">Arvot on ehkä palautettu, mutta tuloksia ei voitu poistaa. Päivitä ja yritä uudelleen; pelin muuttamia arvoja ei korvata.</string>

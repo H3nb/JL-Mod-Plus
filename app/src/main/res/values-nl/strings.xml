@@ -1008,7 +1008,7 @@
     <string name="memory_editor_path_incomplete">Het verwijzingspad overschrijdt de inspectielimiet.</string>
     <string name="memory_editor_reference_instance">Instantieverwijzing</string>
     <string name="memory_editor_reference_static">Statische verwijzing</string>
-    <string name="memory_editor_remove_candidates_description">Verwijderen verbergt alleen resultaten zonder naar het gamegeheugen te schrijven. Herstellen en verwijderen draait de laatste bevestigde bewerking terug als de huidige waarde overeenkomt; resultaten met conflicten blijven staan.</string>
+    <string name="memory_editor_remove_candidates_description">Verwijderen: Verwijdert de geselecteerde resultaten uit de zoeklijst. De waarden in het spelgeheugen blijven ongewijzigd.\n\nHerstellen en verwijderen: Herstelt ook de waarden van vóór de laatst bevestigde bewerking, maar alleen als de huidige waarden nog overeenkomen met de geschreven waarden. Resultaten met conflicten blijven in de lijst.</string>
     <string name="memory_editor_remove_candidates_title">Geselecteerde resultaten verwijderen?</string>
     <string name="memory_editor_revert_and_remove">Herstellen en verwijderen</string>
     <string name="memory_editor_revert_remove_commit_failed">Waarden zijn mogelijk hersteld, maar resultaten konden niet worden verwijderd. Vernieuw en probeer het opnieuw; waarden die door het spel zijn gewijzigd worden niet overschreven.</string>

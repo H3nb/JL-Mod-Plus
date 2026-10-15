@@ -877,7 +877,7 @@
     <string name="memory_editor_refresh">Odśwież</string>
     <string name="memory_editor_refresh_snapshot">Odśwież migawkę</string>
     <string name="memory_editor_remove">Usuń</string>
-    <string name="memory_editor_remove_candidates_description">Usuwanie tylko ukrywa wyniki bez zapisywania do pamięci gry. Cofnij i usuń cofa ostatnią potwierdzoną edycję, jeśli bieżąca wartość odpowiada zapisanej; wyniki z konfliktem pozostają.</string>
+    <string name="memory_editor_remove_candidates_description">Usuń: Usuwa wybrane wyniki z listy wyszukiwania. Wartości w pamięci gry pozostają bez zmian.\n\nCofnij i usuń: Przywraca też wartości sprzed ostatniej potwierdzonej edycji, ale tylko wtedy, gdy obecne wartości nadal odpowiadają zapisanym. Wyniki z konfliktami pozostają na liście.</string>
     <string name="memory_editor_remove_candidates_title">Usunąć wybrane wyniki?</string>
     <string name="memory_editor_replacement">Wartość zastępcza</string>
     <string name="memory_editor_resource_limit">Edytor pamięci osiągnął bezpieczny limit zasobów. Spróbuj użyć bardziej szczegółowego typu danych lub wartości wyszukiwania.</string>

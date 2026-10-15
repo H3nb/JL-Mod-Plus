@@ -960,7 +960,7 @@
     <string name="memory_editor_reference_instance">ଇନଷ୍ଟାନ୍ସ ରେଫରେନ୍ସ</string>
     <string name="memory_editor_reference_static">ଷ୍ଟାଟିକ୍ ରେଫରେନ୍ସ</string>
     <string name="memory_editor_refresh_snapshot">ସ୍ନାପଶଟ୍ ରିଫ୍ରେଶ୍ କରନ୍ତୁ</string>
-    <string name="memory_editor_remove_candidates_description">“ହଟାନ୍ତୁ” କେବଳ ଫଳାଫଳ ଲୁଚାଏ; ଗେମ୍ ମେମୋରୀରେ କିଛି ଲେଖେ ନାହିଁ। “ପୂର୍ବ ମୂଲ୍ୟ ଫେରାଇ ହଟାନ୍ତୁ” ବର୍ତ୍ତମାନର ମୂଲ୍ୟ ମେଳ ଖାଇଲେ ଶେଷ ନିଶ୍ଚିତ ହୋଇଥିବା ସମ୍ପାଦନାକୁ ପୂର୍ବାବସ୍ଥାକୁ ଫେରାଏ; ବିରୋଧ ଥିବା ଫଳାଫଳ ରହିଯାଏ।</string>
+    <string name="memory_editor_remove_candidates_description">ହଟାନ୍ତୁ: ଚୟନ କରାଯାଇଥିବା ଫଳାଫଳଗୁଡ଼ିକୁ ସନ୍ଧାନ ତାଲିକାରୁ ହଟାଏ। ଗେମ୍ ମେମୋରୀରେ ଥିବା ମୂଲ୍ୟଗୁଡ଼ିକ ବଦଳେ ନାହିଁ।\n\nପୂର୍ବ ମୂଲ୍ୟ ଫେରାଇ ହଟାନ୍ତୁ: ଶେଷ ନିଶ୍ଚିତ ସମ୍ପାଦନା ପୂର୍ବର ମୂଲ୍ୟଗୁଡ଼ିକୁ ମଧ୍ୟ ଫେରାଏ, କିନ୍ତୁ ବର୍ତ୍ତମାନର ମୂଲ୍ୟଗୁଡ଼ିକ ଲେଖାଯାଇଥିବା ମୂଲ୍ୟ ସହ ଏବେ ମଧ୍ୟ ମେଳ ଖାଇଲେ ମାତ୍ର। ବିରୋଧ ଥିବା ଫଳାଫଳଗୁଡ଼ିକ ତାଲିକାରେ ରହିଯାଏ।</string>
     <string name="memory_editor_resource_limit">ମେମୋରୀ ସମ୍ପାଦକ ସୁରକ୍ଷିତ ସମ୍ବଳ ସୀମାରେ ପହଞ୍ଚିଛି। ଅଧିକ ନିର୍ଦ୍ଦିଷ୍ଟ ତଥ୍ୟ ପ୍ରକାର କିମ୍ବା ସନ୍ଧାନ ମୂଲ୍ୟ ସହିତ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="memory_editor_revert_and_remove">ପୂର୍ବ ମୂଲ୍ୟ ଫେରାଇ ହଟାନ୍ତୁ</string>
     <string name="memory_editor_revert_remove_commit_failed">ମୂଲ୍ୟଗୁଡ଼ିକ ପୁନଃସ୍ଥାପିତ ହୋଇଥାଇପାରେ, କିନ୍ତୁ ଫଳାଫଳ ହଟାଯାଇପାରିଲା ନାହିଁ। ରିଫ୍ରେଶ୍ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ; ଗେମ୍ ବଦଳାଇଥିବା ମୂଲ୍ୟଗୁଡ଼ିକ ଉପରେ ଲେଖାଯିବ ନାହିଁ।</string>

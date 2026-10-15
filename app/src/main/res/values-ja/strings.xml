@@ -809,7 +809,7 @@
     <string name="memory_editor_refresh">更新</string>
     <string name="memory_editor_refresh_snapshot">スナップショットを更新</string>
     <string name="memory_editor_remove">削除</string>
-    <string name="memory_editor_remove_candidates_description">削除は結果を非表示にするだけで、ゲームのメモリには書き込みません。「編集を戻して削除」は、現在の値が最後に確認された編集で書き込んだ値と一致する場合に、その編集を取り消します。競合する結果は残ります。</string>
+    <string name="memory_editor_remove_candidates_description">削除: 選択した結果を検索一覧から削除します。ゲーム内メモリの値は変更しません。\n\n編集を戻して削除: 最後に確定した編集前の値も復元します。ただし、現在の値がその編集で書き込んだ値と一致する場合に限ります。競合する結果は一覧に残ります。</string>
     <string name="memory_editor_remove_candidates_title">選択した結果を削除しますか？</string>
     <string name="memory_editor_replacement">置換値</string>
     <string name="memory_editor_resource_limit">メモリエディターが安全なリソース上限に達しました。データ型や検索値をより具体的に指定してください。</string>

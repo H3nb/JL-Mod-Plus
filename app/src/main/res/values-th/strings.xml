@@ -790,7 +790,7 @@
     <string name="memory_editor_refresh">รีเฟรช</string>
     <string name="memory_editor_refresh_snapshot">รีเฟรชสแนปช็อต</string>
     <string name="memory_editor_remove">นำออก</string>
-    <string name="memory_editor_remove_candidates_description">การนำออกจะซ่อนผลลัพธ์เท่านั้น โดยไม่เขียนลงหน่วยความจำของเกม “ย้อนการแก้ไขแล้วนำออก” จะย้อนการแก้ไขที่ยืนยันแล้วครั้งล่าสุดเฉพาะเมื่อค่าปัจจุบันตรงกับค่าที่เขียนไว้ ผลลัพธ์ที่ขัดแย้งกันจะยังคงอยู่</string>
+    <string name="memory_editor_remove_candidates_description">นำออก: นำผลลัพธ์ที่เลือกออกจากรายการค้นหา โดยไม่เปลี่ยนค่าในหน่วยความจำของเกม\n\nย้อนการแก้ไขแล้วนำออก: คืนค่าก่อนการแก้ไขครั้งล่าสุดที่ยืนยันแล้วด้วย แต่จะทำเฉพาะเมื่อค่าปัจจุบันยังตรงกับค่าที่เขียนไว้ ผลลัพธ์ที่มีข้อขัดแย้งจะยังอยู่ในรายการ</string>
     <string name="memory_editor_remove_candidates_title">นำผลลัพธ์ที่เลือกออกหรือไม่</string>
     <string name="memory_editor_replacement">ค่าแทนที่</string>
     <string name="memory_editor_resource_limit">ตัวแก้ไขหน่วยความจำถึงขีดจำกัดทรัพยากรที่ปลอดภัยแล้ว ลองระบุชนิดข้อมูลหรือค่าค้นหาให้เจาะจงมากขึ้น</string>

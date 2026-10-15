@@ -1113,7 +1113,7 @@
     <string name="bulk_install_filter_review">Review</string>
     <string name="bulk_install_empty_filter">No matching games.</string>
     <string name="memory_editor_remove_candidates_title">Remove selected results?</string>
-    <string name="memory_editor_remove_candidates_description">Remove only hides results without writing to game memory. Revert &amp; remove undoes the last confirmed edit when the current value matches; conflicting results remain.</string>
+    <string name="memory_editor_remove_candidates_description">Remove: Takes the selected results off the search list. Values in game memory stay unchanged.\n\nRevert &amp; remove: Also restores the values from before their last confirmed edits, but only if the current values still match the edits. Results with conflicts stay in the list.</string>
     <string name="memory_editor_revert_and_remove">Revert &amp; remove</string>
     <string name="memory_editor_revert_remove_commit_failed">Values may have been restored, but results could not be removed. Refresh and retry; values changed by the game will not be overwritten.</string>
     <string name="memory_editor_revert_remove_outcome">Restored: %1$d. Removed: %2$d. Conflicts: %3$d. Unconfirmed: %4$d. Not attempted: %5$d.</string>

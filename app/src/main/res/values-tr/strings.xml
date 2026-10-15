@@ -873,7 +873,7 @@
     <string name="memory_editor_refresh">Yenile</string>
     <string name="memory_editor_refresh_snapshot">Anlık görüntüyü yenile</string>
     <string name="memory_editor_remove">Kaldır</string>
-    <string name="memory_editor_remove_candidates_description">Kaldırma yalnızca sonuçları gizler; oyun belleğine yazmaz. Geri al ve kaldır, mevcut değer yazılan değerle eşleştiğinde son doğrulanan düzenlemeyi geri alır; çakışan sonuçlar kalır.</string>
+    <string name="memory_editor_remove_candidates_description">Kaldır: Seçilen sonuçları arama listesinden kaldırır. Oyun belleğindeki değerler değişmez.\n\nGeri al ve kaldır: Son onaylanan düzenlemeden önceki değerleri de geri yükler, ancak yalnızca geçerli değerler hâlâ yazılan değerlerle eşleşiyorsa. Çakışan sonuçlar listede kalır.</string>
     <string name="memory_editor_remove_candidates_title">Seçili sonuçlar kaldırılsın mı?</string>
     <string name="memory_editor_replacement">Yeni değer</string>
     <string name="memory_editor_resource_limit">Bellek Düzenleyici güvenli kaynak sınırına ulaştı. Daha belirli bir veri türü veya arama değeri deneyin.</string>

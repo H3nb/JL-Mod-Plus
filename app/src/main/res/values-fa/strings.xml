@@ -836,7 +836,7 @@
     <string name="memory_editor_refresh">تازه‌سازی</string>
     <string name="memory_editor_refresh_snapshot">تازه‌سازی تصویر لحظه‌ای</string>
     <string name="memory_editor_remove">حذف</string>
-    <string name="memory_editor_remove_candidates_description">حذف فقط نتایج را پنهان می‌کند و در حافظهٔ بازی نمی‌نویسد. بازگردانی و حذف، آخرین ویرایش تأییدشده را فقط وقتی برمی‌گرداند که مقدار فعلی با مقدار نوشته‌شده مطابقت داشته باشد؛ نتایج دارای تعارض باقی می‌مانند.</string>
+    <string name="memory_editor_remove_candidates_description">حذف: نتایج انتخاب‌شده را از فهرست جستجو برمی‌دارد. مقدارهای حافظهٔ بازی تغییر نمی‌کنند.\n\nبازگردانی و حذف: مقدارهای پیش از آخرین ویرایش تأییدشده را نیز برمی‌گرداند، اما فقط اگر مقدارهای فعلی هنوز با مقدارهای نوشته‌شده مطابقت داشته باشند. نتایج دارای تعارض در فهرست باقی می‌مانند.</string>
     <string name="memory_editor_remove_candidates_title">نتایج انتخاب‌شده حذف شوند؟</string>
     <string name="memory_editor_replacement">مقدار جایگزین</string>
     <string name="memory_editor_resource_limit">ویرایشگر حافظه به حد ایمن منابع رسیده است. نوع داده یا مقدار جستجوی مشخص‌تری را امتحان کنید.</string>
