@@ -7,9 +7,10 @@ describes execution, not a replacement semantic contract.
 
 ## Sources and responsibilities
 
-- Android `app/src/main/res/values/strings.xml` is canonical English; the
-  existing `values-*/strings.xml` files are the accepted locale catalogs.
-  English fallback is a safety net, not an indicator of translation quality.
+- Android `app/src/main/res/values/strings.xml` is canonical English; shipped
+  `values-*/strings.xml` files provide the other locale catalogs. Their presence
+  alone does not establish translation quality. English fallback is a safety net,
+  not evidence of completed language review.
 - The XML files remain the only source of resource text consumed by Android.
   Do not add a runtime translation manager, parallel locale database, or
   committed spreadsheet copy.
@@ -20,6 +21,20 @@ describes execution, not a replacement semantic contract.
   ignored by Git. Translators and review tools can use them for side-by-side work.
 - Existing reviewed strings are a stability baseline. Preserve them unless
   evidence supports a semantic, linguistic, accessibility, or consistency fix.
+
+## Maintaining language support
+
+When English resources, UI meaning, placeholder arguments, or resource identity
+change, check the affected callers and all shipped locale catalogs. Review the
+translations against the revised semantics and run the inventory and relevant
+validation before release. A mechanically present key may still be mistranslated.
+
+Before shipping a new locale, review its BCP-47 identity, Android resource
+qualifier, region/script distinctions, plural forms, and language quality. Check
+that the generated app-language picker offers the intended locale and that
+fallback and representative UI rendering behave correctly. When retiring a
+locale, verify picker behavior and any persisted selection; do not change MIDlet
+or Java ME guest-locale behavior as an accidental side effect.
 
 ## Before translating
 

@@ -54,7 +54,7 @@ python -B scripts/localization_audit.py
 python -B -m unittest discover -s scripts/tests -p 'test_localization_*.py' -v
 ```
 
-The command prints a summary and writes deterministic schema-versioned
+The auditor prints a summary and writes deterministic schema-versioned
 `build/reports/localization/inventory.json` and `inventory.md`. These generated
 reports are ignored and must not be committed. `-B` avoids Python bytecode cache
 files. The optional `--repo-root` selects another repository root; output remains

@@ -258,7 +258,7 @@ guest-locale resolution contract is
 localization code must not inspect MIDlet resources to choose the Java ME device
 locale.
 
-**Target architecture:**
+**Resource architecture and evolution:**
 
 - One human-language `strings.xml` catalog per locale, containing both `<string>`
   and `<plurals>`. Keep English complete, Indonesian fully supported, and every
@@ -273,20 +273,18 @@ locale.
   completeness or review quality; harden or replace the current mechanism only
   through scoped work justified by an observed requirement.
 
-Current implementation evidence:
+Current implementation evidence (verify against the source before relying on it):
 
 - [resources.properties](../app/src/main/res/resources.properties) declares
   `unqualifiedResLocale=en`; [app Gradle configuration](../app/build.gradle.kts)
   enables `androidResources.generateLocaleConfig` and disables `MissingTranslation`.
 - English [default resources](../app/src/main/res/values/strings.xml),
   [Indonesian resources](../app/src/main/res/values-in/strings.xml), and the
-  other retained base locale catalogs use `strings.xml` for app-owned strings
+  other shipped base locale catalogs use `strings.xml` for app-owned strings
   and plurals; structural and configuration-specific resources remain separate.
-  Current catalogs have complete declaration coverage relative to canonical
-  English, but presence is not linguistic certification. English, Indonesian,
-  and Russian have established review baselines; all translations remain open
-  to evidence-based semantic, grammar, terminology, and accessibility fixes.
-  Android fallback remains a safety mechanism, not an accepted substitute for
+  Catalog presence is not linguistic certification. Every locale remains subject
+  to evidence-based semantic, grammar, terminology, and accessibility review.
+  Android fallback is a safety mechanism, not an accepted substitute for
   complete translations.
 - Current catalog counts, locale coverage, and invariant-declaration totals come
   from the [deterministic inventory](#deterministic-inventory); do not maintain
@@ -353,11 +351,12 @@ The tool supplies no semantic/language/dead-resource verdicts, equality judgment
 translation-service dependency, resource repairs, or CI enforcement. Those
 decisions remain in separate semantic and language review under this contract.
 
-## Initial semantic glossary
+## Semantic glossary
 
 Preferred terms are tied to product meaning, not universal dictionary equivalents.
 User/MIDlet-provided names keep their supplied form regardless of the glossary.
-The table is an initial review baseline, not authorization to rewrite resources.
+Review this living reference when product meaning changes; its terms alone do
+not authorize a resource rewrite.
 
 | Concept / preferred English | Product meaning | Preferred Indonesian | Do not confuse with | Normally untranslated? |
 | --- | --- | --- | --- | --- |
@@ -383,15 +382,12 @@ term whose meaning is unclear, apply the evidence rule above first; if material
 uncertainty remains after available evidence is exhausted, record a narrowly
 scoped TODO or `NEEDS_CONTEXT` rather than extending the glossary by guesswork.
 
-## Translation matrix and operational workflow
-
-Use the [localization workflow](localization-workflow.md) for
-context-based batching, read-only cross-language matrix export, target-language
-quality review, and safe integration into Android resources. The matrix derives
-from the existing deterministic inventory and is not a second source of truth,
-a committed copy of translations, or an input to the Android build.
-
 ## Translation and review workflow
+
+Use the [localization workflow](localization-workflow.md) for execution steps,
+including context-based batches, matrix export, and safe updates to Android XML.
+The read-only matrix is a review aid, not another translation source or Android
+build input.
 
 Translations may be prepared and reviewed by human contributors, automated tools,
 or both. Neither a translation's origin nor its apparent fluency establishes
