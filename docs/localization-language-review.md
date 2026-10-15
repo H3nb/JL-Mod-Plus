@@ -658,3 +658,32 @@ of full-sentence/dual morphology for qualified review. These corrections do
 not alter English or the other 38 catalogs. The earlier 977-resource figures
 in this document are historical; the current complete catalog contains 965
 translatable identities after the separate dead-resource cleanup.
+
+### Santali workdir recovery, settings terminology and window spelling — 15 October 2026
+
+A second bounded review against current English and other Ol Chiki UI strings
+updates six existing Santali resources:
+
+- `pref_screen_scale_type_fill` now uses `ᱡᱷᱚᱨᱠᱟ` (window), agreeing with
+  `pref_screen_scale_type_fit` and attested Santali dictionary/example usage
+  (https://en.wiktionary.org/wiki/ᱡᱷᱚᱨᱠᱟ and
+  https://tatoeba.org/en/sentences/show/11185092).
+- `layout_switch` uses the same *layout* rendering as the other virtual-control
+  surfaces. `PREF_SYS_PROPS` now uses the established *system properties*
+  terminology from `pref_theme_system` and `config_system_properties_value`.
+- `pref_enable_statusbar_title` explicitly identifies the **system status bar**
+  and the **show** action, matching its own summary and the runtime-toolbar
+  switch rather than the legacy enable-action wording.
+- `alert_msg_workdir_not_exists` now distinguishes the missing working
+  directory from the **create it / choose another** recovery alternatives.
+  The unmodified `%1$s` path occupies its own line without stray punctuation.
+  Its two literal newline escapes and placeholder contract are preserved.
+- `invalid_resolution_not_saved` states that resolution is invalid **and
+  changes were not saved**; it no longer implies several invalid resolutions
+  or inserts an unexplained colon/exclamation mark.
+
+This is a focused semantic/orthographic repair, not a fluent Santali
+certification. All 76 previously deferred Santali entries remain pending
+native-language quality approval even where a semantic problem is repaired.
+Preserve unrelated loanword preferences and plural morphology for review;
+resource identities and formatting/line-break contracts do not change.

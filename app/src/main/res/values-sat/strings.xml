@@ -10,7 +10,7 @@
     <string name="action_reinstall">ᱫᱩᱦᱲᱟᱹᱵᱚᱦᱟᱞ</string>
     <string name="action_settings">ᱥᱟᱡᱟᱣᱠᱚ</string>
     <string name="alert_map_menu">ᱢᱮᱱᱩ ᱠᱤ (M) ᱫᱚ ᱵᱟᱝ ᱟᱥᱟᱭᱤᱱ ᱟᱠᱟᱱᱟ᱾\nᱱᱚᱶᱟ ᱠᱷᱟᱹᱛᱤᱨ runtime MIDlet ᱢᱮᱱᱩ ᱛᱮ ᱵᱚᱞᱚ ᱨᱮ ᱵᱟᱹᱫᱷᱟ ᱦᱩᱭ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ᱾</string>
-    <string name="alert_msg_workdir_not_exists">ᱡᱟᱭᱜᱟ ᱨᱮ ᱠᱟᱹᱢᱤ ᱰᱟᱭᱨᱮᱠᱴᱚᱨᱭ ᱵᱟᱹᱱᱩᱜᱼᱟ : \n%1$s ᱾ \nᱟᱢ ᱮᱪᱫ ᱛᱮᱭᱟᱨ ᱥᱮᱱᱟᱢ ᱠᱟᱱᱟ ᱥᱮ ᱟᱨᱵᱟᱝᱠᱷᱟᱱ ᱮᱴᱟᱜ ᱵᱟᱪᱷᱟᱣᱟᱢ ᱥᱮ ?</string>
+    <string name="alert_msg_workdir_not_exists">ᱠᱟᱹᱢᱤ ᱰᱟᱭᱨᱮᱠᱴᱚᱨᱭ ᱵᱟᱝ ᱧᱟᱢ ᱞᱮᱱᱟ:\n%1$s\nᱱᱚᱶᱟ ᱵᱮᱱᱟᱣ ᱢᱮ ᱥᱮ ᱮᱴᱟᱜ ᱰᱟᱭᱨᱮᱠᱴᱚᱨᱭ ᱵᱟᱪᱷᱟᱣ ᱢᱮ?</string>
     <string name="CANCEL_CMD">ᱵᱟᱹᱰᱨᱟᱹ</string>
     <string name="change">ᱵᱚᱫᱚᱞ</string>
     <string name="choose">ᱵᱟᱪᱷᱟᱣ</string>
@@ -32,10 +32,10 @@
     <string name="install">ᱵᱚᱦᱟᱞ</string>
     <string name="install_done">ᱮᱯᱞᱤᱠᱮᱥᱚᱱ ᱨᱟᱹᱥ ᱞᱮᱠᱷᱟᱛᱮ ᱵᱚᱦᱟᱞ ᱮᱱᱟ!</string>
     <string name="install_jar_non_matched_jad">ᱱᱚᱶᱟ ᱮᱯ ᱫᱚ JAD ᱨᱮ ᱚᱞ ᱟᱠᱟᱱ ᱮᱯ ᱠᱷᱚᱱ ᱵᱷᱮᱜᱟᱨ ᱠᱟᱱᱟ᱾\nJAD ᱵᱟᱹᱜᱤ ᱠᱟᱛᱮ ᱤᱱᱥᱴᱚᱞ ᱢᱮ?</string>
-    <string name="invalid_resolution_not_saved">ᱵᱷᱩᱞ ᱨᱤᱡᱚᱞᱭᱩᱥᱚᱱ ᱠᱚ : ᱵᱟᱝ ᱥᱟᱧᱪᱟᱣ ᱞᱮᱱᱟ !</string>
+    <string name="invalid_resolution_not_saved">ᱵᱷᱩᱞ ᱨᱤᱡᱚᱞᱭᱩᱥᱚᱱ᱾ ᱵᱚᱫᱚᱞ ᱠᱚ ᱵᱟᱝ ᱥᱟᱧᱪᱟᱣ ᱞᱮᱱᱟ᱾</string>
     <string name="layout_edit_finish">ᱥᱟᱯᱲᱟᱣ ᱢᱩᱪᱟᱹᱫ ᱢᱮ</string>
     <string name="layout_edit_finished">ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱥᱟᱯᱲᱟᱣ ᱯᱩᱨᱟᱹᱣ ᱮᱱᱟ᱾</string>
-    <string name="layout_switch">ᱠᱚᱱᱴᱨᱚᱞ ᱞᱮᱟᱩᱴ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
+    <string name="layout_switch">ᱠᱚᱱᱴᱨᱚᱞ ᱞᱮᱟᱣᱩᱴ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
     <string name="licenses">ᱞᱟᱭᱥᱮᱱᱥ ᱠᱚ</string>
     <string name="loading_info">ᱵᱤᱵᱚᱨᱚᱱ ᱞᱟᱫᱮᱜ ᱠᱟᱱᱟ…</string>
     <string name="mapping_dialog_key_not_specified">ᱡᱟᱦᱟᱸᱱ ᱤᱱᱯᱩᱴ ᱵᱟᱝ ᱟᱥᱟᱭᱤᱱ ᱟᱠᱟᱱᱟ᱾</string>
@@ -61,7 +61,7 @@
     <string name="pref_emulator_dir">ᱠᱟᱹᱢᱤ ᱠᱟᱱ ᱰᱟᱭᱨᱮᱠᱴᱚᱨᱭ</string>
     <string name="pref_enable_actionbar_summary">MIDlet Canvas ᱥᱠᱨᱤᱱ ᱨᱮ ᱨᱟᱱᱴᱟᱭᱤᱢ ᱴᱩᱞᱵᱟᱨ ᱧᱮᱞᱚᱜ ᱞᱮᱠᱟ ᱫᱚᱦᱚᱭ ᱢᱮ᱾</string>
     <string name="pref_enable_actionbar_title">ᱨᱟᱱᱴᱟᱭᱤᱢ ᱴᱩᱞᱵᱟᱨ ᱩᱫᱩᱜ ᱢᱮ</string>
-    <string name="pref_enable_statusbar_title">ᱥᱴᱮᱴᱟᱹᱥᱵᱽᱟᱨ ᱮᱢ ᱪᱷᱚ</string>
+    <string name="pref_enable_statusbar_title">ᱥᱤᱥᱴᱮᱢ ᱥᱴᱮᱴᱟᱥ ᱵᱟᱨ ᱩᱫᱩᱜ ᱢᱮ</string>
     <string name="pref_encoding_title">ᱮᱱᱠᱳᱰᱤᱝ</string>
     <string name="PREF_FILTER">ᱞᱤᱱᱤᱭᱟᱨ ᱯᱷᱤᱞᱴᱚᱨᱤᱝ</string>
     <string name="PREF_FONT_ANTI_ALIASING">ᱟᱹᱱᱴᱤᱼᱟᱹᱞᱟᱭᱥᱤᱝ</string>
@@ -95,13 +95,13 @@
     <string name="pref_screen_gravity_right">ᱡᱚᱡᱚᱢ</string>
     <string name="pref_screen_gravity_top">ᱪᱮᱛᱟᱱ</string>
     <string name="pref_screen_scale_type">ᱥᱠᱮᱞᱤᱝ ᱢᱳᱰ</string>
-    <string name="pref_screen_scale_type_fill">ᱡᱷᱟᱨᱠᱟ ᱯᱩᱨᱟᱹᱣ ᱢᱮ (ᱮᱥᱯᱮᱠᱼᱴ ᱨᱮᱥᱤᱭᱚ ᱤᱜᱽᱱᱟᱨ ᱢᱮ)</string>
+    <string name="pref_screen_scale_type_fill">ᱡᱷᱚᱨᱠᱟ ᱯᱩᱨᱟᱹᱣ ᱢᱮ (ᱮᱥᱯᱮᱠᱼᱴ ᱨᱮᱥᱤᱭᱚ ᱤᱜᱽᱱᱟᱨ ᱢᱮ)</string>
     <string name="pref_screen_scale_type_fit">ᱡᱷᱚᱨᱠᱟ ᱛᱮ ᱯᱷᱤᱴᱚᱜ ᱢᱮ</string>
     <string name="pref_screen_scale_type_none">ᱢᱮᱱᱩᱭᱟᱞ</string>
     <string name="pref_screenshot_summary">MIDlet ᱯᱷᱨᱮᱢ ᱟᱡᱟᱜ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱨᱮᱡᱳᱞᱤᱭᱩᱥᱚᱱ ᱨᱮ ᱥᱟᱧᱪᱟᱣᱟ᱾ ᱱᱚᱶᱟ ᱥᱠᱮᱞᱤᱝ, ᱞᱤᱱᱤᱭᱟᱨ ᱯᱷᱤᱞᱴᱚᱨᱤᱝ ᱟᱨ ᱥᱠᱨᱤᱱ ᱥᱮᱰᱟᱨ ᱢᱟᱲᱟᱝ ᱨᱮ᱾</string>
     <string name="pref_screenshot_title">ᱵᱮᱨᱮᱞ ᱥᱠᱨᱤᱱᱥᱚᱴ</string>
     <string name="PREF_SHADER_FILTER">ᱥᱠᱨᱤᱱ ᱥᱮᱰᱟᱹᱨ</string>
-    <string name="PREF_SYS_PROPS">ᱥᱭᱥᱴᱟᱹᱢ ᱯᱨᱚᱯᱟᱹᱨᱴᱤᱡᱽ</string>
+    <string name="PREF_SYS_PROPS">ᱥᱭᱥᱴᱚᱢ ᱯᱨᱚᱯᱟᱨᱴᱤ ᱠᱚ</string>
     <string name="pref_theme_auto_battery">ᱟᱡ ᱛᱮ, ᱵᱮᱴᱨᱭ ᱥᱟᱺᱪᱟᱣᱤᱭᱟᱹ</string>
     <string name="pref_theme_auto_time">ᱟᱡ ᱛᱮ, ᱢᱟᱦᱟᱸ ᱨᱮᱭᱟᱜ ᱚᱠᱛᱚ ᱛᱮ</string>
     <string name="pref_theme_light">ᱟᱨᱥᱟᱞ</string>
