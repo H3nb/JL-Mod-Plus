@@ -464,7 +464,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">نطاق العصا</string>
     <string name="config_gamepad_calibration_phase_trigger_range">نطاق الزناد</string>
     <string name="config_gamepad_calibration_phase_unknown">الحالة غير متاحة</string>
-    <string name="config_gamepad_calibration_profile">توقيع وحدة التحكم: %1$s</string>
+    <string name="config_gamepad_calibration_profile">بصمة تعريف وحدة التحكم: %1$s</string>
     <string name="config_gamepad_calibration_rejected">رُفضت المعايرة: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">جاهز للمراجعة. يستبدل الحفظ معايرة وحدة التحكم هذه فقط.</string>
     <string name="config_gamepad_calibration_save_failed">تعذر حفظ المعايرة. لم تتغير المعايرة الحالية.</string>

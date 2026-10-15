@@ -391,7 +391,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">Intervalul stickurilor</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Intervalul declanșatoarelor</string>
     <string name="config_gamepad_calibration_phase_unknown">Stare indisponibilă</string>
-    <string name="config_gamepad_calibration_profile">Semnătura controlerului: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Identificatorul controlerului: %1$s</string>
     <string name="config_gamepad_calibration_rejected">Calibrare respinsă: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">Pregătit pentru verificare. Salvarea înlocuiește doar calibrarea acestui controler.</string>
     <string name="config_gamepad_calibration_save_failed">Calibrarea nu a putut fi salvată. Calibrarea existentă rămâne neschimbată.</string>
@@ -414,7 +414,7 @@
     <string name="config_gamepad_diagnosis_pointer">Modul indicatorului</string>
     <string name="config_gamepad_diagnosis_right_stick">Stickul drept</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Eșantioanele de intrare nu sunt trimise intenționat MIDletului.</string>
-    <string name="config_gamepad_diagnosis_signature">Semnătură: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Identificatorul controlerului: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">controler</string>
     <string name="config_gamepad_diagnosis_source_default">implicit</string>
     <string name="config_gamepad_diagnosis_source_explicit">explicit</string>

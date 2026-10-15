@@ -257,6 +257,7 @@
     <string name="config_gamepad_pointer_off">Off</string>
     <string name="config_gamepad_pointer_cursor">Proportional cursor</string>
     <string name="config_gamepad_pointer_joystick">Touch joystick</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
     <string name="config_gamepad_calibration_profile">Controller signature: %1$s</string>
     <string name="config_gamepad_calibration_phase_neutral">Waiting for neutral</string>
     <string name="config_gamepad_calibration_phase_stick_range">Stick range</string>

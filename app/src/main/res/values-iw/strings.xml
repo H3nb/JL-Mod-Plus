@@ -344,7 +344,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">טווח המוט</string>
     <string name="config_gamepad_calibration_phase_trigger_range">טווח ההדק</string>
     <string name="config_gamepad_calibration_phase_unknown">המצב אינו זמין</string>
-    <string name="config_gamepad_calibration_profile">חתימת הבקר: %1$s</string>
+    <string name="config_gamepad_calibration_profile">מזהה הבקר: %1$s</string>
     <string name="config_gamepad_calibration_rejected">הכיול נדחה: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">מוכן לסקירה. השמירה מחליפה רק את הכיול של הבקר הזה.</string>
     <string name="config_gamepad_calibration_save_failed">לא ניתן לשמור את הכיול. הכיול הקיים נשאר ללא שינוי.</string>
@@ -367,7 +367,7 @@
     <string name="config_gamepad_diagnosis_pointer">מצב מצביע</string>
     <string name="config_gamepad_diagnosis_right_stick">מוט ימני</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">דגימות הקלט אינן נשלחות ל־MIDlet במכוון.</string>
-    <string name="config_gamepad_diagnosis_signature">חתימה: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">מזהה הבקר: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">בקר</string>
     <string name="config_gamepad_diagnosis_source_default">ברירת מחדל</string>
     <string name="config_gamepad_diagnosis_source_explicit">מפורש</string>

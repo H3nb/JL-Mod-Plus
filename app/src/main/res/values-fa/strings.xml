@@ -396,7 +396,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">دامنهٔ دسته</string>
     <string name="config_gamepad_calibration_phase_trigger_range">دامنهٔ ماشه</string>
     <string name="config_gamepad_calibration_phase_unknown">وضعیت در دسترس نیست</string>
-    <string name="config_gamepad_calibration_profile">امضای کنترلر: %1$s</string>
+    <string name="config_gamepad_calibration_profile">شناسهٔ کنترلر: %1$s</string>
     <string name="config_gamepad_calibration_rejected">کالیبراسیون رد شد: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">آمادهٔ بازبینی است. ذخیره کردن فقط کالیبراسیون همین کنترلر را جایگزین می‌کند.</string>
     <string name="config_gamepad_calibration_save_failed">کالیبراسیون ذخیره نشد. کالیبراسیون موجود تغییر نکرده است.</string>
@@ -419,7 +419,7 @@
     <string name="config_gamepad_diagnosis_pointer">حالت اشاره‌گر</string>
     <string name="config_gamepad_diagnosis_right_stick">دستهٔ راست</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">نمونه‌های ورودی عمداً به MIDlet ارسال نمی‌شوند.</string>
-    <string name="config_gamepad_diagnosis_signature">امضا: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">شناسهٔ کنترلر: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">کنترلر</string>
     <string name="config_gamepad_diagnosis_source_default">پیش‌فرض</string>
     <string name="config_gamepad_diagnosis_source_explicit">صریح</string>

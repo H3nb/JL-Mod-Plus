@@ -298,7 +298,7 @@
     <string name="config_gamepad_pointer_off">Désactivé</string>
     <string name="config_gamepad_pointer_cursor">Curseur proportionnel</string>
     <string name="config_gamepad_pointer_joystick">Joystick tactile</string>
-    <string name="config_gamepad_calibration_profile">Signature de la manette : %1$s</string>
+    <string name="config_gamepad_calibration_profile">Identifiant de la manette : %1$s</string>
     <string name="config_gamepad_calibration_phase_neutral">En attente de la position neutre</string>
     <string name="config_gamepad_calibration_phase_stick_range">Plage du stick</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Plage de la gâchette</string>
@@ -342,7 +342,7 @@
     <string name="config_gamepad_calibration_phase_unknown">État indisponible</string>
     <string name="config_gamepad_diagnosis_capabilities">Capacités de la manette connectée :</string>
     <string name="config_gamepad_diagnosis_descriptor">Descripteur : %1$s</string>
-    <string name="config_gamepad_diagnosis_signature">Signature : %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Identifiant de la manette : %1$s</string>
     <string name="config_gamepad_diagnosis_axis">Axe %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(aucune manette connectée)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Les échantillons d’entrée ne sont volontairement pas envoyés au MIDlet.</string>

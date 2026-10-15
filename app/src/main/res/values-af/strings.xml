@@ -334,7 +334,7 @@
     <string name="config_gamepad_calibration_phase_stick_range">Stokkieomvang</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Snelleromvang</string>
     <string name="config_gamepad_calibration_phase_unknown">Status nie beskikbaar nie</string>
-    <string name="config_gamepad_calibration_profile">Beheerderhandtekening: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Beheerder-ID: %1$s</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasie verwerp: %1$s</string>
     <string name="config_gamepad_calibration_review_instructions">Gereed vir hersiening. Stoor vervang slegs hierdie beheerder se kalibrasie.</string>
     <string name="config_gamepad_calibration_save_failed">Die kalibrasie kon nie gestoor word nie. Die bestaande kalibrasie bly onveranderd.</string>
@@ -357,7 +357,7 @@
     <string name="config_gamepad_diagnosis_pointer">Wysermodus</string>
     <string name="config_gamepad_diagnosis_right_stick">Regterstokkie</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Invoermonsters word doelbewus nie na die MIDlet gestuur nie.</string>
-    <string name="config_gamepad_diagnosis_signature">Handtekening: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Beheerder-ID: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">beheerder</string>
     <string name="config_gamepad_diagnosis_source_default">verstek</string>
     <string name="config_gamepad_diagnosis_source_explicit">eksplisiet</string>

@@ -603,3 +603,22 @@ representative group of locales. Their public-attachment warning, local-only
 removal, previously uploaded files, partial write effects, and batch-edit type
 restrictions were preserved in reviewed examples. This targeted evidence is
 not a fluency certification for all 39 languages or every UI string.
+
+### Further controller-identity terminology audit
+
+A full 39-locale comparison of `config_gamepad_calibration_profile` and
+`config_gamepad_diagnosis_signature` found more handwritten-signature
+wording and a cross-screen inconsistency in Arabic. A second focused patch
+updates Afrikaans (2), Arabic (1), Persian (2), French (2), Hebrew (2),
+Portuguese-Brazil (2), Portuguese-Portugal (2), and Romanian (2) resources:
+**15 additional labels**. Each uses a locale-appropriate controller identity
+or identifier and retains the exact `%1$s` parameter. The canonical English
+calibration label now has an accompanying translator comment linking it to
+the diagnostic fingerprint.
+
+Literal *signature/signatura/sigнатура* terms in some other catalogs are not
+automatically wrong: several languages accept them as software-identification
+terminology. Unclear cases, especially Santali loanword naturalness, remain
+review candidates. Avoid changing these from dictionary substitutions alone.
+This checkpoint makes no change to application logic or the selected
+controller, and does not certify native-language fluency.
