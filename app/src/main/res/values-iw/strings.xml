@@ -16,11 +16,9 @@
     <string name="about_lineage">JL-Mod Plus הוא פיצול עצמאי של JL-Mod מאת woesss (Yury Kharchenko). JL-Mod מבוסס על J2ME Loader מאת Nikita Shakarun, שמקורו ב־J2meLoader של NaikSoftware.</string>
     <string name="about_lineage_title">מקורות הפרויקט</string>
     <string name="about_links_title">הפרויקט ורישיונות</string>
-    <string name="about_maintainer">אחראי תחזוקה: %1$s</string>
     <string name="about_message">הפעלת יישומים ומשחקים קלאסיים, ארגון יישומי MIDlet בספרייה והתאמת הפקדים, התצוגה, השמע והביצועים. JL-Mod Plus הוא חינמי ובקוד פתוח.</string>
     <string name="about_revision_label">גרסת קוד המקור</string>
     <string name="about_subtitle">אמולטור Java ME ל־Android</string>
-    <string name="about_version">גרסה %1$s</string>
     <string name="about_version_label">גרסה</string>
     <string name="action_back">חזרה</string>
     <string name="action_context_delete">מחיקה</string>
@@ -56,7 +54,6 @@
     <string name="error_name">יש להזין שם.</string>
     <string name="exit">יציאה</string>
     <string name="help">עזרה</string>
-    <string name="help_message">• סינון ליניארי עלול להפחית משמעותית את הביצועים בחלק מיישומי MIDlet. יש להשבית אותו אם ה־MIDlet איטי מדי.&lt;BR&gt;• עיבוד מיידי עוקף את תור האירועים הרגיל של Java ME. הוא עשוי לשפר את התגובתיות, אך עלול לפגוע ביציבות של יישומי MIDlet מסוימים.</string>
     <string name="licenses">רישיונות</string>
     <string name="licenses_unavailable">פרטי הרישיונות אינם זמינים.</string>
     <string name="loading_apps">היישומים נטענים</string>
@@ -122,11 +119,9 @@
     <string name="library_action_about_summary">סקירת הפרויקט, מידע על הבנייה וקישורים.</string>
     <string name="library_action_crash_reports_summary">עיון בדוחות אבחון שנשמרו.</string>
     <string name="library_action_export_bundle">ייצוא חבילת יישום</string>
-    <string name="library_action_help_summary">הנחיות שימוש ופקדים נפוצים.</string>
     <string name="library_action_import_bundle">ייבוא חבילת יישום</string>
     <string name="library_action_import_bundle_summary">שחזור קובץ JAR שיוצא, הגדרות היישום ונתוני שמירה.</string>
     <string name="library_action_licenses_summary">הודעות של צדדים שלישיים ותנאי רישיון הכלולים ביישום.</string>
-    <string name="library_action_save_log_summary">שמירת יומני JL-Mod Plus האחרונים לצורך פתרון בעיות.</string>
     <string name="library_action_select">בחירה</string>
     <string name="library_action_settings_summary">הגדרת ההתנהגות הכללית והמראה.</string>
     <string name="library_action_share_app">שיתוף היישום</string>
@@ -146,7 +141,6 @@
     <string name="library_collection_name">שם האוסף</string>
     <string name="library_collection_new">אוסף חדש</string>
     <string name="library_collection_ready_empty_message">אפשר ליצור אוספים כדי לארגן יישומים בלי להעביר את הקבצים שלהם.</string>
-    <string name="library_collection_remove">הסרה מהאוסף</string>
     <string name="library_collection_remove_from_current">הסרה מהאוסף</string>
     <string name="library_collection_select_message">יש לבחור אוסף כדי להציג את היישומים שבו.</string>
     <string name="library_collection_select_title">בחירת אוסף</string>
@@ -637,7 +631,6 @@
     <string name="installer_stage_wait">ממתין לפעולה אחרת…</string>
     <string name="installer_title">מתקין MIDlet</string>
     <string name="reconversion_done_with_warning">המרת התאימות הסתיימה עם אזהרות.</string>
-    <string name="reconversion_error">לא ניתן להמיר את ה־MIDlet אוטומטית.\n\n%1$s</string>
     <string name="reconversion_error_summary">לא ניתן להמיר את ה־MIDlet אוטומטית.</string>
     <string name="reconverting_wait">ה־MIDlet הזה זקוק להמרת תאימות חד־פעמית לפני הפעלתו. ממיר…</string>
     <string name="reinstall">היישום הזה כבר מותקן. להתקין אותו מחדש?</string>
@@ -754,7 +747,6 @@
     <string name="memory_editor_clear_selection">ביטול הבחירה</string>
     <string name="memory_editor_close">סגירת עורך הזיכרון</string>
     <string name="memory_editor_edit">עריכה</string>
-    <string name="memory_editor_edit_batch_help">מחיל את הערך החלופי על היעדים שנבחרו ומתאימים לסוג הנתונים שנבחר. מעקב והקפאה אינם זמינים בעריכה קבוצתית.</string>
     <string name="memory_editor_edit_batch_no_common_type">התוצאות שנבחרו אינן תומכות בסוג הנתונים שנבחר. יש לערוך תוצאות מתאימות בנפרד.</string>
     <string name="memory_editor_edit_batch_type_notice">רק ערכים שסוג הנתונים שלהם תואם ישתנו.</string>
     <string name="memory_editor_engine_reconnecting">עורך הזיכרון מתחבר מחדש…</string>
@@ -768,7 +760,7 @@
     <string name="memory_editor_freeze_paused">מושהה מטעמי בטיחות</string>
     <string name="memory_editor_identity_unsafe">לא ניתן היה לאמת את הערך שנבחר או את מצב החיפוש. יש לרענן את התוצאות או לפתוח מחדש את כלי הבדיקה, ואז לנסות שוב.</string>
     <string name="memory_editor_increment_invalid">יש להשתמש בסוג אחד של מספרים שלמים ובערכים בטווח שלו.</string>
-    <string name="memory_editor_increment_preview">תצוגה מקדימה: %1$s (%2$d ערכים)</string>
+    <string name="memory_editor_increment_preview">תצוגה מקדימה: %1$s</string>
     <string name="memory_editor_increment_start">ערך התחלתי</string>
     <string name="memory_editor_increment_step">צעד</string>
     <string name="memory_editor_incremental_edit">סדרה חשבונית</string>
@@ -958,11 +950,7 @@
     <string name="pref_accent_blue">כחול ברירת מחדל</string>
     <string name="pref_accent_classic_blue">כחול קלאסי</string>
     <string name="pref_accent_coral">אפרסק אלמוגי</string>
-    <string name="pref_accent_cyan">ציאן</string>
     <string name="pref_accent_green">ירוק אזמרגד</string>
-    <string name="pref_accent_indigo">אינדיגו</string>
-    <string name="pref_accent_orange">כתום</string>
-    <string name="pref_accent_pink">ורוד</string>
     <string name="pref_accent_rose">ורוד פירות יער</string>
     <string name="pref_accent_sapphire">כחול ספיר</string>
     <string name="pref_accent_teal">ירוק ירקן</string>
