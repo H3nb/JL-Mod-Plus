@@ -28,7 +28,6 @@
     <string name="exit">退出</string>
     <string name="FORCE_CLOSE_CONFIRMATION">要停止此 MIDlet 吗？未保存的更改可能会丢失。</string>
     <string name="help">帮助</string>
-    <string name="help_message">• 线性过滤可能显著降低某些 MIDlet 的性能。如果 MIDlet 运行过慢，请禁用此功能。&lt;BR&gt;• 即时处理会绕过常规 Java ME 事件队列。它可能提高响应速度，但也可能使某些 MIDlet 运行不稳定。</string>
     <string name="identity_filter">无（最快）</string>
     <string name="install">安装</string>
     <string name="install_done">应用程序安装成功！</string>
@@ -159,10 +158,8 @@
     <string name="about_lineage">JL-Mod Plus 是 woesss（Yury Kharchenko）开发的 JL-Mod 的独立分支。JL-Mod 基于 Nikita Shakarun 的 J2ME Loader，而 J2ME Loader 源自 NaikSoftware 的 J2meLoader。</string>
     <string name="about_lineage_title">项目起源</string>
     <string name="about_links_title">项目和许可证</string>
-    <string name="about_maintainer">维护者：%1$s</string>
     <string name="about_revision_label">源码修订版本</string>
     <string name="about_subtitle">适用于 Android 的 Java ME 模拟器</string>
-    <string name="about_version">版本 %1$s</string>
     <string name="about_version_label">版本</string>
     <string name="action_back">返回</string>
     <string name="clear_report_selection">取消选择报告</string>
@@ -232,11 +229,9 @@
     <string name="library_action_about_summary">项目概述、构建信息和相关链接。</string>
     <string name="library_action_crash_reports_summary">查看已保存的诊断报告。</string>
     <string name="library_action_export_bundle">导出应用备份包</string>
-    <string name="library_action_help_summary">使用指南和常用操作。</string>
     <string name="library_action_import_bundle">导入应用备份包</string>
     <string name="library_action_import_bundle_summary">恢复已导出的 JAR、应用设置和存档数据。</string>
     <string name="library_action_licenses_summary">应用附带的第三方声明和许可条款。</string>
-    <string name="library_action_save_log_summary">保存 JL-Mod Plus 的近期日志，以便排查问题。</string>
     <string name="library_action_select">选择</string>
     <string name="library_action_settings_summary">配置全局行为和外观。</string>
     <string name="library_action_share_app">分享应用</string>
@@ -256,7 +251,6 @@
     <string name="library_collection_name">合集名称</string>
     <string name="library_collection_new">新建合集</string>
     <string name="library_collection_ready_empty_message">创建合集可整理应用，无需移动文件。</string>
-    <string name="library_collection_remove">从合集中移除</string>
     <string name="library_collection_remove_from_current">从合集中移除</string>
     <string name="library_collection_select_message">选择合集以查看其中的应用。</string>
     <string name="library_collection_select_title">选择合集</string>
@@ -726,7 +720,6 @@
     <string name="installer_stage_wait">正在等待其他操作…</string>
     <string name="installer_title">MIDlet 安装器</string>
     <string name="reconversion_done_with_warning">兼容性转换已完成，但有警告。</string>
-    <string name="reconversion_error">无法自动转换 MIDlet。\n\n%1$s</string>
     <string name="reconversion_error_summary">无法自动转换 MIDlet。</string>
     <string name="reconverting_wait">此 MIDlet 启动前需要进行一次兼容性转换。正在转换…</string>
     <plurals name="bulk_install_attention_count">
@@ -799,7 +792,6 @@
     <string name="memory_editor_clear_selection">清除选择</string>
     <string name="memory_editor_close">关闭内存编辑器</string>
     <string name="memory_editor_edit">编辑</string>
-    <string name="memory_editor_edit_batch_help">将替换值应用于所选目标中与指定数据类型兼容的目标。批量编辑不支持监视和冻结。</string>
     <string name="memory_editor_edit_batch_no_common_type">所选结果不支持指定的数据类型。请分别编辑兼容的结果。</string>
     <string name="memory_editor_edit_batch_type_notice">仅更改数据类型匹配的值。</string>
     <string name="memory_editor_engine_reconnecting">内存编辑器正在重新连接…</string>
@@ -813,7 +805,7 @@
     <string name="memory_editor_freeze_paused">已为安全起见暂停</string>
     <string name="memory_editor_identity_unsafe">无法验证所选值或搜索状态。请刷新结果或重新打开检查器，然后重试。</string>
     <string name="memory_editor_increment_invalid">请使用一种整数类型，且值必须在该类型的范围内。</string>
-    <string name="memory_editor_increment_preview">预览：%1$s（%2$d 个值）</string>
+    <string name="memory_editor_increment_preview">预览：%1$s</string>
     <string name="memory_editor_increment_start">起始值</string>
     <string name="memory_editor_increment_step">步长</string>
     <string name="memory_editor_incremental_edit">按等差数列设置</string>
@@ -958,11 +950,7 @@
     <string name="pref_accent_blue">默认蓝</string>
     <string name="pref_accent_classic_blue">经典蓝</string>
     <string name="pref_accent_coral">珊瑚桃色</string>
-    <string name="pref_accent_cyan">青色</string>
     <string name="pref_accent_green">祖母绿</string>
-    <string name="pref_accent_indigo">靛蓝</string>
-    <string name="pref_accent_orange">橙色</string>
-    <string name="pref_accent_pink">粉色</string>
     <string name="pref_accent_rose">莓果玫瑰色</string>
     <string name="pref_accent_sapphire">蓝宝石色</string>
     <string name="pref_accent_teal">翡翠蓝绿</string>
