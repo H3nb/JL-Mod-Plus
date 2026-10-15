@@ -87,11 +87,9 @@
     <string name="about_lineage">JL-Mod Plus — woesss (Yury Kharchenko) әзірлеген JL-Mod жобасының тәуелсіз тармағы. JL-Mod Nikita Shakarun әзірлеген J2ME Loader негізінде жасалған, ал оның бастауы NaikSoftware әзірлеген J2meLoader жобасына барып тіреледі.</string>
     <string name="about_lineage_title">Жобаның шығу тегі</string>
     <string name="about_links_title">Жоба және лицензиялар</string>
-    <string name="about_maintainer">Қолдаушы: %1$s</string>
     <string name="about_message">Классикалық қолданбалар мен ойындарды іске қосыңыз, Кітапханада MIDlet-терді реттеңіз және басқару элементтерін, экранды, дыбысты және өнімділікті баптаңыз. JL-Mod Plus — тегін әрі бастапқы коды ашық қолданба.</string>
     <string name="about_revision_label">Бастапқы код нұсқасы</string>
     <string name="about_subtitle">Android жүйесіне арналған Java ME эмуляторы</string>
-    <string name="about_version">%1$s нұсқасы</string>
     <string name="about_version_label">Нұсқа</string>
     <string name="action_back">Артқа</string>
     <string name="action_context_shortcut">Таңбаша қосу</string>
@@ -114,7 +112,6 @@
     <string name="dismiss">Жабу</string>
     <string name="dismiss_mapping">Перне сәйкестігін баптауды жабу</string>
     <string name="edit_preset">Профильді өңдеу</string>
-    <string name="help_message">• Сызықтық сүзгілеу кейбір MIDlet-тердің өнімділігін едәуір төмендетуі мүмкін. MIDlet тым баяу болса, оны өшіріңіз.&lt;BR&gt;• Дереу өңдеу қалыпты Java ME оқиғалар кезегін айналып өтеді. Бұл жауап беру жылдамдығын жақсартуы мүмкін, бірақ кейбір MIDlet-тердің жұмысын тұрақсыз етуі мүмкін.</string>
     <string name="licenses_unavailable">Лицензия мәліметтері қолжетімді емес.</string>
     <string name="loading_apps">Қолданбалар жүктелуде</string>
     <string name="locate_bundle">Пакетті табу</string>
@@ -169,11 +166,9 @@
     <string name="library_action_about_summary">Жобаға шолу, құрастырылым ақпараты және сілтемелер.</string>
     <string name="library_action_crash_reports_summary">Сақталған диагностикалық есептерді қарау.</string>
     <string name="library_action_export_bundle">Қолданба пакетін экспорттау</string>
-    <string name="library_action_help_summary">Пайдалану нұсқаулығы және негізгі басқару элементтері.</string>
     <string name="library_action_import_bundle">Қолданба пакетін импорттау</string>
     <string name="library_action_import_bundle_summary">Экспортталған JAR файлын, қолданба баптауларын және сақталған деректерді қалпына келтіру.</string>
     <string name="library_action_licenses_summary">Қолданбаға қосылған үшінші тарап ескертулері мен лицензия шарттары.</string>
-    <string name="library_action_save_log_summary">Ақауларды анықтау үшін JL-Mod Plus жүйесінің соңғы журналдарын сақтау.</string>
     <string name="library_action_select">Таңдау</string>
     <string name="library_action_settings_summary">Жалпы әрекет пен сыртқы көріністі баптау.</string>
     <string name="library_action_share_app">Қолданбаны бөлісу</string>
@@ -193,7 +188,6 @@
     <string name="library_collection_name">Жинақ атауы</string>
     <string name="library_collection_new">Жаңа жинақ</string>
     <string name="library_collection_ready_empty_message">Қолданбаларды файлдарын жылжытпай реттеу үшін жинақтар жасаңыз.</string>
-    <string name="library_collection_remove">Жинақтан алып тастау</string>
     <string name="library_collection_remove_from_current">Жинақтан алып тастау</string>
     <string name="library_collection_select_message">Қолданбаларын көру үшін жинақты таңдаңыз.</string>
     <string name="library_collection_select_title">Жинақты таңдау</string>
@@ -697,11 +691,7 @@
     <string name="pref_accent_amber">Алтын кәріптас</string>
     <string name="pref_accent_blue">Әдепкі көк</string>
     <string name="pref_accent_classic_blue">Классикалық көк</string>
-    <string name="pref_accent_cyan">Көгілдір</string>
     <string name="pref_accent_green">Изумруд жасыл</string>
-    <string name="pref_accent_indigo">Индиго</string>
-    <string name="pref_accent_orange">Қызғылт сары</string>
-    <string name="pref_accent_pink">Қызғылт</string>
     <string name="pref_accent_sapphire">Сапфир көк</string>
     <string name="pref_accent_title">Екпін түсі</string>
     <string name="pref_app_sort_ascending">Өсу ретімен</string>
@@ -867,7 +857,6 @@
     <string name="reconverting_wait">Осы MIDlet іске қосылуы үшін бір реттік үйлесімділік түрлендіруі қажет. Түрлендірілуде…</string>
     <string name="install_jar_non_matched_jad">Бұл қолданба JAD ішінде сипатталған қолданбадан өзгеше.\nJAD файлын елемей, бәрібір орнату керек пе?</string>
     <string name="installer_conversion_skipped_entry">%1$s\nМәселе: Java класс файлын оқу мүмкін болмады.\nӘрекет: Түрлендіру кезінде өткізіп жіберілді.</string>
-    <string name="reconversion_error">MIDlet бағдарламасын автоматты түрде түрлендіру мүмкін болмады.\n\n%1$s</string>
     <string name="reinstall_newest">Бұл қолданбаны %1$s нұсқасына жаңарту керек пе?\n\nҚазір орнатылған нұсқа: %2$s</string>
     <string name="reinstall_older">Бұл қолданбаны %1$s нұсқасымен ауыстыру керек пе?\n\nҚазір орнатылған нұсқа: %2$s\nЕскі нұсқа бұрынғы деректермен дұрыс жұмыс істемеуі мүмкін.</string>
     <string name="memory_editor_add_to_watch">Таңдалған мәндерді бақылау тізіміне қосу</string>
@@ -882,7 +871,6 @@
     <string name="memory_editor_change_amount">Өзгеріс мөлшері</string>
     <string name="memory_editor_clear_selection">Таңдауды тазарту</string>
     <string name="memory_editor_close">Жад өңдегішін жабу</string>
-    <string name="memory_editor_edit_batch_help">Таңдалған дерек түрімен үйлесімді таңдалған нысандарға ауыстыру мәнін қолданады. Топтап өңдеу кезінде бақылау мен бекіту қолжетімсіз.</string>
     <string name="memory_editor_edit_batch_no_common_type">Таңдалған нәтижелер таңдалған дерек түрін қолдамайды. Үйлесімді нәтижелерді бөлек өңдеңіз.</string>
     <string name="memory_editor_edit_batch_type_notice">Тек дерек түрі сәйкес келетін мәндер өзгертіледі.</string>
     <string name="memory_editor_engine_reconnecting">Жад өңдегіші қайта қосылуда…</string>
@@ -896,7 +884,7 @@
     <string name="memory_editor_freeze_paused">Қауіпсіздік үшін кідіртілді</string>
     <string name="memory_editor_identity_unsafe">Таңдалған мәнді немесе іздеу күйін тексеру мүмкін болмады. Нәтижелерді жаңартыңыз немесе инспекторды қайта ашып, әрекетті қайталаңыз.</string>
     <string name="memory_editor_increment_invalid">Бір бүтін сан түрін және оның ауқымындағы мәндерді қолданыңыз.</string>
-    <string name="memory_editor_increment_preview">Алдын ала қарау: %1$s (%2$d мән)</string>
+    <string name="memory_editor_increment_preview">Алдын ала қарау: %1$s</string>
     <string name="memory_editor_increment_start">Бастапқы мән</string>
     <string name="memory_editor_increment_step">Қадам</string>
     <string name="memory_editor_incremental_edit">Тізбекпен орнату</string>
