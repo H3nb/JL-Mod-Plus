@@ -850,7 +850,7 @@
     <string name="memory_editor_refresh">刷新</string>
     <string name="memory_editor_refresh_snapshot">刷新快照</string>
     <string name="memory_editor_remove">移除</string>
-    <string name="memory_editor_remove_candidates_description">移除： 将选中的结果从搜索列表中移除，不会更改游戏内存中的数值。\n\n撤销编辑并移除： 还会尝试恢复到最后一次确认修改前的数值，但仅在当前数值仍与上次写入值一致时执行。存在冲突的结果仍保留在列表中。</string>
+    <string name="memory_editor_remove_candidates_description">移除：将选中的结果从搜索列表中移除，不会更改游戏内存中的数值。\n\n撤销编辑并移除：还会尝试恢复到最后一次确认修改前的数值，但仅在当前数值仍与上次写入值一致时执行。存在冲突的结果仍保留在列表中。</string>
     <string name="memory_editor_remove_candidates_title">移除所选结果？</string>
     <string name="memory_editor_replacement">替换值</string>
     <string name="memory_editor_resource_limit">内存编辑器已达到安全资源限制。请尝试指定更具体的数据类型或搜索值。</string>

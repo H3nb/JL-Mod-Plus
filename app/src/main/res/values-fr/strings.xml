@@ -309,7 +309,7 @@
     <string name="config_gamepad_calibration_save_failed">Impossible d’enregistrer l’étalonnage. L’étalonnage existant reste inchangé.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Aucune plage analogique prise en charge trouvée.</string>
     <string name="config_gamepad_calibration_rejected">Étalonnage refusé : %1$s</string>
-    <string name="config_gamepad_calibration_neutral_instructions">Maintenez tous les sticks signalés centrés et les gâchettes relâchées jusqu’à la fin du minuteur.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Maintenez tous les sticks détectés au centre et toutes les gâchettes détectées relâchées jusqu’à la fin du minuteur.</string>
     <string name="config_gamepad_calibration_stick_instructions">Déplacez chaque stick signalé sur toute sa plage, dans les deux sens, puis appuyez sur Suivant.</string>
     <string name="config_gamepad_calibration_trigger_instructions">Relâchez puis enfoncez complètement chaque gâchette signalée, puis appuyez sur Suivant pour vérifier.</string>
     <string name="config_gamepad_calibration_review_instructions">Prêt pour la vérification. L’enregistrement remplace uniquement l’étalonnage de cette manette.</string>

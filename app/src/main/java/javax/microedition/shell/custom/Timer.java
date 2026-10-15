@@ -470,16 +470,16 @@ public class Timer {
                     if (task.cancelled) {
                         return;
                     }
-                    task.when = saturatingAdd(executionStartTime, task.period);
-                    if (task.relativeGuestTime && timingSession != null) {
-                        task.scheduledWallTime =
-                                timingSession.wallTimeMillisForGuestMonotonicMillis(task.when);
-                    } else {
-                        task.scheduledWallTime = saturatingAdd(
-                                executionStartWallTime,
-                                wallDelayMillis(task.period, task.relativeGuestTime));
-                    }
-                    insertTask(task);
+					task.when = saturatingAdd(executionStartTime, task.period);
+					if (task.relativeGuestTime && timingSession != null) {
+						task.scheduledWallTime =
+								timingSession.wallTimeMillisForGuestMonotonicMillis(task.when);
+					} else {
+						task.scheduledWallTime = saturatingAdd(
+								executionStartWallTime,
+								wallDelayMillis(task.period, task.relativeGuestTime));
+					}
+					insertTask(task);
                 }
             }
         }
@@ -778,7 +778,7 @@ public class Timer {
         if (delay < 0) {
             throw new IllegalArgumentException("delay < 0: " + delay);
         }
-        scheduleImpl(task, delay, -1, false, true);
+		scheduleImpl(task, delay, -1, false, true);
     }
 
     /**
@@ -800,7 +800,7 @@ public class Timer {
         if (delay < 0 || period <= 0) {
             throw new IllegalArgumentException();
         }
-        scheduleImpl(task, delay, period, false, true);
+		scheduleImpl(task, delay, period, false, true);
     }
 
     /**
@@ -847,7 +847,7 @@ public class Timer {
         if (delay < 0 || period <= 0) {
             throw new IllegalArgumentException();
         }
-        scheduleImpl(task, delay, period, true, true);
+		scheduleImpl(task, delay, period, true, true);
     }
 
     /**
@@ -908,19 +908,19 @@ public class Timer {
 
                 task.scheduled = true;
                 task.when = when;
-                task.period = period;
-                task.fixedRate = fixed;
-                task.relativeGuestTime = relativeGuestTime;
-                if (relativeGuestTime && impl.timingSession != null) {
-                    task.scheduledWallTime =
-                            timingSessionWallTimeFor(when);
-                } else {
-                    task.scheduledWallTime = TimerImpl.saturatingAdd(
-                            impl.wallTimeMillis(), impl.wallDelayMillis(delay, relativeGuestTime));
-                }
-                task.scheduledWallPeriodMillis = period > 0
-                        ? impl.wallDelayMillis(period, relativeGuestTime)
-                        : 0L;
+				task.period = period;
+				task.fixedRate = fixed;
+				task.relativeGuestTime = relativeGuestTime;
+				if (relativeGuestTime && impl.timingSession != null) {
+					task.scheduledWallTime =
+							timingSessionWallTimeFor(when);
+				} else {
+					task.scheduledWallTime = TimerImpl.saturatingAdd(
+							impl.wallTimeMillis(), impl.wallDelayMillis(delay, relativeGuestTime));
+				}
+				task.scheduledWallPeriodMillis = period > 0
+						? impl.wallDelayMillis(period, relativeGuestTime)
+						: 0L;
             }
 
             // insert the newTask into queue

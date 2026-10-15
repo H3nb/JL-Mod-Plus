@@ -307,7 +307,7 @@
     <string name="config_gamepad_calibration_save_failed">No se pudo guardar la calibración. La calibración existente no cambia.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">No se encontraron rangos analógicos compatibles.</string>
     <string name="config_gamepad_calibration_rejected">Calibración rechazada: %1$s</string>
-    <string name="config_gamepad_calibration_neutral_instructions">Mantén centrados todos los sticks detectados y sueltos los gatillos hasta que termine el temporizador.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Mantén centrados todos los sticks detectados y sueltos todos los gatillos detectados hasta que termine el temporizador.</string>
     <string name="config_gamepad_calibration_stick_instructions">Mueve cada stick detectado por todo su rango, en ambas direcciones, y pulsa Siguiente.</string>
     <string name="config_gamepad_calibration_trigger_instructions">Suelta y pulsa por completo cada gatillo detectado y después pulsa Siguiente para revisar.</string>
     <string name="config_gamepad_calibration_review_instructions">Listo para revisar. Al guardar solo se reemplaza la calibración de este mando.</string>
