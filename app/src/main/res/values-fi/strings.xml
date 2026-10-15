@@ -25,7 +25,6 @@
     <string name="exit">Poistu</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Pysäytetäänkö tämä MIDlet? Tallentamattomat muutokset voivat kadota.</string>
     <string name="help">Apua</string>
-    <string name="help_message">• Lineaarinen suodatus voi heikentää joidenkin MIDlet-sovellusten suorituskykyä huomattavasti. Poista se käytöstä, jos MIDlet-sovellus on liian hidas.&lt;BR&gt;• Välitön käsittely ohittaa tavallisen Java ME -tapahtumajonon. Se voi parantaa reagointia, mutta tehdä joistakin MIDlet-sovelluksista epävakaita.</string>
     <string name="layout_edit_finish">Lopeta muokkaustila</string>
     <string name="layout_edit_finished">Muokkaustila päättynyt</string>
     <string name="layout_switch">Valitse ohjainten asettelu</string>
@@ -61,7 +60,6 @@
     <string name="SIZE_PRESETS">Fonttikoon esiasetukset</string>
     <string name="START_CMD">Käynnistä</string>
     <string name="SWAP_SIZES">Vaihda koot</string>
-    <string name="about_maintainer">Ylläpitäjä: %1$s</string>
     <string name="about_lineage">JL-Mod Plus on itsenäinen haarautuma woesssin (Yury Kharchenko) JL-Modista. JL-Mod perustuu Nikita Shakarunin J2ME Loaderiin, jonka juuret ulottuvat NaikSoftwaren J2meLoaderiin.</string>
     <string name="action_back">Takaisin</string>
     <string name="action_keyboard_ime">Näppäimistö (IME)</string>
@@ -435,7 +433,6 @@
     <string name="library_collection_members_empty">Tässä kokoelmassa ei ole sovelluksia.</string>
     <string name="library_collection_select_title">Valitse kokoelma</string>
     <string name="library_collection_select_message">Valitse kokoelma nähdäksesi sen sovellukset.</string>
-    <string name="library_collection_remove">Poista kokoelmasta</string>
     <string name="library_collection_remove_from_current">Poista kokoelmasta</string>
     <string name="library_no_matches">Ei osumia haulle \"%1$s\"</string>
     <string name="library_action_share_app">Jaa sovellus</string>
@@ -496,7 +493,6 @@
         <item quantity="one">Muokkaa %1$d arvoa</item>
         <item quantity="other">Muokkaa %1$d arvoa</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Käyttää korvaavaa arvoa valittuihin kohteisiin, jotka ovat yhteensopivia valitun tietotyypin kanssa. Seuranta ja jäädytys eivät ole käytettävissä erämuokkauksissa.</string>
     <string name="memory_editor_edit_batch_no_common_type">Valitut tulokset eivät tue valittua tietotyyppiä. Muokkaa yhteensopivia tuloksia erikseen.</string>
     <string name="memory_editor_save">Käytä</string>
     <string name="memory_editor_replacement">Korvaava arvo</string>
@@ -732,7 +728,6 @@
     <string name="config_help_timing_mode">Valitsee, käyttääkö MIDlet emulointiaikaa vai järjestelmäaikaa. Suhteelliset viiveet seuraavat edelleen emulointinopeutta.</string>
     <string name="config_help_timing_unavailable">Aika-asetukset eivät ole käytettävissä tässä MIDlet-asennuksessa. Asenna tai muunna MIDlet uudelleen ottaaksesi ne käyttöön.</string>
     <string name="reconverting_wait">Tämä MIDlet tarvitsee kertaluonteisen yhteensopivuusmuunnoksen ennen käynnistystä. Muunnetaan…</string>
-    <string name="reconversion_error">MIDlet-sovellusta ei voitu muuntaa automaattisesti.\n\n%1$s</string>
     <string name="config_help_generic_color">Asettaa tämän visuaalisen elementin värin.</string>
     <string name="config_help_encoding">Valitsee microedition.encoding-ominaisuutena ilmoitettavan merkistökoodauksen.</string>
     <string name="config_edit_system_properties">Muokkaa järjestelmäominaisuuksia</string>
@@ -898,10 +893,6 @@
     <string name="pref_accent_amber">Meripihka</string>
     <string name="pref_accent_rose">Ruusu</string>
     <string name="pref_accent_violet">Violetti</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_cyan">Syaani</string>
-    <string name="pref_accent_orange">Oranssi</string>
-    <string name="pref_accent_pink">Vaaleanpunainen</string>
     <string name="runtime_invalid_intent">Virheellinen käynnistyspyyntö: MIDlet-polku puuttuu.</string>
     <string name="runtime_storage_in_use">MIDlet-tallennustila on jo toisen runtimen käytössä.</string>
     <string name="runtime_installation_changed">MIDlet-asennusta ei voitu valmistella käynnistystä varten.</string>
@@ -915,10 +906,8 @@
     <string name="library_selection_unchecked">Ei valittu</string>
     <string name="library_action_settings_summary">Määritä yleinen toiminta ja ulkoasu.</string>
     <string name="library_action_crash_reports_summary">Tarkista tallennetut diagnostiikkaraportit.</string>
-    <string name="library_action_save_log_summary">Tallenna viimeisimmät JL-Mod Plus -lokit vianmääritystä varten.</string>
     <string name="library_action_about_summary">Projektin esittely, koontiversion tiedot ja linkit.</string>
     <string name="library_action_licenses_summary">Sovellukseen sisältyvät kolmansien osapuolten ilmoitukset ja lisenssiehdot.</string>
-    <string name="library_action_help_summary">Käyttöohjeet ja yleiset ohjaimet.</string>
     <string name="library_bulk_delete_apps">Poista sovellukset</string>
     <string name="library_bulk_add_collection">Lisää kokoelmaan</string>
     <string name="library_bulk_share_apps">Jaa sovelluksia</string>
@@ -948,7 +937,6 @@
     <string name="memory_editor_write_failure_outcome">%1$s\nVahvistetut kirjoitukset: %2$d. Vahvistamattomat: %3$d. Ohitetut: %4$d. Ei yritetty: %5$d. Tyypin vuoksi ohitetut: %6$d.</string>
     <string name="memory_editor_next_scan_result">Seuraavan haun tulokset: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Automaattinen</string>
-    <string name="about_version">Versio %1$s</string>
     <string name="screenshot_save_failed">Kuvakaappausta ei voitu tallentaa.</string>
     <string name="screenshot_saved_path">Kuvakaappaus tallennettu kohteeseen %1$s</string>
     <string name="log_save_started">Lokin tallennus aloitettu.</string>
@@ -1009,7 +997,7 @@
     <string name="memory_editor_change_amount">Muutoksen määrä</string>
     <string name="memory_editor_edit_batch_type_notice">Vain vastaavan tietotyypin arvoja muutetaan.</string>
     <string name="memory_editor_increment_invalid">Käytä yhtä kokonaislukutyyppiä ja sen arvoalueella olevia arvoja.</string>
-    <string name="memory_editor_increment_preview">Esikatselu: %1$s (%2$d arvoa)</string>
+    <string name="memory_editor_increment_preview">Esikatselu: %1$s</string>
     <string name="memory_editor_increment_start">Aloitusarvo</string>
     <string name="memory_editor_increment_step">Askel</string>
     <string name="memory_editor_incremental_edit">Arvosarja</string>
