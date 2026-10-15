@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">About</string>
-    <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
-    <!-- %1$s is the maintainer's exact name and account, preserved as invariant data. -->
-    <string name="about_maintainer">Maintainer: %1$s</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="app_debug_badge" translatable="false">DEBUG</string>
     <string name="about_message">Run classic apps and games, organize MIDlets in your Library, and adjust controls, display, audio, and performance. JL-Mod Plus is free and open source.</string>
@@ -54,7 +51,6 @@
     <string name="exit">Exit</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
-    <string name="help_message">&#8226; Linear filtering can significantly reduce performance on some MIDlets. Disable it if the MIDlet is too slow.&lt;BR>&#8226; Immediate processing bypasses the normal Java ME event queue. It may improve responsiveness, but can make some MIDlets unstable.</string>
     <string name="identity_filter">None (fastest)</string>
     <string name="install">Install</string>
     <string name="install_done">Application installed.</string>
@@ -493,7 +489,6 @@
     <string name="library_collection_members_empty">No apps in this collection.</string>
     <string name="library_collection_select_title">Select a collection</string>
     <string name="library_collection_select_message">Choose a collection to view its apps.</string>
-    <string name="library_collection_remove">Remove from collection</string>
     <string name="library_collection_remove_from_current">Remove from collection</string>
     <string name="library_no_matches">No matches for \"%1$s\"</string>
 
@@ -557,7 +552,6 @@
         <item quantity="one">Edit %1$d value</item>
         <item quantity="other">Edit %1$d values</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
     <string name="memory_editor_edit_batch_no_common_type">The selected results do not support the chosen data type. Edit compatible results separately.</string>
     <string name="memory_editor_save">Apply</string>
     <string name="memory_editor_replacement">Replacement value</string>
@@ -807,9 +801,6 @@
     <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Converting…</string>
     <string name="reconversion_done_with_warning">Compatibility conversion completed with warnings.</string>
-    <string name="reconversion_error">The MIDlet could not be converted automatically.
-
-%1$s</string>
     <string name="reconversion_error_summary">The MIDlet could not be converted automatically.</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>
     <string name="config_help_encoding">Chooses the character encoding reported as microedition.encoding.</string>
@@ -991,10 +982,6 @@
     <string name="pref_accent_amber">Golden amber</string>
     <string name="pref_accent_blue">Default blue</string>
     <string name="pref_accent_classic_blue">Classic blue</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_cyan">Cyan</string>
-    <string name="pref_accent_orange">Orange</string>
-    <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
     <string name="runtime_storage_in_use">MIDlet storage is already in use by another runtime.</string>
     <string name="runtime_installation_changed">The MIDlet installation could not be prepared for launch.</string>
@@ -1009,10 +996,8 @@
 
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
     <string name="library_action_crash_reports_summary">Review saved diagnostic reports.</string>
-    <string name="library_action_save_log_summary">Save recent JL-Mod Plus logs for troubleshooting.</string>
     <string name="library_action_about_summary">Project overview, build information, and links.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
-    <string name="library_action_help_summary">Usage guidance and common controls.</string>
     <string name="library_donation_action">Support development</string>
     <string name="library_donation_summary">Help keep JL-Mod Plus growing.</string>
     <string name="library_donation_title">Support JL-Mod Plus</string>
@@ -1056,8 +1041,6 @@
     <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
     <string name="memory_editor_next_scan_result">Next scan results: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Auto</string>
-    <string name="about_maintainer_name" translatable="false">Hendra Bara\'langi\' (H3NB)</string>
-    <string name="about_version">Version %1$s</string>
     <string name="screenshot_save_failed">Could not save the screenshot.</string>
     <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
     <string name="screenshot_saved_path">Screenshot saved to %1$s</string>
@@ -1149,5 +1132,6 @@
     <string name="memory_editor_incremental_edit">Increment</string>
     <string name="memory_editor_increment_step">Step</string>
     <string name="memory_editor_increment_invalid">Use one integer type and values within its range.</string>
-    <string name="memory_editor_increment_preview">Preview: %1$s (%2$d values)</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Preview: %1$s</string>
 </resources>
