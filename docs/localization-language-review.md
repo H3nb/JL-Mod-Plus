@@ -626,3 +626,35 @@ terminology. Unclear cases, especially Santali loanword naturalness, remain
 review candidates. Avoid changing these from dictionary substitutions alone.
 This checkpoint makes no change to application logic or the selected
 controller, and does not certify native-language fluency.
+
+### Bounded Santali UI terminology corrections — 15 October 2026
+
+After reviewing canonical English, UI callers, and established wording already
+in the Ol Chiki catalog, seven Santali resources receive small, reversible
+corrections (six strings and one plural item):
+
+- `parallel_screen_redrawing` now names **asynchronous** screen updates,
+  matching `config_help_parallel_redraw`; the former *parallel* label was a
+  different technical concept. This does not rename the underlying setting.
+- `pref_map_keys` uses the existing key-mapping terminology rather than
+  the inconsistent *tapping*-like spelling. `pref_vk_save_alert` uses the
+  already established virtual-controls **layout** spelling.
+- `pref_enable_actionbar_title` and `pref_enable_actionbar_summary`
+  consistently identify the **runtime toolbar**, not the obsolete ActionBar
+  concept; the equivalent Ol Chiki technical loans are already used in
+  another catalog entry (`pref_use_display_cutout_summary`).
+- `loading_info` spells out the catalog's established **information** term
+  instead of an unexplained abbreviation.
+- `config_system_properties_value` separates the plural noun from the
+  existing plural marker in its `other` branch, matching the resource's
+  `two` branch and related count labels. The count argument and all three
+  plural categories stay identical.
+
+This work is **semantic and intra-catalog terminology review**, not independent
+native-speaker certification. Keep the 76 already-deferred Santali cases open,
+including affected entries; preserve unresolved window-word orthography,
+controller-identifier terminology, borrowed-word naturalness, and the fluency
+of full-sentence/dual morphology for qualified review. These corrections do
+not alter English or the other 38 catalogs. The earlier 977-resource figures
+in this document are historical; the current complete catalog contains 965
+translatable identities after the separate dead-resource cleanup.

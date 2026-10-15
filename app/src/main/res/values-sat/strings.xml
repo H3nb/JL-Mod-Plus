@@ -37,7 +37,7 @@
     <string name="layout_edit_finished">ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱥᱟᱯᱲᱟᱣ ᱯᱩᱨᱟᱹᱣ ᱮᱱᱟ᱾</string>
     <string name="layout_switch">ᱠᱚᱱᱴᱨᱚᱞ ᱞᱮᱟᱩᱴ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
     <string name="licenses">ᱞᱟᱭᱥᱮᱱᱥ ᱠᱚ</string>
-    <string name="loading_info">ᱵᱤᱵ ᱞᱟᱫᱮᱜ ᱠᱟᱱᱟ …</string>
+    <string name="loading_info">ᱵᱤᱵᱚᱨᱚᱱ ᱞᱟᱫᱮᱜ ᱠᱟᱱᱟ…</string>
     <string name="mapping_dialog_key_not_specified">ᱡᱟᱦᱟᱸᱱ ᱤᱱᱯᱩᱴ ᱵᱟᱝ ᱟᱥᱟᱭᱤᱱ ᱟᱠᱟᱱᱟ᱾</string>
     <string name="mapping_dialog_title">ᱠᱤ ᱥᱮ ᱵᱩᱛᱟᱹᱢ ᱚᱛᱟᱭ ᱢᱮ</string>
     <string name="message_delete">ᱱᱚᱣᱟ ᱮᱯ ᱫᱚ ᱱᱚᱣᱟ ᱨᱮᱭᱟᱜ ᱥᱟᱡᱟᱣ ᱠᱚ ᱟᱨ ᱥᱮᱵᱷᱰ ᱰᱟᱴᱟ ᱥᱟᱶ ᱢᱤᱫ ᱥᱟᱶᱛᱮ ᱢᱮᱴᱟᱣ ᱢᱮ? ᱱᱚᱣᱟ ᱫᱚ ᱞᱟᱭᱵᱨᱮᱨᱤ ᱠᱷᱚᱱ ᱮᱯ ᱨᱮᱭᱟᱜ ᱵᱚᱞᱚᱱ ᱦᱚᱸ ᱚᱪᱚᱜᱼᱟᱭ ᱾</string>
@@ -48,7 +48,7 @@
     <string name="more">ᱵᱟᱹᱲᱛᱤ</string>
     <string name="no_data_for_display">ᱩᱫᱩᱜ ᱞᱟᱹᱜᱤᱫ ᱡᱟᱦᱟᱸᱱ ᱮᱯ ᱵᱟᱹᱱᱩᱜᱼᱟ᱾</string>
     <string name="not_saved_exists">ᱢᱟᱲᱟᱝ ᱠᱷᱚᱱ ᱢᱮᱱᱟᱜᱼᱟ</string>
-    <string name="parallel_screen_redrawing">ᱯᱟᱨᱟᱞᱮᱞ ᱥᱠᱨᱤᱱ ᱫᱩᱦᱲᱟᱹᱛᱮᱭᱟᱨ</string>
+    <string name="parallel_screen_redrawing">ᱟᱥᱤᱱᱠᱨᱳᱱᱟᱥ ᱥᱠᱨᱤᱱ ᱟᱯᱰᱮᱴ ᱠᱚ</string>
     <string name="permission_request_failed">ᱱᱚᱶᱟ ᱮᱯ ᱫᱚ ᱫᱚᱦᱚ ᱚᱞ ᱯᱟᱹᱨᱢᱤᱥᱚᱱ ᱛᱟᱭ ᱫᱚᱨᱠᱟᱨ</string>
     <string name="pref_app_sort_date">ᱥᱮᱞᱮᱫ ᱟᱠᱟᱱ ᱢᱟᱦᱟᱸ</string>
     <string name="pref_app_sort_name">ᱧᱩᱛᱩᱢ</string>
@@ -59,8 +59,8 @@
     <string name="pref_button_shape_title">ᱵᱩᱛᱟᱹᱢ ᱨᱩᱯ</string>
     <string name="pref_category_experimental">ᱮᱠᱥᱯᱮᱨᱤᱢᱮᱱᱴᱟᱞ</string>
     <string name="pref_emulator_dir">ᱠᱟᱹᱢᱤ ᱠᱟᱱ ᱰᱟᱭᱨᱮᱠᱴᱚᱨᱭ</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas ᱥᱠᱨᱤᱱ ᱨᱮ runtime toolbar ᱧᱮᱞᱚᱜ ᱞᱮᱠᱟ ᱫᱚᱦᱚᱭ ᱢᱮ᱾</string>
-    <string name="pref_enable_actionbar_title">ᱮᱠᱥᱚᱱᱵᱟᱨ ᱮᱢ ᱪᱷᱚᱭ ᱢᱮ</string>
+    <string name="pref_enable_actionbar_summary">MIDlet Canvas ᱥᱠᱨᱤᱱ ᱨᱮ ᱨᱟᱱᱴᱟᱭᱤᱢ ᱴᱩᱞᱵᱟᱨ ᱧᱮᱞᱚᱜ ᱞᱮᱠᱟ ᱫᱚᱦᱚᱭ ᱢᱮ᱾</string>
+    <string name="pref_enable_actionbar_title">ᱨᱟᱱᱴᱟᱭᱤᱢ ᱴᱩᱞᱵᱟᱨ ᱩᱫᱩᱜ ᱢᱮ</string>
     <string name="pref_enable_statusbar_title">ᱥᱴᱮᱴᱟᱹᱥᱵᱽᱟᱨ ᱮᱢ ᱪᱷᱚ</string>
     <string name="pref_encoding_title">ᱮᱱᱠᱳᱰᱤᱝ</string>
     <string name="PREF_FILTER">ᱞᱤᱱᱤᱭᱟᱨ ᱯᱷᱤᱞᱴᱚᱨᱤᱝ</string>
@@ -79,7 +79,7 @@
     <string name="PREF_IMMEDIATE">ᱞᱚᱜᱚᱱ ᱠᱟᱹᱢᱤ ᱢᱳᱰ</string>
     <string name="PREF_LAYOUT">ᱠᱤ ᱠᱳᱰ ᱞᱮᱟᱣᱩᱴ</string>
     <string name="PREF_LIMIT_FPS">ᱯᱷᱨᱮᱢ ᱨᱮᱴ ᱞᱤᱢᱤᱴ</string>
-    <string name="pref_map_keys">ᱠᱭ ᱴᱮᱯᱤᱝᱠᱚ</string>
+    <string name="pref_map_keys">ᱠᱤ ᱢᱮᱯᱤᱝ ᱠᱚ</string>
     <string name="pref_mascot_summary">Mascot Capsule 3D ᱵᱮᱵᱷᱟᱨᱚᱜ ᱚᱠᱛᱚ ᱢᱮᱥᱮᱡᱽ ᱩᱫᱩᱜ ᱢᱮ᱾</string>
     <string name="pref_mascot_title">Mascot Capsule 3D ᱱᱚᱴᱤᱯᱷᱤᱠᱮᱥᱚᱱ</string>
     <string name="PREF_ORIENTATION">ᱥᱠᱨᱤᱱ ᱚᱨᱤᱮᱱᱴᱮᱥᱚᱱ</string>
@@ -119,7 +119,7 @@
     <string name="PREF_VK_HIDE_DELAY">ᱟᱡᱛᱮ ᱩᱠᱩ ᱞᱟᱦᱟᱣ ᱚᱠᱛᱚ</string>
     <string name="pref_vk_hide_hint">ᱵᱚᱸᱫ ᱮᱱᱟ</string>
     <string name="PREF_VK_OUTLINE">ᱟᱩᱴᱞᱟᱭᱤᱱ ᱨᱚᱝ</string>
-    <string name="pref_vk_save_alert">ᱢᱮᱱᱟᱜ ᱠᱚᱥᱴᱚᱢ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱭᱟᱣᱩᱴ ᱱᱤᱛᱚᱜᱟᱜ ᱛᱮ ᱵᱚᱫᱚᱞᱟ?</string>
+    <string name="pref_vk_save_alert">ᱢᱮᱱᱟᱜ ᱠᱚᱥᱴᱚᱢ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱟᱣᱩᱴ ᱱᱤᱛᱚᱜᱟᱜ ᱛᱮ ᱵᱚᱫᱚᱞᱟ?</string>
     <string name="PREF_VK_SEL_BACK">ᱚᱛᱟ ᱟᱠᱟᱱ ᱵᱩᱛᱟᱹᱢ ᱨᱚᱝ</string>
     <string name="PREF_VK_SEL_FORE">ᱚᱛᱟ ᱟᱠᱟᱱ ᱞᱮᱵᱮᱞ ᱟᱨ ᱥᱤᱢᱵᱚᱞ ᱨᱚᱝ</string>
     <string name="pref_vk_type_arrows">ᱥᱟᱨ</string>
@@ -960,7 +960,7 @@
     <plurals name="config_system_properties_value">
         <item quantity="one">%1$d ᱯᱨᱚᱯᱟᱨᱴᱤ</item>
         <item quantity="two">%1$d ᱯᱨᱚᱯᱟᱨᱴᱤ ᱠᱤᱱ</item>
-        <item quantity="other">%1$d ᱯᱨᱚᱯᱟᱨᱴᱤᱠᱚ</item>
+        <item quantity="other">%1$d ᱯᱨᱚᱯᱟᱨᱴᱤ ᱠᱚ</item>
     </plurals>
     <plurals name="library_bulk_delete_confirmation">
         <item quantity="one">%1$d ᱮᱯ ᱢᱮᱴᱟᱣᱟ? ᱮᱯ ᱨᱮᱫ, ᱥᱮᱴᱤᱝᱥ, ᱥᱮᱵᱽ ᱰᱮᱴᱟ, ᱟᱨ ᱠᱮᱴᱟᱞᱚᱜᱽ ᱮᱱᱴᱨᱤ ᱠᱚ ᱚᱪᱚᱜᱚᱜᱼᱟ᱾</item>
