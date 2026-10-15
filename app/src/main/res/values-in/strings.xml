@@ -45,7 +45,6 @@
     <string name="exit">Keluar</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Hentikan MIDlet ini? Perubahan yang belum disimpan mungkin hilang.</string>
     <string name="help">Bantuan</string>
-    <string name="help_message">• Filter linear dapat sangat menurunkan performa pada sebagian MIDlet. Nonaktifkan jika MIDlet terlalu lambat.&lt;BR&gt;• Pemrosesan langsung melewati antrean event Java ME. Respons dapat meningkat, tetapi sebagian MIDlet mungkin tidak stabil.</string>
     <string name="identity_filter">Tidak ada (paling cepat)</string>
     <string name="install">Instal</string>
     <string name="install_done">Aplikasi terpasang.</string>
@@ -441,7 +440,6 @@
     <string name="library_collection_members_empty">Belum ada aplikasi dalam koleksi ini.</string>
     <string name="library_collection_select_title">Pilih koleksi</string>
     <string name="library_collection_select_message">Pilih koleksi untuk melihat aplikasinya.</string>
-    <string name="library_collection_remove">Hapus dari koleksi</string>
     <string name="library_collection_remove_from_current">Hapus dari koleksi</string>
     <string name="library_no_matches">Tidak ada hasil untuk \"%1$s\"</string>
 
@@ -501,7 +499,6 @@
     <plurals name="memory_editor_edit_batch">
         <item quantity="other">Ubah %1$d nilai</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih dengan tipe data yang sesuai. Pantauan dan pembekuan tidak tersedia untuk perubahan massal.</string>
     <string name="memory_editor_edit_batch_no_common_type">Hasil yang dipilih tidak mendukung tipe data yang dipilih. Ubah hasil yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Terapkan</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
@@ -735,9 +732,6 @@
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Mengonversi…</string>
     <string name="reconversion_done_with_warning">Konversi kompatibilitas selesai dengan peringatan.</string>
-    <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
-
-%1$s</string>
     <string name="reconversion_error_summary">MIDlet ini tidak dapat dikonversi secara otomatis.</string>
     <string name="config_help_generic_color">Mengatur warna bagian tampilan ini.</string>
     <string name="config_help_encoding">Memilih pengodean karakter yang dilaporkan sebagai microedition.encoding.</string>
@@ -906,10 +900,6 @@
     <string name="pref_accent_amber">Amber keemasan</string>
     <string name="pref_accent_blue">Biru bawaan</string>
     <string name="pref_accent_classic_blue">Biru klasik</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_cyan">Sian</string>
-    <string name="pref_accent_orange">Oranye</string>
-    <string name="pref_accent_pink">Merah muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
     <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan oleh runtime lain.</string>
     <string name="runtime_installation_changed">Instalasi MIDlet tidak dapat disiapkan untuk dijalankan.</string>
@@ -924,10 +914,8 @@
 
     <string name="library_action_settings_summary">Atur perilaku dan tampilan global aplikasi.</string>
     <string name="library_action_crash_reports_summary">Tinjau laporan diagnostik yang tersimpan.</string>
-    <string name="library_action_save_log_summary">Simpan log terbaru JL-Mod Plus untuk pemecahan masalah.</string>
     <string name="library_action_about_summary">Ringkasan proyek, informasi build, dan tautan.</string>
     <string name="library_action_licenses_summary">Pemberitahuan pihak ketiga dan ketentuan lisensi yang disertakan.</string>
-    <string name="library_action_help_summary">Panduan penggunaan dan kontrol umum.</string>
     <string name="library_donation_action">Dukung pengembangan</string>
     <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
     <string name="library_donation_title">Dukung JL-Mod Plus</string>
@@ -974,11 +962,9 @@
     <string name="memory_editor_write_failure_outcome">%1$s\nPenulisan terkonfirmasi: %2$d. Belum terkonfirmasi: %3$d. Dilewati: %4$d. Belum dicoba: %5$d. Dilewati karena tipe data: %6$d.</string>
     <string name="memory_editor_next_scan_result">Hasil pemindaian berikutnya: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Otomatis</string>
-    <string name="about_maintainer">Pengelola: %1$s</string>
     <string name="midlet_failure_recovery_message">MIDlet berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. JL-Mod Plus tetap dapat digunakan.</string>
     <string name="midlet_failure_recovery_message_named">“%1$s” berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. JL-Mod Plus tetap dapat digunakan.</string>
     <string name="runtime_replacement_failed">MIDlet yang sedang berjalan tidak dapat dihentikan. Coba buka MIDlet baru lagi.</string>
-    <string name="about_version">Versi %1$s</string>
     <string name="screenshot_save_failed">Tangkapan layar tidak dapat disimpan.</string>
     <string name="screenshot_saved_path">Tangkapan layar disimpan di %1$s</string>
     <string name="log_save_started">Penyimpanan log dimulai.</string>
@@ -1065,5 +1051,5 @@
     <string name="memory_editor_incremental_edit">Bertahap</string>
     <string name="memory_editor_increment_step">Langkah</string>
     <string name="memory_editor_increment_invalid">Gunakan satu tipe bilangan bulat dan nilai dalam rentangnya.</string>
-    <string name="memory_editor_increment_preview">Pratinjau: %1$s (%2$d nilai)</string>
+    <string name="memory_editor_increment_preview">Pratinjau: %1$s</string>
 </resources>
