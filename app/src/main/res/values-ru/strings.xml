@@ -41,7 +41,6 @@
     <string name="exit">Выход</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Остановить этот MIDlet? Несохранённые изменения могут быть потеряны.</string>
     <string name="help">Помощь</string>
-    <string name="help_message">&#8226; Включение фильтрации в некоторых случаях может значительно снизить производительность. Отключите её, если приложение работает слишком медленно.&lt;BR&gt;&#8226; Режим немедленной обработки обходит обычную очередь событий Java ME. Он может повысить отзывчивость, но способен вызвать непредсказуемое поведение.</string>
     <string name="identity_filter">Нет (самый быстрый)</string>
     <string name="install">Установить</string>
     <string name="install_done">Приложение установлено.</string>
@@ -196,7 +195,6 @@
     <string name="midlet_running_notification_title">MIDlet работает</string>
     <string name="midlet_running_notification_text">%1$s работает.</string>
     <string name="midlet_running_notification_channel">Среда выполнения MIDlet</string>
-    <string name="about_maintainer">Сопровождает: %1$s</string>
     <string name="file_picker_sort_modified_newest">Изменение: сначала новые</string>
     <string name="file_picker_empty_folder">Папки не найдены</string>
     <string name="file_picker_folder_exists">Объект с таким именем уже существует.</string>
@@ -238,7 +236,6 @@
     <string name="memory_editor_no_results">Нет результатов</string>
     <string name="memory_editor_unsupported">Редактор памяти недоступен для этой среды выполнения.</string>
     <string name="memory_editor_add_to_watch">Добавить выбранное в наблюдение</string>
-    <string name="memory_editor_edit_batch_help">Применяет новое значение к выбранным целям, совместимым с выбранным типом данных. Наблюдение и заморозка недоступны при пакетном редактировании.</string>
     <string name="memory_editor_edit_batch_no_common_type">Выбранные результаты не поддерживают выбранный тип данных. Измените совместимые результаты отдельно.</string>
     <string name="memory_editor_save">Применить</string>
     <string name="memory_editor_replacement">Новое значение</string>
@@ -292,7 +289,6 @@
     <string name="memory_editor_write_failure_outcome">%1$s\nЗаписи подтверждены: %2$d. Не подтверждены: %3$d. Пропущены: %4$d. Не предпринято: %5$d. Пропущены из-за типа: %6$d.</string>
     <string name="memory_editor_next_scan_result">Результаты следующего сканирования: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Авто</string>
-    <string name="about_version">Версия %1$s</string>
     <string name="screenshot_save_failed">Не удалось сохранить снимок экрана.</string>
     <string name="screenshot_saved_path">Снимок экрана сохранён в %1$s</string>
     <string name="log_save_started">Сохранение журнала начато.</string>
@@ -569,7 +565,6 @@
     <string name="library_collection_manage_apps_summary">Отметьте приложения, которые нужно включить в эту коллекцию.</string>
     <string name="library_collection_members_empty">В этой коллекции нет приложений.</string>
     <string name="library_collection_select_message">Выберите коллекцию, чтобы посмотреть её приложения.</string>
-    <string name="library_collection_remove">Убрать из коллекции</string>
     <string name="library_collection_remove_from_current">Убрать из коллекции</string>
     <string name="library_no_matches">Нет совпадений для \"%1$s\"</string>
     <string name="library_action_share_app">Поделиться приложением</string>
@@ -865,9 +860,6 @@
     <string name="config_help_timing_mode">Выбирает, использует ли MIDlet время эмуляции или системное время. Относительные задержки по-прежнему масштабируются со скоростью эмуляции.</string>
     <string name="config_help_timing_unavailable">Настройки времени недоступны для этой установки MIDlet. Переустановите или преобразуйте MIDlet заново, чтобы включить их.</string>
     <string name="reconverting_wait">Перед запуском этому MIDlet требуется однократное преобразование для совместимости. Преобразование…</string>
-    <string name="reconversion_error">Не удалось автоматически преобразовать MIDlet.
-
-%1$s</string>
     <string name="config_help_generic_color">Задаёт цвет этого визуального элемента.</string>
     <string name="config_help_encoding">Выбирает кодировку символов, сообщаемую в свойстве microedition.encoding.</string>
     <string name="config_edit_system_properties">Изменить системные свойства</string>
@@ -1019,10 +1011,6 @@
     <string name="pref_accent_amber">Янтарный</string>
     <string name="pref_accent_rose">Розово-красный</string>
     <string name="pref_accent_violet">Фиолетовый</string>
-    <string name="pref_accent_indigo">Индиго</string>
-    <string name="pref_accent_cyan">Голубой</string>
-    <string name="pref_accent_orange">Оранжевый</string>
-    <string name="pref_accent_pink">Розовый</string>
     <string name="runtime_invalid_intent">Недопустимый запрос запуска: путь к MIDlet отсутствует.</string>
     <string name="runtime_storage_in_use">Хранилище MIDlet уже используется другой средой выполнения.</string>
     <string name="runtime_storage_unavailable">Не удалось подготовить хранилище MIDlet.</string>
@@ -1032,10 +1020,8 @@
     <string name="library_selection_unchecked">Не выбрано</string>
     <string name="library_action_settings_summary">Настройте общее поведение и внешний вид.</string>
     <string name="library_action_crash_reports_summary">Просмотрите сохранённые диагностические отчёты.</string>
-    <string name="library_action_save_log_summary">Сохраните последние журналы JL-Mod Plus для диагностики.</string>
     <string name="library_action_about_summary">Обзор проекта, сведения о сборке и ссылки.</string>
     <string name="library_action_licenses_summary">Уведомления сторонних компонентов и условия лицензий, включённые в приложение.</string>
-    <string name="library_action_help_summary">Руководство по использованию и основным элементам управления.</string>
     <string name="library_bulk_delete_apps">Удалить приложения</string>
     <string name="library_bulk_share_apps">Поделиться приложениями</string>
     <string name="library_bulk_reinstall_apps">Переустановить</string>
@@ -1075,7 +1061,7 @@
     <string name="memory_editor_change_amount">Величина изменения</string>
     <string name="memory_editor_edit_batch_type_notice">Будут изменены только значения с подходящим типом данных.</string>
     <string name="memory_editor_increment_invalid">Используйте один целочисленный тип и значения в его диапазоне.</string>
-    <string name="memory_editor_increment_preview">Предпросмотр: %1$s (значений: %2$d)</string>
+    <string name="memory_editor_increment_preview">Предпросмотр: %1$s</string>
     <string name="memory_editor_increment_start">Начальное значение</string>
     <string name="memory_editor_increment_step">Шаг</string>
     <string name="memory_editor_incremental_edit">Последовательность</string>
