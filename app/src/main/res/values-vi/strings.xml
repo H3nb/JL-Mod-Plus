@@ -633,7 +633,6 @@
     <string name="saved_keyboard_layout_summary">Bố cục điều khiển ảo đã lưu.</string>
     <string name="virtual_controls_save_failed">Không thể lưu điều khiển ảo. Hãy thử lại.</string>
     <plurals name="config_system_properties_value">
-        <item quantity="one">%1$d thuộc tính</item>
         <item quantity="other">%1$d thuộc tính</item>
     </plurals>
     <string name="config_help_scale_ratio" formatted="false">Điều chỉnh kích thước hiển thị từ 1% đến 1000%. Ở 100%, trò chơi dùng kích thước gốc; giá trị lớn hơn có thể khiến nội dung vượt ra ngoài màn hình.</string>
@@ -724,75 +723,57 @@
     <string name="reconversion_error_summary">Không thể tự động chuyển đổi MIDlet.</string>
     <string name="reconverting_wait">MIDlet này cần chuyển đổi tương thích một lần trước khi khởi động. Đang chuyển đổi…</string>
     <plurals name="bulk_install_attention_count">
-        <item quantity="one">%1$d mục cần xem lại</item>
         <item quantity="other">%1$d mục cần xem lại</item>
     </plurals>
     <plurals name="bulk_install_failed_count">
-        <item quantity="one">%1$d mục thất bại</item>
         <item quantity="other">%1$d mục thất bại</item>
     </plurals>
     <plurals name="bulk_install_found">
-        <item quantity="one">Tìm thấy %1$d ứng dụng</item>
         <item quantity="other">Tìm thấy %1$d ứng dụng</item>
     </plurals>
     <plurals name="bulk_install_installed_count">
-        <item quantity="one">Đã cài đặt %1$d mục</item>
         <item quantity="other">Đã cài đặt %1$d mục</item>
     </plurals>
     <plurals name="bulk_install_omitted_sources">
-        <item quantity="one">Đã bỏ bớt %1$d tệp bổ sung khỏi phần xem lại để giao diện phản hồi nhanh.</item>
         <item quantity="other">Đã bỏ bớt %1$d tệp bổ sung khỏi phần xem lại để giao diện phản hồi nhanh.</item>
     </plurals>
     <plurals name="bulk_install_ready_count">
-        <item quantity="one">%1$d mục sẵn sàng</item>
         <item quantity="other">%1$d mục sẵn sàng</item>
     </plurals>
     <plurals name="bulk_install_reason_ambiguous_match">
-        <item quantity="one">Có %1$d ứng dụng đã cài đặt khớp với nguồn này.</item>
         <item quantity="other">Có %1$d ứng dụng đã cài đặt khớp với nguồn này.</item>
     </plurals>
     <plurals name="bulk_install_reinstall_missing_apps">
-        <item quantity="one">Có %1$d ứng dụng đã chọn trong thư viện không còn khả dụng.</item>
         <item quantity="other">Có %1$d ứng dụng đã chọn trong thư viện không còn khả dụng.</item>
     </plurals>
     <plurals name="bulk_install_reinstalled_count">
-        <item quantity="one">Đã cài đặt lại %1$d mục</item>
         <item quantity="other">Đã cài đặt lại %1$d mục</item>
     </plurals>
     <plurals name="bulk_install_restored_count">
-        <item quantity="one">Đã khôi phục %1$d mục</item>
         <item quantity="other">Đã khôi phục %1$d mục</item>
     </plurals>
     <plurals name="bulk_install_running">
-        <item quantity="one">Đã xử lý %1$d ứng dụng trong tổng số %2$d</item>
         <item quantity="other">Đã xử lý %1$d ứng dụng trong tổng số %2$d</item>
     </plurals>
     <plurals name="bulk_install_selected">
-        <item quantity="one">Đã chọn %1$d mục</item>
         <item quantity="other">Đã chọn %1$d mục</item>
     </plurals>
     <plurals name="bulk_install_skipped_count">
-        <item quantity="one">Đã cài đặt hoặc trùng lặp: %1$d</item>
         <item quantity="other">Đã cài đặt hoặc trùng lặp: %1$d</item>
     </plurals>
     <plurals name="bulk_install_skipped_result_count">
-        <item quantity="one">Đã bỏ qua %1$d mục</item>
         <item quantity="other">Đã bỏ qua %1$d mục</item>
     </plurals>
     <plurals name="bulk_install_updated_count">
-        <item quantity="one">Đã cập nhật %1$d mục</item>
         <item quantity="other">Đã cập nhật %1$d mục</item>
     </plurals>
     <plurals name="bulk_install_warning_count">
-        <item quantity="one">%1$d cảnh báo</item>
         <item quantity="other">%1$d cảnh báo</item>
     </plurals>
     <plurals name="installer_conversion_omitted_details">
-        <item quantity="one">Có %1$d vấn đề chuyển đổi bổ sung không được hiển thị.</item>
         <item quantity="other">Có %1$d vấn đề chuyển đổi bổ sung không được hiển thị.</item>
     </plurals>
     <plurals name="installer_conversion_warning_summary">
-        <item quantity="one">Đã bỏ qua %1$d tệp lớp Java vì không đọc được. Các tính năng dùng những tệp này có thể không hoạt động.</item>
         <item quantity="other">Đã bỏ qua %1$d tệp lớp Java vì không đọc được. Các tính năng dùng những tệp này có thể không hoạt động.</item>
     </plurals>
     <string name="memory_editor_add_to_watch">Thêm các giá trị đã chọn vào danh sách theo dõi</string>
