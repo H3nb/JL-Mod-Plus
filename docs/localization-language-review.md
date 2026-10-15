@@ -14,7 +14,11 @@ Android XML remains the translation catalog. Re-export the inventory before writ
 | `si` | 0 | 0 |
 | `sat` | 0 | 76 |
 
-The 39 catalogs contain 977 canonical identities; all 39 now have full resource presence.
+At the preceding localization checkpoint, the 39 catalogs contained 977 canonical identities.
+A subsequent lint cleanup removed 12 unused translatable identities from English and all
+39 catalogs. The current canonical set contains **965 translatable identities**, and every
+catalog retains complete resource presence. The removed identities were obsolete UI copy;
+no live translation key was replaced with an English fallback.
 There are **zero missing declarations**; Santali linguistic QA remains unfinished. Existing-case counts are a
 deduplicated continuation of recorded deferred selections, not whole-catalog
 native-speaker certification. Santali remains in the requested product scope.
