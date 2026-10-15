@@ -3,6 +3,25 @@
 Snapshot: 14 October 2026. Continue only on `localization/ai-matrix-workflow`;
 base `alpha`. The PR remains Draft and is not ready to merge.
 
+## Lint cleanup checkpoint (15 October 2026)
+
+- The 39 locale catalogs remain complete against the current canonical English
+  resource set, now **965 translatable identities** rather than the historical 977.
+  Twelve obsolete translatable strings were removed consistently in every locale;
+  the separate nontranslatable identities `about_github` and
+  `about_maintainer_name` were also retired.
+- Memory Editor's incremental preview displays the sample sequence without
+  repeating the selected target count already in the batch dialog title.
+  `memory_editor_increment_preview` now takes only `%1$s` in all catalogs.
+- Lint cleanup also corrects a Compose test assertion, preserves Android 6
+  compatibility in managed-memory accounting, normalizes affected Timer
+  indentation, discards two unused icons with notice adjustments, and retains
+  correct Turkish/German wording through targeted Lint annotations.
+- The earlier 977-identity checkpoints below remain historical evidence; the
+  reduced inventory does not imply lost active localization coverage.
+  All 76 deferred existing Santali language-quality reviews and broader
+  machine-assisted translation QA remain open. This PR stays Draft.
+
 ## Earlier accepted work
 
 - Library, Collections, file picker, and Updates: 174 canonical resources
