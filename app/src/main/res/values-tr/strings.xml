@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="about">Hakkında</string>
     <string name="about_message">Klasik uygulamaları ve oyunları çalıştırın, MIDlet\'leri Kitaplığınızda düzenleyin; kontrolleri, görüntüyü, sesi ve performansı ayarlayın. JL-Mod Plus ücretsiz ve açık kaynaklıdır.</string>
     <string name="action_context_delete">Sil</string>
@@ -28,7 +28,6 @@
     <string name="exit">Çıkış</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Bu MIDlet durdurulsun mu? Kaydedilmemiş değişiklikler kaybolabilir.</string>
     <string name="help">Yardım</string>
-    <string name="help_message">• Doğrusal filtreleme, bazı MIDlet\'lerde performansı önemli ölçüde düşürebilir. MIDlet çok yavaşsa bu özelliği devre dışı bırakın.&lt;BR&gt;• Anında işleme, normal Java ME olay kuyruğunu atlar. Yanıt hızını artırabilir, ancak bazı MIDlet\'lerin kararsız çalışmasına neden olabilir.</string>
     <string name="identity_filter">Yok (en hızlı)</string>
     <string name="install">yükle</string>
     <string name="install_done">Uygulama başarıyla yüklendi!</string>
@@ -157,10 +156,8 @@
     <string name="about_lineage">JL-Mod Plus, woesss (Yury Kharchenko) tarafından geliştirilen JL-Mod\'un bağımsız bir çatallamasıdır. JL-Mod, Nikita Shakarun\'un J2ME Loader projesini temel alır. J2ME Loader\'ın kökeni ise NaikSoftware\'in J2meLoader projesine dayanır.</string>
     <string name="about_lineage_title">Projenin kökeni</string>
     <string name="about_links_title">Proje ve lisanslar</string>
-    <string name="about_maintainer">Bakım sorumlusu: %1$s</string>
     <string name="about_revision_label">Kaynak kod revizyonu</string>
     <string name="about_subtitle">Android için Java ME emülatörü</string>
-    <string name="about_version">Sürüm %1$s</string>
     <string name="about_version_label">Sürüm</string>
     <string name="action_back">Geri</string>
     <string name="clear_report_selection">Rapor seçimini temizle</string>
@@ -230,11 +227,9 @@
     <string name="library_action_about_summary">Proje özeti, derleme bilgileri ve bağlantılar.</string>
     <string name="library_action_crash_reports_summary">Kaydedilmiş tanılama raporlarını inceleyin.</string>
     <string name="library_action_export_bundle">Uygulama paketini dışa aktar</string>
-    <string name="library_action_help_summary">Kullanım rehberi ve yaygın kontroller.</string>
     <string name="library_action_import_bundle">Uygulama paketi içe aktar</string>
     <string name="library_action_import_bundle_summary">Dışa aktarılmış JAR dosyasını, uygulama ayarlarını ve kayıt verilerini geri yükleyin.</string>
     <string name="library_action_licenses_summary">Uygulamayla birlikte gelen üçüncü taraf bildirimleri ve lisans koşulları.</string>
-    <string name="library_action_save_log_summary">Sorun gidermek için son JL-Mod Plus günlüklerini kaydedin.</string>
     <string name="library_action_select">Seç</string>
     <string name="library_action_settings_summary">Genel davranışı ve görünümü yapılandırın.</string>
     <string name="library_action_share_app">Uygulamayı paylaş</string>
@@ -254,7 +249,6 @@
     <string name="library_collection_name">Koleksiyon adı</string>
     <string name="library_collection_new">Yeni koleksiyon</string>
     <string name="library_collection_ready_empty_message">Dosyalarını taşımadan uygulamaları düzenlemek için koleksiyonlar oluşturun.</string>
-    <string name="library_collection_remove">Koleksiyondan çıkar</string>
     <string name="library_collection_remove_from_current">Koleksiyondan çıkar</string>
     <string name="library_collection_select_message">Uygulamalarını görmek için bir koleksiyon seçin.</string>
     <string name="library_collection_select_title">Koleksiyon seç</string>
@@ -730,7 +724,6 @@
     <string name="installer_stage_wait">Başka bir işlem bekleniyor…</string>
     <string name="installer_title">MIDlet yükleyicisi</string>
     <string name="reconversion_done_with_warning">Uyumluluk dönüştürmesi uyarılarla tamamlandı.</string>
-    <string name="reconversion_error">MIDlet otomatik olarak dönüştürülemedi.\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet otomatik olarak dönüştürülemedi.</string>
     <string name="reconverting_wait">Bu MIDlet\'in başlatılmadan önce bir defalık uyumluluk dönüştürmesine ihtiyacı var. Dönüştürülüyor…</string>
     <plurals name="bulk_install_attention_count">
@@ -821,8 +814,8 @@
     <string name="memory_editor_clear_selection">Seçimi temizle</string>
     <string name="memory_editor_close">Bellek Düzenleyiciyi kapat</string>
     <string name="memory_editor_edit">Düzenle</string>
-    <string name="memory_editor_edit_batch_help">Yeni değeri, seçilen veri türüyle uyumlu seçili hedeflere uygular. Toplu düzenlemelerde İzleme ve Sabitleme kullanılamaz.</string>
-    <string name="memory_editor_edit_batch_no_common_type">Seçili sonuçlar seçilen veri türünü desteklemiyor. Uyumlu sonuçları ayrı ayrı düzenleyin.</string>
+    <!-- “ayrı ayrı” is an intentional Turkish reduplication meaning “separately”. -->
+    <string name="memory_editor_edit_batch_no_common_type" tools:ignore="Typos">Seçili sonuçlar seçilen veri türünü desteklemiyor. Uyumlu sonuçları ayrı ayrı düzenleyin.</string>
     <string name="memory_editor_edit_batch_type_notice">Yalnızca veri türü eşleşen değerler değiştirilecek.</string>
     <string name="memory_editor_engine_reconnecting">Bellek Düzenleyici yeniden bağlanıyor…</string>
     <string name="memory_editor_engine_unavailable">Bellek Düzenleyici motoru kullanılamıyor.</string>
@@ -835,7 +828,7 @@
     <string name="memory_editor_freeze_paused">Güvenlik için duraklatıldı</string>
     <string name="memory_editor_identity_unsafe">Seçili değer veya arama durumu doğrulanamadı. Sonuçları yenileyin veya İnceleyiciyi yeniden açın, ardından tekrar deneyin.</string>
     <string name="memory_editor_increment_invalid">Tek bir tam sayı türü ve bu türün aralığındaki değerleri kullanın.</string>
-    <string name="memory_editor_increment_preview">Önizleme: %1$s (%2$d değer)</string>
+    <string name="memory_editor_increment_preview">Önizleme: %1$s</string>
     <string name="memory_editor_increment_start">Başlangıç değeri</string>
     <string name="memory_editor_increment_step">Adım</string>
     <string name="memory_editor_incremental_edit">Aritmetik dizi</string>
@@ -986,11 +979,7 @@
     <string name="pref_accent_blue">Varsayılan mavi</string>
     <string name="pref_accent_classic_blue">Klasik mavi</string>
     <string name="pref_accent_coral">Mercan şeftali</string>
-    <string name="pref_accent_cyan">Camgöbeği</string>
     <string name="pref_accent_green">Zümrüt yeşili</string>
-    <string name="pref_accent_indigo">Çivit mavisi</string>
-    <string name="pref_accent_orange">Turuncu</string>
-    <string name="pref_accent_pink">Pembe</string>
     <string name="pref_accent_rose">Orman meyvesi pembesi</string>
     <string name="pref_accent_sapphire">Safir mavisi</string>
     <string name="pref_accent_teal">Yeşim yeşili</string>
