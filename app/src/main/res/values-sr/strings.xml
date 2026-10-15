@@ -14,11 +14,9 @@
     <string name="about_lineage">JL-Mod Plus је независна изведена верзија JL-Mod-а који је развио woesss (Yury Kharchenko). JL-Mod је заснован на J2ME Loader-у који је развио Nikita Shakarun, а који потиче од J2meLoader-а компаније NaikSoftware.</string>
     <string name="about_lineage_title">Порекло пројекта</string>
     <string name="about_links_title">Пројекат и лиценце</string>
-    <string name="about_maintainer">Одржава: %1$s</string>
     <string name="about_message">Покрећите класичне апликације и игре, организујте MIDlet-е у Библиотеци и прилагодите контроле, приказ, звук и перформансе. JL-Mod Plus је бесплатан и отвореног кода.</string>
     <string name="about_revision_label">Ревизија изворног кода</string>
     <string name="about_subtitle">Java ME емулатор за Android</string>
-    <string name="about_version">Верзија %1$s</string>
     <string name="about_version_label">Верзија</string>
     <string name="action_back">Назад</string>
     <string name="action_context_delete">Обриши</string>
@@ -55,7 +53,6 @@
     <string name="error_name">Унесите назив.</string>
     <string name="exit">Изађи</string>
     <string name="help">Помоћ</string>
-    <string name="help_message">• Линеарно филтрирање може знатно да смањи перформансе неких MIDlet-а. Искључите га ако је MIDlet преспор.&lt;BR&gt;• Непосредна обрада заобилази уобичајени Java ME ред догађаја. Може да побољша одзив, али неке MIDlet-е може да учини нестабилним.</string>
     <string name="licenses">Лиценце</string>
     <string name="licenses_unavailable">Детаљи лиценци нису доступни.</string>
     <string name="loading_apps">Учитавање апликација</string>
@@ -121,11 +118,9 @@
     <string name="library_action_about_summary">Преглед пројекта, подаци о изради и везе.</string>
     <string name="library_action_crash_reports_summary">Прегледај сачуване дијагностичке извештаје.</string>
     <string name="library_action_export_bundle">Извези пакет апликације</string>
-    <string name="library_action_help_summary">Упутства за коришћење и уобичајене контроле.</string>
     <string name="library_action_import_bundle">Увези пакет апликације</string>
     <string name="library_action_import_bundle_summary">Вратите извезени JAR, подешавања апликације и сачуване податке.</string>
     <string name="library_action_licenses_summary">Обавештења трећих страна и услови лиценци укључени у апликацију.</string>
-    <string name="library_action_save_log_summary">Сачувајте недавне евиденције JL-Mod Plus ради решавања проблема.</string>
     <string name="library_action_select">Изабери</string>
     <string name="library_action_settings_summary">Подесите опште понашање и изглед.</string>
     <string name="library_action_share_app">Подели апликацију</string>
@@ -145,7 +140,6 @@
     <string name="library_collection_name">Назив колекције</string>
     <string name="library_collection_new">Нова колекција</string>
     <string name="library_collection_ready_empty_message">Направите колекције да бисте организовали апликације без премештања њихових датотека.</string>
-    <string name="library_collection_remove">Уклони из колекције</string>
     <string name="library_collection_remove_from_current">Уклони из колекције</string>
     <string name="library_collection_select_message">Изаберите колекцију да бисте видели њене апликације.</string>
     <string name="library_collection_select_title">Изабери колекцију</string>
@@ -636,7 +630,6 @@
     <string name="installer_stage_wait">Чекање друге радње…</string>
     <string name="installer_title">MIDlet инсталатер</string>
     <string name="reconversion_done_with_warning">Конверзија за компатибилност је завршена са упозорењима.</string>
-    <string name="reconversion_error">MIDlet није могао аутоматски да се конвертује.\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet није могао аутоматски да се конвертује.</string>
     <string name="reconverting_wait">Овај MIDlet захтева једнократну конверзију за компатибилност пре покретања. Конвертовање…</string>
     <string name="reinstall">Ова апликација је већ инсталирана. Поново је инсталирати?</string>
@@ -753,7 +746,6 @@
     <string name="memory_editor_clear_selection">Очисти избор</string>
     <string name="memory_editor_close">Затвори Уређивач меморије</string>
     <string name="memory_editor_edit">Уреди</string>
-    <string name="memory_editor_edit_batch_help">Примењује заменску вредност на изабране циљеве компатибилне са изабраним типом података. Праћење и Замрзни нису доступни за групно уређивање.</string>
     <string name="memory_editor_edit_batch_no_common_type">Изабрани резултати не подржавају изабрани тип података. Уредите компатибилне резултате засебно.</string>
     <string name="memory_editor_edit_batch_type_notice">Мењаће се само вредности са одговарајућим типовима података.</string>
     <string name="memory_editor_engine_reconnecting">Уређивач меморије се поново повезује…</string>
@@ -767,7 +759,7 @@
     <string name="memory_editor_freeze_paused">Паузирано ради безбедности</string>
     <string name="memory_editor_identity_unsafe">Изабрана вредност или стање претраге нису могли да се провере. Освежите резултате или поново отворите Инспектор, па покушајте поново.</string>
     <string name="memory_editor_increment_invalid">Користите један целобројни тип и вредности у његовом опсегу.</string>
-    <string name="memory_editor_increment_preview">Преглед: %1$s (број вредности: %2$d)</string>
+    <string name="memory_editor_increment_preview">Преглед: %1$s</string>
     <string name="memory_editor_increment_start">Почетна вредност</string>
     <string name="memory_editor_increment_step">Корак</string>
     <string name="memory_editor_incremental_edit">Аритметички низ</string>
@@ -957,11 +949,7 @@
     <string name="pref_accent_blue">Подразумевана плава</string>
     <string name="pref_accent_classic_blue">Класична плава</string>
     <string name="pref_accent_coral">Корална боја брескве</string>
-    <string name="pref_accent_cyan">Цијан</string>
     <string name="pref_accent_green">Смарагднозелена</string>
-    <string name="pref_accent_indigo">Индиго</string>
-    <string name="pref_accent_orange">Наранџаста</string>
-    <string name="pref_accent_pink">Ружичаста</string>
     <string name="pref_accent_rose">Бобичаста ружичаста</string>
     <string name="pref_accent_sapphire">Сафирноплава</string>
     <string name="pref_accent_teal">Жаднотиркизна</string>
