@@ -21,11 +21,9 @@
     <string name="about_lineage">JL-Mod Plus යනු woesss (Yury Kharchenko) ගේ JL-Mod හි ස්වාධීන ෆෝක් එකකි. JL-Mod, Nikita Shakarun ගේ J2ME Loader මත පදනම් වී ඇති අතර එහි ආරම්භය NaikSoftware ගේ J2meLoader දක්වා දිව යයි.</string>
     <string name="about_lineage_title">ව්‍යාපෘතියේ ආරම්භය</string>
     <string name="about_links_title">ව්‍යාපෘතිය සහ බලපත්‍ර</string>
-    <string name="about_maintainer">නඩත්තුකරු: %1$s</string>
     <string name="about_message">පැරණි යෙදුම් සහ ක්‍රීඩා ධාවනය කරන්න, ඔබේ පුස්තකාලයේ MIDlet සංවිධානය කරන්න සහ පාලක, දර්ශනය, ශ්‍රව්‍ය හා කාර්යසාධනය සකසන්න. JL-Mod Plus නොමිලේ ලබා දෙන විවෘත කේත යෙදුමකි.</string>
     <string name="about_revision_label">මූලාශ්‍ර සංශෝධනය</string>
     <string name="about_subtitle">Android සඳහා Java ME ඉමුලේටරය</string>
-    <string name="about_version">අනුවාදය %1$s</string>
     <string name="about_version_label">අනුවාදය</string>
     <string name="action_back">ආපසු</string>
     <string name="action_context_delete">මකන්න</string>
@@ -58,7 +56,6 @@
     <string name="edit_preset">පැතිකඩ සංස්කරණය කරන්න</string>
     <string name="error">දෝෂය</string>
     <string name="error_name">නමක් ඇතුළත් කරන්න.</string>
-    <string name="help_message">• රේඛීය පෙරීම සමහර MIDlet වල කාර්යසාධනය සැලකිය යුතු ලෙස අඩු කළ හැක. MIDlet ඉතා මන්දගාමී නම් එය අක්‍රීය කරන්න.&lt;BR&gt;• ක්ෂණික සැකසීම සාමාන්‍ය Java ME සිදුවීම් පෝලිම මඟ හරියි. එය ප්‍රතිචාර දැක්වීම වැඩිදියුණු කළ හැකි නමුත් සමහර MIDlet අස්ථාවර කළ හැක.</string>
     <string name="licenses_unavailable">බලපත්‍ර විස්තර ලබා ගත නොහැක.</string>
     <string name="loading_apps">යෙදුම් පූරණය කරමින්</string>
     <string name="loading_info">තොරතුරු පූරණය කරමින්…</string>
@@ -122,11 +119,9 @@
     <string name="library_action_about_summary">ව්‍යාපෘති හැඳින්වීම, බිල්ඩ් තොරතුරු සහ සබැඳි.</string>
     <string name="library_action_crash_reports_summary">සුරැකි දෝෂ විනිශ්චය වාර්තා බලන්න.</string>
     <string name="library_action_export_bundle">යෙදුම් බණ්ඩලය නිර්යාත කරන්න</string>
-    <string name="library_action_help_summary">භාවිත මඟපෙන්වීම සහ පොදු පාලක.</string>
     <string name="library_action_import_bundle">යෙදුම් බණ්ඩලය ආයාත කරන්න</string>
     <string name="library_action_import_bundle_summary">නිර්යාත කළ JAR, යෙදුම් සැකසුම් සහ සුරැකි දත්ත ප්‍රතිස්ථාපනය කරන්න.</string>
     <string name="library_action_licenses_summary">යෙදුම සමඟ ඇතුළත් තෙවන පාර්ශ්ව දැන්වීම් සහ බලපත්‍ර කොන්දේසි.</string>
-    <string name="library_action_save_log_summary">ගැටලු විසඳීමට JL-Mod Plus හි මෑත ලොග් සුරකින්න.</string>
     <string name="library_action_select">තෝරන්න</string>
     <string name="library_action_settings_summary">සමස්ත ක්‍රියාකාරිත්වය සහ පෙනුම සකසන්න.</string>
     <string name="library_action_share_app">යෙදුම බෙදා ගන්න</string>
@@ -146,7 +141,6 @@
     <string name="library_collection_name">එකතුවේ නම</string>
     <string name="library_collection_new">නව එකතුව</string>
     <string name="library_collection_ready_empty_message">යෙදුම්වල ගොනු ගෙන යාමකින් තොරව ඒවා සංවිධානය කිරීමට එකතු සාදන්න.</string>
-    <string name="library_collection_remove">එකතුවෙන් ඉවත් කරන්න</string>
     <string name="library_collection_remove_from_current">එකතුවෙන් ඉවත් කරන්න</string>
     <string name="library_collection_select_message">එකතුවක යෙදුම් බැලීමට එය තෝරන්න.</string>
     <string name="library_collection_select_title">එකතුවක් තෝරන්න</string>
@@ -603,8 +597,6 @@
     <string name="perf_overlay_top_left">ඉහළ වම</string>
     <string name="perf_overlay_top_right">ඉහළ දකුණ</string>
     <string name="pref_accent_title">උද්දීපන වර්ණය</string>
-    <string name="pref_accent_orange">තැඹිලි</string>
-    <string name="pref_accent_pink">රෝස</string>
     <string name="pref_app_sort_ascending">ආරෝහණ</string>
     <string name="pref_app_sort_descending">අවරෝහණ</string>
     <string name="pref_app_sort_date">එක් කළ දිනය</string>
@@ -685,7 +677,6 @@
     <string name="installer_failed_download">යෙදුම බාගත කළ නොහැකි විය. සම්බන්ධතාව සහ බාගත කිරීමේ සබැඳිය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
     <string name="installer_failed_storage">ස්ථාපනය සම්පූර්ණ කළ නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
     <string name="reconversion_error_summary">MIDlet ස්වයංක්‍රීයව පරිවර්තනය කළ නොහැකි විය.</string>
-    <string name="reconversion_error">MIDlet ස්වයංක්‍රීයව පරිවර්තනය කළ නොහැකි විය.\n\n%1$s</string>
     <string name="reinstall">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. එය නැවත ස්ථාපනය කරන්නද?</string>
     <string name="memory_editor_cancelled">මෙහෙයුම අවලංගු කරන ලදී.</string>
     <string name="memory_editor_clear_selection">තේරීම ඉවත් කරන්න</string>
@@ -695,7 +686,7 @@
     <string name="memory_editor_freeze_paused">ආරක්ෂාව සඳහා තාවකාලිකව නවත්වා ඇත</string>
     <string name="memory_editor_increment_start">ආරම්භක අගය</string>
     <string name="memory_editor_increment_step">පියවර</string>
-    <string name="memory_editor_increment_preview">පෙරදසුන: %1$s (අගයන් %2$d)</string>
+    <string name="memory_editor_increment_preview">පෙරදසුන: %1$s</string>
     <string name="memory_editor_invalid_request">අගය හෝ මෙහෙයුම වලංගු නැත.</string>
     <string name="memory_editor_no_search_history">නැවත ගෙන ඒමට පෙර සිදු කළ සෙවුමක් නැත</string>
     <string name="memory_editor_predicate_between">අතර</string>
@@ -859,7 +850,6 @@
     <string name="memory_editor_undo">අහෝසි කරන්න</string>
     <string name="memory_editor_add_to_watch">තෝරාගත් අගයන් නිරීක්ෂණයට එක් කරන්න</string>
     <string name="memory_editor_no_candidates">සෙවිය හැකි අගයන් හමු නොවීය</string>
-    <string name="memory_editor_edit_batch_help">තෝරාගත් දත්ත වර්ගයට ගැළපෙන තෝරාගත් ඉලක්කවලට ප්‍රතිස්ථාපන අගය යොදයි. සමූහ සංස්කරණයේදී නිරීක්ෂණය සහ අගය ස්ථාවරව තැබීම ලබා ගත නොහැක.</string>
     <string name="memory_editor_edit_batch_no_common_type">තෝරාගත් ප්‍රතිඵල තෝරාගත් දත්ත වර්ගයට සහාය නොදක්වයි. ගැළපෙන ප්‍රතිඵල වෙනම සංස්කරණය කරන්න.</string>
     <string name="memory_editor_freeze">අගය ස්ථාවරව තබන්න</string>
     <string name="memory_editor_close">මතක සංස්කාරකය වසන්න</string>
@@ -1047,8 +1037,6 @@
     <string name="pref_accent_amber">රන්වන් ඇම්බර්</string>
     <string name="pref_accent_blue">පෙරනිමි නිල්</string>
     <string name="pref_accent_classic_blue">සම්භාව්‍ය නිල්</string>
-    <string name="pref_accent_indigo">ඉන්ඩිගෝ</string>
-    <string name="pref_accent_cyan">සයන්</string>
     <string name="bulk_install_library_changed">සමාලෝචනයෙන් පසු පුස්තකාලය වෙනස් වී ඇත. මෙම සමූහය වසා මූලාශ්‍ර නැවත තෝරන්න.</string>
     <string name="bulk_install_target_unverified">නැවත ස්ථාපනය කළ යුතු යෙදුම තහවුරු කළ නොහැකි විය. මෙම සමූහය වසා යෙදුම නැවත තෝරන්න.</string>
     <string name="bulk_install_reason_conflicting_jads">වෙනස් ගුණාංග සහිත JAD ගොනු එකම JAR වෙත යොමු කරයි.</string>
