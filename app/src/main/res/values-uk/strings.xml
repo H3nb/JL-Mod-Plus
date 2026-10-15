@@ -28,7 +28,6 @@
     <string name="exit">Вихід</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Зупинити цей MIDlet? Незбережені зміни може бути втрачено.</string>
     <string name="help">Довідка</string>
-    <string name="help_message">• Лінійна фільтрація може значно знизити продуктивність деяких MIDlet. Вимкніть її, якщо MIDlet працює надто повільно.&lt;BR&gt;• Негайна обробка оминає звичайну чергу подій Java ME. Це може покращити швидкість відгуку, але зробити роботу деяких MIDlet нестабільною.</string>
     <string name="identity_filter">Немає (найшвидше)</string>
     <string name="install">встановити</string>
     <string name="install_done">Додаток успішно встановлено!</string>
@@ -157,10 +156,8 @@
     <string name="about_lineage">JL-Mod Plus — незалежне відгалуження JL-Mod від woesss (Yury Kharchenko). JL-Mod базується на J2ME Loader від Nikita Shakarun, який бере початок від J2meLoader від NaikSoftware.</string>
     <string name="about_lineage_title">Походження проєкту</string>
     <string name="about_links_title">Проєкт і ліцензії</string>
-    <string name="about_maintainer">Супровідник: %1$s</string>
     <string name="about_revision_label">Ревізія коду</string>
     <string name="about_subtitle">Емулятор Java ME для Android</string>
-    <string name="about_version">Версія %1$s</string>
     <string name="about_version_label">Версія</string>
     <string name="action_back">Назад</string>
     <string name="clear_report_selection">Скасувати вибір звітів</string>
@@ -230,11 +227,9 @@
     <string name="library_action_about_summary">Огляд проєкту, інформація про збірку та посилання.</string>
     <string name="library_action_crash_reports_summary">Переглянути збережені діагностичні звіти.</string>
     <string name="library_action_export_bundle">Експортувати пакет застосунку</string>
-    <string name="library_action_help_summary">Інструкції з використання та основні елементи керування.</string>
     <string name="library_action_import_bundle">Імпортувати пакет застосунку</string>
     <string name="library_action_import_bundle_summary">Відновити експортований JAR, налаштування застосунку та збереження.</string>
     <string name="library_action_licenses_summary">Повідомлення третіх сторін і ліцензійні умови, що входять до застосунку.</string>
-    <string name="library_action_save_log_summary">Зберегти останні журнали JL-Mod Plus для усунення несправностей.</string>
     <string name="library_action_select">Вибрати</string>
     <string name="library_action_settings_summary">Налаштувати загальну поведінку та вигляд.</string>
     <string name="library_action_share_app">Поділитися застосунком</string>
@@ -254,7 +249,6 @@
     <string name="library_collection_name">Назва колекції</string>
     <string name="library_collection_new">Нова колекція</string>
     <string name="library_collection_ready_empty_message">Створюйте колекції, щоб упорядковувати застосунки без переміщення файлів.</string>
-    <string name="library_collection_remove">Вилучити з колекції</string>
     <string name="library_collection_remove_from_current">Вилучити з колекції</string>
     <string name="library_collection_select_message">Виберіть колекцію, щоб переглянути її застосунки.</string>
     <string name="library_collection_select_title">Вибрати колекцію</string>
@@ -742,7 +736,6 @@
     <string name="installer_stage_wait">Очікування іншої операції…</string>
     <string name="installer_title">Інсталятор MIDlet</string>
     <string name="reconversion_done_with_warning">Перетворення для сумісності завершено з попередженнями.</string>
-    <string name="reconversion_error">Не вдалося автоматично перетворити MIDlet.\n\n%1$s</string>
     <string name="reconversion_error_summary">Не вдалося автоматично перетворити MIDlet.</string>
     <string name="reconverting_wait">Перед запуском цей MIDlet потребує одноразового перетворення для сумісності. Перетворення…</string>
     <plurals name="bulk_install_attention_count">
@@ -869,7 +862,6 @@
     <string name="memory_editor_clear_selection">Очистити вибір</string>
     <string name="memory_editor_close">Закрити редактор пам’яті</string>
     <string name="memory_editor_edit">Редагувати</string>
-    <string name="memory_editor_edit_batch_help">Застосовує значення заміни до вибраних цілей, сумісних з обраним типом даних. Спостереження та Заморожування недоступні під час групового редагування.</string>
     <string name="memory_editor_edit_batch_no_common_type">Вибрані результати не підтримують обраний тип даних. Редагуйте сумісні результати окремо.</string>
     <string name="memory_editor_edit_batch_type_notice">Буде змінено лише значення з відповідним типом даних.</string>
     <string name="memory_editor_engine_reconnecting">Редактор пам’яті повторно підключається…</string>
@@ -883,7 +875,7 @@
     <string name="memory_editor_freeze_paused">Призупинено задля безпеки</string>
     <string name="memory_editor_identity_unsafe">Не вдалося перевірити вибране значення або стан пошуку. Оновіть результати чи знову відкрийте Інспектор і повторіть спробу.</string>
     <string name="memory_editor_increment_invalid">Використовуйте один цілочисельний тип і значення в його діапазоні.</string>
-    <string name="memory_editor_increment_preview">Попередній перегляд: %1$s (кількість значень: %2$d)</string>
+    <string name="memory_editor_increment_preview">Попередній перегляд: %1$s</string>
     <string name="memory_editor_increment_start">Початкове значення</string>
     <string name="memory_editor_increment_step">Крок</string>
     <string name="memory_editor_incremental_edit">Послідовність із кроком</string>
@@ -1046,11 +1038,7 @@
     <string name="pref_accent_blue">Типовий синій</string>
     <string name="pref_accent_classic_blue">Класичний синій</string>
     <string name="pref_accent_coral">Кораловий персик</string>
-    <string name="pref_accent_cyan">Ціан</string>
     <string name="pref_accent_green">Смарагдовий зелений</string>
-    <string name="pref_accent_indigo">Індиго</string>
-    <string name="pref_accent_orange">Помаранчевий</string>
-    <string name="pref_accent_pink">Рожевий</string>
     <string name="pref_accent_rose">Ягідний рожевий</string>
     <string name="pref_accent_sapphire">Сапфіровий синій</string>
     <string name="pref_accent_teal">Нефритовий бірюзовий</string>
