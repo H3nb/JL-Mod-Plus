@@ -373,9 +373,6 @@ android {
         // Analyze project dependencies through the app lint graph so library lint can be
         // scheduled with the app instead of requiring a second top-level lint invocation.
         checkDependencies = true
-        // Missing translations are intentionally deferred to the dedicated localization pass.
-        // Keep lint active so all other findings remain visible and fail the CI task on errors.
-        disable += "MissingTranslation"
     }
 
     flavorDimensions += "default"

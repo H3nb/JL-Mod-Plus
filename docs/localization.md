@@ -277,7 +277,11 @@ Current implementation evidence (verify against the source before relying on it)
 
 - [resources.properties](../app/src/main/res/resources.properties) declares
   `unqualifiedResLocale=en`; [app Gradle configuration](../app/build.gradle.kts)
-  enables `androidResources.generateLocaleConfig` and disables `MissingTranslation`.
+  enables `androidResources.generateLocaleConfig`. Android Lint's `MissingTranslation`
+  error check is enabled; keep app-owned visible strings complete across all
+  supported locales. Mark genuinely invariant values `translatable="false"`
+  rather than suppressing this check globally. The deterministic inventory
+  remains the source for exact string/plural identity and placeholder QA.
 - English [default resources](../app/src/main/res/values/strings.xml),
   [Indonesian resources](../app/src/main/res/values-in/strings.xml), and the
   other shipped base locale catalogs use `strings.xml` for app-owned strings
