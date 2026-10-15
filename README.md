@@ -33,6 +33,10 @@ JL-Mod Plus includes the features of JL-Mod, with additional features and improv
 - Batch JAR/JAD installation
 - Improved compatibility with modern Android versions
 
+## Contributing
+
+Start with [Agent guidelines](AGENTS.md) for project-wide engineering priorities and task-specific documentation links. See [Build and validation](docs/development.md) for relevant local checks; consult only the subsystem contracts affected by your change.
+
 ## Credits
 
 JL-Mod Plus is based on [JL-Mod](https://github.com/woesss/JL-Mod).

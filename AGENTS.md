@@ -54,6 +54,11 @@ Ground the solution in current evidence before committing to a production fix. T
 | UI copy styling, capitalization, typography, color, iconography, or popup/dialog presentation | [UI copy and presentation style](docs/ui-copy-style.md) |
 | Runtime host UI, Java ME Screen soft keys, or host/LCDUI boundary | [Runtime UI](docs/runtime-ui.md) |
 | Java ME APIs, JSRs, vendor APIs, or guest compatibility | [Java ME compatibility](docs/java-me-compatibility.md) |
+| Audio synthesis, MMAPI playback, native media, file video, or audio focus | [Audio runtime and qualification](docs/audio-runtime.md) |
+| Emulation speed, guest timing, or frame pacing | [Emulation speed](docs/emulation-speed.md) |
+| FPS and performance overlay metrics or their lifecycle | [Performance overlay](docs/performance-overlay.md) |
+| Managed Memory Editor candidate identity, Inspector provenance, or target invalidation | [Memory Editor candidate identity](docs/memory-editor-identity.md) |
+| Diagnostic records, crash reports, exported bundles, or privacy redaction | [Diagnostic bundles](docs/diagnostic-bundles.md) |
 | Preset/config ownership, installed identity, cross-process preset access, or runtime storage identity | [Preset, configuration, and installed-identity contracts](docs/preset-config-contract.md) |
 | Library Room schema or Library-owned data changes | [Library data and schema contracts](docs/library-data-contract.md) |
 | Third-party provenance or notices | [Third-party notices](THIRD_PARTY_NOTICES.md) and [NOTICE](NOTICE) |
