@@ -164,8 +164,8 @@ The active Config missing-application path uses
 `config_missing_app_storage_named` and `config_missing_app_storage_generic`,
 whose named form receives the raw storage-volume description. Legacy
 `err_missing_app` retains its historical quoted-name/trailing-space formatter
-contract as a dormant cleanup candidate so partial secondary locales are not
-silently given a different argument contract.
+contract as a dormant cleanup candidate so existing locale resources and
+callers are not silently given a different argument contract.
 
 ### Complete messages and placeholders
 
@@ -261,8 +261,8 @@ locale.
 **Target architecture:**
 
 - One human-language `strings.xml` catalog per locale, containing both `<string>`
-  and `<plurals>`. The English default is complete, Indonesian is required
-  complete, and every supported locale eventually becomes complete and reviewed.
+  and `<plurals>`. Keep English complete, Indonesian fully supported, and every
+  shipped locale structurally complete and subject to ongoing language review.
 - Structural arrays may remain in `arrays.xml`. Visible labels reference localized
   strings where appropriate; machine array values stay stable and non-translatable.
 - Android native Resources remain the localization engine. Do not add a
@@ -279,18 +279,15 @@ Current implementation evidence:
   `unqualifiedResLocale=en`; [app Gradle configuration](../app/build.gradle.kts)
   enables `androidResources.generateLocaleConfig` and disables `MissingTranslation`.
 - English [default resources](../app/src/main/res/values/strings.xml),
-  [Indonesian resources](../app/src/main/res/values-in/strings.xml), Russian
-  [resources](../app/src/main/res/values-ru/strings.xml), and the other base locale
-  catalogs use one `strings.xml` catalog for strings and plurals; structural and
-  configuration-specific resources remain separate. Active canonical English and
-  Indonesian have completed semantic/language review, Indonesian covers the full
-  translatable source catalog, and Russian has completed a full-catalog review
-  against the canonical semantics known at that review point. Other incomplete
-  secondary locales may intentionally fall back to canonical English until their
-  entries are reviewed. Prior review is a stability baseline, not immunity from
-  correction: avoid synonym or casing churn based only on taste, but revise any
-  locale when current evidence establishes a semantic, clarity, grammar,
-  terminology, accessibility, or consistency defect.
+  [Indonesian resources](../app/src/main/res/values-in/strings.xml), and the
+  other retained base locale catalogs use `strings.xml` for app-owned strings
+  and plurals; structural and configuration-specific resources remain separate.
+  Current catalogs have complete declaration coverage relative to canonical
+  English, but presence is not linguistic certification. English, Indonesian,
+  and Russian have established review baselines; all translations remain open
+  to evidence-based semantic, grammar, terminology, and accessibility fixes.
+  Android fallback remains a safety mechanism, not an accepted substitute for
+  complete translations.
 - Current catalog counts, locale coverage, and invariant-declaration totals come
   from the [deterministic inventory](#deterministic-inventory); do not maintain
   duplicate numeric inventories in this contract. Count-bearing app-owned UI

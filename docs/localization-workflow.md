@@ -45,8 +45,10 @@ From the repository root with Python 3.10+:
 python -B scripts/localization_audit.py
 python -B -m scripts.localization_matrix --prefix memory_editor_ --locale id --locale ru
 python -B -m scripts.localization_matrix --keys-file /path/to/selected-keys.txt --locale fr --locale de --output build/reports/localization/settings-matrix.json
-python -B -m unittest discover -s scripts/tests -p 'test_localization_*.py' -v
 ```
+
+Run the localization test suite using the command in
+[Build and validation](development.md#localization-inventory).
 
 `--prefix` may be repeated to combine key families; `--keys-file` uses
 one key per line and supports comments beginning with `#`. The two batch

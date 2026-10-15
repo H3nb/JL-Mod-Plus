@@ -51,7 +51,7 @@ the repository root with Python 3.10+ and no third-party dependencies:
 
 ```powershell
 python -B scripts/localization_audit.py
-python -B -m unittest discover -s scripts/tests -p test_localization_audit.py -v
+python -B -m unittest discover -s scripts/tests -p 'test_localization_*.py' -v
 ```
 
 The command prints a summary and writes deterministic schema-versioned
@@ -74,14 +74,14 @@ Generate a read-only side-by-side JSON workspace from the existing inventory:
 
 ```powershell
 python -B -m scripts.localization_matrix --prefix memory_editor_ --locale id --locale ru
-python -B -m unittest discover -s scripts/tests -p test_localization_matrix.py -v
 ```
 
 The default output is `build/reports/localization/matrix.json` (ignored by
 Git). The exporter uses the inventory parser, does not modify Android resource
-files, and does not attest linguistic quality. See the [localization
-workflow](localization-workflow.md) for grouped key selection, preservation of
-plurals, and applying reviewed translations.
+files, and does not attest linguistic quality. The shared localization test
+command above covers the inventory, matrix exporter, and batch applier.
+See the [localization workflow](localization-workflow.md) for grouped key
+selection, plural preservation, and applying reviewed translations.
 
 ## Testing strategy
 
