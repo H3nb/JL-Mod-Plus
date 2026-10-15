@@ -28,7 +28,6 @@
     <string name="exit">Ukončit</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Zastavit tento MIDlet? Neuložené změny mohou být ztraceny.</string>
     <string name="help">Nápověda</string>
-    <string name="help_message">• Lineární filtrování může u některých MIDletů výrazně snížit výkon. Pokud je MIDlet příliš pomalý, vypněte jej.&lt;BR&gt;• Okamžité zpracování obchází běžnou frontu událostí Java ME. Může zlepšit odezvu, ale některé MIDlety mohou být nestabilní.</string>
     <string name="identity_filter">Žádný (nejrychlejší)</string>
     <string name="install">instalovat</string>
     <string name="install_done">Aplikace byla úspěšně nainstalována!</string>
@@ -159,10 +158,8 @@
     <string name="about_lineage">JL-Mod Plus je nezávislý fork JL-Mod od woesss (Yury Kharchenko). JL-Mod vychází z J2ME Loader, který vytvořil Nikita Shakarun a který má původ v J2meLoader od NaikSoftware.</string>
     <string name="about_lineage_title">Původ projektu</string>
     <string name="about_links_title">Projekt a licence</string>
-    <string name="about_maintainer">Správce projektu: %1$s</string>
     <string name="about_revision_label">Revize zdrojového kódu</string>
     <string name="about_subtitle">Emulátor Java ME pro Android</string>
-    <string name="about_version">Verze %1$s</string>
     <string name="about_version_label">Verze</string>
     <string name="action_back">Zpět</string>
     <string name="clear_report_selection">Zrušit výběr zpráv</string>
@@ -232,11 +229,9 @@
     <string name="library_action_about_summary">Přehled projektu, informace o sestavení a odkazy.</string>
     <string name="library_action_crash_reports_summary">Zobrazit uložené diagnostické zprávy.</string>
     <string name="library_action_export_bundle">Exportovat balíček aplikace</string>
-    <string name="library_action_help_summary">Návod k použití a běžné ovládací prvky.</string>
     <string name="library_action_import_bundle">Importovat balíček aplikace</string>
     <string name="library_action_import_bundle_summary">Obnovit exportovaný JAR, nastavení aplikace a uložená data.</string>
     <string name="library_action_licenses_summary">Oznámení třetích stran a licenční podmínky přiložené k aplikaci.</string>
-    <string name="library_action_save_log_summary">Uložit nedávné protokoly JL-Mod Plus pro řešení problémů.</string>
     <string name="library_action_select">Vybrat</string>
     <string name="library_action_settings_summary">Nastavit globální chování a vzhled.</string>
     <string name="library_action_share_app">Sdílet aplikaci</string>
@@ -256,7 +251,6 @@
     <string name="library_collection_name">Název kolekce</string>
     <string name="library_collection_new">Nová kolekce</string>
     <string name="library_collection_ready_empty_message">Vytvořte kolekce pro uspořádání aplikací bez přesouvání jejich souborů.</string>
-    <string name="library_collection_remove">Odebrat z kolekce</string>
     <string name="library_collection_remove_from_current">Odebrat z kolekce</string>
     <string name="library_collection_select_message">Vyberte kolekci pro zobrazení jejích aplikací.</string>
     <string name="library_collection_select_title">Vybrat kolekci</string>
@@ -744,7 +738,6 @@
     <string name="installer_stage_wait">Čekání na jinou operaci…</string>
     <string name="installer_title">Instalátor MIDletů</string>
     <string name="reconversion_done_with_warning">Převod pro kompatibilitu dokončen s varováními.</string>
-    <string name="reconversion_error">MIDlet se nepodařilo automaticky převést.\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet se nepodařilo automaticky převést.</string>
     <string name="reconverting_wait">Tento MIDlet vyžaduje před spuštěním jednorázový převod pro kompatibilitu. Probíhá převod…</string>
     <plurals name="bulk_install_attention_count">
@@ -871,7 +864,6 @@
     <string name="memory_editor_clear_selection">Zrušit výběr</string>
     <string name="memory_editor_close">Zavřít editor paměti</string>
     <string name="memory_editor_edit">Upravit</string>
-    <string name="memory_editor_edit_batch_help">Použije náhradní hodnotu na vybrané cíle kompatibilní se zvoleným datovým typem. Sledování a Zmrazení nejsou při hromadných úpravách dostupné.</string>
     <string name="memory_editor_edit_batch_no_common_type">Vybrané výsledky nepodporují zvolený datový typ. Kompatibilní výsledky upravte samostatně.</string>
     <string name="memory_editor_edit_batch_type_notice">Změní se pouze hodnoty s odpovídajícím datovým typem.</string>
     <string name="memory_editor_engine_reconnecting">Editor paměti se znovu připojuje…</string>
@@ -885,7 +877,7 @@
     <string name="memory_editor_freeze_paused">Pozastaveno z bezpečnostních důvodů</string>
     <string name="memory_editor_identity_unsafe">Vybranou hodnotu nebo stav hledání se nepodařilo ověřit. Obnovte výsledky nebo znovu otevřete Inspektor a zkuste to znovu.</string>
     <string name="memory_editor_increment_invalid">Použijte jeden celočíselný typ a hodnoty v jeho rozsahu.</string>
-    <string name="memory_editor_increment_preview">Náhled: %1$s (počet hodnot: %2$d)</string>
+    <string name="memory_editor_increment_preview">Náhled: %1$s</string>
     <string name="memory_editor_increment_start">Počáteční hodnota</string>
     <string name="memory_editor_increment_step">Krok</string>
     <string name="memory_editor_incremental_edit">Posloupnost s krokem</string>
@@ -1048,11 +1040,7 @@
     <string name="pref_accent_blue">Výchozí modrá</string>
     <string name="pref_accent_classic_blue">Klasická modrá</string>
     <string name="pref_accent_coral">Korálově broskvová</string>
-    <string name="pref_accent_cyan">Azurová</string>
     <string name="pref_accent_green">Smaragdově zelená</string>
-    <string name="pref_accent_indigo">Indigová</string>
-    <string name="pref_accent_orange">Oranžová</string>
-    <string name="pref_accent_pink">Růžová</string>
     <string name="pref_accent_rose">Malinově růžová</string>
     <string name="pref_accent_sapphire">Safírově modrá</string>
     <string name="pref_accent_teal">Nefritově modrozelená</string>
