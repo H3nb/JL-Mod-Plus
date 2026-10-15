@@ -465,7 +465,7 @@
     <string name="config_gamepad_diagnosis_pointer">İşaretçi modu</string>
     <string name="config_gamepad_diagnosis_right_stick">Sağ çubuk</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Giriş örnekleri bilerek MIDlet\'e gönderilmez.</string>
-    <string name="config_gamepad_diagnosis_signature">İmza: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Oyun kumandası tanımlayıcısı: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">kontrolcü</string>
     <string name="config_gamepad_diagnosis_source_default">varsayılan</string>
     <string name="config_gamepad_diagnosis_source_explicit">açıkça belirtilmiş</string>

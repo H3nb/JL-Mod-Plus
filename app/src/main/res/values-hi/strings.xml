@@ -41,7 +41,7 @@
     <string name="loading_info">जानकारी लोड हो रही है…</string>
     <string name="mapping_dialog_key_not_specified">कोई इनपुट असाइन नहीं किया गया है।</string>
     <string name="mapping_dialog_title">कोई कुंजी या बटन दबाएँ</string>
-    <string name="message_delete">यह ऐप, इसकी सेटिंग और सहेजा गया गेम डेटा मिटाएँ? इससे लाइब्रेरी में इसकी प्रविष्टि भी हट जाएगी।</string>
+    <string name="message_delete">यह ऐप, इसकी सेटिंग और सहेजा गया डेटा मिटाएँ? इससे लाइब्रेरी में इसकी प्रविष्टि भी हट जाएगी।</string>
     <string name="midlet_name"><b>नाम: </b></string>
     <string name="midlet_size"><b>आकार: </b></string>
     <string name="midlet_vendor"><b>"प्रकाशक: "</b></string>
@@ -304,7 +304,7 @@
     <string name="library_import_done_with_warning">ऐप बंडल चेतावनियों के साथ आयात हो गया।</string>
     <string name="library_import_invalid_bundle">चुना गया ऐप बंडल अमान्य, क्षतिग्रस्त या असमर्थित है। JL-Mod Plus का मान्य ऐप बंडल चुनें और फिर कोशिश करें।</string>
     <string name="library_import_preparing">ऐप बंडल पढ़ा जा रहा है…</string>
-    <string name="library_import_restore_existing">यह ऐप पहले से इंस्टॉल है। बंडल में शामिल कोई भी सेटिंग या सहेजा गया गेम डेटा, उससे संबंधित मौजूदा डेटा की जगह लेगा।</string>
+    <string name="library_import_restore_existing">यह ऐप पहले से इंस्टॉल है। बंडल में शामिल कोई भी सेटिंग या सहेजा गया डेटा, उससे संबंधित मौजूदा डेटा की जगह लेगा।</string>
     <string name="library_import_restore_failed">ऐप इंस्टॉल है, लेकिन बंडल का डेटा पुनर्स्थापित नहीं हो सका। फिर से पुनर्स्थापित करें?</string>
     <string name="library_import_restoring">ऐप की सेटिंग और सहेजा गया गेम डेटा पुनर्स्थापित हो रहा है…</string>
     <string name="library_indexing_current">%1$s स्कैन हो रहा है</string>

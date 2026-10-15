@@ -27,7 +27,7 @@
     <string name="layout_switch">Elrendezés váltása</string>
     <string name="licenses">Licencek</string>
     <string name="mapping_dialog_title">Nyomjon meg egy billentyűt vagy gombot</string>
-    <string name="message_delete">Törli ezt az alkalmazást, a beállításait és a mentett játékadatait? Az alkalmazástárbeli bejegyzése is törlődik.</string>
+    <string name="message_delete">Törli ezt az alkalmazást, a beállításait és a mentett adatait? Az alkalmazástárbeli bejegyzése is törlődik.</string>
     <string name="more">Továbbiak</string>
     <string name="no_data_for_display">Nincs megjeleníthető alkalmazás</string>
     <string name="not_saved_exists">Már létezik</string>
@@ -265,7 +265,7 @@
     <string name="library_import_done_with_warning">Az alkalmazáscsomag importálva, figyelmeztetésekkel.</string>
     <string name="library_import_invalid_bundle">A kiválasztott alkalmazáscsomag érvénytelen, sérült vagy nem támogatott. Válasszon érvényes JL-Mod Plus-alkalmazáscsomagot, és próbálja újra.</string>
     <string name="library_import_preparing">Alkalmazáscsomag beolvasása…</string>
-    <string name="library_import_restore_existing">Ez az alkalmazás már telepítve van. A csomagban szereplő beállítások és mentett játékadatok felülírják a megfelelő meglévő adatokat.</string>
+    <string name="library_import_restore_existing">Ez az alkalmazás már telepítve van. A csomagban szereplő beállítások vagy mentett adatok felülírják a megfelelő meglévő adatokat.</string>
     <string name="library_import_restore_failed">Az alkalmazás telepítve van, de a csomag adatait nem sikerült visszaállítani. Újrapróbálja a visszaállítást?</string>
     <string name="library_import_restoring">Alkalmazásbeállítások és mentett játékadatok visszaállítása…</string>
     <string name="library_indexing_current">%1$s vizsgálata</string>

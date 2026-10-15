@@ -20,7 +20,7 @@
     <string name="layout_switch">Zmień układ przycisków</string>
     <string name="licenses">Licencje</string>
     <string name="mapping_dialog_title">Naciśnij klawisz lub przycisk</string>
-    <string name="message_delete">Usunąć tę aplikację, jej ustawienia i zapisane dane gry? Jej wpis w bibliotece również zostanie usunięty.</string>
+    <string name="message_delete">Usunąć tę aplikację, jej ustawienia i zapisane dane? Jej wpis w bibliotece również zostanie usunięty.</string>
     <string name="more">Więcej</string>
     <string name="no_data_for_display">Brak aplikacji do wyświetlenia</string>
     <string name="parallel_screen_redrawing">Asynchroniczne aktualizacje ekranu</string>
@@ -247,7 +247,7 @@
     <string name="library_import_done_with_warning">Pakiet aplikacji został zaimportowany z ostrzeżeniami.</string>
     <string name="library_import_invalid_bundle">Wybrany pakiet aplikacji jest nieprawidłowy, uszkodzony lub nieobsługiwany. Wybierz prawidłowy pakiet aplikacji JL-Mod Plus i spróbuj ponownie.</string>
     <string name="library_import_preparing">Odczytywanie pakietu aplikacji…</string>
-    <string name="library_import_restore_existing">Ta aplikacja jest już zainstalowana. Ustawienia lub zapisane dane gry zawarte w pakiecie zastąpią odpowiednie istniejące dane.</string>
+    <string name="library_import_restore_existing">Ta aplikacja jest już zainstalowana. Ustawienia lub zapisane dane zawarte w pakiecie zastąpią odpowiednie istniejące dane.</string>
     <string name="library_import_restore_failed">Aplikacja jest zainstalowana, ale nie udało się przywrócić danych jej pakietu. Ponowić przywracanie?</string>
     <string name="library_import_restoring">Przywracanie ustawień aplikacji i zapisanych danych gry…</string>
     <string name="library_indexing_current">Skanowanie %1$s</string>

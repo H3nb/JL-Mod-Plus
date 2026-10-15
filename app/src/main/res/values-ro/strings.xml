@@ -20,7 +20,7 @@
     <string name="layout_switch">Alegeți aranjamentul comenzilor</string>
     <string name="licenses">Licențe</string>
     <string name="mapping_dialog_title">Apăsați o tastă sau un buton</string>
-    <string name="message_delete">Ștergi această aplicație, setările ei și datele de joc salvate? Va fi eliminată și intrarea ei din bibliotecă.</string>
+    <string name="message_delete">Ștergi această aplicație, setările ei și datele salvate? Va fi eliminată și intrarea ei din bibliotecă.</string>
     <string name="more">Mai multe</string>
     <string name="no_data_for_display">Nu există aplicații de afișat</string>
     <string name="parallel_screen_redrawing">Actualizări asincrone ale ecranului</string>
@@ -246,7 +246,7 @@
     <string name="library_import_done_with_warning">Pachetul aplicației a fost importat cu avertismente.</string>
     <string name="library_import_invalid_bundle">Pachetul aplicației selectat este invalid, deteriorat sau neacceptat. Alege un pachet valid JL-Mod Plus și încearcă din nou.</string>
     <string name="library_import_preparing">Se citește pachetul aplicației…</string>
-    <string name="library_import_restore_existing">Această aplicație este deja instalată. Orice setări sau date de joc salvate incluse în pachet vor înlocui datele existente corespunzătoare.</string>
+    <string name="library_import_restore_existing">Această aplicație este deja instalată. Orice setări sau date salvate incluse în pachet vor înlocui datele existente corespunzătoare.</string>
     <string name="library_import_restore_failed">Aplicația este instalată, dar datele pachetului său nu au putut fi restaurate. Reîncerci restaurarea?</string>
     <string name="library_import_restoring">Se restaurează setările aplicației și datele de joc salvate…</string>
     <string name="library_indexing_current">Se scanează %1$s</string>

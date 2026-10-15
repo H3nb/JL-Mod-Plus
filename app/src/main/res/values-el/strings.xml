@@ -356,7 +356,7 @@
     <string name="config_gamepad_diagnosis_pointer">Λειτουργία δείκτη</string>
     <string name="config_gamepad_diagnosis_right_stick">Δεξιός μοχλός</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Τα δείγματα εισόδου σκόπιμα δεν αποστέλλονται στο MIDlet.</string>
-    <string name="config_gamepad_diagnosis_signature">Υπογραφή: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Αναγνωριστικό χειριστηρίου: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">χειριστήριο</string>
     <string name="config_gamepad_diagnosis_source_default">προεπιλογή</string>
     <string name="config_gamepad_diagnosis_source_explicit">ρητή</string>

@@ -329,7 +329,7 @@
     <string name="config_gamepad_calibration_phase_unknown">Stato non disponibile</string>
     <string name="config_gamepad_diagnosis_capabilities">Capacità del controller connesso:</string>
     <string name="config_gamepad_diagnosis_descriptor">Descrittore: %1$s</string>
-    <string name="config_gamepad_diagnosis_signature">Firma: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Identificativo del controller: %1$s</string>
     <string name="config_gamepad_diagnosis_axis">Asse %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(nessun controller connesso)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">I campioni di input non vengono intenzionalmente inviati al MIDlet.</string>

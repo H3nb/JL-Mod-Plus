@@ -30,7 +30,7 @@
     <string name="licenses">ଲାଇସେନ୍ସ</string>
     <string name="mapping_dialog_key_not_specified">କୌଣସି ଇନପୁଟ୍ ନିର୍ଦ୍ଧାରିତ ହୋଇନାହିଁ।</string>
     <string name="mapping_dialog_title">ଏକ କୀ କିମ୍ବା ବଟନ୍ ଦବାନ୍ତୁ</string>
-    <string name="message_delete">ଏହି ଆପ୍, ଏହାର ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ବିଲୋପ କରିବେ? ଏହା ଲାଇବ୍ରେରିରୁ ଏହାର ଏଣ୍ଟ୍ରି ମଧ୍ୟ ହଟାଇବ।</string>
+    <string name="message_delete">ଏହି ଆପ୍, ଏହାର ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଡାଟା ବିଲୋପ କରିବେ? ଏହା ଲାଇବ୍ରେରିରୁ ଏହାର ଏଣ୍ଟ୍ରି ମଧ୍ୟ ହଟାଇବ।</string>
     <string name="midlet_name"><b>ନାମ: </b></string>
     <string name="midlet_size"><b>ଆକାର: </b></string>
     <string name="midlet_vendor"><b>"ପ୍ରକାଶକ: "</b></string>
@@ -243,7 +243,7 @@
     <string name="library_import_done_with_warning">ଚେତାବନୀ ସହ ଆପ୍ ବଣ୍ଡଲ୍ ଆମଦାନି ହୋଇଛି।</string>
     <string name="library_import_invalid_bundle">ବଛାଯାଇଥିବା ଆପ୍ ବଣ୍ଡଲ୍ ଅବୈଧ, ନଷ୍ଟ ହୋଇଛି କିମ୍ବା ସମର୍ଥିତ ନୁହେଁ। ଏକ ବୈଧ JL-Mod Plus ଆପ୍ ବଣ୍ଡଲ୍ ବାଛି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="library_import_preparing">ଆପ୍ ବଣ୍ଡଲ୍ ପଢ଼ାଯାଉଛି…</string>
-    <string name="library_import_restore_existing">ଏହି ଆପ୍ ପୂର୍ବରୁ ଇନଷ୍ଟଲ୍ ହୋଇଛି। ବଣ୍ଡଲ୍‌ରେ ଥିବା କୌଣସି ସେଟିଂସ୍ କିମ୍ବା ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ସମ୍ପୃକ୍ତ ବର୍ତ୍ତମାନର ଡାଟାକୁ ବଦଳାଇବ।</string>
+    <string name="library_import_restore_existing">ଏହି ଆପ୍ ପୂର୍ବରୁ ଇନଷ୍ଟଲ୍ ହୋଇଛି। ବଣ୍ଡଲ୍‌ରେ ଥିବା କୌଣସି ସେଟିଂସ୍ କିମ୍ବା ସଞ୍ଚିତ ଡାଟା ସମ୍ପୃକ୍ତ ବର୍ତ୍ତମାନର ଡାଟାକୁ ବଦଳାଇବ।</string>
     <string name="library_import_restore_failed">ଆପ୍ ଇନଷ୍ଟଲ୍ ହୋଇଛି, କିନ୍ତୁ ଏହାର ବଣ୍ଡଲ୍ ଡାଟା ପୁନରୁଦ୍ଧାର କରାଯାଇପାରିଲା ନାହିଁ। ପୁନରୁଦ୍ଧାର ପାଇଁ ପୁଣି ଚେଷ୍ଟା କରିବେ?</string>
     <string name="library_import_restoring">ଆପ୍ ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଗେମ୍ ଡାଟା ପୁନରୁଦ୍ଧାର ହେଉଛି…</string>
     <string name="library_indexing_current">%1$s ସ୍କାନ୍ ହେଉଛି</string>

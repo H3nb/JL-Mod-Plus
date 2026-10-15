@@ -340,7 +340,7 @@
     <string name="config_gamepad_calibration_phase_unknown">Estado no disponible</string>
     <string name="config_gamepad_diagnosis_capabilities">Capacidades del mando conectado:</string>
     <string name="config_gamepad_diagnosis_descriptor">Descriptor: %1$s</string>
-    <string name="config_gamepad_diagnosis_signature">Firma: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Identificador del mando: %1$s</string>
     <string name="config_gamepad_diagnosis_axis">Eje %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(ningún mando conectado)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Las muestras de entrada no se envían intencionadamente al MIDlet.</string>

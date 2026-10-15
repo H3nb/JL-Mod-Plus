@@ -301,6 +301,8 @@
     <string name="config_gamepad_calibration_phase_unknown">Status unavailable</string>
     <string name="config_gamepad_diagnosis_capabilities">Connected controller capabilities:</string>
     <string name="config_gamepad_diagnosis_descriptor">Descriptor: %1$s</string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
     <string name="config_gamepad_diagnosis_signature">Signature: %1$s</string>
     <string name="config_gamepad_diagnosis_axis">Axis %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(no connected controller)</string>

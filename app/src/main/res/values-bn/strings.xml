@@ -20,7 +20,7 @@
     <string name="layout_switch">কন্ট্রোলের বিন্যাস বেছে নিন</string>
     <string name="licenses">লাইসেন্স</string>
     <string name="mapping_dialog_title">একটি কী বা বোতাম চাপুন</string>
-    <string name="message_delete">এই অ্যাপ, সেটির সেটিংস ও সংরক্ষিত গেম ডেটা মুছবেন? লাইব্রেরি থেকে সেটির এন্ট্রিও সরিয়ে দেওয়া হবে।</string>
+    <string name="message_delete">এই অ্যাপ, সেটির সেটিংস ও সংরক্ষিত ডেটা মুছবেন? লাইব্রেরি থেকে সেটির এন্ট্রিও সরিয়ে দেওয়া হবে।</string>
     <string name="more">আরও</string>
     <string name="no_data_for_display">দেখানোর মতো কোনো অ্যাপ নেই</string>
     <string name="parallel_screen_redrawing">অ্যাসিঙ্ক্রোনাস স্ক্রিন আপডেট</string>
@@ -245,7 +245,7 @@
     <string name="library_import_done_with_warning">সতর্কবার্তাসহ অ্যাপ বান্ডল আমদানি করা হয়েছে।</string>
     <string name="library_import_invalid_bundle">নির্বাচিত অ্যাপ বান্ডলটি অবৈধ, ক্ষতিগ্রস্ত বা অসমর্থিত। JL-Mod Plus-এর একটি বৈধ অ্যাপ বান্ডল বেছে নিয়ে আবার চেষ্টা করুন।</string>
     <string name="library_import_preparing">অ্যাপ বান্ডল পড়া হচ্ছে…</string>
-    <string name="library_import_restore_existing">এই অ্যাপটি আগে থেকেই ইনস্টল করা আছে। বান্ডলে অন্তর্ভুক্ত যেকোনো সেটিংস বা সংরক্ষিত গেম ডেটা সংশ্লিষ্ট বিদ্যমান ডেটার জায়গায় বসবে।</string>
+    <string name="library_import_restore_existing">এই অ্যাপটি আগে থেকেই ইনস্টল করা আছে। বান্ডলে অন্তর্ভুক্ত যেকোনো সেটিংস বা সংরক্ষিত ডেটা সংশ্লিষ্ট বিদ্যমান ডেটার জায়গায় বসবে।</string>
     <string name="library_import_restore_failed">অ্যাপটি ইনস্টল করা আছে, কিন্তু বান্ডলের ডেটা পুনরুদ্ধার করা যায়নি। আবার পুনরুদ্ধারের চেষ্টা করবেন?</string>
     <string name="library_import_restoring">অ্যাপের সেটিংস ও সংরক্ষিত গেম ডেটা পুনরুদ্ধার হচ্ছে…</string>
     <string name="library_indexing_current">%1$s স্ক্যান হচ্ছে</string>

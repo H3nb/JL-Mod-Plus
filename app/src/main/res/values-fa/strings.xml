@@ -26,7 +26,7 @@
     <string name="licenses">مجوزها</string>
     <string name="loading_info">در حال بارگیری اطلاعات …</string>
     <string name="mapping_dialog_title">یک کلید یا دکمه را فشار دهید</string>
-    <string name="message_delete">این برنامه، تنظیمات و داده‌های ذخیرهٔ بازی آن حذف شوند؟ ورودی آن در کتابخانه نیز حذف خواهد شد.</string>
+    <string name="message_delete">این برنامه، تنظیمات و داده‌های ذخیره‌شدهٔ آن حذف شوند؟ ورودی آن در کتابخانه نیز حذف خواهد شد.</string>
     <string name="more">بیشتر</string>
     <string name="no_data_for_display">برنامه‌ای برای نمایش وجود ندارد</string>
     <string name="parallel_screen_redrawing">به‌روزرسانی ناهمگام صفحه</string>
@@ -256,7 +256,7 @@
     <string name="library_import_done_with_warning">بستهٔ برنامه همراه با هشدارها وارد شد.</string>
     <string name="library_import_invalid_bundle">بستهٔ برنامهٔ انتخاب‌شده نامعتبر، آسیب‌دیده یا پشتیبانی‌نشده است. یک بستهٔ معتبر JL-Mod Plus انتخاب کنید و دوباره تلاش کنید.</string>
     <string name="library_import_preparing">در حال خواندن بستهٔ برنامه…</string>
-    <string name="library_import_restore_existing">این برنامه از قبل نصب است. هر تنظیمات یا دادهٔ ذخیرهٔ بازی موجود در بسته، جایگزین داده‌های فعلیِ متناظر خواهد شد.</string>
+    <string name="library_import_restore_existing">این برنامه از قبل نصب است. تنظیمات یا داده‌های ذخیره‌شدهٔ موجود در بسته جایگزین داده‌های فعلیِ متناظر خواهند شد.</string>
     <string name="library_import_restore_failed">برنامه نصب است، اما بازیابی داده‌های بسته ممکن نشد. بازیابی دوباره انجام شود؟</string>
     <string name="library_import_restoring">در حال بازیابی تنظیمات برنامه و داده‌های ذخیرهٔ بازی…</string>
     <string name="library_indexing_current">در حال بررسی %1$s</string>

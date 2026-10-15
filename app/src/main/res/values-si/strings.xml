@@ -65,7 +65,7 @@
     <string name="locate_bundle">බණ්ඩලය සොයා ගන්න</string>
     <string name="log_save_failed">ලොගය සුරැකීම ඇරඹීමට නොහැකි විය.</string>
     <string name="log_save_started">ලොගය සුරැකීම ඇරඹුණි.</string>
-    <string name="message_delete">මෙම යෙදුම, එහි සැකසුම් සහ සුරැකි ක්‍රීඩා දත්ත මකන්නද? මෙයින් එහි පුස්තකාල සටහන ද ඉවත් කෙරේ.</string>
+    <string name="message_delete">මෙම යෙදුම, එහි සැකසුම් සහ සුරැකි දත්ත මකන්නද? මෙයින් එහි පුස්තකාල සටහන ද ඉවත් කෙරේ.</string>
     <string name="message_reset_layout">අතථ්‍ය පාලක පිරිසැලසුම පෙරනිමි තත්ත්වයට යළි සකසන්නද?</string>
     <string name="no_data_for_display">පෙන්වීමට යෙදුම් නැත</string>
     <string name="not_saved_exists">දැනටමත් ඇත</string>
@@ -194,7 +194,7 @@
     <string name="library_import_done_with_warning">අනතුරු ඇඟවීම් සමඟ යෙදුම් බණ්ඩලය ආයාත කළා.</string>
     <string name="library_import_invalid_bundle">තේරූ යෙදුම් බණ්ඩලය වලංගු නැත, හානි වී ඇත හෝ එයට සහාය නොදක්වයි. වලංගු JL-Mod Plus යෙදුම් බණ්ඩලයක් තෝරා නැවත උත්සාහ කරන්න.</string>
     <string name="library_import_preparing">යෙදුම් බණ්ඩලය කියවමින්…</string>
-    <string name="library_import_restore_existing">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. බණ්ඩලයේ ඇතුළත් ඕනෑම සැකසුම් හෝ සුරැකි ක්‍රීඩා දත්ත මඟින් ඊට අදාළ දැනට පවතින දත්ත ප්‍රතිස්ථාපනය වේ.</string>
+    <string name="library_import_restore_existing">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. බණ්ඩලයේ ඇතුළත් ඕනෑම සැකසුම් හෝ සුරැකි දත්ත මඟින් ඊට අදාළ දැනට පවතින දත්ත ප්‍රතිස්ථාපනය වේ.</string>
     <string name="library_import_restore_failed">යෙදුම ස්ථාපනය කර ඇතත්, එහි බණ්ඩල් දත්ත ප්‍රතිස්ථාපනය කිරීමට නොහැකි විය. ප්‍රතිස්ථාපනයට නැවත උත්සාහ කරන්නද?</string>
     <string name="library_import_restoring">යෙදුම් සැකසුම් සහ සුරැකි ක්‍රීඩා දත්ත ප්‍රතිස්ථාපනය කරමින්…</string>
     <string name="library_indexing_current">%1$s පරිලෝකනය කරමින්</string>

@@ -361,7 +361,7 @@
     <string name="config_gamepad_diagnosis_pointer">Режим показивача</string>
     <string name="config_gamepad_diagnosis_right_stick">Десна палица</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Узорци уноса се намерно не шаљу MIDlet-у.</string>
-    <string name="config_gamepad_diagnosis_signature">Потпис: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">Идентификатор контролера: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">контролер</string>
     <string name="config_gamepad_diagnosis_source_default">подразумевано</string>
     <string name="config_gamepad_diagnosis_source_explicit">изричито</string>

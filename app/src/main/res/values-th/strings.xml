@@ -390,7 +390,7 @@
     <string name="config_gamepad_diagnosis_pointer">โหมดตัวชี้</string>
     <string name="config_gamepad_diagnosis_right_stick">ก้านขวา</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">ตัวอย่างอินพุตจะไม่ถูกส่งไปยัง MIDlet โดยตั้งใจ</string>
-    <string name="config_gamepad_diagnosis_signature">ลายเซ็น: %1$s</string>
+    <string name="config_gamepad_diagnosis_signature">ข้อมูลระบุตัวตนของคอนโทรลเลอร์: %1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">คอนโทรลเลอร์</string>
     <string name="config_gamepad_diagnosis_source_default">ค่าเริ่มต้น</string>
     <string name="config_gamepad_diagnosis_source_explicit">ระบุโดยตรง</string>

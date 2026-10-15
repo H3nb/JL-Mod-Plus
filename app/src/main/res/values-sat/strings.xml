@@ -1114,7 +1114,7 @@
     <string name="memory_editor_write_outcome">ᱚᱞ ᱠᱚ ᱠᱚᱱᱯᱷᱟᱨᱢ ᱮᱱᱟ: %1$d᱾ ᱵᱟᱝ ᱠᱚᱱᱯᱷᱟᱨᱢ ᱟᱠᱟᱱ: %2$d᱾ ᱯᱟᱨᱚᱢ ᱮᱱᱟ: %3$d᱾ ᱵᱟᱝ ᱪᱮᱥᱴᱟ ᱟᱠᱟᱱ: %4$d᱾ ᱴᱟᱭᱤᱯ ᱞᱮᱠᱟᱛᱮ ᱯᱟᱨᱚᱢ ᱮᱱᱟ: %5$d᱾</string>
     <string name="memory_editor_write_failure_outcome">%1$s\nᱚᱞ ᱠᱚ ᱠᱚᱱᱯᱷᱟᱨᱢ ᱮᱱᱟ: %2$d᱾ ᱵᱟᱝ ᱠᱚᱱᱯᱷᱟᱨᱢ ᱟᱠᱟᱱ: %3$d᱾ ᱯᱟᱨᱚᱢ ᱮᱱᱟ: %4$d᱾ ᱵᱟᱝ ᱪᱮᱥᱴᱟ ᱟᱠᱟᱱ: %5$d᱾ ᱴᱟᱭᱤᱯ ᱞᱮᱠᱟᱛᱮ ᱯᱟᱨᱚᱢ ᱮᱱᱟ: %6$d᱾</string>
     <string name="updates_not_installable">ᱢᱤᱫ ᱱᱟᱣᱟ ᱨᱤᱞᱤᱡᱽ ᱢᱮᱱᱟᱜᱼᱟ, ᱢᱮᱱᱠᱷᱟᱱ ᱱᱚᱶᱟ ᱨᱮᱭᱟᱜ ᱵᱤᱞᱰ ᱱᱚᱢᱵᱚᱨ ᱱᱚᱶᱟ ᱤᱱᱥᱴᱚᱞᱮᱥᱚᱱ ᱵᱟᱭ ᱟᱯᱰᱮᱴ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ᱾</string>
-    <string name="memory_editor_remove_candidates_description">Remove ᱫᱚ ᱠᱷᱮᱞ ᱢᱮᱢᱳᱨᱤ ᱨᱮ ᱵᱟᱝ ᱚᱞ ᱠᱟᱛᱮ ᱠᱷᱟᱹᱞᱤ ᱨᱤᱡᱟᱞᱴ ᱠᱚᱭ ᱩᱠᱩᱭᱟ᱾ Revert &amp; remove ᱫᱚ ᱢᱩᱪᱟᱹᱫ ᱠᱚᱱᱯᱷᱟᱨᱢ ᱟᱠᱟᱱ ᱮᱰᱤᱴ ᱮ ᱟᱱᱰᱩᱭᱟ ᱡᱚᱠᱷᱚᱱ ᱱᱤᱛᱚᱜᱟᱜ ᱵᱷᱮᱞᱩ ᱢᱤᱞᱟᱹᱣᱜᱼᱟ; ᱮᱯᱮᱨᱦᱮᱸᱰ ᱨᱤᱡᱟᱞᱴ ᱠᱚ ᱛᱟᱦᱮᱸᱱᱟ᱾</string>
+    <string name="memory_editor_remove_candidates_description">ᱚᱪᱚᱜᱽ ᱢᱮ ᱫᱚ ᱠᱷᱮᱞ ᱢᱮᱢᱳᱨᱤ ᱨᱮ ᱵᱟᱝ ᱚᱞ ᱠᱟᱛᱮ ᱠᱷᱟᱹᱞᱤ ᱨᱤᱡᱟᱞᱴ ᱠᱚᱭ ᱩᱠᱩᱭᱟ᱾ ᱨᱩᱣᱟᱹᱲ ᱟᱨ ᱚᱪᱚᱜ ᱫᱚ ᱢᱩᱪᱟᱹᱫ ᱠᱚᱱᱯᱷᱟᱨᱢ ᱟᱠᱟᱱ ᱮᱰᱤᱴ ᱮ ᱟᱱᱰᱩᱭᱟ ᱡᱚᱠᱷᱚᱱ ᱱᱤᱛᱚᱜᱟᱜ ᱵᱷᱮᱞᱩ ᱢᱤᱞᱟᱹᱣᱜᱼᱟ; ᱮᱯᱮᱨᱦᱮᱸᱰ ᱨᱤᱡᱟᱞᱴ ᱠᱚ ᱛᱟᱦᱮᱸᱱᱟ᱾</string>
     <string name="memory_editor_revert_remove_commit_failed">ᱵᱷᱮᱞᱩ ᱠᱚ ᱯᱟᱞᱮᱫ ᱨᱤᱥᱴᱳᱨ ᱟᱠᱟᱱᱟ, ᱢᱮᱱᱠᱷᱟᱱ ᱨᱤᱡᱟᱞᱴ ᱠᱚ ᱵᱟᱝ ᱚᱪᱚᱜ ᱫᱟᱲᱮᱭᱟᱫᱼᱟ᱾ ᱨᱤᱯᱷᱨᱮᱥ ᱢᱮ ᱟᱨ ᱫᱚᱦᱲᱟ ᱪᱮᱥᱴᱟᱭ ᱢᱮ; ᱠᱷᱮᱞ ᱦᱚᱛᱮᱛᱮ ᱵᱚᱫᱚᱞ ᱟᱠᱟᱱ ᱵᱷᱮᱞᱩ ᱠᱚᱫᱚ ᱵᱟᱝ ᱚᱵᱷᱟᱨᱨᱟᱭᱤᱴᱚᱜᱼᱟ᱾</string>
     <string name="memory_editor_revert_remove_outcome">ᱨᱤᱥᱴᱳᱨ ᱮᱱᱟ: %1$d᱾ ᱚᱪᱚᱜ ᱮᱱᱟ: %2$d᱾ ᱮᱯᱮᱨᱦᱮᱸᱰ ᱠᱚ: %3$d᱾ ᱵᱟᱝ ᱠᱚᱱᱯᱷᱟᱨᱢ ᱟᱠᱟᱱ: %4$d᱾ ᱵᱟᱝ ᱪᱮᱥᱴᱟ ᱟᱠᱟᱱ: %5$d᱾</string>
     <string name="memory_editor_edit_batch_type_notice">ᱠᱷᱟᱹᱞᱤ ᱢᱤᱞᱟᱹᱣᱜ ᱰᱮᱴᱟ ᱴᱟᱭᱤᱯ ᱠᱚ ᱵᱚᱫᱚᱞᱚᱜᱼᱟ᱾</string>

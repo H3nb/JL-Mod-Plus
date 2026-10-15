@@ -518,3 +518,35 @@ is in [the progress record](localization-progress.md). The later Santali resourc
 but still requires competent linguistic review and representative manual
 rendering for long or consequential strings. Passing checks do not resolve the remaining
 language judgments. Keep PR 169 Draft; no merge is authorized.
+
+## Targeted semantic QA follow-up — 15 October 2026
+
+A cross-locale review identified a consequential scope error in the dialogs
+`message_delete` and `library_import_restore_existing`. Bengali, Persian,
+Hindi, Hungarian, Kazakh, Odia, Polish, Romanian and Sinhala had narrowed
+English **save data** to **game save data**. Both messages now cover saved data
+from any MIDlet, including non-game utility apps; the bundle warning still says
+that only data included in the bundle replaces matching existing data. The
+Hungarian bundle warning also restores the English **or** relationship.
+
+The diagnostic `config_gamepad_diagnosis_signature` refers to an opaque
+controller fingerprint derived from its descriptor and capabilities; it is not a
+handwritten or cryptographic signature. Spanish, Italian, Thai, Turkish, Greek,
+Serbian, Simplified Chinese and Traditional Chinese now describe controller
+identification instead of a signature. An English source comment records this
+semantic contract without changing the canonical visible English string.
+Remaining locales with literal technical equivalents should be reviewed in
+context rather than automatically replaced.
+
+Santali `memory_editor_remove_candidates_description` now refers to the
+same localized actions used for the actual **Remove** and **Revert & remove**
+controls instead of displaying unrelated English action names. This is a
+UI-label consistency repair, not a certification of the full Santali sentence.
+Existing Santali native-language QA, including the 76 deferred selections,
+recovered machine-reference batches and dual plural forms, remains open.
+
+This is a bounded semantic review, not a whole-catalog native-speaker sign-off.
+Resource names, placeholder indices, plural declarations, and other text are
+unchanged. The `library_filter_recently_opened` / **Recently played** wording
+remains a product-meaning decision pending confirmation of the filter's actual
+behavior; no speculative global rewrite was made.

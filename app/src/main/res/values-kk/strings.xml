@@ -22,7 +22,7 @@
     <string name="licenses">Лицензиялар</string>
     <string name="loading_info">Ақпарат жүктелуде…</string>
     <string name="mapping_dialog_title">Пернені немесе түймені басыңыз</string>
-    <string name="message_delete">Бұл қолданбаны, оның баптауларын және ойынның сақталған деректерін жою керек пе? Кітапханадағы жазбасы да жойылады.</string>
+    <string name="message_delete">Бұл қолданбаны, оның баптауларын және сақталған деректерін жою керек пе? Кітапханадағы жазбасы да жойылады.</string>
     <string name="midlet_name"><b>Аты: </b></string>
     <string name="midlet_size"><b>Өлшемі: </b></string>
     <string name="midlet_vendor"><b>"Баспагер: "</b></string>
@@ -241,7 +241,7 @@
     <string name="library_import_done_with_warning">Қолданба пакеті ескертулермен импортталды.</string>
     <string name="library_import_invalid_bundle">Таңдалған қолданба пакеті жарамсыз, бүлінген немесе оған қолдау көрсетілмейді. Жарамды JL-Mod Plus қолданба пакетін таңдап, қайталап көріңіз.</string>
     <string name="library_import_preparing">Қолданба пакеті оқылуда…</string>
-    <string name="library_import_restore_existing">Бұл қолданба бұрыннан орнатылған. Пакетке кіретін баптаулар немесе ойынның сақталған деректері тиісті қолданыстағы деректерді алмастырады.</string>
+    <string name="library_import_restore_existing">Бұл қолданба бұрыннан орнатылған. Пакетке кіретін баптаулар немесе сақталған деректер тиісті қолданыстағы деректерді алмастырады.</string>
     <string name="library_import_restore_failed">Қолданба орнатылған, бірақ оның пакеттегі деректерін қалпына келтіру мүмкін болмады. Қалпына келтіруді қайталау керек пе?</string>
     <string name="library_import_restoring">Қолданба баптаулары мен ойынның сақталған деректері қалпына келтірілуде…</string>
     <string name="library_indexing_current">%1$s сканерленуде</string>

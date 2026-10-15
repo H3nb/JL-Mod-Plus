@@ -403,7 +403,7 @@
     <string name="config_gamepad_diagnosis_pointer">指標模式</string>
     <string name="config_gamepad_diagnosis_right_stick">右搖桿</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">輸入樣本刻意不傳送給 MIDlet。</string>
-    <string name="config_gamepad_diagnosis_signature">簽章：%1$s</string>
+    <string name="config_gamepad_diagnosis_signature">控制器識別資訊：%1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">控制器</string>
     <string name="config_gamepad_diagnosis_source_default">預設</string>
     <string name="config_gamepad_diagnosis_source_explicit">明確指定</string>

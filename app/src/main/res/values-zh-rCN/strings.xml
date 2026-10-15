@@ -462,7 +462,7 @@
     <string name="config_gamepad_diagnosis_pointer">指针模式</string>
     <string name="config_gamepad_diagnosis_right_stick">右摇杆</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">输入样本有意不发送给 MIDlet。</string>
-    <string name="config_gamepad_diagnosis_signature">签名：%1$s</string>
+    <string name="config_gamepad_diagnosis_signature">控制器识别信息：%1$s</string>
     <string name="config_gamepad_diagnosis_source_controller">控制器</string>
     <string name="config_gamepad_diagnosis_source_default">默认</string>
     <string name="config_gamepad_diagnosis_source_explicit">显式指定</string>
