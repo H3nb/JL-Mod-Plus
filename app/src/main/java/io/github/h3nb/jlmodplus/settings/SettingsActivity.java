@@ -91,6 +91,7 @@ public class SettingsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		AppLocaleTags.migrateRetiredSantaliLocale();
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		normalizeChromePreferences();

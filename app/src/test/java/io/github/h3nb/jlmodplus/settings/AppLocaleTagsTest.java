@@ -9,6 +9,7 @@
 package io.github.h3nb.jlmodplus.settings;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
@@ -27,6 +28,25 @@ public class AppLocaleTagsTest {
 	public void preservesCanonicalRegionAndScriptTags() {
 		assertEquals("pt-BR", AppLocaleTags.canonicalize("pt-BR"));
 		assertEquals("zh-Hant-TW", AppLocaleTags.canonicalize("zh-Hant-TW"));
+	}
+
+	@Test
+	public void retiredSantaliFallsBackToSystem() {
+		assertEquals("", AppLocaleTags.withoutRetiredSantali("sat"));
+		assertEquals("", AppLocaleTags.withoutRetiredSantali("sat-Olck-IN"));
+	}
+
+	@Test
+	public void retirementPreservesOtherRequestedLocalesAndTheirOrder() {
+		assertEquals("id,pt-BR", AppLocaleTags.withoutRetiredSantali("sat,id,pt-BR"));
+		assertEquals("en-US,he", AppLocaleTags.withoutRetiredSantali("en-US,sat-IN,he"));
+	}
+
+	@Test
+	public void unrelatedOrSystemLocalesRequireNoMigration() {
+		assertNull(AppLocaleTags.withoutRetiredSantali(""));
+		assertNull(AppLocaleTags.withoutRetiredSantali("id,pt-BR"));
+		assertNull(AppLocaleTags.withoutRetiredSantali("satirical"));
 	}
 
 	@Test
