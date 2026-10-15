@@ -687,3 +687,35 @@ certification. All 76 previously deferred Santali entries remain pending
 native-language quality approval even where a semantic problem is repaired.
 Preserve unrelated loanword preferences and plural morphology for review;
 resource identities and formatting/line-break contracts do not change.
+
+### Santali profile and virtual-control label coherence — 15 October 2026
+
+A further horizontal/vertical terminology review updates **11 existing**
+Santali `<string>` resources, concentrating on the Profile/Runtime virtual
+controls workflow and one generic destructive action.
+
+- Seven instances of the `ᱞᱮᱟᱩᱴ`/`ᱞᱮᱣᱟᱣᱩᱴ` spelling variants now use the
+  more prevalent in-catalog `ᱞᱮᱟᱣᱩᱴ` for **layout**. The saved-layouts
+  section also uses the same saved-state wording found in
+  `saved_keyboard_layout_summary`, with a separate plural marker.
+  This spans Library appearance, runtime virtual-controls actions and
+  Profile application choices; no underlying feature changes.
+- `profile_apply_settings_keeps_layout` and
+  `profile_apply_layout_keeps_settings` now name **custom configuration**
+  with the catalog's existing `preset_custom_configuration` terminology,
+  rather than the previously inconsistent preference/liking word.
+  They continue to distinguish which setting/layout is retained.
+- The `runtime_preset_update_destination` action and the
+  `preset_update_confirm` button reuse the same **Update** command wording
+  as `preset_update`, instead of a different, potentially adjectival
+  rendering. `%1$s` remains unchanged in the destination action.
+- `action_context_delete` reuses the existing **Delete** action used in
+  `delete_report` and other destructive confirmations. This only unifies
+  the control label; the operation, confirmation and its effects are
+  unchanged.
+
+All keys, indexed arguments, and plural categories are unchanged. These
+are source-meaning and *intra-catalog consistency* corrections, not a
+native-speaker linguistic sign-off. The existing 76 deferred Santali QA
+cases remain open; inflection, orthography, terminology naturalness and
+consequential-message comprehension need independent fluent review.

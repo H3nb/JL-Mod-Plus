@@ -2,7 +2,7 @@
 <resources>
     <string name="about">ᱵᱤᱵᱨᱚᱬ</string>
     <string name="about_message">ᱠᱞᱟᱥᱤᱠ ᱮᱯᱥ ᱟᱨ ᱠᱷᱮᱞ ᱪᱟᱹᱞᱩᱭ ᱢᱮ, ᱟᱢᱟᱜ ᱞᱟᱭᱵᱨᱮᱨᱤ ᱨᱮ MIDlets ᱥᱟᱯᱲᱟᱣ ᱢᱮ, ᱟᱨ ᱠᱚᱱᱴᱨᱚᱞ, ᱩᱫᱩᱜ, ᱚᱰᱤᱭᱳ ᱟᱨ ᱠᱟᱹᱢᱤᱦᱚᱨᱟ ᱵᱮᱵᱮᱥ ᱢᱮ ᱾ JL-Mod Plus ᱫᱚ ᱯᱷᱨᱤ ᱟᱨ ᱚᱯᱷᱮᱱ ᱥᱚᱨᱥ ᱠᱟᱱᱟ ᱾</string>
-    <string name="action_context_delete">ᱜᱮᱫ ᱜᱤᱰᱤ</string>
+    <string name="action_context_delete">ᱢᱮᱴᱟᱣ ᱢᱮ</string>
     <string name="action_context_rename">ᱫᱚᱦᱲᱟ ᱧᱩᱛᱩᱢ</string>
     <string name="action_context_shortcut">ᱥᱚᱴᱠᱚᱴ ᱥᱮᱞᱮᱫᱽ ᱢᱮ</string>
     <string name="action_keyboard_ime">ᱠᱮᱭᱵᱚᱰ (IME)</string>
@@ -198,7 +198,7 @@
     <string name="preset_discard_changes">ᱵᱟᱹᱨᱜᱤᱞ</string>
     <string name="preset_manage">ᱯᱨᱚᱯᱷᱟᱭᱤᱞ ᱠᱚ ᱢᱮᱱᱮᱡᱽ ᱢᱮ</string>
     <string name="preset_name">ᱧᱩᱛᱩᱢ</string>
-    <string name="preset_update_confirm">ᱦᱟᱹᱞᱤᱭᱟᱹᱠ</string>
+    <string name="preset_update_confirm">ᱟᱯᱰᱮᱴ ᱢᱮ</string>
     <string name="updates_check">ᱦᱟᱹᱞᱤᱭᱟᱹᱠ ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱛᱮᱸᱝᱜᱷᱟᱱ</string>
     <string name="updates_checking">ᱦᱟᱹᱞᱤᱭᱟᱹᱠ ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱧᱮᱞᱮᱫ ᱟ …</string>
     <string name="bulk_install_recommended">ᱵᱟᱛᱟᱣᱟᱜ</string>
@@ -336,7 +336,7 @@
     <string name="runtime_preset_save_destination">ᱱᱚᱸᱰᱮ ᱥᱟᱺᱪᱟᱣ ᱢᱮ</string>
     <string name="runtime_preset_apply_destination">ᱱᱚᱸᱰᱮ ᱟᱯᱞᱟᱭ ᱢᱮ</string>
     <string name="runtime_preset_this_midlet_only">ᱱᱚᱣᱟ MIDlet ᱥᱩᱢᱩᱝ</string>
-    <string name="runtime_preset_update_destination">%1$s ᱦᱟᱹᱞᱤᱭᱟᱹᱠ ᱢᱮ</string>
+    <string name="runtime_preset_update_destination">%1$s ᱟᱯᱰᱮᱴ ᱢᱮ</string>
     <string name="runtime_layout_apply_title">%1$s ᱟᱯᱞᱟᱭ ᱢᱮ?</string>
     <string name="runtime_apply">ᱟᱯᱞᱟᱭ ᱢᱮ</string>
     <string name="loading_apps">ᱮᱯ ᱠᱚ ᱞᱟᱫᱮᱜ ᱠᱟᱱᱟ…</string>
@@ -374,7 +374,7 @@
     <string name="library_bulk_share_apps">ᱮᱯ ᱠᱚ ᱦᱟᱹᱴᱤᱧ ᱢᱮ</string>
     <string name="library_bulk_export_apps">ᱵᱟᱱᱰᱮᱞ ᱮᱠᱥᱯᱚᱨᱴ ᱢᱮ</string>
     <string name="library_collections_unavailable_title">ᱛᱩᱢᱟᱹᱞ ᱠᱚ ᱵᱟᱹᱱᱩᱜᱼᱟ</string>
-    <string name="pref_apps_view">ᱞᱮᱟᱩᱴ</string>
+    <string name="pref_apps_view">ᱞᱮᱟᱣᱩᱴ</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_screen_padding_title">ᱥᱠᱨᱤᱱ ᱯᱮᱰᱤᱝ</string>
     <string name="pref_skin_title">ᱥᱠᱤᱱ</string>
@@ -486,10 +486,10 @@
     <string name="settings_profiles_summary">ᱮᱴᱟᱜ MIDlet ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱫᱩᱦᱲᱟᱹ ᱵᱮᱵᱷᱟᱨ ᱫᱟᱲᱮᱭᱟᱜ ᱯᱨᱚᱯᱷᱟᱭᱤᱞ ᱠᱚ ᱢᱮᱱᱮᱡᱽ ᱢᱮ ᱾</string>
     <string name="runtime_virtual_controls_title">ᱣᱟᱹᱨᱪᱩᱟᱹᱞ ᱠᱚᱱᱴᱨᱚᱞ ᱠᱚ</string>
     <string name="runtime_virtual_controls_dpad">D-pad</string>
-    <string name="runtime_virtual_controls_edit">ᱞᱮᱟᱩᱴ ᱥᱟᱯᱲᱟᱣ ᱢᱮ</string>
-    <string name="runtime_virtual_controls_edit_guide_title">ᱞᱮᱟᱩᱴ ᱥᱟᱯᱲᱟᱣ ᱜᱚᱲᱚ</string>
+    <string name="runtime_virtual_controls_edit">ᱞᱮᱟᱣᱩᱴ ᱥᱟᱯᱲᱟᱣ ᱢᱮ</string>
+    <string name="runtime_virtual_controls_edit_guide_title">ᱞᱮᱟᱣᱩᱴ ᱥᱟᱯᱲᱟᱣ ᱜᱚᱲᱚ</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">ᱫᱚᱦᱲᱟ ᱟᱞᱚ ᱩᱫᱩᱜᱽᱟ</string>
-    <string name="runtime_virtual_controls_switch_layout">ᱠᱚᱱᱴᱨᱚᱞ ᱞᱮᱟᱩᱴ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
+    <string name="runtime_virtual_controls_switch_layout">ᱠᱚᱱᱴᱨᱚᱞ ᱞᱮᱟᱣᱩᱴ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
     <string name="runtime_virtual_controls_show_controls">ᱩᱫᱩᱜᱚᱜ ᱠᱚᱱᱴᱨᱚᱞ ᱠᱚ ᱵᱟᱪᱷᱟᱣ ᱢᱮ</string>
     <string name="runtime_virtual_controls_template_dpad_standard">ᱢᱟᱱᱚᱠ D-pad</string>
     <string name="runtime_virtual_controls_template_analog_standard">ᱢᱟᱱᱚᱠ ᱮᱱᱟᱞᱚᱜᱽ ᱥᱴᱤᱠ</string>
@@ -677,7 +677,7 @@
     <string name="preset_invalid_name">ᱢᱤᱫ ᱵᱟᱹᱭᱫᱷᱚ ᱯᱨᱳᱯᱷᱟᱭᱤᱞ ᱧᱩᱛᱩᱢ ᱮᱢ ᱢᱮ᱾</string>
     <string name="preset_keyboard_layout_unavailable">ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱟᱣᱩᱴ ᱵᱟᱹᱱᱩᱜᱼᱟ᱾</string>
     <string name="preset_manager_default_section">ᱱᱟᱣᱟ MIDlet ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱢᱩᱬ</string>
-    <string name="preset_manager_keyboard_section">ᱥᱟᱵ ᱟᱠᱟᱱ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱣᱟᱣᱩᱴᱠᱚ</string>
+    <string name="preset_manager_keyboard_section">ᱥᱟᱧᱪᱟᱣ ᱟᱠᱟᱱ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱟᱣᱩᱴ ᱠᱚ</string>
     <string name="preset_manager_presets_section">ᱤᱧᱟᱜ ᱯᱨᱳᱯᱷᱟᱭᱤᱞᱠᱚ</string>
     <string name="preset_name_exists">ᱱᱚᱣᱟ ᱧᱩᱛᱩᱢᱟᱱ ᱯᱨᱳᱯᱷᱟᱭᱤᱞ ᱢᱟᱲᱟᱝ ᱠᱷᱚᱱ ᱢᱮᱱᱟᱜᱼᱟ᱾</string>
     <string name="preset_picker_title">ᱯᱨᱳᱯᱷᱟᱭᱤᱞ ᱵᱮᱵᱷᱟᱨ ᱢᱮ</string>
@@ -687,9 +687,9 @@
     <string name="preset_use">ᱯᱨᱳᱯᱷᱟᱭᱤᱞ ᱵᱮᱵᱷᱟᱨ ᱢᱮ</string>
     <string name="preset_virtual_keyboard_off">ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱰᱤᱡᱮᱵᱚᱞ ᱮᱱᱟ</string>
     <string name="preset_virtual_keyboard_on">ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱪᱟᱹᱞᱩ ᱮᱱᱟ</string>
-    <string name="profile_apply_layout_keeps_settings">ᱱᱚᱣᱟ MIDlet ᱨᱮᱱᱟᱜ ᱥᱟᱡᱟᱣ ᱫᱚᱦᱚᱭ ᱢᱮ; ᱢᱤᱫ ᱠᱩᱥᱤ ᱠᱚᱱᱯᱷᱤᱜᱽᱨᱮᱥᱚᱱ ᱵᱮᱵᱷᱟᱨ ᱢᱮ᱾</string>
-    <string name="profile_apply_layout_only">ᱠᱷᱟᱹᱞᱤ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱣᱟᱣᱩᱴ</string>
-    <string name="profile_apply_settings_keeps_layout">ᱱᱚᱣᱟ MIDlet ᱨᱮᱱᱟᱜ ᱞᱮᱣᱟᱣᱩᱴ ᱫᱚᱦᱚᱭ ᱢᱮ; ᱢᱤᱫ ᱠᱩᱥᱤ ᱠᱚᱱᱯᱷᱤᱜᱽᱨᱮᱥᱚᱱ ᱵᱮᱵᱷᱟᱨ ᱢᱮ᱾</string>
+    <string name="profile_apply_layout_keeps_settings">ᱱᱚᱣᱟ MIDlet ᱨᱮᱱᱟᱜ ᱥᱟᱡᱟᱣ ᱫᱚᱦᱚᱭ ᱢᱮ; ᱢᱤᱫ ᱠᱚᱥᱴᱚᱢ ᱠᱚᱱᱯᱷᱤᱜᱟᱨᱮᱥᱚᱱ ᱵᱮᱵᱷᱟᱨ ᱢᱮ᱾</string>
+    <string name="profile_apply_layout_only">ᱠᱷᱟᱹᱞᱤ ᱵᱷᱟᱨᱪᱩᱣᱟᱞ ᱠᱚᱱᱴᱨᱳᱞ ᱞᱮᱟᱣᱩᱴ</string>
+    <string name="profile_apply_settings_keeps_layout">ᱱᱚᱣᱟ MIDlet ᱨᱮᱱᱟᱜ ᱞᱮᱟᱣᱩᱴ ᱫᱚᱦᱚᱭ ᱢᱮ; ᱢᱤᱫ ᱠᱚᱥᱴᱚᱢ ᱠᱚᱱᱯᱷᱤᱜᱟᱨᱮᱥᱚᱱ ᱵᱮᱵᱷᱟᱨ ᱢᱮ᱾</string>
     <string name="profile_builtin_settings">JL-Mod Defaults</string>
     <string name="profile_create_summary">ᱮᱴᱟᱜ MIDlet ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱢᱤᱫ ᱫᱚᱦᱲᱟ ᱵᱮᱵᱷᱟᱨ ᱜᱟᱱᱚᱜ ᱥᱮᱴᱟᱯ ᱥᱟᱧᱪᱟᱣ ᱢᱮ᱾</string>
     <string name="profile_default_badge_short">ᱱᱟᱣᱟ MIDlet ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱢᱩᱬ</string>
