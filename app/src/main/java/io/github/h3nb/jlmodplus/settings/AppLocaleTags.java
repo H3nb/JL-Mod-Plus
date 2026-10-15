@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 
 import java.util.Locale;
-import java.util.StringJoiner;
 
 /** Normalizes app-language picker values through the platform BCP-47 mapping. */
 public final class AppLocaleTags {
@@ -33,12 +32,15 @@ public final class AppLocaleTags {
 	@Nullable
 	static String withoutRetiredSantali(@NonNull String languageTags) {
 		boolean removed = false;
-		StringJoiner retained = new StringJoiner(",");
+		StringBuilder retained = new StringBuilder();
 		for (String tag : languageTags.split(",")) {
 			if ("sat".equals(Locale.forLanguageTag(tag).getLanguage())) {
 				removed = true;
 			} else if (!tag.isEmpty()) {
-				retained.add(tag);
+				if (retained.length() > 0) {
+					retained.append(',');
+				}
+				retained.append(tag);
 			}
 		}
 		return removed ? retained.toString() : null;
