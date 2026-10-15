@@ -14,11 +14,9 @@
     <string name="about_lineage">JL-Mod Plus és una bifurcació independent de JL-Mod, de woesss (Yury Kharchenko). JL-Mod es basa en J2ME Loader, de Nikita Shakarun, que té l’origen en J2meLoader de NaikSoftware.</string>
     <string name="about_lineage_title">Orígens del projecte</string>
     <string name="about_links_title">Projecte i llicències</string>
-    <string name="about_maintainer">Responsable del manteniment: %1$s</string>
     <string name="about_message">Executa aplicacions i jocs clàssics, organitza els MIDlets a la Biblioteca i ajusta els controls, la pantalla, l’àudio i el rendiment. JL-Mod Plus és gratuït i de codi obert.</string>
     <string name="about_revision_label">Revisió del codi font</string>
     <string name="about_subtitle">Emulador de Java ME per a Android</string>
-    <string name="about_version">Versió %1$s</string>
     <string name="about_version_label">Versió</string>
     <string name="action_back">Enrere</string>
     <string name="action_context_delete">Suprimeix</string>
@@ -55,7 +53,6 @@
     <string name="error_name">Introdueix un nom.</string>
     <string name="exit">Surt</string>
     <string name="help">Ajuda</string>
-    <string name="help_message">• El filtratge lineal pot reduir considerablement el rendiment d’alguns MIDlets. Desactiva’l si el MIDlet és massa lent.&lt;BR&gt;• El processament immediat omet la cua d’esdeveniments normal de Java ME. Pot millorar la resposta, però pot fer que alguns MIDlets siguin inestables.</string>
     <string name="licenses">Llicències</string>
     <string name="licenses_unavailable">Els detalls de les llicències no estan disponibles.</string>
     <string name="loading_apps">S’estan carregant les aplicacions</string>
@@ -121,11 +118,9 @@
     <string name="library_action_about_summary">Resum del projecte, informació de compilació i enllaços.</string>
     <string name="library_action_crash_reports_summary">Revisa els informes de diagnòstic desats.</string>
     <string name="library_action_export_bundle">Exporta un paquet d’aplicació</string>
-    <string name="library_action_help_summary">Guia d’ús i controls habituals.</string>
     <string name="library_action_import_bundle">Importa un paquet d’aplicació</string>
     <string name="library_action_import_bundle_summary">Restaura un JAR exportat, la configuració de l’aplicació i les dades desades.</string>
     <string name="library_action_licenses_summary">Avisos de tercers i condicions de llicència inclosos amb l’aplicació.</string>
-    <string name="library_action_save_log_summary">Desa els registres recents de JL-Mod Plus per resoldre problemes.</string>
     <string name="library_action_select">Selecciona</string>
     <string name="library_action_settings_summary">Configura el comportament global i l’aparença.</string>
     <string name="library_action_share_app">Comparteix l’aplicació</string>
@@ -145,7 +140,6 @@
     <string name="library_collection_name">Nom de la col·lecció</string>
     <string name="library_collection_new">Col·lecció nova</string>
     <string name="library_collection_ready_empty_message">Crea col·leccions per organitzar les aplicacions sense moure’n els fitxers.</string>
-    <string name="library_collection_remove">Treu de la col·lecció</string>
     <string name="library_collection_remove_from_current">Treu de la col·lecció</string>
     <string name="library_collection_select_message">Tria una col·lecció per veure’n les aplicacions.</string>
     <string name="library_collection_select_title">Selecciona una col·lecció</string>
@@ -636,7 +630,6 @@
     <string name="installer_stage_wait">S\'està esperant una altra operació…</string>
     <string name="installer_title">Instal·lador de MIDlets</string>
     <string name="reconversion_done_with_warning">S\'ha completat la conversió de compatibilitat amb advertiments.</string>
-    <string name="reconversion_error">No s\'ha pogut convertir automàticament el MIDlet.\n\n%1$s</string>
     <string name="reconversion_error_summary">No s\'ha pogut convertir automàticament el MIDlet.</string>
     <string name="reconverting_wait">Aquest MIDlet necessita una conversió de compatibilitat que només es fa una vegada abans de poder iniciar-se. S\'està convertint…</string>
     <string name="reinstall">Aquesta aplicació ja està instal·lada. Voleu reinstal·lar-la?</string>
@@ -753,7 +746,6 @@
     <string name="memory_editor_clear_selection">Esborra la selecció</string>
     <string name="memory_editor_close">Tanca l\'Editor de memòria</string>
     <string name="memory_editor_edit">Edita</string>
-    <string name="memory_editor_edit_batch_help">Aplica el valor de substitució als objectius seleccionats compatibles amb el tipus de dades triat. Seguiment i Congela no estan disponibles per a les edicions en bloc.</string>
     <string name="memory_editor_edit_batch_no_common_type">Els resultats seleccionats no admeten el tipus de dades triat. Editeu els resultats compatibles per separat.</string>
     <string name="memory_editor_edit_batch_type_notice">Només es canviaran els valors amb tipus de dades coincidents.</string>
     <string name="memory_editor_engine_reconnecting">L\'Editor de memòria s\'està reconnectant…</string>
@@ -767,7 +759,7 @@
     <string name="memory_editor_freeze_paused">En pausa per seguretat</string>
     <string name="memory_editor_identity_unsafe">No s\'ha pogut verificar el valor seleccionat o l\'estat de la cerca. Actualitzeu els resultats o torneu a obrir l\'Inspector i torneu-ho a provar.</string>
     <string name="memory_editor_increment_invalid">Feu servir un únic tipus enter i valors dins del seu interval.</string>
-    <string name="memory_editor_increment_preview">Previsualització: %1$s (nombre de valors: %2$d)</string>
+    <string name="memory_editor_increment_preview">Previsualització: %1$s</string>
     <string name="memory_editor_increment_start">Valor inicial</string>
     <string name="memory_editor_increment_step">Pas</string>
     <string name="memory_editor_incremental_edit">Seqüència aritmètica</string>
@@ -957,11 +949,7 @@
     <string name="pref_accent_blue">Blau predeterminat</string>
     <string name="pref_accent_classic_blue">Blau clàssic</string>
     <string name="pref_accent_coral">Préssec coral</string>
-    <string name="pref_accent_cyan">Cian</string>
     <string name="pref_accent_green">Verd maragda</string>
-    <string name="pref_accent_indigo">Índigo</string>
-    <string name="pref_accent_orange">Taronja</string>
-    <string name="pref_accent_pink">Rosa</string>
     <string name="pref_accent_rose">Rosa de baies</string>
     <string name="pref_accent_sapphire">Blau safir</string>
     <string name="pref_accent_teal">Turquesa jade</string>
