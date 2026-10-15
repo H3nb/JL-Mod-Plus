@@ -28,7 +28,6 @@
     <string name="exit">خروج</string>
     <string name="FORCE_CLOSE_CONFIRMATION">هل تريد إيقاف هذا الـMIDlet؟ قد تُفقد التغييرات غير المحفوظة.</string>
     <string name="help">مساعدة</string>
-    <string name="help_message">• قد تقلل التصفية الخطية الأداء بدرجة كبيرة في بعض تطبيقات MIDlet. عطّلها إذا كان MIDlet بطيئًا جدًا.&lt;BR&gt;• تتجاوز المعالجة الفورية قائمة انتظار أحداث Java ME المعتادة. قد تحسّن الاستجابة، لكنها قد تجعل بعض تطبيقات MIDlet غير مستقرة.</string>
     <string name="identity_filter">بدون (الأسرع)</string>
     <string name="install">تثبيت</string>
     <string name="install_done">تم تثبيت التطبيق بنجاح!</string>
@@ -159,10 +158,8 @@
     <string name="about_lineage">JL-Mod Plus مشروع متفرع مستقل من JL-Mod الذي يطوّره woesss (Yury Kharchenko). يستند JL-Mod إلى J2ME Loader من Nikita Shakarun، الذي تعود جذوره إلى J2meLoader من NaikSoftware.</string>
     <string name="about_lineage_title">أصول المشروع</string>
     <string name="about_links_title">المشروع والتراخيص</string>
-    <string name="about_maintainer">مسؤول الصيانة: %1$s</string>
     <string name="about_revision_label">مراجعة المصدر</string>
     <string name="about_subtitle">محاكي Java ME لنظام Android</string>
-    <string name="about_version">الإصدار %1$s</string>
     <string name="about_version_label">الإصدار</string>
     <string name="action_back">رجوع</string>
     <string name="clear_report_selection">إلغاء تحديد التقارير</string>
@@ -232,11 +229,9 @@
     <string name="library_action_about_summary">نبذة عن المشروع ومعلومات البنية والروابط.</string>
     <string name="library_action_crash_reports_summary">مراجعة تقارير التشخيص المحفوظة.</string>
     <string name="library_action_export_bundle">تصدير حزمة التطبيق</string>
-    <string name="library_action_help_summary">إرشادات الاستخدام وعناصر التحكم الشائعة.</string>
     <string name="library_action_import_bundle">استيراد حزمة تطبيق</string>
     <string name="library_action_import_bundle_summary">استعادة ملف JAR مُصدَّر وإعدادات التطبيق وبيانات الحفظ.</string>
     <string name="library_action_licenses_summary">إشعارات الجهات الخارجية وشروط الترخيص المرفقة بالتطبيق.</string>
-    <string name="library_action_save_log_summary">حفظ سجلات JL-Mod Plus الأخيرة لاستكشاف المشكلات وإصلاحها.</string>
     <string name="library_action_select">تحديد</string>
     <string name="library_action_settings_summary">ضبط السلوك العام والمظهر.</string>
     <string name="library_action_share_app">مشاركة التطبيق</string>
@@ -256,7 +251,6 @@
     <string name="library_collection_name">اسم المجموعة</string>
     <string name="library_collection_new">مجموعة جديدة</string>
     <string name="library_collection_ready_empty_message">أنشئ مجموعات لتنظيم التطبيقات دون نقل ملفاتها.</string>
-    <string name="library_collection_remove">إزالة من المجموعة</string>
     <string name="library_collection_remove_from_current">إزالة من المجموعة</string>
     <string name="library_collection_select_message">اختر مجموعة لعرض تطبيقاتها.</string>
     <string name="library_collection_select_title">اختيار مجموعة</string>
@@ -756,7 +750,6 @@
     <string name="installer_stage_wait">بانتظار عملية أخرى…</string>
     <string name="installer_title">مثبّت MIDlet</string>
     <string name="reconversion_done_with_warning">اكتمل تحويل التوافق مع تحذيرات.</string>
-    <string name="reconversion_error">تعذر تحويل MIDlet تلقائيًا.\n\n%1$s</string>
     <string name="reconversion_error_summary">تعذر تحويل MIDlet تلقائيًا.</string>
     <string name="reconverting_wait">يحتاج MIDlet هذا إلى تحويل توافق لمرة واحدة قبل تشغيله. جارٍ التحويل…</string>
     <plurals name="bulk_install_attention_count">
@@ -919,7 +912,6 @@
     <string name="memory_editor_clear_selection">إلغاء التحديد</string>
     <string name="memory_editor_close">إغلاق محرر الذاكرة</string>
     <string name="memory_editor_edit">تعديل</string>
-    <string name="memory_editor_edit_batch_help">يطبّق القيمة البديلة على الأهداف المحددة المتوافقة مع نوع البيانات المختار. المراقبة والتجميد غير متاحين في التعديل الجماعي.</string>
     <string name="memory_editor_edit_batch_no_common_type">النتائج المحددة لا تدعم نوع البيانات المختار. عدّل النتائج المتوافقة على حدة.</string>
     <string name="memory_editor_edit_batch_type_notice">ستتغير القيم ذات أنواع البيانات المطابقة فقط.</string>
     <string name="memory_editor_engine_reconnecting">جارٍ إعادة اتصال محرر الذاكرة…</string>
@@ -933,7 +925,7 @@
     <string name="memory_editor_freeze_paused">متوقف مؤقتًا للحفاظ على الأمان</string>
     <string name="memory_editor_identity_unsafe">تعذّر التحقق من القيمة المحددة أو حالة البحث. حدّث النتائج أو أعد فتح الفاحص، ثم حاول مجددًا.</string>
     <string name="memory_editor_increment_invalid">استخدم نوعًا واحدًا من الأعداد الصحيحة وقيمًا ضمن نطاقه.</string>
-    <string name="memory_editor_increment_preview">معاينة: %1$s (عدد القيم: %2$d)</string>
+    <string name="memory_editor_increment_preview">معاينة: %1$s</string>
     <string name="memory_editor_increment_start">القيمة الابتدائية</string>
     <string name="memory_editor_increment_step">الخطوة</string>
     <string name="memory_editor_incremental_edit">تدرّج حسابي</string>
@@ -1108,11 +1100,7 @@
     <string name="pref_accent_blue">أزرق افتراضي</string>
     <string name="pref_accent_classic_blue">أزرق كلاسيكي</string>
     <string name="pref_accent_coral">خوخي مرجاني</string>
-    <string name="pref_accent_cyan">سماوي</string>
     <string name="pref_accent_green">أخضر زمردي</string>
-    <string name="pref_accent_indigo">نيلي</string>
-    <string name="pref_accent_orange">برتقالي</string>
-    <string name="pref_accent_pink">وردي</string>
     <string name="pref_accent_rose">وردي توتي</string>
     <string name="pref_accent_sapphire">أزرق ياقوتي</string>
     <string name="pref_accent_teal">أخضر يشمي</string>
