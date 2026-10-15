@@ -15,7 +15,6 @@
     <string name="exit">結束</string>
     <string name="FORCE_CLOSE_CONFIRMATION">要停止此 MIDlet 嗎？未儲存的變更可能會遺失。</string>
     <string name="help">說明</string>
-    <string name="help_message">• 線性過濾可能大幅降低某些 MIDlet 的效能。如果 MIDlet 執行過慢，請停用此功能。&lt;BR&gt;• 即時處理會略過一般 Java ME 事件佇列。它可能改善回應速度，但也可能使某些 MIDlet 執行不穩定。</string>
     <string name="layout_edit_finish">結束編輯</string>
     <string name="layout_edit_finished">編輯模式已完成</string>
     <string name="layout_switch">選擇控制項配置</string>
@@ -83,10 +82,8 @@
     <string name="about_lineage">JL-Mod Plus 是 woesss（Yury Kharchenko）開發的 JL-Mod 的獨立衍生專案。JL-Mod 以 Nikita Shakarun 的 J2ME Loader 為基礎，而 J2ME Loader 源自 NaikSoftware 的 J2meLoader。</string>
     <string name="about_lineage_title">專案起源</string>
     <string name="about_links_title">專案與授權條款</string>
-    <string name="about_maintainer">維護者：%1$s</string>
     <string name="about_revision_label">原始碼修訂版本</string>
     <string name="about_subtitle">Android 適用的 Java ME 模擬器</string>
-    <string name="about_version">版本 %1$s</string>
     <string name="about_version_label">版本</string>
     <string name="action_back">返回</string>
     <string name="action_lock_orientation">鎖定螢幕旋轉</string>
@@ -173,11 +170,9 @@
     <string name="library_action_about_summary">專案概述、建置資訊和相關連結。</string>
     <string name="library_action_crash_reports_summary">檢視已儲存的診斷報告。</string>
     <string name="library_action_export_bundle">匯出應用程式備份包</string>
-    <string name="library_action_help_summary">使用指南和常用操作。</string>
     <string name="library_action_import_bundle">匯入應用程式備份包</string>
     <string name="library_action_import_bundle_summary">還原已匯出的 JAR、應用程式設定和存檔資料。</string>
     <string name="library_action_licenses_summary">應用程式隨附的第三方聲明和授權條款。</string>
-    <string name="library_action_save_log_summary">儲存 JL-Mod Plus 的近期記錄，以便排解問題。</string>
     <string name="library_action_select">選取</string>
     <string name="library_action_settings_summary">設定全域行為和外觀。</string>
     <string name="library_action_share_app">分享應用程式</string>
@@ -197,7 +192,6 @@
     <string name="library_collection_name">收藏集名稱</string>
     <string name="library_collection_new">新增收藏集</string>
     <string name="library_collection_ready_empty_message">建立收藏集即可整理應用程式，無須移動檔案。</string>
-    <string name="library_collection_remove">從收藏集中移除</string>
     <string name="library_collection_remove_from_current">從收藏集中移除</string>
     <string name="library_collection_select_message">選擇收藏集以檢視其中的應用程式。</string>
     <string name="library_collection_select_title">選擇收藏集</string>
@@ -671,7 +665,6 @@
     <string name="installer_stage_wait">正在等待其他操作…</string>
     <string name="installer_title">MIDlet 安裝程式</string>
     <string name="reconversion_done_with_warning">相容性轉換已完成，但有警告。</string>
-    <string name="reconversion_error">無法自動轉換 MIDlet。\n\n%1$s</string>
     <string name="reconversion_error_summary">無法自動轉換 MIDlet。</string>
     <string name="reconverting_wait">此 MIDlet 啟動前需要進行一次相容性轉換。正在轉換…</string>
     <string name="reinstall">此應用程式已安裝。要重新安裝嗎？</string>
@@ -752,7 +745,6 @@
     <string name="memory_editor_clear_selection">取消選取</string>
     <string name="memory_editor_close">關閉記憶體編輯器</string>
     <string name="memory_editor_edit">編輯</string>
-    <string name="memory_editor_edit_batch_help">將替換值套用至所選目標中與指定資料型別相容的目標。批次編輯無法使用監看與凍結。</string>
     <string name="memory_editor_edit_batch_no_common_type">所選結果不支援指定的資料型別。請分別編輯相容的結果。</string>
     <string name="memory_editor_edit_batch_type_notice">僅變更資料型別相符的值。</string>
     <string name="memory_editor_engine_reconnecting">記憶體編輯器正在重新連線…</string>
@@ -766,7 +758,7 @@
     <string name="memory_editor_freeze_paused">已基於安全考量暫停</string>
     <string name="memory_editor_identity_unsafe">無法驗證所選值或搜尋狀態。請重新整理結果或重新開啟檢查器，然後再試一次。</string>
     <string name="memory_editor_increment_invalid">請使用一種整數型別，且值必須在該型別的範圍內。</string>
-    <string name="memory_editor_increment_preview">預覽：%1$s（%2$d 個值）</string>
+    <string name="memory_editor_increment_preview">預覽：%1$s</string>
     <string name="memory_editor_increment_start">起始值</string>
     <string name="memory_editor_increment_step">間隔值</string>
     <string name="memory_editor_incremental_edit">依等差數列設定</string>
@@ -919,11 +911,7 @@
     <string name="pref_accent_blue">預設藍</string>
     <string name="pref_accent_classic_blue">經典藍</string>
     <string name="pref_accent_coral">珊瑚桃色</string>
-    <string name="pref_accent_cyan">青色</string>
     <string name="pref_accent_green">祖母綠</string>
-    <string name="pref_accent_indigo">靛藍</string>
-    <string name="pref_accent_orange">橘色</string>
-    <string name="pref_accent_pink">粉紅色</string>
     <string name="pref_accent_rose">莓果玫瑰色</string>
     <string name="pref_accent_sapphire">藍寶石色</string>
     <string name="pref_accent_teal">翡翠藍綠</string>
