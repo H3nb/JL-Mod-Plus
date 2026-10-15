@@ -37,7 +37,6 @@
     <string name="exit">Salir</string>
     <string name="FORCE_CLOSE_CONFIRMATION">¿Detener este MIDlet? Los cambios no guardados pueden perderse.</string>
     <string name="help">Ayuda</string>
-    <string name="help_message">• El filtrado lineal puede reducir significativamente el rendimiento de algunos MIDlets. Desactívalo si el MIDlet es demasiado lento.&lt;BR&gt;• El procesamiento inmediato omite la cola normal de eventos de Java ME. Puede mejorar la respuesta, pero puede volver inestables algunos MIDlets.</string>
     <string name="identity_filter">Ninguno (el más rápido)</string>
     <string name="install">instalar</string>
     <string name="install_done">Aplicación instalada.</string>
@@ -151,7 +150,6 @@
     <string name="take_screenshot">Tomar captura de pantalla</string>
     <string name="warn_install_from_net">El archivo se descargará de Internet.</string>
     <string name="warning">Advertencia</string>
-    <string name="about_maintainer">Mantenedor: %1$s</string>
     <string name="about_lineage">JL-Mod Plus es una bifurcación independiente de JL-Mod, desarrollado por woesss (Yury Kharchenko). JL-Mod se basa en J2ME Loader de Nikita Shakarun, cuyos orígenes se remontan a J2meLoader de NaikSoftware.</string>
     <string name="action_back">Atrás</string>
     <string name="action_lock_orientation">Bloquear rotación de pantalla</string>
@@ -422,7 +420,6 @@
     <string name="library_collection_members_empty">No hay aplicaciones en esta colección.</string>
     <string name="library_collection_select_title">Seleccionar una colección</string>
     <string name="library_collection_select_message">Elige una colección para ver sus aplicaciones.</string>
-    <string name="library_collection_remove">Quitar de la colección</string>
     <string name="library_collection_remove_from_current">Quitar de la colección</string>
     <string name="library_no_matches">No hay resultados para «%1$s»</string>
     <string name="library_action_share_app">Compartir aplicación</string>
@@ -472,7 +469,6 @@
         <item quantity="other">Editar %1$d valores</item>
         <item quantity="many">Editar %1$d de valores</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Aplica el valor de reemplazo a los objetivos seleccionados compatibles con el tipo de datos elegido. Seguimiento y Congelar no están disponibles para ediciones por lotes.</string>
     <string name="memory_editor_edit_batch_no_common_type">Los resultados seleccionados no admiten el tipo de datos elegido. Edita los resultados compatibles por separado.</string>
     <string name="memory_editor_save">Aplicar</string>
     <string name="memory_editor_replacement">Valor de reemplazo</string>
@@ -768,7 +764,6 @@
     <string name="config_help_timing_mode">Elige si el MIDlet usa tiempo de emulación o tiempo del sistema. Los retardos relativos siguen la velocidad de emulación.</string>
     <string name="config_help_timing_unavailable">Los ajustes de tiempo no están disponibles para esta instalación del MIDlet. Reinstala o reconvierte el MIDlet para activarlos.</string>
     <string name="reconverting_wait">Este MIDlet necesita una conversión de compatibilidad única antes de iniciarse. Convirtiendo…</string>
-    <string name="reconversion_error">No se pudo convertir el MIDlet automáticamente.\n\n%1$s</string>
     <string name="config_help_generic_color">Establece el color de este elemento visual.</string>
     <string name="config_help_encoding">Elige la codificación de caracteres que se informa como microedition.encoding.</string>
     <string name="config_edit_system_properties">Editar propiedades del sistema</string>
@@ -935,10 +930,6 @@
     <string name="pref_accent_amber">Ámbar</string>
     <string name="pref_accent_rose">Rosa</string>
     <string name="pref_accent_violet">Violeta</string>
-    <string name="pref_accent_indigo">Índigo</string>
-    <string name="pref_accent_cyan">Cian</string>
-    <string name="pref_accent_orange">Naranja</string>
-    <string name="pref_accent_pink">Rosa</string>
     <string name="runtime_invalid_intent">Solicitud de inicio no válida: falta la ruta del MIDlet.</string>
     <string name="runtime_storage_in_use">El almacenamiento del MIDlet ya está en uso por otro entorno de ejecución.</string>
     <string name="runtime_installation_changed">No se pudo preparar la instalación del MIDlet para iniciarla.</string>
@@ -952,10 +943,8 @@
     <string name="library_selection_unchecked">No seleccionado</string>
     <string name="library_action_settings_summary">Configura el comportamiento y la apariencia globales.</string>
     <string name="library_action_crash_reports_summary">Revisa los informes de diagnóstico guardados.</string>
-    <string name="library_action_save_log_summary">Guarda los registros recientes de JL-Mod Plus para solucionar problemas.</string>
     <string name="library_action_about_summary">Información del proyecto, de la compilación y enlaces.</string>
     <string name="library_action_licenses_summary">Avisos de terceros y términos de licencia incluidos con la aplicación.</string>
-    <string name="library_action_help_summary">Guía de uso y controles habituales.</string>
     <string name="library_bulk_delete_apps">Eliminar aplicaciones</string>
     <string name="library_bulk_add_collection">Añadir a colección</string>
     <string name="library_bulk_share_apps">Compartir aplicaciones</string>
@@ -978,7 +967,6 @@
     <string name="library_collections_unavailable_title">Colecciones no disponibles</string>
     <string name="library_load_failed_message">No se pudo cargar la Biblioteca. Inténtalo de nuevo.</string>
     <string name="bulk_install_prepare_failed">No se pudieron preparar las aplicaciones seleccionadas para la instalación.</string>
-    <string name="about_version">Versión %1$s</string>
     <string name="screenshot_save_failed">No se pudo guardar la captura de pantalla.</string>
     <string name="screenshot_saved_path">Captura guardada en %1$s</string>
     <string name="log_save_started">Se inició el guardado del registro.</string>
@@ -1041,7 +1029,7 @@
     <string name="memory_editor_change_amount">Cantidad de cambio</string>
     <string name="memory_editor_edit_batch_type_notice">Solo se cambiarán los valores con tipos de datos coincidentes.</string>
     <string name="memory_editor_increment_invalid">Usa un único tipo entero y valores dentro de su rango.</string>
-    <string name="memory_editor_increment_preview">Vista previa: %1$s (%2$d valores)</string>
+    <string name="memory_editor_increment_preview">Vista previa: %1$s</string>
     <string name="memory_editor_increment_start">Valor inicial</string>
     <string name="memory_editor_increment_step">Paso</string>
     <string name="memory_editor_incremental_edit">Incremental</string>
