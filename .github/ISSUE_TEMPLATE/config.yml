@@ -1,1 +1,11 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Feature ideas
+    url: https://github.com/H3nb/JL-Mod-Plus/discussions/categories/ideas
+    about: Suggest and discuss new features or improvements.
+  - name: Questions and support
+    url: https://github.com/H3nb/JL-Mod-Plus/discussions/categories/q-a
+    about: Ask questions and get help from the community.
+  - name: General discussion
+    url: https://github.com/H3nb/JL-Mod-Plus/discussions/categories/general
+    about: Share experiences and discuss JL-Mod Plus.

@@ -62,6 +62,7 @@ import io.github.h3nb.jlmodplus.crashes.MidletFailureRecovery;
 import io.github.h3nb.jlmodplus.crashes.ProcessExitStore;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
+import io.github.h3nb.jlmodplus.settings.AppLocaleTags;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.FileUtils;
@@ -250,6 +251,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		AppLocaleTags.migrateRetiredSantaliLocale();
 		updateRecentTaskDescription();
 		if (libraryViewModel != null) libraryViewModel.refreshPlayStats();
 	}

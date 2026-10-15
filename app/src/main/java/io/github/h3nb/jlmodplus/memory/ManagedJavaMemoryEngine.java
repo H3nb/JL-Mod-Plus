@@ -60,20 +60,20 @@ final class ManagedJavaMemoryEngine {
 	private static final int DEFAULT_MAX_ARRAY_ELEMENTS = 2_000_000;
 	private static final long DEFAULT_MAX_RESULT_STORAGE_BYTES = 192L * 1024L * 1024L;
 	private static final int MAX_SEARCH_HISTORY = MemoryEngineContract.MAX_SEARCH_HISTORY;
-	private static final long RESULT_SLOT_BYTES = Integer.BYTES + 2L * Long.BYTES;
+	private static final long RESULT_SLOT_BYTES = Integer.SIZE / Byte.SIZE + 2L * (Long.SIZE / Byte.SIZE);
 	private static final int INITIAL_OWNER_CAPACITY = 16;
 	private static final int FIRST_SUPPORTED_TYPE = MemoryEngineContract.TYPE_BYTE;
 	private static final int LAST_SUPPORTED_TYPE = MemoryEngineContract.TYPE_DOUBLE;
 	private static final long STAGED_OWNER_BYTES = 64L;
 	private static final long FINISHED_BUCKET_BYTES = 64L;
 	private static final long TRAVERSAL_ENTRY_BYTES = 64L;
-	private static final long QUEUE_REFERENCE_BYTES = Long.BYTES;
+	private static final long QUEUE_REFERENCE_BYTES = Long.SIZE / Byte.SIZE;
 	/** Conservative accounting for one weak shared predecessor (not one per numeric element). */
 	private static final long PROVENANCE_NODE_BYTES = 80L;
 	private static final long MIN_PROVENANCE_STORAGE_BUDGET = 64L * 1024L;
 	private static final long MAX_PROVENANCE_CAPTURE_BYTES = 2L * 1024L * 1024L;
 	private static final int MAX_PROVENANCE_DEPTH = 24;
-	private static final long SNAPSHOT_REFERENCE_BYTES = Long.BYTES;
+	private static final long SNAPSHOT_REFERENCE_BYTES = Long.SIZE / Byte.SIZE;
 
 	private final Object stateLock = new Object();
 	private final AtomicLong controlEpoch = new AtomicLong();

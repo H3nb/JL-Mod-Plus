@@ -404,8 +404,8 @@ class ConfigComposeTest {
         }
 
         scrollTo(uiString(R.string.PREF_LIMIT_FPS))
-        composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS))
-        composeRule.onNodeWithText("Maximum").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.fps_limit_maximum)).assertIsDisplayed()
     }
 
     @Test

@@ -9,12 +9,41 @@
 package io.github.h3nb.jlmodplus.settings;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
 
 import java.util.Locale;
 
 /** Normalizes app-language picker values through the platform BCP-47 mapping. */
-final class AppLocaleTags {
+public final class AppLocaleTags {
 	private AppLocaleTags() {
+	}
+
+	/** Drop only the retired Santali locale, preserving any other requested languages. */
+	public static void migrateRetiredSantaliLocale() {
+		String retained = withoutRetiredSantali(AppCompatDelegate.getApplicationLocales().toLanguageTags());
+		if (retained != null) {
+			AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(retained));
+		}
+	}
+
+	/** Null means no change; an empty string means follow the system language. */
+	@Nullable
+	static String withoutRetiredSantali(@NonNull String languageTags) {
+		boolean removed = false;
+		StringBuilder retained = new StringBuilder();
+		for (String tag : languageTags.split(",")) {
+			if ("sat".equals(Locale.forLanguageTag(tag).getLanguage())) {
+				removed = true;
+			} else if (!tag.isEmpty()) {
+				if (retained.length() > 0) {
+					retained.append(',');
+				}
+				retained.append(tag);
+			}
+		}
+		return removed ? retained.toString() : null;
 	}
 
 	@NonNull

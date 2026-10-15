@@ -51,10 +51,10 @@ the repository root with Python 3.10+ and no third-party dependencies:
 
 ```powershell
 python -B scripts/localization_audit.py
-python -B -m unittest discover -s scripts/tests -p test_localization_audit.py -v
+python -B -m unittest discover -s scripts/tests -p 'test_localization_*.py' -v
 ```
 
-The command prints a summary and writes deterministic schema-versioned
+The auditor prints a summary and writes deterministic schema-versioned
 `build/reports/localization/inventory.json` and `inventory.md`. These generated
 reports are ignored and must not be committed. `-B` avoids Python bytecode cache
 files. The optional `--repo-root` selects another repository root; output remains
@@ -63,10 +63,25 @@ under that root's `build/` directory.
 It reads repository-owned values XML without modifying resources. Missing
 translations, fragmentation, and other findings still return success; unreadable
 input, malformed XML, unsupported locale forms, and execution/usage errors return
-non-zero. It performs no semantic review, repairs, AI calls, or CI enforcement.
+non-zero. It performs no semantic review, repairs, translation, or CI enforcement.
 See the [inventory scope and limitations](localization.md#deterministic-inventory)
 before interpreting coverage or placeholder findings. Android builds are not
 required for changes confined to this tool and its documentation/tests.
+
+### Translation matrix export
+
+Generate a read-only side-by-side JSON workspace from the existing inventory:
+
+```powershell
+python -B -m scripts.localization_matrix --prefix memory_editor_ --locale id --locale ru
+```
+
+The default output is `build/reports/localization/matrix.json` (ignored by
+Git). The exporter uses the inventory parser, does not modify Android resource
+files, and does not attest linguistic quality. The shared localization test
+command above covers the inventory, matrix exporter, and batch applier.
+See the [localization workflow](localization-workflow.md) for grouped key
+selection, plural preservation, and applying reviewed translations.
 
 ## Testing strategy
 
