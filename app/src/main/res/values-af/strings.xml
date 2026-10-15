@@ -16,11 +16,9 @@
     <string name="about_lineage">JL-Mod Plus is ’n onafhanklike afsplitsing van JL-Mod deur woesss (Yury Kharchenko). JL-Mod is gebaseer op J2ME Loader deur Nikita Shakarun, wat sy oorsprong in NaikSoftware se J2meLoader het.</string>
     <string name="about_lineage_title">Projekoorsprong</string>
     <string name="about_links_title">Projek en lisensies</string>
-    <string name="about_maintainer">Onderhouer: %1$s</string>
     <string name="about_message">Begin klassieke toepassings en speletjies, organiseer MIDlets in jou Biblioteek en pas kontroles, skerm, oudio en werkverrigting aan. JL-Mod Plus is gratis en oopbron.</string>
     <string name="about_revision_label">Bronkodehersiening</string>
     <string name="about_subtitle">Java ME-emulator vir Android</string>
-    <string name="about_version">Weergawe %1$s</string>
     <string name="about_version_label">Weergawe</string>
     <string name="action_back">Terug</string>
     <string name="action_context_delete">Vee uit</string>
@@ -56,7 +54,6 @@
     <string name="error_name">Voer ’n naam in.</string>
     <string name="exit">Verlaat</string>
     <string name="help">Hulp</string>
-    <string name="help_message">• Lineêre filtrering kan die werkverrigting van sommige MIDlets aansienlik verminder. Deaktiveer dit as die MIDlet te stadig is.&lt;BR&gt;• Onmiddellike verwerking omseil die normale Java ME-gebeurtenisry. Dit kan reaksies verbeter, maar kan sommige MIDlets onstabiel maak.</string>
     <string name="licenses">Lisensies</string>
     <string name="licenses_unavailable">Lisensiebesonderhede is nie beskikbaar nie.</string>
     <string name="loading_apps">Besig om toepassings te laai</string>
@@ -122,11 +119,9 @@
     <string name="library_action_about_summary">Projekoorsig, bou-inligting en skakels.</string>
     <string name="library_action_crash_reports_summary">Bekyk gestoorde diagnostiese verslae.</string>
     <string name="library_action_export_bundle">Voer toepassingsbundel uit</string>
-    <string name="library_action_help_summary">Gebruiksaanwysings en algemene kontroles.</string>
     <string name="library_action_import_bundle">Voer toepassingsbundel in</string>
     <string name="library_action_import_bundle_summary">Herstel ’n uitgevoerde JAR, toepassingsinstellings en stoordata.</string>
     <string name="library_action_licenses_summary">Derdepartykennisgewings en lisensiebepalings wat by die toepassing ingesluit is.</string>
-    <string name="library_action_save_log_summary">Stoor onlangse JL-Mod Plus-logboeke om probleme op te spoor.</string>
     <string name="library_action_select">Kies</string>
     <string name="library_action_settings_summary">Stel algemene gedrag en voorkoms op.</string>
     <string name="library_action_share_app">Deel toepassing</string>
@@ -146,7 +141,6 @@
     <string name="library_collection_name">Versamelingnaam</string>
     <string name="library_collection_new">Nuwe versameling</string>
     <string name="library_collection_ready_empty_message">Skep versamelings om toepassings te organiseer sonder om hul lêers te skuif.</string>
-    <string name="library_collection_remove">Verwyder uit versameling</string>
     <string name="library_collection_remove_from_current">Verwyder uit versameling</string>
     <string name="library_collection_select_message">Kies ’n versameling om sy toepassings te sien.</string>
     <string name="library_collection_select_title">Kies ’n versameling</string>
@@ -631,7 +625,6 @@
     <string name="installer_stage_wait">Wag vir \'n ander bewerking…</string>
     <string name="installer_title">MIDlet-installeerder</string>
     <string name="reconversion_done_with_warning">Versoenbaarheidsomskakeling met waarskuwings voltooi.</string>
-    <string name="reconversion_error">Die MIDlet kon nie outomaties omgeskakel word nie.\n\n%1$s</string>
     <string name="reconversion_error_summary">Die MIDlet kon nie outomaties omgeskakel word nie.</string>
     <string name="reconverting_wait">Hierdie MIDlet benodig \'n eenmalige versoenbaarheidsomskakeling voordat dit kan begin. Besig om om te skakel…</string>
     <string name="reinstall">Hierdie toepassing is reeds geïnstalleer. Herinstalleer dit?</string>
@@ -730,7 +723,6 @@
     <string name="memory_editor_clear_selection">Maak keuse skoon</string>
     <string name="memory_editor_close">Sluit Geheueredigeerder</string>
     <string name="memory_editor_edit">Wysig</string>
-    <string name="memory_editor_edit_batch_help">Pas die vervangingswaarde toe op gekose teikens wat met die gekose datatipe versoenbaar is. Monitering en Vries is nie vir groepwysigings beskikbaar nie.</string>
     <string name="memory_editor_edit_batch_no_common_type">Die gekose resultate ondersteun nie die gekose datatipe nie. Wysig versoenbare resultate afsonderlik.</string>
     <string name="memory_editor_edit_batch_type_notice">Slegs waardes met ooreenstemmende datatipes sal verander word.</string>
     <string name="memory_editor_engine_reconnecting">Geheueredigeerder koppel weer…</string>
@@ -744,7 +736,7 @@
     <string name="memory_editor_freeze_paused">Om veiligheidsredes onderbreek</string>
     <string name="memory_editor_identity_unsafe">Die gekose waarde of soektoestand kon nie bevestig word nie. Verfris die resultate of maak Inspekteerder weer oop en probeer dan weer.</string>
     <string name="memory_editor_increment_invalid">Gebruik een heelgetaltipe en waardes binne sy omvang.</string>
-    <string name="memory_editor_increment_preview">Voorskou: %1$s (aantal waardes: %2$d)</string>
+    <string name="memory_editor_increment_preview">Voorskou: %1$s</string>
     <string name="memory_editor_increment_start">Beginwaarde</string>
     <string name="memory_editor_increment_step">Stapgrootte</string>
     <string name="memory_editor_incremental_edit">Rekenkundige ry</string>
@@ -928,11 +920,7 @@
     <string name="pref_accent_blue">Verstekblou</string>
     <string name="pref_accent_classic_blue">Klassieke blou</string>
     <string name="pref_accent_coral">Koraalperske</string>
-    <string name="pref_accent_cyan">Siaan</string>
     <string name="pref_accent_green">Smaraggroen</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_orange">Oranje</string>
-    <string name="pref_accent_pink">Pienk</string>
     <string name="pref_accent_rose">Bessieroos</string>
     <string name="pref_accent_sapphire">Saffierblou</string>
     <string name="pref_accent_teal">Jadeturkoois</string>
