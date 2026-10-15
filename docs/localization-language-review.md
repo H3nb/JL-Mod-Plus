@@ -5,6 +5,28 @@ and further evidenced Santali recovery. This record supersedes the active counts
 in earlier per-feature snapshots; their historical evidence remains valid.
 Android XML remains the translation catalog. Re-export the inventory before writing.
 
+## Strict-review semantic follow-up — 15 October 2026
+
+The installer confirmation composes its base `reinstall` / `reinstall_newest` question
+with an **operation-specific** second paragraph: ordinary replacement retains existing
+settings/save data; bundle import may replace only the corresponding bundled components.
+Five catalogs (`cs`, `hi`, `ar`, `tr`, `uk`) previously added their own data-retention
+promise inside the base question. Those duplicate/overbroad promises have been removed;
+the separate installer notice is authoritative. No installer data-handling logic changed.
+
+`memory_editor_edit_batch_type_notice` now says **values** with matching data types
+change, not the data types themselves. The Santali wording was adjusted to name the
+values using catalog vocabulary; its grammar and complete semantic fidelity remain
+**NEEDS_LANGUAGE_REVIEW**. Indonesian `Increment` now uses `Barisan aritmetika`,
+reflecting a value sequence with a signed step.
+
+The original last-completion batch contained 87 Santali strings. Two identities
+(`memory_editor_edit_batch_help`, `reconversion_error`) were later retired across
+all locales, leaving **85 active entries** in that *specific* review queue. The
+separate **76 existing-case** queue remains unchanged; earlier checkpoint counts
+are historical. Neither these queues nor successful Android builds are native-speaker
+certification; the PR must remain Draft until consequential language risks are resolved.
+
 ## Current coverage
 
 | Locale | Missing declarations | Unaccepted existing cases in deferred feature selections |
@@ -205,7 +227,7 @@ destination remain unchanged. Exact format indices, declared string names,
 line-break contracts (including literal blank lines), and XML escaping were
 validated before the resource write.
 
-The following **87 keys are PRESENT**, not missing, but require careful
+Of the 87 original completion candidates, **85 keys remain present in the current 965-identity catalog**, not missing, but require careful
 contextual and fluent Santali language review. Prioritize negation, data
 retention and deletion, unsuccessful or partial outcomes, calibration bounds
 and unchanged previous state, profile propagation, Memory Editor writes/undo,
@@ -214,7 +236,7 @@ recent 324 machine-reference strings, 34 newly added dual-form plurals and
 21 contextual strings: having multiple AI references is not linguistic
 certification. The 76 previously deferred existing cases remain listed below.
 
-### Newly present 87-string language-review queue
+### Current 85-key language-review queue (87 at the original checkpoint)
 
 ```
 config_analog_stick_summary
@@ -265,7 +287,6 @@ installer_partial_restore
 installer_removed_leftovers
 library_import_invalid_bundle
 library_import_restore_existing
-memory_editor_edit_batch_help
 memory_editor_edit_batch_no_common_type
 memory_editor_edit_batch_type_notice
 memory_editor_expression_query_help
@@ -296,7 +317,6 @@ profile_apply_whole_follows
 profile_apply_whole_without_layout
 profile_default_fallback_notice
 profile_delete_template_message
-reconversion_error
 reconverting_wait
 runtime_preset_update_explanation
 runtime_preset_update_failed
@@ -389,8 +409,8 @@ localization objective remains all 39 catalogs.
 - `pref_vk_type_phone`: Revised against canonical English on 15 October: Identifies phone **keypad**, rather than phone only. Standard Santali grammar/idiom review remains open.
 - `pref_vk_type_phone_arrows`: Revised against canonical English on 15 October: Identifies phone **keypad** with arrows. Standard Santali grammar/idiom review remains open.
 - `pref_wakelock_title`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.
-- `reinstall`: Existing Ol Chiki prose retained; competent review needed for reinstall decision, preservation clause, and Android newline rendering.
-- `reinstall_newest`: Existing Ol Chiki prose retained; competent review needed for target/current version roles and preserved-data clause.
+- `reinstall`: The short reinstall question is independent of the installer's separate operation-specific data-retention notice; fluent Santali phrasing still requires review.
+- `reinstall_newest`: The update question carries target/current version arguments without an extra preservation promise; fluent Santali phrasing still requires review.
 - `reinstall_older`: Revised against canonical English on 15 October: Restores requested/current version roles and *may not work* compatibility warning, without extra newline or retained-data promise. Standard Santali grammar/idiom review remains open.
 - `saved`: Competent standard Santali Ol Chiki judgment unavailable; preserve existing bytes without accepting semantics.
 - `take_screenshot`: Existing Ol Chiki text preserved: competent standard Santali semantic and grammar judgment is unavailable for this identity.

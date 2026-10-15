@@ -132,8 +132,8 @@
     <string name="pref_vk_type_phone_arrows">Telefonní klávesnice (šipky)</string>
     <string name="pref_wakelock_title">Nevypínat obrazovku</string>
     <string name="PREF_WIDTH">Šířka</string>
-    <string name="reinstall">Aplikace je již nainstalována.\n\nChcete ji přeinstalovat?\nVšechna data budou uložena.</string>
-    <string name="reinstall_newest">Aktualizovat tuto aplikaci na verzi %1$s?\n\nNyní nainstalována: %2$s\nVšechna data budou uložena.</string>
+    <string name="reinstall">Aplikace je již nainstalována. Chcete ji přeinstalovat?</string>
+    <string name="reinstall_newest">Aktualizovat tuto aplikaci na verzi %1$s?\n\nNyní nainstalována: %2$s</string>
     <string name="reinstall_older">Nahradit tuto aplikaci verzí %1$s?\n\nNyní nainstalována: %2$s\nStarší verze nemusí správně pracovat s uloženými daty.</string>
     <string name="reset">Obnovit</string>
     <string name="RESET_LAYOUT_CMD">Obnovit rozložení virtuálních ovládacích prvků</string>

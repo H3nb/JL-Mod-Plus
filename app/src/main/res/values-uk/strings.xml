@@ -130,8 +130,8 @@
     <string name="pref_vk_type_phone_arrows">Телефонна клавіатура (стрілки)</string>
     <string name="pref_wakelock_title">Зберігати екран увімкненим</string>
     <string name="PREF_WIDTH">Ширина</string>
-    <string name="reinstall">Додаток вже встановлено.\n\nВстановити його повторно?\nУсі дані буде збережено.</string>
-    <string name="reinstall_newest">Оновити цей додаток до версії %1$s?\n\nНаразі встановлено: %2$s\nУсі дані буде збережено.</string>
+    <string name="reinstall">Додаток вже встановлено. Встановити його повторно?</string>
+    <string name="reinstall_newest">Оновити цей додаток до версії %1$s?\n\nНаразі встановлено: %2$s</string>
     <string name="reinstall_older">Замінити цей додаток версією %1$s?\n\nНаразі встановлено: %2$s\nСтаріша версія може не працювати належним чином із записаними даними.</string>
     <string name="reset">Скинути</string>
     <string name="RESET_LAYOUT_CMD">Скинути розташування віртуальних елементів керування</string>

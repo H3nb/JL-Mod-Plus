@@ -132,8 +132,8 @@
     <string name="pref_vk_type_phone_arrows">لوحة مفاتيح الهاتف (أسهم)</string>
     <string name="pref_wakelock_title">إبقاء الشاشة مضاءة</string>
     <string name="PREF_WIDTH">العرض</string>
-    <string name="reinstall">التطبيق مثبت بالفعل.\n\nهل تريد إعادة تثبيته؟\nسيتم حفظ جميع البيانات.</string>
-    <string name="reinstall_newest">هل تريد تحديث هذا التطبيق إلى الإصدار %1$s؟\n\nالمثبت حاليًا: %2$s\nستُحفظ الإعدادات الحالية وبيانات الحفظ.</string>
+    <string name="reinstall">التطبيق مثبت بالفعل. هل تريد إعادة تثبيته؟</string>
+    <string name="reinstall_newest">هل تريد تحديث هذا التطبيق إلى الإصدار %1$s؟\n\nالمثبت حاليًا: %2$s</string>
     <string name="reinstall_older">هل تريد استبدال هذا التطبيق بالإصدار %1$s؟\n\nالمثبت حاليا: %2$s\nالإصدار القديم قد لا يعمل بشكل صحيح مع البيانات المسجلة.</string>
     <string name="reset">إعادة ضبط</string>
     <string name="RESET_LAYOUT_CMD">إعادة ضبط تخطيط عناصر التحكم الافتراضية</string>

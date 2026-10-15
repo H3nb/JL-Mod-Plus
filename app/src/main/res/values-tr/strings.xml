@@ -130,8 +130,8 @@
     <string name="pref_vk_type_phone_arrows">Telefon tuş takımı (oklar)</string>
     <string name="pref_wakelock_title">Ekranı açık tut</string>
     <string name="PREF_WIDTH">Genişlik</string>
-    <string name="reinstall">Bu uygulama zaten yüklü. Yeniden yüklensin mi?\nMevcut ayarlar ve kayıt verileri korunacak.</string>
-    <string name="reinstall_newest">Bu uygulama %1$s sürümüne güncellensin mi?\n\nŞu anda yüklü: %2$s\nMevcut ayarlar ve kayıt verileri korunacak.</string>
+    <string name="reinstall">Bu uygulama zaten yüklü. Yeniden yüklensin mi?</string>
+    <string name="reinstall_newest">Bu uygulama %1$s sürümüne güncellensin mi?\n\nŞu anda yüklü: %2$s</string>
     <string name="reinstall_older">Bu uygulama %1$s sürümüyle değiştirilsin mi?\n\nŞu anda yüklü: %2$s\nEski sürüm, kayıtlı verilerle düzgün çalışmayabilir.</string>
     <string name="reset">Sıfırla</string>
     <string name="RESET_LAYOUT_CMD">Sanal kontrol düzenini sıfırla</string>

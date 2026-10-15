@@ -3,6 +3,22 @@
 Snapshot: 14 October 2026. Continue only on `localization/ai-matrix-workflow`;
 base `alpha`. The PR remains Draft and is not ready to merge.
 
+## Strict-review semantic follow-up (15 October 2026)
+
+- Verified `InstallerDialog` appends a separate notice for normal replacement
+  retention versus bundle import overwrite of corresponding included components.
+  Removed duplicate/overbroad retention promises from the base reinstall/update
+  questions in Czech, Hindi, Arabic, Turkish and Ukrainian.
+- English batch-edit notice now identifies **values** with compatible data types;
+  a corresponding provisional Santali object-meaning correction is still pending
+  competent linguistic review. Indonesian incremental-edit mode is labelled
+  `Barisan aritmetika`, matching the arithmetic sequence UI.
+- The historical Santali final 87-string candidate queue contains **85 currently
+  active identities** after the 12-key global cleanup. The distinct 76 deferred
+  existing-case reviews remain pending; all 39 locales retain 965/965 coverage.
+- Resource changes have identity/placeholder-preserving bounds; no runtime installer
+  implementation or profile semantics changed. PR remains Draft.
+
 ## Lint cleanup checkpoint (15 October 2026)
 
 - The 39 locale catalogs remain complete against the current canonical English
@@ -83,7 +99,9 @@ Temporary matrices/proposals/review notes remain outside the committed catalog.
 
 ## Coverage and quality
 
-The inventory has 977 canonical translatable resources and 39 target catalogs.
+At the historical resource-completion checkpoint, the inventory contained 977 canonical
+translatable resources and 39 target catalogs. The **current** inventory has 965
+translatable identities after 12 obsolete resources were removed consistently.
 Missing localized declarations decreased from 1,411 to **zero** after
 197 Santali labels/simple statuses, 324 source-checked Santali single-string
 candidates on 14 October, and 34 plurals plus 21 contextual strings on
@@ -93,7 +111,7 @@ candidates on 14 October, and 34 plurals plus 21 contextual strings on
 2,111 before deferred-language recovery,
 6,152 before settings/runtime, 8,758 before Memory Editor, 11,502 before
 installer, 18,070 before controls, and 25,122 before 12 October).
-**All 39 catalogs** now cover all 977 resource declarations. Santali has
+**All 39 catalogs** cover all **965 current** resource declarations (977 at the earlier checkpoint). Santali has
 zero missing resource identities, but the previously recorded 76 deferred existing
 cases and machine-assisted candidate wording still need qualified linguistic review.
 **Resource presence does not establish language certification.** The remaining

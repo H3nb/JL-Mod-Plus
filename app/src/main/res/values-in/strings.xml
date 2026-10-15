@@ -1048,7 +1048,7 @@
     <string name="memory_editor_path_changed">Jalur referensi berubah sejak pemindaian.</string>
     <string name="memory_editor_path_incomplete">Jalur referensi melewati batas pemeriksaan.</string>
     <string name="memory_editor_source_unknown">Sumber belum terlacak</string>
-    <string name="memory_editor_incremental_edit">Bertahap</string>
+    <string name="memory_editor_incremental_edit">Barisan aritmetika</string>
     <string name="memory_editor_increment_step">Langkah</string>
     <string name="memory_editor_increment_invalid">Gunakan satu tipe bilangan bulat dan nilai dalam rentangnya.</string>
     <string name="memory_editor_increment_preview">Pratinjau: %1$s</string>

@@ -132,8 +132,8 @@
     <string name="pref_vk_type_phone_arrows">फ़ोन कीपैड (तीर)</string>
     <string name="pref_wakelock_title">स्क्रीन चालू रखें</string>
     <string name="PREF_WIDTH">चौड़ाई</string>
-    <string name="reinstall">ऐप्लिकेशन पहले से इंस्टॉल है।\n\nक्या आप इसे फिर से इंस्टॉल करना चाहते हैं?\nसारा डेटा सहेजा जाएगा। </string>
-    <string name="reinstall_newest">इस ऐप को संस्करण %1$s में अपडेट करें?\n\nवर्तमान में स्थापित: %2$s\nसभी डेटा सहेजा जाएगा।</string>
+    <string name="reinstall">ऐप्लिकेशन पहले से इंस्टॉल है। क्या आप इसे फिर से इंस्टॉल करना चाहते हैं?</string>
+    <string name="reinstall_newest">इस ऐप को संस्करण %1$s में अपडेट करें?\n\nवर्तमान में स्थापित: %2$s</string>
     <string name="reinstall_older">इस ऐप को संस्करण %1$s से बदलें?\n\nमौजूदा इंस्टॉल किया गया संस्करण: %2$s\nहो सकता है कि पुराना संस्करण मौजूदा डेटा के साथ सही ढंग से काम न करे।</string>
     <string name="reset">रीसेट</string>
     <string name="RESET_LAYOUT_CMD">वर्चुअल कंट्रोल का लेआउट रीसेट करें</string>
