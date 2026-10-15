@@ -1770,7 +1770,6 @@ private fun RuntimeEditDialog(
                                     stringResource(
                                         R.string.memory_editor_increment_preview,
                                         sample,
-                                        values.size,
                                     ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
