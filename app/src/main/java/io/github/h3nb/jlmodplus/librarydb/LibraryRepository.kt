@@ -73,6 +73,8 @@ class LibraryRepository(
     )
 
     private val nextGeneration = AtomicLong()
+    /** Serializes request and state publication so a completed generation cannot regress to Opening. */
+    private val requestLock = Any()
     private val workdirRequests = MutableStateFlow<WorkdirRequest?>(null)
     private val mutableState = MutableStateFlow<State>(State.Idle)
     private val activeMutex = Mutex()
@@ -312,18 +314,23 @@ class LibraryRepository(
     }
 
     override fun close() {
-        workdirRequests.value = null
-        mutableState.value = State.Idle
+        synchronized(requestLock) {
+            workdirRequests.value = null
+            mutableState.value = State.Idle
+        }
         worker.cancel()
     }
 
     private fun request(emulatorDir: File) {
-        val request = WorkdirRequest(
-            generation = nextGeneration.incrementAndGet(),
-            emulatorDir = emulatorDir,
-        )
-        workdirRequests.value = request
-        mutableState.value = State.Opening(request.generation, request.emulatorDir)
+        synchronized(requestLock) {
+            val request = WorkdirRequest(
+                generation = nextGeneration.incrementAndGet(),
+                emulatorDir = emulatorDir,
+            )
+            // Install Opening before waking the worker; otherwise a fast Ready can be overwritten.
+            mutableState.value = State.Opening(request.generation, request.emulatorDir)
+            workdirRequests.value = request
+        }
     }
 
     private suspend fun runWorkdir(request: WorkdirRequest) {
@@ -377,7 +384,7 @@ class LibraryRepository(
             }.collect { (apps, collections) ->
                 currentCoroutineContext().ensureActive()
                 ensureCurrent(request)
-                mutableState.value = State.Ready(
+                publishIfCurrent(request, State.Ready(
                     generation = request.generation,
                     emulatorDir = emulatorDir,
                     apps = apps,
@@ -385,18 +392,19 @@ class LibraryRepository(
                     bootstrapFailures = bootstrap.failures,
                     legacyImportFailure = bootstrap.legacyImportFailure,
                     reconciliationFailures = reconciliation.failures,
-                )
+                ))
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            if (isCurrent(request)) {
-                mutableState.value = State.Error(
+            publishIfCurrent(
+                request,
+                State.Error(
                     generation = request.generation,
                     emulatorDir = emulatorDir,
                     message = boundedMessage(error),
-                )
-            }
+                ),
+            )
         } finally {
             database?.let { closing ->
                 withContext(NonCancellable) {
@@ -412,7 +420,9 @@ class LibraryRepository(
     }
 
     private fun publishIfCurrent(request: WorkdirRequest, state: State) {
-        if (isCurrent(request)) mutableState.value = state
+        synchronized(requestLock) {
+            if (isCurrent(request)) mutableState.value = state
+        }
     }
 
     private fun ensureCurrent(request: WorkdirRequest) {
