@@ -18,7 +18,6 @@
     <string name="exit">종료</string>
     <string name="FORCE_CLOSE_CONFIRMATION">이 MIDlet을 중지할까요? 저장하지 않은 변경 사항이 사라질 수 있습니다.</string>
     <string name="help">도움말</string>
-    <string name="help_message">• 선형 필터링은 일부 MIDlet의 성능을 크게 떨어뜨릴 수 있습니다. MIDlet이 너무 느리면 이 기능을 끄세요.&lt;BR&gt;• 즉시 처리는 일반 Java ME 이벤트 큐를 거치지 않습니다. 반응성이 좋아질 수 있지만 일부 MIDlet의 동작이 불안정해질 수 있습니다.</string>
     <string name="identity_filter">없음 (가장 빠름)</string>
     <string name="layout_edit_finish">편집 모드 완료</string>
     <string name="layout_edit_finished">편집 모드 완료됨</string>
@@ -117,10 +116,8 @@
     <string name="about_lineage">JL-Mod Plus는 woesss(Yury Kharchenko)의 JL-Mod를 기반으로 한 독립적인 포크입니다. JL-Mod는 Nikita Shakarun의 J2ME Loader를 기반으로 하며, 그 시작은 NaikSoftware의 J2meLoader입니다.</string>
     <string name="about_lineage_title">프로젝트의 기원</string>
     <string name="about_links_title">프로젝트 및 라이선스</string>
-    <string name="about_maintainer">관리자: %1$s</string>
     <string name="about_revision_label">소스 리비전</string>
     <string name="about_subtitle">Android용 Java ME 에뮬레이터</string>
-    <string name="about_version">버전 %1$s</string>
     <string name="about_version_label">버전</string>
     <string name="action_back">뒤로</string>
     <string name="action_keyboard_ime">키보드 (IME)</string>
@@ -202,11 +199,9 @@
     <string name="library_action_about_summary">프로젝트 개요, 빌드 정보 및 링크.</string>
     <string name="library_action_crash_reports_summary">저장된 진단 보고서를 확인합니다.</string>
     <string name="library_action_export_bundle">앱 번들 내보내기</string>
-    <string name="library_action_help_summary">사용 방법과 기본 조작 안내.</string>
     <string name="library_action_import_bundle">앱 번들 가져오기</string>
     <string name="library_action_import_bundle_summary">내보낸 JAR, 앱 설정 및 저장 데이터를 복원합니다.</string>
     <string name="library_action_licenses_summary">앱에 포함된 타사 고지 사항과 라이선스 조건.</string>
-    <string name="library_action_save_log_summary">문제 해결을 위해 최근 JL-Mod Plus 로그를 저장합니다.</string>
     <string name="library_action_select">선택</string>
     <string name="library_action_settings_summary">전역 동작과 모양을 설정합니다.</string>
     <string name="library_action_share_app">앱 공유</string>
@@ -226,7 +221,6 @@
     <string name="library_collection_name">컬렉션 이름</string>
     <string name="library_collection_new">새 컬렉션</string>
     <string name="library_collection_ready_empty_message">컬렉션을 만들면 파일을 이동하지 않고 앱을 정리할 수 있습니다.</string>
-    <string name="library_collection_remove">컬렉션에서 제거</string>
     <string name="library_collection_remove_from_current">컬렉션에서 제거</string>
     <string name="library_collection_select_message">컬렉션을 선택하여 포함된 앱을 확인하세요.</string>
     <string name="library_collection_select_title">컬렉션 선택</string>
@@ -700,7 +694,6 @@
     <string name="installer_stage_wait">다른 작업 대기 중…</string>
     <string name="installer_title">MIDlet 설치 프로그램</string>
     <string name="reconversion_done_with_warning">호환성 변환이 완료되었지만 경고가 있습니다.</string>
-    <string name="reconversion_error">MIDlet을 자동으로 변환할 수 없습니다.\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet을 자동으로 변환할 수 없습니다.</string>
     <string name="reconverting_wait">이 MIDlet을 시작하려면 한 번의 호환성 변환이 필요합니다. 변환 중…</string>
     <string name="reinstall">이 앱은 이미 설치되어 있습니다. 재설치할까요?</string>
@@ -781,7 +774,6 @@
     <string name="memory_editor_clear_selection">선택 해제</string>
     <string name="memory_editor_close">메모리 편집기 닫기</string>
     <string name="memory_editor_edit">편집</string>
-    <string name="memory_editor_edit_batch_help">선택한 대상 중 지정한 데이터 형식과 호환되는 대상에 대체 값을 적용합니다. 일괄 편집에서는 감시와 고정을 사용할 수 없습니다.</string>
     <string name="memory_editor_edit_batch_no_common_type">선택한 결과는 지정한 데이터 형식을 지원하지 않습니다. 호환되는 결과를 따로 편집하세요.</string>
     <string name="memory_editor_edit_batch_type_notice">데이터 형식이 일치하는 값만 변경됩니다.</string>
     <string name="memory_editor_engine_reconnecting">메모리 편집기를 다시 연결하는 중…</string>
@@ -795,7 +787,7 @@
     <string name="memory_editor_freeze_paused">안전을 위해 일시 중지됨</string>
     <string name="memory_editor_identity_unsafe">선택한 값 또는 검색 상태를 검증하지 못했습니다. 결과를 새로고침하거나 검사기를 다시 연 뒤 재시도하세요.</string>
     <string name="memory_editor_increment_invalid">정수 형식 하나와 해당 범위 내의 값을 사용하세요.</string>
-    <string name="memory_editor_increment_preview">미리보기: %1$s (값 %2$d개)</string>
+    <string name="memory_editor_increment_preview">미리보기: %1$s</string>
     <string name="memory_editor_increment_start">시작 값</string>
     <string name="memory_editor_increment_step">간격</string>
     <string name="memory_editor_incremental_edit">등차수열로 설정</string>
@@ -942,11 +934,7 @@
     <string name="pref_accent_blue">기본 파란색</string>
     <string name="pref_accent_classic_blue">클래식 파란색</string>
     <string name="pref_accent_coral">산호 복숭아색</string>
-    <string name="pref_accent_cyan">시안색</string>
     <string name="pref_accent_green">에메랄드 녹색</string>
-    <string name="pref_accent_indigo">남색</string>
-    <string name="pref_accent_orange">주황색</string>
-    <string name="pref_accent_pink">분홍색</string>
     <string name="pref_accent_rose">베리 장미색</string>
     <string name="pref_accent_sapphire">사파이어 파란색</string>
     <string name="pref_accent_teal">옥빛 청록색</string>
