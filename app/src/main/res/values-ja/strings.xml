@@ -104,10 +104,8 @@
     <string name="about_lineage">JL-Mod Plusは、woesss（Yury Kharchenko）によるJL-Modから独立して開発されているフォークです。JL-ModはNikita ShakarunによるJ2ME Loaderを基にしており、その原点はNaikSoftwareのJ2meLoaderにあります。</string>
     <string name="about_lineage_title">プロジェクトの起源</string>
     <string name="about_links_title">プロジェクトとライセンス</string>
-    <string name="about_maintainer">メンテナー：%1$s</string>
     <string name="about_revision_label">ソースリビジョン</string>
     <string name="about_subtitle">Android向けJava MEエミュレータ</string>
-    <string name="about_version">バージョン %1$s</string>
     <string name="about_version_label">バージョン</string>
     <string name="action_back">戻る</string>
     <string name="action_keyboard_ime">キーボード（IME）</string>
@@ -130,7 +128,6 @@
     <string name="dismiss">閉じる</string>
     <string name="dismiss_mapping">キー割り当てを閉じる</string>
     <string name="edit_preset">プロファイルを編集</string>
-    <string name="help_message">• 線形補間フィルタは、一部のMIDletのパフォーマンスを大幅に低下させることがあります。MIDletの動作が遅すぎる場合は無効にしてください。&lt;BR&gt;• 即時処理は、通常のJava MEイベントキューを経由せずに処理します。応答性が向上する場合がありますが、一部のMIDletの動作が不安定になることがあります。</string>
     <string name="licenses_unavailable">ライセンスの詳細を利用できません。</string>
     <string name="loading_apps">アプリを読み込み中</string>
     <string name="locate_bundle">バンドルを探す</string>
@@ -186,11 +183,9 @@
     <string name="library_action_about_summary">プロジェクトの概要、ビルド情報、関連リンク。</string>
     <string name="library_action_crash_reports_summary">保存済みの診断レポートを確認します。</string>
     <string name="library_action_export_bundle">アプリバンドルをエクスポート</string>
-    <string name="library_action_help_summary">使い方と基本的な操作。</string>
     <string name="library_action_import_bundle">アプリバンドルをインポート</string>
     <string name="library_action_import_bundle_summary">エクスポートしたJAR、アプリ設定、セーブデータを復元します。</string>
     <string name="library_action_licenses_summary">アプリに含まれるサードパーティの告知とライセンス条項。</string>
-    <string name="library_action_save_log_summary">問題の調査のために、JL-Mod Plusの最近のログを保存します。</string>
     <string name="library_action_select">選択</string>
     <string name="library_action_settings_summary">全体の動作と外観を設定します。</string>
     <string name="library_action_share_app">アプリを共有</string>
@@ -210,7 +205,6 @@
     <string name="library_collection_name">コレクション名</string>
     <string name="library_collection_new">新しいコレクション</string>
     <string name="library_collection_ready_empty_message">コレクションを作成すると、ファイルを移動せずにアプリを整理できます。</string>
-    <string name="library_collection_remove">コレクションから除外</string>
     <string name="library_collection_remove_from_current">コレクションから除外</string>
     <string name="library_collection_select_message">コレクションを選択すると、その中のアプリを表示できます。</string>
     <string name="library_collection_select_title">コレクションを選択</string>
@@ -682,7 +676,6 @@
     <string name="installer_stage_wait">別の操作の完了を待っています…</string>
     <string name="installer_title">MIDlet インストーラー</string>
     <string name="reconversion_done_with_warning">互換性のための変換が完了しましたが、警告があります。</string>
-    <string name="reconversion_error">MIDlet を自動変換できませんでした。\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet を自動変換できませんでした。</string>
     <string name="reconverting_wait">この MIDlet を起動するには、一度だけ互換性のための変換が必要です。変換しています…</string>
     <string name="reinstall">このアプリはすでにインストールされています。再インストールしますか？</string>
@@ -758,7 +751,6 @@
     <string name="memory_editor_clear_selection">選択を解除</string>
     <string name="memory_editor_close">メモリエディターを閉じる</string>
     <string name="memory_editor_edit">編集</string>
-    <string name="memory_editor_edit_batch_help">選択した対象のうち、選んだデータ型に対応するものに置換値を適用します。一括編集では監視と固定を使用できません。</string>
     <string name="memory_editor_edit_batch_no_common_type">選択した結果は、選んだデータ型に対応していません。対応する結果を別々に編集してください。</string>
     <string name="memory_editor_edit_batch_type_notice">データ型が一致する値のみ変更します。</string>
     <string name="memory_editor_engine_reconnecting">メモリエディターを再接続中…</string>
@@ -772,7 +764,7 @@
     <string name="memory_editor_freeze_paused">安全のため一時停止中</string>
     <string name="memory_editor_identity_unsafe">選択した値または検索状態を検証できませんでした。結果を更新するか、インスペクターを開き直してから再試行してください。</string>
     <string name="memory_editor_increment_invalid">整数型を 1 種類選び、その範囲内の値を使用してください。</string>
-    <string name="memory_editor_increment_preview">プレビュー: %1$s (%2$d 個の値)</string>
+    <string name="memory_editor_increment_preview">プレビュー: %1$s</string>
     <string name="memory_editor_increment_start">開始値</string>
     <string name="memory_editor_increment_step">公差</string>
     <string name="memory_editor_incremental_edit">等差数列で設定</string>
@@ -924,11 +916,7 @@
     <string name="pref_accent_blue">既定のブルー</string>
     <string name="pref_accent_classic_blue">クラシックブルー</string>
     <string name="pref_accent_coral">コーラルピーチ</string>
-    <string name="pref_accent_cyan">シアン</string>
     <string name="pref_accent_green">エメラルドグリーン</string>
-    <string name="pref_accent_indigo">インディゴ</string>
-    <string name="pref_accent_orange">オレンジ</string>
-    <string name="pref_accent_pink">ピンク</string>
     <string name="pref_accent_rose">ベリーローズ</string>
     <string name="pref_accent_sapphire">サファイアブルー</string>
     <string name="pref_accent_teal">ジェイドティール</string>
