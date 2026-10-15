@@ -28,7 +28,6 @@
     <string name="exit">बाहर निकलें</string>
     <string name="FORCE_CLOSE_CONFIRMATION">इस MIDlet को रोकें? बिना सहेजे बदलाव खो सकते हैं।</string>
     <string name="help">मदद</string>
-    <string name="help_message">• लीनियर फ़िल्टरिंग से कुछ MIDlet का प्रदर्शन काफ़ी कम हो सकता है। MIDlet बहुत धीमा हो तो इसे बंद करें।&lt;BR&gt;• तत्काल प्रोसेसिंग सामान्य Java ME इवेंट कतार को बायपास करती है। इससे प्रतिक्रिया बेहतर हो सकती है, लेकिन कुछ MIDlet अस्थिर हो सकते हैं।</string>
     <string name="identity_filter">कोई नहीं (सबसे तेज़)</string>
     <string name="install">इंस्टॉल</string>
     <string name="install_done">एप्लिकेशन सफलतापूर्वक इंस्टॉल किया गया!</string>
@@ -159,10 +158,8 @@
     <string name="about_lineage">JL-Mod Plus, woesss (Yury Kharchenko) के JL-Mod का स्वतंत्र फ़ोर्क है। JL-Mod, Nikita Shakarun के J2ME Loader पर आधारित है, जिसकी शुरुआत NaikSoftware के J2meLoader से हुई थी।</string>
     <string name="about_lineage_title">परियोजना की शुरुआत</string>
     <string name="about_links_title">परियोजना और लाइसेंस</string>
-    <string name="about_maintainer">रखरखावकर्ता: %1$s</string>
     <string name="about_revision_label">सोर्स रिविज़न</string>
     <string name="about_subtitle">Android के लिए Java ME एमुलेटर</string>
-    <string name="about_version">संस्करण %1$s</string>
     <string name="about_version_label">संस्करण</string>
     <string name="action_back">वापस</string>
     <string name="clear_report_selection">रिपोर्ट का चयन हटाएँ</string>
@@ -232,11 +229,9 @@
     <string name="library_action_about_summary">परियोजना का परिचय, बिल्ड की जानकारी और लिंक।</string>
     <string name="library_action_crash_reports_summary">सहेजी गई निदान रिपोर्ट देखें।</string>
     <string name="library_action_export_bundle">ऐप बंडल निर्यात करें</string>
-    <string name="library_action_help_summary">उपयोग के निर्देश और सामान्य नियंत्रण।</string>
     <string name="library_action_import_bundle">ऐप बंडल आयात करें</string>
     <string name="library_action_import_bundle_summary">निर्यात किया गया JAR, ऐप की सेटिंग और सहेजा गया डेटा पुनर्स्थापित करें।</string>
     <string name="library_action_licenses_summary">ऐप में शामिल तृतीय-पक्ष सूचनाएँ और लाइसेंस की शर्तें।</string>
-    <string name="library_action_save_log_summary">समस्या का पता लगाने के लिए JL-Mod Plus के हाल के लॉग सहेजें।</string>
     <string name="library_action_select">चुनें</string>
     <string name="library_action_settings_summary">समग्र व्यवहार और रूप-रंग की सेटिंग बदलें।</string>
     <string name="library_action_share_app">ऐप शेयर करें</string>
@@ -256,7 +251,6 @@
     <string name="library_collection_name">संग्रह का नाम</string>
     <string name="library_collection_new">नया संग्रह</string>
     <string name="library_collection_ready_empty_message">ऐप की फ़ाइलें दूसरी जगह ले जाए बिना उन्हें व्यवस्थित करने के लिए संग्रह बनाएँ।</string>
-    <string name="library_collection_remove">संग्रह से हटाएँ</string>
     <string name="library_collection_remove_from_current">संग्रह से हटाएँ</string>
     <string name="library_collection_select_message">संग्रह के ऐप देखने के लिए उसे चुनें।</string>
     <string name="library_collection_select_title">संग्रह चुनें</string>
@@ -732,7 +726,6 @@
     <string name="installer_stage_wait">दूसरी कार्रवाई का इंतज़ार है…</string>
     <string name="installer_title">MIDlet इंस्टॉलर</string>
     <string name="reconversion_done_with_warning">संगतता के लिए कन्वर्ज़न चेतावनियों के साथ पूरा हुआ।</string>
-    <string name="reconversion_error">MIDlet अपने-आप कन्वर्ट नहीं किया जा सका।\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet अपने-आप कन्वर्ट नहीं किया जा सका।</string>
     <string name="reconverting_wait">इस MIDlet को शुरू होने से पहले संगतता के लिए एक बार कन्वर्ट करना ज़रूरी है। कन्वर्ट किया जा रहा है…</string>
     <plurals name="bulk_install_attention_count">
@@ -823,7 +816,6 @@
     <string name="memory_editor_clear_selection">चयन हटाएँ</string>
     <string name="memory_editor_close">मेमोरी एडिटर बंद करें</string>
     <string name="memory_editor_edit">संपादित करें</string>
-    <string name="memory_editor_edit_batch_help">बदलने वाला मान चुने गए डेटा प्रकार के अनुकूल चयनित लक्ष्यों पर लागू होता है। एक साथ कई मान संपादित करते समय निगरानी और फ़्रीज़ उपलब्ध नहीं हैं।</string>
     <string name="memory_editor_edit_batch_no_common_type">चयनित परिणाम चुने गए डेटा प्रकार का समर्थन नहीं करते। अनुकूल परिणामों को अलग से संपादित करें।</string>
     <string name="memory_editor_edit_batch_type_notice">केवल मेल खाने वाले डेटा प्रकार वाले मान बदले जाएँगे।</string>
     <string name="memory_editor_engine_reconnecting">मेमोरी एडिटर फिर से जुड़ रहा है…</string>
@@ -837,7 +829,7 @@
     <string name="memory_editor_freeze_paused">सुरक्षा के लिए रुका हुआ है</string>
     <string name="memory_editor_identity_unsafe">चयनित मान या खोज की स्थिति सत्यापित नहीं हो सकी। परिणाम रीफ़्रेश करें या निरीक्षक फिर से खोलें, फिर दोबारा कोशिश करें।</string>
     <string name="memory_editor_increment_invalid">एक ही पूर्णांक प्रकार और उसकी सीमा के भीतर के मान इस्तेमाल करें।</string>
-    <string name="memory_editor_increment_preview">पूर्वावलोकन: %1$s (%2$d मान)</string>
+    <string name="memory_editor_increment_preview">पूर्वावलोकन: %1$s</string>
     <string name="memory_editor_increment_start">शुरुआती मान</string>
     <string name="memory_editor_increment_step">क्रम का अंतर</string>
     <string name="memory_editor_incremental_edit">क्रम में मान सेट करें</string>
@@ -988,11 +980,7 @@
     <string name="pref_accent_blue">डिफ़ॉल्ट नीला</string>
     <string name="pref_accent_classic_blue">क्लासिक नीला</string>
     <string name="pref_accent_coral">कोरल पीच</string>
-    <string name="pref_accent_cyan">सियान</string>
     <string name="pref_accent_green">पन्ना हरा</string>
-    <string name="pref_accent_indigo">इंडिगो</string>
-    <string name="pref_accent_orange">नारंगी</string>
-    <string name="pref_accent_pink">गुलाबी</string>
     <string name="pref_accent_rose">बेरी रोज़</string>
     <string name="pref_accent_sapphire">नीलम नीला</string>
     <string name="pref_accent_teal">जेड टील</string>
