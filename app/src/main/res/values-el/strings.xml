@@ -14,11 +14,9 @@
     <string name="about_lineage">Το JL-Mod Plus είναι ένα ανεξάρτητο παρακλάδι του JL-Mod του woesss (Yury Kharchenko). Το JL-Mod βασίζεται στο J2ME Loader του Nikita Shakarun, το οποίο προέρχεται από το J2meLoader της NaikSoftware.</string>
     <string name="about_lineage_title">Προέλευση του έργου</string>
     <string name="about_links_title">Έργο και άδειες χρήσης</string>
-    <string name="about_maintainer">Υπεύθυνος συντήρησης: %1$s</string>
     <string name="about_message">Εκτελέστε κλασικές εφαρμογές και παιχνίδια, οργανώστε τα MIDlet στη Βιβλιοθήκη σας και προσαρμόστε τα χειριστήρια, την οθόνη, τον ήχο και την απόδοση. Το JL-Mod Plus είναι δωρεάν και ανοικτού κώδικα.</string>
     <string name="about_revision_label">Αναθεώρηση πηγαίου κώδικα</string>
     <string name="about_subtitle">Εξομοιωτής Java ME για Android</string>
-    <string name="about_version">Έκδοση %1$s</string>
     <string name="about_version_label">Έκδοση</string>
     <string name="action_back">Πίσω</string>
     <string name="action_context_delete">Διαγραφή</string>
@@ -55,7 +53,6 @@
     <string name="error_name">Εισαγάγετε ένα όνομα.</string>
     <string name="exit">Έξοδος</string>
     <string name="help">Βοήθεια</string>
-    <string name="help_message">• Το γραμμικό φιλτράρισμα μπορεί να μειώσει σημαντικά την απόδοση ορισμένων MIDlet. Απενεργοποιήστε το αν το MIDlet είναι πολύ αργό.&lt;BR&gt;• Η άμεση επεξεργασία παρακάμπτει την κανονική ουρά συμβάντων Java ME. Μπορεί να βελτιώσει την απόκριση, αλλά μπορεί να κάνει ορισμένα MIDlet ασταθή.</string>
     <string name="licenses">Άδειες χρήσης</string>
     <string name="licenses_unavailable">Οι λεπτομέρειες των αδειών χρήσης δεν είναι διαθέσιμες.</string>
     <string name="loading_apps">Φόρτωση εφαρμογών</string>
@@ -121,11 +118,9 @@
     <string name="library_action_about_summary">Επισκόπηση έργου, πληροφορίες κατασκευής και σύνδεσμοι.</string>
     <string name="library_action_crash_reports_summary">Προβολή αποθηκευμένων διαγνωστικών αναφορών.</string>
     <string name="library_action_export_bundle">Εξαγωγή πακέτου εφαρμογής</string>
-    <string name="library_action_help_summary">Οδηγίες χρήσης και συνήθη χειριστήρια.</string>
     <string name="library_action_import_bundle">Εισαγωγή πακέτου εφαρμογής</string>
     <string name="library_action_import_bundle_summary">Επαναφορά εξαγμένου JAR, ρυθμίσεων εφαρμογής και δεδομένων αποθήκευσης.</string>
     <string name="library_action_licenses_summary">Ειδοποιήσεις τρίτων και όροι αδειών χρήσης που περιλαμβάνονται στην εφαρμογή.</string>
-    <string name="library_action_save_log_summary">Αποθήκευση πρόσφατων αρχείων καταγραφής του JL-Mod Plus για αντιμετώπιση προβλημάτων.</string>
     <string name="library_action_select">Επιλογή</string>
     <string name="library_action_settings_summary">Διαμόρφωση της συνολικής συμπεριφοράς και εμφάνισης.</string>
     <string name="library_action_share_app">Κοινοποίηση εφαρμογής</string>
@@ -145,7 +140,6 @@
     <string name="library_collection_name">Όνομα συλλογής</string>
     <string name="library_collection_new">Νέα συλλογή</string>
     <string name="library_collection_ready_empty_message">Δημιουργήστε συλλογές για να οργανώσετε τις εφαρμογές χωρίς να μετακινήσετε τα αρχεία τους.</string>
-    <string name="library_collection_remove">Αφαίρεση από τη συλλογή</string>
     <string name="library_collection_remove_from_current">Αφαίρεση από τη συλλογή</string>
     <string name="library_collection_select_message">Επιλέξτε μια συλλογή για να δείτε τις εφαρμογές της.</string>
     <string name="library_collection_select_title">Επιλογή συλλογής</string>
@@ -630,7 +624,6 @@
     <string name="installer_stage_wait">Αναμονή για άλλη ενέργεια…</string>
     <string name="installer_title">Πρόγραμμα εγκατάστασης MIDlet</string>
     <string name="reconversion_done_with_warning">Η μετατροπή συμβατότητας ολοκληρώθηκε με προειδοποιήσεις.</string>
-    <string name="reconversion_error">Δεν ήταν δυνατή η αυτόματη μετατροπή του MIDlet.\n\n%1$s</string>
     <string name="reconversion_error_summary">Δεν ήταν δυνατή η αυτόματη μετατροπή του MIDlet.</string>
     <string name="reconverting_wait">Αυτό το MIDlet χρειάζεται μια εφάπαξ μετατροπή συμβατότητας πριν μπορέσει να ξεκινήσει. Μετατροπή…</string>
     <string name="reinstall">Αυτή η εφαρμογή είναι ήδη εγκατεστημένη. Να επανεγκατασταθεί;</string>
@@ -729,7 +722,6 @@
     <string name="memory_editor_clear_selection">Εκκαθάριση επιλογής</string>
     <string name="memory_editor_close">Κλείσιμο Επεξεργαστή μνήμης</string>
     <string name="memory_editor_edit">Επεξεργασία</string>
-    <string name="memory_editor_edit_batch_help">Εφαρμόζει την τιμή αντικατάστασης στους επιλεγμένους στόχους που είναι συμβατοί με τον επιλεγμένο τύπο δεδομένων. Η Παρακολούθηση και το Πάγωμα δεν είναι διαθέσιμα για μαζικές επεξεργασίες.</string>
     <string name="memory_editor_edit_batch_no_common_type">Τα επιλεγμένα αποτελέσματα δεν υποστηρίζουν τον επιλεγμένο τύπο δεδομένων. Επεξεργαστείτε τα συμβατά αποτελέσματα ξεχωριστά.</string>
     <string name="memory_editor_edit_batch_type_notice">Θα αλλάξουν μόνο τιμές με τον αντίστοιχο τύπο δεδομένων.</string>
     <string name="memory_editor_engine_reconnecting">Ο Επεξεργαστής μνήμης επανασυνδέεται…</string>
@@ -743,7 +735,7 @@
     <string name="memory_editor_freeze_paused">Σε παύση για λόγους ασφαλείας</string>
     <string name="memory_editor_identity_unsafe">Δεν ήταν δυνατή η επαλήθευση της επιλεγμένης τιμής ή της κατάστασης αναζήτησης. Ανανεώστε τα αποτελέσματα ή ανοίξτε ξανά τον Επιθεωρητή και δοκιμάστε ξανά.</string>
     <string name="memory_editor_increment_invalid">Χρησιμοποιήστε έναν τύπο ακεραίου και τιμές εντός του εύρους του.</string>
-    <string name="memory_editor_increment_preview">Προεπισκόπηση: %1$s (πλήθος τιμών: %2$d)</string>
+    <string name="memory_editor_increment_preview">Προεπισκόπηση: %1$s</string>
     <string name="memory_editor_increment_start">Αρχική τιμή</string>
     <string name="memory_editor_increment_step">Βήμα</string>
     <string name="memory_editor_incremental_edit">Αριθμητική πρόοδος</string>
@@ -927,11 +919,7 @@
     <string name="pref_accent_blue">Προεπιλεγμένο μπλε</string>
     <string name="pref_accent_classic_blue">Κλασικό μπλε</string>
     <string name="pref_accent_coral">Κοραλλί ροδακινί</string>
-    <string name="pref_accent_cyan">Κυανό</string>
     <string name="pref_accent_green">Σμαραγδί</string>
-    <string name="pref_accent_indigo">Λουλακί</string>
-    <string name="pref_accent_orange">Πορτοκαλί</string>
-    <string name="pref_accent_pink">Ροζ</string>
     <string name="pref_accent_rose">Ροζ μούρων</string>
     <string name="pref_accent_sapphire">Μπλε ζαφειριού</string>
     <string name="pref_accent_teal">Τιρκουάζ νεφρίτη</string>
