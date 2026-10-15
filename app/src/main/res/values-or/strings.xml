@@ -22,7 +22,6 @@
     <string name="error_name">ଏକ ନାମ ଲେଖନ୍ତୁ।</string>
     <string name="exit">ପ୍ରସ୍ଥାନ</string>
     <string name="help">ସହାୟତା</string>
-    <string name="help_message">• ଲିନିୟର୍ ଫିଲ୍ଟରିଂ କିଛି MIDlet ର କାର୍ଯ୍ୟଦକ୍ଷତା ବହୁ ମାତ୍ରାରେ କମାଇପାରେ। MIDlet ଅତି ଧୀର ହେଲେ ଏହା ବନ୍ଦ କରନ୍ତୁ।&lt;BR&gt;• ତତ୍କ୍ଷଣାତ୍ ପ୍ରକ୍ରିୟାକରଣ ସାଧାରଣ Java ME ଇଭେଣ୍ଟ କ୍ୟୁକୁ ଏଡ଼ାଇଥାଏ। ଏହା ପ୍ରତିକ୍ରିୟାର ଗତି ବଢ଼ାଇପାରେ, କିନ୍ତୁ କିଛି MIDlet କୁ ଅସ୍ଥିର କରିପାରେ।</string>
     <string name="install">ସଂସ୍ଥାପନ କରନ୍ତୁ</string>
     <string name="install_done">ପ୍ରୟୋଗ ସଫଳତାର ସହିତ ସଂସ୍ଥାପିତ ହୋଇଛି!</string>
     <string name="install_jar_non_matched_jad">ଏହି ଆପ୍ JAD ରେ ବର୍ଣ୍ଣିତ ଆପ୍‌ଠାରୁ ଭିନ୍ନ।\nJAD କୁ ଅଗ୍ରାହ୍ୟ କରି ତଥାପି ସଂସ୍ଥାପନ କରିବେ?</string>
@@ -92,10 +91,8 @@
     <string name="about_lineage">JL-Mod Plus ହେଉଛି woesss (Yury Kharchenko) ଙ୍କ JL-Mod ର ଏକ ସ୍ୱତନ୍ତ୍ର ଫୋର୍କ। JL-Mod, Nikita Shakarun ଙ୍କ J2ME Loader ଉପରେ ଆଧାରିତ, ଯାହାର ମୂଳ ହେଉଛି NaikSoftware ର J2meLoader।</string>
     <string name="about_lineage_title">ପ୍ରକଳ୍ପର ଉତ୍ପତ୍ତି</string>
     <string name="about_links_title">ପ୍ରକଳ୍ପ ଓ ଲାଇସେନ୍ସ</string>
-    <string name="about_maintainer">ରକ୍ଷଣାବେକ୍ଷଣକାରୀ: %1$s</string>
     <string name="about_revision_label">ସୋର୍ସ ରିଭିଜନ୍</string>
     <string name="about_subtitle">Android ପାଇଁ Java ME ଏମୁଲେଟର୍</string>
-    <string name="about_version">ସଂସ୍କରଣ %1$s</string>
     <string name="about_version_label">ସଂସ୍କରଣ</string>
     <string name="action_back">ପଛକୁ</string>
     <string name="action_keyboard_ime">କୀବୋର୍ଡ (IME)</string>
@@ -171,11 +168,9 @@
     <string name="library_action_about_summary">ପ୍ରକଳ୍ପର ପରିଚୟ, ବିଲ୍ଡ ସୂଚନା ଓ ଲିଙ୍କ୍।</string>
     <string name="library_action_crash_reports_summary">ସଞ୍ଚିତ ସମସ୍ୟା ନିର୍ଣ୍ଣୟ ରିପୋର୍ଟ ଦେଖନ୍ତୁ।</string>
     <string name="library_action_export_bundle">ଆପ୍ ବଣ୍ଡଲ୍ ରପ୍ତାନି କରନ୍ତୁ</string>
-    <string name="library_action_help_summary">ବ୍ୟବହାର ନିର୍ଦ୍ଦେଶ ଓ ସାଧାରଣ ନିୟନ୍ତ୍ରଣ।</string>
     <string name="library_action_import_bundle">ଆପ୍ ବଣ୍ଡଲ୍ ଆମଦାନି କରନ୍ତୁ</string>
     <string name="library_action_import_bundle_summary">ରପ୍ତାନି ହୋଇଥିବା JAR, ଆପ୍ ସେଟିଂସ୍ ଓ ସଞ୍ଚିତ ଡାଟା ପୁନରୁଦ୍ଧାର କରନ୍ତୁ।</string>
     <string name="library_action_licenses_summary">ଆପ୍‌ରେ ଥିବା ତୃତୀୟ ପକ୍ଷର ବିଜ୍ଞପ୍ତି ଓ ଲାଇସେନ୍ସ ସର୍ତ୍ତ।</string>
-    <string name="library_action_save_log_summary">ସମସ୍ୟାର ସମାଧାନ ପାଇଁ JL-Mod Plus ର ସାମ୍ପ୍ରତିକ ଲଗ୍ ସଞ୍ଚୟ କରନ୍ତୁ।</string>
     <string name="library_action_select">ବାଛନ୍ତୁ</string>
     <string name="library_action_settings_summary">ସାମଗ୍ରିକ ଆଚରଣ ଓ ରୂପ ବିନ୍ୟାସ କରନ୍ତୁ।</string>
     <string name="library_action_share_app">ଆପ୍ ଶେୟାର୍ କରନ୍ତୁ</string>
@@ -195,7 +190,6 @@
     <string name="library_collection_name">ସଂଗ୍ରହର ନାମ</string>
     <string name="library_collection_new">ନୂଆ ସଂଗ୍ରହ</string>
     <string name="library_collection_ready_empty_message">ଆପ୍ ଫାଇଲ୍‌କୁ ନ ଘୁଞ୍ଚାଇ ଆପ୍ ସଜାଇବା ପାଇଁ ସଂଗ୍ରହ ତିଆରି କରନ୍ତୁ।</string>
-    <string name="library_collection_remove">ସଂଗ୍ରହରୁ ହଟାନ୍ତୁ</string>
     <string name="library_collection_remove_from_current">ସଂଗ୍ରହରୁ ହଟାନ୍ତୁ</string>
     <string name="library_collection_select_message">ସଂଗ୍ରହର ଆପ୍ ଦେଖିବା ପାଇଁ ତାହା ବାଛନ୍ତୁ।</string>
     <string name="library_collection_select_title">ଏକ ସଂଗ୍ରହ ବାଛନ୍ତୁ</string>
@@ -640,9 +634,6 @@
     <string name="perf_overlay_position_help">ଏକ କୋଣ ବାଛନ୍ତୁ।</string>
     <string name="pref_accent_blue">ପୂର୍ବନିର୍ଦ୍ଧାରିତ ନୀଳ</string>
     <string name="pref_accent_classic_blue">ପାରମ୍ପରିକ ନୀଳ</string>
-    <string name="pref_accent_cyan">ନୀଳାଭ ସବୁଜ</string>
-    <string name="pref_accent_orange">କମଳା</string>
-    <string name="pref_accent_pink">ଗୋଲାପୀ</string>
     <string name="pref_app_sort_ascending">ଆରୋହୀ</string>
     <string name="pref_app_sort_descending">ଅବରୋହୀ</string>
     <string name="pref_category_experimental">ପରୀକ୍ଷାମୂଳକ</string>
@@ -677,7 +668,6 @@
     <string name="bulk_install_reason_source_error">ଏହି ଉତ୍ସକୁ ସଂସ୍ଥାପନ ପାଇଁ ପ୍ରସ୍ତୁତ କରାଯାଇପାରିଲା ନାହିଁ।</string>
     <string name="installer_failed_storage">ସଂସ୍ଥାପନ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ। ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="reconversion_error_summary">MIDlet କୁ ସ୍ୱୟଂଚାଳିତ ଭାବରେ ରୂପାନ୍ତର କରାଯାଇପାରିଲା ନାହିଁ।</string>
-    <string name="reconversion_error">MIDlet କୁ ସ୍ୱୟଂଚାଳିତ ଭାବରେ ରୂପାନ୍ତର କରାଯାଇପାରିଲା ନାହିଁ।\n\n%1$s</string>
     <string name="memory_editor_cancelled">କାର୍ଯ୍ୟ ବାତିଲ ହୋଇଛି।</string>
     <string name="memory_editor_change_amount">ପରିବର୍ତ୍ତନ ପରିମାଣ</string>
     <string name="memory_editor_clear_selection">ଚୟନ ହଟାନ୍ତୁ</string>
@@ -936,7 +926,6 @@
     <string name="memory_editor_candidate_relocating">ପୁଣି ଯାଞ୍ଚ ହେଉଛି</string>
     <string name="memory_editor_candidate_untraced">ଆରେ #%1$d[%2$d] · ଉତ୍ସ ଚିହ୍ନଟ ହୋଇନାହିଁ</string>
     <string name="memory_editor_close">ମେମୋରୀ ସମ୍ପାଦକ ବନ୍ଦ କରନ୍ତୁ</string>
-    <string name="memory_editor_edit_batch_help">ଚୟନିତ ତଥ୍ୟ ପ୍ରକାର ସହିତ ସୁସଙ୍ଗତ ଚୟନିତ ଲକ୍ଷ୍ୟଗୁଡ଼ିକରେ ପ୍ରତିସ୍ଥାପନ ମୂଲ୍ୟ ପ୍ରୟୋଗ କରେ। ବ୍ୟାଚ୍ ସମ୍ପାଦନା ପାଇଁ ନିରୀକ୍ଷଣ ଓ ମୂଲ୍ୟ ସ୍ଥିର ରଖିବା ଉପଲବ୍ଧ ନାହିଁ।</string>
     <string name="memory_editor_edit_batch_no_common_type">ଚୟନିତ ଫଳାଫଳଗୁଡ଼ିକ ଚୟନିତ ତଥ୍ୟ ପ୍ରକାର ସମର୍ଥନ କରନ୍ତି ନାହିଁ। ସୁସଙ୍ଗତ ଫଳାଫଳଗୁଡ଼ିକୁ ଅଲଗା ଭାବେ ସମ୍ପାଦନ କରନ୍ତୁ।</string>
     <string name="memory_editor_edit_batch_type_notice">କେବଳ ମେଳ ଖାଉଥିବା ତଥ୍ୟ ପ୍ରକାରର ମୂଲ୍ୟଗୁଡ଼ିକ ବଦଳିବ।</string>
     <string name="memory_editor_engine_reconnecting">ମେମୋରୀ ସମ୍ପାଦକ ପୁଣି ସଂଯୋଗ କରୁଛି…</string>
@@ -948,7 +937,7 @@
     <string name="memory_editor_freeze_paused">ସୁରକ୍ଷା ପାଇଁ ସ୍ଥଗିତ ଅଛି</string>
     <string name="memory_editor_identity_unsafe">ଚୟନିତ ମୂଲ୍ୟ କିମ୍ବା ସନ୍ଧାନ ସ୍ଥିତି ଯାଞ୍ଚ କରାଯାଇପାରିଲା ନାହିଁ। ଫଳାଫଳ ରିଫ୍ରେଶ୍ କରନ୍ତୁ କିମ୍ବା ନିରୀକ୍ଷକ ପୁଣି ଖୋଲି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="memory_editor_increment_invalid">ଗୋଟିଏ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ପ୍ରକାର ଓ ତାହାର ପରିସର ଭିତରେ ଥିବା ମୂଲ୍ୟ ବ୍ୟବହାର କରନ୍ତୁ।</string>
-    <string name="memory_editor_increment_preview">ପ୍ରାକଦର୍ଶନ: %1$s (%2$dଟି ମୂଲ୍ୟ)</string>
+    <string name="memory_editor_increment_preview">ପ୍ରାକଦର୍ଶନ: %1$s</string>
     <string name="memory_editor_increment_step">କ୍ରମିକ ଅନ୍ତର</string>
     <string name="memory_editor_incremental_edit">କ୍ରମିକ ମୂଲ୍ୟ</string>
     <string name="memory_editor_inspect_memory">ନିକଟବର୍ତ୍ତୀ ମେମୋରୀ ଯାଞ୍ଚ କରନ୍ତୁ</string>
@@ -1036,7 +1025,6 @@
     <string name="pref_accent_amber">ସୁନେଲି ଆମ୍ବର୍</string>
     <string name="pref_accent_coral">ପ୍ରବାଳ ଆଭାର ପିଚ୍ ରଙ୍ଗ</string>
     <string name="pref_accent_green">ମରକତ ସବୁଜ</string>
-    <string name="pref_accent_indigo">ଇଣ୍ଡିଗୋ</string>
     <string name="pref_accent_rose">ବେରି ଆଭାର ଗୋଲାପୀ</string>
     <string name="pref_accent_sapphire">ନୀଳମଣି ନୀଳ</string>
     <string name="pref_accent_teal">ଜେଡ୍ ଆଭାର ନୀଳମିଶା ସବୁଜ</string>
