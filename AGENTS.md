@@ -14,11 +14,11 @@ This file contains guidance every agent needs. Keep task-specific instructions a
 
 ## Engineering approach
 
-Ground the solution in current evidence before committing to a production fix. Bounded, reversible experiments are appropriate when needed to establish the cause; remove temporary diagnostic changes before handoff unless they serve an ongoing requirement.
+Ground the solution in current evidence before committing to a production fix. Treat proposed mechanisms, inherited patterns, and agent recommendations as hypotheses rather than requirements; question unverified assumptions while respecting explicit goals and constraints. Use bounded, reversible experiments when needed, and remove temporary diagnostics before handoff unless they serve an ongoing requirement.
 
 - Solve the observed problem and realistic failure modes implied by actual system boundaries. Do not add machinery for hypothetical scenarios without evidence unless the mitigation is simple, natural to the design, and materially reduces credible risk.
 - Understand the relevant invariants, state and behavior owners, lifecycle and concurrency boundaries, persistence/data ownership, compatibility contracts, and affected behavior from current evidence.
-- Compare plausible approaches only to the depth the change warrants. Choose the simplest design that meets the required contracts and operating constraints; explain material tradeoffs rather than seeking superiority on every dimension.
+- Compare plausible approaches only to the depth the change warrants; routine changes do not need formal plans or decision matrices. Choose the simplest design that meets the required contracts and operating constraints; explain material tradeoffs rather than seeking superiority on every dimension.
 - Optimize for total conceptual complexity across the affected system, not diff size or line count. Prefer fewer state owners, sources of truth, synchronization points, translation layers, special cases, abstractions, fallback paths, and moving parts. A larger local refactor can be the simpler solution when it removes those concepts while preserving the required contracts.
 - Consider current platform, language, and library capabilities when they can eliminate project-owned machinery or a fragile boundary. Adopt them when evidence shows lower total complexity or materially better correctness, maintainability, or efficiency; novelty by itself is not a reason to migrate.
 - Simplicity is the result of resolving complexity, not omitting necessary behavior. Preserve required lifecycle, concurrency, persistence, failure, compatibility, and recovery paths; do not narrow an authorized outcome or skip difficult work merely to make the implementation smaller.
@@ -26,7 +26,7 @@ Ground the solution in current evidence before committing to a production fix. B
 - Proceed when evidence supports the approach and no unresolved question is likely to change the design or its correctness. Further investigation or review should resolve a concrete uncertainty, not satisfy a quota of alternatives or review passes.
 - Before adding state, caches, synchronization, abstractions, fallback paths, or dependencies, identify the requirement or credible failure mode that justifies each. Prefer resolving ownership or data-flow problems and removing obsolete machinery to layering additional safeguards on a flawed model.
 - Treat code quality as cumulative: improve directly affected code when doing so strengthens correctness, coherence, reliability, or maintainability; keep unrelated improvements out of scope. Do not require a refactor for its own sake. Stop iterating when the behavior is correct, relevant checks provide sufficient evidence, and remaining alternatives do not offer a material benefit.
-- Review the result as if reviewing someone else's PR. Check correctness, failure paths, scope, unnecessary complexity, and whether a reasonable simpler approach meets the same contracts. For nontrivial changes, briefly report the cause, design rationale, and validation evidence.
+- Review the result as if reviewing someone else's PR. Check correctness, failure paths, scope, unnecessary complexity, and whether a reasonable simpler approach meets the same contracts. Distinguish verified findings from hypotheses; do not manufacture issues or repeat reviews without new evidence. For nontrivial changes, briefly report the cause, design rationale, and validation evidence.
 
 ## Working in this repository
 
