@@ -20,7 +20,6 @@
     <string name="exit">Kilépés</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Leállítja ezt a MIDletet? A nem mentett módosítások elveszhetnek.</string>
     <string name="help">Súgó</string>
-    <string name="help_message">• A lineáris szűrés egyes MIDleteknél jelentősen csökkentheti a teljesítményt. Tiltsa le, ha a MIDlet túl lassú.&lt;BR&gt;• Az azonnali feldolgozás megkerüli a Java ME szokásos eseményvárólistáját. Javíthatja a válaszkészséget, de egyes MIDletek működését instabillá teheti.</string>
     <string name="identity_filter">Nincs (leggyorsabb)</string>
     <string name="layout_edit_finish">Szerkesztési mód bezárása</string>
     <string name="layout_edit_finished">Szerkesztési mód bezárva</string>
@@ -110,10 +109,8 @@
     <string name="about_lineage">A JL-Mod Plus a woesss (Yury Kharchenko) által fejlesztett JL-Mod független elágazása. A JL-Mod Nikita Shakarun J2ME Loader projektjére épül, amely a NaikSoftware J2meLoader projektjéből származik.</string>
     <string name="about_lineage_title">A projekt eredete</string>
     <string name="about_links_title">Projekt és licencek</string>
-    <string name="about_maintainer">Karbantartó: %1$s</string>
     <string name="about_revision_label">Forráskód-revízió</string>
     <string name="about_subtitle">Java ME-emulátor Androidra</string>
-    <string name="about_version">%1$s verzió</string>
     <string name="about_version_label">Verzió</string>
     <string name="action_back">Vissza</string>
     <string name="action_keyboard_ime">Billentyűzet (IME)</string>
@@ -193,11 +190,9 @@
     <string name="library_action_about_summary">A projekt bemutatása, a build adatai és hivatkozások.</string>
     <string name="library_action_crash_reports_summary">Mentett diagnosztikai jelentések áttekintése.</string>
     <string name="library_action_export_bundle">Alkalmazáscsomag exportálása</string>
-    <string name="library_action_help_summary">Használati útmutató és gyakori vezérlők.</string>
     <string name="library_action_import_bundle">Alkalmazáscsomag importálása</string>
     <string name="library_action_import_bundle_summary">Exportált JAR-fájl, alkalmazásbeállítások és mentett adatok visszaállítása.</string>
     <string name="library_action_licenses_summary">Az alkalmazáshoz mellékelt, harmadik féltől származó közlemények és licencfeltételek.</string>
-    <string name="library_action_save_log_summary">A JL-Mod Plus legutóbbi naplóinak mentése hibaelhárításhoz.</string>
     <string name="library_action_select">Kijelölés</string>
     <string name="library_action_settings_summary">Az általános működés és megjelenés beállítása.</string>
     <string name="library_action_share_app">Alkalmazás megosztása</string>
@@ -217,7 +212,6 @@
     <string name="library_collection_name">Gyűjtemény neve</string>
     <string name="library_collection_new">Új gyűjtemény</string>
     <string name="library_collection_ready_empty_message">Hozzon létre gyűjteményeket az alkalmazások rendszerezéséhez a fájljaik áthelyezése nélkül.</string>
-    <string name="library_collection_remove">Eltávolítás a gyűjteményből</string>
     <string name="library_collection_remove_from_current">Eltávolítás a gyűjteményből</string>
     <string name="library_collection_select_message">Válasszon gyűjteményt az alkalmazásainak megtekintéséhez.</string>
     <string name="library_collection_select_title">Gyűjtemény kiválasztása</string>
@@ -697,7 +691,6 @@
     <string name="installer_stage_wait">Várakozás egy másik műveletre…</string>
     <string name="installer_title">MIDlet-telepítő</string>
     <string name="reconversion_done_with_warning">A kompatibilitási konvertálás figyelmeztetésekkel befejeződött.</string>
-    <string name="reconversion_error">A MIDletet nem sikerült automatikusan konvertálni.\n\n%1$s</string>
     <string name="reconversion_error_summary">A MIDletet nem sikerült automatikusan konvertálni.</string>
     <string name="reconverting_wait">Ezen a MIDleten indítás előtt egyszeri kompatibilitási konvertálást kell elvégezni. Konvertálás…</string>
     <string name="reinstall">Ez az alkalmazás már telepítve van. Újratelepíti?</string>
@@ -796,7 +789,6 @@
     <string name="memory_editor_clear_selection">Kijelölés törlése</string>
     <string name="memory_editor_close">Memóriaszerkesztő bezárása</string>
     <string name="memory_editor_edit">Szerkesztés</string>
-    <string name="memory_editor_edit_batch_help">A csereértéket a kiválasztott adattípussal kompatibilis kijelölt célokra alkalmazza. Tömeges szerkesztéskor a Figyelés és a Rögzítés nem érhető el.</string>
     <string name="memory_editor_edit_batch_no_common_type">A kijelölt találatok nem támogatják a kiválasztott adattípust. A kompatibilis találatokat külön szerkessze.</string>
     <string name="memory_editor_edit_batch_type_notice">Csak az egyező adattípusú értékek módosulnak.</string>
     <string name="memory_editor_engine_reconnecting">A memóriaszerkesztő újracsatlakozik…</string>
@@ -810,7 +802,7 @@
     <string name="memory_editor_freeze_paused">Biztonsági okból szüneteltetve</string>
     <string name="memory_editor_identity_unsafe">A kijelölt érték vagy a keresési állapot nem ellenőrizhető. Frissítse a találatokat, vagy nyissa meg újra az Inspektort, majd próbálja újra.</string>
     <string name="memory_editor_increment_invalid">Használjon egyetlen egész adattípust és a tartományába eső értékeket.</string>
-    <string name="memory_editor_increment_preview">Előnézet: %1$s (%2$d érték)</string>
+    <string name="memory_editor_increment_preview">Előnézet: %1$s</string>
     <string name="memory_editor_increment_start">Kezdőérték</string>
     <string name="memory_editor_increment_step">Lépésköz</string>
     <string name="memory_editor_incremental_edit">Sorozat beállítása</string>
@@ -964,11 +956,7 @@
     <string name="pref_accent_blue">Alapértelmezett kék</string>
     <string name="pref_accent_classic_blue">Klasszikus kék</string>
     <string name="pref_accent_coral">Korallos barackszín</string>
-    <string name="pref_accent_cyan">Cián</string>
     <string name="pref_accent_green">Smaragdzöld</string>
-    <string name="pref_accent_indigo">Indigó</string>
-    <string name="pref_accent_orange">Narancssárga</string>
-    <string name="pref_accent_pink">Rózsaszín</string>
     <string name="pref_accent_rose">Bogyós rózsaszín</string>
     <string name="pref_accent_sapphire">Zafírkék</string>
     <string name="pref_accent_teal">Jádezöld türkiz</string>
