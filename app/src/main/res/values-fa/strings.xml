@@ -16,7 +16,6 @@
     <string name="exit">خروج</string>
     <string name="FORCE_CLOSE_CONFIRMATION">این MIDlet متوقف شود؟ تغییرات ذخیره‌نشده ممکن است از دست بروند.</string>
     <string name="help">راهنما</string>
-    <string name="help_message">• فیلتر خطی می‌تواند عملکرد برخی MIDletها را به‌شدت کاهش دهد. اگر MIDlet خیلی کند است، آن را غیرفعال کنید.&lt;BR&gt;• پردازش فوری صف معمول رویدادهای Java ME را دور می‌زند. ممکن است پاسخ‌دهی را بهتر کند، اما می‌تواند برخی MIDletها را ناپایدار کند.</string>
     <string name="identity_filter">هیچ‌کدام (سریع‌ترین)</string>
     <string name="install">نصب</string>
     <string name="install_done">برنامه با موفقیت نصب شده</string>
@@ -97,10 +96,8 @@
     <string name="about_lineage">JL-Mod Plus انشعابی مستقل از JL-Mod اثر woesss (Yury Kharchenko) است. JL-Mod بر پایهٔ J2ME Loader اثر Nikita Shakarun ساخته شده که ریشهٔ آن به J2meLoader اثر NaikSoftware برمی‌گردد.</string>
     <string name="about_lineage_title">خاستگاه پروژه</string>
     <string name="about_links_title">پروژه و مجوزها</string>
-    <string name="about_maintainer">نگه‌دارنده: %1$s</string>
     <string name="about_revision_label">بازبینی کد منبع</string>
     <string name="about_subtitle">شبیه‌ساز Java ME برای Android</string>
-    <string name="about_version">نسخهٔ %1$s</string>
     <string name="about_version_label">نسخه</string>
     <string name="action_back">بازگشت</string>
     <string name="action_keyboard_ime">صفحه‌کلید (IME)</string>
@@ -184,11 +181,9 @@
     <string name="library_action_about_summary">معرفی پروژه، اطلاعات ساخت و پیوندها.</string>
     <string name="library_action_crash_reports_summary">مرور گزارش‌های تشخیصی ذخیره‌شده.</string>
     <string name="library_action_export_bundle">صدور بستهٔ برنامه</string>
-    <string name="library_action_help_summary">راهنمای استفاده و کنترل‌های رایج.</string>
     <string name="library_action_import_bundle">وارد کردن بستهٔ برنامه</string>
     <string name="library_action_import_bundle_summary">بازیابی فایل JAR صادرشده، تنظیمات برنامه و داده‌های ذخیره‌شده.</string>
     <string name="library_action_licenses_summary">اطلاعیه‌های اشخاص ثالث و شرایط مجوز همراه برنامه.</string>
-    <string name="library_action_save_log_summary">ذخیرهٔ گزارش رخدادهای اخیر JL-Mod Plus برای عیب‌یابی.</string>
     <string name="library_action_select">انتخاب</string>
     <string name="library_action_settings_summary">تنظیم رفتار کلی و ظاهر.</string>
     <string name="library_action_share_app">اشتراک‌گذاری برنامه</string>
@@ -208,7 +203,6 @@
     <string name="library_collection_name">نام مجموعه</string>
     <string name="library_collection_new">مجموعهٔ جدید</string>
     <string name="library_collection_ready_empty_message">برای سازمان‌دهی برنامه‌ها بدون جابه‌جایی فایل‌هایشان، مجموعه ایجاد کنید.</string>
-    <string name="library_collection_remove">حذف از مجموعه</string>
     <string name="library_collection_remove_from_current">حذف از مجموعه</string>
     <string name="library_collection_select_message">برای دیدن برنامه‌های یک مجموعه، آن را انتخاب کنید.</string>
     <string name="library_collection_select_title">انتخاب مجموعه</string>
@@ -686,7 +680,6 @@
     <string name="installer_stage_wait">در انتظار عملیات دیگری…</string>
     <string name="installer_title">نصب‌کنندهٔ MIDlet</string>
     <string name="reconversion_done_with_warning">تبدیل سازگاری با هشدارهایی پایان یافت.</string>
-    <string name="reconversion_error">MIDlet به‌صورت خودکار تبدیل نشد.\n\n%1$s</string>
     <string name="reconversion_error_summary">MIDlet به‌صورت خودکار تبدیل نشد.</string>
     <string name="reconverting_wait">این MIDlet پیش از اجرا به یک بار تبدیل سازگاری نیاز دارد. در حال تبدیل…</string>
     <string name="reinstall">این برنامه از قبل نصب شده است. دوباره نصب شود؟</string>
@@ -785,7 +778,6 @@
     <string name="memory_editor_clear_selection">لغو انتخاب</string>
     <string name="memory_editor_close">بستن ویرایشگر حافظه</string>
     <string name="memory_editor_edit">ویرایش</string>
-    <string name="memory_editor_edit_batch_help">مقدار جایگزین را روی هدف‌های انتخاب‌شدهٔ سازگار با نوع دادهٔ انتخابی اعمال می‌کند. پایش و تثبیت در ویرایش گروهی در دسترس نیستند.</string>
     <string name="memory_editor_edit_batch_no_common_type">نتایج انتخاب‌شده از نوع دادهٔ انتخابی پشتیبانی نمی‌کنند. نتایج سازگار را جداگانه ویرایش کنید.</string>
     <string name="memory_editor_edit_batch_type_notice">فقط مقادیر دارای نوع دادهٔ مطابق تغییر می‌کنند.</string>
     <string name="memory_editor_engine_reconnecting">ویرایشگر حافظه در حال اتصال مجدد است…</string>
@@ -799,7 +791,7 @@
     <string name="memory_editor_freeze_paused">برای ایمنی موقتاً متوقف شده</string>
     <string name="memory_editor_identity_unsafe">تأیید مقدار انتخاب‌شده یا وضعیت جستجو ممکن نبود. نتایج را تازه‌سازی کنید یا بازرس را دوباره باز کنید، سپس دوباره تلاش کنید.</string>
     <string name="memory_editor_increment_invalid">از یک نوع عدد صحیح و مقادیر در محدودهٔ آن استفاده کنید.</string>
-    <string name="memory_editor_increment_preview">پیش‌نمایش: %1$s (%2$d مقدار)</string>
+    <string name="memory_editor_increment_preview">پیش‌نمایش: %1$s</string>
     <string name="memory_editor_increment_start">مقدار آغازین</string>
     <string name="memory_editor_increment_step">گام</string>
     <string name="memory_editor_incremental_edit">دنبالهٔ حسابی</string>
@@ -954,11 +946,7 @@
     <string name="pref_accent_blue">آبی پیش‌فرض</string>
     <string name="pref_accent_classic_blue">آبی کلاسیک</string>
     <string name="pref_accent_coral">هلویی مرجانی</string>
-    <string name="pref_accent_cyan">سیان</string>
     <string name="pref_accent_green">سبز زمردی</string>
-    <string name="pref_accent_indigo">نیلی</string>
-    <string name="pref_accent_orange">نارنجی</string>
-    <string name="pref_accent_pink">صورتی</string>
     <string name="pref_accent_rose">صورتی توتی</string>
     <string name="pref_accent_sapphire">آبی یاقوتی</string>
     <string name="pref_accent_teal">سبز یشمی</string>
