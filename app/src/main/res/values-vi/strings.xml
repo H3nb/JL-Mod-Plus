@@ -24,7 +24,6 @@
     <string name="exit">Thoát</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Dừng MIDlet này? Những thay đổi chưa lưu có thể bị mất.</string>
     <string name="help">Trợ giúp</string>
-    <string name="help_message">• Lọc tuyến tính có thể làm giảm đáng kể hiệu suất của một số MIDlet. Tắt tính năng này nếu MIDlet chạy quá chậm.&lt;BR&gt;• Xử lý tức thời bỏ qua hàng đợi sự kiện Java ME thông thường. Tính năng này có thể cải thiện khả năng phản hồi nhưng có thể khiến một số MIDlet hoạt động không ổn định.</string>
     <string name="identity_filter">Không (nhanh nhất)</string>
     <string name="install">cài đặt</string>
     <string name="install_done">Ứng dụng đã cài đặt thành công!</string>
@@ -148,11 +147,9 @@
     <string name="about_lineage">JL-Mod Plus là nhánh phát triển độc lập từ JL-Mod của woesss (Yury Kharchenko). JL-Mod dựa trên J2ME Loader của Nikita Shakarun, vốn bắt nguồn từ J2meLoader của NaikSoftware.</string>
     <string name="about_lineage_title">Nguồn gốc dự án</string>
     <string name="about_links_title">Dự án và giấy phép</string>
-    <string name="about_maintainer">Người duy trì: %1$s</string>
     <string name="about_message">Chạy các ứng dụng và trò chơi kinh điển, sắp xếp MIDlet trong thư viện và điều chỉnh điều khiển, hiển thị, âm thanh và hiệu suất. JL-Mod Plus là phần mềm miễn phí và mã nguồn mở.</string>
     <string name="about_revision_label">Bản sửa đổi mã nguồn</string>
     <string name="about_subtitle">Trình giả lập Java ME cho Android</string>
-    <string name="about_version">Phiên bản %1$s</string>
     <string name="about_version_label">Phiên bản</string>
     <string name="action_back">Quay lại</string>
     <string name="action_lock_orientation">Khóa xoay màn hình</string>
@@ -225,11 +222,9 @@
     <string name="library_action_about_summary">Tổng quan dự án, thông tin bản dựng và các liên kết.</string>
     <string name="library_action_crash_reports_summary">Xem các báo cáo chẩn đoán đã lưu.</string>
     <string name="library_action_export_bundle">Xuất gói ứng dụng</string>
-    <string name="library_action_help_summary">Hướng dẫn sử dụng và các thao tác cơ bản.</string>
     <string name="library_action_import_bundle">Nhập gói ứng dụng</string>
     <string name="library_action_import_bundle_summary">Khôi phục JAR, cài đặt ứng dụng và dữ liệu lưu đã xuất.</string>
     <string name="library_action_licenses_summary">Thông báo của bên thứ ba và điều khoản giấy phép đi kèm ứng dụng.</string>
-    <string name="library_action_save_log_summary">Lưu nhật ký gần đây của JL-Mod Plus để khắc phục sự cố.</string>
     <string name="library_action_select">Chọn</string>
     <string name="library_action_settings_summary">Cấu hình hoạt động và giao diện chung.</string>
     <string name="library_action_share_app">Chia sẻ ứng dụng</string>
@@ -249,7 +244,6 @@
     <string name="library_collection_name">Tên bộ sưu tập</string>
     <string name="library_collection_new">Bộ sưu tập mới</string>
     <string name="library_collection_ready_empty_message">Tạo bộ sưu tập để sắp xếp ứng dụng mà không di chuyển tệp.</string>
-    <string name="library_collection_remove">Xóa khỏi bộ sưu tập</string>
     <string name="library_collection_remove_from_current">Xóa khỏi bộ sưu tập</string>
     <string name="library_collection_select_message">Chọn bộ sưu tập để xem các ứng dụng bên trong.</string>
     <string name="library_collection_select_title">Chọn bộ sưu tập</string>
@@ -719,7 +713,6 @@
     <string name="installer_stage_wait">Đang chờ thao tác khác…</string>
     <string name="installer_title">Trình cài đặt MIDlet</string>
     <string name="reconversion_done_with_warning">Đã hoàn tất chuyển đổi tương thích nhưng có cảnh báo.</string>
-    <string name="reconversion_error">Không thể tự động chuyển đổi MIDlet.\n\n%1$s</string>
     <string name="reconversion_error_summary">Không thể tự động chuyển đổi MIDlet.</string>
     <string name="reconverting_wait">MIDlet này cần chuyển đổi tương thích một lần trước khi khởi động. Đang chuyển đổi…</string>
     <plurals name="bulk_install_attention_count">
@@ -792,7 +785,6 @@
     <string name="memory_editor_clear_selection">Bỏ chọn</string>
     <string name="memory_editor_close">Đóng trình sửa bộ nhớ</string>
     <string name="memory_editor_edit">Sửa</string>
-    <string name="memory_editor_edit_batch_help">Áp dụng giá trị thay thế cho các đích đã chọn tương thích với kiểu dữ liệu đã chọn. Không thể theo dõi hoặc cố định giá trị khi sửa hàng loạt.</string>
     <string name="memory_editor_edit_batch_no_common_type">Các kết quả đã chọn không hỗ trợ kiểu dữ liệu đã chọn. Hãy sửa riêng các kết quả tương thích.</string>
     <string name="memory_editor_edit_batch_type_notice">Chỉ thay đổi các giá trị có kiểu dữ liệu khớp.</string>
     <string name="memory_editor_engine_reconnecting">Đang kết nối lại trình sửa bộ nhớ…</string>
@@ -806,7 +798,7 @@
     <string name="memory_editor_freeze_paused">Đã tạm dừng để đảm bảo an toàn</string>
     <string name="memory_editor_identity_unsafe">Không thể xác minh giá trị đã chọn hoặc trạng thái tìm kiếm. Hãy làm mới kết quả hoặc mở lại trình kiểm tra rồi thử lại.</string>
     <string name="memory_editor_increment_invalid">Hãy dùng một kiểu số nguyên và các giá trị nằm trong phạm vi của kiểu đó.</string>
-    <string name="memory_editor_increment_preview">Xem trước: %1$s (%2$d giá trị)</string>
+    <string name="memory_editor_increment_preview">Xem trước: %1$s</string>
     <string name="memory_editor_increment_start">Giá trị bắt đầu</string>
     <string name="memory_editor_increment_step">Công sai</string>
     <string name="memory_editor_incremental_edit">Đặt theo cấp số cộng</string>
@@ -952,11 +944,7 @@
     <string name="pref_accent_blue">Xanh dương mặc định</string>
     <string name="pref_accent_classic_blue">Xanh dương cổ điển</string>
     <string name="pref_accent_coral">Hồng đào san hô</string>
-    <string name="pref_accent_cyan">Xanh lơ</string>
     <string name="pref_accent_green">Xanh ngọc lục bảo</string>
-    <string name="pref_accent_indigo">Chàm</string>
-    <string name="pref_accent_orange">Cam</string>
-    <string name="pref_accent_pink">Hồng</string>
     <string name="pref_accent_rose">Hồng dâu</string>
     <string name="pref_accent_sapphire">Xanh sapphire</string>
     <string name="pref_accent_teal">Xanh ngọc bích</string>
