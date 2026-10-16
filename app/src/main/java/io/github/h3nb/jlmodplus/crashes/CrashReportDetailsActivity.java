@@ -62,20 +62,27 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		composeView.setId(R.id.crash_report_details_compose_root);
 		setContentView(composeView);
 		String recordId = getIntent().getStringExtra(EXTRA_REPORT_ID);
-		// Historical reconciliation is owned by CrashReporter in the background. Opening a report
-		// must never copy framework traces or run maintenance on the UI thread.
-		record = LocalDiagnosticRepository.findStored(this, recordId);
-		if (record == null) {
-			ThemedToast.show(this, R.string.crash_report_unavailable, Toast.LENGTH_SHORT);
-			finish();
-			return;
-		}
-
-		String displayText = DiagnosticReportText.build(record);
-		applyReportText(displayText);
+		// Reading retained evidence involves file I/O and must not block the UI.
 		composeController = CrashReportsComposeBridge.installDetails(
-				composeView, displayText, createActions());
-		loadNativeSummaryAsync(displayText);
+				composeView, "", createActions(), true);
+		Context appContext = getApplicationContext();
+		new Thread(() -> {
+			LocalDiagnosticRepository.Record loaded =
+					LocalDiagnosticRepository.findStored(appContext, recordId);
+			String displayText = loaded == null ? null : DiagnosticReportText.build(loaded);
+			runOnUiThread(() -> {
+				if (isFinishing() || isDestroyed()) return;
+				if (loaded == null) {
+					ThemedToast.show(this, R.string.crash_report_unavailable, Toast.LENGTH_SHORT);
+					finish();
+					return;
+				}
+				record = loaded;
+				applyReportText(displayText);
+				composeController.updateDisplay(displayText);
+				loadNativeSummaryAsync(displayText);
+			});
+		}, "JLP-read-diagnostic-detail").start();
 	}
 
 	private CrashReportDetailsActions createActions() {

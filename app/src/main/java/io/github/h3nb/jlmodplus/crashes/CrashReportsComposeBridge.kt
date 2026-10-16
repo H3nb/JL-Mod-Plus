@@ -30,6 +30,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -102,16 +103,18 @@ data class DiagnosticBundleReadyState(
 data class CrashReportDetailState(
     val displayText: String,
     val readyBundle: DiagnosticBundleReadyState? = null,
+    val loading: Boolean = false,
 )
 
 class CrashReportDetailsController internal constructor(
     displayText: String,
+    loading: Boolean,
 ) {
-    var state by mutableStateOf(CrashReportDetailState(displayText))
+    var state by mutableStateOf(CrashReportDetailState(displayText, loading = loading))
         private set
 
     fun updateDisplay(displayText: String) {
-        state = state.copy(displayText = displayText)
+        state = state.copy(displayText = displayText, loading = false)
     }
 
     fun showBundleReady(fileName: String) {
@@ -429,19 +432,22 @@ fun CrashReportDetailsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = actions::onCopy) {
+                    IconButton(onClick = actions::onCopy, enabled = !state.loading) {
                         Icon(
                             painter = painterResource(R.drawable.ic_content_copy),
                             contentDescription = stringResource(R.string.copy_report),
                         )
                     }
-                    IconButton(onClick = actions::onReportGitHub) {
+                    IconButton(onClick = actions::onReportGitHub, enabled = !state.loading) {
                         Icon(
                             painter = painterResource(R.drawable.ic_open_external),
                             contentDescription = stringResource(R.string.report_on_github),
                         )
                     }
-                    IconButton(onClick = { showDeleteConfirmation = true }) {
+                    IconButton(
+                        onClick = { showDeleteConfirmation = true },
+                        enabled = !state.loading,
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_delete),
                             contentDescription = stringResource(R.string.delete_report),
@@ -451,13 +457,21 @@ fun CrashReportDetailsScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-        ) {
+        if (state.loading) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+            ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
@@ -473,6 +487,7 @@ fun CrashReportDetailsScreen(
                     )
                 }
             }
+        }
         }
     }
 
@@ -605,13 +620,15 @@ object CrashReportsComposeBridge {
     }
 
     @JvmStatic
+    @JvmOverloads
     fun installDetails(
         view: ComposeView,
         displayText: String,
         actions: CrashReportDetailsActions,
+        loading: Boolean = false,
     ): CrashReportDetailsController {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        val controller = CrashReportDetailsController(displayText)
+        val controller = CrashReportDetailsController(displayText, loading)
         view.setContent {
             JLModPlusTheme {
                 CrashReportDetailsScreen(
