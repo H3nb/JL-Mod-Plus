@@ -70,14 +70,48 @@ automatically.
 The bundle is not encrypted. Privacy is enforced by selecting and sanitizing the exported
 evidence, rather than by embedding a client-side decryption secret.
 
-## Ownership
+## Interpreting failures
 
-JL-Mod Plus tracks the exact URI and identity of the bundle it generated for a diagnostic record.
-The logical filename comes from the stable incident identity, while an internal content fingerprint
-tracks the evidence represented by that ZIP. Retry reuses the tracked bundle only when both still
-match; newer correlated evidence regenerates the ZIP with the same logical filename.
+The failure location (such as `Graphics.drawImage()`) is recorded separately from
+the execution context (process, callback, and verified MIDlet session). A top frame in
+an emulator API does **not** prove that the emulator caused the exception: the API
+may have been called by the MIDlet. When there is insufficient evidence, cause
+attribution remains unknown. Java and OS exit evidence enrich a report without
+changing the original raw records. A manually saved log is not evidence of a fatal
+incident and does not trigger a recovery notice.
 
-Ownership is persisted before the bundle is written or published. Interrupted legacy writes can
-therefore clean their deterministic partial file on retry, and failed cleanup keeps the ownership
-mapping instead of guessing by filename. Deleting the diagnostic attempts to remove only that
-tracked artifact. Files already uploaded elsewhere are outside JL-Mod Plus ownership.
+## Ownership and regeneration
+
+JL-Mod Plus tracks the exact URI/path, verified physical filename and content
+fingerprint of an exported ZIP. Existing ownership records without the newer
+logical-name field remain readable. Logical incident filenames are derived from
+timestamp and interpretation fingerprint; **grouping fingerprints may evolve** when
+more evidence arrives and must not be confused with durable source event IDs.
+
+If an export must change, JL-Mod Plus writes a candidate under separately persisted
+ownership while the prior active ZIP remains available. The candidate is written,
+published and verified before ownership changes; previous ownership is recorded
+for retirement. Failed candidate or retirement cleanup remains discoverable for a
+later retry or maintenance pass. On older Android filesystems, the replacement may
+need a distinct physical revision filename to preserve the previous ZIP. MediaStore
+may also assign a different physical display name: the file reported to the user
+comes from its verified metadata, not merely the desired logical name. Only exact
+owned URIs/paths can be deleted, never files that merely look similar by name.
+Files already uploaded elsewhere are outside JL-Mod Plus ownership.
+
+## Save log
+
+The runtime menu and the Diagnostic reports screen both offer **Save log**, even if
+the report inbox is empty or the MIDlet process has already ended. It is an explicit
+snapshot of Android logcat buffers accessible to this app, **not** a guarantee of
+capturing the moment of a previous crash. The collector requests recent records
+from the `main` and `crash` buffers; it retains up to 500 parsed records
+(including multiline continuations) within a 256 KiB UTF-8 log payload, subject
+to an approximately three-second subprocess deadline. Android versions and ROMs
+can restrict the accessible history.
+
+The output is a unique `.txt` file in `Downloads/JL-Mod Plus Diagnostics/`.
+Status and truncation are recorded; no file is claimed as successful when the
+capture is empty or fails. The same path/URI sanitizer as ZIP exports is used.
+Sanitization cannot guarantee that arbitrary logged messages contain no secrets.
+Review the exported text before sharing. There is no automatic upload.
