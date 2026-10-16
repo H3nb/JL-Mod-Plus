@@ -282,6 +282,9 @@ public final class CrashReporter {
 			Throwable reported, Throwable primaryFailure) {
 		Application application = activeApplication;
 		if (application == null || journal == null || reported == null) return false;
+		// Register the terminal attempt before obtaining the session snapshot; a concurrent
+		// host fatal handler must not terminate the process halfway through the handoff.
+		JavaDiagnosticStore.beginTerminalCapture();
 		try {
 			return JavaDiagnosticStore.captureMidletSessionFailure(
 					application,
@@ -293,6 +296,8 @@ public final class CrashReporter {
 			logMaintenanceFailure("Unable to persist handled MIDlet session failure",
 					reportingFailure);
 			return false;
+		} finally {
+			JavaDiagnosticStore.finishTerminalCapture();
 		}
 	}
 

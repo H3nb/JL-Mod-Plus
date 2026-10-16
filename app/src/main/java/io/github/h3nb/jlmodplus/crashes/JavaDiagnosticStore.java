@@ -139,13 +139,13 @@ final class JavaDiagnosticStore {
 	private static int activeTerminalCaptures;
 	private static final long TERMINAL_JOIN_NANOS = TimeUnit.SECONDS.toNanos(3);
 
-	private static void beginTerminalCapture() {
+	static void beginTerminalCapture() {
 		synchronized (TERMINAL_CAPTURE_LOCK) {
 			activeTerminalCaptures++;
 		}
 	}
 
-	private static void finishTerminalCapture() {
+	static void finishTerminalCapture() {
 		synchronized (TERMINAL_CAPTURE_LOCK) {
 			activeTerminalCaptures--;
 			TERMINAL_CAPTURE_LOCK.notifyAll();
