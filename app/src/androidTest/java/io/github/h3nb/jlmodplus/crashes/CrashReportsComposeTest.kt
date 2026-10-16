@@ -18,6 +18,7 @@ package io.github.h3nb.jlmodplus.crashes
 import io.github.h3nb.jlmodplus.R
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
@@ -68,6 +69,22 @@ class CrashReportsComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.crash_reports_empty)).assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyInboxStillAllowsManualLogSnapshot() {
+        val actions = RecordingListActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportsScreen(
+                    state = CrashReportsListState(loading = false, records = emptyList()),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.save_log)).performClick()
+        assertEquals(1, actions.saveLogCount)
     }
 
     @Test
@@ -193,6 +210,25 @@ class CrashReportsComposeTest {
     }
 
     @Test
+    fun reportDetailLoadingDisablesActions() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportDetailsScreen(
+                    state = CrashReportDetailState(displayText = "", loading = true),
+                    actions = RecordingDetailActions(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription(uiString(R.string.copy_report))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.report_on_github))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.delete_report))
+            .assertIsNotEnabled()
+    }
+
+    @Test
     fun detailActionsExposeOnlyCopyGitHubAndDeleteCallbacks() {
         val actions = RecordingDetailActions()
         composeRule.setContent {
@@ -223,6 +259,7 @@ class CrashReportsComposeTest {
 
     private class RecordingListActions : CrashReportsActions {
         var openedId: String? = null
+        var saveLogCount = 0
         var copiedIds: List<String> = emptyList()
         var deletedIds: List<String> = emptyList()
 
@@ -232,7 +269,9 @@ class CrashReportsComposeTest {
             openedId = reportId
         }
 
-        override fun onSaveLog() = Unit
+        override fun onSaveLog() {
+            saveLogCount++
+        }
 
         override fun onCopySelected(reportIds: List<String>) {
             copiedIds = reportIds
