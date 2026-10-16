@@ -207,7 +207,9 @@ public final class LocalDiagnosticRepository {
 
 	public static Record findStored(Context context, String id) {
 		if (id == null) return null;
-		for (Record record : loadStored(context)) if (id.equals(record.id)) return record;
+		for (Record record : loadStored(context)) {
+			if (record.ownershipRecordIds().contains(id)) return record;
+		}
 		return null;
 	}
 
@@ -351,6 +353,11 @@ public final class LocalDiagnosticRepository {
 					exit);
 		}
 
+		/** Source IDs survive a change in the preferred record ID after correlation. */
+		List<String> ownershipRecordIds() {
+			return ownershipSourceIds(id, javaEvidence, processExit);
+		}
+
 		public String getId() { return id; }
 		public Kind getKind() { return kind; }
 		public long getTimestampMillis() { return timestampMillis; }
@@ -431,6 +438,18 @@ public final class LocalDiagnosticRepository {
 					primary,
 					processExit);
 		}
+	}
+
+	static List<String> ownershipSourceIds(String id,
+			List<JavaDiagnosticStore.Snapshot> javaEvidence, ProcessExitStore.Snapshot exit) {
+		ArrayList<String> ids = new ArrayList<>();
+		ids.add(id);
+		for (JavaDiagnosticStore.Snapshot java : javaEvidence) {
+			String sourceId = javaRecordId(java);
+			if (sourceId != null && !ids.contains(sourceId)) ids.add(sourceId);
+		}
+		if (exit != null && exit.id != null && !ids.contains(exit.id)) ids.add(exit.id);
+		return ids;
 	}
 
 	static String javaRecordId(JavaDiagnosticStore.Snapshot java) {

@@ -67,8 +67,8 @@ final class DiagnosticBundleStore {
 
 		IncidentSummary incident = record.getIncidentSummary();
 		String fileName = incident.bundleFileName();
-		String key = key(record.getId());
 		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+		String key = existingOwnershipKey(preferences, record);
 		NativeTombstoneSummary.Summary nativeSummary = nativeSummary(record);
 
 		String javaStack = DiagnosticExportSanitizer.sanitize(context, record.getStackTrace());
@@ -148,14 +148,16 @@ final class DiagnosticBundleStore {
 	static synchronized boolean deleteTracked(
 			Context context, LocalDiagnosticRepository.Record record) {
 		if (context == null || record == null) return true;
-		String key = key(record.getId());
 		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-		boolean active = cleanupSlot(context, preferences, key, null);
-		// Source deletion may already have completed; retain failed cleanup slots
-		// for a later maintenance pass even if the UI record has disappeared.
-		boolean candidate = cleanupSlot(context, preferences, key + CANDIDATE, null);
-		boolean retired = cleanupSlot(context, preferences, key + RETIRED, null);
-		return active && candidate && retired;
+		boolean deleted = true;
+		for (String recordId : record.ownershipRecordIds()) {
+			String key = key(recordId);
+			boolean active = cleanupSlot(context, preferences, key, null);
+			boolean candidate = cleanupSlot(context, preferences, key + CANDIDATE, null);
+			boolean retired = cleanupSlot(context, preferences, key + RETIRED, null);
+			if (!active || !candidate || !retired) deleted = false;
+		}
+		return deleted;
 	}
 
 	/**
@@ -337,6 +339,16 @@ final class DiagnosticBundleStore {
 				.putString(key + KEY_CONTENT, metadata.contentFingerprint)
 				.putString(key + KEY_LOGICAL, metadata.logicalName)
 				.commit();
+	}
+
+	/** Prefer an existing source ownership slot when later evidence changes the record ID. */
+	private static String existingOwnershipKey(
+			SharedPreferences preferences, LocalDiagnosticRepository.Record record) {
+		for (String sourceId : record.ownershipRecordIds()) {
+			String candidate = key(sourceId);
+			if (read(preferences, candidate) != null) return candidate;
+		}
+		return key(record.getId());
 	}
 
 	private static boolean metadataMatches(

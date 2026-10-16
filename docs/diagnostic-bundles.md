@@ -85,7 +85,9 @@ incident and does not trigger a recovery notice.
 
 JL-Mod Plus tracks the exact URI/path, verified physical filename and content
 fingerprint of an exported ZIP. Existing ownership records without the newer
-logical-name field remain readable. Logical incident filenames are derived from
+logical-name field remain readable. When Java and Android process-exit evidence
+become one record, original source-ID aliases keep earlier owned exports
+reachable without a separate identity registry. Logical incident filenames are derived from
 timestamp and interpretation fingerprint; **grouping fingerprints may evolve** when
 more evidence arrives and must not be confused with durable source event IDs.
 
