@@ -131,18 +131,18 @@ public final class ManualLogCapture {
         }
         Status status = shortened ? Status.PARTIAL : Status.SUCCESS;
         String fileName = fileName();
-        String header = "JL-Mod Plus manual logcat snapshot\\n"
-                + "Version: " + BuildConfig.VERSION_NAME + "\\n"
-                + "SDK: " + Build.VERSION.SDK_INT + "\\n"
-                + "Captured: " + new Date() + " (" + TimeZone.getDefault().getID() + ")\\n"
-                + "Scope: Android application-accessible logcat; main and crash buffers\\n"
+        String header = "JL-Mod Plus manual logcat snapshot\n"
+                + "Version: " + BuildConfig.VERSION_NAME + "\n"
+                + "SDK: " + Build.VERSION.SDK_INT + "\n"
+                + "Captured: " + new Date() + " (" + TimeZone.getDefault().getID() + ")\n"
+                + "Scope: Android application-accessible logcat; main and crash buffers\n"
                 + "Requested: last " + LOGCAT_LINES + " lines; retained at most " + MAX_RECORDS
-                + " parsed records\\n"
-                + "Records retained: " + parsed.records + "\\n"
-                + "Payload bytes: " + payload.length + "\\n"
-                + "Status: " + status + "; truncated: " + shortened + "\\n"
-                + "This is a manual snapshot, not necessarily the log at the moment of a crash.\\n"
-                + "Review the file for sensitive text before sharing.\\n\\n";
+                + " parsed records\n"
+                + "Records retained: " + parsed.records + "\n"
+                + "Payload bytes: " + payload.length + "\n"
+                + "Status: " + status + "; truncated: " + shortened + "\n"
+                + "This is a manual snapshot, not necessarily the log at the moment of a crash.\n"
+                + "Review the file for sensitive text before sharing.\n\n";
         try {
             Uri uri = publish(context, fileName, header + safe);
             return new Result(status, uri, fileName, parsed.records,
@@ -202,10 +202,14 @@ public final class ManualLogCapture {
                         && (count = input.read(chunk)) >= 0) {
                     if (count > 0) tail.write(chunk, count);
                 }
+            }
+            int code;
+            try {
+                code = child.waitFor();
             } finally {
                 process.set(null);
             }
-            return new Sample(tail.bytes(), tail.truncated, child.waitFor());
+            return new Sample(tail.bytes(), tail.truncated, code);
         }
     }
 
