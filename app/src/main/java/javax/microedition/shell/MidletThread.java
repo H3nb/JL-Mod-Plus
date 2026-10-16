@@ -819,7 +819,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			returnToLibrary = returnToLibraryOnTermination;
 		}
 		finalizeFatalRuntime();
-		Runnable processCleanup = () -> Process.killProcess(Process.myPid());
+		Runnable processCleanup = () -> {
+			// Another terminal capture may still be writing on a different thread.
+			CrashReporter.awaitTerminalCaptures();
+			Process.killProcess(Process.myPid());
+		};
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
 			// Keep process death outside the failing guest callback/uncaught-handler stack.
