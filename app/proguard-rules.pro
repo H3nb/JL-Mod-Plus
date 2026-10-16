@@ -38,7 +38,6 @@
 # rather than the entire org.microemu implementation tree.
 -keep,allowoptimization public class org.microemu.cldc.**.Connection { public protected *; }
 
-# Gson 2.14 ships its own consumer ProGuard/R8 configuration.
 # Keep dependency-specific reflection rules upstream instead of duplicating broad
 # package-wide keeps here.
 

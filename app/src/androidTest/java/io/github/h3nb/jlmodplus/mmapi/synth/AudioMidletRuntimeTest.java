@@ -89,7 +89,7 @@ public class AudioMidletRuntimeTest {
             File config = new File(root, "configs/fixture");
             assertTrue(config.mkdirs());
             copy(new File(context.getApplicationInfo().sourceDir), new File(app, "converted.zip"));
-            ProfileModel profile = new ProfileModel(config);
+            ProfileModel profile = ProfileModel.fresh();
             profile.showKeyboard = false;
             profile.touchInput = false;
             profile.soundBank = "";
@@ -99,7 +99,7 @@ public class AudioMidletRuntimeTest {
                 copy(bank, new File(banks, "qualification-bank"));
                 profile.soundBank = "qualification-bank";
             }
-            assertTrue("fixture profile was not saved", ProfilesManager.saveConfig(profile));
+            assertTrue("fixture profile was not saved", ProfilesManager.saveConfig(config, profile));
             write(new File(root, "sustain.mid"), sessionSeconds == 0
                     ? SonivoxRuntimeTest.midi(56640, 57600) : loopingWorkload());
             for (String[] fixture : new String[][]{{"pcm.wav", "effect.wav"}, {"effect.mp3", "effect.mp3"}}) {

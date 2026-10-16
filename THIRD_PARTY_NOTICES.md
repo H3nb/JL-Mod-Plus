@@ -82,7 +82,7 @@ The table below covers direct runtime dependencies and license-significant trans
 | --- | --- | --- |
 | `androidx.*` (Activity, Core, AppCompat, Compose, Fragment, Lifecycle, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
-| `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
+| `org.jetbrains.kotlinx:kotlinx-serialization-core`, `org.jetbrains.kotlinx:kotlinx-serialization-json` | JetBrains kotlinx.serialization | Apache-2.0 |
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |
 | `org.jspecify:jspecify` | JSpecify | Apache-2.0 |
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |

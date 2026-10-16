@@ -10,7 +10,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
@@ -37,8 +37,8 @@ public class ProfilesManagerLocalPublicationTest {
 		writeConfig(target, 176);
 		writeLayout(target, 2);
 
-		assertTrue(ProfilesManager.publishBuiltInSnapshot(
-				ProfileModel.createBuiltIn(target, false, "")));
+		assertTrue(ProfilesManager.publishBuiltInSnapshot(target,
+				ProfileModel.createBuiltIn(false, "")));
 
 		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, readConfig(target).vkType);
 		assertFalse(layoutFile(target).exists());
@@ -238,11 +238,11 @@ public class ProfilesManagerLocalPublicationTest {
 		model.vkType = 1;
 		model.systemProperties = "";
 		Files.write(configFile(dir).toPath(),
-				new Gson().toJson(model).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(model).getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static ProfileModel readConfig(File dir) throws IOException {
-		return new Gson().fromJson(
+		return new ProfileFixtures().fromJson(
 				new String(readConfigBytes(dir), StandardCharsets.UTF_8), ProfileModel.class);
 	}
 

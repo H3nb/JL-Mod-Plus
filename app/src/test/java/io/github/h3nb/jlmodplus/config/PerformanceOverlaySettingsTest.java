@@ -18,14 +18,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
 import java.nio.file.Files;
+import java.io.File;
 
 public class PerformanceOverlaySettingsTest {
-	private final Gson gson = new Gson();
+	private final ProfileFixtures gson = new ProfileFixtures();
 
 	@Test
 	public void legacyShowFpsUsesStandardWithoutChangingEnablement() {
@@ -42,16 +43,16 @@ public class PerformanceOverlaySettingsTest {
 	@Test
 	public void customAndEmptySelectionsSurviveDraftEditingAndPersistence() throws Exception {
 		ProfileModel profile = new ProfileModel();
-		profile.dir = Files.createTempDirectory("jlmod-perf-overlay").toFile();
-		profile.dir.deleteOnExit();
+		File profileDir = Files.createTempDirectory("jlmod-perf-overlay").toFile();
+		profileDir.deleteOnExit();
 		profile.version = ProfileModel.VERSION;
 		int custom = PerformanceOverlayOptions.CPU | PerformanceOverlayOptions.NATIVE_HEAP;
 		ConfigFormState draft = ConfigFormState.fromProfile(profile, "")
 				.toBuilder().performanceOverlayMetrics(custom)
 				.performanceOverlayPosition(PerformanceOverlayOptions.BOTTOM_RIGHT)
 				.showFps(false).build();
-		assertTrue(ProfilesManager.saveConfig(draft.applyTo(profile)));
-		ProfileModel saved = ProfilesManager.loadConfig(profile.dir);
+		assertTrue(ProfilesManager.saveConfig(profileDir, draft.applyTo(profile)));
+		ProfileModel saved = ProfilesManager.loadConfig(profileDir);
 		ConfigFormState reloaded = ConfigFormState.fromProfile(saved, "").toBuilder()
 				.fpsLimit("60").build();
 		assertEquals(custom, reloaded.performanceOverlayMetrics);
@@ -60,8 +61,8 @@ public class PerformanceOverlaySettingsTest {
 
 		ProfileModel empty = reloaded.toBuilder().showFps(true).performanceOverlayMetrics(0)
 				.build().applyTo(saved);
-		assertTrue(ProfilesManager.saveConfig(empty));
-		ProfileModel emptyReloaded = ProfilesManager.loadConfig(profile.dir);
+		assertTrue(ProfilesManager.saveConfig(profileDir, empty));
+		ProfileModel emptyReloaded = ProfilesManager.loadConfig(profileDir);
 		assertTrue(emptyReloaded.showFps);
 		assertEquals(0, ConfigFormState.fromProfile(emptyReloaded, "").performanceOverlayMetrics);
 	}

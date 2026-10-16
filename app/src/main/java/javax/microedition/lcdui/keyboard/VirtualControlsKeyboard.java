@@ -135,12 +135,12 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private float legacyPinchStartSpanX;
 	private float legacyPinchStartSpanY;
 
-	public VirtualControlsKeyboard(ProfileModel settings) {
-		this(settings, true);
+	public VirtualControlsKeyboard(ProfileModel settings, java.io.File configDir) {
+		this(settings, configDir, true);
 	}
 
-	public VirtualControlsKeyboard(ProfileModel settings, boolean recoverPersistentLayout) {
-		super(settings, recoverPersistentLayout);
+	public VirtualControlsKeyboard(ProfileModel settings, java.io.File configDir, boolean recoverPersistentLayout) {
+		super(settings, configDir, recoverPersistentLayout);
 		this.settings = settings;
 		boolean legacyDpadEnabled = settings.virtualDpadEnabled;
 		boolean legacyAnalogEnabled = settings.virtualAnalogEnabled;

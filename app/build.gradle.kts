@@ -195,6 +195,7 @@ abstract class VerifyNativePackagingTask : DefaultTask() {
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.androidx.room3)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.compose.screenshot)
     alias(libs.plugins.ksp)
@@ -518,7 +519,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     ksp(libs.androidx.room3.compiler)
 
-    implementation(libs.google.gson)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.google.oboe)
     implementation(libs.pngj)
     implementation(libs.rx.android)
@@ -529,6 +530,8 @@ dependencies {
     screenshotTestImplementation(libs.screenshot.validation.api)
 
     testImplementation(libs.junit)
+    // Frozen v7 reader oracle only; Gson is absent from application runtime/APKs.
+    testImplementation("com.google.code.gson:gson:2.14.0")
     testImplementation(libs.androidx.room3.testing)
     // Android local-unit-test configurations otherwise resolve sqlite-bundled's Android variant,
     // whose JNI binaries cannot load on the Linux host. Pin the dedicated JVM artifact only for

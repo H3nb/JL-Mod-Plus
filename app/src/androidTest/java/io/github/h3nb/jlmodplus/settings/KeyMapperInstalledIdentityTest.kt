@@ -81,7 +81,7 @@ class KeyMapperInstalledIdentityTest {
 
             val replacement = ProfilesManager.loadPreparedMidletConfig(configDir, false)!!
             assertEquals(640, replacement.screenWidth)
-            assertFalse(replacement.keyMappings?.indexOfKey(KeyEvent.KEYCODE_F1)?.let { it >= 0 } ?: false)
+            assertFalse(replacement.keyMappings.containsKey(KeyEvent.KEYCODE_F1))
         }
     }
 
@@ -110,14 +110,14 @@ class KeyMapperInstalledIdentityTest {
     private fun writeConfig(dir: File, width: Int) {
         assertTrue(dir.mkdirs() || dir.isDirectory)
         val profile = ProfileModel().apply {
-            this.dir = dir
+
             version = ProfileModel.VERSION
             screenWidth = width
             screenHeight = 320
             vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS
             systemProperties = ""
         }
-        assertTrue(ProfilesManager.saveConfig(profile))
+        assertTrue(ProfilesManager.saveConfig(dir, profile))
     }
 
     private fun deleteRecursively(file: File) {

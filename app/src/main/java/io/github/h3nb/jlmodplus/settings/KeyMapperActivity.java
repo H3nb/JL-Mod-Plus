@@ -37,7 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
 
-import com.google.gson.GsonBuilder;
+import io.github.h3nb.jlmodplus.config.ProfileKeyMappings;
 
 import java.io.File;
 
@@ -50,7 +50,6 @@ import io.github.h3nb.jlmodplus.config.PresetLocalOverride;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
-import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
 import io.github.h3nb.jlmodplus.ui.ThemedToast;
 
 public class KeyMapperActivity extends AppCompatActivity {
@@ -110,7 +109,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 		}
 
 		SparseIntArray loadedEffective =
-				KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
+				KeyMapperMappingRules.resolve(defaultKeyMap, ProfileKeyMappings.toSparse(params.keyMappings));
 		// Back is a host-reserved runtime control. Treat this editor normalization as the persisted
 		// effective baseline so opening and closing an older profile is not a user-owned mutation.
 		loadedEffective.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
@@ -122,10 +121,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 			if (save == null || save.isEmpty()) {
 				androidToMIDP = loadedEffective;
 			} else {
-				androidToMIDP = new GsonBuilder()
-						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
-						.create()
-						.fromJson(save, SparseIntArray.class);
+				androidToMIDP = ProfileKeyMappings.decode(save);
 			}
 		}
 		androidToMIDP.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
@@ -186,10 +182,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 			outState.putLong(STATE_EXPECTED_APP_ID, expectedAppId);
 		}
 		if (!KeyMapperMappingRules.equalMaps(persistedEffectiveMap, androidToMIDP)) {
-			String currMap = new GsonBuilder()
-					.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
-					.create()
-					.toJson(androidToMIDP);
+			String currMap = ProfileKeyMappings.encode(androidToMIDP);
 			outState.putString(KEY_SAVE, currMap);
 		} else {
 			outState.putString(KEY_SAVE, "");
@@ -221,19 +214,19 @@ public class KeyMapperActivity extends AppCompatActivity {
 			return true;
 		}
 		SparseIntArray newMap = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
-		SparseIntArray oldMap = params.keyMappings;
+		java.util.Map<Integer, Integer> oldMap = params.keyMappings;
 		if (newMap.size() == 0) {
 			newMap = null;
 		}
 
-		params.keyMappings = newMap;
+		params.keyMappings = ProfileKeyMappings.fromSparse(newMap);
 		boolean saved;
 		if (namedProfile) {
-			saved = ProfilesManager.saveConfig(params);
+			saved = ProfilesManager.saveConfig(configDir, params);
 		} else {
 			InstalledAppWriteGuard.Result result = runInstalledWrite(() ->
 					PresetLocalOverride.runDetachedWrite(
-							this, configDir, () -> ProfilesManager.saveConfig(params)));
+							this, configDir, () -> ProfilesManager.saveConfig(configDir, params)));
 			saved = result == InstalledAppWriteGuard.Result.SUCCESS;
 		}
 		if (saved) {

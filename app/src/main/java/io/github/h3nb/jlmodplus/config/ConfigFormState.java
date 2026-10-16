@@ -14,7 +14,7 @@
 
 package io.github.h3nb.jlmodplus.config;
 
-import com.google.gson.JsonElement;
+import kotlinx.serialization.json.JsonElement;
 
 import androidx.annotation.Nullable;
 
@@ -107,8 +107,8 @@ public final class ConfigFormState {
 		systemProperties = builder.systemProperties;
 		screenBackgroundImage = builder.screenBackgroundImage;
 		soundBank = builder.soundBank;
-		shader = builder.shader;
-		controller = builder.controller == null ? null : builder.controller.deepCopy();
+		shader = copyShader(builder.shader);
+		controller = builder.controller;
 		orientation = builder.orientation;
 		screenBackgroundMode = BackgroundMode.sanitize(builder.screenBackgroundMode);
 		screenScaleType = builder.screenScaleType;
@@ -162,8 +162,8 @@ public final class ConfigFormState {
 				.parallelRedrawScreen(params.parallelRedrawScreen)
 				.forceFullscreen(params.forceFullscreen)
 				.graphicsMode(params.graphicsMode)
-				.shader(params.shader)
-				.controller(params.controller == null ? null : params.controller.deepCopy())
+				.shader(params.shader == null ? null : params.shader.toInfo())
+				.controller(params.controller)
 				.showFps(params.showFps)
 				.performanceOverlayMetrics(params.performanceOverlayMetrics)
 				.performanceOverlayPosition(params.performanceOverlayPosition)
@@ -212,7 +212,7 @@ public final class ConfigFormState {
 		params.immediateMode = immediateMode;
 		params.graphicsMode = graphicsMode;
 		if (graphicsMode == 1) {
-			params.shader = shader;
+			params.shader = ShaderSelection.fromInfo(shader);
 		}
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
@@ -245,9 +245,13 @@ public final class ConfigFormState {
 		params.vkOutlineColor = parseHexOrKeep(vkOutline, params.vkOutlineColor);
 		params.skipResumeCall = skipResumeCall;
 		params.soundBank = soundBank;
-		params.controller = controller == null ? null : controller.deepCopy();
+		params.controller = controller;
 		params.systemProperties = normalizeSystemProperties(systemProperties);
 		return params;
+	}
+
+	private static ShaderInfo copyShader(ShaderInfo shader) {
+		return shader == null ? null : shader.copyForDialog();
 	}
 
 	public static String normalizeSystemProperties(String text) {
@@ -366,7 +370,7 @@ public final class ConfigFormState {
 			screenBackgroundImage = source.screenBackgroundImage;
 			soundBank = source.soundBank;
 			shader = source.shader;
-			controller = source.controller == null ? null : source.controller.deepCopy();
+			controller = source.controller;
 			orientation = source.orientation;
 			screenBackgroundMode = source.screenBackgroundMode;
 			screenScaleType = source.screenScaleType;
@@ -414,7 +418,7 @@ public final class ConfigFormState {
 		public Builder soundBank(String value) { soundBank = value; return this; }
 		public Builder shader(ShaderInfo value) { shader = value; return this; }
 		public Builder controller(JsonElement value) {
-			controller = value == null ? null : value.deepCopy();
+			controller = ProfileJson.copyJson(value);
 			return this;
 		}
 		public Builder orientation(int value) { orientation = value; return this; }

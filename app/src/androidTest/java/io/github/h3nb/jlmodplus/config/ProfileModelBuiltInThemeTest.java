@@ -29,7 +29,7 @@ public class ProfileModelBuiltInThemeTest {
 		File dir = new File(
 				InstrumentationRegistry.getInstrumentation().getTargetContext().getCacheDir(),
 				"built-in-light-profile");
-		ProfileModel profile = ProfileModel.createBuiltIn(dir, false);
+		ProfileModel profile = ProfileModel.createBuiltIn(false);
 
 		assertEquals(0xFAFBFC, profile.screenBackgroundColor);
 		assertEquals(BackgroundMode.THEME, profile.screenBackgroundMode);
@@ -47,7 +47,7 @@ public class ProfileModelBuiltInThemeTest {
 		File dir = new File(
 				InstrumentationRegistry.getInstrumentation().getTargetContext().getCacheDir(),
 				"built-in-dark-profile");
-		ProfileModel profile = ProfileModel.createBuiltIn(dir, true);
+		ProfileModel profile = ProfileModel.createBuiltIn(true);
 
 		assertEquals(0x000000, profile.screenBackgroundColor);
 		assertEquals(255, profile.vkAlpha);

@@ -500,14 +500,14 @@ class PresetAuthorityIpcRuntimeTest {
     private fun writeConfig(dir: File, width: Int) {
         if (!dir.isDirectory) assertTrue(dir.mkdirs())
         val profile = ProfileModel().apply {
-            this.dir = dir
+
             version = ProfileModel.VERSION
             screenWidth = width
             screenHeight = 320
             vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS
             systemProperties = ""
         }
-        assertTrue(ProfilesManager.saveConfig(profile))
+        assertTrue(ProfilesManager.saveConfig(dir, profile))
     }
 
     private fun layoutFile(dir: File) = File(dir, Config.MIDLET_KEY_LAYOUT_FILE)

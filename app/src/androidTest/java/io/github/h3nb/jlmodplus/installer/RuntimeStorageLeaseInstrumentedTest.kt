@@ -66,7 +66,7 @@ class RuntimeStorageLeaseInstrumentedTest {
             assertTrue(privateA.mkdirs())
             assertTrue(privateB.mkdirs())
             File(app.applicationInfo.sourceDir).copyTo(File(installed, "converted.zip"))
-            assertTrue(ProfilesManager.saveConfig(ProfileModel(config)))
+            assertTrue(ProfilesManager.saveConfig(config, ProfileModel.fresh()))
             File(installed, "converted.dex.conf").writeText(
                 "Manifest-Version: 1.0\nMIDlet-Name: Bounce\n" +
                     "MIDlet-Vendor: Tests\nMIDlet-Version: 1.0\n" +
@@ -144,7 +144,7 @@ class RuntimeStorageLeaseInstrumentedTest {
         assertTrue(oldApp.mkdirs())
         assertTrue(config.mkdirs())
         File(app.applicationInfo.sourceDir).copyTo(File(oldApp, "converted.zip"))
-        assertTrue(ProfilesManager.saveConfig(ProfileModel(config)))
+        assertTrue(ProfilesManager.saveConfig(config, ProfileModel.fresh()))
         File(oldApp, "converted.dex.conf").writeText(
             "Manifest-Version: 1.0\n" +
                 "MIDlet-Name: Bounce\nMIDlet-Vendor: Tests\nMIDlet-Version: 1.0\n" +

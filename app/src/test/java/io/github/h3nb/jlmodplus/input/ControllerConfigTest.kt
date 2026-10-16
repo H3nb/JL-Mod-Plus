@@ -14,7 +14,7 @@
 
 package io.github.h3nb.jlmodplus.input
 
-import com.google.gson.JsonParser
+import kotlinx.serialization.json.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -40,7 +40,7 @@ class ControllerConfigTest {
 
     @Test
     fun parsesAndEmitsTheV2AnalogSchema() {
-        val source = JsonParser.parseString(
+        val source = Json.parseToJsonElement(
             """
             {
               "schemaVersion": 2,
@@ -57,7 +57,7 @@ class ControllerConfigTest {
               "futureNote": "keep me"
             }
             """.trimIndent(),
-        ).asJsonObject
+        ).jsonObject
 
         val config = ControllerConfig.parse(source)
 
@@ -70,19 +70,19 @@ class ControllerConfigTest {
         assertEquals(PointerMode.CURSOR, config.pointer.mode)
         assertEquals(PointerAction.CLICK, config.pointer.clickAction)
         assertEquals(VirtualAnalogStickMode.FLOATING, config.pointer.joystickMode)
-        assertEquals("keep me", config.toJson().get("futureNote").asString)
-        assertEquals(2, config.toJson().get("schemaVersion").asInt)
-        assertFalse(config.toJson().has("bindings"))
-        assertFalse(config.toJson().has("mode"))
+        assertEquals("keep me", config.toJson().getValue("futureNote").jsonPrimitive.content)
+        assertEquals(2, config.toJson().getValue("schemaVersion").jsonPrimitive.int)
+        assertFalse(config.toJson().containsKey("bindings"))
+        assertFalse(config.toJson().containsKey("mode"))
         assertEquals(
             "floating",
-            config.toJson().getAsJsonObject("pointer").get("joystickMode").asString,
+            config.toJson().getValue("pointer").jsonObject.getValue("joystickMode").jsonPrimitive.content,
         )
     }
 
     @Test
     fun legacyDigitalPayloadIsReadWithoutRecreatingASecondMappingTable() {
-        val source = JsonParser.parseString(
+        val source = Json.parseToJsonElement(
             """
             {
               "schemaVersion": 1,
@@ -96,7 +96,7 @@ class ControllerConfigTest {
               }
             }
             """.trimIndent(),
-        ).asJsonObject
+        ).jsonObject
 
         val config = ControllerConfig.parse(source)
 
@@ -104,19 +104,19 @@ class ControllerConfigTest {
         assertTrue(config.enabled)
         assertEquals(PointerAction.CLICK, config.pointer.clickAction)
         val emitted = config.toJson()
-        assertFalse(emitted.has("mode"))
-        assertFalse(emitted.has("preset"))
-        assertFalse(emitted.has("directionMode"))
-        assertFalse(emitted.has("bindings"))
-        assertEquals("CLICK", emitted.getAsJsonObject("pointer").get("clickAction").asString)
-        assertFalse(emitted.getAsJsonObject("pointer").has("clickBinding"))
+        assertFalse(emitted.containsKey("mode"))
+        assertFalse(emitted.containsKey("preset"))
+        assertFalse(emitted.containsKey("directionMode"))
+        assertFalse(emitted.containsKey("bindings"))
+        assertEquals("CLICK", emitted.getValue("pointer").jsonObject.getValue("clickAction").jsonPrimitive.content)
+        assertFalse(emitted.getValue("pointer").jsonObject.containsKey("clickBinding"))
     }
 
     @Test
     fun unsupportedFuturePayloadRemainsOpaqueUntilExplicitRecovery() {
-        val source = JsonParser.parseString(
+        val source = Json.parseToJsonElement(
             """{"schemaVersion": 99, "enabled": true, "vendor": {"opaque": true}}""",
-        ).asJsonObject
+        ).jsonObject
 
         val config = ControllerConfig.parse(source)
 
@@ -127,19 +127,19 @@ class ControllerConfigTest {
         val recovered = config.reset()
         assertTrue(recovered.isSupported)
         assertTrue(recovered.shouldWriteController)
-        assertEquals(ControllerConfig.CURRENT_SCHEMA_VERSION, recovered.toJson().get("schemaVersion").asInt)
-        assertFalse(recovered.toJson().has("vendor"))
+        assertEquals(ControllerConfig.CURRENT_SCHEMA_VERSION, recovered.toJson().getValue("schemaVersion").jsonPrimitive.int)
+        assertFalse(recovered.toJson().containsKey("vendor"))
     }
 
     @Test
     fun malformedPayloadIsUnsupportedInsteadOfPartiallyApplied() {
         val config = ControllerConfig.parse(
-            JsonParser.parseString("""{"enabled":"yes"}""").asJsonObject,
+            Json.parseToJsonElement("""{"enabled":"yes"}""").jsonObject,
         )
 
         assertFalse(config.isSupported)
         assertNotNull(config.notice)
-        assertEquals("yes", config.toJson().get("enabled").asString)
+        assertEquals("yes", config.toJson().getValue("enabled").jsonPrimitive.content)
     }
 
     @Test
@@ -164,6 +164,6 @@ class ControllerConfigTest {
             calibration,
             ControllerConfig.parse(json).calibrations["pad-capability"],
         )
-        assertFalse(config.withoutCalibration("pad-capability").toJson().has("calibrations"))
+        assertFalse(config.withoutCalibration("pad-capability").toJson().containsKey("calibrations"))
     }
 }

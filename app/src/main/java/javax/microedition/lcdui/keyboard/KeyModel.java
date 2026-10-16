@@ -16,18 +16,10 @@
 
 package javax.microedition.lcdui.keyboard;
 
-import com.google.gson.annotations.SerializedName;
 
 public class KeyModel {
-	@SerializedName("DefaultKeyCode")
 	public int defaultKeyCode;
-
-	@SerializedName("CustomKeyCode")
 	public int customKeyCode;
-
-	@SerializedName("GameAction")
 	public int gameAction;
-
-	@SerializedName("KeyName")
 	public String keyName;
 }

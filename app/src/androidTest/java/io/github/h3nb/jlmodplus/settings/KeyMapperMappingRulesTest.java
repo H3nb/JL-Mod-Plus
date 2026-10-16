@@ -122,7 +122,7 @@ public class KeyMapperMappingRulesTest {
 	@Test
 	public void runtimeMenuTargetRecognizesMultiplePhysicalSources() {
 		ProfileModel profile = new ProfileModel();
-		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings = new java.util.HashMap<>();
 		profile.keyMappings.put(KeyEvent.KEYCODE_F1, KeyMapper.KEY_OPTIONS_MENU);
 		profile.keyMappings.put(KeyEvent.KEYCODE_5, KeyMapper.KEY_OPTIONS_MENU);
 		profile.keyMappings.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
@@ -141,7 +141,7 @@ public class KeyMapperMappingRulesTest {
 	@Test
 	public void runtimeBackBindingCannotBeOverriddenByProfile() {
 		ProfileModel profile = new ProfileModel();
-		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings = new java.util.HashMap<>();
 		profile.keyMappings.put(KeyEvent.KEYCODE_BACK, Canvas.KEY_FIRE);
 
 		KeyMapper.setKeyMapping(profile);

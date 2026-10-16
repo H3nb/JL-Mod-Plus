@@ -119,7 +119,7 @@ class InstallerFilesystemTest {
             val customProfile = requireNotNull(ProfilesManager.loadConfig(installedConfigDir)).apply {
                 screenWidth = 777
             }
-            assertTrue(ProfilesManager.saveConfig(customProfile))
+            assertTrue(ProfilesManager.saveConfig(installedConfigDir, customProfile))
             assertTrue(preferences.edit()
                 .remove(ProfileModel.builtInThemePreferenceKey(installedConfigDir))
                 .commit())

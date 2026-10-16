@@ -34,7 +34,7 @@ public class ConfigFormStateTest {
 		model.vkBgColorSelected = 0xAABBCC;
 		model.vkFgColorSelected = 0xDDEEFF;
 		model.vkOutlineColor = 0x010203;
-		model.shader = new ShaderInfo("existing", "owner");
+		model.shader = ShaderSelection.fromInfo(new ShaderInfo("existing", "owner"));
 
 		ConfigFormState state = ConfigFormState.builder()
 				.screenWidth("not-a-number")
