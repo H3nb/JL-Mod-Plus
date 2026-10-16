@@ -43,11 +43,11 @@ public class ManualLogCaptureTest {
 
     @Test
     public void countReflectsRecordsAfterPayloadIsTrimmed() {
-        String first = "10-16 15:00:00.123  100  200 I Demo: old\\n";
-        String second = "10-16 15:00:01.123  100  200 I Demo: new\\n";
+        String first = "10-16 15:00:00.123  100  200 I Demo: old\n";
+        String second = "10-16 15:00:01.123  100  200 I Demo: new\n";
         assertEquals(2, ManualLogCapture.countRecords(first + second));
         assertEquals(1, ManualLogCapture.countRecords(second));
-        assertEquals(0, ManualLogCapture.countRecords("partial tail\\n"));
+        assertEquals(0, ManualLogCapture.countRecords("partial tail\n"));
     }
 
     @Test
