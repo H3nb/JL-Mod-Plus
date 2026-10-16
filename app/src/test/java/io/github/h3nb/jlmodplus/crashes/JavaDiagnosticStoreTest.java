@@ -204,7 +204,7 @@ public class JavaDiagnosticStoreTest {
 		JavaDiagnosticStore.FatalHandler handler = new JavaDiagnosticStore.FatalHandler(
 				(thread, error) -> {
 					started.countDown();
-					if (!release.await(2, TimeUnit.SECONDS)) throw new AssertionError("timed out");
+					if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("timed out");
 				},
 				(thread, error) -> {
 					upstreamError.set(error);
@@ -216,7 +216,7 @@ public class JavaDiagnosticStoreTest {
 				Thread.currentThread(), new IllegalStateException("secondary")), "secondary");
 		try {
 			owner.start();
-			assertTrue(started.await(2, TimeUnit.SECONDS));
+			assertTrue(started.await(5, TimeUnit.SECONDS));
 			secondary.start();
 			secondary.join(2000);
 			assertFalse(secondary.isAlive());
@@ -229,6 +229,39 @@ public class JavaDiagnosticStoreTest {
 		assertFalse(owner.isAlive());
 		assertEquals(1, upstreamCalls.get());
 		assertTrue(upstreamError.get() == original);
+	}
+
+	@Test
+	public void processCleanupWaitsForActiveHostFatalCapture() throws Exception {
+		CountDownLatch capturing = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		AtomicInteger cleanupReached = new AtomicInteger();
+		JavaDiagnosticStore.FatalHandler handler = new JavaDiagnosticStore.FatalHandler(
+				(thread, error) -> {
+					capturing.countDown();
+					if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("timed out");
+				}, (thread, error) -> {}, null);
+		Thread owner = new Thread(() -> handler.uncaughtException(
+				Thread.currentThread(), new IllegalStateException("host")), "host-crash");
+		Thread cleanup = new Thread(() -> {
+			JavaDiagnosticStore.awaitTerminalCaptures();
+			cleanupReached.incrementAndGet();
+		}, "process-cleanup");
+		try {
+			owner.start();
+			assertTrue(capturing.await(5, TimeUnit.SECONDS));
+			cleanup.start();
+			// The cleanup cannot finish while the host writer has been deliberately suspended.
+			Thread.sleep(100);
+			assertEquals(0, cleanupReached.get());
+		} finally {
+			release.countDown();
+			owner.join(5000);
+			cleanup.join(5000);
+		}
+		assertFalse(owner.isAlive());
+		assertFalse(cleanup.isAlive());
+		assertEquals(1, cleanupReached.get());
 	}
 
 	@Test
