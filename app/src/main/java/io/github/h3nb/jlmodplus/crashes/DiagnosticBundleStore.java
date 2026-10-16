@@ -52,6 +52,9 @@ final class DiagnosticBundleStore {
 	private static final String KEY_FILE = ".file";
 	private static final String KEY_FORMAT = ".format";
 	private static final String KEY_CONTENT = ".content";
+	private static final String KEY_LOGICAL = ".logical";
+	private static final String CANDIDATE = ".candidate";
+	private static final String RETIRED = ".retired";
 	private static final String MIME_ZIP = "application/zip";
 
 	private DiagnosticBundleStore() {}
@@ -93,27 +96,49 @@ final class DiagnosticBundleStore {
 		if (existing != null
 				&& metadataMatches(existing, fileName, contentFingerprint)
 				&& isReusable(context, existing)) {
-			return prepared(context, incident, nativeSummary, Uri.parse(existing.uri), fileName);
+			return prepared(context, incident, nativeSummary,
+					Uri.parse(existing.uri), existing.fileName);
 		}
 
-		if (existing != null) {
-			boolean removed = deleteOwned(context, existing);
-			if (!removed && ownedArtifactExists(context, existing)) {
-				throw new IOException("Unable to replace tracked diagnostic bundle");
-			}
-			if (!clear(preferences, key)) {
-				throw new IOException("Unable to clear diagnostic bundle ownership");
-			}
+		// A failed previous replacement can leave only application-owned candidate/retired
+		// metadata behind. Never delete the currently active artifact while reconciling it.
+		if (!cleanupSlot(context, preferences, key + CANDIDATE, existing)
+				|| !cleanupSlot(context, preferences, key + RETIRED, existing)) {
+			throw new IOException("Unable to clean up an earlier diagnostic export");
 		}
 
+		// Older Android exports are filesystem entries, so use a distinct physical name
+		// while the old ZIP must remain available. The semantic name stays unchanged.
+		String physicalName = fileName;
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+				&& existing != null && fileName.equals(existing.fileName)) {
+			int extension = fileName.lastIndexOf('.');
+			physicalName = fileName.substring(0, extension) + "-"
+					+ contentFingerprint.substring(0, 8) + fileName.substring(extension);
+		}
+		String candidateKey = key + CANDIDATE;
 		Metadata complete = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 				? Api29Impl.write(
-						context, preferences, key, fileName, contentFingerprint,
+						context, preferences, candidateKey, fileName, contentFingerprint,
 						report, incidentJson, anrTrace, tombstone)
 				: writeLegacy(
-						preferences, key, fileName, contentFingerprint,
+						preferences, candidateKey, physicalName, fileName, contentFingerprint,
 						report, incidentJson, anrTrace, tombstone);
-		return prepared(context, incident, nativeSummary, Uri.parse(complete.uri), fileName);
+
+		// Persist the retired identity before replacing active ownership, so a failure
+		// between publication and cleanup cannot orphan the previous public ZIP.
+		if (existing != null && !claim(preferences, key + RETIRED, existing)) {
+			throw new IOException("Unable to preserve prior diagnostic bundle ownership");
+		}
+		if (!claim(preferences, key, complete)) {
+			throw new IOException("Unable to commit replacement diagnostic bundle ownership");
+		}
+		// A candidate slot equal to the new active URI is only an alias: clear it,
+		// never delete it. Failed retirement cleanup remains discoverable on retry.
+		clear(preferences, candidateKey);
+		if (existing != null) cleanupSlot(context, preferences, key + RETIRED, complete);
+		return prepared(context, incident, nativeSummary,
+				Uri.parse(complete.uri), complete.fileName);
 	}
 
 	/**
@@ -125,14 +150,43 @@ final class DiagnosticBundleStore {
 		if (context == null || record == null) return true;
 		String key = key(record.getId());
 		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-		Metadata metadata = read(preferences, key);
-		if (metadata == null) return true;
+		boolean active = cleanupSlot(context, preferences, key, null);
+		// Source deletion may already have completed; retain failed cleanup slots
+		// for a later maintenance pass even if the UI record has disappeared.
+		boolean candidate = cleanupSlot(context, preferences, key + CANDIDATE, null);
+		boolean retired = cleanupSlot(context, preferences, key + RETIRED, null);
+		return active && candidate && retired;
+	}
 
-		boolean deleted = deleteOwned(context, metadata);
-		if (deleted || !ownedArtifactExists(context, metadata)) {
-			return clear(preferences, key);
+	/**
+	 * Best-effort orphan recovery after a prior retry, interruption, or deletion.
+	 * Only candidate/retired slots are eligible; active metadata is never collected
+	 * based on age or filename similarity.
+	 */
+	static synchronized void cleanupPending(Context context) {
+		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+		for (String name : preferences.getAll().keySet()) {
+			if (!name.startsWith("record.") || !name.endsWith(KEY_URI)) continue;
+			if (!name.endsWith(CANDIDATE + KEY_URI) && !name.endsWith(RETIRED + KEY_URI)) {
+				continue;
+			}
+			String slot = name.substring(0, name.length() - KEY_URI.length());
+			String activeKey = slot.substring(0, slot.lastIndexOf('.'));
+			cleanupSlot(context, preferences, slot, read(preferences, activeKey));
 		}
-		return false;
+	}
+
+	private static boolean cleanupSlot(Context context, SharedPreferences preferences,
+			String slot, Metadata protectedActive) {
+		Metadata pending = read(preferences, slot);
+		if (pending == null) return true;
+		if (protectedActive != null && pending.uri.equals(protectedActive.uri)) {
+			return clear(preferences, slot);
+		}
+		if (!deleteOwned(context, pending) && ownedArtifactExists(context, pending)) {
+			return false;
+		}
+		return clear(preferences, slot);
 	}
 
 	private static PreparedBundle prepared(Context context, IncidentSummary incident,
@@ -169,9 +223,14 @@ final class DiagnosticBundleStore {
 			Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
 			if (uri == null) throw new IOException("Unable to create diagnostic bundle");
 
+			String actualName = storedMediaName(resolver, uri);
+			if (actualName == null) {
+				deleteMediaStoreUri(resolver, uri);
+				throw new IOException("Unable to verify diagnostic bundle display name");
+			}
 			Metadata metadata = new Metadata(
-					uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION,
-					contentFingerprint);
+					uri.toString(), actualName, fileName,
+					DiagnosticBundleFormat.FORMAT_VERSION, contentFingerprint);
 			if (!claim(preferences, key, metadata)) {
 				deleteMediaStoreUri(resolver, uri);
 				throw new IOException("Unable to persist diagnostic bundle ownership");
@@ -201,6 +260,15 @@ final class DiagnosticBundleStore {
 			}
 		}
 
+		private static String storedMediaName(ContentResolver resolver, Uri uri) {
+			try (Cursor cursor = resolver.query(
+					uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+				return cursor != null && cursor.moveToFirst() ? cursor.getString(0) : null;
+			} catch (RuntimeException ignored) {
+				return null;
+			}
+		}
+
 		private static void deleteMediaStoreUri(ContentResolver resolver, Uri uri) {
 			try {
 				resolver.delete(uri, null, null);
@@ -210,7 +278,7 @@ final class DiagnosticBundleStore {
 
 	@SuppressWarnings("deprecation")
 	private static Metadata writeLegacy(SharedPreferences preferences, String key,
-			String fileName, String contentFingerprint, String report, String incidentJson,
+			String fileName, String logicalName, String contentFingerprint, String report, String incidentJson,
 			String anrTrace, String tombstone) throws IOException {
 		File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 		File directory = new File(downloads, PUBLIC_DIRECTORY);
@@ -226,7 +294,7 @@ final class DiagnosticBundleStore {
 		}
 
 		Metadata metadata = new Metadata(
-				Uri.fromFile(destination).toString(), fileName,
+				Uri.fromFile(destination).toString(), fileName, logicalName,
 				DiagnosticBundleFormat.FORMAT_VERSION, contentFingerprint);
 		if (!claim(preferences, key, metadata)) {
 			throw new IOException("Unable to persist diagnostic bundle ownership");
@@ -267,13 +335,14 @@ final class DiagnosticBundleStore {
 				.putString(key + KEY_FILE, metadata.fileName)
 				.putInt(key + KEY_FORMAT, metadata.formatVersion)
 				.putString(key + KEY_CONTENT, metadata.contentFingerprint)
+				.putString(key + KEY_LOGICAL, metadata.logicalName)
 				.commit();
 	}
 
 	private static boolean metadataMatches(
 			Metadata metadata, String fileName, String contentFingerprint) {
 		return metadata.formatVersion == DiagnosticBundleFormat.FORMAT_VERSION
-				&& fileName.equals(metadata.fileName)
+				&& fileName.equals(metadata.logicalName)
 				&& contentFingerprint.equals(metadata.contentFingerprint);
 	}
 
@@ -380,7 +449,8 @@ final class DiagnosticBundleStore {
 		String contentFingerprint = preferences.getString(key + KEY_CONTENT, null);
 		if (uri == null || file == null || contentFingerprint == null) return null;
 		return new Metadata(
-				uri, file, preferences.getInt(key + KEY_FORMAT, -1), contentFingerprint);
+				uri, file, preferences.getString(key + KEY_LOGICAL, file),
+				preferences.getInt(key + KEY_FORMAT, -1), contentFingerprint);
 	}
 
 	private static boolean clear(SharedPreferences preferences, String key) {
@@ -389,6 +459,7 @@ final class DiagnosticBundleStore {
 				.remove(key + KEY_FILE)
 				.remove(key + KEY_FORMAT)
 				.remove(key + KEY_CONTENT)
+				.remove(key + KEY_LOGICAL)
 				.commit();
 	}
 
@@ -424,12 +495,15 @@ final class DiagnosticBundleStore {
 	private static final class Metadata {
 		final String uri;
 		final String fileName;
+		final String logicalName;
 		final int formatVersion;
 		final String contentFingerprint;
 
-		Metadata(String uri, String fileName, int formatVersion, String contentFingerprint) {
+		Metadata(String uri, String fileName, String logicalName,
+				int formatVersion, String contentFingerprint) {
 			this.uri = uri;
 			this.fileName = fileName;
+			this.logicalName = logicalName;
 			this.formatVersion = formatVersion;
 			this.contentFingerprint = contentFingerprint;
 		}
