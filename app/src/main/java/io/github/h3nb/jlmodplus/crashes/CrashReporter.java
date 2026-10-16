@@ -270,6 +270,14 @@ public final class CrashReporter {
 	 * This path deliberately does not invoke the process uncaught handler. MidletThread owns the
 	 * subsequent isolated-process termination after this synchronous best-effort capture returns.
 	 */
+	/**
+	 * Give concurrent terminal diagnostic writes a bounded opportunity to complete before
+	 * an intentional isolated-runtime process kill. This does not classify the failure.
+	 */
+	public static void awaitTerminalCaptures() {
+		JavaDiagnosticStore.awaitTerminalCaptures();
+	}
+
 	public static boolean captureMidletSessionFailure(Thread thread, MidletSessionJournal journal,
 			Throwable reported, Throwable primaryFailure) {
 		Application application = activeApplication;
