@@ -967,7 +967,6 @@
     <string name="runtime_replacement_failed">MIDlet yang sedang berjalan tidak dapat dihentikan. Coba buka MIDlet baru lagi.</string>
     <string name="screenshot_save_failed">Tangkapan layar tidak dapat disimpan.</string>
     <string name="screenshot_saved_path">Tangkapan layar disimpan di %1$s</string>
-    <string name="log_save_started">Penyimpanan log dimulai.</string>
     <string name="log_save_failed">Penyimpanan log tidak dapat dimulai.</string>
     <string name="runtime_midlet_list_failed">Daftar MIDlet aplikasi ini tidak dapat dibaca.</string>
     <string name="diagnostic_reason_java_crash">Crash Java</string>

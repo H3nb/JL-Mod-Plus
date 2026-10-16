@@ -939,7 +939,6 @@
     <string name="memory_editor_type_auto">Automatisch</string>
     <string name="screenshot_save_failed">Screenshot kon niet worden opgeslagen.</string>
     <string name="screenshot_saved_path">Screenshot opgeslagen in %1$s</string>
-    <string name="log_save_started">Opslaan van logboek gestart.</string>
     <string name="log_save_failed">Opslaan van logboek kon niet worden gestart.</string>
     <string name="runtime_midlet_list_failed">De MIDlet-lijst van deze applicatie kon niet worden gelezen.</string>
     <string name="diagnostic_reason_java_crash">Java-crash</string>

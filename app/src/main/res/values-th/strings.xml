@@ -102,7 +102,6 @@
     <string name="loading_info">กำลังโหลดข้อมูล…</string>
     <string name="locate_bundle">ค้นหาชุดข้อมูล</string>
     <string name="log_save_failed">ไม่สามารถเริ่มบันทึกล็อกได้</string>
-    <string name="log_save_started">เริ่มบันทึกล็อกแล้ว</string>
     <string name="message_reset_layout">รีเซ็ตการจัดวางตัวควบคุมเสมือนเป็นค่าเริ่มต้นหรือไม่</string>
     <string name="not_saved_exists">มีอยู่แล้ว</string>
     <string name="open_github">เปิด GitHub</string>

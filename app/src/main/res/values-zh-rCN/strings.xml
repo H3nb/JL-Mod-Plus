@@ -180,7 +180,6 @@
     <string name="loading_apps">正在加载应用</string>
     <string name="locate_bundle">查找备份包</string>
     <string name="log_save_failed">无法开始保存日志。</string>
-    <string name="log_save_started">已开始保存日志。</string>
     <string name="message_reset_layout">要将虚拟控件布局恢复为默认值吗？</string>
     <string name="open_github">打开 GitHub</string>
     <string name="remove_screen_preset">移除分辨率预设</string>

@@ -60,7 +60,6 @@
     <string name="loading_info">Besig om inligting te laai…</string>
     <string name="locate_bundle">Soek bundel</string>
     <string name="log_save_failed">Kon nie begin om die logboek te stoor nie.</string>
-    <string name="log_save_started">Die stoor van die logboek het begin.</string>
     <string name="message_delete">Vee hierdie toepassing, sy instellings en stoordata uit? Dit verwyder ook sy Biblioteekinskrywing.</string>
     <string name="message_reset_layout">Herstel die uitleg van virtuele kontroles na die verstek?</string>
     <string name="more">Meer</string>

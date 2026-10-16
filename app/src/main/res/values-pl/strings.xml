@@ -118,7 +118,6 @@
     <string name="loading_info">Wczytywanie informacji…</string>
     <string name="locate_bundle">Znajdź pakiet</string>
     <string name="log_save_failed">Nie udało się rozpocząć zapisywania dziennika.</string>
-    <string name="log_save_started">Rozpoczęto zapisywanie dziennika.</string>
     <string name="message_reset_layout">Przywrócić domyślny układ wirtualnych elementów sterowania?</string>
     <string name="not_saved_exists">Już istnieje</string>
     <string name="open_github">Otwórz GitHub</string>

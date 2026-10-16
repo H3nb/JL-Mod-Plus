@@ -158,7 +158,6 @@
     <string name="loading_info">Зареждане на информация…</string>
     <string name="locate_bundle">Намиране на пакет</string>
     <string name="log_save_failed">Запазването на регистрационния файл не може да бъде стартирано.</string>
-    <string name="log_save_started">Запазването на регистрационния файл започна.</string>
     <string name="message_reset_layout">Да се възстанови ли подредбата по подразбиране на виртуалните контроли?</string>
     <string name="open_github">Отваряне на GitHub</string>
     <string name="remove_screen_preset">Премахване на предварително зададена резолюция</string>

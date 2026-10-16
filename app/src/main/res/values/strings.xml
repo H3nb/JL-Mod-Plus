@@ -1044,7 +1044,6 @@
     <string name="screenshot_save_failed">Could not save the screenshot.</string>
     <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
     <string name="screenshot_saved_path">Screenshot saved to %1$s</string>
-    <string name="log_save_started">Log saving started.</string>
     <!-- Deliberate English fallback until reviewed translations are available. -->
     <string name="log_save_success" tools:ignore="MissingTranslation">Saved %1$s in Downloads → JL-Mod Plus Diagnostics.</string>
     <string name="log_save_partial" tools:ignore="MissingTranslation">Saved a partial log as %1$s in Downloads → JL-Mod Plus Diagnostics.</string>

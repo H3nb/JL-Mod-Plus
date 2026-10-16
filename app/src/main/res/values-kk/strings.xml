@@ -116,7 +116,6 @@
     <string name="loading_apps">Қолданбалар жүктелуде</string>
     <string name="locate_bundle">Пакетті табу</string>
     <string name="log_save_failed">Журналды сақтауды бастау мүмкін болмады.</string>
-    <string name="log_save_started">Журналды сақтау басталды.</string>
     <string name="message_reset_layout">Виртуалды басқару элементтерінің орналасуын әдепкі күйге қайтару керек пе?</string>
     <string name="open_github">GitHub сайтын ашу</string>
     <string name="remove_screen_preset">Ажыратымдылықтың дайын баптауын алып тастау</string>

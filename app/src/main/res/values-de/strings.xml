@@ -939,7 +939,6 @@
     <string name="bulk_install_prepare_failed">Die ausgewählten Apps konnten nicht für die Installation vorbereitet werden.</string>
     <string name="screenshot_save_failed">Screenshot konnte nicht gespeichert werden.</string>
     <string name="screenshot_saved_path">Screenshot gespeichert unter %1$s</string>
-    <string name="log_save_started">Speichern des Protokolls gestartet.</string>
     <string name="log_save_failed">Speichern des Protokolls konnte nicht gestartet werden.</string>
     <string name="runtime_midlet_list_failed">Die MIDlet-Liste dieser Anwendung konnte nicht gelesen werden.</string>
     <string name="diagnostic_reason_java_crash">Java-Absturz</string>

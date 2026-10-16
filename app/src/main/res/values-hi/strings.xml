@@ -180,7 +180,6 @@
     <string name="loading_apps">ऐप लोड हो रहे हैं</string>
     <string name="locate_bundle">बंडल ढूँढ़ें</string>
     <string name="log_save_failed">लॉग सहेजना शुरू नहीं हो सका।</string>
-    <string name="log_save_started">लॉग सहेजना शुरू हो गया।</string>
     <string name="message_reset_layout">वर्चुअल कंट्रोल का लेआउट डिफ़ॉल्ट पर रीसेट करें?</string>
     <string name="open_github">GitHub खोलें</string>
     <string name="remove_screen_preset">रिज़ॉल्यूशन प्रीसेट हटाएँ</string>

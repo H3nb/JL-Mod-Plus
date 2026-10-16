@@ -116,7 +116,6 @@
     <string name="loading_info">তথ্য লোড হচ্ছে…</string>
     <string name="locate_bundle">বান্ডল খুঁজে নিন</string>
     <string name="log_save_failed">লগ সংরক্ষণ শুরু করা যায়নি।</string>
-    <string name="log_save_started">লগ সংরক্ষণ শুরু হয়েছে।</string>
     <string name="message_reset_layout">ভার্চুয়াল নিয়ন্ত্রণের বিন্যাস ডিফল্টে ফিরিয়ে নেবেন?</string>
     <string name="not_saved_exists">আগে থেকেই আছে</string>
     <string name="open_github">GitHub খুলুন</string>

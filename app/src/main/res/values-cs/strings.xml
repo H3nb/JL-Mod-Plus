@@ -180,7 +180,6 @@
     <string name="loading_apps">Načítání aplikací</string>
     <string name="locate_bundle">Najít balíček</string>
     <string name="log_save_failed">Nepodařilo se zahájit ukládání protokolu.</string>
-    <string name="log_save_started">Ukládání protokolu bylo zahájeno.</string>
     <string name="message_reset_layout">Obnovit výchozí rozložení virtuálních ovládacích prvků?</string>
     <string name="open_github">Otevřít GitHub</string>
     <string name="remove_screen_preset">Odebrat předvolbu rozlišení</string>

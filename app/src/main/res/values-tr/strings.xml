@@ -178,7 +178,6 @@
     <string name="loading_apps">Uygulamalar yükleniyor</string>
     <string name="locate_bundle">Paketi bul</string>
     <string name="log_save_failed">Günlüğü kaydetme işlemi başlatılamadı.</string>
-    <string name="log_save_started">Günlüğü kaydetme işlemi başladı.</string>
     <string name="message_reset_layout">Sanal kontrol düzeni varsayılana sıfırlansın mı?</string>
     <string name="open_github">GitHub\'ı aç</string>
     <string name="remove_screen_preset">Çözünürlük ön ayarını kaldır</string>

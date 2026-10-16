@@ -128,7 +128,6 @@
     <string name="loading_apps">در حال بارگیری برنامه‌ها</string>
     <string name="locate_bundle">یافتن بسته</string>
     <string name="log_save_failed">شروع ذخیرهٔ گزارش رخدادها ممکن نشد.</string>
-    <string name="log_save_started">ذخیرهٔ گزارش رخدادها آغاز شد.</string>
     <string name="message_reset_layout">چیدمان کنترل‌های مجازی به حالت پیش‌فرض بازنشانی شود؟</string>
     <string name="not_saved_exists">از قبل وجود دارد</string>
     <string name="open_github">باز کردن GitHub</string>

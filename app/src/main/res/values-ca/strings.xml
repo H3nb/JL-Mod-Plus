@@ -59,7 +59,6 @@
     <string name="loading_info">S’està carregant la informació…</string>
     <string name="locate_bundle">Localitza el paquet</string>
     <string name="log_save_failed">No s’ha pogut iniciar el desament del registre.</string>
-    <string name="log_save_started">S’ha iniciat el desament del registre.</string>
     <string name="message_delete">Vols suprimir aquesta aplicació, la seva configuració i les dades desades? També se suprimirà l’entrada de la Biblioteca.</string>
     <string name="message_reset_layout">Vols restablir la disposició predeterminada dels controls virtuals?</string>
     <string name="more">Més</string>

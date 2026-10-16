@@ -178,7 +178,6 @@
     <string name="loading_apps">Завантаження застосунків</string>
     <string name="locate_bundle">Знайти пакет</string>
     <string name="log_save_failed">Не вдалося розпочати збереження журналу.</string>
-    <string name="log_save_started">Збереження журналу розпочато.</string>
     <string name="message_reset_layout">Скинути розташування віртуальних елементів керування до типового?</string>
     <string name="open_github">Відкрити GitHub</string>
     <string name="remove_screen_preset">Вилучити шаблон роздільності</string>

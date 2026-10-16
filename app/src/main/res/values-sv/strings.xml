@@ -939,7 +939,6 @@
     <string name="memory_editor_type_auto">Automatisk</string>
     <string name="screenshot_save_failed">Skärmbilden kunde inte sparas.</string>
     <string name="screenshot_saved_path">Skärmbild sparad i %1$s</string>
-    <string name="log_save_started">Loggsparning startad.</string>
     <string name="log_save_failed">Loggsparning kunde inte startas.</string>
     <string name="runtime_midlet_list_failed">Den här applikationens MIDlet-lista kunde inte läsas.</string>
     <string name="diagnostic_reason_java_crash">Java-krasch</string>

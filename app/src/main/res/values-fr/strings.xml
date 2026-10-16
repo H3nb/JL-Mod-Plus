@@ -969,7 +969,6 @@
     <string name="bulk_install_prepare_failed">Les applications sélectionnées n’ont pas pu être préparées pour l’installation.</string>
     <string name="screenshot_save_failed">Impossible d’enregistrer la capture d’écran.</string>
     <string name="screenshot_saved_path">Capture enregistrée dans %1$s</string>
-    <string name="log_save_started">Enregistrement du journal démarré.</string>
     <string name="log_save_failed">Impossible de démarrer l’enregistrement du journal.</string>
     <string name="runtime_midlet_list_failed">Impossible de lire la liste des MIDlets de cette application.</string>
     <string name="diagnostic_reason_java_crash">Plantage Java</string>

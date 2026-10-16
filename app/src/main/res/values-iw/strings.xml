@@ -60,7 +60,6 @@
     <string name="loading_info">המידע נטען…</string>
     <string name="locate_bundle">איתור החבילה</string>
     <string name="log_save_failed">לא ניתן להתחיל בשמירת היומן.</string>
-    <string name="log_save_started">שמירת היומן התחילה.</string>
     <string name="message_delete">למחוק את היישום הזה, את הגדרותיו ואת נתוני השמירה שלו? גם הרשומה שלו בספרייה תוסר.</string>
     <string name="message_reset_layout">לאפס את פריסת הפקדים הווירטואליים לברירת המחדל?</string>
     <string name="more">עוד</string>

@@ -59,7 +59,6 @@
     <string name="loading_info">Laster informasjon…</string>
     <string name="locate_bundle">Finn pakke</string>
     <string name="log_save_failed">Kunne ikke begynne å lagre loggen.</string>
-    <string name="log_save_started">Logglagring startet.</string>
     <string name="message_delete">Slett denne appen, innstillingene og de lagrede dataene? Dette fjerner også oppføringen i Bibliotek.</string>
     <string name="message_reset_layout">Tilbakestill oppsettet for virtuelle kontroller til standard?</string>
     <string name="more">Mer</string>

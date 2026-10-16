@@ -939,7 +939,6 @@
     <string name="memory_editor_type_auto">Automatisk</string>
     <string name="screenshot_save_failed">Skærmbilledet kunne ikke gemmes.</string>
     <string name="screenshot_saved_path">Skærmbillede gemt i %1$s</string>
-    <string name="log_save_started">Gemning af log startet.</string>
     <string name="log_save_failed">Gemning af log kunne ikke startes.</string>
     <string name="runtime_midlet_list_failed">Denne applikations MIDlet-liste kunne ikke læses.</string>
     <string name="diagnostic_reason_java_crash">Java-nedbrud</string>

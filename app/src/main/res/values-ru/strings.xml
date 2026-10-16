@@ -291,7 +291,6 @@
     <string name="memory_editor_type_auto">Авто</string>
     <string name="screenshot_save_failed">Не удалось сохранить снимок экрана.</string>
     <string name="screenshot_saved_path">Снимок экрана сохранён в %1$s</string>
-    <string name="log_save_started">Сохранение журнала начато.</string>
     <string name="log_save_failed">Не удалось начать сохранение журнала.</string>
     <string name="runtime_midlet_list_failed">Не удалось прочитать список MIDlet этого приложения.</string>
     <string name="diagnostic_reason_java_crash">Сбой Java</string>

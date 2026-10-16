@@ -969,7 +969,6 @@
     <string name="bulk_install_prepare_failed">Non è stato possibile preparare le app selezionate per l’installazione.</string>
     <string name="screenshot_save_failed">Impossibile salvare lo screenshot.</string>
     <string name="screenshot_saved_path">Screenshot salvato in %1$s</string>
-    <string name="log_save_started">Salvataggio del registro avviato.</string>
     <string name="log_save_failed">Impossibile avviare il salvataggio del registro.</string>
     <string name="runtime_midlet_list_failed">Impossibile leggere l’elenco MIDlet di questa applicazione.</string>
     <string name="diagnostic_reason_java_crash">Arresto anomalo Java</string>

@@ -59,7 +59,6 @@
     <string name="loading_info">Φόρτωση πληροφοριών…</string>
     <string name="locate_bundle">Εντοπισμός πακέτου</string>
     <string name="log_save_failed">Δεν ήταν δυνατή η έναρξη αποθήκευσης του αρχείου καταγραφής.</string>
-    <string name="log_save_started">Η αποθήκευση του αρχείου καταγραφής ξεκίνησε.</string>
     <string name="message_delete">Να διαγραφεί αυτή η εφαρμογή, οι ρυθμίσεις και τα δεδομένα αποθήκευσής της; Αυτό αφαιρεί και την καταχώρισή της στη Βιβλιοθήκη.</string>
     <string name="message_reset_layout">Να επανέλθει η διάταξη των εικονικών χειριστηρίων στην προεπιλεγμένη;</string>
     <string name="more">Περισσότερα</string>

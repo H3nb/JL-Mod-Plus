@@ -116,7 +116,6 @@
     <string name="loading_info">正在載入資訊…</string>
     <string name="locate_bundle">尋找備份包</string>
     <string name="log_save_failed">無法開始儲存記錄。</string>
-    <string name="log_save_started">已開始儲存記錄。</string>
     <string name="message_reset_layout">要將虛擬控制項配置重設為預設值嗎？</string>
     <string name="not_saved_exists">已存在</string>
     <string name="open_github">開啟 GitHub</string>

@@ -969,7 +969,6 @@
     <string name="bulk_install_prepare_failed">No se pudieron preparar las aplicaciones seleccionadas para la instalación.</string>
     <string name="screenshot_save_failed">No se pudo guardar la captura de pantalla.</string>
     <string name="screenshot_saved_path">Captura guardada en %1$s</string>
-    <string name="log_save_started">Se inició el guardado del registro.</string>
     <string name="log_save_failed">No se pudo iniciar el guardado del registro.</string>
     <string name="runtime_midlet_list_failed">No se pudo leer la lista de MIDlets de esta aplicación.</string>
     <string name="diagnostic_reason_java_crash">Fallo de Java</string>

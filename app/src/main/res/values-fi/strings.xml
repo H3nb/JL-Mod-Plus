@@ -939,7 +939,6 @@
     <string name="memory_editor_type_auto">Automaattinen</string>
     <string name="screenshot_save_failed">Kuvakaappausta ei voitu tallentaa.</string>
     <string name="screenshot_saved_path">Kuvakaappaus tallennettu kohteeseen %1$s</string>
-    <string name="log_save_started">Lokin tallennus aloitettu.</string>
     <string name="log_save_failed">Lokin tallennusta ei voitu aloittaa.</string>
     <string name="runtime_midlet_list_failed">Tämän sovelluksen MIDlet-luetteloa ei voitu lukea.</string>
     <string name="diagnostic_reason_java_crash">Java-kaatuminen</string>

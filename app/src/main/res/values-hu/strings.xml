@@ -138,7 +138,6 @@
     <string name="loading_info">Információk betöltése…</string>
     <string name="locate_bundle">Csomag megkeresése</string>
     <string name="log_save_failed">Nem sikerült elindítani a napló mentését.</string>
-    <string name="log_save_started">A napló mentése elindult.</string>
     <string name="message_reset_layout">Visszaállítja a virtuális vezérlők elrendezését az alapértelmezettre?</string>
     <string name="open_github">GitHub megnyitása</string>
     <string name="remove_screen_preset">Felbontási előbeállítás eltávolítása</string>

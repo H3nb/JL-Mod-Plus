@@ -132,7 +132,6 @@
     <string name="loading_apps">アプリを読み込み中</string>
     <string name="locate_bundle">バンドルを探す</string>
     <string name="log_save_failed">ログの保存を開始できませんでした。</string>
-    <string name="log_save_started">ログの保存を開始しました。</string>
     <string name="message_reset_layout">仮想コントロールの配置を初期状態に戻しますか？</string>
     <string name="open_github">GitHubを開く</string>
     <string name="remove_screen_preset">解像度プリセットを削除</string>

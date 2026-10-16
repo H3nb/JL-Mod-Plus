@@ -180,7 +180,6 @@
     <string name="loading_apps">جارٍ تحميل التطبيقات</string>
     <string name="locate_bundle">تحديد موقع الحزمة</string>
     <string name="log_save_failed">تعذر بدء حفظ السجل.</string>
-    <string name="log_save_started">بدأ حفظ السجل.</string>
     <string name="message_reset_layout">هل تريد إعادة ضبط تخطيط عناصر التحكم الافتراضية إلى الوضع الافتراضي؟</string>
     <string name="open_github">فتح GitHub</string>
     <string name="remove_screen_preset">إزالة إعداد مسبق للدقة</string>

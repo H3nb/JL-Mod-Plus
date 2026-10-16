@@ -117,7 +117,6 @@
     <string name="loading_info">Se încarcă informațiile…</string>
     <string name="locate_bundle">Localizează pachetul</string>
     <string name="log_save_failed">Salvarea jurnalului nu a putut fi pornită.</string>
-    <string name="log_save_started">Salvarea jurnalului a început.</string>
     <string name="message_reset_layout">Resetezi dispunerea comenzilor virtuale la cea implicită?</string>
     <string name="not_saved_exists">Există deja</string>
     <string name="open_github">Deschide GitHub</string>

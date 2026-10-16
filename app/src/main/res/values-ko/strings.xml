@@ -147,7 +147,6 @@
     <string name="loading_info">정보 불러오는 중…</string>
     <string name="locate_bundle">번들 찾기</string>
     <string name="log_save_failed">로그 저장을 시작하지 못했습니다.</string>
-    <string name="log_save_started">로그 저장을 시작했습니다.</string>
     <string name="message_reset_layout">가상 컨트롤 배치를 기본값으로 초기화할까요?</string>
     <string name="open_github">GitHub 열기</string>
     <string name="remove_screen_preset">해상도 프리셋 제거</string>

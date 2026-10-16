@@ -172,7 +172,6 @@
     <string name="loading_apps">Đang tải ứng dụng</string>
     <string name="locate_bundle">Tìm gói</string>
     <string name="log_save_failed">Không thể bắt đầu lưu nhật ký.</string>
-    <string name="log_save_started">Đã bắt đầu lưu nhật ký.</string>
     <string name="message_reset_layout">Đặt lại bố cục điều khiển ảo về mặc định?</string>
     <string name="open_github">Mở GitHub</string>
     <string name="remove_screen_preset">Xóa thiết lập sẵn về độ phân giải</string>
