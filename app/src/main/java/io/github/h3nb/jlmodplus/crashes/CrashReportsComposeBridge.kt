@@ -73,6 +73,7 @@ import java.util.Date
 interface CrashReportsActions {
     fun onBack()
     fun onOpen(reportId: String)
+    fun onSaveLog()
     fun onCopySelected(reportIds: List<String>)
     fun onDeleteSelected(reportIds: List<String>)
 }
@@ -125,6 +126,7 @@ class CrashReportDetailsController internal constructor(
 data class CrashReportsListState(
     val loading: Boolean,
     val records: List<CrashReportListItem>,
+    val savingLog: Boolean = false,
 )
 
 /** Keeps list data observable without reinstalling the Activity's Compose content. */
@@ -137,10 +139,14 @@ class CrashReportsListController internal constructor(
         private set
 
     fun update(records: List<LocalDiagnosticRepository.Record>) {
-        state = CrashReportsListState(
+        state = state.copy(
             loading = false,
             records = records.map { it.toComposeListItem(context) },
         )
+    }
+
+    fun setSavingLog(saving: Boolean) {
+        state = state.copy(savingLog = saving)
     }
 }
 
@@ -234,6 +240,14 @@ fun CrashReportsScreen(
                     }
                 },
                 actions = {
+                    if (!selectionMode) {
+                        TextButton(
+                            onClick = actions::onSaveLog,
+                            enabled = !state.savingLog,
+                        ) {
+                            Text(stringResource(R.string.save_log))
+                        }
+                    }
                     if (selectionMode) {
                         val allSelected = selectedIds.size == state.records.size
                         IconButton(

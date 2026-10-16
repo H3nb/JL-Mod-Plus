@@ -149,6 +149,7 @@ private object NoOpListActions : CrashReportsActions {
 
     override fun onOpen(reportId: String) = Unit
 
+    override fun onSaveLog() = Unit
     override fun onCopySelected(reportIds: List<String>) = Unit
 
     override fun onDeleteSelected(reportIds: List<String>) = Unit

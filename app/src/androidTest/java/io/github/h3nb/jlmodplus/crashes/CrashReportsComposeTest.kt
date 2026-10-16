@@ -232,6 +232,8 @@ class CrashReportsComposeTest {
             openedId = reportId
         }
 
+        override fun onSaveLog() = Unit
+
         override fun onCopySelected(reportIds: List<String>) {
             copiedIds = reportIds
         }

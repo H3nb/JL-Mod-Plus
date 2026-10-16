@@ -45,6 +45,8 @@ public class CrashReportsActivity extends AppCompatActivity {
 	private List<LocalDiagnosticRepository.Record> currentRecords = Collections.emptyList();
 	private boolean resumed;
 	private boolean refreshRetryScheduled;
+	private boolean logSaveRunning;
+	private int readGeneration;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -68,12 +70,22 @@ public class CrashReportsActivity extends AppCompatActivity {
 	@Override
 	protected void onPause() {
 		resumed = false;
+		readGeneration++;
 		super.onPause();
 	}
 
 	private void updateStoredRecords() {
-		currentRecords = LocalDiagnosticRepository.loadStored(this);
-		composeController.update(currentRecords);
+		int generation = ++readGeneration;
+		Context appContext = getApplicationContext();
+		new Thread(() -> {
+			List<LocalDiagnosticRepository.Record> records =
+					LocalDiagnosticRepository.loadStored(appContext);
+			runOnUiThread(() -> {
+				if (!resumed || isFinishing() || isDestroyed() || generation != readGeneration) return;
+				currentRecords = records;
+				composeController.update(records);
+			});
+		}, "JLP-read-diagnostics").start();
 	}
 
 	private void scheduleRefreshUpdate() {
@@ -109,6 +121,11 @@ public class CrashReportsActivity extends AppCompatActivity {
 			}
 
 			@Override
+			public void onSaveLog() {
+				saveLog();
+			}
+
+			@Override
 			public void onCopySelected(List<String> reportIds) {
 				copySelected(reportIds);
 			}
@@ -118,6 +135,31 @@ public class CrashReportsActivity extends AppCompatActivity {
 				deleteSelected(reportIds);
 			}
 		};
+	}
+
+	private void saveLog() {
+		if (logSaveRunning) return;
+		logSaveRunning = true;
+		composeController.setSavingLog(true);
+		new Thread(() -> {
+			ManualLogCapture.Result result = ManualLogCapture.save(getApplicationContext());
+			runOnUiThread(() -> {
+				logSaveRunning = false;
+				if (isFinishing() || isDestroyed()) return;
+				composeController.setSavingLog(false);
+				if (result.saved()) {
+					ThemedToast.show(this, getString(
+							result.status == ManualLogCapture.Status.PARTIAL
+									? R.string.log_save_partial : R.string.log_save_success,
+							result.fileName), Toast.LENGTH_LONG);
+				} else {
+					int message = result.status == ManualLogCapture.Status.EMPTY
+							? R.string.log_save_empty : result.status == ManualLogCapture.Status.TIMEOUT
+							? R.string.log_save_timeout : R.string.log_save_failed;
+					ThemedToast.show(this, message, Toast.LENGTH_LONG);
+				}
+			});
+		}, "JLP-save-diagnostic-log").start();
 	}
 
 	private List<LocalDiagnosticRepository.Record> selectedRecords(List<String> reportIds) {
@@ -153,6 +195,7 @@ public class CrashReportsActivity extends AppCompatActivity {
 	private void deleteSelected(List<String> reportIds) {
 		List<LocalDiagnosticRepository.Record> records = selectedRecords(reportIds);
 		if (records.isEmpty()) return;
+		readGeneration++;
 		Context appContext = getApplicationContext();
 		new Thread(() -> {
 			boolean allSourcesDeleted = true;

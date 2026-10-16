@@ -96,7 +96,7 @@ import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.runtime.RuntimeReplacementActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
-import io.github.h3nb.jlmodplus.util.LogUtils;
+import io.github.h3nb.jlmodplus.crashes.ManualLogCapture;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 
@@ -1581,14 +1581,27 @@ public class MicroActivity extends AppCompatActivity {
 		});
 	}
 
+	private boolean logSaveRunning;
+
 	private void saveLog() {
-		try {
-			LogUtils.writeLog();
-			toast(R.string.log_save_started);
-		} catch (IOException e) {
-			e.printStackTrace();
-			toast(R.string.log_save_failed);
-		}
+		if (logSaveRunning) return;
+		logSaveRunning = true;
+		new Thread(() -> {
+			ManualLogCapture.Result result = ManualLogCapture.save(getApplicationContext());
+			runOnUiThread(() -> {
+				logSaveRunning = false;
+				if (isFinishing() || isDestroyed()) return;
+				if (result.saved()) {
+					toast(getString(result.status == ManualLogCapture.Status.PARTIAL
+							? R.string.log_save_partial : R.string.log_save_success,
+							result.fileName));
+				} else {
+					toast(result.status == ManualLogCapture.Status.EMPTY
+							? R.string.log_save_empty : result.status == ManualLogCapture.Status.TIMEOUT
+							? R.string.log_save_timeout : R.string.log_save_failed);
+				}
+			});
+		}, "JLP-save-runtime-log").start();
 	}
 
 	private void showControlsDialog() {
