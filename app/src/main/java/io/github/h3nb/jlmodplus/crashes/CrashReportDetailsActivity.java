@@ -70,6 +70,8 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			LocalDiagnosticRepository.Record loaded =
 					LocalDiagnosticRepository.findStored(appContext, recordId);
 			String displayText = loaded == null ? null : DiagnosticReportText.build(loaded);
+			String sanitized = displayText == null ? null
+					: DiagnosticExportSanitizer.sanitize(appContext, displayText);
 			runOnUiThread(() -> {
 				if (isFinishing() || isDestroyed()) return;
 				if (loaded == null) {
@@ -78,7 +80,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 					return;
 				}
 				record = loaded;
-				applyReportText(displayText);
+				exportText = sanitized;
 				composeController.updateDisplay(displayText);
 				loadNativeSummaryAsync(displayText);
 			});
@@ -132,19 +134,17 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		Thread parser = new Thread(() -> {
 			String nativeSummary = NativeTombstoneSummary.summarize(exit);
 			if (nativeSummary == null) return;
+			String displayText = DiagnosticReportText.withNativeSummary(
+					baseDisplayText, nativeSummary);
+			String sanitized = DiagnosticExportSanitizer.sanitize(
+					getApplicationContext(), displayText);
 			runOnUiThread(() -> {
 				if (isFinishing() || isDestroyed()) return;
-				String displayText = DiagnosticReportText.withNativeSummary(
-						baseDisplayText, nativeSummary);
-				applyReportText(displayText);
+				exportText = sanitized;
 				composeController.updateDisplay(displayText);
 			});
 		}, "JLP-native-diagnostic");
 		parser.start();
-	}
-
-	private void applyReportText(String displayText) {
-		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
 	}
 
 	private void copyReport() {

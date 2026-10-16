@@ -129,6 +129,12 @@ public final class ManualLogCapture {
             safe = new String(payload, start, payload.length - start, StandardCharsets.UTF_8);
             payload = safe.getBytes(StandardCharsets.UTF_8);
         }
+        // Sanitization may expand text beyond the cap. Recount after discarding
+        // records at the beginning; never claim records absent from the saved file.
+        int retainedRecords = countRecords(safe);
+        if (retainedRecords == 0) {
+            return failure(Status.EMPTY, "No complete log records fit in the snapshot");
+        }
         Status status = shortened ? Status.PARTIAL : Status.SUCCESS;
         String fileName = fileName();
         String header = "JL-Mod Plus manual logcat snapshot\n"
@@ -138,14 +144,14 @@ public final class ManualLogCapture {
                 + "Scope: Android application-accessible logcat; main and crash buffers\n"
                 + "Requested: last " + LOGCAT_LINES + " lines; retained at most " + MAX_RECORDS
                 + " parsed records\n"
-                + "Records retained: " + parsed.records + "\n"
+                + "Records retained: " + retainedRecords + "\n"
                 + "Payload bytes: " + payload.length + "\n"
                 + "Status: " + status + "; truncated: " + shortened + "\n"
                 + "This is a manual snapshot, not necessarily the log at the moment of a crash.\n"
                 + "Review the file for sensitive text before sharing.\n\n";
         try {
             Uri uri = publish(context, fileName, header + safe);
-            return new Result(status, uri, fileName, parsed.records,
+            return new Result(status, uri, fileName, retainedRecords,
                     payload.length, shortened, null);
         } catch (IOException | RuntimeException error) {
             return failure(Status.FAILED, "Could not save log to Downloads");
@@ -281,6 +287,14 @@ public final class ManualLogCapture {
         StringBuilder text = new StringBuilder(Math.min(value.length(), MAX_BYTES));
         for (StringBuilder record : records) text.append(record);
         return new Parsed(text.toString(), records.size(), extra);
+    }
+
+    static int countRecords(String value) {
+        int count = 0;
+        for (String line : value.split("\\n", -1)) {
+            if (RECORD_START.matcher(line).matches()) count++;
+        }
+        return count;
     }
 
     private static String fileName() {

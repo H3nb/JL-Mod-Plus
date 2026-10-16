@@ -472,21 +472,21 @@ fun CrashReportDetailsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
             ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-            ) {
-                SelectionContainer {
-                    Text(
-                        text = state.displayText,
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    SelectionContainer {
+                        Text(
+                            text = state.displayText,
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
                 }
-            }
         }
         }
     }
