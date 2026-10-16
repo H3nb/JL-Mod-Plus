@@ -676,7 +676,8 @@ public class CrashRuntimeIsolationTest {
 	private static LocalDiagnosticRepository.Record launchProbeAndAwaitCorrelatedRecord(
 			Context context, Set<String> existingIds) {
 		Intent intent = new Intent(context, CrashRuntimeProbeActivity.class)
-				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				// Clear any stale crash Activity before each run without touching the app task.
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
 
 		long deadline = SystemClock.uptimeMillis() + REPORT_TIMEOUT_MILLIS;

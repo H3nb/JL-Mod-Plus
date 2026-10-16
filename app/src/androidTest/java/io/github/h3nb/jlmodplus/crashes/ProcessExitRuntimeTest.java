@@ -120,7 +120,8 @@ public class ProcessExitRuntimeTest {
 		try {
 			Intent intent = new Intent(context, CrashRuntimeProbeActivity.class)
 					.putExtra(CrashRuntimeProbeActivity.EXTRA_MODE, CrashRuntimeProbeActivity.MODE_SIGNAL_KILL)
-					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					// Do not route signal mode into an old crash probe's existing task.
+					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 			context.startActivity(intent);
 			probeJournal = awaitSignalJournal(context, existingSessions);
 			awaitRemoteProcessStops(context, midletProcessName);
