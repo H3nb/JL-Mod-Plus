@@ -136,7 +136,7 @@ final class JavaDiagnosticStore {
 
 	static synchronized void install(Context context, String processName, String processRole) {
 		if (installed || context == null) return;
-		Context appContext = context.getApplicationContext();
+		Context appContext = context;
 		Thread.UncaughtExceptionHandler upstream = Thread.getDefaultUncaughtExceptionHandler();
 		FatalHandler handler = new FatalHandler(
 				(thread, error) -> persistLive(
@@ -250,7 +250,6 @@ final class JavaDiagnosticStore {
 				failureBoundary,
 				appContext);
 		writeNew(context, snapshot);
-		prune(context);
 	}
 
 	static List<Snapshot> loadStored(Context context) {
@@ -967,11 +966,16 @@ final class JavaDiagnosticStore {
 	}
 
 	private static FileInputStream openAtomicRead(File destination) throws IOException {
+		// Reading committed evidence never performs recovery or touches a live writer's .new file.
+		File backup = new File(destination.getPath() + BACKUP_SUFFIX);
+		return new FileInputStream(backup.isFile() ? backup : destination);
+	}
+
+	private static void recoverAtomic(File destination) throws IOException {
+		// Only the writer owns mutation/recovery of an interrupted atomic write.
 		File backup = new File(destination.getPath() + BACKUP_SUFFIX);
 		File pending = new File(destination.getPath() + NEW_SUFFIX);
 		if (backup.isFile()) {
-			// Android AtomicFile historically writes through the base after moving the previous
-			// committed value to .bak. Therefore any surviving backup outranks the base.
 			if (destination.exists() && !deleteIfExists(destination)) {
 				throw new IOException("Unable to discard incomplete Java diagnostic");
 			}
@@ -979,21 +983,8 @@ final class JavaDiagnosticStore {
 				throw new IOException("Unable to restore Java diagnostic backup");
 			}
 		}
-		// A .new file is never authoritative until the replacement is fully committed.
 		if (pending.exists() && !deleteIfExists(pending)) {
 			throw new IOException("Unable to discard incomplete Java diagnostic write");
-		}
-		return new FileInputStream(destination);
-	}
-
-	private static void recoverAtomic(File destination) throws IOException {
-		if (!destination.exists()
-				&& !new File(destination.getPath() + BACKUP_SUFFIX).exists()) {
-			deleteIfExists(new File(destination.getPath() + NEW_SUFFIX));
-			return;
-		}
-		try (FileInputStream ignored = openAtomicRead(destination)) {
-			// Recovery only; caller will reopen the file when it needs content.
 		}
 	}
 
@@ -1141,7 +1132,7 @@ final class JavaDiagnosticStore {
 		private final FatalCapture capture;
 		private final Thread.UncaughtExceptionHandler upstream;
 		private final Runnable fallback;
-		private final AtomicBoolean capturing = new AtomicBoolean();
+		private final AtomicBoolean terminalClaimed = new AtomicBoolean();
 
 		FatalHandler(FatalCapture capture, Thread.UncaughtExceptionHandler upstream, Runnable fallback) {
 			this.capture = capture;
@@ -1151,19 +1142,20 @@ final class JavaDiagnosticStore {
 
 		@Override
 		public void uncaughtException(Thread thread, Throwable error) {
-			if (capturing.compareAndSet(false, true)) {
-				try {
-					if (capture != null) capture.capture(thread, error);
-				} catch (Throwable captureFailure) {
-					logFailure("Fatal Java diagnostic capture failed open", captureFailure);
-				} finally {
-					capturing.set(false);
-				}
+			// One terminal owner captures and delegates. Reentrant/parallel callbacks must not
+			// invoke the upstream process-killing handler before the owner finishes capturing.
+			if (!terminalClaimed.compareAndSet(false, true)) return;
+			try {
+				if (capture != null) capture.capture(thread, error);
+			} catch (Throwable captureFailure) {
+				logFailure("Fatal Java diagnostic capture failed open", captureFailure);
 			}
 			if (upstream != null && upstream != this) {
 				try {
 					upstream.uncaughtException(thread, error);
-					return;
+					// An Android process uncaught handler should terminate. If it returns,
+					// the fallback still ends the process; never restart this capture.
+
 				} catch (Throwable upstreamFailure) {
 					logFailure("Upstream uncaught handler failed", upstreamFailure);
 				}

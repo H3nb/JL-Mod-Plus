@@ -672,9 +672,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	private boolean hasProvenGuestOwnership(Thread thread, Throwable error) {
-		if (CrashReporter.hasProvenFrameworkOrigin(error)) {
-			return false;
-		}
 		if (thread == Thread.currentThread()) {
 			EscapingGuestFailure marker = ESCAPING_GUEST_FAILURE.get();
 			if (marker != null) {

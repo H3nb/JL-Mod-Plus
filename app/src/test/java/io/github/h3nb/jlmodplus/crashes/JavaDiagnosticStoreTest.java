@@ -169,7 +169,7 @@ public class JavaDiagnosticStoreTest {
 
 		assertEquals(1, captures.get());
 		assertEquals(1, upstreamCalls.get());
-		assertEquals(0, fallbacks.get());
+		assertEquals(1, fallbacks.get());
 	}
 
 	@Test
@@ -188,7 +188,7 @@ public class JavaDiagnosticStoreTest {
 		holder[0].uncaughtException(Thread.currentThread(), new RuntimeException("outer"));
 
 		assertEquals(1, captures.get());
-		assertEquals(2, upstreamCalls.get());
+		assertEquals(1, upstreamCalls.get());
 	}
 
 	@Test

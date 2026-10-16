@@ -74,7 +74,7 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
-	public void provenGuestWorkerFallbackHandlesObfuscationButHostFrameStillWins() {
+	public void guestWorkerAndFrameworkApiLocationDoNotProveCause() {
 		JavaDiagnosticStore.Snapshot guest = javaEvidence(
 				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
 				List.of(throwable("java.lang.NullPointerException", "boom", "bz", "a")),
@@ -83,8 +83,8 @@ public class IncidentInterpreterTest {
 				MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD);
 		IncidentSummary guestIncident = IncidentInterpreter.interpret(null, guest, null);
 
-		assertEquals(IncidentSummary.Category.MIDLET_CRASH, guestIncident.category);
-		assertEquals(IncidentSummary.FailureOrigin.MIDLET, guestIncident.failureOrigin);
+		assertEquals(IncidentSummary.Category.JAVA_FAILURE, guestIncident.category);
+		assertEquals(IncidentSummary.FailureOrigin.UNKNOWN, guestIncident.failureOrigin);
 
 		JavaDiagnosticStore.Snapshot host = javaEvidence(
 				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
@@ -95,8 +95,10 @@ public class IncidentInterpreterTest {
 				MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD);
 		IncidentSummary hostIncident = IncidentInterpreter.interpret(null, host, null);
 
-		assertEquals(IncidentSummary.Category.JL_MOD_PLUS, hostIncident.category);
-		assertEquals(IncidentSummary.FailureOrigin.JL_MOD_PLUS, hostIncident.failureOrigin);
+		assertEquals(IncidentSummary.Category.JAVA_FAILURE, hostIncident.category);
+		assertEquals(IncidentSummary.FailureOrigin.UNKNOWN, hostIncident.failureOrigin);
+		assertEquals("javax.microedition.lcdui.event.EventQueue.run(Unknown Source)",
+				hostIncident.topRelevantFrame);
 	}
 
 	@Test
@@ -125,8 +127,8 @@ public class IncidentInterpreterTest {
 		IncidentSummary incident = IncidentInterpreter.interpret(
 				null, javaEvidence(List.of(host), 0, "game.Main"), null);
 
-		assertEquals(IncidentSummary.Category.JL_MOD_PLUS, incident.category);
-		assertEquals(IncidentSummary.FailureOrigin.JL_MOD_PLUS, incident.failureOrigin);
+		assertEquals(IncidentSummary.Category.JAVA_FAILURE, incident.category);
+		assertEquals(IncidentSummary.FailureOrigin.UNKNOWN, incident.failureOrigin);
 	}
 
 	@Test
@@ -149,8 +151,8 @@ public class IncidentInterpreterTest {
 		IncidentSummary standalone = IncidentInterpreter.interpret(null, java, null);
 		IncidentSummary enriched = IncidentInterpreter.interpret(null, java, mainCrashExit());
 
-		assertEquals(IncidentSummary.Category.JL_MOD_PLUS, standalone.category);
-		assertEquals("JL-Mod Plus", standalone.subject);
+		assertEquals(IncidentSummary.Category.JAVA_FAILURE, standalone.category);
+		assertEquals("Java failure", standalone.subject);
 		assertEquals(standalone.subject, enriched.subject);
 		assertEquals(standalone.fingerprint, enriched.fingerprint);
 		assertEquals(standalone.bundleFileName(), enriched.bundleFileName());
