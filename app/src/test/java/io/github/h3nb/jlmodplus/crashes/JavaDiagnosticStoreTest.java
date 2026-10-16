@@ -306,7 +306,8 @@ public class JavaDiagnosticStoreTest {
 		JavaDiagnosticStore.Snapshot restored = JavaDiagnosticStore.read(file);
 
 		assertEquals("acra:committed", restored.legacyRecordId);
-		assertFalse(backup.exists());
+		assertTrue(backup.exists()); // A reader must not mutate a writer's pending state.
+		assertTrue(file.exists());
 	}
 
 	@Test
