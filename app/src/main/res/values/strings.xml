@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="about">About</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="app_debug_badge" translatable="false">DEBUG</string>
@@ -1045,10 +1045,11 @@
     <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
     <string name="screenshot_saved_path">Screenshot saved to %1$s</string>
     <string name="log_save_started">Log saving started.</string>
-    <string name="log_save_success">Saved %1$s in Downloads → JL-Mod Plus Diagnostics.</string>
-    <string name="log_save_partial">Saved a partial log as %1$s in Downloads → JL-Mod Plus Diagnostics.</string>
-    <string name="log_save_empty">No application log records are available in the Android buffer.</string>
-    <string name="log_save_timeout">Log collection timed out. No file was saved.</string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation">Saved %1$s in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Saved a partial log as %1$s in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">No application log records are available in the Android buffer.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">Log collection timed out. No file was saved.</string>
     <string name="log_save_failed">Could not save the log.</string>
     <string name="runtime_midlet_list_failed">Could not read this application’s MIDlet list.</string>
     <string name="diagnostic_reason_java_crash">Java crash</string>
