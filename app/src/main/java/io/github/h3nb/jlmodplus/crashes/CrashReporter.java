@@ -209,6 +209,8 @@ public final class CrashReporter {
 		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
 		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 		runMaintenanceStep("process context pruning", () -> CrashContextStore.prune(application));
+		runMaintenanceStep("diagnostic export cleanup",
+				() -> DiagnosticBundleStore.cleanupPending(application));
 	}
 
 	private static void setBackgroundThreadPriority() {
