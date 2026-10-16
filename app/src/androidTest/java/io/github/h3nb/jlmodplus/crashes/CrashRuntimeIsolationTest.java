@@ -97,6 +97,7 @@ public class CrashRuntimeIsolationTest {
 			LocalDiagnosticRepository.Record first = launchProbeAndAwaitCorrelatedRecord(
 					context, baselineIds);
 			assertRemoteProcessStops(context, midletProcessName);
+			assertProbeDoesNotRestart(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			assertCorrelatedProbeRecord(first);
@@ -105,6 +106,7 @@ public class CrashRuntimeIsolationTest {
 			LocalDiagnosticRepository.Record second = launchProbeAndAwaitCorrelatedRecord(
 					context, afterFirstIds);
 			assertRemoteProcessStops(context, midletProcessName);
+			assertProbeDoesNotRestart(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			assertCorrelatedProbeRecord(second);
@@ -969,6 +971,16 @@ public class CrashRuntimeIsolationTest {
 					fail("Clean follow-up MIDlet session produced a diagnostic failure: " + record.getId());
 				}
 			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+	}
+
+	private static void assertProbeDoesNotRestart(Context context, String processName) {
+		// A momentary missing PID is insufficient: Android used to revive the debug crash task.
+		long deadline = SystemClock.uptimeMillis() + 1_500L;
+		do {
+			assertEquals("Debug crash probe resurrected after SIGKILL",
+					0, processPid(context, processName));
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
 	}

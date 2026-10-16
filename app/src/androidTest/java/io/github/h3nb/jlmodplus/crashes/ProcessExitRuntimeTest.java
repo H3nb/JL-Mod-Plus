@@ -133,6 +133,8 @@ public class ProcessExitRuntimeTest {
 			long deadline = SystemClock.uptimeMillis() + 2_000L;
 			do {
 				assertEquals(baselineIds, recordIds(LocalDiagnosticRepository.load(context)));
+				assertEquals("Signal-killed probe must not relaunch",
+						0, processPid(context, midletProcessName));
 				SystemClock.sleep(100L);
 			} while (SystemClock.uptimeMillis() < deadline);
 			MidletSessionJournal.Snapshot session = MidletSessionJournal.read(probeJournal);
