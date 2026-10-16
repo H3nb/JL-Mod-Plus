@@ -487,7 +487,7 @@ fun CrashReportDetailsScreen(
                         )
                     }
                 }
-        }
+            }
         }
     }
 
