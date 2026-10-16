@@ -1290,7 +1290,7 @@ class ControllerInputRouter(
 
         private fun resolveProfile(profile: ProfileModel?): ControllerConfig {
             if (profile == null) return ControllerConfig.defaultNavigation()
-            val controller = profile.controller?.takeIf { it.isJsonObject }?.asJsonObject
+            val controller = profile.controller as? kotlinx.serialization.json.JsonObject
             return ControllerConfig.resolve(controller)
         }
 

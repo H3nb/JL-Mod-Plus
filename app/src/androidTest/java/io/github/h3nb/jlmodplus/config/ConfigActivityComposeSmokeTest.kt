@@ -296,14 +296,14 @@ class ConfigActivityComposeSmokeTest {
     private fun writeConfig(dir: File, width: Int, keyboardType: Int = 3) {
         assertTrue(dir.mkdirs() || dir.isDirectory)
         val profile = ProfileModel().apply {
-            this.dir = dir
+
             version = ProfileModel.VERSION
             screenWidth = width
             screenHeight = 320
             vkType = keyboardType
             systemProperties = ""
         }
-        assertTrue(ProfilesManager.saveConfig(profile))
+        assertTrue(ProfilesManager.saveConfig(dir, profile))
     }
 
     private fun deleteRecursively(file: File) {

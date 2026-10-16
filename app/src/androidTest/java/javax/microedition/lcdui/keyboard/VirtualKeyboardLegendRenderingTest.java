@@ -51,12 +51,12 @@ public class VirtualKeyboardLegendRenderingTest {
 		assertTrue(profileDir.mkdirs());
 
 		ProfileModel settings = new ProfileModel();
-		settings.dir = profileDir;
+
 		settings.vkType = 1; // Phone: normal numeric keys are wide enough to show legends.
 		settings.vkFeedback = false;
 		settings.vkAlpha = 255;
 
-		keyboard = new VirtualKeyboard(settings);
+		keyboard = new VirtualKeyboard(settings, profileDir);
 		keyboard.setView(new View(context));
 		keyboard.resize(new RectF(0f, 0f, 1200f, 600f), 0f, 0f, 1200f, 600f);
 

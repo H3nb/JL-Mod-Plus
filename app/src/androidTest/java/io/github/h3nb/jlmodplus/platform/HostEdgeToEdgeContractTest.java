@@ -85,7 +85,7 @@ public class HostEdgeToEdgeContractTest {
 		assertTrue("Unable to create key mapper inset fixture",
 				fixtureRoot.mkdirs() || fixtureRoot.isDirectory());
 		assertTrue("Unable to save key mapper inset fixture",
-				ProfilesManager.saveConfig(new ProfileModel(fixtureRoot)));
+				ProfilesManager.saveConfig(fixtureRoot, ProfileModel.fresh()));
 		Intent intent = new Intent(Constants.ACTION_EDIT_PROFILE, Uri.parse(fixtureRoot.getAbsolutePath()),
 				context, KeyMapperActivity.class)
 				.setData(Uri.parse(fixtureRoot.getAbsolutePath()));

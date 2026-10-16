@@ -12,7 +12,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.SharedPreferences;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
@@ -656,7 +656,7 @@ public class LinkedPresetActivationTest {
 	public void localBuiltInEditDetachesDurablyBeforeConfigPublication() throws Exception {
 		File target = tempDir("local-builtin-edit");
 		ProfileModel current = configModel(target, 30);
-		assertTrue(ProfilesManager.saveConfig(current));
+		assertTrue(ProfilesManager.saveConfig(target, current));
 		ProfileModel builtIn = ProfileConfigMatcher.copyConfig(current);
 		ConfigFormState draft = ConfigFormState.fromProfile(current, "")
 				.toBuilder()
@@ -673,7 +673,7 @@ public class LinkedPresetActivationTest {
 				() -> {
 					assertFalse(isBuiltInOwned(preferences, target));
 					ProfileModel candidate = ProfileConfigMatcher.effectiveConfig(current, draft);
-					return ProfilesManager.saveConfig(candidate);
+					return ProfilesManager.saveConfig(target, candidate);
 				},
 				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, true)));
 
@@ -686,7 +686,7 @@ public class LinkedPresetActivationTest {
 	public void failedDurableBuiltInDetachBlocksConfigPublication() throws Exception {
 		File target = tempDir("local-builtin-detach-fail");
 		ProfileModel current = configModel(target, 30);
-		assertTrue(ProfilesManager.saveConfig(current));
+		assertTrue(ProfilesManager.saveConfig(target, current));
 		ProfileModel builtIn = ProfileConfigMatcher.copyConfig(current);
 		ConfigFormState draft = ConfigFormState.fromProfile(current, "")
 				.toBuilder()
@@ -715,7 +715,7 @@ public class LinkedPresetActivationTest {
 	public void failedConfigWriteRestoresBuiltInOwnershipAfterSuccessfulDetach() throws Exception {
 		File target = tempDir("local-builtin-write-fail");
 		ProfileModel current = configModel(target, 30);
-		assertTrue(ProfilesManager.saveConfig(current));
+		assertTrue(ProfilesManager.saveConfig(target, current));
 		FakePreferences preferences = builtInOwned(target);
 
 		assertFalse(ConfigActivity.persistConfigAfterBuiltInOwnershipBarrier(
@@ -790,7 +790,7 @@ public class LinkedPresetActivationTest {
 
 	private static ProfileModel configModel(File dir, int fpsLimit) {
 		ProfileModel model = new ProfileModel();
-		model.dir = dir;
+
 		model.version = ProfileModel.VERSION;
 		model.fpsLimit = fpsLimit;
 		model.systemProperties = "";
@@ -805,11 +805,11 @@ public class LinkedPresetActivationTest {
 		model.vkType = vkType;
 		model.systemProperties = "";
 		Files.write(configFile(dir).toPath(),
-				new Gson().toJson(model).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(model).getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static ProfileModel readConfig(File dir) throws Exception {
-		return new Gson().fromJson(
+		return new ProfileFixtures().fromJson(
 				new String(Files.readAllBytes(configFile(dir).toPath()), StandardCharsets.UTF_8),
 				ProfileModel.class);
 	}

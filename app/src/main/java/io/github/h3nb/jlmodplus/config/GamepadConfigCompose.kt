@@ -51,9 +51,9 @@ internal fun GamepadInputPreferences(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
 ) {
-    val opaqueController = form.controller?.let { !it.isJsonObject } == true
+    val opaqueController = form.controller != null && form.controller !is kotlinx.serialization.json.JsonObject
     val resolved = remember(form.controller) {
-        ControllerConfig.parse(form.controller?.takeIf { it.isJsonObject }?.asJsonObject)
+        ControllerConfig.parse(form.controller as? kotlinx.serialization.json.JsonObject)
     }
     val supported = !opaqueController && resolved.isSupported
     val compatibilityMessage = when {

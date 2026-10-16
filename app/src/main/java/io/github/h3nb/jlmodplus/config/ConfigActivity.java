@@ -57,7 +57,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import com.google.gson.JsonElement;
+import kotlinx.serialization.json.JsonElement;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -121,6 +121,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ProfileModel params;
 	@Nullable private ProfileModel persistedBaseline;
 	private boolean isProfile;
+	private boolean newConfig;
 	private File appDir;
 	private long expectedAppId;
 	@Nullable private InstalledAppWriteGuard installedWriteGuard;
@@ -427,11 +428,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		builtInDefaultParams = newBuiltInProfile();
 
 		if (!loadConfig()) {
+			ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
 			needShow = false;
 			finish();
 			return;
 		}
-		if (!params.isNew && !needShow) {
+		if (!newConfig && !needShow) {
 			startMIDlet();
 			return;
 		}
@@ -450,7 +452,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		initSoundBankOptions();
 		initSkinOptions();
 		initShaderSpinner();
-		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		currentForm = formFromParams();
 		composeController = new ConfigComposeController(
 				composeView,
 				createUiState(),
@@ -852,10 +854,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private ControllerConfig currentControllerConfig() {
 		if (currentForm == null || currentForm.controller == null
-				|| !currentForm.controller.isJsonObject()) {
+				|| !(currentForm.controller instanceof kotlinx.serialization.json.JsonObject)) {
 			return ControllerConfig.defaultNavigation();
 		}
-		return ControllerConfig.parse(currentForm.controller.getAsJsonObject());
+		return ControllerConfig.parse((kotlinx.serialization.json.JsonObject) currentForm.controller);
 	}
 
 	private String buildConfigGamepadDiagnosis() {
@@ -1165,20 +1167,23 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			}
 			refreshProfileOriginFromMetadata();
 		}
-		params = ProfilesManager.loadConfig(
+		ProfilesManager.LoadResult loaded = ProfilesManager.loadConfigResult(
 				configDir,
 				true,
 				isProfile ? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
 						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
 				!isProfile && profileOrigin == null && readBuiltInThemeLinked());
 
+		newConfig = loaded.status == ProfilesManager.LoadStatus.MISSING;
+		params = loaded.model;
 		if (params == null) {
+			if (!newConfig) return false;
 			if (isProfile) {
 				params = newNamedProfileDefaults();
 				builtInThemeLinked = false;
 				return true;
 			}
-			if (!FreshInstalledMidletInitializer.publishBuiltIn(
+			if (!FreshInstalledMidletInitializer.publishMissingConfig(
 					hostPreferences, configDir, isDarkTheme())) {
 				Log.e(TAG, "Unable to materialize Built-in recovery for installed MIDlet");
 				return false;
@@ -1209,14 +1214,23 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return true;
 	}
 
+	private ConfigFormState formFromParams() {
+		ConfigFormState form = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		if (form.shader != null && shaders != null) {
+			int index = shaders.indexOf(form.shader);
+			if (index >= 0) form.shader.settings = shaders.get(index).settings;
+		}
+		return form;
+	}
+
 	private void showShaderSettings() {
 		ShaderInfo shader = currentForm == null ? null : currentForm.shader;
 		if (shader == null || !shader.hasTunableSettings()) {
 			return;
 		}
-		ensureShaderValues(shader);
-		params.shader = shader;
-		ShaderTuneAlert.newInstance(shader).show(getSupportFragmentManager(), "ShaderTuning");
+		ShaderInfo draft = shader.copyForDialog();
+		ensureShaderValues(draft);
+		ShaderTuneAlert.newInstance(draft).show(getSupportFragmentManager(), "ShaderTuning");
 	}
 
 	private void initShaderSpinner() {
@@ -1268,11 +1282,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			Collections.sort(shaders);
 		}
 		shaders.add(0, new ShaderInfo(getString(R.string.identity_filter), "woesss"));
-		ShaderInfo selected = params.shader;
+		ShaderInfo selected = params.shader == null ? null : params.shader.toInfo();
 		if (selected != null) {
 			int position = shaders.indexOf(selected);
 			if (position > 0) {
-				shaders.get(position).values = selected.values;
+				shaders.get(position).values = selected.values == null ? null : selected.values.clone();
 			}
 		}
 	}
@@ -1448,10 +1462,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (reloadFromFile && !(identityHeld
 				? loadConfigWithInstalledIdentity()
 				: loadConfig())) {
-			Log.e(TAG, "Keeping current in-memory params because persisted snapshot is unsafe");
+			Log.e(TAG, "Persisted snapshot is unsafe; refusing further editor publication");
+			ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+			needShow = false;
+			finish();
 			return;
 		}
-		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		currentForm = formFromParams();
 		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
@@ -1468,7 +1485,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		try {
 			if (isProfile) {
 				if (currentForm != null) currentForm.applyTo(params);
-				return ProfilesManager.saveConfig(params);
+				return ProfilesManager.saveConfig(configDir, params);
 			}
 
 			synchronized (ProfilesManager.presetSourceLock()) {
@@ -1492,7 +1509,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						this::reconcileBuiltInThemeLink,
 						() -> {
 							params = candidate;
-							return ProfilesManager.saveConfig(params);
+							return ProfilesManager.saveConfig(configDir, params);
 						},
 						() -> setBuiltInThemeLinked(true));
 				if (saved) {
@@ -1650,8 +1667,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		ProfileModel previousParams = params;
 		ConfigFormState previousForm = currentForm;
 		params = newBuiltInProfile();
-		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-		if (!ProfilesManager.publishBuiltInSnapshot(params)) {
+		currentForm = formFromParams();
+		if (!ProfilesManager.publishBuiltInSnapshot(configDir, params)) {
 			params = previousParams;
 			currentForm = previousForm;
 			return false;
@@ -1678,9 +1695,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			profileOrigin = null;
 			builtInThemeLinked = false;
 			params = newBuiltInProfile();
-			currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+			currentForm = formFromParams();
 			params = ProfileConfigMatcher.effectiveConfig(params, currentForm);
-			if (!ProfilesManager.publishBuiltInSnapshot(params)) {
+			if (!ProfilesManager.publishBuiltInSnapshot(configDir, params)) {
 				if (previousParams != null) params = previousParams;
 				currentForm = previousForm;
 				restoreSourceOwnership(ownership);
@@ -1697,7 +1714,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private ProfileModel newBuiltInProfile() {
-		return ProfileModel.createBuiltIn(configDir, isDarkTheme());
+		return ProfileModel.createBuiltIn(isDarkTheme());
 	}
 
 	private ProfileModel newNamedProfileDefaults() {
@@ -1719,7 +1736,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return;
 		}
 		ProfileModel.applyBuiltInTheme(params, isDarkTheme());
-		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		currentForm = formFromParams();
 		persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 		builtInDefaultParams = newBuiltInProfile();
 		refreshProfileMatchCache();
@@ -2090,12 +2107,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	public void onTuneComplete(float[] values) {
-		if (params.shader != null) {
-			params.shader.values = values;
-		}
 		if (currentForm != null && currentForm.shader != null) {
 			if (isProfile) profileDraftDirty = true;
-			currentForm.shader.values = values;
+			ShaderInfo draft = currentForm.shader;
+			draft.values = values.clone();
+			currentForm = currentForm.toBuilder().shader(draft).build();
+			params.shader = ShaderSelection.fromInfo(currentForm.shader);
 			if (composeController != null) {
 				composeController.update(createUiState());
 			}
@@ -2144,7 +2161,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private ConfigUiState createUiState() {
 		ConfigFormState state = currentForm == null
-				? ConfigFormState.fromProfile(params, normalizedSystemProperties())
+				? formFromParams()
 				: currentForm;
 		String defaultProfile = isProfile || !isCurrentProfilesRoot()
 				? null : cachedDefaultProfileName;
@@ -2158,14 +2175,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		JsonElement effectiveComparison = compareBuiltIn || comparePersisted
 				? ProfileConfigMatcher.comparisonSnapshot(ProfileConfigMatcher.effectiveConfig(params, state))
 				: null;
-		if (compareBuiltIn && effectiveComparison.equals(
+		if (compareBuiltIn && ProfileJson.sameValue(effectiveComparison,
 				ProfileConfigMatcher.comparisonSnapshot(builtInDefaultParams))) {
 			profileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
 		} else if (profileStatus == null) {
 			profileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
 		}
 		boolean draftDiverged = !isProfile && params != null
-				&& (persistedBaseline == null || !effectiveComparison.equals(
+				&& (persistedBaseline == null || !ProfileJson.sameValue(effectiveComparison,
 						ProfileConfigMatcher.comparisonSnapshot(persistedBaseline)));
 		String updatePresetName = resolveUpdatePresetName(
 				isProfile, profileStatus, originExists, draftDiverged);

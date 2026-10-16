@@ -895,11 +895,11 @@ public class CrashRuntimeIsolationTest {
 			throw new IOException("Unable to create lifecycle fixture config directory");
 		}
 		copyFile(new File(context.getApplicationInfo().sourceDir), new File(appDir, "converted.zip"));
-		ProfileModel profile = new ProfileModel(configDir);
+		ProfileModel profile = ProfileModel.fresh();
 		profile.showKeyboard = false;
 		profile.touchInput = false;
 		profile.soundBank = "";
-		if (!ProfilesManager.saveConfig(profile)) {
+		if (!ProfilesManager.saveConfig(configDir, profile)) {
 			throw new IOException("Unable to write lifecycle fixture profile");
 		}
 		LifecycleFixtureCatalog.register(context, root, appDir,

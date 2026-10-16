@@ -20,7 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
@@ -342,13 +342,13 @@ public class ProfilesManagerSnapshotSyncTest {
 		model.vkType = vkType;
 		model.systemProperties = "";
 		Files.write(configFile(dir).toPath(),
-				new Gson().toJson(model).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(model).getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static ProfileModel readConfig(File dir) throws IOException {
 		String json = new String(Files.readAllBytes(configFile(dir).toPath()),
 				StandardCharsets.UTF_8);
-		return new Gson().fromJson(json, ProfileModel.class);
+		return new ProfileFixtures().fromJson(json, ProfileModel.class);
 	}
 
 	private static void writeLayout(File dir, int type) throws IOException {

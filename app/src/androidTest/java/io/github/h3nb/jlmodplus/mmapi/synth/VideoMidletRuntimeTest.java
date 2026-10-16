@@ -62,7 +62,7 @@ public class VideoMidletRuntimeTest {
             File config = new File(root, "configs/fixture");
             assertTrue(config.mkdirs());
             copy(new File(context.getApplicationInfo().sourceDir), new File(app, "converted.zip"));
-            ProfileModel profile = new ProfileModel(config);
+            ProfileModel profile = ProfileModel.fresh();
             profile.soundBank = "";
             profile.showKeyboard = true;
             profile.touchInput = true;
@@ -70,7 +70,7 @@ public class VideoMidletRuntimeTest {
                     Integer.parseInt(
                             InstrumentationRegistry.getArguments()
                                     .getString("videoGraphicsMode", "0"));
-            assertTrue(ProfilesManager.saveConfig(profile));
+            assertTrue(ProfilesManager.saveConfig(config, profile));
             for (String[] media :
                     new String[][] {
                         {"video/markers.mp4", "video.mp4"}, {"audio/effect.mp3", "effect.mp3"}

@@ -14,8 +14,8 @@
 
 package io.github.h3nb.jlmodplus.librarydb
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import kotlinx.serialization.json.*
+
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -100,7 +100,7 @@ internal object LibraryAppBundleReader {
         }
         val root = parseManifest(manifestBytes)
         val formatVersion = try {
-            root.get("formatVersion")?.asInt
+            root.get("formatVersion")?.jsonPrimitive?.int
         } catch (error: RuntimeException) {
             throw IOException("Invalid app bundle format version", error)
         }
@@ -113,28 +113,28 @@ internal object LibraryAppBundleReader {
 
     @Throws(IOException::class)
     internal fun parseManifest(manifest: ByteArray): JsonObject = try {
-        JsonParser.parseString(manifest.toString(Charsets.UTF_8)).asJsonObject
+        Json.parseToJsonElement(manifest.toString(Charsets.UTF_8)).jsonObject
     } catch (error: RuntimeException) {
         throw IOException("Invalid app bundle manifest", error)
     }
 
     @Throws(IOException::class)
     private fun parseUniversal(root: JsonObject, names: Set<String>): ParsedBundle = try {
-        val schema = root.get("schema")?.takeUnless { it.isJsonNull }?.asString
+        val schema = root.get("schema")?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
         if (schema != LibraryAppBundleFormat.UNIVERSAL_SCHEMA) {
             throw IOException("Invalid app bundle schema")
         }
         val appsElement = root.get("apps")
-        if (appsElement == null || !appsElement.isJsonArray || appsElement.asJsonArray.size() == 0) {
+        if (appsElement == null || appsElement !is JsonArray || appsElement.jsonArray.size == 0) {
             throw IOException("Universal app bundle has no apps")
         }
-        if (appsElement.asJsonArray.size() > MAX_BUNDLE_APPS) {
+        if (appsElement.jsonArray.size > MAX_BUNDLE_APPS) {
             throw IOException("Universal app bundle contains too many apps")
         }
 
-        val apps = appsElement.asJsonArray.map { element ->
-            if (!element.isJsonObject) throw IOException("Invalid app record in bundle manifest")
-            parseApp(element.asJsonObject)
+        val apps = appsElement.jsonArray.map { element ->
+            if (element !is JsonObject) throw IOException("Invalid app record in bundle manifest")
+            parseApp(element.jsonObject)
         }
         val ids = apps.map(BundleApp::bundleId)
         if (ids.size != ids.toSet().size) throw IOException("Duplicate bundleId in app bundle manifest")
@@ -231,7 +231,7 @@ internal object LibraryAppBundleReader {
     @Throws(IOException::class)
     private fun parseApp(app: JsonObject): BundleApp {
         fun requiredString(field: String): String {
-            val value = app.get(field)?.takeUnless { it.isJsonNull }?.asString?.trim()
+            val value = app.get(field)?.takeUnless { it == JsonNull }?.jsonPrimitive?.content?.trim()
             if (value.isNullOrEmpty()) throw IOException("Missing $field in app bundle manifest")
             return value
         }

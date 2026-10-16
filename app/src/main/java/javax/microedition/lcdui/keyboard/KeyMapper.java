@@ -122,9 +122,9 @@ public class KeyMapper {
 			mapKeyName(MOTOROLA_KEY_SOFT_LEFT, "SOFT1");
 			mapKeyName(MOTOROLA_KEY_SOFT_RIGHT, "SOFT2");
 		} else if (layoutType == CUSTOM_LAYOUT) {
-			List<KeyModel> list = params.customKeys;
+			List<io.github.h3nb.jlmodplus.config.CustomKey> list = params.customKeys;
 			if (list != null) {
-				for (KeyModel keyModel : list) {
+				for (io.github.h3nb.jlmodplus.config.CustomKey keyModel : list) {
 					if (keyModel.defaultKeyCode == 0) {
 						continue;
 					}
@@ -181,7 +181,7 @@ public class KeyMapper {
 	public static void setKeyMapping(ProfileModel params) {
 		layoutType = params.keyCodesLayout;
 		SparseIntArray map = getDefaultKeyMap();
-		SparseIntArray customKeyMap = params.keyMappings;
+		SparseIntArray customKeyMap = io.github.h3nb.jlmodplus.config.ProfileKeyMappings.toSparse(params.keyMappings);
 		if (customKeyMap != null) {
 			for (int i = 0, size = customKeyMap.size(); i < size; i++) {
 				int key = customKeyMap.keyAt(i);

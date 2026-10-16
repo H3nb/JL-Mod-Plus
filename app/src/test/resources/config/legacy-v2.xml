@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<map>
+    <int name="Version" value="2" />
+    <int name="ScreenWidth" value="128" />
+    <int name="ScreenHeight" value="160" />
+    <boolean name="ScreenScaleToFit" value="true" />
+    <boolean name="ScreenKeepAspectRatio" value="false" />
+    <string name="KeyMappings">[{"key":131,"value":0},{"key":132,"value":-2147483648}]</string>
+    <string name="SystemProperties">microedition.platform: old Ω</string>
+    <int-array name="IgnoredHistory" num="2"><item value="1" /><item value="2" /></int-array>
+    <map name="Shader">
+        <string name="name">CRT</string>
+        <double-array name="Settings" num="2"><item value="1.25" /><item value="2.5" /></double-array>
+    </map>
+</map>

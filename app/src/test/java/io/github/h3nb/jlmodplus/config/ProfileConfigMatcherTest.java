@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
 
-import com.google.gson.Gson;
+
 import com.google.gson.JsonObject;
 
 import org.junit.Test;
@@ -42,20 +42,15 @@ public class ProfileConfigMatcherTest {
 		JsonObject rightController = new JsonObject();
 		leftController.addProperty("futureValue", new BigInteger("9007199254740992"));
 		rightController.addProperty("futureValue", new BigInteger("9007199254740993"));
-		left.controller = leftController;
-		right.controller = rightController;
+		left.controller = ProfileJsonTestSupport.parse(leftController.toString());
+		right.controller = ProfileJsonTestSupport.parse(rightController.toString());
 		left.systemProperties = null;
 		right.systemProperties = "";
-		left.dir = new File("left");
-		right.dir = new File("right");
 
-		// The existing serializer round trip canonicalizes opaque JSON numbers before equality.
-		assertEquals(ProfileConfigMatcher.comparisonSnapshot(left),
-				ProfileConfigMatcher.comparisonSnapshot(right));
-		assertTrue(ProfileConfigMatcher.sameConfig(left, right));
+        assertFalse(ProfileConfigMatcher.sameConfig(left, right));
 		assertEquals(null, left.systemProperties);
 		assertEquals(new BigInteger("9007199254740992"),
-				left.controller.getAsJsonObject().get("futureValue").getAsBigInteger());
+				new BigInteger(((kotlinx.serialization.json.JsonObject) left.controller).get("futureValue").toString()));
 	}
 	@Test
 	public void obsoleteAutomaticScaleDoesNotMakeLinkedPresetLookModified() {
@@ -92,25 +87,25 @@ public class ProfileConfigMatcherTest {
 		directory.deleteOnExit();
 		ProfileModel legacy = new ProfileModel();
 		legacy.version = ProfileModel.VERSION;
-		legacy.dir = directory;
+
 		legacy.screenScaleType = 1;
 		legacy.screenScaleRatio = 75;
 		Files.write(new File(directory, Config.MIDLET_CONFIG_FILE).toPath(),
-				new Gson().toJson(legacy).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(legacy).getBytes(StandardCharsets.UTF_8));
 
 		ProfileModel loaded = ProfilesManager.loadConfig(directory, false,
 				ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false);
 		assertEquals(100, loaded.screenScaleRatio);
-		assertTrue(ProfilesManager.saveConfig(loaded));
-		ProfileModel saved = new Gson().fromJson(
+		assertTrue(ProfilesManager.saveConfig(directory, loaded));
+		ProfileModel saved = new ProfileFixtures().fromJson(
 				new String(Files.readAllBytes(new File(directory, Config.MIDLET_CONFIG_FILE).toPath()),
 						StandardCharsets.UTF_8), ProfileModel.class);
 		assertEquals(100, saved.screenScaleRatio);
 
 		saved.screenScaleType = 0;
 		saved.screenScaleRatio = 400;
-		saved.dir = directory;
-		assertTrue(ProfilesManager.saveConfig(saved));
+
+		assertTrue(ProfilesManager.saveConfig(directory, saved));
 		assertEquals(400, ProfilesManager.loadConfig(directory).screenScaleRatio);
 	}
 
@@ -126,7 +121,7 @@ public class ProfileConfigMatcherTest {
 
 		ConfigFormState draft = ConfigFormState.fromProfile(current, current.systemProperties)
 				.toBuilder().screenWidth("360").build();
-		ProfileModel candidate = new Gson().fromJson(new Gson().toJson(current), ProfileModel.class);
+		ProfileModel candidate = new ProfileFixtures().fromJson(new ProfileFixtures().toJson(current), ProfileModel.class);
 		candidate.screenWidth = 360;
 		candidate.systemProperties = "profiles: MIDP2.0\nplatform: test\n";
 
@@ -161,15 +156,17 @@ public class ProfileConfigMatcherTest {
 		working.screenWidth = 240;
 		working.screenHeight = 320;
 		working.systemProperties = "platform: test\n";
-		working.shader = new ShaderInfo("CRT", "tester");
-		working.shader.values = new float[] {1.0f, 2.0f};
+		ShaderInfo shader = new ShaderInfo("CRT", "tester");
+        shader.values = new float[] {1.0f, 2.0f};
+        working.shader = ShaderSelection.fromInfo(shader);
 		ProfileModel baseline = ProfileConfigMatcher.copyConfig(working);
 		ConfigFormState form = ConfigFormState.fromProfile(working, working.systemProperties);
 
-		working.shader.values[0] = 9.0f;
+		shader.values[0] = 9.0f;
+        working.shader = ShaderSelection.fromInfo(shader);
 		form.shader.values[0] = 9.0f;
 
-		assertEquals(1.0f, baseline.shader.values[0], 0.0f);
+		assertEquals(1.0f, baseline.shader.values.get(0), 0.0f);
 		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(working, form, baseline));
 	}
 
@@ -182,7 +179,7 @@ public class ProfileConfigMatcherTest {
 		legacy.screenWidth = 240;
 		legacy.screenHeight = 320;
 		File config = new File(directory, "config.json");
-		String json = new Gson().toJson(legacy);
+		String json = new ProfileFixtures().toJson(legacy);
 		Files.write(config.toPath(), json.getBytes(StandardCharsets.UTF_8));
 
 		ProfilesManager.loadConfig(directory, false);
@@ -196,7 +193,7 @@ public class ProfileConfigMatcherTest {
 		namedDirectory.deleteOnExit();
 		File midletDirectory = Files.createTempDirectory("jlmod-midlet-background").toFile();
 		midletDirectory.deleteOnExit();
-		Gson gson = new Gson();
+		ProfileFixtures gson = new ProfileFixtures();
 		ProfileModel legacy = new ProfileModel();
 		legacy.version = 6;
 		legacy.screenBackgroundColor = 0x123456;
@@ -229,15 +226,15 @@ public class ProfileConfigMatcherTest {
 		File directory = Files.createTempDirectory("jlmod-profile-timing").toFile();
 		directory.deleteOnExit();
 		ProfileModel legacy = new ProfileModel();
-		legacy.dir = directory;
+
 		legacy.version = 5;
-		JsonObject json = new Gson().toJsonTree(legacy).getAsJsonObject();
+		JsonObject json = new ProfileFixtures().toJsonTree(legacy).getAsJsonObject();
 		json.addProperty("EmulationSpeedPercent", 800);
 		json.addProperty("ShowEmulationSpeed", true);
 		json.addProperty("TimingMode", 1);
 		Files.write(
 				new File(directory, "config.json").toPath(),
-				new Gson().toJson(json).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(json).getBytes(StandardCharsets.UTF_8));
 
 		ProfileModel loaded = ProfilesManager.loadConfig(directory);
 

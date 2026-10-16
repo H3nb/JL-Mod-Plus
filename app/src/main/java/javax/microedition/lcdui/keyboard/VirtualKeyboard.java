@@ -225,13 +225,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private long pointerSourceSequence;
 	private LayoutEditObserver layoutEditObserver;
 
-	public VirtualKeyboard(ProfileModel settings) {
-		this(settings, true);
+	public VirtualKeyboard(ProfileModel settings, java.io.File configDir) {
+		this(settings, configDir, true);
 	}
 
-	protected VirtualKeyboard(ProfileModel settings, boolean recoverPersistentLayout) {
+	protected VirtualKeyboard(ProfileModel settings, java.io.File configDir, boolean recoverPersistentLayout) {
 		this.settings = settings;
-		this.saveFile = new File(settings.dir + Config.MIDLET_KEY_LAYOUT_FILE);
+		this.saveFile = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		if (recoverPersistentLayout) recoverLayoutFile();
 
 		for (int i = KEY_NUM1; i < 9; i++) {

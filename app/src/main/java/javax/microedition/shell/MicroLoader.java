@@ -71,7 +71,6 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
-import io.github.h3nb.jlmodplus.config.ShaderInfo;
 import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
@@ -454,7 +453,7 @@ public class MicroLoader {
 		try {
 			// Apply configuration to the launching MIDlet
 			if (params.showKeyboard) {
-				ContextHolder.setVk(new VirtualControlsKeyboard(params, false));
+				ContextHolder.setVk(new VirtualControlsKeyboard(params, new File(workDir + Config.MIDLET_CONFIGS_DIR + appDirName), false));
 			} else {
 				ContextHolder.setVk(null);
 			}
@@ -475,11 +474,7 @@ public class MicroLoader {
 
 			Displayable.setVirtualSize(params.screenWidth, params.screenHeight);
 			EventQueue.setImmediate(params.immediateMode);
-			ShaderInfo shader = params.shader;
-			if (shader != null) {
-				shader.dir = workDir + Config.SHADERS_DIR;
-			}
-			Canvas.setSettings(params);
+			Canvas.setSettings(params, new File(workDir + Config.SHADERS_DIR));
 			Canvas.setTimingOverlayEnabled(timingTransformCompatible);
 
 			Font.applySettings(params);
@@ -490,7 +485,7 @@ public class MicroLoader {
 				soundBank = sb.getPath();
 			}
 			if (params.screenBackgroundImage != null) {
-				SkinLayer.init(params);
+				SkinLayer.init(params, new File(workDir));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -525,7 +520,7 @@ public class MicroLoader {
 	}
 
 	public int getMenuKeyCode() {
-		SparseIntArray mappings = params.keyMappings;
+		SparseIntArray mappings = io.github.h3nb.jlmodplus.config.ProfileKeyMappings.toSparse(params.keyMappings);
 		if (mappings == null) {
 			return KeyEvent.KEYCODE_BACK;
 		}

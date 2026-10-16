@@ -25,7 +25,6 @@ import android.graphics.RectF;
 import androidx.core.content.ContextCompat;
 
 import java.io.File;
-import java.util.Objects;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
@@ -79,8 +78,7 @@ public class SkinLayer implements Overlay {
 		return instance;
 	}
 
-	public static void init(ProfileModel settings) {
-		File workDir = Objects.requireNonNull(settings.dir.getParentFile()).getParentFile();
+	public static void init(ProfileModel settings, File workDir) {
 		File skin = new File(workDir + Config.SKINS_DIR + settings.screenBackgroundImage);
 		BitmapFactory.Options opts = new BitmapFactory.Options();
 		opts.inJustDecodeBounds = true;

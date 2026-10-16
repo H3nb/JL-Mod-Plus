@@ -17,43 +17,13 @@
 
 package io.github.h3nb.jlmodplus.config;
 
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
-
-import android.content.Context;
-import android.content.res.Configuration;
-import android.util.SparseIntArray;
-
 import com.google.gson.JsonElement;
-import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-
-import java.io.File;
 import java.util.List;
-
-import javax.microedition.lcdui.keyboard.KeyModel;
-import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.shell.timing.TimingMode;
-import javax.microedition.util.ContextHolder;
 
-import androidx.preference.PreferenceManager;
-
-import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
-import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
-
-public class ProfileModel {
-	public static final int VERSION = 7;
-
-	/** Stable preference key used to keep the built-in palette linked to the host theme. */
-	public static String builtInThemePreferenceKey(File configDir) {
-		return "config_profile_builtin_theme:" + configDir.getAbsolutePath();
-	}
-
-	/** True if this is a new profile (not yet saved to file). */
-	public final transient boolean isNew;
-
-	public transient File dir;
-
+/** Frozen pre-migration v7 schema, used only to read the new writer with the old engine. */
+final class LegacyV7Profile {
 	@SerializedName("Version")
 	public int version;
 
@@ -67,7 +37,6 @@ public class ProfileModel {
 	public int screenBackgroundColor;
 
 	/** Stable background strategy; the custom color remains stored while other modes are active. */
-	@JsonAdapter(BackgroundModeAdapter.class)
 	@SerializedName("ScreenBackgroundMode")
 	public int screenBackgroundMode = BackgroundMode.CUSTOM;
 
@@ -113,7 +82,7 @@ public class ProfileModel {
 	public int graphicsMode;
 
 	@SerializedName("Shader")
-	public ShaderInfo shader;
+	public LegacyShader shader;
 
 	@SerializedName("ParallelRedrawScreen")
 	public boolean parallelRedrawScreen;
@@ -221,11 +190,10 @@ public class ProfileModel {
 	public int keyCodesLayout;
 
 	@SerializedName("CustomKeys")
-	public List<KeyModel> customKeys;
+	public List<LegacyKey> customKeys;
 
-	@JsonAdapter(SparseIntArrayAdapter.class)
 	@SerializedName("KeyMappings")
-	public SparseIntArray keyMappings;
+	public java.util.Map<Integer, Integer> keyMappings;
 
 	/**
 	 * Optional per-profile controller configuration. The subtree is deliberately kept as JSON so
@@ -244,101 +212,18 @@ public class ProfileModel {
 	@SerializedName("SkipResumeCall")
 	public boolean skipResumeCall;
 
-	@SuppressWarnings("unused") // Gson uses default constructor if present
-	public ProfileModel() {
-		isNew = false;
-		timingMode = TimingMode.FULL_GUEST_TIME;
-	}
 
-	public ProfileModel(File dir) {
-		this(dir, ContextHolder.getAssetAsString("defaults/system.props"));
-	}
-
-	ProfileModel(File dir, String defaultSystemProperties) {
-		this.dir = dir;
-		isNew = true;
-		version = VERSION;
-		screenWidth = 240;
-		screenHeight = 320;
-		screenBackgroundColor = 0xD0D0D0;
-		screenBackgroundMode = BackgroundMode.CUSTOM;
-		screenScaleType = 1;
-		screenGravity = 1;
-		screenScaleRatio = 100;
-		screenScaleToFit = true;
-		screenKeepAspectRatio = true;
-		graphicsMode = 1;
-
-		fontSizeSmall = 18;
-		fontSizeMedium = 22;
-		fontSizeLarge = 26;
-		fontAA = true;
-
-		showKeyboard = true;
-		virtualDpadEnabled = false;
-		virtualAnalogEnabled = false;
-		touchInput = true;
-
-		vkButtonShape = VirtualKeyboard.SHAPE_ROUND_RECT;
-		vkAlpha = 64;
-
-		vkBgColor = 0xD0D0D0;
-		vkFgColor = 0x000080;
-		vkBgColorSelected = 0x000080;
-		vkFgColorSelected = 0xFFFFFF;
-		vkOutlineColor = 0xFFFFFF;
-		systemProperties = defaultSystemProperties;
-	}
-
-	/** Applies the theme-owned colors used by the app-provided profile template. */
-	public static void applyBuiltInTheme(ProfileModel profile, boolean darkTheme) {
-		int background = darkTheme ? 0x000000 : 0xFFFFFF;
-		int foreground = darkTheme ? 0xFFFFFF : 0x000000;
-		profile.vkAlpha = 255;
-		profile.vkBgColor = background;
-		profile.vkFgColor = foreground;
-		profile.vkBgColorSelected = foreground;
-		profile.vkFgColorSelected = background;
-		profile.vkOutlineColor = foreground;
-	}
-
-	/**
-	 * Resolves the active app theme for both activities and the MIDlet runtime. AppCompat applies
-	 * an explicit light/dark preference to activity resources, but the application context used by
-	 * the MIDlet loader can still expose the device's original uiMode. Reading the explicit
-	 * preference first keeps linked built-in profiles in sync even when the device theme differs.
-	 */
-	public static boolean isDarkTheme(Context context) {
-		String preference = PreferenceManager.getDefaultSharedPreferences(context)
-				.getString(PREF_THEME, context.getString(R.string.pref_theme_default));
-		return isDarkTheme(preference, context.getResources().getConfiguration().uiMode);
-	}
-
-	/** Visible to JVM tests so explicit preference precedence stays regression-tested. */
-	static boolean isDarkTheme(String preference, int uiMode) {
-		if ("dark".equals(preference)) return true;
-		if ("light".equals(preference)) return false;
-		int nightMask = uiMode & Configuration.UI_MODE_NIGHT_MASK;
-		return nightMask == Configuration.UI_MODE_NIGHT_YES;
-	}
-
-	/**
-	 * Creates the app-provided profile template using the active host theme. Existing saved
-	 * named profiles continue to load their own explicit colors.
-	 */
-	public static ProfileModel createBuiltIn(File dir, boolean darkTheme) {
-		return createBuiltIn(
-				dir, darkTheme, ContextHolder.getAssetAsString("defaults/system.props"));
-	}
-
-	static ProfileModel createBuiltIn(
-			File dir, boolean darkTheme, String defaultSystemProperties) {
-		ProfileModel profile = new ProfileModel(dir, defaultSystemProperties);
-		profile.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
-		profile.screenBackgroundMode = BackgroundMode.THEME;
-		// Keep a deterministic dormant custom value so switching back to Custom is reversible.
-		profile.screenBackgroundColor = AppBackgroundColors.rgb(darkTheme);
-		applyBuiltInTheme(profile, darkTheme);
-		return profile;
-	}
+    static final class LegacyShader {
+        String fragment;
+        String vertex;
+        String name;
+        String author;
+        @SerializedName("Settings") float[] values;
+    }
+    static final class LegacyKey {
+        @SerializedName("DefaultKeyCode") int defaultKeyCode;
+        @SerializedName("CustomKeyCode") int customKeyCode;
+        @SerializedName("GameAction") int gameAction;
+        @SerializedName("KeyName") String keyName;
+    }
 }

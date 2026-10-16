@@ -308,7 +308,14 @@ public abstract class Canvas extends Displayable {
 		screenshotRawMode = enable;
 	}
 
+	private static java.io.File shaderDirectory;
+
 	public static void setSettings(ProfileModel settings) {
+		setSettings(settings, null);
+	}
+
+	public static void setSettings(ProfileModel settings, java.io.File shaderDirectory) {
+		Canvas.shaderDirectory = shaderDirectory;
 		Canvas.settings = settings;
 		fpsLimit = settings.fpsLimit;
 		int mode = settings.graphicsMode;
@@ -1565,7 +1572,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-			program = new ShaderProgram(settings.shader);
+			program = new ShaderProgram(settings.shader, shaderDirectory);
 			program.use();
 			int c = effectiveBackgroundArgb();
 			glClearColor((c >> 16 & 0xff) / 255.0f, (c >> 8 & 0xff) / 255.0f,
@@ -1580,8 +1587,9 @@ public abstract class Canvas extends Displayable {
 			lastUploadedWidth = bitmap.getWidth();
 			lastUploadedHeight = bitmap.getHeight();
 			program.loadVbo(vbo, bitmap.getWidth(), bitmap.getHeight());
-			if (settings.shader != null && settings.shader.values != null && program.uSetting >= 0) {
-				glUniform4fv(program.uSetting, 1, settings.shader.values, 0);
+			if (settings.shader != null && program.uSetting >= 0) {
+				float[] values = settings.shader.valuesArray();
+				if (values != null) glUniform4fv(program.uSetting, 1, values, 0);
 			}
 			if (isImmersiveMode()) {
 				ambientRenderer = new AmbientGlRenderer();

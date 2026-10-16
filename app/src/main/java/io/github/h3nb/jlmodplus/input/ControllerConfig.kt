@@ -14,11 +14,8 @@
 
 package io.github.h3nb.jlmodplus.input
 
-import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.JsonPrimitive
+import kotlinx.serialization.json.*
+import io.github.h3nb.jlmodplus.config.ProfileJson
 import java.util.Collections
 import java.util.EnumMap
 import java.util.LinkedHashMap
@@ -57,9 +54,9 @@ class ControllerConfig private constructor(
     /** Validated, device-independent calibration profiles keyed by descriptor/capability. */
     val calibrations: Map<String, GamepadCalibration> = immutableCalibrations(calibrations)
 
-    /** Returns a defensive copy of the source subtree, if this config came from JSON. */
+    /** Returns the owned read-only source subtree, if this config came from JSON. */
     val rawJson: JsonObject?
-        get() = originalJson?.deepCopy()
+        get() = originalJson
 
     fun validate(): ValidationResult {
         val issues = ArrayList<ValidationIssue>()
@@ -100,12 +97,12 @@ class ControllerConfig private constructor(
      */
     fun toJson(): JsonObject {
         if (unsupportedReason != null && originalJson != null) {
-            return originalJson.deepCopy()
+            return originalJson
         }
 
-        val root = originalJson?.deepCopy() ?: JsonObject()
-        root.addProperty(KEY_SCHEMA_VERSION, CURRENT_SCHEMA_VERSION)
-        root.addProperty(KEY_ENABLED, enabled)
+        val root = originalJson?.toMutableMap() ?: linkedMapOf()
+        root[KEY_SCHEMA_VERSION] = JsonPrimitive(CURRENT_SCHEMA_VERSION)
+        root[KEY_ENABLED] = JsonPrimitive(enabled)
         root.remove(KEY_MODE)
         root.remove(KEY_PRESET)
         root.remove(KEY_DIRECTION_MODE)
@@ -117,16 +114,19 @@ class ControllerConfig private constructor(
         val sticks = mergeObject(root, KEY_STICKS)
         writeStick(sticks, STICK_LEFT, leftStick)
         writeStick(sticks, STICK_RIGHT, rightStick)
+        root[KEY_STICKS] = JsonObject(sticks)
 
         val triggerObject = mergeObject(root, KEY_TRIGGERS)
-        triggerObject.addProperty(KEY_TRIGGER_PRESS, triggers.pressThreshold)
-        triggerObject.addProperty(KEY_TRIGGER_RELEASE, triggers.releaseThreshold)
-        triggerObject.addProperty(KEY_TRIGGER_ENABLED, triggers.enabled)
+        triggerObject[KEY_TRIGGER_PRESS] = JsonPrimitive(triggers.pressThreshold)
+        triggerObject[KEY_TRIGGER_RELEASE] = JsonPrimitive(triggers.releaseThreshold)
+        triggerObject[KEY_TRIGGER_ENABLED] = JsonPrimitive(triggers.enabled)
+        root[KEY_TRIGGERS] = JsonObject(triggerObject)
 
         val pointerObject = mergeObject(root, KEY_POINTER)
         writePointer(pointerObject, pointer)
+        root[KEY_POINTER] = JsonObject(pointerObject)
 
-        if (calibrations.isNotEmpty() || root.has(KEY_CALIBRATIONS)) {
+        if (calibrations.isNotEmpty() || root.containsKey(KEY_CALIBRATIONS)) {
             val calibrationObject = mergeObject(root, KEY_CALIBRATIONS)
             val originalCalibrations = parseCalibrations(originalJson?.get(KEY_CALIBRATIONS))
             originalCalibrations.keys
@@ -134,13 +134,14 @@ class ControllerConfig private constructor(
                 .forEach(calibrationObject::remove)
             calibrations.forEach { (signature, calibration) ->
                 val existing = calibrationObject.get(signature)
-                calibrationObject.add(signature, mergeCalibration(existing, calibration))
+                calibrationObject[signature] = mergeCalibration(existing, calibration)
             }
+            root[KEY_CALIBRATIONS] = JsonObject(calibrationObject)
         }
-        return root
+        return JsonObject(root)
     }
 
-    fun toJsonString(gson: Gson = Gson()): String = gson.toJson(toJson())
+    fun toJsonString(): String = toJson().toString()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -210,7 +211,7 @@ class ControllerConfig private constructor(
             pointer = source.pointer,
             calibrations = source.calibrations,
             schemaVersion = source.schemaVersion,
-            originalJson = source.originalJson?.deepCopy(),
+            originalJson = source.originalJson,
             unsupportedReason = source.unsupportedReason,
             shouldWriteController = source.shouldWriteController,
             resolutionSource = source.resolutionSource,
@@ -292,7 +293,7 @@ class ControllerConfig private constructor(
                 pointer = pointer,
                 calibrations = mutableCalibrations,
                 schemaVersion = schemaVersion,
-                originalJson = originalJson?.deepCopy(),
+                originalJson = originalJson,
                 unsupportedReason = if (keepOpaque) unsupportedReason else null,
                 shouldWriteController = shouldWriteController || modified,
                 resolutionSource = resolutionSource,
@@ -318,7 +319,7 @@ class ControllerConfig private constructor(
                 pointer = pointer,
                 calibrations = mutableCalibrations,
                 schemaVersion = schemaVersion,
-                originalJson = originalJson?.deepCopy(),
+                originalJson = originalJson,
                 unsupportedReason = if (preserveUnsupportedPayload && !modified) unsupportedReason else null,
                 shouldWriteController = shouldWriteController || modified,
                 resolutionSource = resolutionSource,
@@ -339,7 +340,7 @@ class ControllerConfig private constructor(
         @JvmStatic
         fun parse(json: JsonObject?): ControllerConfig {
             if (json == null) return defaultNavigation()
-            val original = json.deepCopy()
+            val original = ProfileJson.ownedJson(json).jsonObject
             return try {
                 parseSupported(json, original)
             } catch (failure: ParseFailure) {
@@ -361,15 +362,15 @@ class ControllerConfig private constructor(
         fun parse(json: String?): ControllerConfig {
             if (json == null) return defaultNavigation()
             return try {
-                val element = JsonParser.parseString(json)
-                if (!element.isJsonObject) {
-                    unsupported(JsonObject(), "controller config must be a JSON object", CURRENT_SCHEMA_VERSION)
+                val element = Json.parseToJsonElement(json)
+                if (element !is JsonObject) {
+                    unsupported(JsonObject(emptyMap()), "controller config must be a JSON object", CURRENT_SCHEMA_VERSION)
                 } else {
-                    parse(element.asJsonObject)
+                    parse(element.jsonObject)
                 }
             } catch (failure: RuntimeException) {
                 unsupported(
-                    JsonObject(),
+                    JsonObject(emptyMap()),
                     failure.message ?: "controller config is not valid JSON",
                     CURRENT_SCHEMA_VERSION,
                 )
@@ -395,10 +396,10 @@ class ControllerConfig private constructor(
             )
 
             val sticks = json.get(KEY_STICKS)
-            if (sticks != null && !sticks.isJsonObject) {
+            if (sticks != null && sticks !is JsonObject) {
                 throw ParseFailure("sticks must be a JSON object")
             }
-            val stickObject = sticks?.asJsonObject
+            val stickObject = sticks?.jsonObject
             val left = parseStick(
                 stickObject?.get(STICK_LEFT),
                 defaultMode = StickMode.DIRECTIONS,
@@ -413,8 +414,8 @@ class ControllerConfig private constructor(
             )
 
             val triggerObject = when {
-                json.get(KEY_TRIGGERS)?.isJsonObject == true -> json.getAsJsonObject(KEY_TRIGGERS)
-                json.get(KEY_TRIGGER)?.isJsonObject == true -> json.getAsJsonObject(KEY_TRIGGER)
+                json[KEY_TRIGGERS] is JsonObject -> json.getValue(KEY_TRIGGERS).jsonObject
+                json[KEY_TRIGGER] is JsonObject -> json.getValue(KEY_TRIGGER).jsonObject
                 else -> null
             }
             val press = if (triggerObject != null) {
@@ -454,10 +455,10 @@ class ControllerConfig private constructor(
         private fun readEnabled(json: JsonObject): Boolean {
             json.get(KEY_ENABLED)?.let {
                 val primitive = it.asPrimitiveOrNull()
-                if (primitive == null || !primitive.isBoolean) {
+                if (primitive == null || primitive.isString || primitive.booleanOrNull == null) {
                     throw ParseFailure("enabled must be a boolean")
                 }
-                return primitive.asBoolean
+                return primitive.boolean
             }
             // The old experimental mode is accepted as a one-time read compatibility aid, but
             // it is never emitted and it never reintroduces the removed digital mapping table.
@@ -478,8 +479,8 @@ class ControllerConfig private constructor(
             if (element == null) {
                 return StickSettings(mode = defaultMode, directionMode = defaultDirectionMode)
             }
-            if (!element.isJsonObject) throw ParseFailure("$path must be a JSON object")
-            val json = element.asJsonObject
+            if (element !is JsonObject) throw ParseFailure("$path must be a JSON object")
+            val json = element.jsonObject
             val mode = readEnum(json, KEY_STICK_MODE, defaultMode.token, StickMode::fromToken)
             val directionMode = readEnum(
                 json,
@@ -517,8 +518,8 @@ class ControllerConfig private constructor(
 
         private fun parsePointer(element: JsonElement?): PointerSettings {
             if (element == null) return PointerSettings()
-            if (!element.isJsonObject) throw ParseFailure("pointer must be a JSON object")
-            val json = element.asJsonObject
+            if (element !is JsonObject) throw ParseFailure("pointer must be a JSON object")
+            val json = element.jsonObject
             val mode = readEnum(json, KEY_POINTER_MODE, PointerMode.OFF.token, PointerMode::fromToken)
             val sourceStick = readEnum(
                 json,
@@ -559,8 +560,8 @@ class ControllerConfig private constructor(
             // Read the former pointer-only wrapper so a pre-refactor cursor click survives one
             // edit. Guest and host binding kinds are intentionally ignored, never imported.
             val legacy = json.get(KEY_CLICK_BINDING)
-            if (legacy == null || !legacy.isJsonObject) return null
-            val legacyObject = legacy.asJsonObject
+            if (legacy == null || legacy !is JsonObject) return null
+            val legacyObject = legacy.jsonObject
             val kind = readString(legacyObject, KEY_BINDING_KIND, required = false, path = "clickBinding.kind")
                 ?: return null
             if (normalize(kind) !in setOf("POINTERINTERACTION", "POINTER")) return null
@@ -571,14 +572,14 @@ class ControllerConfig private constructor(
 
         private fun parseCalibrations(element: JsonElement?): LinkedHashMap<String, GamepadCalibration> {
             if (element == null) return LinkedHashMap()
-            if (!element.isJsonObject) throw ParseFailure("calibrations must be a JSON object")
+            if (element !is JsonObject) throw ParseFailure("calibrations must be a JSON object")
             val result = LinkedHashMap<String, GamepadCalibration>()
-            element.asJsonObject.entrySet().toList().sortedBy { it.key }.forEach { entry ->
-                if (entry.key.isBlank() || !entry.value.isJsonObject) return@forEach
+            element.jsonObject.entries.toList().sortedBy { it.key }.forEach { entry ->
+                if (entry.key.isBlank() || entry.value !is JsonObject) return@forEach
                 val channels = EnumMap<CalibrationChannel, StickProcessor.ValidatedCalibration>(
                     CalibrationChannel::class.java,
                 )
-                val channelObject = entry.value.asJsonObject
+                val channelObject = entry.value.jsonObject
                 CalibrationChannel.entries.forEach { channel ->
                     val parsed = parseCalibrationChannel(channelObject.get(calibrationToken(channel)), channel)
                     if (parsed != null) channels[channel] = parsed
@@ -592,9 +593,9 @@ class ControllerConfig private constructor(
             element: JsonElement?,
             channel: CalibrationChannel,
         ): StickProcessor.ValidatedCalibration? {
-            if (element == null || !element.isJsonObject) return null
+            if (element == null || element !is JsonObject) return null
             return try {
-                val json = element.asJsonObject
+                val json = element.jsonObject
                 val min = requiredCalibrationNumber(json, "min")
                 val max = requiredCalibrationNumber(json, "max")
                 val rest = requiredCalibrationNumber(json, "rest")
@@ -624,28 +625,28 @@ class ControllerConfig private constructor(
         private fun requiredCalibrationNumber(json: JsonObject, key: String): Double {
             val value = json.get(key)?.asPrimitiveOrNull()
                 ?: throw ParseFailure("calibration.$key must be a finite number")
-            if (!value.isNumber || !value.asDouble.isFinite()) {
+            if ((value.isString || value.doubleOrNull == null) || !value.double.isFinite()) {
                 throw ParseFailure("calibration.$key must be a finite number")
             }
-            return value.asDouble
+            return value.double
         }
 
         private fun optionalCalibrationNumber(json: JsonObject, key: String, fallback: Double): Double {
             val value = json.get(key) ?: return fallback
             val primitive = value.asPrimitiveOrNull()
                 ?: throw ParseFailure("calibration.$key must be a finite number")
-            if (!primitive.isNumber || !primitive.asDouble.isFinite()) {
+            if ((primitive.isString || primitive.doubleOrNull == null) || !primitive.double.isFinite()) {
                 throw ParseFailure("calibration.$key must be a finite number")
             }
-            return primitive.asDouble
+            return primitive.double
         }
 
         private fun readSchemaVersion(json: JsonObject): Int {
             val element = json.get(KEY_SCHEMA_VERSION) ?: return CURRENT_SCHEMA_VERSION
             val primitive = element.asPrimitiveOrNull()
                 ?: throw ParseFailure("schemaVersion must be an integer")
-            if (!primitive.isNumber) throw ParseFailure("schemaVersion must be an integer")
-            val value = primitive.asDouble
+            if ((primitive.isString || primitive.doubleOrNull == null)) throw ParseFailure("schemaVersion must be an integer")
+            val value = primitive.double
             if (!value.isFinite() || value < 1.0 || value != value.toInt().toDouble()) {
                 throw ParseFailure("schemaVersion must be a positive integer")
             }
@@ -683,7 +684,7 @@ class ControllerConfig private constructor(
             if (primitive == null || !primitive.isString) {
                 throw ParseFailure("$path must be a string")
             }
-            return primitive.asString
+            return primitive.content
         }
 
         private fun readNumber(
@@ -694,10 +695,10 @@ class ControllerConfig private constructor(
         ): Double {
             val element = json.get(key) ?: fallbackElement ?: return defaultValue
             val primitive = element.asPrimitiveOrNull()
-            if (primitive == null || !primitive.isNumber) {
+            if (primitive == null || (primitive.isString || primitive.doubleOrNull == null)) {
                 throw ParseFailure("$key must be a finite number")
             }
-            val value = primitive.asDouble
+            val value = primitive.double
             if (!value.isFinite()) throw ParseFailure("$key must be a finite number")
             return value
         }
@@ -705,10 +706,10 @@ class ControllerConfig private constructor(
         private fun readBoolean(json: JsonObject, key: String, defaultValue: Boolean): Boolean {
             val element = json.get(key) ?: return defaultValue
             val primitive = element.asPrimitiveOrNull()
-            if (primitive == null || !primitive.isBoolean) {
+            if (primitive == null || primitive.isString || primitive.booleanOrNull == null) {
                 throw ParseFailure("$key must be a boolean")
             }
-            return primitive.asBoolean
+            return primitive.boolean
         }
 
         private fun unsupported(original: JsonObject, reason: String, schemaVersion: Int): ControllerConfig = create(
@@ -760,7 +761,7 @@ class ControllerConfig private constructor(
             pointer = pointer,
             calibrations = calibrations,
             schemaVersion = schemaVersion,
-            originalJson = originalJson?.deepCopy(),
+            originalJson = originalJson,
             unsupportedReason = unsupportedReason,
             shouldWriteController = shouldWriteController,
             resolutionSource = resolutionSource,
@@ -1028,43 +1029,38 @@ private fun immutableCalibrations(
         .associateTo(LinkedHashMap()) { it.key to it.value },
 )
 
-private fun JsonElement.asPrimitiveOrNull(): JsonPrimitive? =
-    if (isJsonPrimitive) asJsonPrimitive else null
+private fun JsonElement.asPrimitiveOrNull(): JsonPrimitive? = this as? JsonPrimitive
 
-private fun mergeObject(parent: JsonObject, key: String): JsonObject {
-    val current = parent.get(key)
-    if (current != null && current.isJsonObject) return current.asJsonObject
-    val replacement = JsonObject()
-    parent.add(key, replacement)
-    return replacement
-}
+private fun mergeObject(parent: Map<String, JsonElement>, key: String): MutableMap<String, JsonElement> =
+    (parent[key] as? JsonObject)?.toMutableMap() ?: linkedMapOf()
 
-private fun writeStick(parent: JsonObject, key: String, settings: StickSettings) {
+private fun writeStick(parent: MutableMap<String, JsonElement>, key: String, settings: StickSettings) {
     val json = mergeObject(parent, key)
-    json.addProperty("mode", settings.mode.token)
-    json.addProperty("directionMode", settings.directionMode.token)
-    json.addProperty("innerDeadzone", settings.innerDeadzone)
-    json.addProperty("outerSaturation", settings.outerSaturation)
-    json.addProperty("pressRadius", settings.pressRadius)
-    json.addProperty("releaseRadius", settings.releaseRadius)
-    json.addProperty("angularHysteresisDegrees", settings.angularHysteresisDegrees)
-    json.addProperty("responseExponent", settings.responseExponent)
-    json.addProperty("invertX", settings.invertX)
-    json.addProperty("invertY", settings.invertY)
-    json.addProperty("swapAxes", settings.swapAxes)
+    json["mode"] = JsonPrimitive(settings.mode.token)
+    json["directionMode"] = JsonPrimitive(settings.directionMode.token)
+    json["innerDeadzone"] = JsonPrimitive(settings.innerDeadzone)
+    json["outerSaturation"] = JsonPrimitive(settings.outerSaturation)
+    json["pressRadius"] = JsonPrimitive(settings.pressRadius)
+    json["releaseRadius"] = JsonPrimitive(settings.releaseRadius)
+    json["angularHysteresisDegrees"] = JsonPrimitive(settings.angularHysteresisDegrees)
+    json["responseExponent"] = JsonPrimitive(settings.responseExponent)
+    json["invertX"] = JsonPrimitive(settings.invertX)
+    json["invertY"] = JsonPrimitive(settings.invertY)
+    json["swapAxes"] = JsonPrimitive(settings.swapAxes)
+    parent[key] = JsonObject(json)
 }
 
-private fun writePointer(parent: JsonObject, pointer: PointerSettings) {
-    parent.addProperty("mode", pointer.mode.token)
-    parent.addProperty("stick", pointer.sourceStick.token)
+private fun writePointer(parent: MutableMap<String, JsonElement>, pointer: PointerSettings) {
+    parent["mode"] = JsonPrimitive(pointer.mode.token)
+    parent["stick"] = JsonPrimitive(pointer.sourceStick.token)
     if (pointer.clickAction == null) parent.remove("clickAction")
-    else parent.addProperty("clickAction", pointer.clickAction.token)
-    parent.addProperty("joystickMode", pointer.joystickMode.token)
+    else parent["clickAction"] = JsonPrimitive(pointer.clickAction.token)
+    parent["joystickMode"] = JsonPrimitive(pointer.joystickMode.token)
     parent.remove("clickBinding")
-    parent.addProperty("speed", pointer.speed)
-    parent.addProperty("centerX", pointer.centerX)
-    parent.addProperty("centerY", pointer.centerY)
-    parent.addProperty("radius", pointer.radius)
+    parent["speed"] = JsonPrimitive(pointer.speed)
+    parent["centerX"] = JsonPrimitive(pointer.centerX)
+    parent["centerY"] = JsonPrimitive(pointer.centerY)
+    parent["radius"] = JsonPrimitive(pointer.radius)
 }
 
 private fun calibrationToken(channel: CalibrationChannel): String = when (channel) {
@@ -1080,23 +1076,23 @@ private fun mergeCalibration(
     existing: JsonElement?,
     calibration: GamepadCalibration,
 ): JsonObject {
-    val result = if (existing != null && existing.isJsonObject) existing.asJsonObject.deepCopy() else JsonObject()
+    val result = (existing as? JsonObject)?.toMutableMap() ?: linkedMapOf()
     calibration.channels.forEach { (channel, value) ->
-        result.add(calibrationToken(channel), mergeCalibrationChannel(result.get(calibrationToken(channel)), value))
+        result[calibrationToken(channel)] = mergeCalibrationChannel(result.get(calibrationToken(channel)), value)
     }
-    return result
+    return JsonObject(result)
 }
 
 private fun mergeCalibrationChannel(
     existing: JsonElement?,
     calibration: StickProcessor.ValidatedCalibration,
 ): JsonObject {
-    val result = if (existing != null && existing.isJsonObject) existing.asJsonObject.deepCopy() else JsonObject()
-    result.addProperty("min", calibration.range.min)
-    result.addProperty("max", calibration.range.max)
-    result.addProperty("rest", calibration.rest)
-    result.addProperty("spread", calibration.restSpread)
-    result.addProperty("samples", calibration.sampleCount)
-    result.addProperty("restMustBeInterior", calibration.restMustBeInterior)
-    return result
+    val result = (existing as? JsonObject)?.toMutableMap() ?: linkedMapOf()
+    result["min"] = JsonPrimitive(calibration.range.min)
+    result["max"] = JsonPrimitive(calibration.range.max)
+    result["rest"] = JsonPrimitive(calibration.rest)
+    result["spread"] = JsonPrimitive(calibration.restSpread)
+    result["samples"] = JsonPrimitive(calibration.sampleCount)
+    result["restMustBeInterior"] = JsonPrimitive(calibration.restMustBeInterior)
+    return JsonObject(result)
 }

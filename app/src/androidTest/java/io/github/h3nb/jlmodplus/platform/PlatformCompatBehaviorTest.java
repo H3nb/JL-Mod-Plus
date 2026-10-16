@@ -402,12 +402,12 @@ public class PlatformCompatBehaviorTest {
 		}
 		copyFile(new File(context.getApplicationInfo().sourceDir), new File(appDir, "converted.zip"));
 		writeManifest(appDir, marker, null);
-		ProfileModel profile = new ProfileModel(configDir);
+		ProfileModel profile = ProfileModel.fresh();
 		profile.graphicsMode = 2;
 		profile.showKeyboard = false;
 		profile.touchInput = true;
 		profile.soundBank = "";
-		if (!ProfilesManager.saveConfig(profile)) {
+		if (!ProfilesManager.saveConfig(configDir, profile)) {
 			throw new IOException("Unable to save platform compatibility fixture profile");
 		}
 	}
