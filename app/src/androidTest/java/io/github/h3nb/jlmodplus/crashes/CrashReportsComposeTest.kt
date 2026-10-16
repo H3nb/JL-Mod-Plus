@@ -15,6 +15,8 @@
 
 package io.github.h3nb.jlmodplus.crashes
 
+import android.content.Intent
+import android.net.Uri
 import io.github.h3nb.jlmodplus.R
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertIsDisplayed
@@ -28,6 +30,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -142,22 +145,62 @@ class CrashReportsComposeTest {
             uiQuantityString(R.plurals.crash_reports_selected_count, 1, 1),
         ).assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription(uiString(R.string.copy_selected_reports)).performClick()
-        assertEquals(listOf("report-1"), actions.copiedIds)
+        composeRule.onNodeWithContentDescription(uiString(R.string.share_selected_reports)).performClick()
+        assertEquals(listOf("report-1"), actions.sharedIds)
 
         composeRule.onNodeWithText("Other MIDlet").performClick()
         composeRule.onNodeWithText(
             uiQuantityString(R.plurals.crash_reports_selected_count, 2, 2),
         ).assertIsDisplayed()
 
-        assertEquals(
-            0,
-            composeRule.onAllNodesWithText("Share selected reports").fetchSemanticsNodes().size,
-        )
+        composeRule.onNodeWithContentDescription(uiString(R.string.share_selected_reports)).performClick()
+        assertEquals(listOf("report-1", "report-2"), actions.sharedIds)
 
         composeRule.onNodeWithContentDescription(uiString(R.string.delete_selected_reports)).performClick()
         composeRule.onNodeWithText(uiString(R.string.delete_selected_reports)).performClick()
         assertEquals(listOf("report-1", "report-2"), actions.deletedIds)
+    }
+
+    @Test
+    fun batchSharingDisablesDestructiveActionsWhilePreparing() {
+        val actions = RecordingListActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportsScreen(
+                    state = CrashReportsListState(
+                        loading = false,
+                        records = listOf(CrashReportListItem("report-1", "Demo MIDlet", "Today")),
+                        sharingReports = true,
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        composeRule.onNodeWithContentDescription(uiString(R.string.share_selected_reports))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.delete_selected_reports))
+            .assertIsNotEnabled()
+    }
+
+    @Test
+    fun batchShareIntentContainsOnlySelectedZipUrisWithReadPermission() {
+        val first = Uri.parse("content://media/external/downloads/111")
+        val second = Uri.parse("content://media/external/downloads/222")
+        val intent = CrashReportsActivity.shareIntent(arrayListOf(first, second))
+        assertEquals(Intent.ACTION_SEND_MULTIPLE, intent.action)
+        assertEquals("application/zip", intent.type)
+        assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+        assertEquals(2, intent.clipData?.itemCount)
+        assertEquals(first, intent.clipData?.getItemAt(0)?.uri)
+        assertEquals(second, intent.clipData?.getItemAt(1)?.uri)
+        @Suppress("DEPRECATION")
+        val attachments = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+        assertEquals(listOf(first, second), attachments)
+
+        val one = CrashReportsActivity.shareIntent(arrayListOf(first))
+        assertEquals(Intent.ACTION_SEND, one.action)
+        assertEquals(first, one.clipData?.getItemAt(0)?.uri)
     }
 
     @Test
@@ -260,7 +303,7 @@ class CrashReportsComposeTest {
     private class RecordingListActions : CrashReportsActions {
         var openedId: String? = null
         var saveLogCount = 0
-        var copiedIds: List<String> = emptyList()
+        var sharedIds: List<String> = emptyList()
         var deletedIds: List<String> = emptyList()
 
         override fun onBack() = Unit
@@ -273,8 +316,8 @@ class CrashReportsComposeTest {
             saveLogCount++
         }
 
-        override fun onCopySelected(reportIds: List<String>) {
-            copiedIds = reportIds
+        override fun onShareSelected(reportIds: List<String>) {
+            sharedIds = reportIds
         }
 
         override fun onDeleteSelected(reportIds: List<String>) {

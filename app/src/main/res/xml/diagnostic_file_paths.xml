@@ -14,4 +14,6 @@
     <cache-path
         name="library_export_bulk"
         path="library-export-bulk/" />
+    <!-- Read grants are issued only for selected legacy ZIP URIs, never the directory. -->
+    <external-path name="legacy_diagnostic_bundles" path="Download/JL-Mod Plus Diagnostics/" />
 </paths>

@@ -371,7 +371,6 @@
     <string name="copy_report">Copier</string>
     <string name="report_on_github">Signaler sur GitHub</string>
     <string name="delete_report">Supprimer</string>
-    <string name="copy_selected_reports">Copier les rapports sélectionnés</string>
     <string name="delete_selected_reports">Supprimer les rapports sélectionnés</string>
     <string name="crash_report_copied">Rapport copié</string>
     <string name="crash_report_bundle_preparing">Préparation du bundle de diagnostic…</string>
@@ -535,11 +534,6 @@
         <item quantity="one">%1$d sélectionné</item>
         <item quantity="other">%1$d sélectionnés</item>
         <item quantity="many">%1$d sélectionnés</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d rapport copié</item>
-        <item quantity="other">%1$d rapports copiés</item>
-        <item quantity="many">%1$d rapports copiés</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Supprimer %1$d rapport de diagnostic ?</item>

@@ -371,7 +371,6 @@
     <string name="copy_report">Kopieren</string>
     <string name="report_on_github">Auf GitHub melden</string>
     <string name="delete_report">Löschen</string>
-    <string name="copy_selected_reports">Ausgewählte Berichte kopieren</string>
     <string name="delete_selected_reports">Ausgewählte Berichte löschen</string>
     <string name="crash_report_copied">Bericht kopiert</string>
     <string name="crash_report_bundle_preparing">Diagnosepaket wird vorbereitet…</string>
@@ -532,10 +531,6 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d ausgewählt</item>
         <item quantity="other">%1$d ausgewählt</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d Bericht kopiert</item>
-        <item quantity="other">%1$d Berichte kopiert</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d Diagnosebericht löschen?</item>

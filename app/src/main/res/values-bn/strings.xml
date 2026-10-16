@@ -95,7 +95,6 @@
     <string name="config_missing_app_storage_generic">অ্যাপ পাওয়া যায়নি।\nস্টোরেজ ডিভাইসটি উপলব্ধ আছে কি না দেখুন, অথবা শর্টকাট আবার তৈরি করুন।</string>
     <string name="config_missing_app_storage_named">অ্যাপ পাওয়া যায়নি।\n“%1$s” স্টোরেজ ডিভাইসটি উপলব্ধ আছে কি না দেখুন, অথবা শর্টকাট আবার তৈরি করুন।</string>
     <string name="copy_report">কপি করুন</string>
-    <string name="copy_selected_reports">নির্বাচিত রিপোর্ট কপি করুন</string>
     <string name="create">তৈরি করুন</string>
     <string name="create_apps_dir_failed">এই স্থানে কাজের ডিরেক্টরি প্রস্তুত করা যায়নি:\n%1$s\nঅন্য ডিরেক্টরি বেছে নিন।</string>
     <string name="default_label">%1$s (ডিফল্ট)</string>
@@ -1057,10 +1056,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d ডায়াগনস্টিক রিপোর্ট মুছে ফেলবেন?</item>
         <item quantity="other">%1$d ডায়াগনস্টিক রিপোর্ট মুছে ফেলবেন?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d রিপোর্ট ক্লিপবোর্ডে কপি করা হয়েছে</item>
-        <item quantity="other">%1$d রিপোর্ট ক্লিপবোর্ডে কপি করা হয়েছে</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d নির্বাচিত</item>

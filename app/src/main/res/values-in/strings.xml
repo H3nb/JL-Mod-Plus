@@ -371,12 +371,9 @@
     <string name="copy_report">Salin</string>
     <string name="report_on_github">Laporkan di GitHub</string>
     <string name="delete_report">Hapus</string>
-    <string name="copy_selected_reports">Salin laporan terpilih</string>
+    <string name="share_selected_reports">Bagikan laporan terpilih</string>
     <string name="delete_selected_reports">Hapus laporan terpilih</string>
     <string name="crash_report_copied">Laporan disalin</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="other">%1$d laporan disalin</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Menyiapkan bundel diagnostik…</string>
     <string name="crash_report_bundle_ready_title">Bundel diagnostik siap</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nLampirkan berkas ini sebelum mengirim issue GitHub. Bundel diagnostik akan menjadi publik setelah dilampirkan ke issue tersebut.</string>

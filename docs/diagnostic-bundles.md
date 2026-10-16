@@ -53,6 +53,14 @@ Bundles are ordinary, unencrypted ZIP files containing:
 The opaque protobuf tombstone remains local evidence and is not copied into the standard public
 bundle.
 
+The inbox also supports **Share selected reports**: selected incidents are prepared as the same
+sanitized ZIP bundles on a background thread, then offered together through Android's share sheet.
+Only the selected ZIP URIs receive temporary read grants. If any bundle fails preparation, the
+share sheet does not open with an incomplete selection. ZIPs successfully prepared before a
+failure remain user-owned exports and can be reused or deleted with their source report.
+Individual report copying remains available in the detail screen; batch clipboard copying is
+intentionally not offered.
+
 ## Privacy contract
 
 Public export redacts the actual app-private data root, including credential- and

@@ -95,7 +95,6 @@
     <string name="config_missing_app_storage_generic">找不到應用程式。\n請檢查儲存裝置是否可用，或重新建立捷徑。</string>
     <string name="config_missing_app_storage_named">找不到應用程式。\n請檢查儲存裝置「%1$s」是否可用，或重新建立捷徑。</string>
     <string name="copy_report">複製</string>
-    <string name="copy_selected_reports">複製所選報告</string>
     <string name="create">建立</string>
     <string name="create_apps_dir_failed">無法在以下路徑準備工作目錄：\n%1$s\n請選擇其他目錄。</string>
     <string name="default_label">%1$s（預設）</string>
@@ -1025,9 +1024,6 @@
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">刪除 %1$d 份診斷報告？</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="other">已將 %1$d 份報告複製到剪貼簿</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="other">已選取 %1$d 項</item>

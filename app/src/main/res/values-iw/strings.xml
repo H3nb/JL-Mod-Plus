@@ -35,7 +35,6 @@
     <string name="config_missing_app_storage_generic">היישום לא נמצא.\nיש לבדוק אם התקן האחסון זמין, או ליצור מחדש את קיצור הדרך.</string>
     <string name="config_missing_app_storage_named">היישום לא נמצא.\nיש לבדוק אם התקן האחסון ״%1$s״ זמין, או ליצור מחדש את קיצור הדרך.</string>
     <string name="copy_report">העתקה</string>
-    <string name="copy_selected_reports">העתקת הדוחות שנבחרו</string>
     <string name="create">יצירה</string>
     <string name="create_apps_dir_failed">לא ניתן להכין את תיקיית העבודה בנתיב:\n%1$s\nיש לבחור תיקייה אחרת.</string>
     <string name="default_label">%1$s (ברירת מחדל)</string>
@@ -1089,11 +1088,6 @@
         <item quantity="one">למחוק %1$d דוח אבחון?</item>
         <item quantity="two">למחוק %1$d דוחות אבחון?</item>
         <item quantity="other">למחוק %1$d דוחות אבחון?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">הועתק %1$d דוח</item>
-        <item quantity="two">הועתקו %1$d דוחות</item>
-        <item quantity="other">הועתקו %1$d דוחות</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">נבחר %1$d</item>

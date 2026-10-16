@@ -376,13 +376,8 @@
     <string name="copy_report">Kopioi</string>
     <string name="report_on_github">Ilmoita GitHub-palvelussa</string>
     <string name="delete_report">Poista</string>
-    <string name="copy_selected_reports">Kopioi valitut raportit</string>
     <string name="delete_selected_reports">Poista valitut raportit</string>
     <string name="crash_report_copied">Raportti kopioitu</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d raportti kopioitu</item>
-        <item quantity="other">%1$d raporttia kopioitu</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Valmistellaan diagnostiikkapakettia…</string>
     <string name="crash_report_bundle_ready_title">Diagnostiikkapaketti valmis</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nTallennettu kansioon Downloads → JL-Mod Plus Diagnostics.\n\nLiitä tämä tiedosto ennen GitHub-issuen lähettämistä. Diagnostiikkapaketti tulee julkiseksi, kun se liitetään issueen.</string>

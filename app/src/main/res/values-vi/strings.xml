@@ -158,7 +158,6 @@
     <string name="config_missing_app_storage_generic">Không tìm thấy ứng dụng.\nKiểm tra xem thiết bị lưu trữ có khả dụng không hoặc tạo lại lối tắt.</string>
     <string name="config_missing_app_storage_named">Không tìm thấy ứng dụng.\nKiểm tra xem thiết bị lưu trữ “%1$s” có khả dụng không hoặc tạo lại lối tắt.</string>
     <string name="copy_report">Sao chép</string>
-    <string name="copy_selected_reports">Sao chép báo cáo đã chọn</string>
     <string name="delete_report">Xóa</string>
     <string name="delete_selected_reports">Xóa báo cáo đã chọn</string>
     <string name="diagnostic_reason_anr">Ứng dụng không phản hồi</string>
@@ -1025,9 +1024,6 @@
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">Xóa %1$d báo cáo chẩn đoán?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="other">Đã sao chép %1$d báo cáo vào bộ nhớ tạm</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="other">Đã chọn %1$d mục</item>

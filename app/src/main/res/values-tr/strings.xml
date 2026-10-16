@@ -164,7 +164,6 @@
     <string name="config_missing_app_storage_generic">Uygulama bulunamadı.\nDepolama aygıtının kullanılabilir olup olmadığını kontrol edin veya kısayolu yeniden oluşturun.</string>
     <string name="config_missing_app_storage_named">Uygulama bulunamadı.\n“%1$s” depolama aygıtının kullanılabilir olup olmadığını kontrol edin veya kısayolu yeniden oluşturun.</string>
     <string name="copy_report">Kopyala</string>
-    <string name="copy_selected_reports">Seçili raporları kopyala</string>
     <string name="delete_report">Sil</string>
     <string name="delete_selected_reports">Seçili raporları sil</string>
     <string name="diagnostic_reason_anr">Uygulama yanıt vermiyor</string>
@@ -1058,10 +1057,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">%1$d tanılama raporu silinsin mi?</item>
         <item quantity="one">%1$d tanılama raporu silinsin mi?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="other">%1$d rapor kopyalandı</item>
-        <item quantity="one">%1$d rapor kopyalandı</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="other">%1$d seçildi</item>

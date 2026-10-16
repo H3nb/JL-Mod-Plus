@@ -75,7 +75,7 @@ interface CrashReportsActions {
     fun onBack()
     fun onOpen(reportId: String)
     fun onSaveLog()
-    fun onCopySelected(reportIds: List<String>)
+    fun onShareSelected(reportIds: List<String>)
     fun onDeleteSelected(reportIds: List<String>)
 }
 
@@ -130,6 +130,7 @@ data class CrashReportsListState(
     val loading: Boolean,
     val records: List<CrashReportListItem>,
     val savingLog: Boolean = false,
+    val sharingReports: Boolean = false,
 )
 
 /** Keeps list data observable without reinstalling the Activity's Compose content. */
@@ -150,6 +151,10 @@ class CrashReportsListController internal constructor(
 
     fun setSavingLog(saving: Boolean) {
         state = state.copy(savingLog = saving)
+    }
+
+    fun setSharingReports(sharing: Boolean) {
+        state = state.copy(sharingReports = sharing)
     }
 }
 
@@ -275,13 +280,19 @@ fun CrashReportsScreen(
                                 ),
                             )
                         }
-                        IconButton(onClick = { actions.onCopySelected(selectedIds.toList()) }) {
+                        IconButton(
+                            onClick = { actions.onShareSelected(selectedIds.toList()) },
+                            enabled = !state.sharingReports,
+                        ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_content_copy),
-                                contentDescription = stringResource(R.string.copy_selected_reports),
+                                painter = painterResource(R.drawable.ic_share),
+                                contentDescription = stringResource(R.string.share_selected_reports),
                             )
                         }
-                        IconButton(onClick = { showDeleteConfirmation = true }) {
+                        IconButton(
+                            onClick = { showDeleteConfirmation = true },
+                            enabled = !state.sharingReports,
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_delete),
                                 contentDescription = stringResource(R.string.delete_selected_reports),

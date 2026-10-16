@@ -376,13 +376,8 @@
     <string name="copy_report">Kopiëren</string>
     <string name="report_on_github">Melden op GitHub</string>
     <string name="delete_report">Verwijderen</string>
-    <string name="copy_selected_reports">Geselecteerde rapporten kopiëren</string>
     <string name="delete_selected_reports">Geselecteerde rapporten verwijderen</string>
     <string name="crash_report_copied">Rapport gekopieerd</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d rapport gekopieerd</item>
-        <item quantity="other">%1$d rapporten gekopieerd</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Diagnostisch pakket voorbereiden…</string>
     <string name="crash_report_bundle_ready_title">Diagnostisch pakket gereed</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nOpgeslagen in Downloads → JL-Mod Plus Diagnostics.\n\nVoeg dit bestand toe voordat je het GitHub-issue indient. Het diagnostische pakket wordt openbaar zodra het aan het issue is toegevoegd.</string>

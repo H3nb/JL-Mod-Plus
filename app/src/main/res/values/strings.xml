@@ -416,13 +416,9 @@
     <string name="copy_report">Copy</string>
     <string name="report_on_github">Report on GitHub</string>
     <string name="delete_report">Delete</string>
-    <string name="copy_selected_reports">Copy selected reports</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">Share selected reports</string>
     <string name="delete_selected_reports">Delete selected reports</string>
     <string name="crash_report_copied">Report copied</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d report copied</item>
-        <item quantity="other">%1$d reports copied</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
     <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nAttach this file before submitting the GitHub issue. The diagnostic bundle will be public once attached to the issue.</string>

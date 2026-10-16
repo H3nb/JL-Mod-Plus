@@ -96,7 +96,6 @@
     <string name="config_missing_app_storage_generic">Aplicația nu a fost găsită.\nVerifică dacă dispozitivul de stocare este disponibil sau creează din nou scurtătura.</string>
     <string name="config_missing_app_storage_named">Aplicația nu a fost găsită.\nVerifică dacă dispozitivul de stocare „%1$s” este disponibil sau creează din nou scurtătura.</string>
     <string name="copy_report">Copiază</string>
-    <string name="copy_selected_reports">Copiază rapoartele selectate</string>
     <string name="create">Creează</string>
     <string name="create_apps_dir_failed">Directorul de lucru nu a putut fi pregătit la:\n%1$s\nAlege alt director.</string>
     <string name="default_label">%1$s (implicit)</string>
@@ -1089,11 +1088,6 @@
         <item quantity="one">Ștergi %1$d raport de diagnostic?</item>
         <item quantity="few">Ștergi %1$d rapoarte de diagnostic?</item>
         <item quantity="other">Ștergi %1$d de rapoarte de diagnostic?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d raport copiat în clipboard</item>
-        <item quantity="few">%1$d rapoarte copiate în clipboard</item>
-        <item quantity="other">%1$d de rapoarte copiate în clipboard</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d selectat</item>

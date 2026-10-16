@@ -101,7 +101,6 @@
     <string name="config_missing_app_storage_generic">ଆପ୍ ମିଳିଲା ନାହିଁ।\nଷ୍ଟୋରେଜ୍ ଡିଭାଇସ୍ ଉପଲବ୍ଧ ଅଛି କି ନାହିଁ ଯାଞ୍ଚ କରନ୍ତୁ, କିମ୍ବା ସର୍ଟକଟ୍ ପୁଣି ତିଆରି କରନ୍ତୁ।</string>
     <string name="config_missing_app_storage_named">ଆପ୍ ମିଳିଲା ନାହିଁ।\n“%1$s” ଷ୍ଟୋରେଜ୍ ଡିଭାଇସ୍ ଉପଲବ୍ଧ ଅଛି କି ନାହିଁ ଯାଞ୍ଚ କରନ୍ତୁ, କିମ୍ବା ସର୍ଟକଟ୍ ପୁଣି ତିଆରି କରନ୍ତୁ।</string>
     <string name="copy_report">କପି କରନ୍ତୁ</string>
-    <string name="copy_selected_reports">ବଛାଯାଇଥିବା ରିପୋର୍ଟ କପି କରନ୍ତୁ</string>
     <string name="delete_report">ବିଲୋପ କରନ୍ତୁ</string>
     <string name="delete_selected_reports">ବଛାଯାଇଥିବା ରିପୋର୍ଟ ବିଲୋପ କରନ୍ତୁ</string>
     <string name="diagnostic_reason_anr">ଆପ୍ ପ୍ରତିକ୍ରିୟା ଦେଉନାହିଁ</string>
@@ -705,10 +704,6 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$dଟି ଚୟନ କରାଯାଇଛି</item>
         <item quantity="other">%1$dଟି ଚୟନ କରାଯାଇଛି</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$dଟି ରିପୋର୍ଟ କପି କରାଯାଇଛି</item>
-        <item quantity="other">%1$dଟି ରିପୋର୍ଟ କପି କରାଯାଇଛି</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$dଟି ନିଦାନ ରିପୋର୍ଟ ବିଲୋପ କରିବେ?</item>

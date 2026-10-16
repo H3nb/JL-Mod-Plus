@@ -100,7 +100,6 @@
     <string name="config_missing_app_storage_generic">Қолданба табылмады.\nСақтау құрылғысы қолжетімді екенін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
     <string name="config_missing_app_storage_named">Қолданба табылмады.\n«%1$s» сақтау құрылғысы қолжетімді екенін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
     <string name="copy_report">Көшіру</string>
-    <string name="copy_selected_reports">Таңдалған есептерді көшіру</string>
     <string name="create_apps_dir_failed">Мына жерде жұмыс бумасын дайындау мүмкін болмады:\n%1$s\nБасқа буманы таңдаңыз.</string>
     <string name="delete_report">Жою</string>
     <string name="delete_selected_reports">Таңдалған есептерді жою</string>
@@ -1016,10 +1015,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d диагностикалық есепті жою керек пе?</item>
         <item quantity="other">%1$d диагностикалық есепті жою керек пе?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d есеп алмасу буферіне көшірілді</item>
-        <item quantity="other">%1$d есеп алмасу буферіне көшірілді</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d таңдалды</item>
