@@ -97,7 +97,7 @@ public class IncidentInterpreterTest {
 
 		assertEquals(IncidentSummary.Category.JAVA_FAILURE, hostIncident.category);
 		assertEquals(IncidentSummary.FailureOrigin.UNKNOWN, hostIncident.failureOrigin);
-		assertEquals("javax.microedition.lcdui.event.EventQueue.run(Unknown Source)",
+		assertEquals("javax.microedition.lcdui.event.EventQueue.run(SourceFile:42)",
 				hostIncident.topRelevantFrame);
 	}
 
