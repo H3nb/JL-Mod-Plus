@@ -37,6 +37,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -134,6 +135,42 @@ final class JavaDiagnosticStore {
 
 	private JavaDiagnosticStore() {}
 
+	private static final Object TERMINAL_CAPTURE_LOCK = new Object();
+	private static int activeTerminalCaptures;
+	private static final long TERMINAL_JOIN_NANOS = TimeUnit.SECONDS.toNanos(3);
+
+	private static void beginTerminalCapture() {
+		synchronized (TERMINAL_CAPTURE_LOCK) {
+			activeTerminalCaptures++;
+		}
+	}
+
+	private static void finishTerminalCapture() {
+		synchronized (TERMINAL_CAPTURE_LOCK) {
+			activeTerminalCaptures--;
+			TERMINAL_CAPTURE_LOCK.notifyAll();
+		}
+	}
+
+	/** Best effort. No in-process wait can guarantee completion through blocked storage I/O. */
+	static void awaitTerminalCaptures() {
+		long deadline = System.nanoTime() + TERMINAL_JOIN_NANOS;
+		synchronized (TERMINAL_CAPTURE_LOCK) {
+			while (activeTerminalCaptures > 0) {
+				long remaining = deadline - System.nanoTime();
+				if (remaining <= 0) return;
+				try {
+					TimeUnit.NANOSECONDS.timedWait(TERMINAL_CAPTURE_LOCK, remaining);
+				} catch (InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+					return;
+				}
+			}
+		}
+	}
+
+
+
 	static synchronized void install(Context context, String processName, String processRole) {
 		if (installed || context == null) return;
 		Context appContext = context;
@@ -153,9 +190,10 @@ final class JavaDiagnosticStore {
 	static boolean captureMidletSessionFailure(Context context, Thread thread,
 			MidletSessionJournal.Snapshot session, Throwable reported, Throwable primary) {
 		if (context == null || session == null || reported == null) return false;
+		beginTerminalCapture();
 		try {
 			persistSessionFailure(
-					context.getApplicationContext(),
+					context,
 					thread,
 					session,
 					reported,
@@ -164,6 +202,8 @@ final class JavaDiagnosticStore {
 		} catch (Throwable error) {
 			logFailure("Unable to persist handled MIDlet session failure", error);
 			return false;
+		} finally {
+			finishTerminalCapture();
 		}
 	}
 
@@ -1145,11 +1185,17 @@ final class JavaDiagnosticStore {
 			// One terminal owner captures and delegates. Reentrant/parallel callbacks must not
 			// invoke the upstream process-killing handler before the owner finishes capturing.
 			if (!terminalClaimed.compareAndSet(false, true)) return;
+			beginTerminalCapture();
 			try {
 				if (capture != null) capture.capture(thread, error);
 			} catch (Throwable captureFailure) {
 				logFailure("Fatal Java diagnostic capture failed open", captureFailure);
+			} finally {
+				finishTerminalCapture();
 			}
+			// Let any already-started direct MIDlet capture finish before delegating
+			// to an upstream handler that can terminate the entire Android process.
+			awaitTerminalCaptures();
 			if (upstream != null && upstream != this) {
 				try {
 					upstream.uncaughtException(thread, error);
