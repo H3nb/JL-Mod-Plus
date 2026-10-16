@@ -585,7 +585,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (!finalizeIntentionalTermination(fallbackOutcome)) {
 			return;
 		}
-		Runnable processCleanup = () -> Process.killProcess(Process.myPid());
+		Runnable processCleanup = () -> {
+			CrashReporter.awaitTerminalCaptures();
+			Process.killProcess(Process.myPid());
+		};
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
 			// A live MIDlet may already have yielded its Activity to Library. With no host left to
