@@ -22,7 +22,10 @@ import java.io.FileOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JavaDiagnosticStoreTest {
 	@Rule
@@ -189,6 +192,43 @@ public class JavaDiagnosticStoreTest {
 
 		assertEquals(1, captures.get());
 		assertEquals(1, upstreamCalls.get());
+	}
+
+	@Test
+	public void parallelFatalCannotDelegateBeforeOwnerCaptureFinishes() throws Exception {
+		CountDownLatch started = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		AtomicInteger upstreamCalls = new AtomicInteger();
+		AtomicReference<Throwable> upstreamError = new AtomicReference<>();
+		Throwable original = new IllegalStateException("original");
+		JavaDiagnosticStore.FatalHandler handler = new JavaDiagnosticStore.FatalHandler(
+				(thread, error) -> {
+					started.countDown();
+					if (!release.await(2, TimeUnit.SECONDS)) throw new AssertionError("timed out");
+				},
+				(thread, error) -> {
+					upstreamError.set(error);
+					upstreamCalls.incrementAndGet();
+				}, null);
+		Thread owner = new Thread(() -> handler.uncaughtException(
+				Thread.currentThread(), original), "capture-owner");
+		Thread secondary = new Thread(() -> handler.uncaughtException(
+				Thread.currentThread(), new IllegalStateException("secondary")), "secondary");
+		try {
+			owner.start();
+			assertTrue(started.await(2, TimeUnit.SECONDS));
+			secondary.start();
+			secondary.join(2000);
+			assertFalse(secondary.isAlive());
+			assertEquals(0, upstreamCalls.get());
+		} finally {
+			release.countDown();
+			owner.join(2000);
+			secondary.join(2000);
+		}
+		assertFalse(owner.isAlive());
+		assertEquals(1, upstreamCalls.get());
+		assertTrue(upstreamError.get() == original);
 	}
 
 	@Test
