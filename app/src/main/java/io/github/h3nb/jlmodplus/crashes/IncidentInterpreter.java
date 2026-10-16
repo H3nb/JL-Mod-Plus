@@ -164,6 +164,14 @@ final class IncidentInterpreter {
 						&& (frameClass.equals(entrypoint) || frameClass.startsWith(entrypoint + "$"))) {
 					return IncidentSummary.FailureOrigin.MIDLET;
 				}
+				// A direct host fatal outside a known guest callback identifies host
+				// execution, not necessarily the root cause of the exception.
+				if (kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
+						&& entrypoint == null && boundary == null
+						&& (frameClass.startsWith("io.github.h3nb.jlmodplus.")
+								|| frameClass.startsWith("ru.playsoftware.j2meloader."))) {
+					return IncidentSummary.FailureOrigin.JL_MOD_PLUS;
+				}
 			}
 		}
 		return IncidentSummary.FailureOrigin.UNKNOWN;

@@ -75,8 +75,9 @@ evidence, rather than by embedding a client-side decryption secret.
 The failure location (such as `Graphics.drawImage()`) is recorded separately from
 the execution context (process, callback, and verified MIDlet session). A top frame in
 an emulator API does **not** prove that the emulator caused the exception: the API
-may have been called by the MIDlet. When there is insufficient evidence, cause
-attribution remains unknown. Java and OS exit evidence enrich a report without
+may have been called by the MIDlet. A direct fatal handler outside a known
+guest callback can identify host execution without proving the root cause.
+When there is insufficient evidence, cause attribution remains unknown. Java and OS exit evidence enrich a report without
 changing the original raw records. A manually saved log is not evidence of a fatal
 incident and does not trigger a recovery notice.
 
@@ -98,6 +99,11 @@ may also assign a different physical display name: the file reported to the user
 comes from its verified metadata, not merely the desired logical name. Only exact
 owned URIs/paths can be deleted, never files that merely look similar by name.
 Files already uploaded elsewhere are outside JL-Mod Plus ownership.
+
+Deleting a diagnostic cleans exact owned public exports before removing source
+evidence. If cleanup fails, the source remains visible for retry. Export and
+deletion are serialized in-process so another ZIP cannot be published between
+cleanup and source deletion.
 
 ## Save log
 

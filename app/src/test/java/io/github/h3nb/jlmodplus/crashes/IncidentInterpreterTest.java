@@ -151,8 +151,9 @@ public class IncidentInterpreterTest {
 		IncidentSummary standalone = IncidentInterpreter.interpret(null, java, null);
 		IncidentSummary enriched = IncidentInterpreter.interpret(null, java, mainCrashExit());
 
-		assertEquals(IncidentSummary.Category.JAVA_FAILURE, standalone.category);
-		assertEquals("Java failure", standalone.subject);
+		assertEquals(IncidentSummary.Category.JL_MOD_PLUS, standalone.category);
+		assertEquals(IncidentSummary.FailureOrigin.JL_MOD_PLUS, standalone.failureOrigin);
+		assertEquals("JL-Mod Plus", standalone.subject);
 		assertEquals(standalone.subject, enriched.subject);
 		assertEquals(standalone.fingerprint, enriched.fingerprint);
 		assertEquals(standalone.bundleFileName(), enriched.bundleFileName());

@@ -142,8 +142,8 @@ final class DiagnosticBundleStore {
 	}
 
 	/**
-	 * Deletes only the exact artifact tracked for this record. Failure never implies the source
-	 * diagnostic must be retained.
+	 * Deletes only exact tracked artifacts. On failure the caller retains the source
+	 * diagnostic so the user can retry cleaning owned public exports.
 	 */
 	static synchronized boolean deleteTracked(
 			Context context, LocalDiagnosticRepository.Record record) {

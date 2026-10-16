@@ -216,9 +216,15 @@ public final class LocalDiagnosticRepository {
 	}
 
 	static DeleteResult deleteWithArtifacts(Context context, Record record) {
-		if (!deleteSource(context, record)) return new DeleteResult(false, true);
-		boolean bundleDeleted = DiagnosticBundleStore.deleteTracked(context, record);
-		return new DeleteResult(true, bundleDeleted);
+		// Export and delete must not interleave: otherwise a new public ZIP may be
+		// published after the diagnostic source has already been removed.
+		synchronized (DiagnosticBundleStore.class) {
+			if (!DiagnosticBundleStore.deleteTracked(context, record)) {
+				// Leave source evidence available for an explicit cleanup retry.
+				return new DeleteResult(false, false);
+			}
+			return new DeleteResult(deleteSource(context, record), true);
+		}
 	}
 
 	private static boolean deleteSource(Context context, Record record) {
