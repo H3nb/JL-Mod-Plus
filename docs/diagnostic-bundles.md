@@ -55,8 +55,9 @@ bundle.
 
 The inbox also supports **Share selected reports**: selected incidents are prepared as the same
 sanitized ZIP bundles on a background thread, then offered together through Android's share sheet.
-Only the selected ZIP URIs receive temporary read grants. If any bundle fails preparation, the
-share sheet does not open with an incomplete selection. ZIPs successfully prepared before a
+Only the selected ZIP URIs receive temporary read grants. The inbox selection is locked during
+preparation so the visible selection cannot diverge from the ZIPs being prepared. If any bundle
+fails preparation, the share sheet does not open with an incomplete selection. ZIPs successfully prepared before a
 failure remain user-owned exports and can be reused or deleted with their source report.
 Individual report copying remains available in the detail screen; batch clipboard copying is
 intentionally not offered.

@@ -240,7 +240,8 @@ public class CrashReportsActivity extends AppCompatActivity {
 		else intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
 		ClipData clip = ClipData.newRawUri("Diagnostic bundles", uris.get(0));
 		for (int i = 1; i < uris.size(); i++) clip.addItem(new ClipData.Item(uris.get(i)));
-		return intent.setClipData(clip);
+		intent.setClipData(clip);
+		return intent;
 	}
 
 	private void deleteSelected(List<String> reportIds) {

@@ -15,6 +15,7 @@
 
 package io.github.h3nb.jlmodplus.crashes
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.selection.toggleable
@@ -195,7 +196,8 @@ fun CrashReportsScreen(
     var selectedIds by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(state.records) {
+    LaunchedEffect(state.records, state.sharingReports) {
+        if (state.sharingReports) return@LaunchedEffect
         val retainedIds = state.records.mapTo(HashSet()) { it.id }
         val retainedSelection = selectedIds.filter { it in retainedIds }
         if (retainedSelection != selectedIds) {
@@ -205,12 +207,16 @@ fun CrashReportsScreen(
 
     val selectionMode = selectedIds.isNotEmpty()
     fun toggleSelection(reportId: String) {
+        if (state.sharingReports) return
         val updated = selectedIds.toMutableList()
         if (!updated.remove(reportId)) {
             updated.add(reportId)
         }
         selectedIds = updated.toList()
     }
+
+    // Freeze navigation while the selected ZIPs are being prepared.
+    if (state.sharingReports) BackHandler { }
 
     Scaffold(
         topBar = {
@@ -232,6 +238,7 @@ fun CrashReportsScreen(
                 },
                 navigationIcon = {
                     IconButton(
+                        enabled = !state.sharingReports,
                         onClick = {
                             if (selectionMode) {
                                 showDeleteConfirmation = false
@@ -259,8 +266,9 @@ fun CrashReportsScreen(
                     if (selectionMode) {
                         val allSelected = selectedIds.size == state.records.size
                         IconButton(
+                            enabled = !state.sharingReports,
                             onClick = {
-                                    selectedIds = if (allSelected) {
+                                selectedIds = if (allSelected) {
                                         emptyList()
                                     } else {
                                         state.records.map { it.id }
@@ -382,6 +390,7 @@ fun CrashReportsScreen(
                                 if (selectionMode) {
                                     Modifier.toggleable(
                                         value = selected,
+                                        enabled = !state.sharingReports,
                                         role = Role.Checkbox,
                                         onValueChange = { toggleSelection(record.id) },
                                     )

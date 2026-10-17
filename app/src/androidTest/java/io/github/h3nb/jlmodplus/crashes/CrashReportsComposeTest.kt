@@ -22,6 +22,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -181,6 +183,49 @@ class CrashReportsComposeTest {
             .assertIsNotEnabled()
         composeRule.onNodeWithContentDescription(uiString(R.string.delete_selected_reports))
             .assertIsNotEnabled()
+    }
+
+    @Test
+    fun batchShareKeepsSelectionLockedUntilPreparationFinishes() {
+        val sharing = mutableStateOf(false)
+        val actions = RecordingListActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportsScreen(
+                    state = CrashReportsListState(
+                        loading = false,
+                        records = listOf(
+                            CrashReportListItem("report-1", "Demo MIDlet", "Today"),
+                            CrashReportListItem("report-2", "Other MIDlet", "Today"),
+                        ),
+                        sharingReports = sharing.value,
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        composeRule.runOnIdle { sharing.value = true }
+
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.select_all_reports))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.share_selected_reports))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.delete_selected_reports))
+            .assertIsNotEnabled()
+
+        composeRule.onNodeWithText("Other MIDlet").performTouchInput { click() }
+        composeRule.onNodeWithText(
+            uiQuantityString(R.plurals.crash_reports_selected_count, 1, 1),
+        ).assertIsDisplayed()
+
+        composeRule.runOnIdle { sharing.value = false }
+        composeRule.onNodeWithText("Other MIDlet").performClick()
+        composeRule.onNodeWithText(
+            uiQuantityString(R.plurals.crash_reports_selected_count, 2, 2),
+        ).assertIsDisplayed()
     }
 
     @Test
