@@ -32,6 +32,7 @@ final class DiagnosticExportSanitizer {
 	private static final Pattern PRIVATE_UNIX_PATH = Pattern.compile(
 			"(?<![A-Za-z0-9:/])(?:"
 					+ "/storage/emulated/[0-9]+/[^\\s]+"
+					+ "|/storage/[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}/[^\\s]+"
 					+ "|/storage/self/primary/[^\\s]+"
 					+ "|/sdcard/[^\\s]+"
 					+ "|/mnt/sdcard/[^\\s]+"

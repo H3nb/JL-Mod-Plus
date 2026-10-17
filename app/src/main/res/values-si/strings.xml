@@ -39,7 +39,6 @@
     <string name="config_missing_app_storage_generic">යෙදුම හමු නොවීය.\nආචයන උපාංගය ලබා ගත හැකිදැයි පරීක්ෂා කරන්න, නැතහොත් කෙටිමඟ නැවත සාදන්න.</string>
     <string name="config_missing_app_storage_named">යෙදුම හමු නොවීය.\n“%1$s” ආචයන උපාංගය ලබා ගත හැකිදැයි පරීක්ෂා කරන්න, නැතහොත් කෙටිමඟ නැවත සාදන්න.</string>
     <string name="copy_report">පිටපත් කරන්න</string>
-    <string name="copy_selected_reports">තේරූ වාර්තා පිටපත් කරන්න</string>
     <string name="create">සාදන්න</string>
     <string name="create_apps_dir_failed">මෙම ස්ථානයේ වැඩ නාමාවලිය සූදානම් කිරීමට නොහැකි විය:\n%1$s\nවෙනත් නාමාවලියක් තෝරන්න.</string>
     <string name="default_label">%1$s (පෙරනිමි)</string>
@@ -61,7 +60,6 @@
     <string name="loading_info">තොරතුරු පූරණය කරමින්…</string>
     <string name="locate_bundle">බණ්ඩලය සොයා ගන්න</string>
     <string name="log_save_failed">ලොගය සුරැකීම ඇරඹීමට නොහැකි විය.</string>
-    <string name="log_save_started">ලොගය සුරැකීම ඇරඹුණි.</string>
     <string name="message_delete">මෙම යෙදුම, එහි සැකසුම් සහ සුරැකි දත්ත මකන්නද? මෙයින් එහි පුස්තකාල සටහන ද ඉවත් කෙරේ.</string>
     <string name="message_reset_layout">අතථ්‍ය පාලක පිරිසැලසුම පෙරනිමි තත්ත්වයට යළි සකසන්නද?</string>
     <string name="no_data_for_display">පෙන්වීමට යෙදුම් නැත</string>
@@ -901,10 +899,6 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$dක් තෝරා ඇත</item>
         <item quantity="other">%1$dක් තෝරා ඇත</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">වාර්තා %1$dක් පිටපත් කරන ලදී</item>
-        <item quantity="other">වාර්තා %1$dක් පිටපත් කරන ලදී</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">දෝෂ විනිශ්චය වාර්තා %1$dක් මකන්නද?</item>

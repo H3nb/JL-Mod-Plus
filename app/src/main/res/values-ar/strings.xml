@@ -166,7 +166,6 @@
     <string name="config_missing_app_storage_generic">لم يُعثر على التطبيق.\nتحقق من توفر جهاز التخزين أو أعد إنشاء الاختصار.</string>
     <string name="config_missing_app_storage_named">لم يُعثر على التطبيق.\nتحقق من توفر جهاز التخزين «%1$s» أو أعد إنشاء الاختصار.</string>
     <string name="copy_report">نسخ</string>
-    <string name="copy_selected_reports">نسخ التقارير المحددة</string>
     <string name="delete_report">حذف</string>
     <string name="delete_selected_reports">حذف التقارير المحددة</string>
     <string name="diagnostic_reason_anr">التطبيق لا يستجيب</string>
@@ -180,7 +179,6 @@
     <string name="loading_apps">جارٍ تحميل التطبيقات</string>
     <string name="locate_bundle">تحديد موقع الحزمة</string>
     <string name="log_save_failed">تعذر بدء حفظ السجل.</string>
-    <string name="log_save_started">بدأ حفظ السجل.</string>
     <string name="message_reset_layout">هل تريد إعادة ضبط تخطيط عناصر التحكم الافتراضية إلى الوضع الافتراضي؟</string>
     <string name="open_github">فتح GitHub</string>
     <string name="remove_screen_preset">إزالة إعداد مسبق للدقة</string>
@@ -1186,14 +1184,6 @@
         <item quantity="few">حذف %1$d تقارير تشخيص؟</item>
         <item quantity="many">حذف %1$d تقرير تشخيص؟</item>
         <item quantity="other">حذف %1$d تقرير تشخيص؟</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="zero">نُسخت %1$d تقارير</item>
-        <item quantity="one">نُسخ تقرير واحد (%1$d)</item>
-        <item quantity="two">نُسخ تقريران (%1$d)</item>
-        <item quantity="few">نُسخت %1$d تقارير</item>
-        <item quantity="many">نُسخ %1$d تقريرًا</item>
-        <item quantity="other">نُسخ %1$d تقرير</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="zero">%1$d تقارير محددة</item>

@@ -168,12 +168,12 @@ internal class ScreenSoftBarComposeController(
 internal fun ScreenSoftBarContent(
     presentation: ScreenSoftBarPresentation,
     menuVisible: Boolean,
-    menuFocusIndex: Int = 0,
-    menuFocusVisible: Boolean = false,
     onOpenMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onCommand: (Command) -> Unit,
     modifier: Modifier = Modifier,
+    menuFocusIndex: Int = 0,
+    menuFocusVisible: Boolean = false,
     onNavigationFocusChanged: (Boolean) -> Unit = {},
 ) {
     val left = presentation.left

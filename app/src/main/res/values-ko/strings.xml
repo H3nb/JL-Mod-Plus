@@ -130,7 +130,6 @@
     <string name="config_missing_app_storage_generic">앱을 찾을 수 없습니다.\n저장 장치를 사용할 수 있는지 확인하거나 바로가기를 다시 만드세요.</string>
     <string name="config_missing_app_storage_named">앱을 찾을 수 없습니다.\n저장 장치 “%1$s”를 사용할 수 있는지 확인하거나 바로가기를 다시 만드세요.</string>
     <string name="copy_report">복사</string>
-    <string name="copy_selected_reports">선택한 보고서 복사</string>
     <string name="create">만들기</string>
     <string name="delete_report">삭제</string>
     <string name="delete_selected_reports">선택한 보고서 삭제</string>
@@ -147,7 +146,6 @@
     <string name="loading_info">정보 불러오는 중…</string>
     <string name="locate_bundle">번들 찾기</string>
     <string name="log_save_failed">로그 저장을 시작하지 못했습니다.</string>
-    <string name="log_save_started">로그 저장을 시작했습니다.</string>
     <string name="message_reset_layout">가상 컨트롤 배치를 기본값으로 초기화할까요?</string>
     <string name="open_github">GitHub 열기</string>
     <string name="remove_screen_preset">해상도 프리셋 제거</string>
@@ -1026,9 +1024,6 @@
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">진단 보고서 %1$d개를 삭제하시겠습니까?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="other">보고서 %1$d개를 클립보드에 복사했습니다</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="other">%1$d개 선택됨</item>

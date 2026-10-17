@@ -593,13 +593,13 @@ internal fun RuntimeEmulationSpeedDialog(
 internal fun RuntimeMenuHost(
     state: RuntimeMenuUiState,
     menuVisible: Boolean,
-    virtualKeyboardPage: Boolean = false,
-    controllerFocusIndex: Int = -1,
     actions: RuntimeMenuActions,
     onDismissMenu: () -> Unit,
+    modifier: Modifier = Modifier,
+    virtualKeyboardPage: Boolean = false,
+    controllerFocusIndex: Int = -1,
     onOpenVirtualKeyboardPage: () -> Unit = {},
     onCloseVirtualKeyboardPage: () -> Unit = {},
-    modifier: Modifier = Modifier,
     onNavigationFocusChanged: (Boolean) -> Unit = {},
 ) {
     Box(

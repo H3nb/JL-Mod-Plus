@@ -122,7 +122,6 @@
     <string name="config_missing_app_storage_generic">Az alkalmazás nem található.\nEllenőrizze, hogy a tárolóeszköz elérhető-e, vagy hozza létre újra a parancsikont.</string>
     <string name="config_missing_app_storage_named">Az alkalmazás nem található.\nEllenőrizze, hogy a(z) „%1$s” tárolóeszköz elérhető-e, vagy hozza létre újra a parancsikont.</string>
     <string name="copy_report">Másolás</string>
-    <string name="copy_selected_reports">Kijelölt jelentések másolása</string>
     <string name="delete_report">Törlés</string>
     <string name="delete_selected_reports">Kijelölt jelentések törlése</string>
     <string name="diagnostic_reason_anr">Az alkalmazás nem válaszol</string>
@@ -138,7 +137,6 @@
     <string name="loading_info">Információk betöltése…</string>
     <string name="locate_bundle">Csomag megkeresése</string>
     <string name="log_save_failed">Nem sikerült elindítani a napló mentését.</string>
-    <string name="log_save_started">A napló mentése elindult.</string>
     <string name="message_reset_layout">Visszaállítja a virtuális vezérlők elrendezését az alapértelmezettre?</string>
     <string name="open_github">GitHub megnyitása</string>
     <string name="remove_screen_preset">Felbontási előbeállítás eltávolítása</string>
@@ -1058,10 +1056,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Töröl %1$d diagnosztikai jelentést?</item>
         <item quantity="other">Töröl %1$d diagnosztikai jelentést?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d jelentés a vágólapra másolva</item>
-        <item quantity="other">%1$d jelentés a vágólapra másolva</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d kijelölve</item>

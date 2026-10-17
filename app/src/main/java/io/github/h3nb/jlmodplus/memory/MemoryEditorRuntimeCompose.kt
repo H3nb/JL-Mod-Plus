@@ -1485,6 +1485,7 @@ private fun RuntimeUnknownSearchDialog(
                                     predicate = it
                                     actions.setUnknownSearchPredicate(it)
                                 },
+                                modifier = Modifier.fillMaxWidth(),
                             )
                             RuntimeTypeMenu(
                                 type = type,
@@ -2485,8 +2486,8 @@ private fun RuntimeSearchControlRow(
 private fun RuntimePredicateMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
-    enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
@@ -2503,7 +2504,7 @@ private fun RuntimePredicateMenu(
 private fun RuntimeRelativeMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
@@ -2542,7 +2543,7 @@ private fun RuntimeEditTypeMenu(
     type: Int,
     types: List<Int>,
     onType: (Int) -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
         value = type,

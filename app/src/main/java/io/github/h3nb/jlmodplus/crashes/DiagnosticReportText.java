@@ -8,8 +8,6 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import java.util.List;
-
 /** Human-readable local presentation derived from the same interpretation used for export. */
 final class DiagnosticReportText {
 	private DiagnosticReportText() {}
@@ -100,15 +98,6 @@ final class DiagnosticReportText {
 					.append(stack.trim()).append('\n');
 		}
 		return text.toString().trim();
-	}
-
-	static String buildBatch(List<LocalDiagnosticRepository.Record> records) {
-		StringBuilder text = new StringBuilder();
-		for (LocalDiagnosticRepository.Record record : records) {
-			if (text.length() > 0) text.append("\n\n---\n\n");
-			text.append(build(record));
-		}
-		return text.toString();
 	}
 
 	static String withNativeSummary(String report, String nativeSummary) {

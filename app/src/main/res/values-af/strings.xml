@@ -35,7 +35,6 @@
     <string name="config_missing_app_storage_generic">Toepassing nie gevind nie.\nKontroleer of die bergingstoestel beskikbaar is, of skep die kortpad weer.</string>
     <string name="config_missing_app_storage_named">Toepassing nie gevind nie.\nKontroleer of die bergingstoestel “%1$s” beskikbaar is, of skep die kortpad weer.</string>
     <string name="copy_report">Kopieer</string>
-    <string name="copy_selected_reports">Kopieer gekose verslae</string>
     <string name="create">Skep</string>
     <string name="create_apps_dir_failed">Kon nie die werkvouer hier voorberei nie:\n%1$s\nKies ’n ander vouer.</string>
     <string name="default_label">%1$s (verstek)</string>
@@ -60,7 +59,6 @@
     <string name="loading_info">Besig om inligting te laai…</string>
     <string name="locate_bundle">Soek bundel</string>
     <string name="log_save_failed">Kon nie begin om die logboek te stoor nie.</string>
-    <string name="log_save_started">Die stoor van die logboek het begin.</string>
     <string name="message_delete">Vee hierdie toepassing, sy instellings en stoordata uit? Dit verwyder ook sy Biblioteekinskrywing.</string>
     <string name="message_reset_layout">Herstel die uitleg van virtuele kontroles na die verstek?</string>
     <string name="more">Meer</string>
@@ -1058,10 +1056,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Vee %1$d diagnostiese verslag uit?</item>
         <item quantity="other">Vee %1$d diagnostiese verslae uit?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d verslag gekopieer</item>
-        <item quantity="other">%1$d verslae gekopieer</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d gekies</item>

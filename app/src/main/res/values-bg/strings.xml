@@ -142,7 +142,6 @@
     <string name="config_missing_app_storage_generic">Приложението не е намерено.\nПроверете дали устройството за съхранение е налично или създайте отново прекия път.</string>
     <string name="config_missing_app_storage_named">Приложението не е намерено.\nПроверете дали устройството за съхранение „%1$s“ е налично или създайте отново прекия път.</string>
     <string name="copy_report">Копиране</string>
-    <string name="copy_selected_reports">Копиране на избраните отчети</string>
     <string name="delete_report">Изтриване</string>
     <string name="delete_selected_reports">Изтриване на избраните отчети</string>
     <string name="diagnostic_reason_anr">Приложението не отговаря</string>
@@ -158,7 +157,6 @@
     <string name="loading_info">Зареждане на информация…</string>
     <string name="locate_bundle">Намиране на пакет</string>
     <string name="log_save_failed">Запазването на регистрационния файл не може да бъде стартирано.</string>
-    <string name="log_save_started">Запазването на регистрационния файл започна.</string>
     <string name="message_reset_layout">Да се възстанови ли подредбата по подразбиране на виртуалните контроли?</string>
     <string name="open_github">Отваряне на GitHub</string>
     <string name="remove_screen_preset">Премахване на предварително зададена резолюция</string>
@@ -1058,10 +1056,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Да се изтрие ли %1$d диагностичен отчет?</item>
         <item quantity="other">Да се изтрият ли %1$d диагностични отчета?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d отчет е копиран в клипборда</item>
-        <item quantity="other">%1$d отчета са копирани в клипборда</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">Избран е %1$d</item>

@@ -8,6 +8,7 @@
 package io.github.h3nb.jlmodplus.config
 
 import android.util.SparseIntArray
+import androidx.core.util.size
 import java.util.Collections
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -57,7 +58,7 @@ object ProfileKeyMappings {
     }
 
     @JvmStatic fun fromSparse(values: SparseIntArray?): Map<Int, Int> = buildMap {
-        if (values != null) for (index in 0 until values.size()) put(values.keyAt(index), values.valueAt(index))
+        if (values != null) for (index in 0 until values.size) put(values.keyAt(index), values.valueAt(index))
     }
 
     @JvmStatic fun encode(values: SparseIntArray): String =

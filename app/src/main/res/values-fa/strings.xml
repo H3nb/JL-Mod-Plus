@@ -108,7 +108,6 @@
     <string name="config_missing_app_storage_generic">برنامه یافت نشد.\nبررسی کنید که دستگاه ذخیره‌سازی در دسترس باشد، یا میان‌بر را دوباره ایجاد کنید.</string>
     <string name="config_missing_app_storage_named">برنامه یافت نشد.\nبررسی کنید که دستگاه ذخیره‌سازی «%1$s» در دسترس باشد، یا میان‌بر را دوباره ایجاد کنید.</string>
     <string name="copy_report">کپی</string>
-    <string name="copy_selected_reports">کپی گزارش‌های انتخاب‌شده</string>
     <string name="create">ایجاد</string>
     <string name="create_apps_dir_failed">آماده‌سازی پوشهٔ کاری در این مسیر ممکن نشد:\n%1$s\nپوشهٔ دیگری انتخاب کنید.</string>
     <string name="default_label">%1$s (پیش‌فرض)</string>
@@ -128,7 +127,6 @@
     <string name="loading_apps">در حال بارگیری برنامه‌ها</string>
     <string name="locate_bundle">یافتن بسته</string>
     <string name="log_save_failed">شروع ذخیرهٔ گزارش رخدادها ممکن نشد.</string>
-    <string name="log_save_started">ذخیرهٔ گزارش رخدادها آغاز شد.</string>
     <string name="message_reset_layout">چیدمان کنترل‌های مجازی به حالت پیش‌فرض بازنشانی شود؟</string>
     <string name="not_saved_exists">از قبل وجود دارد</string>
     <string name="open_github">باز کردن GitHub</string>
@@ -1058,10 +1056,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d گزارش عیب‌یابی حذف شود؟</item>
         <item quantity="other">%1$d گزارش عیب‌یابی حذف شود؟</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d گزارش کپی شد</item>
-        <item quantity="other">%1$d گزارش کپی شد</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d مورد انتخاب شده است</item>

@@ -166,7 +166,6 @@
     <string name="config_missing_app_storage_generic">ऐप नहीं मिला।\nदेखें कि स्टोरेज डिवाइस उपलब्ध है या नहीं, या शॉर्टकट फिर से बनाएँ।</string>
     <string name="config_missing_app_storage_named">ऐप नहीं मिला।\nदेखें कि “%1$s” स्टोरेज डिवाइस उपलब्ध है या नहीं, या शॉर्टकट फिर से बनाएँ।</string>
     <string name="copy_report">कॉपी करें</string>
-    <string name="copy_selected_reports">चुनी गई रिपोर्ट कॉपी करें</string>
     <string name="delete_report">मिटाएँ</string>
     <string name="delete_selected_reports">चुनी गई रिपोर्ट मिटाएँ</string>
     <string name="diagnostic_reason_anr">ऐप जवाब नहीं दे रहा</string>
@@ -180,7 +179,6 @@
     <string name="loading_apps">ऐप लोड हो रहे हैं</string>
     <string name="locate_bundle">बंडल ढूँढ़ें</string>
     <string name="log_save_failed">लॉग सहेजना शुरू नहीं हो सका।</string>
-    <string name="log_save_started">लॉग सहेजना शुरू हो गया।</string>
     <string name="message_reset_layout">वर्चुअल कंट्रोल का लेआउट डिफ़ॉल्ट पर रीसेट करें?</string>
     <string name="open_github">GitHub खोलें</string>
     <string name="remove_screen_preset">रिज़ॉल्यूशन प्रीसेट हटाएँ</string>
@@ -1058,10 +1056,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d निदान रिपोर्ट हटाएँ?</item>
         <item quantity="other">%1$d निदान रिपोर्ट हटाएँ?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d रिपोर्ट क्लिपबोर्ड पर कॉपी की गई</item>
-        <item quantity="other">%1$d रिपोर्ट क्लिपबोर्ड पर कॉपी की गईं</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d चुना गया</item>
