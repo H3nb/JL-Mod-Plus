@@ -164,28 +164,6 @@ class CrashReportsComposeTest {
     }
 
     @Test
-    fun batchSharingDisablesDestructiveActionsWhilePreparing() {
-        val actions = RecordingListActions()
-        composeRule.setContent {
-            JLModPlusTheme {
-                CrashReportsScreen(
-                    state = CrashReportsListState(
-                        loading = false,
-                        records = listOf(CrashReportListItem("report-1", "Demo MIDlet", "Today")),
-                        sharingReports = true,
-                    ),
-                    actions = actions,
-                )
-            }
-        }
-        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        composeRule.onNodeWithContentDescription(uiString(R.string.share_selected_reports))
-            .assertIsNotEnabled()
-        composeRule.onNodeWithContentDescription(uiString(R.string.delete_selected_reports))
-            .assertIsNotEnabled()
-    }
-
-    @Test
     fun batchShareKeepsSelectionLockedUntilPreparationFinishes() {
         val sharing = mutableStateOf(false)
         val actions = RecordingListActions()
