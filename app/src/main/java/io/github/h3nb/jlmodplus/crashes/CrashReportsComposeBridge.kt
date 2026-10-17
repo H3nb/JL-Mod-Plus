@@ -131,7 +131,7 @@ data class CrashReportsListState(
     val loading: Boolean,
     val records: List<CrashReportListItem>,
     val savingLog: Boolean = false,
-    val sharingReports: Boolean = false,
+    val processingReports: Boolean = false,
 )
 
 /** Keeps list data observable without reinstalling the Activity's Compose content. */
@@ -154,8 +154,8 @@ class CrashReportsListController internal constructor(
         state = state.copy(savingLog = saving)
     }
 
-    fun setSharingReports(sharing: Boolean) {
-        state = state.copy(sharingReports = sharing)
+    fun setProcessingReports(sharing: Boolean) {
+        state = state.copy(processingReports = sharing)
     }
 }
 
@@ -196,8 +196,8 @@ fun CrashReportsScreen(
     var selectedIds by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(state.records, state.sharingReports) {
-        if (state.sharingReports) return@LaunchedEffect
+    LaunchedEffect(state.records, state.processingReports) {
+        if (state.processingReports) return@LaunchedEffect
         val retainedIds = state.records.mapTo(HashSet()) { it.id }
         val retainedSelection = selectedIds.filter { it in retainedIds }
         if (retainedSelection != selectedIds) {
@@ -207,7 +207,7 @@ fun CrashReportsScreen(
 
     val selectionMode = selectedIds.isNotEmpty()
     fun toggleSelection(reportId: String) {
-        if (state.sharingReports) return
+        if (state.processingReports) return
         val updated = selectedIds.toMutableList()
         if (!updated.remove(reportId)) {
             updated.add(reportId)
@@ -215,8 +215,8 @@ fun CrashReportsScreen(
         selectedIds = updated.toList()
     }
 
-    // Freeze navigation while the selected ZIPs are being prepared.
-    if (state.sharingReports) BackHandler { }
+    // Freeze selection and navigation while either batch operation is running.
+    if (state.processingReports) BackHandler { }
 
     Scaffold(
         topBar = {
@@ -238,7 +238,7 @@ fun CrashReportsScreen(
                 },
                 navigationIcon = {
                     IconButton(
-                        enabled = !state.sharingReports,
+                        enabled = !state.processingReports,
                         onClick = {
                             if (selectionMode) {
                                 showDeleteConfirmation = false
@@ -266,7 +266,7 @@ fun CrashReportsScreen(
                     if (selectionMode) {
                         val allSelected = selectedIds.size == state.records.size
                         IconButton(
-                            enabled = !state.sharingReports,
+                            enabled = !state.processingReports,
                             onClick = {
                                 selectedIds = if (allSelected) {
                                         emptyList()
@@ -290,7 +290,7 @@ fun CrashReportsScreen(
                         }
                         IconButton(
                             onClick = { actions.onShareSelected(selectedIds.toList()) },
-                            enabled = !state.sharingReports,
+                            enabled = !state.processingReports,
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_share),
@@ -299,7 +299,7 @@ fun CrashReportsScreen(
                         }
                         IconButton(
                             onClick = { showDeleteConfirmation = true },
-                            enabled = !state.sharingReports,
+                            enabled = !state.processingReports,
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_delete),
@@ -390,7 +390,7 @@ fun CrashReportsScreen(
                                 if (selectionMode) {
                                     Modifier.toggleable(
                                         value = selected,
-                                        enabled = !state.sharingReports,
+                                        enabled = !state.processingReports,
                                         role = Role.Checkbox,
                                         onValueChange = { toggleSelection(record.id) },
                                     )

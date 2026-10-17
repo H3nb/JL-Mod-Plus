@@ -164,7 +164,7 @@ class CrashReportsComposeTest {
     }
 
     @Test
-    fun batchShareKeepsSelectionLockedUntilPreparationFinishes() {
+    fun batchOperationKeepsSelectionLockedUntilCompletion() {
         val sharing = mutableStateOf(false)
         val actions = RecordingListActions()
         composeRule.setContent {
@@ -176,7 +176,7 @@ class CrashReportsComposeTest {
                             CrashReportListItem("report-1", "Demo MIDlet", "Today"),
                             CrashReportListItem("report-2", "Other MIDlet", "Today"),
                         ),
-                        sharingReports = sharing.value,
+                        processingReports = sharing.value,
                     ),
                     actions = actions,
                 )
@@ -193,6 +193,8 @@ class CrashReportsComposeTest {
             .assertIsNotEnabled()
         composeRule.onNodeWithContentDescription(uiString(R.string.delete_selected_reports))
             .assertIsNotEnabled()
+        assertTrue(actions.sharedIds.isEmpty())
+        assertTrue(actions.deletedIds.isEmpty())
 
         composeRule.onNodeWithText("Other MIDlet").performTouchInput { click() }
         composeRule.onNodeWithText(

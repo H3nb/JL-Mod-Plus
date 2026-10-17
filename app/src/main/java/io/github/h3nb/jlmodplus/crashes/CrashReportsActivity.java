@@ -51,7 +51,7 @@ public class CrashReportsActivity extends AppCompatActivity {
 	private boolean resumed;
 	private boolean refreshRetryScheduled;
 	private boolean logSaveRunning;
-	private boolean sharingReports;
+	private boolean processingReports;
 	private int readGeneration;
 
 	@Override
@@ -183,11 +183,11 @@ public class CrashReportsActivity extends AppCompatActivity {
 	}
 
 	private void shareSelected(List<String> reportIds) {
-		if (sharingReports) return;
+		if (processingReports) return;
 		List<LocalDiagnosticRepository.Record> records = selectedRecords(reportIds);
 		if (records.isEmpty()) return;
-		sharingReports = true;
-		composeController.setSharingReports(true);
+		processingReports = true;
+		composeController.setProcessingReports(true);
 		ThemedToast.show(this, R.string.crash_report_bundle_preparing, Toast.LENGTH_SHORT);
 		Context appContext = getApplicationContext();
 		new Thread(() -> {
@@ -212,9 +212,9 @@ public class CrashReportsActivity extends AppCompatActivity {
 			}
 			boolean ready = prepared;
 			runOnUiThread(() -> {
-				sharingReports = false;
+				processingReports = false;
 				if (isFinishing() || isDestroyed()) return;
-				composeController.setSharingReports(false);
+				composeController.setProcessingReports(false);
 				if (!ready) {
 					ThemedToast.show(this, R.string.crash_report_bundle_failed, Toast.LENGTH_LONG);
 					return;
@@ -245,24 +245,33 @@ public class CrashReportsActivity extends AppCompatActivity {
 	}
 
 	private void deleteSelected(List<String> reportIds) {
-		if (sharingReports) return;
+		if (processingReports) return;
 		List<LocalDiagnosticRepository.Record> records = selectedRecords(reportIds);
 		if (records.isEmpty()) return;
+		processingReports = true;
+		composeController.setProcessingReports(true);
 		readGeneration++;
 		Context appContext = getApplicationContext();
 		new Thread(() -> {
 			boolean allSourcesDeleted = true;
 			boolean allBundlesDeleted = true;
-			for (LocalDiagnosticRepository.Record selected : records) {
-				LocalDiagnosticRepository.DeleteResult result =
-						LocalDiagnosticRepository.deleteWithArtifacts(appContext, selected);
-				allSourcesDeleted &= result.sourceDeleted;
-				allBundlesDeleted &= result.bundleDeleted;
+			try {
+				for (LocalDiagnosticRepository.Record selected : records) {
+					LocalDiagnosticRepository.DeleteResult result =
+							LocalDiagnosticRepository.deleteWithArtifacts(appContext, selected);
+					allSourcesDeleted &= result.sourceDeleted;
+					allBundlesDeleted &= result.bundleDeleted;
+				}
+			} catch (RuntimeException error) {
+				allSourcesDeleted = false;
+				android.util.Log.w("CrashReportsActivity", "Unable to delete diagnostic", error);
 			}
 			boolean finalAllSourcesDeleted = allSourcesDeleted;
 			boolean finalAllBundlesDeleted = allBundlesDeleted;
 			runOnUiThread(() -> {
+				processingReports = false;
 				if (isFinishing() || isDestroyed()) return;
+				composeController.setProcessingReports(false);
 				updateStoredRecords();
 				if (!finalAllSourcesDeleted) {
 					ThemedToast.show(

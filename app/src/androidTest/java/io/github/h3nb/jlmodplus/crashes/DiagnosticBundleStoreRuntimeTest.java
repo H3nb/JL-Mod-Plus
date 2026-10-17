@@ -12,6 +12,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -31,7 +32,9 @@ import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -44,6 +47,37 @@ import java.util.UUID;
 public class DiagnosticBundleStoreRuntimeTest {
     private static final String PREFS = "diagnostic_bundle_ownership";
     private static final String SLOT = "record.diagnostic_ci_ownership";
+
+    @Test
+    public void deletedSourceCannotBeRepublishedFromStaleRecord() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File source = new File(context.getFilesDir(), "diagnostics/java/ci-stale-"
+                + UUID.randomUUID() + ".java.properties");
+        JavaDiagnosticStore.Snapshot evidence = new JavaDiagnosticStore.Snapshot(
+                source, JavaDiagnosticStore.Kind.FATAL_UNCAUGHT,
+                System.currentTimeMillis(), context.getPackageName(), "main",
+                android.os.Process.myPid(), "instrumentation", 1L, 5,
+                null, null, null, null, null, "test", Build.VERSION.RELEASE,
+                Build.VERSION.SDK_INT, null, null, null, null,
+                "java.lang.IllegalStateException: test-only",
+                Collections.emptyList(), -1, null, null, null);
+        try {
+            JavaDiagnosticStore.write(source, evidence);
+            LocalDiagnosticRepository.Record retained = LocalDiagnosticRepository.findStored(
+                    context, "java:" + source.getName());
+            assertNotNull("The test source must be visible before deletion", retained);
+            assertTrue(LocalDiagnosticRepository.deleteWithArtifacts(context, retained).sourceDeleted);
+
+            try {
+                DiagnosticBundleStore.ensure(context, retained);
+                fail("Deleted evidence must not be republished from a stale selection");
+            } catch (IOException expected) {
+                assertEquals("Diagnostic source no longer exists", expected.getMessage());
+            }
+        } finally {
+            JavaDiagnosticStore.delete(evidence);
+        }
+    }
 
     @Test
     public void cleanupOnlyRemovesOwnedCandidateAndRetiredUris() throws Exception {

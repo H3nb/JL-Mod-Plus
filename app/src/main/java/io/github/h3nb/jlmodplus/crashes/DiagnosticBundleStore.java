@@ -65,6 +65,12 @@ final class DiagnosticBundleStore {
 			throw new IOException("Missing diagnostic incident");
 		}
 
+		// Sharing may arrive with a stale selection after a different screen deleted the source.
+		// Validate under the same lock as deleteWithArtifacts before publishing any new ZIP.
+		LocalDiagnosticRepository.Record current = LocalDiagnosticRepository.findStored(
+				context, record.getId());
+		if (current == null) throw new IOException("Diagnostic source no longer exists");
+		record = current;
 		IncidentSummary incident = record.getIncidentSummary();
 		String fileName = incident.bundleFileName();
 		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
