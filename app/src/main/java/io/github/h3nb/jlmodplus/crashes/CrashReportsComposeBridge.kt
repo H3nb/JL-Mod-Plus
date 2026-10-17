@@ -15,6 +15,7 @@
 
 package io.github.h3nb.jlmodplus.crashes
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.selection.toggleable
@@ -30,6 +31,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -73,7 +75,8 @@ import java.util.Date
 interface CrashReportsActions {
     fun onBack()
     fun onOpen(reportId: String)
-    fun onCopySelected(reportIds: List<String>)
+    fun onSaveLog()
+    fun onShareSelected(reportIds: List<String>)
     fun onDeleteSelected(reportIds: List<String>)
 }
 
@@ -101,16 +104,18 @@ data class DiagnosticBundleReadyState(
 data class CrashReportDetailState(
     val displayText: String,
     val readyBundle: DiagnosticBundleReadyState? = null,
+    val loading: Boolean = false,
 )
 
 class CrashReportDetailsController internal constructor(
     displayText: String,
+    loading: Boolean,
 ) {
-    var state by mutableStateOf(CrashReportDetailState(displayText))
+    var state by mutableStateOf(CrashReportDetailState(displayText, loading = loading))
         private set
 
     fun updateDisplay(displayText: String) {
-        state = state.copy(displayText = displayText)
+        state = state.copy(displayText = displayText, loading = false)
     }
 
     fun showBundleReady(fileName: String) {
@@ -125,6 +130,8 @@ class CrashReportDetailsController internal constructor(
 data class CrashReportsListState(
     val loading: Boolean,
     val records: List<CrashReportListItem>,
+    val savingLog: Boolean = false,
+    val processingReports: Boolean = false,
 )
 
 /** Keeps list data observable without reinstalling the Activity's Compose content. */
@@ -137,10 +144,18 @@ class CrashReportsListController internal constructor(
         private set
 
     fun update(records: List<LocalDiagnosticRepository.Record>) {
-        state = CrashReportsListState(
+        state = state.copy(
             loading = false,
             records = records.map { it.toComposeListItem(context) },
         )
+    }
+
+    fun setSavingLog(saving: Boolean) {
+        state = state.copy(savingLog = saving)
+    }
+
+    fun setProcessingReports(sharing: Boolean) {
+        state = state.copy(processingReports = sharing)
     }
 }
 
@@ -181,7 +196,8 @@ fun CrashReportsScreen(
     var selectedIds by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(state.records) {
+    LaunchedEffect(state.records, state.processingReports) {
+        if (state.processingReports) return@LaunchedEffect
         val retainedIds = state.records.mapTo(HashSet()) { it.id }
         val retainedSelection = selectedIds.filter { it in retainedIds }
         if (retainedSelection != selectedIds) {
@@ -191,12 +207,16 @@ fun CrashReportsScreen(
 
     val selectionMode = selectedIds.isNotEmpty()
     fun toggleSelection(reportId: String) {
+        if (state.processingReports) return
         val updated = selectedIds.toMutableList()
         if (!updated.remove(reportId)) {
             updated.add(reportId)
         }
         selectedIds = updated.toList()
     }
+
+    // Freeze selection and navigation while either batch operation is running.
+    if (state.processingReports) BackHandler { }
 
     Scaffold(
         topBar = {
@@ -218,6 +238,7 @@ fun CrashReportsScreen(
                 },
                 navigationIcon = {
                     IconButton(
+                        enabled = !state.processingReports,
                         onClick = {
                             if (selectionMode) {
                                 showDeleteConfirmation = false
@@ -234,11 +255,20 @@ fun CrashReportsScreen(
                     }
                 },
                 actions = {
+                    if (!selectionMode) {
+                        TextButton(
+                            onClick = actions::onSaveLog,
+                            enabled = !state.savingLog,
+                        ) {
+                            Text(stringResource(R.string.save_log))
+                        }
+                    }
                     if (selectionMode) {
                         val allSelected = selectedIds.size == state.records.size
                         IconButton(
+                            enabled = !state.processingReports,
                             onClick = {
-                                    selectedIds = if (allSelected) {
+                                selectedIds = if (allSelected) {
                                         emptyList()
                                     } else {
                                         state.records.map { it.id }
@@ -258,13 +288,19 @@ fun CrashReportsScreen(
                                 ),
                             )
                         }
-                        IconButton(onClick = { actions.onCopySelected(selectedIds.toList()) }) {
+                        IconButton(
+                            onClick = { actions.onShareSelected(selectedIds.toList()) },
+                            enabled = !state.processingReports,
+                        ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_content_copy),
-                                contentDescription = stringResource(R.string.copy_selected_reports),
+                                painter = painterResource(R.drawable.ic_share),
+                                contentDescription = stringResource(R.string.share_selected_reports),
                             )
                         }
-                        IconButton(onClick = { showDeleteConfirmation = true }) {
+                        IconButton(
+                            onClick = { showDeleteConfirmation = true },
+                            enabled = !state.processingReports,
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_delete),
                                 contentDescription = stringResource(R.string.delete_selected_reports),
@@ -354,6 +390,7 @@ fun CrashReportsScreen(
                                 if (selectionMode) {
                                     Modifier.toggleable(
                                         value = selected,
+                                        enabled = !state.processingReports,
                                         role = Role.Checkbox,
                                         onValueChange = { toggleSelection(record.id) },
                                     )
@@ -415,19 +452,22 @@ fun CrashReportDetailsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = actions::onCopy) {
+                    IconButton(onClick = actions::onCopy, enabled = !state.loading) {
                         Icon(
                             painter = painterResource(R.drawable.ic_content_copy),
                             contentDescription = stringResource(R.string.copy_report),
                         )
                     }
-                    IconButton(onClick = actions::onReportGitHub) {
+                    IconButton(onClick = actions::onReportGitHub, enabled = !state.loading) {
                         Icon(
                             painter = painterResource(R.drawable.ic_open_external),
                             contentDescription = stringResource(R.string.report_on_github),
                         )
                     }
-                    IconButton(onClick = { showDeleteConfirmation = true }) {
+                    IconButton(
+                        onClick = { showDeleteConfirmation = true },
+                        enabled = !state.loading,
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_delete),
                             contentDescription = stringResource(R.string.delete_report),
@@ -437,26 +477,35 @@ fun CrashReportDetailsScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
+        if (state.loading) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center,
             ) {
-                SelectionContainer {
-                    Text(
-                        text = state.displayText,
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    SelectionContainer {
+                        Text(
+                            text = state.displayText,
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
                 }
             }
         }
@@ -591,13 +640,15 @@ object CrashReportsComposeBridge {
     }
 
     @JvmStatic
+    @JvmOverloads
     fun installDetails(
         view: ComposeView,
         displayText: String,
         actions: CrashReportDetailsActions,
+        loading: Boolean = false,
     ): CrashReportDetailsController {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        val controller = CrashReportDetailsController(displayText)
+        val controller = CrashReportDetailsController(displayText, loading)
         view.setContent {
             JLModPlusTheme {
                 CrashReportDetailsScreen(

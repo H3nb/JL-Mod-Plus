@@ -160,20 +160,19 @@ final class IncidentInterpreter {
 		if (primary != null && primary.firstFrame() != null) {
 			String frameClass = primary.firstFrame().className;
 			if (frameClass != null) {
-				// Proven framework origin wins over session ownership. The fallback below exists
-				// only for an uncaught worker already proven to be guest-owned at capture time.
-				if (isFrameworkClass(frameClass)) {
-					return IncidentSummary.FailureOrigin.JL_MOD_PLUS;
-				}
 				if (entrypoint != null
 						&& (frameClass.equals(entrypoint) || frameClass.startsWith(entrypoint + "$"))) {
 					return IncidentSummary.FailureOrigin.MIDLET;
 				}
+				// A direct host fatal outside a known guest callback identifies host
+				// execution, not necessarily the root cause of the exception.
+				if (kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
+						&& entrypoint == null && boundary == null
+						&& (frameClass.startsWith("io.github.h3nb.jlmodplus.")
+								|| frameClass.startsWith("ru.playsoftware.j2meloader."))) {
+					return IncidentSummary.FailureOrigin.JL_MOD_PLUS;
+				}
 			}
-		}
-		if (kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE
-				&& boundary == MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD) {
-			return IncidentSummary.FailureOrigin.MIDLET;
 		}
 		return IncidentSummary.FailureOrigin.UNKNOWN;
 	}

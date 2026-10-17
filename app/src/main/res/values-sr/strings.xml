@@ -34,7 +34,6 @@
     <string name="config_missing_app_storage_generic">Апликација није пронађена.\nПроверите да ли је уређај за складиштење доступан или поново направите пречицу.</string>
     <string name="config_missing_app_storage_named">Апликација није пронађена.\nПроверите да ли је уређај за складиштење „%1$s“ доступан или поново направите пречицу.</string>
     <string name="copy_report">Копирај</string>
-    <string name="copy_selected_reports">Копирај изабране извештаје</string>
     <string name="create">Направи</string>
     <string name="create_apps_dir_failed">Није могуће припремити радни директоријум на:\n%1$s\nИзаберите други директоријум.</string>
     <string name="default_label">%1$s (подразумевано)</string>
@@ -59,7 +58,6 @@
     <string name="loading_info">Учитавање података…</string>
     <string name="locate_bundle">Пронађи пакет</string>
     <string name="log_save_failed">Није могуће започети чување евиденције.</string>
-    <string name="log_save_started">Чување евиденције је започело.</string>
     <string name="message_delete">Обрисати ову апликацију, њена подешавања и сачуване податке? Тиме се уклања и њена ставка из Библиотеке.</string>
     <string name="message_reset_layout">Вратити распоред виртуалних контрола на подразумевани?</string>
     <string name="more">Још</string>
@@ -1089,11 +1087,6 @@
         <item quantity="one">Обрисати %1$d дијагностички извештај?</item>
         <item quantity="few">Обрисати %1$d дијагностичка извештаја?</item>
         <item quantity="other">Обрисати %1$d дијагностичких извештаја?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">Копиран је %1$d извештај</item>
-        <item quantity="few">Копирана су %1$d извештаја</item>
-        <item quantity="other">Копирано је %1$d извештаја</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">Изабран је %1$d извештај</item>

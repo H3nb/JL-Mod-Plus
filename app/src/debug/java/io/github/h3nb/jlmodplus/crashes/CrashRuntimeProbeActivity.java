@@ -51,10 +51,9 @@ public final class CrashRuntimeProbeActivity extends Activity {
 			// Deliberately leave outcome=NONE: this represents an abrupt process death that cannot
 			// execute Java exception reporting or graceful MIDlet teardown.
 			journal.transition(MidletSessionJournal.Stage.RUNNING);
-			// Let the Activity launch transaction finish before killing the remote process. This keeps
-			// the synchronously-written session journal correlated with ApplicationExitInfo on API 30+
-			// instead of allowing the framework projection to race the journal visibility check.
-			new Handler(Looper.getMainLooper()).post(() -> Process.killProcess(Process.myPid()));
+			// Complete the launch transaction, then remove the probe task before the real SIGKILL.
+			// Otherwise Android may revive this Activity and repeatedly kill a new :midlet PID.
+			new Handler(Looper.getMainLooper()).post(this::finishTaskAndKillProcess);
 			return;
 		}
 
@@ -79,8 +78,15 @@ public final class CrashRuntimeProbeActivity extends Activity {
 				throw new IllegalStateException("Unable to persist debug session failure");
 			}
 			journal.complete(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
-			Process.killProcess(Process.myPid());
+			runOnUiThread(this::finishTaskAndKillProcess);
 		}, "jlmod-crash-runtime-probe");
 		crashThread.start();
+	}
+
+	private void finishTaskAndKillProcess() {
+		// This debug-only Activity must not be recreated after deliberate process death.
+		// Remove its task through ActivityTaskManager before sending the real SIGKILL.
+		finishAndRemoveTask();
+		Process.killProcess(Process.myPid());
 	}
 }

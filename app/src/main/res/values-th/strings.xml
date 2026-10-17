@@ -81,7 +81,6 @@
     <string name="config_missing_app_storage_generic">ไม่พบแอป\nตรวจสอบว่าอุปกรณ์จัดเก็บข้อมูลพร้อมใช้งานหรือสร้างทางลัดใหม่</string>
     <string name="config_missing_app_storage_named">ไม่พบแอป\nตรวจสอบว่าอุปกรณ์จัดเก็บข้อมูล “%1$s” พร้อมใช้งานหรือสร้างทางลัดใหม่</string>
     <string name="copy_report">คัดลอก</string>
-    <string name="copy_selected_reports">คัดลอกรายงานที่เลือก</string>
     <string name="create">สร้าง</string>
     <string name="create_apps_dir_failed">ไม่สามารถเตรียมไดเรกทอรีทำงานที่:\n%1$s\nเลือกไดเรกทอรีอื่น</string>
     <string name="default_label">%1$s (ค่าเริ่มต้น)</string>
@@ -102,7 +101,6 @@
     <string name="loading_info">กำลังโหลดข้อมูล…</string>
     <string name="locate_bundle">ค้นหาชุดข้อมูล</string>
     <string name="log_save_failed">ไม่สามารถเริ่มบันทึกล็อกได้</string>
-    <string name="log_save_started">เริ่มบันทึกล็อกแล้ว</string>
     <string name="message_reset_layout">รีเซ็ตการจัดวางตัวควบคุมเสมือนเป็นค่าเริ่มต้นหรือไม่</string>
     <string name="not_saved_exists">มีอยู่แล้ว</string>
     <string name="open_github">เปิด GitHub</string>
@@ -1026,9 +1024,6 @@
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">ลบรายงานการวินิจฉัย %1$d รายการหรือไม่</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="other">คัดลอกรายงาน %1$d รายการไปยังคลิปบอร์ดแล้ว</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="other">เลือกแล้ว %1$d รายการ</item>

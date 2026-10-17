@@ -17,6 +17,7 @@ package io.github.h3nb.jlmodplus.ui
 
 import android.app.Activity
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilterChipDefaults
@@ -121,7 +122,7 @@ enum class AccentPalette(val key: String) {
             val stored = preferences.getString(Constants.PREF_ACCENT, null)
             val selected = fromKey(stored)
             if (stored != null && stored != selected.key) {
-                preferences.edit().putString(Constants.PREF_ACCENT, selected.key).apply()
+                preferences.edit { putString(Constants.PREF_ACCENT, selected.key) }
             }
             return selected
         }

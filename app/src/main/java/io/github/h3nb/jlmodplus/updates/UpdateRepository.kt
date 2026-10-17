@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.BuildConfig
 import kotlinx.coroutines.CancellationException
@@ -53,10 +54,11 @@ internal class UpdateRepository private constructor(context: Context) {
     init {
         val identity = BuildConfig.VERSION_NAME + "#" + BuildConfig.VERSION_CODE
         if (preferences.getString(KEY_INSTALLED, null) != identity) {
-            preferences.edit()
-                .putString(KEY_INSTALLED, identity)
-                .remove(KEY_SUCCESS).remove(KEY_RESULT).remove(KEY_VERSION)
-                .remove(KEY_CODE).remove(KEY_URL).apply()
+            preferences.edit {
+                putString(KEY_INSTALLED, identity)
+                remove(KEY_SUCCESS).remove(KEY_RESULT).remove(KEY_VERSION)
+                remove(KEY_CODE).remove(KEY_URL)
+            }
             lastChecked = 0L
             status = UpdateStatus.NotChecked
         }
@@ -65,22 +67,24 @@ internal class UpdateRepository private constructor(context: Context) {
     fun selectChannel(value: UpdateChannel) {
         if (channel == value) return
         channel = value
-        preferences.edit().putString(KEY_CHANNEL, value.name)
-            .remove(KEY_SUCCESS).remove(KEY_RESULT).remove(KEY_VERSION)
-            .remove(KEY_CODE).remove(KEY_URL).apply()
+        preferences.edit {
+            putString(KEY_CHANNEL, value.name)
+            remove(KEY_SUCCESS).remove(KEY_RESULT).remove(KEY_VERSION)
+            remove(KEY_CODE).remove(KEY_URL)
+        }
         lastChecked = 0L
         status = UpdateStatus.NotChecked
     }
 
     fun configureAutomaticChecks(enabled: Boolean) {
         automaticChecks = enabled
-        preferences.edit().putBoolean(KEY_ENABLED, enabled).apply()
+        preferences.edit { putBoolean(KEY_ENABLED, enabled) }
     }
 
     fun takeUnnotifiedVersion(): String? {
         val candidate = (status as? UpdateStatus.Available)?.candidate ?: return null
         if (preferences.getString(KEY_NOTIFIED, null) == candidate.versionName) return null
-        preferences.edit().putString(KEY_NOTIFIED, candidate.versionName).apply()
+        preferences.edit { putString(KEY_NOTIFIED, candidate.versionName) }
         return candidate.versionName
     }
 
@@ -91,7 +95,7 @@ internal class UpdateRepository private constructor(context: Context) {
         val attempted = preferences.getLong(KEY_ATTEMPT, 0L)
         if (!manual && now - attempted in 0 until RETRY_DELAY_MS) return@withLock
 
-        preferences.edit().putLong(KEY_ATTEMPT, now).apply()
+        preferences.edit { putLong(KEY_ATTEMPT, now) }
         val requestedChannel = channel
         status = UpdateStatus.Checking
         try {

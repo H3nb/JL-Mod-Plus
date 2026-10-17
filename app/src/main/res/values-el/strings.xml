@@ -34,7 +34,6 @@
     <string name="config_missing_app_storage_generic">Η εφαρμογή δεν βρέθηκε.\nΕλέγξτε αν η συσκευή αποθήκευσης είναι διαθέσιμη ή δημιουργήστε ξανά τη συντόμευση.</string>
     <string name="config_missing_app_storage_named">Η εφαρμογή δεν βρέθηκε.\nΕλέγξτε αν η συσκευή αποθήκευσης «%1$s» είναι διαθέσιμη ή δημιουργήστε ξανά τη συντόμευση.</string>
     <string name="copy_report">Αντιγραφή</string>
-    <string name="copy_selected_reports">Αντιγραφή επιλεγμένων αναφορών</string>
     <string name="create">Δημιουργία</string>
     <string name="create_apps_dir_failed">Δεν ήταν δυνατή η προετοιμασία του καταλόγου εργασίας στη θέση:\n%1$s\nΕπιλέξτε άλλον κατάλογο.</string>
     <string name="default_label">%1$s (προεπιλογή)</string>
@@ -59,7 +58,6 @@
     <string name="loading_info">Φόρτωση πληροφοριών…</string>
     <string name="locate_bundle">Εντοπισμός πακέτου</string>
     <string name="log_save_failed">Δεν ήταν δυνατή η έναρξη αποθήκευσης του αρχείου καταγραφής.</string>
-    <string name="log_save_started">Η αποθήκευση του αρχείου καταγραφής ξεκίνησε.</string>
     <string name="message_delete">Να διαγραφεί αυτή η εφαρμογή, οι ρυθμίσεις και τα δεδομένα αποθήκευσής της; Αυτό αφαιρεί και την καταχώρισή της στη Βιβλιοθήκη.</string>
     <string name="message_reset_layout">Να επανέλθει η διάταξη των εικονικών χειριστηρίων στην προεπιλεγμένη;</string>
     <string name="more">Περισσότερα</string>
@@ -1057,10 +1055,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Να διαγραφεί %1$d διαγνωστική αναφορά;</item>
         <item quantity="other">Να διαγραφούν %1$d διαγνωστικές αναφορές;</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">Αντιγράφηκε %1$d αναφορά</item>
-        <item quantity="other">Αντιγράφηκαν %1$d αναφορές</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d επιλεγμένη</item>

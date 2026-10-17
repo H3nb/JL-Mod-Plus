@@ -97,7 +97,6 @@
     <string name="config_missing_app_storage_generic">Nie znaleziono aplikacji.\nSprawdź, czy nośnik pamięci jest dostępny, lub utwórz skrót ponownie.</string>
     <string name="config_missing_app_storage_named">Nie znaleziono aplikacji.\nSprawdź, czy nośnik pamięci „%1$s” jest dostępny, lub utwórz skrót ponownie.</string>
     <string name="copy_report">Kopiuj</string>
-    <string name="copy_selected_reports">Kopiuj zaznaczone raporty</string>
     <string name="create">Utwórz</string>
     <string name="create_apps_dir_failed">Nie udało się przygotować katalogu roboczego w:\n%1$s\nWybierz inny katalog.</string>
     <string name="default_label">%1$s (domyślnie)</string>
@@ -118,7 +117,6 @@
     <string name="loading_info">Wczytywanie informacji…</string>
     <string name="locate_bundle">Znajdź pakiet</string>
     <string name="log_save_failed">Nie udało się rozpocząć zapisywania dziennika.</string>
-    <string name="log_save_started">Rozpoczęto zapisywanie dziennika.</string>
     <string name="message_reset_layout">Przywrócić domyślny układ wirtualnych elementów sterowania?</string>
     <string name="not_saved_exists">Już istnieje</string>
     <string name="open_github">Otwórz GitHub</string>
@@ -1122,12 +1120,6 @@
         <item quantity="few">Usunąć %1$d raporty diagnostyczne?</item>
         <item quantity="many">Usunąć %1$d raportów diagnostycznych?</item>
         <item quantity="other">Usunąć %1$d raportu diagnostycznego?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">Skopiowano %1$d raport do schowka</item>
-        <item quantity="few">Skopiowano %1$d raporty do schowka</item>
-        <item quantity="many">Skopiowano %1$d raportów do schowka</item>
-        <item quantity="other">Skopiowano %1$d raportu do schowka</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">Wybrano %1$d</item>

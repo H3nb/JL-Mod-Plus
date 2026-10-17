@@ -164,7 +164,6 @@
     <string name="config_missing_app_storage_generic">Застосунок не знайдено.\nПеревірте, чи доступний пристрій зберігання даних, або створіть ярлик знову.</string>
     <string name="config_missing_app_storage_named">Застосунок не знайдено.\nПеревірте, чи доступний пристрій зберігання даних «%1$s», або створіть ярлик знову.</string>
     <string name="copy_report">Копіювати</string>
-    <string name="copy_selected_reports">Копіювати вибрані звіти</string>
     <string name="delete_report">Видалити</string>
     <string name="delete_selected_reports">Видалити вибрані звіти</string>
     <string name="diagnostic_reason_anr">Застосунок не відповідає</string>
@@ -178,7 +177,6 @@
     <string name="loading_apps">Завантаження застосунків</string>
     <string name="locate_bundle">Знайти пакет</string>
     <string name="log_save_failed">Не вдалося розпочати збереження журналу.</string>
-    <string name="log_save_started">Збереження журналу розпочато.</string>
     <string name="message_reset_layout">Скинути розташування віртуальних елементів керування до типового?</string>
     <string name="open_github">Відкрити GitHub</string>
     <string name="remove_screen_preset">Вилучити шаблон роздільності</string>
@@ -1122,12 +1120,6 @@
         <item quantity="few">Видалити %1$d діагностичні звіти?</item>
         <item quantity="many">Видалити %1$d діагностичних звітів?</item>
         <item quantity="other">Видалити %1$d діагностичного звіту?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d звіт скопійовано в буфер обміну</item>
-        <item quantity="few">%1$d звіти скопійовано в буфер обміну</item>
-        <item quantity="many">%1$d звітів скопійовано в буфер обміну</item>
-        <item quantity="other">%1$d звіту скопійовано в буфер обміну</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">Вибрано %1$d</item>

@@ -34,7 +34,6 @@
     <string name="config_missing_app_storage_generic">Fant ikke applikasjonen.\nSjekk om lagringsenheten er tilgjengelig, eller opprett snarveien på nytt.</string>
     <string name="config_missing_app_storage_named">Fant ikke applikasjonen.\nSjekk om lagringsenheten «%1$s» er tilgjengelig, eller opprett snarveien på nytt.</string>
     <string name="copy_report">Kopier</string>
-    <string name="copy_selected_reports">Kopier valgte rapporter</string>
     <string name="create">Opprett</string>
     <string name="create_apps_dir_failed">Kunne ikke klargjøre arbeidsmappen på:\n%1$s\nVelg en annen mappe.</string>
     <string name="default_label">%1$s (standard)</string>
@@ -59,7 +58,6 @@
     <string name="loading_info">Laster informasjon…</string>
     <string name="locate_bundle">Finn pakke</string>
     <string name="log_save_failed">Kunne ikke begynne å lagre loggen.</string>
-    <string name="log_save_started">Logglagring startet.</string>
     <string name="message_delete">Slett denne appen, innstillingene og de lagrede dataene? Dette fjerner også oppføringen i Bibliotek.</string>
     <string name="message_reset_layout">Tilbakestill oppsettet for virtuelle kontroller til standard?</string>
     <string name="more">Mer</string>
@@ -1057,10 +1055,6 @@
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Slett %1$d diagnoserapport?</item>
         <item quantity="other">Slett %1$d diagnoserapporter?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d rapport kopiert</item>
-        <item quantity="other">%1$d rapporter kopiert</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d valgt</item>

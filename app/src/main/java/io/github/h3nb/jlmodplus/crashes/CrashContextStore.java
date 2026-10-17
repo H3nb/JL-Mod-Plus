@@ -71,7 +71,7 @@ final class CrashContextStore {
 	private static final String KEY_BREADCRUMB_COUNT = "breadcrumbCount";
 
 	private static final Object LOCK = new Object();
-	private static Snapshot current;
+	private static volatile Snapshot current;
 
 	private CrashContextStore() {}
 
@@ -151,9 +151,7 @@ final class CrashContextStore {
 	}
 
 	static Snapshot currentSnapshot() {
-		synchronized (LOCK) {
-			return current;
-		}
+		return current;
 	}
 
 	static String currentRunId() {

@@ -4,7 +4,6 @@
  */
 package io.github.h3nb.jlmodplus.config
 
-import androidx.annotation.Nullable
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.File
@@ -40,8 +39,7 @@ internal object KeyboardLayoutValidator {
 
     /** Returns null for a layout accepted by the runtime, or a short diagnostic otherwise. */
     @JvmStatic
-    @Nullable
-    fun validate(@Nullable file: File?): String? {
+    fun validate(file: File?): String? {
         if (file == null || !file.isFile || file.length() <= 0L) {
             return "layout file is missing or empty"
         }
@@ -56,8 +54,7 @@ internal object KeyboardLayoutValidator {
 
     /** Applies the exact same format validation before an IPC payload can affect ownership. */
     @JvmStatic
-    @Nullable
-    fun validateBytes(@Nullable bytes: ByteArray?): String? {
+    fun validateBytes(bytes: ByteArray?): String? {
         if (bytes == null || bytes.isEmpty()) return "layout payload is missing or empty"
         return try {
             DataInputStream(ByteArrayInputStream(bytes)).use(::validateInput)

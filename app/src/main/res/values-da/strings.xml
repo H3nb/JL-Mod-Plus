@@ -376,13 +376,8 @@
     <string name="copy_report">Kopiér</string>
     <string name="report_on_github">Rapportér på GitHub</string>
     <string name="delete_report">Slet</string>
-    <string name="copy_selected_reports">Kopiér valgte rapporter</string>
     <string name="delete_selected_reports">Slet valgte rapporter</string>
     <string name="crash_report_copied">Rapport kopieret</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d rapport kopieret</item>
-        <item quantity="other">%1$d rapporter kopieret</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Forbereder diagnostikpakke…</string>
     <string name="crash_report_bundle_ready_title">Diagnostikpakke klar</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nGemt i Downloads → JL-Mod Plus Diagnostics.\n\nVedhæft denne fil, før du indsender dit GitHub-issue. Diagnostikpakken bliver offentlig, når den vedhæftes dit issue.</string>
@@ -939,7 +934,6 @@
     <string name="memory_editor_type_auto">Automatisk</string>
     <string name="screenshot_save_failed">Skærmbilledet kunne ikke gemmes.</string>
     <string name="screenshot_saved_path">Skærmbillede gemt i %1$s</string>
-    <string name="log_save_started">Gemning af log startet.</string>
     <string name="log_save_failed">Gemning af log kunne ikke startes.</string>
     <string name="runtime_midlet_list_failed">Denne applikations MIDlet-liste kunne ikke læses.</string>
     <string name="diagnostic_reason_java_crash">Java-nedbrud</string>

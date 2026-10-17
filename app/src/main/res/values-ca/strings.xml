@@ -34,7 +34,6 @@
     <string name="config_missing_app_storage_generic">No s’ha trobat l’aplicació.\nComprova si el dispositiu d’emmagatzematge està disponible o torna a crear la drecera.</string>
     <string name="config_missing_app_storage_named">No s’ha trobat l’aplicació.\nComprova si el dispositiu d’emmagatzematge «%1$s» està disponible o torna a crear la drecera.</string>
     <string name="copy_report">Copia</string>
-    <string name="copy_selected_reports">Copia els informes seleccionats</string>
     <string name="create">Crea</string>
     <string name="create_apps_dir_failed">No s’ha pogut preparar el directori de treball a:\n%1$s\nTria un altre directori.</string>
     <string name="default_label">%1$s (predeterminat)</string>
@@ -59,7 +58,6 @@
     <string name="loading_info">S’està carregant la informació…</string>
     <string name="locate_bundle">Localitza el paquet</string>
     <string name="log_save_failed">No s’ha pogut iniciar el desament del registre.</string>
-    <string name="log_save_started">S’ha iniciat el desament del registre.</string>
     <string name="message_delete">Vols suprimir aquesta aplicació, la seva configuració i les dades desades? També se suprimirà l’entrada de la Biblioteca.</string>
     <string name="message_reset_layout">Vols restablir la disposició predeterminada dels controls virtuals?</string>
     <string name="more">Més</string>
@@ -1089,11 +1087,6 @@
         <item quantity="one">Vols suprimir %1$d informe de diagnòstic?</item>
         <item quantity="many">Vols suprimir %1$d informes de diagnòstic?</item>
         <item quantity="other">Vols suprimir %1$d informes de diagnòstic?</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d informe copiat</item>
-        <item quantity="many">%1$d informes copiats</item>
-        <item quantity="other">%1$d informes copiats</item>
     </plurals>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d seleccionat</item>

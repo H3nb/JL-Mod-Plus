@@ -25,6 +25,7 @@
             android:process=":locale_probe" />
         <activity
             android:name="io.github.h3nb.jlmodplus.crashes.CrashRuntimeProbeActivity"
+            android:taskAffinity="${applicationId}.crash_probe"
             android:excludeFromRecents="true"
             android:exported="false"
             android:noHistory="true"

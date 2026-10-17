@@ -371,7 +371,6 @@
     <string name="copy_report">Copier</string>
     <string name="report_on_github">Signaler sur GitHub</string>
     <string name="delete_report">Supprimer</string>
-    <string name="copy_selected_reports">Copier les rapports sélectionnés</string>
     <string name="delete_selected_reports">Supprimer les rapports sélectionnés</string>
     <string name="crash_report_copied">Rapport copié</string>
     <string name="crash_report_bundle_preparing">Préparation du bundle de diagnostic…</string>
@@ -535,11 +534,6 @@
         <item quantity="one">%1$d sélectionné</item>
         <item quantity="other">%1$d sélectionnés</item>
         <item quantity="many">%1$d sélectionnés</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d rapport copié</item>
-        <item quantity="other">%1$d rapports copiés</item>
-        <item quantity="many">%1$d rapports copiés</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Supprimer %1$d rapport de diagnostic ?</item>
@@ -969,7 +963,6 @@
     <string name="bulk_install_prepare_failed">Les applications sélectionnées n’ont pas pu être préparées pour l’installation.</string>
     <string name="screenshot_save_failed">Impossible d’enregistrer la capture d’écran.</string>
     <string name="screenshot_saved_path">Capture enregistrée dans %1$s</string>
-    <string name="log_save_started">Enregistrement du journal démarré.</string>
     <string name="log_save_failed">Impossible de démarrer l’enregistrement du journal.</string>
     <string name="runtime_midlet_list_failed">Impossible de lire la liste des MIDlets de cette application.</string>
     <string name="diagnostic_reason_java_crash">Plantage Java</string>

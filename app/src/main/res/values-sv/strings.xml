@@ -376,13 +376,8 @@
     <string name="copy_report">Kopiera</string>
     <string name="report_on_github">Rapportera på GitHub</string>
     <string name="delete_report">Ta bort</string>
-    <string name="copy_selected_reports">Kopiera valda rapporter</string>
     <string name="delete_selected_reports">Ta bort valda rapporter</string>
     <string name="crash_report_copied">Rapport kopierad</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d rapport kopierad</item>
-        <item quantity="other">%1$d rapporter kopierade</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Förbereder diagnostikpaket…</string>
     <string name="crash_report_bundle_ready_title">Diagnostikpaket klart</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nSparad i Downloads → JL-Mod Plus Diagnostics.\n\nBifoga den här filen innan du skickar ditt GitHub-issue. Diagnostikpaketet blir offentligt när det bifogas till ditt issue.</string>
@@ -939,7 +934,6 @@
     <string name="memory_editor_type_auto">Automatisk</string>
     <string name="screenshot_save_failed">Skärmbilden kunde inte sparas.</string>
     <string name="screenshot_saved_path">Skärmbild sparad i %1$s</string>
-    <string name="log_save_started">Loggsparning startad.</string>
     <string name="log_save_failed">Loggsparning kunde inte startas.</string>
     <string name="runtime_midlet_list_failed">Den här applikationens MIDlet-lista kunde inte läsas.</string>
     <string name="diagnostic_reason_java_crash">Java-krasch</string>

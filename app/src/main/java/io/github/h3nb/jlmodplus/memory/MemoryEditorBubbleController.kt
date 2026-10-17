@@ -23,6 +23,7 @@ import androidx.core.graphics.Insets
 import androidx.core.os.ConfigurationCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import io.github.h3nb.jlmodplus.R
 import java.text.NumberFormat
 import java.util.Locale
@@ -62,7 +63,7 @@ class MemoryEditorBubbleController(
     private var dragging = false
 
     private val bubbleLayoutListener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-        if (!destroyed && !dragging && bubbleView.visibility == View.VISIBLE) {
+        if (!destroyed && !dragging && bubbleView.isVisible) {
             settleToNearestEdge(animated = false)
         }
     }
@@ -135,9 +136,9 @@ class MemoryEditorBubbleController(
     }
 
     init {
-        bubbleView.visibility = View.GONE
+        bubbleView.isVisible = false
         bubbleView.isFocusable = true
-        progressView.visibility = View.GONE
+        progressView.isVisible = false
         bubbleView.setOnClickListener { openEditor() }
         bubbleView.setOnTouchListener(::onBubbleTouch)
         bubbleView.addOnLayoutChangeListener(bubbleLayoutListener)
@@ -169,7 +170,7 @@ class MemoryEditorBubbleController(
     fun onHostPaused() {
         hostResumed = false
         cancelDrag()
-        bubbleView.visibility = View.GONE
+        bubbleView.isVisible = false
     }
 
     fun destroy() {
@@ -183,11 +184,11 @@ class MemoryEditorBubbleController(
         bubbleView.setOnClickListener(null)
         setProgress(null)
         disconnectEngine()
-        bubbleView.visibility = View.GONE
+        bubbleView.isVisible = false
     }
 
     private fun onBubbleTouch(view: View, event: MotionEvent): Boolean {
-        if (destroyed || !enabled || view.visibility != View.VISIBLE) return false
+        if (destroyed || !enabled || !view.isVisible) return false
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 bubbleView.animate().cancel()
@@ -326,7 +327,7 @@ class MemoryEditorBubbleController(
             syncVisibility()
             return
         }
-        bubbleView.visibility = View.GONE
+        bubbleView.isVisible = false
         editorOnTop = true
         try {
             activity.startActivity(MemoryEditorActivity.createIntent(activity, token))
@@ -371,13 +372,13 @@ class MemoryEditorBubbleController(
 
     private fun setProgress(percent: Int?) {
         if (percent == null) {
-            iconView.visibility = View.VISIBLE
-            progressView.visibility = View.GONE
+            iconView.isVisible = true
+            progressView.isVisible = false
             progressView.text = ""
             bubbleView.contentDescription = activity.getString(R.string.memory_editor_bubble_content_description)
         } else {
-            iconView.visibility = View.GONE
-            progressView.visibility = View.VISIBLE
+            iconView.isVisible = false
+            progressView.isVisible = true
             val percentText = percentFormat.format(percent / 100.0)
             progressView.text = percentText
             bubbleView.contentDescription =
@@ -387,10 +388,8 @@ class MemoryEditorBubbleController(
 
     private fun syncVisibility() {
         if (destroyed) return
-        bubbleView.visibility = if (
-            enabled && hostResumed && MemoryRuntimeSession.currentToken() != 0L
-        ) View.VISIBLE else View.GONE
-        if (bubbleView.visibility == View.VISIBLE) {
+        bubbleView.isVisible = enabled && hostResumed && MemoryRuntimeSession.currentToken() != 0L
+        if (bubbleView.isVisible) {
             bubbleView.bringToFront()
             // Re-clamp after rotation, split-screen resizing, or inset changes. Posting waits until
             // the host has a valid size and preserves the last vertical position within the session.

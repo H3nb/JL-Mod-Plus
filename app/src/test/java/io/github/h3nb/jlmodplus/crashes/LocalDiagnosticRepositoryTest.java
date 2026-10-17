@@ -8,6 +8,7 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -130,6 +131,20 @@ public class LocalDiagnosticRepositoryTest {
 
 		assertTrue("acra:old-report-id".equals(
 				LocalDiagnosticRepository.javaRecordId(migrated)));
+	}
+
+	@Test
+	public void correlatedRecordRetainsSourceOwnershipIdentifiers() {
+		JavaDiagnosticStore.Snapshot java =
+				javaEvidence(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, SESSION, null);
+		ProcessExitStore.Snapshot exit = processExit(ProcessExitStore.REASON_CRASH, 0);
+		List<String> joined = LocalDiagnosticRepository.ownershipSourceIds(
+				LocalDiagnosticRepository.javaRecordId(java), List.of(java), exit);
+		assertEquals(2, joined.size());
+		assertTrue(joined.contains(LocalDiagnosticRepository.javaRecordId(java)));
+		assertTrue(joined.contains(exit.id));
+		assertEquals(List.of(exit.id),
+				LocalDiagnosticRepository.ownershipSourceIds(exit.id, List.of(), exit));
 	}
 
 	@Test

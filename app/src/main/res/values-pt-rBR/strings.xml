@@ -371,7 +371,6 @@
     <string name="copy_report">Copiar</string>
     <string name="report_on_github">Relatar no GitHub</string>
     <string name="delete_report">Excluir</string>
-    <string name="copy_selected_reports">Copiar relatórios selecionados</string>
     <string name="delete_selected_reports">Excluir relatórios selecionados</string>
     <string name="crash_report_copied">Relatório copiado</string>
     <string name="crash_report_bundle_preparing">Preparando pacote de diagnóstico…</string>
@@ -535,11 +534,6 @@
         <item quantity="one">%1$d selecionado</item>
         <item quantity="other">%1$d selecionados</item>
         <item quantity="many">%1$d selecionados</item>
-    </plurals>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d relatório copiado</item>
-        <item quantity="other">%1$d relatórios copiados</item>
-        <item quantity="many">%1$d de relatórios copiados</item>
     </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Excluir %1$d relatório de diagnóstico?</item>
@@ -969,7 +963,6 @@
     <string name="bulk_install_prepare_failed">Não foi possível preparar os aplicativos selecionados para instalação.</string>
     <string name="screenshot_save_failed">Não foi possível salvar a captura de tela.</string>
     <string name="screenshot_saved_path">Captura salva em %1$s</string>
-    <string name="log_save_started">Salvamento do log iniciado.</string>
     <string name="log_save_failed">Não foi possível iniciar o salvamento do log.</string>
     <string name="runtime_midlet_list_failed">Não foi possível ler a lista de MIDlets deste aplicativo.</string>
     <string name="diagnostic_reason_java_crash">Falha do Java</string>
