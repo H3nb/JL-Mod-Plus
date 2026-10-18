@@ -28,8 +28,6 @@
     <string name="pref_app_sort_date">加入日期</string>
     <string name="pref_app_sort_name">名稱</string>
     <string name="pref_button_shape_title">按鈕形狀</string>
-    <string name="pref_enable_actionbar_summary">在 MIDlet Canvas 螢幕上持續顯示執行階段工具列。</string>
-    <string name="pref_enable_actionbar_title">顯示執行階段工具列</string>
     <string name="pref_encoding_title">字元編碼</string>
     <string name="PREF_FILTER">線性濾波</string>
     <string name="PREF_FONT_LARGE">大</string>
@@ -925,8 +923,6 @@
     <string name="pref_button_shape_round">圓角矩形</string>
     <string name="pref_category_experimental">實驗性功能</string>
     <string name="pref_emulator_dir">工作目錄</string>
-    <string name="pref_enable_statusbar_summary">持續顯示系統狀態列。啟用後會停用螢幕凹口區域。</string>
-    <string name="pref_enable_statusbar_title">顯示系統狀態列</string>
     <string name="pref_graphics_hw_gles">硬體加速 (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">硬體加速 (Surface)</string>
     <string name="pref_graphics_hw_view">硬體加速 (Window)</string>
@@ -956,8 +952,6 @@
     <string name="pref_theme_auto_time">自動（依時段）</string>
     <string name="pref_theme_system">依照系統設定</string>
     <string name="pref_title_emulation">MIDlet 生命週期</string>
-    <string name="pref_use_display_cutout_summary">允許相容的 MIDlet Canvas 內容與執行階段工具列使用螢幕凹口區域。啟用後會隱藏系統狀態列。</string>
-    <string name="pref_use_display_cutout_title">使用螢幕凹口區域</string>
     <string name="pref_vibration_title">震動</string>
     <string name="pref_vk_hide_hint">停用</string>
     <string name="pref_vk_save_alert">以目前配置取代現有的自訂虛擬控制項配置？</string>
@@ -1028,4 +1022,9 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="other">已選取 %1$d 項</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">擴展至螢幕凹口區域</string>
+    <string name="pref_midlet_display_cutout_summary">允許 MIDlet 畫面使用螢幕凹口周圍的區域。部分畫面可能遭到遮擋。</string>
+    <string name="pref_runtime_fullscreen_title">全螢幕</string>
+    <string name="pref_runtime_fullscreen_summary">遊玩時隱藏工具列。適用於所有 MIDlet。</string>
+    <string name="runtime_fullscreen_update_failed">無法存取全螢幕設定，請重試。</string>
 </resources>

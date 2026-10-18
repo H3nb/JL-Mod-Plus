@@ -98,9 +98,6 @@
     <string name="pref_button_shape_title">Форма кнопок</string>
     <string name="pref_category_experimental">Экспериментальные/временные параметры</string>
     <string name="pref_emulator_dir">Рабочая папка</string>
-    <string name="pref_enable_actionbar_summary">Оставлять панель инструментов среды выполнения видимой на экранах Canvas MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Показывать панель инструментов среды выполнения</string>
-    <string name="pref_enable_statusbar_title">Показывать системную строку состояния</string>
     <string name="pref_encoding_title">Кодировка</string>
     <string name="PREF_FILTER">Линейная фильтрация</string>
     <string name="PREF_FONT_ANTI_ALIASING">Сглаживание</string>
@@ -275,8 +272,6 @@
     <string name="library_load_error_title">Библиотека недоступна</string>
     <string name="library_selection_select_all">Выбрать все</string>
     <string name="library_selection_unselect_all">Снять выделение со всех</string>
-    <string name="pref_use_display_cutout_title">Использовать вырез дисплея для MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Разрешить совместимому содержимому Canvas MIDlet и панели инструментов среды выполнения использовать область выреза дисплея. При включении системная строка состояния скрывается.</string>
     <string name="runtime_installation_changed">Не удалось подготовить установленный MIDlet к запуску.</string>
     <string name="library_bulk_add_collection">Добавить в коллекцию</string>
     <string name="library_collections_unavailable_title">Коллекции недоступны</string>
@@ -415,7 +410,6 @@
     <string name="library_collections_empty_title">Коллекций пока нет</string>
     <string name="pref_app_sort_ascending">По возрастанию</string>
     <string name="pref_app_sort_descending">По убыванию</string>
-    <string name="pref_enable_statusbar_summary">Оставлять системную строку состояния видимой. При включении область выреза дисплея отключается.</string>
     <string name="pref_language">Язык</string>
     <string name="pref_skip_resume_call">Пропускать startApp() при возобновлении</string>
     <string name="pref_soundbank_title">Банк звуков MIDI</string>
@@ -1127,4 +1121,9 @@
         <item quantity="many">Пропущено %1$d файлов классов Java, поскольку их не удалось прочитать. Использующие их функции могут не работать.</item>
         <item quantity="other">Файлы классов Java пропущены, поскольку их не удалось прочитать: %1$d. Использующие их функции могут не работать.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Расширять в область выреза дисплея</string>
+    <string name="pref_midlet_display_cutout_summary">Разрешить экрану MIDlet использовать область вокруг выреза дисплея. Часть экрана может быть закрыта.</string>
+    <string name="pref_runtime_fullscreen_title">Полный экран</string>
+    <string name="pref_runtime_fullscreen_summary">Скрывать панель инструментов во время игры. Применяется ко всем MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">Не удалось получить доступ к настройке полного экрана. Повторите попытку.</string>
 </resources>

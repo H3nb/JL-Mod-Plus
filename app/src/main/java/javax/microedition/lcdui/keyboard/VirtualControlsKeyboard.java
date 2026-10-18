@@ -1532,25 +1532,24 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			// Classic concentric recess with palette-derived shading, composited at one opacity.
 			fillCircle(graphics, centerX, centerY, radius * 0.94f, base);
 			fillCircle(graphics, centerX, centerY, radius * 0.69f,
-					VirtualControlAppearance.mixRgb(base, 0x000000, 0.26f));
+					VirtualControlAppearance.analogRecessShadow(base));
 			fillCircle(graphics, centerX, centerY, radius * 0.59f,
-					VirtualControlAppearance.mixRgb(base, outline, 0.07f));
+					VirtualControlAppearance.analogRecessFace(base));
 			graphics.strokeControlCircle(centerX, centerY, radius * 0.94f,
 					opaqueColor(outline), stroke);
 
 			// Recessed rim and layered thumb restore the old physical-joystick character.
 			float thumbRadius = radius * 0.395f;
 			fillCircle(graphics, thumbX, thumbY, thumbRadius * 1.075f,
-					VirtualControlAppearance.mixRgb(thumbColor, outline, 0.38f));
+					VirtualControlAppearance.analogThumbRim(thumbColor));
 			fillCircle(graphics, thumbX, thumbY, thumbRadius, thumbColor);
 			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.82f,
-					VirtualControlAppearance.mixRgb(thumbColor, indicator, 0.10f));
+					VirtualControlAppearance.analogThumbFace(thumbColor));
 			graphics.strokeControlCircle(thumbX, thumbY, thumbRadius,
 					opaqueColor(VirtualControlAppearance.mixRgb(thumbColor, outline, 0.56f)),
 					stroke);
 			// A subtle centered cap detail stays balanced as the thumb moves.
-			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.11f,
-					VirtualControlAppearance.mixRgb(thumbColor, indicator, 0.16f));
+			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.11f, indicator);
 			if (editingAnalog) {
 				graphics.strokeControlCircle(centerX, centerY, radius * 1.02f,
 						opaqueColor(VirtualControlAppearance.background(settings, true)), stroke);

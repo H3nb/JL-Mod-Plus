@@ -22,105 +22,74 @@ import org.junit.Test;
 
 public class GuestWindowPolicyTest {
 	@Test
-	public void cutoutRequiresUserOptInCanvasAndNoStatusBar() {
-		assertTrue(GuestWindowPolicy.canUseDisplayCutout(true, false, false, true));
-		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, false, false, false));
-		assertFalse(GuestWindowPolicy.canUseDisplayCutout(false, false, false, true));
-		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, true, false, true));
-		assertTrue(GuestWindowPolicy.canUseDisplayCutout(true, false, true, true));
+	public void compactLandscapeUsesAvailableWindowShapeAndRestoresHeightForLargeText() {
+		assertEquals(48, GuestWindowPolicy.canvasToolbarHeightDp(1080, 2400, 1f));
+		assertEquals(40, GuestWindowPolicy.canvasToolbarHeightDp(2400, 1080, 1f));
+		assertEquals(48, GuestWindowPolicy.canvasToolbarHeightDp(2400, 1080, 1.5f));
+		assertEquals(48, GuestWindowPolicy.canvasToolbarHeightDp(0, 0, 1f));
 	}
 
 	@Test
-	public void canvasChromeUsesOnlyTheEnabledRuntimeBars() {
-		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(true, true, false, true);
-
-		assertTrue(chrome.canvas);
-		assertFalse(chrome.toolbarVisible);
-		assertTrue(chrome.statusBarVisible);
-		assertFalse(chrome.navigationBarVisible);
-		assertFalse(chrome.cutoutAllowed);
+	public void fullscreenAndGuestCutoutAreIndependentCanvasChoices() {
+		GuestWindowPolicy.Chrome withToolbar = GuestWindowPolicy.resolve(true, false, true);
+		assertTrue(withToolbar.toolbarVisible);
+		assertTrue(withToolbar.cutoutAllowed);
+		assertFalse(withToolbar.statusBarVisible);
+		assertFalse(withToolbar.navigationBarVisible);
+		GuestWindowPolicy.Chrome fullscreen = GuestWindowPolicy.resolve(true, true, false);
+		assertFalse(fullscreen.toolbarVisible);
+		assertFalse(fullscreen.cutoutAllowed);
 	}
 
 	@Test
-	public void immersiveCanvasChromeAllowsCutoutOnlyWhenBothBarsAreHidden() {
-		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(true, false, false, true);
-
-		assertTrue(chrome.canvas);
-		assertFalse(chrome.toolbarVisible);
-		assertFalse(chrome.statusBarVisible);
-		assertFalse(chrome.navigationBarVisible);
-		assertTrue(chrome.cutoutAllowed);
+	public void formRestoresHostBarsWithoutChangingStoredFullscreenChoice() {
+		GuestWindowPolicy.Chrome form = GuestWindowPolicy.resolve(false, true, true);
+		assertTrue(form.toolbarVisible);
+		assertTrue(form.statusBarVisible);
+		assertTrue(form.navigationBarVisible);
+		assertFalse(form.cutoutAllowed);
+		assertFalse(GuestWindowPolicy.resolve(true, true, true).toolbarVisible);
 	}
 
 	@Test
-	public void hostChromeAlwaysRestoresHostNavigationAndToolbar() {
-		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(false, false, false, true);
-
-		assertFalse(chrome.canvas);
-		assertTrue(chrome.toolbarVisible);
-		assertTrue(chrome.statusBarVisible);
-		assertTrue(chrome.navigationBarVisible);
-		assertFalse(chrome.cutoutAllowed);
+	public void gameReservesOnlyCutoutRemainingBelowCompactToolbar() {
+		assertPadding(GuestWindowPolicy.paddingForBounds(
+				1080, 2400, 0, 48, 1080, 2352, 0, 32, 0, 0), 0, 0, 0, 0);
+		assertPadding(GuestWindowPolicy.paddingForBounds(
+				1080, 2400, 0, 48, 1080, 2352, 0, 80, 0, 0), 0, 32, 0, 0);
 	}
 
 	@Test
-	public void actionBarAndCanvasMayShareAnAllowedCutout() {
-		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, false, true, true,
-				30, 40, 50, 60,
-				7, 8, 9, 10, 100);
-
-		assertPadding(padding, 0, 0, 0, 0);
+	public void sideCutoutStillAffectsLandscapeGameBelowToolbar() {
+		GuestWindowPolicy.Padding padding = GuestWindowPolicy.paddingForBounds(
+				2400, 1080, 0, 48, 2400, 1032, 80, 0, 0, 0);
+		assertPadding(padding, 80, 0, 0, 0);
+		// A nested guest already inside its host's safe bounds needs no extra padding.
+		assertPadding(GuestWindowPolicy.paddingForBounds(
+				2400, 1080, 80, 48, 2320, 1032, 80, 0, 0, 0), 0, 0, 0, 0);
 	}
 
 	@Test
-	public void userDisabledCutoutReservesCutoutEvenWhenRuntimeWouldOtherwiseAllowIt() {
-		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, false, false, false,
-				30, 40, 50, 60,
-				7, 8, 9, 10, 100);
-
-		assertPadding(padding, 7, 8, 9, 10);
+	public void windowOffsetsAndBottomImeAreAppliedOnlyWhereTheyOverlap() {
+		assertPadding(GuestWindowPolicy.paddingForBounds(
+				1000, 800, 20, 100, 950, 700, 30, 80, 40, 300), 10, 0, 10, 300);
 	}
 
 	@Test
-	public void visibleStatusBarDisablesCutoutEvenWhenActionBarIsEnabled() {
-		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, true, true, true,
-				30, 40, 50, 60,
-				7, 8, 9, 10, 100);
-
-		assertPadding(padding, 7, 40, 9, 10);
+	public void tinyWindowsRetainAPositiveDrawableArea() {
+		assertPadding(GuestWindowPolicy.paddingForBounds(
+				10, 10, 0, 0, 10, 10, 40, 50, 60, 70), 9, 9, 0, 0);
 	}
 
 	@Test
-	public void visibleStatusBarIsIncludedForCanvasButCutoutPolicyStillApplies() {
-		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, true, false, true,
-				30, 40, 50, 60,
-				7, 8, 9, 10, 100);
-
-		assertPadding(padding, 7, 40, 9, 10);
-	}
-
-	@Test
-	public void hostDisplayableReservesSystemCutoutAndImeInsets() {
-		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				false, false, false, true,
-				30, 40, 50, 60,
-				7, 8, 9, 10, 100);
-
-		assertPadding(padding, 30, 40, 50, 100);
-	}
-
-	@Test
-	public void hostDisplayableReservesBottomCutoutWhenItExceedsNavigationAndIme() {
-		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				false, false, false, true,
-				0, 0, 0, 20,
-				0, 0, 0, 40, 10);
-
-		assertPadding(padding, 0, 0, 0, 40);
+	public void roundedClearanceDependsOnWhereControlsMeetTheCorner() {
+		assertEquals(40, GuestWindowPolicy.roundedCornerClearance(40, 40, 0, 48, true));
+		// Centered glyphs need less clearance than the empty upper corners of their touch target.
+		assertEquals(12, GuestWindowPolicy.roundedCornerClearance(40, 40, 12, 36, true));
+		assertEquals(0, GuestWindowPolicy.roundedCornerClearance(40, 40, 40, 88, true));
+		assertEquals(6, GuestWindowPolicy.roundedCornerClearance(40, 40, 20, 68, true));
+		assertEquals(0, GuestWindowPolicy.roundedCornerClearance(40, 760, 0, 48, false));
+		assertEquals(40, GuestWindowPolicy.roundedCornerClearance(40, 760, 752, 800, false));
 	}
 
 	private static void assertPadding(GuestWindowPolicy.Padding padding,

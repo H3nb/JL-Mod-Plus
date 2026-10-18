@@ -47,7 +47,13 @@ public class VirtualControlAppearanceTest {
 		profile.vkBgColorSelected = 0x369ABC;
 		assertEquals(0x2E2E2E, VirtualControlAppearance.analogThumb(profile, false));
 		assertEquals(0x369ABC, VirtualControlAppearance.analogThumb(profile, true));
-		assertEquals(0x131313, VirtualControlAppearance.mixRgb(0x000000, 0xFFFFFF, 0.075f));
+		profile.vkOutlineColor = 0x0000FF;
+		assertEquals(0x2E2E2E, VirtualControlAppearance.analogThumb(profile, false));
+		assertEquals(0xD1D1D1, VirtualControlAppearance.analogThumbColor(0xFFFFFF, 0x369ABC, false));
+		assertEquals(0xD12E2E, VirtualControlAppearance.analogThumbColor(0xFF0000, 0x369ABC, false));
+		assertEquals(0x369ABC, VirtualControlAppearance.analogThumbColor(0xFF0000, 0x369ABC, true));
+		assertEquals(0x000000, VirtualControlAppearance.analogRecessShadow(0x000000));
+		assertEquals(0x0F0F0F, VirtualControlAppearance.analogRecessFace(0x000000));
 	}
 
 	@Test

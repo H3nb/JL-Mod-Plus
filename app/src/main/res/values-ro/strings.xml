@@ -27,8 +27,6 @@
     <string name="pref_app_sort_date">Data adăugării</string>
     <string name="pref_app_sort_name">Nume</string>
     <string name="pref_button_shape_title">Formă buton</string>
-    <string name="pref_enable_actionbar_summary">Menține vizibilă bara de instrumente din timpul execuției pe ecranele Canvas ale MIDletului.</string>
-    <string name="pref_enable_actionbar_title">Afișează bara de instrumente în timpul execuției</string>
     <string name="pref_encoding_title">Codificare</string>
     <string name="PREF_FILTER">Filtrare liniară</string>
     <string name="PREF_FONT_LARGE">Mare</string>
@@ -984,8 +982,6 @@
     <string name="pref_button_shape_round">Dreptunghi rotunjit</string>
     <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Director de lucru</string>
-    <string name="pref_enable_statusbar_summary">Menține vizibilă bara de stare a sistemului. Activarea dezactivează folosirea zonei decupajului ecranului.</string>
-    <string name="pref_enable_statusbar_title">Afișează bara de stare a sistemului</string>
     <string name="pref_graphics_hw_gles">Accelerare hardware (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Accelerare hardware (Surface)</string>
     <string name="pref_graphics_hw_view">Accelerare hardware (Window)</string>
@@ -1015,8 +1011,6 @@
     <string name="pref_theme_auto_time">Automată (ora din zi)</string>
     <string name="pref_theme_system">Urmează setările sistemului</string>
     <string name="pref_title_emulation">Ciclul de viață al MIDletului</string>
-    <string name="pref_use_display_cutout_summary">Permite conținutului Canvas compatibil al MIDletului și barei de instrumente din timpul execuției să folosească zona decupajului ecranului. Activarea ascunde bara de stare a sistemului.</string>
-    <string name="pref_use_display_cutout_title">Folosește zona decupajului ecranului</string>
     <string name="pref_vibration_title">Vibrații</string>
     <string name="pref_vk_hide_hint">Dezactivat</string>
     <string name="pref_vk_save_alert">Înlocuiești dispunerea personalizată existentă a comenzilor virtuale cu cea curentă?</string>
@@ -1094,4 +1088,9 @@
         <item quantity="few">%1$d selectate</item>
         <item quantity="other">%1$d selectate</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Extinde în zona decupajului ecranului</string>
+    <string name="pref_midlet_display_cutout_summary">Permite afișajului MIDlet să folosească zona din jurul decupajului ecranului. O parte a afișajului poate fi acoperită.</string>
+    <string name="pref_runtime_fullscreen_title">Ecran complet</string>
+    <string name="pref_runtime_fullscreen_summary">Ascunde bara de instrumente în timpul jocului. Se aplică tuturor MIDlet-urilor.</string>
+    <string name="runtime_fullscreen_update_failed">Nu s-a putut accesa setarea pentru ecran complet. Încearcă din nou.</string>
 </resources>

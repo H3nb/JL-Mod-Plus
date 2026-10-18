@@ -59,9 +59,6 @@
     <string name="pref_button_shape_title">Форма кнопок</string>
     <string name="pref_category_experimental">Експериментальні</string>
     <string name="pref_emulator_dir">Робоча директорія</string>
-    <string name="pref_enable_actionbar_summary">Зберігає панель інструментів видимою на екранах Canvas MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Показувати панель інструментів під час виконання</string>
-    <string name="pref_enable_statusbar_title">Показувати системний рядок стану</string>
     <string name="pref_encoding_title">Кодування</string>
     <string name="PREF_FILTER">Лінійна фільтрація</string>
     <string name="PREF_FONT_ANTI_ALIASING">Згладжування</string>
@@ -1046,7 +1043,6 @@
     <string name="pref_app_sort_descending">За спаданням</string>
     <string name="pref_apps_view">Компонування</string>
     <string name="pref_audio_title">MIDI</string>
-    <string name="pref_enable_statusbar_summary">Зберігає системний рядок стану видимим. Увімкнення вимикає використання області вирізу дисплея.</string>
     <string name="pref_language">Мова застосунку</string>
     <string name="pref_mascot_summary">Показує повідомлення під час використання Mascot Capsule 3D.</string>
     <string name="pref_mascot_title">Сповіщення про Mascot Capsule 3D</string>
@@ -1056,8 +1052,6 @@
     <string name="pref_skip_resume_call">Пропускати startApp() під час відновлення</string>
     <string name="pref_soundbank_title">Банк звуків MIDI</string>
     <string name="pref_title_emulation">Життєвий цикл MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Дозволяє сумісному вмісту Canvas MIDlet і панелі інструментів під час виконання використовувати область вирізу дисплея. Увімкнення приховує системний рядок стану.</string>
-    <string name="pref_use_display_cutout_title">Використовувати область вирізу дисплея</string>
     <string name="settings_profiles_summary">Керуйте профілями, які можна використовувати для різних MIDlet.</string>
     <string name="settings_section_appearance">Оформлення застосунку</string>
     <string name="settings_section_language">Мова</string>
@@ -1127,4 +1121,9 @@
         <item quantity="many">Вибрано %1$d</item>
         <item quantity="other">Вибрано %1$d</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Розширювати в область вирізу дисплея</string>
+    <string name="pref_midlet_display_cutout_summary">Дозволити екрану MIDlet використовувати область навколо вирізу дисплея. Частина екрана може бути закрита.</string>
+    <string name="pref_runtime_fullscreen_title">Повний екран</string>
+    <string name="pref_runtime_fullscreen_summary">Приховувати панель інструментів під час гри. Застосовується до всіх MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">Не вдалося отримати доступ до налаштування повного екрана. Спробуйте ще раз.</string>
 </resources>

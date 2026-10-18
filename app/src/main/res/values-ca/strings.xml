@@ -966,10 +966,6 @@
     <string name="pref_button_shape_title">Forma dels botons</string>
     <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Directori de treball</string>
-    <string name="pref_enable_actionbar_summary">Mantén visible la barra d’eines d’execució a les pantalles Canvas dels MIDlets.</string>
-    <string name="pref_enable_actionbar_title">Mostra la barra d’eines d’execució</string>
-    <string name="pref_enable_statusbar_summary">Mantén visible la barra d’estat del sistema. En activar aquesta opció, es desactiva l’ús de l’àrea del retall de pantalla.</string>
-    <string name="pref_enable_statusbar_title">Mostra la barra d’estat del sistema</string>
     <string name="pref_encoding_title">Codificació</string>
     <string name="pref_graphics_hw_gles">Acceleració de maquinari (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Acceleració de maquinari (Surface)</string>
@@ -1008,8 +1004,6 @@
     <string name="pref_theme_system">Segueix la configuració del sistema</string>
     <string name="pref_theme_title">Tema</string>
     <string name="pref_title_emulation">Cicle de vida del MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Permet que el contingut Canvas dels MIDlets compatibles i la barra d’eines d’execució utilitzin l’àrea del retall de pantalla. En activar aquesta opció, s’oculta la barra d’estat del sistema.</string>
-    <string name="pref_use_display_cutout_title">Utilitza l’àrea del retall de pantalla</string>
     <string name="pref_vibration_title">Vibració</string>
     <string name="pref_vk_hide_hint">Desactivat</string>
     <string name="pref_vk_save_alert">Vols substituir la disposició personalitzada existent dels controls virtuals per l’actual?</string>
@@ -1093,4 +1087,9 @@
         <item quantity="many">%1$d seleccionats</item>
         <item quantity="other">%1$d seleccionats</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Amplia a l’àrea del retall de pantalla</string>
+    <string name="pref_midlet_display_cutout_summary">Permet que la pantalla del MIDlet utilitzi l’àrea al voltant del retall de pantalla. Una part del contingut pot quedar tapada.</string>
+    <string name="pref_runtime_fullscreen_title">Pantalla completa</string>
+    <string name="pref_runtime_fullscreen_summary">Amaga la barra d’eines mentre jugues. S’aplica a tots els MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">No s’ha pogut accedir a l’ajust de pantalla completa. Torna-ho a provar.</string>
 </resources>

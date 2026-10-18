@@ -16,7 +16,7 @@ package javax.microedition.lcdui.keyboard;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 
 /** One semantic color and opacity contract for legacy buttons and grouped controls. */
-final class VirtualControlAppearance {
+public final class VirtualControlAppearance {
 	private VirtualControlAppearance() {}
 
 	static int background(ProfileModel profile, boolean pressed) {
@@ -41,9 +41,30 @@ final class VirtualControlAppearance {
 		return (red << 16) | (green << 8) | blue;
 	}
 
+	/** The idle cap gets a neutral tonal lift; its color never depends on the outline. */
+	public static int analogThumbColor(int normalBackground, int selectedBackground, boolean active) {
+		return active ? selectedBackground & 0xFFFFFF :
+				mixRgb(normalBackground, 0x808080, 0.36f);
+	}
+
+	public static int analogRecessShadow(int background) {
+		return mixRgb(background, 0x000000, 0.26f);
+	}
+
+	public static int analogRecessFace(int background) {
+		return mixRgb(background, 0x808080, 0.12f);
+	}
+
+	public static int analogThumbRim(int thumb) {
+		return mixRgb(thumb, 0xFFFFFF, 0.35f);
+	}
+
+	public static int analogThumbFace(int thumb) {
+		return mixRgb(thumb, 0xFFFFFF, 0.10f);
+	}
+
 	static int analogThumb(ProfileModel profile, boolean active) {
-		return active ? background(profile, true) :
-				mixRgb(background(profile, false), outline(profile), 0.18f);
+		return analogThumbColor(background(profile, false), background(profile, true), active);
 	}
 
 	static int opacity(int configured, boolean editing, boolean forceOpaqueOutsideGuest) {

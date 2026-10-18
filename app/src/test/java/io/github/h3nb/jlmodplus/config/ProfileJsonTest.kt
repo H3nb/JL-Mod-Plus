@@ -40,7 +40,35 @@ class ProfileJsonTest {
         listOf("HwAcceleration", "ScreenScaleToFit", "ScreenKeepAspectRatio").forEach(oldTree::remove)
         val newTree = Json.parseToJsonElement(output).jsonObject
         val comparableOld = Json.parseToJsonElement(oldTree.toString()).jsonObject.filterValues { it != JsonNull }
-        assertTrue(ProfileJson.sameValue(JsonObject(comparableOld), newTree))
+        // The additive cutout option was not part of the frozen historical schema.
+        assertEquals(JsonPrimitive(false), newTree["AllowDisplayCutout"])
+        assertTrue(ProfileJson.sameValue(JsonObject(comparableOld), JsonObject(newTree - "AllowDisplayCutout")))
+    }
+
+    @Test fun additiveCutoutOptionDefaultsOffWithoutPublishingOrChangingEffectiveConfig() {
+        val input = fixture("gson-v7.json")
+        assertFalse(Json.parseToJsonElement(input).jsonObject.containsKey("AllowDisplayCutout"))
+        val decoded = ProfileJson.decode(input, false)
+        val explicitOff = ProfileJson.decode(
+            JsonObject(Json.parseToJsonElement(input).jsonObject +
+                ("AllowDisplayCutout" to JsonPrimitive(false))).toString(), false,
+        )
+        assertFalse(decoded.model.allowDisplayCutout)
+        assertFalse(decoded.needsPublication)
+        assertTrue(ProfileConfigMatcher.sameConfig(decoded.model, explicitOff.model))
+
+        val directory = Files.createTempDirectory("profile-cutout-default").toFile()
+        val config = File(directory, Config.MIDLET_CONFIG_FILE).apply { writeText(input) }
+        try {
+            assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
+            assertEquals(input, config.readText())
+            assertEquals(setOf(config.name), directory.list()!!.toSet())
+            assertTrue(ProfilesManager.saveConfig(directory, decoded.model))
+            assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
+            assertEquals(JsonPrimitive(false), Json.parseToJsonElement(config.readText()).jsonObject["AllowDisplayCutout"])
+        } finally {
+            directory.deleteRecursively()
+        }
     }
 
     @Test fun legacyScalarsDefaultsAndBackgroundRulesStaySeparateFromController() {

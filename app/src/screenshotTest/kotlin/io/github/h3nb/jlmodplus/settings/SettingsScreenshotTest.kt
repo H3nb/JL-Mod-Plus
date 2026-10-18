@@ -44,13 +44,11 @@ private val PreviewSettingsState = SettingsUiState(
         SettingsOption("id", "Bahasa Indonesia"),
     ),
     switches = listOf(
-        SettingsSwitch("pref_actionbar_switch", "Show runtime toolbar", "Keep the runtime toolbar visible on MIDlet Canvas screens.", true),
-        SettingsSwitch("pref_statusbar_switch", "Show system status bar", "Keep the system status bar visible. Enabling it disables the display-cutout area.", false),
         SettingsSwitch(
-            "pref_use_display_cutout",
-            "Use display cutout area",
-            "Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. Enabling it hides the system status bar.",
-            true,
+            "pref_actionbar_switch",
+            "Fullscreen",
+            "Hide the toolbar while playing. Applies to all MIDlets.",
+            false,
         ),
         SettingsSwitch("pref_wakelock_switch", "Keep screen on", null, false),
         SettingsSwitch(

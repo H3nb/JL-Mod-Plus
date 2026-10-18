@@ -27,9 +27,6 @@
     <string name="pref_app_sort_date">Data dodania</string>
     <string name="pref_app_sort_name">Nazwa</string>
     <string name="pref_button_shape_title">Kształt przycisków</string>
-    <string name="pref_enable_actionbar_summary">Utrzymuje widoczność paska narzędzi podczas działania na ekranach Canvas MIDletu.</string>
-    <string name="pref_enable_actionbar_title">Pokaż pasek narzędzi podczas działania</string>
-    <string name="pref_enable_statusbar_title">Pokaż systemowy pasek stanu</string>
     <string name="pref_encoding_title">Kodowanie</string>
     <string name="PREF_FILTER">Filtrowanie liniowe</string>
     <string name="PREF_FONT_LARGE">Duży</string>
@@ -1016,7 +1013,6 @@
     <string name="pref_button_shape_round">Zaokrąglony prostokąt</string>
     <string name="pref_category_experimental">Eksperymentalne</string>
     <string name="pref_emulator_dir">Katalog roboczy</string>
-    <string name="pref_enable_statusbar_summary">Utrzymuje widoczność systemowego paska stanu. Włączenie wyłącza używanie obszaru wycięcia wyświetlacza.</string>
     <string name="pref_graphics_hw_gles">Przyspieszenie sprzętowe (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Przyspieszenie sprzętowe (Surface)</string>
     <string name="pref_graphics_hw_view">Przyspieszenie sprzętowe (Window)</string>
@@ -1046,8 +1042,6 @@
     <string name="pref_theme_auto_time">Automatyczny (pora dnia)</string>
     <string name="pref_theme_system">Zgodnie z ustawieniami systemu</string>
     <string name="pref_title_emulation">Cykl życia MIDletu</string>
-    <string name="pref_use_display_cutout_summary">Pozwala zgodnej zawartości Canvas MIDletu i paskowi narzędzi podczas działania używać obszaru wycięcia wyświetlacza. Włączenie ukrywa systemowy pasek stanu.</string>
-    <string name="pref_use_display_cutout_title">Używaj obszaru wycięcia wyświetlacza</string>
     <string name="pref_vibration_title">Wibracje</string>
     <string name="pref_vk_hide_hint">Wyłączone</string>
     <string name="pref_vk_save_alert">Zastąpić istniejący niestandardowy układ wirtualnych elementów sterujących bieżącym?</string>
@@ -1127,4 +1121,9 @@
         <item quantity="many">Wybrano %1$d</item>
         <item quantity="other">Wybrano %1$d</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Rozszerz na obszar wycięcia wyświetlacza</string>
+    <string name="pref_midlet_display_cutout_summary">Pozwól widokowi MIDletu korzystać z obszaru wokół wycięcia wyświetlacza. Część widoku może zostać zasłonięta.</string>
+    <string name="pref_runtime_fullscreen_title">Pełny ekran</string>
+    <string name="pref_runtime_fullscreen_summary">Ukryj pasek narzędzi podczas gry. Dotyczy wszystkich MIDletów.</string>
+    <string name="runtime_fullscreen_update_failed">Nie udało się uzyskać dostępu do ustawienia pełnego ekranu. Spróbuj ponownie.</string>
 </resources>
