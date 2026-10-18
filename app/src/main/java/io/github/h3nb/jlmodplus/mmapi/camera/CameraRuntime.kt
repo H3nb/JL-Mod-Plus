@@ -9,6 +9,7 @@ import android.os.Looper
 import android.util.Rational
 import android.util.Size
 import android.view.View
+import android.view.Gravity
 import android.widget.FrameLayout
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -317,7 +318,7 @@ object CameraRuntime {
             newPreview(it.context).also { preview ->
                 it.foreground = ColorDrawable(Color.BLACK)
                 it.removeAllViews()
-                it.addView(preview, FrameLayout.LayoutParams(-1, -1))
+                it.addView(preview, FrameLayout.LayoutParams(-1, -1, Gravity.CENTER))
             }
         }
         @Suppress("DEPRECATION")
@@ -411,14 +412,17 @@ object CameraRuntime {
 
     private fun newPreview(context: Context) = PreviewView(context).apply {
         implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-        scaleType = PreviewView.ScaleType.FIT_CENTER
+        // The parent fits this View to the ViewPort aspect. FIT_CENTER on a larger,
+        // differently shaped View can expose buffer pixels outside the shared crop.
+        scaleType = PreviewView.ScaleType.FILL_CENTER
         setBackgroundColor(Color.BLACK)
         isClickable = false
         isFocusable = false
     }
     internal fun createPreview(player: CameraCapturePlayer, context: Context): View {
         check(Looper.myLooper() == Looper.getMainLooper())
-        val container = FrameLayout(context).apply { setBackgroundColor(Color.BLACK) }
+        val container = CameraPreviewContainer(context, player.source.width, player.source.height)
+            .apply { setBackgroundColor(Color.BLACK) }
         player.previewContainer = container
         container.viewTreeObserver.addOnGlobalLayoutListener { presentationChanged(player) }
         container.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {

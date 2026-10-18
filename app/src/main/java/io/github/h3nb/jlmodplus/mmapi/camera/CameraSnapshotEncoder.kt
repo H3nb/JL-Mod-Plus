@@ -74,7 +74,11 @@ internal object CameraSnapshotEncoder {
             throw MediaException("Invalid snapshot dimensions or quality")
         }
         var output: Bitmap? = null
+        var cropped: Bitmap? = null
         try {
+            // Canvas filtering can sample outside a drawBitmap source Rect. Give the sampler
+            // a bitmap whose boundary is the shared crop, so its edge pixels clamp there.
+            cropped = Bitmap.createBitmap(bitmap, crop.left, crop.top, crop.width(), crop.height())
             output = Bitmap.createBitmap(options.width, options.height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(output)
             canvas.drawColor(Color.BLACK)
@@ -88,11 +92,9 @@ internal object CameraSnapshotEncoder {
             val left = (options.width - rotated.width() * scale) / 2f
             val top = (options.height - rotated.height() * scale) / 2f
             matrix.postTranslate(left, top)
-            // Clip in output coordinates, then constrain sampling to the source rectangle as well.
-            // Drawing the whole JPEG with only a destination clip can sample outside its crop.
             canvas.clipRect(left, top, options.width - left, options.height - top)
             canvas.concat(matrix)
-            canvas.drawBitmap(bitmap, crop, source, Paint(Paint.FILTER_BITMAP_FLAG))
+            canvas.drawBitmap(cropped, null, source, Paint(Paint.FILTER_BITMAP_FLAG))
             val format = when (options.format) {
                 CameraCaptureOptions.Format.JPEG -> Bitmap.CompressFormat.JPEG
                 CameraCaptureOptions.Format.PNG -> Bitmap.CompressFormat.PNG
@@ -110,6 +112,7 @@ internal object CameraSnapshotEncoder {
             throw MediaException("Not enough memory for camera snapshot")
         } finally {
             output?.recycle()
+            if (cropped !== bitmap) cropped?.recycle()
         }
     }
 

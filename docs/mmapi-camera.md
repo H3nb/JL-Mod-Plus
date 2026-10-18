@@ -32,6 +32,14 @@ independent of preview dimensions. A different output aspect ratio fits the full
 framing with padding rather than introducing a hidden crop. The guarantee concerns
 composition; moving subjects and successive camera exposures can differ in time.
 
+The preview View fits the logical source aspect inside the guest's display rectangle.
+CameraX fills that smaller View using the shared ViewPort crop; the surrounding
+container supplies black padding. Fitting the cropped buffer into a differently
+shaped PreviewView can otherwise expose pixels beyond that crop. Snapshot filtering
+is likewise confined to a bitmap bounded by the shared crop before rotation/scaling.
+Rotation is applied once from `ImageProxy.imageInfo.rotationDegrees`; encoded output
+has upright pixels and does not require a second EXIF rotation by the MIDlet.
+
 `getSnapshot(null)` uses the default supported snapshot encoding. JPEG and PNG
 are supported. Explicit sizes require both positive width and height, with each
 axis at most 1280 and at most 1,228,800 output pixels. JPEG quality is 1 through
