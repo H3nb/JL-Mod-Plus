@@ -5,6 +5,12 @@ microphone capture, gallery saving and JSR-234 camera controls are outside this
 subset. `capture://video` names a live camera source; it does not promise a
 `RecordControl`.
 
+For a new camera issue, start with the
+[device evidence and troubleshooting guide](camera-pr175-device-investigation.md).
+It identifies code owners, the proven Miami root cause, completed device checks
+and the independent debug MIDlet. The
+[historical study](camera-java-me-history.md) records rationale, not pending work.
+
 ## Camera selection
 
 | Locator | Emulated camera |
@@ -35,8 +41,8 @@ fit or the toolbar is hidden, the same action remains in the options menu.
 
 ## Geometry and snapshots
 
-Preview and still capture share framing and rotation, with no horizontal mirroring. Display size
-changes affect presentation, not the capture source. Snapshot dimensions are
+Preview and still capture share framing and rotation, with no horizontal mirroring.
+Display size changes affect presentation, not the capture source. Snapshot dimensions are
 independent of preview dimensions. A different output aspect ratio fits the full
 framing with padding rather than introducing a hidden crop. The guarantee concerns
 composition; moving subjects and successive camera exposures can differ in time.
@@ -50,11 +56,12 @@ Rotation is applied once from `ImageProxy.imageInfo.rotationDegrees`; encoded ou
 has upright pixels and does not require a second EXIF rotation by the MIDlet.
 
 `getSnapshot(null)` uses the default supported snapshot encoding. JPEG and PNG
-are supported. With automatic resolution selected, source and snapshot defaults are selected once per MIDlet
-session from the full virtual screen: 480 x 640 for portrait, 640 x 480 for
+are supported. With automatic resolution selected, source and snapshot defaults
+are selected once per MIDlet session from the full virtual screen: 480 x 640 for portrait, 640 x 480 for
 landscape or square. With automatic screen dimensions, a fixed profile/phone-keypad
 orientation takes precedence over the launch-time Android display; otherwise the
-initial resolved virtual size is used. Viewport resizing and host rotation do not
+initial resolved virtual size is used. The manual resolution choice supplies that
+same session default directly. Viewport resizing and host rotation do not
 change this default. Advertised automatic encoding strings use the same dimensions;
 explicit profile encoding strings and explicitly requested sizes retain precedence.
 This is an emulator default policy, not a universal feature-phone requirement.

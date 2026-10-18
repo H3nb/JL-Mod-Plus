@@ -1,307 +1,315 @@
-# PR 175 camera device investigation
+# Camera troubleshooting and device evidence — PR 175
 
-## Scope and identities
+This is the investigation and reproducible device-test handoff for
+[PR 175](https://github.com/H3nb/JL-Mod-Plus/pull/175), investigated on 2026-10-18.
+Read [MMAPI camera](mmapi-camera.md) first for the current supported contract.
+[Java ME camera history](camera-java-me-history.md) explains the specification and
+vendor evidence behind the approved default policy. Historical proposals are not
+implementation instructions.
 
-Investigation on 2026-10-18, using the physical Android 16 device connected by USB.
-Starting PR head: `2ea018fd36ca35a24c5304512fe2519114aec8af`, branch
-`feat/camera-preview-snapshots`, draft [PR 175](https://github.com/H3nb/JL-Mod-Plus/pull/175).
-The reported installed CI build is [run 2741](https://github.com/H3nb/JL-Mod-Plus/actions/runs/39119113716).
-The installed debug APK was copied before updates. Its signing certificate matched
-the local build (`9f1b019ee11f2edb30122b894c634ac5cf813ddeed012ee3b9e1e59f7b63b449`).
-Device updates used `adb install -r`; there was no uninstall, clear-data, root, or
-modification of the installed game JAR. Photos were inspected locally and are not
-repository fixtures. The game photo was not accepted into the user's saved captures.
+## Current result
 
-## Observations and first additional rotation
+The reported sideways Miami Nights 2 photo involved two distinct boundaries:
 
-Miami Nights 2's TAKE PICTURE and PREVIEW screens reproduced the reported difference.
-Temporary diagnostics recorded one capture at device time 20:52:49 +08:00:
+1. CameraX metadata and the encoder produced upright pixels. The game's observed
+   `getSnapshot(null)` path then rotated landscape images by `TRANS_ROT90` to fit
+   its portrait working image. The emulator's unconditional landscape default
+   conflicted with that expectation; a second global encoder rotation would break
+   independent MIDlets.
+2. Independent testing found real emulator framing defects: a differently shaped
+   PreviewView exposed content outside the shared crop, and filtered bitmap
+   scaling sampled pixels outside that crop. Both are fixed.
+
+Automatic dimensions now follow the full virtual screen once at MIDlet launch:
+480 x 640 for portrait, 640 x 480 for landscape/square. Media configuration can
+select either size explicitly and choose the default rear/front camera. Explicit
+MIDlet dimensions and capability overrides retain their documented precedence.
+The user confirmed the automatic portrait build worked as expected in Miami.
+No game-name, device-model, Android-version or fixed-angle workaround was added.
+
+The PR remains draft/open and must not be merged as part of this investigation.
+The branch includes alpha through `450c6eac35ecaab2f95194998d12d2fd3d999fde`.
+
+## Where to start in the code
+
+Paths below are relative to `app/src/main/java/`.
+
+| Concern | Owner / starting point |
+| --- | --- |
+| Requested sizes, encoding validation and lens precedence | `io/github/h3nb/jlmodplus/mmapi/camera/CameraCaptureOptions.kt` |
+| Launch-time profile/default dimensions | `javax/microedition/shell/MicroLoader.java` |
+| Automatic capability strings versus profile overrides | `io/github/h3nb/jlmodplus/mmapi/camera/CameraCapabilities.kt` |
+| Player/API state and guest calls | `io/github/h3nb/jlmodplus/mmapi/camera/CameraCapturePlayer.kt`, `CameraCall.kt` |
+| CameraX binding, shared ViewPort, target rotation, permission and lifecycle | `io/github/h3nb/jlmodplus/mmapi/camera/CameraRuntime.kt` |
+| Fitted preview bounds and padding | `io/github/h3nb/jlmodplus/mmapi/camera/CameraPreviewContainer.kt` |
+| JPEG decode, crop, one rotation, fit/padding and final bytes | `io/github/h3nb/jlmodplus/mmapi/camera/CameraSnapshotEncoder.kt` |
+| Media form, persisted fields and preset equality | `io/github/h3nb/jlmodplus/config/ConfigComposeBridge.kt`, `ConfigFormState.java`, `ProfileModel.kt`, `ProfileJson.kt`, `ProfileConfigMatcher.kt` |
+| Toolbar/menu visibility, packing and action dispatch | `javax/microedition/shell/RuntimeMenuCompose.kt` |
+
+The settings are additive JSON-v7 fields: `CameraDefaultFacing` uses rear `1` or
+front `0`; `CameraResolution` uses automatic `0`, portrait `1`, landscape `2`.
+Missing fields mean rear/automatic without forcing a profile rewrite. A generic
+camera request may fall back when the preferred lens is absent; a named device
+request is strict. Toolbar swaps are session-only and do not rewrite preferences.
+
+## Root-cause evidence
+
+Starting branch head was `2ea018fd36ca35a24c5304512fe2519114aec8af` on
+`feat/camera-preview-snapshots`. The reported installed build was
+[CI 2741](https://github.com/H3nb/JL-Mod-Plus/actions/runs/39119113716).
+The following rear capture was recorded at device time 20:52:49 +08:00:
 
 | Boundary | Observed value |
 | --- | --- |
-| Rear sensor / display rotation | 90 degrees / `ROTATION_0` |
+| Sensor / display rotation | 90 degrees / `ROTATION_0` |
 | Preview and ImageCapture resolution | 1280 x 960 |
 | Both use cases' crop | `(280, 0)-(1000, 960)` |
-| ImageProxy / decoded JPEG | 1280 x 960 / 1280 x 960 |
-| ImageProxy rotation / raw JPEG EXIF orientation | 90 degrees / 6 |
-| `getSnapshot` parameter / selected override | null / absent |
+| ImageProxy / decoded raw JPEG | 1280 x 960 / 1280 x 960 |
+| `rotationDegrees` / raw JPEG EXIF orientation | 90 degrees / 6 |
+| `getSnapshot` argument / override | null / absent |
 | Exact returned JPEG | 640 x 480, quality 90, upright scene pixels |
-| Next MIDP image operation | source 640 x 480, region 640 x 480, transform 5 |
+| Next executed MIDP image operation | region 640 x 480, transform 5 (`TRANS_ROT90`) |
 
-The raw JPEG and output were collected before the byte array reached guest code.
-Comparing their pixels showed that the encoder's clockwise rotation produces the
-correct scene orientation. EXIF 6 agrees with the proxy metadata; applying it again
-would rotate twice. `BitmapFactory` and the MIDP image decode path do not add that
-second EXIF transform.
+Temporary diagnostics collected raw CameraX JPEG and exact returned bytes before
+control reached the guest. Comparing pixels showed that the encoder's clockwise
+rotation correctly matched the scene. EXIF 6 agreed with the proxy metadata;
+applying both would rotate twice. Neither BitmapFactory nor the MIDP decode path
+added another EXIF transform.
 
-The installed `res.jar` was accessed read-only through shared storage, with SHA-256
-`fcd0d7cffbf26b6ea5c147c209063a44f118fad823f9cd260aadf5e72b1c60c6`.
-Inspection with `javap -p -c` located the camera path in class `a`. It calls
-`getSnapshot(null)`, decodes the returned bytes, and, on the observed branch, checks
-`height < width` before calling `Image.createImage(image, 0, 0, width, height, 5)`.
-MIDP transform 5 is `Sprite.TRANS_ROT90`. Device logging confirmed this call actually
-ran, rather than merely existing in an unused branch. Its later sampling builds a
-48 x 64 thumbnail, with a 480 x 640 working photo. Together with its portrait
-viewfinder, this establishes that this game path expects a portrait photo. It does
-not establish which physical-phone convention the game was written against.
+The installed game `res.jar` was read through shared storage without modification.
+Its SHA-256 was `fcd0d7cffbf26b6ea5c147c209063a44f118fad823f9cd260aadf5e72b1c60c6`.
+`javap -p -c` located class `a` calling `getSnapshot(null)`, decoding the bytes,
+checking `height < width`, then calling `Image.createImage(..., 5)`. Device logging
+confirmed execution of that branch. Its 480 x 640 working photo, 48 x 64 thumbnail
+and portrait viewfinder establish the observed path's portrait expectation.
+They do not establish a universal historical phone-camera convention.
 
 ```mermaid
 flowchart LR
-    A["CameraX JPEG 1280x960<br/>rotationDegrees=90, EXIF=6"] --> B["Crop 720x960<br/>rotate clockwise once"]
-    B --> C["getSnapshot: 640x480<br/>upright pixels"]
-    C --> D["Game: TRANS_ROT90<br/>480x640"]
-    D --> E["Game thumbnail<br/>48x64, sideways scene"]
+    A["CameraX JPEG<br/>rotationDegrees=90, EXIF=6"] --> B["Crop then rotate once<br/>upright scene"]
+    B --> C["Old implicit default<br/>640x480"]
+    C --> D["Game applies TRANS_ROT90<br/>sideways scene"]
+    B --> E["Approved portrait default<br/>480x640"]
+    E --> F["Game keeps portrait image"]
 ```
 
-The first additional quarter-turn is therefore in guest processing after
-`getSnapshot()` returns. Calling this a game bug would go beyond the evidence:
-the PR forces both an unspecified source and an unspecified snapshot into 640 x 480,
-which triggers the game's portrait-normalization branch. Correct scene rotation
-inside that landscape rectangle does not prove that this default geometry is the
-right compatibility policy. No name, device, Android-version, or fixed-angle
-override was added to the emulator to counteract it.
+The first additional pixel rotation was in game processing. The earliest default
+geometry mismatch was in the emulator, before encoding. This distinction is why
+the fix changes the coherent default source/ViewPort/output geometry, rather than
+counter-rotating every returned image or classifying the game as defective.
 
-## Independent emulator defects
+## Independent framing fixes
 
-The independent `CameraSnapshotMidlet` decodes `getSnapshot()` bytes and displays
-them using `Graphics.drawImage` or `ImageItem`, without a transform. Its commands,
-raw returned files and reports are kept outside game-owned data.
+The independent debug MIDlet decodes snapshots and draws them with `drawImage` or
+`ImageItem` without transforms. Before the fix, resizing its direct video region
+from 320 x 240 to 240 x 320 exposed extra content above/below the shared crop, while
+snapshot bytes retained the central crop. Both use cases reported equal crop
+metadata. The first divergence was presentation: a full-container `FIT_CENTER`
+PreviewView could expose buffer content outside the fitted crop.
 
-Before the fix, changing its direct-video display from 320 x 240 to 240 x 320
-revealed extra scene content above/below the shared crop. The encoded bytes retained
-the central 4:3 crop. Both CameraX use cases reported the same crop, so the first
-framing divergence was in presentation: a full-container `PreviewView` using
-`FIT_CENTER` could draw buffer content outside the fitted crop into the rest of
-its own bounds.
+`CameraPreviewContainer` now fits the logical source aspect into guest bounds,
+centers the child, and supplies black padding. Its PreviewView uses `FILL_CENTER`
+and clips the shared ViewPort crop. Guest display resizing remains presentation-only.
 
-`CameraPreviewContainer` now measures the PreviewView to fit the logical source
-aspect inside guest bounds, with a centered child and black background. The View
-uses `FILL_CENTER`, matching the shared ViewPort; its bounds clip the camera buffer.
-Guest display resizing remains presentation-only and does not select another crop.
-
-The existing physical instrumentation test
+The existing asymmetric-pixel test
 `cropExcludesOutsidePixelsBeforeScalingAndRotation` also failed on the original
-encoder: filtered scaling sampled magenta pixels beyond a cyan source crop.
-Constraining only `Canvas.drawBitmap`'s source rectangle did not clamp that sampling.
-The encoder now creates a crop-bounded bitmap before filtering. It recycles that
-temporary bitmap when distinct from the caller's source. The existing pixel/byte
-limits and failure handling remain in force; peak allocation can increase by up to
-one bounded source crop (at most 16 MiB of ARGB pixels).
+encoder: scaling sampled magenta pixels outside a cyan crop. A drawBitmap source
+rectangle alone did not clamp filtered sampling. The encoder now creates a
+crop-bounded bitmap before filtering and recycles it when distinct from its input.
+This may add one bounded source-crop allocation, at most 16 MiB of ARGB pixels.
 
-## Specification and open-source comparison
+## N73 left-aligned viewport: a separate game layout
 
-- [JSR-135 VideoControl](https://raw.githubusercontent.com/shinovon/J2ME_Docs/master/docs/jsr135/javax/microedition/media/control/VideoControl.html)
-  defines a snapshot of displayed content, format/resolution parameters, and the
-  first advertised format as the null-parameter default. It does not require a
-  handset-specific extra quarter-turn.
-- [CameraX capture callback](https://developer.android.com/reference/androidx/camera/core/ImageCapture.OnImageCapturedCallback)
-  defines `rotationDegrees` as the clockwise rotation needed to match target rotation.
-  [CameraX configuration](https://developer.android.com/media/camera/camerax/configuration#crop-rect)
-  describes shared sensor crop coordinates and preview/capture agreement after crop
-  and rotation. The actual source version inspected was CameraX 1.6.2.
-- [J2ME Loader camera controller](https://github.com/nikita36078/J2ME-Loader/blob/13e29830632464719a643043e1113310fe6e64cc/app/src/main/java/javax/microedition/media/CameraController.java)
-  decodes JPEG and rotates by proxy metadata. Its implementation is a useful comparison,
-  not evidence that every aspect of its lifecycle/geometry should replace this PR.
-- [Official Android image helper](https://github.com/android/camera-samples/blob/2f10e46fc7a09f7208f8d6de72482ecf3e5fb85a/core-camera/src/main/java/com/android/camera/core/image/ImageUtils.kt)
-  also applies proxy rotation after decoding; mirroring is an explicit separate choice.
-- [GrapheneOS preview ratio](https://github.com/GrapheneOS/Camera/blob/fc75d0d5dd574240910ef99b0dfe98e0aadb500f/app/src/main/java/app/grapheneos/camera/ktx/PreviewView.kt)
-  constrains preview layout aspect using camera geometry. Its sensor-oriented photo
-  policy is distinct from this emulator's logical source contract, but supports
-  constraining the preview bounds rather than compensating with extra image rotation.
-- [KEmulator capture player](https://github.com/shinovon/KEmulator/blob/main/src/media/emulator/media/capture/CapturePlayerImpl.java)
-  is a desktop-webcam comparison, not proof of Android sensor or feature-phone semantics.
+The user later reported that Miami Nights 2's N73 variant had a left-aligned
+portrait preview on virtual 240 x 320, unlike the tested SE K800i variant. The
+camera was covered; the dark image itself was not a capture failure.
 
-No third-party implementation was copied into the fix.
+Read-only inspection of the installed N73 `res.jar`, SHA-256
+`92945c2a443e92ddbdc8ed2d5bc84e19c3efa700f028750d7c89c432cd462e70`,
+found class `a`'s relevant branch calling `setDisplayLocation(0, c + 2)` and
+`setDisplaySize(e - 4, d - 4)`. Its static initialization gives `c=24`,
+`d=320-48=272` and `e=((240<<8)/320)*272>>8=204`: the requested rectangle
+is `(0,26,200,268)`. The SE variant instead computes a horizontal offset.
 
-## Compatibility assessment at the first device checkpoint
+With N73 open at TAKE PICTURE on the updated physical build, a read-only activity
+view dump showed:
 
-Upright pixels, exact explicitly requested sizes, and consistent preview/snapshot
-handedness remain the proposed invariants. Globally counter-rotating pixels would
-break the independent MIDlet. However, the existing fixed landscape source/default
-is an implementation choice, not a JSR-135 requirement and not a reason to reject
-portrait output for requests that omit dimensions. The independent tests qualify
-the implemented geometry; they do not settle this policy.
+```text
+Canvas video root:       0,0-1280,1706
+CameraPreviewContainer: 0,139-1067,1568
+PreviewView child:       0,3-1067,1426
+```
 
-The follow-up [historical capability and orientation study](camera-java-me-history.md)
-separates specification requirements, vendor evidence, the game's expectations,
-and the geometry change proposed at that checkpoint. The approved implementation
-and subsequent user confirmation are recorded below.
+Scaling `(0,26,200,268)` by the Canvas mapping produces exactly those container
+bounds after rounding. The portrait PreviewView is centered inside the requested
+container, including three pixels of top/bottom padding. There is no lost emulator
+offset. No TAKE or ACCEPT was pressed for this check, and no game file was edited.
 
-## Validation and remaining limits
+[JSR-135 setDisplayLocation](https://docs.oracle.com/javame/config/cldc/opt-pkgs/api/mm/jsr135/javax/microedition/media/control/VideoControl.html)
+uses coordinates relative to the Canvas's upper-left corner. A universal implicit
+centering change would override explicit guest positioning. This finding therefore
+does not justify a production alignment fix. Any optional compatibility override
+would need a separate approved contract, without game/device-name detection.
 
-The final executable state was built and installed without the temporary capture
-logging/dump code. APK assembly and instrumentation assembly passed. For physical
-qualification the local build used `jlmodNativeBuild=false` and an external init
-script to package the original CI APK's native libraries: all 13 `.so` entries were
-verified byte-for-byte equal. No generated native workaround or init script was
-added to the repository. A complete fresh native rebuild/release build is not
-claimed. Lint and JVM validation were subsequently checked with the normal
-native-enabled project model.
+For future read-only geometry checks, scope the activity dump explicitly:
 
-| Check | Result |
+```text
+adb -s SERIAL shell dumpsys activity -p io.github.h3nb.jlmodplus.debug javax.microedition.shell.MicroActivity
+```
+
+Avoid an unfiltered `dumpsys activity top`; it can include unrelated tasks.
+
+## Validation evidence and limits
+
+These are separate checkpoints; earlier explicit-size geometry tests do not imply
+that every later default policy was tested in the same full matrix.
+
+| Checkpoint | Evidence |
 | --- | --- |
-| Camera capability/options and Manager capability JVM tests | 17 passed |
-| Physical instrumentation: preview layout, encoder, Camera Player and cancellable calls | 17 passed |
-| `:app:lintEmulatorDebug`, normal native-enabled model | Passed, 0 errors, 20 warnings, 2 hints; no camera findings |
-| Rear/front x display rotations 0/90/180/270 x output ratios 4:3, 3:4, square | 24 final-build captures, exact dimensions and decodable formats |
-| JPEG, PNG and null/default requests | Passed; null/default returns 640 x 480 JPEG |
-| Logical source 3:4 and square, independent of output size | Additional captures passed |
-| Real Canvas and Form/VideoItem | Preview and direct decoded snapshot display passed |
-| Hidden preview / stopped Player / restart | Captures passed; stopped state 300, restarted state 400 |
-| Home/background capture, Library reselection/resume | Controlled MediaException while backgrounded; capture passed after resume |
-| Player close / capture after close | Closed state 0; controlled IllegalStateException |
-| Miami Nights 2 on final build | Shared crop now visible with padding; game still explicitly rotates its thumbnail |
-| Owned fixture and temporary on-device images | Removed; installed game retained |
-| `git diff --check` | Passed |
+| Shared crop/rotation fix | 24 physical captures: rear/front x Android display rotations 0/90/180/270 x output aspects 4:3, 3:4 and square; exact dimensions and decodable bytes |
+| Preview versus exact returned image | Same composition; measured correlation 0.970–0.999 rear and 0.864–0.995 front; moving exposures are not identical frames |
+| Display and Player paths | Canvas and Form/VideoItem; hidden preview; stopped capture; restart; background failure then resume; close and controlled capture-after-close failure |
+| Virtual-screen defaults | Virtual 240 x 320 returned 480 x 640 rear/front; virtual 320 x 240 returned 640 x 480 rear/front; advertised/source sizes agreed |
+| Explicit size and session stability | PNG 640 x 480 overrode portrait default; display resize did not change the session default; automatic size plus forced landscape returned 640 x 480 |
+| Miami after default update | User confirmed expected behavior; this confirmation is distinct from the earlier instrumented capture evidence |
+| Persisted Media settings, physical Android 16 | Saved front/landscape on portrait virtual screen returned 640 x 480; real `config.edit` selection of rear/portrait persisted values `1`/`1` and returned 480 x 640 |
+| Real toolbar camera swap | Destination changed front→rear after rear→front swap; subsequent JPEG remained 480 x 640; explicit PNG 640 x 480 won; close removed the icon |
+| Selected local JVM tests | 366/367 passed; an existing private-files test could not create a symlink without the Windows privilege |
+| Focused physical instrumentation | 21 tests passed for Media choices, toolbar action/availability/busy/overflow and camera API/encoder/cancellation; three UI cases passed again after localized copy revisions |
+| Screenshot references and lint | 12 Media/navigation references visually reviewed; all 122 previews and normal-model lint passed before the compact-toolbar follow-up |
+| Localization follow-up | Terminology/grammar reviewed in 12 catalogs; all 12 camera resources present in all 38 translated locales; resource compilation passed |
+| Remote checkpoint `3c559c544` | [Android CI](https://github.com/H3nb/JL-Mod-Plus/actions/runs/39136819799) passed fresh native assembly, full app/dexlib JVM tests, instrumentation assembly, lint and screenshot validation |
+| Compact-toolbar follow-up | 11 layout JVM tests and five physical UI tests passed, including camera action/busy state, cutout packing and 40dp-high landscape hit bounds; five changed references visually reviewed, all 122 screenshot previews passed again |
 
-The matrix used ADB-controlled display rotations on the physical device, rather
-than claiming four independently hand-held device poses. Rear target features
-included asymmetric cables, printed packaging and a marked power adapter; the front
-target was a notebook with readable text. The preview's fitted image region and
-the snapshot's non-padding region were compared after resizing to 160 x 120 grayscale.
-For all 24 pairs, untransformed correspondence scored highest compared with a
-horizontal mirror or 90/180/270-degree alternatives. Pearson correlation was
-0.970-0.999 rear and 0.864-0.995 front. These scores support the visual framing,
-orientation and handedness comparison; they are not assertions of identical
-exposures or a general quality/performance benchmark.
+The display-rotation matrix used ADB-controlled Android display rotation, not four
+handheld poses. The independent debug MIDlet exercises the real guest runtime,
+but is not a test of JAR conversion/installation. The broader UI suite on the
+Indonesian phone locale was not green: existing tests use hardcoded English
+selectors such as Start, Apply and OK. It is not counted as passing.
 
-The game JAR, converted payload, descriptor, icon and profile files retained their
-baseline checksums. Both saved-capture RMS files also retained their checksums
-(no ACCEPT was pressed). Ordinary game-state RMS files changed during game launch
-and user navigation; they were neither cleared nor restored over the user's progress.
+Physical permission deny/regrant, driver contention/absence, host destruction
+during exposure and a multi-device/OEM sweep remain unqualified. API state and
+cancellation tests do not replace those driver scenarios. See the qualification
+matrix in [MMAPI camera](mmapi-camera.md) when extending coverage.
 
-Physical permission deny/regrant, camera contention/absence, host destruction in
-the middle of exposure, and a multi-device/OEM sweep remain unqualified. Automated
-call/Player tests cover cancellation and state contracts, but do not replace those
-driver/lifecycle scenarios. The independent MIDlet runs in the real guest process
-as a debug fixture; it is not a qualification of the JAR conversion/install path.
+### Device and data provenance
 
-At this checkpoint the emulator framing/crop defects were fixed, while compatibility
-between the implicit default geometry and the game's portrait expectation remained
-unresolved. The approved follow-up below changes that default for user testing.
-The PR stays draft/open;
-no merge or remote publication was performed during this investigation.
+Device testing used the connected physical Android 16 phone. Updates used
+`adb install -r` with the original debug signing certificate, SHA-256
+`9f1b019ee11f2edb30122b894c634ac5cf813ddeed012ee3b9e1e59f7b63b449`.
+No uninstall, clear-data, root, game-JAR editing or old-save restoration occurred.
+The initial diagnostic game photo was not accepted. The user subsequently opened,
+configured and played Miami; normal config, keyboard-layout and RMS writes must
+not be mistaken for test-induced data deletion. Hash checks retained converted
+assets and matched current files across the owned-fixture cleanup checkpoint.
 
-## Approved virtual-screen default update
+Local device APKs reused all 13 native libraries from CI 2741 through an external
+init script and `jlmodNativeBuild=false`; their bytes were checked equal. That
+setup was not committed. Local APK assembly is not fresh-native-build evidence;
+use the PR's current CI results for complete native assembly and Linux JVM tests.
+Temporary photo logging was removed. Photos were inspected locally, not committed
+as repository fixtures. Owned probe catalog/config/data and private photos were
+removed after testing.
 
-After the historical study, the user approved implementing a virtual-screen-based
-default and installing it for manual Miami testing. The full virtual screen at
-launch selects 480 x 640 for portrait, 640 x 480 for landscape/square. This is held
-for the MIDlet session, including new Players and host reattachment. For automatic
-screen dimensions, phone-keyboard portrait or a forced profile orientation takes
-precedence over the Android display's orientation before the host request settles.
-Otherwise the initial resolved virtual dimensions determine orientation.
+## Troubleshooting without repeating the investigation
 
-Automatic advertised dimensions, default source geometry and unspecified snapshot
-sizes use the same choice. Explicit sizes and explicit advertised profile defaults
-retain precedence. CameraX crop/rotation handling and encoder transforms are
-unchanged; the portrait default changes the shared source/ViewPort aspect as well
-as the returned image rectangle. No MIDlet/device-name condition is involved.
+| Symptom | Inspect first | Avoid assuming |
+| --- | --- | --- |
+| Preview upright, game photo sideways | Exact `getSnapshot` bytes, actual request/default dimensions, then guest image transforms | That CameraX or EXIF rotated twice merely because the game display is sideways |
+| Independent decoded bytes sideways | Proxy rotation, target rotation, raw JPEG/EXIF and encoder rotation in that order | A fixed angle or sensor mounting inferred from model/version |
+| Preview shows more content than snapshot | Shared ViewPort/crop metadata, fitted PreviewView bounds and clipping | That changing output width/height repairs source framing |
+| Preview rectangle is not centered | Guest setDisplayLocation/Size calls and mapped Android view bounds; N73 example above | That every MIDlet requests a centered region or that the emulator should override explicit coordinates |
+| Colored edge pixels outside crop | Crop-bounded bitmap and filtered sampling | That drawBitmap's source rectangle clamps its filter |
+| Wrong unspecified dimensions | Profile resolution, virtual screen at launch, automatic encoding discovery and explicit property overrides | That current preview bounds or later display resize select the default |
+| Wrong lens | Named locator, session override, configured default, availability | That Android camera IDs equal devcam numbers |
+| Missing/disabled swap action | Active foreground camera, both directions available, capture/rebind busy state, toolbar packing and menu fallback | That every camera source exposes two usable directions |
+| Probe stops reporting | Guest lifecycle, command id, exception/crash and process focus | That a fixture/class-loader failure proves a production camera failure |
 
-The installed APK SHA-256 is
-`81de08e3942fd76ae0cf46d2c5175328bd0d1c3690837d4926fa390286321824`.
-Installation used `adb install -r` with the matching debug certificate. Its 13
-native libraries remain byte-identical to CI 2741, using the external build setup
-described above. All files under the installed Miami converted/config/data
-directories retained their before/after SHA-256 values during this update.
+If new diagnostics are needed, compare the raw CameraX JPEG, proxy metadata,
+exact returned bytes and guest image operation at the same capture boundary.
+Use a stationary asymmetric TOP/LEFT target; distinguish scene rotation from the
+width/height rectangle and distinguish mirroring from rotation. Keep diagnostics
+bounded, local and temporary. Never add a host-backend reference to the probe:
+that caused a guest class-loader stall during this investigation. Observe the
+lens through host state/UI; the independent camera path stays Java ME-only.
 
-Validation of this update:
+## Reproduce with the owned debug MIDlet
 
-- 19 JVM tests passed: capability/default parsing and Manager discovery.
-- 18 physical Android tests passed: Player/session stability, encoder, preview
-  layout and cancellable calls.
-- Independent MIDlet on virtual 240 x 320: rear/front null snapshots decoded as
-  480 x 640 JPEG, matching advertised and source dimensions.
-- Independent MIDlet on virtual 320 x 240: rear/front null snapshots decoded as
-  640 x 480 JPEG, matching advertised and source dimensions.
-- Portrait session plus explicit PNG 640 x 480 returned that exact size. A display
-  resize to 320 x 240 still returned 480 x 640 for the next null snapshot.
-- Automatic dimensions plus forced landscape returned 640 x 480.
-- All seven captured byte arrays decoded successfully. Owned fixture/config/data
-  and private probe images were removed afterward.
+Read [Build and validation](development.md) for the current Android toolchain.
+Build/install the matching debug and androidTest APKs. Run only while the device
+is available for testing and no user guest session is active. The opt-in test opens
+no hardware during ordinary test runs.
 
-These checks qualify the changed default-resolution path; they do not repeat the
-earlier 24-case visual matrix or establish a final visual pass for Miami under the
-new policy. The user will test Miami on the installed build.
+```text
+adb -s SERIAL shell am instrument -w \
+  -e class io.github.h3nb.jlmodplus.mmapi.camera.CameraDeviceProbeTest \
+  -e cameraDeviceProbe true -e cameraProbeHold true \
+  -e cameraProbeScreenWidth 240 -e cameraProbeScreenHeight 320 \
+  -e cameraProbeDefaultFacing 0 -e cameraProbeResolution 2 \
+  io.github.h3nb.jlmodplus.debug.test/androidx.test.runner.AndroidJUnitRunner
+```
 
-## Media configuration and toolbar follow-up
+The example is one command; use your shell's continuation syntax. Setup creates
+only `Camera175Probe` in the current workdir's converted/config/data directories
+and its catalog entry. It copies the current debug APK for the fixture classes;
+recreate it after changing debug fixture code. It does not change the workdir
+preference. Reusing an owned fixture requires `-e cameraProbeReuse true`.
+Additional setup arguments: `cameraProbeOrientation` and the values in the settings
+table above. The held instrumentation session stops after 20 minutes or its stop file.
 
-The user confirmed that the virtual-screen default build worked as expected in
-Miami Nights 2, then requested a contextual toolbar shortcut and persistent camera
-defaults. These changes are now implemented together with `origin/alpha` commit
-`450c6eac35ecaab2f95194998d12d2fd3d999fde`:
+Write a local UTF-8 `command.properties` containing, for example:
 
-- Media replaces the Audio destination and uses the official Material `perm_media`
-  symbol. The existing MIDI soundbank section remains; Camera adds rear/front and
-  automatic/portrait/landscape default choices, localized in all 39 catalogs.
-- Rear/automatic are additive JSON-v7 defaults. Missing fields do not trigger a
-  profile rewrite. Form drafts, save/load, preset copies and comparison include
-  both fields. Named camera locators and explicit sizes keep their precedence;
-  only an unavailable configured default lens may fall back.
-- Toolbar swap uses existing runtime state/callback on Canvas and Form. It becomes
-  the fourth shortcut when the three Canvas shortcuts are also available and fit.
-  Overflow retains the action when the shortcut does not fit or the toolbar is
-  hidden. Capture/rebinding disables the button while keeping availability stable.
+```properties
+id=rear-open-001
+action=open
+locator=capture://devcam0
+```
 
-Local validation: 366 of 367 selected JVM tests passed; the unrelated
-`LegacyPrivateFilesTest.rejectsTraversalLinksAndPrivateNamespaces` could not create
-a symbolic link without a Windows privilege. A focused physical-device run passed
-21 tests covering the new Media choices, toolbar availability/actions/busy/overflow,
-and camera Player/encoder/cancellation contracts. A broader UI run on the phone's
-Indonesian locale was not green: existing tests search for hardcoded English labels
-such as Start, Apply and OK. It is not reported as a passing suite.
+Transfer it without putting images into shared storage:
 
-Twelve configuration screenshot references were rendered and reviewed. Differences
-were confined to the renamed destination/icon (navigation bar or rail) and the new
-Camera section. Full local screenshot validation passed all 122 previews, and
-`:app:lintEmulatorDebug` passed with the normal native-enabled Gradle model.
+```text
+adb -s SERIAL push command.properties /data/local/tmp/camera175-command.properties
+adb -s SERIAL shell run-as io.github.h3nb.jlmodplus.debug cp /data/local/tmp/camera175-command.properties files/camera175-probe/command.properties
+adb -s SERIAL shell run-as io.github.h3nb.jlmodplus.debug cat files/camera175-probe/report.properties
+```
 
-Physical integration then passed through the independent MIDlet on Android 16:
+Use a new id for every command and wait for the matching report before continuing.
+Supported actions: `open`, `capture`, `preview`, `display`, `hide`, `stop`, `start`,
+`close`. Open defaults to direct Canvas video; `mode=form` uses Form/VideoItem.
+`display` takes `width` and `height`. Capture accepts an optional `encoding` value,
+for example `encoding=png&width=640&height=480`; omitting it tests null. It hides the
+live preview to display the decoded result; use `preview` to resume live viewing.
 
-- A saved front/landscape profile on virtual 240 x 320 advertised/source-reported
-  640 x 480 and returned a decoded 640 x 480 JPEG. The host toolbar offered rear.
-- The real `config.edit` Media screen showed those saved choices. Selecting rear
-  and portrait, then Start, persisted `CameraDefaultFacing: 1` and
-  `CameraResolution: 1` in JSON v7. The new session advertised/source-reported
-  480 x 640 and returned a decoded 480 x 640 JPEG.
-- Tapping the toolbar swap changed its destination from front to rear and the
-  next front-camera JPEG remained 480 x 640. An explicit PNG 640 x 480 returned
-  that exact size. Closing the Player removed the swap icon.
+Reports contain state, advertised/source dimensions and an error when one occurs.
+Successful captures also contain decoded width/height, byte count and a private
+`<id>.snapshot` filename. For byte comparison, export with a binary-safe local
+Python subprocess; do not route JPEG/PNG through a text decoder:
 
-An initial diagnostic fixture stalled after referencing the host CameraRuntime
-from its guest class loader. Removing that reference restored the probe; lens
-selection was instead observed through the host toolbar. The independent fixture
-now uses only the Java ME API for camera operations and reporting.
+```python
+from pathlib import Path
+from subprocess import check_output
+Path("snapshot.jpg").write_bytes(check_output([
+    "adb", "-s", "SERIAL", "exec-out", "run-as",
+    "io.github.h3nb.jlmodplus.debug", "cat",
+    "files/camera175-probe/CAPTURE-ID.snapshot",
+]))
+```
 
-The final locally installed APK SHA-256 is
-`02c19264948fdbc66718eded03351b9bf8ca259b7a412631a4527831e61b49d8`.
-This includes the subsequent terminology/grammar review of 12 localized catalogs;
-the camera resource matrix has no missing translations across 38 translated locales.
-Installation used `adb install -r`, preserving app data. As above, its native
-libraries came from CI 2741 rather than a fresh local native compilation. The
-owned fixture/catalog/config/data and private probe output were removed, and the
-phone returned to the library. Miami's converted files retained their hashes;
-its configuration/key layout and RMS hashes changed between the 22:11 baseline
-and 22:27, before the successful 22:28-22:30 fixture tests. The user confirmed
-opening/changing the game during that interval. A second comparison after cleanup
-matched all current Miami files. No old user files were restored over that state.
+End the held instrumentation session by touching
+`files/camera175-probe.stop` through run-as. Close the probe runtime before cleanup.
+Run the same opt-in instrumentation command with `-e cameraProbeAction cleanup`
+and without `cameraProbeHold`. Cleanup verifies the owned descriptor before
+removing its catalog entry, converted/config/data directories and private output.
+Remove `/data/local/tmp/camera175-command.properties` and any local photos after
+review. Never point this fixture cleanup at a real MIDlet.
 
-## Manual probe
+## Sources used
 
-`CameraDeviceProbeTest` is opt-in (`-e cameraDeviceProbe true`) and opens no hardware
-in ordinary test runs. Setup adds only its owned `Camera175Probe` catalog entry,
-converted directory and config in the current workdir. It does not change the user's
-workdir preference. Use `-e cameraProbeReuse true` to relaunch an existing probe.
-Use `-e cameraProbeHold true` to retain the instrumentation session while driving it;
-write `files/camera175-probe.stop` through `run-as` to end the session.
+- [JSR-135 VideoControl](https://raw.githubusercontent.com/shinovon/J2ME_Docs/master/docs/jsr135/javax/microedition/media/control/VideoControl.html): snapshot/display contract and the null-format default.
+- [CameraX capture callback](https://developer.android.com/reference/androidx/camera/core/ImageCapture.OnImageCapturedCallback) and [crop configuration](https://developer.android.com/media/camera/camerax/configuration#crop-rect): proxy rotation and shared sensor crop; source version inspected was 1.6.2.
+- [J2ME Loader camera controller](https://github.com/nikita36078/J2ME-Loader/blob/13e29830632464719a643043e1113310fe6e64cc/app/src/main/java/javax/microedition/media/CameraController.java): JPEG decode and metadata rotation comparison.
+- [Official Android image helper](https://github.com/android/camera-samples/blob/2f10e46fc7a09f7208f8d6de72482ecf3e5fb85a/core-camera/src/main/java/com/android/camera/core/image/ImageUtils.kt): proxy rotation and separate mirroring.
+- [GrapheneOS preview ratio](https://github.com/GrapheneOS/Camera/blob/fc75d0d5dd574240910ef99b0dfe98e0aadb500f/app/src/main/java/app/grapheneos/camera/ktx/PreviewView.kt): aspect-constrained presentation; its photo policy is not this emulator's contract.
+- [KEmulator capture player](https://github.com/shinovon/KEmulator/blob/main/src/media/emulator/media/capture/CapturePlayerImpl.java): desktop webcam comparison, not handset-orientation evidence.
 
-Commands are Java properties in private `files/camera175-probe/command.properties`:
-unique `id`, `action`, and optional `locator`, `mode`, `encoding`, `width`, `height`.
-Actions are `open`, `capture`, `preview`, `display`, `hide`, `stop`, `start`, `close`.
-`mode=form` uses a real MIDP Form/VideoItem; the default is direct Canvas video.
-Read `report.properties` for the matching id and state/error. A capture writes exact
-returned bytes into `<id>.snapshot`; an absent `encoding` tests `getSnapshot(null)`.
-After ending the runtime, run the same opt-in test with
-`-e cameraProbeAction cleanup`; it verifies the fixture descriptor and removes only
-its owned entry/directories and private probe output. Do not run this manual launcher
-against an unrelated active guest session.
+No third-party camera implementation was copied into the fix.

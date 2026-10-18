@@ -1,10 +1,21 @@
-# Java ME camera capabilities and orientation: PR 175 follow-up
+# Java ME camera capabilities and orientation: research rationale
 
 Research on 2026-10-18, following the physical-device investigation. This study
 corrects the interpretation that Miami Nights 2's additional rotation alone proves
 a game defect. Its observed path expects portrait geometry; the investigated PR
 head supplied an implicit landscape default. The later approved policy is recorded
-below and in [MMAPI camera](mmapi-camera.md).
+below. Use [MMAPI camera](mmapi-camera.md) for the current contract and the
+[device/troubleshooting handoff](camera-pr175-device-investigation.md) for code
+entry points, measured evidence and reproducible tests. This research is not a
+list of pending implementation steps.
+
+## Decision in force
+
+The user approved a virtual-screen-derived automatic default: portrait 480 x 640,
+landscape/square 640 x 480, fixed for the MIDlet session. Media configuration can
+override that default and select rear/front. Explicit MIDlet sizes and profile
+encoding defaults retain precedence. This is an emulator compatibility policy;
+the historical sources below do not make it a universal JSR-135 requirement.
 
 ## What the APIs actually expose
 
@@ -91,55 +102,24 @@ upright scene into a landscape rectangle; the game rotates that rectangle.
 The first additional pixel rotation is in the game, but the earliest compatibility
 policy mismatch is the emulator's implicit geometry versus the game's expectation.
 
-Returning an upright portrait image would avoid that branch. This is a prediction
-from the inspected branch, not a completed final-build game test of a new policy.
+Returning an upright portrait image avoids that branch. The user subsequently
+confirmed expected Miami behavior after installing the approved default update.
+That confirmation is separate from the earlier instrumented capture evidence.
 Simply changing output width/height while keeping the current landscape ViewPort
 would retain the wrong implicit framing and add padding; that is not a complete
 geometry correction.
 
-## Original proposal and adopted policy
+## Alternative considered, not adopted
 
-The sensor-derived default below was the initial proposal. The user subsequently
-approved a virtual-screen-derived default instead: portrait 480 x 640, landscape
-or square 640 x 480, fixed for the MIDlet session. Automatic capability properties,
-unspecified source dimensions and unspecified snapshot dimensions share that choice.
-Explicit dimensions/profile defaults keep precedence. The implemented policy is
-described in [MMAPI camera](mmapi-camera.md); no sensor-derived default or removal
-of advertised dimensions has been adopted. The following retains the earlier
-proposal for the investigation's reasoning, not as an implementation requirement.
+An initial proposal derived implicit source aspect from the upright CameraX buffer,
+bounded the default output's longest edge at 640, and advertised formats without
+dimension pairs. The user chose the virtual-screen policy instead. No sensor-derived
+default or removal of advertised dimensions was implemented. Reopening that choice
+would be a substantive compatibility change for MIDlets using omitted sizes and
+parsing capability strings; it requires new evidence and an explicit proposal.
 
-Replace the unconditional landscape default with a resolved camera geometry:
-
-1. Preserve whether source/output dimensions were explicitly supplied. Explicit
-   dimensions and explicit profile encoding defaults remain authoritative.
-2. For an unspecified source, derive its aspect from the selected CameraX buffer
-   in target orientation. Use CameraX metadata rather than assuming sensor mounting
-   or adding a fixed rotation. Resolve the shared crop, preview aspect and reported
-   source dimensions from that one geometry.
-3. For a snapshot without dimensions, fit that upright source aspect within a
-   bounded default size, proposed longest edge 640. For a 3:4 source this yields
-   480 x 640; for 4:3 it yields 640 x 480. Explicit snapshot dimensions keep exact
-   requested sizes and the existing shared-framing/padding policy.
-4. Advertise automatic snapshot formats without a forced dimension pair, for example
-   `encoding=jpeg encoding=png`, and automatic source encoding as `encoding=rgb888`,
-   so the advertised defaults remain truthful across resolved geometry.
-   This syntax is permitted by Manager's grammar.
-   Capability discovery, parsing and actual capture must agree.
-5. A guest display-region resize remains a presentation change. It must not silently
-   rotate/reselect the source. Continue to use the current CameraX target-display
-   rotation policy unless separate evidence supports changing that policy.
-
-This recommendation is an emulator policy choice supported by the current game
-evidence and the sensor-oriented approach in [J2ME Loader](https://github.com/nikita36078/J2ME-Loader/blob/13e29830632464719a643043e1113310fe6e64cc/app/src/main/java/javax/microedition/media/CameraController.java),
-not a claim that JSR-135 mandates it. It needs agreement before implementation:
-MIDlets using null or omitted sizes will observe different default dimensions and
-framing, and MIDlets parsing the automatic property will no longer see a fixed size.
-Source dimensions must be coherent at the existing API state boundaries, including
-realize/prefetch, a lens switch and display rotation; lifecycle changes cannot be
-treated as a mere encoder edit.
-
-Acceptance requires the independent MIDlet and Miami retested on-device with null,
-format-only and explicit sizes; source-dimension/capability readback; front/rear and
-rotation/aspect coverage; display resizing without source changes; profile-default
-precedence; and the existing failure/lifecycle checks. Do not counter-rotate pixels,
-identify the game, or infer a universal old-phone rule from a portrait viewport.
+Both approaches require one coherent source/ViewPort/default-output geometry and
+keep display resizing separate. Neither justifies counter-rotating all pixels,
+identifying a particular game, or deriving a universal phone rule from a viewport.
+Use the current qualification matrix and measured results linked above when
+investigating a new failure; do not implement the discarded proposal as unfinished work.
