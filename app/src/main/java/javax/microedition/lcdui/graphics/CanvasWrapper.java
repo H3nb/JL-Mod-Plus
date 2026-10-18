@@ -20,11 +20,15 @@ package javax.microedition.lcdui.graphics;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.RectF;
+import android.graphics.RadialGradient;
 import android.graphics.Region;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.os.Build;
 
@@ -42,6 +46,7 @@ public class CanvasWrapper {
 	private final Paint imgPaint = new Paint();
 	private final Paint diagnosticPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Paint controlFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+	private final Paint controlGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Paint controlStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final float diagnosticAscent;
 	private final float diagnosticHeight;
@@ -50,6 +55,7 @@ public class CanvasWrapper {
 	private final float baseTextCenterOffset;
 	private final float baseTextHeight;
 	private final boolean filterBitmap;
+	private final float controlOutlineWidth;
 
 	private float textAscent;
 	private float textCenterOffset;
@@ -65,6 +71,8 @@ public class CanvasWrapper {
 
 		// init text paint
 		Context context = ContextHolder.getAppContext();
+		// Outline weight is fixed in dp, never scaled by a key, D-pad, or stick radius.
+		controlOutlineWidth = context.getResources().getDisplayMetrics().density * 0.5f;
 		textPaint.setTypeface(ResourcesCompat.getFont(context, R.font.roboto_regular));
 		textSize = context.getResources().getDimension(R.dimen._22sp);
 		textPaint.setTextSize(textSize);
@@ -104,7 +112,86 @@ public class CanvasWrapper {
 		canvas.restoreToCount(saveCount);
 	}
 
-	/** Anti-aliased grouped-control primitives use independent paints, leaving legacy keys intact. */
+	/** Shader and transform reused between analog frames; each surface owns its instance. */
+	public static final class ControlGradient {
+		private Shader shader;
+		private final Matrix transform = new Matrix();
+		private int first;
+		private int middle;
+		private int last;
+	}
+
+	/** A three-stop diagonal gradient keeps the chosen color at the center of a surface. */
+	public void fillControlLinearCircle(ControlGradient gradient, float cx, float cy,
+			float radius, int top, int middle, int bottom) {
+		if (!(gradient.shader instanceof LinearGradient) ||
+				gradient.first != top || gradient.middle != middle || gradient.last != bottom) {
+			gradient.shader = new LinearGradient(-1f, -1f, 1f, 1f,
+					new int[]{top, middle, bottom},
+					new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP);
+			gradient.first = top;
+			gradient.middle = middle;
+			gradient.last = bottom;
+		}
+		drawControlGradientCircle(gradient, cx, cy, radius);
+	}
+
+	/** A shaded recess, darker at its edge, without extra concentric geometry. */
+	public void fillControlRadialCircle(ControlGradient gradient, float cx, float cy,
+			float radius, int center, int edge) {
+		if (!(gradient.shader instanceof RadialGradient) ||
+				gradient.first != center || gradient.last != edge) {
+			gradient.shader = new RadialGradient(0f, 0f, 1f,
+					center, edge, Shader.TileMode.CLAMP);
+			gradient.first = center;
+			gradient.last = edge;
+		}
+		drawControlGradientCircle(gradient, cx, cy, radius);
+	}
+
+	private void drawControlGradientCircle(ControlGradient gradient,
+			float cx, float cy, float radius) {
+		gradient.transform.setScale(radius, radius);
+		gradient.transform.postTranslate(cx, cy);
+		gradient.shader.setLocalMatrix(gradient.transform);
+		controlGradientPaint.setShader(gradient.shader);
+		canvas.drawCircle(cx, cy, radius, controlGradientPaint);
+		controlGradientPaint.setShader(null);
+	}
+
+	/** Anti-aliased virtual-control primitives do not modify the legacy MIDlet paints. */
+	public float getControlOutlineWidth() {
+		return controlOutlineWidth;
+	}
+
+	public void fillControlRect(RectF rect, int color) {
+		controlFillPaint.setColor(color);
+		canvas.drawRect(rect, controlFillPaint);
+	}
+
+	public void strokeControlRect(RectF rect, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawRect(rect, controlStrokePaint);
+	}
+
+	public void strokeControlRoundRect(RectF rect, float rounding, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawRoundRect(rect, rounding, rounding, controlStrokePaint);
+	}
+
+	public void fillControlOval(RectF oval, int color) {
+		controlFillPaint.setColor(color);
+		canvas.drawOval(oval, controlFillPaint);
+	}
+
+	public void strokeControlOval(RectF oval, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawOval(oval, controlStrokePaint);
+	}
+
 	public void fillControlPath(Path path, int color) {
 		controlFillPaint.setColor(color);
 		canvas.drawPath(path, controlFillPaint);

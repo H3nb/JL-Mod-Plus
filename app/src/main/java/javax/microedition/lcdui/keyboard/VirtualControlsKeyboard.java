@@ -79,6 +79,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private final RectF paintRect = new RectF();
 	private final Path dpadOutline = new Path();
 	private final Path dpadArrow = new Path();
+	private final CanvasWrapper.ControlGradient analogShellGradient = new CanvasWrapper.ControlGradient();
+	private final CanvasWrapper.ControlGradient analogBowlGradient = new CanvasWrapper.ControlGradient();
+	private final CanvasWrapper.ControlGradient analogThumbGradient = new CanvasWrapper.ControlGradient();
 	private final RectF guestBounds = new RectF();
 
 	private VirtualAnalogStick analogStick;
@@ -1344,6 +1347,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float cx = geometry.getCenterX();
 		float cy = geometry.getCenterY();
 		float r = geometry.getRadius();
+		boolean editingLayout = getLayoutEditMode() != LAYOUT_EOF;
 		int alpha = controlAlpha(cx, cy, r);
 		if (alpha == 0) return;
 		Set<VirtualDpadDirection> pressed = dpadToken == null
@@ -1354,28 +1358,35 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int outline = VirtualControlAppearance.outline(settings);
 		int foreground = VirtualControlAppearance.foreground(settings, false);
 		int selectedForeground = VirtualControlAppearance.foreground(settings, true);
-		float stroke = Math.max(1.0f, r * 0.012f);
+		float stroke = graphics.getControlOutlineWidth();
 
 		int layer = beginControlLayer(graphics, cx, cy, r * 1.06f, alpha);
 		try {
 			buildDpadOutline(dpadOutline, cx, cy, r);
-			graphics.fillControlPath(dpadOutline, opaqueColor(base));
-			// Inset pressed surfaces keep diagonals distinct and avoid harsh rectangular joins.
-			if (pressed.contains(VirtualDpadDirection.UP)) {
-				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.UP, selected);
-			}
-			if (pressed.contains(VirtualDpadDirection.DOWN)) {
-				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.DOWN, selected);
-			}
-			if (pressed.contains(VirtualDpadDirection.LEFT)) {
-				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.LEFT, selected);
-			}
-			if (pressed.contains(VirtualDpadDirection.RIGHT)) {
-				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.RIGHT, selected);
+			// Fade the combined surfaces once, not each overlapping region individually.
+			int surfaceLayer = beginControlLayer(graphics, cx, cy, r * 1.06f,
+					VirtualControlAppearance.surfaceAlpha(editingLayout));
+			try {
+				graphics.fillControlPath(dpadOutline, opaqueColor(base));
+				// Inset pressed surfaces keep diagonals distinct and avoid harsh rectangular joins.
+				if (pressed.contains(VirtualDpadDirection.UP)) {
+					paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.UP, selected);
+				}
+				if (pressed.contains(VirtualDpadDirection.DOWN)) {
+					paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.DOWN, selected);
+				}
+				if (pressed.contains(VirtualDpadDirection.LEFT)) {
+					paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.LEFT, selected);
+				}
+				if (pressed.contains(VirtualDpadDirection.RIGHT)) {
+					paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.RIGHT, selected);
+				}
+				fillCircle(graphics, cx, cy, r * 0.175f, base);
+			} finally {
+				endControlLayer(graphics, surfaceLayer);
 			}
 			graphics.strokeControlPath(dpadOutline, opaqueColor(outline), stroke);
 			int hubOutline = VirtualControlAppearance.mixRgb(base, outline, 0.45f);
-			fillCircle(graphics, cx, cy, r * 0.175f, base);
 			graphics.strokeControlCircle(cx, cy, r * 0.175f,
 					opaqueColor(hubOutline), stroke);
 			if (getLayoutEditMode() != LAYOUT_EOF && editControl == EditControl.DPAD) {
@@ -1492,8 +1503,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private void paintAnalog(CanvasWrapper graphics) {
-		boolean editingAnalog = getLayoutEditMode() != LAYOUT_EOF &&
-				editControl == EditControl.ANALOG;
+		boolean editingLayout = getLayoutEditMode() != LAYOUT_EOF;
+		boolean editingAnalog = editingLayout && editControl == EditControl.ANALOG;
 		float centerX;
 		float centerY;
 		float radius;
@@ -1524,23 +1535,57 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int base = VirtualControlAppearance.background(settings, false);
 		int outline = VirtualControlAppearance.outline(settings);
 		int thumbColor = VirtualControlAppearance.analogThumb(settings, active);
-		int indicator = VirtualControlAppearance.foreground(settings, active);
 
 		int layer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f, alpha);
 		try {
-			float stroke = Math.max(1.0f, radius * 0.012f);
-			fillCircle(graphics, centerX, centerY, radius * 0.94f, base);
-			// One quiet recessed surface separates the cap from its base without target rings.
-			fillCircle(graphics, centerX, centerY, radius * 0.67f,
-					VirtualControlAppearance.mixRgb(base, outline, 0.075f));
-			graphics.strokeControlCircle(centerX, centerY, radius * 0.94f,
-					opaqueColor(outline), stroke);
-			float thumbRadius = radius * 0.43f;
-			fillCircle(graphics, thumbX, thumbY, thumbRadius, thumbColor);
-			graphics.strokeControlCircle(thumbX, thumbY, thumbRadius,
-					opaqueColor(VirtualControlAppearance.mixRgb(base, outline, 0.56f)),
-					Math.max(1.0f, radius * 0.016f));
-			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.13f, indicator);
+			float stroke = graphics.getControlOutlineWidth();
+			// Keep the normal paint order unchanged; edit mode fades the composed surfaces.
+			int surfaceLayer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f,
+					VirtualControlAppearance.surfaceAlpha(editingLayout));
+			float shellRadius = radius * 0.94f;
+			float thumbRadius = radius * 0.45f;
+			try {
+				int shell = VirtualControlAppearance.analogShell(base);
+				graphics.fillControlLinearCircle(analogShellGradient,
+						centerX, centerY, shellRadius,
+						opaqueColor(VirtualControlAppearance.analogShellTop(base)),
+						opaqueColor(shell),
+						opaqueColor(VirtualControlAppearance.analogShellBottom(base)));
+				if (!editingLayout) {
+					graphics.strokeControlCircle(centerX, centerY, shellRadius,
+							opaqueColor(outline), stroke);
+					graphics.strokeControlCircle(centerX, centerY, radius * 0.915f,
+							(0x33 << 24) | VirtualControlAppearance.analogShellRim(base), stroke);
+				}
+				graphics.fillControlRadialCircle(analogBowlGradient, centerX, centerY,
+						radius * 0.70f,
+						opaqueColor(VirtualControlAppearance.analogBowlCenter(base)),
+						opaqueColor(VirtualControlAppearance.analogBowlEdge(base)));
+				graphics.fillControlCircle(thumbX, thumbY + thumbRadius * 0.045f,
+						thumbRadius * 1.055f,
+						(0x5A << 24) | VirtualControlAppearance.analogThumbShadow(base));
+				fillCircle(graphics, thumbX, thumbY, thumbRadius * 1.035f,
+						VirtualControlAppearance.analogThumbRim(thumbColor));
+				graphics.fillControlLinearCircle(analogThumbGradient,
+						thumbX, thumbY, thumbRadius,
+						opaqueColor(VirtualControlAppearance.analogThumbTop(thumbColor)),
+						opaqueColor(thumbColor),
+						opaqueColor(VirtualControlAppearance.analogThumbBottom(thumbColor)));
+				if (!editingLayout) {
+					graphics.strokeControlCircle(thumbX, thumbY, thumbRadius * 0.96f,
+							(0x55 << 24) | VirtualControlAppearance.analogThumbRim(thumbColor), stroke);
+				}
+			} finally {
+				endControlLayer(graphics, surfaceLayer);
+			}
+			if (editingLayout) {
+				graphics.strokeControlCircle(centerX, centerY, shellRadius,
+						opaqueColor(outline), stroke);
+				graphics.strokeControlCircle(centerX, centerY, radius * 0.915f,
+						(0x33 << 24) | VirtualControlAppearance.analogShellRim(base), stroke);
+				graphics.strokeControlCircle(thumbX, thumbY, thumbRadius * 0.96f,
+						(0x55 << 24) | VirtualControlAppearance.analogThumbRim(thumbColor), stroke);
+			}
 			if (editingAnalog) {
 				graphics.strokeControlCircle(centerX, centerY, radius * 1.02f,
 						opaqueColor(VirtualControlAppearance.background(settings, true)), stroke);
