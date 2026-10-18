@@ -76,7 +76,7 @@ preview against decoded snapshot bytes with a stationary asymmetric target:
 | Scenario | Expected result |
 | --- | --- |
 | Canvas and Form, rear and front | Same crop, orientation and handedness |
-| Portrait and landscape; output ratios 4:3, 3:4 and square | Full shared crop, black padding if needed, exact requested size |
+| Portrait, landscape and 180-degree display turns; output ratios 4:3, 3:4 and square | Full shared crop, black padding if needed, exact requested size |
 | Switch front/rear repeatedly | New preview before capture readiness; matching source in returned bytes |
 | Deny/regrant CAMERA permission | Retryable failure, responsive host, no microphone request |
 | Hide preview, take snapshot | Capture works without waiting for a visible preview surface |

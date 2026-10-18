@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">কাজের ডিরেক্টরিতে শেয়ার করা ফোল্ডার ব্যবহার করুন।</string>
     <string name="midlet_storage_mode_android_summary">আগের সংস্করণগুলোর মতো Android স্টোরেজ ব্যবহার করুন।</string>
+    <string name="runtime_camera_use_front">সামনের ক্যামেরা ব্যবহার করুন</string>
+    <string name="runtime_camera_use_rear">পেছনের ক্যামেরা ব্যবহার করুন</string>
+    <string name="runtime_camera_switch_failed">ক্যামেরা বদলানো যায়নি।</string>
 </resources>

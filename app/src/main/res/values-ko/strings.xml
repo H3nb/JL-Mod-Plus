@@ -1052,4 +1052,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">작업 디렉터리의 공유 폴더를 사용합니다.</string>
     <string name="midlet_storage_mode_android_summary">이전 버전과 같이 Android 저장소를 사용합니다.</string>
+    <string name="runtime_camera_use_front">전면 카메라 사용</string>
+    <string name="runtime_camera_use_rear">후면 카메라 사용</string>
+    <string name="runtime_camera_switch_failed">카메라를 전환하지 못했습니다.</string>
 </resources>

@@ -11,6 +11,8 @@ import android.util.Size
 import android.view.View
 import android.widget.FrameLayout
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.hardware.display.DisplayManager
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraState
@@ -41,8 +43,25 @@ object CameraRuntime {
     private val main = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor { Thread(it, "CameraSnapshot").apply { isDaemon = true } }
     private val epoch = AtomicLong()
+    @Volatile private var runtimeOpen = false
     private val players = Collections.newSetFromMap(ConcurrentHashMap<CameraCapturePlayer, Boolean>())
     private var host: MicroActivity? = null
+    private var displayManager: DisplayManager? = null
+    private val displayListener = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) = Unit
+        override fun onDisplayRemoved(displayId: Int) = Unit
+        override fun onDisplayChanged(displayId: Int) {
+            val activity = host ?: return
+            val current = binding ?: return
+            @Suppress("DEPRECATION")
+            val display = activity.windowManager.defaultDisplay
+            // A 180-degree turn can change display rotation without a configuration callback.
+            if (foreground && display.displayId == displayId && current.rotation != display.rotation) {
+                unbind()
+                drain()
+            }
+        }
+    }
     private var foreground = false
     private var hostHasResumed = false
     private var permission: Runnable? = null
@@ -70,12 +89,26 @@ object CameraRuntime {
     }
 
     internal fun generation() = epoch.get()
-    internal fun register(player: CameraCapturePlayer) { players.add(player) }
+    internal fun register(player: CameraCapturePlayer) {
+        if (!valid(player)) throw MediaException("Camera runtime is closed")
+        players.add(player)
+        if (!valid(player)) {
+            player.close()
+            throw MediaException("Camera runtime is closed")
+        }
+    }
     private fun post(action: () -> Unit) { main.post(action) }
-    private fun valid(player: CameraCapturePlayer) = player.runtimeGeneration == epoch.get() && player.getState() != Player.CLOSED
+    private fun valid(player: CameraCapturePlayer) = runtimeOpen && player.runtimeGeneration == epoch.get() && player.getState() != Player.CLOSED
 
-    @JvmStatic fun beginRuntime() = resetRuntime()
-    @JvmStatic fun closeRuntime() = resetRuntime()
+    @JvmStatic fun beginRuntime() {
+        runtimeOpen = false
+        resetRuntime()
+        runtimeOpen = true
+    }
+    @JvmStatic fun closeRuntime() {
+        runtimeOpen = false
+        resetRuntime()
+    }
     private fun resetRuntime() {
         val generation = epoch.incrementAndGet()
         // Close synchronously to unblock guests even if Android is busy destroying its host.
@@ -105,6 +138,10 @@ object CameraRuntime {
             foreground = false
             hostHasResumed = false
         }
+        if (displayManager == null) {
+            displayManager = activity.applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+            displayManager!!.registerDisplayListener(displayListener, main)
+        }
         permission = requestPermission
         refresh = refreshActions
         notifyMenu()
@@ -132,6 +169,8 @@ object CameraRuntime {
         onHostPaused(activity)
         failPending(MediaException("Camera host was destroyed"))
         host = null
+        displayManager?.unregisterDisplayListener(displayListener)
+        displayManager = null
         permission = null
         refresh = null
         requestingPermission = false
@@ -246,7 +285,9 @@ object CameraRuntime {
             for (request in ready) {
                 if (!request.call.isComplete && valid(request.player)) {
                     try { request.ready(current) }
-                    catch (failure: Exception) { request.call.fail(failure) }
+                    catch (failure: Exception) {
+                        request.call.fail(if (request.player.getState() == Player.CLOSED) failure else cameraFailure(failure))
+                    }
                 }
             }
             notifyMenu()
@@ -274,6 +315,7 @@ object CameraRuntime {
         // before the new camera has produced a frame, especially during a lens switch.
         val view = container?.let {
             newPreview(it.context).also { preview ->
+                it.foreground = ColorDrawable(Color.BLACK)
                 it.removeAllViews()
                 it.addView(preview, FrameLayout.LayoutParams(-1, -1))
             }
@@ -296,7 +338,6 @@ object CameraRuntime {
             // PreviewView mirrors front cameras by default, including pre-API33. Cancel that
             // display transform so the guest and its encoded image both see physical pixels.
             view.scaleX = if (lens == CameraSelector.LENS_FACING_FRONT) -1f else 1f
-            view.alpha = 0f
             preview.setSurfaceProvider(view.surfaceProvider)
             group.addUseCase(preview)
         }
@@ -329,7 +370,7 @@ object CameraRuntime {
         capturing?.fail(MediaException("Camera stream changed; retry capture"))
         capturing = null
         if (old != null) {
-            old.view?.alpha = 0f
+            (old.view?.parent as? FrameLayout)?.foreground = ColorDrawable(Color.BLACK)
             (old.view?.parent as? FrameLayout)?.removeView(old.view)
             old.camera.cameraInfo.cameraState.removeObserver(old.cameraObserver)
             old.streamObserver?.let { old.view?.previewStreamState?.removeObserver(it) }
@@ -340,7 +381,7 @@ object CameraRuntime {
     private fun backendFailed(failure: Exception) {
         val player = owner
         unbind()
-        failPending(failure)
+        failPending(cameraFailure(failure))
         if (switchFailure != null) {
             overrideFacing = previousFacing
             finishSwitch(failure.message ?: "Could not switch camera")
@@ -352,13 +393,20 @@ object CameraRuntime {
         }
         notifyMenu()
     }
+    private fun cameraFailure(failure: Exception): Exception =
+        if (failure is MediaException || failure is SecurityException) failure
+        else MediaException("Camera operation failed: ${failure.message}")
+
     private fun failPending(failure: Exception) {
         for (request in pending) request.call.fail(failure)
         pending.clear()
     }
     private fun updatePreviewVisibility() {
         val current = binding ?: return
-        current.view?.alpha = if (current.ready && current.player.getState() == Player.STARTED) 1f else 0f
+        // Preserve TextureView's normal draw/update path under the cover: STREAMING
+        // depends on its frame-update callback, not just the arrival of a camera buffer.
+        (current.view?.parent as? FrameLayout)?.foreground =
+            if (current.ready && current.player.getState() == Player.STARTED) null else ColorDrawable(Color.BLACK)
     }
 
     private fun newPreview(context: Context) = PreviewView(context).apply {
@@ -367,7 +415,6 @@ object CameraRuntime {
         setBackgroundColor(Color.BLACK)
         isClickable = false
         isFocusable = false
-        alpha = 0f
     }
     internal fun createPreview(player: CameraCapturePlayer, context: Context): View {
         check(Looper.myLooper() == Looper.getMainLooper())
@@ -422,7 +469,7 @@ object CameraRuntime {
         })
     }
     private fun finishCapture(call: CameraCall<ByteArray>, failure: Exception) = post {
-        call.fail(failure)
+        call.fail(cameraFailure(failure))
         if (capturing === call) capturing = null
         notifyMenu()
     }

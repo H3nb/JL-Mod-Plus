@@ -1151,4 +1151,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Używaj folderów współdzielonych w katalogu roboczym.</string>
     <string name="midlet_storage_mode_android_summary">Używaj pamięci Androida jak w poprzednich wersjach.</string>
+    <string name="runtime_camera_use_front">Użyj przedniego aparatu</string>
+    <string name="runtime_camera_use_rear">Użyj tylnego aparatu</string>
+    <string name="runtime_camera_switch_failed">Nie udało się przełączyć aparatu.</string>
 </resources>

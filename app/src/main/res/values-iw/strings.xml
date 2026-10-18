@@ -1118,4 +1118,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">שימוש בתיקיות משותפות בספריית העבודה.</string>
     <string name="midlet_storage_mode_android_summary">שימוש באחסון Android כמו בגרסאות הקודמות.</string>
+    <string name="runtime_camera_use_front">שימוש במצלמה הקדמית</string>
+    <string name="runtime_camera_use_rear">שימוש במצלמה האחורית</string>
+    <string name="runtime_camera_switch_failed">לא ניתן להחליף מצלמה.</string>
 </resources>

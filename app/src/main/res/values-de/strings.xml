@@ -1086,4 +1086,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Freigegebene Ordner im Arbeitsverzeichnis verwenden.</string>
     <string name="midlet_storage_mode_android_summary">Android-Speicher wie in früheren Versionen verwenden.</string>
+    <string name="runtime_camera_use_front">Frontkamera verwenden</string>
+    <string name="runtime_camera_use_rear">Rückkamera verwenden</string>
+    <string name="runtime_camera_switch_failed">Kamera konnte nicht gewechselt werden.</string>
 </resources>

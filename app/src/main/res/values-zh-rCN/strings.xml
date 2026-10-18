@@ -1052,4 +1052,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">使用工作目录中的共享文件夹。</string>
     <string name="midlet_storage_mode_android_summary">像以前的版本一样使用 Android 存储空间。</string>
+    <string name="runtime_camera_use_front">使用前置摄像头</string>
+    <string name="runtime_camera_use_rear">使用后置摄像头</string>
+    <string name="runtime_camera_switch_failed">无法切换摄像头。</string>
 </resources>

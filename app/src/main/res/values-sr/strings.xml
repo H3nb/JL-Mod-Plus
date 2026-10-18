@@ -1117,4 +1117,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Користи дељене фасцикле у радном директоријуму.</string>
     <string name="midlet_storage_mode_android_summary">Користи Android складиште као у претходним верзијама.</string>
+    <string name="runtime_camera_use_front">Користи предњу камеру</string>
+    <string name="runtime_camera_use_rear">Користи задњу камеру</string>
+    <string name="runtime_camera_switch_failed">Није могуће променити камеру.</string>
 </resources>

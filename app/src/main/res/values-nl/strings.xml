@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Gedeelde mappen in de werkmap gebruiken.</string>
     <string name="midlet_storage_mode_android_summary">Android-opslag gebruiken zoals in eerdere versies.</string>
+    <string name="runtime_camera_use_front">Frontcamera gebruiken</string>
+    <string name="runtime_camera_use_rear">Achtercamera gebruiken</string>
+    <string name="runtime_camera_switch_failed">Kan niet van camera wisselen.</string>
 </resources>

@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Megosztott mappák használata a munkakönyvtárban.</string>
     <string name="midlet_storage_mode_android_summary">Android-tárhely használata a korábbi verziókhoz hasonlóan.</string>
+    <string name="runtime_camera_use_front">Előlapi kamera használata</string>
+    <string name="runtime_camera_use_rear">Hátlapi kamera használata</string>
+    <string name="runtime_camera_switch_failed">Nem sikerült kamerát váltani.</string>
 </resources>

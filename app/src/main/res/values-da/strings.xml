@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Brug delte mapper i arbejdsmappen.</string>
     <string name="midlet_storage_mode_android_summary">Brug Android-lagerplads som i tidligere versioner.</string>
+    <string name="runtime_camera_use_front">Brug frontkamera</string>
+    <string name="runtime_camera_use_rear">Brug bagkamera</string>
+    <string name="runtime_camera_switch_failed">Kunne ikke skifte kamera.</string>
 </resources>

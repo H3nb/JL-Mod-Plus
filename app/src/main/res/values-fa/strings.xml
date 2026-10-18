@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">از پوشه‌های مشترک در پوشه کاری استفاده کنید.</string>
     <string name="midlet_storage_mode_android_summary">مانند نسخه‌های قبلی از فضای ذخیره‌سازی Android استفاده کنید.</string>
+    <string name="runtime_camera_use_front">استفاده از دوربین جلو</string>
+    <string name="runtime_camera_use_rear">استفاده از دوربین پشت</string>
+    <string name="runtime_camera_switch_failed">تعویض دوربین ممکن نشد.</string>
 </resources>

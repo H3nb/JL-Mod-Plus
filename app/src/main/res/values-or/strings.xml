@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">କାର୍ଯ୍ୟ ଡିରେକ୍ଟୋରୀର ସେୟାର୍ଡ ଫୋଲ୍ଡର୍ ବ୍ୟବହାର କରନ୍ତୁ।</string>
     <string name="midlet_storage_mode_android_summary">ପୂର୍ବ ସଂସ୍କରଣ ପରି Android ଷ୍ଟୋରେଜ୍ ବ୍ୟବହାର କରନ୍ତୁ।</string>
+    <string name="runtime_camera_use_front">ସାମ୍ନା କ୍ୟାମେରା ବ୍ୟବହାର କରନ୍ତୁ</string>
+    <string name="runtime_camera_use_rear">ପଛ କ୍ୟାମେରା ବ୍ୟବହାର କରନ୍ତୁ</string>
+    <string name="runtime_camera_switch_failed">କ୍ୟାମେରା ବଦଳାଯାଇପାରିଲା ନାହିଁ।</string>
 </resources>

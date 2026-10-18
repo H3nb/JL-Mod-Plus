@@ -1151,4 +1151,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Používat sdílené složky v pracovním adresáři.</string>
     <string name="midlet_storage_mode_android_summary">Používat úložiště Androidu jako v předchozích verzích.</string>
+    <string name="runtime_camera_use_front">Použít přední fotoaparát</string>
+    <string name="runtime_camera_use_rear">Použít zadní fotoaparát</string>
+    <string name="runtime_camera_switch_failed">Nepodařilo se přepnout fotoaparát.</string>
 </resources>

@@ -1052,4 +1052,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Sử dụng các thư mục dùng chung trong thư mục làm việc.</string>
     <string name="midlet_storage_mode_android_summary">Sử dụng bộ nhớ Android như ở các phiên bản trước.</string>
+    <string name="runtime_camera_use_front">Sử dụng camera trước</string>
+    <string name="runtime_camera_use_rear">Sử dụng camera sau</string>
+    <string name="runtime_camera_switch_failed">Không thể chuyển đổi camera.</string>
 </resources>

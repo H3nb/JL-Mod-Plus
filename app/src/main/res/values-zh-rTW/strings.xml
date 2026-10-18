@@ -1052,4 +1052,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">使用工作目錄中的共用資料夾。</string>
     <string name="midlet_storage_mode_android_summary">使用與先前版本相同的 Android 儲存空間。</string>
+    <string name="runtime_camera_use_front">使用前置相機</string>
+    <string name="runtime_camera_use_rear">使用後置相機</string>
+    <string name="runtime_camera_switch_failed">無法切換相機。</string>
 </resources>

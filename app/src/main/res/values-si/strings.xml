@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">වැඩ කරන නාමාවලියේ හවුල් ෆෝල්ඩර භාවිත කරන්න.</string>
     <string name="midlet_storage_mode_android_summary">පෙර අනුවාදවල මෙන් Android ගබඩාව භාවිත කරන්න.</string>
+    <string name="runtime_camera_use_front">ඉදිරිපස කැමරාව භාවිත කරන්න</string>
+    <string name="runtime_camera_use_rear">පසුපස කැමරාව භාවිත කරන්න</string>
+    <string name="runtime_camera_switch_failed">කැමරාව මාරු කළ නොහැකි විය.</string>
 </resources>

@@ -1118,4 +1118,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Usa le cartelle condivise nella directory di lavoro.</string>
     <string name="midlet_storage_mode_android_summary">Usa la memoria Android come nelle versioni precedenti.</string>
+    <string name="runtime_camera_use_front">Usa la fotocamera anteriore</string>
+    <string name="runtime_camera_use_rear">Usa la fotocamera posteriore</string>
+    <string name="runtime_camera_switch_failed">Impossibile cambiare fotocamera.</string>
 </resources>

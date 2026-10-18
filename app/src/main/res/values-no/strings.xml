@@ -1084,4 +1084,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Bruk delte mapper i arbeidsmappen.</string>
     <string name="midlet_storage_mode_android_summary">Bruk Android-lagring som i tidligere versjoner.</string>
+    <string name="runtime_camera_use_front">Bruk frontkamera</string>
+    <string name="runtime_camera_use_rear">Bruk bakkamera</string>
+    <string name="runtime_camera_switch_failed">Kunne ikke bytte kamera.</string>
 </resources>

@@ -1052,4 +1052,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">ใช้โฟลเดอร์ร่วมกันในไดเรกทอรีการทำงาน</string>
     <string name="midlet_storage_mode_android_summary">ใช้พื้นที่เก็บข้อมูล Android เหมือนเวอร์ชันก่อนหน้า</string>
+    <string name="runtime_camera_use_front">ใช้กล้องหน้า</string>
+    <string name="runtime_camera_use_rear">ใช้กล้องหลัง</string>
+    <string name="runtime_camera_switch_failed">สลับกล้องไม่สำเร็จ</string>
 </resources>

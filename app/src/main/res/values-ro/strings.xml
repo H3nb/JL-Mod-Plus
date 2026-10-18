@@ -1118,4 +1118,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Folosește folderele partajate din directorul de lucru.</string>
     <string name="midlet_storage_mode_android_summary">Folosește stocarea Android ca în versiunile anterioare.</string>
+    <string name="runtime_camera_use_front">Folosește camera frontală</string>
+    <string name="runtime_camera_use_rear">Folosește camera din spate</string>
+    <string name="runtime_camera_switch_failed">Nu s-a putut schimba camera.</string>
 </resources>

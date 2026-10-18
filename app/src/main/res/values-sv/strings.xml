@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Använd delade mappar i arbetskatalogen.</string>
     <string name="midlet_storage_mode_android_summary">Använd Android-lagring som i tidigare versioner.</string>
+    <string name="runtime_camera_use_front">Använd främre kameran</string>
+    <string name="runtime_camera_use_rear">Använd bakre kameran</string>
+    <string name="runtime_camera_switch_failed">Det gick inte att byta kamera.</string>
 </resources>

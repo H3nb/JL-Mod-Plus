@@ -1217,4 +1217,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">استخدم المجلدات المشتركة في دليل العمل.</string>
     <string name="midlet_storage_mode_android_summary">استخدم مساحة تخزين Android كما في الإصدارات السابقة.</string>
+    <string name="runtime_camera_use_front">استخدام الكاميرا الأمامية</string>
+    <string name="runtime_camera_use_rear">استخدام الكاميرا الخلفية</string>
+    <string name="runtime_camera_switch_failed">تعذر تبديل الكاميرا.</string>
 </resources>

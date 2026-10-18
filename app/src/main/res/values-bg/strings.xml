@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Използване на споделени папки в работната директория.</string>
     <string name="midlet_storage_mode_android_summary">Използване на хранилището на Android както в предишните версии.</string>
+    <string name="runtime_camera_use_front">Използвай предната камера</string>
+    <string name="runtime_camera_use_rear">Използвай задната камера</string>
+    <string name="runtime_camera_switch_failed">Неуспешно превключване на камерата.</string>
 </resources>

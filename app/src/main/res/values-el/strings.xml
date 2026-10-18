@@ -1084,4 +1084,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Χρήση κοινόχρηστων φακέλων στον κατάλογο εργασίας.</string>
     <string name="midlet_storage_mode_android_summary">Χρήση του χώρου αποθήκευσης Android όπως στις προηγούμενες εκδόσεις.</string>
+    <string name="runtime_camera_use_front">Χρήση μπροστινής κάμερας</string>
+    <string name="runtime_camera_use_rear">Χρήση πίσω κάμερας</string>
+    <string name="runtime_camera_switch_failed">Δεν ήταν δυνατή η εναλλαγή κάμερας.</string>
 </resources>

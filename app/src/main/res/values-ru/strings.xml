@@ -1151,4 +1151,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Использовать общие папки в рабочем каталоге.</string>
     <string name="midlet_storage_mode_android_summary">Использовать хранилище Android, как в предыдущих версиях.</string>
+    <string name="runtime_camera_use_front">Использовать фронтальную камеру</string>
+    <string name="runtime_camera_use_rear">Использовать заднюю камеру</string>
+    <string name="runtime_camera_switch_failed">Не удалось переключить камеру.</string>
 </resources>

@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Gebruik gedeelde vouers in die werkgids.</string>
     <string name="midlet_storage_mode_android_summary">Gebruik Android-berging soos in vorige weergawes.</string>
+    <string name="runtime_camera_use_front">Gebruik die voorste kamera</string>
+    <string name="runtime_camera_use_rear">Gebruik die agterste kamera</string>
+    <string name="runtime_camera_switch_failed">Kon nie tussen kameras wissel nie.</string>
 </resources>

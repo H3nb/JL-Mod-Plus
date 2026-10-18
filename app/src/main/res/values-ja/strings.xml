@@ -1052,4 +1052,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">作業ディレクトリ内の共有フォルダーを使用します。</string>
     <string name="midlet_storage_mode_android_summary">以前のバージョンと同じAndroidストレージを使用します。</string>
+    <string name="runtime_camera_use_front">前面カメラを使用</string>
+    <string name="runtime_camera_use_rear">背面カメラを使用</string>
+    <string name="runtime_camera_switch_failed">カメラを切り替えられませんでした。</string>
 </resources>

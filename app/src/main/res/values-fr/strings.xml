@@ -1118,4 +1118,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Utiliser les dossiers partagés du répertoire de travail.</string>
     <string name="midlet_storage_mode_android_summary">Utiliser le stockage Android comme dans les versions précédentes.</string>
+    <string name="runtime_camera_use_front">Utiliser la caméra avant</string>
+    <string name="runtime_camera_use_rear">Utiliser la caméra arrière</string>
+    <string name="runtime_camera_switch_failed">Impossible de changer de caméra.</string>
 </resources>

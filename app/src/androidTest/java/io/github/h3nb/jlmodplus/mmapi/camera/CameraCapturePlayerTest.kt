@@ -147,6 +147,14 @@ class CameraCapturePlayerTest {
     }
 
     @Test
+    fun shutdownRejectsNewPlayersUntilAnotherRuntimeBegins() {
+        CameraRuntime.closeRuntime()
+        expect<MediaException> { CameraCapturePlayer("capture://video") }
+        CameraRuntime.beginRuntime()
+        CameraCapturePlayer("capture://video").close()
+    }
+
+    @Test
     fun canceledPrepareCannotStartPlayerAfterStopReturned() {
         val player = CameraCapturePlayer("capture://video")
         try {

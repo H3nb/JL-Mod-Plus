@@ -1085,4 +1085,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Жұмыс каталогындағы ортақ қалталарды пайдалану.</string>
     <string name="midlet_storage_mode_android_summary">Алдыңғы нұсқалардағыдай Android жадын пайдалану.</string>
+    <string name="runtime_camera_use_front">Алдыңғы камераны пайдалану</string>
+    <string name="runtime_camera_use_rear">Артқы камераны пайдалану</string>
+    <string name="runtime_camera_switch_failed">Камераны ауыстыру мүмкін болмады.</string>
 </resources>
