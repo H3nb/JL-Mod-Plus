@@ -87,45 +87,6 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void safeAreaFitsCustomKeysWithoutChangingStoredGeometryOrAccumulatingDrift() throws Exception {
-        RectF full = new RectF(0f, 0f, 1200f, 600f);
-        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
-        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
-        VirtualKeyboardLayoutSnapshot baseline = keyboard.captureLayoutSnapshot();
-        java.util.List<RectF> original = keyboard.getVisibleLayoutControlBounds();
-        RectF safe = new RectF(180f, 30f, 1130f, 550f);
-
-        for (int pass = 0; pass < 4; pass++) {
-            keyboard.resizeWithinSafeArea(full, safe, 0f, 0f, 1200f, 600f);
-            assertEquals(baseline, keyboard.captureLayoutSnapshot());
-            for (RectF bounds : keyboard.getVisibleLayoutControlBounds()) {
-                assertTrue("Control outside safe area: " + bounds, safe.contains(bounds));
-            }
-            assertFalse(keyboard.pointerPressed(0, 1f, 1f));
-            keyboard.resizeWithinSafeArea(full, full, 0f, 0f, 1200f, 600f);
-            assertEquals(baseline, keyboard.captureLayoutSnapshot());
-            assertEquals(original, keyboard.getVisibleLayoutControlBounds());
-        }
-    }
-
-    @Test
-    public void insetControlBoundsKeepUnderlyingSurfaceOrientationAndAnalogOrigin() throws Exception {
-        RectF full = new RectF(0f, 0f, 1200f, 600f);
-        RectF safe = new RectF(650f, 20f, 1180f, 580f);
-        keyboard.resizeWithinSafeArea(full, safe, 0f, 0f, 1200f, 600f);
-        assertEquals(VirtualLayoutOrientation.LANDSCAPE,
-                keyboard.controlLayoutOrientation(safe, VirtualLayoutOrientation.PORTRAIT));
-        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
-        settings.virtualAnalogEnabled = true;
-        settings.virtualAnalogCenterX = 0.5f;
-        settings.virtualAnalogCenterY = 0.5f;
-        keyboard.resizeWithinSafeArea(full, safe, 0f, 0f, 1200f, 600f);
-        VirtualDpadGeometry geometry = geometry("analogGeometry");
-        assertEquals(safe.centerX(), geometry.getCenterX(), EPS);
-        assertEquals(safe.centerY(), geometry.getCenterY(), EPS);
-    }
-
-    @Test
     public void newProfileKeepsGroupedControlsDisabled() {
         ProfileModel profile = ProfileModel.fresh();
 

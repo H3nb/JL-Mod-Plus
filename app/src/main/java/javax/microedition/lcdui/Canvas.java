@@ -53,7 +53,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
-import androidx.core.graphics.Insets;
 import androidx.core.content.ContextCompat;
 
 import java.nio.ByteBuffer;
@@ -219,7 +218,6 @@ public abstract class Canvas extends Displayable {
 	private final Runnable ambientHostRunnable = this::runAmbientHostTick;
 	private Handler uiHandler;
 	private Overlay overlay;
-	private volatile Insets controlSafeInsets = Insets.NONE;
 	private OverlayView controllerOverlayView;
 	private final ControllerJoystickOverlay controllerJoystickOverlay =
 			new ControllerJoystickOverlay();
@@ -849,33 +847,6 @@ public abstract class Canvas extends Displayable {
 		return width != tmpWidth || height != tmpHeight;
 	}
 
-	/** Host-provided surface-local insets for touch controls; never changes guest geometry. */
-	public void setControlSafeInsets(int left, int top, int right, int bottom) {
-		Insets next = Insets.of(Math.max(0, left), Math.max(0, top), Math.max(0, right), Math.max(0, bottom));
-		if (controlSafeInsets.equals(next)) return;
-		// updateSize can also be requested by guest setFullScreenMode: publish one coherent tuple.
-		controlSafeInsets = next;
-		if (overlay != null) overlay.cancel();
-		resizeControlOverlay();
-	}
-
-	private void resizeControlOverlay() {
-		if (overlay == null || displayWidth <= 0 || displayHeight <= 0) return;
-		Insets safe = controlSafeInsets;
-		float left = Math.min(safe.left, displayWidth - 1);
-		float top = Math.min(safe.top, displayHeight - 1);
-		float right = Math.max(left + 1, displayWidth - safe.right);
-		float bottom = Math.max(top + 1, displayHeight - safe.bottom);
-		RectF safeBounds = new RectF(left, top, right, bottom);
-		float guestBottom = onY + onHeight + softBar.bounds.height();
-		if (overlay instanceof VirtualKeyboard keyboard) {
-			keyboard.resizeWithinSafeArea(new RectF(0, 0, displayWidth, displayHeight), safeBounds,
-					onX, onY, onX + onWidth, guestBottom);
-		} else {
-			overlay.resize(safeBounds, onX, onY, onX + onWidth, guestBottom);
-		}
-	}
-
 	/**
 	 * Update the size and position of the virtual screen relative to the real one.
 	 */
@@ -1004,6 +975,7 @@ public abstract class Canvas extends Displayable {
 			onHeight -= softBarHeight;
 		}
 
+		RectF screen = new RectF(0, 0, displayWidth, displayHeight);
 		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
 
 		synchronized (bufferLock) {
@@ -1016,7 +988,9 @@ public abstract class Canvas extends Displayable {
 		}
 		configureAmbientGeometry();
 		ViewHandler.postEvent(this::updateVideoDisplays);
-		resizeControlOverlay();
+		if (overlay != null) {
+			overlay.resize(screen, onX, onY, onX + onWidth, onY + onHeight + softBarHeight);
+		}
 		if (skinLayer != null && !skinLayer.hasDisplayFrame()) {
 			skinLayer.resize(virtualScreen, 0, 0, displayWidth, displayHeight);
 		}

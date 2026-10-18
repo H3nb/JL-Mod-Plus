@@ -90,6 +90,18 @@ fun RuntimeCompactToolbarScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Runtime central cutout toolbar", widthDp = 360, heightDp = 48, showBackground = true)
+@Composable
+fun RuntimeCentralCutoutToolbarScreenshot() {
+    val cutout = with(androidx.compose.ui.platform.LocalDensity.current) {
+        RuntimeToolbarOcclusion(154.dp.roundToPx(), 206.dp.roundToPx())
+    }
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeMenuPreview(state = CanvasMenuState.copy(toolbarCutouts = listOf(cutout)))
+    }
+}
+
+@PreviewTest
 @Preview(
     name = "Runtime fullscreen menu dark landscape",
     widthDp = 640,

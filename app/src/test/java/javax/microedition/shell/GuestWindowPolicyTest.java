@@ -44,10 +44,11 @@ public class GuestWindowPolicyTest {
 	}
 
 	@Test
-	public void toolbarAlreadyBelowTopCutoutDoesNotReserveItAgainForGame() {
-		GuestWindowPolicy.Padding padding = GuestWindowPolicy.paddingForBounds(
-				1080, 2400, 0, 128, 1080, 2272, 0, 80, 0, 0);
-		assertPadding(padding, 0, 0, 0, 0);
+	public void gameReservesOnlyCutoutRemainingBelowCompactToolbar() {
+		assertPadding(GuestWindowPolicy.paddingForBounds(
+				1080, 2400, 0, 48, 1080, 2352, 0, 32, 0, 0), 0, 0, 0, 0);
+		assertPadding(GuestWindowPolicy.paddingForBounds(
+				1080, 2400, 0, 48, 1080, 2352, 0, 80, 0, 0), 0, 32, 0, 0);
 	}
 
 	@Test
@@ -55,7 +56,7 @@ public class GuestWindowPolicyTest {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.paddingForBounds(
 				2400, 1080, 0, 48, 2400, 1032, 80, 0, 0, 0);
 		assertPadding(padding, 80, 0, 0, 0);
-		// A surface already inset by its host must not inset its virtual controls twice.
+		// A nested guest already inside its host's safe bounds needs no extra padding.
 		assertPadding(GuestWindowPolicy.paddingForBounds(
 				2400, 1080, 80, 48, 2320, 1032, 80, 0, 0, 0), 0, 0, 0, 0);
 	}

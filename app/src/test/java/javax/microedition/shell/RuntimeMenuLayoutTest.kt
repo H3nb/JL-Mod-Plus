@@ -40,7 +40,7 @@ class RuntimeMenuLayoutTest {
         assertEquals(false, fullMenu.single { it.label == R.string.pref_runtime_fullscreen_title }.checked)
 
         // A cutout or round corner reduces actual usable width without shrinking touch targets.
-        val narrow = canvas.copy(toolbarInsetLeftPx = 120)
+        val narrow = canvas.copy(toolbarInsetLeftPx = 168)
         val narrowToolbar = runtimeToolbarShortcuts(narrow, 360f)
         assertEquals(listOf(RuntimeToolbarShortcut.Speed), narrowToolbar)
         val narrowMenu = menu(narrow, narrowToolbar)
@@ -100,7 +100,36 @@ class RuntimeMenuLayoutTest {
         assertFalse(menu(incompatible).any { it.label == R.string.PREF_EMULATION_SPEED })
         assertFalse(menu(incompatible).any { it.label == R.string.action_keyboard_ime })
         val largeText = canvas.copy(toolbarFontScale = 2f)
-        assertEquals(listOf(RuntimeToolbarShortcut.Speed, RuntimeToolbarShortcut.Ime), runtimeToolbarShortcuts(largeText, 360f))
+        assertEquals(listOf(RuntimeToolbarShortcut.Speed, RuntimeToolbarShortcut.Ime), runtimeToolbarShortcuts(largeText, 320f))
+    }
+
+    @Test
+    fun centralCutoutSplitsTitleAndActionsWithoutReservingABlankTopBand() {
+        val notch = canvas.copy(toolbarCutouts = listOf(RuntimeToolbarOcclusion(154, 206)))
+        val layout = runtimeToolbarLayout(notch, 360f)
+        assertEquals(RuntimeToolbarSpan(16f, 150f), layout.title)
+        assertEquals(listOf(RuntimeToolbarShortcut.Speed, RuntimeToolbarShortcut.Ime), layout.actions.map { it.shortcut })
+        assertTrue(layout.actions.all { it.span.left >= 210f && it.span.right <= 344f && it.span.width >= 48f })
+        assertTrue(menu(notch, layout.actions.map { it.shortcut }).any { it.label == R.string.take_screenshot })
+        assertEquals(0, notch.toolbarInsetTopPx)
+    }
+
+    @Test
+    fun roundedMarginsAndCutoutPlacementMirrorForRtl() {
+        val state = canvas.copy(
+            toolbarInsetLeftPx = 32,
+            toolbarInsetRightPx = 24,
+            toolbarCutouts = listOf(RuntimeToolbarOcclusion(160, 200)),
+        )
+        val ltr = runtimeToolbarLayout(state, 360f)
+        val rtl = runtimeToolbarLayout(state.copy(toolbarRtl = true), 360f)
+        assertEquals(RuntimeToolbarSpan(32f, 156f), ltr.title)
+        assertEquals(RuntimeToolbarSpan(204f, 336f), rtl.title)
+        assertTrue(ltr.actions.all { it.span.left >= 204f && it.span.right <= 336f })
+        assertTrue(rtl.actions.all { it.span.left >= 32f && it.span.right <= 156f })
+        val obscured = canvas.copy(toolbarCutouts = listOf(RuntimeToolbarOcclusion(0, 360)))
+        assertTrue(runtimeToolbarLayout(obscured, 360f).actions.isEmpty())
+        assertEquals(null, runtimeToolbarLayout(obscured, 360f).title)
     }
 
     private fun menu(state: RuntimeMenuUiState, shortcuts: List<RuntimeToolbarShortcut> = emptyList()) =

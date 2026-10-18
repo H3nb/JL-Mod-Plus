@@ -212,8 +212,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private float prevScaleX;
 	private float prevScaleY;
 	private RectF screen;
-	private boolean controlBoundsRestricted;
-	private VirtualLayoutOrientation controlSurfaceOrientation;
 	private float keySize =
 			Math.min(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 6.0f;
 	private float snapRadius;
@@ -1704,16 +1702,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private void snapKeys() {
-		if (controlBoundsRestricted) {
-			// Reconstruct logical dimensions and bindings before applying any temporary fitting.
-			// Fitted rectangles must never become the input to the next geometry pass.
-			for (int group = 0; group < keyScaleGroups.length; group++) resizeKeyGroup(group);
-		}
-		for (VirtualKey key : keypad) key.snapValid = false;
-		for (int i = 0; i < keypad.length; i++) snapKey(i, 0);
 		obscuresVirtualScreen = false;
-		for (VirtualKey key : keypad) {
-			if (controlBoundsRestricted && key.visible) fitKeyInsideControlBounds(key.rect);
+		for (int i = 0; i < keypad.length; i++) {
+			snapKey(i, 0);
+			VirtualKey key = keypad[i];
 			RectF rect = key.rect;
 			key.corners = (int) (Math.min(rect.width(), rect.height()) * 0.25F);
 			if (RectF.intersects(rect, virtualScreen)) {
@@ -1725,14 +1717,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				key.opaque = settings.vkForceOpacity;
 			}
 		}
-	}
-
-	private void fitKeyInsideControlBounds(RectF rect) {
-		float width = Math.min(rect.width(), screen.width());
-		float height = Math.min(rect.height(), screen.height());
-		float left = Math.max(screen.left, Math.min(rect.left, screen.right - width));
-		float top = Math.max(screen.top, Math.min(rect.top, screen.bottom - height));
-		rect.set(left, top, left + width, top + height);
 	}
 
 	public boolean isPhone() {
@@ -1834,24 +1818,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	protected final void refreshDirectKeyLayout() {
 		snapKeys();
 		if (overlayView != null) overlayView.postInvalidate();
-	}
-
-	/** Insets are host layout inputs, never persisted Custom layout edits. */
-	public final void resizeWithinSafeArea(RectF surface, RectF safeBounds,
-			float left, float top, float right, float bottom) {
-		controlBoundsRestricted = !surface.equals(safeBounds);
-		controlSurfaceOrientation = VirtualLayoutOrientation.resolve(surface, controlSurfaceOrientation);
-		resize(safeBounds, left, top, right, bottom);
-	}
-
-	protected final VirtualLayoutOrientation controlLayoutOrientation(
-			RectF bounds, VirtualLayoutOrientation previous) {
-		return controlSurfaceOrientation != null ? controlSurfaceOrientation :
-				VirtualLayoutOrientation.resolve(bounds, previous);
-	}
-
-	protected final boolean isWithinControlBounds(float x, float y) {
-		return !controlBoundsRestricted || screen != null && screen.contains(x, y);
 	}
 
 	@Override
@@ -2080,7 +2046,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				float dx = x - offsetX;
 				float dy = offsetY - y;
 				int index = editedIndex * 2;
-				float scale = prevScaleX + dx / (Math.min(screen.width(), screen.height()) * 0.5f);
+				float scale = prevScaleX + dx / Math.min(screen.centerX(), screen.centerY());
 				if (scale <= 0.0f) {
 					scale = Float.MIN_VALUE;
 				}
@@ -2095,7 +2061,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					}
 				}
 				keyScales[index++] = scale;
-				scale = prevScaleY + dy / (Math.min(screen.width(), screen.height()) * 0.5f);
+				scale = prevScaleY + dy / Math.min(screen.centerX(), screen.centerY());
 				if (scale <= 0.0f) {
 					scale = Float.MIN_VALUE;
 				}
@@ -2334,7 +2300,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 
 		boolean contains(float x, float y) {
-			return visible && isWithinControlBounds(x, y) && rect.contains(x, y);
+			return visible && rect.contains(x, y);
 		}
 
 		void paint(CanvasWrapper g, boolean keypadLegendContext) {

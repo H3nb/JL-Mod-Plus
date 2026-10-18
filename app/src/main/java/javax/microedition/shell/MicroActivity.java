@@ -27,6 +27,7 @@ import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Point;
 import android.util.Log;
@@ -1156,7 +1157,9 @@ public class MicroActivity extends AppCompatActivity {
 		Insets caption = lastWindowInsets.getInsets(WindowInsetsCompat.Type.captionBar());
 		Insets bars = chrome.canvas ? caption : Insets.max(caption,
 				lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars()));
-		Insets hostSafe = Insets.max(physical, bars);
+		// The toolbar background occupies the cutout area. Only its contents avoid
+		// intersecting cutout rectangles; a notch must not become an extra top row.
+		Insets hostSafe = Insets.max(waterfall, bars);
 		GuestWindowPolicy.Padding toolbarPadding = GuestWindowPolicy.paddingForBounds(
 				windowWidth, windowHeight, rootLeft, rootTop, rootWidth, rootHeight,
 				hostSafe.left, hostSafe.top, hostSafe.right, 0);
@@ -1167,6 +1170,8 @@ public class MicroActivity extends AppCompatActivity {
 				Math.max(0, rootLeft + rootWidth - windowWidth + rounded.right));
 		if (runtimeMenuController != null) {
 			runtimeMenuController.updateToolbarInsets(toolbarLeft, toolbarPadding.top, toolbarRight, 0);
+			runtimeMenuController.updateToolbarCutouts(toolbarCutoutBounds(rootLeft,
+					rootTop + toolbarPadding.top, toolbarHeight));
 		}
 		int totalToolbarHeight = chrome.toolbarVisible ? toolbarHeight + toolbarPadding.top : 0;
 		setRuntimeToolbarHeight(totalToolbarHeight);
@@ -1180,6 +1185,21 @@ public class MicroActivity extends AppCompatActivity {
 				guestSafe.left, guestSafe.top, guestSafe.right, guestSafe.bottom);
 		setPaddingIfChanged(binding.displayableContainer, guest.left, guest.top, guest.right, guest.bottom);
 		updateOverlayLocation();
+	}
+
+	/** Horizontal cutout obstacles for the toolbar row, in toolbar-local physical pixels. */
+	private int[] toolbarCutoutBounds(int toolbarLeft, int rowTop, int rowHeight) {
+		if (lastWindowInsets.getDisplayCutout() == null) return new int[0];
+		List<Rect> rectangles = lastWindowInsets.getDisplayCutout().getBoundingRects();
+		int[] bounds = new int[rectangles.size() * 2];
+		int count = 0;
+		for (Rect rectangle : rectangles) {
+			if (rectangle.top < rowTop + rowHeight && rectangle.bottom > rowTop) {
+				bounds[count++] = rectangle.left - toolbarLeft;
+				bounds[count++] = rectangle.right - toolbarLeft;
+			}
+		}
+		return java.util.Arrays.copyOf(bounds, count);
 	}
 
 	private Insets roundedHorizontalInsets(int bandTop, int bandBottom, int windowWidth) {
@@ -1236,23 +1256,6 @@ public class MicroActivity extends AppCompatActivity {
 		binding.overlay.setLocation(
 				containerLocation[0] - overlayLocation[0],
 				containerLocation[1] - overlayLocation[1]);
-		if (presentedDisplayable instanceof Canvas canvas && presentedDisplayable == current
-				&& lastWindowInsets != null) {
-			int[] location = new int[2];
-			anchor.getLocationInWindow(location);
-			View decor = getWindow().getDecorView();
-			Insets physical = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout());
-			if (lastWindowInsets.getDisplayCutout() != null) {
-				physical = Insets.max(physical, lastWindowInsets.getDisplayCutout().getWaterfallInsets());
-			}
-			physical = Insets.max(physical, lastWindowInsets.getInsets(WindowInsetsCompat.Type.captionBar()));
-			physical = Insets.max(physical, roundedHorizontalInsets(location[1],
-					location[1] + anchor.getHeight(), decor.getWidth()));
-			GuestWindowPolicy.Padding controls = GuestWindowPolicy.paddingForBounds(
-					decor.getWidth(), decor.getHeight(), location[0], location[1], anchor.getWidth(), anchor.getHeight(),
-					physical.left, physical.top, physical.right, physical.bottom);
-			canvas.setControlSafeInsets(controls.left, controls.top, controls.right, controls.bottom);
-		}
 		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 

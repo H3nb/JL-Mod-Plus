@@ -261,8 +261,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun runtimeToolbarOverflowOpensExistingMenuPath() {
-        val events = mutableListOf<String>()
+    fun runtimeToolbarDoesNotAddAnOverflowButton() {
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeMenuHost(
@@ -275,16 +274,10 @@ class RuntimeMenuComposeTest {
                     menuVisible = false,
                     actions = RecordingRuntimeMenuActions(),
                     onDismissMenu = {},
-                    onOpenMenu = { events += "menu" },
                 )
             }
         }
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.more))
-            .assertWidthIsAtLeast(48.dp)
-            .assertHeightIsAtLeast(48.dp)
-            .performClick()
-        assertEquals(listOf("menu"), events)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.more)).assertCountEquals(0)
     }
 
     @Test
@@ -311,6 +304,48 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
+    fun compactToolbarKeepsWholeTouchTargetsOutsideCentralCutout() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 48.dp)),
+            ) {
+                val cutout = with(androidx.compose.ui.platform.LocalDensity.current) {
+                    RuntimeToolbarOcclusion(154.dp.roundToPx(), 206.dp.roundToPx())
+                }
+                JLModPlusTheme {
+                    RuntimeMenuHost(
+                        state = RuntimeMenuUiState(
+                            title = "Demo MIDlet",
+                            isCanvas = true,
+                            imeAvailable = true,
+                            emulationSpeedAvailable = true,
+                            toolbarCutouts = listOf(cutout),
+                        ),
+                        menuVisible = false,
+                        actions = RecordingRuntimeMenuActions(),
+                        onDismissMenu = {},
+                    )
+                }
+            }
+        }
+        val title = composeRule.onNodeWithText("Demo MIDlet").getUnclippedBoundsInRoot()
+        assertTrue(title.left >= 16.dp && title.right <= 151.dp)
+        val speed = composeRule.onNodeWithText(
+            javax.microedition.shell.timing.EmulationSpeed.formatMultiplier(100),
+        ).getUnclippedBoundsInRoot()
+        assertTrue(speed.left >= 209.dp && speed.right <= 344.dp)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime))
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
+        val ime = composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime))
+            .getUnclippedBoundsInRoot()
+        assertTrue(ime.left >= 209.dp && ime.right <= 344.dp)
+        assertTrue(ime.top >= 0.dp && ime.bottom <= 48.dp)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.take_screenshot)).assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.more)).assertCountEquals(0)
+    }
+
+    @Test
     fun canvasMenuRestoresShortcutsWhenFullscreenHidesToolbar() {
         val fullscreen = androidx.compose.runtime.mutableStateOf(false)
         val menuVisible = androidx.compose.runtime.mutableStateOf(false)
@@ -331,12 +366,11 @@ class RuntimeMenuComposeTest {
                         menuVisible = menuVisible.value,
                         actions = RecordingRuntimeMenuActions(events),
                         onDismissMenu = { events += "dismiss" },
-                        onOpenMenu = { menuVisible.value = true },
                     )
                 }
             }
         }
-        composeRule.onNodeWithContentDescription(uiString(R.string.more)).performClick()
+        composeRule.runOnIdle { menuVisible.value = true }
         val shortcutLabels = listOf(
             uiString(R.string.action_keyboard_ime),
             uiString(R.string.take_screenshot),

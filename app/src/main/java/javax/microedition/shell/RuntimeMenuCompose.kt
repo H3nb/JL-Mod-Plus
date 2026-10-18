@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -56,6 +55,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -66,6 +67,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.R
@@ -108,6 +111,8 @@ internal data class RuntimeMenuUiState(
     val toolbarInsetRightPx: Int = 0,
     val toolbarInsetBottomPx: Int = 0,
     val toolbarDensity: Float = 1f,
+    val toolbarRtl: Boolean = false,
+    val toolbarCutouts: List<RuntimeToolbarOcclusion> = emptyList(),
 )
 
 interface RuntimeMenuActions {
@@ -136,7 +141,7 @@ interface RuntimeMenuActions {
  * Displayable transitions deliberately remain in [MicroActivity].
  */
 class RuntimeMenuComposeController @JvmOverloads constructor(
-    composeView: ComposeView,
+    private val composeView: ComposeView,
     private val actions: RuntimeMenuActions,
     private val hostDialogActions: RuntimeHostDialogActions? = null,
     private val dialogKeyDispatcher: (KeyEvent) -> Boolean = { false },
@@ -179,16 +184,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     }
 
     init {
-        fun updateToolbarSize(width: Int) {
-            updateState(state.copy(
-                toolbarWidthDp = width / composeView.resources.displayMetrics.density,
-                toolbarDensity = composeView.resources.displayMetrics.density,
-                toolbarFontScale = composeView.resources.configuration.fontScale,
-            ))
-        }
-        updateToolbarSize(composeView.width)
-        composeView.addOnLayoutChangeListener { _, left, _, right, _, _, _, _, _ ->
-            updateToolbarSize(right - left)
+        updateState(state)
+        composeView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updateState(state)
         }
         composeView.setViewCompositionStrategy(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
@@ -214,7 +212,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                         controllerFocusIndex = controllerFocusIndex.takeIf { controllerFocusVisible } ?: -1,
                         actions = menuActions,
                         onDismissMenu = ::closeMenu,
-                        onOpenMenu = ::openMenu,
                         onOpenVirtualKeyboardPage = {
                             virtualKeyboardPage = true
                             controllerFocusIndex = 0
@@ -323,7 +320,25 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         ))
     }
 
-    private fun updateState(next: RuntimeMenuUiState) {
+    /** Physical, toolbar-local [left, right] pairs intersecting the 48dp content row. */
+    fun updateToolbarCutouts(horizontalBoundsPx: IntArray) {
+        require(horizontalBoundsPx.size % 2 == 0)
+        val cutouts = horizontalBoundsPx.asList().chunked(2).mapNotNull { (left, right) ->
+            if (right > left) RuntimeToolbarOcclusion(left, right) else null
+        }
+        updateState(state.copy(toolbarCutouts = cutouts))
+    }
+
+    private fun updateState(requested: RuntimeMenuUiState) {
+        val resources = composeView.resources
+        val density = resources.displayMetrics.density
+        // Insets are also refreshed on configuration changes where native bounds stay identical.
+        val next = requested.copy(
+            toolbarWidthDp = composeView.width / density,
+            toolbarDensity = density,
+            toolbarFontScale = resources.configuration.fontScale,
+            toolbarRtl = resources.configuration.layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL,
+        )
         if (state == next) return
         val focusedLabel = controllerItems().getOrNull(controllerFocusIndex)?.label
         state = next
@@ -621,7 +636,6 @@ internal fun RuntimeMenuHost(
     actions: RuntimeMenuActions,
     onDismissMenu: () -> Unit,
     modifier: Modifier = Modifier,
-    onOpenMenu: () -> Unit = {},
     virtualKeyboardPage: Boolean = false,
     controllerFocusIndex: Int = -1,
     onOpenVirtualKeyboardPage: () -> Unit = {},
@@ -639,10 +653,12 @@ internal fun RuntimeMenuHost(
             toolbarWidthDp = maxWidth.value,
             toolbarDensity = density.density,
             toolbarFontScale = density.fontScale,
+            toolbarRtl = LocalLayoutDirection.current == LayoutDirection.Rtl,
         ) else state
-        val shortcuts = runtimeToolbarShortcuts(layoutState, layoutState.toolbarWidthDp ?: 0f)
+        val toolbarLayout = runtimeToolbarLayout(layoutState, layoutState.toolbarWidthDp ?: 0f)
+        val shortcuts = toolbarLayout.actions.map { it.shortcut }
         if (state.toolbarVisible) {
-            RuntimeToolbar(state = layoutState, shortcuts = shortcuts, actions = actions, onOpenMenu = onOpenMenu)
+            RuntimeToolbar(state = layoutState, toolbarLayout = toolbarLayout, actions = actions)
         }
 
         if (menuVisible) {
@@ -663,92 +679,166 @@ internal fun RuntimeMenuHost(
 }
 
 internal enum class RuntimeToolbarShortcut { Speed, Ime, Screenshot }
+internal data class RuntimeToolbarOcclusion(val leftPx: Int, val rightPx: Int)
+internal data class RuntimeToolbarSpan(val left: Float, val right: Float) {
+    val width: Float get() = (right - left).coerceAtLeast(0f)
+}
+internal data class RuntimeToolbarPlacement(val shortcut: RuntimeToolbarShortcut, val span: RuntimeToolbarSpan)
+internal data class RuntimeToolbarLayout(
+    val title: RuntimeToolbarSpan?,
+    val actions: List<RuntimeToolbarPlacement>,
+)
 
-/** Reserve a readable title and overflow before assigning optional 48dp touch targets. */
-internal fun runtimeToolbarShortcuts(state: RuntimeMenuUiState, widthDp: Float): List<RuntimeToolbarShortcut> {
-    if (!state.toolbarVisible || !state.isCanvas) return emptyList()
-    val leftPadding = max(16f, state.toolbarInsetLeftPx / state.toolbarDensity)
-    val rightPadding = max(16f, state.toolbarInsetRightPx / state.toolbarDensity)
-    var remaining = widthDp - leftPadding - rightPadding - 72f - 48f
-    return buildList {
-        fun include(shortcut: RuntimeToolbarShortcut, width: Float) {
-            if (remaining >= width) {
-                add(shortcut)
-                remaining -= width
+internal fun runtimeToolbarShortcuts(state: RuntimeMenuUiState, widthDp: Float): List<RuntimeToolbarShortcut> =
+    runtimeToolbarLayout(state, widthDp).actions.map { it.shortcut }
+
+/** Fill the toolbar background while packing whole touch targets around physical occlusions. */
+internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): RuntimeToolbarLayout {
+    if (!state.toolbarVisible || widthDp <= 0f) return RuntimeToolbarLayout(null, emptyList())
+    val physicalLeft = max(16f, state.toolbarInsetLeftPx / state.toolbarDensity)
+    val physicalRight = widthDp - max(16f, state.toolbarInsetRightPx / state.toolbarDensity)
+    fun logical(span: RuntimeToolbarSpan) = if (state.toolbarRtl) {
+        RuntimeToolbarSpan(widthDp - span.right, widthDp - span.left)
+    } else span
+    val bounds = logical(RuntimeToolbarSpan(physicalLeft, physicalRight))
+    if (bounds.width <= 0f) return RuntimeToolbarLayout(null, emptyList())
+    val cutouts = state.toolbarCutouts.map {
+        logical(RuntimeToolbarSpan(it.leftPx / state.toolbarDensity - 4f, it.rightPx / state.toolbarDensity + 4f))
+    }.sortedBy { it.left }
+    val segments = buildList {
+        var cursor = bounds.left
+        cutouts.forEach { cutout ->
+            if (cutout.right > cursor && cutout.left < bounds.right) {
+                if (cutout.left > cursor) add(RuntimeToolbarSpan(cursor, cutout.left.coerceAtMost(bounds.right)))
+                cursor = max(cursor, cutout.right).coerceAtMost(bounds.right)
             }
         }
-        if (state.emulationSpeedAvailable) include(RuntimeToolbarShortcut.Speed, 64f * state.toolbarFontScale.coerceAtLeast(1f))
-        if (state.imeAvailable) include(RuntimeToolbarShortcut.Ime, 48f)
-        include(RuntimeToolbarShortcut.Screenshot, 48f)
+        if (cursor < bounds.right) add(RuntimeToolbarSpan(cursor, bounds.right))
     }
+    if (segments.isEmpty()) return RuntimeToolbarLayout(null, emptyList())
+    val titleIndex = segments.indexOfFirst { it.width >= 72f }.takeIf { it >= 0 }
+        ?: segments.indices.maxBy { segments[it].width }
+    val titleSegment = segments[titleIndex]
+    val titleReserve = titleSegment.width.coerceAtMost(72f)
+    val actionSegments = segments.mapIndexed { index, span ->
+        if (index == titleIndex) span.copy(left = span.left + titleReserve) else span
+    }
+    fun actionWidth(shortcut: RuntimeToolbarShortcut): Float = when (shortcut) {
+        RuntimeToolbarShortcut.Speed -> 64f * state.toolbarFontScale.coerceAtLeast(1f)
+        else -> 48f
+    }
+    fun pack(shortcuts: List<RuntimeToolbarShortcut>): List<RuntimeToolbarPlacement>? {
+        val ends = actionSegments.map { it.right }.toMutableList()
+        val placements = mutableListOf<RuntimeToolbarPlacement>()
+        for (shortcut in shortcuts.asReversed()) {
+            val width = actionWidth(shortcut)
+            val index = actionSegments.indices.lastOrNull { ends[it] - actionSegments[it].left >= width }
+                ?: return null
+            val right = ends[index]
+            ends[index] = right - width
+            placements += RuntimeToolbarPlacement(shortcut, RuntimeToolbarSpan(right - width, right))
+        }
+        return placements.asReversed()
+    }
+    val selected = mutableListOf<RuntimeToolbarShortcut>()
+    if (state.isCanvas) {
+        val candidates = buildList {
+            if (state.emulationSpeedAvailable) add(RuntimeToolbarShortcut.Speed)
+            if (state.imeAvailable) add(RuntimeToolbarShortcut.Ime)
+            add(RuntimeToolbarShortcut.Screenshot)
+        }
+        candidates.forEach { candidate ->
+            if (pack(selected + candidate) != null) selected += candidate
+        }
+    }
+    val placements = pack(selected).orEmpty()
+    val titleEnd = placements.map { it.span.left }
+        .filter { it >= titleSegment.left && it < titleSegment.right }
+        .minOrNull() ?: titleSegment.right
+    return RuntimeToolbarLayout(
+        title = logical(titleSegment.copy(right = titleEnd)),
+        actions = placements.map { it.copy(span = logical(it.span)) },
+    )
 }
 
 @Composable
 private fun RuntimeToolbar(
     state: RuntimeMenuUiState,
-    shortcuts: List<RuntimeToolbarShortcut>,
+    toolbarLayout: RuntimeToolbarLayout,
     actions: RuntimeMenuActions,
-    onOpenMenu: () -> Unit,
 ) {
-    val actionSize = 48.dp
-    val density = LocalDensity.current
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxSize(),
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(
-                start = maxOf(16.dp, with(density) { state.toolbarInsetLeftPx.toDp() }),
-                top = with(density) { state.toolbarInsetTopPx.toDp() },
-                end = maxOf(16.dp, with(density) { state.toolbarInsetRightPx.toDp() }),
-                bottom = with(density) { state.toolbarInsetBottomPx.toDp() },
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = state.title,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            shortcuts.forEach { shortcut ->
-                when (shortcut) {
-                    RuntimeToolbarShortcut.Speed -> {
-                        val label = stringResource(R.string.PREF_EMULATION_SPEED)
-                        val multiplier = EmulationSpeed.formatMultiplier(state.emulationSpeedPercent)
-                        TextButton(
-                            onClick = actions::onEmulationSpeed,
-                            modifier = Modifier
-                                .width((64f * state.toolbarFontScale.coerceAtLeast(1f)).dp)
-                                .heightIn(min = actionSize)
-                                .semantics { contentDescription = "$label: $multiplier" },
-                        ) {
-                            Text(multiplier, maxLines = 1)
+        Layout(
+            modifier = Modifier.fillMaxSize(),
+            content = {
+                Text(
+                    text = state.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                toolbarLayout.actions.forEach { placement ->
+                    when (placement.shortcut) {
+                        RuntimeToolbarShortcut.Speed -> {
+                            val label = stringResource(R.string.PREF_EMULATION_SPEED)
+                            val multiplier = EmulationSpeed.formatMultiplier(state.emulationSpeedPercent)
+                            TextButton(
+                                onClick = actions::onEmulationSpeed,
+                                modifier = Modifier.fillMaxSize()
+                                    .semantics { contentDescription = "$label: $multiplier" },
+                            ) {
+                                Text(multiplier, maxLines = 1)
+                            }
                         }
+                        RuntimeToolbarShortcut.Ime -> RuntimeToolbarAction(
+                            icon = R.drawable.ic_action_keyboard,
+                            label = R.string.action_keyboard_ime,
+                            size = 48.dp,
+                            onClick = actions::onOpenImeKeyboard,
+                        )
+                        RuntimeToolbarShortcut.Screenshot -> RuntimeToolbarAction(
+                            icon = R.drawable.ic_action_screenshot,
+                            label = R.string.take_screenshot,
+                            size = 48.dp,
+                            onClick = actions::onTakeScreenshot,
+                        )
                     }
-                    RuntimeToolbarShortcut.Ime -> RuntimeToolbarAction(
-                        icon = R.drawable.ic_action_keyboard,
-                        label = R.string.action_keyboard_ime,
-                        size = actionSize,
-                        onClick = actions::onOpenImeKeyboard,
-                    )
-                    RuntimeToolbarShortcut.Screenshot -> RuntimeToolbarAction(
-                        icon = R.drawable.ic_action_screenshot,
-                        label = R.string.take_screenshot,
-                        size = actionSize,
-                        onClick = actions::onTakeScreenshot,
+                }
+            },
+        ) { measurables, constraints ->
+            val width = constraints.maxWidth
+            val height = constraints.maxHeight
+            val top = state.toolbarInsetTopPx.coerceAtMost(height)
+            val contentHeight = (height - top - state.toolbarInsetBottomPx).coerceAtLeast(0)
+            val titleSpan = toolbarLayout.title
+            val titleWidth = titleSpan?.width?.dp?.roundToPx() ?: 0
+            val title = measurables.first().measure(Constraints(
+                minWidth = titleWidth,
+                maxWidth = titleWidth,
+                maxHeight = contentHeight,
+            ))
+            val buttons = measurables.drop(1).mapIndexed { index, measurable ->
+                measurable.measure(Constraints.fixed(
+                    toolbarLayout.actions[index].span.width.dp.roundToPx(),
+                    48.dp.roundToPx(),
+                ))
+            }
+            layout(width, height) {
+                if (titleSpan != null) title.place(
+                    titleSpan.left.dp.roundToPx(), top + (contentHeight - title.height) / 2,
+                )
+                buttons.forEachIndexed { index, button ->
+                    button.place(
+                        toolbarLayout.actions[index].span.left.dp.roundToPx(),
+                        top + (contentHeight - button.height).coerceAtLeast(0) / 2,
                     )
                 }
             }
-            RuntimeToolbarAction(
-                icon = R.drawable.ic_more_vert,
-                label = R.string.more,
-                size = actionSize,
-                onClick = onOpenMenu,
-            )
         }
     }
 }
