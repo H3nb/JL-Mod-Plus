@@ -311,7 +311,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun canvasToolbarActionsKeepMinimumTouchTarget() {
+    fun canvasToolbarActionsUseCompactTargets() {
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeMenuHost(
@@ -329,7 +329,7 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
-            .assertWidthIsAtLeast(48.dp)
+            .assertWidthIsAtLeast(40.dp)
             .assertHeightIsAtLeast(48.dp)
     }
 
@@ -363,7 +363,7 @@ class RuntimeMenuComposeTest {
         composeRule.runOnIdle { state.value = state.value.copy(cameraSwitchAvailable = true) }
         composeRule.onNodeWithContentDescription(front)
             .assertIsDisplayed().assertIsEnabled()
-            .assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
+            .assertWidthIsAtLeast(40.dp).assertHeightIsAtLeast(48.dp)
             .performClick()
         assertEquals(listOf("camera"), events)
         composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime)).assertIsDisplayed()
@@ -450,14 +450,14 @@ class RuntimeMenuComposeTest {
         ).getUnclippedBoundsInRoot()
         assertTrue(speed.left >= 209.dp && speed.right <= 344.dp)
         composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime))
-            .assertWidthIsAtLeast(48.dp)
+            .assertWidthIsAtLeast(40.dp)
             .assertHeightIsAtLeast(48.dp)
         val ime = composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime))
             .getUnclippedBoundsInRoot()
         assertTrue(ime.left >= 209.dp && ime.right <= 344.dp)
         assertTrue(ime.top >= 0.dp && ime.bottom <= 48.dp)
         val screenshot = composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
-            .assertWidthIsAtLeast(48.dp)
+            .assertWidthIsAtLeast(40.dp)
             .assertHeightIsAtLeast(48.dp)
             .getUnclippedBoundsInRoot()
         assertTrue(screenshot.left >= 209.dp && screenshot.right <= 357.dp)
@@ -492,7 +492,7 @@ class RuntimeMenuComposeTest {
             }
         }
         val screenshot = composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
-            .assertWidthIsAtLeast(48.dp)
+            .assertWidthIsAtLeast(40.dp)
         val bounds = screenshot.getUnclippedBoundsInRoot()
         assertTrue(bounds.top >= 0.dp && bounds.bottom <= 40.dp)
         assertEquals(40.dp, bounds.bottom - bounds.top)
@@ -640,7 +640,7 @@ class RuntimeMenuComposeTest {
         composeRule.onAllNodesWithText(uiString(R.string.runtime_virtual_controls_analog)).assertCountEquals(0)
         composeRule.onAllNodesWithText("Key Layout Resize Mode").assertCountEquals(0)
         composeRule.onNodeWithContentDescription("Back")
-            .assertWidthIsAtLeast(48.dp)
+            .assertWidthIsAtLeast(40.dp)
             .assertHeightIsAtLeast(48.dp)
     }
 

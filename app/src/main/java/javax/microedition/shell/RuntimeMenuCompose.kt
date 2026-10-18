@@ -122,7 +122,7 @@ internal data class RuntimeMenuUiState(
     val cameraSwitching: Boolean = false,
     val toolbarWidthDp: Float? = null,
     val toolbarFontScale: Float = 1f,
-    val toolbarSpeedWidthDp: Float = 48f,
+    val toolbarSpeedWidthDp: Float = RUNTIME_TOOLBAR_ACTION_WIDTH_DP,
     val toolbarRoundedLeftPx: Int = 0,
     val toolbarRoundedRightPx: Int = 0,
     val toolbarInsetLeftPx: Int = 0,
@@ -748,6 +748,7 @@ internal fun RuntimeMenuHost(
 }
 
 private const val RUNTIME_SPEED_LABEL_SP = 14f
+private const val RUNTIME_TOOLBAR_ACTION_WIDTH_DP = 40f
 
 /** Matches the explicit labelLarge metrics below; width is shared by rendering and navigation. */
 internal fun measureRuntimeSpeedWidth(resources: Resources, percent: Int): Float {
@@ -759,7 +760,7 @@ internal fun measureRuntimeSpeedWidth(resources: Resources, percent: Int): Float
     }
     val textWidthDp = ceil(paint.measureText(EmulationSpeed.formatMultiplier(percent)).toDouble()).toFloat() /
         resources.displayMetrics.density
-    return max(48f, textWidthDp + 16f)
+    return max(RUNTIME_TOOLBAR_ACTION_WIDTH_DP, textWidthDp + 16f)
 }
 
 internal enum class RuntimeToolbarShortcut { Speed, Ime, Screenshot, Camera }
@@ -805,8 +806,8 @@ internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): Ru
     }
     if (segments.isEmpty()) return RuntimeToolbarLayout(null, emptyList())
     fun actionWidth(shortcut: RuntimeToolbarShortcut): Float = when (shortcut) {
-        RuntimeToolbarShortcut.Speed -> state.toolbarSpeedWidthDp.coerceAtLeast(48f)
-        else -> 48f
+        RuntimeToolbarShortcut.Speed -> state.toolbarSpeedWidthDp.coerceAtLeast(RUNTIME_TOOLBAR_ACTION_WIDTH_DP)
+        else -> RUNTIME_TOOLBAR_ACTION_WIDTH_DP
     }
     fun pack(shortcuts: List<RuntimeToolbarShortcut>): List<RuntimeToolbarPlacement>? {
         val ends = segments.map { it.right }.toMutableList()
@@ -905,20 +906,17 @@ private fun RuntimeToolbar(
                             RuntimeToolbarShortcut.Ime -> RuntimeToolbarAction(
                                 icon = R.drawable.ic_action_keyboard,
                                 label = R.string.action_keyboard_ime,
-                                size = 48.dp,
                                 onClick = actions::onOpenImeKeyboard,
                             )
                             RuntimeToolbarShortcut.Screenshot -> RuntimeToolbarAction(
                                 icon = R.drawable.ic_action_screenshot,
                                 label = R.string.take_screenshot,
-                                size = 48.dp,
                                 onClick = actions::onTakeScreenshot,
                             )
                             RuntimeToolbarShortcut.Camera -> RuntimeToolbarAction(
                                 icon = R.drawable.ic_camera_switch,
                                 label = if (state.cameraFrontFacing) R.string.runtime_camera_use_rear
                                     else R.string.runtime_camera_use_front,
-                                size = 48.dp,
                                 enabled = !state.cameraSwitching,
                                 onClick = actions::onSwitchCamera,
                             )
@@ -963,11 +961,10 @@ private fun RuntimeToolbar(
 private fun RuntimeToolbarAction(
     icon: Int,
     label: Int,
-    size: androidx.compose.ui.unit.Dp,
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(size)) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxSize()) {
         Icon(
             painter = painterResource(icon),
             contentDescription = stringResource(label),

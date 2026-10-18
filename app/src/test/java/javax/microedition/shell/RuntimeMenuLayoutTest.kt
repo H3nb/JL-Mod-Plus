@@ -42,7 +42,7 @@ class RuntimeMenuLayoutTest {
         assertFalse(fullMenu.any { it.label == R.string.PREF_EMULATION_SPEED })
         assertEquals(false, fullMenu.single { it.label == R.string.pref_runtime_fullscreen_title }.checked)
 
-        // A cutout or round corner reduces actual usable width without shrinking touch targets.
+        // A cutout or round corner reduces actual usable width without shrinking compact targets.
         val narrow = canvas.copy(toolbarInsetLeftPx = 280)
         val narrowToolbar = runtimeToolbarShortcuts(narrow, 360f)
         assertEquals(listOf(RuntimeToolbarShortcut.Speed), narrowToolbar)
@@ -103,7 +103,7 @@ class RuntimeMenuLayoutTest {
         assertFalse(menu(incompatible).any { it.label == R.string.PREF_EMULATION_SPEED })
         assertFalse(menu(incompatible).any { it.label == R.string.action_keyboard_ime })
         val largeText = canvas.copy(toolbarFontScale = 2f, toolbarSpeedWidthDp = 100f)
-        assertEquals(listOf(RuntimeToolbarShortcut.Speed, RuntimeToolbarShortcut.Ime), runtimeToolbarShortcuts(largeText, 196f))
+        assertEquals(listOf(RuntimeToolbarShortcut.Speed, RuntimeToolbarShortcut.Ime), runtimeToolbarShortcuts(largeText, 176f))
     }
 
     @Test
@@ -149,7 +149,7 @@ class RuntimeMenuLayoutTest {
             val layout = runtimeToolbarLayout(camera, 360f)
             assertEquals(RuntimeToolbarShortcut.entries, layout.actions.map { it.shortcut })
             assertTrue(layout.actions.all {
-                it.span.width >= 48f && it.span.left >= 4f && it.span.right <= 356f &&
+                it.span.width >= 40f && it.span.left >= 4f && it.span.right <= 356f &&
                     (it.span.right <= 150f || it.span.left >= 210f)
             })
             assertFalse(menu(camera, layout.actions.map { it.shortcut }).any {
@@ -182,7 +182,7 @@ class RuntimeMenuLayoutTest {
         val layout = runtimeToolbarLayout(notch, 360f)
         assertEquals(RuntimeToolbarSpan(8f, 150f), layout.title)
         assertEquals(canvasShortcuts, layout.actions.map { it.shortcut })
-        assertTrue(layout.actions.all { it.span.left >= 210f && it.span.right <= 356f && it.span.width >= 48f })
+        assertTrue(layout.actions.all { it.span.left >= 210f && it.span.right <= 356f && it.span.width >= 40f })
         assertFalse(menu(notch, layout.actions.map { it.shortcut }).any { it.label == R.string.take_screenshot })
         assertEquals(0, notch.toolbarInsetTopPx)
     }
@@ -196,8 +196,8 @@ class RuntimeMenuLayoutTest {
         )
         val ltr = runtimeToolbarLayout(state, 360f)
         val rtl = runtimeToolbarLayout(state.copy(toolbarRtl = true), 360f)
-        assertEquals(RuntimeToolbarSpan(32f, 108f), ltr.title)
-        assertEquals(RuntimeToolbarSpan(252f, 336f), rtl.title)
+        assertEquals(RuntimeToolbarSpan(32f, 156f), ltr.title)
+        assertEquals(RuntimeToolbarSpan(204f, 336f), rtl.title)
         assertEquals(canvasShortcuts, ltr.actions.map { it.shortcut })
         assertTrue(ltr.actions.all { it.span.left >= 32f && it.span.right <= 336f &&
             (it.span.right <= 156f || it.span.left >= 204f) })
@@ -211,17 +211,17 @@ class RuntimeMenuLayoutTest {
 
     @Test
     fun actionsTakePriorityOverTitleAndCanUseBothSidesOfCutout() {
-        val narrow = runtimeToolbarLayout(canvas, 152f)
+        val narrow = runtimeToolbarLayout(canvas, 128f)
         assertEquals(canvasShortcuts, narrow.actions.map { it.shortcut })
         assertEquals(null, narrow.title)
         val fragmented = canvas.copy(
             toolbarSpeedWidthDp = 80f,
-            toolbarCutouts = listOf(RuntimeToolbarOcclusion(104, 112)),
+            toolbarCutouts = listOf(RuntimeToolbarOcclusion(88, 96)),
         )
-        val layout = runtimeToolbarLayout(fragmented, 200f)
+        val layout = runtimeToolbarLayout(fragmented, 184f)
         assertEquals(canvasShortcuts, layout.actions.map { it.shortcut })
         assertEquals(null, layout.title)
-        assertTrue(layout.actions.all { it.span.right <= 100f || it.span.left >= 116f })
+        assertTrue(layout.actions.all { it.span.right <= 84f || it.span.left >= 100f })
     }
 
     @Test
@@ -229,7 +229,7 @@ class RuntimeMenuLayoutTest {
         val rounded = canvas.copy(toolbarRoundedLeftPx = 40, toolbarRoundedRightPx = 40)
         val layout = runtimeToolbarLayout(rounded, 240f)
         assertEquals(canvasShortcuts, layout.actions.map { it.shortcut })
-        assertEquals(RuntimeToolbarSpan(40f, 64f), layout.title)
+        assertEquals(RuntimeToolbarSpan(40f, 88f), layout.title)
         assertTrue(layout.actions.all { it.span.left >= 32f && it.span.right <= 208f })
         // The speed label has the smallest internal padding: 8dp, matching measured text +16dp.
         assertTrue(layout.actions.first().span.left + 8f >= 40f)
