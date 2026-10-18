@@ -425,9 +425,17 @@ public class Timer {
                         // Preserve the J2ME-Loader/JL-Mod callback compatibility boundary:
                         // cancel only the failed task, including an already queued fixed-rate
                         // occurrence. Errors and scheduler failures still escape to worker cleanup.
-                        task.cancel();
                         System.err.println("TimerTask failed; cancelling " + task.getClass().getName());
                         failure.printStackTrace();
+                        try {
+                            // Preserve guest cleanup hooks without holding the task lock.
+                            task.cancel();
+                        } finally {
+                            // Scheduler cancellation must not depend on an override delegating.
+                            synchronized (task.lock) {
+                                task.cancelled = true;
+                            }
+                        }
                     }
                     if (task.period >= 0 && !task.fixedRate) {
                         rescheduleFixedDelayTask(task, fixedDelayStartTime, fixedDelayStartWallTime);

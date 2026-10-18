@@ -23,6 +23,8 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.Date;
 import java.lang.reflect.Field;
 import java.util.concurrent.CountDownLatch;
@@ -425,6 +427,110 @@ public class TimerTest {
 				timer.cancel();
 			}
 			GuestTimingBridge.clear(session);
+		}
+	}
+
+	@Test
+	public void failedTaskPreservesCancellationOverrideCleanup() throws Exception {
+		assertFailedTaskCancellationOverride(true);
+	}
+
+	@Test
+	public void failedTaskIsCancelledEvenIfOverrideDoesNotDelegate() throws Exception {
+		assertFailedTaskCancellationOverride(false);
+	}
+
+	private static void assertFailedTaskCancellationOverride(boolean callsSuper) throws Exception {
+		Timer timer = new Timer("timing-test-cancellation-override", true);
+		CountDownLatch releaseFailure = new CountDownLatch(1);
+		try {
+			Thread worker = workerOf(timer);
+			AtomicReference<Throwable> uncaught = new AtomicReference<>();
+			worker.setUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
+			CountDownLatch failureStarted = new CountDownLatch(1);
+			CountDownLatch healthyRan = new CountDownLatch(1);
+			AtomicInteger failedRuns = new AtomicInteger();
+			AtomicInteger cleanupCalls = new AtomicInteger();
+			AtomicReference<Boolean> delegatedCancellation = new AtomicReference<>();
+			TimerTask failed = new TimerTask() {
+				@Override
+				public boolean cancel() {
+					cleanupCalls.incrementAndGet();
+					if (callsSuper) {
+						boolean result = super.cancel();
+						delegatedCancellation.set(result);
+						return result;
+					}
+					return false;
+				}
+
+				@Override
+				public void run() {
+					failedRuns.incrementAndGet();
+					failureStarted.countDown();
+					try {
+						if (!releaseFailure.await(1L, TimeUnit.SECONDS)) {
+							throw new AssertionError("Failed task was not released");
+						}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						throw new AssertionError(e);
+					}
+					throw new NullPointerException("Expected failure with a cancellation override");
+				}
+			};
+			timer.scheduleAtFixedRate(failed, 0L, 1L);
+			assertTrue(failureStarted.await(1L, TimeUnit.SECONDS));
+			// A queued fixed-rate occurrence would run again before this later healthy task.
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					healthyRan.countDown();
+				}
+			}, 20L);
+			releaseFailure.countDown();
+			assertTrue(healthyRan.await(1L, TimeUnit.SECONDS));
+			assertEquals(1, failedRuns.get());
+			assertEquals(1, cleanupCalls.get());
+			// The override sees the same cancellation state/result as an ordinary caller.
+			assertEquals(callsSuper ? Boolean.TRUE : null, delegatedCancellation.get());
+			assertTrue(worker.isAlive());
+			assertNull(uncaught.get());
+		} finally {
+			releaseFailure.countDown();
+			timer.cancel();
+		}
+	}
+
+	@Test
+	public void cancellationOverrideFailureEscapesAfterOriginalFailureIsLogged() throws Exception {
+		Timer timer = new Timer("timing-test-cancellation-failure", true);
+		PrintStream originalError = System.err;
+		ByteArrayOutputStream log = new ByteArrayOutputStream();
+		try (PrintStream capturedError = new PrintStream(log, true, "UTF-8")) {
+			System.setErr(capturedError);
+			Thread worker = workerOf(timer);
+			AtomicReference<Throwable> uncaught = new AtomicReference<>();
+			worker.setUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
+			RuntimeException expected = new IllegalStateException("guest cleanup failure");
+			timer.schedule(new TimerTask() {
+				@Override
+				public boolean cancel() {
+					throw expected;
+				}
+
+				@Override
+				public void run() {
+					throw new NullPointerException("original guest callback failure");
+				}
+			}, 0L, 1L);
+			worker.join(1_000L);
+			assertFalse(worker.isAlive());
+			assertSame(expected, uncaught.get());
+			assertTrue(log.toString("UTF-8").contains("original guest callback failure"));
+		} finally {
+			System.setErr(originalError);
+			timer.cancel();
 		}
 	}
 

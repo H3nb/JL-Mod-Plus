@@ -20,7 +20,14 @@ queued healthy tasks and accept new work. Cancellation also suppresses a fixed-r
 occurrence that was queued before the failed callback, and fixed-delay callbacks
 are not requeued after failure. The task identity and stack trace are written to
 standard error, which Android exposes through logcat; these caught failures do not
-become fatal session reports.
+become fatal session reports by themselves.
+
+Automatic failure cancellation still invokes a guest override of `cancel()` so
+its cleanup runs with the original cancellation state. A `finally` block marks
+the internal task state cancelled under its existing lock, even if that override
+does not delegate to the base implementation. The guest hook runs without the
+task lock held. A new failure from the cancellation hook is not swallowed: it
+still terminates the worker, with the original callback failure already logged.
 
 This is a deliberate compatibility policy, also used by
 [KEmulator nnmod](https://github.com/shinovon/KEmulator/blob/2fe11e46713021f6099fd6ef39916d1d4d0f2e19/src/main/emulator/custom/subclass/TimerThread.java#L61-L66),
