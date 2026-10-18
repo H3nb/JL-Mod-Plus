@@ -137,12 +137,14 @@ public class FileSystemFileConnection implements FileConnection {
 
 	private void requireWrite() {
 		throwClosed();
-		if (mode == Connector.READ) throw new IllegalModeException("Connection is read-only");
-        try {
-            VirtualFileSystem.checkMutation(root, file);
-        } catch (IOException denied) {
-            throw new SecurityException(denied.getMessage(), denied);
-        }
+		if (mode == Connector.READ) {
+			throw new IllegalModeException("Connection is read-only");
+		}
+		try {
+			VirtualFileSystem.checkMutation(root, file);
+		} catch (IOException denied) {
+			throw new SecurityException(denied.getMessage(), denied);
+		}
 	}
 
 	@Override
