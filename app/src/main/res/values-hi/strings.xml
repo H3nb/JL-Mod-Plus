@@ -59,9 +59,6 @@
     <string name="pref_button_shape_title">बटन का आकार</string>
     <string name="pref_category_experimental">प्रायोगिक</string>
     <string name="pref_emulator_dir">कार्यशील डायरेक्टरी</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas स्क्रीन पर रनटाइम टूलबार दिखता रहने दें।</string>
-    <string name="pref_enable_actionbar_title">रनटाइम टूलबार दिखाएँ</string>
-    <string name="pref_enable_statusbar_title">सिस्टम स्टेटस बार दिखाएँ</string>
     <string name="pref_encoding_title">एन्कोडिंग</string>
     <string name="PREF_FILTER">लीनियर फ़िल्टरिंग</string>
     <string name="PREF_FONT_ANTI_ALIASING">एंटी-अलियासिंग</string>
@@ -988,7 +985,6 @@
     <string name="pref_app_sort_descending">अवरोही</string>
     <string name="pref_apps_view">लेआउट</string>
     <string name="pref_audio_title">MIDI</string>
-    <string name="pref_enable_statusbar_summary">सिस्टम स्टेटस बार दिखता रहने दें। इसे चालू करने से डिस्प्ले कटआउट क्षेत्र का इस्तेमाल बंद हो जाता है।</string>
     <string name="pref_language">ऐप की भाषा</string>
     <string name="pref_screen_padding_title">स्क्रीन के आसपास खाली जगह</string>
     <string name="pref_skin_not_set">कोई नहीं</string>
@@ -996,8 +992,6 @@
     <string name="pref_skip_resume_call">फिर से शुरू होने पर startApp() कॉल छोड़ें</string>
     <string name="pref_soundbank_title">MIDI साउंडबैंक</string>
     <string name="pref_title_emulation">MIDlet जीवनचक्र</string>
-    <string name="pref_use_display_cutout_summary">संगत MIDlet Canvas सामग्री और रनटाइम टूलबार को डिस्प्ले कटआउट क्षेत्र का इस्तेमाल करने दें। इसे चालू करने से सिस्टम स्टेटस बार छिप जाता है।</string>
-    <string name="pref_use_display_cutout_title">डिस्प्ले कटआउट क्षेत्र इस्तेमाल करें</string>
     <string name="settings_profiles_summary">ऐसे प्रोफ़ाइल प्रबंधित करें जिन्हें अलग-अलग MIDlet में दोबारा इस्तेमाल कर सकते हैं।</string>
     <string name="settings_section_appearance">ऐप का रूप</string>
     <string name="settings_section_language">भाषा</string>

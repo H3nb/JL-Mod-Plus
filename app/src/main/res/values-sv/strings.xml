@@ -177,10 +177,6 @@
     <string name="pref_button_shape_title">Knappform</string>
     <string name="pref_category_experimental">Experimentella/tillfälliga alternativ</string>
     <string name="pref_emulator_dir">Arbetsmapp</string>
-    <string name="pref_enable_actionbar_summary">Håll runtimeverktygsfältet synligt på MIDlet Canvas-skärmar.</string>
-    <string name="pref_enable_actionbar_title">Visa runtimeverktygsfält</string>
-    <string name="pref_enable_statusbar_title">Visa systemstatusfält</string>
-    <string name="pref_enable_statusbar_summary">Håll systemstatusfältet synligt. När det aktiveras inaktiveras området vid skärmutskärningen.</string>
     <string name="pref_encoding_title">Teckenkodning</string>
     <string name="PREF_FILTER">Linjär filtrering</string>
     <string name="PREF_FONT_ANTI_ALIASING">Kantutjämning</string>
@@ -879,8 +875,6 @@
     <string name="settings_section_storage">Lagring</string>
     <string name="settings_section_profiles">Profiler</string>
     <string name="settings_profiles_summary">Hantera profiler som du kan återanvända mellan MIDlet-appar.</string>
-    <string name="pref_use_display_cutout_title">Använd skärmutskärning i MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Tillåt kompatibelt MIDlet Canvas-innehåll och runtimeverktygsfältet att använda skärmutskärningsområdet. När det aktiveras döljs systemets statusfält.</string>
     <string name="pref_accent_title">Accentfärg</string>
     <string name="pref_accent_blue">Standardblå</string>
     <string name="pref_accent_teal">Blågrön</string>

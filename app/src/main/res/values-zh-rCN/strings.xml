@@ -59,9 +59,6 @@
     <string name="pref_button_shape_title">按钮形状</string>
     <string name="pref_category_experimental">实验性功能</string>
     <string name="pref_emulator_dir">工作目录</string>
-    <string name="pref_enable_actionbar_summary">在 MIDlet Canvas 屏幕上保持显示运行时工具栏。</string>
-    <string name="pref_enable_actionbar_title">显示运行时工具栏</string>
-    <string name="pref_enable_statusbar_title">显示系统状态栏</string>
     <string name="pref_encoding_title">字符编码</string>
     <string name="PREF_FILTER">线性过滤</string>
     <string name="PREF_FONT_ANTI_ALIASING">抗锯齿</string>
@@ -958,7 +955,6 @@
     <string name="pref_app_sort_descending">降序</string>
     <string name="pref_apps_view">布局</string>
     <string name="pref_audio_title">MIDI</string>
-    <string name="pref_enable_statusbar_summary">保持显示系统状态栏。启用后会禁用显示屏刘海区域。</string>
     <string name="pref_language">应用语言</string>
     <string name="pref_screen_padding_title">屏幕边距</string>
     <string name="pref_skin_not_set">无</string>
@@ -966,8 +962,6 @@
     <string name="pref_skip_resume_call">恢复时跳过 startApp()</string>
     <string name="pref_soundbank_title">MIDI 音色库</string>
     <string name="pref_title_emulation">MIDlet 生命周期</string>
-    <string name="pref_use_display_cutout_summary">允许兼容的 MIDlet Canvas 内容和运行时工具栏使用显示屏刘海区域。启用后会隐藏系统状态栏。</string>
-    <string name="pref_use_display_cutout_title">使用显示屏刘海区域</string>
     <string name="settings_profiles_summary">管理可在多个 MIDlet 之间复用的配置文件。</string>
     <string name="settings_section_appearance">应用外观</string>
     <string name="settings_section_language">语言</string>

@@ -43,6 +43,7 @@ without changing the guest-visible contract.
 | Exit | Every Displayable | `showExitConfirmation()` |
 | Save Log | Every Displayable | `saveLog()` |
 | Lock Screen Rotation | Every Displayable | Existing lock/unlock orientation calculation |
+| Fullscreen | Canvas | Global preference shared with Settings; hides only host toolbar, not MIDP commands or guest fullscreen mode |
 | Keyboard (IME) | Canvas when Android IME exists | Existing toggle semantics, posted after popup dismissal, using the Canvas/GLSurfaceView window token and its explicit `InputConnection` contract |
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
 | Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` display maximum, `-1` reset) |
@@ -59,11 +60,29 @@ non-Canvas Displayables.
   overlay hit geometry. The current `RuntimeHostView` structure keeps
   `displayable_container` and `OverlayView` as direct View boundaries to
   preserve that contract.
-- Toolbar and menu presentation must preserve the established guest-height
-  behavior: disabling the toolbar contributes zero host-toolbar height to the
-  Canvas, while the enabled compact height remains current compatibility
-  behavior until an intentional product change is separately reviewed and
-  validated.
+- Disabling the toolbar contributes zero host-toolbar height. Enabled toolbar
+  controls retain at least 48dp touch targets; safe top padding belongs to the
+  toolbar once, not also to the game below it. Layout uses actual window bounds,
+  insets, density and text scale rather than a device model or orientation alone.
+- The runtime window draws edge-to-edge. Toolbar controls independently avoid
+  cutouts, waterfall edges and reported rounded corners. Guest Canvas bounds
+  follow the profile's `AllowDisplayCutout` flag (default false); enabling it
+  permits game content under a cutout without removing virtual-control safety.
+  APIs without rounded-corner information retain the standard control margins.
+- Fullscreen uses the inverse existing global toolbar preference, written only
+  by the main-process fullscreen authority. Settings and the runtime use its
+  asynchronous client and change notifications; the runtime never writes the
+  main-process SharedPreferences cache. Host dialogs and transient system bars
+  do not change this preference. Non-Canvas screens retain host navigation.
+- Toolbar shortcuts and menu/controller actions come from the same layout
+  decision. IME, screenshot and compatible emulation speed appear in the menu
+  whenever their shortcut is absent; overflow and Android Back open the same
+  host menu. Fullscreen remains reachable in the Canvas menu.
+- Explicit guest LCD dimensions remain fixed. Automatic dimensions continue to
+  follow the established Canvas resize/sizeChanged path when host space changes.
+  Virtual controls receive separate surface-local safe bounds, retain their
+  underlying surface orientation and never persist layout adaptation as a user
+  edit. Draw and touch coordinates share those bounds.
 - Android Back, the toolbar overflow, and the legacy physical/menu-key paths
   all open the same modal host menu. Dialog Back dismisses that menu and
   returns focus to the MIDlet; it never exits the MIDlet. A long press from a

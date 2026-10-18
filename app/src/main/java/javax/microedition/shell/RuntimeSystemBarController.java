@@ -14,8 +14,6 @@
 
 package javax.microedition.shell;
 
-import android.os.Build;
-import android.view.View;
 import android.view.Window;
 
 import androidx.core.view.WindowCompat;
@@ -35,11 +33,6 @@ final class RuntimeSystemBarController {
 	}
 
 	static void apply(Window window, boolean statusBarVisible, boolean navigationBarVisible) {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-			window.getDecorView().setSystemUiVisibility(
-					legacySystemUiVisibility(statusBarVisible, navigationBarVisible));
-			return;
-		}
 
 		WindowInsetsControllerCompat controller =
 				WindowCompat.getInsetsController(window, window.getDecorView());
@@ -58,22 +51,4 @@ final class RuntimeSystemBarController {
 		}
 	}
 
-	@SuppressWarnings("deprecation")
-	static int legacySystemUiVisibility(boolean statusBarVisible, boolean navigationBarVisible) {
-		if (statusBarVisible && navigationBarVisible) {
-			return View.SYSTEM_UI_FLAG_VISIBLE;
-		}
-
-		int flags = View.SYSTEM_UI_FLAG_VISIBLE;
-		if (!navigationBarVisible) {
-			flags |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-		}
-		if (!statusBarVisible) {
-			flags |= View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
-			if (!navigationBarVisible) {
-				flags |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
-			}
-		}
-		return flags;
-	}
 }

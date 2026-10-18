@@ -700,10 +700,6 @@
     <string name="pref_button_shape_rect">Тіктөртбұрыш</string>
     <string name="pref_button_shape_round">Бұрыштары дөңгеленген тіктөртбұрыш</string>
     <string name="pref_button_shape_title">Батырма пішіні</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas экрандарында орындалу ортасының саймандар панелін көрсетіп тұру.</string>
-    <string name="pref_enable_actionbar_title">Орындалу ортасының саймандар панелін көрсету</string>
-    <string name="pref_enable_statusbar_summary">Жүйенің күй жолағын көрсетіп тұру. Бұл параметрді іске қосу дисплей ойығының аймағын пайдалануды сөндіреді.</string>
-    <string name="pref_enable_statusbar_title">Жүйенің күй жолағын көрсету</string>
     <string name="pref_encoding_title">Таңбаларды кодтау</string>
     <string name="pref_graphics_hw_gles">Құрылғылық үдету (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Құрылғылық үдету (Surface)</string>
@@ -726,8 +722,6 @@
     <string name="pref_theme_system">Жүйе баптауларына сай</string>
     <string name="pref_theme_title">Тема</string>
     <string name="pref_title_emulation">MIDlet өмірлік циклі</string>
-    <string name="pref_use_display_cutout_summary">Үйлесімді MIDlet Canvas мазмұны мен орындалу ортасының саймандар панеліне дисплей ойығының аймағын пайдалануға рұқсат беру. Бұл параметрді іске қосу жүйенің күй жолағын жасырады.</string>
-    <string name="pref_use_display_cutout_title">Дисплей ойығының аймағын пайдалану</string>
     <string name="pref_vibration_title">Діріл</string>
     <string name="pref_vk_save_alert">Виртуалды басқару элементтерінің бұрынғы жеке орналасуын қазіргі орналасумен ауыстыру керек пе?</string>
     <string name="pref_vk_type_numbers_arrows">Сандар мен бағыттауыштар</string>

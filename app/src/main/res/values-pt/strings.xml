@@ -48,9 +48,6 @@
     <string name="pref_button_shape_round">Retângulo arredondado</string>
     <string name="pref_button_shape_title">Formato dos botões</string>
     <string name="pref_emulator_dir">Diretório de trabalho</string>
-    <string name="pref_enable_actionbar_summary">Manter a barra de ferramentas de execução visível nos ecrãs Canvas do MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Mostrar barra de ferramentas de execução</string>
-    <string name="pref_enable_statusbar_title">Mostrar barra de estado do sistema</string>
     <string name="pref_encoding_title">Codificação</string>
     <string name="PREF_FILTER">Filtragem linear</string>
     <string name="PREF_FONT_LARGE">Grande</string>
@@ -242,7 +239,6 @@
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_category_experimental">Opções experimentais/temporárias</string>
-    <string name="pref_enable_statusbar_summary">Manter a barra de estado do sistema visível. Ao ativá-la, a área do recorte do ecrã é desativada.</string>
     <string name="PREF_FONT_ANTI_ALIASING">Antialiasing</string>
     <string name="pref_graphics_software">Software</string>
     <string name="pref_language">Idioma</string>
@@ -915,8 +911,6 @@
     <string name="settings_section_storage">Armazenamento</string>
     <string name="settings_section_profiles">Perfis</string>
     <string name="settings_profiles_summary">Gerir perfis que pode reutilizar entre MIDlets.</string>
-    <string name="pref_use_display_cutout_title">Usar recorte do ecrã no MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Permite que o conteúdo Canvas compatível do MIDlet e a barra de execução usem a área do recorte do ecrã. Ao ativá-lo, a barra de estado do sistema é ocultada.</string>
     <string name="pref_accent_title">Cor de destaque</string>
     <string name="pref_accent_blue">Azul predefinido</string>
     <string name="pref_accent_teal">Azul-petróleo</string>

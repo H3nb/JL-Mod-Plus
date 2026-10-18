@@ -33,8 +33,6 @@
     <string name="pref_app_sort_date">تاریخ افزودن</string>
     <string name="pref_app_sort_name">نام</string>
     <string name="pref_button_shape_title">شکل دکمه</string>
-    <string name="pref_enable_actionbar_summary">نوار ابزار اجرا در صفحه‌های MIDlet Canvas نمایان بماند.</string>
-    <string name="pref_enable_actionbar_title">نمایش نوار ابزار اجرا</string>
     <string name="pref_encoding_title">کدگذاری نویسه‌ها</string>
     <string name="PREF_FILTER">فیلتر خطی</string>
     <string name="PREF_FONT_LARGE">بزرگ</string>
@@ -960,8 +958,6 @@
     <string name="pref_button_shape_round">مستطیل با گوشه‌های گرد</string>
     <string name="pref_category_experimental">آزمایشی</string>
     <string name="pref_emulator_dir">پوشهٔ کاری</string>
-    <string name="pref_enable_statusbar_summary">نوار وضعیت سیستم نمایان بماند. فعال‌کردن آن استفاده از ناحیهٔ بریدگی نمایشگر را غیرفعال می‌کند.</string>
-    <string name="pref_enable_statusbar_title">نمایش نوار وضعیت سیستم</string>
     <string name="pref_graphics_hw_gles">شتاب‌دهی سخت‌افزاری (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">شتاب‌دهی سخت‌افزاری (Surface)</string>
     <string name="pref_graphics_hw_view">شتاب‌دهی سخت‌افزاری (Window)</string>
@@ -985,8 +981,6 @@
     <string name="pref_theme_auto_time">خودکار (بر اساس زمان روز)</string>
     <string name="pref_theme_system">پیروی از تنظیمات سیستم</string>
     <string name="pref_title_emulation">چرخهٔ حیات MIDlet</string>
-    <string name="pref_use_display_cutout_summary">به محتوای سازگار MIDlet Canvas و نوار ابزار اجرا اجازه می‌دهد از ناحیهٔ بریدگی نمایشگر استفاده کنند. فعال‌کردن آن نوار وضعیت سیستم را پنهان می‌کند.</string>
-    <string name="pref_use_display_cutout_title">استفاده از ناحیهٔ بریدگی نمایشگر</string>
     <string name="pref_vibration_title">لرزش</string>
     <string name="pref_vk_hide_hint">غیرفعال</string>
     <string name="pref_vk_save_alert">چیدمان سفارشی موجودِ کنترل‌های مجازی با چیدمان فعلی جایگزین شود؟</string>

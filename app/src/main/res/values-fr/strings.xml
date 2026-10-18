@@ -70,9 +70,6 @@
     <string name="pref_button_shape_round">Rectangle arrondi</string>
     <string name="pref_button_shape_title">Forme des boutons</string>
     <string name="pref_emulator_dir">Répertoire de travail</string>
-    <string name="pref_enable_actionbar_summary">Garder la barre d’outils d’exécution visible sur les écrans Canvas du MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Afficher la barre d’outils d’exécution</string>
-    <string name="pref_enable_statusbar_title">Afficher la barre d’état système</string>
     <string name="pref_encoding_title">Encodage des caractères</string>
     <string name="PREF_FILTER">Filtrage linéaire</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anticrénelage</string>
@@ -263,7 +260,6 @@
     <string name="pref_apps_view">Affichage de la Bibliothèque</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Options expérimentales/temporaires</string>
-    <string name="pref_enable_statusbar_summary">Garder la barre d’état système visible. Son activation désactive la zone de l’encoche d’affichage.</string>
     <string name="pref_language">Langue</string>
     <string name="pref_mascot_summary">Afficher un message lorsque Mascot Capsule 3D est utilisé.</string>
     <string name="pref_mascot_title">Notification Mascot Capsule 3D</string>
@@ -915,8 +911,6 @@
     <string name="settings_section_storage">Stockage</string>
     <string name="settings_section_profiles">Profils</string>
     <string name="settings_profiles_summary">Gérez les profils réutilisables entre les MIDlets.</string>
-    <string name="pref_use_display_cutout_title">Utiliser l’encoche d’affichage dans le MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Permet au contenu Canvas compatible du MIDlet et à la barre d’outils d’exécution d’utiliser la zone de l’encoche d’affichage. Son activation masque la barre d’état système.</string>
     <string name="pref_accent_title">Couleur d’accent</string>
     <string name="pref_accent_blue">Bleu par défaut</string>
     <string name="pref_accent_teal">Sarcelle</string>

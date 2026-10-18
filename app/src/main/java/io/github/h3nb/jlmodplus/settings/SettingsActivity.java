@@ -28,10 +28,8 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_SHOW_LIST_DESCRI
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_SCREENSHOT_SWITCH;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_USE_DISPLAY_CUTOUT;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_VIBRATION;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
@@ -50,8 +48,9 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -83,6 +82,8 @@ public class SettingsActivity extends AppCompatActivity {
 	private SharedPreferences preferences;
 	private SettingsComposeController composeController;
 	private String directoryError;
+	private RuntimeFullscreenClient fullscreenClient;
+	private boolean fullscreen;
 
 	private final ActivityResultLauncher<String> openDirLauncher = registerForActivityResult(
 			new PickDirResultContract(),
@@ -94,7 +95,7 @@ public class SettingsActivity extends AppCompatActivity {
 		AppLocaleTags.migrateRetiredSantaliLocale();
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		normalizeChromePreferences();
+		fullscreen = !preferences.getBoolean(PREF_TOOLBAR, false);
 
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
@@ -102,6 +103,33 @@ public class SettingsActivity extends AppCompatActivity {
 				composeView,
 				buildState(),
 				createActions());
+		fullscreenClient = new RuntimeFullscreenClient(this, new RuntimeFullscreenClient.Listener() {
+			@Override
+			public void onFullscreenChanged(boolean value) {
+				fullscreen = value;
+				refreshState();
+			}
+
+			@Override
+			public void onFullscreenError(@NonNull Exception failure) {
+				Log.e("SettingsActivity", "Could not access fullscreen preference", failure);
+				Toast.makeText(SettingsActivity.this, R.string.runtime_fullscreen_update_failed,
+						Toast.LENGTH_SHORT).show();
+			}
+		});
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (fullscreenClient != null) fullscreenClient.start();
+		refreshState();
+	}
+
+	@Override
+	protected void onPause() {
+		if (fullscreenClient != null) fullscreenClient.close();
+		super.onPause();
 	}
 
 	@Override
@@ -165,13 +193,11 @@ public class SettingsActivity extends AppCompatActivity {
 
 			@Override
 			public void onToggle(@NonNull String key, boolean checked) {
-				SharedPreferences.Editor editor = preferences.edit().putBoolean(key, checked);
-				if (PREF_STATUSBAR.equals(key) && checked) {
-					editor.putBoolean(PREF_USE_DISPLAY_CUTOUT, false);
-				} else if (PREF_USE_DISPLAY_CUTOUT.equals(key) && checked) {
-					editor.putBoolean(PREF_STATUSBAR, false);
+				if (PREF_TOOLBAR.equals(key)) {
+					fullscreenClient.setFullscreen(checked);
+					return;
 				}
-				editor.apply();
+				preferences.edit().putBoolean(key, checked).apply();
 				if (PREF_VIBRATION.equals(key)) {
 					ContextHolder.setVibration(checked);
 				}
@@ -203,7 +229,6 @@ public class SettingsActivity extends AppCompatActivity {
 	}
 
 	private SettingsUiState buildState() {
-		normalizeChromePreferences();
 		List<SettingsOption> themes = buildThemeOptions();
 		String themeValue = preferences.getString(PREF_THEME, getString(R.string.pref_theme_default));
 		SettingsOption selectedTheme = findOption(themes, themeValue, themes.get(0));
@@ -229,25 +254,9 @@ public class SettingsActivity extends AppCompatActivity {
 		List<SettingsSwitch> switches = new ArrayList<>();
 		switches.add(new SettingsSwitch(
 				PREF_TOOLBAR,
-				getString(R.string.pref_enable_actionbar_title),
-				getString(R.string.pref_enable_actionbar_summary),
-				preferences.getBoolean(PREF_TOOLBAR, false)));
-		boolean statusBarEnabled = preferences.getBoolean(PREF_STATUSBAR, false);
-		boolean displayCutoutEnabled = preferences.getBoolean(PREF_USE_DISPLAY_CUTOUT, true);
-		switches.add(new SettingsSwitch(
-				PREF_STATUSBAR,
-				getString(R.string.pref_enable_statusbar_title),
-				getString(R.string.pref_enable_statusbar_summary),
-				statusBarEnabled,
-				true));
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-			switches.add(new SettingsSwitch(
-					PREF_USE_DISPLAY_CUTOUT,
-					getString(R.string.pref_use_display_cutout_title),
-					getString(R.string.pref_use_display_cutout_summary),
-					displayCutoutEnabled,
-					true));
-		}
+				getString(R.string.pref_runtime_fullscreen_title),
+				getString(R.string.pref_runtime_fullscreen_summary),
+				fullscreen));
 		switches.add(new SettingsSwitch(
 				PREF_KEEP_SCREEN,
 				getString(R.string.pref_wakelock_title),
@@ -395,16 +404,6 @@ public class SettingsActivity extends AppCompatActivity {
 			case LIBRARY_GRID_SPACING_STANDARD:
 			default:
 				return "standard";
-		}
-	}
-
-	/** Repairs combinations persisted by versions that did not enforce the chrome interlock. */
-	private void normalizeChromePreferences() {
-		if (preferences == null) return;
-		boolean statusBarEnabled = preferences.getBoolean(PREF_STATUSBAR, false);
-		boolean displayCutoutEnabled = preferences.getBoolean(PREF_USE_DISPLAY_CUTOUT, true);
-		if (statusBarEnabled && displayCutoutEnabled) {
-			preferences.edit().putBoolean(PREF_USE_DISPLAY_CUTOUT, false).apply();
 		}
 	}
 

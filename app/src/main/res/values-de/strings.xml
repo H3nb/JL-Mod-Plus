@@ -66,9 +66,6 @@
     <string name="pref_button_shape_round">Abgerundetes Rechteck</string>
     <string name="pref_button_shape_title">Tastenform</string>
     <string name="pref_emulator_dir">Arbeitsverzeichnis</string>
-    <string name="pref_enable_actionbar_summary">Runtime-Symbolleiste auf MIDlet-Canvas-Bildschirmen sichtbar halten.</string>
-    <string name="pref_enable_actionbar_title">Runtime-Symbolleiste anzeigen</string>
-    <string name="pref_enable_statusbar_title">Systemstatusleiste anzeigen</string>
     <string name="pref_encoding_title">Zeichenkodierung</string>
     <string name="PREF_FILTER">Lineare Filterung</string>
     <string name="PREF_FONT_ANTI_ALIASING">Kantenglättung</string>
@@ -253,7 +250,6 @@
     <string name="pref_apps_view">Bibliotheksansicht</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Experimentelle/temporäre Optionen</string>
-    <string name="pref_enable_statusbar_summary">Systemstatusleiste sichtbar halten. Bei Aktivierung wird der Bereich des Display-Ausschnitts deaktiviert.</string>
     <string name="pref_graphics_hw_gles">Hardwarebeschleunigung (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardwarebeschleunigung (Surface)</string>
     <string name="pref_graphics_hw_view">Hardwarebeschleunigung (Window)</string>
@@ -886,8 +882,6 @@
     <string name="settings_section_storage">Speicher</string>
     <string name="settings_section_profiles">Profile</string>
     <string name="settings_profiles_summary">Profile verwalten, die du für mehrere MIDlets wiederverwenden kannst.</string>
-    <string name="pref_use_display_cutout_title">Display-Ausschnitt im MIDlet verwenden</string>
-    <string name="pref_use_display_cutout_summary">Kompatible MIDlet-Canvas-Inhalte und die Runtime-Symbolleiste dürfen den Bereich des Display-Ausschnitts verwenden. Bei Aktivierung wird die Systemstatusleiste ausgeblendet.</string>
     <string name="pref_accent_title">Akzentfarbe</string>
     <string name="pref_accent_blue">Standardblau</string>
     <string name="pref_accent_teal">Blaugrün</string>

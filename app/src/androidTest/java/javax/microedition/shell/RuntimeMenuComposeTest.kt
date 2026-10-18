@@ -261,7 +261,8 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun runtimeToolbarDoesNotExposeRedundantMenuButton() {
+    fun runtimeToolbarOverflowOpensExistingMenuPath() {
+        val events = mutableListOf<String>()
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeMenuHost(
@@ -274,11 +275,16 @@ class RuntimeMenuComposeTest {
                     menuVisible = false,
                     actions = RecordingRuntimeMenuActions(),
                     onDismissMenu = {},
+                    onOpenMenu = { events += "menu" },
                 )
             }
         }
 
-        composeRule.onAllNodesWithContentDescription("Menu").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(uiString(R.string.more))
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
+            .performClick()
+        assertEquals(listOf("menu"), events)
     }
 
     @Test
@@ -302,6 +308,52 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
             .assertWidthIsAtLeast(48.dp)
             .assertHeightIsAtLeast(48.dp)
+    }
+
+    @Test
+    fun canvasMenuRestoresShortcutsWhenFullscreenHidesToolbar() {
+        val fullscreen = androidx.compose.runtime.mutableStateOf(false)
+        val menuVisible = androidx.compose.runtime.mutableStateOf(false)
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    RuntimeMenuHost(
+                        state = RuntimeMenuUiState(
+                            title = "MIDlet",
+                            isCanvas = true,
+                            toolbarVisible = !fullscreen.value,
+                            imeAvailable = true,
+                            emulationSpeedAvailable = true,
+                        ),
+                        menuVisible = menuVisible.value,
+                        actions = RecordingRuntimeMenuActions(events),
+                        onDismissMenu = { events += "dismiss" },
+                        onOpenMenu = { menuVisible.value = true },
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.more)).performClick()
+        val shortcutLabels = listOf(
+            uiString(R.string.action_keyboard_ime),
+            uiString(R.string.take_screenshot),
+            uiString(R.string.PREF_EMULATION_SPEED),
+        )
+        shortcutLabels.forEach { label ->
+            composeRule.onAllNodes(hasText(label) and hasAnyAncestor(isDialog()))
+                .assertCountEquals(0)
+        }
+        composeRule.runOnIdle { fullscreen.value = true }
+        shortcutLabels.forEach { label ->
+            composeRule.onAllNodes(hasText(label) and hasAnyAncestor(isDialog()))
+                .assertCountEquals(1)
+        }
+        composeRule.onNodeWithText(uiString(R.string.PREF_EMULATION_SPEED))
+            .performScrollTo().performClick()
+        assertEquals(listOf("dismiss", "speed"), events)
     }
 
     @Test
@@ -419,6 +471,24 @@ class RuntimeMenuComposeTest {
 
         composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_show_controls)).performClick()
         assertEquals(listOf("dismiss", "showControls"), events)
+    }
+
+    @Test
+    fun fullscreenToggleDismissesBeforeChangingGlobalPreference() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(title = "MIDlet", isCanvas = true),
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(events),
+                    onDismissMenu = { events += "dismiss" },
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.pref_runtime_fullscreen_title))
+            .performScrollTo().performClick()
+        assertEquals(listOf("dismiss", "fullscreen"), events)
     }
 
     @Test
@@ -1139,6 +1209,10 @@ private class RecordingRuntimeMenuActions(
 
     override fun onToggleOrientationLock() {
         events += "orientation"
+    }
+
+    override fun onToggleFullscreen() {
+        events += "fullscreen"
     }
 
     override fun onOpenImeKeyboard() {

@@ -54,9 +54,6 @@
     <string name="pref_button_shape_round">Hình chữ nhật bo góc</string>
     <string name="pref_button_shape_title">Kiểu nút</string>
     <string name="pref_emulator_dir">Thư mục làm việc</string>
-    <string name="pref_enable_actionbar_summary">Luôn hiện thanh công cụ thực thi trên màn hình Canvas của MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Hiện thanh công cụ thực thi</string>
-    <string name="pref_enable_statusbar_title">Hiện thanh trạng thái hệ thống</string>
     <string name="pref_encoding_title">Bảng mã ký tự</string>
     <string name="PREF_FILTER">Lọc tuyến tính</string>
     <string name="PREF_FONT_ANTI_ALIASING">Khử răng cưa</string>
@@ -953,7 +950,6 @@
     <string name="pref_apps_view">Bố cục</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Thử nghiệm</string>
-    <string name="pref_enable_statusbar_summary">Luôn hiện thanh trạng thái hệ thống. Bật tùy chọn này sẽ tắt việc dùng vùng khuyết màn hình.</string>
     <string name="pref_language">Ngôn ngữ ứng dụng</string>
     <string name="pref_mascot_summary">Hiện thông báo khi Mascot Capsule 3D được sử dụng.</string>
     <string name="pref_mascot_title">Thông báo Mascot Capsule 3D</string>
@@ -965,8 +961,6 @@
     <string name="pref_skip_resume_call">Bỏ qua startApp() khi tiếp tục</string>
     <string name="pref_soundbank_title">Bộ âm sắc MIDI</string>
     <string name="pref_title_emulation">Vòng đời MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Cho phép nội dung Canvas của MIDlet tương thích và thanh công cụ thực thi dùng vùng khuyết màn hình. Bật tùy chọn này sẽ ẩn thanh trạng thái hệ thống.</string>
-    <string name="pref_use_display_cutout_title">Dùng vùng khuyết màn hình</string>
     <string name="settings_profiles_summary">Quản lý hồ sơ có thể dùng lại cho nhiều MIDlet.</string>
     <string name="settings_section_appearance">Giao diện ứng dụng</string>
     <string name="settings_section_language">Ngôn ngữ</string>

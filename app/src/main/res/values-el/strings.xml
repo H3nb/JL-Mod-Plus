@@ -936,10 +936,6 @@
     <string name="pref_button_shape_title">Σχήμα κουμπιών</string>
     <string name="pref_category_experimental">Πειραματικά</string>
     <string name="pref_emulator_dir">Κατάλογος εργασίας</string>
-    <string name="pref_enable_actionbar_summary">Διατηρεί ορατή τη γραμμή εργαλείων εκτέλεσης στις οθόνες Canvas των MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Εμφάνιση γραμμής εργαλείων εκτέλεσης</string>
-    <string name="pref_enable_statusbar_summary">Διατηρεί ορατή τη γραμμή κατάστασης του συστήματος. Η ενεργοποίηση απενεργοποιεί τη χρήση της περιοχής εγκοπής της οθόνης.</string>
-    <string name="pref_enable_statusbar_title">Εμφάνιση γραμμής κατάστασης συστήματος</string>
     <string name="pref_encoding_title">Κωδικοποίηση</string>
     <string name="pref_graphics_hw_gles">Επιτάχυνση υλικού (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Επιτάχυνση υλικού (Surface)</string>
@@ -978,8 +974,6 @@
     <string name="pref_theme_system">Χρήση ρυθμίσεων συστήματος</string>
     <string name="pref_theme_title">Θέμα</string>
     <string name="pref_title_emulation">Κύκλος ζωής MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Επιτρέπει στο συμβατό περιεχόμενο Canvas των MIDlet και στη γραμμή εργαλείων εκτέλεσης να χρησιμοποιούν την περιοχή εγκοπής της οθόνης. Η ενεργοποίηση αποκρύπτει τη γραμμή κατάστασης του συστήματος.</string>
-    <string name="pref_use_display_cutout_title">Χρήση περιοχής εγκοπής οθόνης</string>
     <string name="pref_vibration_title">Δόνηση</string>
     <string name="pref_vk_hide_hint">Απενεργοποιημένο</string>
     <string name="pref_vk_save_alert">Να αντικατασταθεί η υπάρχουσα προσαρμοσμένη διάταξη εικονικών χειριστηρίων με την τρέχουσα;</string>

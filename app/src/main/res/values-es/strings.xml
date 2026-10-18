@@ -68,9 +68,6 @@
     <string name="pref_button_shape_round">Rectángulo redondeado</string>
     <string name="pref_button_shape_title">Forma del botón</string>
     <string name="pref_emulator_dir">Directorio de trabajo</string>
-    <string name="pref_enable_actionbar_summary">Mantener visible la barra de herramientas de ejecución en las pantallas Canvas del MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Mostrar barra de ejecución</string>
-    <string name="pref_enable_statusbar_title">Mostrar barra de estado del sistema</string>
     <string name="pref_encoding_title">Codificación</string>
     <string name="PREF_FILTER">Filtrado lineal</string>
     <string name="PREF_FONT_ANTI_ALIASING">Antialiasing</string>
@@ -257,7 +254,6 @@
     <string name="pref_apps_view">Vista de Biblioteca</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Opciones experimentales/temporales</string>
-    <string name="pref_enable_statusbar_summary">Mantener visible la barra de estado del sistema. Al activarla, se deshabilita el área del recorte de pantalla.</string>
     <string name="pref_graphics_software">Software</string>
     <string name="pref_language">Idioma</string>
     <string name="pref_mascot_summary">Mostrar un mensaje cuando se use Mascot Capsule 3D.</string>
@@ -915,8 +911,6 @@
     <string name="settings_section_storage">Almacenamiento</string>
     <string name="settings_section_profiles">Perfiles</string>
     <string name="settings_profiles_summary">Gestiona perfiles que puedes reutilizar entre MIDlets.</string>
-    <string name="pref_use_display_cutout_title">Usar recorte de pantalla en el MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Permite que el contenido Canvas compatible del MIDlet y la barra de ejecución usen el área del recorte de pantalla. Al activarlo, se oculta la barra de estado del sistema.</string>
     <string name="pref_accent_title">Color de acento</string>
     <string name="pref_accent_blue">Azul predeterminado</string>
     <string name="pref_accent_teal">Verde azulado</string>

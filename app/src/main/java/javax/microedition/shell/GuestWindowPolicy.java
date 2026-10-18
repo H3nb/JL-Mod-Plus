@@ -14,60 +14,36 @@
 
 package javax.microedition.shell;
 
+/** Pure runtime chrome and safe-rectangle policy; coordinates are window-relative pixels. */
 final class GuestWindowPolicy {
-	private GuestWindowPolicy() {
+	private GuestWindowPolicy() { }
+
+	static Chrome resolve(boolean canvas, boolean fullscreen, boolean userAllowsCutout) {
+		return new Chrome(canvas, !canvas || !fullscreen, !canvas, !canvas,
+				canvas && userAllowsCutout);
 	}
 
-	static boolean canUseDisplayCutout(boolean canvas,
-			boolean statusBarEnabled, boolean runtimeToolbarEnabled, boolean userAllowsCutout) {
-		// The Compose runtime toolbar is part of the host content and may occupy the cutout area. The
-		// system status bar cannot be combined with a cutout-enabled MIDlet because both reserve
-		// the same top inset.
-		return userAllowsCutout && canvas && !statusBarEnabled;
+	/** Account only for the safe area that still overlaps this component, not its ancestors. */
+	static Padding paddingForBounds(int windowWidth, int windowHeight,
+			int viewLeft, int viewTop, int viewWidth, int viewHeight,
+			int safeLeft, int safeTop, int safeRight, int safeBottom) {
+		int left = Math.min(Math.max(0, safeLeft - viewLeft), Math.max(0, viewWidth - 1));
+		int right = Math.min(Math.max(0, viewLeft + viewWidth - windowWidth + safeRight),
+				Math.max(0, viewWidth - left - 1));
+		int top = Math.min(Math.max(0, safeTop - viewTop), Math.max(0, viewHeight - 1));
+		int bottom = Math.min(Math.max(0, viewTop + viewHeight - windowHeight + safeBottom),
+				Math.max(0, viewHeight - top - 1));
+		return new Padding(left, top, right, bottom);
 	}
 
-	/**
-	 * Resolves the complete host-chrome contract for one displayable kind.
-	 *
-	 * <p>The runtime toolbar, system bars, cutout eligibility, and guest padding must all use the
-	 * same interpretation of the three user-facing switches. Keeping this state as one value makes
-	 * transitions between Canvas and form displayables deterministic and testable without an
-	 * Android window.</p>
-	 */
-	static Chrome resolve(boolean canvas, boolean statusBarEnabled,
-			boolean runtimeToolbarEnabled, boolean userAllowsCutout) {
-		return new Chrome(
-				canvas,
-				!canvas || runtimeToolbarEnabled,
-				!canvas || statusBarEnabled,
-				!canvas,
-				canUseDisplayCutout(canvas, statusBarEnabled, runtimeToolbarEnabled, userAllowsCutout));
-	}
-
-	static Padding calculate(boolean canvas, boolean statusBarEnabled,
-			boolean runtimeToolbarEnabled, boolean userAllowsCutout,
-			int systemLeft, int statusTop, int systemRight, int navigationBottom,
-			int cutoutLeft, int cutoutTop, int cutoutRight, int cutoutBottom, int imeBottom) {
-		return calculate(resolve(canvas, statusBarEnabled, runtimeToolbarEnabled, userAllowsCutout),
-				systemLeft, statusTop, systemRight, navigationBottom,
-				cutoutLeft, cutoutTop, cutoutRight, cutoutBottom, imeBottom);
-	}
-
-	static Padding calculate(Chrome chrome,
-			int systemLeft, int statusTop, int systemRight, int navigationBottom,
-			int cutoutLeft, int cutoutTop, int cutoutRight, int cutoutBottom, int imeBottom) {
-		if (chrome.canvas) {
-			return new Padding(
-					chrome.cutoutAllowed ? 0 : cutoutLeft,
-					chrome.cutoutAllowed ? 0 : Math.max(chrome.statusBarVisible ? statusTop : 0, cutoutTop),
-					chrome.cutoutAllowed ? 0 : cutoutRight,
-					chrome.cutoutAllowed ? 0 : cutoutBottom);
-		}
-		return new Padding(
-				Math.max(systemLeft, cutoutLeft),
-				Math.max(statusTop, cutoutTop),
-				Math.max(systemRight, cutoutRight),
-				Math.max(Math.max(navigationBottom, imeBottom), cutoutBottom));
+	/** Horizontal clearance where a rectangular control band meets a rounded corner. */
+	static int roundedCornerClearance(int radius, int centerY, int bandTop, int bandBottom,
+			boolean topCorner) {
+		if (radius <= 0 || bandBottom <= bandTop) return 0;
+		int distance = topCorner ? centerY - bandTop : bandBottom - centerY;
+		if (distance <= 0) return 0;
+		distance = Math.min(distance, radius);
+		return (int) Math.ceil(radius - Math.sqrt((double) radius * radius - (double) distance * distance));
 	}
 
 	static final class Chrome {

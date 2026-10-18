@@ -272,7 +272,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				int current = getLayout();
 				if (VirtualKeyboardLayoutState.isSupportedBaseVariant(current)) {
 					setStoredCustomLayoutState(VirtualKeyboardLayoutState.forBase(current));
-					activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+					activeLayoutOrientation = controlLayoutOrientation(
 							screenBounds, activeLayoutOrientation);
 					activeOrientationDirty = true;
 					activeCustomSource = ActiveCustomSource.OVERRIDE;
@@ -329,7 +329,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		cancel();
 		setStoredCustomLayoutState(VirtualKeyboardLayoutState.forBase(variant));
 		activeOrientationDirty = false;
-		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+		activeLayoutOrientation = controlLayoutOrientation(
 				screenBounds, activeLayoutOrientation);
 
 		// Reuse the established built-in generator for explicit template preview. After it has
@@ -344,7 +344,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	private void markActiveOrientationEdited() {
 		beginPendingRuntimeCustomizationIfNeeded();
-		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+		activeLayoutOrientation = controlLayoutOrientation(
 				screenBounds, activeLayoutOrientation);
 		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
 		if (getLayout() != TYPE_CUSTOM) {
@@ -410,7 +410,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 							VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
 				}
 				if (screenBounds != null && getStoredCustomLayoutState() != null) {
-					activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+					activeLayoutOrientation = controlLayoutOrientation(
 							screenBounds, activeLayoutOrientation);
 					applyCustomOrientationState(activeLayoutOrientation);
 				}
@@ -586,7 +586,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		setStoredCustomLayoutState(state.customLayout());
 		activeOrientationDirty = false;
 		setLayoutVariantInMemory(TYPE_CUSTOM);
-		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+		activeLayoutOrientation = controlLayoutOrientation(
 				screenBounds, activeLayoutOrientation);
 		if (screenBounds != null) {
 			applyCustomOrientationState(activeLayoutOrientation);
@@ -684,7 +684,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
 		VirtualLayoutOrientation nextOrientation =
-				VirtualLayoutOrientation.resolve(screen, activeLayoutOrientation);
+				controlLayoutOrientation(screen, activeLayoutOrientation);
 		boolean orientationChanged = activeLayoutOrientation != null &&
 				nextOrientation != activeLayoutOrientation;
 		if (orientationChanged) {
@@ -877,6 +877,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public boolean pointerPressed(int pointer, float x, float y) {
+		if (!isWithinControlBounds(x, y)) return false;
 		int mode = getLayoutEditMode();
 		if (mode != LAYOUT_EOF) {
 			if (legacyEditPointer >= 0 && pointer != legacyEditPointer && beginLegacyPinch(pointer, x, y)) {

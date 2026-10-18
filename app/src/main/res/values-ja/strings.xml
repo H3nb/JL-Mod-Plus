@@ -43,8 +43,6 @@
     <string name="pref_app_sort_name">名前</string>
     <string name="pref_app_sort_vendor">提供元</string>
     <string name="pref_emulator_dir">作業ディレクトリ</string>
-    <string name="pref_enable_actionbar_summary">MIDlet の Canvas 画面でランタイムツールバーを表示し続けます。</string>
-    <string name="pref_enable_actionbar_title">ランタイムツールバーを表示</string>
     <string name="pref_encoding_title">エンコード形式</string>
     <string name="PREF_FILTER">線形フィルタリング</string>
     <string name="PREF_FONT_LARGE">大</string>
@@ -929,8 +927,6 @@
     <string name="pref_button_shape_round">角丸長方形</string>
     <string name="pref_button_shape_title">ボタンの形</string>
     <string name="pref_category_experimental">実験的機能</string>
-    <string name="pref_enable_statusbar_summary">システムのステータスバーを表示し続けます。有効にすると、ディスプレイの切り欠き領域は使用できなくなります。</string>
-    <string name="pref_enable_statusbar_title">システムのステータスバーを表示</string>
     <string name="pref_graphics_mode_title">グラフィックスモード</string>
     <string name="pref_language">アプリの言語</string>
     <string name="pref_mascot_summary">Mascot Capsule 3D が使用されたときにメッセージを表示します。</string>
@@ -957,8 +953,6 @@
     <string name="pref_theme_auto_time">自動（時刻）</string>
     <string name="pref_theme_system">システム設定に従う</string>
     <string name="pref_title_emulation">MIDlet のライフサイクル</string>
-    <string name="pref_use_display_cutout_summary">対応する MIDlet Canvas の内容とランタイムツールバーで、ディスプレイの切り欠き領域を使用できるようにします。有効にすると、システムのステータスバーが非表示になります。</string>
-    <string name="pref_use_display_cutout_title">ディスプレイの切り欠き領域を使用</string>
     <string name="pref_vk_hide_hint">無効</string>
     <string name="pref_vk_save_alert">既存のカスタム仮想コントロールの配置を、現在の配置で置き換えますか？</string>
     <string name="pref_vk_type_arrows_numbers">矢印と数字</string>

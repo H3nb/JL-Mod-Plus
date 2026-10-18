@@ -35,8 +35,6 @@
     <string name="permission_request_failed">Denne app kræver skrivetilladelse til lager.</string>
     <string name="pref_app_sort_date">Tilføjelsesdato</string>
     <string name="pref_app_sort_name">Navn</string>
-    <string name="pref_enable_actionbar_summary">Hold runtime-værktøjslinjen synlig på MIDlet Canvas-skærme.</string>
-    <string name="pref_enable_actionbar_title">Vis runtime-værktøjslinje</string>
     <string name="PREF_FILTER">Lineær filtrering</string>
     <string name="PREF_FONT_LARGE">Stor</string>
     <string name="PREF_FONT_MEDIUM">Mellem</string>
@@ -204,8 +202,6 @@
     <string name="pref_button_shape_title">Knapform</string>
     <string name="pref_category_experimental">Eksperimentelle/midlertidige indstillinger</string>
     <string name="pref_emulator_dir">Arbejdsmappe</string>
-    <string name="pref_enable_statusbar_title">Vis systemstatuslinje</string>
-    <string name="pref_enable_statusbar_summary">Hold systemstatuslinjen synlig. Når den aktiveres, deaktiveres området ved skærmudskæringen.</string>
     <string name="pref_encoding_title">Tegnkodning</string>
     <string name="PREF_FONT_ANTI_ALIASING">Kantudjævning</string>
     <string name="PREF_FORCE_FULLSCREEN">Start uden kommandobjælke</string>
@@ -879,8 +875,6 @@
     <string name="settings_section_storage">Lager</string>
     <string name="settings_section_profiles">Profiler</string>
     <string name="settings_profiles_summary">Administrer profiler, som du kan genbruge på tværs af MIDlet-programmer.</string>
-    <string name="pref_use_display_cutout_title">Brug skærmudskæring i MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Tillad kompatibelt MIDlet Canvas-indhold og runtime-værktøjslinjen at bruge området ved skærmudskæringen. Når det aktiveres, skjules systemstatuslinjen.</string>
     <string name="pref_accent_title">Accentfarve</string>
     <string name="pref_accent_blue">Standardblå</string>
     <string name="pref_accent_teal">Blågrøn</string>

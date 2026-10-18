@@ -59,6 +59,7 @@ private val CanvasMenuState = RuntimeMenuUiState(
     virtualKeyboardAvailable = true,
     virtualKeyboardEditing = true,
     orientationLocked = true,
+    emulationSpeedAvailable = true,
 )
 
 @PreviewTest
@@ -80,7 +81,7 @@ fun RuntimeOverflowMenuScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Runtime compact toolbar", widthDp = 360, heightDp = 38, showBackground = true)
+@Preview(name = "Runtime compact toolbar", widthDp = 240, heightDp = 48, showBackground = true)
 @Composable
 fun RuntimeCompactToolbarScreenshot() {
     JLModPlusTheme(darkTheme = false) {

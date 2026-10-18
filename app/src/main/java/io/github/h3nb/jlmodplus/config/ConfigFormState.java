@@ -73,6 +73,7 @@ public final class ConfigFormState {
 	public final boolean immediateMode;
 	public final boolean parallelRedrawScreen;
 	public final boolean forceFullscreen;
+	public final boolean allowDisplayCutout;
 	public final boolean showFps;
 	public final int performanceOverlayMetrics;
 	public final int performanceOverlayPosition;
@@ -121,6 +122,7 @@ public final class ConfigFormState {
 		immediateMode = builder.immediateMode;
 		parallelRedrawScreen = builder.parallelRedrawScreen;
 		forceFullscreen = builder.forceFullscreen;
+		allowDisplayCutout = builder.allowDisplayCutout;
 		showFps = builder.showFps;
 		performanceOverlayMetrics = PerformanceOverlayOptions.sanitize(builder.performanceOverlayMetrics);
 		performanceOverlayPosition = PerformanceOverlayOptions.sanitizePosition(builder.performanceOverlayPosition);
@@ -161,6 +163,7 @@ public final class ConfigFormState {
 				.immediateMode(params.immediateMode)
 				.parallelRedrawScreen(params.parallelRedrawScreen)
 				.forceFullscreen(params.forceFullscreen)
+				.allowDisplayCutout(params.allowDisplayCutout)
 				.graphicsMode(params.graphicsMode)
 				.shader(params.shader == null ? null : params.shader.toInfo())
 				.controller(params.controller)
@@ -216,6 +219,7 @@ public final class ConfigFormState {
 		}
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
+		params.allowDisplayCutout = allowDisplayCutout;
 		params.showFps = showFps;
 		params.performanceOverlayMetrics = performanceOverlayMetrics;
 		params.performanceOverlayPosition = performanceOverlayPosition;
@@ -333,6 +337,7 @@ public final class ConfigFormState {
 		private boolean immediateMode;
 		private boolean parallelRedrawScreen;
 		private boolean forceFullscreen;
+		private boolean allowDisplayCutout;
 		private boolean showFps;
 		private int performanceOverlayMetrics = PerformanceOverlayOptions.STANDARD;
 		private int performanceOverlayPosition = PerformanceOverlayOptions.TOP_LEFT;
@@ -383,6 +388,7 @@ public final class ConfigFormState {
 			immediateMode = source.immediateMode;
 			parallelRedrawScreen = source.parallelRedrawScreen;
 			forceFullscreen = source.forceFullscreen;
+			allowDisplayCutout = source.allowDisplayCutout;
 			showFps = source.showFps;
 			performanceOverlayMetrics = source.performanceOverlayMetrics;
 			performanceOverlayPosition = source.performanceOverlayPosition;
@@ -433,6 +439,7 @@ public final class ConfigFormState {
 		public Builder immediateMode(boolean value) { immediateMode = value; return this; }
 		public Builder parallelRedrawScreen(boolean value) { parallelRedrawScreen = value; return this; }
 		public Builder forceFullscreen(boolean value) { forceFullscreen = value; return this; }
+		public Builder allowDisplayCutout(boolean value) { allowDisplayCutout = value; return this; }
 		public Builder showFps(boolean value) { showFps = value; return this; }
 		public Builder performanceOverlayMetrics(int value) { performanceOverlayMetrics = value; return this; }
 		public Builder performanceOverlayPosition(int value) { performanceOverlayPosition = value; return this; }

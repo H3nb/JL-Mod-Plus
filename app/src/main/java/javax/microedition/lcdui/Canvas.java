@@ -218,6 +218,7 @@ public abstract class Canvas extends Displayable {
 	private final Runnable ambientHostRunnable = this::runAmbientHostTick;
 	private Handler uiHandler;
 	private Overlay overlay;
+	private int controlSafeLeft, controlSafeTop, controlSafeRight, controlSafeBottom;
 	private OverlayView controllerOverlayView;
 	private final ControllerJoystickOverlay controllerJoystickOverlay =
 			new ControllerJoystickOverlay();
@@ -847,6 +848,38 @@ public abstract class Canvas extends Displayable {
 		return width != tmpWidth || height != tmpHeight;
 	}
 
+	/** Host-provided surface-local insets for touch controls; never changes guest geometry. */
+	public void setControlSafeInsets(int left, int top, int right, int bottom) {
+		left = Math.max(0, left);
+		top = Math.max(0, top);
+		right = Math.max(0, right);
+		bottom = Math.max(0, bottom);
+		if (controlSafeLeft == left && controlSafeTop == top &&
+				controlSafeRight == right && controlSafeBottom == bottom) return;
+		controlSafeLeft = left;
+		controlSafeTop = top;
+		controlSafeRight = right;
+		controlSafeBottom = bottom;
+		if (overlay != null) overlay.cancel();
+		resizeControlOverlay();
+	}
+
+	private void resizeControlOverlay() {
+		if (overlay == null || displayWidth <= 0 || displayHeight <= 0) return;
+		float left = Math.min(controlSafeLeft, displayWidth - 1);
+		float top = Math.min(controlSafeTop, displayHeight - 1);
+		float right = Math.max(left + 1, displayWidth - controlSafeRight);
+		float bottom = Math.max(top + 1, displayHeight - controlSafeBottom);
+		RectF safeBounds = new RectF(left, top, right, bottom);
+		float guestBottom = onY + onHeight + softBar.bounds.height();
+		if (overlay instanceof VirtualKeyboard keyboard) {
+			keyboard.resizeWithinSafeArea(new RectF(0, 0, displayWidth, displayHeight), safeBounds,
+					onX, onY, onX + onWidth, guestBottom);
+		} else {
+			overlay.resize(safeBounds, onX, onY, onX + onWidth, guestBottom);
+		}
+	}
+
 	/**
 	 * Update the size and position of the virtual screen relative to the real one.
 	 */
@@ -975,7 +1008,6 @@ public abstract class Canvas extends Displayable {
 			onHeight -= softBarHeight;
 		}
 
-		RectF screen = new RectF(0, 0, displayWidth, displayHeight);
 		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
 
 		synchronized (bufferLock) {
@@ -988,9 +1020,7 @@ public abstract class Canvas extends Displayable {
 		}
 		configureAmbientGeometry();
 		ViewHandler.postEvent(this::updateVideoDisplays);
-		if (overlay != null) {
-			overlay.resize(screen, onX, onY, onX + onWidth, onY + onHeight + softBarHeight);
-		}
+		resizeControlOverlay();
 		if (skinLayer != null && !skinLayer.hasDisplayFrame()) {
 			skinLayer.resize(virtualScreen, 0, 0, displayWidth, displayHeight);
 		}

@@ -966,10 +966,6 @@
     <string name="pref_button_shape_title">Облик дугмади</string>
     <string name="pref_category_experimental">Експериментално</string>
     <string name="pref_emulator_dir">Радни директоријум</string>
-    <string name="pref_enable_actionbar_summary">Задржи траку алатки за извршавање видљивом на MIDlet Canvas екранима.</string>
-    <string name="pref_enable_actionbar_title">Прикажи траку алатки за извршавање</string>
-    <string name="pref_enable_statusbar_summary">Задржи системску статусну траку видљивом. Укључивање ове опције искључује употребу области изреза екрана.</string>
-    <string name="pref_enable_statusbar_title">Прикажи системску статусну траку</string>
     <string name="pref_encoding_title">Кодирање знакова</string>
     <string name="pref_graphics_hw_gles">Хардверско убрзање (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Хардверско убрзање (Surface)</string>
@@ -1008,8 +1004,6 @@
     <string name="pref_theme_system">Прати системска подешавања</string>
     <string name="pref_theme_title">Тема</string>
     <string name="pref_title_emulation">Животни циклус MIDlet-а</string>
-    <string name="pref_use_display_cutout_summary">Дозволи компатибилном MIDlet Canvas садржају и траци алатки за извршавање да користе област изреза екрана. Укључивање ове опције скрива системску статусну траку.</string>
-    <string name="pref_use_display_cutout_title">Користи област изреза екрана</string>
     <string name="pref_vibration_title">Вибрација</string>
     <string name="pref_vk_hide_hint">Искључено</string>
     <string name="pref_vk_save_alert">Желите ли да постојећи прилагођени распоред виртуалних контрола замените тренутним?</string>

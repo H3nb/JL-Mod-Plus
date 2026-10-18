@@ -39,9 +39,6 @@
     <string name="pref_button_shape_round">Lekerekített téglalap</string>
     <string name="pref_button_shape_title">Gombforma</string>
     <string name="pref_emulator_dir">Munkakönyvtár</string>
-    <string name="pref_enable_actionbar_summary">Láthatóan tartja a futásidejű eszköztárat a MIDlet Canvas-képernyőin.</string>
-    <string name="pref_enable_actionbar_title">Futásidejű eszköztár megjelenítése</string>
-    <string name="pref_enable_statusbar_title">Rendszer állapotsorának megjelenítése</string>
     <string name="pref_encoding_title">Kódolás</string>
     <string name="PREF_FILTER">Lineáris szűrés</string>
     <string name="PREF_FONT_LARGE">Nagy</string>
@@ -966,7 +963,6 @@
     <string name="pref_apps_view">Elrendezés</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Kísérleti</string>
-    <string name="pref_enable_statusbar_summary">Láthatóan tartja a rendszer állapotsorát. Bekapcsolása letiltja a kijelzőkivágás területének használatát.</string>
     <string name="pref_language">Alkalmazás nyelve</string>
     <string name="pref_mascot_summary">Üzenetet jelenít meg a Mascot Capsule 3D használatakor.</string>
     <string name="pref_mascot_title">Mascot Capsule 3D értesítés</string>
@@ -988,8 +984,6 @@
     <string name="pref_skip_resume_call">A startApp() kihagyása folytatáskor</string>
     <string name="pref_soundbank_title">MIDI-hangbank</string>
     <string name="pref_title_emulation">MIDlet életciklusa</string>
-    <string name="pref_use_display_cutout_summary">Engedélyezi a kompatibilis MIDlet Canvas-tartalomnak és a futásidejű eszköztárnak a kijelzőkivágás területének használatát. Bekapcsolása elrejti a rendszer állapotsorát.</string>
-    <string name="pref_use_display_cutout_title">Kijelzőkivágás területének használata</string>
     <string name="pref_vibration_title">Rezgés</string>
     <string name="pref_vk_save_alert">Lecseréli a virtuális vezérlők meglévő egyéni elrendezését a jelenlegire?</string>
     <string name="pref_vk_type_arrows">Nyilak</string>

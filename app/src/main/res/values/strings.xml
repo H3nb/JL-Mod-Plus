@@ -184,10 +184,6 @@
     <string name="pref_button_shape_title">Button shape</string>
     <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Working directory</string>
-    <string name="pref_enable_actionbar_summary">Keep the runtime toolbar visible on MIDlet Canvas screens.</string>
-    <string name="pref_enable_actionbar_title">Show runtime toolbar</string>
-    <string name="pref_enable_statusbar_title">Show system status bar</string>
-    <string name="pref_enable_statusbar_summary">Keep the system status bar visible. Enabling it disables the display-cutout area.</string>
     <string name="pref_encoding_title">Encoding</string>
     <string name="PREF_FILTER">Linear filtering</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-aliasing</string>
@@ -966,8 +962,6 @@
     <string name="settings_section_storage">Storage</string>
     <string name="settings_section_profiles">Profiles</string>
     <string name="settings_profiles_summary">Manage profiles you can reuse across MIDlets.</string>
-    <string name="pref_use_display_cutout_title">Use display cutout area</string>
-    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. Enabling it hides the system status bar.</string>
     <string name="pref_accent_title">Accent color</string>
     <string name="pref_accent_sapphire">Sapphire blue</string>
     <string name="pref_accent_violet">Orchid violet</string>
@@ -1134,4 +1128,9 @@
     <string name="memory_editor_increment_invalid">Use one integer type and values within its range.</string>
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">Preview: %1$s</string>
+    <string name="pref_midlet_display_cutout_title">Expand into display cutout area</string>
+    <string name="pref_midlet_display_cutout_summary">Let the game use the area around the camera cutout. Part of the image may be obscured.</string>
+    <string name="pref_runtime_fullscreen_title">Fullscreen</string>
+    <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">Could not access the fullscreen setting. Try again.</string>
 </resources>

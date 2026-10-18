@@ -59,9 +59,6 @@
     <string name="pref_button_shape_title">Tvar tlačítka</string>
     <string name="pref_category_experimental">Experimentální</string>
     <string name="pref_emulator_dir">Pracovní adresář</string>
-    <string name="pref_enable_actionbar_summary">Ponechá panel nástrojů viditelný na obrazovkách Canvas MIDletu.</string>
-    <string name="pref_enable_actionbar_title">Zobrazit panel nástrojů za běhu</string>
-    <string name="pref_enable_statusbar_title">Zobrazit systémovou stavovou lištu</string>
     <string name="pref_encoding_title">Kódování</string>
     <string name="PREF_FILTER">Lineární filtrování</string>
     <string name="PREF_FONT_ANTI_ALIASING">Vyhlazování hran</string>
@@ -1048,7 +1045,6 @@
     <string name="pref_app_sort_descending">Sestupně</string>
     <string name="pref_apps_view">Rozložení</string>
     <string name="pref_audio_title">MIDI</string>
-    <string name="pref_enable_statusbar_summary">Ponechá systémovou stavovou lištu viditelnou. Zapnutí zakáže používání oblasti výřezu displeje.</string>
     <string name="pref_language">Jazyk aplikace</string>
     <string name="pref_screen_padding_title">Odsazení obrazovky</string>
     <string name="pref_skin_not_set">Žádný</string>
@@ -1056,8 +1052,6 @@
     <string name="pref_skip_resume_call">Přeskočit startApp() při obnovení</string>
     <string name="pref_soundbank_title">Zvuková banka MIDI</string>
     <string name="pref_title_emulation">Životní cyklus MIDletu</string>
-    <string name="pref_use_display_cutout_summary">Umožní kompatibilnímu obsahu Canvas MIDletu a panelu nástrojů používat oblast výřezu displeje. Zapnutí skryje systémovou stavovou lištu.</string>
-    <string name="pref_use_display_cutout_title">Použít oblast výřezu displeje</string>
     <string name="settings_profiles_summary">Spravujte profily, které můžete používat pro různé MIDlety.</string>
     <string name="settings_section_appearance">Vzhled aplikace</string>
     <string name="settings_section_language">Jazyk</string>
