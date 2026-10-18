@@ -91,10 +91,12 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
@@ -113,6 +115,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
 import javax.microedition.shell.timing.TimingMode
+import javax.microedition.lcdui.keyboard.VirtualControlAppearance
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.model.Size
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
@@ -1734,7 +1737,7 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
                 modifier = Modifier.size(width = 52.dp, height = 40.dp),
                 shape = keyShape,
                 color = if (pressed) selectedBackground else background,
-                border = BorderStroke(1.dp, outline),
+                border = BorderStroke(0.5.dp, outline),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
@@ -1748,8 +1751,7 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
                 outline, pressed,
             )
             AnalogColorSample(
-                background, foreground, selectedBackground, selectedForeground,
-                outline, pressed,
+                background, selectedBackground, outline, pressed,
             )
         }
         Text(
@@ -1814,12 +1816,12 @@ private fun DpadColorSample(
                 cornerRadius = CornerRadius(r * 0.095f),
             )
         }
-        drawPath(cross, outline, style = Stroke(maxOf(1.dp.toPx(), r * 0.012f)))
+        drawPath(cross, outline, style = Stroke(0.5.dp.toPx()))
         drawCircle(background, r * 0.175f, Offset(cx, cy))
         drawCircle(
             lerp(background, outline, 0.45f),
             r * 0.175f, Offset(cx, cy),
-            style = Stroke(maxOf(1.dp.toPx(), r * 0.012f)),
+            style = Stroke(0.5.dp.toPx()),
         )
 
         val arrow = r * 0.11f
@@ -1867,41 +1869,78 @@ private fun DpadColorSample(
 @Composable
 private fun AnalogColorSample(
     background: Color,
-    foreground: Color,
     selectedBackground: Color,
-    selectedForeground: Color,
     outline: Color,
     pressed: Boolean,
 ) {
-    Surface(
-        modifier = Modifier.size(72.dp),
-        shape = CircleShape,
-        color = background,
-        border = BorderStroke(1.dp, outline),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = lerp(background, outline, 0.075f),
-            ) {}
-            Surface(
-                modifier = Modifier
-                    .offset(x = if (pressed) 11.dp else 0.dp, y = if (pressed) (-7).dp else 0.dp)
-                    .size(31.dp),
-                shape = CircleShape,
-                color = if (pressed) selectedBackground else lerp(background, outline, 0.18f),
-                border = BorderStroke(1.dp, lerp(background, outline, 0.56f)),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Surface(
-                        modifier = Modifier.size(6.dp),
-                        shape = CircleShape,
-                        color = if (pressed) selectedForeground else foreground,
-                    ) {}
-                }
-            }
-        }
+    val backgroundRgb = background.toArgb() and 0xFFFFFF
+    val thumbRgb = VirtualControlAppearance.analogThumbColor(
+        backgroundRgb, selectedBackground.toArgb() and 0xFFFFFF, pressed,
+    )
+    fun opaque(rgb: Int) = Color(0xFF000000.toInt() or rgb)
+
+    Canvas(modifier = Modifier.size(72.dp)) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val radius = size.minDimension / 2f
+        val shellRadius = radius * 0.94f
+        val thumbRadius = radius * 0.45f
+        val outlineStroke = Stroke(0.5.dp.toPx())
+
+        // The palette and circle proportions mirror the runtime renderer.
+        drawCircle(
+            brush = Brush.linearGradient(
+                listOf(
+                    opaque(VirtualControlAppearance.analogShellTop(backgroundRgb)),
+                    opaque(VirtualControlAppearance.analogShell(backgroundRgb)),
+                    opaque(VirtualControlAppearance.analogShellBottom(backgroundRgb)),
+                ),
+                start = Offset(center.x - shellRadius, center.y - shellRadius),
+                end = Offset(center.x + shellRadius, center.y + shellRadius),
+            ),
+            radius = shellRadius,
+            center = center,
+        )
+        drawCircle(outline, shellRadius, center, style = outlineStroke)
+        drawCircle(
+            opaque(VirtualControlAppearance.analogShellRim(backgroundRgb)).copy(alpha = 0.2f),
+            radius * 0.915f, center, style = outlineStroke,
+        )
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    opaque(VirtualControlAppearance.analogBowlCenter(backgroundRgb)),
+                    opaque(VirtualControlAppearance.analogBowlEdge(backgroundRgb)),
+                ),
+                center = center,
+                radius = radius * 0.70f,
+            ),
+            radius = radius * 0.70f,
+            center = center,
+        )
+        drawCircle(
+            opaque(VirtualControlAppearance.analogThumbShadow(backgroundRgb)).copy(alpha = 0x5A / 255f),
+            thumbRadius * 1.055f,
+            Offset(center.x, center.y + thumbRadius * 0.045f),
+        )
+        drawCircle(opaque(VirtualControlAppearance.analogThumbRim(thumbRgb)),
+            thumbRadius * 1.035f, center)
+        drawCircle(
+            brush = Brush.linearGradient(
+                listOf(
+                    opaque(VirtualControlAppearance.analogThumbTop(thumbRgb)),
+                    opaque(thumbRgb),
+                    opaque(VirtualControlAppearance.analogThumbBottom(thumbRgb)),
+                ),
+                start = Offset(center.x - thumbRadius, center.y - thumbRadius),
+                end = Offset(center.x + thumbRadius, center.y + thumbRadius),
+            ),
+            radius = thumbRadius,
+            center = center,
+        )
+        drawCircle(
+            opaque(VirtualControlAppearance.analogThumbRim(thumbRgb)).copy(alpha = 0.33f),
+            thumbRadius * 0.96f, center, style = outlineStroke,
+        )
     }
 }
 
