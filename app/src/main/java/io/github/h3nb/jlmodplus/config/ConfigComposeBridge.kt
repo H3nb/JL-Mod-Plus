@@ -1958,12 +1958,6 @@ private fun SystemSection(
 ) {
     if (showClearData) {
         ConfigSection(title = stringResource(R.string.midlet_permissions_settings_title)) {
-            Text(
-                text = stringResource(R.string.midlet_permissions_settings_summary),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
             val access = state.fileAccess
             val modes = org.microemu.cldc.file.StorageMode.values().toList()
             val modeOptions = listOf(
