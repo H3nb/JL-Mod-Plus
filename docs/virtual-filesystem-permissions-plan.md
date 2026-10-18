@@ -1,6 +1,6 @@
 # Virtual filesystem and MIDlet permissions — implementation plan
 
-Status: Draft implementation. Not merged; Android/device qualification remains required.
+Status: Draft implementation. Not merged; on-device smoke testing was reported successful; automated connected-device qualification remains optional.
 
 ## Scope and constraints
 
@@ -141,15 +141,15 @@ prompt choice reachability and permission changes without profile draft edits;
 those require a connected Android runtime. CI build/lint evidence must refer to
 the new PR revision before merge.
 
-The Draft UI is localized in English and Indonesian. Its new canonical strings
-carry resource-local MissingTranslation annotations, matching the existing
-incremental-localization policy; no global lint rule or other catalog is disabled.
-Other locales use English fallback until reviewed translations are added.
+The storage permission UI is translated across all 39 shipped string catalogs,
+including English and Indonesian. The reviewed feature keys no longer use
+resource-local MissingTranslation annotations; unrelated translations are untouched.
 
 ## Storage-mode and copy revisions (18 October 2026)
 
 - The first System section is **Storage access permissions** / **Izin akses penyimpanan**.
-  **Shared** / **Berbagi** is the default and retains workdir-backed C/E. **Android** maps C to
+  **Virtual** (internally `SHARED`) is the default and retains workdir-backed C/E.
+  **Android** maps C to
   primary external storage and E to a second mounted volume, or the primary when only one exists.
   A single physical volume advertises only C; aliases remain usable. Missing volumes fail closed
   and are never created by the resolver. Android access remains subject to existing host permissions.
@@ -166,6 +166,23 @@ Other locales use English fallback until reviewed translations are added.
   atomic protection against host-side filesystem races, or discovery of unrelated historical workdirs.
 - Android media properties use physical public directories; Shared keeps its existing virtual
   media directories. Neither mode changes private/cache URLs. Unknown roots still fail closed.
-- Runtime prompts say only that the app wants to read or change files. Option rows have no extra
-  inter-row spacing and keep 48 dp touch targets. EN/ID copy is concise; other locales use the
-  existing scoped English fallback.
+- Runtime prompts identify the MIDlet and its requested file access. Option rows have no extra
+  inter-row spacing and keep 48 dp touch targets. All shipped catalogs have translated copy.
+
+## Platform request cache lifecycle (18 October 2026)
+
+File-based `MIDlet.platformRequest()` copies its selected file to the app's
+`midlet-platform-share/` cache for the narrow `FileProvider` allowlist; it does
+not expose the underlying MIDlet storage as a provider root. On each subsequent
+file share, stale `midlet-` copies older than 24 hours are deleted best-effort.
+New copies remain available after the handoff so receiving Android applications
+can finish reading them; failed copies and URI publication failures remove their
+partial copies immediately. The cache is Android-managed and can be reclaimed
+under storage pressure; no hard byte limit is imposed on recently shared files
+because it could break active consumers. The final copy may remain until another
+file share or Android's normal cache reclamation. The cleanup routine has focused
+JVM regression tests; it does not require a recurring background service.
+
+The repository owner reported successful real-device smoke testing of MIDlet
+storage and permission behavior before this follow-up. CI compiles, but does
+not execute, the Android instrumentation suite on a connected device.

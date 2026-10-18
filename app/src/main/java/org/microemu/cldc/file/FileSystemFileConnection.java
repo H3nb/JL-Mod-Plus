@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.io.BufferedOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -284,25 +283,8 @@ public class FileSystemFileConnection implements FileConnection {
 		requireRead();
 		if (!file.isFile()) throw new IOException("No file to share");
 		Context context = ContextHolder.getAppContext();
-		File directory = new File(context.getCacheDir(), "midlet-platform-share");
-		if (!directory.isDirectory() && !directory.mkdirs()) {
-			throw new IOException("Cannot create temporary shared-file directory");
-		}
-		String fileName = file.getName();
-		int dot = fileName.lastIndexOf('.');
-		String extension = dot > 0 && fileName.length() - dot <= 12
-				? fileName.substring(dot) : ".bin";
-		File shared = File.createTempFile("midlet-", extension, directory);
-		try (InputStream input = new FileInputStream(file);
-				OutputStream output = new BufferedOutputStream(new FileOutputStream(shared))) {
-			byte[] buffer = new byte[8192];
-			for (int count; (count = input.read(buffer)) != -1;) {
-				output.write(buffer, 0, count);
-			}
-		} catch (IOException failure) {
-			shared.delete();
-			throw failure;
-		}
+		File shared = MidletPlatformShareCache.stage(file,
+				new File(context.getCacheDir(), "midlet-platform-share"));
 		try {
 			return FileProvider.getUriForFile(context,
 					context.getPackageName() + ".diagnostic-files", shared);
