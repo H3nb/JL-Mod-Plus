@@ -1573,14 +1573,22 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		fileAccessBusy = true;
 		if (composeController != null) composeController.update(createUiState());
 		profileMetadataExecutor.execute(() -> {
-			boolean saved = runInstalledWrite(() -> MidletPermissionStore.write(this,
+			InstalledAppWriteGuard.Result result = installedWriteGuard.run(
+					appDir.getPath(), expectedAppId, () -> MidletPermissionStore.write(this,
 					appDir.getPath(), expectedAppId,
 					write ? MidletPermissionStore.FILE_WRITE : MidletPermissionStore.FILE_READ,
 					permissionFingerprint, decision));
 			runOnUiThread(() -> {
 				if (isFinishing() || isDestroyed()) return;
 				fileAccessBusy = false;
-				if (!saved) ThemedToast.show(this, R.string.midlet_permissions_save_failed, Toast.LENGTH_LONG);
+				if (result == InstalledAppWriteGuard.Result.STALE) {
+					ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+					finish();
+					return;
+				}
+				if (result != InstalledAppWriteGuard.Result.SUCCESS) {
+					ThemedToast.show(this, R.string.midlet_permissions_save_failed, Toast.LENGTH_LONG);
+				}
 				refreshFileAccess();
 			});
 		});
@@ -1591,7 +1599,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		fileAccessBusy = true;
 		if (composeController != null) composeController.update(createUiState());
 		profileMetadataExecutor.execute(() -> {
-			boolean saved = runInstalledWrite(() -> {
+			InstalledAppWriteGuard.Result result = installedWriteGuard.run(appDir.getPath(), expectedAppId, () -> {
 				try (RuntimeStorageLease lease = RuntimeStorageLease.acquire(getFilesDir(), appDir)) {
 					if (lease == null) return false;
 					new LegacyPrivateFiles(new File(workDir), appDir.getName()).copy(relativePath);
@@ -1601,7 +1609,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			runOnUiThread(() -> {
 				if (isFinishing() || isDestroyed()) return;
 				fileAccessBusy = false;
-				ThemedToast.show(this, saved ? R.string.midlet_legacy_import_success
+				if (result == InstalledAppWriteGuard.Result.STALE) {
+					ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+					finish();
+					return;
+				}
+				ThemedToast.show(this, result == InstalledAppWriteGuard.Result.SUCCESS ? R.string.midlet_legacy_import_success
 						: R.string.midlet_legacy_import_failed, Toast.LENGTH_LONG);
 				refreshFileAccess();
 			});
