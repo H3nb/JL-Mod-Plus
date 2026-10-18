@@ -1023,7 +1023,7 @@
         <item quantity="other">เลือกแล้ว %1$d รายการ</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">ขยายไปยังพื้นที่รอยบากหน้าจอ</string>
-    <string name="pref_midlet_display_cutout_summary">อนุญาตให้เกมใช้พื้นที่รอบรอยบากกล้อง ภาพบางส่วนอาจถูกบัง</string>
+    <string name="pref_midlet_display_cutout_summary">อนุญาตให้หน้าจอ MIDlet ใช้พื้นที่รอบรอยบากหน้าจอ ส่วนหนึ่งของหน้าจอ MIDlet อาจถูกบัง</string>
     <string name="pref_runtime_fullscreen_title">เต็มหน้าจอ</string>
     <string name="pref_runtime_fullscreen_summary">ซ่อนแถบเครื่องมือขณะเล่น มีผลกับ MIDlet ทั้งหมด</string>
     <string name="runtime_fullscreen_update_failed">ไม่สามารถเข้าถึงการตั้งค่าเต็มหน้าจอได้ โปรดลองอีกครั้ง</string>

@@ -1056,7 +1056,7 @@
         <item quantity="other">%1$d Java-klassfiler hoppades över eftersom de inte kunde läsas. Funktioner som använder dem kanske inte fungerar.</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">Utöka till skärmutskärningens område</string>
-    <string name="pref_midlet_display_cutout_summary">Låt spelet använda området runt kamerautskärningen. En del av bilden kan döljas.</string>
+    <string name="pref_midlet_display_cutout_summary">Låt MIDlet-vyn använda området runt skärmutskärningen. En del av vyn kan döljas.</string>
     <string name="pref_runtime_fullscreen_title">Helskärm</string>
     <string name="pref_runtime_fullscreen_summary">Dölj verktygsfältet medan du spelar. Gäller alla MIDlet-appar.</string>
     <string name="runtime_fullscreen_update_failed">Kunde inte komma åt helskärmsinställningen. Försök igen.</string>

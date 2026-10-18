@@ -1122,7 +1122,7 @@
         <item quantity="many">Vybráno %1$d</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">Rozšířit do oblasti výřezu displeje</string>
-    <string name="pref_midlet_display_cutout_summary">Povolit hře používat oblast kolem výřezu pro fotoaparát. Část obrazu může být zakrytá.</string>
+    <string name="pref_midlet_display_cutout_summary">Povolit zobrazení MIDletu používat oblast kolem výřezu displeje. Část zobrazení může být zakrytá.</string>
     <string name="pref_runtime_fullscreen_title">Celá obrazovka</string>
     <string name="pref_runtime_fullscreen_summary">Skrýt panel nástrojů během hraní. Platí pro všechny MIDlety.</string>
     <string name="runtime_fullscreen_update_failed">K nastavení celé obrazovky se nepodařilo získat přístup. Zkuste to znovu.</string>

@@ -14,12 +14,18 @@
 
 package javax.microedition.shell
 
+import android.content.res.Resources
+import android.graphics.Typeface
+import android.text.TextPaint
+import android.util.TypedValue
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -35,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -44,6 +51,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -55,6 +63,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -65,11 +75,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.input.HostCommand
@@ -88,6 +100,7 @@ import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
 import javax.microedition.shell.timing.EmulationSpeed
 import kotlin.math.max
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
@@ -106,6 +119,9 @@ internal data class RuntimeMenuUiState(
     val memoryEditorBubbleEnabled: Boolean = false,
     val toolbarWidthDp: Float? = null,
     val toolbarFontScale: Float = 1f,
+    val toolbarSpeedWidthDp: Float = 48f,
+    val toolbarRoundedLeftPx: Int = 0,
+    val toolbarRoundedRightPx: Int = 0,
     val toolbarInsetLeftPx: Int = 0,
     val toolbarInsetTopPx: Int = 0,
     val toolbarInsetRightPx: Int = 0,
@@ -320,7 +336,15 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         ))
     }
 
-    /** Physical, toolbar-local [left, right] pairs intersecting the 48dp content row. */
+    /** Rounded corners constrain visible content; button padding may occupy the curved margin. */
+    fun updateToolbarRoundedInsets(leftPx: Int, rightPx: Int) {
+        updateState(state.copy(
+            toolbarRoundedLeftPx = leftPx.coerceAtLeast(0),
+            toolbarRoundedRightPx = rightPx.coerceAtLeast(0),
+        ))
+    }
+
+    /** Physical, toolbar-local [left, right] pairs intersecting the content row. */
     fun updateToolbarCutouts(horizontalBoundsPx: IntArray) {
         require(horizontalBoundsPx.size % 2 == 0)
         val cutouts = horizontalBoundsPx.asList().chunked(2).mapNotNull { (left, right) ->
@@ -337,6 +361,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             toolbarWidthDp = composeView.width / density,
             toolbarDensity = density,
             toolbarFontScale = resources.configuration.fontScale,
+            toolbarSpeedWidthDp = measureRuntimeSpeedWidth(resources, requested.emulationSpeedPercent),
             toolbarRtl = resources.configuration.layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL,
         )
         if (state == next) return
@@ -653,6 +678,7 @@ internal fun RuntimeMenuHost(
             toolbarWidthDp = maxWidth.value,
             toolbarDensity = density.density,
             toolbarFontScale = density.fontScale,
+            toolbarSpeedWidthDp = measureRuntimeSpeedWidth(LocalContext.current.resources, state.emulationSpeedPercent),
             toolbarRtl = LocalLayoutDirection.current == LayoutDirection.Rtl,
         ) else state
         val toolbarLayout = runtimeToolbarLayout(layoutState, layoutState.toolbarWidthDp ?: 0f)
@@ -678,6 +704,21 @@ internal fun RuntimeMenuHost(
     }
 }
 
+private const val RUNTIME_SPEED_LABEL_SP = 14f
+
+/** Matches the explicit labelLarge metrics below; width is shared by rendering and navigation. */
+internal fun measureRuntimeSpeedWidth(resources: Resources, percent: Int): Float {
+    val paint = TextPaint().apply {
+        isAntiAlias = true
+        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
+            RUNTIME_SPEED_LABEL_SP, resources.displayMetrics)
+    }
+    val textWidthDp = ceil(paint.measureText(EmulationSpeed.formatMultiplier(percent)).toDouble()).toFloat() /
+        resources.displayMetrics.density
+    return max(48f, textWidthDp + 16f)
+}
+
 internal enum class RuntimeToolbarShortcut { Speed, Ime, Screenshot }
 internal data class RuntimeToolbarOcclusion(val leftPx: Int, val rightPx: Int)
 internal data class RuntimeToolbarSpan(val left: Float, val right: Float) {
@@ -695,8 +736,12 @@ internal fun runtimeToolbarShortcuts(state: RuntimeMenuUiState, widthDp: Float):
 /** Fill the toolbar background while packing whole touch targets around physical occlusions. */
 internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): RuntimeToolbarLayout {
     if (!state.toolbarVisible || widthDp <= 0f) return RuntimeToolbarLayout(null, emptyList())
-    val physicalLeft = max(16f, state.toolbarInsetLeftPx / state.toolbarDensity)
-    val physicalRight = widthDp - max(16f, state.toolbarInsetRightPx / state.toolbarDensity)
+    val strictLeft = state.toolbarInsetLeftPx / state.toolbarDensity
+    val strictRight = state.toolbarInsetRightPx / state.toolbarDensity
+    val roundedLeft = state.toolbarRoundedLeftPx / state.toolbarDensity
+    val roundedRight = state.toolbarRoundedRightPx / state.toolbarDensity
+    val physicalLeft = maxOf(4f, strictLeft, roundedLeft - 8f)
+    val physicalRight = widthDp - maxOf(4f, strictRight, roundedRight - 8f)
     fun logical(span: RuntimeToolbarSpan) = if (state.toolbarRtl) {
         RuntimeToolbarSpan(widthDp - span.right, widthDp - span.left)
     } else span
@@ -716,29 +761,29 @@ internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): Ru
         if (cursor < bounds.right) add(RuntimeToolbarSpan(cursor, bounds.right))
     }
     if (segments.isEmpty()) return RuntimeToolbarLayout(null, emptyList())
-    val titleIndex = segments.indexOfFirst { it.width >= 72f }.takeIf { it >= 0 }
-        ?: segments.indices.maxBy { segments[it].width }
-    val titleSegment = segments[titleIndex]
-    val titleReserve = titleSegment.width.coerceAtMost(72f)
-    val actionSegments = segments.mapIndexed { index, span ->
-        if (index == titleIndex) span.copy(left = span.left + titleReserve) else span
-    }
     fun actionWidth(shortcut: RuntimeToolbarShortcut): Float = when (shortcut) {
-        RuntimeToolbarShortcut.Speed -> 64f * state.toolbarFontScale.coerceAtLeast(1f)
+        RuntimeToolbarShortcut.Speed -> state.toolbarSpeedWidthDp.coerceAtLeast(48f)
         else -> 48f
     }
     fun pack(shortcuts: List<RuntimeToolbarShortcut>): List<RuntimeToolbarPlacement>? {
-        val ends = actionSegments.map { it.right }.toMutableList()
-        val placements = mutableListOf<RuntimeToolbarPlacement>()
-        for (shortcut in shortcuts.asReversed()) {
+        val ends = segments.map { it.right }.toMutableList()
+        val placements = arrayOfNulls<RuntimeToolbarPlacement>(shortcuts.size)
+        // At most three actions: try another segment before dropping an otherwise reachable action.
+        fun place(actionIndex: Int): Boolean {
+            if (actionIndex < 0) return true
+            val shortcut = shortcuts[actionIndex]
             val width = actionWidth(shortcut)
-            val index = actionSegments.indices.lastOrNull { ends[it] - actionSegments[it].left >= width }
-                ?: return null
-            val right = ends[index]
-            ends[index] = right - width
-            placements += RuntimeToolbarPlacement(shortcut, RuntimeToolbarSpan(right - width, right))
+            for (index in segments.indices.reversed()) {
+                if (ends[index] - segments[index].left < width) continue
+                val right = ends[index]
+                ends[index] = right - width
+                placements[actionIndex] = RuntimeToolbarPlacement(shortcut, RuntimeToolbarSpan(right - width, right))
+                if (place(actionIndex - 1)) return true
+                ends[index] = right
+            }
+            return false
         }
-        return placements.asReversed()
+        return if (place(shortcuts.lastIndex)) placements.filterNotNull() else null
     }
     val selected = mutableListOf<RuntimeToolbarShortcut>()
     if (state.isCanvas) {
@@ -752,11 +797,17 @@ internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): Ru
         }
     }
     val placements = pack(selected).orEmpty()
-    val titleEnd = placements.map { it.span.left }
-        .filter { it >= titleSegment.left && it < titleSegment.right }
-        .minOrNull() ?: titleSegment.right
+    val titleBounds = logical(RuntimeToolbarSpan(
+        maxOf(8f, strictLeft, roundedLeft),
+        widthDp - maxOf(8f, strictRight, roundedRight),
+    ))
+    val titleSegment = segments.map { segment ->
+        val firstAction = placements.map { it.span.left }
+            .filter { it >= segment.left && it < segment.right }.minOrNull() ?: segment.right
+        RuntimeToolbarSpan(max(segment.left, titleBounds.left), minOf(firstAction, titleBounds.right))
+    }.firstOrNull { it.width > 0f }
     return RuntimeToolbarLayout(
-        title = logical(titleSegment.copy(right = titleEnd)),
+        title = titleSegment?.let(::logical),
         actions = placements.map { it.copy(span = logical(it.span)) },
     )
 }
@@ -773,70 +824,82 @@ private fun RuntimeToolbar(
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxSize(),
     ) {
-        Layout(
-            modifier = Modifier.fillMaxSize(),
-            content = {
-                Text(
-                    text = state.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                toolbarLayout.actions.forEach { placement ->
-                    when (placement.shortcut) {
-                        RuntimeToolbarShortcut.Speed -> {
-                            val label = stringResource(R.string.PREF_EMULATION_SPEED)
-                            val multiplier = EmulationSpeed.formatMultiplier(state.emulationSpeedPercent)
-                            TextButton(
-                                onClick = actions::onEmulationSpeed,
-                                modifier = Modifier.fillMaxSize()
-                                    .semantics { contentDescription = "$label: $multiplier" },
-                            ) {
-                                Text(multiplier, maxLines = 1)
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+            Layout(
+                modifier = Modifier.fillMaxSize().clipToBounds(),
+                content = {
+                    Text(
+                        text = state.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    toolbarLayout.actions.forEach { placement ->
+                        when (placement.shortcut) {
+                            RuntimeToolbarShortcut.Speed -> {
+                                val label = stringResource(R.string.PREF_EMULATION_SPEED)
+                                val multiplier = EmulationSpeed.formatMultiplier(state.emulationSpeedPercent)
+                                TextButton(
+                                    onClick = actions::onEmulationSpeed,
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                    modifier = Modifier.fillMaxSize()
+                                        .semantics { contentDescription = "$label: $multiplier" },
+                                ) {
+                                    Text(
+                                        multiplier,
+                                        maxLines = 1,
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            fontSize = RUNTIME_SPEED_LABEL_SP.sp,
+                                            fontFamily = FontFamily.SansSerif,
+                                            fontWeight = FontWeight.Medium,
+                                            letterSpacing = 0.sp,
+                                        ),
+                                    )
+                                }
                             }
+                            RuntimeToolbarShortcut.Ime -> RuntimeToolbarAction(
+                                icon = R.drawable.ic_action_keyboard,
+                                label = R.string.action_keyboard_ime,
+                                size = 48.dp,
+                                onClick = actions::onOpenImeKeyboard,
+                            )
+                            RuntimeToolbarShortcut.Screenshot -> RuntimeToolbarAction(
+                                icon = R.drawable.ic_action_screenshot,
+                                label = R.string.take_screenshot,
+                                size = 48.dp,
+                                onClick = actions::onTakeScreenshot,
+                            )
                         }
-                        RuntimeToolbarShortcut.Ime -> RuntimeToolbarAction(
-                            icon = R.drawable.ic_action_keyboard,
-                            label = R.string.action_keyboard_ime,
-                            size = 48.dp,
-                            onClick = actions::onOpenImeKeyboard,
-                        )
-                        RuntimeToolbarShortcut.Screenshot -> RuntimeToolbarAction(
-                            icon = R.drawable.ic_action_screenshot,
-                            label = R.string.take_screenshot,
-                            size = 48.dp,
-                            onClick = actions::onTakeScreenshot,
+                    }
+                },
+            ) { measurables, constraints ->
+                val width = constraints.maxWidth
+                val height = constraints.maxHeight
+                val top = state.toolbarInsetTopPx.coerceAtMost(height)
+                val contentHeight = (height - top - state.toolbarInsetBottomPx).coerceAtLeast(0)
+                val titleSpan = toolbarLayout.title
+                val titleWidth = titleSpan?.width?.dp?.roundToPx() ?: 0
+                val title = measurables.first().measure(Constraints(
+                    minWidth = titleWidth,
+                    maxWidth = titleWidth,
+                    maxHeight = contentHeight,
+                ))
+                val buttons = measurables.drop(1).mapIndexed { index, measurable ->
+                    measurable.measure(Constraints.fixed(
+                        toolbarLayout.actions[index].span.width.dp.roundToPx(),
+                        minOf(contentHeight, 48.dp.roundToPx()),
+                    ))
+                }
+                layout(width, height) {
+                    if (titleSpan != null) title.place(
+                        titleSpan.left.dp.roundToPx(), top + (contentHeight - title.height) / 2,
+                    )
+                    buttons.forEachIndexed { index, button ->
+                        button.place(
+                            toolbarLayout.actions[index].span.left.dp.roundToPx(),
+                            top + (contentHeight - button.height).coerceAtLeast(0) / 2,
                         )
                     }
-                }
-            },
-        ) { measurables, constraints ->
-            val width = constraints.maxWidth
-            val height = constraints.maxHeight
-            val top = state.toolbarInsetTopPx.coerceAtMost(height)
-            val contentHeight = (height - top - state.toolbarInsetBottomPx).coerceAtLeast(0)
-            val titleSpan = toolbarLayout.title
-            val titleWidth = titleSpan?.width?.dp?.roundToPx() ?: 0
-            val title = measurables.first().measure(Constraints(
-                minWidth = titleWidth,
-                maxWidth = titleWidth,
-                maxHeight = contentHeight,
-            ))
-            val buttons = measurables.drop(1).mapIndexed { index, measurable ->
-                measurable.measure(Constraints.fixed(
-                    toolbarLayout.actions[index].span.width.dp.roundToPx(),
-                    48.dp.roundToPx(),
-                ))
-            }
-            layout(width, height) {
-                if (titleSpan != null) title.place(
-                    titleSpan.left.dp.roundToPx(), top + (contentHeight - title.height) / 2,
-                )
-                buttons.forEachIndexed { index, button ->
-                    button.place(
-                        toolbarLayout.actions[index].span.left.dp.roundToPx(),
-                        top + (contentHeight - button.height).coerceAtLeast(0) / 2,
-                    )
                 }
             }
         }
@@ -975,7 +1038,7 @@ internal fun runtimeMenuEntries(
     action(R.string.action_lock_orientation, R.drawable.ic_screen_lock_rotation, state.orientationLocked, actions::onToggleOrientationLock)
     action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled, actions::onMemoryEditor)
     if (state.isCanvas) {
-        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_action_screenshot, !state.toolbarVisible, actions::onToggleFullscreen)
+        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_runtime_fullscreen, !state.toolbarVisible, actions::onToggleFullscreen)
         if (state.imeAvailable && RuntimeToolbarShortcut.Ime !in shortcuts) {
             action(R.string.action_keyboard_ime, R.drawable.ic_action_keyboard, callback = actions::onOpenImeKeyboard)
         }

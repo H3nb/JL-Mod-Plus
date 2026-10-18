@@ -1056,7 +1056,7 @@
         <item quantity="other">ස්ථාපිත යෙදුම් %1$dක් මෙම මූලාශ්‍රයට ගැළපේ.</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">තිර කැපුම් ප්‍රදේශයට පුළුල් කරන්න</string>
-    <string name="pref_midlet_display_cutout_summary">කැමරා කැපුම වටා ඇති ප්‍රදේශය භාවිත කිරීමට ක්‍රීඩාවට ඉඩ දෙන්න. රූපයේ කොටසක් වැසී යා හැකිය.</string>
+    <string name="pref_midlet_display_cutout_summary">තිර කැපුම වටා ඇති ප්‍රදේශය භාවිත කිරීමට MIDlet දර්ශනයට ඉඩ දෙන්න. දර්ශනයේ කොටසක් වැසී යා හැකිය.</string>
     <string name="pref_runtime_fullscreen_title">පූර්ණ තිරය</string>
     <string name="pref_runtime_fullscreen_summary">ක්‍රීඩා කරන විට මෙවලම් තීරුව සඟවන්න. සියලුම MIDlet යෙදුම් සඳහා අදාළ වේ.</string>
     <string name="runtime_fullscreen_update_failed">පූර්ණ තිර සැකසුමට ප්‍රවේශ විය නොහැකි විය. නැවත උත්සාහ කරන්න.</string>

@@ -1056,7 +1056,7 @@
         <item quantity="other">%1$d चुने गए</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">डिस्प्ले कटआउट क्षेत्र में फैलाएँ</string>
-    <string name="pref_midlet_display_cutout_summary">गेम को कैमरा कटआउट के आसपास का क्षेत्र इस्तेमाल करने दें। तस्वीर का कुछ हिस्सा छिप सकता है।</string>
+    <string name="pref_midlet_display_cutout_summary">MIDlet के दृश्य को डिस्प्ले कटआउट के आसपास का क्षेत्र इस्तेमाल करने दें। दृश्य का कुछ हिस्सा छिप सकता है।</string>
     <string name="pref_runtime_fullscreen_title">पूर्ण स्क्रीन</string>
     <string name="pref_runtime_fullscreen_summary">खेलते समय टूलबार छिपाएँ। सभी MIDlet पर लागू होता है।</string>
     <string name="runtime_fullscreen_update_failed">पूर्ण स्क्रीन सेटिंग तक पहुँचा नहीं जा सका। फिर कोशिश करें।</string>

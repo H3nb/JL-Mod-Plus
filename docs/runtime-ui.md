@@ -60,11 +60,15 @@ non-Canvas Displayables.
   overlay hit geometry. The current `RuntimeHostView` structure keeps
   `displayable_container` and `OverlayView` as direct View boundaries to
   preserve that contract.
-- Disabling the toolbar contributes zero host-toolbar height. Enabled toolbar
-  controls retain at least 48dp touch targets. The toolbar background occupies
+- Disabling the toolbar contributes zero host-toolbar height. Canvas toolbar
+  controls use 48dp height in portrait and 40dp in a landscape-shaped window
+  at normal text scale; enlarged text restores 48dp. The compact landscape row
+  deliberately trades touch height for MIDlet space, without extending hit
+  regions into the guest. The toolbar background occupies
   the cutout area without adding the cutout height above its content row.
-  Only the title and action targets avoid intersecting cutout rectangles and
-  screen corners. Layout uses actual window bounds,
+  Whole action targets avoid intersecting cutout rectangles. Rounded-corner
+  clearance follows the centered visible text/icon band; strict system and
+  waterfall exclusions remain separate. Layout uses actual window bounds,
   insets, density and text scale rather than a device model or orientation alone.
 - The runtime window draws edge-to-edge. Toolbar controls independently avoid
   cutouts, waterfall edges and reported rounded corners. Guest Canvas bounds
@@ -78,7 +82,9 @@ non-Canvas Displayables.
   main-process SharedPreferences cache. Host dialogs and transient system bars
   do not change this preference. Non-Canvas screens retain host navigation.
 - Toolbar shortcuts and menu/controller actions come from the same layout
-  decision. IME, screenshot and compatible emulation speed appear in the menu
+  decision. Available speed, IME and screenshot actions receive space before
+  the title, which elides or disappears when necessary. IME, screenshot and
+  compatible emulation speed appear in the menu
   whenever their shortcut is absent. Android Back opens the host menu;
   the toolbar has no redundant overflow button. Fullscreen remains reachable
   in the Canvas menu.

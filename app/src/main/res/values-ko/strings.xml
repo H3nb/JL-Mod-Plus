@@ -1023,7 +1023,7 @@
         <item quantity="other">%1$d개 선택됨</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">디스플레이 컷아웃 영역으로 확장</string>
-    <string name="pref_midlet_display_cutout_summary">게임에서 카메라 컷아웃 주변 영역을 사용하도록 허용합니다. 이미지 일부가 가려질 수 있습니다.</string>
+    <string name="pref_midlet_display_cutout_summary">MIDlet 화면에서 디스플레이 컷아웃 주변 영역을 사용하도록 허용합니다. 화면 일부가 가려질 수 있습니다.</string>
     <string name="pref_runtime_fullscreen_title">전체 화면</string>
     <string name="pref_runtime_fullscreen_summary">플레이 중 도구 모음을 숨깁니다. 모든 MIDlet에 적용됩니다.</string>
     <string name="runtime_fullscreen_update_failed">전체 화면 설정에 접근할 수 없습니다. 다시 시도하세요.</string>

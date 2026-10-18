@@ -15,6 +15,16 @@
 package javax.microedition.shell
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -329,7 +339,7 @@ class RuntimeMenuComposeTest {
             }
         }
         val title = composeRule.onNodeWithText("Demo MIDlet").getUnclippedBoundsInRoot()
-        assertTrue(title.left >= 16.dp && title.right <= 151.dp)
+        assertTrue(title.left >= 8.dp && title.right <= 151.dp)
         val speed = composeRule.onNodeWithText(
             javax.microedition.shell.timing.EmulationSpeed.formatMultiplier(100),
         ).getUnclippedBoundsInRoot()
@@ -341,7 +351,52 @@ class RuntimeMenuComposeTest {
             .getUnclippedBoundsInRoot()
         assertTrue(ime.left >= 209.dp && ime.right <= 344.dp)
         assertTrue(ime.top >= 0.dp && ime.bottom <= 48.dp)
-        composeRule.onAllNodesWithContentDescription(uiString(R.string.take_screenshot)).assertCountEquals(0)
+        val screenshot = composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
+            .getUnclippedBoundsInRoot()
+        assertTrue(screenshot.left >= 209.dp && screenshot.right <= 357.dp)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.more)).assertCountEquals(0)
+    }
+
+    @Test
+    fun landscapeToolbarTargetsFitInsideFortyDpHost() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(640.dp, 120.dp)),
+            ) {
+                JLModPlusTheme {
+                    Column {
+                        RuntimeMenuHost(
+                            state = RuntimeMenuUiState(
+                                title = "Landscape MIDlet",
+                                isCanvas = true,
+                                imeAvailable = true,
+                                emulationSpeedAvailable = true,
+                            ),
+                            modifier = Modifier.fillMaxWidth().height(40.dp),
+                            menuVisible = false,
+                            actions = RecordingRuntimeMenuActions(events),
+                            onDismissMenu = {},
+                        )
+                        Box(Modifier.fillMaxWidth().height(80.dp)
+                            .testTag("below-toolbar").clickable { events += "game" })
+                    }
+                }
+            }
+        }
+        val screenshot = composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
+            .assertWidthIsAtLeast(48.dp)
+        val bounds = screenshot.getUnclippedBoundsInRoot()
+        assertTrue(bounds.top >= 0.dp && bounds.bottom <= 40.dp)
+        assertEquals(40.dp, bounds.height)
+        screenshot.performClick()
+        // The old 48dp target would extend into this first row below the compact toolbar.
+        composeRule.onNodeWithTag("below-toolbar").performTouchInput {
+            click(Offset(width - 28.dp.toPx(), 1.dp.toPx()))
+        }
+        assertEquals(listOf("screenshot", "game"), events)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.more)).assertCountEquals(0)
     }
 

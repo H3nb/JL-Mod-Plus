@@ -1129,7 +1129,7 @@
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">Preview: %1$s</string>
     <string name="pref_midlet_display_cutout_title">Expand into display cutout area</string>
-    <string name="pref_midlet_display_cutout_summary">Let the game use the area around the camera cutout. Part of the image may be obscured.</string>
+    <string name="pref_midlet_display_cutout_summary">Let the MIDlet display use the area around the display cutout. Part of the display may be obscured.</string>
     <string name="pref_runtime_fullscreen_title">Fullscreen</string>
     <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Could not access the fullscreen setting. Try again.</string>

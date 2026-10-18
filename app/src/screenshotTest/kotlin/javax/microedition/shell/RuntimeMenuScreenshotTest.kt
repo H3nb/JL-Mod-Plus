@@ -102,6 +102,20 @@ fun RuntimeCentralCutoutToolbarScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Runtime landscape toolbar", widthDp = 640, heightDp = 40, showBackground = true)
+@Composable
+fun RuntimeLandscapeToolbarScreenshot() {
+    val roundedInset = with(androidx.compose.ui.platform.LocalDensity.current) { 28.dp.roundToPx() }
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeMenuPreview(state = CanvasMenuState.copy(
+            emulationSpeedPercent = 150,
+            toolbarRoundedLeftPx = roundedInset,
+            toolbarRoundedRightPx = roundedInset,
+        ))
+    }
+}
+
+@PreviewTest
 @Preview(
     name = "Runtime fullscreen menu dark landscape",
     widthDp = 640,

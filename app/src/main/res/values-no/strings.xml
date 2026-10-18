@@ -1055,7 +1055,7 @@
         <item quantity="other">%1$d valgt</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">Utvid til området ved skjermutskjæringen</string>
-    <string name="pref_midlet_display_cutout_summary">La spillet bruke området rundt kamerautskjæringen. Deler av bildet kan bli skjult.</string>
+    <string name="pref_midlet_display_cutout_summary">La MIDlet-visningen bruke området rundt skjermutskjæringen. Deler av visningen kan bli skjult.</string>
     <string name="pref_runtime_fullscreen_title">Fullskjerm</string>
     <string name="pref_runtime_fullscreen_summary">Skjul verktøylinjen mens du spiller. Gjelder alle MIDlet-er.</string>
     <string name="runtime_fullscreen_update_failed">Kunne ikke få tilgang til fullskjerminnstillingen. Prøv igjen.</string>

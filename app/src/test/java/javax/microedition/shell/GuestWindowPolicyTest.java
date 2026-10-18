@@ -22,6 +22,14 @@ import org.junit.Test;
 
 public class GuestWindowPolicyTest {
 	@Test
+	public void compactLandscapeUsesAvailableWindowShapeAndRestoresHeightForLargeText() {
+		assertEquals(48, GuestWindowPolicy.canvasToolbarHeightDp(1080, 2400, 1f));
+		assertEquals(40, GuestWindowPolicy.canvasToolbarHeightDp(2400, 1080, 1f));
+		assertEquals(48, GuestWindowPolicy.canvasToolbarHeightDp(2400, 1080, 1.5f));
+		assertEquals(48, GuestWindowPolicy.canvasToolbarHeightDp(0, 0, 1f));
+	}
+
+	@Test
 	public void fullscreenAndGuestCutoutAreIndependentCanvasChoices() {
 		GuestWindowPolicy.Chrome withToolbar = GuestWindowPolicy.resolve(true, false, true);
 		assertTrue(withToolbar.toolbarVisible);
@@ -76,6 +84,8 @@ public class GuestWindowPolicyTest {
 	@Test
 	public void roundedClearanceDependsOnWhereControlsMeetTheCorner() {
 		assertEquals(40, GuestWindowPolicy.roundedCornerClearance(40, 40, 0, 48, true));
+		// Centered glyphs need less clearance than the empty upper corners of their touch target.
+		assertEquals(12, GuestWindowPolicy.roundedCornerClearance(40, 40, 12, 36, true));
 		assertEquals(0, GuestWindowPolicy.roundedCornerClearance(40, 40, 40, 88, true));
 		assertEquals(6, GuestWindowPolicy.roundedCornerClearance(40, 40, 20, 68, true));
 		assertEquals(0, GuestWindowPolicy.roundedCornerClearance(40, 760, 0, 48, false));

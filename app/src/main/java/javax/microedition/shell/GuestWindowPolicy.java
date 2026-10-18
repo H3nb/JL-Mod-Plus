@@ -23,6 +23,11 @@ final class GuestWindowPolicy {
 				canvas && userAllowsCutout);
 	}
 
+	/** Compact landscape trades 8dp of touch height for guest space; enlarged text keeps 48dp. */
+	static int canvasToolbarHeightDp(int windowWidth, int windowHeight, float fontScale) {
+		return windowHeight > 0 && windowWidth > windowHeight && fontScale <= 1f ? 40 : 48;
+	}
+
 	/** Account only for the safe area that still overlaps this component, not its ancestors. */
 	static Padding paddingForBounds(int windowWidth, int windowHeight,
 			int viewLeft, int viewTop, int viewWidth, int viewHeight,

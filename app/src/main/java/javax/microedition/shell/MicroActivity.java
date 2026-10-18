@@ -111,7 +111,7 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_AUTO = 1;
 	private static final int ORIENTATION_PORTRAIT = 2;
 	private static final int ORIENTATION_LANDSCAPE = 3;
-	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
+	private static final int DEFAULT_RUNTIME_TOOLBAR_HEIGHT_DP = 48;
 	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
@@ -669,12 +669,19 @@ public class MicroActivity extends AppCompatActivity {
 		if (!chrome.toolbarVisible) {
 			return 0;
 		}
-		int minimumTouchTarget = Math.round(MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP
+		int defaultToolbarHeight = Math.round(DEFAULT_RUNTIME_TOOLBAR_HEIGHT_DP
 				* getResources().getDisplayMetrics().density);
-		int standardHeight = Math.max(Math.round(getToolBarHeight()), minimumTouchTarget);
-		// Canvas previously compressed the action row below the minimum Android touch target.
-		// Keep its compact visual treatment while giving each visible action a reliable 48dp target.
-		return chrome.canvas ? Math.max(standardHeight * 2 / 3, minimumTouchTarget) : standardHeight;
+		int standardHeight = Math.max(Math.round(getToolBarHeight()), defaultToolbarHeight);
+		if (!chrome.canvas) return standardHeight;
+		int width = binding.getRoot().getWidth();
+		int height = binding.getRoot().getHeight();
+		Configuration configuration = getResources().getConfiguration();
+		if (width == 0 || height == 0) {
+			width = configuration.screenWidthDp;
+			height = configuration.screenHeightDp;
+		}
+		return Math.round(GuestWindowPolicy.canvasToolbarHeightDp(width, height,
+				configuration.fontScale) * getResources().getDisplayMetrics().density);
 	}
 
 	private void setRuntimeToolbarHeight(int height) {
@@ -1163,13 +1170,15 @@ public class MicroActivity extends AppCompatActivity {
 		GuestWindowPolicy.Padding toolbarPadding = GuestWindowPolicy.paddingForBounds(
 				windowWidth, windowHeight, rootLeft, rootTop, rootWidth, rootHeight,
 				hostSafe.left, hostSafe.top, hostSafe.right, 0);
-		Insets rounded = roundedHorizontalInsets(rootTop + toolbarPadding.top,
-				rootTop + toolbarPadding.top + toolbarHeight, windowWidth);
-		int toolbarLeft = Math.max(toolbarPadding.left, Math.max(0, rounded.left - rootLeft));
-		int toolbarRight = Math.max(toolbarPadding.right,
-				Math.max(0, rootLeft + rootWidth - windowWidth + rounded.right));
+		// Corners protect the centered text/icon band, not the empty top of their touch rectangles.
+		int contentBandHeight = Math.min(toolbarHeight, Math.round(24
+				* getResources().getDisplayMetrics().density * getResources().getConfiguration().fontScale));
+		int contentBandTop = rootTop + toolbarPadding.top + (toolbarHeight - contentBandHeight) / 2;
+		Insets rounded = roundedHorizontalInsets(contentBandTop, contentBandTop + contentBandHeight, windowWidth);
 		if (runtimeMenuController != null) {
-			runtimeMenuController.updateToolbarInsets(toolbarLeft, toolbarPadding.top, toolbarRight, 0);
+			runtimeMenuController.updateToolbarInsets(toolbarPadding.left, toolbarPadding.top, toolbarPadding.right, 0);
+			runtimeMenuController.updateToolbarRoundedInsets(Math.max(0, rounded.left - rootLeft),
+					Math.max(0, rootLeft + rootWidth - windowWidth + rounded.right));
 			runtimeMenuController.updateToolbarCutouts(toolbarCutoutBounds(rootLeft,
 					rootTop + toolbarPadding.top, toolbarHeight));
 		}

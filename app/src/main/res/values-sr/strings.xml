@@ -1088,7 +1088,7 @@
         <item quantity="other">Изабрано је %1$d извештаја</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">Прошири на област изреза екрана</string>
-    <string name="pref_midlet_display_cutout_summary">Дозволи игри да користи област око изреза камере. Део слике може бити заклоњен.</string>
+    <string name="pref_midlet_display_cutout_summary">Дозволи приказу MIDlet апликације да користи област око изреза екрана. Део приказа може бити заклоњен.</string>
     <string name="pref_runtime_fullscreen_title">Цео екран</string>
     <string name="pref_runtime_fullscreen_summary">Сакриј траку алатки током игре. Важи за све MIDlet апликације.</string>
     <string name="runtime_fullscreen_update_failed">Није могуће приступити подешавању целог екрана. Покушај поново.</string>

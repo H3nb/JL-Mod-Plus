@@ -1043,7 +1043,7 @@
     <string name="memory_editor_increment_invalid">Gunakan satu tipe bilangan bulat dan nilai dalam rentangnya.</string>
     <string name="memory_editor_increment_preview">Pratinjau: %1$s</string>
     <string name="pref_midlet_display_cutout_title">Perluas ke area potongan layar</string>
-    <string name="pref_midlet_display_cutout_summary">Izinkan game menggunakan area di sekitar lubang kamera. Sebagian gambar mungkin tertutup.</string>
+    <string name="pref_midlet_display_cutout_summary">Izinkan tampilan MIDlet menggunakan area di sekitar potongan layar. Sebagian tampilan mungkin tertutup.</string>
     <string name="pref_runtime_fullscreen_title">Layar penuh</string>
     <string name="pref_runtime_fullscreen_summary">Sembunyikan bilah alat saat bermain. Berlaku untuk semua MIDlet.</string>
     <string name="runtime_fullscreen_update_failed">Pengaturan layar penuh tidak dapat diakses. Coba lagi.</string>

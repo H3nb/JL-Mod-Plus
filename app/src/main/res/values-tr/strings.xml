@@ -1057,7 +1057,7 @@
         <item quantity="one">%1$d seçildi</item>
     </plurals>
     <string name="pref_midlet_display_cutout_title">Ekran çentiği alanına genişlet</string>
-    <string name="pref_midlet_display_cutout_summary">Oyunun kamera çentiği çevresindeki alanı kullanmasına izin ver. Görüntünün bir kısmı kapanabilir.</string>
+    <string name="pref_midlet_display_cutout_summary">MIDlet görüntüsünün ekran çentiği çevresindeki alanı kullanmasına izin ver. Görüntünün bir kısmı kapanabilir.</string>
     <string name="pref_runtime_fullscreen_title">Tam ekran</string>
     <string name="pref_runtime_fullscreen_summary">Oyun sırasında araç çubuğunu gizle. Tüm MIDlet’ler için geçerlidir.</string>
     <string name="runtime_fullscreen_update_failed">Tam ekran ayarına erişilemedi. Yeniden deneyin.</string>
