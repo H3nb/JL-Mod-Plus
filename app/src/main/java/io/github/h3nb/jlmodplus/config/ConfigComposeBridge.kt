@@ -1752,8 +1752,7 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
                 outline, pressed,
             )
             AnalogColorSample(
-                background, foreground, selectedBackground, selectedForeground,
-                outline, pressed,
+                background, selectedBackground, outline, pressed,
             )
         }
         Text(
@@ -1871,9 +1870,7 @@ private fun DpadColorSample(
 @Composable
 private fun AnalogColorSample(
     background: Color,
-    foreground: Color,
     selectedBackground: Color,
-    selectedForeground: Color,
     outline: Color,
     pressed: Boolean,
 ) {
@@ -1943,8 +1940,6 @@ private fun AnalogColorSample(
             opaque(VirtualControlAppearance.analogThumbRim(thumbRgb)).copy(alpha = 0.33f),
             thumbRadius * 0.96f, center, style = outlineStroke,
         )
-        drawCircle(if (pressed) selectedForeground else foreground,
-            thumbRadius * 0.11f, center)
     }
 }
 

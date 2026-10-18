@@ -1527,7 +1527,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int base = VirtualControlAppearance.background(settings, false);
 		int outline = VirtualControlAppearance.outline(settings);
 		int thumbColor = VirtualControlAppearance.analogThumb(settings, active);
-		int indicator = VirtualControlAppearance.foreground(settings, active);
 
 		int layer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f, alpha);
 		try {
@@ -1564,7 +1563,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 					opaqueColor(VirtualControlAppearance.analogThumbBottom(thumbColor)));
 			graphics.strokeControlCircle(thumbX, thumbY, thumbRadius * 0.96f,
 					(0x55 << 24) | VirtualControlAppearance.analogThumbRim(thumbColor), stroke);
-			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.11f, indicator);
 			if (editingAnalog) {
 				graphics.strokeControlCircle(centerX, centerY, radius * 1.02f,
 						opaqueColor(VirtualControlAppearance.background(settings, true)), stroke);
