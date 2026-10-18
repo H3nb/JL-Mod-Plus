@@ -251,8 +251,8 @@
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Camera</string>
     <string name="config_camera_default_title">Standaardcamera</string>
-    <string name="config_camera_rear">Achterkant</string>
-    <string name="config_camera_front">Voorkant</string>
+    <string name="config_camera_rear">Achtercamera</string>
+    <string name="config_camera_front">Frontcamera</string>
     <string name="config_camera_resolution_title">Standaardresolutie</string>
     <string name="config_camera_resolution_auto">Automatisch</string>
     <string name="config_camera_resolution_portrait">480×640 — Staand</string>

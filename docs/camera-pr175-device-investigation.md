@@ -274,7 +274,9 @@ selection was instead observed through the host toolbar. The independent fixture
 now uses only the Java ME API for camera operations and reporting.
 
 The final locally installed APK SHA-256 is
-`f285f88f3309ba9cfa7c4d5ebf06581f4a2d792ec7a0c0f7317b4c57fb89cb0d`.
+`02c19264948fdbc66718eded03351b9bf8ca259b7a412631a4527831e61b49d8`.
+This includes the subsequent terminology/grammar review of 12 localized catalogs;
+the camera resource matrix has no missing translations across 38 translated locales.
 Installation used `adb install -r`, preserving app data. As above, its native
 libraries came from CI 2741 rather than a fresh local native compilation. The
 owned fixture/catalog/config/data and private probe output were removed, and the

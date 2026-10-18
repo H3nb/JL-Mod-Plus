@@ -344,8 +344,8 @@
     <string name="config_camera_front">Алдыңғы</string>
     <string name="config_camera_resolution_title">Әдепкі ажыратымдылық</string>
     <string name="config_camera_resolution_auto">Автоматты</string>
-    <string name="config_camera_resolution_portrait">480×640 — Портрет</string>
-    <string name="config_camera_resolution_landscape">640×480 — Альбом</string>
+    <string name="config_camera_resolution_portrait">480×640 — Портреттік</string>
+    <string name="config_camera_resolution_landscape">640×480 — Альбомдық</string>
     <string name="config_destination_controls">Басқару</string>
     <string name="config_destination_general">Жалпы</string>
     <string name="config_destination_graphics">Дисплей</string>

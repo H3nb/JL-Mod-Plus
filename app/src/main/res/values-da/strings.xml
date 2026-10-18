@@ -242,8 +242,8 @@
     <string name="config_destination_media">Medier</string>
     <string name="config_camera_title">Kamera</string>
     <string name="config_camera_default_title">Standardkamera</string>
-    <string name="config_camera_rear">Bagpå</string>
-    <string name="config_camera_front">Foran</string>
+    <string name="config_camera_rear">Bagkamera</string>
+    <string name="config_camera_front">Frontkamera</string>
     <string name="config_camera_resolution_title">Standardopløsning</string>
     <string name="config_camera_resolution_auto">Automatisk</string>
     <string name="config_camera_resolution_portrait">480×640 — Stående</string>

@@ -259,7 +259,7 @@
     <string name="config_camera_rear">Posteriore</string>
     <string name="config_camera_front">Anteriore</string>
     <string name="config_camera_resolution_title">Risoluzione predefinita</string>
-    <string name="config_camera_resolution_auto">Automatico</string>
+    <string name="config_camera_resolution_auto">Automatica</string>
     <string name="config_camera_resolution_portrait">480×640 — Ritratto</string>
     <string name="config_camera_resolution_landscape">640×480 — Panoramico</string>
     <string name="config_destination_controls">Controlli</string>

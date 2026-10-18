@@ -298,9 +298,9 @@
     <string name="config_camera_rear">Πίσω</string>
     <string name="config_camera_front">Μπροστινή</string>
     <string name="config_camera_resolution_title">Προεπιλεγμένη ανάλυση</string>
-    <string name="config_camera_resolution_auto">Αυτόματος</string>
-    <string name="config_camera_resolution_portrait">480×640 — Κατακόρυφος</string>
-    <string name="config_camera_resolution_landscape">640×480 — Οριζόντιος</string>
+    <string name="config_camera_resolution_auto">Αυτόματη</string>
+    <string name="config_camera_resolution_portrait">480×640 — Κατακόρυφη</string>
+    <string name="config_camera_resolution_landscape">640×480 — Οριζόντια</string>
     <string name="config_destination_controls">Χειριστήρια</string>
     <string name="config_destination_general">Γενικά</string>
     <string name="config_destination_graphics">Προβολή</string>

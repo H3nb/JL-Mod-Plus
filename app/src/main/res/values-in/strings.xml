@@ -653,10 +653,10 @@
     <string name="config_destination_graphics">Tampilan</string>
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Kamera</string>
-    <string name="config_camera_default_title">Kamera default</string>
+    <string name="config_camera_default_title">Kamera bawaan</string>
     <string name="config_camera_rear">Belakang</string>
     <string name="config_camera_front">Depan</string>
-    <string name="config_camera_resolution_title">Resolusi default</string>
+    <string name="config_camera_resolution_title">Resolusi bawaan</string>
     <string name="config_camera_resolution_auto">Otomatis</string>
     <string name="config_camera_resolution_portrait">480×640 — Potret</string>
     <string name="config_camera_resolution_landscape">640×480 — Lanskap</string>
@@ -1082,5 +1082,5 @@
     <string name="midlet_storage_mode_android_summary">Gunakan penyimpanan Android seperti versi sebelumnya.</string>
     <string name="runtime_camera_use_front">Gunakan kamera depan</string>
     <string name="runtime_camera_use_rear">Gunakan kamera belakang</string>
-    <string name="runtime_camera_switch_failed">Kamera tidak dapat diganti.</string>
+    <string name="runtime_camera_switch_failed">Tidak dapat beralih kamera.</string>
 </resources>

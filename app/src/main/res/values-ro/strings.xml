@@ -354,7 +354,7 @@
     <string name="config_camera_rear">Spate</string>
     <string name="config_camera_front">Față</string>
     <string name="config_camera_resolution_title">Rezoluție implicită</string>
-    <string name="config_camera_resolution_auto">Automat</string>
+    <string name="config_camera_resolution_auto">Automată</string>
     <string name="config_camera_resolution_portrait">480×640 — Portret</string>
     <string name="config_camera_resolution_landscape">640×480 — Peisaj</string>
     <string name="config_destination_controls">Comenzi</string>

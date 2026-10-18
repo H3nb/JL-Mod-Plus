@@ -273,7 +273,7 @@
     <string name="config_camera_rear">Trasera</string>
     <string name="config_camera_front">Frontal</string>
     <string name="config_camera_resolution_title">Resolución predeterminada</string>
-    <string name="config_camera_resolution_auto">Automático</string>
+    <string name="config_camera_resolution_auto">Automática</string>
     <string name="config_camera_resolution_portrait">480×640 — Vertical</string>
     <string name="config_camera_resolution_landscape">640×480 — Horizontal</string>
     <string name="config_destination_controls">Controles</string>
