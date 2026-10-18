@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * MicroEmulator
  * Copyright (C) 2006-2007 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2006-2007 Vlad Skarzhevskyy
@@ -50,7 +51,7 @@ public class Connection implements ConnectionImplementation {
 			throw new IOException("Invalid Protocol " + name);
 		}
 		if (connectionType == CONNECTIONTYPE_SYSTEM_FS) {
-			return new FileSystemFileConnection(name);
+			return new FileSystemFileConnection(name, mode);
 		}
 		throw new IOException("Invalid connectionType configuration");
 	}

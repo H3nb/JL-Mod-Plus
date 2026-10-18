@@ -168,6 +168,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var menuVisible by mutableStateOf(false)
     private var limitFpsVisible by mutableStateOf(false)
     private var emulationSpeedVisible by mutableStateOf(false)
+    private var filePermissionPrompt by mutableStateOf<FilePermissionPrompt?>(null)
     private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
     private var virtualKeyboardPage by mutableStateOf(false)
     private var controllerFocusIndex by mutableIntStateOf(0)
@@ -277,7 +278,19 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                             )
                         }
                     }
-                    if (hostDialogActions != null) {
+                    filePermissionPrompt?.let { prompt ->
+                        ControllerDialogInputScope(
+                            onControllerKeyEvent = dialogKeyDispatcher,
+                            onControllerMotionEvent = dialogMotionDispatcher,
+                            onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                        ) {
+                            FilePermissionDialog(write = prompt.write, onChoice = { choice ->
+                                changeControllerSurface { filePermissionPrompt = null }
+                                prompt.onChoice.accept(choice)
+                            })
+                        }
+                    }
+                    if (hostDialogActions != null && filePermissionPrompt == null) {
                         ControllerDialogInputScope(
                             onControllerKeyEvent = dialogKeyDispatcher,
                             onControllerMotionEvent = dialogMotionDispatcher,
@@ -387,9 +400,11 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             || limitFpsVisible
             || emulationSpeedVisible
             || hostDialogState != null
+            || filePermissionPrompt != null
 
     fun closeMenu() {
         if (!isMenuVisible()) return
+        val cancelledPermission = filePermissionPrompt
         val continueVirtualKeyboardEdit =
             hostDialogState is RuntimeHostDialogState.FinishVirtualKeyboardEdit
         changeControllerSurface {
@@ -397,10 +412,12 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             limitFpsVisible = false
             emulationSpeedVisible = false
             hostDialogState = null
+            filePermissionPrompt = null
             virtualKeyboardPage = false
             controllerFocusIndex = 0
             controllerFocusVisible = false
         }
+        cancelledPermission?.onChoice?.accept(MidletPermissionManager.CANCEL)
         if (continueVirtualKeyboardEdit) {
             hostDialogActions?.onVirtualKeyboardEditContinued()
         }
@@ -409,7 +426,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     /** Routes controller focus while the runtime menu or one of its dialogs owns the input. */
     fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
         if (!isMenuVisible()) return false
-        if (hostDialogState != null || limitFpsVisible || emulationSpeedVisible) {
+        if (filePermissionPrompt != null || hostDialogState != null || limitFpsVisible || emulationSpeedVisible) {
             // Dialog semantics stay inside Compose. Preserve both DOWN and UP so a focused Compose
             // control receives a complete Activate key sequence. Consume during composition
             // hand-off as well so no controller edge can leak into the MIDlet behind the modal.
@@ -457,6 +474,19 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             controllerFocusIndex = 0
         },
     )
+
+    /** Called only on the host thread. The returned handle dismisses only this request. */
+    fun showFilePermissionPrompt(write: Boolean, onChoice: MidletPermissionManager.Choice): Runnable? {
+        // Do not replace an unrelated host decision with a permission prompt.
+        if (isMenuVisible()) return null
+        val prompt = FilePermissionPrompt(write, onChoice)
+        changeControllerSurface { filePermissionPrompt = prompt }
+        return Runnable {
+            if (filePermissionPrompt === prompt) {
+                changeControllerSurface { filePermissionPrompt = null }
+            }
+        }
+    }
 
     fun showMidletDialog(names: Array<String>) {
         changeControllerSurface {

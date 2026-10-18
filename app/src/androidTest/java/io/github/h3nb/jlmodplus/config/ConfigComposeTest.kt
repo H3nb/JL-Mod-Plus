@@ -66,6 +66,35 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun sharedPermissionChangeDoesNotEditTheReusableProfile() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form, base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets, base.profileStatus, base.profileTemplates,
+            base.timingControlsEnabled, base.profileNames, base.controllerAvailable,
+            base.updatePresetName, ConfigUiState.FileAccess(0, 0, emptyList()),
+        )
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, events, initialDestination = ConfigDestination.System) }
+        }
+        composeRule.onNodeWithText(uiString(R.string.midlet_permissions_settings_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.midlet_storage_mode_title)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.midlet_storage_mode_android)).performClick()
+        composeRule.runOnIdle {
+            assertEquals(org.microemu.cldc.file.StorageMode.ANDROID, events.storageMode)
+            assertEquals(0, events.formChanges)
+        }
+        scrollTo(uiString(R.string.midlet_permissions_write))
+        composeRule.onNodeWithText(uiString(R.string.midlet_permissions_write)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.midlet_permissions_deny)).performClick()
+        composeRule.runOnIdle {
+            assertEquals(true to MidletPermissionStore.DENY, events.filePermission)
+            assertEquals(0, events.formChanges)
+        }
+    }
+
+    @Test
     fun groupedGamepadPreferencesHaveSeparateVerticalBounds() {
         composeRule.setContent {
             JLModPlusTheme {
@@ -988,6 +1017,14 @@ class ConfigComposeTest {
     }
 
     private class RecordingConfigEvents : ConfigFormEvents {
+        var storageMode: org.microemu.cldc.file.StorageMode? = null
+        override fun onStorageModeChanged(mode: org.microemu.cldc.file.StorageMode) {
+            storageMode = mode
+        }
+        var filePermission: Pair<Boolean, Int>? = null
+        override fun onFilePermissionChanged(write: Boolean, decision: Int) {
+            filePermission = write to decision
+        }
         var formChanges = 0
         var lastForm: ConfigFormState? = null
 

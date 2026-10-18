@@ -5,11 +5,14 @@ package io.github.h3nb.jlmodplus.config;
 
 /** Small Bundle contract shared by the main-process authority provider and the runtime client. */
 public final class PresetAuthorityContract {
+    public static final String KEY_STORAGE_MODE = "storageMode";
 	public static final String AUTHORITY_SUFFIX = ".preset-authority";
 
 	public static final String METHOD_PREPARE_RUNTIME = "prepareRuntime";
 	public static final String METHOD_RESOLVE_UPDATE_TARGET = "resolveUpdateTarget";
 	public static final String METHOD_SAVE_VIRTUAL_KEYBOARD_LAYOUT = "saveVirtualKeyboardLayout";
+	public static final String METHOD_GET_FILE_PERMISSIONS = "getFilePermissions";
+	public static final String METHOD_SET_FILE_PERMISSION = "setFilePermission";
 
 	public static final String KEY_APP_PATH = "appPath";
 	public static final String KEY_EXPECTED_APP_ID = "expectedAppId";
@@ -19,6 +22,11 @@ public final class PresetAuthorityContract {
 	public static final String KEY_UPDATE_TARGET = "updateTarget";
 	public static final String KEY_LAYOUT_PAYLOAD = "layoutPayload";
 	public static final String KEY_UPDATE_OUTCOME = "updateOutcome";
+	public static final String KEY_JAR_FINGERPRINT = "jarFingerprint";
+	public static final String KEY_PERMISSION_CAPABILITY = "permissionCapability";
+	public static final String KEY_PERMISSION_DECISION = "permissionDecision";
+	public static final String KEY_FILE_READ_DECISION = "fileReadDecision";
+	public static final String KEY_FILE_WRITE_DECISION = "fileWriteDecision";
 
 	public static final int RESULT_OK = 0;
 	public static final int RESULT_STALE = 1;
