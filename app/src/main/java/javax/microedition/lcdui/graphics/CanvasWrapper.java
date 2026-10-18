@@ -50,6 +50,7 @@ public class CanvasWrapper {
 	private final float baseTextCenterOffset;
 	private final float baseTextHeight;
 	private final boolean filterBitmap;
+	private final float controlOutlineWidth;
 
 	private float textAscent;
 	private float textCenterOffset;
@@ -65,6 +66,8 @@ public class CanvasWrapper {
 
 		// init text paint
 		Context context = ContextHolder.getAppContext();
+		// Outline weight is fixed in dp, never scaled by a key, D-pad, or stick radius.
+		controlOutlineWidth = context.getResources().getDisplayMetrics().density * 0.75f;
 		textPaint.setTypeface(ResourcesCompat.getFont(context, R.font.roboto_regular));
 		textSize = context.getResources().getDimension(R.dimen._22sp);
 		textPaint.setTextSize(textSize);
@@ -104,7 +107,39 @@ public class CanvasWrapper {
 		canvas.restoreToCount(saveCount);
 	}
 
-	/** Anti-aliased grouped-control primitives use independent paints, leaving legacy keys intact. */
+	/** Anti-aliased virtual-control primitives do not modify the legacy MIDlet paints. */
+	public float getControlOutlineWidth() {
+		return controlOutlineWidth;
+	}
+
+	public void fillControlRect(RectF rect, int color) {
+		controlFillPaint.setColor(color);
+		canvas.drawRect(rect, controlFillPaint);
+	}
+
+	public void strokeControlRect(RectF rect, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawRect(rect, controlStrokePaint);
+	}
+
+	public void strokeControlRoundRect(RectF rect, float rounding, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawRoundRect(rect, rounding, rounding, controlStrokePaint);
+	}
+
+	public void fillControlOval(RectF oval, int color) {
+		controlFillPaint.setColor(color);
+		canvas.drawOval(oval, controlFillPaint);
+	}
+
+	public void strokeControlOval(RectF oval, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawOval(oval, controlStrokePaint);
+	}
+
 	public void fillControlPath(Path path, int color) {
 		controlFillPaint.setColor(color);
 		canvas.drawPath(path, controlFillPaint);

@@ -2308,22 +2308,23 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			int fgColor = VirtualControlAppearance.foreground(settings, selected);
 			int alpha = VirtualControlAppearance.opacity(settings.vkAlpha,
 					layoutEditMode != LAYOUT_EOF, opaque) << 24;
-			g.setFillColor((layoutEditMode != LAYOUT_EOF ? (0xFF / 3) << 24 : alpha) | bgColor);
+			int fill = (layoutEditMode != LAYOUT_EOF ? (0xFF / 3) << 24 : alpha) | bgColor;
+			int outline = alpha | VirtualControlAppearance.outline(settings);
+			float stroke = g.getControlOutlineWidth();
 			g.setTextColor(alpha | fgColor);
-			g.setDrawColor(alpha | settings.vkOutlineColor);
 
 			switch (settings.vkButtonShape) {
 				case SHAPE_ROUND_RECT -> {
-					g.fillRoundRect(rect, corners, corners);
-					g.drawRoundRect(rect, corners, corners);
+					g.fillControlRoundRect(rect, corners, fill);
+					g.strokeControlRoundRect(rect, corners, outline, stroke);
 				}
 				case SHAPE_RECT -> {
-					g.fillRect(rect);
-					g.drawRect(rect);
+					g.fillControlRect(rect, fill);
+					g.strokeControlRect(rect, outline, stroke);
 				}
 				case SHAPE_OVAL -> {
-					g.fillArc(rect, 0, 360);
-					g.drawArc(rect, 0, 360);
+					g.fillControlOval(rect, fill);
+					g.strokeControlOval(rect, outline, stroke);
 				}
 			}
 			paintKeyLabel(g, this, rect, keypadLegendContext);

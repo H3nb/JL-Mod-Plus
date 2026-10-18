@@ -1354,7 +1354,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int outline = VirtualControlAppearance.outline(settings);
 		int foreground = VirtualControlAppearance.foreground(settings, false);
 		int selectedForeground = VirtualControlAppearance.foreground(settings, true);
-		float stroke = Math.max(1.0f, r * 0.012f);
+		float stroke = graphics.getControlOutlineWidth();
 
 		int layer = beginControlLayer(graphics, cx, cy, r * 1.06f, alpha);
 		try {
@@ -1528,19 +1528,31 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 		int layer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f, alpha);
 		try {
-			float stroke = Math.max(1.0f, radius * 0.012f);
+			float stroke = graphics.getControlOutlineWidth();
+			// Classic concentric recess with palette-derived shading, composited at one opacity.
 			fillCircle(graphics, centerX, centerY, radius * 0.94f, base);
-			// One quiet recessed surface separates the cap from its base without target rings.
-			fillCircle(graphics, centerX, centerY, radius * 0.67f,
-					VirtualControlAppearance.mixRgb(base, outline, 0.075f));
+			fillCircle(graphics, centerX, centerY, radius * 0.77f,
+					VirtualControlAppearance.mixRgb(base, outline, 0.17f));
+			fillCircle(graphics, centerX, centerY, radius * 0.69f,
+					VirtualControlAppearance.mixRgb(base, 0x000000, 0.26f));
+			fillCircle(graphics, centerX, centerY, radius * 0.59f,
+					VirtualControlAppearance.mixRgb(base, outline, 0.07f));
 			graphics.strokeControlCircle(centerX, centerY, radius * 0.94f,
 					opaqueColor(outline), stroke);
-			float thumbRadius = radius * 0.43f;
+
+			// Recessed rim and layered thumb restore the old physical-joystick character.
+			float thumbRadius = radius * 0.395f;
+			fillCircle(graphics, thumbX, thumbY, thumbRadius * 1.075f,
+					VirtualControlAppearance.mixRgb(thumbColor, outline, 0.38f));
 			fillCircle(graphics, thumbX, thumbY, thumbRadius, thumbColor);
+			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.82f,
+					VirtualControlAppearance.mixRgb(thumbColor, indicator, 0.10f));
 			graphics.strokeControlCircle(thumbX, thumbY, thumbRadius,
-					opaqueColor(VirtualControlAppearance.mixRgb(base, outline, 0.56f)),
-					Math.max(1.0f, radius * 0.016f));
-			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.13f, indicator);
+					opaqueColor(VirtualControlAppearance.mixRgb(thumbColor, outline, 0.56f)),
+					stroke);
+			fillCircle(graphics, thumbX - thumbRadius * 0.16f,
+					thumbY - thumbRadius * 0.18f, thumbRadius * 0.16f,
+					VirtualControlAppearance.mixRgb(thumbColor, indicator, 0.20f));
 			if (editingAnalog) {
 				graphics.strokeControlCircle(centerX, centerY, radius * 1.02f,
 						opaqueColor(VirtualControlAppearance.background(settings, true)), stroke);
