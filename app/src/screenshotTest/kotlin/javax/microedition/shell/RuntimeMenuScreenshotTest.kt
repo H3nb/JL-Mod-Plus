@@ -15,6 +15,10 @@
 package javax.microedition.shell
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -276,11 +280,14 @@ private fun RuntimeMenuPreview(
     menuVisible: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    RuntimeMenuHost(
-        state = state,
-        menuVisible = menuVisible,
-        actions = NoOpRuntimeMenuActions,
-        onDismissMenu = {},
-        modifier = modifier,
-    )
+    // Runtime menus use a full window, while their native toolbar host stays one row high.
+    Box(modifier = modifier.fillMaxSize()) {
+        RuntimeMenuHost(
+            state = state,
+            menuVisible = menuVisible,
+            actions = NoOpRuntimeMenuActions,
+            onDismissMenu = {},
+            modifier = if (menuVisible) Modifier.fillMaxWidth().height(48.dp) else Modifier.fillMaxSize(),
+        )
+    }
 }

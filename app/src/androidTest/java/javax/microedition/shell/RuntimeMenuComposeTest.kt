@@ -390,7 +390,7 @@ class RuntimeMenuComposeTest {
             .assertWidthIsAtLeast(48.dp)
         val bounds = screenshot.getUnclippedBoundsInRoot()
         assertTrue(bounds.top >= 0.dp && bounds.bottom <= 40.dp)
-        assertEquals(40.dp, bounds.height)
+        assertEquals(40.dp, bounds.bottom - bounds.top)
         screenshot.performClick()
         // The old 48dp target would extend into this first row below the compact toolbar.
         composeRule.onNodeWithTag("below-toolbar").performTouchInput {
