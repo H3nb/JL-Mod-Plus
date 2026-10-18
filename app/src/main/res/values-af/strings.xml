@@ -937,10 +937,6 @@
     <string name="pref_button_shape_title">Knoppievorm</string>
     <string name="pref_category_experimental">Eksperimenteel</string>
     <string name="pref_emulator_dir">Werkgids</string>
-    <string name="pref_enable_actionbar_summary">Hou die looptydnutsbalk sigbaar op MIDlet Canvas-skerms.</string>
-    <string name="pref_enable_actionbar_title">Wys looptydnutsbalk</string>
-    <string name="pref_enable_statusbar_summary">Hou die stelselstatusbalk sigbaar. As dit aangeskakel word, word die gebruik van die skermuitsnyding se area afgeskakel.</string>
-    <string name="pref_enable_statusbar_title">Wys stelselstatusbalk</string>
     <string name="pref_encoding_title">Karakterenkodering</string>
     <string name="pref_graphics_hw_gles">Hardewareversnelling (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardewareversnelling (Surface)</string>
@@ -979,8 +975,6 @@
     <string name="pref_theme_system">Volg stelselinstellings</string>
     <string name="pref_theme_title">Tema</string>
     <string name="pref_title_emulation">MIDlet-lewensiklus</string>
-    <string name="pref_use_display_cutout_summary">Laat versoenbare MIDlet Canvas-inhoud en die looptydnutsbalk toe om die skermuitsnyding se area te gebruik. As dit aangeskakel word, word die stelselstatusbalk versteek.</string>
-    <string name="pref_use_display_cutout_title">Gebruik skermuitsnyding se area</string>
     <string name="pref_vibration_title">Vibrasie</string>
     <string name="pref_vk_hide_hint">Afgeskakel</string>
     <string name="pref_vk_save_alert">Vervang die bestaande pasgemaakte uitleg van virtuele beheerknoppies met die huidige een?</string>
@@ -1061,4 +1055,9 @@
         <item quantity="one">%1$d gekies</item>
         <item quantity="other">%1$d gekies</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Brei uit na die skermuitsnyding se area</string>
+    <string name="pref_midlet_display_cutout_summary">Laat die MIDlet-vertoning die area rondom die skermuitsnyding gebruik. ’n Deel van die vertoning kan bedek word.</string>
+    <string name="pref_runtime_fullscreen_title">Volskerm</string>
+    <string name="pref_runtime_fullscreen_summary">Versteek die nutsbalk terwyl jy speel. Geld vir alle MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">Kon nie toegang tot die volskerminstelling kry nie. Probeer weer.</string>
 </resources>

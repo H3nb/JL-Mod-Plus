@@ -56,6 +56,7 @@ data class ProfileModel(
     @SerialName("TimingMode") @JvmField var timingMode: Int = TimingMode.FULL_GUEST_TIME,
     @SerialName("FpsLimit") @JvmField var fpsLimit: Int = 0,
     @SerialName("ForceFullscreen") @JvmField var forceFullscreen: Boolean = false,
+    @SerialName("AllowDisplayCutout") @JvmField var allowDisplayCutout: Boolean = false,
     @SerialName("FontSizeSmall") @JvmField var fontSizeSmall: Int = 0,
     @SerialName("FontSizeMedium") @JvmField var fontSizeMedium: Int = 0,
     @SerialName("FontSizeLarge") @JvmField var fontSizeLarge: Int = 0,

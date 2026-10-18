@@ -54,10 +54,6 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 				boolean enable = !ViewConfiguration.get(this).hasPermanentMenuKey();
 				sp.edit().putBoolean(Constants.PREF_TOOLBAR, enable).apply();
 			}
-			if (sp.getBoolean(Constants.PREF_STATUSBAR, false)
-					&& sp.getBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, true)) {
-				sp.edit().putBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, false).apply();
-			}
 		}
 		ContextHolder.setVibration(sp.getBoolean(Constants.PREF_VIBRATION, true));
 		sp.registerOnSharedPreferenceChangeListener(this);

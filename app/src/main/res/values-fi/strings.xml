@@ -35,8 +35,6 @@
     <string name="permission_request_failed">Tämä sovellus tarvitsee tallennustilan kirjoitusoikeuden.</string>
     <string name="pref_app_sort_date">Lisäyspäivä</string>
     <string name="pref_app_sort_name">Nimi</string>
-    <string name="pref_enable_actionbar_summary">Pidä runtime-työkalupalkki näkyvissä MIDlet Canvas -näytöissä.</string>
-    <string name="pref_enable_actionbar_title">Näytä runtime-työkalupalkki</string>
     <string name="PREF_FILTER">Lineaarinen suodatus</string>
     <string name="PREF_FONT_LARGE">Suuri</string>
     <string name="PREF_FONT_MEDIUM">Keskikokoinen</string>
@@ -200,8 +198,6 @@
     <string name="pref_button_shape_title">Painikkeen muoto</string>
     <string name="pref_category_experimental">Kokeelliset/tilapäiset asetukset</string>
     <string name="pref_emulator_dir">Työkansio</string>
-    <string name="pref_enable_statusbar_title">Näytä järjestelmän tilapalkki</string>
-    <string name="pref_enable_statusbar_summary">Pidä järjestelmän tilapalkki näkyvissä. Kun asetus otetaan käyttöön, näyttöloven alue poistetaan käytöstä.</string>
     <string name="pref_encoding_title">Merkistökoodaus</string>
     <string name="PREF_FONT_ANTI_ALIASING">Reunojen pehmennys</string>
     <string name="PREF_FORCE_FULLSCREEN">Käynnistä ilman komentopalkkia</string>
@@ -879,8 +875,6 @@
     <string name="settings_section_storage">Tallennustila</string>
     <string name="settings_section_profiles">Profiilit</string>
     <string name="settings_profiles_summary">Hallitse profiileja, joita voit käyttää uudelleen eri MIDlet-sovelluksissa.</string>
-    <string name="pref_use_display_cutout_title">Käytä näytön lovea MIDlet-sovelluksessa</string>
-    <string name="pref_use_display_cutout_summary">Salli yhteensopivan MIDlet Canvas -sisällön ja runtime-työkalupalkin käyttää näytön loven aluetta. Kun asetus otetaan käyttöön, järjestelmän tilapalkki piilotetaan.</string>
     <string name="pref_accent_title">Korostusväri</string>
     <string name="pref_accent_blue">Oletussininen</string>
     <string name="pref_accent_teal">Sinivihreä</string>
@@ -1061,4 +1055,9 @@
         <item quantity="one">%1$d Java-luokkatiedosto ohitettiin, koska sitä ei voitu lukea. Sitä käyttävät ominaisuudet eivät ehkä toimi.</item>
         <item quantity="other">%1$d Java-luokkatiedostoa ohitettiin, koska niitä ei voitu lukea. Niitä käyttävät ominaisuudet eivät ehkä toimi.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Laajenna näytön loven alueelle</string>
+    <string name="pref_midlet_display_cutout_summary">Salli MIDlet-näkymän käyttää näytön loven ympärillä olevaa aluetta. Osa näkymästä voi peittyä.</string>
+    <string name="pref_runtime_fullscreen_title">Koko näyttö</string>
+    <string name="pref_runtime_fullscreen_summary">Piilota työkalupalkki pelatessa. Koskee kaikkia MIDlet-sovelluksia.</string>
+    <string name="runtime_fullscreen_update_failed">Koko näytön asetusta ei voitu käyttää. Yritä uudelleen.</string>
 </resources>

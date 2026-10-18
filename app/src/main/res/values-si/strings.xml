@@ -747,10 +747,6 @@
     <string name="msg_immediate_mode_disabled">සිදුවීම් callback එකක් තුළ තවත් callback කැඳවීමේ ගැඹුර අධික වූ බැවින් ක්ෂණික සැකසීම අක්‍රීය කරන ලදී.</string>
     <string name="parallel_screen_redrawing">අසමමුහුර්ත තිර යාවත්කාලීන</string>
     <string name="pref_emulator_dir">වැඩ නාමාවලිය</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas තිරවල ධාවන මෙවලම් තීරුව දිගටම පෙන්වයි.</string>
-    <string name="pref_enable_actionbar_title">ධාවන මෙවලම් තීරුව පෙන්වන්න</string>
-    <string name="pref_enable_statusbar_title">පද්ධති තත්ත්ව තීරුව පෙන්වන්න</string>
-    <string name="pref_enable_statusbar_summary">පද්ධති තත්ත්ව තීරුව දිගටම පෙන්වයි. මෙය සබල කළ විට තිර කැපුම් ප්‍රදේශය භාවිත කිරීම අක්‍රීය වේ.</string>
     <string name="PREF_FILTER">රේඛීය පෙරීම</string>
     <string name="PREF_FONT_ANTI_ALIASING">අකුරු දාර සුමට කිරීම</string>
     <string name="PREF_FORCE_FULLSCREEN">විධාන තීරුව නොමැතිව අරඹන්න</string>
@@ -973,8 +969,6 @@
     <string name="config_analog_stick_summary">ප්‍රධාන ඇනලොග් ස්ටික් සඳහා අක්‍රියයි, දිශා 4, දිශා 8 හෝ අංක යතුරු පුවරුව තෝරන්න. පාලක බොත්තම් යතුරු පැවරුම් භාවිත කරයි.</string>
     <string name="config_controller_help_body_compact">පාලක බොත්තම් යතුරු පුවරුවේ සහ දුරකථනයේ යතුරුවලට සමාන යතුරු පැවරුම් භාවිත කරයි. ඇනලොග් ස්ටික් MIDlet වෙත යවන්නේ දිශා ආදානය පමණයි. Android ආපසු යතුරේ සාමාන්‍ය ක්‍රියාකාරිත්වය නොවෙනස්ව පවතී; M වෙත පැවරූ ඕනෑම භෞතික බොත්තමක් ධාවන MIDlet මෙනුව විවෘත කරයි.</string>
     <string name="settings_section_midlet_runtime">MIDlet ධාවන පරිසරය</string>
-    <string name="pref_use_display_cutout_title">තිර කැපුම් ප්‍රදේශය භාවිත කරන්න</string>
-    <string name="pref_use_display_cutout_summary">ගැළපෙන MIDlet Canvas අන්තර්ගතයට සහ ධාවන මෙවලම් තීරුවට තිර කැපුම් ප්‍රදේශය භාවිත කිරීමට ඉඩ දෙයි. මෙය සබල කළ විට පද්ධති තත්ත්ව තීරුව සැඟවේ.</string>
     <string name="runtime_storage_in_use">MIDlet ගබඩාව දැනටමත් වෙනත් ධාවන පරිසරයක් භාවිත කරයි.</string>
     <string name="midlet_running_notification_channel">MIDlet ධාවන පරිසරය</string>
     <string name="runtime_virtual_controls_edit_guide_message">පාලක චලනය කිරීමට ඒවා ඇදගෙන යන්න. බොත්තම්වල පළල හෝ උස වෙනස් කිරීමට ඇඟිලි දෙකක් තිරස්ව හෝ සිරස්ව චලනය කරන්න; දෙකම වෙනස් කිරීමට විකර්ණව චලනය කරන්න. D-pad හෝ ඇනලොග් ස්ටික් සමානුපාතිකව විශාල හෝ කුඩා කිරීමට ඇඟිලි දෙක ළං කරන්න හෝ ඈත් කරන්න. අවසන් වූ විට නිමයි තට්ටු කරන්න.</string>
@@ -1061,4 +1055,9 @@
         <item quantity="one">ස්ථාපිත යෙදුම් %1$dක් මෙම මූලාශ්‍රයට ගැළපේ.</item>
         <item quantity="other">ස්ථාපිත යෙදුම් %1$dක් මෙම මූලාශ්‍රයට ගැළපේ.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">තිර කැපුම් ප්‍රදේශයට පුළුල් කරන්න</string>
+    <string name="pref_midlet_display_cutout_summary">තිර කැපුම වටා ඇති ප්‍රදේශය භාවිත කිරීමට MIDlet දර්ශනයට ඉඩ දෙන්න. දර්ශනයේ කොටසක් වැසී යා හැකිය.</string>
+    <string name="pref_runtime_fullscreen_title">පූර්ණ තිරය</string>
+    <string name="pref_runtime_fullscreen_summary">ක්‍රීඩා කරන විට මෙවලම් තීරුව සඟවන්න. සියලුම MIDlet යෙදුම් සඳහා අදාළ වේ.</string>
+    <string name="runtime_fullscreen_update_failed">පූර්ණ තිර සැකසුමට ප්‍රවේශ විය නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
 </resources>

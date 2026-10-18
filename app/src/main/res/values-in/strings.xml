@@ -141,10 +141,6 @@
     <string name="pref_button_shape_title">Bentuk tombol</string>
     <string name="pref_category_experimental">Eksperimental</string>
     <string name="pref_emulator_dir">Direktori kerja</string>
-    <string name="pref_enable_actionbar_summary">Menjaga bilah alat runtime tetap terlihat pada layar Canvas MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Tampilkan bilah alat runtime</string>
-    <string name="pref_enable_statusbar_title">Tampilkan bilah status sistem</string>
-    <string name="pref_enable_statusbar_summary">Menjaga bilah status sistem tetap terlihat. Mengaktifkannya menonaktifkan area potongan layar.</string>
     <string name="pref_encoding_title">Pengodean</string>
     <string name="pref_language">Bahasa aplikasi</string>
     <string name="PREF_FILTER">Filter linear</string>
@@ -885,8 +881,6 @@
     <string name="settings_section_storage">Penyimpanan</string>
     <string name="settings_section_profiles">Profil</string>
     <string name="settings_profiles_summary">Kelola profil yang dapat digunakan kembali di berbagai MIDlet.</string>
-    <string name="pref_use_display_cutout_title">Gunakan area potongan layar</string>
-    <string name="pref_use_display_cutout_summary">Mengizinkan konten Canvas MIDlet yang kompatibel dan bilah alat runtime menggunakan area potongan layar. Mengaktifkannya menyembunyikan bilah status sistem.</string>
     <string name="pref_accent_title">Warna aksen</string>
     <string name="pref_accent_sapphire">Biru safir</string>
     <string name="pref_accent_violet">Violet anggrek</string>
@@ -1048,4 +1042,9 @@
     <string name="memory_editor_increment_step">Langkah</string>
     <string name="memory_editor_increment_invalid">Gunakan satu tipe bilangan bulat dan nilai dalam rentangnya.</string>
     <string name="memory_editor_increment_preview">Pratinjau: %1$s</string>
+    <string name="pref_midlet_display_cutout_title">Perluas ke area potongan layar</string>
+    <string name="pref_midlet_display_cutout_summary">Izinkan tampilan MIDlet menggunakan area di sekitar potongan layar. Sebagian tampilan mungkin tertutup.</string>
+    <string name="pref_runtime_fullscreen_title">Layar penuh</string>
+    <string name="pref_runtime_fullscreen_summary">Sembunyikan bilah alat saat bermain. Berlaku untuk semua MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">Pengaturan layar penuh tidak dapat diakses. Coba lagi.</string>
 </resources>

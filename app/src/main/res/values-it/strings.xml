@@ -49,9 +49,6 @@
     <string name="pref_button_shape_round">Rettangolo arrotondato</string>
     <string name="pref_button_shape_title">Forma del tasto</string>
     <string name="pref_emulator_dir">Cartella di lavoro</string>
-    <string name="pref_enable_actionbar_summary">Mantiene visibile la barra degli strumenti runtime nelle schermate Canvas del MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Mostra barra strumenti runtime</string>
-    <string name="pref_enable_statusbar_title">Mostra barra di stato di sistema</string>
     <string name="pref_encoding_title">Codifica testo</string>
     <string name="PREF_FILTER">Filtro lineare</string>
     <string name="PREF_FONT_LARGE">Grande</string>
@@ -232,7 +229,6 @@
     <string name="pref_apps_view">Vista Libreria</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Opzioni sperimentali/temporanee</string>
-    <string name="pref_enable_statusbar_summary">Mantiene visibile la barra di stato di sistema. L’attivazione disabilita l’area del ritaglio del display.</string>
     <string name="PREF_FONT_ANTI_ALIASING">Antialiasing</string>
     <string name="pref_graphics_software">Software</string>
     <string name="pref_language">Lingua</string>
@@ -915,8 +911,6 @@
     <string name="settings_section_storage">Archiviazione</string>
     <string name="settings_section_profiles">Profili</string>
     <string name="settings_profiles_summary">Gestisci profili riutilizzabili tra più MIDlet.</string>
-    <string name="pref_use_display_cutout_title">Usa ritaglio display nel MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Consente ai contenuti Canvas compatibili del MIDlet e alla barra runtime di usare l’area del ritaglio del display. Se attivato, nasconde la barra di stato di sistema.</string>
     <string name="pref_accent_title">Colore accento</string>
     <string name="pref_accent_blue">Blu predefinito</string>
     <string name="pref_accent_teal">Verde acqua</string>
@@ -1094,4 +1088,9 @@
         <item quantity="other">%1$d file di classe Java sono stati saltati perché non è stato possibile leggerli. Le funzionalità che li usano potrebbero non funzionare.</item>
         <item quantity="many">%1$d di file di classe Java sono stati saltati perché non è stato possibile leggerli. Le funzionalità che li usano potrebbero non funzionare.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Estendi all’area del ritaglio del display</string>
+    <string name="pref_midlet_display_cutout_summary">Consenti alla schermata del MIDlet di usare l’area attorno al ritaglio del display. Parte della schermata potrebbe essere coperta.</string>
+    <string name="pref_runtime_fullscreen_title">Schermo intero</string>
+    <string name="pref_runtime_fullscreen_summary">Nasconde la barra degli strumenti durante il gioco. Si applica a tutti i MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">Impossibile accedere all’impostazione dello schermo intero. Riprova.</string>
 </resources>

@@ -295,6 +295,10 @@
             android:process=":midlet" />
 
         <provider
+            android:name=".settings.RuntimeFullscreenProvider"
+            android:authorities="${applicationId}.runtime-fullscreen"
+            android:exported="false" />
+        <provider
             android:name=".config.PresetAuthorityProvider"
             android:authorities="${applicationId}.preset-authority"
             android:exported="false" />

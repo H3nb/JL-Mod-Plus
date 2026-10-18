@@ -936,10 +936,6 @@
     <string name="pref_button_shape_title">Knappeform</string>
     <string name="pref_category_experimental">Eksperimentelt</string>
     <string name="pref_emulator_dir">Arbeidsmappe</string>
-    <string name="pref_enable_actionbar_summary">Hold verktøylinjen for kjøring synlig på MIDlet-ens Canvas-skjermer.</string>
-    <string name="pref_enable_actionbar_title">Vis verktøylinje for kjøring</string>
-    <string name="pref_enable_statusbar_summary">Hold systemets statuslinje synlig. Når dette aktiveres, deaktiveres bruk av området ved skjermutskjæringen.</string>
-    <string name="pref_enable_statusbar_title">Vis systemets statuslinje</string>
     <string name="pref_encoding_title">Tegnkoding</string>
     <string name="pref_graphics_hw_gles">Maskinvareakselerasjon (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Maskinvareakselerasjon (Surface)</string>
@@ -978,8 +974,6 @@
     <string name="pref_theme_system">Følg systeminnstillingene</string>
     <string name="pref_theme_title">Tema</string>
     <string name="pref_title_emulation">MIDlet-livssyklus</string>
-    <string name="pref_use_display_cutout_summary">La kompatibelt Canvas-innhold fra MIDlet-er og verktøylinjen for kjøring bruke området ved skjermutskjæringen. Når dette aktiveres, skjules systemets statuslinje.</string>
-    <string name="pref_use_display_cutout_title">Bruk området ved skjermutskjæringen</string>
     <string name="pref_vibration_title">Vibrasjon</string>
     <string name="pref_vk_hide_hint">Deaktivert</string>
     <string name="pref_vk_save_alert">Erstatt det eksisterende egendefinerte oppsettet for virtuelle kontroller med det gjeldende?</string>
@@ -1060,4 +1054,9 @@
         <item quantity="one">%1$d valgt</item>
         <item quantity="other">%1$d valgt</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Utvid til området ved skjermutskjæringen</string>
+    <string name="pref_midlet_display_cutout_summary">La MIDlet-visningen bruke området rundt skjermutskjæringen. Deler av visningen kan bli skjult.</string>
+    <string name="pref_runtime_fullscreen_title">Fullskjerm</string>
+    <string name="pref_runtime_fullscreen_summary">Skjul verktøylinjen mens du spiller. Gjelder alle MIDlet-er.</string>
+    <string name="runtime_fullscreen_update_failed">Kunne ikke få tilgang til fullskjerminnstillingen. Prøv igjen.</string>
 </resources>

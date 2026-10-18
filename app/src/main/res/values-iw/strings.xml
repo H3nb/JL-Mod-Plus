@@ -967,10 +967,6 @@
     <string name="pref_button_shape_title">צורת כפתור</string>
     <string name="pref_category_experimental">ניסיוני</string>
     <string name="pref_emulator_dir">תיקיית עבודה</string>
-    <string name="pref_enable_actionbar_summary">שמירת סרגל הכלים של סביבת הריצה גלוי במסכי MIDlet Canvas.</string>
-    <string name="pref_enable_actionbar_title">הצגת סרגל הכלים של סביבת הריצה</string>
-    <string name="pref_enable_statusbar_summary">שמירת סרגל המצב של המערכת גלוי. הפעלת האפשרות משביתה את השימוש באזור מגרעת התצוגה.</string>
-    <string name="pref_enable_statusbar_title">הצגת סרגל המצב של המערכת</string>
     <string name="pref_encoding_title">קידוד</string>
     <string name="pref_graphics_hw_gles">האצת חומרה (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">האצת חומרה (Surface)</string>
@@ -1009,8 +1005,6 @@
     <string name="pref_theme_system">לפי הגדרות המערכת</string>
     <string name="pref_theme_title">ערכת נושא</string>
     <string name="pref_title_emulation">מחזור החיים של MIDlet</string>
-    <string name="pref_use_display_cutout_summary">מתן אפשרות לתוכן MIDlet Canvas תואם ולסרגל הכלים של סביבת הריצה להשתמש באזור מגרעת התצוגה. הפעלת האפשרות מסתירה את סרגל המצב של המערכת.</string>
-    <string name="pref_use_display_cutout_title">שימוש באזור מגרעת התצוגה</string>
     <string name="pref_vibration_title">רטט</string>
     <string name="pref_vk_hide_hint">מושבת</string>
     <string name="pref_vk_save_alert">להחליף את הפריסה המותאמת הקיימת של הפקדים הווירטואליים בפריסה הנוכחית?</string>
@@ -1094,4 +1088,9 @@
         <item quantity="two">נבחרו %1$d</item>
         <item quantity="other">נבחרו %1$d</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">הרחבה לאזור מגרעת התצוגה</string>
+    <string name="pref_midlet_display_cutout_summary">אפשר לתצוגת MIDlet להשתמש באזור שסביב מגרעת המסך. חלק מהתצוגה עלול להיות מוסתר.</string>
+    <string name="pref_runtime_fullscreen_title">מסך מלא</string>
+    <string name="pref_runtime_fullscreen_summary">הסתרת סרגל הכלים בזמן המשחק. חל על כל יישומי MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">לא ניתן לגשת להגדרת המסך המלא. יש לנסות שוב.</string>
 </resources>

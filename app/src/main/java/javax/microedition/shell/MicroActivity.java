@@ -27,7 +27,12 @@ import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Point;
+import android.util.Log;
+import android.view.RoundedCorner;
+import android.view.WindowInsets;
 import android.media.AudioManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -95,6 +100,7 @@ import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.runtime.RuntimeReplacementActivity;
+import io.github.h3nb.jlmodplus.settings.RuntimeFullscreenClient;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.crashes.ManualLogCapture;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
@@ -105,7 +111,7 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_AUTO = 1;
 	private static final int ORIENTATION_PORTRAIT = 2;
 	private static final int ORIENTATION_LANDSCAPE = 3;
-	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
+	private static final int DEFAULT_RUNTIME_TOOLBAR_HEIGHT_DP = 48;
 	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
@@ -119,8 +125,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Nullable
 	private Runnable pendingTerminalProcessCleanup;
 	private boolean runtimeToolbarEnabled;
-	private boolean statusBarEnabled;
-	private boolean displayCutoutEnabled;
+	private RuntimeFullscreenClient fullscreenClient;
 	private boolean orientationLocked;
 	private MicroLoader microLoader;
 	private boolean pendingMidletLaunch;
@@ -143,10 +148,6 @@ public class MicroActivity extends AppCompatActivity {
 	/** True from an explicit external Android launch until this host resumes again. */
 	private volatile boolean externalAndroidHandoff;
 	private boolean skinLayerAvailable;
-	private int virtualDisplayPaddingLeft;
-	private int virtualDisplayPaddingTop;
-	private int virtualDisplayPaddingRight;
-	private int virtualDisplayPaddingBottom;
 	private View overlayAnchor;
 	private SharedPreferences defaultPreferences;
 	private SharedPreferences runtimePreferences;
@@ -167,15 +168,11 @@ public class MicroActivity extends AppCompatActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		lockNightMode();
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
+		EdgeToEdgeCompat.enableForComposeSurface(this);
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
-		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
-		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
-		virtualDisplayPaddingRight = binding.virtualDisplay.getPaddingRight();
-		virtualDisplayPaddingBottom = binding.virtualDisplay.getPaddingBottom();
 		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (view, insets) -> {
 			lastWindowInsets = insets;
 			applyGuestInsets(current);
@@ -183,6 +180,12 @@ public class MicroActivity extends AppCompatActivity {
 		});
 		binding.displayableContainer.addOnLayoutChangeListener((view, left, top, right, bottom,
 				oldLeft, oldTop, oldRight, oldBottom) -> updateOverlayLocation());
+		binding.getRoot().addOnLayoutChangeListener((view, left, top, right, bottom,
+				oldLeft, oldTop, oldRight, oldBottom) -> {
+			if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
+				applyGuestInsets(current);
+			}
+		});
 		binding.toolbar.addOnLayoutChangeListener((view, left, top, right, bottom,
 				oldLeft, oldTop, oldRight, oldBottom) -> updateOverlayLocation());
 		binding.overlay.addOnLayoutChangeListener((view, left, top, right, bottom,
@@ -193,10 +196,22 @@ public class MicroActivity extends AppCompatActivity {
 		runtimePreferences = RuntimeUiPreferences.get(this);
 		sp.registerOnSharedPreferenceChangeListener(canvasThemeListener);
 		runtimeToolbarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
-		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
-		// Keep legacy preference files safe: status bar and cutout are mutually exclusive even if
-		// an older version persisted both switches as enabled.
-		displayCutoutEnabled = sp.getBoolean(PREF_USE_DISPLAY_CUTOUT, true) && !statusBarEnabled;
+
+		fullscreenClient = new RuntimeFullscreenClient(this, new RuntimeFullscreenClient.Listener() {
+			@Override
+			public void onFullscreenChanged(boolean fullscreen) {
+				if (runtimeToolbarEnabled == !fullscreen) return;
+				runtimeToolbarEnabled = !fullscreen;
+				refreshRuntimeChrome();
+			}
+
+			@Override
+			public void onFullscreenError(@NonNull Exception failure) {
+				Log.w("MicroActivity", "Could not update runtime fullscreen preference", failure);
+				toast(R.string.runtime_fullscreen_update_failed);
+			}
+		});
+		fullscreenClient.start();
 		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
@@ -442,6 +457,11 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onToggleFullscreen() {
+						if (fullscreenClient != null) fullscreenClient.setFullscreen(runtimeToolbarEnabled);
+					}
+
+					@Override
 					public void onEmulationSpeed() {
 						updateRuntimeMenuState(current);
 					}
@@ -639,27 +659,38 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {
-		return GuestWindowPolicy.resolve(displayable instanceof Canvas,
-				statusBarEnabled, runtimeToolbarEnabled, displayCutoutEnabled);
+		// A failed load can leave a loader without a profile while its host error dialog is open.
+		ProfileModel profile = microLoader == null ? null : microLoader.getProfile();
+		return GuestWindowPolicy.resolve(displayable instanceof Canvas, !runtimeToolbarEnabled,
+				profile != null && profile.allowDisplayCutout);
 	}
 
 	private int getRuntimeToolbarHeight(GuestWindowPolicy.Chrome chrome) {
 		if (!chrome.toolbarVisible) {
 			return 0;
 		}
-		int minimumTouchTarget = Math.round(MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP
+		int defaultToolbarHeight = Math.round(DEFAULT_RUNTIME_TOOLBAR_HEIGHT_DP
 				* getResources().getDisplayMetrics().density);
-		int standardHeight = Math.max(Math.round(getToolBarHeight()), minimumTouchTarget);
-		// Canvas previously compressed the action row below the minimum Android touch target.
-		// Keep its compact visual treatment while giving each visible action a reliable 48dp target.
-		return chrome.canvas ? Math.max(standardHeight * 2 / 3, minimumTouchTarget) : standardHeight;
+		int standardHeight = Math.max(Math.round(getToolBarHeight()), defaultToolbarHeight);
+		if (!chrome.canvas) return standardHeight;
+		int width = binding.getRoot().getWidth();
+		int height = binding.getRoot().getHeight();
+		Configuration configuration = getResources().getConfiguration();
+		if (width == 0 || height == 0) {
+			width = configuration.screenWidthDp;
+			height = configuration.screenHeightDp;
+		}
+		return Math.round(GuestWindowPolicy.canvasToolbarHeightDp(width, height,
+				configuration.fontScale) * getResources().getDisplayMetrics().density);
 	}
 
 	private void setRuntimeToolbarHeight(int height) {
 		LinearLayout.LayoutParams layoutParams =
 				(LinearLayout.LayoutParams) binding.toolbar.getLayoutParams();
-		layoutParams.height = Math.max(height, 0);
-		binding.toolbar.setLayoutParams(layoutParams);
+		if (layoutParams.height != Math.max(height, 0)) {
+			layoutParams.height = Math.max(height, 0);
+			binding.toolbar.setLayoutParams(layoutParams);
+		}
 	}
 
 	public void lockNightMode() {
@@ -772,7 +803,10 @@ public class MicroActivity extends AppCompatActivity {
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		refreshCanvasBackground();
-		if (binding != null) binding.getRoot().post(this::updateOverlayLocation);
+		if (binding != null) {
+			ViewCompat.requestApplyInsets(binding.getRoot());
+			binding.getRoot().post(() -> applyGuestInsets(current));
+		}
 		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 
@@ -801,6 +835,10 @@ public class MicroActivity extends AppCompatActivity {
 			if (defaultPreferences != null) {
 				defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 				defaultPreferences = null;
+			}
+			if (fullscreenClient != null) {
+				fullscreenClient.close();
+				fullscreenClient = null;
 			}
 			runtimePreferences = null;
 			if (memoryEditorController != null) {
@@ -1076,61 +1114,131 @@ public class MicroActivity extends AppCompatActivity {
 	private void applySystemUi(GuestWindowPolicy.Chrome chrome, @Nullable Displayable displayable) {
 		RuntimeSystemBarController.apply(
 				getWindow(), chrome.statusBarVisible, chrome.navigationBarVisible);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-			applyGuestInsets(displayable);
-		}
+		applyGuestInsets(displayable);
 	}
 
 	private WindowInsetsControllerCompat getInsetsController() {
 		return WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
 	}
 
-	private void configureDisplayCutoutWindow() {
-		configureDisplayCutoutWindow(displayCutoutEnabled && !statusBarEnabled);
+	private void refreshRuntimeChrome() {
+		GuestWindowPolicy.Chrome chrome = getRuntimeChrome(current);
+		applySystemUi(chrome, current);
+		updateRuntimeMenuState(current);
 	}
 
-	private void configureDisplayCutoutWindow(boolean allowWindowCutout) {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+	private void configureDisplayCutoutWindow() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return;
+		WindowManager.LayoutParams attributes = getWindow().getAttributes();
+		int mode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+				? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+				: WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+		if (attributes.layoutInDisplayCutoutMode != mode) {
+			attributes.layoutInDisplayCutoutMode = mode;
+			getWindow().setAttributes(attributes);
+		}
+	}
+
+	/** Window fills the display; toolbar controls and guest content own independent safe bounds. */
+	private void applyGuestInsets(@Nullable Displayable displayable) {
+		if (binding == null) return;
+		GuestWindowPolicy.Chrome chrome = getRuntimeChrome(displayable);
+		int toolbarHeight = getRuntimeToolbarHeight(chrome);
+		if (lastWindowInsets == null || binding.getRoot().getWidth() == 0) {
+			setRuntimeToolbarHeight(toolbarHeight);
 			return;
 		}
-		WindowManager.LayoutParams attributes = getWindow().getAttributes();
-		if (allowWindowCutout) {
-			attributes.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-					? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-					: WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-		} else {
-			// Android 15+ may force the window edge-to-edge regardless of this mode. GuestWindowPolicy
-			// remains authoritative there and reserves the cutout inset when the user disables it.
-			attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+		View decor = getWindow().getDecorView();
+		int windowWidth = decor.getWidth();
+		int windowHeight = decor.getHeight();
+		int[] rootLocation = new int[2];
+		binding.getRoot().getLocationInWindow(rootLocation);
+		int rootLeft = rootLocation[0];
+		int rootTop = rootLocation[1];
+		int rootWidth = binding.getRoot().getWidth();
+		int rootHeight = binding.getRoot().getHeight();
+		Insets cutout = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout());
+		Insets waterfall = lastWindowInsets.getDisplayCutout() == null ? Insets.NONE
+				: lastWindowInsets.getDisplayCutout().getWaterfallInsets();
+		Insets physical = Insets.max(cutout, waterfall);
+		Insets caption = lastWindowInsets.getInsets(WindowInsetsCompat.Type.captionBar());
+		Insets bars = chrome.canvas ? caption : Insets.max(caption,
+				lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars()));
+		// The toolbar background occupies the cutout area. Only its contents avoid
+		// intersecting cutout rectangles; a notch must not become an extra top row.
+		Insets hostSafe = Insets.max(waterfall, bars);
+		GuestWindowPolicy.Padding toolbarPadding = GuestWindowPolicy.paddingForBounds(
+				windowWidth, windowHeight, rootLeft, rootTop, rootWidth, rootHeight,
+				hostSafe.left, hostSafe.top, hostSafe.right, 0);
+		// Corners protect the centered text/icon band, not the empty top of their touch rectangles.
+		int contentBandHeight = Math.min(toolbarHeight, Math.round(24
+				* getResources().getDisplayMetrics().density * getResources().getConfiguration().fontScale));
+		int contentBandTop = rootTop + toolbarPadding.top + (toolbarHeight - contentBandHeight) / 2;
+		Insets rounded = roundedHorizontalInsets(contentBandTop, contentBandTop + contentBandHeight, windowWidth);
+		if (runtimeMenuController != null) {
+			runtimeMenuController.updateToolbarInsets(toolbarPadding.left, toolbarPadding.top, toolbarPadding.right, 0);
+			runtimeMenuController.updateToolbarRoundedInsets(Math.max(0, rounded.left - rootLeft),
+					Math.max(0, rootLeft + rootWidth - windowWidth + rounded.right));
+			runtimeMenuController.updateToolbarCutouts(toolbarCutoutBounds(rootLeft,
+					rootTop + toolbarPadding.top, toolbarHeight));
 		}
-		getWindow().setAttributes(attributes);
-		if (binding != null) {
-			ViewCompat.requestApplyInsets(binding.getRoot());
+		int totalToolbarHeight = chrome.toolbarVisible ? toolbarHeight + toolbarPadding.top : 0;
+		setRuntimeToolbarHeight(totalToolbarHeight);
+
+		Insets guestSafe = chrome.cutoutAllowed ? bars : Insets.max(physical, bars);
+		if (!chrome.canvas) {
+			guestSafe = Insets.max(guestSafe, lastWindowInsets.getInsets(WindowInsetsCompat.Type.ime()));
 		}
+		GuestWindowPolicy.Padding guest = GuestWindowPolicy.paddingForBounds(windowWidth, windowHeight,
+				rootLeft, rootTop + totalToolbarHeight, rootWidth, Math.max(1, rootHeight - totalToolbarHeight),
+				guestSafe.left, guestSafe.top, guestSafe.right, guestSafe.bottom);
+		setPaddingIfChanged(binding.displayableContainer, guest.left, guest.top, guest.right, guest.bottom);
+		updateOverlayLocation();
 	}
 
-	private void applyGuestInsets(@Nullable Displayable displayable) {
-		int left = virtualDisplayPaddingLeft;
-		int top = virtualDisplayPaddingTop;
-		int right = virtualDisplayPaddingRight;
-		int bottom = virtualDisplayPaddingBottom;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && lastWindowInsets != null) {
-			Insets systemBars = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars());
-			Insets statusBars = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.statusBars());
-			Insets navigationBars = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.navigationBars());
-			Insets cutout = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout());
-			Insets ime = lastWindowInsets.getInsets(WindowInsetsCompat.Type.ime());
-			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(displayable);
-			GuestWindowPolicy.Padding guestPadding = GuestWindowPolicy.calculate(chrome,
-					systemBars.left, statusBars.top, systemBars.right, navigationBars.bottom,
-					cutout.left, cutout.top, cutout.right, cutout.bottom, ime.bottom);
-			left += guestPadding.left;
-			top += guestPadding.top;
-			right += guestPadding.right;
-			bottom += guestPadding.bottom;
+	/** Horizontal cutout obstacles for the toolbar row, in toolbar-local physical pixels. */
+	private int[] toolbarCutoutBounds(int toolbarLeft, int rowTop, int rowHeight) {
+		if (lastWindowInsets.getDisplayCutout() == null) return new int[0];
+		List<Rect> rectangles = lastWindowInsets.getDisplayCutout().getBoundingRects();
+		int[] bounds = new int[rectangles.size() * 2];
+		int count = 0;
+		for (Rect rectangle : rectangles) {
+			if (rectangle.top < rowTop + rowHeight && rectangle.bottom > rowTop) {
+				bounds[count++] = rectangle.left - toolbarLeft;
+				bounds[count++] = rectangle.right - toolbarLeft;
+			}
 		}
-		binding.virtualDisplay.setPadding(left, top, right, bottom);
-		updateOverlayLocation();
+		return java.util.Arrays.copyOf(bounds, count);
+	}
+
+	private Insets roundedHorizontalInsets(int bandTop, int bandBottom, int windowWidth) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return Insets.NONE;
+		WindowInsets insets = getWindow().getDecorView().getRootWindowInsets();
+		if (insets == null) return Insets.NONE;
+		int left = 0;
+		int right = 0;
+		int[] positions = {RoundedCorner.POSITION_TOP_LEFT, RoundedCorner.POSITION_TOP_RIGHT,
+				RoundedCorner.POSITION_BOTTOM_LEFT, RoundedCorner.POSITION_BOTTOM_RIGHT};
+		for (int position : positions) {
+			RoundedCorner corner = insets.getRoundedCorner(position);
+			if (corner == null) continue;
+			boolean top = position == RoundedCorner.POSITION_TOP_LEFT || position == RoundedCorner.POSITION_TOP_RIGHT;
+			boolean atLeft = position == RoundedCorner.POSITION_TOP_LEFT || position == RoundedCorner.POSITION_BOTTOM_LEFT;
+			Point center = corner.getCenter();
+			int clearance = GuestWindowPolicy.roundedCornerClearance(corner.getRadius(), center.y,
+					bandTop, bandBottom, top);
+			if (clearance == 0) continue;
+			if (atLeft) left = Math.max(left, center.x - corner.getRadius() + clearance);
+			else right = Math.max(right, windowWidth - center.x - corner.getRadius() + clearance);
+		}
+		return Insets.of(Math.max(0, left), 0, Math.max(0, right), 0);
+	}
+
+	private static void setPaddingIfChanged(View view, int left, int top, int right, int bottom) {
+		if (view.getPaddingLeft() != left || view.getPaddingTop() != top
+				|| view.getPaddingRight() != right || view.getPaddingBottom() != bottom) {
+			view.setPadding(left, top, right, bottom);
+		}
 	}
 
 	private void updateOverlayLocation() {
@@ -1846,8 +1954,7 @@ public class MicroActivity extends AppCompatActivity {
 			}
 			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
 			applySystemUi(chrome, next);
-			configureDisplayCutoutWindow(chrome.cutoutAllowed);
-			setRuntimeToolbarHeight(getRuntimeToolbarHeight(chrome));
+			configureDisplayCutoutWindow();
 			updateRuntimeMenuState(next);
 			applyGuestInsets(next);
 			if (replaceMountedView && next != null) {

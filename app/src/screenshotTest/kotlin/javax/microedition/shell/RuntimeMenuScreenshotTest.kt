@@ -15,6 +15,10 @@
 package javax.microedition.shell
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,6 +63,7 @@ private val CanvasMenuState = RuntimeMenuUiState(
     virtualKeyboardAvailable = true,
     virtualKeyboardEditing = true,
     orientationLocked = true,
+    emulationSpeedAvailable = true,
 )
 
 @PreviewTest
@@ -80,11 +85,37 @@ fun RuntimeOverflowMenuScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Runtime compact toolbar", widthDp = 360, heightDp = 38, showBackground = true)
+@Preview(name = "Runtime compact toolbar", widthDp = 240, heightDp = 48, showBackground = true)
 @Composable
 fun RuntimeCompactToolbarScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         RuntimeMenuPreview(state = CanvasMenuState)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Runtime central cutout toolbar", widthDp = 360, heightDp = 48, showBackground = true)
+@Composable
+fun RuntimeCentralCutoutToolbarScreenshot() {
+    val cutout = with(androidx.compose.ui.platform.LocalDensity.current) {
+        RuntimeToolbarOcclusion(154.dp.roundToPx(), 206.dp.roundToPx())
+    }
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeMenuPreview(state = CanvasMenuState.copy(toolbarCutouts = listOf(cutout)))
+    }
+}
+
+@PreviewTest
+@Preview(name = "Runtime landscape toolbar", widthDp = 640, heightDp = 40, showBackground = true)
+@Composable
+fun RuntimeLandscapeToolbarScreenshot() {
+    val roundedInset = with(androidx.compose.ui.platform.LocalDensity.current) { 28.dp.roundToPx() }
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeMenuPreview(state = CanvasMenuState.copy(
+            emulationSpeedPercent = 150,
+            toolbarRoundedLeftPx = roundedInset,
+            toolbarRoundedRightPx = roundedInset,
+        ))
     }
 }
 
@@ -249,11 +280,14 @@ private fun RuntimeMenuPreview(
     menuVisible: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    RuntimeMenuHost(
-        state = state,
-        menuVisible = menuVisible,
-        actions = NoOpRuntimeMenuActions,
-        onDismissMenu = {},
-        modifier = modifier,
-    )
+    // Runtime menus use a full window, while their native toolbar host stays one row high.
+    Box(modifier = modifier.fillMaxSize()) {
+        RuntimeMenuHost(
+            state = state,
+            menuVisible = menuVisible,
+            actions = NoOpRuntimeMenuActions,
+            onDismissMenu = {},
+            modifier = if (menuVisible) Modifier.fillMaxWidth().height(48.dp) else Modifier.fillMaxSize(),
+        )
+    }
 }

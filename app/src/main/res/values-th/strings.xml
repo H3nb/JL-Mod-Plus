@@ -25,7 +25,6 @@
     <string name="pref_app_sort_date">วันที่เพิ่ม</string>
     <string name="pref_app_sort_name">ชื่อ</string>
     <string name="pref_button_shape_title">รูปร่างปุ่ม</string>
-    <string name="pref_enable_actionbar_title">แสดงแถบเครื่องมือรันไทม์</string>
     <string name="PREF_FILTER">การกรองแบบเชิงเส้น</string>
     <string name="PREF_FONT_LARGE">ใหญ่</string>
     <string name="PREF_FONT_MEDIUM">ปานกลาง</string>
@@ -917,9 +916,6 @@
     <string name="pref_button_shape_round">สี่เหลี่ยมผืนผ้ามุมมน</string>
     <string name="pref_category_experimental">ฟีเจอร์ทดลอง</string>
     <string name="pref_emulator_dir">ไดเรกทอรีทำงาน</string>
-    <string name="pref_enable_actionbar_summary">แสดงแถบเครื่องมือรันไทม์ไว้บนหน้าจอ Canvas ของ MIDlet</string>
-    <string name="pref_enable_statusbar_summary">แสดงแถบสถานะระบบไว้ การเปิดตัวเลือกนี้จะปิดการใช้พื้นที่รอยบากหน้าจอ</string>
-    <string name="pref_enable_statusbar_title">แสดงแถบสถานะระบบ</string>
     <string name="pref_encoding_title">การเข้ารหัสอักขระ</string>
     <string name="pref_graphics_hw_gles">การเร่งด้วยฮาร์ดแวร์ (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">การเร่งด้วยฮาร์ดแวร์ (Surface)</string>
@@ -950,8 +946,6 @@
     <string name="pref_theme_auto_time">อัตโนมัติ (ตามช่วงเวลาของวัน)</string>
     <string name="pref_theme_system">ตามการตั้งค่าระบบ</string>
     <string name="pref_title_emulation">วงจรการทำงานของ MIDlet</string>
-    <string name="pref_use_display_cutout_summary">อนุญาตให้เนื้อหา Canvas ของ MIDlet ที่รองรับและแถบเครื่องมือรันไทม์ใช้พื้นที่รอยบากหน้าจอ การเปิดตัวเลือกนี้จะซ่อนแถบสถานะระบบ</string>
-    <string name="pref_use_display_cutout_title">ใช้พื้นที่รอยบากหน้าจอ</string>
     <string name="pref_vibration_title">การสั่น</string>
     <string name="pref_vk_hide_hint">ปิดใช้งาน</string>
     <string name="pref_vk_save_alert">แทนที่รูปแบบตัวควบคุมเสมือนที่กำหนดเองเดิมด้วยรูปแบบปัจจุบันหรือไม่</string>
@@ -1028,4 +1022,9 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="other">เลือกแล้ว %1$d รายการ</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">ขยายไปยังพื้นที่รอยบากหน้าจอ</string>
+    <string name="pref_midlet_display_cutout_summary">อนุญาตให้หน้าจอ MIDlet ใช้พื้นที่รอบรอยบากหน้าจอ ส่วนหนึ่งของหน้าจอ MIDlet อาจถูกบัง</string>
+    <string name="pref_runtime_fullscreen_title">เต็มหน้าจอ</string>
+    <string name="pref_runtime_fullscreen_summary">ซ่อนแถบเครื่องมือขณะเล่น มีผลกับ MIDlet ทั้งหมด</string>
+    <string name="runtime_fullscreen_update_failed">ไม่สามารถเข้าถึงการตั้งค่าเต็มหน้าจอได้ โปรดลองอีกครั้ง</string>
 </resources>

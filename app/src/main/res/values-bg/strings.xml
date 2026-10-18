@@ -49,9 +49,6 @@
     <string name="pref_button_shape_round">Заоблен правоъгълник</string>
     <string name="pref_button_shape_title">Форма на бутона</string>
     <string name="pref_emulator_dir">Работна директория</string>
-    <string name="pref_enable_actionbar_summary">Запазва лентата с инструменти видима на екраните Canvas на MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Показване на лентата с инструменти при изпълнение</string>
-    <string name="pref_enable_statusbar_title">Показване на системната лента на състоянието</string>
     <string name="pref_encoding_title">Кодиране</string>
     <string name="PREF_FILTER">Линейно филтриране</string>
     <string name="PREF_FONT_ANTI_ALIASING">Изглаждане на ръбовете</string>
@@ -974,7 +971,6 @@
     <string name="pref_apps_view">Подредба</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Експериментални</string>
-    <string name="pref_enable_statusbar_summary">Запазва системната лента на състоянието видима. Включването изключва използването на зоната на изреза на дисплея.</string>
     <string name="pref_language">Език на приложението</string>
     <string name="pref_mascot_summary">Показва съобщение при използване на Mascot Capsule 3D.</string>
     <string name="pref_mascot_title">Известие за Mascot Capsule 3D</string>
@@ -989,8 +985,6 @@
     <string name="pref_theme_auto_time">Автоматично (според часа)</string>
     <string name="pref_theme_system">Следване на системните настройки</string>
     <string name="pref_title_emulation">Жизнен цикъл на MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Позволява на съвместимото съдържание Canvas на MIDlet и лентата с инструменти да използват зоната на изреза на дисплея. Включването скрива системната лента на състоянието.</string>
-    <string name="pref_use_display_cutout_title">Използване на зоната на изреза на дисплея</string>
     <string name="pref_vk_save_alert">Да се замени ли съществуващата персонализирана подредба на виртуалните контроли с текущата?</string>
     <string name="pref_vk_type_arrows">Стрелки</string>
     <string name="pref_vk_type_arrows_numbers">Стрелки и числа</string>
@@ -1061,4 +1055,9 @@
         <item quantity="one">Избран е %1$d</item>
         <item quantity="other">Избрани са %1$d</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Разширяване в зоната на изреза на дисплея</string>
+    <string name="pref_midlet_display_cutout_summary">Позволява на изгледа на MIDlet да използва зоната около изреза на дисплея. Част от изгледа може да бъде закрита.</string>
+    <string name="pref_runtime_fullscreen_title">Цял екран</string>
+    <string name="pref_runtime_fullscreen_summary">Скриване на лентата с инструменти по време на игра. Важи за всички MIDlet приложения.</string>
+    <string name="runtime_fullscreen_update_failed">Няма достъп до настройката за цял екран. Опитайте отново.</string>
 </resources>

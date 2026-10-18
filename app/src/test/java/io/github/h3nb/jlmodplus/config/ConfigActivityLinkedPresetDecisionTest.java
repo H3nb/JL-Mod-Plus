@@ -112,6 +112,32 @@ public class ConfigActivityLinkedPresetDecisionTest {
 	}
 
 	@Test
+	public void defaultCutoutFieldPreservesOwnershipUntilUserActuallyChangesIt() {
+		ProfileModel legacy = ProfileJson.decode("{\"Version\":7,\"SystemProperties\":\"\"}", false).model;
+		ProfileModel baseline = ProfileConfigMatcher.copyConfig(legacy);
+		ConfigFormState unchanged = ConfigFormState.fromProfile(legacy, "").toBuilder().build();
+
+		// Loading and saving an unchanged draft must not enter the detach-before-write path.
+		assertFalse(ConfigActivity.hasEffectiveDraftDivergence(legacy, unchanged, baseline));
+		assertFalse(ConfigActivity.shouldDetachBuiltInThemeLink(true, false, legacy, unchanged, baseline));
+		ConfigUiState.ProfileStatus linked = ConfigActivity.resolveNamedPresetStatus(true, "K800i", true, null);
+		assertEquals("K800i", linked.activeProfile);
+		assertNull(ConfigActivity.resolveUpdatePresetName(false, linked, true, false));
+		// Equality also cannot promote existing CUSTOM ownership into a named link.
+		assertTrue(ConfigActivity.resolveNamedPresetStatus(false, "K800i", true, null).modified);
+
+		ConfigFormState expanded = unchanged.toBuilder().allowDisplayCutout(true).build();
+		ProfileModel changed = ProfileConfigMatcher.effectiveConfig(legacy, expanded);
+		assertTrue(changed.allowDisplayCutout);
+		assertTrue(ConfigActivity.hasEffectiveDraftDivergence(legacy, expanded, baseline));
+		assertTrue(ConfigActivity.shouldDetachBuiltInThemeLink(true, false, legacy, expanded, baseline));
+		assertTrue(ConfigFormState.fromProfile(changed, "").toBuilder().build().allowDisplayCutout);
+		assertTrue(ProfileJson.decode(ProfileJson.encode(changed), false).model.allowDisplayCutout);
+		assertFalse(ConfigActivity.hasEffectiveDraftDivergence(
+				legacy, expanded.toBuilder().allowDisplayCutout(false).build(), baseline));
+	}
+
+	@Test
 	public void linkedEffectiveDraftChangeOffersUpdate() {
 		ProfileModel persisted = model(240);
 		ConfigFormState draft = ConfigFormState.fromProfile(persisted, persisted.systemProperties)

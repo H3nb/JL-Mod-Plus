@@ -7,6 +7,10 @@
     </queries>
 
     <application tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon">
+        <service
+            android:name="io.github.h3nb.jlmodplus.settings.FullscreenProbeService"
+            android:exported="false"
+            android:process=":fullscreen_probe" />
         <activity
             android:name="io.github.h3nb.jlmodplus.mmapi.synth.AudioQualificationActivity"
             android:excludeFromRecents="true"

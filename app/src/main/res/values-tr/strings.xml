@@ -59,9 +59,6 @@
     <string name="pref_button_shape_title">Tuş şekli</string>
     <string name="pref_category_experimental">Deneysel</string>
     <string name="pref_emulator_dir">Çalışma dizini</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas ekranlarında çalışma araç çubuğunu görünür tutar.</string>
-    <string name="pref_enable_actionbar_title">Çalışma araç çubuğunu göster</string>
-    <string name="pref_enable_statusbar_title">Sistem durum çubuğunu göster</string>
     <string name="pref_encoding_title">Kodlama</string>
     <string name="PREF_FILTER">Doğrusal filtreleme</string>
     <string name="PREF_FONT_ANTI_ALIASING">Örtüşme Önleme</string>
@@ -987,7 +984,6 @@
     <string name="pref_app_sort_descending">Azalan</string>
     <string name="pref_apps_view">Düzen</string>
     <string name="pref_audio_title">MIDI</string>
-    <string name="pref_enable_statusbar_summary">Sistem durum çubuğunu görünür tutar. Etkinleştirmek, ekran çentiği alanının kullanımını kapatır.</string>
     <string name="pref_language">Uygulama dili</string>
     <string name="pref_mascot_summary">Mascot Capsule 3D kullanıldığında mesaj gösterir.</string>
     <string name="pref_mascot_title">Mascot Capsule 3D bildirimi</string>
@@ -997,8 +993,6 @@
     <string name="pref_skip_resume_call">Sürdürürken startApp() çağrısını atla</string>
     <string name="pref_soundbank_title">MIDI ses bankası</string>
     <string name="pref_title_emulation">MIDlet yaşam döngüsü</string>
-    <string name="pref_use_display_cutout_summary">Uyumlu MIDlet Canvas içeriğinin ve çalışma araç çubuğunun ekran çentiği alanını kullanmasına izin verir. Etkinleştirmek, sistem durum çubuğunu gizler.</string>
-    <string name="pref_use_display_cutout_title">Ekran çentiği alanını kullan</string>
     <string name="settings_profiles_summary">Farklı MIDlet\'lerde yeniden kullanabileceğiniz profilleri yönetin.</string>
     <string name="settings_section_appearance">Uygulama görünümü</string>
     <string name="settings_section_language">Dil</string>
@@ -1062,4 +1056,9 @@
         <item quantity="other">%1$d seçildi</item>
         <item quantity="one">%1$d seçildi</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Ekran çentiği alanına genişlet</string>
+    <string name="pref_midlet_display_cutout_summary">MIDlet görüntüsünün ekran çentiği çevresindeki alanı kullanmasına izin ver. Görüntünün bir kısmı kapanabilir.</string>
+    <string name="pref_runtime_fullscreen_title">Tam ekran</string>
+    <string name="pref_runtime_fullscreen_summary">Oyun sırasında araç çubuğunu gizle. Tüm MIDlet’ler için geçerlidir.</string>
+    <string name="runtime_fullscreen_update_failed">Tam ekran ayarına erişilemedi. Yeniden deneyin.</string>
 </resources>

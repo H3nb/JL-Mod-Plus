@@ -37,9 +37,6 @@
     <string name="pref_button_shape_round">모서리가 둥근 직사각형</string>
     <string name="pref_button_shape_title">버튼 모양</string>
     <string name="pref_emulator_dir">작업 디렉토리</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas 화면에서 런타임 도구 모음을 계속 표시합니다.</string>
-    <string name="pref_enable_actionbar_title">런타임 도구 모음 표시</string>
-    <string name="pref_enable_statusbar_title">시스템 상태 표시줄 표시</string>
     <string name="pref_encoding_title">인코딩</string>
     <string name="PREF_FILTER">선형 필터링</string>
     <string name="PREF_FONT_ANTI_ALIASING">안티앨리어싱</string>
@@ -944,7 +941,6 @@
     <string name="pref_apps_view">레이아웃</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">실험적 기능</string>
-    <string name="pref_enable_statusbar_summary">시스템 상태 표시줄을 계속 표시합니다. 켜면 디스플레이 컷아웃 영역을 사용할 수 없습니다.</string>
     <string name="pref_language">앱 언어</string>
     <string name="pref_mascot_summary">Mascot Capsule 3D가 사용될 때 메시지를 표시합니다.</string>
     <string name="pref_mascot_title">Mascot Capsule 3D 알림</string>
@@ -959,8 +955,6 @@
     <string name="pref_theme_auto_time">자동 (시간대)</string>
     <string name="pref_theme_system">시스템 설정 따르기</string>
     <string name="pref_title_emulation">MIDlet 생명 주기</string>
-    <string name="pref_use_display_cutout_summary">호환되는 MIDlet Canvas 콘텐츠와 런타임 도구 모음이 디스플레이 컷아웃 영역을 사용하도록 허용합니다. 켜면 시스템 상태 표시줄이 숨겨집니다.</string>
-    <string name="pref_use_display_cutout_title">디스플레이 컷아웃 영역 사용</string>
     <string name="pref_vk_save_alert">기존 사용자 지정 가상 컨트롤 배치를 현재 배치로 바꾸시겠습니까?</string>
     <string name="pref_vk_type_arrows">화살표</string>
     <string name="pref_vk_type_arrows_numbers">화살표 및 숫자</string>
@@ -1028,4 +1022,9 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="other">%1$d개 선택됨</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">디스플레이 컷아웃 영역으로 확장</string>
+    <string name="pref_midlet_display_cutout_summary">MIDlet 화면에서 디스플레이 컷아웃 주변 영역을 사용하도록 허용합니다. 화면 일부가 가려질 수 있습니다.</string>
+    <string name="pref_runtime_fullscreen_title">전체 화면</string>
+    <string name="pref_runtime_fullscreen_summary">플레이 중 도구 모음을 숨깁니다. 모든 MIDlet에 적용됩니다.</string>
+    <string name="runtime_fullscreen_update_failed">전체 화면 설정에 접근할 수 없습니다. 다시 시도하세요.</string>
 </resources>

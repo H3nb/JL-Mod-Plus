@@ -48,9 +48,6 @@
     <string name="pref_button_shape_round">Afgeronde rechthoek</string>
     <string name="pref_button_shape_title">Knop vorm</string>
     <string name="pref_emulator_dir">Werkfolder</string>
-    <string name="pref_enable_actionbar_summary">Houd de runtimewerkbalk zichtbaar op MIDlet Canvas-schermen.</string>
-    <string name="pref_enable_actionbar_title">Runtimewerkbalk tonen</string>
-    <string name="pref_enable_statusbar_title">Systeemstatusbalk tonen</string>
     <string name="pref_encoding_title">Tekencodering</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-aliasing</string>
     <string name="PREF_FONT_LARGE">Groot</string>
@@ -235,7 +232,6 @@
     <string name="pref_apps_view">Bibliotheekweergave</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_category_experimental">Experimentele/tijdelijke opties</string>
-    <string name="pref_enable_statusbar_summary">Houd de systeemstatusbalk zichtbaar. Als dit is ingeschakeld, wordt het gebied van de schermuitsparing uitgeschakeld.</string>
     <string name="PREF_FILTER">Lineaire filtering</string>
     <string name="PREF_FONT_MEDIUM">Gemiddeld</string>
     <string name="pref_graphics_software">Software</string>
@@ -879,8 +875,6 @@
     <string name="settings_section_storage">Opslag</string>
     <string name="settings_section_profiles">Profielen</string>
     <string name="settings_profiles_summary">Beheer profielen die je voor meerdere MIDlet-apps kunt hergebruiken.</string>
-    <string name="pref_use_display_cutout_title">Schermuitsparing gebruiken in MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Sta compatibele MIDlet Canvas-inhoud en de runtimewerkbalk toe het gebied van de schermuitsparing te gebruiken. Als dit is ingeschakeld, wordt de systeemstatusbalk verborgen.</string>
     <string name="pref_accent_title">Accentkleur</string>
     <string name="pref_accent_blue">Standaardblauw</string>
     <string name="pref_accent_teal">Blauwgroen</string>
@@ -1061,4 +1055,9 @@
         <item quantity="one">%1$d Java-klassebestand is overgeslagen omdat het niet kon worden gelezen. Functies die het gebruiken werken mogelijk niet.</item>
         <item quantity="other">%1$d Java-klassebestanden zijn overgeslagen omdat ze niet konden worden gelezen. Functies die ze gebruiken werken mogelijk niet.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Uitbreiden naar de schermuitsparing</string>
+    <string name="pref_midlet_display_cutout_summary">Laat de MIDlet-weergave de ruimte rondom de schermuitsparing gebruiken. Een deel van de weergave kan worden bedekt.</string>
+    <string name="pref_runtime_fullscreen_title">Volledig scherm</string>
+    <string name="pref_runtime_fullscreen_summary">Verberg de werkbalk tijdens het spelen. Geldt voor alle MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">Geen toegang tot de instelling voor volledig scherm. Probeer het opnieuw.</string>
 </resources>

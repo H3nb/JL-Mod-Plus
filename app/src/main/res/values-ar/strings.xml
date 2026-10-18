@@ -59,9 +59,6 @@
     <string name="pref_button_shape_title">شكل الزر</string>
     <string name="pref_category_experimental">تجريبي</string>
     <string name="pref_emulator_dir">مجلد العمل</string>
-    <string name="pref_enable_actionbar_summary">إبقاء شريط أدوات التشغيل ظاهرًا على شاشات MIDlet Canvas.</string>
-    <string name="pref_enable_actionbar_title">إظهار شريط أدوات التشغيل</string>
-    <string name="pref_enable_statusbar_title">إظهار شريط حالة النظام</string>
     <string name="pref_encoding_title">الترميز</string>
     <string name="PREF_FILTER">التصفية الخطية</string>
     <string name="PREF_FONT_ANTI_ALIASING">تنعيم</string>
@@ -1108,7 +1105,6 @@
     <string name="pref_app_sort_descending">تنازلي</string>
     <string name="pref_apps_view">التخطيط</string>
     <string name="pref_audio_title">MIDI</string>
-    <string name="pref_enable_statusbar_summary">إبقاء شريط حالة النظام ظاهرًا. يؤدي تفعيله إلى تعطيل استخدام منطقة اقتطاع الشاشة.</string>
     <string name="pref_language">لغة التطبيق</string>
     <string name="pref_screen_padding_title">هوامش الشاشة</string>
     <string name="pref_skin_not_set">بدون</string>
@@ -1116,8 +1112,6 @@
     <string name="pref_skip_resume_call">تخطي startApp() عند الاستئناف</string>
     <string name="pref_soundbank_title">بنك أصوات MIDI</string>
     <string name="pref_title_emulation">دورة حياة MIDlet</string>
-    <string name="pref_use_display_cutout_summary">السماح لمحتوى MIDlet Canvas المتوافق وشريط أدوات التشغيل باستخدام منطقة اقتطاع الشاشة. يؤدي تفعيله إلى إخفاء شريط حالة النظام.</string>
-    <string name="pref_use_display_cutout_title">استخدام منطقة اقتطاع الشاشة</string>
     <string name="settings_profiles_summary">إدارة ملفات إعدادات يمكن إعادة استخدامها عبر تطبيقات MIDlet.</string>
     <string name="settings_section_appearance">مظهر التطبيق</string>
     <string name="settings_section_language">اللغة</string>
@@ -1193,4 +1187,9 @@
         <item quantity="many">%1$d تقريرًا محددًا</item>
         <item quantity="other">%1$d تقرير محدد</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">التوسيع إلى منطقة اقتطاع الشاشة</string>
+    <string name="pref_midlet_display_cutout_summary">السماح لواجهة MIDlet باستخدام المنطقة المحيطة باقتطاع الشاشة. قد يُحجب جزء من الواجهة.</string>
+    <string name="pref_runtime_fullscreen_title">ملء الشاشة</string>
+    <string name="pref_runtime_fullscreen_summary">إخفاء شريط الأدوات أثناء اللعب. يسري على جميع تطبيقات MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">تعذّر الوصول إلى إعداد ملء الشاشة. حاول مرة أخرى.</string>
 </resources>

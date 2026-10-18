@@ -27,8 +27,6 @@
     <string name="pref_app_sort_date">যোগ করার তারিখ</string>
     <string name="pref_app_sort_name">নাম</string>
     <string name="pref_button_shape_title">বাটনের আকৃতি</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas স্ক্রিনে রানটাইম টুলবার দৃশ্যমান রাখুন।</string>
-    <string name="pref_enable_actionbar_title">রানটাইম টুলবার দেখান</string>
     <string name="pref_encoding_title">এনকোডিং</string>
     <string name="PREF_FILTER">লিনিয়ার ফিল্টারিং</string>
     <string name="PREF_FONT_LARGE">বড়</string>
@@ -954,8 +952,6 @@
     <string name="pref_button_shape_round">গোল কোণযুক্ত আয়তক্ষেত্র</string>
     <string name="pref_category_experimental">পরীক্ষামূলক</string>
     <string name="pref_emulator_dir">কাজের ডিরেক্টরি</string>
-    <string name="pref_enable_statusbar_summary">সিস্টেম স্ট্যাটাস বার দৃশ্যমান রাখুন। এটি চালু করলে ডিসপ্লের কাটআউট এলাকা ব্যবহার বন্ধ হয়ে যায়।</string>
-    <string name="pref_enable_statusbar_title">সিস্টেম স্ট্যাটাস বার দেখান</string>
     <string name="pref_graphics_hw_gles">হার্ডওয়্যার অ্যাক্সেলারেশন (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">হার্ডওয়্যার অ্যাক্সেলারেশন (Surface)</string>
     <string name="pref_graphics_hw_view">হার্ডওয়্যার অ্যাক্সেলারেশন (Window)</string>
@@ -985,8 +981,6 @@
     <string name="pref_theme_auto_time">স্বয়ংক্রিয় (দিনের সময় অনুযায়ী)</string>
     <string name="pref_theme_system">সিস্টেম সেটিংস অনুসরণ করুন</string>
     <string name="pref_title_emulation">MIDlet-এর জীবনচক্র</string>
-    <string name="pref_use_display_cutout_summary">সামঞ্জস্যপূর্ণ MIDlet Canvas কনটেন্ট ও রানটাইম টুলবারকে ডিসপ্লের কাটআউট এলাকা ব্যবহার করতে দিন। এটি চালু করলে সিস্টেম স্ট্যাটাস বার লুকিয়ে যায়।</string>
-    <string name="pref_use_display_cutout_title">ডিসপ্লের কাটআউট এলাকা ব্যবহার করুন</string>
     <string name="pref_vibration_title">কম্পন</string>
     <string name="pref_vk_hide_hint">বন্ধ</string>
     <string name="pref_vk_save_alert">বর্তমান লেআউট দিয়ে বিদ্যমান স্বনির্ধারিত ভার্চুয়াল কন্ট্রোল লেআউট প্রতিস্থাপন করবেন?</string>
@@ -1061,4 +1055,9 @@
         <item quantity="one">%1$d নির্বাচিত</item>
         <item quantity="other">%1$d নির্বাচিত</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">ডিসপ্লের কাটআউট এলাকায় প্রসারিত করুন</string>
+    <string name="pref_midlet_display_cutout_summary">MIDlet-এর প্রদর্শনকে ডিসপ্লের কাটআউটের চারপাশের এলাকা ব্যবহার করতে দিন। প্রদর্শনের কিছু অংশ ঢাকা পড়তে পারে।</string>
+    <string name="pref_runtime_fullscreen_title">পূর্ণ স্ক্রিন</string>
+    <string name="pref_runtime_fullscreen_summary">খেলার সময় টুলবার লুকান। সব MIDlet-এর ক্ষেত্রে প্রযোজ্য।</string>
+    <string name="runtime_fullscreen_update_failed">পূর্ণ স্ক্রিন সেটিং অ্যাক্সেস করা যায়নি। আবার চেষ্টা করুন।</string>
 </resources>

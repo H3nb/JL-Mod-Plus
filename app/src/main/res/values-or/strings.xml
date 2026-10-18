@@ -46,9 +46,6 @@
     <string name="pref_button_shape_round">ଗୋଲାକାର କୋଣ ଥିବା ଆୟତକ୍ଷେତ୍ର</string>
     <string name="pref_button_shape_title">ବଟନ୍ ଆକୃତି</string>
     <string name="pref_emulator_dir">ୱାର୍କିଂ ଡିରେକ୍ଟୋରୀ</string>
-    <string name="pref_enable_actionbar_summary">MIDlet Canvas ସ୍କ୍ରିନ୍‌ରେ ରନ୍‌ଟାଇମ୍ ଟୁଲ୍‌ବାର୍ ଦୃଶ୍ୟମାନ ରଖନ୍ତୁ।</string>
-    <string name="pref_enable_actionbar_title">ରନ୍‌ଟାଇମ୍ ଟୁଲ୍‌ବାର୍ ଦେଖାନ୍ତୁ</string>
-    <string name="pref_enable_statusbar_title">ସିଷ୍ଟମ୍ ଷ୍ଟାଟସ୍ ବାର୍ ଦେଖାନ୍ତୁ</string>
     <string name="pref_encoding_title">ଏନକୋଡିଂ</string>
     <string name="PREF_FONT_LARGE">ବଡ଼</string>
     <string name="PREF_FONT_MEDIUM">ମଧ୍ୟମ</string>
@@ -1024,11 +1021,8 @@
     <string name="pref_accent_teal">ଜେଡ୍ ଆଭାର ନୀଳମିଶା ସବୁଜ</string>
     <string name="pref_accent_title">ଆକ୍ସେଣ୍ଟ୍ ରଙ୍ଗ</string>
     <string name="pref_accent_violet">ଅର୍କିଡ୍ ଆଭାର ବାଇଗଣୀ</string>
-    <string name="pref_enable_statusbar_summary">ସିଷ୍ଟମ୍ ଷ୍ଟାଟସ୍ ବାର୍ ଦୃଶ୍ୟମାନ ରଖନ୍ତୁ। ଏହା ସକ୍ରିୟ କଲେ ଡିସପ୍ଲେ କଟ୍‌ଆଉଟ୍ କ୍ଷେତ୍ର ବ୍ୟବହାର ବନ୍ଦ ହୁଏ।</string>
     <string name="pref_screen_padding_title">ସ୍କ୍ରିନ୍ ଚାରିପଟର ଖାଲି ସ୍ଥାନ</string>
     <string name="pref_skin_title">ସ୍କିନ୍</string>
-    <string name="pref_use_display_cutout_summary">ସୁସଙ୍ଗତ MIDlet Canvas ବିଷୟବସ୍ତୁ ଓ ରନ୍‌ଟାଇମ୍ ଟୁଲ୍‌ବାର୍‌କୁ ଡିସପ୍ଲେ କଟ୍‌ଆଉଟ୍ କ୍ଷେତ୍ର ବ୍ୟବହାର କରିବାକୁ ଦିଅନ୍ତୁ। ଏହା ସକ୍ରିୟ କଲେ ସିଷ୍ଟମ୍ ଷ୍ଟାଟସ୍ ବାର୍ ଲୁଚିଯାଏ।</string>
-    <string name="pref_use_display_cutout_title">ଡିସପ୍ଲେ କଟ୍‌ଆଉଟ୍ କ୍ଷେତ୍ର ବ୍ୟବହାର କରନ୍ତୁ</string>
     <string name="pref_vk_save_alert">ବର୍ତ୍ତମାନ ଥିବା କଷ୍ଟମ୍ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବିନ୍ୟାସକୁ ଏବେର ବିନ୍ୟାସ ସହିତ ବଦଳାଇବେ?</string>
     <string name="preset_apply_failed_summary">ଏହି ପ୍ରୋଫାଇଲ୍ ପ୍ରୟୋଗ କରାଯାଇପାରିଲା ନାହିଁ। ଉତ୍ସ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="preset_based_on_modified">ଏହି MIDlet ର ବର୍ତ୍ତମାନର କନଫିଗରେସନ୍ %1$s ଠାରୁ ଭିନ୍ନ।</string>
@@ -1061,4 +1055,9 @@
         <item quantity="one">%dଟି ପାରାମିଟର୍ ଚୟନ ହୋଇଛି</item>
         <item quantity="other">%dଟି ପାରାମିଟର୍ ଚୟନ ହୋଇଛି</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">ଡିସପ୍ଲେ କଟ୍‌ଆଉଟ୍ କ୍ଷେତ୍ରକୁ ବିସ୍ତାର କରନ୍ତୁ</string>
+    <string name="pref_midlet_display_cutout_summary">MIDlet ଦୃଶ୍ୟକୁ ଡିସପ୍ଲେ କଟ୍‌ଆଉଟ୍ ଚାରିପାଖର କ୍ଷେତ୍ର ବ୍ୟବହାର କରିବାକୁ ଦିଅନ୍ତୁ। ଦୃଶ୍ୟର କିଛି ଅଂଶ ଲୁଚିଯାଇପାରେ।</string>
+    <string name="pref_runtime_fullscreen_title">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍</string>
+    <string name="pref_runtime_fullscreen_summary">ଖେଳିବା ସମୟରେ ଟୁଲ୍‌ବାର୍ ଲୁଚାନ୍ତୁ। ସମସ୍ତ MIDlet ପାଇଁ ପ୍ରଯୋଜ୍ୟ।</string>
+    <string name="runtime_fullscreen_update_failed">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍ ସେଟିଂକୁ ଆକ୍ସେସ୍ କରାଯାଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
 </resources>
