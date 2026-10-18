@@ -89,5 +89,7 @@ public class VirtualControlAppearanceTest {
 		assertEquals(255, VirtualControlAppearance.opacity(0, true, false));
 		assertEquals(255, VirtualControlAppearance.opacity(999, false, false));
 		assertEquals(0, VirtualControlAppearance.opacity(-5, false, false));
+		assertEquals(255, VirtualControlAppearance.surfaceAlpha(false));
+		assertEquals(85, VirtualControlAppearance.surfaceAlpha(true));
 	}
 }

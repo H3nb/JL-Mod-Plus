@@ -2306,9 +2306,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		void paint(CanvasWrapper g, boolean keypadLegendContext) {
 			int bgColor = VirtualControlAppearance.background(settings, selected);
 			int fgColor = VirtualControlAppearance.foreground(settings, selected);
-			int alpha = VirtualControlAppearance.opacity(settings.vkAlpha,
-					layoutEditMode != LAYOUT_EOF, opaque) << 24;
-			int fill = (layoutEditMode != LAYOUT_EOF ? (0xFF / 3) << 24 : alpha) | bgColor;
+			boolean editing = layoutEditMode != LAYOUT_EOF;
+			int alpha = VirtualControlAppearance.opacity(settings.vkAlpha, editing, opaque) << 24;
+			int fillAlpha = editing ? VirtualControlAppearance.surfaceAlpha(true) << 24 : alpha;
+			int fill = fillAlpha | bgColor;
 			int outline = alpha | VirtualControlAppearance.outline(settings);
 			float stroke = g.getControlOutlineWidth();
 			g.setTextColor(alpha | fgColor);

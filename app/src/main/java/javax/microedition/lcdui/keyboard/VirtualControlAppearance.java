@@ -124,6 +124,11 @@ public final class VirtualControlAppearance {
 		return analogThumbColor(background(profile, false), background(profile, true), active);
 	}
 
+	/** Fade composed control surfaces in layout edit mode; keep outlines and labels legible. */
+	static int surfaceAlpha(boolean editing) {
+		return editing ? 0xFF / 3 : 255;
+	}
+
 	static int opacity(int configured, boolean editing, boolean forceOpaqueOutsideGuest) {
 		if (editing || forceOpaqueOutsideGuest) return 255;
 		return Math.max(0, Math.min(255, configured));
