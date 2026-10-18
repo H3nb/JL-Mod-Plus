@@ -1022,4 +1022,9 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="other">已選取 %1$d 項</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">擴展至螢幕凹口區域</string>
+    <string name="pref_midlet_display_cutout_summary">允許遊戲使用相機開孔周圍的區域。部分畫面可能遭到遮擋。</string>
+    <string name="pref_runtime_fullscreen_title">全螢幕</string>
+    <string name="pref_runtime_fullscreen_summary">遊玩時隱藏工具列。適用於所有 MIDlet。</string>
+    <string name="runtime_fullscreen_update_failed">無法存取全螢幕設定，請重試。</string>
 </resources>

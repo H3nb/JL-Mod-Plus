@@ -1055,4 +1055,9 @@
         <item quantity="one">%1$d নির্বাচিত</item>
         <item quantity="other">%1$d নির্বাচিত</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">ডিসপ্লের কাটআউট এলাকায় প্রসারিত করুন</string>
+    <string name="pref_midlet_display_cutout_summary">গেমকে ক্যামেরার কাটআউটের চারপাশের এলাকা ব্যবহার করতে দিন। ছবির কিছু অংশ ঢাকা পড়তে পারে।</string>
+    <string name="pref_runtime_fullscreen_title">পূর্ণ স্ক্রিন</string>
+    <string name="pref_runtime_fullscreen_summary">খেলার সময় টুলবার লুকান। সব MIDlet-এর ক্ষেত্রে প্রযোজ্য।</string>
+    <string name="runtime_fullscreen_update_failed">পূর্ণ স্ক্রিন সেটিং অ্যাক্সেস করা যায়নি। আবার চেষ্টা করুন।</string>
 </resources>

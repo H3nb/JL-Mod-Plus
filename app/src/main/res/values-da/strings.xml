@@ -1055,4 +1055,9 @@
         <item quantity="one">%1$d Java-klassefil blev sprunget over, fordi den ikke kunne læses. Funktioner, der bruger den, virker muligvis ikke.</item>
         <item quantity="other">%1$d Java-klassefiler blev sprunget over, fordi de ikke kunne læses. Funktioner, der bruger dem, virker muligvis ikke.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Udvid til området ved skærmudskæringen</string>
+    <string name="pref_midlet_display_cutout_summary">Lad spillet bruge området omkring kameraudskæringen. En del af billedet kan blive skjult.</string>
+    <string name="pref_runtime_fullscreen_title">Fuld skærm</string>
+    <string name="pref_runtime_fullscreen_summary">Skjul værktøjslinjen, mens du spiller. Gælder alle MIDlet-apps.</string>
+    <string name="runtime_fullscreen_update_failed">Kunne ikke få adgang til indstillingen for fuld skærm. Prøv igen.</string>
 </resources>

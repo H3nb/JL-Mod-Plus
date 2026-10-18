@@ -1055,4 +1055,9 @@
         <item quantity="one">%dଟି ପାରାମିଟର୍ ଚୟନ ହୋଇଛି</item>
         <item quantity="other">%dଟି ପାରାମିଟର୍ ଚୟନ ହୋଇଛି</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">ଡିସପ୍ଲେ କଟ୍‌ଆଉଟ୍ କ୍ଷେତ୍ରକୁ ବିସ୍ତାର କରନ୍ତୁ</string>
+    <string name="pref_midlet_display_cutout_summary">ଗେମ୍‌କୁ କ୍ୟାମେରା କଟ୍‌ଆଉଟ୍ ଚାରିପାଖର କ୍ଷେତ୍ର ବ୍ୟବହାର କରିବାକୁ ଦିଅନ୍ତୁ। ଚିତ୍ରର କିଛି ଅଂଶ ଲୁଚିଯାଇପାରେ।</string>
+    <string name="pref_runtime_fullscreen_title">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍</string>
+    <string name="pref_runtime_fullscreen_summary">ଖେଳିବା ସମୟରେ ଟୁଲ୍‌ବାର୍ ଲୁଚାନ୍ତୁ। ସମସ୍ତ MIDlet ପାଇଁ ପ୍ରଯୋଜ୍ୟ।</string>
+    <string name="runtime_fullscreen_update_failed">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍ ସେଟିଂକୁ ଆକ୍ସେସ୍ କରାଯାଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
 </resources>

@@ -60,11 +60,11 @@ class ProfileJsonTest {
         val directory = Files.createTempDirectory("profile-cutout-default").toFile()
         val config = File(directory, Config.MIDLET_CONFIG_FILE).apply { writeText(input) }
         try {
-            assertFalse(ProfilesManager.loadConfig(directory).allowDisplayCutout)
+            assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
             assertEquals(input, config.readText())
-            assertEquals(setOf(Config.MIDLET_CONFIG_FILE), directory.list()!!.toSet())
+            assertEquals(setOf(config.name), directory.list()!!.toSet())
             assertTrue(ProfilesManager.saveConfig(directory, decoded.model))
-            assertFalse(ProfilesManager.loadConfig(directory).allowDisplayCutout)
+            assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
             assertEquals(JsonPrimitive(false), Json.parseToJsonElement(config.readText()).jsonObject["AllowDisplayCutout"])
         } finally {
             directory.deleteRecursively()

@@ -1088,4 +1088,9 @@
         <item quantity="other">%1$d fichiers de classe Java ont été ignorés car ils n’ont pas pu être lus. Les fonctionnalités qui les utilisent peuvent ne pas fonctionner.</item>
         <item quantity="many">%1$d fichiers de classe Java ont été ignorés car ils n’ont pas pu être lus. Les fonctionnalités qui les utilisent peuvent ne pas fonctionner.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Étendre à la zone de l’encoche de l’écran</string>
+    <string name="pref_midlet_display_cutout_summary">Permet au jeu d’utiliser la zone autour de l’encoche de la caméra. Une partie de l’image peut être masquée.</string>
+    <string name="pref_runtime_fullscreen_title">Plein écran</string>
+    <string name="pref_runtime_fullscreen_summary">Masque la barre d’outils pendant le jeu. S’applique à tous les MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">Impossible d’accéder au réglage du plein écran. Réessayez.</string>
 </resources>

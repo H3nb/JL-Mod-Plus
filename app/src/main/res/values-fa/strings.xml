@@ -1055,4 +1055,9 @@
         <item quantity="one">%1$d مورد انتخاب شده است</item>
         <item quantity="other">%1$d مورد انتخاب شده است</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">گسترش به ناحیهٔ بریدگی نمایشگر</string>
+    <string name="pref_midlet_display_cutout_summary">به بازی اجازه می‌دهد از ناحیهٔ اطراف بریدگی دوربین استفاده کند. ممکن است بخشی از تصویر پوشانده شود.</string>
+    <string name="pref_runtime_fullscreen_title">تمام‌صفحه</string>
+    <string name="pref_runtime_fullscreen_summary">پنهان کردن نوار ابزار هنگام بازی. برای همهٔ برنامه‌های MIDlet اعمال می‌شود.</string>
+    <string name="runtime_fullscreen_update_failed">دسترسی به تنظیم تمام‌صفحه ممکن نشد. دوباره تلاش کنید.</string>
 </resources>

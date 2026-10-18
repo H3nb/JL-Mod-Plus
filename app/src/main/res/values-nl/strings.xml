@@ -1055,4 +1055,9 @@
         <item quantity="one">%1$d Java-klassebestand is overgeslagen omdat het niet kon worden gelezen. Functies die het gebruiken werken mogelijk niet.</item>
         <item quantity="other">%1$d Java-klassebestanden zijn overgeslagen omdat ze niet konden worden gelezen. Functies die ze gebruiken werken mogelijk niet.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Uitbreiden naar de schermuitsparing</string>
+    <string name="pref_midlet_display_cutout_summary">Laat het spel de ruimte rondom de camera-uitsparing gebruiken. Een deel van het beeld kan worden bedekt.</string>
+    <string name="pref_runtime_fullscreen_title">Volledig scherm</string>
+    <string name="pref_runtime_fullscreen_summary">Verberg de werkbalk tijdens het spelen. Geldt voor alle MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">Geen toegang tot de instelling voor volledig scherm. Probeer het opnieuw.</string>
 </resources>

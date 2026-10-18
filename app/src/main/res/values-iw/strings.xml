@@ -1088,4 +1088,9 @@
         <item quantity="two">נבחרו %1$d</item>
         <item quantity="other">נבחרו %1$d</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">הרחבה לאזור מגרעת התצוגה</string>
+    <string name="pref_midlet_display_cutout_summary">אפשר למשחק להשתמש באזור שסביב מגרעת המצלמה. חלק מהתמונה עלול להיות מוסתר.</string>
+    <string name="pref_runtime_fullscreen_title">מסך מלא</string>
+    <string name="pref_runtime_fullscreen_summary">הסתרת סרגל הכלים בזמן המשחק. חל על כל יישומי MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">לא ניתן לגשת להגדרת המסך המלא. יש לנסות שוב.</string>
 </resources>

@@ -53,6 +53,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
 import androidx.core.content.ContextCompat;
 
 import java.nio.ByteBuffer;
@@ -218,7 +219,7 @@ public abstract class Canvas extends Displayable {
 	private final Runnable ambientHostRunnable = this::runAmbientHostTick;
 	private Handler uiHandler;
 	private Overlay overlay;
-	private int controlSafeLeft, controlSafeTop, controlSafeRight, controlSafeBottom;
+	private volatile Insets controlSafeInsets = Insets.NONE;
 	private OverlayView controllerOverlayView;
 	private final ControllerJoystickOverlay controllerJoystickOverlay =
 			new ControllerJoystickOverlay();
@@ -850,26 +851,21 @@ public abstract class Canvas extends Displayable {
 
 	/** Host-provided surface-local insets for touch controls; never changes guest geometry. */
 	public void setControlSafeInsets(int left, int top, int right, int bottom) {
-		left = Math.max(0, left);
-		top = Math.max(0, top);
-		right = Math.max(0, right);
-		bottom = Math.max(0, bottom);
-		if (controlSafeLeft == left && controlSafeTop == top &&
-				controlSafeRight == right && controlSafeBottom == bottom) return;
-		controlSafeLeft = left;
-		controlSafeTop = top;
-		controlSafeRight = right;
-		controlSafeBottom = bottom;
+		Insets next = Insets.of(Math.max(0, left), Math.max(0, top), Math.max(0, right), Math.max(0, bottom));
+		if (controlSafeInsets.equals(next)) return;
+		// updateSize can also be requested by guest setFullScreenMode: publish one coherent tuple.
+		controlSafeInsets = next;
 		if (overlay != null) overlay.cancel();
 		resizeControlOverlay();
 	}
 
 	private void resizeControlOverlay() {
 		if (overlay == null || displayWidth <= 0 || displayHeight <= 0) return;
-		float left = Math.min(controlSafeLeft, displayWidth - 1);
-		float top = Math.min(controlSafeTop, displayHeight - 1);
-		float right = Math.max(left + 1, displayWidth - controlSafeRight);
-		float bottom = Math.max(top + 1, displayHeight - controlSafeBottom);
+		Insets safe = controlSafeInsets;
+		float left = Math.min(safe.left, displayWidth - 1);
+		float top = Math.min(safe.top, displayHeight - 1);
+		float right = Math.max(left + 1, displayWidth - safe.right);
+		float bottom = Math.max(top + 1, displayHeight - safe.bottom);
 		RectF safeBounds = new RectF(left, top, right, bottom);
 		float guestBottom = onY + onHeight + softBar.bounds.height();
 		if (overlay instanceof VirtualKeyboard keyboard) {

@@ -1088,4 +1088,9 @@
         <item quantity="few">%1$d selectate</item>
         <item quantity="other">%1$d selectate</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Extinde în zona decupajului ecranului</string>
+    <string name="pref_midlet_display_cutout_summary">Permite jocului să folosească zona din jurul decupajului camerei. O parte a imaginii poate fi acoperită.</string>
+    <string name="pref_runtime_fullscreen_title">Ecran complet</string>
+    <string name="pref_runtime_fullscreen_summary">Ascunde bara de instrumente în timpul jocului. Se aplică tuturor MIDlet-urilor.</string>
+    <string name="runtime_fullscreen_update_failed">Nu s-a putut accesa setarea pentru ecran complet. Încearcă din nou.</string>
 </resources>

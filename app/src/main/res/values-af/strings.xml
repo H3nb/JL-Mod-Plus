@@ -1055,4 +1055,9 @@
         <item quantity="one">%1$d gekies</item>
         <item quantity="other">%1$d gekies</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Brei uit na die skermuitsnyding se area</string>
+    <string name="pref_midlet_display_cutout_summary">Laat die speletjie die area rondom die kamera-uitsnyding gebruik. ’n Deel van die beeld kan bedek word.</string>
+    <string name="pref_runtime_fullscreen_title">Volskerm</string>
+    <string name="pref_runtime_fullscreen_summary">Versteek die nutsbalk terwyl jy speel. Geld vir alle MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">Kon nie toegang tot die volskerminstelling kry nie. Probeer weer.</string>
 </resources>

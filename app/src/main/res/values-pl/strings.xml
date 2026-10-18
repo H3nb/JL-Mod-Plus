@@ -1121,4 +1121,9 @@
         <item quantity="many">Wybrano %1$d</item>
         <item quantity="other">Wybrano %1$d</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Rozszerz na obszar wycięcia wyświetlacza</string>
+    <string name="pref_midlet_display_cutout_summary">Pozwól grze korzystać z obszaru wokół wycięcia na aparat. Część obrazu może zostać zasłonięta.</string>
+    <string name="pref_runtime_fullscreen_title">Pełny ekran</string>
+    <string name="pref_runtime_fullscreen_summary">Ukryj pasek narzędzi podczas gry. Dotyczy wszystkich MIDletów.</string>
+    <string name="runtime_fullscreen_update_failed">Nie udało się uzyskać dostępu do ustawienia pełnego ekranu. Spróbuj ponownie.</string>
 </resources>

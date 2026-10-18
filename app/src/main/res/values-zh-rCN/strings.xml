@@ -1022,4 +1022,9 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="other">已选择 %1$d 项</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">扩展到屏幕缺口区域</string>
+    <string name="pref_midlet_display_cutout_summary">允许游戏使用摄像头开孔周围的区域。部分画面可能被遮挡。</string>
+    <string name="pref_runtime_fullscreen_title">全屏</string>
+    <string name="pref_runtime_fullscreen_summary">游戏时隐藏工具栏。适用于所有 MIDlet。</string>
+    <string name="runtime_fullscreen_update_failed">无法访问全屏设置，请重试。</string>
 </resources>

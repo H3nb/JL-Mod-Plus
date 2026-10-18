@@ -1088,4 +1088,9 @@
         <item quantity="other">%1$d file di classe Java sono stati saltati perché non è stato possibile leggerli. Le funzionalità che li usano potrebbero non funzionare.</item>
         <item quantity="many">%1$d di file di classe Java sono stati saltati perché non è stato possibile leggerli. Le funzionalità che li usano potrebbero non funzionare.</item>
     </plurals>
+    <string name="pref_midlet_display_cutout_title">Estendi all’area del ritaglio del display</string>
+    <string name="pref_midlet_display_cutout_summary">Consenti al gioco di usare l’area attorno al ritaglio della fotocamera. Parte dell’immagine potrebbe essere coperta.</string>
+    <string name="pref_runtime_fullscreen_title">Schermo intero</string>
+    <string name="pref_runtime_fullscreen_summary">Nasconde la barra degli strumenti durante il gioco. Si applica a tutti i MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">Impossibile accedere all’impostazione dello schermo intero. Riprova.</string>
 </resources>

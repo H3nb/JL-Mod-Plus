@@ -1,6 +1,8 @@
 /* Licensed under the Apache License, Version 2.0 (the "License"); */
 package io.github.h3nb.jlmodplus.settings
 
+import android.annotation.SuppressLint
+import androidx.core.net.toUri
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
@@ -15,6 +17,9 @@ import io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR
 class RuntimeFullscreenProvider : ContentProvider() {
     override fun onCreate() = true
 
+    // Calls run on the client's worker/Binder thread; the commit result is required before
+    // confirming a cross-process write. KTX edit(commit=true) discards that result.
+    @SuppressLint("ApplySharedPref", "UseKtx")
     @Synchronized
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle {
         check(Binder.getCallingUid() == Process.myUid()) { "Internal fullscreen preference only" }
@@ -53,6 +58,6 @@ class RuntimeFullscreenProvider : ContentProvider() {
         const val READ = "read"
         const val WRITE = "write"
         const val VALUE = "fullscreen"
-        fun uri(packageName: String): Uri = Uri.parse("content://$packageName.runtime-fullscreen")
+        fun uri(packageName: String): Uri = "content://$packageName.runtime-fullscreen".toUri()
     }
 }
