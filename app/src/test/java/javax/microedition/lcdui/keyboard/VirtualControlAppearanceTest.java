@@ -52,8 +52,13 @@ public class VirtualControlAppearanceTest {
 		assertEquals(0xD1D1D1, VirtualControlAppearance.analogThumbColor(0xFFFFFF, 0x369ABC, false));
 		assertEquals(0xD12E2E, VirtualControlAppearance.analogThumbColor(0xFF0000, 0x369ABC, false));
 		assertEquals(0x369ABC, VirtualControlAppearance.analogThumbColor(0xFF0000, 0x369ABC, true));
-		assertEquals(0x000000, VirtualControlAppearance.analogRecessShadow(0x000000));
-		assertEquals(0x0F0F0F, VirtualControlAppearance.analogRecessFace(0x000000));
+		assertEquals(0x1A1A1A, VirtualControlAppearance.analogShell(0x000000));
+		assertEquals(0xFFFFFF, VirtualControlAppearance.analogThumbColor(0xFFFFFF, 0xFFFFFF, true));
+		assertEquals(0xFF0000, VirtualControlAppearance.analogThumbColor(0xFFFFFF, 0xFF0000, true));
+		assertEquals(0x000000, VirtualControlAppearance.analogThumbBottom(0x000000));
+		assertEquals(0xFFFFFF, VirtualControlAppearance.analogThumbTop(0xFFFFFF));
+		assertEquals(0x000000, VirtualControlAppearance.analogBowlEdge(0x000000) & 0xFF000000);
+		assertEquals(0xFF0000, VirtualControlAppearance.analogThumbColor(0x000000, 0xFF0000, true));
 	}
 
 	@Test

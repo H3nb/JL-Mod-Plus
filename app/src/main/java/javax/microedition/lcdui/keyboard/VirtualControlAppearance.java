@@ -47,20 +47,40 @@ public final class VirtualControlAppearance {
 				mixRgb(normalBackground, 0x808080, 0.36f);
 	}
 
-	public static int analogRecessShadow(int background) {
-		return mixRgb(background, 0x000000, 0.26f);
+	public static int analogShell(int background) {
+		return mixRgb(background, 0x808080, 0.20f);
 	}
 
-	public static int analogRecessFace(int background) {
-		return mixRgb(background, 0x808080, 0.12f);
+	public static int analogShellTop(int background) {
+		return mixRgb(analogShell(background), 0xFFFFFF, 0.12f);
+	}
+
+	public static int analogShellBottom(int background) {
+		return mixRgb(analogShell(background), 0x000000, 0.18f);
+	}
+
+	public static int analogShellRim(int background) {
+		return mixRgb(analogShell(background), 0xFFFFFF, 0.24f);
+	}
+
+	public static int analogBowlCenter(int background) {
+		return mixRgb(analogShell(background), 0x000000, 0.48f);
+	}
+
+	public static int analogBowlEdge(int background) {
+		return mixRgb(analogShell(background), 0x000000, 0.78f);
+	}
+
+	public static int analogThumbTop(int thumb) {
+		return mixRgb(thumb, 0xFFFFFF, 0.16f);
+	}
+
+	public static int analogThumbBottom(int thumb) {
+		return mixRgb(thumb, 0x000000, 0.18f);
 	}
 
 	public static int analogThumbRim(int thumb) {
-		return mixRgb(thumb, 0xFFFFFF, 0.35f);
-	}
-
-	public static int analogThumbFace(int thumb) {
-		return mixRgb(thumb, 0xFFFFFF, 0.10f);
+		return mixRgb(thumb, 0xFFFFFF, 0.32f);
 	}
 
 	static int analogThumb(ProfileModel profile, boolean active) {

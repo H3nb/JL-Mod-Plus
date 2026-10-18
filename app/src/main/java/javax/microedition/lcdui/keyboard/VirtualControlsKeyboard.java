@@ -79,6 +79,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private final RectF paintRect = new RectF();
 	private final Path dpadOutline = new Path();
 	private final Path dpadArrow = new Path();
+	private final CanvasWrapper.ControlGradient analogShellGradient = new CanvasWrapper.ControlGradient();
+	private final CanvasWrapper.ControlGradient analogBowlGradient = new CanvasWrapper.ControlGradient();
+	private final CanvasWrapper.ControlGradient analogThumbGradient = new CanvasWrapper.ControlGradient();
 	private final RectF guestBounds = new RectF();
 
 	private VirtualAnalogStick analogStick;
@@ -1529,26 +1532,38 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int layer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f, alpha);
 		try {
 			float stroke = graphics.getControlOutlineWidth();
-			// Classic concentric recess with palette-derived shading, composited at one opacity.
-			fillCircle(graphics, centerX, centerY, radius * 0.94f, base);
-			fillCircle(graphics, centerX, centerY, radius * 0.69f,
-					VirtualControlAppearance.analogRecessShadow(base));
-			fillCircle(graphics, centerX, centerY, radius * 0.59f,
-					VirtualControlAppearance.analogRecessFace(base));
-			graphics.strokeControlCircle(centerX, centerY, radius * 0.94f,
+			// Smooth shell and recessed bowl: depth comes from tonal gradients, not extra rings.
+			float shellRadius = radius * 0.94f;
+			int shell = VirtualControlAppearance.analogShell(base);
+			graphics.fillControlLinearCircle(analogShellGradient,
+					centerX, centerY, shellRadius,
+					opaqueColor(VirtualControlAppearance.analogShellTop(base)),
+					opaqueColor(shell),
+					opaqueColor(VirtualControlAppearance.analogShellBottom(base)));
+			graphics.strokeControlCircle(centerX, centerY, shellRadius,
 					opaqueColor(outline), stroke);
-
-			// Recessed rim and layered thumb restore the old physical-joystick character.
-			float thumbRadius = radius * 0.395f;
-			fillCircle(graphics, thumbX, thumbY, thumbRadius * 1.075f,
-					VirtualControlAppearance.analogThumbRim(thumbColor));
-			fillCircle(graphics, thumbX, thumbY, thumbRadius, thumbColor);
-			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.82f,
-					VirtualControlAppearance.analogThumbFace(thumbColor));
-			graphics.strokeControlCircle(thumbX, thumbY, thumbRadius,
-					opaqueColor(VirtualControlAppearance.mixRgb(thumbColor, outline, 0.56f)),
+			graphics.strokeControlCircle(centerX, centerY, radius * 0.915f,
+					(0x66 << 24) | VirtualControlAppearance.analogShellRim(base),
 					stroke);
-			// A subtle centered cap detail stays balanced as the thumb moves.
+
+			graphics.fillControlRadialCircle(analogBowlGradient, centerX, centerY,
+					radius * 0.70f,
+					opaqueColor(VirtualControlAppearance.analogBowlCenter(base)),
+					opaqueColor(VirtualControlAppearance.analogBowlEdge(base)));
+
+			// A shallow shadow and raised, softly illuminated thumb.
+			float thumbRadius = radius * 0.45f;
+			graphics.fillControlCircle(thumbX, thumbY + thumbRadius * 0.045f,
+					thumbRadius * 1.055f, 0x38000000);
+			fillCircle(graphics, thumbX, thumbY, thumbRadius * 1.035f,
+					VirtualControlAppearance.analogThumbRim(thumbColor));
+			graphics.fillControlLinearCircle(analogThumbGradient,
+					thumbX, thumbY, thumbRadius,
+					opaqueColor(VirtualControlAppearance.analogThumbTop(thumbColor)),
+					opaqueColor(thumbColor),
+					opaqueColor(VirtualControlAppearance.analogThumbBottom(thumbColor)));
+			graphics.strokeControlCircle(thumbX, thumbY, thumbRadius * 0.96f,
+					(0x55 << 24) | VirtualControlAppearance.analogThumbRim(thumbColor), stroke);
 			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.11f, indicator);
 			if (editingAnalog) {
 				graphics.strokeControlCircle(centerX, centerY, radius * 1.02f,
