@@ -50,12 +50,12 @@ public class LegacyVirtualKeyboardTouchTest {
         assertTrue(profileDir.mkdirs());
 
         ProfileModel settings = new ProfileModel();
-        settings.dir = profileDir;
+
         settings.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS; // F occupies the center of the arrow cluster.
         settings.vkFeedback = false;
         settings.vkAlpha = 255;
 
-        keyboard = new VirtualKeyboard(settings);
+        keyboard = new VirtualKeyboard(settings, profileDir);
         keyboard.setView(new View(context));
         keyboard.resize(new RectF(0f, 0f, 1200f, 600f), 0f, 0f, 1200f, 600f);
 

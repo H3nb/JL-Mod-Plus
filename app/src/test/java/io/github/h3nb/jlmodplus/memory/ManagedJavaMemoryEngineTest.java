@@ -23,6 +23,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Hashtable;
+import java.util.Map;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Stack;
@@ -63,7 +66,7 @@ public class ManagedJavaMemoryEngineTest {
 		assertTrue(hasAddress(page, "stackOnly"));
 		assertTrue(hasAddress(page, "tableOnly"));
 		assertTrue(hasAddress(page, "staticMatch [static]"));
-		assertTrue(hasAddressPrefix(page, "int[]#"));
+		assertTrue(hasAddress(page, "int[]#"));
 		assertFalse(hasAddress(page, "finalMatch"));
 		assertFalse(hasAddress(page, "customOnly"));
 		assertTrue(allIdsUseManagedNamespace(page));
@@ -164,7 +167,7 @@ public class ManagedJavaMemoryEngineTest {
 		long first = 0L;
 		long second = 0L;
 		for (int index = 0; index < page.ids.length; index++) {
-			if (!page.addresses[index].startsWith("int[]#")) continue;
+			if (!page.addresses[index].contains("int[]#")) continue;
 			if (first == 0L) first = page.ids[index];
 			else if (second == 0L) second = page.ids[index];
 		}
@@ -560,7 +563,7 @@ public class ManagedJavaMemoryEngineTest {
 			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision,
 					offset, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
 			for (int index = 0; index < page.ids.length; index++) {
-				if (page.addresses[index].startsWith("int[]#")) arrayIds.add(page.ids[index]);
+				if (page.addresses[index].contains("int[]#")) arrayIds.add(page.ids[index]);
 			}
 		}
 		assertTrue(arrayIds.size() >= 100);
@@ -854,6 +857,514 @@ public class ManagedJavaMemoryEngineTest {
 				engine.edit(TOKEN, search.revision, new long[]{1L}, 1, false, 0L).code);
 	}
 
+
+	@Test
+	public void incrementalFollowsCallerOrderAndSupportsBothStepDirections() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long changed = idForAddress(search.revision, "rootChanged");
+		long match = idForAddress(search.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult decrement = engine.editIncremental(TOKEN,
+				search.revision, new long[]{changed, match},
+				MemoryEngineContract.TYPE_INT, "100", "-3", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, decrement.code);
+		assertEquals(2, decrement.written);
+		assertEquals(100, root.rootChanged);
+		assertEquals(97, root.rootMatch);
+		ManagedJavaMemoryEngine.ManagedOperationResult increment = engine.editIncremental(TOKEN,
+				search.revision, new long[]{match, changed},
+				MemoryEngineContract.TYPE_INT, "200", "2", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, increment.code);
+		assertEquals(200, root.rootMatch);
+		assertEquals(202, root.rootChanged);
+	}
+
+	@Test
+	public void incrementalRejectsOverflowAndMixedTypesBeforeWriting() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long match = idForAddress(search.revision, "rootMatch");
+		long changed = idForAddress(search.revision, "rootChanged");
+		assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+				engine.editIncremental(TOKEN, search.revision, new long[]{match, changed},
+						MemoryEngineContract.TYPE_INT, "2147483647", "1", 0L).code);
+		assertEquals(7, root.rootMatch);
+		assertEquals(7, root.rootChanged);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult mixed = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_AUTO, MemoryEngineContract.PREDICATE_EQUAL,
+				"7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+				engine.editIncremental(TOKEN, mixed.revision,
+						new long[]{idForAddress(mixed.revision, "rootMatch"),
+								idForAddress(mixed.revision, "byteMatch")},
+						MemoryEngineContract.TYPE_INT, "50", "1", 0L).code);
+		assertEquals(7, root.rootMatch);
+		assertEquals(7, root.byteMatch);
+	}
+
+	@Test
+	public void revertRestoresValueImmediatelyBeforeLastEditAndRemovesOnlyOnSuccess() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		root.rootMatch = 120;
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "999", false, 0L).code);
+		root.rootMatch = 500;
+		ManagedJavaMemoryEngine.ManagedOperationResult conflict = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, conflict.code);
+		assertEquals(500, root.rootMatch);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
+		root.rootMatch = 999;
+		ManagedJavaMemoryEngine.ManagedOperationResult restored = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, restored.code);
+		assertEquals(1, restored.written);
+		assertEquals(120, root.rootMatch);
+		assertFalse(hasId(engine.resultPage(TOKEN, restored.revision, 0, 100), id));
+	}
+
+	@Test
+	public void retryAfterConfirmedRestoreOnlyRemovesIfRestoredValueStillMatches()
+			throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		Field journalField = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		journalField.setAccessible(true);
+		ManagedMemoryMutationJournal journal = (ManagedMemoryMutationJournal) journalField.get(engine);
+		journal.markRestored(id, journal.get(id));
+		root.rootMatch = 42;
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(42, root.rootMatch);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
+
+		root.rootMatch = 7;
+		ManagedJavaMemoryEngine.ManagedOperationResult retry = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, retry.code);
+		assertFalse(hasId(engine.resultPage(TOKEN, retry.revision, 0, 100), id));
+		assertEquals(null, journal.get(id));
+	}
+
+	@Test
+	public void revertAndRemoveDoesNotSilentlyDropAnActiveFreezeTarget() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.setFreezeLock(TOKEN, search.revision, new long[]{id}, 900, 0L).code);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult blocked = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, blocked.code);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
+		assertEquals(7, root.rootMatch);
+
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearFreeze(TOKEN, new long[]{id}, 0L).code);
+		ManagedJavaMemoryEngine.ManagedOperationResult removed = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, removed.code);
+		assertFalse(hasId(engine.resultPage(TOKEN, removed.revision, 0, 100), id));
+	}
+
+	@Test
+	public void clearSearchReleasesJournalHistoryForUnretainedOwners()
+			throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "901", false, 0L).code);
+
+		Field journalField = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		journalField.setAccessible(true);
+		ManagedMemoryMutationJournal journal = (ManagedMemoryMutationJournal) journalField.get(engine);
+		assertTrue(journal.get(id) != null);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearSearchResult(TOKEN, search.revision, 0L).code);
+		assertEquals(null, journal.get(id));
+	}
+
+	@Test
+	public void noOpBatchCanRunWhenEditHistoryIsFullButAWriteCannot()
+			throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long unchanged = idForAddress(search.revision, "rootMatch");
+		long changing = idForAddress(search.revision, "rootChanged");
+		ManagedMemoryMutationJournal journal = new ManagedMemoryMutationJournal();
+		for (int index = 0; index < 1024; index++) {
+			long fakeId = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_ARRAY,
+					index + 5000, 0);
+			journal.record(fakeId, MemoryEngineContract.TYPE_INT, 0, 1);
+		}
+		Field field = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		field.setAccessible(true);
+		field.set(engine, journal);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{unchanged, changing},
+						MemoryEngineContract.TYPE_INT, "7", false, 0L).code);
+		assertEquals(7, root.rootMatch);
+		assertEquals(7, root.rootChanged);
+		assertEquals(null, journal.get(unchanged));
+		root.rootChanged = 4;
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+				engine.editTyped(TOKEN, search.revision, new long[]{unchanged, changing},
+						MemoryEngineContract.TYPE_INT, "7", false, 0L).code);
+		assertEquals(4, root.rootChanged);
+	}
+
+	@Test
+	public void candidateHistoryPrunesUnwatchedArraySlotAfterClear()
+			throws ReflectiveOperationException {
+		root.array = new int[]{7, 7};
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		long first = 0L;
+		long second = 0L;
+		for (int index = 0; index < page.ids.length; index++) {
+			if (!"array".equals(page.sourceFields[index])) continue;
+			if (ManagedJavaMemoryIds.slot(page.ids[index]) == 0) first = page.ids[index];
+			if (ManagedJavaMemoryIds.slot(page.ids[index]) == 1) second = page.ids[index];
+		}
+		assertTrue(first != 0L && second != 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.addWatch(TOKEN, search.revision, new long[]{first}, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{first, second},
+						MemoryEngineContract.TYPE_INT, "90", false, 0L).code);
+		Field field = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		field.setAccessible(true);
+		ManagedMemoryMutationJournal journal = (ManagedMemoryMutationJournal) field.get(engine);
+		assertTrue(journal.get(first) != null && journal.get(second) != null);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearSearchResult(TOKEN, search.revision, 0L).code);
+		assertTrue(journal.get(first) != null);
+		assertEquals(null, journal.get(second));
+	}
+
+	@Test
+	public void repeatedEditsRevertOnlyTheMostRecentConfirmedMutation() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "800", false, 0L).code);
+		root.rootMatch = 120;
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(120, root.rootMatch);
+	}
+
+	@Test
+	public void noOpEditDoesNotEraseLastActualMutation() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(7, root.rootMatch);
+	}
+
+	@Test
+	public void partialRestoreKeepsConflictingResultAndRemovesUneditedResult() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long first = idForAddress(search.revision, "rootMatch");
+		long second = idForAddress(search.revision, "rootChanged");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{first},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		root.rootMatch = 42;
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{first, second}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, result.code);
+		assertTrue(hasId(engine.resultPage(TOKEN, result.revision, 0, 100), first));
+		assertFalse(hasId(engine.resultPage(TOKEN, result.revision, 0, 100), second));
+		assertEquals(42, root.rootMatch);
+	}
+
+	@Test
+	public void revertedCandidatesRespectOriginalRevisionAndStaleIds() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN,
+				search.revision, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				MemoryEngineContract.COMPARE_PREVIOUS, "7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(7, root.rootMatch);
+	}
+	@Test
+	@SuppressWarnings("unchecked")
+	public void collectedWeakOwnerNeverRebindsDuringRevert() throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		// Clearing this exact weak handle models collection without relying on nondeterministic GC.
+		Field ownersField = ManagedJavaMemoryEngine.class.getDeclaredField("owners");
+		ownersField.setAccessible(true);
+		Map<Long, Object> owners = (Map<Long, Object>) ownersField.get(engine);
+		Object owner = owners.get(ManagedJavaMemoryIds.ownerHandle(id));
+		Field weakField = owner.getClass().getDeclaredField("weakOwner");
+		weakField.setAccessible(true);
+		((WeakReference<?>) weakField.get(owner)).clear();
+
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, rejected.code);
+		assertEquals(900, root.rootMatch);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
+	}
+
+	@Test
+	public void arraysWithEqualValuesRetainDistinctRuntimeIdentities() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long first = idForAddress(search.revision, "FixtureRoot.staticArray");
+		long second = idForAddress(search.revision, "FixtureRoot.array [instance]");
+		assertFalse(first == second);
+		assertFalse(ManagedJavaMemoryIds.ownerHandle(first)
+				== ManagedJavaMemoryIds.ownerHandle(second));
+		assertEquals(7, root.array[0]);
+		assertEquals(7, FixtureRoot.staticArray[0]);
+	}
+
+	@Test
+	public void primitiveFieldSourceUsesExactDeclaringClassNameAndType() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		boolean foundStatic = false;
+		boolean foundInstance = false;
+		for (int index = 0; index < page.ids.length; index++) {
+			if ("staticMatch".equals(page.sourceFields[index])) {
+				foundStatic = true;
+				assertEquals(MemoryEngineContract.SOURCE_STATIC_FIELD, page.sourceKinds[index]);
+				assertEquals(FixtureRoot.class.getName(), page.sourceClasses[index]);
+				assertEquals("int", page.sourceTypes[index]);
+			}
+			if ("rootMatch".equals(page.sourceFields[index])) {
+				foundInstance = true;
+				assertEquals(MemoryEngineContract.SOURCE_INSTANCE_FIELD, page.sourceKinds[index]);
+				assertEquals(FixtureRoot.class.getName(), page.sourceClasses[index]);
+				assertEquals("int", page.sourceTypes[index]);
+			}
+		}
+		assertTrue(foundStatic);
+		assertTrue(foundInstance);
+	}
+
+	@Test
+	public void inspectorVerifiesSharedReferencePathsAndDetectsReplacement() {
+		int[] originalStatic = FixtureRoot.staticArray;
+		int[] original = root.array;
+		try {
+			FixtureRoot.staticArray = new int[]{234567};
+			root.array = new int[]{234567};
+			ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+					MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+					234567L, 0L, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+			long staticId = idForAddress(search.revision, "FixtureRoot.staticArray");
+			long instanceId = idForAddress(search.revision, "FixtureRoot.array [instance]");
+			ManagedJavaMemoryEngine.ManagedInspection staticPath =
+					engine.inspect(TOKEN, search.revision, staticId, 1);
+			assertEquals(MemoryEngineContract.PATH_VERIFIED, staticPath.path.status);
+			assertTrue(staticPath.path.path.contains("FixtureRoot.staticArray[0]"));
+			ManagedJavaMemoryEngine.ManagedInspection instancePath =
+					engine.inspect(TOKEN, search.revision, instanceId, 1);
+			assertEquals(MemoryEngineContract.PATH_VERIFIED, instancePath.path.status);
+			assertTrue(instancePath.path.path.contains("MIDlet"));
+			assertTrue(instancePath.path.path.contains("FixtureRoot.array[0]"));
+
+			int[] priorSelectedArray = root.array;
+			root.array = new int[]{234567};
+			assertEquals(MemoryEngineContract.PATH_CHANGED,
+					engine.inspect(TOKEN, search.revision, instanceId, 1).path.status);
+			assertEquals(234567, priorSelectedArray[0]);
+		} finally {
+			FixtureRoot.staticArray = originalStatic;
+			root.array = original;
+		}
+	}
+
+	@Test
+	public void objectArrayIndexesHaveVerifiedPathsButExactContainersDoNot() {
+		int[] nested = new int[]{876543};
+		root.cycle[1] = nested;
+		root.vector.add(new int[]{876543});
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				876543L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		assertEquals(2, page.ids.length);
+		int verified = 0;
+		int untraced = 0;
+		for (long id : page.ids) {
+			ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+					search.revision, id, 1);
+			if (inspected.path.status == MemoryEngineContract.PATH_VERIFIED) {
+				verified++;
+				assertTrue(inspected.path.path.contains("[1][0]"));
+			} else {
+				assertEquals(MemoryEngineContract.PATH_UNKNOWN, inspected.path.status);
+				untraced++;
+			}
+		}
+		assertEquals(1, verified);
+		assertEquals(1, untraced);
+		root.cycle[1] = new int[]{876543};
+		for (long id : page.ids) {
+			ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+					search.revision, id, 1);
+			if (inspected.path.status == MemoryEngineContract.PATH_CHANGED) {
+				assertTrue(inspected.path.path.isEmpty());
+				return;
+			}
+		}
+		throw new AssertionError("Replaced Object[] element did not invalidate its old path");
+	}
+
+	@Test
+	public void rootedAliasUpgradesUntracedPendingArrayWithoutRebinding() {
+		int[] shared = new int[]{486257};
+		Vector<Object> container = new Vector<>();
+		container.add(shared);
+		MemoryDiscoveryBridge.setMidletRoot(TOKEN,
+				new AliasRoot(container, new AliasCarrier(shared)));
+
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				486257L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		assertEquals(1L, search.resultCount);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		ManagedJavaMemoryEngine.ManagedInspection inspection =
+				engine.inspect(TOKEN, search.revision, page.ids[0], 1);
+		assertEquals(MemoryEngineContract.PATH_VERIFIED, inspection.path.status);
+		assertTrue(inspection.path.path.contains("AliasRoot.contents[1]"));
+		assertTrue(inspection.path.path.contains("AliasCarrier.values[0]"));
+	}
+
+	@Test
+	public void unsupportedContainerRouteDoesNotPretendToBeAChangedRoot() {
+		root.vector.add(new DetachedLink(808081));
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				808081L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		assertEquals(1, page.ids.length);
+		ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+				search.revision, page.ids[0], 1);
+		assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+		assertEquals(MemoryEngineContract.PATH_UNKNOWN, inspected.path.status);
+		assertTrue(inspected.path.path.isEmpty());
+	}
+
+	@Test
+	public void sharedProvenanceDoesNotDuplicateForArrayElements() {
+		root.array = new int[]{707707, 707707, 707707};
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				707707L, 0L, 0L);
+		assertEquals(3, search.resultCount);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		for (long id : page.ids) {
+			assertEquals(MemoryEngineContract.PATH_VERIFIED,
+					engine.inspect(TOKEN, search.revision, id, 1).path.status);
+		}
+	}
+
+	@Test
+	public void arrayLabelsShowOnlyVerifiedDirectReferencePaths() {
+		int[] originalStatic = FixtureRoot.staticArray;
+		try {
+			FixtureRoot.staticArray = new int[]{123457};
+			root.array = new int[]{123457};
+			ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+					MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+					123457L, 0L, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+			assertEquals(Arrays.toString(page.addresses), 2, page.ids.length);
+			assertTrue(Arrays.toString(page.addresses),
+					hasAddress(page, "FixtureRoot.staticArray [static]"));
+			assertTrue(Arrays.toString(page.addresses),
+					hasAddress(page, "FixtureRoot.array [instance]"));
+			int staticIndex = -1;
+			int instanceIndex = -1;
+			for (int index = 0; index < page.ids.length; index++) {
+				if (page.addresses[index].contains("FixtureRoot.staticArray")) staticIndex = index;
+				if (page.addresses[index].contains("FixtureRoot.array [instance]")) instanceIndex = index;
+			}
+			assertTrue(staticIndex >= 0 && instanceIndex >= 0);
+			assertEquals(MemoryEngineContract.SOURCE_STATIC_FIELD, page.sourceKinds[staticIndex]);
+			assertEquals(MemoryEngineContract.SOURCE_INSTANCE_FIELD, page.sourceKinds[instanceIndex]);
+			assertEquals(FixtureRoot.class.getName(), page.sourceClasses[staticIndex]);
+			assertEquals(FixtureRoot.class.getName(), page.sourceClasses[instanceIndex]);
+			assertEquals("staticArray", page.sourceFields[staticIndex]);
+			assertEquals("array", page.sourceFields[instanceIndex]);
+			assertEquals("[I", page.sourceTypes[staticIndex]);
+			assertEquals("[I", page.sourceTypes[instanceIndex]);
+
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					engine.addWatch(TOKEN, search.revision, new long[]{page.ids[staticIndex]}, 0L).code);
+			ManagedJavaMemoryEngine.ManagedPage watched = engine.watchPage(TOKEN);
+			assertEquals(1, watched.ids.length);
+			assertEquals(page.sourceKinds[staticIndex], watched.sourceKinds[0]);
+			assertEquals(page.sourceClasses[staticIndex], watched.sourceClasses[0]);
+			assertEquals(page.sourceFields[staticIndex], watched.sourceFields[0]);
+			ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+					search.revision, page.ids[staticIndex], 1);
+			assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+			assertEquals(page.sourceFields[staticIndex], inspected.source.fieldName);
+			assertEquals(page.sourceTypes[staticIndex], inspected.source.fieldType);
+
+			root.array = new int[]{123457};
+			ManagedJavaMemoryEngine.ManagedPage afterReferenceChange = engine.resultPage(TOKEN,
+					search.revision, 0, 100);
+			assertFalse(hasAddress(afterReferenceChange, "FixtureRoot.array [instance]"));
+			for (int index = 0; index < afterReferenceChange.ids.length; index++) {
+				if (afterReferenceChange.ids[index] == page.ids[instanceIndex]) {
+					assertEquals(MemoryEngineContract.SOURCE_UNKNOWN,
+							afterReferenceChange.sourceKinds[index]);
+				}
+			}
+		} finally {
+			FixtureRoot.staticArray = originalStatic;
+		}
+	}
+
+	@Test
+	public void arrayReachedThroughObjectArrayDoesNotInventFieldOwnership() {
+		root.cycle[1] = new int[]{123456};
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				123456L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		assertEquals(1, page.ids.length);
+		assertTrue(page.addresses[0].startsWith("int[]#"));
+		assertFalse(page.addresses[0].contains(" → "));
+		assertEquals(MemoryEngineContract.SOURCE_UNKNOWN, page.sourceKinds[0]);
+		assertEquals("", page.sourceClasses[0]);
+		assertEquals("", page.sourceFields[0]);
+	}
+
 	private ManagedJavaMemoryEngine.ManagedOperationResult startExact() {
 		return engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
 				MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
@@ -885,11 +1396,6 @@ public class ManagedJavaMemoryEngineTest {
 
 	private static boolean hasAddress(ManagedJavaMemoryEngine.ManagedPage page, String fragment) {
 		for (String address : page.addresses) if (address.contains(fragment)) return true;
-		return false;
-	}
-
-	private static boolean hasAddressPrefix(ManagedJavaMemoryEngine.ManagedPage page, String prefix) {
-		for (String address : page.addresses) if (address.startsWith(prefix)) return true;
 		return false;
 	}
 
@@ -1013,6 +1519,30 @@ public class ManagedJavaMemoryEngineTest {
 
 	private static final class DetachedDisplayRoot {
 		private int escapedMatch = 424_242;
+	}
+
+	private static final class AliasRoot {
+		final Object[] contents;
+
+		AliasRoot(Object first, Object second) {
+			contents = new Object[]{first, second};
+		}
+	}
+
+	private static final class AliasCarrier {
+		final int[] values;
+
+		AliasCarrier(int[] values) {
+			this.values = values;
+		}
+	}
+
+	private static final class DetachedLink {
+		final int[] values;
+
+		DetachedLink(int value) {
+			values = new int[]{value};
+		}
 	}
 
 	private static final class CapacityRoot {

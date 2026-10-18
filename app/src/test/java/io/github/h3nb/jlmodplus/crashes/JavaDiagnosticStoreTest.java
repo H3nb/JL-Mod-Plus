@@ -22,7 +22,10 @@ import java.io.FileOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JavaDiagnosticStoreTest {
 	@Rule
@@ -169,7 +172,7 @@ public class JavaDiagnosticStoreTest {
 
 		assertEquals(1, captures.get());
 		assertEquals(1, upstreamCalls.get());
-		assertEquals(0, fallbacks.get());
+		assertEquals(1, fallbacks.get());
 	}
 
 	@Test
@@ -188,7 +191,77 @@ public class JavaDiagnosticStoreTest {
 		holder[0].uncaughtException(Thread.currentThread(), new RuntimeException("outer"));
 
 		assertEquals(1, captures.get());
-		assertEquals(2, upstreamCalls.get());
+		assertEquals(1, upstreamCalls.get());
+	}
+
+	@Test
+	public void parallelFatalCannotDelegateBeforeOwnerCaptureFinishes() throws Exception {
+		CountDownLatch started = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		AtomicInteger upstreamCalls = new AtomicInteger();
+		AtomicReference<Throwable> upstreamError = new AtomicReference<>();
+		Throwable original = new IllegalStateException("original");
+		JavaDiagnosticStore.FatalHandler handler = new JavaDiagnosticStore.FatalHandler(
+				(thread, error) -> {
+					started.countDown();
+					if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("timed out");
+				},
+				(thread, error) -> {
+					upstreamError.set(error);
+					upstreamCalls.incrementAndGet();
+				}, null);
+		Thread owner = new Thread(() -> handler.uncaughtException(
+				Thread.currentThread(), original), "capture-owner");
+		Thread secondary = new Thread(() -> handler.uncaughtException(
+				Thread.currentThread(), new IllegalStateException("secondary")), "secondary");
+		try {
+			owner.start();
+			assertTrue(started.await(5, TimeUnit.SECONDS));
+			secondary.start();
+			secondary.join(2000);
+			assertFalse(secondary.isAlive());
+			assertEquals(0, upstreamCalls.get());
+		} finally {
+			release.countDown();
+			owner.join(2000);
+			secondary.join(2000);
+		}
+		assertFalse(owner.isAlive());
+		assertEquals(1, upstreamCalls.get());
+		assertTrue(upstreamError.get() == original);
+	}
+
+	@Test
+	public void processCleanupWaitsForActiveHostFatalCapture() throws Exception {
+		CountDownLatch capturing = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		AtomicInteger cleanupReached = new AtomicInteger();
+		JavaDiagnosticStore.FatalHandler handler = new JavaDiagnosticStore.FatalHandler(
+				(thread, error) -> {
+					capturing.countDown();
+					if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("timed out");
+				}, (thread, error) -> {}, null);
+		Thread owner = new Thread(() -> handler.uncaughtException(
+				Thread.currentThread(), new IllegalStateException("host")), "host-crash");
+		Thread cleanup = new Thread(() -> {
+			JavaDiagnosticStore.awaitTerminalCaptures();
+			cleanupReached.incrementAndGet();
+		}, "process-cleanup");
+		try {
+			owner.start();
+			assertTrue(capturing.await(5, TimeUnit.SECONDS));
+			cleanup.start();
+			// The cleanup cannot finish while the host writer has been deliberately suspended.
+			Thread.sleep(100);
+			assertEquals(0, cleanupReached.get());
+		} finally {
+			release.countDown();
+			owner.join(5000);
+			cleanup.join(5000);
+		}
+		assertFalse(owner.isAlive());
+		assertFalse(cleanup.isAlive());
+		assertEquals(1, cleanupReached.get());
 	}
 
 	@Test
@@ -306,7 +379,8 @@ public class JavaDiagnosticStoreTest {
 		JavaDiagnosticStore.Snapshot restored = JavaDiagnosticStore.read(file);
 
 		assertEquals("acra:committed", restored.legacyRecordId);
-		assertFalse(backup.exists());
+		assertTrue(backup.exists()); // A reader must not mutate a writer's pending state.
+		assertTrue(file.exists());
 	}
 
 	@Test

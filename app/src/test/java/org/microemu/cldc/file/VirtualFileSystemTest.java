@@ -1,6 +1,7 @@
 package org.microemu.cldc.file;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
@@ -57,11 +58,15 @@ public class VirtualFileSystemTest {
         VirtualFileSystem.install(temp.getRoot(), "game-a");
         File first = VirtualFileSystem.resolve("private:/", "save.dat");
         File vendor = VirtualFileSystem.resolve("siemens:/", "save.dat");
+        File vendorDrive = VirtualFileSystem.resolve("a:/", "save.dat");
+        assertTrue(VirtualFileSystem.isPrivate("a:/"));
+        assertTrue(VirtualFileSystem.isPrivate("b:/"));
         assertTrue(relative(first).startsWith("data/game-a/private/"));
         assertEquals("data/game-a/vendor/siemens/save.dat", relative(vendor));
         VirtualFileSystem.install(temp.getRoot(), "game-b");
         File second = VirtualFileSystem.resolve("private:/", "save.dat");
         assertNotEquals(first, second);
+        assertNotEquals(vendorDrive, VirtualFileSystem.resolve("a:/", "save.dat"));
         assertTrue(relative(second).startsWith("data/game-b/private/"));
         assertEquals("storage/c", relative(VirtualFileSystem.resolve("c:/", "")));
     }
@@ -107,6 +112,31 @@ public class VirtualFileSystemTest {
         assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "../game"));
         assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "a/b"));
         assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "a:b"));
+    }
+
+    @Test public void legacyPrivateUrlsStayWithinTheirOriginalInstallation() throws Exception {
+        File workdir = new File(temp.getRoot(), "WorkDir");
+        VirtualFileSystem.install(workdir, "GameOne", temp.getRoot());
+        String oldRoot = "c:/WorkDir/data/GameOne/private/";
+        assertEquals(oldRoot, VirtualFileSystem.rootFor(oldRoot + "save.dat"));
+        assertTrue(VirtualFileSystem.isPrivate(oldRoot));
+        assertEquals(VirtualFileSystem.resolve("private:/", "save.dat"),
+                VirtualFileSystem.resolve(oldRoot, "save.dat"));
+        assertThrows(IOException.class, () -> VirtualFileSystem.resolve(oldRoot, "../score.rsh"));
+        File first = VirtualFileSystem.resolve(oldRoot, "save.dat");
+        Files.write(first.toPath(), new byte[]{42});
+        File shared = VirtualFileSystem.resolve("c:/", "shared.dat");
+        Files.write(shared.toPath(), new byte[]{7});
+        VirtualFileSystem.install(workdir, "GameTwo", temp.getRoot());
+        assertThrows(IOException.class, () -> VirtualFileSystem.resolve(oldRoot, "save.dat"));
+        // An old URL for another installation can refer only to the shared C namespace,
+        // where no private data is mounted or copied.
+        String resolvedRoot = VirtualFileSystem.rootFor(oldRoot + "save.dat");
+        assertEquals("c:/", resolvedRoot);
+        assertFalse(VirtualFileSystem.resolve(resolvedRoot,
+                (oldRoot + "save.dat").substring(resolvedRoot.length())).exists());
+        assertArrayEquals(new byte[]{42}, Files.readAllBytes(first.toPath()));
+        assertEquals(shared, VirtualFileSystem.resolve("c:/", "shared.dat"));
     }
 
     private String relative(File file) throws IOException {

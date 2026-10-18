@@ -339,9 +339,20 @@ class LibraryRepositoryTest {
         predicate: (LibraryRepository.State.Ready) -> Boolean = { true },
     ): LibraryRepository.State.Ready = withTimeout(10_000) {
         val canonical = root.canonicalFile
-        repository.state
-            .filterIsInstance<LibraryRepository.State.Ready>()
-            .first { it.emulatorDir == canonical && predicate(it) }
+        when (val result = repository.state.first { state ->
+            when (state) {
+                is LibraryRepository.State.Ready ->
+                    state.emulatorDir == canonical && predicate(state)
+                is LibraryRepository.State.Error ->
+                    state.emulatorDir == canonical
+                else -> false
+            }
+        }) {
+            is LibraryRepository.State.Ready -> result
+            is LibraryRepository.State.Error ->
+                error("Library recovery failed for $canonical: ${result.message}")
+            else -> error("Unexpected Library state: $result")
+        }
     }
 
     private fun LibraryRepository.State.Ready.token() =

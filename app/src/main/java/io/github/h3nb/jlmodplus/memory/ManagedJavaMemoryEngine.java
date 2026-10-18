@@ -60,15 +60,20 @@ final class ManagedJavaMemoryEngine {
 	private static final int DEFAULT_MAX_ARRAY_ELEMENTS = 2_000_000;
 	private static final long DEFAULT_MAX_RESULT_STORAGE_BYTES = 192L * 1024L * 1024L;
 	private static final int MAX_SEARCH_HISTORY = MemoryEngineContract.MAX_SEARCH_HISTORY;
-	private static final long RESULT_SLOT_BYTES = Integer.BYTES + 2L * Long.BYTES;
+	private static final long RESULT_SLOT_BYTES = Integer.SIZE / Byte.SIZE + 2L * (Long.SIZE / Byte.SIZE);
 	private static final int INITIAL_OWNER_CAPACITY = 16;
 	private static final int FIRST_SUPPORTED_TYPE = MemoryEngineContract.TYPE_BYTE;
 	private static final int LAST_SUPPORTED_TYPE = MemoryEngineContract.TYPE_DOUBLE;
 	private static final long STAGED_OWNER_BYTES = 64L;
 	private static final long FINISHED_BUCKET_BYTES = 64L;
 	private static final long TRAVERSAL_ENTRY_BYTES = 64L;
-	private static final long QUEUE_REFERENCE_BYTES = Long.BYTES;
-	private static final long SNAPSHOT_REFERENCE_BYTES = Long.BYTES;
+	private static final long QUEUE_REFERENCE_BYTES = Long.SIZE / Byte.SIZE;
+	/** Conservative accounting for one weak shared predecessor (not one per numeric element). */
+	private static final long PROVENANCE_NODE_BYTES = 80L;
+	private static final long MIN_PROVENANCE_STORAGE_BUDGET = 64L * 1024L;
+	private static final long MAX_PROVENANCE_CAPTURE_BYTES = 2L * 1024L * 1024L;
+	private static final int MAX_PROVENANCE_DEPTH = 24;
+	private static final long SNAPSHOT_REFERENCE_BYTES = Long.SIZE / Byte.SIZE;
 
 	private final Object stateLock = new Object();
 	private final AtomicLong controlEpoch = new AtomicLong();
@@ -76,6 +81,7 @@ final class ManagedJavaMemoryEngine {
 	private final Map<Long, OwnerBucket> owners = new HashMap<>();
 	private final Map<Class<?>, Schema> schemaCache = new HashMap<>();
 	private final WatchStore watches = new WatchStore();
+	@Nullable private ManagedMemoryMutationJournal editJournal;
 	private final ArrayDeque<SearchState> searchHistory = new ArrayDeque<>();
 	private volatile long activeToken;
 	private ClassLoader activeLoader;
@@ -121,8 +127,8 @@ final class ManagedJavaMemoryEngine {
 
 	private static void enqueueSnapshotRoots(ScanContext scan,
 	                                         MemoryDiscoveryBridge.Snapshot snapshot) {
-		scan.enqueue(snapshot.root());
-		scan.enqueue(snapshot.displayableRoot());
+		scan.enqueueRoot(snapshot.root(), ProvenanceNode.MIDLET_ROOT);
+		scan.enqueueRoot(snapshot.displayableRoot(), ProvenanceNode.DISPLAYABLE_ROOT);
 	}
 
 	ManagedCapabilities capabilities(long token) {
@@ -620,7 +626,9 @@ final class ManagedJavaMemoryEngine {
 						bucket.owner.handle, slot);
 				page.values[output] = readValueText(bucket.owner, slot, strongOwner, type,
 						page.states, output, value);
-				page.addresses[output] = labelFor(bucket.owner, slot);
+				CandidateSource source = sourceFor(bucket.owner, slot, strongOwner);
+				page.addresses[output] = labelFor(bucket.owner, slot, source);
+				page.setSource(output, source);
 				page.aliasMasks[output] = 1 << type;
 				page.types[output] = type;
 				page.relocations[output] = 0;
@@ -702,13 +710,16 @@ final class ManagedJavaMemoryEngine {
 		synchronized (stateLock) {
 			revision = committed;
 		}
+		CandidateSource anchorSource = sourceFor(owner, anchorSlot, strongOwner);
+		PathObservation path = inspectPath(token, owner, strongOwner, anchorSlot);
 		for (int index = 0; index < slots.size(); index++) {
 			int slot = slots.get(index);
 			int type = valueTypeFor(owner, slot);
 			ids[index] = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, slot);
 			types[index] = type;
 			offsets[index] = slot - anchorSlot;
-			labels[index] = labelFor(owner, slot);
+			labels[index] = labelFor(owner, slot, owner.kind == KIND_ARRAY
+					? anchorSource : sourceFor(owner, slot, strongOwner));
 			if (owner.kind == KIND_ARRAY) {
 				editable[index] = true;
 			} else {
@@ -733,7 +744,8 @@ final class ManagedJavaMemoryEngine {
 		return new ManagedInspection(MemoryEngineContract.RESULT_OK,
 				revision == null ? expectedRevision : revision.id, ids, values, initial, previous,
 				types, states, offsets, expectedBits, labels, editable,
-				"managed-logical-owner=" + owner.handle + ":slot=" + anchorSlot, null);
+				"managed-logical-owner=" + owner.handle + ":slot=" + anchorSlot,
+				anchorSource, path, null);
 	}
 
 	ManagedOperationResult editInspector(long token, long expectedRevision, long anchorId,
@@ -806,16 +818,36 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 					"Managed Inspector edit was cancelled before writing");
 		}
+		long targetId = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, targetSlot);
+		long before = current[0];
+		boolean changed = before != parsed[0];
+		synchronized (stateLock) {
+			if (changed && editJournal != null && !editJournal.canRecord(targetId)) {
+				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+						"The bounded edit history is full");
+			}
+		}
 		try {
-			writeTyped(owner, targetSlot, strongOwner, valueType, parsed[0]);
+			if (changed) writeTyped(owner, targetSlot, strongOwner, valueType, parsed[0]);
 			if (!readTyped(owner, targetSlot, strongOwner, current)
 					|| !writeConfirmed(current[0], parsed[0])) {
+				if (changed) {
+					synchronized (stateLock) { mutationJournalLocked().markUncertain(targetId, valueType); }
+				}
 				return resultDetailed(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
 						"Managed Inspector write was not confirmed", 1, 0, 0, 1, 0, 0, 0);
+			}
+			if (before != parsed[0]) {
+				synchronized (stateLock) {
+					mutationJournalLocked().record(targetId, valueType, before, parsed[0]);
+				}
 			}
 			return resultDetailed(token, MemoryEngineContract.RESULT_OK,
 					"Managed Inspector write confirmed", 1, 1, 0, 0, 0, 0, 0);
 		} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+			if (changed) {
+				synchronized (stateLock) { mutationJournalLocked().markUncertain(targetId, valueType); }
+			}
 			return resultDetailed(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 					"Managed Inspector write was rejected before confirmation", 1, 0, 1, 0, 0, 1, 0);
 		}
@@ -883,6 +915,111 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
+
+	/**
+	 * Restores only the last confirmed explicit edit, conditioned on the current raw bits.
+	 * Never uses search baselines as mutation history. Unedited results need no write.
+	 */
+	ManagedOperationResult revertAndRemove(long token, long expectedRevision, @Nullable long[] ids,
+	                                      long operationEpoch) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Select up to 100 visible results to revert and remove");
+		}
+		long[] unique = uniqueIds(ids);
+		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, false);
+		if (batch.error != null) return batch.error;
+		ManagedOperationResult valid = revalidateBatch(token, expectedRevision, batch, false, operationEpoch);
+		if (valid != null) return valid;
+		long[] removable = new long[batch.count];
+		int removed = 0;
+		int restored = 0;
+		int conflicts = 0;
+		int unconfirmed = 0;
+		int attempts = 0;
+		long[] current = new long[1];
+		for (int index = 0; index < batch.count; index++) {
+			if (!isOperationActive(token, operationEpoch)) break;
+			valid = revalidateBatch(token, expectedRevision, batch, false, operationEpoch);
+			if (valid != null) break;
+			long id = batch.ids[index];
+			ManagedMemoryMutationJournal.Entry entry;
+			boolean frozen;
+			synchronized (stateLock) {
+				entry = editJournal == null ? null : editJournal.get(id);
+				int watchIndex = watches.indexOf(id);
+				frozen = watchIndex >= 0 && watches.freeze[watchIndex];
+			}
+			// A live Freeze may immediately overwrite the restored value even if there is
+			// no explicit edit journal entry for this candidate.
+			if (frozen) {
+				conflicts++;
+				continue;
+			}
+			if (entry == null) {
+				removable[removed++] = id;
+				continue;
+			}
+			OwnerBucket owner = batch.owners[index];
+			Object strongOwner = batch.strongOwners[index];
+			if (entry.uncertain || entry.type != valueTypeFor(owner, batch.slots[index])
+					|| !readTyped(owner, batch.slots[index], strongOwner, current)
+					|| current[0] != (entry.restored ? entry.before : entry.after)) {
+				conflicts++;
+				continue;
+			}
+			if (entry.restored) {
+				// A prior restore succeeded, but publishing the result removal did not.
+				// It is safe to retry removal only while the original value still matches.
+				removable[removed++] = id;
+				continue;
+			}
+			attempts++;
+			try {
+				writeTyped(owner, batch.slots[index], strongOwner, entry.type, entry.before);
+				if (readTyped(owner, batch.slots[index], strongOwner, current)
+						&& writeConfirmed(current[0], entry.before)) {
+					restored++;
+					removable[removed++] = id;
+					synchronized (stateLock) {
+						if (editJournal != null) editJournal.markRestored(id, entry);
+					}
+					if (batch.watch[index]) updateWatchPrevious(id, current[0]);
+				} else {
+					unconfirmed++;
+					synchronized (stateLock) { mutationJournalLocked().markUncertain(id, entry.type); }
+				}
+			} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+				conflicts++;
+				synchronized (stateLock) { mutationJournalLocked().markUncertain(id, entry.type); }
+			}
+		}
+		int notAttempted = batch.count - removed - conflicts - unconfirmed;
+		if (removed > 0) {
+			// Filtering publishes one new search revision; unsuccessful restores stay visible.
+			ManagedOperationResult filtered = filter(token, expectedRevision,
+					Arrays.copyOf(removable, removed), false, operationEpoch);
+			if (filtered.code != MemoryEngineContract.RESULT_OK) {
+				return resultDetailed(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
+						"Values may have been restored, but result removal was not committed",
+						attempts, restored, conflicts, unconfirmed, notAttempted, conflicts, 0,
+						MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED);
+			}
+			// Journal entries are cleared only after filter commits the revised result set.
+			synchronized (stateLock) {
+				if (editJournal != null) {
+					for (int index = 0; index < removed; index++) editJournal.remove(removable[index]);
+				}
+			}
+		}
+		int code = (conflicts == 0 && unconfirmed == 0 && notAttempted == 0)
+				? MemoryEngineContract.RESULT_OK : MemoryEngineContract.RESULT_PARTIAL_WRITE;
+		return resultDetailed(token, code, "Restored " + restored + ", removed " + removed
+				+ ", conflicts " + conflicts + ", unconfirmed " + unconfirmed
+				+ ", not attempted " + notAttempted, attempts, restored, conflicts,
+				unconfirmed, notAttempted, conflicts, 0);
+	}
+
 	ManagedPage watchPage(long token) {
 		WatchSnapshot snapshot;
 		synchronized (stateLock) {
@@ -900,7 +1037,9 @@ final class ManagedJavaMemoryEngine {
 			page.values[index] = readValueText(owner, slot, strongOwner, type, page.states, index, value);
 			page.initialValues[index] = ManagedJavaValue.format(type, snapshot.initial[index]);
 			page.previousValues[index] = ManagedJavaValue.format(type, snapshot.previous[index]);
-			page.addresses[index] = owner == null ? "managed#LOST" : labelFor(owner, slot);
+			CandidateSource source = sourceFor(owner, slot, strongOwner);
+			page.addresses[index] = labelFor(owner, slot, source);
+			page.setSource(index, source);
 			page.types[index] = type;
 			page.relocations[index] = 0;
 			page.labels[index] = snapshot.labels[index] == null ? "" : snapshot.labels[index];
@@ -951,7 +1090,22 @@ final class ManagedJavaMemoryEngine {
 	ManagedOperationResult editTyped(long token, long expectedRevision, @Nullable long[] ids,
 	                                int declaredType, @Nullable String replacementValue,
 	                                boolean allowWatchOnly, long operationEpoch) {
-		if (!MemoryEngineContract.isValueType(declaredType)) {
+		return editBatch(token, expectedRevision, ids, declaredType, replacementValue,
+				false, null, allowWatchOnly, operationEpoch);
+	}
+
+	ManagedOperationResult editIncremental(long token, long expectedRevision, @Nullable long[] ids,
+	                                      int type, @Nullable String base, @Nullable String step,
+	                                      long operationEpoch) {
+		return editBatch(token, expectedRevision, ids, type, base, true, step, false, operationEpoch);
+	}
+
+	private ManagedOperationResult editBatch(long token, long expectedRevision, @Nullable long[] ids,
+	                                        int declaredType, @Nullable String replacementValue,
+	                                        boolean incremental, @Nullable String stepText,
+	                                        boolean allowWatchOnly, long operationEpoch) {
+		if (!MemoryEngineContract.isValueType(declaredType)
+				|| (incremental && !ManagedMemoryMutationJournal.isIntegerType(declaredType))) {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed edit received an unsupported declared primitive type");
 		}
@@ -963,6 +1117,10 @@ final class ManagedJavaMemoryEngine {
 							: "Managed edits are limited to 100 visible result rows");
 		}
 		long[] unique = uniqueIds(ids);
+		if (incremental && unique.length != ids.length) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Incremental editing cannot repeat a candidate identity");
+		}
 		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, allowWatchOnly);
 		if (batch.error != null) return batch.error;
 		int[] selectedIndexes = new int[batch.count];
@@ -974,6 +1132,10 @@ final class ManagedJavaMemoryEngine {
 					&& actualType != declaredType) {
 				return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"A retained Watch target no longer matches the declared primitive type");
+			}
+			if (incremental && actualType != declaredType) {
+				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Incremental editing requires every selected target to have the chosen integer type");
 			}
 			if (declaredType == MemoryEngineContract.TYPE_AUTO || actualType == declaredType) {
 				selectedIndexes[selectedCount++] = index;
@@ -989,13 +1151,46 @@ final class ManagedJavaMemoryEngine {
 		}
 		long[] replacements = new long[writableBatch.count];
 		long[] parsed = new long[1];
-		for (int index = 0; index < writableBatch.count; index++) {
-			int type = valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]);
-			if (!ManagedJavaValue.parse(replacementValue, type, parsed)) {
+		if (incremental) {
+			if (!ManagedMemoryMutationJournal.sequence(replacementValue, stepText,
+					declaredType, replacements)) {
 				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
-						"Managed edit value is outside the selected primitive type");
+						"Incremental sequence exceeds the selected integer type or input limit");
 			}
-			replacements[index] = parsed[0];
+		} else {
+			for (int index = 0; index < writableBatch.count; index++) {
+				int type = valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]);
+				if (!ManagedJavaValue.parse(replacementValue, type, parsed)) {
+					return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+							"Managed edit value is outside the selected primitive type");
+				}
+				replacements[index] = parsed[0];
+			}
+		}
+		// Most batches fit in the journal: avoid an extra reflection read for every
+		// candidate. Probe actual changes only when a conservative capacity check fails.
+		boolean needsNoOpProbe;
+		synchronized (stateLock) {
+			needsNoOpProbe = editJournal != null
+					&& !editJournal.canRecord(writableBatch.ids, writableBatch.count);
+		}
+		if (needsNoOpProbe) {
+			long[] needsHistory = new long[writableBatch.count];
+			int needsHistoryCount = 0;
+			long[] probe = new long[1];
+			for (int index = 0; index < writableBatch.count; index++) {
+				if (!readTyped(writableBatch.owners[index], writableBatch.slots[index],
+						writableBatch.strongOwners[index], probe)
+						|| probe[0] != replacements[index]) {
+					needsHistory[needsHistoryCount++] = writableBatch.ids[index];
+				}
+			}
+			synchronized (stateLock) {
+				if (editJournal != null && !editJournal.canRecord(needsHistory, needsHistoryCount)) {
+					return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+							"Edit history is full; clear unneeded results or restart the MIDlet");
+				}
+			}
 		}
 		ManagedOperationResult validation = revalidateBatch(token, expectedRevision, writableBatch,
 				allowWatchOnly, operationEpoch);
@@ -1028,19 +1223,52 @@ final class ManagedJavaMemoryEngine {
 					continue;
 				}
 				attempted++;
+				boolean writeStarted = false;
 				try {
 					int type = valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]);
-					writeTyped(writableBatch.owners[index], writableBatch.slots[index], owner, type,
-							replacements[index]);
+					if (!readTyped(writableBatch.owners[index], writableBatch.slots[index], owner, readback)) {
+						rejectedBeforeWrite++;
+						continue;
+					}
+					long before = readback[0];
+					if (before != replacements[index]) {
+						// The guest may change a value after preflight. Recheck before every
+						// write so a newly changing target never bypasses journal capacity.
+						synchronized (stateLock) {
+							if (editJournal != null && !editJournal.canRecord(writableBatch.ids[index])) {
+								rejectedBeforeWrite++;
+								continue;
+							}
+						}
+						writeStarted = true;
+						writeTyped(writableBatch.owners[index], writableBatch.slots[index], owner, type,
+								replacements[index]);
+					}
 					if (readTyped(writableBatch.owners[index], writableBatch.slots[index], owner, readback)
 							&& writeConfirmed(readback[0], replacements[index])) {
 						written++;
+						if (before != replacements[index]) {
+							synchronized (stateLock) {
+								mutationJournalLocked().record(writableBatch.ids[index], type, before, replacements[index]);
+							}
+						}
 						if (writableBatch.watch[index]) updateWatchPrevious(writableBatch.ids[index], readback[0]);
 					} else {
 						unconfirmed++;
+						if (writeStarted) {
+							synchronized (stateLock) {
+								mutationJournalLocked().markUncertain(writableBatch.ids[index], type);
+							}
+						}
 					}
 				} catch (IllegalAccessException | RuntimeException | LinkageError error) {
 					rejectedBeforeWrite++;
+					if (writeStarted) {
+						synchronized (stateLock) {
+							mutationJournalLocked().markUncertain(writableBatch.ids[index],
+									valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]));
+						}
+					}
 				}
 			}
 		}
@@ -1068,11 +1296,20 @@ final class ManagedJavaMemoryEngine {
 	                                             int attempted, int written, int skipped,
 	                                             int unconfirmed, int notAttempted,
 	                                             int rejectedBeforeWrite, int skippedByType) {
+		return resultDetailed(token, code, message, attempted, written, skipped,
+				unconfirmed, notAttempted, rejectedBeforeWrite, skippedByType,
+				MemoryEngineContract.REASON_NONE);
+	}
+
+	private ManagedOperationResult resultDetailed(long token, int code, @Nullable String message,
+	                                             int attempted, int written, int skipped,
+	                                             int unconfirmed, int notAttempted,
+	                                             int rejectedBeforeWrite, int skippedByType, int reason) {
 		synchronized (stateLock) {
 			long revision = committed == null ? 0L : committed.id;
 			return new ManagedOperationResult(code, revision, visibleResultCountLocked(),
 					baselineCount, message, attempted, written, skipped, unconfirmed, notAttempted,
-					rejectedBeforeWrite, skippedByType, watches.count, watches.freezeCount());
+					rejectedBeforeWrite, skippedByType, watches.count, watches.freezeCount(), reason);
 		}
 	}
 
@@ -1466,6 +1703,7 @@ final class ManagedJavaMemoryEngine {
 		requestedType = MemoryEngineContract.TYPE_AUTO;
 		lastMessage = null;
 		watches.clear();
+		editJournal = null;
 		owners.clear();
 		schemaCache.clear();
 		nextOwnerHandle = 1L;
@@ -1512,6 +1750,12 @@ final class ManagedJavaMemoryEngine {
 			cleanupOwnersLocked();
 			return successLocked(diagnostic);
 		}
+	}
+
+	/** Allocate mutation tracking only after the first explicit write or uncertain attempt. */
+	private ManagedMemoryMutationJournal mutationJournalLocked() {
+		if (editJournal == null) editJournal = new ManagedMemoryMutationJournal();
+		return editJournal;
 	}
 
 	static boolean revisionCanCommit(long expectedRevision, long currentRevision) {
@@ -1893,15 +2137,42 @@ final class ManagedJavaMemoryEngine {
 		return "LOST";
 	}
 
-	private String labelFor(OwnerBucket owner, int slot) {
+	private String labelFor(@Nullable OwnerBucket owner, int slot, CandidateSource source) {
 		if (owner == null) return "managed#LOST";
-		if (owner.kind == KIND_ARRAY) return arrayTypeName(valueTypeFor(owner, slot)) + "[]#"
-				+ owner.handle + "[" + slot + "]";
+		if (owner.kind == KIND_ARRAY) {
+			String identity = arrayTypeName(valueTypeFor(owner, slot)) + "[]#"
+					+ owner.handle + "[" + slot + "]";
+			if (source == CandidateSource.UNKNOWN) return identity;
+			String className = source.declaringClass;
+			int lastDot = className.lastIndexOf('.');
+			return className.substring(lastDot + 1) + "." + source.fieldName
+					+ (source.kind == MemoryEngineContract.SOURCE_STATIC_FIELD ? " [static]" : " [instance]")
+					+ " → " + identity;
+		}
 		FieldSlot field = owner.schema.fieldAt(slot);
 		if (field == null) return "managed#" + owner.handle + "[" + slot + "]";
 		if (owner.kind == KIND_STATIC_FIELD) return field.declaringClass.getName() + "."
 				+ field.field.getName() + " [static]";
 		return field.declaringClass.getName() + "#" + owner.handle + "." + field.field.getName();
+	}
+
+	/**
+	 * The logical owner is authoritative for edits; this optional descriptor only reports an
+	 * existing, directly observed field reference. A matching value never identifies an object.
+	 */
+	private static CandidateSource sourceFor(@Nullable OwnerBucket owner, int slot,
+	                                         @Nullable Object strongOwner) {
+		if (owner == null || strongOwner == null) return CandidateSource.UNKNOWN;
+		if (owner.kind == KIND_ARRAY) {
+			return owner.arrayReference == null ? CandidateSource.UNKNOWN
+					: owner.arrayReference.currentSource(strongOwner);
+		}
+		FieldSlot field = owner.schema == null ? null : owner.schema.fieldAt(slot);
+		if (field == null || !field.primitiveField) return CandidateSource.UNKNOWN;
+		return CandidateSource.fromField(field.field,
+				owner.kind == KIND_STATIC_FIELD
+						? MemoryEngineContract.SOURCE_STATIC_FIELD
+						: MemoryEngineContract.SOURCE_INSTANCE_FIELD);
 	}
 
 	private static int valueTypeFor(OwnerBucket owner, int slot) {
@@ -2004,6 +2275,20 @@ final class ManagedJavaMemoryEngine {
 		Iterator<Long> handles = owners.keySet().iterator();
 		while (handles.hasNext()) {
 			if (!retained.contains(handles.next())) handles.remove();
+		}
+		if (editJournal != null) {
+			editJournal.pruneCandidates(id -> {
+				long handle = ManagedJavaMemoryIds.ownerHandle(id);
+				if (!owners.containsKey(handle)) return false;
+				if (watches.indexOf(id) >= 0) return true;
+				int kind = ManagedJavaMemoryIds.kind(id);
+				int slot = ManagedJavaMemoryIds.slot(id);
+				if (committed != null && committed.contains(handle, kind, slot)) return true;
+				for (SearchState state : searchHistory) {
+					if (state.revision.contains(handle, kind, slot)) return true;
+				}
+				return false;
+			});
 		}
 	}
 
@@ -2114,12 +2399,25 @@ final class ManagedJavaMemoryEngine {
 		final int skippedByType;
 		final int watchCount;
 		final int freezeCount;
+		final int reason;
 
 		ManagedOperationResult(int code, long revision, long resultCount, long baselineCount,
 		                       String message,
 		                       int attempted, int written, int skipped, int unconfirmed,
 		                       int notAttempted, int rejectedBeforeWrite, int skippedByType,
 		                       int watchCount, int freezeCount) {
+			this(code, revision, resultCount, baselineCount, message,
+					attempted, written, skipped, unconfirmed, notAttempted,
+					rejectedBeforeWrite, skippedByType, watchCount, freezeCount,
+					MemoryEngineContract.REASON_NONE);
+		}
+
+		ManagedOperationResult(int code, long revision, long resultCount, long baselineCount,
+		                       String message,
+		                       int attempted, int written, int skipped, int unconfirmed,
+		                       int notAttempted, int rejectedBeforeWrite, int skippedByType,
+		                       int watchCount, int freezeCount, int reason) {
+			this.reason = reason;
 			this.code = code;
 			this.revision = revision;
 			this.resultCount = resultCount;
@@ -2144,6 +2442,10 @@ final class ManagedJavaMemoryEngine {
 		final String[] initialValues;
 		final String[] previousValues;
 		final String[] addresses;
+		final int[] sourceKinds;
+		final String[] sourceClasses;
+		final String[] sourceFields;
+		final String[] sourceTypes;
 		final String[] labels;
 		final int[] aliasMasks;
 		final int[] types;
@@ -2157,6 +2459,10 @@ final class ManagedJavaMemoryEngine {
 			ids = new long[count];
 			values = new String[count];
 			addresses = new String[count];
+			sourceKinds = new int[count];
+			sourceClasses = new String[count];
+			sourceFields = new String[count];
+			sourceTypes = new String[count];
 			aliasMasks = new int[count];
 			types = new int[count];
 			states = new int[count];
@@ -2166,6 +2472,13 @@ final class ManagedJavaMemoryEngine {
 			labels = watch ? new String[count] : null;
 			freezeModes = watch ? new int[count] : null;
 			freezePaused = watch ? new boolean[count] : null;
+		}
+
+		void setSource(int index, CandidateSource source) {
+			sourceKinds[index] = source.kind;
+			sourceClasses[index] = source.declaringClass;
+			sourceFields[index] = source.fieldName;
+			sourceTypes[index] = source.fieldType;
 		}
 
 		static ManagedPage allocate(int count, long revision) {
@@ -2195,12 +2508,15 @@ final class ManagedJavaMemoryEngine {
 		final String[] labels;
 		final boolean[] editable;
 		final String provenance;
+		final CandidateSource source;
+		final PathObservation path;
 		final String message;
 
 		ManagedInspection(int code, long revision, long[] ids, String[] values,
 		                String[] initialValues, String[] previousValues, int[] types, int[] states,
 		                int[] relativeOffsets, long[] expectedBits, String[] labels,
-		                boolean[] editable, String provenance, String message) {
+		                boolean[] editable, String provenance, CandidateSource source,
+		                PathObservation path, String message) {
 			this.code = code;
 			this.revision = revision;
 			this.ids = ids;
@@ -2214,13 +2530,16 @@ final class ManagedJavaMemoryEngine {
 			this.labels = labels;
 			this.editable = editable;
 			this.provenance = provenance;
+			this.source = source;
+			this.path = path;
 			this.message = message;
 		}
 
 		static ManagedInspection failure(int code, @Nullable String message) {
 			return new ManagedInspection(code, 0L, new long[0], new String[0], new String[0],
 					new String[0], new int[0], new int[0], new int[0], new long[0], new String[0],
-					new boolean[0], "", message);
+					new boolean[0], "", CandidateSource.UNKNOWN,
+					new PathObservation(MemoryEngineContract.PATH_UNKNOWN, ""), message);
 		}
 	}
 
@@ -2493,13 +2812,19 @@ final class ManagedJavaMemoryEngine {
 		final GroupPlan groupPlan;
 		final boolean captureAllValues;
 		final ArrayDeque<Object> queue = new ArrayDeque<>();
-		final IdentityHashMap<Object, Boolean> queued = new IdentityHashMap<>();
+		final IdentityHashMap<Object, ProvenanceNode> queued = new IdentityHashMap<>();
 		final IdentityHashMap<Object, Boolean> visited = new IdentityHashMap<>();
 		final IdentityHashMap<Object, OwnerBucket> objectOwners = new IdentityHashMap<>();
+		/** Pending direct-field paths only; the scanner already retains these queued arrays. */
+		final IdentityHashMap<Object, ArrayReference> pendingArrayReferences = new IdentityHashMap<>();
+		ArrayReference dequeuedArrayReference;
 		final RevisionBuilder revision;
 		final GroupMatcher groupMatcher;
 		final long[] value = new long[1];
 		long transientStorageBytes;
+		final long maxProvenanceBytes;
+		final long provenanceHistoryBytes;
+		long provenanceBytes;
 		long visitCount;
 		int skippedFields;
 		int concurrentFailures;
@@ -2532,22 +2857,81 @@ final class ManagedJavaMemoryEngine {
 			this.captureAllValues = captureAllValues;
 			this.revision = new RevisionBuilder(retainedRevisionBytes);
 			this.groupMatcher = groupPlan == null ? null : new GroupMatcher(groupPlan);
+			this.maxProvenanceBytes = limits.maxResultStorageBytes < MIN_PROVENANCE_STORAGE_BUDGET
+					? 0L : Math.min(MAX_PROVENANCE_CAPTURE_BYTES,
+							limits.maxResultStorageBytes / 32L);
+			// Existing history can be evicted during scanning; using its initial size only
+			// makes optional provenance capture more conservative, never less safe.
+			this.provenanceHistoryBytes = maxProvenanceBytes == 0L ? 0L : historyStorageBytes();
 		}
 
 		void enqueue(@Nullable Object value) {
-			if (value == null || queued.containsKey(value) || visited.containsKey(value)) return;
-			if (queue.size() >= limits.maxPending) {
-				throw new ResourceLimitException("Managed traversal pending queue exceeds the resource limit");
+			enqueuePath(value, null, null, -1, ProvenanceNode.UNKNOWN_ROOT);
+		}
+
+		void enqueueRoot(@Nullable Object value, int rootKind) {
+			enqueuePath(value, null, null, -1, rootKind);
+		}
+
+		void enqueuePath(@Nullable Object value, @Nullable ProvenanceNode parent,
+		                 @Nullable Field field, int index, int kind) {
+			if (value == null || visited.containsKey(value)) return;
+			boolean pending = queued.containsKey(value);
+			if (pending && queued.get(value) != null) return;
+			if (!pending) {
+				if (queue.size() >= limits.maxPending) {
+					throw new ResourceLimitException("Managed traversal pending queue exceeds the resource limit");
+				}
+				reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
 			}
-			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
-			queued.put(value, Boolean.TRUE);
-			queue.addLast(value);
+			ProvenanceNode node = null;
+			// An edge without a captured predecessor cannot form a verified root path.
+			// Do not allocate misleading orphan nodes when optional capture is partial.
+			boolean rooted = kind == ProvenanceNode.MIDLET_ROOT
+					|| kind == ProvenanceNode.DISPLAYABLE_ROOT
+					|| kind == ProvenanceNode.STATIC_FIELD;
+			if ((rooted || (parent != null && kind != ProvenanceNode.UNKNOWN_ROOT))
+					&& provenanceBytes < maxProvenanceBytes
+					&& maxProvenanceBytes - provenanceBytes >= PROVENANCE_NODE_BYTES
+					&& revision.withinStorageBudget(limits,
+							checkedAdd(checkedAdd(transientStorageBytes,
+									provenanceHistoryBytes), PROVENANCE_NODE_BYTES))) {
+				reserveTraversalBytes(PROVENANCE_NODE_BYTES);
+				provenanceBytes += PROVENANCE_NODE_BYTES;
+				node = new ProvenanceNode(value, parent, field, index, kind);
+			}
+			// A later rooted alias can upgrade an untraced pending object. Never replace an
+			// already captured route, and never add a second queue entry for the same object.
+			if (!pending || node != null) queued.put(value, node);
+			if (!pending) queue.addLast(value);
 		}
 
 		Object dequeue() {
 			Object value = queue.removeFirst();
 			releaseTraversalBytes(QUEUE_REFERENCE_BYTES);
+			dequeuedArrayReference = pendingArrayReferences.remove(value);
+			if (dequeuedArrayReference != null) releaseTraversalBytes(TRAVERSAL_ENTRY_BYTES);
 			return value;
+		}
+
+		void enqueueReference(@Nullable Object value, FieldSlot source, @Nullable Object parent) {
+			if (value != null && !visited.containsKey(value)
+					&& !pendingArrayReferences.containsKey(value)) {
+				Class<?> component = value.getClass().getComponentType();
+				int arrayType = ManagedJavaValue.typeForClass(component);
+				if (ManagedJavaValue.isSupportedType(arrayType)
+						&& (groupPlan != null ? groupPlan.type == arrayType : plan.accepts(arrayType))
+						&& pendingArrayReferences.size() < maxProvenanceBytes / TRAVERSAL_ENTRY_BYTES
+						&& revision.withinStorageBudget(limits,
+								checkedAdd(transientStorageBytes, TRAVERSAL_ENTRY_BYTES))) {
+					// A direct-reference label is optional. Never exhaust the scan budget or
+					// evict search history merely to capture diagnostic provenance.
+					reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES);
+					pendingArrayReferences.put(value, new ArrayReference(source.field, parent));
+				}
+			}
+			enqueuePath(value, parent == null ? null : queued.get(parent), source.field, -1,
+					parent == null ? ProvenanceNode.STATIC_FIELD : ProvenanceNode.INSTANCE_FIELD);
 		}
 
 		boolean checkpoint() {
@@ -2571,7 +2955,7 @@ final class ManagedJavaMemoryEngine {
 			Class<?> type = value.getClass();
 			int arrayType = ManagedJavaValue.typeForClass(type.getComponentType());
 			if (ManagedJavaValue.isSupportedType(arrayType)) {
-				scanPrimitiveArray(value, arrayType);
+				scanPrimitiveArray(value, arrayType, dequeuedArrayReference);
 				return;
 			}
 			if (value instanceof Object[]) {
@@ -2603,8 +2987,10 @@ final class ManagedJavaMemoryEngine {
 						} else if (plan.accepts(field.valueType) && !field.finalField
 								&& (captureAllValues || plan.matchesKnown(field.valueType,
 										current))) {
-							if (owner == null) owner = ownerForObject(value, KIND_OBJECT_FIELD,
-									schema, objectOwners);
+							if (owner == null) {
+								owner = ownerForObject(value, KIND_OBJECT_FIELD, schema, objectOwners);
+								if (owner.provenancePath == null) owner.provenancePath = queued.get(value);
+							}
 							if (!addToActiveRevision(revision, owner, field.slot, current, current,
 									transientStorageBytes)) {
 								throw new ResourceLimitException(
@@ -2613,7 +2999,7 @@ final class ManagedJavaMemoryEngine {
 						}
 						if (field.finalField) skippedFields++;
 					} else if (field.referenceField) {
-						enqueue(field.field.get(value));
+						enqueueReference(field.field.get(value), field, value);
 					}
 				} catch (ResourceLimitException limit) {
 					throw limit;
@@ -2623,8 +3009,11 @@ final class ManagedJavaMemoryEngine {
 					concurrentFailures++;
 				}
 			}
-			if (groupMatcher != null && groupMatcher.complete()) publishGroup(value, KIND_OBJECT_FIELD,
-					schema, objectOwners);
+			if (groupMatcher != null && groupMatcher.complete()) {
+				publishGroup(value, KIND_OBJECT_FIELD, schema, objectOwners);
+				OwnerBucket groupOwner = objectOwners.get(value);
+				if (groupOwner != null) if (groupOwner.provenancePath == null) groupOwner.provenancePath = queued.get(value);
+			}
 		}
 
 		boolean scanStaticClass(Class<?> type) {
@@ -2655,7 +3044,7 @@ final class ManagedJavaMemoryEngine {
 						}
 						if (field.finalField) skippedFields++;
 					} else if (field.referenceField) {
-						enqueue(field.field.get(null));
+						enqueueReference(field.field.get(null), field, null);
 					}
 				} catch (ResourceLimitException limit) {
 					throw limit;
@@ -2670,7 +3059,7 @@ final class ManagedJavaMemoryEngine {
 			return true;
 		}
 
-		void scanPrimitiveArray(Object array, int arrayType) {
+		void scanPrimitiveArray(Object array, int arrayType, @Nullable ArrayReference reference) {
 			if (groupMatcher != null) {
 				if (arrayType != groupPlan.type) return;
 			} else if (!plan.accepts(arrayType)) {
@@ -2691,7 +3080,11 @@ final class ManagedJavaMemoryEngine {
 					groupMatcher.match(index, arrayType, value[0]);
 					if (groupMatcher.complete()) break;
 				} else if (captureAllValues || plan.matchesKnown(arrayType, value[0])) {
-					if (owner == null) owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
+					if (owner == null) {
+						owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
+						if (reference != null) owner.arrayReference = reference;
+						if (owner.provenancePath == null) owner.provenancePath = queued.get(array);
+					}
 					if (!addToActiveRevision(revision, owner, index, value[0], value[0],
 							transientStorageBytes)) {
 						throw new ResourceLimitException(
@@ -2699,8 +3092,15 @@ final class ManagedJavaMemoryEngine {
 					}
 				}
 			}
-			if (groupMatcher != null && groupMatcher.complete()) publishGroup(array,
-					KIND_ARRAY, null, objectOwners);
+			if (groupMatcher != null && groupMatcher.complete()) {
+				publishGroup(array, KIND_ARRAY, null, objectOwners);
+				if (reference != null) {
+					OwnerBucket groupOwner = objectOwners.get(array);
+					if (groupOwner != null) groupOwner.arrayReference = reference;
+				}
+				OwnerBucket groupOwner = objectOwners.get(array);
+				if (groupOwner != null) if (groupOwner.provenancePath == null) groupOwner.provenancePath = queued.get(array);
+			}
 		}
 
 		private void publishGroup(Object ownerObject, int kind, @Nullable Schema schema,
@@ -2724,7 +3124,8 @@ final class ManagedJavaMemoryEngine {
 				if ((index & (CHECK_INTERVAL - 1)) == 0 && !isOperationActive(token, operationEpoch)) {
 					throw new OperationCancelledException();
 				}
-				enqueue(array[index]);
+				enqueuePath(array[index], queued.get(array), null, index,
+						ProvenanceNode.ARRAY_INDEX);
 			}
 		}
 
@@ -2802,6 +3203,7 @@ final class ManagedJavaMemoryEngine {
 		final ArrayList<OwnerBucketBuilder> builders = new ArrayList<>();
 		final Map<Long, OwnerBucketBuilder> byOwner = new HashMap<>();
 		final long retainedRevisionBytes;
+		long stagedStorageBytes;
 		long candidateCount;
 
 		RevisionBuilder() {
@@ -2821,6 +3223,7 @@ final class ManagedJavaMemoryEngine {
 				builder = new OwnerBucketBuilder(owner, initialCapacity);
 				byOwner.put(owner.handle, builder);
 				builders.add(builder);
+				stagedStorageBytes = checkedAdd(stagedStorageBytes, newStorage);
 			}
 			return builder;
 		}
@@ -2839,6 +3242,7 @@ final class ManagedJavaMemoryEngine {
 			long growth = builder.additionalStorageForNext(limits.maxCandidates);
 			if (!canAddStorage(limits, extraBytes, growth)) return false;
 			if (!builder.add(slot, initialValue, previousValue, limits)) return false;
+			stagedStorageBytes = checkedAdd(stagedStorageBytes, growth);
 			candidateCount++;
 			return true;
 		}
@@ -2848,11 +3252,7 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		long storageBytes() {
-			long total = retainedRevisionBytes;
-			for (OwnerBucketBuilder builder : builders) {
-				total = checkedAdd(total, builder.storageBytes());
-			}
-			return total;
+			return checkedAdd(retainedRevisionBytes, stagedStorageBytes);
 		}
 
 		Revision finish(long id, Limits limits, long extraBytes) {
@@ -2866,6 +3266,9 @@ final class ManagedJavaMemoryEngine {
 						checkedAdd(checkedMultiply(builder.size, RESULT_SLOT_BYTES),
 								FINISHED_BUCKET_BYTES));
 			}
+			long pathBytes = retainedPathBytes();
+			// Transient scan accounting already includes every retained path node at this point.
+			// Count only the finished candidate copies for the peak, then retain paths in Revision.
 			if (!canAddStorage(limits, extraBytes, finishedStorageBytes)) {
 				throw new ResourceLimitException("Managed result storage exceeds the byte budget");
 			}
@@ -2881,7 +3284,19 @@ final class ManagedJavaMemoryEngine {
 			}
 			if (nonEmptyBuckets == 0) finishedStorageBytes = 0L;
 			return new Revision(id, views.toArray(new BucketView[0]), count,
-					finishedStorageBytes);
+					checkedAdd(finishedStorageBytes, pathBytes));
+		}
+
+		private long retainedPathBytes() {
+			IdentityHashMap<ProvenanceNode, Boolean> retained = new IdentityHashMap<>();
+			for (OwnerBucketBuilder builder : builders) {
+				if (builder.size == 0) continue;
+				for (ProvenanceNode node = builder.owner.provenancePath;
+						node != null && retained.put(node, Boolean.TRUE) == null; node = node.parent) {
+					// Every retained ancestor is shared, regardless of the number of matching slots.
+				}
+			}
+			return checkedMultiply(retained.size(), PROVENANCE_NODE_BYTES);
 		}
 
 		private boolean canAddStorage(Limits limits, long extraBytes, long additionalBytes) {
@@ -3065,7 +3480,179 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
+	/** Immutable descriptor; no references to the game or runtime are retained. */
+	static final class CandidateSource {
+		static final CandidateSource UNKNOWN = new CandidateSource(
+				MemoryEngineContract.SOURCE_UNKNOWN, "", "", "");
+		final int kind;
+		final String declaringClass;
+		final String fieldName;
+		final String fieldType;
+
+		private CandidateSource(int kind, String declaringClass, String fieldName, String fieldType) {
+			this.kind = kind;
+			this.declaringClass = declaringClass;
+			this.fieldName = fieldName;
+			this.fieldType = fieldType;
+		}
+
+		static CandidateSource fromField(Field field, int kind) {
+			String className = field.getDeclaringClass().getName();
+			String name = field.getName();
+			String type = field.getType().getName();
+			// Preserve complete names or report no source. Truncating a name changes identity.
+			if (className.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS
+					|| name.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS
+					|| type.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS) {
+				return UNKNOWN;
+			}
+			return new CandidateSource(kind, className, name, type);
+		}
+	}
+
+	/** A weak observation of one direct reference; other references may exist. */
+	private static final class ArrayReference {
+		final Field field;
+		final WeakReference<Object> instance;
+
+		ArrayReference(Field field, @Nullable Object parent) {
+			this.field = field;
+			this.instance = parent == null ? null : new WeakReference<>(parent);
+		}
+
+		CandidateSource currentSource(Object array) {
+			try {
+				Object parent = instance == null ? null : instance.get();
+				if (instance != null && parent == null) return CandidateSource.UNKNOWN;
+				if (field.get(parent) != array) return CandidateSource.UNKNOWN;
+				return CandidateSource.fromField(field, instance == null
+						? MemoryEngineContract.SOURCE_STATIC_FIELD
+						: MemoryEngineContract.SOURCE_INSTANCE_FIELD);
+			} catch (IllegalAccessException | RuntimeException | LinkageError ignored) {
+				return CandidateSource.UNKNOWN;
+			}
+		}
+	}
+
+	/** A single incoming edge per discovered object, shared by every matching primitive slot. */
+	private static final class ProvenanceNode {
+		static final int UNKNOWN_ROOT = 0;
+		static final int MIDLET_ROOT = 1;
+		static final int DISPLAYABLE_ROOT = 2;
+		static final int STATIC_FIELD = 3;
+		static final int INSTANCE_FIELD = 4;
+		static final int ARRAY_INDEX = 5;
+		final WeakReference<Object> target;
+		@Nullable final ProvenanceNode parent;
+		@Nullable final Field field;
+		final int index;
+		final int kind;
+
+		ProvenanceNode(Object target, @Nullable ProvenanceNode parent,
+		               @Nullable Field field, int index, int kind) {
+			this.target = new WeakReference<>(target);
+			this.parent = parent;
+			this.field = field;
+			this.index = index;
+			this.kind = kind;
+		}
+	}
+
+	/** One observation of a path; never authorizes mutation or another-runtime rebinding. */
+	static final class PathObservation {
+		final int status;
+		final String path;
+
+		PathObservation(int status, String path) {
+			this.status = status;
+			this.path = path;
+		}
+	}
+
+	private PathObservation inspectPath(long token, OwnerBucket owner, Object actual, int slot) {
+		if (owner.kind == KIND_STATIC_FIELD) {
+			FieldSlot field = owner.schema.fieldAt(slot);
+			return field == null ? new PathObservation(MemoryEngineContract.PATH_UNKNOWN, "") :
+					new PathObservation(MemoryEngineContract.PATH_VERIFIED,
+							field.declaringClass.getName() + "." + field.field.getName());
+		}
+		ProvenanceNode leaf = owner.provenancePath;
+		if (leaf == null || actual == null) return new PathObservation(MemoryEngineContract.PATH_UNKNOWN, "");
+		ProvenanceNode[] nodes = new ProvenanceNode[MAX_PROVENANCE_DEPTH];
+		int depth = 0;
+		for (ProvenanceNode node = leaf; node != null; node = node.parent) {
+			if (depth == nodes.length) return new PathObservation(MemoryEngineContract.PATH_INCOMPLETE, "");
+			nodes[depth++] = node;
+		}
+		MemoryDiscoveryBridge.Snapshot runtime = MemoryDiscoveryBridge.snapshot(token);
+		if (!runtime.isAvailable()) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+		StringBuilder label = new StringBuilder();
+		Object previous = null;
+		for (int index = depth - 1; index >= 0; index--) {
+			ProvenanceNode node = nodes[index];
+			Object current = node.target.get();
+			if (current == null) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+			try {
+				switch (node.kind) {
+					case ProvenanceNode.MIDLET_ROOT:
+						if (runtime.root() != current) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						label.append("MIDlet");
+						break;
+					case ProvenanceNode.DISPLAYABLE_ROOT:
+						if (runtime.displayableRoot() != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append("Displayable");
+						break;
+					case ProvenanceNode.STATIC_FIELD:
+						if (node.field == null || node.field.get(null) != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append(node.field.getDeclaringClass().getName())
+								.append('.').append(node.field.getName());
+						break;
+					case ProvenanceNode.INSTANCE_FIELD:
+						if (node.field == null || previous == null || node.field.get(previous) != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append(" → ").append(node.field.getDeclaringClass().getSimpleName())
+								.append('.').append(node.field.getName());
+						break;
+					case ProvenanceNode.ARRAY_INDEX:
+						if (!(previous instanceof Object[]) || node.index < 0
+								|| node.index >= ((Object[]) previous).length
+								|| ((Object[]) previous)[node.index] != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append('[').append(node.index).append(']');
+						break;
+					default:
+						return new PathObservation(MemoryEngineContract.PATH_UNKNOWN, "");
+				}
+			} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+				return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+			}
+			previous = current;
+			if (label.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS - 32) {
+				return new PathObservation(MemoryEngineContract.PATH_INCOMPLETE, "");
+			}
+		}
+		if (previous != actual) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+		if (owner.kind == KIND_ARRAY) label.append('[').append(slot).append(']');
+		else {
+			FieldSlot field = owner.schema.fieldAt(slot);
+			if (field == null) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+			label.append(" → ").append(field.declaringClass.getSimpleName())
+					.append('.').append(field.field.getName());
+		}
+		return label.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS
+				? new PathObservation(MemoryEngineContract.PATH_INCOMPLETE, "")
+				: new PathObservation(MemoryEngineContract.PATH_VERIFIED, label.toString());
+	}
+
 	private static final class OwnerBucket {
+		@Nullable ArrayReference arrayReference;
+		@Nullable ProvenanceNode provenancePath;
 		final long handle;
 		final int kind;
 		final Class<?> staticClass;

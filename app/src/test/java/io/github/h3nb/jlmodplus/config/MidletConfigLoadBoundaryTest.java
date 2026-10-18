@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.SharedPreferences;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
@@ -393,11 +393,11 @@ public class MidletConfigLoadBoundaryTest {
 		model.vkType = vkType;
 		model.systemProperties = "";
 		Files.write(configFile(dir).toPath(),
-				new Gson().toJson(model).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(model).getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static ProfileModel readConfig(File dir) throws IOException {
-		return new Gson().fromJson(
+		return new ProfileFixtures().fromJson(
 				new String(Files.readAllBytes(configFile(dir).toPath()), StandardCharsets.UTF_8),
 				ProfileModel.class);
 	}

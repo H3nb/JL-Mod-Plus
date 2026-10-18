@@ -90,9 +90,7 @@ class HostInputRouterTest {
     @Test
     fun nonBackPhysicalKeyMappedToMStillOpensMenu() {
         val profile = ProfileModel()
-        profile.keyMappings = SparseIntArray().apply {
-            put(KeyEvent.KEYCODE_Q, KeyMapper.KEY_OPTIONS_MENU)
-        }
+        profile.keyMappings = mapOf(KeyEvent.KEYCODE_Q to KeyMapper.KEY_OPTIONS_MENU)
         KeyMapper.setKeyMapping(profile)
         try {
             val host = RecordingHost(modal = false)

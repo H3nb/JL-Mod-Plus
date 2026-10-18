@@ -95,13 +95,13 @@ public final class MemoryIpcRuntimeTest {
 				new File(appDirectory, "converted.zip"));
 		writeManifest(new File(appDirectory, "converted.dex.conf"));
 
-		ProfileModel profile = new ProfileModel(configDirectory);
+		ProfileModel profile = ProfileModel.fresh();
 		profile.graphicsMode = 2;
 		profile.showKeyboard = false;
 		profile.touchInput = true;
 		profile.soundBank = "";
 		assertTrue("Unable to save memory IPC fixture profile",
-				ProfilesManager.saveConfig(profile));
+				ProfilesManager.saveConfig(configDirectory, profile));
 		assertTrue("Unable to select memory IPC fixture",
 				preferences.edit().putString(Constants.PREF_EMULATOR_DIR,
 						root.getAbsolutePath()).commit());

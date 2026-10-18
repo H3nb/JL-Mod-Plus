@@ -46,9 +46,11 @@ public interface ConfigFormEvents {
 	default void onShaderTuningComplete(float[] values) {
 	}
 
-	/** Opens installation-owned Java ME file permissions; these are never part of a preset. */
-	default void onFilePermissions() {
-	}
+    /** Installation-owned access decisions, never profile/preset edits. */
+    default void onFilePermissionChanged(boolean write, int decision) {}
+
+    /** Copies a user-selected legacy Siemens file within this installation only. */
+    default void onImportLegacyPrivateFile(@NonNull String relativePath) {}
 
 	/** Opens preset management from the General destination. */
 	default void onManageProfiles() {

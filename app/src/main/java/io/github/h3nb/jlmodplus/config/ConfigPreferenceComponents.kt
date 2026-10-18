@@ -233,11 +233,16 @@ internal fun ConfigNumberPreference(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     valueSuffix: String? = null,
+    resetValue: String? = null,
+    validIntegerRange: IntRange? = null,
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
     val display = buildString {
         append(value.ifEmpty { fallbackLabel })
-        if (value.isNotEmpty() && valueSuffix != null) append(" ").append(valueSuffix)
+        if (value.isNotEmpty() && valueSuffix != null) {
+            if (valueSuffix != "%") append(" ")
+            append(valueSuffix)
+        }
     }
     ConfigValuePreference(
         title = title,
@@ -255,6 +260,8 @@ internal fun ConfigNumberPreference(
             label = null,
             keyboardType = keyboardType,
             valueSuffix = valueSuffix,
+            resetValue = resetValue,
+            validIntegerRange = validIntegerRange,
             onDismissRequest = { dialogVisible = false },
             onConfirm = { next ->
                 dialogVisible = false

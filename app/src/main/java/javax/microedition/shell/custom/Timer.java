@@ -15,8 +15,7 @@
  *  limitations under the License.
  */
 
-/* Modified in JL-Mod Plus: converted guest timers use the parent-owned timing bridge while
- * retaining the inherited Apache Timer contracts. */
+/* Modified for JL-Mod Plus. */
 
 package javax.microedition.shell.custom;
 
@@ -420,18 +419,25 @@ public class Timer {
                         continue;
                     }
 
-                    boolean taskCompletedNormally = false;
                     try {
                         task.run();
-                        taskCompletedNormally = true;
-                    } finally {
-                        if (!taskCompletedNormally) {
-                            synchronized (this) {
-                                cancelled = true;
+                    } catch (Exception failure) {
+                        // Preserve the J2ME-Loader/JL-Mod callback compatibility boundary:
+                        // cancel only the failed task, including an already queued fixed-rate
+                        // occurrence. Errors and scheduler failures still escape to worker cleanup.
+                        System.err.println("TimerTask failed; cancelling " + task.getClass().getName());
+                        failure.printStackTrace();
+                        try {
+                            // Preserve guest cleanup hooks without holding the task lock.
+                            task.cancel();
+                        } finally {
+                            // Scheduler cancellation must not depend on an override delegating.
+                            synchronized (task.lock) {
+                                task.cancelled = true;
                             }
                         }
                     }
-                    if (taskCompletedNormally && task.period >= 0 && !task.fixedRate) {
+                    if (task.period >= 0 && !task.fixedRate) {
                         rescheduleFixedDelayTask(task, fixedDelayStartTime, fixedDelayStartWallTime);
                     }
                 }
@@ -470,16 +476,16 @@ public class Timer {
                     if (task.cancelled) {
                         return;
                     }
-					task.when = saturatingAdd(executionStartTime, task.period);
-					if (task.relativeGuestTime && timingSession != null) {
-						task.scheduledWallTime =
-								timingSession.wallTimeMillisForGuestMonotonicMillis(task.when);
-					} else {
-						task.scheduledWallTime = saturatingAdd(
-								executionStartWallTime,
-								wallDelayMillis(task.period, task.relativeGuestTime));
-					}
-					insertTask(task);
+                    task.when = saturatingAdd(executionStartTime, task.period);
+                    if (task.relativeGuestTime && timingSession != null) {
+                        task.scheduledWallTime =
+                                timingSession.wallTimeMillisForGuestMonotonicMillis(task.when);
+                    } else {
+                        task.scheduledWallTime = saturatingAdd(
+                                executionStartWallTime,
+                                wallDelayMillis(task.period, task.relativeGuestTime));
+                    }
+                    insertTask(task);
                 }
             }
         }
@@ -778,7 +784,7 @@ public class Timer {
         if (delay < 0) {
             throw new IllegalArgumentException("delay < 0: " + delay);
         }
-		scheduleImpl(task, delay, -1, false, true);
+        scheduleImpl(task, delay, -1, false, true);
     }
 
     /**
@@ -800,7 +806,7 @@ public class Timer {
         if (delay < 0 || period <= 0) {
             throw new IllegalArgumentException();
         }
-		scheduleImpl(task, delay, period, false, true);
+        scheduleImpl(task, delay, period, false, true);
     }
 
     /**
@@ -847,7 +853,7 @@ public class Timer {
         if (delay < 0 || period <= 0) {
             throw new IllegalArgumentException();
         }
-		scheduleImpl(task, delay, period, true, true);
+        scheduleImpl(task, delay, period, true, true);
     }
 
     /**
@@ -908,19 +914,19 @@ public class Timer {
 
                 task.scheduled = true;
                 task.when = when;
-				task.period = period;
-				task.fixedRate = fixed;
-				task.relativeGuestTime = relativeGuestTime;
-				if (relativeGuestTime && impl.timingSession != null) {
-					task.scheduledWallTime =
-							timingSessionWallTimeFor(when);
-				} else {
-					task.scheduledWallTime = TimerImpl.saturatingAdd(
-							impl.wallTimeMillis(), impl.wallDelayMillis(delay, relativeGuestTime));
-				}
-				task.scheduledWallPeriodMillis = period > 0
-						? impl.wallDelayMillis(period, relativeGuestTime)
-						: 0L;
+                task.period = period;
+                task.fixedRate = fixed;
+                task.relativeGuestTime = relativeGuestTime;
+                if (relativeGuestTime && impl.timingSession != null) {
+                    task.scheduledWallTime =
+                            timingSessionWallTimeFor(when);
+                } else {
+                    task.scheduledWallTime = TimerImpl.saturatingAdd(
+                            impl.wallTimeMillis(), impl.wallDelayMillis(delay, relativeGuestTime));
+                }
+                task.scheduledWallPeriodMillis = period > 0
+                        ? impl.wallDelayMillis(period, relativeGuestTime)
+                        : 0L;
             }
 
             // insert the newTask into queue

@@ -1,0 +1,92 @@
+{
+  "Controller": {
+    "schemaVersion": 99,
+    "future": {
+      "large": 9007199254740993,
+      "array": [
+        true,
+        "x",
+        1.0
+      ]
+    }
+  },
+  "CustomKeys": [
+    {
+      "CustomKeyCode": 42,
+      "DefaultKeyCode": -1,
+      "GameAction": 1,
+      "KeyName": "上 Ω"
+    }
+  ],
+  "FontAntiAlias": true,
+  "FontApplyDimensions": true,
+  "FontSizeLarge": 23,
+  "FontSizeMedium": 17,
+  "FontSizeSmall": 11,
+  "ForceFullscreen": true,
+  "FpsLimit": 55,
+  "GraphicsMode": 1,
+  "HwAcceleration": false,
+  "ImmediateMode": true,
+  "Layout": 3,
+  "KeyMappings": {
+    "131": 0,
+    "132": -2147483648,
+    "133": 42
+  },
+  "Orientation": 2,
+  "ParallelRedrawScreen": true,
+  "PerformanceOverlayMetrics": 5,
+  "PerformanceOverlayPosition": 3,
+  "ScreenBackgroundColor": 1122867,
+  "ScreenBackgroundImage": "背景 \u0026 skin.png",
+  "ScreenBackgroundMode": 0,
+  "ScreenFilter": true,
+  "ScreenGravity": 2,
+  "ScreenHeight": 208,
+  "ScreenKeepAspectRatio": true,
+  "ScreenPadding": 13,
+  "ScreenScaleRatio": 85,
+  "ScreenScaleToFit": true,
+  "ScreenScaleType": 0,
+  "ScreenWidth": 176,
+  "Shader": {
+    "author": "tester",
+    "fragment": "crt.fsh",
+    "name": "CRT Ω",
+    "Settings": [
+      1.25,
+      -0.0,
+      2.5,
+      4.0
+    ],
+    "vertex": "crt.vsh"
+  },
+  "ShowFps": true,
+  "ShowKeyboard": true,
+  "SkipResumeCall": true,
+  "SoundBank": "音.sf2",
+  "SystemProperties": "a: one\nz: new\n",
+  "TimingMode": 1,
+  "TouchInput": true,
+  "Version": 7,
+  "VirtualAnalogCenterX": 0.2,
+  "VirtualAnalogCenterY": 0.75,
+  "VirtualAnalogEnabled": false,
+  "VirtualAnalogRadius": 0.18,
+  "VirtualDpadCenterX": 0.7,
+  "VirtualDpadCenterY": 0.8,
+  "VirtualDpadEnabled": true,
+  "VirtualDpadRadius": 0.14,
+  "VirtualKeyboardAlpha": 133,
+  "VirtualKeyboardColorBackground": 123456,
+  "VirtualKeyboardColorBackgroundSelected": 234567,
+  "ButtonShape": 1,
+  "VirtualKeyboardFeedback": true,
+  "VirtualKeyboardColorForeground": 345678,
+  "VirtualKeyboardColorForegroundSelected": 456789,
+  "VirtualKeyboardForceOpacity": true,
+  "VirtualKeyboardDelay": 1500,
+  "VirtualKeyboardColorOutline": 567890,
+  "VirtualKeyboardType": 3
+}

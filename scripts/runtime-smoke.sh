@@ -11,6 +11,7 @@ selectors=(
   'javax.microedition.media.MediaBoundaryRuntimeTest'
   'io.github.h3nb.jlmodplus.librarydb.LibraryDatabaseAndroidTest'
   'io.github.h3nb.jlmodplus.crashes.CrashReportsComposeTest'
+  'io.github.h3nb.jlmodplus.crashes.DiagnosticBundleStoreRuntimeTest'
   'io.github.h3nb.jlmodplus.config.PresetAuthorityIpcRuntimeTest#staleRuntimeIdentityCannotModifyReplacementApp'
   'io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#missingRuntimeCompletionCarriesStructuredReason'
   'io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest'

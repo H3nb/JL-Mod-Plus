@@ -16,6 +16,14 @@ This document records durable semantic correctness boundaries for preset/configu
 - Whole-preset activation may establish LINKED ownership only after the complete source snapshot is valid and the local snapshot has been durably materialized.
 - Global default changes are prospective. Existing installed identities keep their current Built-in, CUSTOM, or LINKED state; fresh installation binds the then-current eligible default or a Built-in fallback.
 
+## Additive configuration fields
+
+`AllowDisplayCutout` is a profile-owned boolean with default false. A missing
+field in an older profile is equivalent to explicit false. Reading the field
+must not force publication, bump the configuration version, detach LINKED
+ownership or replace Built-in ownership with CUSTOM. Normal serialization writes
+the field; a real user change follows the existing effective-change rules.
+
 ## Persistence and recovery
 
 - Preset source and installed-snapshot publication must not expose a partially written state as committed. Recover interrupted publication before consuming, replacing, renaming, deleting, or synchronizing the affected snapshot.

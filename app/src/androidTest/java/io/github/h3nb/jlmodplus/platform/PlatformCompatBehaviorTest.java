@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.accessibilityservice.AccessibilityService;
@@ -55,6 +56,7 @@ import jlmod.platformfixture.PlatformCompatMidlet;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.settings.RuntimeFullscreenProvider;
 import io.github.h3nb.jlmodplus.util.Constants;
 
 @RunWith(AndroidJUnit4.class)
@@ -72,8 +74,6 @@ public class PlatformCompatBehaviorTest {
 	private String previousEmulatorDirectory;
 	private boolean hadToolbar;
 	private boolean previousToolbar;
-	private boolean hadStatusBar;
-	private boolean previousStatusBar;
 	private File root;
 	private File appDir;
 	private File marker;
@@ -88,8 +88,6 @@ public class PlatformCompatBehaviorTest {
 		previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
 		hadToolbar = preferences.contains(Constants.PREF_TOOLBAR);
 		previousToolbar = preferences.getBoolean(Constants.PREF_TOOLBAR, false);
-		hadStatusBar = preferences.contains(Constants.PREF_STATUSBAR);
-		previousStatusBar = preferences.getBoolean(Constants.PREF_STATUSBAR, false);
 		root = new File(context.getFilesDir(), FIXTURE_ROOT);
 		appDir = new File(new File(root, "converted"), "fixture");
 		marker = new File(root, "platform.marker");
@@ -107,7 +105,6 @@ public class PlatformCompatBehaviorTest {
 		restorePreference(preferences, Constants.PREF_EMULATOR_DIR,
 				hadEmulatorDirectory, previousEmulatorDirectory);
 		restorePreference(preferences, Constants.PREF_TOOLBAR, hadToolbar, previousToolbar);
-		restorePreference(preferences, Constants.PREF_STATUSBAR, hadStatusBar, previousStatusBar);
 		deleteRecursivelyBestEffort(root);
 	}
 
@@ -140,6 +137,8 @@ public class PlatformCompatBehaviorTest {
 
 	@Test
 	public void canvasMenuImeActionRestoresCanvasInputConnection() throws Exception {
+		// The menu exposes IME when no toolbar shortcut is displayed.
+		setFullscreen(true);
 		launchFixture(context, appDir);
 		awaitMarker(marker, "shown");
 		invokeGlobalBack();
@@ -152,33 +151,37 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void toolbarAndStatusBarStatesKeepCanvasAlive() throws Exception {
-		boolean[][] barStates = {{false, false}, {true, false}, {false, true}, {true, true}};
-		for (boolean[] barState : barStates) {
+	public void fullscreenStatesKeepCanvasAliveAndTransientBarsPreserveGeometry() throws Exception {
+		for (boolean fullscreen : new boolean[]{false, true}) {
 			clearMarker(marker);
-			assertTrue("Unable to configure platform compatibility bar state",
-					preferences.edit()
-							.putBoolean(Constants.PREF_TOOLBAR, barState[0])
-							.putBoolean(Constants.PREF_STATUSBAR, barState[1])
-							.commit());
+			setFullscreen(fullscreen);
 			launchFixture(context, appDir);
 			awaitMarker(marker, "shown");
 			awaitMarker(marker, "size=");
 			tapCanvasArea();
 			awaitMarker(marker, "pointer=");
-			if (!barState[0] && !barState[1]) {
-				int sizeEventsBeforeTransientBars = awaitStableSizeEventCount(marker);
-				int[] displaySize = physicalDisplaySize();
-				executeShellCommand("input touchscreen swipe " + displaySize[0] / 2 + " "
-						+ (displaySize[1] - 1) + " " + displaySize[0] / 2 + " "
-						+ displaySize[1] / 2 + " 300");
-				assertEquals("Transient system bars must overlay instead of resizing the Canvas",
-						sizeEventsBeforeTransientBars, awaitStableSizeEventCount(marker));
-			}
-			assertTrue("MIDlet process must remain alive for toolbar/status-bar state",
+			int sizeEventsBeforeTransientBars = awaitStableSizeEventCount(marker);
+			int[] displaySize = physicalDisplaySize();
+			executeShellCommand("input touchscreen swipe " + displaySize[0] / 2 + " "
+					+ (displaySize[1] - 1) + " " + displaySize[0] / 2 + " "
+					+ displaySize[1] / 2 + " 300");
+			assertEquals("Transient system bars must overlay instead of resizing the Canvas",
+					sizeEventsBeforeTransientBars, awaitStableSizeEventCount(marker));
+			assertTrue("MIDlet process must remain alive in either fullscreen state",
 					processPid(context, midletProcessName) != 0);
 			killFixtureProcess();
 		}
+	}
+
+	private void setFullscreen(boolean fullscreen) {
+		Bundle request = new Bundle();
+		request.putBoolean(RuntimeFullscreenProvider.VALUE, fullscreen);
+		Bundle confirmed = context.getContentResolver().call(
+				Uri.parse("content://" + context.getPackageName() + ".runtime-fullscreen"),
+				RuntimeFullscreenProvider.WRITE, null, request);
+		assertTrue("Fullscreen provider must confirm the persisted preference", confirmed != null);
+		assertEquals("Unable to configure fullscreen fixture state",
+				fullscreen, confirmed.getBoolean(RuntimeFullscreenProvider.VALUE));
 	}
 
 	@Test
@@ -402,12 +405,12 @@ public class PlatformCompatBehaviorTest {
 		}
 		copyFile(new File(context.getApplicationInfo().sourceDir), new File(appDir, "converted.zip"));
 		writeManifest(appDir, marker, null);
-		ProfileModel profile = new ProfileModel(configDir);
+		ProfileModel profile = ProfileModel.fresh();
 		profile.graphicsMode = 2;
 		profile.showKeyboard = false;
 		profile.touchInput = true;
 		profile.soundBank = "";
-		if (!ProfilesManager.saveConfig(profile)) {
+		if (!ProfilesManager.saveConfig(configDir, profile)) {
 			throw new IOException("Unable to save platform compatibility fixture profile");
 		}
 	}

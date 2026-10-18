@@ -126,6 +126,19 @@ source even when sentence structure or terminology differs.
 > English and Indonesian are two language renderings of one semantic contract,
 > not two independent sources of product meaning and not a literal translation pair.
 
+### Standard language and technical terminology
+
+Use standard grammar, orthography, and established contemporary UI usage for
+any target locale, without imposing English syntax or an artificially formal
+register. For Indonesian, consult KBBI VI for vocabulary and EYD V for spelling
+when uncertain; prefer natural, accurate Indonesian over literal translation.
+Retain familiar foreign or technical terms when their established software
+meaning is clearer than an uncommon forced equivalent, but do not leave
+ordinary UI prose in English without a good contextual reason. Resolve term
+choices against product semantics and the glossary rather than automatic word
+replacement. Apply equivalent locale-appropriate standards to other languages;
+region, script, and natural word order may differ.
+
 **Target:** every locale declared supported has a complete, reviewed catalog.
 Partial localization is acceptable during migration, not the desired permanent
 architecture. English fallback is a runtime safety mechanism, not a reason to
@@ -151,8 +164,8 @@ The active Config missing-application path uses
 `config_missing_app_storage_named` and `config_missing_app_storage_generic`,
 whose named form receives the raw storage-volume description. Legacy
 `err_missing_app` retains its historical quoted-name/trailing-space formatter
-contract as a dormant cleanup candidate so partial secondary locales are not
-silently given a different argument contract.
+contract as a dormant cleanup candidate so existing locale resources and
+callers are not silently given a different argument contract.
 
 ### Complete messages and placeholders
 
@@ -245,11 +258,11 @@ guest-locale resolution contract is
 localization code must not inspect MIDlet resources to choose the Java ME device
 locale.
 
-**Target architecture:**
+**Resource architecture and evolution:**
 
 - One human-language `strings.xml` catalog per locale, containing both `<string>`
-  and `<plurals>`. The English default is complete, Indonesian is required
-  complete, and every supported locale eventually becomes complete and reviewed.
+  and `<plurals>`. Keep English complete, Indonesian fully supported, and every
+  shipped locale structurally complete and subject to ongoing language review.
 - Structural arrays may remain in `arrays.xml`. Visible labels reference localized
   strings where appropriate; machine array values stay stable and non-translatable.
 - Android native Resources remain the localization engine. Do not add a
@@ -260,24 +273,23 @@ locale.
   completeness or review quality; harden or replace the current mechanism only
   through scoped work justified by an observed requirement.
 
-Current implementation evidence:
+Current implementation evidence (verify against the source before relying on it):
 
 - [resources.properties](../app/src/main/res/resources.properties) declares
   `unqualifiedResLocale=en`; [app Gradle configuration](../app/build.gradle.kts)
-  enables `androidResources.generateLocaleConfig` and disables `MissingTranslation`.
+  enables `androidResources.generateLocaleConfig`. Android Lint's `MissingTranslation`
+  error check is enabled; keep app-owned visible strings complete across all
+  supported locales. Mark genuinely invariant values `translatable="false"`
+  rather than suppressing this check globally. The deterministic inventory
+  remains the source for exact string/plural identity and placeholder QA.
 - English [default resources](../app/src/main/res/values/strings.xml),
-  [Indonesian resources](../app/src/main/res/values-in/strings.xml), Russian
-  [resources](../app/src/main/res/values-ru/strings.xml), and the other base locale
-  catalogs use one `strings.xml` catalog for strings and plurals; structural and
-  configuration-specific resources remain separate. Active canonical English and
-  Indonesian have completed semantic/language review, Indonesian covers the full
-  translatable source catalog, and Russian has completed a full-catalog review
-  against the canonical semantics known at that review point. Other incomplete
-  secondary locales may intentionally fall back to canonical English until their
-  entries are reviewed. Prior review is a stability baseline, not immunity from
-  correction: avoid synonym or casing churn based only on taste, but revise any
-  locale when current evidence establishes a semantic, clarity, grammar,
-  terminology, accessibility, or consistency defect.
+  [Indonesian resources](../app/src/main/res/values-in/strings.xml), and the
+  other shipped base locale catalogs use `strings.xml` for app-owned strings
+  and plurals; structural and configuration-specific resources remain separate.
+  Catalog presence is not linguistic certification. Every locale remains subject
+  to evidence-based semantic, grammar, terminology, and accessibility review.
+  Android fallback is a safety mechanism, not an accepted substitute for
+  complete translations.
 - Current catalog counts, locale coverage, and invariant-declaration totals come
   from the [deterministic inventory](#deterministic-inventory); do not maintain
   duplicate numeric inventories in this contract. Count-bearing app-owned UI
@@ -340,14 +352,15 @@ See [Build and validation](development.md#localization-inventory) for the actual
 commands and ignored report paths. Findings do not fail the command; unreadable
 input, malformed XML, unsupported locale forms, or execution/usage errors do.
 The tool supplies no semantic/language/dead-resource verdicts, equality judgment,
-AI dependency, resource repairs, or CI enforcement. Those decisions remain in
-separate semantic and language review under this contract.
+translation-service dependency, resource repairs, or CI enforcement. Those
+decisions remain in separate semantic and language review under this contract.
 
-## Initial semantic glossary
+## Semantic glossary
 
 Preferred terms are tied to product meaning, not universal dictionary equivalents.
 User/MIDlet-provided names keep their supplied form regardless of the glossary.
-The table is an initial review baseline, not authorization to rewrite resources.
+Review this living reference when product meaning changes; its terms alone do
+not authorize a resource rewrite.
 
 | Concept / preferred English | Product meaning | Preferred Indonesian | Do not confuse with | Normally untranslated? |
 | --- | --- | --- | --- | --- |
@@ -373,16 +386,23 @@ term whose meaning is unclear, apply the evidence rule above first; if material
 uncertainty remains after available evidence is exhausted, record a narrowly
 scoped TODO or `NEEDS_CONTEXT` rather than extending the glossary by guesswork.
 
-## AI-assisted workflow
+## Translation and review workflow
 
-AI assistance is optional and non-authoritative. Implementation, applicable
-specifications, verified runtime behavior, and explicit project contracts remain
-authoritative. Runtime correctness must not depend on a model, provider, API, or
-orchestration mode.
+Use the [localization workflow](localization-workflow.md) for execution steps,
+including context-based batches, matrix export, and safe updates to Android XML.
+The read-only matrix is a review aid, not another translation source or Android
+build input.
 
-Choose review depth and division by task requirements rather than model names or
-capability tiers. One capable agent may perform all roles; split work only when
-parallel or specialized review materially improves quality or efficiency.
+Translations may be prepared and reviewed by human contributors, automated tools,
+or both. Neither a translation's origin nor its apparent fluency establishes
+correctness. Implementation, applicable specifications, verified runtime behavior,
+and explicit project contracts remain authoritative. Runtime correctness must not
+depend on a translation provider, model, API, or orchestration mode.
+
+Choose review depth and division by task requirements rather than a prescribed
+number or type of reviewers. One qualified contributor or agent may perform all
+roles; split work only when parallel or specialized review materially improves
+quality or efficiency.
 
 | Role | Responsibility |
 | --- | --- |
@@ -398,7 +418,7 @@ against shared evidence rather than reviewer identity. Record concise
 verdicts and supporting evidence, and revisit affected locale renderings whenever
 source meaning, UI role, resource type, or parameter contracts change.
 
-Execution-specific model, provider, reasoning-effort, or tool choices belong in
+Execution-specific translator, tool, provider, or review choices belong in
 transient task handoffs rather than this repository contract. They may change
 without documentation edits as long as the roles, evidence requirements, and
 acceptance criteria above are preserved.
@@ -418,4 +438,4 @@ Review vocabulary:
 
 These are workflow labels, not runtime resource metadata. Use them when an
 explicit audit record is useful; they do not require an audit database, fixed
-review sequence, or AI integration.
+review sequence, or translation-service integration.

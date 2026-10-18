@@ -207,7 +207,9 @@ public final class LocalDiagnosticRepository {
 
 	public static Record findStored(Context context, String id) {
 		if (id == null) return null;
-		for (Record record : loadStored(context)) if (id.equals(record.id)) return record;
+		for (Record record : loadStored(context)) {
+			if (record.ownershipRecordIds().contains(id)) return record;
+		}
 		return null;
 	}
 
@@ -216,9 +218,15 @@ public final class LocalDiagnosticRepository {
 	}
 
 	static DeleteResult deleteWithArtifacts(Context context, Record record) {
-		if (!deleteSource(context, record)) return new DeleteResult(false, true);
-		boolean bundleDeleted = DiagnosticBundleStore.deleteTracked(context, record);
-		return new DeleteResult(true, bundleDeleted);
+		// Export and delete must not interleave: otherwise a new public ZIP may be
+		// published after the diagnostic source has already been removed.
+		synchronized (DiagnosticBundleStore.class) {
+			if (!DiagnosticBundleStore.deleteTracked(context, record)) {
+				// Leave source evidence available for an explicit cleanup retry.
+				return new DeleteResult(false, false);
+			}
+			return new DeleteResult(deleteSource(context, record), true);
+		}
 	}
 
 	private static boolean deleteSource(Context context, Record record) {
@@ -345,6 +353,11 @@ public final class LocalDiagnosticRepository {
 					exit);
 		}
 
+		/** Source IDs survive a change in the preferred record ID after correlation. */
+		List<String> ownershipRecordIds() {
+			return ownershipSourceIds(id, javaEvidence, processExit);
+		}
+
 		public String getId() { return id; }
 		public Kind getKind() { return kind; }
 		public long getTimestampMillis() { return timestampMillis; }
@@ -425,6 +438,18 @@ public final class LocalDiagnosticRepository {
 					primary,
 					processExit);
 		}
+	}
+
+	static List<String> ownershipSourceIds(String id,
+			List<JavaDiagnosticStore.Snapshot> javaEvidence, ProcessExitStore.Snapshot exit) {
+		ArrayList<String> ids = new ArrayList<>();
+		ids.add(id);
+		for (JavaDiagnosticStore.Snapshot java : javaEvidence) {
+			String sourceId = javaRecordId(java);
+			if (sourceId != null && !ids.contains(sourceId)) ids.add(sourceId);
+		}
+		if (exit != null && exit.id != null && !ids.contains(exit.id)) ids.add(exit.id);
+		return ids;
 	}
 
 	static String javaRecordId(JavaDiagnosticStore.Snapshot java) {

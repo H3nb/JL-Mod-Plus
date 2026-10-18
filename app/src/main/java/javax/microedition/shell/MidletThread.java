@@ -585,7 +585,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (!finalizeIntentionalTermination(fallbackOutcome)) {
 			return;
 		}
-		Runnable processCleanup = () -> Process.killProcess(Process.myPid());
+		Runnable processCleanup = () -> {
+			CrashReporter.awaitTerminalCaptures();
+			Process.killProcess(Process.myPid());
+		};
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
 			// A live MIDlet may already have yielded its Activity to Library. With no host left to
@@ -672,9 +675,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	private boolean hasProvenGuestOwnership(Thread thread, Throwable error) {
-		if (CrashReporter.hasProvenFrameworkOrigin(error)) {
-			return false;
-		}
 		if (thread == Thread.currentThread()) {
 			EscapingGuestFailure marker = ESCAPING_GUEST_FAILURE.get();
 			if (marker != null) {
@@ -819,7 +819,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			returnToLibrary = returnToLibraryOnTermination;
 		}
 		finalizeFatalRuntime();
-		Runnable processCleanup = () -> Process.killProcess(Process.myPid());
+		Runnable processCleanup = () -> {
+			// Another terminal capture may still be writing on a different thread.
+			CrashReporter.awaitTerminalCaptures();
+			Process.killProcess(Process.myPid());
+		};
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
 			// Keep process death outside the failing guest callback/uncaught-handler stack.

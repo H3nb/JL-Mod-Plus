@@ -90,6 +90,7 @@ private val PreviewConfigState = ConfigUiState(
         .screenWidth("240")
         .screenHeight("320")
         .screenBackground("D0D0D0")
+        .screenScaleType(1)
         .screenScaleRatio("100")
         .screenPadding("0")
         .fpsLimit("60")

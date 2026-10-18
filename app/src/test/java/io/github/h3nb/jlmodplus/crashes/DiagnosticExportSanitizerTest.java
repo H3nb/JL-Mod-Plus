@@ -100,6 +100,22 @@ public class DiagnosticExportSanitizerTest {
 	}
 
 	@Test
+	public void redactsRemovableStoragePaths() {
+		String input = "save=/storage/ABCD-1234/Documents/Private/save.dat "
+				+ "other=/storage/0abc-1d2e/DCIM/photo.jpg "
+				+ "system=/system/lib64/libart.so";
+
+		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
+
+		assertFalse(sanitized.contains("/storage/ABCD-1234/"));
+		assertFalse(sanitized.contains("/storage/0abc-1d2e/"));
+		assertFalse(sanitized.contains("Private/save.dat"));
+		assertTrue(sanitized.contains("save=<user-path>"));
+		assertTrue(sanitized.contains("other=<user-path>"));
+		assertTrue(sanitized.contains("/system/lib64/libart.so"));
+	}
+
+	@Test
 	public void keepsDiagnosticMetadataAndJavaFramesReadable() {
 		String input = "Build: abc123 · emulatorDebug\n"
 				+ "MIDlet: Example\nProcess: midlet\nFingerprint: deadbeef\n"

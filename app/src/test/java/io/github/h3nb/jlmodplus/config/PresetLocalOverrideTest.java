@@ -10,7 +10,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.SharedPreferences;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
@@ -113,11 +113,11 @@ public class PresetLocalOverrideTest {
 	public void automaticMigrationDoesNotDetachLinkedOwnership() throws Exception {
 		File configDir = tempDir("migration");
 		ProfileModel legacy = new ProfileModel();
-		legacy.dir = configDir;
+
 		legacy.version = 5;
 		legacy.timingMode = 999;
 		Files.write(new File(configDir, "config.json").toPath(),
-				new Gson().toJson(legacy).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(legacy).getBytes(StandardCharsets.UTF_8));
 		FakePreferences preferences = linked(configDir, "K800i");
 
 		ProfilesManager.loadConfig(
@@ -136,12 +136,12 @@ public class PresetLocalOverrideTest {
 		File draftDir = tempDir("named-draft");
 		FakePreferences preferences = linked(activeDir, "K800i");
 		ProfileModel draft = new ProfileModel();
-		draft.dir = draftDir;
+
 		draft.version = ProfileModel.VERSION;
 		draft.screenWidth = 360;
 		draft.systemProperties = "";
 
-		assertTrue(ProfilesManager.saveConfig(draft));
+		assertTrue(ProfilesManager.saveConfig(draftDir, draft));
 
 		assertTrue(isLinked(preferences, activeDir));
 		assertEquals("K800i", origin(preferences, activeDir));

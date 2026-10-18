@@ -14,7 +14,7 @@
 
 package io.github.h3nb.jlmodplus.config;
 
-import com.google.gson.JsonElement;
+import kotlinx.serialization.json.JsonElement;
 
 import androidx.annotation.Nullable;
 
@@ -73,6 +73,7 @@ public final class ConfigFormState {
 	public final boolean immediateMode;
 	public final boolean parallelRedrawScreen;
 	public final boolean forceFullscreen;
+	public final boolean allowDisplayCutout;
 	public final boolean showFps;
 	public final int performanceOverlayMetrics;
 	public final int performanceOverlayPosition;
@@ -91,7 +92,8 @@ public final class ConfigFormState {
 		screenWidth = builder.screenWidth;
 		screenHeight = builder.screenHeight;
 		screenBackground = builder.screenBackground;
-		screenScaleRatio = builder.screenScaleRatio;
+		screenScaleRatio = Integer.toString(ProfileModel.effectiveScreenScaleRatio(
+				builder.screenScaleType, parseInt(builder.screenScaleRatio, 100)));
 		screenPadding = builder.screenPadding;
 		fpsLimit = builder.fpsLimit;
 		fontSizeSmall = builder.fontSizeSmall;
@@ -106,8 +108,8 @@ public final class ConfigFormState {
 		systemProperties = builder.systemProperties;
 		screenBackgroundImage = builder.screenBackgroundImage;
 		soundBank = builder.soundBank;
-		shader = builder.shader;
-		controller = builder.controller == null ? null : builder.controller.deepCopy();
+		shader = copyShader(builder.shader);
+		controller = builder.controller;
 		orientation = builder.orientation;
 		screenBackgroundMode = BackgroundMode.sanitize(builder.screenBackgroundMode);
 		screenScaleType = builder.screenScaleType;
@@ -120,6 +122,7 @@ public final class ConfigFormState {
 		immediateMode = builder.immediateMode;
 		parallelRedrawScreen = builder.parallelRedrawScreen;
 		forceFullscreen = builder.forceFullscreen;
+		allowDisplayCutout = builder.allowDisplayCutout;
 		showFps = builder.showFps;
 		performanceOverlayMetrics = PerformanceOverlayOptions.sanitize(builder.performanceOverlayMetrics);
 		performanceOverlayPosition = PerformanceOverlayOptions.sanitizePosition(builder.performanceOverlayPosition);
@@ -160,9 +163,10 @@ public final class ConfigFormState {
 				.immediateMode(params.immediateMode)
 				.parallelRedrawScreen(params.parallelRedrawScreen)
 				.forceFullscreen(params.forceFullscreen)
+				.allowDisplayCutout(params.allowDisplayCutout)
 				.graphicsMode(params.graphicsMode)
-				.shader(params.shader)
-				.controller(params.controller == null ? null : params.controller.deepCopy())
+				.shader(params.shader == null ? null : params.shader.toInfo())
+				.controller(params.controller)
 				.showFps(params.showFps)
 				.performanceOverlayMetrics(params.performanceOverlayMetrics)
 				.performanceOverlayPosition(params.performanceOverlayPosition)
@@ -201,7 +205,8 @@ public final class ConfigFormState {
 		params.screenBackgroundColor = parseHexOrKeep(screenBackground, params.screenBackgroundColor);
 		params.screenBackgroundMode = BackgroundMode.sanitize(screenBackgroundMode);
 		params.screenBackgroundImage = screenBackgroundImage;
-		params.screenScaleRatio = parseInt(screenScaleRatio, 100);
+		params.screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(
+				screenScaleType, parseInt(screenScaleRatio, 100));
 		params.orientation = orientation;
 		params.screenGravity = screenGravity;
 		params.screenPadding = parseInt(screenPadding, 0);
@@ -210,10 +215,11 @@ public final class ConfigFormState {
 		params.immediateMode = immediateMode;
 		params.graphicsMode = graphicsMode;
 		if (graphicsMode == 1) {
-			params.shader = shader;
+			params.shader = ShaderSelection.fromInfo(shader);
 		}
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
+		params.allowDisplayCutout = allowDisplayCutout;
 		params.showFps = showFps;
 		params.performanceOverlayMetrics = performanceOverlayMetrics;
 		params.performanceOverlayPosition = performanceOverlayPosition;
@@ -243,9 +249,13 @@ public final class ConfigFormState {
 		params.vkOutlineColor = parseHexOrKeep(vkOutline, params.vkOutlineColor);
 		params.skipResumeCall = skipResumeCall;
 		params.soundBank = soundBank;
-		params.controller = controller == null ? null : controller.deepCopy();
+		params.controller = controller;
 		params.systemProperties = normalizeSystemProperties(systemProperties);
 		return params;
+	}
+
+	private static ShaderInfo copyShader(ShaderInfo shader) {
+		return shader == null ? null : shader.copyForDialog();
 	}
 
 	public static String normalizeSystemProperties(String text) {
@@ -327,6 +337,7 @@ public final class ConfigFormState {
 		private boolean immediateMode;
 		private boolean parallelRedrawScreen;
 		private boolean forceFullscreen;
+		private boolean allowDisplayCutout;
 		private boolean showFps;
 		private int performanceOverlayMetrics = PerformanceOverlayOptions.STANDARD;
 		private int performanceOverlayPosition = PerformanceOverlayOptions.TOP_LEFT;
@@ -364,7 +375,7 @@ public final class ConfigFormState {
 			screenBackgroundImage = source.screenBackgroundImage;
 			soundBank = source.soundBank;
 			shader = source.shader;
-			controller = source.controller == null ? null : source.controller.deepCopy();
+			controller = source.controller;
 			orientation = source.orientation;
 			screenBackgroundMode = source.screenBackgroundMode;
 			screenScaleType = source.screenScaleType;
@@ -377,6 +388,7 @@ public final class ConfigFormState {
 			immediateMode = source.immediateMode;
 			parallelRedrawScreen = source.parallelRedrawScreen;
 			forceFullscreen = source.forceFullscreen;
+			allowDisplayCutout = source.allowDisplayCutout;
 			showFps = source.showFps;
 			performanceOverlayMetrics = source.performanceOverlayMetrics;
 			performanceOverlayPosition = source.performanceOverlayPosition;
@@ -412,7 +424,7 @@ public final class ConfigFormState {
 		public Builder soundBank(String value) { soundBank = value; return this; }
 		public Builder shader(ShaderInfo value) { shader = value; return this; }
 		public Builder controller(JsonElement value) {
-			controller = value == null ? null : value.deepCopy();
+			controller = ProfileJson.copyJson(value);
 			return this;
 		}
 		public Builder orientation(int value) { orientation = value; return this; }
@@ -427,6 +439,7 @@ public final class ConfigFormState {
 		public Builder immediateMode(boolean value) { immediateMode = value; return this; }
 		public Builder parallelRedrawScreen(boolean value) { parallelRedrawScreen = value; return this; }
 		public Builder forceFullscreen(boolean value) { forceFullscreen = value; return this; }
+		public Builder allowDisplayCutout(boolean value) { allowDisplayCutout = value; return this; }
 		public Builder showFps(boolean value) { showFps = value; return this; }
 		public Builder performanceOverlayMetrics(int value) { performanceOverlayMetrics = value; return this; }
 		public Builder performanceOverlayPosition(int value) { performanceOverlayPosition = value; return this; }

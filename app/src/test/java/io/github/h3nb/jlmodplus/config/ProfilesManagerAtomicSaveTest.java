@@ -20,7 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.gson.Gson;
+
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -34,11 +34,11 @@ public class ProfilesManagerAtomicSaveTest {
 		File directory = Files.createTempDirectory("jlmod-atomic-save").toFile();
 		directory.deleteOnExit();
 		ProfileModel profile = new ProfileModel();
-		profile.dir = directory;
+
 		profile.version = ProfileModel.VERSION;
 		profile.systemProperties = "unicode=✓";
 
-		assertTrue(ProfilesManager.saveConfig(profile));
+		assertTrue(ProfilesManager.saveConfig(directory, profile));
 		File config = new File(directory, Config.MIDLET_CONFIG_FILE);
 		assertTrue(config.isFile());
 		assertFalse(new File(config.getPath() + ".new").exists());
@@ -53,10 +53,10 @@ public class ProfilesManagerAtomicSaveTest {
 		File directory = Files.createTempDirectory("jlmod-atomic-recover").toFile();
 		directory.deleteOnExit();
 		ProfileModel previous = new ProfileModel();
-		previous.dir = directory;
+
 		previous.version = ProfileModel.VERSION;
 		File config = new File(directory, Config.MIDLET_CONFIG_FILE);
-		Files.write(config.toPath(), new Gson().toJson(previous).getBytes(StandardCharsets.UTF_8));
+		Files.write(config.toPath(), new ProfileFixtures().toJson(previous).getBytes(StandardCharsets.UTF_8));
 		File backup = new File(config.getPath() + ".bak");
 		assertTrue(config.renameTo(backup));
 
@@ -72,7 +72,7 @@ public class ProfilesManagerAtomicSaveTest {
 		assertFalse(defaults.virtualDpadEnabled);
 		assertFalse(defaults.virtualAnalogEnabled);
 
-		ProfileModel legacy = new Gson().fromJson(
+		ProfileModel legacy = new ProfileFixtures().fromJson(
 				"{\"VirtualKeyboardType\":3}", ProfileModel.class);
 		assertNotNull(legacy);
 		assertFalse(legacy.virtualDpadEnabled);
@@ -81,13 +81,13 @@ public class ProfilesManagerAtomicSaveTest {
 
 	@Test
 	public void explicitGroupedVirtualControlStateSurvivesDeserialization() {
-		ProfileModel dpad = new Gson().fromJson(
+		ProfileModel dpad = new ProfileFixtures().fromJson(
 				"{\"VirtualDpadEnabled\":true,\"VirtualAnalogEnabled\":false}",
 				ProfileModel.class);
 		assertTrue(dpad.virtualDpadEnabled);
 		assertFalse(dpad.virtualAnalogEnabled);
 
-		ProfileModel analog = new Gson().fromJson(
+		ProfileModel analog = new ProfileFixtures().fromJson(
 				"{\"VirtualDpadEnabled\":false,\"VirtualAnalogEnabled\":true}",
 				ProfileModel.class);
 		assertFalse(analog.virtualDpadEnabled);

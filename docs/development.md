@@ -51,10 +51,10 @@ the repository root with Python 3.10+ and no third-party dependencies:
 
 ```powershell
 python -B scripts/localization_audit.py
-python -B -m unittest discover -s scripts/tests -p test_localization_audit.py -v
+python -B -m unittest discover -s scripts/tests -p 'test_localization_*.py' -v
 ```
 
-The command prints a summary and writes deterministic schema-versioned
+The auditor prints a summary and writes deterministic schema-versioned
 `build/reports/localization/inventory.json` and `inventory.md`. These generated
 reports are ignored and must not be committed. `-B` avoids Python bytecode cache
 files. The optional `--repo-root` selects another repository root; output remains
@@ -63,10 +63,25 @@ under that root's `build/` directory.
 It reads repository-owned values XML without modifying resources. Missing
 translations, fragmentation, and other findings still return success; unreadable
 input, malformed XML, unsupported locale forms, and execution/usage errors return
-non-zero. It performs no semantic review, repairs, AI calls, or CI enforcement.
+non-zero. It performs no semantic review, repairs, translation, or CI enforcement.
 See the [inventory scope and limitations](localization.md#deterministic-inventory)
 before interpreting coverage or placeholder findings. Android builds are not
 required for changes confined to this tool and its documentation/tests.
+
+### Translation matrix export
+
+Generate a read-only side-by-side JSON workspace from the existing inventory:
+
+```powershell
+python -B -m scripts.localization_matrix --prefix memory_editor_ --locale id --locale ru
+```
+
+The default output is `build/reports/localization/matrix.json` (ignored by
+Git). The exporter uses the inventory parser, does not modify Android resource
+files, and does not attest linguistic quality. The shared localization test
+command above covers the inventory, matrix exporter, and batch applier.
+See the [localization workflow](localization-workflow.md) for grouped key
+selection, plural preservation, and applying reviewed translations.
 
 ## Testing strategy
 
@@ -329,7 +344,17 @@ variant before merging changes to shrinking, signing, release configuration, or
 dependencies that can affect it. Manual release dispatch publishes an APK and is
 not a substitute for a non-publishing release build check.
 
-`jlmod.versionCode` remains source-controlled. The workflow checks that it is a
-positive integer, not that it exceeds every previously published APK. Follow the
-[versioning policy](agent-workflow.md#versioning) before publishing; a unique alpha
-version name or tag does not establish monotonic version codes.
+Published APK identities are allocated by the release workflow rather than edited in
+`gradle.properties`. On GitHub Actions, use **Release JL-Mod Plus** with the full
+SemVer value (for example, `0.2.0-alpha.1`), without a leading `v`. Only
+`alpha` permits pre-release publication. Stable publication requires a separately
+prepared `stable` branch based on the JL-Mod Plus codebase; the legacy `main`
+branch is not a release source.
+
+The workflow serializes publication across branches, computes the next Android
+`versionCode` from existing releases, checks the version and signing identity,
+and publishes APK assets together with `release-info.json` and checksums. Existing
+`0.1.0` pre-releases are handled through their tagged source metadata. A failure
+after draft creation requires investigation; do not reuse an existing tag or
+overwrite published assets. The working branch does not publish automatically.
+`gradle.properties` remains the default identity for non-publishing builds.

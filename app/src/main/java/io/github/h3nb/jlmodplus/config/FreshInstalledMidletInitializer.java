@@ -202,6 +202,24 @@ public final class FreshInstalledMidletInitializer {
 		}
 	}
 
+	/** Recover only an absent config, retaining all existing layout/data and explicit ownership. */
+	static boolean publishMissingConfig(SharedPreferences preferences, File configDir, boolean darkTheme) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			ProfilesManager.LoadResult result = ProfilesManager.loadConfigResult(configDir, false,
+					ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG, false);
+			if (result.status != ProfilesManager.LoadStatus.MISSING) return false;
+			PresetSourceReplacement.Guard ownership = PresetSourceReplacement.begin(preferences, configDir);
+			if (!ownership.canWrite()) return false;
+			ProfileModel defaults = ProfileModel.createBuiltIn(darkTheme);
+			if (!ProfilesManager.saveConfig(configDir, defaults)) {
+				ownership.restoreIfUnchanged();
+				return false;
+			}
+			return ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir)
+					? true : ownership.publishBuiltInOwnership();
+		}
+	}
+
 	/** Discards only a fresh initialization owned by the current failed installer operation. */
 	public static boolean discardFreshInitialization(
 			@NonNull SharedPreferences preferences,
@@ -226,8 +244,8 @@ public final class FreshInstalledMidletInitializer {
 		PresetSourceReplacement.Guard ownership =
 				PresetSourceReplacement.begin(preferences, configDir);
 		if (!ownership.canWrite()) return false;
-		if (!ProfilesManager.publishBuiltInSnapshot(ProfileModel.createBuiltIn(
-				configDir, darkTheme, defaultSystemProperties))) {
+		if (!ProfilesManager.publishBuiltInSnapshot(configDir, ProfileModel.createBuiltIn(
+				 darkTheme, defaultSystemProperties))) {
 			return false;
 		}
 		return ownership.publishBuiltInOwnership();

@@ -34,6 +34,9 @@ interface IMemoryEngineService {
     long filterResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds, boolean keep);
     long editResults(long runtimeToken, long expectedRevision, in long[] resultIds,
             int valueType, String replacementValue);
+    long editResultsIncremental(long runtimeToken, long expectedRevision, in long[] orderedResultIds,
+            int valueType, String baseValue, String step);
+    long revertAndRemoveResults(long runtimeToken, long expectedRevision, in long[] resultIds);
     long addWatchResults(long runtimeToken, long expectedRevision, in long[] resultIds);
     long setFreezeResults(long runtimeToken, long expectedRevision, in long[] resultIds,
             int mode, String firstValue, String secondValue);

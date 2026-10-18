@@ -6,9 +6,10 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import kotlinx.serialization.json.*
+
 import android.content.Context
 import android.net.Uri
-import com.google.gson.JsonParser
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -940,8 +941,8 @@ object LibraryAppBundleImporter {
         }
         val version = try {
             manifestFile.reader(Charsets.UTF_8).use { reader ->
-                val root = JsonParser.parseReader(reader).asJsonObject
-                root.get("formatVersion")?.asInt
+                val root = Json.parseToJsonElement(reader.readText()).jsonObject
+                root.get("formatVersion")?.jsonPrimitive?.int
             }
         } catch (error: RuntimeException) {
             throw IOException("Invalid app bundle manifest", error)

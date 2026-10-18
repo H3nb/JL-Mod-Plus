@@ -1,0 +1,63 @@
+package io.github.h3nb.jlmodplus.updates
+
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class ReleaseVersionTest {
+    @Test
+    fun crossSeriesAndPrereleaseOrder() {
+        val pairs = listOf(
+            "0.2.0-alpha.1" to "0.1.0-alpha.2",
+            "0.2.0-alpha.10" to "0.2.0-alpha.9",
+            "0.2.0-beta.1" to "0.2.0-alpha.50",
+            "0.2.0-rc.1" to "0.2.0-beta.2",
+            "0.2.0" to "0.2.0-rc.9",
+            "999999999999.0.0" to "0.99999999999.0",
+        )
+        pairs.forEach { (high, low) ->
+            assertTrue(requireNotNull(ReleaseVersion.parse(high)) > requireNotNull(ReleaseVersion.parse(low)))
+            assertFalse(requireNotNull(ReleaseVersion.parse(low)) > requireNotNull(ReleaseVersion.parse(high)))
+        }
+    }
+
+    @Test
+    fun requiresHigherAndroidCodeAsWell() {
+        val candidate = UpdateCandidate("0.2.0-alpha.1", 21, "https://example.invalid")
+        assertTrue(eligibleUpdate("0.1.0-alpha.2", 20, candidate))
+        assertFalse(eligibleUpdate("0.1.0-alpha.2", 22, candidate))
+        assertFalse(eligibleUpdate("0.2.0", 20, candidate))
+    }
+
+    @Test
+    fun buildMetadataDoesNotChangePrecedence() {
+        val base = requireNotNull(ReleaseVersion.parse("0.2.0+build.1"))
+        val other = requireNotNull(ReleaseVersion.parse("0.2.0+build.99"))
+        assertFalse(base > other)
+        assertFalse(other > base)
+    }
+
+    @Test
+    fun aNewerSemverWithAnOlderCodeIsNotAnUpdate() {
+        assertFalse(
+            eligibleUpdate(
+                "0.2.0-beta.2", 300,
+                UpdateCandidate("0.3.0-alpha.1", 299, "https://example.invalid"),
+            ),
+        )
+        assertTrue(
+            eligibleUpdate(
+                "0.2.0-beta.2", 300,
+                UpdateCandidate("0.3.0-alpha.1", 301, "https://example.invalid"),
+            ),
+        )
+    }
+
+    @Test
+    fun refusesMalformedAndLeadingZeroVersions() {
+        listOf("0.2.0-alpha.01", "v0.2.0", "0.2", "0.2.0-alpha..1",
+            "0.2.0-alpha.1.", "0.2.0-").forEach {
+            assertTrue(ReleaseVersion.parse(it) == null)
+        }
+    }
+}

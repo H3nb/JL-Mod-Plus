@@ -8,13 +8,13 @@ package io.github.h3nb.jlmodplus.memory
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat
@@ -38,7 +38,7 @@ class MemoryEditorActivity : AppCompatActivity() {
             return
         }
 
-        window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+        window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
         window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         EdgeToEdgeCompat.enableForComposeSurface(this)
         hideSystemBars()

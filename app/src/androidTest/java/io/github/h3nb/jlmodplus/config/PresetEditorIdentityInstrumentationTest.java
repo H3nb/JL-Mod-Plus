@@ -17,7 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.preference.PreferenceManager;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,9 +61,9 @@ public class PresetEditorIdentityInstrumentationTest {
 
 			ProfilesManager.saveEditedSnapshot(session, draft);
 
-			ProfileModel savedA = new Gson().fromJson(new String(
+			ProfileModel savedA = ProfileJson.decode(new String(
 					Files.readAllBytes(new File(sourceA, "config.json").toPath()),
-					StandardCharsets.UTF_8), ProfileModel.class);
+					StandardCharsets.UTF_8), false).model;
 			assertEquals(640, savedA.screenWidth);
 			assertArrayEquals(originalB, Files.readAllBytes(new File(sourceB, "config.json").toPath()));
 		} finally {
@@ -88,7 +88,7 @@ public class PresetEditorIdentityInstrumentationTest {
 		model.vkType = 1;
 		model.systemProperties = "";
 		Files.write(new File(dir, "config.json").toPath(),
-				new Gson().toJson(model).getBytes(StandardCharsets.UTF_8));
+				ProfileJson.tree(model).toString().getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static void verifyRecreatedName(boolean delete) throws Exception {

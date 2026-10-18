@@ -13,7 +13,7 @@ import static org.junit.Assert.fail;
 
 import android.content.SharedPreferences;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
@@ -393,8 +393,8 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 		File staleLayoutBackup = new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".bak");
 		Files.write(staleLayoutBackup.toPath(), originalLayout);
 
-		assertTrue(ProfilesManager.publishBuiltInSnapshot(
-				ProfileModel.createBuiltIn(draft, false, "")));
+		assertTrue(ProfilesManager.publishBuiltInSnapshot(draft,
+				ProfileModel.createBuiltIn(false, "")));
 		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, readConfig(draft).vkType);
 		assertFalse(layoutFile(draft).exists());
 		assertArrayEquals(originalLayout, readLayout(target));
@@ -594,11 +594,11 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 		model.vkType = 1;
 		model.systemProperties = "";
 		Files.write(configFile(dir).toPath(),
-				new Gson().toJson(model).getBytes(StandardCharsets.UTF_8));
+				new ProfileFixtures().toJson(model).getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static ProfileModel readConfig(File dir) throws Exception {
-		return new Gson().fromJson(
+		return new ProfileFixtures().fromJson(
 				new String(readConfigBytes(dir), StandardCharsets.UTF_8),
 				ProfileModel.class);
 	}

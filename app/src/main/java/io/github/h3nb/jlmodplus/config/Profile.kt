@@ -17,7 +17,6 @@
 
 package io.github.h3nb.jlmodplus.config
 
-import androidx.annotation.Nullable
 import io.github.h3nb.jlmodplus.util.FileUtils
 import java.io.File
 import java.util.Locale
@@ -82,7 +81,7 @@ class Profile(name: String) : Comparable<Profile> {
     companion object {
         /** Validates a user-facing name before it is used as a profile directory name. */
         @JvmStatic
-        fun isValidName(@Nullable rawName: String?): Boolean {
+        fun isValidName(rawName: String?): Boolean {
             if (rawName == null) return false
             val value = rawName.trim()
             if (value.isEmpty() || value == "." || value == ".."

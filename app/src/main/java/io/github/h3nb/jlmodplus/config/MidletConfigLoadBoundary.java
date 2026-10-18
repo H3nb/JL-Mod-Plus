@@ -93,7 +93,7 @@ public final class MidletConfigLoadBoundary {
 			return preferences.edit().remove(builtInKey).commit();
 		}
 		config.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
-		return ProfilesManager.saveConfig(config);
+		return ProfilesManager.saveConfig(configDir, config);
 	}
 
 	@Nullable

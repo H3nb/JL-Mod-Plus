@@ -27,7 +27,8 @@ import java.nio.FloatBuffer;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.config.ShaderInfo;
+import io.github.h3nb.jlmodplus.config.ShaderSelection;
+import java.io.File;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 
 public class ShaderProgram {
@@ -43,13 +44,13 @@ public class ShaderProgram {
 	public int uPixelDelta;
 	private int programHandle = -1;
 
-	public ShaderProgram(ShaderInfo shader) {
+	public ShaderProgram(ShaderSelection shader, File shaderDirectory) {
 		if (shader != null) {
 			String vertex = shader.vertex;
 			String fragment = shader.fragment;
-			if (vertex != null && fragment != null) {
-				String vertexCode = FileUtils.getText(shader.dir + vertex);
-				String fragmentCode = FileUtils.getText(shader.dir + fragment);
+			if (vertex != null && fragment != null && shaderDirectory != null) {
+				String vertexCode = FileUtils.getText(new File(shaderDirectory, vertex).getPath());
+				String fragmentCode = FileUtils.getText(new File(shaderDirectory, fragment).getPath());
 				if (createProgram(vertexCode, fragmentCode) != -1) {
 					glReleaseShaderCompiler();
 					return;

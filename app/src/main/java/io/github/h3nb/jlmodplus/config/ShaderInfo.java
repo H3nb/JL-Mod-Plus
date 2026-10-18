@@ -22,34 +22,39 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
-import com.google.gson.annotations.SerializedName;
 
 import java.util.Locale;
 
 public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	public transient String dir;
-	@SerializedName("fragment")
 	public String fragment;
-	@SerializedName("vertex")
 	public String vertex;
-	@SerializedName("name")
 	String name;
-	@SerializedName("author")
 	String author;
 	transient boolean outputResolution;
 	transient boolean upscaling;
 	transient Setting[] settings = new Setting[4];
-	@SerializedName("Settings")
 	public float[] values;
 
 
-	@SuppressWarnings("unused")    // used by Gson deserialization
 	public ShaderInfo() {
 	}
 
 	public ShaderInfo(String name, String author) {
 		this.name = name;
 		this.author = author;
+	}
+
+	/** Dialog/form parameters are drafts; catalog metadata is read-only after loading. */
+	public ShaderInfo copyForDialog() {
+		ShaderInfo copy = new ShaderInfo(name, author);
+		copy.fragment = fragment;
+		copy.vertex = vertex;
+		copy.outputResolution = outputResolution;
+		copy.upscaling = upscaling;
+		copy.settings = settings;
+		copy.values = values == null ? null : values.clone();
+		return copy;
 	}
 
 	public ShaderInfo(Parcel in) {
@@ -59,7 +64,8 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		vertex = in.readString();
 		outputResolution = in.readByte() != 0;
 		upscaling = in.readByte() != 0;
-		settings = (Setting[]) in.readParcelableArray(getClass().getClassLoader());
+		settings = in.createTypedArray(Setting.CREATOR);
+		values = in.createFloatArray();
 	}
 
 	@Override
@@ -251,7 +257,8 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		dest.writeString(vertex);
 		dest.writeByte((byte) (outputResolution ? 1 : 0));
 		dest.writeByte((byte) (upscaling ? 1 : 0));
-		dest.writeArray(settings);
+		dest.writeTypedArray(settings, flags);
+		dest.writeFloatArray(values);
 	}
 
 	static class Setting implements Parcelable {

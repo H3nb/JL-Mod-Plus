@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * MicroEmulator
  * Copyright (C) 2006-2007 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2006-2007 Vlad Skarzhevskyy
@@ -507,45 +508,31 @@ public class FileSystemFileConnection implements FileConnection {
 
 	@Override
 	public void setFileConnection(String fileName) throws IOException {
-		requireRead();
-		if (fileName == null) {
-			throw new NullPointerException();
-		}
-		if (!isDirectory()) {
-			throw new IOException("Current FileConnection is not a directory");
-		}
-		File newFile;
-		String newPath;
-		String newName;
-		if ("..".equals(fileName)) {
-			newFile = file.getParentFile();
-			if (newFile == null || (path.isEmpty() && name.isEmpty())) {
-				throw new IOException("Cannot set FileConnection to '..' from a file system root");
-			}
-			int index = path.lastIndexOf(DIR_SEP, path.length() - 2);
-			if (index == -1) {
-				newPath = "";
-				newName = path;
-			} else {
-				newPath = path.substring(0, index);
-				newName = path.substring(index + 1);
-			}
-		} else {
-			if (fileName.indexOf(DIR_SEP) != -1) {
-				throw new IllegalArgumentException();
-			}
-			newFile = new File(file, fileName);
-			newPath = path + name;
-			newName = fileName;
-		}
-		newFile = VirtualFileSystem.checked(root, newFile);
-		if (!newFile.exists()) {
-			throw new IllegalArgumentException();
-		}
-		file = newFile;
-		path = newPath;
-		name = newName;
-	}
+        throwClosed();
+        if (fileName == null) throw new NullPointerException("fileName");
+        if (!file.isDirectory()) throw new IOException("Current FileConnection is not a directory");
+        File target;
+        if (fileName.equals("..")) {
+            if (file.getPath().equals(fsRootPath)) throw new IOException("Cannot leave filesystem root");
+            target = file.getParentFile();
+        } else {
+            String child = fileName.endsWith("/") ? fileName.substring(0, fileName.length() - 1) : fileName;
+            if (child.isEmpty() || child.equals(".") || child.indexOf('/') >= 0
+                    || child.indexOf('\\') >= 0 || child.indexOf(':') >= 0 || child.equals("..")) {
+                throw new IllegalArgumentException("Not a child file name");
+            }
+            target = new File(file, child);
+        }
+        target = VirtualFileSystem.checked(root, target);
+        if (!target.exists()) throw new IllegalArgumentException("File does not exist");
+        String relative = target.getPath().substring(fsRootPath.length());
+        if (relative.startsWith("/")) relative = relative.substring(1);
+        int separator = relative.lastIndexOf('/');
+        path = separator < 0 ? "" : relative.substring(0, separator + 1);
+        name = relative.substring(separator + 1);
+        if (!name.isEmpty() && target.isDirectory()) name += '/';
+        file = target;
+    }
 
 	@Override
 	public void setHidden(boolean hidden) throws IOException {
@@ -588,8 +575,6 @@ public class FileSystemFileConnection implements FileConnection {
 	@Override
 	public void close() throws IOException {
 		if (this.file != null) {
-			if (openedInputStream != null) openedInputStream.close();
-			if (openedOutputStream != null) openedOutputStream.close();
 			locationClosedFrom = new Throwable();
 			locationClosedFrom.fillInStackTrace();
 			this.file = null;

@@ -7,7 +7,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.gson.Gson;
+
 
 import org.junit.Test;
 
@@ -18,7 +18,7 @@ import java.nio.file.Files;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 
 public class ProfilesManagerPreparedRuntimeTest {
-    private static final Gson GSON = new Gson();
+    private static final ProfileFixtures GSON = new ProfileFixtures();
 
     @Test
     public void preparedRuntimeLoadDoesNotRecoverAtomicSidecars() throws Exception {

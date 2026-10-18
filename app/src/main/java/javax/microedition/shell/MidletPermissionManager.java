@@ -1,10 +1,11 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ */
 package javax.microedition.shell;
 
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-
-import androidx.appcompat.app.AlertDialog;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -12,17 +13,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.microedition.util.ContextHolder;
 
-import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.MidletPermissionStore;
 
 /** Java ME file authorization for the current installed runtime, distinct from Android grants. */
 public final class MidletPermissionManager {
-    private static final int CANCEL = 0;
-    private static final int ONCE = 1;
-    private static final int SESSION = 2;
-    private static final int ALWAYS = 3;
-    private static final int DENY = 4;
+    static final int CANCEL = 0;
+    static final int ONCE = 1;
+    static final int SESSION = 2;
+    static final int ALWAYS = 3;
+    static final int DENY = 4;
     private static volatile Session current;
+
+    @FunctionalInterface
+    public interface Choice {
+        void accept(int choice);
+    }
 
     private MidletPermissionManager() {}
 
@@ -51,8 +56,7 @@ public final class MidletPermissionManager {
         Pending prompt = active.pending;
         if (prompt != null) {
             prompt.complete(CANCEL);
-            AlertDialog dialog = prompt.dialog;
-            if (dialog != null) new Handler(Looper.getMainLooper()).post(dialog::dismiss);
+            dismiss(prompt);
         }
     }
 
@@ -91,8 +95,11 @@ public final class MidletPermissionManager {
     public static void requireFileAccess(String root, boolean write) {
         Session active = current;
         if (active == null || active.closed) throw new SecurityException("No active MIDlet permissions");
-        if ("private:/".equalsIgnoreCase(root) || "cache:/".equalsIgnoreCase(root)
-                || "siemens:/".equalsIgnoreCase(root)) return;
+        try {
+            if (org.microemu.cldc.file.VirtualFileSystem.isPrivate(root)) return;
+        } catch (java.io.IOException invalidRoot) {
+            throw new SecurityException("Invalid virtual filesystem root", invalidRoot);
+        }
         String capability = write ? MidletPermissionStore.FILE_WRITE : MidletPermissionStore.FILE_READ;
         int decision = write ? active.writeDecision : active.readDecision;
         boolean granted = write ? active.writeSession : active.readSession;
@@ -105,7 +112,11 @@ public final class MidletPermissionManager {
         synchronized (active.promptLock) {
             if (active.closed) throw new SecurityException("MIDlet runtime has ended");
             if (write ? active.writeSession : active.readSession) return;
-            if ((write ? active.writeDecision : active.readDecision) == MidletPermissionStore.ALLOW) return;
+            int latest = write ? active.writeDecision : active.readDecision;
+            if (latest == MidletPermissionStore.ALLOW) return;
+            if (latest == MidletPermissionStore.DENY) {
+                throw new SecurityException("Java ME file access denied");
+            }
             Pending request = new Pending();
             active.pending = request;
             new Handler(Looper.getMainLooper()).post(() -> showPrompt(active, request, write));
@@ -118,8 +129,7 @@ public final class MidletPermissionManager {
                 Thread.currentThread().interrupt();
             } finally {
                 request.complete(CANCEL);
-                AlertDialog dialog = request.dialog;
-                if (dialog != null) new Handler(Looper.getMainLooper()).post(dialog::dismiss);
+                dismiss(request);
                 active.pending = null;
             }
             if (active.closed) throw new SecurityException("MIDlet runtime has ended");
@@ -133,7 +143,7 @@ public final class MidletPermissionManager {
                 int stored = result == ALWAYS ? MidletPermissionStore.ALLOW : MidletPermissionStore.DENY;
                 boolean persisted = active.authority.setFilePermission(active.appPath, active.appId,
                         active.jarSha256, capability, stored);
-                if (persisted) {
+                if (persisted || stored == MidletPermissionStore.DENY) {
                     if (write) active.writeDecision = stored;
                     else active.readDecision = stored;
                     if (stored == MidletPermissionStore.ALLOW) return;
@@ -154,33 +164,21 @@ public final class MidletPermissionManager {
             return;
         }
         try {
-            String[] choices = {
-                    activity.getString(R.string.midlet_file_permission_allow_once),
-                    activity.getString(R.string.midlet_file_permission_allow_session),
-                    activity.getString(R.string.midlet_file_permission_allow_always),
-                    activity.getString(R.string.midlet_file_permission_deny)
-            };
-            AlertDialog dialog = new AlertDialog.Builder(activity)
-                    .setTitle(R.string.midlet_file_permission_title)
-                    .setMessage(write ? R.string.midlet_file_permission_write
-                            : R.string.midlet_file_permission_read)
-                    .setItems(choices, (ignored, index) ->
-                            request.complete(index == 0 ? ONCE : index == 1 ? SESSION
-                                    : index == 2 ? ALWAYS : DENY))
-                    .setNegativeButton(android.R.string.cancel,
-                            (ignored, index) -> request.complete(CANCEL))
-                    .setOnCancelListener(ignored -> request.complete(CANCEL))
-                    .create();
-            request.dialog = dialog;
-            if (active.closed || request.result.get() != -1) {
+            request.dismiss = activity.showFilePermissionPrompt(write, request::complete);
+            if (request.dismiss == null || active.closed || request.result.get() != -1) {
                 request.complete(CANCEL);
-                return;
+                dismiss(request);
             }
-            dialog.show();
-            if (active.closed || request.result.get() != -1) dialog.dismiss();
         } catch (RuntimeException failure) {
             request.complete(CANCEL);
         }
+    }
+
+    private static void dismiss(Pending request) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            Runnable dismiss = request.dismiss;
+            if (dismiss != null) dismiss.run();
+        });
     }
 
     private static final class Session {
@@ -210,7 +208,7 @@ public final class MidletPermissionManager {
     private static final class Pending {
         final CountDownLatch finished = new CountDownLatch(1);
         final AtomicInteger result = new AtomicInteger(-1);
-        volatile AlertDialog dialog;
+        volatile Runnable dismiss;
 
         void complete(int choice) {
             if (result.compareAndSet(-1, choice)) finished.countDown();

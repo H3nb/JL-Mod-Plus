@@ -56,13 +56,37 @@ public class ManagedJavaMemoryHardeningTest {
 			cursor = cursor.next;
 		}
 		installRoot(chain, ChainNode.class);
+		// Provenance is optional under tight memory budgets: the numeric search
+		// must retain its prior safety and success behavior without ancestry.
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
 				100, 100, 10, 10, 100, 100, 10_500L));
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, "999", "", 0L).code);
+
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 10, 10, 100, 100, 20_000L));
 		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
 				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
 				"999", "", 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
 		assertEquals(0L, result.resultCount);
+	}
+
+	@Test
+	public void lowBudgetSkipsOptionalProvenanceWithoutLosingSearchResults() {
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 10, 10, 100, 100, 2_000L));
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				"7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		assertTrue(search.resultCount > 0);
+		long id = engine.resultPage(TOKEN, search.revision, 0, 1).ids[0];
+		ManagedJavaMemoryEngine.ManagedInspection inspected =
+				engine.inspect(TOKEN, search.revision, id, 1);
+		assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+		assertEquals(MemoryEngineContract.PATH_UNKNOWN, inspected.path.status);
 	}
 
 	@Test
@@ -121,8 +145,9 @@ public class ManagedJavaMemoryHardeningTest {
 
 	@Test
 	public void historyIsEvictedBeforeItCanBlockTheNextRefine() {
+		// The cap must hold the same eight revisions plus the shared root predecessor.
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
-				100, 100, 10, 10, 100, 100, 1_100L));
+				100, 100, 10, 10, 100, 100, 2_000L));
 		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
 				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
 				"7", "", 0L);

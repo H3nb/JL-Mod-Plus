@@ -59,6 +59,7 @@ public final class ConfigUiState {
 	/** Existing named source eligible for explicit whole-device Update, or null when unavailable. */
 	@Nullable
 	public final String updatePresetName;
+	@Nullable public final FileAccess fileAccess;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -129,6 +130,19 @@ public final class ConfigUiState {
 			@NonNull List<String> profileNames,
 			boolean controllerAvailable,
 			@Nullable String updatePresetName) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+                profileStatus, profileTemplates, timingControlsEnabled, profileNames,
+                controllerAvailable, updatePresetName, null);
+    }
+
+	public ConfigUiState(
+            @NonNull ConfigFormState form, @NonNull List<Size> screenPresets,
+            @NonNull List<FontPreset> fontPresets, @NonNull List<String> skins,
+            @NonNull List<String> soundBanks, @NonNull List<ShaderInfo> shaders,
+            @NonNull List<Size> removableScreenPresets, @NonNull ProfileStatus profileStatus,
+            @NonNull List<ProfileTemplate> profileTemplates, boolean timingControlsEnabled,
+            @NonNull List<String> profileNames, boolean controllerAvailable,
+            @Nullable String updatePresetName, @Nullable FileAccess fileAccess) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -142,7 +156,20 @@ public final class ConfigUiState {
 		this.profileNames = immutableCopy(profileNames);
 		this.controllerAvailable = controllerAvailable;
 		this.updatePresetName = updatePresetName;
+        this.fileAccess = fileAccess;
 	}
+
+    public static final class FileAccess {
+        public final int read;
+        public final int write;
+        @NonNull public final List<String> legacyFiles;
+
+        public FileAccess(int read, int write, @NonNull List<String> legacyFiles) {
+            this.read = read;
+            this.write = write;
+            this.legacyFiles = immutableCopy(legacyFiles);
+        }
+    }
 
 	private static <T> List<T> immutableCopy(List<T> values) {
 		return Collections.unmodifiableList(new ArrayList<>(values));

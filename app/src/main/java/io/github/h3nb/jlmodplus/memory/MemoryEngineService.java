@@ -338,6 +338,19 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long editResultsIncremental(long token, long expectedRevision, long[] orderedResultIds,
+		                                  int valueType, String baseValue, String step) {
+			return enqueueManaged(token, false, () -> managedEditIncremental(token,
+					expectedRevision, orderedResultIds, valueType, baseValue, step));
+		}
+
+		@Override
+		public long revertAndRemoveResults(long token, long expectedRevision, long[] resultIds) {
+			return enqueueManaged(token, false, () -> managedRevertAndRemove(token,
+					expectedRevision, resultIds));
+		}
+
+		@Override
 		public long addWatchResults(long token, long expectedRevision, long[] resultIds) {
 			return enqueueManaged(token, false, () -> managedAddWatch(token, expectedRevision,
 					resultIds));
@@ -884,6 +897,56 @@ public final class MemoryEngineService extends Service {
 			return consumeManagedResult(token, bridge, bridge.managedEditTyped(token,
 					expectedRevision, ids, declaredType, replacementValue, allowWatchOnly,
 					cancelEpoch.get()));
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedEditIncremental(long token, long revision, long[] ids, int type,
+	                                   String base, String step) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE
+				|| !allManagedIds(ids) || !ManagedMemoryMutationJournal.isIntegerType(type)
+				|| !MemoryEngineContract.isBoundedInput(base)
+				|| !MemoryEngineContract.isBoundedInput(step)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Incremental editing requires ordered managed integer candidates");
+		}
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			return consumeManagedResult(token, bridge, bridge.managedEditIncremental(token,
+					revision, ids, type, base, step, cancelEpoch.get()));
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedRevertAndRemove(long token, long revision, long[] ids) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE
+				|| !allManagedIds(ids)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Revert requires up to 100 current result candidates");
+		}
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		long epoch = cancelEpoch.get();
+		long clearGeneration = searchClearGeneration.get();
+		try {
+			Bundle result = bridge.managedRevertAndRemove(token, revision, ids, epoch);
+			long runtimeAfterRpc = bridge.getRuntimeToken();
+			synchronized (searchCommitLock) {
+				int decision = managedSearchReplyDecisionLocked(token, bridge, result,
+						runtimeAfterRpc, clearGeneration, epoch, revision);
+				if (decision != MemoryEngineContract.RESULT_OK) {
+					return managedFailure(decision, managedReplyFailureMessage(decision));
+				}
+				updateManagedStateLocked(token, result);
+			}
+			return managedResultCode(result);
 		} catch (RemoteException exception) {
 			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 					"MIDlet runtime connection was lost");
@@ -1560,6 +1623,10 @@ public final class MemoryEngineService extends Service {
 		result.putLongArray(MemoryEngineContract.KEY_RESULT_IDS, new long[0]);
 		result.putStringArray(MemoryEngineContract.KEY_RESULT_VALUES, new String[0]);
 		result.putStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES, new String[0]);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_SOURCE_KINDS, new int[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_CLASSES, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_TYPES, new String[0]);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_ALIAS_MASKS, new int[0]);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_TYPES, new int[0]);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_STATES, new int[0]);

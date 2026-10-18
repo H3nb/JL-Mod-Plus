@@ -23,7 +23,7 @@
     <string name="action_reinstall">Instal ulang</string>
     <string name="action_settings">Pengaturan</string>
     <string name="message_reset_layout">Atur ulang tata letak kontrol virtual ke bawaan?</string>
-    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nOpsi emulator mungkin tidak dapat diakses.</string>
+    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nMenu runtime MIDlet mungkin tidak dapat diakses.</string>
     <string name="alert_msg_workdir_not_exists">Direktori kerja tidak ditemukan di:\n\'%1$s\'.\nBuat direktori tersebut atau pilih direktori lain?</string>
     <string name="CANCEL_CMD">Batal</string>
     <string name="change">Ubah</string>
@@ -45,7 +45,6 @@
     <string name="exit">Keluar</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Hentikan MIDlet ini? Perubahan yang belum disimpan mungkin hilang.</string>
     <string name="help">Bantuan</string>
-    <string name="help_message">• Filter linear dapat sangat menurunkan performa pada sebagian MIDlet. Nonaktifkan jika MIDlet terlalu lambat.&lt;BR&gt;• Pemrosesan langsung melewati antrean event Java ME. Respons dapat meningkat, tetapi sebagian MIDlet mungkin tidak stabil.</string>
     <string name="identity_filter">Tidak ada (paling cepat)</string>
     <string name="install">Instal</string>
     <string name="install_done">Aplikasi terpasang.</string>
@@ -142,10 +141,6 @@
     <string name="pref_button_shape_title">Bentuk tombol</string>
     <string name="pref_category_experimental">Eksperimental</string>
     <string name="pref_emulator_dir">Direktori kerja</string>
-    <string name="pref_enable_actionbar_summary">Menjaga bilah alat runtime tetap terlihat pada layar Canvas MIDlet.</string>
-    <string name="pref_enable_actionbar_title">Tampilkan bilah alat runtime</string>
-    <string name="pref_enable_statusbar_title">Tampilkan bilah status sistem</string>
-    <string name="pref_enable_statusbar_summary">Menjaga bilah status sistem tetap terlihat. Mengaktifkannya menonaktifkan area potongan layar.</string>
     <string name="pref_encoding_title">Pengodean</string>
     <string name="pref_language">Bahasa aplikasi</string>
     <string name="PREF_FILTER">Filter linear</string>
@@ -154,7 +149,7 @@
     <string name="PREF_FONT_MEDIUM">Sedang</string>
     <string name="PREF_FONT_SIZE_IN_SP">Gunakan skala font Android</string>
     <string name="PREF_FONT_SMALL">Kecil</string>
-    <string name="PREF_FORCE_FULLSCREEN">Mulai dalam mode layar penuh</string>
+    <string name="PREF_FORCE_FULLSCREEN">Mulai tanpa bilah perintah</string>
     <string name="pref_graphics_hw_gles">Akselerasi hardware (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Akselerasi hardware (Surface)</string>
     <string name="pref_graphics_hw_view">Akselerasi hardware (Window)</string>
@@ -172,7 +167,7 @@
     <string name="pref_orientation_default">Bawaan sistem</string>
     <string name="pref_orientation_land">Lanskap</string>
     <string name="pref_orientation_port">Potret</string>
-    <string name="PREF_SCALE_RATIO">Skala (%)</string>
+    <string name="PREF_SCALE_RATIO">Skala</string>
     <string name="pref_screen_gravity">Posisi layar</string>
     <string name="pref_screen_gravity_bottom">Bawah</string>
     <string name="pref_screen_gravity_center">Tengah</string>
@@ -217,7 +212,7 @@
     <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Kalibrasi sebelumnya tidak berubah.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ditemukan rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: %1$s</string>
-    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik tetap di tengah dan trigger dilepas sampai penghitung waktu netral selesai.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik yang terdeteksi tetap di tengah dan semua trigger yang terdeteksi dalam keadaan dilepas sampai penghitung waktu netral selesai.</string>
     <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang terdeteksi hingga batas penuh ke segala arah, lalu tekan Berikutnya.</string>
     <string name="config_gamepad_calibration_trigger_instructions">Lepaskan lalu tekan penuh setiap trigger yang terdeteksi, kemudian tekan Berikutnya untuk meninjau.</string>
     <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Menyimpan hanya akan mengganti kalibrasi pengontrol ini.</string>
@@ -248,8 +243,8 @@
     <string name="config_gamepad_calibration_phase_unknown">Status tidak tersedia</string>
     <string name="config_gamepad_diagnosis_capabilities">Kemampuan pengontrol yang terhubung:</string>
     <string name="config_gamepad_diagnosis_descriptor">Deskriptor: %1$s</string>
-    <string name="config_gamepad_diagnosis_signature">Signature: %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">Sumbu %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
+    <string name="config_gamepad_diagnosis_signature">Identitas pengontrol: %1$s</string>
+    <string name="config_gamepad_diagnosis_axis">Sumbu %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(tidak ada pengontrol yang terhubung)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Sampel input sengaja tidak dikirim ke MIDlet.</string>
     <string name="config_select_screen_size">Pilih ukuran layar</string>
@@ -309,7 +304,7 @@
     <string name="warn_install_from_net">Berkas akan diunduh dari internet.</string>
     <string name="warning">Peringatan</string>
     <string name="remove_screen_preset">Hapus preset resolusi</string>
-    <string name="removed">Dihapus %1$s</string>
+    <string name="removed">%1$s dihapus</string>
     <string name="file_picker_select_file">Pilih berkas</string>
     <string name="file_picker_select_folder">Pilih folder</string>
     <string name="file_picker_select_app_bundle">Pilih bundel aplikasi</string>
@@ -359,7 +354,7 @@
 
     <string name="crash_reports">Laporan diagnostik</string>
     <string name="diagnostic_report">Laporan diagnostik</string>
-    <string name="view_reports">Lihat laporan</string>
+    <string name="view_reports">Lihat laporan diagnostik</string>
     <string name="crash_reports_empty">Tidak ada laporan diagnostik lokal</string>
     <string name="crash_reports_loading">Memuat laporan diagnostik</string>
     <string name="crash_report_midlet_failure">Kegagalan sesi MIDlet</string>
@@ -372,12 +367,9 @@
     <string name="copy_report">Salin</string>
     <string name="report_on_github">Laporkan di GitHub</string>
     <string name="delete_report">Hapus</string>
-    <string name="copy_selected_reports">Salin laporan terpilih</string>
+    <string name="share_selected_reports">Bagikan laporan terpilih</string>
     <string name="delete_selected_reports">Hapus laporan terpilih</string>
     <string name="crash_report_copied">Laporan disalin</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="other">%1$d laporan disalin</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Menyiapkan bundel diagnostik…</string>
     <string name="crash_report_bundle_ready_title">Bundel diagnostik siap</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nLampirkan berkas ini sebelum mengirim issue GitHub. Bundel diagnostik akan menjadi publik setelah dilampirkan ke issue tersebut.</string>
@@ -441,7 +433,6 @@
     <string name="library_collection_members_empty">Belum ada aplikasi dalam koleksi ini.</string>
     <string name="library_collection_select_title">Pilih koleksi</string>
     <string name="library_collection_select_message">Pilih koleksi untuk melihat aplikasinya.</string>
-    <string name="library_collection_remove">Hapus dari koleksi</string>
     <string name="library_collection_remove_from_current">Hapus dari koleksi</string>
     <string name="library_no_matches">Tidak ada hasil untuk \"%1$s\"</string>
 
@@ -454,7 +445,7 @@
     <string name="library_import_done">Bundel aplikasi berhasil diimpor.</string>
     <string name="library_import_done_with_warning">Bundel aplikasi diimpor dengan peringatan.</string>
     <string name="library_import_invalid_bundle">Bundel yang dipilih tidak valid, rusak, atau tidak didukung. Pilih bundel JL-Mod Plus yang valid lalu coba lagi.</string>
-    <string name="library_import_restore_existing">Aplikasi ini sudah terpasang. Impor akan mengganti pengaturan dan data simpanan dengan isi bundel.</string>
+    <string name="library_import_restore_existing">Aplikasi ini sudah terpasang. Jika bundel menyertakan pengaturan atau data simpanan, data tersebut akan mengganti data terkait yang sudah ada.</string>
     <string name="library_import_restore_failed">Aplikasi sudah terpasang, tetapi data bundel gagal dipulihkan. Coba pulihkan lagi?</string>
     <string name="library_play_stats_summary">Dimainkan: %1$d kali · Waktu total: %2$s</string>
     <string name="library_share_chooser_title">Bagikan aplikasi</string>
@@ -501,7 +492,6 @@
     <plurals name="memory_editor_edit_batch">
         <item quantity="other">Ubah %1$d nilai</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih dengan tipe data yang sesuai. Pantauan dan pembekuan tidak tersedia untuk perubahan massal.</string>
     <string name="memory_editor_edit_batch_no_common_type">Hasil yang dipilih tidak mendukung tipe data yang dipilih. Ubah hasil yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Terapkan</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
@@ -674,6 +664,10 @@
     <string name="config_controls_key_input">Input fisik</string>
     <string name="config_controls_virtual_keyboard">Kontrol virtual</string>
     <string name="config_controls_virtual_keyboard_colors">Warna kontrol virtual</string>
+    <string name="config_virtual_controls_color_preview">Pratinjau warna</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Ditekan</string>
+    <string name="config_virtual_controls_preview_hint">Ketuk untuk melihat warna saat ditekan. Pratinjau menggunakan opasitas yang dipilih.</string>
     <string name="config_controls_maintenance">Tata letak kontrol virtual</string>
     <string name="config_current_value">Nilai saat ini</string>
     <string name="config_screen_size">Ukuran layar</string>
@@ -696,8 +690,8 @@
     <string name="profile_template_operation_failed">Operasi profil tidak dapat diselesaikan.</string>
     <string name="config_help_screen_size">Menentukan resolusi virtual layar Java ME yang digunakan MIDlet.</string>
     <string name="config_help_orientation">Menentukan orientasi tampilan saat MIDlet berjalan.</string>
-    <string name="config_help_scale_type">Menentukan cara penskalaan layar MIDlet terhadap area yang tersedia.</string>
-    <string name="config_help_scale_ratio">Mengubah ukuran tampilan tanpa mengubah resolusi virtual MIDlet.</string>
+    <string name="config_help_scale_type">Pilih cara game ditampilkan di layar. Gunakan Manual untuk mengatur skala sendiri.</string>
+    <string name="config_help_scale_ratio" formatted="false">Mengatur ukuran tampilan dari 1% hingga 1000%. Pada 100%, game menggunakan ukuran aslinya; nilai lebih besar dapat melewati batas layar.</string>
     <string name="config_help_lock_custom_resolution_ratio">Mempertahankan rasio lebar dan tinggi saat salah satunya diubah.</string>
     <string name="config_help_virtual_keyboard">Menampilkan kontrol virtual di layar untuk MIDlet ini.</string>
     <string name="config_help_touch_input">Mengizinkan MIDlet menerima input dari layar sentuh.</string>
@@ -720,20 +714,17 @@
     <string name="config_help_shader">Menerapkan shader pada frame MIDlet sebelum ditampilkan.</string>
     <string name="config_help_shader_tuning">Kontrol yang tersedia bergantung pada shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Menjadwalkan penyajian frame secara asinkron. Dapat meningkatkan performa pada perangkat tertentu.</string>
-    <string name="config_help_force_fullscreen">Memulai layar Canvas MIDlet dalam mode layar penuh. MIDlet tetap dapat mengubah mode ini.</string>
+    <string name="config_help_force_fullscreen">Memulai layar Canvas Java ME tanpa bilah perintah softkey. Game dapat mengubah mode ini.</string>
     <string name="config_help_fps_limit">Menetapkan batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) memakai refresh rate maksimum layar.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan emulasi</string>
     <string name="PREF_TIMING_MODE">Sumber waktu</string>
     <string name="config_timing_mode_full_guest">Waktu emulasi</string>
     <string name="config_timing_mode_real_wall">Waktu sistem</string>
     <string name="config_help_emulation_speed">Mengatur kecepatan clock MIDlet dan jeda yang didukung. Audio dan UI Android tetap berjalan pada kecepatan normal.</string>
-    <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
+    <string name="config_help_timing_mode">Menentukan apakah MIDlet menggunakan waktu emulasi atau waktu sistem. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
-    <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
+    <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Mengonversi…</string>
     <string name="reconversion_done_with_warning">Konversi kompatibilitas selesai dengan peringatan.</string>
-    <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
-
-%1$s</string>
     <string name="reconversion_error_summary">MIDlet ini tidak dapat dikonversi secara otomatis.</string>
     <string name="config_help_generic_color">Mengatur warna bagian tampilan ini.</string>
     <string name="config_help_encoding">Memilih pengodean karakter yang dilaporkan sebagai microedition.encoding.</string>
@@ -750,7 +741,7 @@
     <string name="config_help_font_aa">Menghaluskan tepi teks yang dirender.</string>
     <string name="config_help_key_layout">Menentukan skema kode tombol yang dilaporkan ke MIDlet.</string>
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke aksi keypad Java ME.</string>
-    <string name="config_help_vk_button_shape">Menentukan bentuk tombol kontrol virtual.</string>
+    <string name="config_help_vk_button_shape">Menentukan bentuk tombol keypad. D-pad dan stik analog tetap menggunakan bentuk masing-masing.</string>
     <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Pengaturan.</string>
     <string name="config_help_vk_alpha">Mengatur opasitas kontrol virtual: 0 = transparan sepenuhnya; 255 = buram sepenuhnya.</string>
     <string name="config_help_vk_force_opacity">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
@@ -791,7 +782,7 @@
     <string name="preset_update_summary">Ganti %1$s dengan pengaturan MIDlet ini dan tata letak kontrol virtualnya jika tersedia. Perubahan ini akan berlaku untuk MIDlet lain yang menggunakan profil ini saat dijalankan lagi.</string>
     <string name="preset_update_confirm">Perbarui</string>
     <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya dari profil tersebut.</string>
-    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan karena tidak tersedia, tidak lengkap, atau tidak dapat dibaca. Bawaan JL-Mod akan digunakan untuk MIDlet baru.</string>
+    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan. Profil mungkin tidak tersedia, tidak lengkap, atau tidak dapat dibaca. Bawaan JL-Mod kini menjadi profil bawaan untuk MIDlet baru.</string>
     <string name="preset_discard_changes_title">Buang perubahan?</string>
     <string name="preset_discard_changes_summary">Draf profil ini belum disimpan.</string>
     <string name="preset_continue_editing">Lanjut mengedit</string>
@@ -830,7 +821,7 @@
     <string name="library_metadata_name">Nama</string>
     <string name="library_metadata_vendor">Vendor</string>
     <string name="library_metadata_description">Deskripsi</string>
-    <string name="library_metadata_reset_to_original">Pulihkan versi asli</string>
+    <string name="library_metadata_reset_to_original">Kembalikan ke aslinya</string>
     <string name="library_metadata_save">Simpan</string>
 
     <string name="perf_overlay_title">Overlay performa</string>
@@ -890,8 +881,6 @@
     <string name="settings_section_storage">Penyimpanan</string>
     <string name="settings_section_profiles">Profil</string>
     <string name="settings_profiles_summary">Kelola profil yang dapat digunakan kembali di berbagai MIDlet.</string>
-    <string name="pref_use_display_cutout_title">Gunakan area potongan layar</string>
-    <string name="pref_use_display_cutout_summary">Mengizinkan konten Canvas MIDlet yang kompatibel dan bilah alat runtime menggunakan area potongan layar. Mengaktifkannya menyembunyikan bilah status sistem.</string>
     <string name="pref_accent_title">Warna aksen</string>
     <string name="pref_accent_sapphire">Biru safir</string>
     <string name="pref_accent_violet">Violet anggrek</string>
@@ -902,10 +891,6 @@
     <string name="pref_accent_amber">Amber keemasan</string>
     <string name="pref_accent_blue">Biru bawaan</string>
     <string name="pref_accent_classic_blue">Biru klasik</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_cyan">Sian</string>
-    <string name="pref_accent_orange">Oranye</string>
-    <string name="pref_accent_pink">Merah muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
     <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan oleh runtime lain.</string>
     <string name="runtime_installation_changed">Instalasi MIDlet tidak dapat disiapkan untuk dijalankan.</string>
@@ -920,10 +905,8 @@
 
     <string name="library_action_settings_summary">Atur perilaku dan tampilan global aplikasi.</string>
     <string name="library_action_crash_reports_summary">Tinjau laporan diagnostik yang tersimpan.</string>
-    <string name="library_action_save_log_summary">Simpan log terbaru JL-Mod Plus untuk pemecahan masalah.</string>
     <string name="library_action_about_summary">Ringkasan proyek, informasi build, dan tautan.</string>
     <string name="library_action_licenses_summary">Pemberitahuan pihak ketiga dan ketentuan lisensi yang disertakan.</string>
-    <string name="library_action_help_summary">Panduan penggunaan dan kontrol umum.</string>
     <string name="library_donation_action">Dukung pengembangan</string>
     <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
     <string name="library_donation_title">Dukung JL-Mod Plus</string>
@@ -970,14 +953,11 @@
     <string name="memory_editor_write_failure_outcome">%1$s\nPenulisan terkonfirmasi: %2$d. Belum terkonfirmasi: %3$d. Dilewati: %4$d. Belum dicoba: %5$d. Dilewati karena tipe data: %6$d.</string>
     <string name="memory_editor_next_scan_result">Hasil pemindaian berikutnya: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Otomatis</string>
-    <string name="about_maintainer">Pengelola: %1$s</string>
     <string name="midlet_failure_recovery_message">MIDlet berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. JL-Mod Plus tetap dapat digunakan.</string>
     <string name="midlet_failure_recovery_message_named">“%1$s” berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. JL-Mod Plus tetap dapat digunakan.</string>
     <string name="runtime_replacement_failed">MIDlet yang sedang berjalan tidak dapat dihentikan. Coba buka MIDlet baru lagi.</string>
-    <string name="about_version">Versi %1$s</string>
     <string name="screenshot_save_failed">Tangkapan layar tidak dapat disimpan.</string>
     <string name="screenshot_saved_path">Tangkapan layar disimpan di %1$s</string>
-    <string name="log_save_started">Penyimpanan log dimulai.</string>
     <string name="log_save_failed">Penyimpanan log tidak dapat dimulai.</string>
     <string name="runtime_midlet_list_failed">Daftar MIDlet aplikasi ini tidak dapat dibaca.</string>
     <string name="diagnostic_reason_java_crash">Crash Java</string>
@@ -1010,21 +990,83 @@
     <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi memiliki versi yang sama.</string>
     <string name="bulk_install_reason_older_candidate">Versi yang lebih baru dari aplikasi ini ada dalam instalasi massal yang sama.</string>
     <string name="bulk_install_reason_source_error">Sumber ini tidak dapat disiapkan untuk instalasi.</string>
-    <string name="midlet_file_permission_title">Akses penyimpanan virtual</string>
-    <string name="midlet_file_permission_read">Game ini ingin membaca berkas di penyimpanan virtual bersama JL-Mod Plus.</string>
-    <string name="midlet_file_permission_write">Game ini ingin membuat, mengubah, atau menghapus berkas di penyimpanan virtual bersama JL-Mod Plus.</string>
+    <string name="midlet_file_permission_title">Akses penyimpanan bersama</string>
+    <string name="midlet_file_permission_read">MIDlet ini ingin membaca berkas yang dibagikan dengan MIDlet lain di JL-Mod Plus. Data simpanan pribadinya tetap terpisah.</string>
+    <string name="midlet_file_permission_write">MIDlet ini ingin membuat, mengubah, atau menghapus berkas yang dibagikan dengan MIDlet lain di JL-Mod Plus. Data simpanan pribadinya tetap terpisah.</string>
     <string name="midlet_file_permission_allow_once">Izinkan sekali</string>
-    <string name="midlet_file_permission_allow_session">Izinkan selama bermain</string>
+    <string name="midlet_file_permission_allow_session">Izinkan selama sesi MIDlet ini</string>
     <string name="midlet_file_permission_allow_always">Selalu izinkan</string>
-    <string name="midlet_file_permission_deny">Tolak</string>
-    <string name="midlet_permissions_settings_title">Izin</string>
-    <string name="midlet_permissions_storage">Penyimpanan virtual</string>
-    <string name="midlet_permissions_settings_summary">Atur akses baca dan tulis ke drive virtual bersama. Perubahan berlaku saat game dijalankan kembali.</string>
+    <string name="midlet_file_permission_deny">Selalu tolak</string>
+    <string name="midlet_permissions_settings_title">Izin akses</string>
+    <string name="midlet_permissions_settings_summary">Atur akses ke drive virtual bersama C:/ dan E:/. Berkas pribadi dan data simpanan tetap terpisah untuk setiap MIDlet. Perubahan langsung disimpan dan berlaku saat MIDlet dijalankan kembali.</string>
     <string name="midlet_permissions_read">Baca berkas bersama</string>
     <string name="midlet_permissions_write">Ubah berkas bersama</string>
-    <string name="midlet_permissions_ask">Tanyakan setiap kali</string>
+    <string name="midlet_permissions_ask">Tanyakan</string>
     <string name="midlet_permissions_allow">Selalu izinkan</string>
     <string name="midlet_permissions_deny">Tolak</string>
-    <string name="midlet_permissions_item">%1$s · %2$s</string>
-    <string name="midlet_permissions_save_failed">Izin tidak dapat disimpan. Pastikan game masih terpasang dan berkas JAR aslinya tersedia.</string>
+    <string name="midlet_permissions_save_failed">Izin tidak dapat disimpan. Pastikan MIDlet masih terpasang dan berkas JAR aslinya tersedia.</string>
+    <string name="updates_title">Pembaruan</string>
+    <string name="updates_more_summary">Periksa versi terbaru JL-Mod Plus.</string>
+    <string name="updates_more_available">Versi yang lebih baru tersedia.</string>
+    <string name="updates_installed_version">Versi terpasang: %1$s</string>
+    <string name="updates_build_code">Build %1$d</string>
+    <string name="updates_channel">Saluran pembaruan</string>
+    <string name="updates_stable">Stabil</string>
+    <string name="updates_preview">Pratinjau</string>
+    <string name="updates_automatic">Periksa otomatis saat membuka Pustaka</string>
+    <string name="updates_not_checked">Belum ada pemeriksaan pembaruan yang selesai.</string>
+    <string name="updates_checking">Memeriksa pembaruan…</string>
+    <string name="updates_current">Anda sudah menggunakan versi terbaru.</string>
+    <string name="updates_no_release">Belum ada rilis kompatibel yang dipublikasikan di saluran ini.</string>
+    <string name="updates_not_installable">Ada rilis yang lebih baru, tetapi nomor build-nya tidak dapat memperbarui instalasi ini.</string>
+    <string name="updates_failed">Gagal memeriksa pembaruan. Periksa koneksi lalu coba lagi.</string>
+    <string name="updates_available">Pembaruan tersedia</string>
+    <string name="updates_view_release">Lihat rilis</string>
+    <string name="updates_last_checked">Terakhir diperiksa: %1$s</string>
+    <string name="updates_check">Periksa pembaruan</string>
+    <string name="updates_notice">JL-Mod Plus %1$s tersedia. Buka Pembaruan di tab Lainnya.</string>
+    <string name="updates_debug_build">Ini build debug. APK rilis GitHub terpasang secara terpisah.</string>
+    <string name="updates_link_copied">Tidak ada browser. Tautan rilis disalin.</string>
+    <string name="updates_browser_unavailable">Tidak ada browser untuk membuka rilis.</string>
+    <string name="bulk_install_choose_files">File</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_unreadable_archives">Arsip tidak dapat dibaca: %1$d</string>
+    <string name="bulk_install_skipped_entries">Entri arsip dilewati: %1$d</string>
+    <string name="bulk_install_filter_all">Semua</string>
+    <string name="bulk_install_filter_selected">Dipilih</string>
+    <string name="bulk_install_filter_review">Tinjau</string>
+    <string name="bulk_install_empty_filter">Tidak ada game yang sesuai.</string>
+    <string name="memory_editor_remove_candidates_title">Hapus hasil yang dipilih?</string>
+    <string name="memory_editor_remove_candidates_description">Hapus: Mengeluarkan hasil terpilih dari daftar pencarian. Nilainya di memori game tidak berubah.\n\nPulihkan dan hapus: Juga mengembalikan nilai sebelum perubahan terakhir yang dikonfirmasi, tetapi hanya jika nilai saat ini masih sama dengan nilai hasil perubahan tersebut. Hasil yang berkonflik tetap berada dalam daftar.</string>
+    <string name="memory_editor_revert_and_remove">Pulihkan dan hapus</string>
+    <string name="memory_editor_revert_remove_commit_failed">Nilai mungkin sudah dipulihkan, tetapi hasil belum bisa dihapus. Segarkan lalu coba lagi; nilai yang diubah game tidak akan ditimpa.</string>
+    <string name="memory_editor_revert_remove_outcome">Dipulihkan: %1$d. Dihapus: %2$d. Konflik: %3$d. Belum terkonfirmasi: %4$d. Belum dicoba: %5$d.</string>
+    <string name="memory_editor_set_all">Samakan nilai</string>
+    <string name="memory_editor_increment_start">Nilai awal</string>
+    <string name="memory_editor_edit_batch_type_notice">Hanya nilai dengan tipe data yang sesuai yang akan diubah.</string>
+    <string name="memory_editor_write_confirmed">%1$d nilai dikonfirmasi melalui pembacaan ulang memori.</string>
+    <string name="memory_editor_candidate_untraced">Array #%1$d[%2$d] · Sumber belum terlacak</string>
+    <string name="memory_editor_candidate_static">%1$s · %2$s</string>
+    <string name="memory_editor_candidate_instance">%1$s · %2$s · target #%3$d</string>
+    <string name="memory_editor_reference_static">Referensi statis</string>
+    <string name="memory_editor_reference_instance">Referensi instance</string>
+    <string name="memory_editor_path_changed">Jalur referensi berubah sejak pemindaian.</string>
+    <string name="memory_editor_path_incomplete">Jalur referensi melewati batas pemeriksaan.</string>
+    <string name="memory_editor_source_unknown">Sumber belum terlacak</string>
+    <string name="memory_editor_incremental_edit">Barisan aritmetika</string>
+    <string name="memory_editor_increment_step">Langkah</string>
+    <string name="memory_editor_increment_invalid">Gunakan satu tipe bilangan bulat dan nilai dalam rentangnya.</string>
+    <string name="memory_editor_increment_preview">Pratinjau: %1$s</string>
+    <string name="pref_midlet_display_cutout_title">Perluas ke area potongan layar</string>
+    <string name="pref_midlet_display_cutout_summary">Izinkan tampilan MIDlet menggunakan area di sekitar potongan layar. Sebagian tampilan mungkin tertutup.</string>
+    <string name="pref_runtime_fullscreen_title">Layar penuh</string>
+    <string name="pref_runtime_fullscreen_summary">Sembunyikan bilah alat saat bermain. Berlaku untuk semua MIDlet.</string>
+    <string name="runtime_fullscreen_update_failed">Pengaturan layar penuh tidak dapat diakses. Coba lagi.</string>
+    <string name="midlet_permissions_read_summary">Baca berkas yang ditempatkan di drive virtual bersama.</string>
+    <string name="midlet_permissions_write_summary">Buat, ubah, atau hapus berkas di drive virtual bersama.</string>
+    <string name="midlet_legacy_import_title">Simpanan Siemens lama</string>
+    <string name="midlet_legacy_import_action">Pilih berkas simpanan lama</string>
+    <string name="midlet_legacy_import_summary">Salin berkas yang dipilih ke penyimpanan Siemens pribadi MIDlet ini. Berkas asli tetap di tempatnya dan berkas yang sudah ada tidak diganti. Hentikan MIDlet sebelum mengimpor.</string>
+    <string name="midlet_legacy_import_success">Berkas telah disalin ke penyimpanan pribadi MIDlet ini.</string>
+    <string name="midlet_legacy_import_failed">Berkas tidak dapat diimpor. Hentikan MIDlet dan pastikan berkas tujuan belum ada.</string>
 </resources>

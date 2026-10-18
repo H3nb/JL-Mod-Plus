@@ -14,9 +14,8 @@
 
 package io.github.h3nb.jlmodplus.librarydb
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
+import kotlinx.serialization.json.*
+
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -252,24 +251,24 @@ internal object LibraryUniversalBundleExporter {
     }
 
     private fun manifestBytes(apps: List<PlannedApp>): ByteArray {
-        val root = JsonObject()
-        root.addProperty("schema", LibraryAppBundleFormat.UNIVERSAL_SCHEMA)
-        root.addProperty("formatVersion", LibraryAppBundleFormat.UNIVERSAL_VERSION)
-        val records = JsonArray()
+        val root = linkedMapOf<String, JsonElement>()
+        root["schema"] = JsonPrimitive(LibraryAppBundleFormat.UNIVERSAL_SCHEMA)
+        root["formatVersion"] = JsonPrimitive(LibraryAppBundleFormat.UNIVERSAL_VERSION)
+        val records = arrayListOf<JsonElement>()
         apps.forEach { app ->
-            val record = JsonObject()
-            record.addProperty("bundleId", app.source.bundleId)
-            record.addProperty("title", app.source.title.trim())
-            record.addProperty("vendor", app.source.vendor.trim())
-            record.addProperty("version", app.source.version.trim())
-            record.addProperty("payloadRoot", app.payloadRoot)
-            record.addProperty("sourceSha256", app.sourceSha256)
-            record.addProperty("configState", app.configState.manifestValue())
-            record.addProperty("dataState", app.dataState.manifestValue())
-            records.add(record)
+            val record = linkedMapOf<String, JsonElement>()
+            record["bundleId"] = JsonPrimitive(app.source.bundleId)
+            record["title"] = JsonPrimitive(app.source.title.trim())
+            record["vendor"] = JsonPrimitive(app.source.vendor.trim())
+            record["version"] = JsonPrimitive(app.source.version.trim())
+            record["payloadRoot"] = JsonPrimitive(app.payloadRoot)
+            record["sourceSha256"] = JsonPrimitive(app.sourceSha256)
+            record["configState"] = JsonPrimitive(app.configState.manifestValue())
+            record["dataState"] = JsonPrimitive(app.dataState.manifestValue())
+            records.add(JsonObject(record))
         }
-        root.add("apps", records)
-        return (GsonBuilder().disableHtmlEscaping().create().toJson(root) + "\n")
+        root["apps"] = JsonArray(records)
+        return (JsonObject(root).toString() + "\n")
             .toByteArray(Charsets.UTF_8)
     }
 

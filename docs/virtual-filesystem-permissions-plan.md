@@ -1,6 +1,6 @@
 # Virtual filesystem and MIDlet permissions — implementation plan
 
-Status: design and implementation checklist. This document does not claim that the proposed behavior has shipped.
+Status: Draft implementation. Not merged; Android/device qualification remains required.
 
 ## Scope and constraints
 
@@ -27,7 +27,7 @@ Treat these as migration inputs, not compatibility requirements.
 
 - Introduce workdir-backed shared mounts `storage/c/` and `storage/e/`, independent of actual Android storage volumes. Both exist without removable SD storage.
 - Keep private/cache data owned by the installed MIDlet, under its existing workdir and `storageKey` identity. RMS remains outside guest-visible shared roots. No MIDlet may enumerate or open another MIDlet's private area through VFS.
-- Keep vendor-specific storage behind the same VFS service. Introduce `storage/vendor/...` only when a verified vendor API needs an independent backing store. Do not duplicate C/E contents for aliases.
+- Keep vendor-specific storage behind the same VFS service. Keep Siemens relative files and its A/B drive mounts in the installation-private `data/<storageKey>/vendor/siemens/` namespace. Only C/E and their aliases are shared. Do not duplicate C/E contents for aliases.
 - Use a defined mount table and optional compatibility-profile aliases. Logical roots are not physical paths. Only configured, supported roots may open; never silently redirect unknown roots to C.
 - `FileSystemRegistry.listRoots()` publishes precisely the mounted *enumerable* roots for the selected profile, not all accepted aliases or Android volumes. Document default and profile-specific root mappings with tests.
 - Resolve all `fileconn.dir.*` properties to **usable virtual FileConnection URLs**. `fileconn.dir.private` must resolve exclusively to the current installed identity. Choose its URI presentation from compatibility evidence and test it through `Connector.open`; do not leak a host filesystem path in a Java ME system property.
@@ -98,3 +98,45 @@ Blocking acceptance checks:
 ## Explicit exclusions
 
 No isolated process migration, DEX/ASM/ClassLoader hardening, Android permission removal or restructuring, new camera/Bluetooth/location functionality, unrelated UI refactoring, automatic physical-storage migration, or merge until functional implementation and relevant validation are complete.
+
+## Review corrections — 18 October 2026
+
+The user-confirmed boundary is file access inside the working directory. C/E are
+shared storage for intentional file exchange; RMS, private/cache files and
+Siemens save storage remain installation-scoped. This does not change Android
+host permissions or claim protection against arbitrary guest DEX/host API calls.
+
+- Resolved integration conflicts with alpha `d7b82c6b`; preserved its guest locale
+  resolution, diagnostics provider roots and runtime toolbar changes.
+- Runtime authorization uses the existing Compose Material 3 host and modal input
+  owner. Message and all grant choices appear together; cancellation/teardown
+  completes the waiting request. A queued request rechecks DENY under the prompt
+  lock, including a denial whose persistent write failed.
+- System configuration exposes shared READ and WRITE separately. Decisions are
+  saved off the UI thread outside profile serialization; changing a permission
+  does not edit/detach a reusable preset. Changes affect the next MIDlet launch.
+- FileConnection close leaves previously opened streams usable. WRITE-mode
+  directory traversal is supported, including directory names returned by list
+  and consistent URLs while ascending within a mount.
+- Exact legacy URLs for this installation's private/cache folders resolve to
+  those same private folders. They never expose the mixed data directory,
+  another installation, or the old Android storage root.
+- Configuration offers explicit import when legacy Siemens candidates exist.
+  Only the selected file is copied to this installation's private Siemens area;
+  originals and existing destinations remain untouched. RMS `.rsh`/`.rsr`,
+  private/cache/vendor namespaces, traversal and symbolic links are excluded.
+  Imports hold the installed identity guard and an exclusive runtime storage
+  lease, so a running MIDlet must stop first. Inspection is bounded to 1024
+  entries/16 directory levels; each copied file is bounded to 64 MiB. A failed
+  import leaves the source intact and does not fall back to Android storage.
+- Old public-storage URLs are intentionally not restored. Users may place files
+  they want to share in `<workdir>/storage/c/` or `<workdir>/storage/e/` with their
+  file manager. No bulk copy or automatic gallery/music scan is performed.
+
+Validation: the VFS and legacy-import JVM suites pass locally (10 tests). A
+separate JVM harness using Android stubs also executes the production Java
+permission queue and FileConnection compatibility tests (13 tests total).
+This is not Android/UI/device qualification. Instrumentation additionally covers
+prompt choice reachability and permission changes without profile draft edits;
+those require a connected Android runtime. CI build/lint evidence must refer to
+the new PR revision before merge.

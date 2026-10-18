@@ -135,6 +135,20 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
+		public Bundle managedEditIncremental(long runtimeToken, long expectedRevision, long[] orderedIds,
+				int valueType, String baseValue, String step, long cancellationEpoch) {
+			return managedResult(runtimeToken, managedEngine.editIncremental(runtimeToken,
+					expectedRevision, orderedIds, valueType, baseValue, step, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedRevertAndRemove(long runtimeToken, long expectedRevision, long[] ids,
+				long cancellationEpoch) {
+			return managedResult(runtimeToken, managedEngine.revertAndRemove(runtimeToken,
+					expectedRevision, ids, cancellationEpoch));
+		}
+
+		@Override
 		public Bundle managedInspect(long runtimeToken, long expectedRevision, long candidateId,
 				int radius, boolean allowWatchOnly) {
 			return managedInspection(runtimeToken,
@@ -294,7 +308,9 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, state.code);
 		// Target-owned NO_SESSION is emitted only by Undo when search history is empty.
-		if (state.code == MemoryEngineContract.RESULT_NO_SESSION) {
+		if (state.reason != MemoryEngineContract.REASON_NONE) {
+			result.putInt(MemoryEngineContract.KEY_OPERATION_REASON, state.reason);
+		} else if (state.code == MemoryEngineContract.RESULT_NO_SESSION) {
 			result.putInt(MemoryEngineContract.KEY_OPERATION_REASON,
 					MemoryEngineContract.REASON_NO_SEARCH_HISTORY);
 		}
@@ -343,6 +359,12 @@ public final class MemoryTargetBridgeService extends Service {
 			result.putBooleanArray(MemoryEngineContract.KEY_INSPECT_EDITABLE, state.editable);
 			result.putString(MemoryEngineContract.KEY_INSPECT_PROVENANCE,
 					MemoryEngineContract.truncateDisplay(state.provenance));
+			result.putInt(MemoryEngineContract.KEY_INSPECT_PATH_STATUS, state.path.status);
+			result.putString(MemoryEngineContract.KEY_INSPECT_PATH, state.path.path);
+			result.putInt(MemoryEngineContract.KEY_INSPECT_SOURCE_KIND, state.source.kind);
+			result.putString(MemoryEngineContract.KEY_INSPECT_SOURCE_CLASS, state.source.declaringClass);
+			result.putString(MemoryEngineContract.KEY_INSPECT_SOURCE_FIELD, state.source.fieldName);
+			result.putString(MemoryEngineContract.KEY_INSPECT_SOURCE_TYPE, state.source.fieldType);
 		}
 		if (state.message != null && !state.message.isBlank()) {
 			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
@@ -360,6 +382,13 @@ public final class MemoryTargetBridgeService extends Service {
 				MemoryEngineContract.truncateDisplay(page.values));
 		result.putStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES,
 				MemoryEngineContract.truncateDisplay(page.addresses));
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_SOURCE_KINDS, page.sourceKinds);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_CLASSES,
+				page.sourceClasses);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS,
+				page.sourceFields);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_TYPES,
+				page.sourceTypes);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_ALIAS_MASKS, page.aliasMasks);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_TYPES, page.types);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_STATES, page.states);

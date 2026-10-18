@@ -120,7 +120,8 @@ public class ProcessExitRuntimeTest {
 		try {
 			Intent intent = new Intent(context, CrashRuntimeProbeActivity.class)
 					.putExtra(CrashRuntimeProbeActivity.EXTRA_MODE, CrashRuntimeProbeActivity.MODE_SIGNAL_KILL)
-					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					// Do not route signal mode into an old crash probe's existing task.
+					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 			context.startActivity(intent);
 			probeJournal = awaitSignalJournal(context, existingSessions);
 			awaitRemoteProcessStops(context, midletProcessName);
@@ -132,6 +133,8 @@ public class ProcessExitRuntimeTest {
 			long deadline = SystemClock.uptimeMillis() + 2_000L;
 			do {
 				assertEquals(baselineIds, recordIds(LocalDiagnosticRepository.load(context)));
+				assertEquals("Signal-killed probe must not relaunch",
+						0, processPid(context, midletProcessName));
 				SystemClock.sleep(100L);
 			} while (SystemClock.uptimeMillis() < deadline);
 			MidletSessionJournal.Snapshot session = MidletSessionJournal.read(probeJournal);

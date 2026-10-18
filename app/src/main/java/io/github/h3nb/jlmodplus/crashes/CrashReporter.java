@@ -84,15 +84,27 @@ public final class CrashReporter {
 		diagnosticContext = new DiagnosticContext(processName, processRole,
 				null, null, null, null, null);
 
-		CrashContextStore.initialize(
-				application, processRole, application.getString(R.string.jlmod_build_commit),
-				BuildConfig.JLMOD_BUILD_VARIANT);
-		CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
-
-		// Android 11+ state and the Java uncaught bridge are published synchronously because the
-		// process may die before deferred maintenance gets CPU.
-		ProcessExitStore.initializeProcess(application, processRole);
+		// Install the Java bridge before optional breadcrumbs/OS metadata can fail at startup.
+		// The Application object itself is valid in attachBaseContext; getApplicationContext()
+		// is not guaranteed to have been published yet.
 		JavaDiagnosticStore.install(application, processName, processRole);
+		try {
+			CrashContextStore.initialize(
+					application, processRole, application.getString(R.string.jlmod_build_commit),
+					BuildConfig.JLMOD_BUILD_VARIANT);
+		} catch (Throwable error) {
+			logMaintenanceFailure("Unable to initialize crash context", error);
+		}
+		try {
+			CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
+		} catch (Throwable error) {
+			logMaintenanceFailure("Unable to record process start", error);
+		}
+		try {
+			ProcessExitStore.initializeProcess(application, processRole);
+		} catch (Throwable error) {
+			logMaintenanceFailure("Unable to initialize process-exit metadata", error);
+		}
 	}
 
 	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */
@@ -197,6 +209,8 @@ public final class CrashReporter {
 		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
 		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 		runMaintenanceStep("process context pruning", () -> CrashContextStore.prune(application));
+		runMaintenanceStep("diagnostic export cleanup",
+				() -> DiagnosticBundleStore.cleanupPending(application));
 	}
 
 	private static void setBackgroundThreadPriority() {
@@ -256,22 +270,21 @@ public final class CrashReporter {
 	 * This path deliberately does not invoke the process uncaught handler. MidletThread owns the
 	 * subsequent isolated-process termination after this synchronous best-effort capture returns.
 	 */
-	/** True only when the Throwable's primary frame proves JL-Mod Plus/framework origin. */
-	public static boolean hasProvenFrameworkOrigin(Throwable error) {
-		if (error == null) return false;
-		try {
-			StackTraceElement[] frames = error.getStackTrace();
-			return frames.length > 0
-					&& IncidentInterpreter.isFrameworkClass(frames[0].getClassName());
-		} catch (Throwable ignored) {
-			return false;
-		}
+	/**
+	 * Give concurrent terminal diagnostic writes a bounded opportunity to complete before
+	 * an intentional isolated-runtime process kill. This does not classify the failure.
+	 */
+	public static void awaitTerminalCaptures() {
+		JavaDiagnosticStore.awaitTerminalCaptures();
 	}
 
 	public static boolean captureMidletSessionFailure(Thread thread, MidletSessionJournal journal,
 			Throwable reported, Throwable primaryFailure) {
 		Application application = activeApplication;
 		if (application == null || journal == null || reported == null) return false;
+		// Register the terminal attempt before obtaining the session snapshot; a concurrent
+		// host fatal handler must not terminate the process halfway through the handoff.
+		JavaDiagnosticStore.beginTerminalCapture();
 		try {
 			return JavaDiagnosticStore.captureMidletSessionFailure(
 					application,
@@ -283,6 +296,8 @@ public final class CrashReporter {
 			logMaintenanceFailure("Unable to persist handled MIDlet session failure",
 					reportingFailure);
 			return false;
+		} finally {
+			JavaDiagnosticStore.finishTerminalCapture();
 		}
 	}
 

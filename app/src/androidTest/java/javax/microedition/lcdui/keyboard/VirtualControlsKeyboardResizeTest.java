@@ -67,12 +67,12 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(profileDir.mkdirs());
 
         settings = new ProfileModel();
-        settings.dir = profileDir;
+
 		settings.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
         settings.vkFeedback = false;
         settings.vkAlpha = 255;
 
-        keyboard = new VirtualControlsKeyboard(settings);
+        keyboard = new VirtualControlsKeyboard(settings, profileDir);
         keyboard.setView(new View(context));
         keyboard.resize(new RectF(0f, 0f, 1200f, 600f), 0f, 0f, 1200f, 600f);
         keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
@@ -88,7 +88,7 @@ public class VirtualControlsKeyboardResizeTest {
 
     @Test
     public void newProfileKeepsGroupedControlsDisabled() {
-        ProfileModel profile = new ProfileModel(new File(profileDir, "new-profile"));
+        ProfileModel profile = ProfileModel.fresh();
 
         assertFalse(profile.virtualDpadEnabled);
         assertFalse(profile.virtualAnalogEnabled);
@@ -229,7 +229,7 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void standardTemplateReflowsWhenOnlyGuestViewportChanges() throws Exception {
+    public void portraitStandardDoesNotReflowWhenOnlyGuestViewportChanges() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         keyboard.setView(new View(context) {
             @Override
@@ -247,7 +247,7 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(screen, 18f, 0f, 812f, 1118f);
         float after = rectField(keyByLabel("F")).centerY();
 
-        assertTrue(Math.abs(after - before) > 100f);
+        assertEquals(before, after, EPS);
         assertTrue(rectField(keyByLabel("F")).top > 1118f);
     }
 
@@ -303,7 +303,7 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(keyboard.pointerReleased(0, dpad.getCenterX() + 20f, dpad.getCenterY()));
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
 
-        assertTrue(ProfilesManager.saveConfig(settings));
+        assertTrue(ProfilesManager.saveConfig(profileDir, settings));
         try (FileOutputStream stream = new FileOutputStream(layoutFile())) {
             stream.write(keyboard.encodeCurrentLayoutForPersistence());
         }
@@ -638,7 +638,7 @@ public class VirtualControlsKeyboardResizeTest {
 
         // An unrelated profile save may capture only the current working geometry, but v4 remains
         // authoritative for both orientation slots.
-        ProfilesManager.saveConfig(settings);
+        ProfilesManager.saveConfig(profileDir, settings);
         recreateKeyboardFromDisk(landscape);
         assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
         assertNotEquals(portraitFire, rectField(keyByLabel("F")).centerX(), EPS);
@@ -721,7 +721,7 @@ public class VirtualControlsKeyboardResizeTest {
 
         settings.virtualDpadEnabled = true;
         settings.virtualAnalogEnabled = false;
-        ProfilesManager.saveConfig(settings);
+        ProfilesManager.saveConfig(profileDir, settings);
         recreateKeyboardFromDisk(portrait);
 
         assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
@@ -801,7 +801,7 @@ public class VirtualControlsKeyboardResizeTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         VirtualControlsKeyboard candidate = null;
         try {
-            candidate = new VirtualControlsKeyboard(settings);
+            candidate = new VirtualControlsKeyboard(settings, profileDir);
             candidate.setView(new View(context));
             candidate.resize(landscape, 0f, 0f, 1200f, 600f);
             assertEquals(6, candidate.getLayout());
@@ -838,7 +838,7 @@ public class VirtualControlsKeyboardResizeTest {
         try {
             ProfileModel persistedSettings = ProfilesManager.loadConfig(profileDir);
             assertNotNull(persistedSettings);
-            persisted = new VirtualControlsKeyboard(persistedSettings);
+            persisted = new VirtualControlsKeyboard(persistedSettings, profileDir);
             persisted.setView(new View(context));
             persisted.resize(landscape, 0f, 0f, 1200f, 600f);
             assertEquals(VirtualControlsKeyboard.TYPE_DPAD_STANDARD, persisted.getLayout());
@@ -885,7 +885,7 @@ public class VirtualControlsKeyboardResizeTest {
         try {
             ProfileModel persistedSettings = ProfilesManager.loadConfig(profileDir);
             assertNotNull(persistedSettings);
-            candidate = new VirtualControlsKeyboard(persistedSettings);
+            candidate = new VirtualControlsKeyboard(persistedSettings, profileDir);
             candidate.setView(new View(context));
             candidate.resize(portrait, 0f, 0f, 600f, 1200f);
             assertEquals(VirtualKeyboard.TYPE_CUSTOM, candidate.getLayout());
@@ -1163,7 +1163,7 @@ public class VirtualControlsKeyboardResizeTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         VirtualControlsKeyboard candidate = null;
         try {
-            candidate = new VirtualControlsKeyboard(settings);
+            candidate = new VirtualControlsKeyboard(settings, profileDir);
             candidate.setView(new View(context));
             candidate.resize(portrait, 0f, 0f, 600f, 1200f);
             assertNotEquals(VirtualKeyboard.TYPE_CUSTOM, candidate.getLayout());
@@ -1558,7 +1558,7 @@ public class VirtualControlsKeyboardResizeTest {
         assertNotNull(loaded);
         settings = loaded;
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        keyboard = new VirtualControlsKeyboard(settings);
+        keyboard = new VirtualControlsKeyboard(settings, profileDir);
         keyboard.setView(new View(context));
         keyboard.resize(screen, 0f, 0f, screen.width(), screen.height());
         keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
@@ -1772,7 +1772,7 @@ public class VirtualControlsKeyboardResizeTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         VirtualControlsKeyboard candidate = null;
         try {
-            candidate = new VirtualControlsKeyboard(settings);
+            candidate = new VirtualControlsKeyboard(settings, profileDir);
             candidate.setView(new View(context));
             candidate.resize(new RectF(0f, 0f, 1200f, 600f), 0f, 0f, 1200f, 600f);
             assertNotEquals(VirtualKeyboard.TYPE_CUSTOM, candidate.getLayout());

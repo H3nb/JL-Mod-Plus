@@ -852,3 +852,38 @@ private fun LayoutSelectionDialog(
         },
     )
 }
+
+internal data class FilePermissionPrompt(
+    val write: Boolean,
+    val onChoice: MidletPermissionManager.Choice,
+)
+
+@Composable
+internal fun FilePermissionDialog(write: Boolean, onChoice: (Int) -> Unit) {
+    val choices = listOf(
+        R.string.midlet_file_permission_allow_once to MidletPermissionManager.ONCE,
+        R.string.midlet_file_permission_allow_session to MidletPermissionManager.SESSION,
+        R.string.midlet_file_permission_allow_always to MidletPermissionManager.ALWAYS,
+        R.string.midlet_file_permission_deny to MidletPermissionManager.DENY,
+    )
+    AlertDialog(
+        onDismissRequest = { onChoice(MidletPermissionManager.CANCEL) },
+        title = { Text(stringResource(R.string.midlet_file_permission_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(if (write) R.string.midlet_file_permission_write
+                    else R.string.midlet_file_permission_read))
+                choices.forEach { (label, choice) ->
+                    TextButton(onClick = { onChoice(choice) }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(label), modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onChoice(MidletPermissionManager.CANCEL) }) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}

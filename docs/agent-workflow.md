@@ -18,6 +18,8 @@ authorization to widen scope or change the JL-Mod Plus compatibility contract.
 ## Current-state evidence
 
 - Inspect current source, configuration, tests, workflows, and current documentation first when determining what exists or how it behaves.
+- For nontrivial changes, trace the active entry point to its behavior and state owners, affected data, process or lifecycle boundaries, and relevant contract tests before choosing a design. Broaden investigation only when evidence points beyond the initial boundary.
+- For bugs, distinguish observed behavior from suspected causes. Use a focused reproduction, logs, or bounded diagnostics to test competing explanations before patching. If reproduction is unavailable, state the remaining uncertainty and validate the closest practical contract.
 - Treat PRs, commits, deleted branches, old issues, discussions, and other historical artifacts as context rather than implementation authority. A merged change can also be obsolete if current code superseded or reverted it.
 - Search history only when the user asks for it or current-state evidence cannot resolve a necessary question. Search narrowly around the relevant subsystem, path, symbol, behavior, regression, or provenance question, and stop once sufficient evidence exists.
 - Revalidate conclusions from history against current repository state before recommending or changing implementation. Exclude work the user identifies as obsolete or abandoned unless they explicitly ask to revisit it.
@@ -84,6 +86,7 @@ Apply the scope and design priorities in [AGENTS.md](../AGENTS.md).
 
 - `versionName` follows Semantic Versioning; apply the semantics appropriate to the current major version.
 - Android `versionCode` must increase monotonically for published application IDs.
+- Published app versions and Android codes are allocated by the guarded release workflow. Never reuse a published tag or mutate its APK assets. The legacy `main` branch is not the Stable release source.
 - Do not bump versions as an unrelated side effect.
 
 ## Validation and handoff

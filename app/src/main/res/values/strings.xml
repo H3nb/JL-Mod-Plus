@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="about">About</string>
-    <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
-    <!-- %1$s is the maintainer's exact name and account, preserved as invariant data. -->
-    <string name="about_maintainer">Maintainer: %1$s</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="app_debug_badge" translatable="false">DEBUG</string>
     <string name="about_message">Run classic apps and games, organize MIDlets in your Library, and adjust controls, display, audio, and performance. JL-Mod Plus is free and open source.</string>
@@ -54,7 +51,6 @@
     <string name="exit">Exit</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
-    <string name="help_message">&#8226; Linear filtering can significantly reduce performance on some MIDlets. Disable it if the MIDlet is too slow.&lt;BR>&#8226; Immediate processing bypasses the normal Java ME event queue. It may improve responsiveness, but can make some MIDlets unstable.</string>
     <string name="identity_filter">None (fastest)</string>
     <string name="install">Install</string>
     <string name="install_done">Application installed.</string>
@@ -188,10 +184,6 @@
     <string name="pref_button_shape_title">Button shape</string>
     <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Working directory</string>
-    <string name="pref_enable_actionbar_summary">Keep the runtime toolbar visible on MIDlet Canvas screens.</string>
-    <string name="pref_enable_actionbar_title">Show runtime toolbar</string>
-    <string name="pref_enable_statusbar_title">Show system status bar</string>
-    <string name="pref_enable_statusbar_summary">Keep the system status bar visible. Enabling it disables the display-cutout area.</string>
     <string name="pref_encoding_title">Encoding</string>
     <string name="PREF_FILTER">Linear filtering</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-aliasing</string>
@@ -199,7 +191,7 @@
     <string name="PREF_FONT_MEDIUM">Medium</string>
     <string name="PREF_FONT_SIZE_IN_SP">Use Android font scale</string>
     <string name="PREF_FONT_SMALL">Small</string>
-    <string name="PREF_FORCE_FULLSCREEN">Start in fullscreen</string>
+    <string name="PREF_FORCE_FULLSCREEN">Start without command bar</string>
     <string name="pref_graphics_hw_gles">Hardware acceleration (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardware acceleration (Surface)</string>
     <string name="pref_graphics_hw_view">Hardware acceleration (Window)</string>
@@ -218,7 +210,7 @@
     <string name="pref_orientation_default">System default</string>
     <string name="pref_orientation_land">Landscape</string>
     <string name="pref_orientation_port">Portrait</string>
-    <string name="PREF_SCALE_RATIO">Scale (%)</string>
+    <string name="PREF_SCALE_RATIO">Scale</string>
     <string name="pref_screen_gravity">Screen position</string>
     <string name="pref_screen_gravity_bottom">Bottom</string>
     <string name="pref_screen_gravity_center">Center</string>
@@ -257,6 +249,7 @@
     <string name="config_gamepad_pointer_off">Off</string>
     <string name="config_gamepad_pointer_cursor">Proportional cursor</string>
     <string name="config_gamepad_pointer_joystick">Touch joystick</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
     <string name="config_gamepad_calibration_profile">Controller signature: %1$s</string>
     <string name="config_gamepad_calibration_phase_neutral">Waiting for neutral</string>
     <string name="config_gamepad_calibration_phase_stick_range">Stick range</string>
@@ -301,6 +294,8 @@
     <string name="config_gamepad_calibration_phase_unknown">Status unavailable</string>
     <string name="config_gamepad_diagnosis_capabilities">Connected controller capabilities:</string>
     <string name="config_gamepad_diagnosis_descriptor">Descriptor: %1$s</string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
     <string name="config_gamepad_diagnosis_signature">Signature: %1$s</string>
     <string name="config_gamepad_diagnosis_axis">Axis %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(no connected controller)</string>
@@ -417,13 +412,9 @@
     <string name="copy_report">Copy</string>
     <string name="report_on_github">Report on GitHub</string>
     <string name="delete_report">Delete</string>
-    <string name="copy_selected_reports">Copy selected reports</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">Share selected reports</string>
     <string name="delete_selected_reports">Delete selected reports</string>
     <string name="crash_report_copied">Report copied</string>
-    <plurals name="crash_reports_copied">
-        <item quantity="one">%1$d report copied</item>
-        <item quantity="other">%1$d reports copied</item>
-    </plurals>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
     <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nAttach this file before submitting the GitHub issue. The diagnostic bundle will be public once attached to the issue.</string>
@@ -490,7 +481,6 @@
     <string name="library_collection_members_empty">No apps in this collection.</string>
     <string name="library_collection_select_title">Select a collection</string>
     <string name="library_collection_select_message">Choose a collection to view its apps.</string>
-    <string name="library_collection_remove">Remove from collection</string>
     <string name="library_collection_remove_from_current">Remove from collection</string>
     <string name="library_no_matches">No matches for \"%1$s\"</string>
 
@@ -503,7 +493,7 @@
     <string name="library_import_done">App bundle imported.</string>
     <string name="library_import_done_with_warning">App bundle imported with warnings.</string>
     <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
-    <string name="library_import_restore_existing">This app is already installed. Importing will replace the settings and save data contained in the bundle.</string>
+    <string name="library_import_restore_existing">This app is already installed. Any settings or save data included in the bundle will replace the corresponding existing data.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
     <string name="library_play_stats_summary">Plays: %1$d · Total time: %2$s</string>
     <string name="library_share_chooser_title">Share app</string>
@@ -554,7 +544,6 @@
         <item quantity="one">Edit %1$d value</item>
         <item quantity="other">Edit %1$d values</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
     <string name="memory_editor_edit_batch_no_common_type">The selected results do not support the chosen data type. Edit compatible results separately.</string>
     <string name="memory_editor_save">Apply</string>
     <string name="memory_editor_replacement">Replacement value</string>
@@ -745,6 +734,10 @@
     <string name="config_controls_key_input">Physical input</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
+    <string name="config_virtual_controls_color_preview">Color preview</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Pressed</string>
+    <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
     <string name="config_controls_maintenance">Virtual controls layout</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
@@ -765,8 +758,8 @@
     <string name="profile_template_operation_failed">Could not complete the profile operation.</string>
     <string name="config_help_screen_size">Sets the virtual Java ME screen resolution used by the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>
-    <string name="config_help_scale_type">Chooses how the MIDlet screen is scaled relative to the available area.</string>
-    <string name="config_help_scale_ratio">Changes the displayed size without changing the MIDlet’s virtual resolution.</string>
+    <string name="config_help_scale_type">Choose how the game fits the display. Select Manual to set a custom scale.</string>
+    <string name="config_help_scale_ratio" formatted="false">Adjusts the displayed size from 1% to 1000%. At 100%, the game uses its original size; larger values may extend beyond the screen.</string>
     <string name="config_help_lock_custom_resolution_ratio">Keeps the aspect ratio while editing the custom resolution.</string>
     <string name="config_help_virtual_keyboard">Shows on-screen controls for this MIDlet.</string>
     <string name="config_help_touch_input">Lets the MIDlet receive pointer input from the touchscreen.</string>
@@ -789,7 +782,7 @@
     <string name="config_help_shader">Applies a shader to the MIDlet frame before it is displayed.</string>
     <string name="config_help_shader_tuning">Available controls depend on the selected shader.</string>
     <string name="config_help_parallel_redraw">Schedules frame presentation asynchronously. This may improve performance on some devices.</string>
-    <string name="config_help_force_fullscreen">Starts MIDlet Canvas screens in fullscreen mode. The MIDlet can change this mode.</string>
+    <string name="config_help_force_fullscreen">Starts Java ME Canvas screens without the softkey command bar. Games can change this mode.</string>
     <string name="config_help_fps_limit">Sets the FPS limit at 1× emulation speed. The effective limit follows emulation speed; 0 (Maximum) uses the display’s maximum refresh rate.</string>
     <string name="PREF_EMULATION_SPEED">Emulation speed</string>
     <string name="PREF_TIMING_MODE">Time source</string>
@@ -800,9 +793,6 @@
     <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Converting…</string>
     <string name="reconversion_done_with_warning">Compatibility conversion completed with warnings.</string>
-    <string name="reconversion_error">The MIDlet could not be converted automatically.
-
-%1$s</string>
     <string name="reconversion_error_summary">The MIDlet could not be converted automatically.</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>
     <string name="config_help_encoding">Chooses the character encoding reported as microedition.encoding.</string>
@@ -819,7 +809,7 @@
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
     <string name="config_help_key_layout">Chooses the key code layout reported to the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
-    <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
+    <string name="config_help_vk_button_shape">Sets the shape of keypad buttons. The D-pad and analog stick keep their own shapes.</string>
     <string name="config_help_vk_feedback">Vibrates on virtual-control presses when vibration is enabled in Settings.</string>
     <string name="config_help_vk_alpha">Sets control opacity: 0 = fully transparent; 255 = fully opaque.</string>
     <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>
@@ -972,8 +962,6 @@
     <string name="settings_section_storage">Storage</string>
     <string name="settings_section_profiles">Profiles</string>
     <string name="settings_profiles_summary">Manage profiles you can reuse across MIDlets.</string>
-    <string name="pref_use_display_cutout_title">Use display cutout area</string>
-    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. Enabling it hides the system status bar.</string>
     <string name="pref_accent_title">Accent color</string>
     <string name="pref_accent_sapphire">Sapphire blue</string>
     <string name="pref_accent_violet">Orchid violet</string>
@@ -984,10 +972,6 @@
     <string name="pref_accent_amber">Golden amber</string>
     <string name="pref_accent_blue">Default blue</string>
     <string name="pref_accent_classic_blue">Classic blue</string>
-    <string name="pref_accent_indigo">Indigo</string>
-    <string name="pref_accent_cyan">Cyan</string>
-    <string name="pref_accent_orange">Orange</string>
-    <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
     <string name="runtime_storage_in_use">MIDlet storage is already in use by another runtime.</string>
     <string name="runtime_installation_changed">The MIDlet installation could not be prepared for launch.</string>
@@ -1002,10 +986,8 @@
 
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
     <string name="library_action_crash_reports_summary">Review saved diagnostic reports.</string>
-    <string name="library_action_save_log_summary">Save recent JL-Mod Plus logs for troubleshooting.</string>
     <string name="library_action_about_summary">Project overview, build information, and links.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
-    <string name="library_action_help_summary">Usage guidance and common controls.</string>
     <string name="library_donation_action">Support development</string>
     <string name="library_donation_summary">Help keep JL-Mod Plus growing.</string>
     <string name="library_donation_title">Support JL-Mod Plus</string>
@@ -1049,13 +1031,15 @@
     <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
     <string name="memory_editor_next_scan_result">Next scan results: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Auto</string>
-    <string name="about_maintainer_name" translatable="false">Hendra Bara\'langi\' (H3NB)</string>
-    <string name="about_version">Version %1$s</string>
     <string name="screenshot_save_failed">Could not save the screenshot.</string>
     <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
     <string name="screenshot_saved_path">Screenshot saved to %1$s</string>
-    <string name="log_save_started">Log saving started.</string>
-    <string name="log_save_failed">Could not start saving the log.</string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation">Saved %1$s in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Saved a partial log as %1$s in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">No application log records are available in the Android buffer.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">Log collection timed out. No file was saved.</string>
+    <string name="log_save_failed">Could not save the log.</string>
     <string name="runtime_midlet_list_failed">Could not read this application’s MIDlet list.</string>
     <string name="diagnostic_reason_java_crash">Java crash</string>
     <string name="diagnostic_reason_native_crash">Native crash</string>
@@ -1091,21 +1075,84 @@
     <string name="bulk_install_reason_version_conflict">Multiple app variants have the same version.</string>
     <string name="bulk_install_reason_older_candidate">A newer version of this app is in the same batch.</string>
     <string name="bulk_install_reason_source_error">This source could not be prepared for installation.</string>
-    <string name="midlet_file_permission_title">Virtual storage access</string>
-    <string name="midlet_file_permission_read">This game wants to read files in JL-Mod Plus\'s shared virtual storage.</string>
-    <string name="midlet_file_permission_write">This game wants to create, change, or delete files in JL-Mod Plus\'s shared virtual storage.</string>
+    <string name="midlet_file_permission_title">Shared storage access</string>
+    <string name="midlet_file_permission_read">This MIDlet wants to read files shared with other MIDlets in JL-Mod Plus. Its private save data remains separate.</string>
+    <string name="midlet_file_permission_write">This MIDlet wants to create, change, or delete files shared with other MIDlets in JL-Mod Plus. Its private save data remains separate.</string>
     <string name="midlet_file_permission_allow_once">Allow once</string>
-    <string name="midlet_file_permission_allow_session">Allow while playing</string>
+    <string name="midlet_file_permission_allow_session">Allow for this MIDlet session</string>
     <string name="midlet_file_permission_allow_always">Always allow</string>
-    <string name="midlet_file_permission_deny">Deny</string>
-    <string name="midlet_permissions_settings_title">Permissions</string>
-    <string name="midlet_permissions_storage">Virtual storage</string>
-    <string name="midlet_permissions_settings_summary">Control read and write access to shared virtual drives. Changes apply the next time the game starts.</string>
+    <string name="midlet_file_permission_deny">Always deny</string>
+    <string name="midlet_permissions_settings_title">Access permissions</string>
+    <string name="midlet_permissions_settings_summary">Control access to shared virtual drives C:/ and E:/. Private files and save data stay separate for each MIDlet. Changes are saved immediately and apply on the next MIDlet launch.</string>
     <string name="midlet_permissions_read">Read shared files</string>
     <string name="midlet_permissions_write">Change shared files</string>
-    <string name="midlet_permissions_ask">Ask each time</string>
+    <string name="midlet_permissions_ask">Ask</string>
     <string name="midlet_permissions_allow">Always allow</string>
     <string name="midlet_permissions_deny">Deny</string>
-    <string name="midlet_permissions_item">%1$s · %2$s</string>
-    <string name="midlet_permissions_save_failed">Could not save this permission. Check that the game is still installed and its original JAR is available.</string>
+    <string name="midlet_permissions_save_failed">Could not save this permission. Check that the MIDlet is still installed and its original JAR is available.</string>
+    <string name="updates_title">Updates</string>
+    <string name="updates_more_summary">Check for new versions of JL-Mod Plus.</string>
+    <string name="updates_more_available">A newer version is available.</string>
+    <string name="updates_installed_version">Installed version: %1$s</string>
+    <string name="updates_build_code">Build %1$d</string>
+    <string name="updates_channel">Update channel</string>
+    <string name="updates_stable">Stable</string>
+    <string name="updates_preview">Preview</string>
+    <string name="updates_automatic">Check automatically when opening the Library</string>
+    <string name="updates_not_checked">No update check has been completed yet.</string>
+    <string name="updates_checking">Checking for updates…</string>
+    <string name="updates_current">You’re up to date.</string>
+    <string name="updates_no_release">No compatible published release is available on this channel.</string>
+    <string name="updates_not_installable">A newer release exists, but its build number cannot update this installation.</string>
+    <string name="updates_failed">Couldn’t check for updates. Check your connection and try again.</string>
+    <string name="updates_available">Update available</string>
+    <string name="updates_view_release">View release</string>
+    <string name="updates_last_checked">Last checked: %1$s</string>
+    <string name="updates_check">Check for updates</string>
+    <string name="updates_notice">JL-Mod Plus %1$s is available. See Updates in More.</string>
+    <string name="updates_debug_build">This is a debug build. GitHub release APKs are installed separately.</string>
+    <string name="updates_link_copied">No browser is available. The release link was copied.</string>
+    <string name="updates_browser_unavailable">No browser is available to open the release.</string>
+    <string name="bulk_install_choose_files">Files</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_unreadable_archives">Unreadable archives: %1$d</string>
+    <string name="bulk_install_skipped_entries">Skipped archive entries: %1$d</string>
+    <string name="bulk_install_filter_all">All</string>
+    <string name="bulk_install_filter_selected">Selected</string>
+    <string name="bulk_install_filter_review">Review</string>
+    <string name="bulk_install_empty_filter">No matching games.</string>
+    <string name="memory_editor_remove_candidates_title">Remove selected results?</string>
+    <string name="memory_editor_remove_candidates_description">Remove: Takes the selected results off the search list. Values in game memory stay unchanged.\n\nRevert &amp; remove: Also restores the values from before their last confirmed edits, but only if the current values still match the edits. Results with conflicts stay in the list.</string>
+    <string name="memory_editor_revert_and_remove">Revert &amp; remove</string>
+    <string name="memory_editor_revert_remove_commit_failed">Values may have been restored, but results could not be removed. Refresh and retry; values changed by the game will not be overwritten.</string>
+    <string name="memory_editor_revert_remove_outcome">Restored: %1$d. Removed: %2$d. Conflicts: %3$d. Unconfirmed: %4$d. Not attempted: %5$d.</string>
+    <string name="memory_editor_set_all">Set all</string>
+    <string name="memory_editor_increment_start">Start value</string>
+    <string name="memory_editor_edit_batch_type_notice">Only values with matching data types will be changed.</string>
+    <string name="memory_editor_write_confirmed">Values confirmed by memory readback: %1$d.</string>
+    <string name="memory_editor_candidate_untraced">Array #%1$d[%2$d] · Source not traced</string>
+    <string name="memory_editor_candidate_static">%1$s · %2$s</string>
+    <string name="memory_editor_candidate_instance">%1$s · %2$s · target #%3$d</string>
+    <string name="memory_editor_reference_static">Static reference</string>
+    <string name="memory_editor_reference_instance">Instance reference</string>
+    <string name="memory_editor_path_changed">Reference path changed since scanning.</string>
+    <string name="memory_editor_path_incomplete">Reference path exceeds the inspection limit.</string>
+    <string name="memory_editor_source_unknown">Source not traced</string>
+    <string name="memory_editor_incremental_edit">Increment</string>
+    <string name="memory_editor_increment_step">Step</string>
+    <string name="memory_editor_increment_invalid">Use one integer type and values within its range.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Preview: %1$s</string>
+    <string name="pref_midlet_display_cutout_title">Expand into display cutout area</string>
+    <string name="pref_midlet_display_cutout_summary">Let the MIDlet display use the area around the display cutout. Part of the display may be obscured.</string>
+    <string name="pref_runtime_fullscreen_title">Fullscreen</string>
+    <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
+    <string name="runtime_fullscreen_update_failed">Could not access the fullscreen setting. Try again.</string>
+    <string name="midlet_permissions_read_summary">Read files placed in the shared virtual drives.</string>
+    <string name="midlet_permissions_write_summary">Create, change, or delete files in the shared virtual drives.</string>
+    <string name="midlet_legacy_import_title">Legacy Siemens saves</string>
+    <string name="midlet_legacy_import_action">Choose an old save file</string>
+    <string name="midlet_legacy_import_summary">Copy a selected file into this MIDlet’s private Siemens storage. The original stays in place and existing files are never replaced. Stop the MIDlet before importing.</string>
+    <string name="midlet_legacy_import_success">The file was copied into this MIDlet’s private storage.</string>
+    <string name="midlet_legacy_import_failed">Could not import the file. Stop the MIDlet and check that the destination does not already exist.</string>
 </resources>

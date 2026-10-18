@@ -217,7 +217,12 @@ class LibraryComposeTest {
         )
         composeRule.onNodeWithText("No matches for \"missing\"").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Install").performClick()
+        composeRule.onNodeWithText(uiString(R.string.bulk_install_choose_files)).performClick()
         assertEquals(1, actions.installCount)
+
+        composeRule.onNodeWithContentDescription("Install").performClick()
+        composeRule.onNodeWithText(uiString(R.string.bulk_install_choose_folder)).performClick()
+        assertEquals(1, actions.folderInstallCount)
     }
 
     @Test
@@ -972,6 +977,7 @@ class LibraryComposeTest {
         var hideGridTitles = false
         var sortIndex: Int? = null
         var installCount = 0
+        var folderInstallCount = 0
         var importCount = 0
         var openedId: Int? = null
         var renamed: Pair<Int, String>? = null
@@ -987,6 +993,7 @@ class LibraryComposeTest {
         override fun onGridSpacingChange(spacing: LibraryGridSpacing) { gridSpacing = spacing }
         override fun onSort(sortIndex: Int) { this.sortIndex = sortIndex }
         override fun onInstall() { installCount++ }
+        override fun onInstallFolder() { folderInstallCount++ }
         override fun onImportAppBundle() { importCount++ }
         override fun onOpenApp(appId: Int) { openedId = appId }
         override fun onAddShortcut(appId: Int) = Unit

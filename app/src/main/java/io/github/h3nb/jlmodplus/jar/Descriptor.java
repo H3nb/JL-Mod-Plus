@@ -164,16 +164,13 @@ public class Descriptor {
 		String[] lines = source.split("[\\n\\r]+");
 		for (int i = lines.length - 1; i > 0; i--) {
 			String line = lines[i];
+			if (!line.isEmpty() && line.charAt(0) == ' ') {
+				lines[i - 1] += line.substring(1);
+				continue;
+			}
 			int separatorIdx = line.indexOf(SEPARATOR);
 			if (separatorIdx == -1) {
-				if (line.isEmpty()) {
-					continue;
-				}
-				if (line.charAt(0) == ' ') {
-					lines[i - 1] += line.substring(1);
-				} else {
-					lines[i - 1] += line;
-				}
+				if (!line.isEmpty()) lines[i - 1] += line;
 			} else {
 				String name = substringStripped(line, 0, separatorIdx);
 				String value = substringStripped(line, separatorIdx + 1, line.length());
@@ -291,7 +288,10 @@ public class Descriptor {
 
 	public SpannableStringBuilder getInfo(Context c) {
 		SpannableStringBuilder info = new SpannableStringBuilder();
-		String description = attributes.get(MIDLET_DESCRIPTION);
+		String description = MidletDescriptionLocalization.resolve(
+				MidletDescriptionLocalization.extract(attributes),
+				javax.microedition.shell.MidletLocaleResolver.resolve(c),
+				attributes.get(MIDLET_DESCRIPTION));
 		if (description != null) {
 			info.append(description).append("\n\n");
 		}

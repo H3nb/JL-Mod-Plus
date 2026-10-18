@@ -20,13 +20,9 @@ package io.github.h3nb.jlmodplus.config;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -44,7 +40,6 @@ import javax.microedition.util.ContextHolder;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import javax.microedition.shell.timing.TimingMode;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.XmlUtils;
 
@@ -64,7 +59,6 @@ public class ProfilesManager {
 	static final String PRESET_SAVE_NEW_PROFILE_MARKER = ".new-profile";
 	private static final Object PRESET_SOURCE_LOCK = new Object();
 	private static final Map<String, File> presetEditSessions = new HashMap<>();
-	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	/** Shared process-local monitor for all named-preset source reads, writes, and lifecycle changes. */
 	@NonNull
@@ -637,13 +631,12 @@ public class ProfilesManager {
 	}
 
 	/** Publishes the app-provided profile as one config-plus-absent-layout snapshot. */
-	static boolean publishBuiltInSnapshot(@NonNull ProfileModel profile) {
-		if (profile.dir == null) return false;
+	static boolean publishBuiltInSnapshot(@NonNull File targetDir, @NonNull ProfileModel profile) {
 		synchronized (PRESET_SOURCE_LOCK) {
 			try {
-				prepareLocalPublicationTarget(profile.dir, true);
+				prepareLocalPublicationTarget(targetDir, true);
 				publishLocalSnapshotArtifacts(
-						profile.dir, profile.dir, profile,
+						targetDir, targetDir, profile,
 						true, true, false, false, null, null, true);
 				return true;
 			} catch (IOException | RuntimeException e) {
@@ -704,14 +697,8 @@ public class ProfilesManager {
 					if (sourceConfig == null) {
 						throw new IOException("Profile configuration is not loadable");
 					}
-					File originalDir = sourceConfig.dir;
-					try {
-						sourceConfig.dir = staging;
-						if (!saveConfig(sourceConfig)) {
-							throw new IOException("Unable to materialize profile configuration");
-						}
-					} finally {
-						sourceConfig.dir = originalDir;
+					if (!saveConfig(staging, sourceConfig)) {
+						throw new IOException("Unable to materialize profile configuration");
 					}
 				}
 				if (!isValidConfigFile(stagedConfig)) {
@@ -971,8 +958,9 @@ public class ProfilesManager {
 
 	private static boolean isValidConfigFile(File file) {
 		if (file == null || !file.isFile() || file.length() <= 0L) return false;
-		try (FileReader reader = new FileReader(file)) {
-			return gson.fromJson(reader, ProfileModel.class) != null;
+		try (java.io.Reader reader = new java.io.InputStreamReader(
+                new FileInputStream(file), StandardCharsets.UTF_8)) {
+			return ProfileJson.decode(readText(reader), false) != null;
 		} catch (Exception e) {
 			return false;
 		}
@@ -1272,97 +1260,94 @@ public class ProfilesManager {
 			boolean legacyThemeLinked,
 			boolean recoverAtomic,
 			boolean requireMigrationSave) {
-		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
-		if (recoverAtomic) recoverAtomicConfig(file);
-		ProfileModel params = null;
-		File oldFile = new File(dir, "config.xml");
-		boolean loadedLegacyFile = false;
-		if (file.exists()) {
-			try (FileReader reader = new FileReader(file)) {
-				params = gson.fromJson(reader, ProfileModel.class);
-				if (params != null) params.dir = dir;
-			} catch (Exception e) {
-				Log.e(TAG, "loadConfig: ", e);
-			}
-		}
-		if (params == null) {
-			if (oldFile.exists()) {
-				try (FileInputStream in = new FileInputStream(oldFile)) {
-					HashMap<String, Object> map = XmlUtils.readMapXml(in);
-					JsonElement json = gson.toJsonTree(map);
-					params = gson.fromJson(json, ProfileModel.class);
-					if (params != null) params.dir = dir;
-					loadedLegacyFile = params != null;
-				} catch (Exception e) {
-					Log.e(TAG, "loadConfig: ", e);
-				}
-			}
-		}
-		if (params == null) {
-			return null;
-		}
-		int originalVersion = params.version;
-		switch (params.version) {
-			case 0:
-				if (params.hwAcceleration) {
-					params.graphicsMode = 3;
-				}
-				updateSystemProperties(params);
-			case 1:
-				int w = params.screenWidth;
-				int h = params.screenHeight;
-				if (w > 0) {
-					if (h > 0) {
-						params.fontAA = Math.min(w, h) >= 240;
-					} else {
-						params.fontAA = w >= 240;
-					}
-				} else {
-					params.fontAA = (h <= 0) || (h >= 240);
-				}
-			case 2:
-				if (params.screenScaleToFit) {
-					if (params.screenKeepAspectRatio) {
-						params.screenScaleType = 1;
-					} else {
-						params.screenScaleType = 2;
-					}
-				} else {
-					params.screenScaleType = 0;
-				}
-				params.screenGravity = 1;
-				break;
-		}
-		boolean backgroundModeNeedsMigration = originalVersion < ProfileModel.VERSION;
-		if (backgroundModeNeedsMigration) {
-			params.screenBackgroundMode = context == BackgroundMigrationContext.MIDLET_CONFIG
-					&& legacyThemeLinked ? BackgroundMode.THEME : BackgroundMode.CUSTOM;
-		} else {
-			params.screenBackgroundMode = BackgroundMode.sanitize(params.screenBackgroundMode);
-		}
-		boolean versionNeedsMigration = originalVersion < ProfileModel.VERSION;
-		int normalizedTimingMode = TimingMode.sanitize(params.timingMode);
-		boolean timingModeNeedsMigration = params.timingMode != normalizedTimingMode;
-		params.timingMode = normalizedTimingMode;
-		if (versionNeedsMigration) {
-			params.version = ProfileModel.VERSION;
-		}
-		if (persistMigrations && (versionNeedsMigration || timingModeNeedsMigration
-				|| backgroundModeNeedsMigration)) {
-			boolean saved = saveConfig(params);
-			if (!saved && requireMigrationSave) return null;
-			if (saved && loadedLegacyFile && oldFile.delete()) {
-				Log.d(TAG, "loadConfig: old config file deleted");
-			}
-		}
-		return params;
+		return loadConfigResult(dir, persistMigrations, context, legacyThemeLinked,
+				recoverAtomic, requireMigrationSave).model;
 	}
 
-	public static boolean saveConfig(ProfileModel p) {
-		if (p == null || p.dir == null) {
+	public enum LoadStatus { MISSING, LOADED, UNSUPPORTED_VERSION, FAILED }
+
+	public static final class LoadResult {
+		public final LoadStatus status;
+		@Nullable public final ProfileModel model;
+		public final int sourceVersion;
+		@Nullable public final Exception failure;
+
+		private LoadResult(LoadStatus status, ProfileModel model, int sourceVersion, Exception failure) {
+			this.status = status;
+			this.model = model;
+			this.sourceVersion = sourceVersion;
+			this.failure = failure;
+		}
+	}
+
+	public static LoadResult loadConfigResult(File dir, boolean persistMigrations,
+			BackgroundMigrationContext context, boolean legacyThemeLinked) {
+		return loadConfigResult(dir, persistMigrations, context, legacyThemeLinked, true, false);
+	}
+
+	private static LoadResult loadConfigResult(File dir, boolean persistMigrations,
+			BackgroundMigrationContext context, boolean legacyThemeLinked,
+			boolean recoverAtomic, boolean requireMigrationSave) {
+		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
+		File oldFile = new File(dir, "config.xml");
+		try {
+			if (recoverAtomic) recoverAtomicConfig(file);
+			ProfileJson.Decoded decoded;
+			boolean legacy = false;
+			boolean theme = context == BackgroundMigrationContext.MIDLET_CONFIG && legacyThemeLinked;
+			if (file.exists()) {
+				try (java.io.Reader reader = new java.io.InputStreamReader(
+						new FileInputStream(file), StandardCharsets.UTF_8)) {
+					decoded = ProfileJson.decode(readText(reader), theme);
+				}
+			} else if (oldFile.exists()) {
+				try (FileInputStream in = new FileInputStream(oldFile)) {
+					decoded = ProfileJson.decodeXml(XmlUtils.readMapXml(in), theme);
+				}
+				legacy = true;
+			} else {
+				// A failed recovery must not turn durable residue into permission to create defaults.
+				if (atomicSibling(file, ATOMIC_BACKUP_SUFFIX).exists()
+						|| atomicSibling(file, ATOMIC_NEW_SUFFIX).exists()) {
+					throw new IOException("Unrecovered config publication");
+				}
+				return new LoadResult(LoadStatus.MISSING, null, -1, null);
+			}
+			if (persistMigrations && (decoded.needsPublication || legacy)) {
+				boolean saved = saveConfig(dir, decoded.model);
+				if (!saved && requireMigrationSave) throw new IOException("Unable to publish config migration");
+				if (saved && legacy && !oldFile.delete()) Log.w(TAG, "Unable to remove migrated XML " + oldFile);
+			}
+			return new LoadResult(LoadStatus.LOADED, decoded.model, decoded.sourceVersion, null);
+		} catch (ProfileJson.UnsupportedVersion failure) {
+			return new LoadResult(LoadStatus.UNSUPPORTED_VERSION, null, failure.version, failure);
+		} catch (Exception failure) {
+			java.util.logging.Logger.getLogger(TAG).log(java.util.logging.Level.WARNING,
+					"Unable to load configuration " + dir, failure);
+			return new LoadResult(LoadStatus.FAILED, null, -1, failure);
+		}
+	}
+
+	private static String readText(java.io.Reader reader) throws IOException {
+		StringBuilder text = new StringBuilder();
+		char[] buffer = new char[4096];
+		int count;
+		while ((count = reader.read(buffer)) != -1) text.append(buffer, 0, count);
+		return text.toString();
+	}
+
+	public static boolean saveConfig(File configDir, ProfileModel p) {
+		if (p == null || configDir == null) {
 			return false;
 		}
-		File file = new File(p.dir, Config.MIDLET_CONFIG_FILE);
+		final String encoded;
+		try {
+			encoded = ProfileJson.encode(p);
+		} catch (Exception failure) {
+			Log.e(TAG, "Unable to encode config", failure);
+			return false;
+		}
+		File file = new File(configDir, Config.MIDLET_CONFIG_FILE);
 		File parent = file.getParentFile();
 		File temporary = atomicSibling(file, ATOMIC_NEW_SUFFIX);
 		File backup = atomicSibling(file, ATOMIC_BACKUP_SUFFIX);
@@ -1382,7 +1367,7 @@ public class ProfilesManager {
 			}
 			try (FileOutputStream output = new FileOutputStream(temporary);
 				 Writer writer = new OutputStreamWriter(output, StandardCharsets.UTF_8)) {
-				gson.toJson(p, writer);
+				writer.write(encoded);
 				writer.flush();
 				output.getFD().sync();
 			}

@@ -15,6 +15,16 @@
 package javax.microedition.shell
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -67,6 +77,25 @@ private fun uiString(resId: Int, vararg formatArgs: Any): String =
 class RuntimeMenuComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun sharedFilePermissionShowsMessageAndAllChoices() {
+        var result = -1
+        composeRule.setContent {
+            JLModPlusTheme { FilePermissionDialog(write = true, onChoice = { result = it }) }
+        }
+        composeRule.onNodeWithText(uiString(R.string.midlet_file_permission_write)).assertIsDisplayed()
+        listOf(
+            R.string.midlet_file_permission_allow_once,
+            R.string.midlet_file_permission_allow_session,
+            R.string.midlet_file_permission_allow_always,
+            R.string.midlet_file_permission_deny,
+        ).forEach { label ->
+            composeRule.onNodeWithText(uiString(label)).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithText(uiString(R.string.midlet_file_permission_deny)).performClick()
+        composeRule.runOnIdle { assertEquals(MidletPermissionManager.DENY, result) }
+    }
 
     @Test
     fun runtimeDialogPreservesInheritedHiddenSystemBars() {
@@ -261,7 +290,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun runtimeToolbarDoesNotExposeRedundantMenuButton() {
+    fun runtimeToolbarDoesNotAddAnOverflowButton() {
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeMenuHost(
@@ -277,8 +306,7 @@ class RuntimeMenuComposeTest {
                 )
             }
         }
-
-        composeRule.onAllNodesWithContentDescription("Menu").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.more)).assertCountEquals(0)
     }
 
     @Test
@@ -302,6 +330,138 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
             .assertWidthIsAtLeast(48.dp)
             .assertHeightIsAtLeast(48.dp)
+    }
+
+    @Test
+    fun compactToolbarKeepsWholeTouchTargetsOutsideCentralCutout() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 48.dp)),
+            ) {
+                val cutout = with(androidx.compose.ui.platform.LocalDensity.current) {
+                    RuntimeToolbarOcclusion(154.dp.roundToPx(), 206.dp.roundToPx())
+                }
+                JLModPlusTheme {
+                    RuntimeMenuHost(
+                        state = RuntimeMenuUiState(
+                            title = "Demo MIDlet",
+                            isCanvas = true,
+                            imeAvailable = true,
+                            emulationSpeedAvailable = true,
+                            toolbarCutouts = listOf(cutout),
+                        ),
+                        menuVisible = false,
+                        actions = RecordingRuntimeMenuActions(),
+                        onDismissMenu = {},
+                    )
+                }
+            }
+        }
+        val title = composeRule.onNodeWithText("Demo MIDlet").getUnclippedBoundsInRoot()
+        assertTrue(title.left >= 8.dp && title.right <= 151.dp)
+        val speed = composeRule.onNodeWithText(
+            javax.microedition.shell.timing.EmulationSpeed.formatMultiplier(100),
+        ).getUnclippedBoundsInRoot()
+        assertTrue(speed.left >= 209.dp && speed.right <= 344.dp)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime))
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
+        val ime = composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime))
+            .getUnclippedBoundsInRoot()
+        assertTrue(ime.left >= 209.dp && ime.right <= 344.dp)
+        assertTrue(ime.top >= 0.dp && ime.bottom <= 48.dp)
+        val screenshot = composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
+            .getUnclippedBoundsInRoot()
+        assertTrue(screenshot.left >= 209.dp && screenshot.right <= 357.dp)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.more)).assertCountEquals(0)
+    }
+
+    @Test
+    fun landscapeToolbarTargetsFitInsideFortyDpHost() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(640.dp, 120.dp)),
+            ) {
+                JLModPlusTheme {
+                    Column {
+                        RuntimeMenuHost(
+                            state = RuntimeMenuUiState(
+                                title = "Landscape MIDlet",
+                                isCanvas = true,
+                                imeAvailable = true,
+                                emulationSpeedAvailable = true,
+                            ),
+                            modifier = Modifier.fillMaxWidth().height(40.dp),
+                            menuVisible = false,
+                            actions = RecordingRuntimeMenuActions(events),
+                            onDismissMenu = {},
+                        )
+                        Box(Modifier.fillMaxWidth().height(80.dp)
+                            .testTag("below-toolbar").clickable { events += "game" })
+                    }
+                }
+            }
+        }
+        val screenshot = composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
+            .assertWidthIsAtLeast(48.dp)
+        val bounds = screenshot.getUnclippedBoundsInRoot()
+        assertTrue(bounds.top >= 0.dp && bounds.bottom <= 40.dp)
+        assertEquals(40.dp, bounds.bottom - bounds.top)
+        screenshot.performClick()
+        // The old 48dp target would extend into this first row below the compact toolbar.
+        composeRule.onNodeWithTag("below-toolbar").performTouchInput {
+            click(Offset(width - 28.dp.toPx(), 1.dp.toPx()))
+        }
+        assertEquals(listOf("screenshot", "game"), events)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.more)).assertCountEquals(0)
+    }
+
+    @Test
+    fun canvasMenuRestoresShortcutsWhenFullscreenHidesToolbar() {
+        val fullscreen = androidx.compose.runtime.mutableStateOf(false)
+        val menuVisible = androidx.compose.runtime.mutableStateOf(false)
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    RuntimeMenuHost(
+                        state = RuntimeMenuUiState(
+                            title = "MIDlet",
+                            isCanvas = true,
+                            toolbarVisible = !fullscreen.value,
+                            imeAvailable = true,
+                            emulationSpeedAvailable = true,
+                        ),
+                        menuVisible = menuVisible.value,
+                        actions = RecordingRuntimeMenuActions(events),
+                        onDismissMenu = { events += "dismiss" },
+                    )
+                }
+            }
+        }
+        composeRule.runOnIdle { menuVisible.value = true }
+        val shortcutLabels = listOf(
+            uiString(R.string.action_keyboard_ime),
+            uiString(R.string.take_screenshot),
+            uiString(R.string.PREF_EMULATION_SPEED),
+        )
+        shortcutLabels.forEach { label ->
+            composeRule.onAllNodes(hasText(label) and hasAnyAncestor(isDialog()))
+                .assertCountEquals(0)
+        }
+        composeRule.runOnIdle { fullscreen.value = true }
+        shortcutLabels.forEach { label ->
+            composeRule.onAllNodes(hasText(label) and hasAnyAncestor(isDialog()))
+                .assertCountEquals(1)
+        }
+        composeRule.onNodeWithText(uiString(R.string.PREF_EMULATION_SPEED))
+            .performScrollTo().performClick()
+        assertEquals(listOf("dismiss", "speed"), events)
     }
 
     @Test
@@ -419,6 +579,24 @@ class RuntimeMenuComposeTest {
 
         composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_show_controls)).performClick()
         assertEquals(listOf("dismiss", "showControls"), events)
+    }
+
+    @Test
+    fun fullscreenToggleDismissesBeforeChangingGlobalPreference() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(title = "MIDlet", isCanvas = true),
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(events),
+                    onDismissMenu = { events += "dismiss" },
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.pref_runtime_fullscreen_title))
+            .performScrollTo().performClick()
+        assertEquals(listOf("dismiss", "fullscreen"), events)
     }
 
     @Test
@@ -1139,6 +1317,10 @@ private class RecordingRuntimeMenuActions(
 
     override fun onToggleOrientationLock() {
         events += "orientation"
+    }
+
+    override fun onToggleFullscreen() {
+        events += "fullscreen"
     }
 
     override fun onOpenImeKeyboard() {

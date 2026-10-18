@@ -14,14 +14,12 @@
 
 package io.github.h3nb.jlmodplus.config
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonElement
+import kotlinx.serialization.json.JsonElement
+
 
 /** Small deterministic matcher for the effective, unsaved configuration draft. */
 internal class ProfileConfigMatcher private constructor() {
     companion object {
-        private val GSON: Gson = GsonBuilder().create()
 
         @JvmStatic
         fun copyConfig(source: ProfileModel): ProfileModel = copy(source)
@@ -42,21 +40,22 @@ internal class ProfileConfigMatcher private constructor() {
 
         @JvmStatic
         fun sameConfig(left: ProfileModel, right: ProfileModel): Boolean {
-            return comparisonSnapshot(left) == comparisonSnapshot(right)
+            return ProfileJson.sameValue(comparisonSnapshot(left), comparisonSnapshot(right))
         }
 
-        /** Keeps the serializer's numeric/adapter canonicalization without retaining a cache. */
+        /** Projects effective values without mutating the baseline or the stored opaque payload. */
         @JvmStatic
         fun comparisonSnapshot(source: ProfileModel): JsonElement {
-            val normalized = copy(source)
+            val normalized = source.copy()
             normalized.systemProperties = ConfigFormState.normalizeSystemProperties(normalized.systemProperties)
-            return GSON.toJsonTree(normalized)
+            normalized.screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(
+                normalized.screenScaleType, normalized.screenScaleRatio,
+            )
+            return ProfileJson.tree(normalized)
         }
 
         private fun copy(source: ProfileModel): ProfileModel {
-            val copy = GSON.fromJson(GSON.toJson(source), ProfileModel::class.java)
-            copy.dir = source.dir
-            return copy
+            return ProfileJson.ownedCopy(source)
         }
     }
 }

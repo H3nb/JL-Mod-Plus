@@ -375,13 +375,13 @@ public class PresetAuthorityTest {
     private static void writeConfig(File dir, int width) throws Exception {
         if (!dir.isDirectory()) assertTrue(dir.mkdirs());
         ProfileModel profile = new ProfileModel();
-        profile.dir = dir;
+
         profile.version = ProfileModel.VERSION;
         profile.screenWidth = width;
         profile.screenHeight = 320;
         profile.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
         profile.systemProperties = "";
-        assertTrue(ProfilesManager.saveConfig(profile));
+        assertTrue(ProfilesManager.saveConfig(dir, profile));
     }
 
     private static ProfileModel readConfig(File dir) {
