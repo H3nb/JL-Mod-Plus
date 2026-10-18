@@ -53,12 +53,16 @@ public class VirtualControlAppearanceTest {
 		assertEquals(0xD12E2E, VirtualControlAppearance.analogThumbColor(0xFF0000, 0x369ABC, false));
 		assertEquals(0x369ABC, VirtualControlAppearance.analogThumbColor(0xFF0000, 0x369ABC, true));
 		assertEquals(0x1A1A1A, VirtualControlAppearance.analogShell(0x000000));
-		assertEquals(0xFFFFFF, VirtualControlAppearance.analogThumbColor(0xFFFFFF, 0xFFFFFF, true));
-		assertEquals(0xFF0000, VirtualControlAppearance.analogThumbColor(0xFFFFFF, 0xFF0000, true));
+		assertEquals(0x353535, VirtualControlAppearance.analogShellTop(0x000000));
+		assertEquals(0x151515, VirtualControlAppearance.analogShellBottom(0x000000));
+		assertEquals(0x0E0E0E, VirtualControlAppearance.analogBowlCenter(0x000000));
+		assertEquals(0x060606, VirtualControlAppearance.analogBowlEdge(0x000000));
+		assertEquals(0xE6E6E6, VirtualControlAppearance.analogShell(0xFFFFFF));
+		assertEquals(0xE93535, VirtualControlAppearance.analogShellTop(0xFF0000));
+		assertEquals(0xBD1515, VirtualControlAppearance.analogShellBottom(0xFF0000));
 		assertEquals(0x000000, VirtualControlAppearance.analogThumbBottom(0x000000));
 		assertEquals(0xFFFFFF, VirtualControlAppearance.analogThumbTop(0xFFFFFF));
-		assertEquals(0x000000, VirtualControlAppearance.analogBowlEdge(0x000000) & 0xFF000000);
-		assertEquals(0xFF0000, VirtualControlAppearance.analogThumbColor(0x000000, 0xFF0000, true));
+		assertEquals(0xFF0000, VirtualControlAppearance.analogThumbColor(0xFFFFFF, 0xFF0000, true));
 	}
 
 	@Test
