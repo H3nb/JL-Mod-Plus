@@ -21,6 +21,8 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -48,6 +50,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
@@ -162,6 +165,25 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
 
         assertEquals(listOf("Demo"), actions.searches)
+    }
+
+    @Test
+    fun searchDoneReleasesFocusButRetainsTheQuery() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        val search = composeRule.onNode(hasSetTextAction())
+        search.performClick()
+        search.assertIsFocused()
+        search.performTextInput("Demo")
+        search.performImeAction()
+        composeRule.waitForIdle()
+
+        search.assertIsNotFocused()
+        assertEquals("Demo", actions.searches.last())
+
+        search.performClick()
+        search.assertIsFocused()
     }
 
     @Test

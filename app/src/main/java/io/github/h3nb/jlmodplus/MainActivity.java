@@ -123,6 +123,10 @@ public class MainActivity extends AppCompatActivity {
 		EdgeToEdgeCompat.enableForComposeLibrary(this);
 		FrameLayout root = new FrameLayout(this);
 		root.setId(R.id.main_host_root);
+		// Keep the initial window focus on a non-text host rather than letting
+		// Android select the Library search field and automatically open the IME.
+		root.setFocusableInTouchMode(true);
+		root.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
 		FragmentContainerView container = new FragmentContainerView(this);
 		container.setId(R.id.container);
 		root.addView(container, new FrameLayout.LayoutParams(
@@ -131,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
 		root.addView(overlay, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 		setContentView(root);
+		root.requestFocus();
 
 		mainComposeController = new MainActivityComposeController(overlay, new MainHostActions() {
 			@Override
