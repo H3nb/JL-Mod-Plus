@@ -124,8 +124,8 @@ the implemented geometry; they do not settle this policy.
 
 The follow-up [historical capability and orientation study](camera-java-me-history.md)
 separates specification requirements, vendor evidence, the game's expectations,
-and a proposed geometry change. That proposal has not been implemented. The
-installed game's profile was not changed during this investigation.
+and the geometry change proposed at that checkpoint. The approved implementation
+and subsequent user confirmation are recorded below.
 
 ## Validation and remaining limits
 
@@ -223,6 +223,66 @@ Validation of this update:
 These checks qualify the changed default-resolution path; they do not repeat the
 earlier 24-case visual matrix or establish a final visual pass for Miami under the
 new policy. The user will test Miami on the installed build.
+
+## Media configuration and toolbar follow-up
+
+The user confirmed that the virtual-screen default build worked as expected in
+Miami Nights 2, then requested a contextual toolbar shortcut and persistent camera
+defaults. These changes are now implemented together with `origin/alpha` commit
+`450c6eac35ecaab2f95194998d12d2fd3d999fde`:
+
+- Media replaces the Audio destination and uses the official Material `perm_media`
+  symbol. The existing MIDI soundbank section remains; Camera adds rear/front and
+  automatic/portrait/landscape default choices, localized in all 39 catalogs.
+- Rear/automatic are additive JSON-v7 defaults. Missing fields do not trigger a
+  profile rewrite. Form drafts, save/load, preset copies and comparison include
+  both fields. Named camera locators and explicit sizes keep their precedence;
+  only an unavailable configured default lens may fall back.
+- Toolbar swap uses existing runtime state/callback on Canvas and Form. It becomes
+  the fourth shortcut when the three Canvas shortcuts are also available and fit.
+  Overflow retains the action when the shortcut does not fit or the toolbar is
+  hidden. Capture/rebinding disables the button while keeping availability stable.
+
+Local validation: 366 of 367 selected JVM tests passed; the unrelated
+`LegacyPrivateFilesTest.rejectsTraversalLinksAndPrivateNamespaces` could not create
+a symbolic link without a Windows privilege. A focused physical-device run passed
+21 tests covering the new Media choices, toolbar availability/actions/busy/overflow,
+and camera Player/encoder/cancellation contracts. A broader UI run on the phone's
+Indonesian locale was not green: existing tests search for hardcoded English labels
+such as Start, Apply and OK. It is not reported as a passing suite.
+
+Twelve configuration screenshot references were rendered and reviewed. Differences
+were confined to the renamed destination/icon (navigation bar or rail) and the new
+Camera section. Full local screenshot validation passed all 122 previews, and
+`:app:lintEmulatorDebug` passed with the normal native-enabled Gradle model.
+
+Physical integration then passed through the independent MIDlet on Android 16:
+
+- A saved front/landscape profile on virtual 240 x 320 advertised/source-reported
+  640 x 480 and returned a decoded 640 x 480 JPEG. The host toolbar offered rear.
+- The real `config.edit` Media screen showed those saved choices. Selecting rear
+  and portrait, then Start, persisted `CameraDefaultFacing: 1` and
+  `CameraResolution: 1` in JSON v7. The new session advertised/source-reported
+  480 x 640 and returned a decoded 480 x 640 JPEG.
+- Tapping the toolbar swap changed its destination from front to rear and the
+  next front-camera JPEG remained 480 x 640. An explicit PNG 640 x 480 returned
+  that exact size. Closing the Player removed the swap icon.
+
+An initial diagnostic fixture stalled after referencing the host CameraRuntime
+from its guest class loader. Removing that reference restored the probe; lens
+selection was instead observed through the host toolbar. The independent fixture
+now uses only the Java ME API for camera operations and reporting.
+
+The final locally installed APK SHA-256 is
+`f285f88f3309ba9cfa7c4d5ebf06581f4a2d792ec7a0c0f7317b4c57fb89cb0d`.
+Installation used `adb install -r`, preserving app data. As above, its native
+libraries came from CI 2741 rather than a fresh local native compilation. The
+owned fixture/catalog/config/data and private probe output were removed, and the
+phone returned to the library. Miami's converted files retained their hashes;
+its configuration/key layout and RMS hashes changed between the 22:11 baseline
+and 22:27, before the successful 22:28-22:30 fixture tests. The user confirmed
+opening/changing the game during that interval. A second comparison after cleanup
+matched all current Miami files. No old user files were restored over that state.
 
 ## Manual probe
 
