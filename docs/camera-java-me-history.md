@@ -11,7 +11,7 @@ list of pending implementation steps.
 
 ## Decision in force
 
-The user approved a virtual-screen-derived automatic default: portrait 480 x 640,
+The adopted automatic default follows the virtual screen: portrait 480 x 640,
 landscape/square 640 x 480, fixed for the MIDlet session. Media configuration can
 override that default and select rear/front. Explicit MIDlet sizes and profile
 encoding defaults retain precedence. This is an emulator compatibility policy;
@@ -30,7 +30,7 @@ the historical sources below do not make it a universal JSR-135 requirement.
 | Vendor UI orientation APIs/JAD attributes | Application/display orientation | A separate mechanism; it does not itself specify the snapshot byte format |
 
 The [JSR-135 overview](https://nikita36078.github.io/J2ME_Docs/docs/jsr135/overview-summary.html)
-defines the capability properties. [Manager](https://nikita36078.github.io/J2ME_Docs/docs/jsr135/javax/microedition/media/Manager.html)
+defines the capability properties. [Manager](https://docs.oracle.com/javame/config/cldc/opt-pkgs/api/mm/jsr135/javax/microedition/media/Manager.html)
 defines encoding-string syntax, including optional width/height parameters and
 capture locators. [VideoControl](https://docs.oracle.com/javame/config/cldc/opt-pkgs/api/mm/jsr135/javax/microedition/media/control/VideoControl.html)
 defines the null default and display methods. None of these establishes a rule
@@ -55,7 +55,9 @@ The list is ascending on that platform, so null chooses its lowest resolution.
 It gives a 640 x 480 encoding-string example and says the JSR-234 Camera extension
 is unsupported. This is a vendor-specific policy, not a rule that every MMAPI
 implementation sorts sizes or uses the same default.
-[Vendor document, archived HTML transcription](https://manualzz.com/doc/23656675/sony-ericsson-satio--vivaz--vivaz-pro-phones-developers-g...).
+[Vendor document, archived HTML transcription](https://manualzz.com/doc/23656675/).
+This is historical mirror evidence; its availability can change. Retain the
+document title/revision and page reference when checking an original copy.
 
 The indexed extraction of Sony Ericsson's March 2007 *Developers guidelines:
 Java ME, CLDC-MIDP 2.0 for feature and entry level phones* includes portrait size
@@ -102,8 +104,8 @@ upright scene into a landscape rectangle; the game rotates that rectangle.
 The first additional pixel rotation is in the game, but the earliest compatibility
 policy mismatch is the emulator's implicit geometry versus the game's expectation.
 
-Returning an upright portrait image avoids that branch. The user subsequently
-confirmed expected Miami behavior after installing the approved default update.
+Returning an upright portrait image avoids that branch. Manual feedback confirmed
+expected Miami behavior after installing the adopted default update.
 That confirmation is separate from the earlier instrumented capture evidence.
 Simply changing output width/height while keeping the current landscape ViewPort
 would retain the wrong implicit framing and add padding; that is not a complete
@@ -113,7 +115,7 @@ geometry correction.
 
 An initial proposal derived implicit source aspect from the upright CameraX buffer,
 bounded the default output's longest edge at 640, and advertised formats without
-dimension pairs. The user chose the virtual-screen policy instead. No sensor-derived
+dimension pairs. The virtual-screen policy was adopted instead. No sensor-derived
 default or removal of advertised dimensions was implemented. Reopening that choice
 would be a substantive compatibility change for MIDlets using omitted sizes and
 parsing capability strings; it requires new evidence and an explicit proposal.

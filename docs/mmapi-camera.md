@@ -42,9 +42,10 @@ fit or the toolbar is hidden, the same action remains in the options menu.
 ## Geometry and snapshots
 
 Preview and still capture share framing and rotation, with no horizontal mirroring.
-Display size changes affect presentation, not the capture source. Snapshot dimensions are
-independent of preview dimensions. A different output aspect ratio fits the full
-framing with padding rather than introducing a hidden crop. The guarantee concerns
+Display size changes affect presentation, not the capture source. Snapshot
+dimensions are independent of preview dimensions. A different output aspect
+ratio fits the full framing with padding rather than introducing a hidden crop.
+The guarantee concerns
 composition; moving subjects and successive camera exposures can differ in time.
 
 The preview View fits the logical source aspect inside the guest's display rectangle.
@@ -57,9 +58,10 @@ has upright pixels and does not require a second EXIF rotation by the MIDlet.
 
 `getSnapshot(null)` uses the default supported snapshot encoding. JPEG and PNG
 are supported. With automatic resolution selected, source and snapshot defaults
-are selected once per MIDlet session from the full virtual screen: 480 x 640 for portrait, 640 x 480 for
-landscape or square. With automatic screen dimensions, a fixed profile/phone-keypad
-orientation takes precedence over the launch-time Android display; otherwise the
+are selected once per MIDlet session from the full virtual screen: 480 x 640 for
+portrait, 640 x 480 for landscape or square. With automatic screen dimensions,
+a fixed profile/phone-keypad orientation takes precedence over the launch-time
+Android display; otherwise the
 initial resolved virtual size is used. The manual resolution choice supplies that
 same session default directly. Viewport resizing and host rotation do not
 change this default. Advertised automatic encoding strings use the same dimensions;
