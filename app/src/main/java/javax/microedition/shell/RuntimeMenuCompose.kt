@@ -847,6 +847,7 @@ private fun RuntimeToolbar(
                                 ) {
                                     Text(
                                         multiplier,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         maxLines = 1,
                                         style = MaterialTheme.typography.labelLarge.copy(
                                             fontSize = RUNTIME_SPEED_LABEL_SP.sp,
