@@ -16,6 +16,7 @@ package javax.microedition.shell.custom;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingMode;
@@ -347,14 +349,94 @@ public class TimerTest {
 	}
 
 	@Test
-	public void timerTaskRuntimeExceptionTerminatesWorkerAndIsNotSwallowed() throws Exception {
-		Timer timer = new Timer("timing-test-runtime-exception", true);
+	public void oneShotTaskExceptionLeavesTimerUsable() throws Exception {
+		assertTaskExceptionIsContained((timer, task) -> timer.schedule(task, 0L));
+	}
+
+	@Test
+	public void fixedDelayTaskExceptionCancelsOnlyFailedTask() throws Exception {
+		assertTaskExceptionIsContained((timer, task) -> timer.schedule(task, 0L, 1L));
+	}
+
+	@Test
+	public void fixedRateTaskExceptionCancelsAlreadyQueuedOccurrence() throws Exception {
+		assertTaskExceptionIsContained((timer, task) -> timer.scheduleAtFixedRate(task, 0L, 1L));
+	}
+
+	private static void assertTaskExceptionIsContained(
+			BiConsumer<Timer, TimerTask> scheduleFailure) throws Exception {
+		TimingSession session = new TimingSession(new HostTimeSource(), 100, 1L);
+		GuestTimingBridge.install(session);
+		Timer timer = null;
+		CountDownLatch releaseFailure = new CountDownLatch(1);
+		try {
+			timer = new Timer("timing-test-contained-exception", true);
+			Thread worker = workerOf(timer);
+			AtomicReference<Throwable> uncaught = new AtomicReference<>();
+			worker.setUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
+			CountDownLatch failureStarted = new CountDownLatch(1);
+			CountDownLatch healthyRan = new CountDownLatch(1);
+			CountDownLatch laterRan = new CountDownLatch(1);
+			AtomicInteger failedRuns = new AtomicInteger();
+			TimerTask failed = new TimerTask() {
+				@Override
+				public void run() {
+					failedRuns.incrementAndGet();
+					failureStarted.countDown();
+					try {
+						if (!releaseFailure.await(1L, TimeUnit.SECONDS)) {
+							throw new AssertionError("Failed task was not released");
+						}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						throw new AssertionError(e);
+					}
+					throw new NullPointerException("Expected guest callback failure");
+				}
+			};
+			scheduleFailure.accept(timer, failed);
+			assertTrue(failureStarted.await(1L, TimeUnit.SECONDS));
+			// Queue healthy work before the failure so it must survive on this same Timer.
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					healthyRan.countDown();
+				}
+			}, 0L);
+			releaseFailure.countDown();
+			assertTrue(healthyRan.await(1L, TimeUnit.SECONDS));
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					laterRan.countDown();
+				}
+			}, 0L);
+			assertTrue(laterRan.await(1L, TimeUnit.SECONDS));
+			assertEquals(1, failedRuns.get());
+			assertFalse("failed task must already be cancelled", failed.cancel());
+			assertTrue(worker.isAlive());
+			assertNull(uncaught.get());
+			session.close();
+			worker.join(1_000L);
+			assertFalse("contained failures must not prevent session cleanup", worker.isAlive());
+		} finally {
+			releaseFailure.countDown();
+			if (timer != null) {
+				timer.cancel();
+			}
+			GuestTimingBridge.clear(session);
+		}
+	}
+
+	@Test
+	public void timerTaskErrorTerminatesWorkerAndIsNotSwallowed() throws Exception {
+		Timer timer = new Timer("timing-test-error", true);
 		try {
 			Thread worker = workerOf(timer);
 			AtomicReference<Throwable> uncaught = new AtomicReference<>();
 			CountDownLatch ran = new CountDownLatch(1);
 			worker.setUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
-			RuntimeException expected = new RuntimeException("timer failure");
+			AssertionError expected = new AssertionError("timer failure");
 			timer.schedule(new TimerTask() {
 				@Override
 				public void run() {
@@ -379,6 +461,50 @@ public class TimerTest {
 			}
 		} finally {
 			timer.cancel();
+		}
+	}
+
+	@Test
+	public void schedulerExceptionIsNotContainedAsTaskFailure() throws Exception {
+		AtomicReference<RuntimeException> clockFailure = new AtomicReference<>();
+		HostTimeSource host = new HostTimeSource();
+		TimingSession session = new TimingSession(new TimingTimeSource() {
+			@Override
+			public long monotonicNanos() {
+				RuntimeException failure = clockFailure.get();
+				if (failure != null) throw failure;
+				return host.monotonicNanos();
+			}
+
+			@Override
+			public long wallTimeMillis() {
+				return host.wallTimeMillis();
+			}
+		}, 100, 1L);
+		GuestTimingBridge.install(session);
+		Timer timer = null;
+		try {
+			timer = new Timer("timing-test-scheduler-failure", true);
+			Thread worker = workerOf(timer);
+			AtomicReference<Throwable> uncaught = new AtomicReference<>();
+			worker.setUncaughtExceptionHandler((thread, throwable) -> uncaught.set(throwable));
+			RuntimeException expected = new IllegalStateException("scheduler clock failure");
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					// The callback returns normally; the next scheduler clock read must escape.
+					clockFailure.set(expected);
+				}
+			}, 0L, 1L);
+			worker.join(1_000L);
+			assertFalse(worker.isAlive());
+			assertSame(expected, uncaught.get());
+		} finally {
+			clockFailure.set(null);
+			if (timer != null) {
+				timer.cancel();
+			}
+			GuestTimingBridge.clear(session);
 		}
 	}
 
