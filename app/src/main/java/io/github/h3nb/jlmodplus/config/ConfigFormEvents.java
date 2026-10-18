@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import org.microemu.cldc.file.StorageMode;
+
 import androidx.annotation.NonNull;
 
 import io.github.h3nb.jlmodplus.config.model.Size;
@@ -45,6 +47,14 @@ public interface ConfigFormEvents {
 	/** Called after the Compose shader editor confirms its four-slot value array. */
 	default void onShaderTuningComplete(float[] values) {
 	}
+
+    /** Installation-owned access decisions, never profile/preset edits. */
+    default void onStorageModeChanged(StorageMode mode) {}
+
+    default void onFilePermissionChanged(boolean write, int decision) {}
+
+    /** Copies a user-selected legacy Siemens file within this installation only. */
+    default void onImportLegacyPrivateFile(@NonNull String relativePath) {}
 
 	/** Opens preset management from the General destination. */
 	default void onManageProfiles() {

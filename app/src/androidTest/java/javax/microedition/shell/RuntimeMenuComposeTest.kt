@@ -79,6 +79,25 @@ class RuntimeMenuComposeTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun sharedFilePermissionShowsMessageAndAllChoices() {
+        var result = -1
+        composeRule.setContent {
+            JLModPlusTheme { FilePermissionDialog(write = true, onChoice = { result = it }) }
+        }
+        composeRule.onNodeWithText(uiString(R.string.midlet_file_permission_write)).assertIsDisplayed()
+        listOf(
+            R.string.midlet_file_permission_allow_once,
+            R.string.midlet_file_permission_allow_session,
+            R.string.midlet_file_permission_allow_always,
+            R.string.midlet_file_permission_deny,
+        ).forEach { label ->
+            composeRule.onNodeWithText(uiString(label)).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithText(uiString(R.string.midlet_file_permission_deny)).performClick()
+        composeRule.runOnIdle { assertEquals(MidletPermissionManager.DENY, result) }
+    }
+
+    @Test
     fun runtimeDialogPreservesInheritedHiddenSystemBars() {
         var dialogWindow: android.view.Window? = null
         composeRule.setContent {

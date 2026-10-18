@@ -20,6 +20,8 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import org.microemu.cldc.file.StorageMode;
+
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT;
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT_PROFILE;
 import static io.github.h3nb.jlmodplus.util.Constants.KEY_INSTALLED_APP_PATH;
@@ -74,6 +76,7 @@ import javax.microedition.util.ContextHolder;
 
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.config.model.Size;
 import io.github.h3nb.jlmodplus.settings.KeyMapperActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -160,6 +163,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private List<String> profileNames = Collections.emptyList();
 	@Nullable private String cachedDefaultProfileName;
 	private int profileCacheGeneration;
+	@Nullable private ConfigUiState.FileAccess fileAccess;
+	@Nullable private String permissionFingerprint;
+	private boolean fileAccessBusy;
 	private final ExecutorService profileMetadataExecutor = Executors.newSingleThreadExecutor();
 	@Nullable private String profileOrigin;
 	@Nullable private PresetLinkage presetLinkage;
@@ -237,6 +243,21 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onShaderTuningComplete(@NonNull float[] values) {
 			onTuneComplete(values);
+		}
+
+		@Override
+        public void onStorageModeChanged(StorageMode mode) {
+            saveStorageMode(mode);
+        }
+
+        @Override
+		public void onFilePermissionChanged(boolean write, int decision) {
+			saveFilePermission(write, decision);
+		}
+
+		@Override
+		public void onImportLegacyPrivateFile(@NonNull String relativePath) {
+			importLegacyPrivateFile(relativePath);
 		}
 
 		@Override
@@ -437,6 +458,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			startMIDlet();
 			return;
 		}
+		refreshFileAccess();
 		refreshProfileMatchCache();
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		ComposeView composeView = new ComposeView(this);
@@ -1348,6 +1370,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Override
 	protected void onResume() {
 		super.onResume();
+		refreshFileAccess();
 		if (needShow) {
 			loadParams(true);
 			if (isProfile && profileEditorResumeObserved) {
@@ -1524,6 +1547,97 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return false;
 		}
 	}
+
+	private void refreshFileAccess() {
+		if (isProfile || appDir == null || expectedAppId <= 0 || fileAccessBusy) return;
+		fileAccessBusy = true;
+		profileMetadataExecutor.execute(() -> {
+			String fingerprint = MidletPermissionStore.fingerprint(
+					new File(appDir, Config.MIDLET_RES_FILE.substring(1)));
+			List<String> legacy = Collections.emptyList();
+			try {
+				legacy = new LegacyPrivateFiles(new File(workDir), appDir.getName()).list();
+			} catch (IOException failure) {
+				Log.w(TAG, "Cannot inspect legacy private files", failure);
+			}
+            MidletPermissionStore.Access stored = MidletPermissionStore.readAccess(
+                    this, appDir.getPath(), expectedAppId, fingerprint);
+            ConfigUiState.FileAccess access = new ConfigUiState.FileAccess(
+                    stored.mode, stored.read, stored.write, legacy);
+			runOnUiThread(() -> {
+				if (isFinishing() || isDestroyed()) return;
+				permissionFingerprint = fingerprint;
+				fileAccess = access;
+				fileAccessBusy = false;
+				if (composeController != null) composeController.update(createUiState());
+			});
+		});
+	}
+
+    private void saveStorageMode(StorageMode mode) {
+        if (isProfile || fileAccessBusy || fileAccess == null) return;
+        saveStorageAccess(() -> MidletPermissionStore.writeMode(this,
+                appDir.getPath(), expectedAppId, mode));
+    }
+
+    private void saveFilePermission(boolean write, int decision) {
+        if (isProfile || fileAccessBusy || fileAccess == null) return;
+        StorageMode mode = fileAccess.mode;
+        String fingerprint = permissionFingerprint;
+        saveStorageAccess(() -> MidletPermissionStore.write(this, appDir.getPath(), expectedAppId,
+                mode, write ? MidletPermissionStore.FILE_WRITE : MidletPermissionStore.FILE_READ,
+                fingerprint, decision));
+    }
+
+    private void saveStorageAccess(InstalledAppWriteGuard.WriteOperation operation) {
+        fileAccessBusy = true;
+        if (composeController != null) composeController.update(createUiState());
+        profileMetadataExecutor.execute(() -> {
+            InstalledAppWriteGuard.Result result = installedWriteGuard.run(
+                    appDir.getPath(), expectedAppId, operation);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                fileAccessBusy = false;
+                if (result == InstalledAppWriteGuard.Result.STALE) {
+                    ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+                    finish();
+                    return;
+                }
+                if (result != InstalledAppWriteGuard.Result.SUCCESS) {
+                    ThemedToast.show(this, R.string.midlet_permissions_save_failed, Toast.LENGTH_LONG);
+                }
+                refreshFileAccess();
+            });
+        });
+    }
+
+	private void importLegacyPrivateFile(String relativePath) {
+		if (isProfile || fileAccessBusy) return;
+		fileAccessBusy = true;
+		if (composeController != null) composeController.update(createUiState());
+		profileMetadataExecutor.execute(() -> {
+			InstalledAppWriteGuard.Result result = installedWriteGuard.run(appDir.getPath(), expectedAppId, () -> {
+				try (RuntimeStorageLease lease = RuntimeStorageLease.acquire(getFilesDir(), appDir)) {
+					if (lease == null) return false;
+					new LegacyPrivateFiles(new File(workDir), appDir.getName()).copy(relativePath);
+					return true;
+				}
+			});
+			runOnUiThread(() -> {
+				if (isFinishing() || isDestroyed()) return;
+				fileAccessBusy = false;
+				if (result == InstalledAppWriteGuard.Result.STALE) {
+					ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+					finish();
+					return;
+				}
+				ThemedToast.show(this, result == InstalledAppWriteGuard.Result.SUCCESS ? R.string.midlet_legacy_import_success
+						: R.string.midlet_legacy_import_failed, Toast.LENGTH_LONG);
+				refreshFileAccess();
+			});
+		});
+	}
+
 
 	private boolean runInstalledWrite(@NonNull BooleanOperation operation) {
 		InstalledAppWriteGuard guard = installedWriteGuard;
@@ -2205,7 +2319,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
-				profileNames, hasControllerDevice(), updatePresetName);
+				profileNames, hasControllerDevice(), updatePresetName, fileAccessBusy ? null : fileAccess);
 	}
 
 	private boolean hasCompatibleTimingTransform() {

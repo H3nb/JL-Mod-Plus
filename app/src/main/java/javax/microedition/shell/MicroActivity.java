@@ -817,6 +817,7 @@ public class MicroActivity extends AppCompatActivity {
 		try {
 			boolean currentHost = ContextHolder.getActivity() == this;
 			if (currentHost) {
+				MidletPermissionManager.cancelPending();
 				Display display = Display.getDisplay(null);
 				if (display != null) {
 					display.detachHost();
@@ -1090,6 +1091,11 @@ public class MicroActivity extends AppCompatActivity {
 			}
 		}
 	}
+
+    Runnable showFilePermissionPrompt(boolean write, MidletPermissionManager.Choice onChoice) {
+        return runtimeMenuController == null ? null
+                : runtimeMenuController.showFilePermissionPrompt(write, onChoice);
+    }
 
 	void showErrorDialog(String message) {
 		if (runtimeMenuController != null) {

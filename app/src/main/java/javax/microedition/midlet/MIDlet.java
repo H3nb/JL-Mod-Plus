@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
@@ -96,10 +97,14 @@ public abstract class MIDlet {
 		try {
 			Intent intent = new Intent(Intent.ACTION_VIEW);
 			if (url.startsWith("file://")) {
-				FileSystemFileConnection fileConnection = (FileSystemFileConnection) Connector.open(url);
-				intent.setData(fileConnection.getURI());
-				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-				fileConnection.close();
+				FileSystemFileConnection fileConnection =
+						(FileSystemFileConnection) Connector.open(url, Connector.READ);
+				try {
+					intent.setData(fileConnection.getURI());
+					intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+				} finally {
+					fileConnection.close();
+				}
 			} else {
 				intent.setData(Uri.parse(url));
 			}
@@ -128,7 +133,7 @@ public abstract class MIDlet {
 	}
 
 	public final int checkPermission(String permission) {
-		return 1;
+		return javax.microedition.shell.MidletPermissionManager.checkPermission(permission);
 	}
 
 	public final void resumeRequest() {

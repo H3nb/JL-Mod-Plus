@@ -41,46 +41,58 @@ public final class VirtualControlAppearance {
 		return (red << 16) | (green << 8) | blue;
 	}
 
-	/** The idle cap gets a neutral tonal lift; its color never depends on the outline. */
-	public static int analogThumbColor(int normalBackground, int selectedBackground, boolean active) {
-		return active ? selectedBackground & 0xFFFFFF :
-				mixRgb(normalBackground, 0x808080, 0.36f);
+	/** Lightness-aware shading retains the selected background hue and leaves outline independent. */
+	private static boolean isLight(int rgb) {
+		int red = (rgb >>> 16) & 0xFF;
+		int green = (rgb >>> 8) & 0xFF;
+		int blue = rgb & 0xFF;
+		return red * 54 + green * 183 + blue * 19 >= 150 * 256;
 	}
 
+	/** Keep the selected thumb exact; lift dark idle colors or shade light ones modestly. */
+	public static int analogThumbColor(int normalBackground, int selectedBackground, boolean active) {
+		if (active) return selectedBackground & 0xFFFFFF;
+		int background = normalBackground & 0xFFFFFF;
+		return mixRgb(background, isLight(background) ? 0x000000 : 0xFFFFFF, 0.10f);
+	}
+
+	/** The middle stop of the shell gradient matches the configured keypad background. */
 	public static int analogShell(int background) {
-		return mixRgb(background, 0x808080, 0.20f);
+		return background & 0xFFFFFF;
 	}
 
 	public static int analogShellTop(int background) {
-		return mixRgb(analogShell(background), 0xFFFFFF, 0.12f);
+		return mixRgb(analogShell(background), 0xFFFFFF, 0.065f);
 	}
 
 	public static int analogShellBottom(int background) {
-		return mixRgb(analogShell(background), 0x000000, 0.18f);
+		return mixRgb(analogShell(background), 0x000000, 0.085f);
 	}
 
 	public static int analogShellRim(int background) {
-		return mixRgb(analogShell(background), 0xFFFFFF, 0.24f);
+		return mixRgb(analogShell(background), 0xFFFFFF, 0.16f);
 	}
 
 	public static int analogBowlCenter(int background) {
-		return mixRgb(analogShell(background), 0x000000, 0.48f);
+		int base = analogShell(background);
+		return mixRgb(base, isLight(base) ? 0x000000 : 0xFFFFFF,
+				isLight(base) ? 0.22f : 0.025f);
 	}
 
 	public static int analogBowlEdge(int background) {
-		return mixRgb(analogShell(background), 0x000000, 0.78f);
+		return mixRgb(analogShell(background), 0x000000, 0.55f);
 	}
 
 	public static int analogThumbTop(int thumb) {
-		return mixRgb(thumb, 0xFFFFFF, 0.16f);
+		return mixRgb(thumb, 0xFFFFFF, 0.09f);
 	}
 
 	public static int analogThumbBottom(int thumb) {
-		return mixRgb(thumb, 0x000000, 0.18f);
+		return mixRgb(thumb, 0x000000, 0.12f);
 	}
 
 	public static int analogThumbRim(int thumb) {
-		return mixRgb(thumb, 0xFFFFFF, 0.32f);
+		return mixRgb(thumb, 0xFFFFFF, 0.20f);
 	}
 
 	static int analogThumb(ProfileModel profile, boolean active) {

@@ -1542,7 +1542,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			graphics.strokeControlCircle(centerX, centerY, shellRadius,
 					opaqueColor(outline), stroke);
 			graphics.strokeControlCircle(centerX, centerY, radius * 0.915f,
-					(0x66 << 24) | VirtualControlAppearance.analogShellRim(base),
+					(0x33 << 24) | VirtualControlAppearance.analogShellRim(base),
 					stroke);
 
 			graphics.fillControlRadialCircle(analogBowlGradient, centerX, centerY,

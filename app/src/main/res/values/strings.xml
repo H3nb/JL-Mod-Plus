@@ -1075,6 +1075,20 @@
     <string name="bulk_install_reason_version_conflict">Multiple app variants have the same version.</string>
     <string name="bulk_install_reason_older_candidate">A newer version of this app is in the same batch.</string>
     <string name="bulk_install_reason_source_error">This source could not be prepared for installation.</string>
+    <string name="midlet_file_permission_title">Storage access</string>
+    <string name="midlet_file_permission_read">This MIDlet wants to read files.</string>
+    <string name="midlet_file_permission_write">This MIDlet wants to create, change, or delete files.</string>
+    <string name="midlet_file_permission_allow_once">Allow once</string>
+    <string name="midlet_file_permission_allow_session">Allow while the MIDlet is running</string>
+    <string name="midlet_file_permission_allow_always">Always allow</string>
+    <string name="midlet_file_permission_deny">Always deny</string>
+    <string name="midlet_permissions_settings_title">Storage access permissions</string>
+        <string name="midlet_permissions_read">Read files</string>
+    <string name="midlet_permissions_write">Change files</string>
+    <string name="midlet_permissions_ask">Ask</string>
+    <string name="midlet_permissions_allow">Always allow</string>
+    <string name="midlet_permissions_deny">Deny</string>
+    <string name="midlet_permissions_save_failed">Could not save storage settings.</string>
     <string name="updates_title">Updates</string>
     <string name="updates_more_summary">Check for new versions of JL-Mod Plus.</string>
     <string name="updates_more_available">A newer version is available.</string>
@@ -1133,4 +1147,15 @@
     <string name="pref_runtime_fullscreen_title">Fullscreen</string>
     <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Could not access the fullscreen setting. Try again.</string>
+    <string name="midlet_permissions_write_summary">Includes creating and deleting files.</string>
+    <string name="midlet_legacy_import_title">Legacy Siemens saves</string>
+    <string name="midlet_legacy_import_action">Choose an old save file</string>
+    <string name="midlet_legacy_import_summary">Copy an old save file into this MIDlet’s private Siemens storage. Stop the MIDlet first.</string>
+    <string name="midlet_legacy_import_success">File copied to this MIDlet’s private storage.</string>
+    <string name="midlet_legacy_import_failed">Import failed. Stop the MIDlet and check that the destination file does not exist.</string>
+    <string name="midlet_storage_mode_title">Storage mode</string>
+    <string name="midlet_storage_mode_shared">Virtual</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Use shared folders in the working directory.</string>
+    <string name="midlet_storage_mode_android_summary">Use Android storage as in previous versions.</string>
 </resources>
