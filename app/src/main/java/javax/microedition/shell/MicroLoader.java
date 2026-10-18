@@ -195,13 +195,17 @@ public class MicroLoader {
 		}
 		timingSession = session;
 		audioSession = RuntimeAudioCoordinator.beginRuntime();
+		io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.beginRuntime();
 		memoryRuntimeToken = MemoryRuntimeSession.start();
 	}
 
 	void closeTimingSession() {
 		RuntimeAudioCoordinator audio = audioSession;
 		audioSession = null;
-		if (audio != null) audio.close();
+		if (audio != null) {
+			io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.closeRuntime();
+			audio.close();
+		}
 		TimingSession session = timingSession;
 		timingSession = null;
 		GuestTimingBridge.clear(session);
@@ -505,6 +509,16 @@ public class MicroLoader {
 				if (prop.length == 2 && !"microedition.locale".equals(prop[0])) {
 					MidletSystem.setProperty(prop[0], prop[1]);
 				}
+			}
+			// Resolve automatic camera discovery only in this runtime snapshot. Persisted
+			// properties and linked/custom configuration identity remain untouched.
+			Map<String, String> cameraProperties =
+					io.github.h3nb.jlmodplus.mmapi.camera.CameraCapabilities.resolve(
+							params.systemProperties,
+							ContextHolder.getAssetAsString("defaults/system.props"),
+							io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isCameraAvailable());
+			for (Map.Entry<String, String> property : cameraProperties.entrySet()) {
+				MidletSystem.setProperty(property.getKey(), property.getValue());
 			}
 			try {
 				Charset.forName(System.getProperty("microedition.encoding"));

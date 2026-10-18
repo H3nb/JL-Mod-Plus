@@ -117,6 +117,9 @@ internal data class RuntimeMenuUiState(
     val emulationSpeedAvailable: Boolean = false,
     val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
     val memoryEditorBubbleEnabled: Boolean = false,
+    val cameraSwitchAvailable: Boolean = false,
+    val cameraFrontFacing: Boolean = false,
+    val cameraSwitching: Boolean = false,
     val toolbarWidthDp: Float? = null,
     val toolbarFontScale: Float = 1f,
     val toolbarSpeedWidthDp: Float = 48f,
@@ -144,6 +147,7 @@ interface RuntimeMenuActions {
     fun onEmulationSpeed()
     fun onSetEmulationSpeed(value: Int)
     fun onResetEmulationSpeed()
+    fun onSwitchCamera() {}
     fun onMemoryEditor()
     fun onEditVirtualKeyboardLayout()
 
@@ -336,6 +340,15 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
             memoryEditorBubbleEnabled = memoryEditorBubbleEnabled,
+        ))
+    }
+
+    /** Camera actions are host-owned and available on both Canvas and Form. */
+    fun updateCameraState(available: Boolean, frontFacing: Boolean, switching: Boolean) {
+        updateState(state.copy(
+            cameraSwitchAvailable = available,
+            cameraFrontFacing = frontFacing,
+            cameraSwitching = switching,
         ))
     }
 
@@ -1019,7 +1032,7 @@ private fun RuntimeMenuDialog(
                             } else {
                                 RuntimeMenuItem(
                                     entry.label, entry.icon,
-                                    controllerFocusIndex == index, entry.activate,
+                                    controllerFocusIndex == index, entry.enabled, entry.activate,
                                 )
                             }
                         }
@@ -1039,6 +1052,7 @@ internal data class RuntimeMenuEntry(
     val label: Int,
     val icon: Int,
     val checked: Boolean? = null,
+    val enabled: Boolean = true,
     val activate: () -> Unit,
 )
 
@@ -1051,8 +1065,13 @@ internal fun runtimeMenuEntries(
     onDismiss: () -> Unit,
     onOpenVirtualKeyboardPage: () -> Unit,
 ): List<RuntimeMenuEntry> = buildList {
-    fun action(label: Int, icon: Int, checked: Boolean? = null, callback: () -> Unit) {
-        add(RuntimeMenuEntry(label, icon, checked) { onDismiss(); callback() })
+    fun action(
+        label: Int, icon: Int, checked: Boolean? = null,
+        enabled: Boolean = true, callback: () -> Unit,
+    ) {
+        add(RuntimeMenuEntry(label, icon, checked, enabled) {
+            if (enabled) { onDismiss(); callback() }
+        })
     }
     if (virtualKeyboardPage) {
         action(
@@ -1066,10 +1085,18 @@ internal fun runtimeMenuEntries(
     }
     action(R.string.exit, R.drawable.ic_exit, callback = actions::onExit)
     action(R.string.save_log, R.drawable.ic_save, callback = actions::onSaveLog)
-    action(R.string.action_lock_orientation, R.drawable.ic_screen_lock_rotation, state.orientationLocked, actions::onToggleOrientationLock)
-    action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled, actions::onMemoryEditor)
+    action(R.string.action_lock_orientation, R.drawable.ic_screen_lock_rotation, state.orientationLocked, callback = actions::onToggleOrientationLock)
+    action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled, callback = actions::onMemoryEditor)
+    if (state.cameraSwitchAvailable) {
+        action(
+            if (state.cameraFrontFacing) R.string.runtime_camera_use_rear else R.string.runtime_camera_use_front,
+            R.drawable.ic_camera_switch,
+            enabled = !state.cameraSwitching,
+            callback = actions::onSwitchCamera,
+        )
+    }
     if (state.isCanvas) {
-        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_runtime_fullscreen, !state.toolbarVisible, actions::onToggleFullscreen)
+        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_runtime_fullscreen, !state.toolbarVisible, callback = actions::onToggleFullscreen)
         if (state.imeAvailable && RuntimeToolbarShortcut.Ime !in shortcuts) {
             action(R.string.action_keyboard_ime, R.drawable.ic_action_keyboard, callback = actions::onOpenImeKeyboard)
         }
@@ -1137,6 +1164,7 @@ private fun RuntimeMenuItem(
     label: Int,
     leadingIcon: Int? = null,
     focused: Boolean = false,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     ListItem(
@@ -1149,6 +1177,7 @@ private fun RuntimeMenuItem(
                 text = stringResource(label),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.38f),
             )
         },
         leadingContent = leadingIcon?.let { icon ->
@@ -1156,7 +1185,7 @@ private fun RuntimeMenuItem(
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.38f),
                 )
             }
         },
@@ -1165,6 +1194,6 @@ private fun RuntimeMenuItem(
             .then(
                 if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier,
             )
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
     )
 }

@@ -104,6 +104,40 @@ class RuntimeMenuLayoutTest {
     }
 
     @Test
+    fun cameraSwitchIsContextualForCanvasAndFormAndNamesTheDestination() {
+        for (isCanvas in listOf(false, true)) {
+            val inactive = canvas.copy(isCanvas = isCanvas)
+            assertFalse(menu(inactive).any { it.label == R.string.runtime_camera_use_front })
+            assertFalse(menu(inactive).any { it.label == R.string.runtime_camera_use_rear })
+            val rear = inactive.copy(cameraSwitchAvailable = true)
+            assertTrue(menu(rear).single { it.label == R.string.runtime_camera_use_front }.enabled)
+            assertFalse(menu(rear).any { it.label == R.string.runtime_camera_use_rear })
+            val front = rear.copy(cameraFrontFacing = true)
+            assertTrue(menu(front).single { it.label == R.string.runtime_camera_use_rear }.enabled)
+            assertFalse(menu(front).any { it.label == R.string.runtime_camera_use_front })
+            assertEquals(runtimeToolbarShortcuts(inactive, 360f), runtimeToolbarShortcuts(front, 360f))
+        }
+    }
+
+    @Test
+    fun busyCameraSwitchCannotDispatchOrDismissMenuFromAnyInputPath() {
+        val events = mutableListOf<String>()
+        val actions = object : NoOpMenuActions() {
+            override fun onSwitchCamera() { events += "switch" }
+        }
+        fun switchEntry(switching: Boolean) = runtimeMenuEntries(
+            canvas.copy(cameraSwitchAvailable = true, cameraSwitching = switching),
+            emptyList(), false, actions, { events += "dismiss" }, {},
+        ).single { it.label == R.string.runtime_camera_use_front }
+        val busy = switchEntry(true)
+        assertFalse(busy.enabled)
+        busy.activate()
+        assertTrue(events.isEmpty())
+        switchEntry(false).activate()
+        assertEquals(listOf("dismiss", "switch"), events)
+    }
+
+    @Test
     fun centralCutoutSplitsTitleAndActionsWithoutReservingABlankTopBand() {
         val notch = canvas.copy(toolbarCutouts = listOf(RuntimeToolbarOcclusion(154, 206)))
         val layout = runtimeToolbarLayout(notch, 360f)

@@ -22,6 +22,7 @@ package javax.microedition.shell;
 import static android.content.pm.ActivityInfo.*;
 import static io.github.h3nb.jlmodplus.util.Constants.*;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Intent;
@@ -55,6 +56,8 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -99,6 +102,7 @@ import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
+import io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime;
 import io.github.h3nb.jlmodplus.runtime.RuntimeReplacementActivity;
 import io.github.h3nb.jlmodplus.settings.RuntimeFullscreenClient;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -140,6 +144,9 @@ public class MicroActivity extends AppCompatActivity {
 	private PresetAuthorityClient presetAuthorityClient;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
+	private final ActivityResultLauncher<String> cameraPermissionLauncher =
+			registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+					granted -> CameraRuntime.onPermissionResult(this, granted));
 	private ControllerInputRouter controllerInputRouter;
 	private long controllerTargetGeneration = 1L;
 	private MemoryEditorBubbleController memoryEditorController;
@@ -287,6 +294,9 @@ public class MicroActivity extends AppCompatActivity {
 			previousHost.releaseMountedPresentationForReplacement();
 		}
 		ContextHolder.setCurrentActivity(this);
+		CameraRuntime.attachHost(this,
+				() -> cameraPermissionLauncher.launch(Manifest.permission.CAMERA),
+				() -> updateRuntimeMenuState(current));
 		if (!reattachingRuntime) {
 			PresetAuthorityClient.PrepareResult prepared =
 					presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
@@ -481,6 +491,11 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onSwitchCamera() {
+						CameraRuntime.switchCamera(message -> toast(R.string.runtime_camera_switch_failed));
+					}
+
+					@Override
 					public void onMemoryEditor() {
 						memoryEditorController().toggleBubble();
 						updateRuntimeMenuState(current);
@@ -619,6 +634,10 @@ public class MicroActivity extends AppCompatActivity {
 		if (runtimeMenuController == null) {
 			return;
 		}
+		runtimeMenuController.updateCameraState(
+				CameraRuntime.canSwitchCamera(),
+				CameraRuntime.isFrontCamera(),
+				CameraRuntime.isSwitchingCamera());
 		GuestWindowPolicy.Chrome chrome = getRuntimeChrome(displayable);
 		VirtualKeyboard vk = ContextHolder.getVk();
 		TimingSession timingSession = microLoader == null ? null : microLoader.getTimingSession();
@@ -771,6 +790,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		CameraRuntime.onHostResumed(this);
 		io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(true);
 		if (pendingMidletLaunch) {
 			pendingMidletLaunch = false;
@@ -785,6 +805,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		CameraRuntime.onHostPaused(this);
 		if (ContextHolder.getActivity() == this
 				&& (memoryEditorController == null || !memoryEditorController.isEditorOnTop())) {
 			io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(false);
@@ -802,6 +823,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		CameraRuntime.onHostConfigurationChanged(this);
 		refreshCanvasBackground();
 		if (binding != null) {
 			ViewCompat.requestApplyInsets(binding.getRoot());
@@ -815,6 +837,7 @@ public class MicroActivity extends AppCompatActivity {
 		Runnable processCleanup = pendingTerminalProcessCleanup;
 		pendingTerminalProcessCleanup = null;
 		try {
+			CameraRuntime.onHostDestroyed(this);
 			boolean currentHost = ContextHolder.getActivity() == this;
 			if (currentHost) {
 				MidletPermissionManager.cancelPending();
