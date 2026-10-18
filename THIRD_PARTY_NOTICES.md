@@ -43,6 +43,8 @@ Gradle and CI do not access the network to obtain them.
 | `ic_config_general.xml` (`tune`), `ic_check_circle.xml` (`check_circle`), `ic_save_as.xml` (`save_as`), `ic_sync.xml` (`sync`), `ic_refresh.xml` (`refresh`), `ic_reinstall.xml` (`restart_alt`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_lock.xml` (`lock`), `ic_unlock.xml` (`lock_open`), `ic_close.xml` (`close`), `ic_exit.xml` (`exit_to_app`), `ic_virtual_controls.xml` (`joystick`), `ic_control_layout.xml` (`dashboard_customize`), `ic_auto_mode.xml` (`auto_mode`), `ic_visibility.xml` (`visibility`), `ic_visibility_off.xml` (`visibility_off`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
+| `ic_camera_switch.xml` (`cameraswitch`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+
 
 ### Sociabuzz identity
 
@@ -81,7 +83,7 @@ The table below covers direct runtime dependencies and license-significant trans
 
 | Runtime component / coordinates | Origin | License / notice |
 | --- | --- | --- |
-| `androidx.*` (Activity, Core, AppCompat, Compose, Fragment, Lifecycle, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
+| `androidx.*` (Activity, Core, AppCompat, CameraX, Compose, Fragment, Lifecycle, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
 | `org.jetbrains.kotlinx:kotlinx-serialization-core`, `org.jetbrains.kotlinx:kotlinx-serialization-json` | JetBrains kotlinx.serialization | Apache-2.0 |
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |
