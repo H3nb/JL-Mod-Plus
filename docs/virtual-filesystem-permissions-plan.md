@@ -140,3 +140,8 @@ This is not Android/UI/device qualification. Instrumentation additionally covers
 prompt choice reachability and permission changes without profile draft edits;
 those require a connected Android runtime. CI build/lint evidence must refer to
 the new PR revision before merge.
+
+The Draft UI is localized in English and Indonesian. Its new canonical strings
+carry resource-local MissingTranslation annotations, matching the existing
+incremental-localization policy; no global lint rule or other catalog is disabled.
+Other locales use English fallback until reviewed translations are added.
