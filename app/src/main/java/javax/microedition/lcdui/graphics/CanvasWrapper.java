@@ -20,11 +20,14 @@ package javax.microedition.lcdui.graphics;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.graphics.Region;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.os.Build;
 
@@ -42,6 +45,7 @@ public class CanvasWrapper {
 	private final Paint imgPaint = new Paint();
 	private final Paint diagnosticPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Paint controlFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+	private final Paint controlGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Paint controlStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final float diagnosticAscent;
 	private final float diagnosticHeight;
@@ -105,6 +109,32 @@ public class CanvasWrapper {
 
 	public void restoreAlphaLayer(int saveCount) {
 		canvas.restoreToCount(saveCount);
+	}
+
+	/** Caches color shaders while allowing the same gradient to move with a control. */
+	public static final class CircleGradient {
+		private LinearGradient shader;
+		private final Matrix transform = new Matrix();
+		private int topColor;
+		private int bottomColor;
+	}
+
+	/** Paint a shaded control surface without creating shaders on every animation frame. */
+	public void fillControlGradientCircle(CircleGradient gradient,
+			float cx, float cy, float radius, int topColor, int bottomColor) {
+		if (gradient.shader == null || gradient.topColor != topColor ||
+				gradient.bottomColor != bottomColor) {
+			gradient.shader = new LinearGradient(0f, 0f, 0f, 1f,
+					topColor, bottomColor, Shader.TileMode.CLAMP);
+			gradient.topColor = topColor;
+			gradient.bottomColor = bottomColor;
+		}
+		gradient.transform.setScale(1f, radius * 2f);
+		gradient.transform.postTranslate(0f, cy - radius);
+		gradient.shader.setLocalMatrix(gradient.transform);
+		controlGradientPaint.setShader(gradient.shader);
+		canvas.drawCircle(cx, cy, radius, controlGradientPaint);
+		controlGradientPaint.setShader(null);
 	}
 
 	/** Anti-aliased virtual-control primitives do not modify the legacy MIDlet paints. */
