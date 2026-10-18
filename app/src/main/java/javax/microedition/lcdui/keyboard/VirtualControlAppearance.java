@@ -32,7 +32,7 @@ public final class VirtualControlAppearance {
 	}
 
 	/** Only secondary details are blended; user-selected primary/pressed colors remain exact. */
-	static int mixRgb(int from, int to, float ratio) {
+	public static int mixRgb(int from, int to, float ratio) {
 		float amount = Math.max(0f, Math.min(1f, ratio));
 		float inverse = 1f - amount;
 		int red = Math.round(((from >> 16) & 255) * inverse + ((to >> 16) & 255) * amount);
