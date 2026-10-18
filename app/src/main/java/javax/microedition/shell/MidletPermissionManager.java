@@ -64,29 +64,15 @@ public final class MidletPermissionManager {
     }
 
     public static int checkPermission(String name) {
+        boolean read = "javax.microedition.io.Connector.file.read".equals(name);
+        boolean write = "javax.microedition.io.Connector.file.write".equals(name);
+        // Only storage participates in this policy. Preserve alpha's unconditional result for
+        // every other input, including unknown names and null, without requiring a session.
+        if (!read && !write) return 1;
         Session active = current;
-        if (active == null || active.closed || name == null) return 0;
-        if ("javax.microedition.io.Connector.file.read".equals(name)) {
-            return status(active.readDecision, active.readSession);
-        }
-        if ("javax.microedition.io.Connector.file.write".equals(name)) {
-            return status(active.writeDecision, active.writeSession);
-        }
-        // Other existing Java ME protocols still use their legacy authorization behavior.
-        // Report their implemented capabilities as allowed until they have a policy gate.
-        return switch (name) {
-            case "javax.microedition.io.Connector.http",
-                    "javax.microedition.io.Connector.https",
-                    "javax.microedition.io.Connector.socket",
-                    "javax.microedition.io.Connector.ssl",
-                    "javax.microedition.io.Connector.datagram",
-                    "javax.microedition.io.Connector.sms",
-                    "javax.microedition.io.Connector.bluetooth.client",
-                    "javax.microedition.io.Connector.bluetooth.server",
-                    "javax.wireless.messaging.sms.send",
-                    "javax.wireless.messaging.sms.receive" -> 1;
-            default -> 0;
-        };
+        if (active == null || active.closed) return 0;
+        return write ? status(active.writeDecision, active.writeSession)
+                : status(active.readDecision, active.readSession);
     }
 
     private static int status(int decision, boolean sessionGranted) {

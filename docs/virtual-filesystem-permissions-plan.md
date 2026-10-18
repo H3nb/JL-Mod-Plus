@@ -54,10 +54,10 @@ Treat these as migration inputs, not compatibility requirements.
 
 - One permission authority uses durable Library `appId` to bind a grant to a specific installation. `storageKey` scopes backing data only. A copied/linked/shared preset cannot carry installed permission grants to another MIDlet.
 - Persistent decisions: `ASK`, `ALLOW`, `DENY`. Temporary decisions: once and current runtime session; clearing/expiry must be well-defined. Defaults: private installation-scoped operations allowed; shared VFS READ and WRITE separately `ASK`.
-- The first executable integration is JSR-75 and vendor file operations. Other Java ME capabilities can be enumerated in a centralized registry for later integration **without presenting them as implemented**.
+- This PR controls only JSR-75 and vendor file storage operations. Other MIDlet permissions retain alpha's existing behavior; no non-storage permission registry or policy is introduced.
 - Recognize `MIDlet-Permissions` and `MIDlet-Permissions-Opt` as declarations, not as proof of trust and not as user approval. No certificate validity check controls the runtime grants.
 - Define behavior when the retained JAR contents change: retain explicit denials and installation ownership; do not silently transfer sensitive permanent grants to changed executable content. Avoid resetting permissions merely because a display name or storage location changes.
-- `MIDlet.checkPermission(name)` queries effective policy without displaying UI and uses MIDP-compatible return values: `1` granted, `0` denied or unknown permission, `-1` undecided/interaction required. API entry points must enforce permission independently of `checkPermission`.
+- For the exact file READ/WRITE permission names, `MIDlet.checkPermission(name)` returns `1` granted, `0` denied or no active session, and `-1` undecided, without displaying UI. All other inputs retain alpha's unconditional `1`, including unknown names and null; their permission behavior is outside this PR. Storage API entry points enforce their policy independently of `checkPermission`.
 - In Shared mode, granting file READ or WRITE never expands the workdir-backed mounts. Android mode is an explicit per-installation compatibility opt-in; its grants are scoped separately.
 
 ### Runtime and UI
