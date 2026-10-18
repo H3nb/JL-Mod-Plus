@@ -41,7 +41,15 @@ Rotation is applied once from `ImageProxy.imageInfo.rotationDegrees`; encoded ou
 has upright pixels and does not require a second EXIF rotation by the MIDlet.
 
 `getSnapshot(null)` uses the default supported snapshot encoding. JPEG and PNG
-are supported. Explicit sizes require both positive width and height, with each
+are supported. Automatic source and snapshot defaults are selected once per MIDlet
+session from the full virtual screen: 480 x 640 for portrait, 640 x 480 for
+landscape or square. With automatic screen dimensions, a fixed profile/phone-keypad
+orientation takes precedence over the launch-time Android display; otherwise the
+initial resolved virtual size is used. Viewport resizing and host rotation do not
+change this default. Advertised automatic encoding strings use the same dimensions;
+explicit profile encoding strings and explicitly requested sizes retain precedence.
+This is an emulator default policy, not a universal feature-phone requirement.
+Explicit sizes require both positive width and height, with each
 axis at most 1280 and at most 1,228,800 output pixels. JPEG quality is 1 through
 100; PNG has no quality parameter. Unknown, duplicate or unsupported parameters
 fail instead of silently changing the request. Source encoding is raw (`rgb888`

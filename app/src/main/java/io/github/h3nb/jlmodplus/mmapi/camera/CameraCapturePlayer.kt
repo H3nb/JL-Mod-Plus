@@ -20,7 +20,8 @@ import io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay
 
 /** JSR-135 live source. No recorder, audio output, or file decoder participates. */
 class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: String) : Player {
-    internal val source = CameraCaptureOptions.parseLocator(locator)
+    private val defaultDimensions = CameraRuntime.defaultDimensions
+    internal val source = CameraCaptureOptions.parseLocator(locator, defaultDimensions)
     internal val runtimeGeneration = CameraRuntime.generation()
     private val lock = Any()
     private val closed = AtomicBoolean()
@@ -123,7 +124,7 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
         // The first published encoding is the default, including an explicit profile override.
         val selected = type ?: MidletSystem.getProperty("video.snapshot.encodings")
             ?.trim()?.split(Regex("\\s+"))?.firstOrNull()?.takeIf { it.isNotEmpty() }
-        val options = CameraCaptureOptions.parseSnapshot(selected)
+        val options = CameraCaptureOptions.parseSnapshot(selected, defaultDimensions)
         prefetch()
         return CameraRuntime.snapshot(this, options)
     }

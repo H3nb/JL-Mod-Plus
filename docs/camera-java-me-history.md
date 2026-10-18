@@ -2,9 +2,9 @@
 
 Research on 2026-10-18, following the physical-device investigation. This study
 corrects the interpretation that Miami Nights 2's additional rotation alone proves
-a game defect. Its observed path expects portrait geometry; the PR currently
-supplies an implicit landscape default. No production policy change accompanies
-this document.
+a game defect. Its observed path expects portrait geometry; the investigated PR
+head supplied an implicit landscape default. The later approved policy is recorded
+below and in [MMAPI camera](mmapi-camera.md).
 
 ## What the APIs actually expose
 
@@ -83,7 +83,7 @@ thumbnail, and rotates decoded images when height is less than width. Its portra
 viewport agrees with that expectation. The [device report](camera-pr175-device-investigation.md)
 records the exact CameraX metadata and executed MIDP transform.
 
-The PR currently publishes 640 x 480 in both automatic properties and replaces
+The investigated PR head published 640 x 480 in both automatic properties and replaced
 omitted source/snapshot dimensions with that same pair in `CameraCaptureOptions`.
 The source pair also controls the shared ViewPort. Thus the implicit landscape
 choice precedes the encoder and the game. Rotation normalization then puts an
@@ -97,7 +97,16 @@ Simply changing output width/height while keeping the current landscape ViewPort
 would retain the wrong implicit framing and add padding; that is not a complete
 geometry correction.
 
-## Concrete proposal for review
+## Original proposal and adopted policy
+
+The sensor-derived default below was the initial proposal. The user subsequently
+approved a virtual-screen-derived default instead: portrait 480 x 640, landscape
+or square 640 x 480, fixed for the MIDlet session. Automatic capability properties,
+unspecified source dimensions and unspecified snapshot dimensions share that choice.
+Explicit dimensions/profile defaults keep precedence. The implemented policy is
+described in [MMAPI camera](mmapi-camera.md); no sensor-derived default or removal
+of advertised dimensions has been adopted. The following retains the earlier
+proposal for the investigation's reasoning, not as an implementation requirement.
 
 Replace the unconditional landscape default with a resolved camera geometry:
 

@@ -21,6 +21,8 @@ package javax.microedition.shell;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+import static javax.microedition.shell.MicroActivity.ORIENTATION_PORTRAIT;
+import static javax.microedition.shell.MicroActivity.ORIENTATION_LANDSCAPE;
 
 import android.graphics.Bitmap;
 import android.os.Environment;
@@ -56,6 +58,7 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.midlet.MIDlet;
@@ -100,6 +103,7 @@ public class MicroLoader {
 	private final Map<String, String> midlets = new LinkedHashMap<>();
 
 	ProfileModel params;
+	private io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions.Dimensions cameraDefaultDimensions;
 	private final File appDir;
 	private final String workDir;
 	private final String appDirName;
@@ -195,7 +199,7 @@ public class MicroLoader {
 		}
 		timingSession = session;
 		audioSession = RuntimeAudioCoordinator.beginRuntime();
-		io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.beginRuntime();
+		io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.beginRuntime(cameraDefaultDimensions);
 		memoryRuntimeToken = MemoryRuntimeSession.start();
 	}
 
@@ -512,11 +516,28 @@ public class MicroLoader {
 			}
 			// Resolve automatic camera discovery only in this runtime snapshot. Persisted
 			// properties and linked/custom configuration identity remain untouched.
+			Displayable.setVirtualSize(params.screenWidth, params.screenHeight);
+			if (cameraDefaultDimensions == null) {
+				boolean portrait = Displayable.getVirtualHeight() > Displayable.getVirtualWidth();
+				// Auto dimensions are resolved before the host's orientation request takes
+				// effect. Honor its fixed orientation instead of freezing the old display.
+				if (params.screenWidth <= 0 || params.screenHeight <= 0) {
+					VirtualKeyboard keyboard = ContextHolder.getVk();
+					if ((keyboard != null && keyboard.isPhone()) || params.orientation == ORIENTATION_PORTRAIT) {
+						portrait = true;
+					} else if (params.orientation == ORIENTATION_LANDSCAPE) {
+						portrait = false;
+					}
+				}
+				cameraDefaultDimensions = io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
+						.defaultsForOrientation(portrait);
+			}
 			Map<String, String> cameraProperties =
 					io.github.h3nb.jlmodplus.mmapi.camera.CameraCapabilities.resolve(
 							params.systemProperties,
 							ContextHolder.getAssetAsString("defaults/system.props"),
-							io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isCameraAvailable());
+						io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isCameraAvailable(),
+						cameraDefaultDimensions);
 			for (Map.Entry<String, String> property : cameraProperties.entrySet()) {
 				MidletSystem.setProperty(property.getKey(), property.getValue());
 			}
@@ -526,7 +547,6 @@ public class MicroLoader {
 				MidletSystem.setProperty("microedition.encoding", "ISO-8859-1");
 			}
 
-			Displayable.setVirtualSize(params.screenWidth, params.screenHeight);
 			EventQueue.setImmediate(params.immediateMode);
 			Canvas.setSettings(params, new File(workDir + Config.SHADERS_DIR));
 			Canvas.setTimingOverlayEnabled(timingTransformCompatible);

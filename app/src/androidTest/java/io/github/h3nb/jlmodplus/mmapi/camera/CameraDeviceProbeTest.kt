@@ -59,8 +59,9 @@ class CameraDeviceProbeTest {
             """.trimIndent())
             val config = File(root, "configs/$storageKey").apply { mkdirs() }
             val profile = ProfileModel.fresh().apply {
-                screenWidth = 640
-                screenHeight = 800
+                screenWidth = args.getString("cameraProbeScreenWidth")?.toInt() ?: 640
+                screenHeight = args.getString("cameraProbeScreenHeight")?.toInt() ?: 800
+                orientation = args.getString("cameraProbeOrientation")?.toInt() ?: 0
                 showKeyboard = false
                 touchInput = true
             }

@@ -113,7 +113,7 @@ one bounded source crop (at most 16 MiB of ARGB pixels).
 
 No third-party implementation was copied into the fix.
 
-## Compatibility policy still under review
+## Compatibility assessment at the first device checkpoint
 
 Upright pixels, exact explicitly requested sizes, and consistent preview/snapshot
 handedness remain the proposed invariants. Globally counter-rotating pixels would
@@ -176,10 +176,53 @@ call/Player tests cover cancellation and state contracts, but do not replace tho
 driver/lifecycle scenarios. The independent MIDlet runs in the real guest process
 as a debug fixture; it is not a qualification of the JAR conversion/install path.
 
-The emulator framing/crop defects are fixed. Compatibility between the emulator's
-implicit default geometry and the game's portrait expectation remains unresolved.
+At this checkpoint the emulator framing/crop defects were fixed, while compatibility
+between the implicit default geometry and the game's portrait expectation remained
+unresolved. The approved follow-up below changes that default for user testing.
 The PR stays draft/open;
 no merge or remote publication was performed during this investigation.
+
+## Approved virtual-screen default update
+
+After the historical study, the user approved implementing a virtual-screen-based
+default and installing it for manual Miami testing. The full virtual screen at
+launch selects 480 x 640 for portrait, 640 x 480 for landscape/square. This is held
+for the MIDlet session, including new Players and host reattachment. For automatic
+screen dimensions, phone-keyboard portrait or a forced profile orientation takes
+precedence over the Android display's orientation before the host request settles.
+Otherwise the initial resolved virtual dimensions determine orientation.
+
+Automatic advertised dimensions, default source geometry and unspecified snapshot
+sizes use the same choice. Explicit sizes and explicit advertised profile defaults
+retain precedence. CameraX crop/rotation handling and encoder transforms are
+unchanged; the portrait default changes the shared source/ViewPort aspect as well
+as the returned image rectangle. No MIDlet/device-name condition is involved.
+
+The installed APK SHA-256 is
+`81de08e3942fd76ae0cf46d2c5175328bd0d1c3690837d4926fa390286321824`.
+Installation used `adb install -r` with the matching debug certificate. Its 13
+native libraries remain byte-identical to CI 2741, using the external build setup
+described above. All files under the installed Miami converted/config/data
+directories retained their before/after SHA-256 values during this update.
+
+Validation of this update:
+
+- 19 JVM tests passed: capability/default parsing and Manager discovery.
+- 18 physical Android tests passed: Player/session stability, encoder, preview
+  layout and cancellable calls.
+- Independent MIDlet on virtual 240 x 320: rear/front null snapshots decoded as
+  480 x 640 JPEG, matching advertised and source dimensions.
+- Independent MIDlet on virtual 320 x 240: rear/front null snapshots decoded as
+  640 x 480 JPEG, matching advertised and source dimensions.
+- Portrait session plus explicit PNG 640 x 480 returned that exact size. A display
+  resize to 320 x 240 still returned 480 x 640 for the next null snapshot.
+- Automatic dimensions plus forced landscape returned 640 x 480.
+- All seven captured byte arrays decoded successfully. Owned fixture/config/data
+  and private probe images were removed afterward.
+
+These checks qualify the changed default-resolution path; they do not repeat the
+earlier 24-case visual matrix or establish a final visual pass for Miami under the
+new policy. The user will test Miami on the installed build.
 
 ## Manual probe
 

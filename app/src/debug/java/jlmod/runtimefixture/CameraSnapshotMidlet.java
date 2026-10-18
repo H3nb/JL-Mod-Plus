@@ -111,6 +111,11 @@ public final class CameraSnapshotMidlet extends MIDlet {
             player.close();
         } else throw new IllegalArgumentException(action);
         report.setProperty("state", Integer.toString(player.getState()));
+        if (player.getState() != Player.CLOSED) {
+            report.setProperty("sourceWidth", Integer.toString(video.getSourceWidth()));
+            report.setProperty("sourceHeight", Integer.toString(video.getSourceHeight()));
+            report.setProperty("snapshotEncodings", System.getProperty("video.snapshot.encodings", ""));
+        }
     }
 
     public void pauseApp() {}

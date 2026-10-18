@@ -8,6 +8,26 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class CameraCaptureOptionsTest {
+    @Test fun virtualScreenOrientationSelectsOnlyOmittedDimensions() {
+        for ((screen, expected) in listOf(
+            (240 to 320) to (480 to 640),
+            (320 to 240) to (640 to 480),
+            (240 to 240) to (640 to 480),
+        )) {
+            val defaults = CameraCaptureOptions.defaultsForScreen(screen.first, screen.second)
+            val source = CameraCaptureOptions.parseLocator("capture://video", defaults)
+            assertEquals(expected, source.width to source.height)
+            for (request in listOf(null, "encoding=png", "encoding=jpeg&quality=80")) {
+                val snapshot = CameraCaptureOptions.parseSnapshot(request, defaults)
+                assertEquals(expected, snapshot.width to snapshot.height)
+            }
+            val explicit = CameraCaptureOptions.parseSnapshot("encoding=png&width=320&height=240", defaults)
+            assertEquals(320 to 240, explicit.width to explicit.height)
+            val explicitSource = CameraCaptureOptions.parseLocator("capture://video?width=240&height=320", defaults)
+            assertEquals(240 to 320, explicitSource.width to explicitSource.height)
+        }
+    }
+
     @Test fun defaultSourceAndExplicitDeviceSelectionAreIndependentOfAndroidIds() {
         val source = CameraCaptureOptions.parseLocator("capture://video")
         assertNull(source.facing)

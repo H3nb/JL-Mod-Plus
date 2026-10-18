@@ -15,7 +15,9 @@ object CameraCapabilities {
      * Null values remove unsupported automatic properties left by a prior runtime.
      */
     @JvmStatic
-    fun resolve(properties: String, defaultProperties: String, available: Boolean): Map<String, String?> {
+    @JvmOverloads
+    fun resolve(properties: String, defaultProperties: String, available: Boolean,
+                dimensions: CameraCaptureOptions.Dimensions = CameraCaptureOptions.Dimensions()): Map<String, String?> {
         val profile = parse(properties)
         val defaults = parse(defaultProperties)
         val inheritedLegacyFalse = profile[SUPPORTS_CAPTURE] == "false" &&
@@ -23,13 +25,14 @@ object CameraCapabilities {
         val requestedSupport = profile[SUPPORTS_CAPTURE].takeUnless { inheritedLegacyFalse }
         val support = explicit(requestedSupport) ?: available.toString()
         val automaticCapture = available && support == "true"
+        val size = "width=${dimensions.width}&height=${dimensions.height}"
         return linkedMapOf(
             SUPPORTS_CAPTURE to support,
             VIDEO_ENCODINGS to (explicit(profile[VIDEO_ENCODINGS]) ?: if (automaticCapture) {
-                "encoding=rgb888&width=640&height=480"
+                "encoding=rgb888&$size"
             } else null),
             SNAPSHOT_ENCODINGS to (explicit(profile[SNAPSHOT_ENCODINGS]) ?: if (automaticCapture) {
-                "encoding=jpeg&width=640&height=480 encoding=png&width=640&height=480"
+                "encoding=jpeg&$size encoding=png&$size"
             } else null),
         )
     }

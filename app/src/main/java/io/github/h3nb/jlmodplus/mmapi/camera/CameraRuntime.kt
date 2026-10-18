@@ -45,6 +45,8 @@ object CameraRuntime {
     private val worker = Executors.newSingleThreadExecutor { Thread(it, "CameraSnapshot").apply { isDaemon = true } }
     private val epoch = AtomicLong()
     @Volatile private var runtimeOpen = false
+    internal var defaultDimensions = CameraCaptureOptions.Dimensions()
+        private set
     private val players = Collections.newSetFromMap(ConcurrentHashMap<CameraCapturePlayer, Boolean>())
     private var host: MicroActivity? = null
     private var displayManager: DisplayManager? = null
@@ -101,9 +103,12 @@ object CameraRuntime {
     private fun post(action: () -> Unit) { main.post(action) }
     private fun valid(player: CameraCapturePlayer) = runtimeOpen && player.runtimeGeneration == epoch.get() && player.getState() != Player.CLOSED
 
-    @JvmStatic fun beginRuntime() {
+    @JvmStatic @JvmOverloads fun beginRuntime(
+        dimensions: CameraCaptureOptions.Dimensions = CameraCaptureOptions.Dimensions(),
+    ) {
         runtimeOpen = false
         resetRuntime()
+        defaultDimensions = dimensions
         runtimeOpen = true
     }
     @JvmStatic fun closeRuntime() {

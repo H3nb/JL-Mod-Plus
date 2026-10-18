@@ -12,6 +12,17 @@ object CameraCaptureOptions {
     const val DEFAULT_HEIGHT = 480
     const val MAX_PIXELS = 1_228_800
 
+    data class Dimensions(val width: Int = DEFAULT_WIDTH, val height: Int = DEFAULT_HEIGHT)
+
+    /** One launch-time choice from the full virtual screen, before UI insets. */
+    @JvmStatic
+    fun defaultsForScreen(width: Int, height: Int): Dimensions =
+        defaultsForOrientation(height > width)
+
+    @JvmStatic
+    fun defaultsForOrientation(portrait: Boolean): Dimensions =
+        if (portrait) Dimensions(DEFAULT_HEIGHT, DEFAULT_WIDTH) else Dimensions()
+
     data class Source(val facing: Int?, val width: Int, val height: Int)
 
     enum class Format { JPEG, PNG }
@@ -20,8 +31,9 @@ object CameraCaptureOptions {
 
     /** Logical source encoding is raw; snapshot encoding is selected independently. */
     @JvmStatic
+    @JvmOverloads
     @Throws(MediaException::class)
-    fun parseLocator(locator: String): Source {
+    fun parseLocator(locator: String, defaults: Dimensions = Dimensions()): Source {
         val separator = locator.indexOf('?')
         val device = if (separator < 0) locator else locator.substring(0, separator)
         val facing = when (device) {
@@ -36,7 +48,7 @@ object CameraCaptureOptions {
         if (encoding != null && encoding != "rgb888" && encoding != "video/raw") {
             throw MediaException("Unsupported camera source encoding: $encoding")
         }
-        val (width, height) = dimensions(parameters)
+        val (width, height) = dimensions(parameters, defaults)
         return Source(facing, width, height)
     }
 
@@ -45,8 +57,9 @@ object CameraCaptureOptions {
      * this rectangle with padding; changing output aspect ratio must never add crop.
      */
     @JvmStatic
+    @JvmOverloads
     @Throws(MediaException::class)
-    fun parseSnapshot(type: String?): Snapshot {
+    fun parseSnapshot(type: String?, defaults: Dimensions = Dimensions()): Snapshot {
         val parameters = if (type == null) emptyMap() else parseParameters(type)
         requireKeys(parameters, setOf("encoding", "width", "height", "quality"))
         val format = when (val encoding = parameters["encoding"]?.lowercase(Locale.ROOT)) {
@@ -59,7 +72,7 @@ object CameraCaptureOptions {
         }
         val quality = parameters["quality"]?.let { positiveInteger(it, "quality") } ?: 90
         if (quality > 100) throw MediaException("Snapshot quality must be between 1 and 100")
-        val (width, height) = dimensions(parameters)
+        val (width, height) = dimensions(parameters, defaults)
         return Snapshot(format, width, height, quality)
     }
 
@@ -84,15 +97,15 @@ object CameraCaptureOptions {
         }
     }
 
-    private fun dimensions(parameters: Map<String, String>): Pair<Int, Int> {
+    private fun dimensions(parameters: Map<String, String>, defaults: Dimensions): Pair<Int, Int> {
         val widthValue = parameters["width"]
         val heightValue = parameters["height"]
         // The supported subset accepts either a complete requested size or defaults.
         if ((widthValue == null) != (heightValue == null)) {
             throw MediaException("Camera width and height must be specified together")
         }
-        val width = widthValue?.let { positiveInteger(it, "width") } ?: DEFAULT_WIDTH
-        val height = heightValue?.let { positiveInteger(it, "height") } ?: DEFAULT_HEIGHT
+        val width = widthValue?.let { positiveInteger(it, "width") } ?: defaults.width
+        val height = heightValue?.let { positiveInteger(it, "height") } ?: defaults.height
         if (width > 1280 || height > 1280 || width.toLong() * height > MAX_PIXELS) {
             throw MediaException("Camera dimensions exceed the supported snapshot limit")
         }

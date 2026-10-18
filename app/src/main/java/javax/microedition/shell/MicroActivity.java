@@ -113,8 +113,8 @@ import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;
 	private static final int ORIENTATION_AUTO = 1;
-	private static final int ORIENTATION_PORTRAIT = 2;
-	private static final int ORIENTATION_LANDSCAPE = 3;
+	static final int ORIENTATION_PORTRAIT = 2;
+	static final int ORIENTATION_LANDSCAPE = 3;
 	private static final int DEFAULT_RUNTIME_TOOLBAR_HEIGHT_DP = 48;
 	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;

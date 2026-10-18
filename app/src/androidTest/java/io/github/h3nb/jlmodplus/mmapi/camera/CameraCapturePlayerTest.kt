@@ -12,6 +12,7 @@ import javax.microedition.media.MediaException
 import javax.microedition.media.Player
 import javax.microedition.media.PlayerListener
 import javax.microedition.media.TimeBase
+import javax.microedition.lcdui.Displayable
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,6 +26,28 @@ import org.junit.runner.RunWith
 /** API/lifecycle coverage without opening an Android camera or requesting permission. */
 @RunWith(AndroidJUnit4::class)
 class CameraCapturePlayerTest {
+    @Test
+    fun sessionDefaultsRemainStableAcrossVirtualDisplayChangesAndExplicitSources() {
+        val oldWidth = Displayable.getVirtualWidth()
+        val oldHeight = Displayable.getVirtualHeight()
+        CameraRuntime.beginRuntime(CameraCaptureOptions.defaultsForScreen(240, 320))
+        try {
+            Displayable.setVirtualSize(320, 240)
+            val player = CameraCapturePlayer("capture://video")
+            try {
+                player.realize()
+                assertEquals(480, player.display.sourceWidth)
+                assertEquals(640, player.display.sourceHeight)
+            } finally { player.close() }
+            val explicit = CameraCapturePlayer("capture://video?width=320&height=240")
+            try {
+                explicit.realize()
+                assertEquals(320, explicit.display.sourceWidth)
+                assertEquals(240, explicit.display.sourceHeight)
+            } finally { explicit.close() }
+        } finally { Displayable.setVirtualSize(oldWidth, oldHeight) }
+    }
+
     @Before
     fun startRuntime() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync { CameraRuntime.beginRuntime() }

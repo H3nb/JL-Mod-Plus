@@ -9,6 +9,20 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CameraCapabilitiesTest {
+    @Test fun portraitDiscoveryAndRequestsAgreeWithoutOverridingExplicitProfileSizes() {
+        val size = CameraCaptureOptions.defaultsForScreen(240, 320)
+        val resolved = CameraCapabilities.resolve(defaults, defaults, true, size)
+        val source = CameraCaptureOptions.parseLocator("capture://video?" + resolved[CameraCapabilities.VIDEO_ENCODINGS], size)
+        assertEquals(480 to 640, source.width to source.height)
+        val first = resolved[CameraCapabilities.SNAPSHOT_ENCODINGS]!!.substringBefore(' ')
+        assertEquals(CameraCaptureOptions.parseSnapshot(null, size), CameraCaptureOptions.parseSnapshot(first, size))
+        val custom = defaults.replace("video.snapshot.encodings: auto", "video.snapshot.encodings: encoding=png&width=320&height=240")
+        val advertised = CameraCapabilities.resolve(custom, defaults, true, size)[CameraCapabilities.SNAPSHOT_ENCODINGS]
+        assertEquals("encoding=png&width=320&height=240", advertised)
+        val snapshot = CameraCaptureOptions.parseSnapshot(advertised, size)
+        assertEquals(320 to 240, snapshot.width to snapshot.height)
+    }
+
     private val defaults = """
         microedition.platform: Nokia 6233
         supports.audio.capture: true
