@@ -12,7 +12,7 @@ Device updates used `adb install -r`; there was no uninstall, clear-data, root, 
 modification of the installed game JAR. Photos were inspected locally and are not
 repository fixtures. The game photo was not accepted into the user's saved captures.
 
-## Observations and first rotation error
+## Observations and first additional rotation
 
 Miami Nights 2's TAKE PICTURE and PREVIEW screens reproduced the reported difference.
 Temporary diagnostics recorded one capture at device time 20:52:49 +08:00:
@@ -41,8 +41,9 @@ Inspection with `javap -p -c` located the camera path in class `a`. It calls
 `height < width` before calling `Image.createImage(image, 0, 0, width, height, 5)`.
 MIDP transform 5 is `Sprite.TRANS_ROT90`. Device logging confirmed this call actually
 ran, rather than merely existing in an unused branch. Its later sampling builds a
-48 x 64 thumbnail. Neither that thumbnail size nor its rotation establishes a
-640 x 480 encoder resolution/orientation failure.
+48 x 64 thumbnail, with a 480 x 640 working photo. Together with its portrait
+viewfinder, this establishes that this game path expects a portrait photo. It does
+not establish which physical-phone convention the game was written against.
 
 ```mermaid
 flowchart LR
@@ -52,9 +53,13 @@ flowchart LR
     D --> E["Game thumbnail<br/>48x64, sideways scene"]
 ```
 
-The first incorrect extra rotation is therefore in guest processing after
-`getSnapshot()` returns. No name, device, Android-version, or fixed-angle override
-was added to the emulator to counteract it.
+The first additional quarter-turn is therefore in guest processing after
+`getSnapshot()` returns. Calling this a game bug would go beyond the evidence:
+the PR forces both an unspecified source and an unspecified snapshot into 640 x 480,
+which triggers the game's portrait-normalization branch. Correct scene rotation
+inside that landscape rectangle does not prove that this default geometry is the
+right compatibility policy. No name, device, Android-version, or fixed-angle
+override was added to the emulator to counteract it.
 
 ## Independent emulator defects
 
@@ -108,16 +113,19 @@ one bounded source crop (at most 16 MiB of ARGB pixels).
 
 No third-party implementation was copied into the fix.
 
-## Compatibility decision
+## Compatibility policy still under review
 
-Keep upright pixels, exact explicitly requested sizes, the existing default encoding,
-and unmirrored preview/snapshot semantics. Globally counter-rotating snapshots would
-break independent MIDlets and would violate this PR's preview/snapshot contract.
-Changing the first advertised default to portrait solely to evade a guest's
-landscape-image heuristic is a separate compatibility policy, not a proven universal
-camera correction. It has not been adopted. The existing explicit system-property
-override can be evaluated separately if a user wants a different default format;
-the installed game's profile was not changed during this investigation.
+Upright pixels, exact explicitly requested sizes, and consistent preview/snapshot
+handedness remain the proposed invariants. Globally counter-rotating pixels would
+break the independent MIDlet. However, the existing fixed landscape source/default
+is an implementation choice, not a JSR-135 requirement and not a reason to reject
+portrait output for requests that omit dimensions. The independent tests qualify
+the implemented geometry; they do not settle this policy.
+
+The follow-up [historical capability and orientation study](camera-java-me-history.md)
+separates specification requirements, vendor evidence, the game's expectations,
+and a proposed geometry change. That proposal has not been implemented. The
+installed game's profile was not changed during this investigation.
 
 ## Validation and remaining limits
 
@@ -168,8 +176,9 @@ call/Player tests cover cancellation and state contracts, but do not replace tho
 driver/lifecycle scenarios. The independent MIDlet runs in the real guest process
 as a debug fixture; it is not a qualification of the JAR conversion/install path.
 
-The emulator framing/crop defects are fixed. The game's own orientation heuristic
-remains an explicit unresolved compatibility decision. The PR stays draft/open;
+The emulator framing/crop defects are fixed. Compatibility between the emulator's
+implicit default geometry and the game's portrait expectation remains unresolved.
+The PR stays draft/open;
 no merge or remote publication was performed during this investigation.
 
 ## Manual probe
