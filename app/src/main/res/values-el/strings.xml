@@ -292,7 +292,15 @@
     <string name="config_decrease_value">Μείωση τιμής</string>
     <string name="config_delete_app_data">Διαγραφή δεδομένων MIDlet</string>
     <string name="config_delete_app_data_summary">Διαγράφει οριστικά τα δεδομένα αυτού του MIDlet, μαζί με τα αποθηκευμένα παιχνίδια. Οι ρυθμίσεις του διατηρούνται.</string>
-    <string name="config_destination_audio">Ήχος</string>
+    <string name="config_destination_media">Πολυμέσα</string>
+    <string name="config_camera_title">Κάμερα</string>
+    <string name="config_camera_default_title">Προεπιλεγμένη κάμερα</string>
+    <string name="config_camera_rear">Πίσω</string>
+    <string name="config_camera_front">Μπροστινή</string>
+    <string name="config_camera_resolution_title">Προεπιλεγμένη ανάλυση</string>
+    <string name="config_camera_resolution_auto">Αυτόματη</string>
+    <string name="config_camera_resolution_portrait">480×640 — Κατακόρυφη</string>
+    <string name="config_camera_resolution_landscape">640×480 — Οριζόντια</string>
     <string name="config_destination_controls">Χειριστήρια</string>
     <string name="config_destination_general">Γενικά</string>
     <string name="config_destination_graphics">Προβολή</string>
@@ -1084,4 +1092,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Χρήση κοινόχρηστων φακέλων στον κατάλογο εργασίας.</string>
     <string name="midlet_storage_mode_android_summary">Χρήση του χώρου αποθήκευσης Android όπως στις προηγούμενες εκδόσεις.</string>
+    <string name="runtime_camera_use_front">Χρήση μπροστινής κάμερας</string>
+    <string name="runtime_camera_use_rear">Χρήση πίσω κάμερας</string>
+    <string name="runtime_camera_switch_failed">Δεν ήταν δυνατή η εναλλαγή κάμερας.</string>
 </resources>

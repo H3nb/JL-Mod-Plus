@@ -237,7 +237,15 @@
     <string name="pref_soundbank_title">MIDI-soundbank</string>
     <string name="PREF_SYS_PROPS">Järjestelmäominaisuudet</string>
     <string name="config_destination_graphics">Näyttö</string>
-    <string name="config_destination_audio">Ääni</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Oletuskamera</string>
+    <string name="config_camera_rear">Takakamera</string>
+    <string name="config_camera_front">Etukamera</string>
+    <string name="config_camera_resolution_title">Oletustarkkuus</string>
+    <string name="config_camera_resolution_auto">Automaattinen</string>
+    <string name="config_camera_resolution_portrait">480×640 — Pysty</string>
+    <string name="config_camera_resolution_landscape">640×480 — Vaaka</string>
     <string name="config_destination_controls">Ohjaimet</string>
     <string name="config_gamepad_test">Testaa ohjainta</string>
     <string name="config_gamepad_calibrate">Kalibroi ohjain</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Käytä jaettuja kansioita työhakemistossa.</string>
     <string name="midlet_storage_mode_android_summary">Käytä Androidin tallennustilaa kuten aiemmissa versioissa.</string>
+    <string name="runtime_camera_use_front">Käytä etukameraa</string>
+    <string name="runtime_camera_use_rear">Käytä takakameraa</string>
+    <string name="runtime_camera_switch_failed">Kameran vaihto epäonnistui.</string>
 </resources>

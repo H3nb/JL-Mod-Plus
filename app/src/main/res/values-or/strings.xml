@@ -331,7 +331,6 @@
     <string name="config_custom_resolution">କଷ୍ଟମ୍ ରେଜୋଲ୍ୟୁସନ୍</string>
     <string name="config_decrease_value">ମାନ କମାନ୍ତୁ</string>
     <string name="config_delete_app_data">MIDlet ଡାଟା ବିଲୋପ କରନ୍ତୁ</string>
-    <string name="config_destination_audio">ଅଡିଓ</string>
     <string name="config_destination_controls">ନିୟନ୍ତ୍ରଣ</string>
     <string name="config_destination_general">ସାଧାରଣ</string>
     <string name="config_destination_graphics">ଡିସପ୍ଲେ</string>
@@ -1085,4 +1084,16 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">କାର୍ଯ୍ୟ ଡିରେକ୍ଟୋରୀର ସେୟାର୍ଡ ଫୋଲ୍ଡର୍ ବ୍ୟବହାର କରନ୍ତୁ।</string>
     <string name="midlet_storage_mode_android_summary">ପୂର୍ବ ସଂସ୍କରଣ ପରି Android ଷ୍ଟୋରେଜ୍ ବ୍ୟବହାର କରନ୍ତୁ।</string>
+    <string name="runtime_camera_use_front">ସାମ୍ନା କ୍ୟାମେରା ବ୍ୟବହାର କରନ୍ତୁ</string>
+    <string name="runtime_camera_use_rear">ପଛ କ୍ୟାମେରା ବ୍ୟବହାର କରନ୍ତୁ</string>
+    <string name="runtime_camera_switch_failed">କ୍ୟାମେରା ବଦଳାଯାଇପାରିଲା ନାହିଁ।</string>
+    <string name="config_destination_media">ମିଡିଆ</string>
+    <string name="config_camera_title">କ୍ୟାମେରା</string>
+    <string name="config_camera_default_title">ଡିଫଲ୍ଟ କ୍ୟାମେରା</string>
+    <string name="config_camera_rear">ପଛ</string>
+    <string name="config_camera_front">ସାମ୍ନା</string>
+    <string name="config_camera_resolution_title">ଡିଫଲ୍ଟ ରେଜୋଲ୍ୟୁସନ୍</string>
+    <string name="config_camera_resolution_auto">ସ୍ୱୟଂଚାଳିତ</string>
+    <string name="config_camera_resolution_portrait">480×640 — ପୋର୍ଟ୍ରେଟ୍</string>
+    <string name="config_camera_resolution_landscape">640×480 — ଲ୍ୟାଣ୍ଡସ୍କେପ୍</string>
 </resources>

@@ -25,6 +25,7 @@ import android.webkit.MimeTypeMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -41,6 +42,7 @@ import io.github.h3nb.jlmodplus.mmapi.synth.AudioPlayer;
 import io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS;
 import io.github.h3nb.jlmodplus.mmapi.video.VideoFormat;
 import io.github.h3nb.jlmodplus.mmapi.video.VideoLibrary;
+import io.github.h3nb.jlmodplus.mmapi.camera.CameraCapturePlayer;
 
 public class Manager {
 	public static final String TONE_DEVICE_LOCATOR = "device://tone";
@@ -71,6 +73,10 @@ public class Manager {
 			try (InputStream stream = Connector.openInputStream(locator)) {
 				return createPlayer(stream, type);
 			}
+		} else if (locator.startsWith("capture://video") || locator.startsWith("capture://devcam")) {
+			// Construction validates the supported MMAPI locator. Hardware and camera
+			// permission acquisition belong to the Player's prefetch/start lifecycle.
+			return new CameraCapturePlayer(locator);
 		} else if (locator.startsWith(CAPTURE_AUDIO_LOCATOR) &&
 				ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 			return new RecordPlayer();
@@ -139,16 +145,23 @@ public class Manager {
 
 	public static String[] getSupportedContentTypes(String protocol) {
 		if ("device".equals(protocol)) return new String[]{"audio/midi", "audio/x-tone-seq"};
+		if ("capture".equals(protocol)) return new String[]{"video/raw"};
 		if (protocol != null && !"file".equals(protocol) && !"resource".equals(protocol)) return new String[0];
-		return new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
+		String[] types = new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
 				"audio/mp4", "audio/mmf", "audio/x-tone-seq", "audio/sp-midi", "audio/xmf",
 				"audio/mobile-xmf", "audio/imelody", "text/x-imelody", "audio/rtttl", "audio/x-rtttl",
 				"audio/ota", "audio/x-ota", "video/mp4", "video/3gpp"};
+		if (protocol != null) return types;
+		String[] allTypes = Arrays.copyOf(types, types.length + 1);
+		allTypes[types.length] = "video/raw";
+		return allTypes;
 	}
 
 	public static String[] getSupportedProtocols(String contentType) {
-		if (contentType == null || "audio/midi".equalsIgnoreCase(contentType) ||
+		if (contentType == null) return new String[]{"device", "file", "resource", "capture"};
+		if ("video/raw".equalsIgnoreCase(contentType)) return new String[]{"capture"};
+		if ("audio/midi".equalsIgnoreCase(contentType) ||
 				"audio/x-tone-seq".equalsIgnoreCase(contentType)) return new String[]{"device", "file", "resource"};
 		for (String supported : getSupportedContentTypes(null)) {
 			if (supported.equalsIgnoreCase(contentType)) return new String[]{"file", "resource"};

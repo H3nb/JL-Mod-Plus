@@ -8,6 +8,7 @@ package io.github.h3nb.jlmodplus.config
 import java.math.BigDecimal
 import java.util.Collections
 import javax.microedition.shell.timing.TimingMode
+import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.json.*
@@ -70,6 +71,8 @@ object ProfileJson {
         val timing = TimingMode.sanitize(model.timingMode)
         val needsPublication = version < ProfileModel.VERSION || timing != model.timingMode
         model.timingMode = timing
+        model.cameraDefaultFacing = CameraCaptureOptions.normalizeFacing(model.cameraDefaultFacing)
+        model.cameraResolution = CameraCaptureOptions.normalizeResolution(model.cameraResolution)
         return Decoded(ownedCopy(model), version, needsPublication)
     }
 
@@ -77,6 +80,8 @@ object ProfileJson {
         version = ProfileModel.VERSION,
         screenBackgroundMode = BackgroundMode.sanitize(source.screenBackgroundMode),
         screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(source.screenScaleType, source.screenScaleRatio),
+        cameraDefaultFacing = CameraCaptureOptions.normalizeFacing(source.cameraDefaultFacing),
+        cameraResolution = CameraCaptureOptions.normalizeResolution(source.cameraResolution),
     ))
 
     /** Copy value collections on entry; never retain an externally mutable tree backing map. */

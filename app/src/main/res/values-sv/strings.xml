@@ -223,7 +223,15 @@
     <string name="pref_soundbank_title">MIDI-soundbank</string>
     <string name="PREF_SYS_PROPS">Systemegenskaper</string>
     <string name="config_destination_graphics">Bild</string>
-    <string name="config_destination_audio">Ljud</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Standardkamera</string>
+    <string name="config_camera_rear">Bakre</string>
+    <string name="config_camera_front">Främre</string>
+    <string name="config_camera_resolution_title">Standardupplösning</string>
+    <string name="config_camera_resolution_auto">Automatisk</string>
+    <string name="config_camera_resolution_portrait">480×640 — Stående</string>
+    <string name="config_camera_resolution_landscape">640×480 — Liggande</string>
     <string name="config_destination_controls">Kontroller</string>
     <string name="config_gamepad_test">Testa handkontroll</string>
     <string name="config_gamepad_calibrate">Kalibrera handkontroll</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Använd delade mappar i arbetskatalogen.</string>
     <string name="midlet_storage_mode_android_summary">Använd Android-lagring som i tidigare versioner.</string>
+    <string name="runtime_camera_use_front">Använd främre kameran</string>
+    <string name="runtime_camera_use_rear">Använd bakre kameran</string>
+    <string name="runtime_camera_switch_failed">Det gick inte att byta kamera.</string>
 </resources>

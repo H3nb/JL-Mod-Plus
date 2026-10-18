@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.config
 
 import kotlinx.serialization.json.JsonElement
+import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 
 
 /** Small deterministic matcher for the effective, unsaved configuration draft. */
@@ -48,6 +49,8 @@ internal class ProfileConfigMatcher private constructor() {
         fun comparisonSnapshot(source: ProfileModel): JsonElement {
             val normalized = source.copy()
             normalized.systemProperties = ConfigFormState.normalizeSystemProperties(normalized.systemProperties)
+            normalized.cameraDefaultFacing = CameraCaptureOptions.normalizeFacing(normalized.cameraDefaultFacing)
+            normalized.cameraResolution = CameraCaptureOptions.normalizeResolution(normalized.cameraResolution)
             normalized.screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(
                 normalized.screenScaleType, normalized.screenScaleRatio,
             )

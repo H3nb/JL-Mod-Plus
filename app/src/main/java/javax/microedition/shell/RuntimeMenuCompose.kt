@@ -117,9 +117,12 @@ internal data class RuntimeMenuUiState(
     val emulationSpeedAvailable: Boolean = false,
     val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
     val memoryEditorBubbleEnabled: Boolean = false,
+    val cameraSwitchAvailable: Boolean = false,
+    val cameraFrontFacing: Boolean = false,
+    val cameraSwitching: Boolean = false,
     val toolbarWidthDp: Float? = null,
     val toolbarFontScale: Float = 1f,
-    val toolbarSpeedWidthDp: Float = 48f,
+    val toolbarSpeedWidthDp: Float = RUNTIME_TOOLBAR_ACTION_WIDTH_DP,
     val toolbarRoundedLeftPx: Int = 0,
     val toolbarRoundedRightPx: Int = 0,
     val toolbarInsetLeftPx: Int = 0,
@@ -144,6 +147,7 @@ interface RuntimeMenuActions {
     fun onEmulationSpeed()
     fun onSetEmulationSpeed(value: Int)
     fun onResetEmulationSpeed()
+    fun onSwitchCamera() {}
     fun onMemoryEditor()
     fun onEditVirtualKeyboardLayout()
 
@@ -336,6 +340,15 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
             memoryEditorBubbleEnabled = memoryEditorBubbleEnabled,
+        ))
+    }
+
+    /** Camera actions are host-owned and available on both Canvas and Form. */
+    fun updateCameraState(available: Boolean, frontFacing: Boolean, switching: Boolean) {
+        updateState(state.copy(
+            cameraSwitchAvailable = available,
+            cameraFrontFacing = frontFacing,
+            cameraSwitching = switching,
         ))
     }
 
@@ -735,6 +748,7 @@ internal fun RuntimeMenuHost(
 }
 
 private const val RUNTIME_SPEED_LABEL_SP = 14f
+private const val RUNTIME_TOOLBAR_ACTION_WIDTH_DP = 40f
 
 /** Matches the explicit labelLarge metrics below; width is shared by rendering and navigation. */
 internal fun measureRuntimeSpeedWidth(resources: Resources, percent: Int): Float {
@@ -746,10 +760,10 @@ internal fun measureRuntimeSpeedWidth(resources: Resources, percent: Int): Float
     }
     val textWidthDp = ceil(paint.measureText(EmulationSpeed.formatMultiplier(percent)).toDouble()).toFloat() /
         resources.displayMetrics.density
-    return max(48f, textWidthDp + 16f)
+    return max(RUNTIME_TOOLBAR_ACTION_WIDTH_DP, textWidthDp + 16f)
 }
 
-internal enum class RuntimeToolbarShortcut { Speed, Ime, Screenshot }
+internal enum class RuntimeToolbarShortcut { Speed, Ime, Screenshot, Camera }
 internal data class RuntimeToolbarOcclusion(val leftPx: Int, val rightPx: Int)
 internal data class RuntimeToolbarSpan(val left: Float, val right: Float) {
     val width: Float get() = (right - left).coerceAtLeast(0f)
@@ -792,13 +806,13 @@ internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): Ru
     }
     if (segments.isEmpty()) return RuntimeToolbarLayout(null, emptyList())
     fun actionWidth(shortcut: RuntimeToolbarShortcut): Float = when (shortcut) {
-        RuntimeToolbarShortcut.Speed -> state.toolbarSpeedWidthDp.coerceAtLeast(48f)
-        else -> 48f
+        RuntimeToolbarShortcut.Speed -> state.toolbarSpeedWidthDp.coerceAtLeast(RUNTIME_TOOLBAR_ACTION_WIDTH_DP)
+        else -> RUNTIME_TOOLBAR_ACTION_WIDTH_DP
     }
     fun pack(shortcuts: List<RuntimeToolbarShortcut>): List<RuntimeToolbarPlacement>? {
         val ends = segments.map { it.right }.toMutableList()
         val placements = arrayOfNulls<RuntimeToolbarPlacement>(shortcuts.size)
-        // At most three actions: try another segment before dropping an otherwise reachable action.
+        // Try another segment before dropping an otherwise reachable action.
         fun place(actionIndex: Int): Boolean {
             if (actionIndex < 0) return true
             val shortcut = shortcuts[actionIndex]
@@ -816,15 +830,16 @@ internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): Ru
         return if (place(shortcuts.lastIndex)) placements.filterNotNull() else null
     }
     val selected = mutableListOf<RuntimeToolbarShortcut>()
-    if (state.isCanvas) {
-        val candidates = buildList {
+    val candidates = buildList {
+        if (state.isCanvas) {
             if (state.emulationSpeedAvailable) add(RuntimeToolbarShortcut.Speed)
             if (state.imeAvailable) add(RuntimeToolbarShortcut.Ime)
             add(RuntimeToolbarShortcut.Screenshot)
         }
-        candidates.forEach { candidate ->
-            if (pack(selected + candidate) != null) selected += candidate
-        }
+        if (state.cameraSwitchAvailable) add(RuntimeToolbarShortcut.Camera)
+    }
+    candidates.forEach { candidate ->
+        if (pack(selected + candidate) != null) selected += candidate
     }
     val placements = pack(selected).orEmpty()
     val titleBounds = logical(RuntimeToolbarSpan(
@@ -891,14 +906,19 @@ private fun RuntimeToolbar(
                             RuntimeToolbarShortcut.Ime -> RuntimeToolbarAction(
                                 icon = R.drawable.ic_action_keyboard,
                                 label = R.string.action_keyboard_ime,
-                                size = 48.dp,
                                 onClick = actions::onOpenImeKeyboard,
                             )
                             RuntimeToolbarShortcut.Screenshot -> RuntimeToolbarAction(
                                 icon = R.drawable.ic_action_screenshot,
                                 label = R.string.take_screenshot,
-                                size = 48.dp,
                                 onClick = actions::onTakeScreenshot,
+                            )
+                            RuntimeToolbarShortcut.Camera -> RuntimeToolbarAction(
+                                icon = R.drawable.ic_camera_switch,
+                                label = if (state.cameraFrontFacing) R.string.runtime_camera_use_rear
+                                    else R.string.runtime_camera_use_front,
+                                enabled = !state.cameraSwitching,
+                                onClick = actions::onSwitchCamera,
                             )
                         }
                     }
@@ -941,14 +961,14 @@ private fun RuntimeToolbar(
 private fun RuntimeToolbarAction(
     icon: Int,
     label: Int,
-    size: androidx.compose.ui.unit.Dp,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick, modifier = Modifier.size(size)) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxSize()) {
         Icon(
             painter = painterResource(icon),
             contentDescription = stringResource(label),
-            tint = MaterialTheme.colorScheme.onSurface,
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.38f),
         )
     }
 }
@@ -1019,7 +1039,7 @@ private fun RuntimeMenuDialog(
                             } else {
                                 RuntimeMenuItem(
                                     entry.label, entry.icon,
-                                    controllerFocusIndex == index, entry.activate,
+                                    controllerFocusIndex == index, entry.enabled, entry.activate,
                                 )
                             }
                         }
@@ -1039,6 +1059,7 @@ internal data class RuntimeMenuEntry(
     val label: Int,
     val icon: Int,
     val checked: Boolean? = null,
+    val enabled: Boolean = true,
     val activate: () -> Unit,
 )
 
@@ -1051,8 +1072,13 @@ internal fun runtimeMenuEntries(
     onDismiss: () -> Unit,
     onOpenVirtualKeyboardPage: () -> Unit,
 ): List<RuntimeMenuEntry> = buildList {
-    fun action(label: Int, icon: Int, checked: Boolean? = null, callback: () -> Unit) {
-        add(RuntimeMenuEntry(label, icon, checked) { onDismiss(); callback() })
+    fun action(
+        label: Int, icon: Int, checked: Boolean? = null,
+        enabled: Boolean = true, callback: () -> Unit,
+    ) {
+        add(RuntimeMenuEntry(label, icon, checked, enabled) {
+            if (enabled) { onDismiss(); callback() }
+        })
     }
     if (virtualKeyboardPage) {
         action(
@@ -1066,10 +1092,18 @@ internal fun runtimeMenuEntries(
     }
     action(R.string.exit, R.drawable.ic_exit, callback = actions::onExit)
     action(R.string.save_log, R.drawable.ic_save, callback = actions::onSaveLog)
-    action(R.string.action_lock_orientation, R.drawable.ic_screen_lock_rotation, state.orientationLocked, actions::onToggleOrientationLock)
-    action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled, actions::onMemoryEditor)
+    action(R.string.action_lock_orientation, R.drawable.ic_screen_lock_rotation, state.orientationLocked, callback = actions::onToggleOrientationLock)
+    action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled, callback = actions::onMemoryEditor)
+    if (state.cameraSwitchAvailable && RuntimeToolbarShortcut.Camera !in shortcuts) {
+        action(
+            if (state.cameraFrontFacing) R.string.runtime_camera_use_rear else R.string.runtime_camera_use_front,
+            R.drawable.ic_camera_switch,
+            enabled = !state.cameraSwitching,
+            callback = actions::onSwitchCamera,
+        )
+    }
     if (state.isCanvas) {
-        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_runtime_fullscreen, !state.toolbarVisible, actions::onToggleFullscreen)
+        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_runtime_fullscreen, !state.toolbarVisible, callback = actions::onToggleFullscreen)
         if (state.imeAvailable && RuntimeToolbarShortcut.Ime !in shortcuts) {
             action(R.string.action_keyboard_ime, R.drawable.ic_action_keyboard, callback = actions::onOpenImeKeyboard)
         }
@@ -1137,6 +1171,7 @@ private fun RuntimeMenuItem(
     label: Int,
     leadingIcon: Int? = null,
     focused: Boolean = false,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     ListItem(
@@ -1149,6 +1184,7 @@ private fun RuntimeMenuItem(
                 text = stringResource(label),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.38f),
             )
         },
         leadingContent = leadingIcon?.let { icon ->
@@ -1156,7 +1192,7 @@ private fun RuntimeMenuItem(
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.38f),
                 )
             }
         },
@@ -1165,6 +1201,6 @@ private fun RuntimeMenuItem(
             .then(
                 if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier,
             )
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
     )
 }

@@ -48,6 +48,7 @@ without changing the guest-visible contract.
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
 | Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` display maximum, `-1` reset) |
 | Emulation Speed | Canvas with compatible timing transform | Manual session-only multiplier from 0.25x to 16x; Reset selects 1x. See [Emulation speed](emulation-speed.md). |
+| Swap camera | Active camera with front/rear available, Canvas or Form | Fourth toolbar shortcut when space permits; options-menu fallback otherwise. Disabled during capture/switch; same session-only action in both locations. |
 | Virtual Keyboard options | Canvas when a virtual keyboard exists | Existing layout edit/resize/finish/switch/hide methods |
 
 The finish-layout item is visible only while the virtual keyboard is in an
@@ -64,7 +65,11 @@ non-Canvas Displayables.
   controls use 48dp height in portrait and 40dp in a landscape-shaped window
   at normal text scale; enlarged text restores 48dp. The compact landscape row
   deliberately trades touch height for MIDlet space, without extending hit
-  regions into the guest. The toolbar background occupies
+  regions into the guest. Icon actions occupy adjacent 40dp-wide slots with 24dp
+  icons; the speed label grows when its measured text needs more space. Portrait
+  controls retain their 48dp height. This compact horizontal spacing trades the
+  former 48dp target width for a denser action group, without overlapping targets.
+  The toolbar background occupies
   the cutout area without adding the cutout height above its content row.
   Whole action targets avoid intersecting cutout rectangles. Rounded-corner
   clearance follows the centered visible text/icon band; strict system and

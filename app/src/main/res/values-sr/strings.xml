@@ -297,7 +297,15 @@
     <string name="config_decrease_value">Смањи вредност</string>
     <string name="config_delete_app_data">Обриши податке MIDlet-а</string>
     <string name="config_delete_app_data_summary">Трајно брише податке овог MIDlet-а, укључујући сачуване податке. Подешавања се задржавају.</string>
-    <string name="config_destination_audio">Звук</string>
+    <string name="config_destination_media">Медији</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Подразумевана камера</string>
+    <string name="config_camera_rear">Задња</string>
+    <string name="config_camera_front">Предња</string>
+    <string name="config_camera_resolution_title">Подразумевана резолуција</string>
+    <string name="config_camera_resolution_auto">Аутоматска</string>
+    <string name="config_camera_resolution_portrait">480×640 — Усправна</string>
+    <string name="config_camera_resolution_landscape">640×480 — Водоравна</string>
     <string name="config_destination_controls">Контроле</string>
     <string name="config_destination_general">Опште</string>
     <string name="config_destination_graphics">Приказ</string>
@@ -1117,4 +1125,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Користи дељене фасцикле у радном директоријуму.</string>
     <string name="midlet_storage_mode_android_summary">Користи Android складиште као у претходним верзијама.</string>
+    <string name="runtime_camera_use_front">Користи предњу камеру</string>
+    <string name="runtime_camera_use_rear">Користи задњу камеру</string>
+    <string name="runtime_camera_switch_failed">Није могуће променити камеру.</string>
 </resources>

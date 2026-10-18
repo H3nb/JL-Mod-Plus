@@ -158,6 +158,20 @@ gaps between the interior and the shifted outline.
 
 JL-Mod keeps Android task foreground, emulator/AMS foreground selection, MIDlet lifecycle, and LCDUI display foreground as separate facts. In particular, MIDP `Display.setCurrent(null)` retains the current `Displayable` and is treated as a request to yield emulator foreground to the Library; it never means Android Home. A live runtime may therefore coexist with Library foreground. Non-null `setCurrent()` calls update guest display state but do not directly foreground Android Activities. The runtime storage lease remains liveness evidence only; emulator foreground selection is persisted separately and generation-fenced.
 
+## MMAPI camera
+
+Start with the [camera contract](mmapi-camera.md) for supported capture locators,
+default resolution/lens precedence and geometry. The
+[device investigation and troubleshooting guide](camera-pr175-device-investigation.md)
+maps code owners, proven Miami variant behavior, completed tests and the independent
+debug MIDlet. The [historical study](camera-java-me-history.md) explains the policy
+decision; its discarded alternatives are not pending implementation work.
+
+In direct-video mode, preserve the MIDlet's requested display coordinates. A
+left-aligned camera region is not by itself evidence of an emulator bug: compare
+the actual `setDisplayLocation`/`setDisplaySize` values with mapped Android bounds
+before changing alignment, crop or rotation.
+
 ## MMAPI file video
 
 File 3GP/MP4 video has one Player contract and a soundtrack on the shared runtime

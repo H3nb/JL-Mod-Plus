@@ -71,7 +71,7 @@ private val CanvasMenuState = RuntimeMenuUiState(
 @Composable
 fun RuntimeToolbarScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        RuntimeMenuPreview(state = CanvasMenuState)
+        RuntimeMenuPreview(state = CanvasMenuState.copy(cameraSwitchAvailable = true))
     }
 }
 

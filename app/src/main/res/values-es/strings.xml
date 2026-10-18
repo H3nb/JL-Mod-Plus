@@ -267,7 +267,15 @@
     <string name="pref_skip_resume_call">Omitir startApp() al reanudar</string>
     <string name="pref_soundbank_title">Banco de sonidos MIDI</string>
     <string name="config_destination_graphics">Pantalla</string>
-    <string name="config_destination_audio">Audio</string>
+    <string name="config_destination_media">Multimedia</string>
+    <string name="config_camera_title">Cámara</string>
+    <string name="config_camera_default_title">Cámara predeterminada</string>
+    <string name="config_camera_rear">Trasera</string>
+    <string name="config_camera_front">Frontal</string>
+    <string name="config_camera_resolution_title">Resolución predeterminada</string>
+    <string name="config_camera_resolution_auto">Automática</string>
+    <string name="config_camera_resolution_portrait">480×640 — Vertical</string>
+    <string name="config_camera_resolution_landscape">640×480 — Horizontal</string>
     <string name="config_destination_controls">Controles</string>
     <string name="config_destination_system">Sistema</string>
     <string name="config_screen_size">Tamaño de pantalla</string>
@@ -1118,4 +1126,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Usar carpetas compartidas en el directorio de trabajo.</string>
     <string name="midlet_storage_mode_android_summary">Usar el almacenamiento de Android como en versiones anteriores.</string>
+    <string name="runtime_camera_use_front">Usar cámara frontal</string>
+    <string name="runtime_camera_use_rear">Usar cámara trasera</string>
+    <string name="runtime_camera_switch_failed">No se pudo cambiar de cámara.</string>
 </resources>

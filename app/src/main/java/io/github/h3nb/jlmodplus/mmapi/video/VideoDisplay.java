@@ -18,6 +18,13 @@ import javax.microedition.media.control.VideoControl;
 
 /** Guest geometry, separate video producer Surface, and main-thread View lifetime. */
 public final class VideoDisplay implements VideoControl {
+    /** A second producer (camera) shares LCDUI geometry without decoder ownership. */
+    public interface Content {
+        View createView(Context context);
+        void detachView(View view);
+        byte[] getSnapshot(String type) throws MediaException;
+    }
+
     public interface SurfaceOwner {
         // Owner queues the change on the codec worker; destruction is acknowledged
         // there before releasing the Surface and any obsolete SurfaceTexture.
@@ -25,6 +32,7 @@ public final class VideoDisplay implements VideoControl {
     }
 
     private final SurfaceOwner owner;
+    private final Content content;
     private final int sourceWidth, sourceHeight;
     private int mode = -1, x, y, width, height;
     private boolean visible, fullscreen;
@@ -33,6 +41,7 @@ public final class VideoDisplay implements VideoControl {
     private VideoItem item;
     private FrameLayout view; // main thread only
     private TextureView texture;
+    private View producer;
     private long revision;
     private Runnable sizeListener;
     private int reportedWidth, reportedHeight;
@@ -55,6 +64,18 @@ public final class VideoDisplay implements VideoControl {
         this.width = width;
         this.height = height;
         this.owner = owner;
+        content = null;
+        reportedWidth = width;
+        reportedHeight = height;
+    }
+
+    public VideoDisplay(int width, int height, Content content) {
+        sourceWidth = width;
+        sourceHeight = height;
+        this.width = width;
+        this.height = height;
+        this.content = content;
+        owner = null;
         reportedWidth = width;
         reportedHeight = height;
     }
@@ -168,8 +189,9 @@ public final class VideoDisplay implements VideoControl {
     }
 
     @Override
-    public synchronized byte[] getSnapshot(String type) throws MediaException {
-        initialized();
+    public byte[] getSnapshot(String type) throws MediaException {
+        synchronized (this) { initialized(); }
+        if (content != null) return content.getSnapshot(type);
         throw new MediaException("Video snapshots are unsupported");
     }
 
@@ -186,6 +208,12 @@ public final class VideoDisplay implements VideoControl {
         FrameLayout root = new FrameLayout(context);
         root.setClipChildren(true);
         root.setClipToPadding(true);
+        if (content != null) {
+            producer = content.createView(context);
+            view = root;
+            root.addView(producer);
+            return root;
+        }
         TextureView next = new TextureView(context);
         next.setOpaque(true);
         next.setFocusable(false);
@@ -215,6 +243,7 @@ public final class VideoDisplay implements VideoControl {
                     public void onSurfaceTextureUpdated(SurfaceTexture s) {}
                 });
         texture = next;
+        producer = next;
         view = root;
         root.addView(next);
         return root;
@@ -245,7 +274,7 @@ public final class VideoDisplay implements VideoControl {
                         Math.max(1, Math.round(size[1] * sy)));
         params.leftMargin = Math.round((fullscreen ? 0 : x) * sx);
         params.topMargin = Math.round((fullscreen ? 0 : y) * sy);
-        texture.setLayoutParams(params);
+        producer.setLayoutParams(params);
         view.setVisibility(visible && shown ? View.VISIBLE : View.INVISIBLE);
     }
 
@@ -259,7 +288,7 @@ public final class VideoDisplay implements VideoControl {
         view.setMinimumWidth(w);
         view.setMinimumHeight(h);
         view.setLayoutParams(new android.widget.LinearLayout.LayoutParams(w, h));
-        texture.setLayoutParams(new FrameLayout.LayoutParams(w, h));
+        producer.setLayoutParams(new FrameLayout.LayoutParams(w, h));
         view.setVisibility(!closed && visible ? View.VISIBLE : View.INVISIBLE);
         return view;
     }
@@ -273,10 +302,12 @@ public final class VideoDisplay implements VideoControl {
     }
 
     public synchronized void detachView() {
+        if (producer != null && content != null) content.detachView(producer);
         if (view != null && view.getParent() instanceof ViewGroup)
             ((ViewGroup) view.getParent()).removeView(view);
         view = null;
         texture = null;
+        producer = null;
     }
 
     public synchronized void close() {

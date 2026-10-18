@@ -380,7 +380,15 @@
     <string name="config_decrease_value">Намаляване на стойността</string>
     <string name="config_delete_app_data">Изтриване на данните на MIDlet</string>
     <string name="config_delete_app_data_summary">Изтрива окончателно данните на този MIDlet, включително запазените данни. Настройките му ще се запазят.</string>
-    <string name="config_destination_audio">Звук</string>
+    <string name="config_destination_media">Медия</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Камера по подразбиране</string>
+    <string name="config_camera_rear">Задна</string>
+    <string name="config_camera_front">Предна</string>
+    <string name="config_camera_resolution_title">Разделителна способност по подразбиране</string>
+    <string name="config_camera_resolution_auto">Автоматично</string>
+    <string name="config_camera_resolution_portrait">480×640 — Портретно</string>
+    <string name="config_camera_resolution_landscape">640×480 — Пейзажно</string>
     <string name="config_destination_controls">Управление</string>
     <string name="config_destination_general">Общи</string>
     <string name="config_destination_graphics">Дисплей</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Използване на споделени папки в работната директория.</string>
     <string name="midlet_storage_mode_android_summary">Използване на хранилището на Android както в предишните версии.</string>
+    <string name="runtime_camera_use_front">Използвай предната камера</string>
+    <string name="runtime_camera_use_rear">Използвай задната камера</string>
+    <string name="runtime_camera_switch_failed">Неуспешно превключване на камерата.</string>
 </resources>

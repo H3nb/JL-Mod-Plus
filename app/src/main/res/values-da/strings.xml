@@ -239,7 +239,15 @@
     <string name="pref_skip_resume_call">Spring startApp() over ved genoptagelse</string>
     <string name="pref_soundbank_title">MIDI-soundbank</string>
     <string name="config_destination_graphics">Skærm</string>
-    <string name="config_destination_audio">Lyd</string>
+    <string name="config_destination_media">Medier</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Standardkamera</string>
+    <string name="config_camera_rear">Bagkamera</string>
+    <string name="config_camera_front">Frontkamera</string>
+    <string name="config_camera_resolution_title">Standardopløsning</string>
+    <string name="config_camera_resolution_auto">Automatisk</string>
+    <string name="config_camera_resolution_portrait">480×640 — Stående</string>
+    <string name="config_camera_resolution_landscape">640×480 — Liggende</string>
     <string name="config_destination_controls">Kontroller</string>
     <string name="config_gamepad_test">Test controller</string>
     <string name="config_gamepad_calibrate">Kalibrer controller</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Brug delte mapper i arbejdsmappen.</string>
     <string name="midlet_storage_mode_android_summary">Brug Android-lagerplads som i tidligere versioner.</string>
+    <string name="runtime_camera_use_front">Brug frontkamera</string>
+    <string name="runtime_camera_use_rear">Brug bagkamera</string>
+    <string name="runtime_camera_switch_failed">Kunne ikke skifte kamera.</string>
 </resources>

@@ -19,6 +19,7 @@ import kotlinx.serialization.json.JsonElement;
 import androidx.annotation.Nullable;
 
 import javax.microedition.shell.timing.TimingMode;
+import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,6 +69,8 @@ public final class ConfigFormState {
 	public final int keyCodesLayout;
 	public final int vkButtonShape;
 	public final int vkAlpha;
+	public final int cameraDefaultFacing;
+	public final int cameraResolution;
 
 	public final boolean screenFilter;
 	public final boolean immediateMode;
@@ -118,6 +121,8 @@ public final class ConfigFormState {
 		keyCodesLayout = builder.keyCodesLayout;
 		vkButtonShape = builder.vkButtonShape;
 		vkAlpha = builder.vkAlpha;
+		cameraDefaultFacing = CameraCaptureOptions.normalizeFacing(builder.cameraDefaultFacing);
+		cameraResolution = CameraCaptureOptions.normalizeResolution(builder.cameraResolution);
 		screenFilter = builder.screenFilter;
 		immediateMode = builder.immediateMode;
 		parallelRedrawScreen = builder.parallelRedrawScreen;
@@ -194,6 +199,8 @@ public final class ConfigFormState {
 				.vkOutline(formatColor(params.vkOutlineColor))
 				.skipResumeCall(params.skipResumeCall)
 				.soundBank(params.soundBank)
+				.cameraDefaultFacing(params.cameraDefaultFacing)
+				.cameraResolution(params.cameraResolution)
 				.systemProperties(systemProperties)
 				.build();
 	}
@@ -249,6 +256,8 @@ public final class ConfigFormState {
 		params.vkOutlineColor = parseHexOrKeep(vkOutline, params.vkOutlineColor);
 		params.skipResumeCall = skipResumeCall;
 		params.soundBank = soundBank;
+		params.cameraDefaultFacing = cameraDefaultFacing;
+		params.cameraResolution = cameraResolution;
 		params.controller = controller;
 		params.systemProperties = normalizeSystemProperties(systemProperties);
 		return params;
@@ -333,6 +342,8 @@ public final class ConfigFormState {
 		private int keyCodesLayout;
 		private int vkButtonShape;
 		private int vkAlpha;
+		private int cameraDefaultFacing = CameraCaptureOptions.BACK;
+		private int cameraResolution = CameraCaptureOptions.RESOLUTION_AUTO;
 		private boolean screenFilter;
 		private boolean immediateMode;
 		private boolean parallelRedrawScreen;
@@ -384,6 +395,8 @@ public final class ConfigFormState {
 			keyCodesLayout = source.keyCodesLayout;
 			vkButtonShape = source.vkButtonShape;
 			vkAlpha = source.vkAlpha;
+			cameraDefaultFacing = source.cameraDefaultFacing;
+			cameraResolution = source.cameraResolution;
 			screenFilter = source.screenFilter;
 			immediateMode = source.immediateMode;
 			parallelRedrawScreen = source.parallelRedrawScreen;
@@ -435,6 +448,8 @@ public final class ConfigFormState {
 		public Builder keyCodesLayout(int value) { keyCodesLayout = value; return this; }
 		public Builder vkButtonShape(int value) { vkButtonShape = value; return this; }
 		public Builder vkAlpha(int value) { vkAlpha = value; return this; }
+		public Builder cameraDefaultFacing(int value) { cameraDefaultFacing = value; return this; }
+		public Builder cameraResolution(int value) { cameraResolution = value; return this; }
 		public Builder screenFilter(boolean value) { screenFilter = value; return this; }
 		public Builder immediateMode(boolean value) { immediateMode = value; return this; }
 		public Builder parallelRedrawScreen(boolean value) { parallelRedrawScreen = value; return this; }

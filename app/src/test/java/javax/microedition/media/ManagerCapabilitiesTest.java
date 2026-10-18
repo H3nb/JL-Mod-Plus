@@ -20,9 +20,30 @@ public class ManagerCapabilitiesTest {
 		assertArrayEquals(new String[]{"device", "file", "resource"}, Manager.getSupportedProtocols("audio/midi"));
 		assertArrayEquals(new String[]{"file", "resource"}, Manager.getSupportedProtocols("VIDEO/MP4"));
 		for (String type : Manager.getSupportedContentTypes(null)) {
+			if ("video/raw".equals(type)) continue;
 			assertTrue(Arrays.asList(Manager.getSupportedContentTypes("file")).contains(type));
 			assertTrue(Arrays.asList(Manager.getSupportedContentTypes("resource")).contains(type));
 			assertTrue(Arrays.asList(Manager.getSupportedProtocols(type)).contains("file"));
+		}
+	}
+
+	@Test public void rawCameraSourceIsDiscoveredSeparatelyFromSnapshotFileEncodings() {
+		assertArrayEquals(new String[]{"video/raw"}, Manager.getSupportedContentTypes("capture"));
+		assertArrayEquals(new String[]{"capture"}, Manager.getSupportedProtocols("VIDEO/RAW"));
+		assertTrue(Arrays.asList(Manager.getSupportedProtocols(null)).contains("capture"));
+		assertTrue(Arrays.asList(Manager.getSupportedContentTypes(null)).contains("video/raw"));
+		assertFalse(Arrays.asList(Manager.getSupportedContentTypes("file")).contains("video/raw"));
+		assertFalse(Arrays.asList(Manager.getSupportedContentTypes("resource")).contains("video/raw"));
+		assertArrayEquals(new String[0], Manager.getSupportedProtocols("image/jpeg"));
+		assertArrayEquals(new String[0], Manager.getSupportedProtocols("image/png"));
+	}
+
+	@Test public void protocolAndContentTypeDiscoveryAgreeInBothDirections() {
+		for (String protocol : Manager.getSupportedProtocols(null)) {
+			for (String type : Manager.getSupportedContentTypes(protocol)) {
+				assertTrue(Arrays.asList(Manager.getSupportedContentTypes(null)).contains(type));
+				assertTrue(Arrays.asList(Manager.getSupportedProtocols(type)).contains(protocol));
+			}
 		}
 	}
 }

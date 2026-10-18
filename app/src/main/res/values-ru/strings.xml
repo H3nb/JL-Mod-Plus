@@ -414,7 +414,15 @@
     <string name="pref_skip_resume_call">Пропускать startApp() при возобновлении</string>
     <string name="pref_soundbank_title">Банк звуков MIDI</string>
     <string name="config_destination_graphics">Экран</string>
-    <string name="config_destination_audio">Аудио</string>
+    <string name="config_destination_media">Медиа</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Камера по умолчанию</string>
+    <string name="config_camera_rear">Задняя</string>
+    <string name="config_camera_front">Передняя</string>
+    <string name="config_camera_resolution_title">Разрешение по умолчанию</string>
+    <string name="config_camera_resolution_auto">Автоматически</string>
+    <string name="config_camera_resolution_portrait">480×640 — Портретная</string>
+    <string name="config_camera_resolution_landscape">640×480 — Альбомная</string>
     <string name="config_destination_controls">Управление</string>
     <string name="config_gamepad_test">Проверить контроллер</string>
     <string name="config_gamepad_calibrate">Калибровать контроллер</string>
@@ -1151,4 +1159,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Использовать общие папки в рабочем каталоге.</string>
     <string name="midlet_storage_mode_android_summary">Использовать хранилище Android, как в предыдущих версиях.</string>
+    <string name="runtime_camera_use_front">Использовать фронтальную камеру</string>
+    <string name="runtime_camera_use_rear">Использовать заднюю камеру</string>
+    <string name="runtime_camera_switch_failed">Не удалось переключить камеру.</string>
 </resources>

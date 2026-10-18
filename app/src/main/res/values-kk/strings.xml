@@ -337,7 +337,15 @@
     <string name="config_custom_resolution">Арнайы ажыратымдылық</string>
     <string name="config_decrease_value">Мәнді азайту</string>
     <string name="config_delete_app_data">MIDlet деректерін жою</string>
-    <string name="config_destination_audio">Аудио</string>
+    <string name="config_destination_media">Медиа</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Әдепкі камера</string>
+    <string name="config_camera_rear">Артқы</string>
+    <string name="config_camera_front">Алдыңғы</string>
+    <string name="config_camera_resolution_title">Әдепкі ажыратымдылық</string>
+    <string name="config_camera_resolution_auto">Автоматты</string>
+    <string name="config_camera_resolution_portrait">480×640 — Портреттік</string>
+    <string name="config_camera_resolution_landscape">640×480 — Альбомдық</string>
     <string name="config_destination_controls">Басқару</string>
     <string name="config_destination_general">Жалпы</string>
     <string name="config_destination_graphics">Дисплей</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Жұмыс каталогындағы ортақ қалталарды пайдалану.</string>
     <string name="midlet_storage_mode_android_summary">Алдыңғы нұсқалардағыдай Android жадын пайдалану.</string>
+    <string name="runtime_camera_use_front">Алдыңғы камераны пайдалану</string>
+    <string name="runtime_camera_use_rear">Артқы камераны пайдалану</string>
+    <string name="runtime_camera_switch_failed">Камераны ауыстыру мүмкін болмады.</string>
 </resources>

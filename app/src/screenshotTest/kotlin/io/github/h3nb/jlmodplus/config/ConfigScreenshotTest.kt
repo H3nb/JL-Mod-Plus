@@ -217,7 +217,7 @@ fun ConfigPreferenceComponentsScreenshot() {
 @Composable
 fun ConfigMediaEmptyScreenshot() {
     JLModPlusTheme {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Audio)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Media)
     }
 }
 

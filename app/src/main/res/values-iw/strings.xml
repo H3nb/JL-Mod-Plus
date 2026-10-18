@@ -298,7 +298,15 @@
     <string name="config_decrease_value">הקטנת ערך</string>
     <string name="config_delete_app_data">מחיקת נתוני MIDlet</string>
     <string name="config_delete_app_data_summary">מוחק לצמיתות את נתוני ה־MIDlet הזה, כולל שמירות. ההגדרות שלו יישמרו.</string>
-    <string name="config_destination_audio">שמע</string>
+    <string name="config_destination_media">מדיה</string>
+    <string name="config_camera_title">מצלמה</string>
+    <string name="config_camera_default_title">מצלמת ברירת מחדל</string>
+    <string name="config_camera_rear">אחורית</string>
+    <string name="config_camera_front">קדמית</string>
+    <string name="config_camera_resolution_title">רזולוציית ברירת מחדל</string>
+    <string name="config_camera_resolution_auto">אוטומטי</string>
+    <string name="config_camera_resolution_portrait">480×640 — לאורך</string>
+    <string name="config_camera_resolution_landscape">640×480 — לרוחב</string>
     <string name="config_destination_controls">פקדים</string>
     <string name="config_destination_general">כללי</string>
     <string name="config_destination_graphics">תצוגה</string>
@@ -1118,4 +1126,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">שימוש בתיקיות משותפות בספריית העבודה.</string>
     <string name="midlet_storage_mode_android_summary">שימוש באחסון Android כמו בגרסאות הקודמות.</string>
+    <string name="runtime_camera_use_front">שימוש במצלמה הקדמית</string>
+    <string name="runtime_camera_use_rear">שימוש במצלמה האחורית</string>
+    <string name="runtime_camera_switch_failed">לא ניתן להחליף מצלמה.</string>
 </resources>

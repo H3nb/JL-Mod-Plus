@@ -350,7 +350,15 @@
     <string name="config_decrease_value">値を減らす</string>
     <string name="config_delete_app_data">MIDlet のデータを削除</string>
     <string name="config_delete_app_data_summary">セーブデータを含む、この MIDlet のデータを完全に削除します。設定は保持されます。</string>
-    <string name="config_destination_audio">音声</string>
+    <string name="config_destination_media">メディア</string>
+    <string name="config_camera_title">カメラ</string>
+    <string name="config_camera_default_title">既定のカメラ</string>
+    <string name="config_camera_rear">背面</string>
+    <string name="config_camera_front">前面</string>
+    <string name="config_camera_resolution_title">既定の解像度</string>
+    <string name="config_camera_resolution_auto">自動</string>
+    <string name="config_camera_resolution_portrait">480×640 — 縦向き</string>
+    <string name="config_camera_resolution_landscape">640×480 — 横向き</string>
     <string name="config_destination_controls">操作</string>
     <string name="config_destination_general">全般</string>
     <string name="config_destination_graphics">表示</string>
@@ -1052,4 +1060,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">作業ディレクトリ内の共有フォルダーを使用します。</string>
     <string name="midlet_storage_mode_android_summary">以前のバージョンと同じAndroidストレージを使用します。</string>
+    <string name="runtime_camera_use_front">前面カメラを使用</string>
+    <string name="runtime_camera_use_rear">背面カメラを使用</string>
+    <string name="runtime_camera_switch_failed">カメラを切り替えられませんでした。</string>
 </resources>

@@ -400,7 +400,15 @@
     <string name="config_decrease_value">मान घटाएँ</string>
     <string name="config_delete_app_data">MIDlet का डेटा मिटाएँ</string>
     <string name="config_delete_app_data_summary">सहेजे गए डेटा सहित इस MIDlet का डेटा हमेशा के लिए मिटाएँ। इसकी सेटिंग रखी जाएँगी।</string>
-    <string name="config_destination_audio">ऑडियो</string>
+    <string name="config_destination_media">मीडिया</string>
+    <string name="config_camera_title">कैमरा</string>
+    <string name="config_camera_default_title">डिफ़ॉल्ट कैमरा</string>
+    <string name="config_camera_rear">पीछे</string>
+    <string name="config_camera_front">सामने</string>
+    <string name="config_camera_resolution_title">डिफ़ॉल्ट रिज़ॉल्यूशन</string>
+    <string name="config_camera_resolution_auto">स्वतः</string>
+    <string name="config_camera_resolution_portrait">480×640 — पोर्ट्रेट</string>
+    <string name="config_camera_resolution_landscape">640×480 — लैंडस्केप</string>
     <string name="config_destination_controls">कंट्रोल</string>
     <string name="config_destination_general">सामान्य</string>
     <string name="config_destination_graphics">डिस्प्ले</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">वर्किंग डायरेक्टरी में साझा फ़ोल्डर इस्तेमाल करें।</string>
     <string name="midlet_storage_mode_android_summary">पिछले संस्करणों की तरह Android स्टोरेज इस्तेमाल करें।</string>
+    <string name="runtime_camera_use_front">सामने का कैमरा इस्तेमाल करें</string>
+    <string name="runtime_camera_use_rear">पीछे का कैमरा इस्तेमाल करें</string>
+    <string name="runtime_camera_switch_failed">कैमरा बदला नहीं जा सका।</string>
 </resources>

@@ -248,7 +248,15 @@
     <string name="pref_skip_resume_call">startApp() overslaan bij hervatten</string>
     <string name="pref_soundbank_title">MIDI-soundbank</string>
     <string name="config_destination_graphics">Beeld</string>
-    <string name="config_destination_audio">Audio</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Camera</string>
+    <string name="config_camera_default_title">Standaardcamera</string>
+    <string name="config_camera_rear">Achtercamera</string>
+    <string name="config_camera_front">Frontcamera</string>
+    <string name="config_camera_resolution_title">Standaardresolutie</string>
+    <string name="config_camera_resolution_auto">Automatisch</string>
+    <string name="config_camera_resolution_portrait">480×640 — Staand</string>
+    <string name="config_camera_resolution_landscape">640×480 — Liggend</string>
     <string name="config_destination_controls">Bediening</string>
     <string name="config_gamepad_test">Controller testen</string>
     <string name="config_gamepad_calibrate">Controller kalibreren</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Gedeelde mappen in de werkmap gebruiken.</string>
     <string name="midlet_storage_mode_android_summary">Android-opslag gebruiken zoals in eerdere versies.</string>
+    <string name="runtime_camera_use_front">Frontcamera gebruiken</string>
+    <string name="runtime_camera_use_rear">Achtercamera gebruiken</string>
+    <string name="runtime_camera_switch_failed">Kan niet van camera wisselen.</string>
 </resources>

@@ -337,7 +337,15 @@
     <string name="config_decrease_value">減少數值</string>
     <string name="config_delete_app_data">刪除 MIDlet 資料</string>
     <string name="config_delete_app_data_summary">永久刪除此 MIDlet 的資料，包括存檔。其設定將保留。</string>
-    <string name="config_destination_audio">音訊</string>
+    <string name="config_destination_media">媒體</string>
+    <string name="config_camera_title">相機</string>
+    <string name="config_camera_default_title">預設相機</string>
+    <string name="config_camera_rear">後置</string>
+    <string name="config_camera_front">前置</string>
+    <string name="config_camera_resolution_title">預設解析度</string>
+    <string name="config_camera_resolution_auto">自動</string>
+    <string name="config_camera_resolution_portrait">480×640 — 縱向顯示</string>
+    <string name="config_camera_resolution_landscape">640×480 — 橫向顯示</string>
     <string name="config_destination_controls">控制</string>
     <string name="config_destination_general">一般</string>
     <string name="config_destination_graphics">顯示</string>
@@ -1052,4 +1060,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">使用工作目錄中的共用資料夾。</string>
     <string name="midlet_storage_mode_android_summary">使用與先前版本相同的 Android 儲存空間。</string>
+    <string name="runtime_camera_use_front">使用前置相機</string>
+    <string name="runtime_camera_use_rear">使用後置相機</string>
+    <string name="runtime_camera_switch_failed">無法切換相機。</string>
 </resources>

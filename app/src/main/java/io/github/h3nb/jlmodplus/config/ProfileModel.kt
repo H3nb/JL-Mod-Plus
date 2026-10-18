@@ -21,6 +21,7 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors
 import io.github.h3nb.jlmodplus.util.Constants.PREF_THEME
 import java.io.File
@@ -88,6 +89,8 @@ data class ProfileModel(
     @SerialName("KeyMappings") @JvmField var keyMappings: Map<Int, Int> = emptyMap(),
     @SerialName("Controller") @JvmField var controller: JsonElement? = null,
     @SerialName("SoundBank") @JvmField var soundBank: String? = null,
+    @SerialName("CameraDefaultFacing") @JvmField var cameraDefaultFacing: Int = CameraCaptureOptions.BACK,
+    @SerialName("CameraResolution") @JvmField var cameraResolution: Int = CameraCaptureOptions.RESOLUTION_AUTO,
     @SerialName("SystemProperties") @JvmField var systemProperties: String? = null,
     @SerialName("SkipResumeCall") @JvmField var skipResumeCall: Boolean = false,
 ) {

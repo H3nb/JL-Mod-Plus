@@ -353,7 +353,15 @@
     <string name="config_decrease_value">کاهش مقدار</string>
     <string name="config_delete_app_data">حذف داده‌های MIDlet</string>
     <string name="config_delete_app_data_summary">داده‌های این MIDlet، از جمله داده‌های ذخیره‌شده، را برای همیشه حذف می‌کند. تنظیمات آن حفظ می‌شوند.</string>
-    <string name="config_destination_audio">صدا</string>
+    <string name="config_destination_media">رسانه</string>
+    <string name="config_camera_title">دوربین</string>
+    <string name="config_camera_default_title">دوربین پیش‌فرض</string>
+    <string name="config_camera_rear">پشت</string>
+    <string name="config_camera_front">جلو</string>
+    <string name="config_camera_resolution_title">وضوح پیش‌فرض</string>
+    <string name="config_camera_resolution_auto">خودکار</string>
+    <string name="config_camera_resolution_portrait">480×640 — عمودی</string>
+    <string name="config_camera_resolution_landscape">640×480 — افقی</string>
     <string name="config_destination_controls">کنترل‌ها</string>
     <string name="config_destination_general">عمومی</string>
     <string name="config_destination_graphics">نمایش</string>
@@ -1085,4 +1093,7 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">از پوشه‌های مشترک در پوشه کاری استفاده کنید.</string>
     <string name="midlet_storage_mode_android_summary">مانند نسخه‌های قبلی از فضای ذخیره‌سازی Android استفاده کنید.</string>
+    <string name="runtime_camera_use_front">استفاده از دوربین جلو</string>
+    <string name="runtime_camera_use_rear">استفاده از دوربین پشت</string>
+    <string name="runtime_camera_switch_failed">تعویض دوربین ممکن نشد.</string>
 </resources>
