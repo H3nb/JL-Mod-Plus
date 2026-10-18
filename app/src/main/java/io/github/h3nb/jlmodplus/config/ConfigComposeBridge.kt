@@ -1917,9 +1917,11 @@ private fun AnalogColorSample(
             radius = radius * 0.70f,
             center = center,
         )
-        drawCircle(Color.Black.copy(alpha = 0.22f),
+        drawCircle(
+            opaque(VirtualControlAppearance.analogThumbShadow(backgroundRgb)).copy(alpha = 0x5A / 255f),
             thumbRadius * 1.055f,
-            Offset(center.x, center.y + thumbRadius * 0.045f))
+            Offset(center.x, center.y + thumbRadius * 0.045f),
+        )
         drawCircle(opaque(VirtualControlAppearance.analogThumbRim(thumbRgb)),
             thumbRadius * 1.035f, center)
         drawCircle(

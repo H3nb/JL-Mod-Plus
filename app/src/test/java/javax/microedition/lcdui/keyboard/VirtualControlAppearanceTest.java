@@ -51,7 +51,8 @@ public class VirtualControlAppearanceTest {
 		assertEquals(0x000000, VirtualControlAppearance.analogShellBottom(profile.vkBgColor));
 		assertEquals(0x1A1A1A, VirtualControlAppearance.analogThumb(profile, false));
 		assertEquals(0xFF0000, VirtualControlAppearance.analogThumb(profile, true));
-		assertEquals(0x060606, VirtualControlAppearance.analogBowlCenter(profile.vkBgColor));
+		assertEquals(0x090909, VirtualControlAppearance.analogBowlCenter(profile.vkBgColor));
+		assertEquals(0x040404, VirtualControlAppearance.analogBowlEdge(profile.vkBgColor));
 
 		// Outline changes must never tint the material surfaces.
 		profile.vkOutlineColor = 0x00FF00;
@@ -61,13 +62,23 @@ public class VirtualControlAppearanceTest {
 		profile.vkBgColor = 0xFFFFFF;
 		assertEquals(0xFFFFFF, VirtualControlAppearance.analogShell(profile.vkBgColor));
 		assertEquals(0xE6E6E6, VirtualControlAppearance.analogThumb(profile, false));
-		assertEquals(0xC7C7C7, VirtualControlAppearance.analogBowlCenter(profile.vkBgColor));
+		assertEquals(0xEBEBEB, VirtualControlAppearance.analogBowlCenter(profile.vkBgColor));
+		assertEquals(0xBABABA, VirtualControlAppearance.analogBowlEdge(profile.vkBgColor));
 
 		profile.vkBgColor = 0xFF0000;
 		assertEquals(0xFF0000, VirtualControlAppearance.analogShell(profile.vkBgColor));
 		assertEquals(0xFF1A1A, VirtualControlAppearance.analogThumb(profile, false));
 		assertEquals(0xFF0000, VirtualControlAppearance.analogThumb(profile, true));
 		assertEquals(0xE90000, VirtualControlAppearance.analogShellBottom(profile.vkBgColor));
+		assertEquals(0xEB0000, VirtualControlAppearance.analogBowlCenter(profile.vkBgColor));
+		assertEquals(0xBA0000, VirtualControlAppearance.analogBowlEdge(profile.vkBgColor));
+
+		// Recess and shadow retain the hue of the configured color.
+		profile.vkBgColor = 0x967879;
+		assertEquals(0x967879, VirtualControlAppearance.analogShell(profile.vkBgColor));
+		assertEquals(0x8A6E6F, VirtualControlAppearance.analogBowlCenter(profile.vkBgColor));
+		assertEquals(0x6E5858, VirtualControlAppearance.analogBowlEdge(profile.vkBgColor));
+		assertEquals(0x574646, VirtualControlAppearance.analogThumbShadow(profile.vkBgColor));
 	}
 
 	@Test

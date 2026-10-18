@@ -42,6 +42,26 @@ public final class VirtualControlAppearance {
 	}
 
 	/** Lightness-aware shading retains the selected background hue and leaves outline independent. */
+	private static int adjustTone(int rgb, float amount) {
+		float strength = Math.max(-1f, Math.min(1f, amount));
+		int red = adjustChannel((rgb >>> 16) & 0xFF, strength);
+		int green = adjustChannel((rgb >>> 8) & 0xFF, strength);
+		int blue = adjustChannel(rgb & 0xFF, strength);
+		return (red << 16) | (green << 8) | blue;
+	}
+
+	private static int adjustChannel(int channel, float strength) {
+		return Math.round(strength < 0f ? channel * (1f + strength)
+				: channel + (255 - channel) * strength);
+	}
+
+	/** Lift only genuinely near-black colors; the strength fades smoothly as brightness rises. */
+	private static float nearBlackLift(int rgb, float maximum) {
+		int bright = Math.max((rgb >>> 16) & 0xFF,
+				Math.max((rgb >>> 8) & 0xFF, rgb & 0xFF));
+		return maximum * Math.max(0f, 1f - bright / 48f);
+	}
+
 	private static boolean isLight(int rgb) {
 		int red = (rgb >>> 16) & 0xFF;
 		int green = (rgb >>> 8) & 0xFF;
@@ -53,7 +73,7 @@ public final class VirtualControlAppearance {
 	public static int analogThumbColor(int normalBackground, int selectedBackground, boolean active) {
 		if (active) return selectedBackground & 0xFFFFFF;
 		int background = normalBackground & 0xFFFFFF;
-		return mixRgb(background, isLight(background) ? 0x000000 : 0xFFFFFF, 0.10f);
+		return adjustTone(background, isLight(background) ? -0.10f : 0.10f);
 	}
 
 	/** The middle stop of the shell gradient matches the configured keypad background. */
@@ -62,37 +82,42 @@ public final class VirtualControlAppearance {
 	}
 
 	public static int analogShellTop(int background) {
-		return mixRgb(analogShell(background), 0xFFFFFF, 0.065f);
+		return adjustTone(analogShell(background), 0.065f);
 	}
 
 	public static int analogShellBottom(int background) {
-		return mixRgb(analogShell(background), 0x000000, 0.085f);
+		return adjustTone(analogShell(background), -0.085f);
 	}
 
 	public static int analogShellRim(int background) {
-		return mixRgb(analogShell(background), 0xFFFFFF, 0.16f);
+		return adjustTone(analogShell(background), 0.16f);
 	}
 
 	public static int analogBowlCenter(int background) {
 		int base = analogShell(background);
-		return mixRgb(base, isLight(base) ? 0x000000 : 0xFFFFFF,
-				isLight(base) ? 0.22f : 0.025f);
+		return adjustTone(adjustTone(base, -0.08f), nearBlackLift(base, 0.035f));
 	}
 
 	public static int analogBowlEdge(int background) {
-		return mixRgb(analogShell(background), 0x000000, 0.55f);
+		int base = analogShell(background);
+		return adjustTone(adjustTone(base, -0.27f), nearBlackLift(base, 0.015f));
+	}
+
+	/** A tinted drop shadow follows the background instead of using solid black. */
+	public static int analogThumbShadow(int background) {
+		return adjustTone(analogShell(background), -0.42f);
 	}
 
 	public static int analogThumbTop(int thumb) {
-		return mixRgb(thumb, 0xFFFFFF, 0.09f);
+		return adjustTone(thumb, 0.09f);
 	}
 
 	public static int analogThumbBottom(int thumb) {
-		return mixRgb(thumb, 0x000000, 0.12f);
+		return adjustTone(thumb, -0.12f);
 	}
 
 	public static int analogThumbRim(int thumb) {
-		return mixRgb(thumb, 0xFFFFFF, 0.20f);
+		return adjustTone(thumb, 0.20f);
 	}
 
 	static int analogThumb(ProfileModel profile, boolean active) {

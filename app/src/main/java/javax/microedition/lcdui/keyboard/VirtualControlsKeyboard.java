@@ -1553,7 +1553,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			// A shallow shadow and raised, softly illuminated thumb.
 			float thumbRadius = radius * 0.45f;
 			graphics.fillControlCircle(thumbX, thumbY + thumbRadius * 0.045f,
-					thumbRadius * 1.055f, 0x38000000);
+					thumbRadius * 1.055f,
+					(0x5A << 24) | VirtualControlAppearance.analogThumbShadow(base));
 			fillCircle(graphics, thumbX, thumbY, thumbRadius * 1.035f,
 					VirtualControlAppearance.analogThumbRim(thumbColor));
 			graphics.fillControlLinearCircle(analogThumbGradient,
