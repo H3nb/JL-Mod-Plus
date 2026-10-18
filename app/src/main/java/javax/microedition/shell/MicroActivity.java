@@ -658,8 +658,10 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {
+		// A failed load can leave a loader without a profile while its host error dialog is open.
+		ProfileModel profile = microLoader == null ? null : microLoader.getProfile();
 		return GuestWindowPolicy.resolve(displayable instanceof Canvas, !runtimeToolbarEnabled,
-				microLoader != null && microLoader.getProfile().allowDisplayCutout);
+				profile != null && profile.allowDisplayCutout);
 	}
 
 	private int getRuntimeToolbarHeight(GuestWindowPolicy.Chrome chrome) {
