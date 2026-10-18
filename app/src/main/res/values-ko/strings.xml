@@ -365,7 +365,15 @@
     <string name="config_decrease_value">값 줄이기</string>
     <string name="config_delete_app_data">MIDlet 데이터 삭제</string>
     <string name="config_delete_app_data_summary">저장 데이터를 포함한 이 MIDlet의 데이터를 영구적으로 삭제합니다. 설정은 유지됩니다.</string>
-    <string name="config_destination_audio">오디오</string>
+    <string name="config_destination_media">미디어</string>
+    <string name="config_camera_title">카메라</string>
+    <string name="config_camera_default_title">기본 카메라</string>
+    <string name="config_camera_rear">후면</string>
+    <string name="config_camera_front">전면</string>
+    <string name="config_camera_resolution_title">기본 해상도</string>
+    <string name="config_camera_resolution_auto">자동</string>
+    <string name="config_camera_resolution_portrait">480×640 — 세로</string>
+    <string name="config_camera_resolution_landscape">640×480 — 가로</string>
     <string name="config_destination_controls">조작</string>
     <string name="config_destination_general">일반</string>
     <string name="config_destination_graphics">화면</string>

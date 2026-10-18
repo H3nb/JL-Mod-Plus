@@ -388,7 +388,15 @@
     <string name="config_decrease_value">Giảm giá trị</string>
     <string name="config_delete_app_data">Xóa dữ liệu MIDlet</string>
     <string name="config_delete_app_data_summary">Xóa vĩnh viễn dữ liệu của MIDlet này, bao gồm dữ liệu đã lưu. Cài đặt của MIDlet vẫn được giữ lại.</string>
-    <string name="config_destination_audio">Âm thanh</string>
+    <string name="config_destination_media">Đa phương tiện</string>
+    <string name="config_camera_title">Máy ảnh</string>
+    <string name="config_camera_default_title">Máy ảnh mặc định</string>
+    <string name="config_camera_rear">Sau</string>
+    <string name="config_camera_front">Trước</string>
+    <string name="config_camera_resolution_title">Độ phân giải mặc định</string>
+    <string name="config_camera_resolution_auto">Tự động</string>
+    <string name="config_camera_resolution_portrait">480×640 — Hướng dọc</string>
+    <string name="config_camera_resolution_landscape">640×480 — Xoay ngang</string>
     <string name="config_destination_controls">Điều khiển</string>
     <string name="config_destination_general">Chung</string>
     <string name="config_destination_graphics">Hiển thị</string>

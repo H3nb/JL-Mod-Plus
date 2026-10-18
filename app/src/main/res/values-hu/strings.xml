@@ -361,7 +361,15 @@
     <string name="config_decrease_value">Érték csökkentése</string>
     <string name="config_delete_app_data">MIDlet adatainak törlése</string>
     <string name="config_delete_app_data_summary">Véglegesen törli ennek a MIDletnek az adatait, beleértve a mentéseket. A beállításai megmaradnak.</string>
-    <string name="config_destination_audio">Hang</string>
+    <string name="config_destination_media">Média</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Alapértelmezett kamera</string>
+    <string name="config_camera_rear">Hátlapi</string>
+    <string name="config_camera_front">Előlapi</string>
+    <string name="config_camera_resolution_title">Alapértelmezett felbontás</string>
+    <string name="config_camera_resolution_auto">Automatikus</string>
+    <string name="config_camera_resolution_portrait">480×640 — Álló</string>
+    <string name="config_camera_resolution_landscape">640×480 — Fekvő</string>
     <string name="config_destination_controls">Vezérlés</string>
     <string name="config_destination_general">Általános</string>
     <string name="config_destination_graphics">Megjelenítés</string>

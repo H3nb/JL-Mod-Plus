@@ -11,6 +11,15 @@ object CameraCaptureOptions {
     const val DEFAULT_WIDTH = 640
     const val DEFAULT_HEIGHT = 480
     const val MAX_PIXELS = 1_228_800
+    const val RESOLUTION_AUTO = 0
+    const val RESOLUTION_PORTRAIT = 1
+    const val RESOLUTION_LANDSCAPE = 2
+
+    @JvmStatic fun normalizeFacing(value: Int): Int = if (value == FRONT) FRONT else BACK
+    @JvmStatic fun normalizeResolution(value: Int): Int = when (value) {
+        RESOLUTION_PORTRAIT, RESOLUTION_LANDSCAPE -> value
+        else -> RESOLUTION_AUTO
+    }
 
     data class Dimensions(val width: Int = DEFAULT_WIDTH, val height: Int = DEFAULT_HEIGHT)
 
@@ -22,6 +31,34 @@ object CameraCaptureOptions {
     @JvmStatic
     fun defaultsForOrientation(portrait: Boolean): Dimensions =
         if (portrait) Dimensions(DEFAULT_HEIGHT, DEFAULT_WIDTH) else Dimensions()
+
+    @JvmStatic
+    fun configuredDimensions(resolution: Int, screenPortrait: Boolean): Dimensions =
+        defaultsForOrientation(when (normalizeResolution(resolution)) {
+            RESOLUTION_PORTRAIT -> true
+            RESOLUTION_LANDSCAPE -> false
+            else -> screenPortrait
+        })
+
+    /** Named devices and session swaps are strict; a configured default may fall back. */
+    @JvmStatic
+    @Throws(MediaException::class)
+    fun selectFacing(requested: Int?, preferred: Int, rearAvailable: Boolean, frontAvailable: Boolean): Int {
+        fun available(facing: Int) = when (facing) {
+            BACK -> rearAvailable
+            FRONT -> frontAvailable
+            else -> false
+        }
+        if (requested != null) {
+            if (!available(requested)) throw MediaException("Requested camera is unavailable")
+            return requested
+        }
+        val selected = normalizeFacing(preferred)
+        if (available(selected)) return selected
+        val other = if (selected == BACK) FRONT else BACK
+        if (available(other)) return other
+        throw MediaException("No camera is available")
+    }
 
     data class Source(val facing: Int?, val width: Int, val height: Int)
 

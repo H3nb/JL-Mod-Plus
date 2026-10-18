@@ -410,7 +410,15 @@
     <string name="config_decrease_value">Snížit hodnotu</string>
     <string name="config_delete_app_data">Smazat data MIDletu</string>
     <string name="config_delete_app_data_summary">Trvale smaže data tohoto MIDletu včetně uložených pozic. Jeho nastavení zůstane zachováno.</string>
-    <string name="config_destination_audio">Zvuk</string>
+    <string name="config_destination_media">Média</string>
+    <string name="config_camera_title">Fotoaparát</string>
+    <string name="config_camera_default_title">Výchozí fotoaparát</string>
+    <string name="config_camera_rear">Zadní</string>
+    <string name="config_camera_front">Přední</string>
+    <string name="config_camera_resolution_title">Výchozí rozlišení</string>
+    <string name="config_camera_resolution_auto">Automaticky</string>
+    <string name="config_camera_resolution_portrait">480×640 — Na výšku</string>
+    <string name="config_camera_resolution_landscape">640×480 — Na šířku</string>
     <string name="config_destination_controls">Ovládání</string>
     <string name="config_destination_general">Obecné</string>
     <string name="config_destination_graphics">Zobrazení</string>

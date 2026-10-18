@@ -297,7 +297,15 @@
     <string name="config_decrease_value">Redueix el valor</string>
     <string name="config_delete_app_data">Suprimeix les dades del MIDlet</string>
     <string name="config_delete_app_data_summary">Suprimeix permanentment les dades d\'aquest MIDlet, incloses les partides desades. Se\'n conservarà la configuració.</string>
-    <string name="config_destination_audio">Àudio</string>
+    <string name="config_destination_media">Multimèdia</string>
+    <string name="config_camera_title">Càmera</string>
+    <string name="config_camera_default_title">Càmera predeterminada</string>
+    <string name="config_camera_rear">Posterior</string>
+    <string name="config_camera_front">Frontal</string>
+    <string name="config_camera_resolution_title">Resolució predeterminada</string>
+    <string name="config_camera_resolution_auto">Automàtica</string>
+    <string name="config_camera_resolution_portrait">480×640 — Vertical</string>
+    <string name="config_camera_resolution_landscape">640×480 — Horitzontal</string>
     <string name="config_destination_controls">Controls</string>
     <string name="config_destination_general">General</string>
     <string name="config_destination_graphics">Pantalla</string>

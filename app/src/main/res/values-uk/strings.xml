@@ -408,7 +408,15 @@
     <string name="config_decrease_value">Зменшити значення</string>
     <string name="config_delete_app_data">Видалити дані MIDlet</string>
     <string name="config_delete_app_data_summary">Назавжди видаляє дані цього MIDlet, зокрема збереження ігор. Його налаштування залишаться.</string>
-    <string name="config_destination_audio">Звук</string>
+    <string name="config_destination_media">Медіа</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Типова камера</string>
+    <string name="config_camera_rear">Задня</string>
+    <string name="config_camera_front">Передня</string>
+    <string name="config_camera_resolution_title">Типова роздільна здатність</string>
+    <string name="config_camera_resolution_auto">Авто</string>
+    <string name="config_camera_resolution_portrait">480×640 — Портретна</string>
+    <string name="config_camera_resolution_landscape">640×480 — Альбомна</string>
     <string name="config_destination_controls">Керування</string>
     <string name="config_destination_general">Загальні</string>
     <string name="config_destination_graphics">Відображення</string>

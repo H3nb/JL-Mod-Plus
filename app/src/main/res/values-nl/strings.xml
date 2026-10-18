@@ -248,7 +248,15 @@
     <string name="pref_skip_resume_call">startApp() overslaan bij hervatten</string>
     <string name="pref_soundbank_title">MIDI-soundbank</string>
     <string name="config_destination_graphics">Beeld</string>
-    <string name="config_destination_audio">Audio</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Camera</string>
+    <string name="config_camera_default_title">Standaardcamera</string>
+    <string name="config_camera_rear">Achterkant</string>
+    <string name="config_camera_front">Voorkant</string>
+    <string name="config_camera_resolution_title">Standaardresolutie</string>
+    <string name="config_camera_resolution_auto">Automatisch</string>
+    <string name="config_camera_resolution_portrait">480×640 — Staand</string>
+    <string name="config_camera_resolution_landscape">640×480 — Liggend</string>
     <string name="config_destination_controls">Bediening</string>
     <string name="config_gamepad_test">Controller testen</string>
     <string name="config_gamepad_calibrate">Controller kalibreren</string>

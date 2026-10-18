@@ -395,7 +395,15 @@
     <string name="config_decrease_value">减小数值</string>
     <string name="config_delete_app_data">删除 MIDlet 数据</string>
     <string name="config_delete_app_data_summary">永久删除此 MIDlet 的数据，包括存档。其设置将保留。</string>
-    <string name="config_destination_audio">音频</string>
+    <string name="config_destination_media">媒体</string>
+    <string name="config_camera_title">相机</string>
+    <string name="config_camera_default_title">默认相机</string>
+    <string name="config_camera_rear">后置</string>
+    <string name="config_camera_front">前置</string>
+    <string name="config_camera_resolution_title">默认分辨率</string>
+    <string name="config_camera_resolution_auto">自动</string>
+    <string name="config_camera_resolution_portrait">480×640 — 竖屏</string>
+    <string name="config_camera_resolution_landscape">640×480 — 横屏</string>
     <string name="config_destination_controls">控制</string>
     <string name="config_destination_general">常规</string>
     <string name="config_destination_graphics">显示</string>

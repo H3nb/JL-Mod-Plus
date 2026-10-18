@@ -199,7 +199,7 @@ public class MicroLoader {
 		}
 		timingSession = session;
 		audioSession = RuntimeAudioCoordinator.beginRuntime();
-		io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.beginRuntime(cameraDefaultDimensions);
+		io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.beginRuntime(cameraDefaultDimensions, params.cameraDefaultFacing);
 		memoryRuntimeToken = MemoryRuntimeSession.start();
 	}
 
@@ -530,7 +530,7 @@ public class MicroLoader {
 					}
 				}
 				cameraDefaultDimensions = io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
-						.defaultsForOrientation(portrait);
+						.configuredDimensions(params.cameraResolution, portrait);
 			}
 			Map<String, String> cameraProperties =
 					io.github.h3nb.jlmodplus.mmapi.camera.CameraCapabilities.resolve(

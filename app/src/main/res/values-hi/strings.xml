@@ -400,7 +400,15 @@
     <string name="config_decrease_value">मान घटाएँ</string>
     <string name="config_delete_app_data">MIDlet का डेटा मिटाएँ</string>
     <string name="config_delete_app_data_summary">सहेजे गए डेटा सहित इस MIDlet का डेटा हमेशा के लिए मिटाएँ। इसकी सेटिंग रखी जाएँगी।</string>
-    <string name="config_destination_audio">ऑडियो</string>
+    <string name="config_destination_media">मीडिया</string>
+    <string name="config_camera_title">कैमरा</string>
+    <string name="config_camera_default_title">डिफ़ॉल्ट कैमरा</string>
+    <string name="config_camera_rear">पीछे</string>
+    <string name="config_camera_front">सामने</string>
+    <string name="config_camera_resolution_title">डिफ़ॉल्ट रिज़ॉल्यूशन</string>
+    <string name="config_camera_resolution_auto">स्वतः</string>
+    <string name="config_camera_resolution_portrait">480×640 — उर्ध्व</string>
+    <string name="config_camera_resolution_landscape">640×480 — आड़ा</string>
     <string name="config_destination_controls">कंट्रोल</string>
     <string name="config_destination_general">सामान्य</string>
     <string name="config_destination_graphics">डिस्प्ले</string>

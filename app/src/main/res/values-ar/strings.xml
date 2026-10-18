@@ -420,7 +420,15 @@
     <string name="config_decrease_value">تقليل القيمة</string>
     <string name="config_delete_app_data">حذف بيانات MIDlet</string>
     <string name="config_delete_app_data_summary">احذف بيانات MIDlet هذا نهائيًا، بما فيها ملفات الحفظ. ستُحفظ إعداداته.</string>
-    <string name="config_destination_audio">الصوت</string>
+    <string name="config_destination_media">الوسائط</string>
+    <string name="config_camera_title">الكاميرا</string>
+    <string name="config_camera_default_title">الكاميرا الافتراضية</string>
+    <string name="config_camera_rear">الخلفية</string>
+    <string name="config_camera_front">الأمامية</string>
+    <string name="config_camera_resolution_title">الدقة الافتراضية</string>
+    <string name="config_camera_resolution_auto">تلقائي</string>
+    <string name="config_camera_resolution_portrait">480×640 — عمودي</string>
+    <string name="config_camera_resolution_landscape">640×480 — أفقي</string>
     <string name="config_destination_controls">أدوات التحكم</string>
     <string name="config_destination_general">عام</string>
     <string name="config_destination_graphics">العرض</string>

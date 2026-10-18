@@ -21,6 +21,7 @@ import io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay
 /** JSR-135 live source. No recorder, audio output, or file decoder participates. */
 class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: String) : Player {
     private val defaultDimensions = CameraRuntime.defaultDimensions
+    internal val defaultFacing = CameraRuntime.defaultFacing
     internal val source = CameraCaptureOptions.parseLocator(locator, defaultDimensions)
     internal val runtimeGeneration = CameraRuntime.generation()
     private val lock = Any()

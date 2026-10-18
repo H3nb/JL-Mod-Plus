@@ -47,6 +47,8 @@ object CameraRuntime {
     @Volatile private var runtimeOpen = false
     internal var defaultDimensions = CameraCaptureOptions.Dimensions()
         private set
+    internal var defaultFacing = CameraCaptureOptions.BACK
+        private set
     private val players = Collections.newSetFromMap(ConcurrentHashMap<CameraCapturePlayer, Boolean>())
     private var host: MicroActivity? = null
     private var displayManager: DisplayManager? = null
@@ -105,10 +107,12 @@ object CameraRuntime {
 
     @JvmStatic @JvmOverloads fun beginRuntime(
         dimensions: CameraCaptureOptions.Dimensions = CameraCaptureOptions.Dimensions(),
+        facing: Int = CameraCaptureOptions.BACK,
     ) {
         runtimeOpen = false
         resetRuntime()
         defaultDimensions = dimensions
+        defaultFacing = CameraCaptureOptions.normalizeFacing(facing)
         runtimeOpen = true
     }
     @JvmStatic fun closeRuntime() {
@@ -303,15 +307,9 @@ object CameraRuntime {
     private fun selector(facing: Int) = CameraSelector.Builder().requireLensFacing(facing).build()
     private fun facing(player: CameraCapturePlayer, cameras: ProcessCameraProvider): Int {
         val requested = overrideFacing ?: player.source.facing
-        if (requested != null) {
-            if (!cameras.hasCamera(selector(requested))) throw MediaException("Requested camera is unavailable")
-            return requested
-        }
-        return when {
-            cameras.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA) -> CameraSelector.LENS_FACING_BACK
-            cameras.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) -> CameraSelector.LENS_FACING_FRONT
-            else -> throw MediaException("No camera is available")
-        }
+        return CameraCaptureOptions.selectFacing(requested, player.defaultFacing,
+            cameras.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA),
+            cameras.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA))
     }
 
     private fun bind(cameras: ProcessCameraProvider, activity: MicroActivity, player: CameraCapturePlayer) {
@@ -485,13 +483,13 @@ object CameraRuntime {
 
     @JvmStatic fun canSwitchCamera(): Boolean {
         val cameras = provider ?: return false
-        val current = binding ?: return false
+        val player = binding?.player ?: owner?.takeIf { switchFailure != null } ?: return false
         return try {
-            valid(current.player) && foreground &&
+            valid(player) && foreground &&
                 cameras.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) && cameras.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
         } catch (_: Exception) { false }
     }
-    @JvmStatic fun isFrontCamera() = binding?.facing == CameraSelector.LENS_FACING_FRONT
+    @JvmStatic fun isFrontCamera() = (binding?.facing ?: overrideFacing) == CameraSelector.LENS_FACING_FRONT
     @JvmStatic fun isSwitchingCamera() = switchFailure != null || capturing != null || binding?.ready == false
     @JvmStatic fun switchCamera(onFailure: SwitchFailure) {
         if (!canSwitchCamera() || isSwitchingCamera()) { onFailure.accept("Camera is not ready"); return }

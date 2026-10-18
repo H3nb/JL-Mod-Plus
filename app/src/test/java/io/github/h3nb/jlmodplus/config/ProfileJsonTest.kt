@@ -42,7 +42,47 @@ class ProfileJsonTest {
         val comparableOld = Json.parseToJsonElement(oldTree.toString()).jsonObject.filterValues { it != JsonNull }
         // The additive cutout option was not part of the frozen historical schema.
         assertEquals(JsonPrimitive(false), newTree["AllowDisplayCutout"])
-        assertTrue(ProfileJson.sameValue(JsonObject(comparableOld), JsonObject(newTree - "AllowDisplayCutout")))
+        assertEquals(JsonPrimitive(1), newTree["CameraDefaultFacing"])
+        assertEquals(JsonPrimitive(0), newTree["CameraResolution"])
+        assertTrue(ProfileJson.sameValue(JsonObject(comparableOld),
+            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution"))))
+    }
+
+    @Test fun additiveCameraDefaultsPreserveV7ReadOnlyLoadAndRoundTripExplicitChoices() {
+        val input = fixture("gson-v7.json")
+        val decoded = ProfileJson.decode(input, false)
+        assertEquals(1, decoded.model.cameraDefaultFacing)
+        assertEquals(0, decoded.model.cameraResolution)
+        assertFalse(decoded.needsPublication)
+        val explicitDefaults = ProfileJson.decode(
+            JsonObject(Json.parseToJsonElement(input).jsonObject + mapOf(
+                "CameraDefaultFacing" to JsonPrimitive(1), "CameraResolution" to JsonPrimitive(0),
+            )).toString(), false,
+        ).model
+        assertTrue(ProfileConfigMatcher.sameConfig(decoded.model, explicitDefaults))
+        val directory = Files.createTempDirectory("profile-camera-default").toFile()
+        val file = File(directory, Config.MIDLET_CONFIG_FILE).apply { writeText(input) }
+        try {
+            val loaded = checkNotNull(ProfilesManager.loadConfig(directory))
+            assertEquals(input, file.readText())
+            assertEquals(setOf(file.name), directory.list()!!.toSet())
+            val changed = ProfileConfigMatcher.copyConfig(loaded).apply {
+                cameraDefaultFacing = 0
+                cameraResolution = 2
+            }
+            assertFalse(ProfileConfigMatcher.sameConfig(loaded, changed))
+            assertTrue(ProfilesManager.saveConfig(directory, changed))
+            val reread = checkNotNull(ProfilesManager.loadConfig(directory))
+            assertEquals(0, reread.cameraDefaultFacing)
+            assertEquals(2, reread.cameraResolution)
+            assertEquals(7, reread.version)
+            assertEquals(loaded.controller, reread.controller)
+            assertTrue(ProfileConfigMatcher.sameConfig(changed, reread))
+        } finally { directory.deleteRecursively() }
+        val invalid = ProfileJson.decode("""{"Version":7,"CameraDefaultFacing":99,"CameraResolution":-1}""", false)
+        assertEquals(1, invalid.model.cameraDefaultFacing)
+        assertEquals(0, invalid.model.cameraResolution)
+        assertFalse(invalid.needsPublication)
     }
 
     @Test fun additiveCutoutOptionDefaultsOffWithoutPublishingOrChangingEffectiveConfig() {

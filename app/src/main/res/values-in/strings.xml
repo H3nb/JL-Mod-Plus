@@ -651,7 +651,15 @@
 
     <string name="config_destination_general">Umum</string>
     <string name="config_destination_graphics">Tampilan</string>
-    <string name="config_destination_audio">Audio</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Kamera default</string>
+    <string name="config_camera_rear">Belakang</string>
+    <string name="config_camera_front">Depan</string>
+    <string name="config_camera_resolution_title">Resolusi default</string>
+    <string name="config_camera_resolution_auto">Otomatis</string>
+    <string name="config_camera_resolution_portrait">480×640 — Potret</string>
+    <string name="config_camera_resolution_landscape">640×480 — Lanskap</string>
     <string name="config_destination_controls">Kontrol</string>
     <string name="config_destination_system">Sistem</string>
     <string name="config_basic_display">Layar MIDlet</string>

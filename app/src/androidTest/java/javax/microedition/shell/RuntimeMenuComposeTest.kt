@@ -32,6 +32,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
@@ -330,6 +331,91 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
             .assertWidthIsAtLeast(48.dp)
             .assertHeightIsAtLeast(48.dp)
+    }
+
+    @Test
+    fun cameraToolbarShortcutTracksLifecycleDestinationAndBusyStateOnCanvasAndForm() {
+        val events = mutableListOf<String>()
+        val state = androidx.compose.runtime.mutableStateOf(RuntimeMenuUiState(
+            title = "Camera MIDlet",
+            isCanvas = true,
+            imeAvailable = true,
+            emulationSpeedAvailable = true,
+        ))
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 48.dp)),
+            ) {
+                JLModPlusTheme {
+                    RuntimeMenuHost(
+                        state = state.value,
+                        menuVisible = false,
+                        actions = RecordingRuntimeMenuActions(events),
+                        onDismissMenu = { events += "dismiss" },
+                    )
+                }
+            }
+        }
+        val front = uiString(R.string.runtime_camera_use_front)
+        val rear = uiString(R.string.runtime_camera_use_rear)
+        composeRule.onAllNodesWithContentDescription(front).assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(rear).assertCountEquals(0)
+        composeRule.runOnIdle { state.value = state.value.copy(cameraSwitchAvailable = true) }
+        composeRule.onNodeWithContentDescription(front)
+            .assertIsDisplayed().assertIsEnabled()
+            .assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
+            .performClick()
+        assertEquals(listOf("camera"), events)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_keyboard_ime)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot)).assertIsDisplayed()
+        composeRule.onNodeWithText(javax.microedition.shell.timing.EmulationSpeed.formatMultiplier(100))
+            .assertIsDisplayed()
+
+        composeRule.runOnIdle { state.value = state.value.copy(cameraSwitching = true) }
+        composeRule.onNodeWithContentDescription(front).assertIsDisplayed().assertIsNotEnabled()
+            .performTouchInput { click() }
+        assertEquals(listOf("camera"), events)
+        composeRule.runOnIdle {
+            state.value = state.value.copy(isCanvas = false, cameraFrontFacing = true, cameraSwitching = false)
+        }
+        composeRule.onAllNodesWithContentDescription(front).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(rear).assertIsDisplayed().assertIsEnabled().performClick()
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.take_screenshot)).assertCountEquals(0)
+        assertEquals(listOf("camera", "camera"), events)
+        composeRule.runOnIdle { state.value = state.value.copy(cameraSwitchAvailable = false) }
+        composeRule.onAllNodesWithContentDescription(rear).assertCountEquals(0)
+    }
+
+    @Test
+    fun cameraMenuActionExistsOnlyWhenShortcutCannotBeShown() {
+        val events = mutableListOf<String>()
+        val state = androidx.compose.runtime.mutableStateOf(RuntimeMenuUiState(
+            title = "Camera MIDlet",
+            isCanvas = true,
+            imeAvailable = true,
+            emulationSpeedAvailable = true,
+            cameraSwitchAvailable = true,
+            toolbarWidthDp = 360f,
+        ))
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = state.value,
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(events),
+                    onDismissMenu = { events += "dismiss" },
+                )
+            }
+        }
+        val label = uiString(R.string.runtime_camera_use_front)
+        composeRule.onAllNodesWithText(label).assertCountEquals(0)
+        composeRule.runOnIdle { state.value = state.value.copy(toolbarWidthDp = 152f) }
+        composeRule.onNodeWithText(label).performScrollTo().assertIsDisplayed().performClick()
+        assertEquals(listOf("dismiss", "camera"), events)
+        composeRule.runOnIdle { state.value = state.value.copy(toolbarVisible = false, cameraSwitching = true) }
+        composeRule.onNodeWithText(label).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
+            .performTouchInput { click() }
+        assertEquals(listOf("dismiss", "camera"), events)
     }
 
     @Test
@@ -1353,6 +1439,10 @@ private class RecordingRuntimeMenuActions(
 
     override fun onResetEmulationSpeed() {
         events += "resetSpeed"
+    }
+
+    override fun onSwitchCamera() {
+        events += "camera"
     }
 
     override fun onMemoryEditor() {

@@ -762,7 +762,7 @@ internal fun measureRuntimeSpeedWidth(resources: Resources, percent: Int): Float
     return max(48f, textWidthDp + 16f)
 }
 
-internal enum class RuntimeToolbarShortcut { Speed, Ime, Screenshot }
+internal enum class RuntimeToolbarShortcut { Speed, Ime, Screenshot, Camera }
 internal data class RuntimeToolbarOcclusion(val leftPx: Int, val rightPx: Int)
 internal data class RuntimeToolbarSpan(val left: Float, val right: Float) {
     val width: Float get() = (right - left).coerceAtLeast(0f)
@@ -811,7 +811,7 @@ internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): Ru
     fun pack(shortcuts: List<RuntimeToolbarShortcut>): List<RuntimeToolbarPlacement>? {
         val ends = segments.map { it.right }.toMutableList()
         val placements = arrayOfNulls<RuntimeToolbarPlacement>(shortcuts.size)
-        // At most three actions: try another segment before dropping an otherwise reachable action.
+        // Try another segment before dropping an otherwise reachable action.
         fun place(actionIndex: Int): Boolean {
             if (actionIndex < 0) return true
             val shortcut = shortcuts[actionIndex]
@@ -829,15 +829,16 @@ internal fun runtimeToolbarLayout(state: RuntimeMenuUiState, widthDp: Float): Ru
         return if (place(shortcuts.lastIndex)) placements.filterNotNull() else null
     }
     val selected = mutableListOf<RuntimeToolbarShortcut>()
-    if (state.isCanvas) {
-        val candidates = buildList {
+    val candidates = buildList {
+        if (state.isCanvas) {
             if (state.emulationSpeedAvailable) add(RuntimeToolbarShortcut.Speed)
             if (state.imeAvailable) add(RuntimeToolbarShortcut.Ime)
             add(RuntimeToolbarShortcut.Screenshot)
         }
-        candidates.forEach { candidate ->
-            if (pack(selected + candidate) != null) selected += candidate
-        }
+        if (state.cameraSwitchAvailable) add(RuntimeToolbarShortcut.Camera)
+    }
+    candidates.forEach { candidate ->
+        if (pack(selected + candidate) != null) selected += candidate
     }
     val placements = pack(selected).orEmpty()
     val titleBounds = logical(RuntimeToolbarSpan(
@@ -913,6 +914,14 @@ private fun RuntimeToolbar(
                                 size = 48.dp,
                                 onClick = actions::onTakeScreenshot,
                             )
+                            RuntimeToolbarShortcut.Camera -> RuntimeToolbarAction(
+                                icon = R.drawable.ic_camera_switch,
+                                label = if (state.cameraFrontFacing) R.string.runtime_camera_use_rear
+                                    else R.string.runtime_camera_use_front,
+                                size = 48.dp,
+                                enabled = !state.cameraSwitching,
+                                onClick = actions::onSwitchCamera,
+                            )
                         }
                     }
                 },
@@ -955,13 +964,14 @@ private fun RuntimeToolbarAction(
     icon: Int,
     label: Int,
     size: androidx.compose.ui.unit.Dp,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick, modifier = Modifier.size(size)) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(size)) {
         Icon(
             painter = painterResource(icon),
             contentDescription = stringResource(label),
-            tint = MaterialTheme.colorScheme.onSurface,
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.38f),
         )
     }
 }
@@ -1087,7 +1097,7 @@ internal fun runtimeMenuEntries(
     action(R.string.save_log, R.drawable.ic_save, callback = actions::onSaveLog)
     action(R.string.action_lock_orientation, R.drawable.ic_screen_lock_rotation, state.orientationLocked, callback = actions::onToggleOrientationLock)
     action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled, callback = actions::onMemoryEditor)
-    if (state.cameraSwitchAvailable) {
+    if (state.cameraSwitchAvailable && RuntimeToolbarShortcut.Camera !in shortcuts) {
         action(
             if (state.cameraFrontFacing) R.string.runtime_camera_use_rear else R.string.runtime_camera_use_front,
             R.drawable.ic_camera_switch,

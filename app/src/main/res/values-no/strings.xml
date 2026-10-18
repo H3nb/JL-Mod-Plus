@@ -292,7 +292,15 @@
     <string name="config_decrease_value">Reduser verdi</string>
     <string name="config_delete_app_data">Slett MIDlet-data</string>
     <string name="config_delete_app_data_summary">Slett denne MIDlet-ens data permanent, inkludert lagrede data. Innstillingene beholdes.</string>
-    <string name="config_destination_audio">Lyd</string>
+    <string name="config_destination_media">Medier</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Standardkamera</string>
+    <string name="config_camera_rear">Bak</string>
+    <string name="config_camera_front">Foran</string>
+    <string name="config_camera_resolution_title">Standardoppløsning</string>
+    <string name="config_camera_resolution_auto">Automatisk</string>
+    <string name="config_camera_resolution_portrait">480×640 — Stående</string>
+    <string name="config_camera_resolution_landscape">640×480 — Liggende</string>
     <string name="config_destination_controls">Kontroller</string>
     <string name="config_destination_general">Generelt</string>
     <string name="config_destination_graphics">Visning</string>

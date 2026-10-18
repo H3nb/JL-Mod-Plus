@@ -231,7 +231,15 @@
     <string name="pref_soundbank_title">MIDI soundbank</string>
     <string name="PREF_SYS_PROPS">System properties</string>
     <string name="config_destination_graphics">Display</string>
-    <string name="config_destination_audio">Audio</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Camera</string>
+    <string name="config_camera_default_title">Default camera</string>
+    <string name="config_camera_rear">Rear</string>
+    <string name="config_camera_front">Front</string>
+    <string name="config_camera_resolution_title">Default resolution</string>
+    <string name="config_camera_resolution_auto">Automatic</string>
+    <string name="config_camera_resolution_portrait">480×640 — Portrait</string>
+    <string name="config_camera_resolution_landscape">640×480 — Landscape</string>
     <string name="config_destination_controls">Controls</string>
     <string name="config_gamepad_test">Test controller</string>
     <string name="config_gamepad_calibrate">Calibrate controller</string>

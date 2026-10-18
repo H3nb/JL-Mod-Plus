@@ -348,7 +348,15 @@
     <string name="config_decrease_value">Micșorați valoarea</string>
     <string name="config_delete_app_data">Ștergeți datele MIDletului</string>
     <string name="config_delete_app_data_summary">Șterge definitiv datele acestui MIDlet, inclusiv salvările. Setările sale vor fi păstrate.</string>
-    <string name="config_destination_audio">Audio</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Cameră</string>
+    <string name="config_camera_default_title">Camera implicită</string>
+    <string name="config_camera_rear">Spate</string>
+    <string name="config_camera_front">Față</string>
+    <string name="config_camera_resolution_title">Rezoluție implicită</string>
+    <string name="config_camera_resolution_auto">Automat</string>
+    <string name="config_camera_resolution_portrait">480×640 — Portret</string>
+    <string name="config_camera_resolution_landscape">640×480 — Peisaj</string>
     <string name="config_destination_controls">Comenzi</string>
     <string name="config_destination_general">General</string>
     <string name="config_destination_graphics">Afișare</string>

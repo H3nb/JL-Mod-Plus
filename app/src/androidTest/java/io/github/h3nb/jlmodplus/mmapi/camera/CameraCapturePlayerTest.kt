@@ -30,7 +30,7 @@ class CameraCapturePlayerTest {
     fun sessionDefaultsRemainStableAcrossVirtualDisplayChangesAndExplicitSources() {
         val oldWidth = Displayable.getVirtualWidth()
         val oldHeight = Displayable.getVirtualHeight()
-        CameraRuntime.beginRuntime(CameraCaptureOptions.defaultsForScreen(240, 320))
+        CameraRuntime.beginRuntime(CameraCaptureOptions.defaultsForScreen(240, 320), CameraCaptureOptions.FRONT)
         try {
             Displayable.setVirtualSize(320, 240)
             val player = CameraCapturePlayer("capture://video")
@@ -38,6 +38,8 @@ class CameraCapturePlayerTest {
                 player.realize()
                 assertEquals(480, player.display.sourceWidth)
                 assertEquals(640, player.display.sourceHeight)
+                assertEquals(CameraCaptureOptions.FRONT, player.defaultFacing)
+                assertNull(player.source.facing)
             } finally { player.close() }
             val explicit = CameraCapturePlayer("capture://video?width=320&height=240")
             try {
@@ -45,6 +47,12 @@ class CameraCapturePlayerTest {
                 assertEquals(320, explicit.display.sourceWidth)
                 assertEquals(240, explicit.display.sourceHeight)
             } finally { explicit.close() }
+            val named = CameraCapturePlayer("capture://devcam0")
+            try {
+                assertEquals(CameraCaptureOptions.BACK, named.source.facing)
+                assertEquals(CameraCaptureOptions.BACK,
+                    CameraCaptureOptions.selectFacing(named.source.facing, named.defaultFacing, true, true))
+            } finally { named.close() }
         } finally { Displayable.setVirtualSize(oldWidth, oldHeight) }
     }
 

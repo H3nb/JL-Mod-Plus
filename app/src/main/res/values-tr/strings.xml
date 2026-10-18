@@ -398,7 +398,15 @@
     <string name="config_decrease_value">Değeri azalt</string>
     <string name="config_delete_app_data">MIDlet verilerini sil</string>
     <string name="config_delete_app_data_summary">Kayıtlar dahil bu MIDlet\'in verilerini kalıcı olarak siler. Ayarları korunur.</string>
-    <string name="config_destination_audio">Ses</string>
+    <string name="config_destination_media">Medya</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Varsayılan kamera</string>
+    <string name="config_camera_rear">Arka</string>
+    <string name="config_camera_front">Ön</string>
+    <string name="config_camera_resolution_title">Varsayılan çözünürlük</string>
+    <string name="config_camera_resolution_auto">Otomatik</string>
+    <string name="config_camera_resolution_portrait">480×640 — Dikey</string>
+    <string name="config_camera_resolution_landscape">640×480 — Yatay</string>
     <string name="config_destination_controls">Kontroller</string>
     <string name="config_destination_general">Genel</string>
     <string name="config_destination_graphics">Ekran</string>

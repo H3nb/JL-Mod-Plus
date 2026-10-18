@@ -62,6 +62,8 @@ class CameraDeviceProbeTest {
                 screenWidth = args.getString("cameraProbeScreenWidth")?.toInt() ?: 640
                 screenHeight = args.getString("cameraProbeScreenHeight")?.toInt() ?: 800
                 orientation = args.getString("cameraProbeOrientation")?.toInt() ?: 0
+                cameraDefaultFacing = args.getString("cameraProbeDefaultFacing")?.toInt() ?: CameraCaptureOptions.BACK
+                cameraResolution = args.getString("cameraProbeResolution")?.toInt() ?: CameraCaptureOptions.RESOLUTION_AUTO
                 showKeyboard = false
                 touchInput = true
             }

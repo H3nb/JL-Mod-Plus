@@ -48,6 +48,7 @@ without changing the guest-visible contract.
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
 | Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` display maximum, `-1` reset) |
 | Emulation Speed | Canvas with compatible timing transform | Manual session-only multiplier from 0.25x to 16x; Reset selects 1x. See [Emulation speed](emulation-speed.md). |
+| Swap camera | Active camera with front/rear available, Canvas or Form | Fourth toolbar shortcut when space permits; options-menu fallback otherwise. Disabled during capture/switch; same session-only action in both locations. |
 | Virtual Keyboard options | Canvas when a virtual keyboard exists | Existing layout edit/resize/finish/switch/hide methods |
 
 The finish-layout item is visible only while the virtual keyboard is in an

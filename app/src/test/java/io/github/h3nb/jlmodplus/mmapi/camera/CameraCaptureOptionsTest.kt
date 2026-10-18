@@ -8,6 +8,42 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class CameraCaptureOptionsTest {
+    @Test fun configuredResolutionOverridesScreenOnlyForDefaultRequests() {
+        for (portraitScreen in listOf(false, true)) {
+            for ((setting, expected) in listOf(
+                CameraCaptureOptions.RESOLUTION_PORTRAIT to (480 to 640),
+                CameraCaptureOptions.RESOLUTION_LANDSCAPE to (640 to 480),
+            )) {
+                val size = CameraCaptureOptions.configuredDimensions(setting, portraitScreen)
+                assertEquals(expected, size.width to size.height)
+                val snapshot = CameraCaptureOptions.parseSnapshot(null, size)
+                assertEquals(expected, snapshot.width to snapshot.height)
+                val explicit = CameraCaptureOptions.parseSnapshot("encoding=png&width=320&height=320", size)
+                assertEquals(320 to 320, explicit.width to explicit.height)
+            }
+            assertEquals(CameraCaptureOptions.defaultsForOrientation(portraitScreen),
+                CameraCaptureOptions.configuredDimensions(99, portraitScreen))
+        }
+    }
+
+    @Test fun preferredLensFallsBackButExplicitDevicesAndSwapsRemainStrict() {
+        for (preferred in listOf(CameraCaptureOptions.BACK, CameraCaptureOptions.FRONT)) {
+            assertEquals(preferred, CameraCaptureOptions.selectFacing(null, preferred, true, true))
+            assertEquals(CameraCaptureOptions.BACK, CameraCaptureOptions.selectFacing(null, preferred, true, false))
+            assertEquals(CameraCaptureOptions.FRONT, CameraCaptureOptions.selectFacing(null, preferred, false, true))
+            assertThrows(MediaException::class.java) {
+                CameraCaptureOptions.selectFacing(null, preferred, false, false)
+            }
+            for (explicit in listOf(CameraCaptureOptions.BACK, CameraCaptureOptions.FRONT)) {
+                assertEquals(explicit, CameraCaptureOptions.selectFacing(explicit, preferred, true, true))
+                assertThrows(MediaException::class.java) {
+                    CameraCaptureOptions.selectFacing(explicit, preferred,
+                        explicit != CameraCaptureOptions.BACK, explicit != CameraCaptureOptions.FRONT)
+                }
+            }
+        }
+    }
+
     @Test fun virtualScreenOrientationSelectsOnlyOmittedDimensions() {
         for ((screen, expected) in listOf(
             (240 to 320) to (480 to 640),

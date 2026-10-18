@@ -25,6 +25,35 @@ import javax.microedition.shell.timing.TimingMode;
 
 public class ConfigFormStateTest {
 	@Test
+	public void cameraPreferencesSurviveUnrelatedDraftEditsAndApply() {
+		ProfileModel profile = new ProfileModel();
+		profile.cameraDefaultFacing = 0;
+		profile.cameraResolution = 2;
+		ConfigFormState state = ConfigFormState.fromProfile(profile, "")
+				.toBuilder().screenWidth("320").build();
+		ProfileModel saved = state.applyTo(new ProfileModel());
+		assertEquals(0, saved.cameraDefaultFacing);
+		assertEquals(2, saved.cameraResolution);
+		assertEquals(320, saved.screenWidth);
+	}
+
+	@Test
+	public void cameraDraftDefaultsAreRearAndAutomatic() {
+		ConfigFormState state = ConfigFormState.builder().build();
+		assertEquals(1, state.cameraDefaultFacing);
+		assertEquals(0, state.cameraResolution);
+	}
+
+	@Test
+	public void invalidCameraDraftValuesFallBackToRearAndAutomatic() {
+		ConfigFormState state = ConfigFormState.builder()
+				.cameraDefaultFacing(27).cameraResolution(-4).build();
+		ProfileModel saved = state.applyTo(new ProfileModel());
+		assertEquals(1, saved.cameraDefaultFacing);
+		assertEquals(0, saved.cameraResolution);
+	}
+
+	@Test
 	public void applyToKeepsLegacyParsingAndFallbackRules() {
 		ProfileModel model = new ProfileModel();
 		model.screenBackgroundColor = 0x112233;

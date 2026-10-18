@@ -353,7 +353,15 @@
     <string name="config_decrease_value">Zmniejsz wartość</string>
     <string name="config_delete_app_data">Usuń dane MIDletu</string>
     <string name="config_delete_app_data_summary">Trwale usuwa dane tego MIDletu, w tym zapisane dane. Jego ustawienia zostaną zachowane.</string>
-    <string name="config_destination_audio">Dźwięk</string>
+    <string name="config_destination_media">Multimedia</string>
+    <string name="config_camera_title">Aparat</string>
+    <string name="config_camera_default_title">Domyślny aparat</string>
+    <string name="config_camera_rear">Tylny</string>
+    <string name="config_camera_front">Przedni</string>
+    <string name="config_camera_resolution_title">Domyślna rozdzielczość</string>
+    <string name="config_camera_resolution_auto">Automatyczna</string>
+    <string name="config_camera_resolution_portrait">480×640 — Pionowa</string>
+    <string name="config_camera_resolution_landscape">640×480 — Pozioma</string>
     <string name="config_destination_controls">Sterowanie</string>
     <string name="config_destination_general">Ogólne</string>
     <string name="config_destination_graphics">Wyświetlanie</string>

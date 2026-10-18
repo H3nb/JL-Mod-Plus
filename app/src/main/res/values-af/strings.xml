@@ -293,7 +293,15 @@
     <string name="config_decrease_value">Verlaag waarde</string>
     <string name="config_delete_app_data">Vee MIDlet-data uit</string>
     <string name="config_delete_app_data_summary">Vee hierdie MIDlet se data, insluitend gestoorde data, permanent uit. Sy instellings word behou.</string>
-    <string name="config_destination_audio">Oudio</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Verstekkamera</string>
+    <string name="config_camera_rear">Agter</string>
+    <string name="config_camera_front">Voor</string>
+    <string name="config_camera_resolution_title">Verstekresolusie</string>
+    <string name="config_camera_resolution_auto">Outomaties</string>
+    <string name="config_camera_resolution_portrait">480×640 — Portret</string>
+    <string name="config_camera_resolution_landscape">640×480 — Landskap</string>
     <string name="config_destination_controls">Beheerknoppies</string>
     <string name="config_destination_general">Algemeen</string>
     <string name="config_destination_graphics">Vertoning</string>

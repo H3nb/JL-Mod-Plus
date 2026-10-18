@@ -144,7 +144,9 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.config_controls_key_input)).assertExists()
         composeRule.onNodeWithText("Controls").assertIsSelected()
 
-        composeRule.onNodeWithContentDescription("Audio").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_media)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_audio_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.config_camera_title)).assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("System").performClick()
         scrollTo(uiString(R.string.PREF_SYS_PROPS))
@@ -152,6 +154,50 @@ class ConfigComposeTest {
         scrollTo(uiString(R.string.config_maintenance))
         composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertExists()
         composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
+    }
+
+    @Test
+    fun mediaCameraChoicesMapRearFrontAndResolutionToStoredValues() {
+        val base = sampleState()
+        val currentForm = mutableStateOf(base.form)
+        val events = object : ConfigFormEvents by RecordingConfigEvents() {
+            override fun onFormChanged(form: ConfigFormState) {
+                currentForm.value = form
+            }
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(
+                    ConfigUiState(
+                        currentForm.value, base.screenPresets, base.fontPresets, base.skins,
+                        base.soundBanks, base.shaders, base.removableScreenPresets,
+                    ),
+                    events,
+                    initialDestination = ConfigDestination.Media,
+                )
+            }
+        }
+        val camera = uiString(R.string.config_camera_default_title)
+        val resolution = uiString(R.string.config_camera_resolution_title)
+        composeRule.onNodeWithText(uiString(R.string.pref_audio_title)).assertIsDisplayed()
+        scrollTo(camera)
+        composeRule.onNodeWithText(camera).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_camera_front)).performClick()
+        composeRule.runOnIdle { assertEquals(0, currentForm.value.cameraDefaultFacing) }
+        composeRule.onNodeWithText(camera).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_camera_rear)).performClick()
+        composeRule.runOnIdle { assertEquals(1, currentForm.value.cameraDefaultFacing) }
+
+        scrollTo(resolution)
+        composeRule.onNodeWithText(resolution).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_camera_resolution_portrait)).performClick()
+        composeRule.runOnIdle { assertEquals(1, currentForm.value.cameraResolution) }
+        composeRule.onNodeWithText(resolution).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_camera_resolution_landscape)).performClick()
+        composeRule.runOnIdle { assertEquals(2, currentForm.value.cameraResolution) }
+        composeRule.onNodeWithText(resolution).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_camera_resolution_auto)).performClick()
+        composeRule.runOnIdle { assertEquals(0, currentForm.value.cameraResolution) }
     }
 
     @Test

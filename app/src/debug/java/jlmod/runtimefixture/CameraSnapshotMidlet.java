@@ -115,6 +115,8 @@ public final class CameraSnapshotMidlet extends MIDlet {
             report.setProperty("sourceWidth", Integer.toString(video.getSourceWidth()));
             report.setProperty("sourceHeight", Integer.toString(video.getSourceHeight()));
             report.setProperty("snapshotEncodings", System.getProperty("video.snapshot.encodings", ""));
+            report.setProperty("frontFacing", Boolean.toString(
+                    io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isFrontCamera()));
         }
     }
 

@@ -325,7 +325,15 @@
     <string name="config_decrease_value">ลดค่า</string>
     <string name="config_delete_app_data">ลบข้อมูล MIDlet</string>
     <string name="config_delete_app_data_summary">ลบข้อมูลของ MIDlet นี้อย่างถาวร รวมถึงข้อมูลเซฟ โดยเก็บการตั้งค่าไว้</string>
-    <string name="config_destination_audio">เสียง</string>
+    <string name="config_destination_media">สื่อ</string>
+    <string name="config_camera_title">กล้อง</string>
+    <string name="config_camera_default_title">กล้องเริ่มต้น</string>
+    <string name="config_camera_rear">ด้านหลัง</string>
+    <string name="config_camera_front">ด้านหน้า</string>
+    <string name="config_camera_resolution_title">ความละเอียดเริ่มต้น</string>
+    <string name="config_camera_resolution_auto">อัตโนมัติ</string>
+    <string name="config_camera_resolution_portrait">480×640 — แนวตั้ง</string>
+    <string name="config_camera_resolution_landscape">640×480 — แนวนอน</string>
     <string name="config_destination_controls">การควบคุม</string>
     <string name="config_destination_general">ทั่วไป</string>
     <string name="config_destination_graphics">การแสดงผล</string>

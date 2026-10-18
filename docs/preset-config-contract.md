@@ -24,6 +24,12 @@ must not force publication, bump the configuration version, detach LINKED
 ownership or replace Built-in ownership with CUSTOM. Normal serialization writes
 the field; a real user change follows the existing effective-change rules.
 
+`CameraDefaultFacing` (rear 1, front 0) and `CameraResolution` (automatic 0,
+portrait 1, landscape 2) are profile-owned values. Missing or invalid values use
+rear/automatic without requiring publication or a configuration-version change.
+They participate in form drafts, preset copies and effective-change comparison.
+Runtime swaps never persist those temporary lens overrides to config or preset.
+
 ## Persistence and recovery
 
 - Preset source and installed-snapshot publication must not expose a partially written state as committed. Recover interrupted publication before consuming, replacing, renaming, deleting, or synchronizing the affected snapshot.

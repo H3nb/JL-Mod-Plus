@@ -285,7 +285,6 @@
     <string name="config_custom_resolution">අභිරුචි විභේදනය</string>
     <string name="config_decrease_value">අගය අඩු කරන්න</string>
     <string name="config_delete_app_data">MIDlet දත්ත මකන්න</string>
-    <string name="config_destination_audio">ශ්‍රව්‍ය</string>
     <string name="config_destination_controls">පාලක</string>
     <string name="config_destination_general">සාමාන්‍ය</string>
     <string name="config_destination_graphics">සංදර්ශකය</string>
@@ -1088,4 +1087,13 @@
     <string name="runtime_camera_use_front">ඉදිරිපස කැමරාව භාවිත කරන්න</string>
     <string name="runtime_camera_use_rear">පසුපස කැමරාව භාවිත කරන්න</string>
     <string name="runtime_camera_switch_failed">කැමරාව මාරු කළ නොහැකි විය.</string>
+    <string name="config_destination_media">මාධ්‍ය</string>
+    <string name="config_camera_title">කැමරාව</string>
+    <string name="config_camera_default_title">පෙරනිමි කැමරාව</string>
+    <string name="config_camera_rear">පසුපස</string>
+    <string name="config_camera_front">ඉදිරිපස</string>
+    <string name="config_camera_resolution_title">පෙරනිමි විභේදනය</string>
+    <string name="config_camera_resolution_auto">ස්වයංක්‍රීය</string>
+    <string name="config_camera_resolution_portrait">480×640 — සිරස්</string>
+    <string name="config_camera_resolution_landscape">640×480 — තිරස්</string>
 </resources>

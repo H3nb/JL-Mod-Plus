@@ -115,6 +115,7 @@ import kotlinx.coroutines.launch
 import javax.microedition.shell.timing.TimingMode
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.model.Size
+import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
@@ -277,7 +278,7 @@ data class EncodingPickerRequest(
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
     Basic(R.string.config_destination_general, R.drawable.ic_config_general),
     Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
-    Audio(R.string.config_destination_audio, R.drawable.ic_config_audio),
+    Media(R.string.config_destination_media, R.drawable.ic_config_media),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
     System(R.string.config_destination_system, R.drawable.ic_settings),
 }
@@ -553,7 +554,10 @@ private fun ConfigDestinationContent(
                 ScreenSection(form, state, onFormChanged, events)
                 FontSection(form, state, onFormChanged)
             }
-            ConfigDestination.Audio -> AudioSection(form, state, onFormChanged)
+            ConfigDestination.Media -> {
+                AudioSection(form, state, onFormChanged)
+                CameraSection(form, onFormChanged)
+            }
             ConfigDestination.Controls -> InputSection(
                 form,
                 state,
@@ -1941,6 +1945,43 @@ private fun AudioSection(
                         .soundBank(if (index == 0) null else state.soundBanks.getOrNull(index))
                         .build(),
                 )
+            },
+        )
+    }
+}
+
+@Composable
+private fun CameraSection(
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+) {
+    ConfigSection(title = stringResource(R.string.config_camera_title)) {
+        val facingValues = listOf(CameraCaptureOptions.BACK, CameraCaptureOptions.FRONT)
+        val facingOptions = listOf(
+            stringResource(R.string.config_camera_rear),
+            stringResource(R.string.config_camera_front),
+        )
+        ConfigChoicePreference(
+            title = stringResource(R.string.config_camera_default_title),
+            description = null,
+            selected = facingOptions[if (form.cameraDefaultFacing == CameraCaptureOptions.FRONT) 1 else 0],
+            options = facingOptions,
+            onSelected = { index ->
+                onFormChanged(form.toBuilder().cameraDefaultFacing(facingValues[index]).build())
+            },
+        )
+        val resolutionOptions = listOf(
+            stringResource(R.string.config_camera_resolution_auto),
+            stringResource(R.string.config_camera_resolution_portrait),
+            stringResource(R.string.config_camera_resolution_landscape),
+        )
+        ConfigChoicePreference(
+            title = stringResource(R.string.config_camera_resolution_title),
+            description = null,
+            selected = resolutionOptions.getOrElse(form.cameraResolution) { resolutionOptions[0] },
+            options = resolutionOptions,
+            onSelected = { index ->
+                onFormChanged(form.toBuilder().cameraResolution(index).build())
             },
         )
     }

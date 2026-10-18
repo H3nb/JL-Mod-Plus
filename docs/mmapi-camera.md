@@ -9,7 +9,7 @@ subset. `capture://video` names a live camera source; it does not promise a
 
 | Locator | Emulated camera |
 | --- | --- |
-| `capture://video` | Default: rear camera, or front if rear is unavailable |
+| `capture://video` | Configured default camera; rear when unspecified; falls back if the preferred direction is unavailable |
 | `capture://devcam0` | Rear camera |
 | `capture://devcam1` | Front camera |
 
@@ -23,6 +23,15 @@ Unknown device names and unsupported locator parameters fail with `MediaExceptio
 The runtime camera action lets the user override the requested direction for the
 current MIDlet session. It changes preview and capture together. A single rear
 direction does not enumerate ultrawide and telephoto lenses.
+
+MIDlet config groups audio and camera settings under **Media**. Its **Camera**
+section selects the default camera (rear/front) and default resolution (automatic,
+480 x 640 portrait, or 640 x 480 landscape). These are profile/preset values.
+Named `devcam0`/`devcam1` requests remain strict and take precedence over the preferred
+default camera; a session swap remains temporary and does not rewrite the profile.
+When the toolbar is shown, an active camera exposes a swap shortcut when both
+directions are available. It is disabled during capture/rebinding; when it cannot
+fit or the toolbar is hidden, the same action remains in the options menu.
 
 ## Geometry and snapshots
 
@@ -41,7 +50,7 @@ Rotation is applied once from `ImageProxy.imageInfo.rotationDegrees`; encoded ou
 has upright pixels and does not require a second EXIF rotation by the MIDlet.
 
 `getSnapshot(null)` uses the default supported snapshot encoding. JPEG and PNG
-are supported. Automatic source and snapshot defaults are selected once per MIDlet
+are supported. With automatic resolution selected, source and snapshot defaults are selected once per MIDlet
 session from the full virtual screen: 480 x 640 for portrait, 640 x 480 for
 landscape or square. With automatic screen dimensions, a fixed profile/phone-keypad
 orientation takes precedence over the launch-time Android display; otherwise the

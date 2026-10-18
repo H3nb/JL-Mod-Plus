@@ -268,7 +268,15 @@
     <string name="pref_skip_resume_call">Ignorar startApp() ao retomar</string>
     <string name="pref_soundbank_title">Banco de sons MIDI</string>
     <string name="config_destination_graphics">Tela</string>
-    <string name="config_destination_audio">Áudio</string>
+    <string name="config_destination_media">Mídia</string>
+    <string name="config_camera_title">Câmera</string>
+    <string name="config_camera_default_title">Câmera padrão</string>
+    <string name="config_camera_rear">Traseira</string>
+    <string name="config_camera_front">Frontal</string>
+    <string name="config_camera_resolution_title">Resolução padrão</string>
+    <string name="config_camera_resolution_auto">Automático</string>
+    <string name="config_camera_resolution_portrait">480×640 — Retrato</string>
+    <string name="config_camera_resolution_landscape">640×480 — Paisagem</string>
     <string name="config_destination_controls">Controles</string>
     <string name="config_destination_system">Sistema</string>
     <string name="config_screen_size">Tamanho da tela</string>
