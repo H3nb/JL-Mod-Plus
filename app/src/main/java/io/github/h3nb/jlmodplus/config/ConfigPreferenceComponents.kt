@@ -90,7 +90,7 @@ internal fun ConfigSection(
 @Composable
 internal fun ConfigValuePreference(
     title: String,
-    description: String,
+    description: String?,
     value: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -111,12 +111,14 @@ internal fun ConfigValuePreference(
             color = if (enabled) MaterialTheme.colorScheme.onSurface
             else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
         )
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-            else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-        )
+        if (!description.isNullOrEmpty()) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+            )
+        }
         if (message != null) {
             ConfigInlineMessage(message, messageLevel)
         }
@@ -187,7 +189,7 @@ internal fun ConfigSwitchPreference(
 @Composable
 internal fun ConfigChoicePreference(
     title: String,
-    description: String,
+    description: String?,
     selected: String,
     options: List<String>,
     onSelected: (Int) -> Unit,

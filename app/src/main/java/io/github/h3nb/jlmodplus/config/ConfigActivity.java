@@ -20,6 +20,8 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import org.microemu.cldc.file.StorageMode;
+
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT;
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT_PROFILE;
 import static io.github.h3nb.jlmodplus.util.Constants.KEY_INSTALLED_APP_PATH;
@@ -244,6 +246,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
+        public void onStorageModeChanged(StorageMode mode) {
+            saveStorageMode(mode);
+        }
+
+        @Override
 		public void onFilePermissionChanged(boolean write, int decision) {
 			saveFilePermission(write, decision);
 		}
@@ -1553,11 +1560,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			} catch (IOException failure) {
 				Log.w(TAG, "Cannot inspect legacy private files", failure);
 			}
-			ConfigUiState.FileAccess access = new ConfigUiState.FileAccess(
-					MidletPermissionStore.read(this, appDir.getPath(), expectedAppId,
-							MidletPermissionStore.FILE_READ, fingerprint),
-					MidletPermissionStore.read(this, appDir.getPath(), expectedAppId,
-							MidletPermissionStore.FILE_WRITE, fingerprint), legacy);
+            MidletPermissionStore.Access stored = MidletPermissionStore.readAccess(
+                    this, appDir.getPath(), expectedAppId, fingerprint);
+            ConfigUiState.FileAccess access = new ConfigUiState.FileAccess(
+                    stored.mode, stored.read, stored.write, legacy);
 			runOnUiThread(() -> {
 				if (isFinishing() || isDestroyed()) return;
 				permissionFingerprint = fingerprint;
@@ -1568,31 +1574,42 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		});
 	}
 
-	private void saveFilePermission(boolean write, int decision) {
-		if (isProfile || fileAccessBusy || fileAccess == null) return;
-		fileAccessBusy = true;
-		if (composeController != null) composeController.update(createUiState());
-		profileMetadataExecutor.execute(() -> {
-			InstalledAppWriteGuard.Result result = installedWriteGuard.run(
-					appDir.getPath(), expectedAppId, () -> MidletPermissionStore.write(this,
-					appDir.getPath(), expectedAppId,
-					write ? MidletPermissionStore.FILE_WRITE : MidletPermissionStore.FILE_READ,
-					permissionFingerprint, decision));
-			runOnUiThread(() -> {
-				if (isFinishing() || isDestroyed()) return;
-				fileAccessBusy = false;
-				if (result == InstalledAppWriteGuard.Result.STALE) {
-					ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
-					finish();
-					return;
-				}
-				if (result != InstalledAppWriteGuard.Result.SUCCESS) {
-					ThemedToast.show(this, R.string.midlet_permissions_save_failed, Toast.LENGTH_LONG);
-				}
-				refreshFileAccess();
-			});
-		});
-	}
+    private void saveStorageMode(StorageMode mode) {
+        if (isProfile || fileAccessBusy || fileAccess == null) return;
+        saveStorageAccess(() -> MidletPermissionStore.writeMode(this,
+                appDir.getPath(), expectedAppId, mode));
+    }
+
+    private void saveFilePermission(boolean write, int decision) {
+        if (isProfile || fileAccessBusy || fileAccess == null) return;
+        StorageMode mode = fileAccess.mode;
+        String fingerprint = permissionFingerprint;
+        saveStorageAccess(() -> MidletPermissionStore.write(this, appDir.getPath(), expectedAppId,
+                mode, write ? MidletPermissionStore.FILE_WRITE : MidletPermissionStore.FILE_READ,
+                fingerprint, decision));
+    }
+
+    private void saveStorageAccess(InstalledAppWriteGuard.WriteOperation operation) {
+        fileAccessBusy = true;
+        if (composeController != null) composeController.update(createUiState());
+        profileMetadataExecutor.execute(() -> {
+            InstalledAppWriteGuard.Result result = installedWriteGuard.run(
+                    appDir.getPath(), expectedAppId, operation);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                fileAccessBusy = false;
+                if (result == InstalledAppWriteGuard.Result.STALE) {
+                    ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+                    finish();
+                    return;
+                }
+                if (result != InstalledAppWriteGuard.Result.SUCCESS) {
+                    ThemedToast.show(this, R.string.midlet_permissions_save_failed, Toast.LENGTH_LONG);
+                }
+                refreshFileAccess();
+            });
+        });
+    }
 
 	private void importLegacyPrivateFile(String relativePath) {
 		if (isProfile || fileAccessBusy) return;

@@ -104,7 +104,15 @@ public class File {
 	}
 
 	public static String[] list(String pathName, boolean includeHidden) throws IOException {
-		FilenameFilter filter = includeHidden ? null : (dir, name) -> name.charAt(0) != '.';
+		FilenameFilter filter = (dir, name) -> {
+            if (!includeHidden && name.charAt(0) == '.') return false;
+            try {
+                getFile(pathName + (pathName.endsWith("/") ? "" : "/") + name);
+                return true;
+            } catch (SecurityException denied) {
+                return false;
+            }
+        };
 		String[] files = getFile(pathName).list(filter);
 		if (files == null) {
 			return new String[0];
@@ -191,7 +199,10 @@ public class File {
         try {
             java.io.File result = VirtualFileSystem.resolve(root, path);
             if ((access & 1) != 0) MidletPermissionManager.requireFileAccess(root, false);
-            if ((access & 2) != 0) MidletPermissionManager.requireFileAccess(root, true);
+            if ((access & 2) != 0) {
+                VirtualFileSystem.checkMutation(root, result);
+                MidletPermissionManager.requireFileAccess(root, true);
+            }
             return result;
         } catch (IOException error) {
             throw new SecurityException("Invalid Siemens filesystem path", error);

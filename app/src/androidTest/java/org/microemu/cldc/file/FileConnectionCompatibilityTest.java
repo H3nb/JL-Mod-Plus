@@ -38,6 +38,44 @@ public class FileConnectionCompatibilityTest {
         VirtualFileSystem.clear();
     }
 
+    @Test public void androidAdaptersHidePrivateDataAndProtectAncestorMutations() throws Exception {
+        File volume = temporary.newFolder("volume");
+        File work = new File(volume, "WorkDir");
+        VirtualFileSystem.install(work, "one", volume, StorageMode.ANDROID, new File[]{volume});
+        java.lang.reflect.Field current = MidletPermissionManager.class.getDeclaredField("current");
+        current.setAccessible(true);
+        Object session = current.get(null);
+        for (String name : new String[]{"readDecision", "writeDecision"}) {
+            java.lang.reflect.Field decision = session.getClass().getDeclaredField(name);
+            decision.setAccessible(true);
+            decision.setInt(session, io.github.h3nb.jlmodplus.config.MidletPermissionStore.ALLOW);
+        }
+        File privateFile = VirtualFileSystem.resolve("private:/", "save.dat");
+        try (FileOutputStream output = new FileOutputStream(privateFile)) { output.write(new byte[]{1, 2, 3}); }
+        File publicFile = new File(work, "public.dat");
+        try (FileOutputStream output = new FileOutputStream(publicFile)) { output.write(42); }
+        FileSystemFileConnection directory = new FileSystemFileConnection("file:///c:/WorkDir/", Connector.READ_WRITE);
+        java.util.List<String> children = java.util.Collections.list(directory.list());
+        assertTrue(children.contains("public.dat"));
+        assertFalse(children.contains("data/"));
+        assertEquals(1L, directory.directorySize(true));
+        assertThrows(SecurityException.class, directory::delete);
+        assertThrows(SecurityException.class, () -> directory.rename("renamed"));
+        assertThrows(java.io.IOException.class, () -> directory.setFileConnection("data/"));
+        assertThrows(java.io.IOException.class, () -> new FileSystemFileConnection(
+                "file:///e:/WorkDir/data/two/private/save.dat", Connector.READ));
+        // The existing own-private compatibility URL is still scoped to this installation.
+        FileSystemFileConnection own = new FileSystemFileConnection(
+                "file:///c:/WorkDir/data/one/private/save.dat", Connector.READ);
+        assertEquals(3L, own.fileSize());
+        own.close();
+        assertEquals(java.util.Collections.singletonList("public.dat"),
+                java.util.Arrays.asList(com.siemens.mp.io.File.list("c:/WorkDir/")));
+        assertThrows(SecurityException.class, () -> com.siemens.mp.io.File.rename("c:/WorkDir", "c:/moved"));
+        assertThrows(SecurityException.class, () -> com.siemens.mp.io.File.delete("c:/WorkDir/data/two/save"));
+        directory.close();
+    }
+
     @Test public void streamsRemainUsableAfterConnectionClose() throws Exception {
         File fixture = VirtualFileSystem.resolve("private:/", "save.dat");
         try (FileOutputStream output = new FileOutputStream(fixture)) { output.write(new byte[]{1, 2}); }

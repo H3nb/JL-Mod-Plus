@@ -3,6 +3,8 @@
  */
 package javax.microedition.shell;
 
+import org.microemu.cldc.file.StorageMode;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -31,11 +33,12 @@ public final class MidletPermissionManager {
 
     private MidletPermissionManager() {}
 
-    static void install(Context context, String appPath, long appId, String jarSha256) {
+    static StorageMode install(Context context, String appPath, long appId, String jarSha256) {
         PresetAuthorityClient authority = new PresetAuthorityClient(context);
-        int[] decisions = authority.getFilePermissions(appPath, appId, jarSha256);
+        MidletPermissionStore.Access decisions = authority.getFilePermissions(appPath, appId, jarSha256);
         clear();
-        current = new Session(authority, appPath, appId, jarSha256, decisions[0], decisions[1]);
+        current = new Session(authority, appPath, appId, jarSha256, decisions.mode, decisions.read, decisions.write);
+        return decisions.mode;
     }
 
     public static void clear() {
@@ -142,7 +145,7 @@ public final class MidletPermissionManager {
             if (result == ALWAYS || result == DENY) {
                 int stored = result == ALWAYS ? MidletPermissionStore.ALLOW : MidletPermissionStore.DENY;
                 boolean persisted = active.authority.setFilePermission(active.appPath, active.appId,
-                        active.jarSha256, capability, stored);
+                        active.jarSha256, active.mode, capability, stored);
                 if (persisted || stored == MidletPermissionStore.DENY) {
                     if (write) active.writeDecision = stored;
                     else active.readDecision = stored;
@@ -186,6 +189,7 @@ public final class MidletPermissionManager {
         final String appPath;
         final long appId;
         final String jarSha256;
+        final StorageMode mode;
         final Object promptLock = new Object();
         volatile int readDecision;
         volatile int writeDecision;
@@ -195,11 +199,12 @@ public final class MidletPermissionManager {
         volatile Pending pending;
 
         Session(PresetAuthorityClient authority, String appPath, long appId, String jarSha256,
-                int readDecision, int writeDecision) {
+                StorageMode mode, int readDecision, int writeDecision) {
             this.authority = authority;
             this.appPath = appPath;
             this.appId = appId;
             this.jarSha256 = jarSha256;
+            this.mode = mode;
             this.readDecision = readDecision;
             this.writeDecision = writeDecision;
         }

@@ -5,6 +5,7 @@ package io.github.h3nb.jlmodplus.config;
 
 /** Small Bundle contract shared by the main-process authority provider and the runtime client. */
 public final class PresetAuthorityContract {
+    public static final String KEY_STORAGE_MODE = "storageMode";
 	public static final String AUTHORITY_SUFFIX = ".preset-authority";
 
 	public static final String METHOD_PREPARE_RUNTIME = "prepareRuntime";

@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import org.microemu.cldc.file.StorageMode;
+
 import androidx.annotation.NonNull;
 
 import io.github.h3nb.jlmodplus.config.model.Size;
@@ -47,6 +49,8 @@ public interface ConfigFormEvents {
 	}
 
     /** Installation-owned access decisions, never profile/preset edits. */
+    default void onStorageModeChanged(StorageMode mode) {}
+
     default void onFilePermissionChanged(boolean write, int decision) {}
 
     /** Copies a user-selected legacy Siemens file within this installation only. */

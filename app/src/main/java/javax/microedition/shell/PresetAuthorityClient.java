@@ -3,6 +3,8 @@
  */
 package javax.microedition.shell;
 
+import org.microemu.cldc.file.StorageMode;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
@@ -96,24 +98,28 @@ final class PresetAuthorityClient {
 		});
 	}
 
-    int[] getFilePermissions(String appPath, long appId, String jarFingerprint) {
+    MidletPermissionStore.Access getFilePermissions(String appPath, long appId, String jarFingerprint) {
         Bundle extras = identityExtras(appPath, appId);
         extras.putString(PresetAuthorityContract.KEY_JAR_FINGERPRINT, jarFingerprint);
         Bundle result = call(PresetAuthorityContract.METHOD_GET_FILE_PERMISSIONS, extras);
         if (result == null || result.getInt(PresetAuthorityContract.KEY_RESULT,
                 PresetAuthorityContract.RESULT_FAILED) != PresetAuthorityContract.RESULT_OK) {
-            return new int[]{MidletPermissionStore.DENY, MidletPermissionStore.DENY};
+            return new MidletPermissionStore.Access(StorageMode.SHARED, MidletPermissionStore.DENY, MidletPermissionStore.DENY);
         }
-        return new int[]{
+        StorageMode mode = StorageMode.parse(result.getString(PresetAuthorityContract.KEY_STORAGE_MODE));
+        if (mode == null) return new MidletPermissionStore.Access(
+                StorageMode.SHARED, MidletPermissionStore.DENY, MidletPermissionStore.DENY);
+        return new MidletPermissionStore.Access(mode,
                 result.getInt(PresetAuthorityContract.KEY_FILE_READ_DECISION, MidletPermissionStore.DENY),
                 result.getInt(PresetAuthorityContract.KEY_FILE_WRITE_DECISION, MidletPermissionStore.DENY)
-        };
+        );
     }
 
     boolean setFilePermission(String appPath, long appId, String jarFingerprint,
-            String capability, int decision) {
+            StorageMode mode, String capability, int decision) {
         Bundle extras = identityExtras(appPath, appId);
         extras.putString(PresetAuthorityContract.KEY_JAR_FINGERPRINT, jarFingerprint);
+        extras.putString(PresetAuthorityContract.KEY_STORAGE_MODE, mode.name());
         extras.putString(PresetAuthorityContract.KEY_PERMISSION_CAPABILITY, capability);
         extras.putInt(PresetAuthorityContract.KEY_PERMISSION_DECISION, decision);
         Bundle result = call(PresetAuthorityContract.METHOD_SET_FILE_PERMISSION, extras);

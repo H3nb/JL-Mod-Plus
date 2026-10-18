@@ -1957,6 +1957,49 @@ private fun SystemSection(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
 ) {
+    if (showClearData) {
+        ConfigSection(title = stringResource(R.string.midlet_permissions_settings_title)) {
+            Text(
+                text = stringResource(R.string.midlet_permissions_settings_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            val access = state.fileAccess
+            val modes = org.microemu.cldc.file.StorageMode.values().toList()
+            val modeOptions = listOf(
+                stringResource(R.string.midlet_storage_mode_shared),
+                stringResource(R.string.midlet_storage_mode_android),
+            )
+            ConfigChoicePreference(
+                title = stringResource(R.string.midlet_storage_mode_title),
+                description = stringResource(if (access?.mode == org.microemu.cldc.file.StorageMode.ANDROID)
+                    R.string.midlet_storage_mode_android_summary else R.string.midlet_storage_mode_shared_summary),
+                selected = access?.mode?.let { modeOptions[modes.indexOf(it)] }
+                    ?: stringResource(R.string.loading_info),
+                options = modeOptions,
+                enabled = access != null,
+                onSelected = { modes.getOrNull(it)?.let(events::onStorageModeChanged) },
+            )
+            val options = listOf(
+                stringResource(R.string.midlet_permissions_ask),
+                stringResource(R.string.midlet_permissions_allow),
+                stringResource(R.string.midlet_permissions_deny),
+            )
+            listOf(false, true).forEach { write ->
+                val decision = if (write) access?.write else access?.read
+                ConfigChoicePreference(
+                    title = stringResource(if (write) R.string.midlet_permissions_write else R.string.midlet_permissions_read),
+                    description = if (write) stringResource(R.string.midlet_permissions_write_summary) else null,
+                    selected = decision?.let { options.getOrElse(it) { options[0] } }
+                        ?: stringResource(R.string.loading_info),
+                    options = options,
+                    enabled = access != null,
+                    onSelected = { events.onFilePermissionChanged(write, it) },
+                )
+            }
+        }
+    }
     ConfigSection(title = stringResource(R.string.config_system_timing)) {
         val timingModes = TimingMode.values().toList()
         val timingModeOptions = listOf(
@@ -1995,32 +2038,6 @@ private fun SystemSection(
     }
 
     if (showClearData) {
-        ConfigSection(title = stringResource(R.string.midlet_permissions_settings_title)) {
-            Text(
-                text = stringResource(R.string.midlet_permissions_settings_summary),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            val access = state.fileAccess
-            val options = listOf(
-                stringResource(R.string.midlet_permissions_ask),
-                stringResource(R.string.midlet_permissions_allow),
-                stringResource(R.string.midlet_permissions_deny),
-            )
-            listOf(false, true).forEach { write ->
-                val decision = if (write) access?.write else access?.read
-                ConfigChoicePreference(
-                    title = stringResource(if (write) R.string.midlet_permissions_write else R.string.midlet_permissions_read),
-                    description = stringResource(if (write) R.string.midlet_permissions_write_summary else R.string.midlet_permissions_read_summary),
-                    selected = decision?.let { options.getOrElse(it) { options[0] } }
-                        ?: stringResource(R.string.loading_info),
-                    options = options,
-                    enabled = access != null,
-                    onSelected = { events.onFilePermissionChanged(write, it) },
-                )
-            }
-        }
         state.fileAccess?.legacyFiles?.takeIf { it.isNotEmpty() }?.let { files ->
             var importVisible by rememberSaveable { mutableStateOf(false) }
             ConfigSection(title = stringResource(R.string.midlet_legacy_import_title)) {

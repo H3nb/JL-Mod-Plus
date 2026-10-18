@@ -30,12 +30,12 @@ public class MidletPermissionConcurrencyTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Class<?> type = Class.forName(MidletPermissionManager.class.getName() + "$Session");
         Constructor<?> constructor = type.getDeclaredConstructor(PresetAuthorityClient.class,
-                String.class, long.class, String.class, int.class, int.class);
+                String.class, long.class, String.class, org.microemu.cldc.file.StorageMode.class, int.class, int.class);
         constructor.setAccessible(true);
         // No installed grant is persisted by this fixture. A denied prompt must still deny the
         // current session when persistence fails (stale installation, missing storage, etc.).
         Object session = constructor.newInstance(new PresetAuthorityClient(context),
-                "/nonexistent-permission-fixture", Long.MAX_VALUE, null, 0, 0);
+                "/nonexistent-permission-fixture", Long.MAX_VALUE, null, org.microemu.cldc.file.StorageMode.SHARED, 0, 0);
         Field current = MidletPermissionManager.class.getDeclaredField("current");
         current.setAccessible(true);
         current.set(null, session);

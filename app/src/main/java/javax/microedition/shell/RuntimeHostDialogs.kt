@@ -873,9 +873,14 @@ internal fun FilePermissionDialog(write: Boolean, onChoice: (Int) -> Unit) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(if (write) R.string.midlet_file_permission_write
                     else R.string.midlet_file_permission_read))
-                choices.forEach { (label, choice) ->
-                    TextButton(onClick = { onChoice(choice) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(label), modifier = Modifier.fillMaxWidth())
+                Column {
+                    choices.forEach { (label, choice) ->
+                        TextButton(
+                            onClick = { onChoice(choice) },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) {
+                            Text(stringResource(label), modifier = Modifier.fillMaxWidth())
+                        }
                     }
                 }
             }

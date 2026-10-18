@@ -82,6 +82,10 @@ import io.github.h3nb.jlmodplus.util.AppUtils;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
 import org.microemu.cldc.file.VirtualFileSystem;
+import org.microemu.cldc.file.StorageMode;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
+import java.util.ArrayList;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
@@ -427,18 +431,54 @@ public class MicroLoader {
 		}
 	}
 
+    private StorageMode storageMode = StorageMode.SHARED;
+
+    private File[] androidStorageRoots() {
+        ArrayList<File> roots = new ArrayList<>();
+        File primary = Environment.getExternalStorageDirectory();
+        if (primary.isDirectory()) roots.add(primary);
+        if (SDK_INT >= 30) {
+            StorageManager manager = ContextCompat.getSystemService(ContextHolder.getAppContext(), StorageManager.class);
+            if (manager != null) for (StorageVolume volume : manager.getStorageVolumes()) {
+                String state = volume.getState();
+                File directory = volume.getDirectory();
+                if ((Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state))
+                        && directory != null && !roots.contains(directory)) roots.add(directory);
+            }
+        }
+        return roots.toArray(new File[0]);
+    }
+
+    private void setMediaProperty(String name, String sharedUrl, String androidDirectory) {
+        String url = sharedUrl;
+        if (storageMode == StorageMode.ANDROID) {
+            url = "file:///c:/" + androidDirectory + "/";
+        }
+        MidletSystem.setProperty("fileconn.dir." + name, url);
+    }
+
 	private void setProperties() {
 		MidletSystem.setProperty("microedition.locale",
 				MidletLocaleResolver.withSystemProperties(guestLocale, params.systemProperties));
+	}
+
+    private void setStorageProperties() {
 		MidletSystem.setProperty("fileconn.dir.cache", "file:///cache:/");
 		MidletSystem.setProperty("fileconn.dir.private", "file:///private:/");
-		MidletSystem.setProperty("fileconn.dir.music", "file:///e:/Music/");
-		MidletSystem.setProperty("fileconn.dir.photos", "file:///e:/Images/");
-		MidletSystem.setProperty("fileconn.dir.videos", "file:///e:/Videos/");
-		MidletSystem.setProperty("fileconn.dir.tones", "file:///c:/Sounds/");
-		MidletSystem.setProperty("fileconn.dir.recordings", "file:///e:/Recordings/");
+		setMediaProperty("music", "file:///e:/Music/", Environment.DIRECTORY_MUSIC);
+		setMediaProperty("photos", "file:///e:/Images/", Environment.DIRECTORY_PICTURES);
+		setMediaProperty("videos", "file:///e:/Videos/", Environment.DIRECTORY_MOVIES);
+		setMediaProperty("tones", "file:///c:/Sounds/", Environment.DIRECTORY_RINGTONES);
+		setMediaProperty("recordings", "file:///e:/Recordings/", "Recordings");
 		MidletSystem.setProperty("fileconn.dir.memorycard", "file:///e:/");
-	}
+        // Storage policy is captured after applyConfiguration; preserve explicit profile overrides.
+        for (String line : params.systemProperties.split("\n")) {
+            String[] property = line.split(": *", 2);
+            if (property.length == 2 && property[0].startsWith("fileconn.dir.")) {
+                MidletSystem.setProperty(property[0], property[1]);
+            }
+        }
+    }
 
 	public int getOrientation() {
 		return params.orientation;
@@ -558,11 +598,13 @@ public class MicroLoader {
 						ContextHolder.getActivity().getString(R.string.runtime_installation_changed));
 				return;
 			}
-			VirtualFileSystem.install(new File(workDir), appDirName,
-					Environment.getExternalStorageDirectory());
-			ownsVirtualStorage = true;
-			MidletPermissionManager.install(ContextHolder.getAppContext(), appDir.getPath(),
-					expectedAppId, jarSha256);
+            ownsVirtualStorage = true;
+            storageMode = MidletPermissionManager.install(ContextHolder.getAppContext(), appDir.getPath(),
+                    expectedAppId, jarSha256);
+            VirtualFileSystem.install(new File(workDir), appDirName,
+                    Environment.getExternalStorageDirectory(), storageMode,
+                    storageMode == StorageMode.ANDROID ? androidStorageRoots() : new File[0]);
+            setStorageProperties();
 			startTimingSession();
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),

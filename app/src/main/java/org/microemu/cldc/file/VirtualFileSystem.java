@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Vector;
 
 /**
- * Workdir-backed Java ME storage. Root names are guest-visible identifiers, never Android paths.
+ * Java ME storage with a workdir-backed default and an explicit Android compatibility mode.
  * An installation owns its private mounts; C and E are shared by installations in the workdir.
  */
 public final class VirtualFileSystem {
@@ -27,6 +27,12 @@ public final class VirtualFileSystem {
     }
 
     public static void install(File workDir, String storageKey, File legacyStorageRoot) throws IOException {
+        install(workDir, storageKey, legacyStorageRoot, StorageMode.SHARED, new File[0]);
+    }
+
+    public static void install(File workDir, String storageKey, File legacyStorageRoot,
+            StorageMode mode, File[] androidRoots) throws IOException {
+        if (mode == null) throw new IOException("Missing storage mode");
         if (storageKey == null || storageKey.isEmpty() || storageKey.equals(".")
                 || storageKey.equals("..") || storageKey.contains("/") || storageKey.contains("\\")
                 || storageKey.indexOf(':') >= 0) {
@@ -34,8 +40,31 @@ public final class VirtualFileSystem {
         }
         File base = workDir.getCanonicalFile();
         Map<String, Mount> mounts = new LinkedHashMap<>();
-        mount(mounts, "c:/", new File(base, "storage/c"), true);
-        mount(mounts, "e:/", new File(base, "storage/e"), true);
+        if (mode == StorageMode.ANDROID) {
+            if (androidRoots == null || androidRoots.length == 0) {
+                throw new IOException("No Android storage volume available");
+            }
+            for (File volume : androidRoots) {
+                if (volume == null || !volume.isDirectory()) throw new IOException("Android volume unavailable");
+            }
+            mount(mounts, "c:/", androidRoots[0].getCanonicalFile(), true);
+            mount(mounts, "e:/", androidRoots[Math.min(1, androidRoots.length - 1)].getCanonicalFile(), true);
+            // A single physical volume still accepts E:/ aliases without advertising a duplicate.
+            if (androidRoots.length == 1) mounts.get("e:/").visible = false;
+            java.util.List<File> protectedPaths = new java.util.ArrayList<>();
+            for (String name : Arrays.asList("data", "converted", "configs", "templates", "cache")) {
+                protectedPaths.add(new File(base, name));
+            }
+            for (String db : Arrays.asList("J2ME-apps.db", "JL-Mod-library.db")) {
+                for (String suffix : Arrays.asList("", "-wal", "-shm", "-journal")) {
+                    protectedPaths.add(new File(base, db + suffix));
+                }
+            }
+            for (Mount physical : mounts.values()) physical.protectedPaths = protectedPaths;
+        } else {
+            mount(mounts, "c:/", new File(base, "storage/c"), true);
+            mount(mounts, "e:/", new File(base, "storage/e"), true);
+        }
         alias(mounts, "0:/", "c:/");
         alias(mounts, "1:/", "e:/");
         alias(mounts, "fs/MyStuff/", "e:/");
@@ -45,8 +74,7 @@ public final class VirtualFileSystem {
         mount(mounts, "siemens:/", new File(privateBase, "vendor/siemens"), false);
         mount(mounts, "a:/", new File(privateBase, "vendor/siemens/a"), false);
         mount(mounts, "b:/", new File(privateBase, "vendor/siemens/b"), false);
-        // Old persisted URLs may address this installation's private/cache folders. Never mount
-        // the physical Android root, the workdir itself, or the mixed RMS/vendor data directory.
+        // Preserve only this installation's exact private/cache legacy URLs.
         if (legacyStorageRoot != null) {
             File legacyRoot = legacyStorageRoot.getCanonicalFile();
             String prefix = legacyRoot.getPath() + File.separator;
@@ -63,20 +91,23 @@ public final class VirtualFileSystem {
         for (String root : Arrays.asList("c:/", "e:/", "private:/", "cache:/", "siemens:/")) {
             File dir = mounts.get(root).directory;
             checkMount(mounts.get(root));
-            if (!dir.isDirectory() && !dir.mkdirs()) {
+            if (!dir.isDirectory() && (mode == StorageMode.ANDROID
+                    && !mounts.get(root).privateData || !dir.mkdirs())) {
                 throw new IOException("Cannot create virtual drive " + root);
             }
             checkMount(mounts.get(root));
         }
-        for (String relative : Arrays.asList("Music", "Images", "Videos", "Recordings")) {
-            File folder = checked(mounts.get("e:/"), new File(mounts.get("e:/").directory, relative));
-            if (!folder.isDirectory() && !folder.mkdirs()) {
+        if (mode == StorageMode.SHARED) {
+            for (String relative : Arrays.asList("Music", "Images", "Videos", "Recordings")) {
+                File folder = checked(mounts.get("e:/"), new File(mounts.get("e:/").directory, relative));
+                if (!folder.isDirectory() && !folder.mkdirs()) {
+                    throw new IOException("Cannot prepare virtual media directory");
+                }
+            }
+            File sounds = checked(mounts.get("c:/"), new File(mounts.get("c:/").directory, "Sounds"));
+            if (!sounds.isDirectory() && !sounds.mkdirs()) {
                 throw new IOException("Cannot prepare virtual media directory");
             }
-        }
-        File sounds = checked(mounts.get("c:/"), new File(mounts.get("c:/").directory, "Sounds"));
-        if (!sounds.isDirectory() && !sounds.mkdirs()) {
-            throw new IOException("Cannot prepare virtual media directory");
         }
         session = new Session(Collections.unmodifiableMap(mounts));
     }
@@ -93,7 +124,7 @@ public final class VirtualFileSystem {
     private static void alias(Map<String, Mount> mounts, String name, String target) {
         Mount original = mounts.get(target);
         mounts.put(rootKey(name),
-                new Mount(original.directory, false, original.privateData));
+                new Mount(original.directory, false, original.privateData, original.protectedPaths));
     }
 
     private static Session active() throws IOException {
@@ -145,7 +176,7 @@ public final class VirtualFileSystem {
                 throw new IOException("Relative path segments are not valid in file URLs");
             }
         }
-        if (!mount.directory.isDirectory() && !mount.directory.mkdirs()) {
+        if (!mount.directory.isDirectory() && (!mount.protectedPaths.isEmpty() || !mount.directory.mkdirs())) {
             throw new IOException("Cannot prepare virtual filesystem root");
         }
         return checked(mount, new File(mount.directory, path));
@@ -163,7 +194,31 @@ public final class VirtualFileSystem {
                 && !resolved.getPath().startsWith(root.getPath() + File.separator)) {
             throw new IOException("Path escapes virtual filesystem root");
         }
+        for (File protectedPath : mount.protectedPaths) {
+            // Check both lexical and canonical paths so links cannot expose private data or
+            // move the protection away from an internal directory name.
+            if (within(candidate.getAbsoluteFile(), protectedPath.getAbsoluteFile())
+                    || within(resolved, protectedPath.getCanonicalFile())) {
+                throw new IOException("Emulator internal storage is private");
+            }
+        }
         return resolved;
+    }
+
+    public static void checkMutation(String root, File candidate) throws IOException {
+        Mount mount = mount(root);
+        File resolved = checked(mount, candidate);
+        for (File protectedPath : mount.protectedPaths) {
+            if (within(protectedPath.getAbsoluteFile(), candidate.getAbsoluteFile())
+                    || within(protectedPath.getCanonicalFile(), resolved)) {
+                throw new IOException("Cannot modify an ancestor of emulator internal storage");
+            }
+        }
+    }
+
+    private static boolean within(File candidate, File parent) {
+        return candidate.equals(parent)
+                || candidate.getPath().startsWith(parent.getPath() + File.separator);
     }
 
     private static void checkMount(Mount mount) throws IOException {
@@ -192,10 +247,16 @@ public final class VirtualFileSystem {
 
     private static final class Mount {
         final File directory;
-        final boolean visible;
+        boolean visible;
+        java.util.List<File> protectedPaths = Collections.emptyList();
         final boolean privateData;
 
         Mount(File directory, boolean visible, boolean privateData) {
+            this(directory, visible, privateData, Collections.emptyList());
+        }
+
+        Mount(File directory, boolean visible, boolean privateData, java.util.List<File> protectedPaths) {
+            this.protectedPaths = protectedPaths;
             this.directory = directory;
             this.visible = visible;
             this.privateData = privateData;

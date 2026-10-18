@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import org.microemu.cldc.file.StorageMode;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -38,6 +39,13 @@ public class MidletPermissionStoreInstrumentationTest {
                 MidletPermissionStore.FILE_WRITE, null, MidletPermissionStore.ASK);
         MidletPermissionStore.write(context, otherWorkdirAppPath, appId,
                 MidletPermissionStore.FILE_READ, null, MidletPermissionStore.ASK);
+        for (StorageMode mode : StorageMode.values()) {
+            for (String capability : new String[]{MidletPermissionStore.FILE_READ, MidletPermissionStore.FILE_WRITE}) {
+                MidletPermissionStore.write(context, appPath, appId, mode, capability, null, MidletPermissionStore.ASK);
+            }
+        }
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).edit()
+                .remove("midlet_permission:" + appId + ":" + appPath.length() + ":" + appPath + ":storage.mode").commit();
         if (temporaryJar != null) temporaryJar.delete();
     }
 
@@ -70,6 +78,29 @@ public class MidletPermissionStoreInstrumentationTest {
                 null, MidletPermissionStore.ASK));
         assertEquals(MidletPermissionStore.ASK,
                 MidletPermissionStore.read(context, appPath, appId, capability, jarOne));
+    }
+
+    @Test
+    public void modeIsPerInstallationAndBroaderAndroidGrantsStartUndecided() {
+        String fingerprint = "jar-content-sha";
+        assertEquals(StorageMode.SHARED, MidletPermissionStore.readAccess(context, appPath, appId, fingerprint).mode);
+        assertTrue(MidletPermissionStore.write(context, appPath, appId,
+                MidletPermissionStore.FILE_READ, fingerprint, MidletPermissionStore.ALLOW));
+        assertTrue(MidletPermissionStore.writeMode(context, appPath, appId, StorageMode.ANDROID));
+        MidletPermissionStore.Access android = MidletPermissionStore.readAccess(context, appPath, appId, fingerprint);
+        assertEquals(StorageMode.ANDROID, android.mode);
+        assertEquals(MidletPermissionStore.ASK, android.read);
+        assertEquals(MidletPermissionStore.ASK, android.write);
+        assertEquals(StorageMode.SHARED, MidletPermissionStore.readAccess(context, appPath, appId + 1, fingerprint).mode);
+        assertEquals(StorageMode.SHARED, MidletPermissionStore.readAccess(context, otherWorkdirAppPath, appId, fingerprint).mode);
+        assertTrue(MidletPermissionStore.write(context, appPath, appId, StorageMode.ANDROID,
+                MidletPermissionStore.FILE_READ, fingerprint, MidletPermissionStore.DENY));
+        assertTrue(MidletPermissionStore.writeMode(context, appPath, appId, StorageMode.SHARED));
+        assertEquals(MidletPermissionStore.ALLOW, MidletPermissionStore.readAccess(context, appPath, appId, fingerprint).read);
+        // A running Android session still writes to its captured scope after config selects Shared.
+        assertTrue(MidletPermissionStore.write(context, appPath, appId, StorageMode.ANDROID,
+                MidletPermissionStore.FILE_WRITE, fingerprint, MidletPermissionStore.ALLOW));
+        assertEquals(MidletPermissionStore.ASK, MidletPermissionStore.readAccess(context, appPath, appId, fingerprint).write);
     }
 
     @Test

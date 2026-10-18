@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import org.microemu.cldc.file.StorageMode;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -160,11 +162,18 @@ public final class ConfigUiState {
 	}
 
     public static final class FileAccess {
+        public final StorageMode mode;
         public final int read;
         public final int write;
         @NonNull public final List<String> legacyFiles;
 
         public FileAccess(int read, int write, @NonNull List<String> legacyFiles) {
+            this(StorageMode.SHARED, read, write, legacyFiles);
+        }
+
+        public FileAccess(StorageMode mode, int read, int write,
+                @NonNull List<String> legacyFiles) {
+            this.mode = mode;
             this.read = read;
             this.write = write;
             this.legacyFiles = immutableCopy(legacyFiles);

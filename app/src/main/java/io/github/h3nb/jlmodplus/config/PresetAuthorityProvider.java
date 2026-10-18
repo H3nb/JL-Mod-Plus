@@ -3,6 +3,8 @@
  */
 package io.github.h3nb.jlmodplus.config;
 
+import org.microemu.cldc.file.StorageMode;
+
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -91,12 +93,11 @@ public final class PresetAuthorityProvider extends ContentProvider {
         }
         String fingerprint = extras.getString(PresetAuthorityContract.KEY_JAR_FINGERPRINT);
         Bundle response = result(PresetAuthorityContract.RESULT_OK);
-        response.putInt(PresetAuthorityContract.KEY_FILE_READ_DECISION,
-                MidletPermissionStore.read(getContext(), appPath, appId,
-                        MidletPermissionStore.FILE_READ, fingerprint));
-        response.putInt(PresetAuthorityContract.KEY_FILE_WRITE_DECISION,
-                MidletPermissionStore.read(getContext(), appPath, appId,
-                        MidletPermissionStore.FILE_WRITE, fingerprint));
+        MidletPermissionStore.Access access = MidletPermissionStore.readAccess(
+                getContext(), appPath, appId, fingerprint);
+        response.putString(PresetAuthorityContract.KEY_STORAGE_MODE, access.mode.name());
+        response.putInt(PresetAuthorityContract.KEY_FILE_READ_DECISION, access.read);
+        response.putInt(PresetAuthorityContract.KEY_FILE_WRITE_DECISION, access.write);
         return response;
     }
 
@@ -104,14 +105,15 @@ public final class PresetAuthorityProvider extends ContentProvider {
         String capability = extras.getString(PresetAuthorityContract.KEY_PERMISSION_CAPABILITY);
         int decision = extras.getInt(PresetAuthorityContract.KEY_PERMISSION_DECISION, -1);
         String fingerprint = extras.getString(PresetAuthorityContract.KEY_JAR_FINGERPRINT);
-        if (!MidletPermissionStore.supported(capability)
+        StorageMode mode = StorageMode.parse(extras.getString(PresetAuthorityContract.KEY_STORAGE_MODE));
+        if (mode == null || !MidletPermissionStore.supported(capability)
                 || decision < MidletPermissionStore.ASK
                 || decision > MidletPermissionStore.DENY) {
             return result(PresetAuthorityContract.RESULT_INVALID);
         }
         InstalledAppWriteGuard.Result saved = permissionGuard.run(appPath, appId,
                 () -> MidletPermissionStore.write(getContext(), appPath, appId,
-                        capability, fingerprint, decision));
+                        mode, capability, fingerprint, decision));
         return result(switch (saved) {
             case SUCCESS -> PresetAuthorityContract.RESULT_OK;
             case STALE -> PresetAuthorityContract.RESULT_STALE;

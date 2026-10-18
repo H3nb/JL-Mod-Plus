@@ -1,6 +1,7 @@
 package io.github.h3nb.jlmodplus.config;
 
 import android.content.Context;
+import org.microemu.cldc.file.StorageMode;
 import android.content.SharedPreferences;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,8 +28,13 @@ public final class MidletPermissionStore {
 
     public static int read(Context context, String appPath, long appId,
             String capability, String fingerprint) {
-        if (appId <= 0 || !supported(capability)) return DENY;
-        String key = key(appPath, appId, capability);
+        return read(context, appPath, appId, StorageMode.SHARED, capability, fingerprint);
+    }
+
+    public static int read(Context context, String appPath, long appId, StorageMode mode,
+            String capability, String fingerprint) {
+        if (appId <= 0 || mode == null || !supported(capability)) return DENY;
+        String key = permissionKey(appPath, appId, mode, capability);
         if (key == null) return DENY;
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         int choice = preferences.getInt(key, ASK);
@@ -39,10 +45,15 @@ public final class MidletPermissionStore {
 
     public static boolean write(Context context, String appPath, long appId,
             String capability, String fingerprint, int decision) {
-        if (appId <= 0 || !supported(capability)
+        return write(context, appPath, appId, StorageMode.SHARED, capability, fingerprint, decision);
+    }
+
+    public static boolean write(Context context, String appPath, long appId, StorageMode mode,
+            String capability, String fingerprint, int decision) {
+        if (appId <= 0 || mode == null || !supported(capability)
                 || decision != ASK && decision != ALLOW && decision != DENY
                 || decision == ALLOW && (fingerprint == null || fingerprint.isEmpty())) return false;
-        String key = key(appPath, appId, capability);
+        String key = permissionKey(appPath, appId, mode, capability);
         if (key == null) return false;
         SharedPreferences.Editor edit = PreferenceManager.getDefaultSharedPreferences(context).edit();
         if (decision == ASK) {
@@ -53,6 +64,39 @@ public final class MidletPermissionStore {
             edit.putInt(key, ALLOW).putString(key + ".sha256", fingerprint);
         }
         return edit.commit();
+    }
+
+    public static final class Access {
+        public final StorageMode mode;
+        public final int read;
+        public final int write;
+
+        public Access(StorageMode mode, int read, int write) {
+            this.mode = mode;
+            this.read = read;
+            this.write = write;
+        }
+    }
+
+    public static Access readAccess(Context context, String appPath, long appId, String fingerprint) {
+        String key = key(appPath, appId, "storage.mode");
+        StorageMode mode = key == null ? null : StorageMode.parse(
+                PreferenceManager.getDefaultSharedPreferences(context).getString(key, null));
+        if (mode == null) mode = StorageMode.SHARED;
+        return new Access(mode, read(context, appPath, appId, mode, FILE_READ, fingerprint),
+                read(context, appPath, appId, mode, FILE_WRITE, fingerprint));
+    }
+
+    public static boolean writeMode(Context context, String appPath, long appId, StorageMode mode) {
+        String key = key(appPath, appId, "storage.mode");
+        return appId > 0 && key != null && mode != null
+                && PreferenceManager.getDefaultSharedPreferences(context).edit()
+                    .putString(key, mode.name()).commit();
+    }
+
+    private static String permissionKey(String path, long id, StorageMode mode, String capability) {
+        // Keep existing shared grants; broader Android access always starts with a new decision.
+        return key(path, id, mode == StorageMode.SHARED ? capability : "android." + capability);
     }
 
     public static String fingerprint(File retainedJar) {

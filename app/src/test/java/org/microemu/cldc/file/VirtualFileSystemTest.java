@@ -139,6 +139,66 @@ public class VirtualFileSystemTest {
         assertEquals(shared, VirtualFileSystem.resolve("c:/", "shared.dat"));
     }
 
+    @Test public void androidModeMountsPhysicalVolumesButKeepsPrivateLocations() throws Exception {
+        File primary = temp.newFolder("primary");
+        File card = temp.newFolder("card");
+        File work = new File(primary, "WorkDir");
+        VirtualFileSystem.install(work, "one");
+        File privateSave = VirtualFileSystem.resolve("private:/", "save");
+        File vendorSave = VirtualFileSystem.resolve("a:/", "save");
+        Files.write(privateSave.toPath(), new byte[]{42});
+        VirtualFileSystem.install(work, "one", primary, StorageMode.ANDROID, new File[]{primary, card});
+        assertEquals(primary, VirtualFileSystem.resolve("c:/", ""));
+        assertEquals(card, VirtualFileSystem.resolve("e:/", ""));
+        assertEquals(card, VirtualFileSystem.resolve("1:/", ""));
+        assertEquals(privateSave, VirtualFileSystem.resolve("private:/", "save"));
+        assertEquals(vendorSave, VirtualFileSystem.resolve("a:/", "save"));
+        assertArrayEquals(new byte[]{42}, Files.readAllBytes(privateSave.toPath()));
+        assertFalse(new File(primary, "Sounds").exists());
+        assertFalse(new File(card, "Music").exists());
+        assertEquals(2, Collections.list(VirtualFileSystem.listRoots()).size());
+        VirtualFileSystem.install(work, "two", primary, StorageMode.ANDROID, new File[]{primary});
+        assertEquals(1, Collections.list(VirtualFileSystem.listRoots()).size());
+        assertEquals(primary, VirtualFileSystem.resolve("e:/", ""));
+        assertNotEquals(privateSave, VirtualFileSystem.resolve("private:/", "save"));
+        assertThrows(IOException.class, () -> VirtualFileSystem.resolve("c:/", "WorkDir/data/one/private/save"));
+        VirtualFileSystem.install(work, "one");
+        assertEquals(new File(work, "storage/c"), VirtualFileSystem.resolve("c:/", ""));
+    }
+
+    @Test public void androidModeProtectsInternalsAndTheirAncestorsIncludingSymlinks() throws Exception {
+        File primary = temp.newFolder("volume");
+        File work = new File(primary, "parent/WorkDir");
+        VirtualFileSystem.install(work, "one", primary, StorageMode.ANDROID, new File[]{primary});
+        for (String internal : new String[]{"data/other/record.rsh", "configs/other", "converted/other",
+                "templates/preset", "cache/private", "JL-Mod-library.db-wal", "J2ME-apps.db"}) {
+            assertThrows(IOException.class, () -> VirtualFileSystem.resolve("c:/", "parent/WorkDir/" + internal));
+        }
+        File privateDir = new File(work, "data");
+        Files.createSymbolicLink(new File(primary, "linked-data").toPath(), privateDir.toPath());
+        assertThrows(IOException.class, () -> VirtualFileSystem.resolve("c:/", "linked-data/other"));
+        Files.createSymbolicLink(new File(primary, "linked-work").toPath(), work.toPath());
+        assertThrows(IOException.class, () -> VirtualFileSystem.checkMutation("c:/", new File(primary, "linked-work")));
+        assertThrows(IOException.class, () -> VirtualFileSystem.checkMutation("c:/", work));
+        assertThrows(IOException.class, () -> VirtualFileSystem.checkMutation("c:/", work.getParentFile()));
+        assertThrows(IOException.class, () -> VirtualFileSystem.checkMutation("c:/", primary));
+        VirtualFileSystem.checkMutation("c:/", new File(primary, "normal.txt"));
+        VirtualFileSystem.checkMutation("private:/", VirtualFileSystem.resolve("private:/", "save"));
+        // Selecting the storage root itself as workdir must still allow reading its listing.
+        VirtualFileSystem.install(primary, "one", primary, StorageMode.ANDROID, new File[]{primary});
+        assertEquals(primary, VirtualFileSystem.resolve("c:/", ""));
+        assertThrows(IOException.class, () -> VirtualFileSystem.resolve("c:/", "data/one/record.rsh"));
+    }
+
+    @Test public void unavailableAndroidVolumeDoesNotGetCreated() throws Exception {
+        File absent = new File(temp.getRoot(), "unmounted");
+        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "one", absent,
+                StorageMode.ANDROID, new File[]{absent}));
+        assertFalse(absent.exists());
+        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "one", null,
+                StorageMode.ANDROID, new File[0]));
+    }
+
     private String relative(File file) throws IOException {
         String base = temp.getRoot().getCanonicalPath();
         return file.getCanonicalPath().substring(base.length() + 1).replace(File.separatorChar, '/');

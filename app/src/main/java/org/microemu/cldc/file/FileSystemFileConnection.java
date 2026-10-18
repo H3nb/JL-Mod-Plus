@@ -138,6 +138,11 @@ public class FileSystemFileConnection implements FileConnection {
 	private void requireWrite() {
 		throwClosed();
 		if (mode == Connector.READ) throw new IllegalModeException("Connection is read-only");
+        try {
+            VirtualFileSystem.checkMutation(root, file);
+        } catch (IOException denied) {
+            throw new SecurityException(denied.getMessage(), denied);
+        }
 	}
 
 	@Override
@@ -498,6 +503,7 @@ public class FileSystemFileConnection implements FileConnection {
 		}
 		if (name.isEmpty() || newName.isEmpty() || newName.equals(".") || newName.equals("..") || newName.indexOf('\\') >= 0) throw new IllegalArgumentException("Invalid file name");
 		File newFile = VirtualFileSystem.checked(root, new File(file.getParentFile(), newName));
+		VirtualFileSystem.checkMutation(root, newFile);
 		if (!file.renameTo(newFile)) {
 			throw new IOException("Unable to rename " + file.getAbsolutePath() + " to "
 					+ newFile.getAbsolutePath());

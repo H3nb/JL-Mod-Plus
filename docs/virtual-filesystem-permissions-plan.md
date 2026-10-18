@@ -6,7 +6,7 @@ Status: Draft implementation. Not merged; Android/device qualification remains r
 
 Deliver a shared virtual filesystem (VFS) for Java ME file APIs and a per-installed-MIDlet permission manager. Keep Android app permissions, runtime process topology, guest DEX conversion, ClassLoader behavior, camera implementation, and other unrelated features unchanged.
 
-The purpose is to prevent normal file API operations from reaching arbitrary Android storage and to let users control Java ME permissions without relying on historical certificate trust. This is **not an OS-enforced sandbox** for deliberately hostile DEX code. Host Java/Android API bypasses are outside this PR; do not describe the VFS as preventing them.
+The default Shared mode prevents normal file API operations from reaching arbitrary Android storage and to let users control Java ME permissions without relying on historical certificate trust. This is **not an OS-enforced sandbox** for deliberately hostile DEX code. Host Java/Android API bypasses are outside this PR; do not describe the VFS as preventing them.
 
 Follow [Java ME compatibility](java-me-compatibility.md), [preset and installed identity contracts](preset-config-contract.md), [library schema guidance](library-data-contract.md), and [test strategy](development.md#testing-strategy). Preserve existing license notices in modified files.
 
@@ -58,21 +58,21 @@ Treat these as migration inputs, not compatibility requirements.
 - Recognize `MIDlet-Permissions` and `MIDlet-Permissions-Opt` as declarations, not as proof of trust and not as user approval. No certificate validity check controls the runtime grants.
 - Define behavior when the retained JAR contents change: retain explicit denials and installation ownership; do not silently transfer sensitive permanent grants to changed executable content. Avoid resetting permissions merely because a display name or storage location changes.
 - `MIDlet.checkPermission(name)` queries effective policy without displaying UI and uses MIDP-compatible return values: `1` granted, `0` denied or unknown permission, `-1` undecided/interaction required. API entry points must enforce permission independently of `checkPermission`.
-- The filesystem restriction is not merely a permission: even if file READ or WRITE is granted, the API never accepts arbitrary Android paths.
+- In Shared mode, granting file READ or WRITE never expands the workdir-backed mounts. Android mode is an explicit per-installation compatibility opt-in; its grants are scoped separately.
 
 ### Runtime and UI
 
 - The permission manager serializes simultaneous prompts for the same installation/capability and avoids flooding users with repeated file operations.
 - Never block the Android main thread waiting for user input. Define cancellation on runtime exit, Activity destruction, workdir switch, deletion/reinstall, and stale installation identity.
 - Revoke a grant consistently: new operations must observe the new decision; document and test existing-open-stream behavior rather than leaving stale silent authority.
-- Permissions appear under the individual MIDlet configuration, **not in shared or linked presets**. Use human-readable English/Indonesian strings. Explain access to *virtual shared storage* rather than all Android files. Do not imply OS-level isolation.
+- Permissions appear under the individual MIDlet configuration, **not in shared or linked presets**. Use human-readable English/Indonesian strings. Use short read/write descriptions and show the selected storage backend in System settings. Do not imply OS-level isolation.
 - Do not request Android permissions as part of Java ME permission dialogs. Host Android permission handling remains unchanged for this PR.
 
 ## Existing-data migration
 
 - No bulk copy of Android primary storage, no deletion or in-place relocation of old data based solely on legacy URLs, and no eager creation of every possible vendor root.
 - Preserve RMS, save data, app configuration, installed identity, and the current workdir. Treat old `fileconn.dir.private` references, including persisted absolute URLs in RMS, as a compatibility investigation with focused fixtures.
-- Introduce a bounded, opt-in import mechanism for files users need in C/E if justified by tests. Never use a fallback that restores unrestricted physical-root access.
+- Introduce a bounded, opt-in import mechanism for files users need in C/E if justified by tests. Never silently fall back to physical-root access; only an explicit Android mode selection enables physical volumes.
 - On failure, retain the original file and a recoverable state; do not silently report a successful migration.
 
 ## Delivery order and acceptance gates
@@ -84,8 +84,8 @@ Treat these as migration inputs, not compatibility requirements.
 
 Blocking acceptance checks:
 
-- C/E exist as separate shared virtual directories even on Android devices without a removable card.
-- A MIDlet reading/writing `file:///c:/` or `file:///e:/` through supported Java ME APIs can never reach `/storage/emulated/0` outside its configured VFS backing directories.
+- In default Shared mode, C/E exist as separate directories even without a removable card.
+- In Shared mode, C/E never reach physical storage outside their configured backing directories. Android mode requires explicit selection and separately scoped grants.
 - A MIDlet cannot open another installation's private data through VFS, including through alias, traversal, unknown root, symlink, or vendor API.
 - Connector access mode and file READ/WRITE permission are both enforced, with correct Java ME error behavior.
 - Root listings and `fileconn.dir.*` URLs agree with the active mount configuration.
@@ -101,7 +101,7 @@ No isolated process migration, DEX/ASM/ClassLoader hardening, Android permission
 
 ## Review corrections — 18 October 2026
 
-The user-confirmed boundary is file access inside the working directory. C/E are
+The default Shared-mode boundary is file access inside the working directory. C/E are
 shared storage for intentional file exchange; RMS, private/cache files and
 Siemens save storage remain installation-scoped. This does not change Android
 host permissions or claim protection against arbitrary guest DEX/host API calls.
@@ -129,7 +129,7 @@ host permissions or claim protection against arbitrary guest DEX/host API calls.
   lease, so a running MIDlet must stop first. Inspection is bounded to 1024
   entries/16 directory levels; each copied file is bounded to 64 MiB. A failed
   import leaves the source intact and does not fall back to Android storage.
-- Old public-storage URLs are intentionally not restored. Users may place files
+- In Shared mode, old public-storage URLs are not restored. Users may place files
   they want to share in `<workdir>/storage/c/` or `<workdir>/storage/e/` with their
   file manager. No bulk copy or automatic gallery/music scan is performed.
 
@@ -145,3 +145,27 @@ The Draft UI is localized in English and Indonesian. Its new canonical strings
 carry resource-local MissingTranslation annotations, matching the existing
 incremental-localization policy; no global lint rule or other catalog is disabled.
 Other locales use English fallback until reviewed translations are added.
+
+## Storage-mode and copy revisions (18 October 2026)
+
+- The first System section is **Storage access permissions** / **Izin akses penyimpanan**.
+  **Shared** / **Berbagi** is the default and retains workdir-backed C/E. **Android** maps C to
+  primary external storage and E to a second mounted volume, or the primary when only one exists.
+  A single physical volume advertises only C; aliases remain usable. Missing volumes fail closed
+  and are never created by the resolver. Android access remains subject to existing host permissions.
+- Mode, read and write decisions belong to an installed app identity, outside reusable presets.
+  Existing shared grants keep their scope; Android grants start at ASK and never inherit them.
+  The launch snapshots the selected mode and its grants. Runtime grant writes name that snapshot
+  even if settings have changed meanwhile. Settings take effect on the next launch.
+- Private/cache, RMS and Siemens A/B data keep the same installation-owned locations in both modes.
+  No mode switch copies or relocates files. Android physical mounts exclude the current workdir's
+  data, converted apps, configs, templates, host cache and catalog database files/sidecars.
+  Canonical and lexical checks also reject symlink routes to those paths; mutations of their
+  ancestors are blocked, and directory listings omit protected children. Exact legacy aliases
+  for the current app's own private/cache remain valid. These checks do not claim an OS sandbox,
+  atomic protection against host-side filesystem races, or discovery of unrelated historical workdirs.
+- Android media properties use physical public directories; Shared keeps its existing virtual
+  media directories. Neither mode changes private/cache URLs. Unknown roots still fail closed.
+- Runtime prompts say only that the app wants to read or change files. Option rows have no extra
+  inter-row spacing and keep 48 dp touch targets. EN/ID copy is concise; other locales use the
+  existing scoped English fallback.

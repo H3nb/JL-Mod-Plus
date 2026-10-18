@@ -78,6 +78,13 @@ class ConfigComposeTest {
         composeRule.setContent {
             JLModPlusTheme { ConfigScreen(state, events, initialDestination = ConfigDestination.System) }
         }
+        composeRule.onNodeWithText(uiString(R.string.midlet_permissions_settings_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.midlet_storage_mode_title)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.midlet_storage_mode_android)).performClick()
+        composeRule.runOnIdle {
+            assertEquals(org.microemu.cldc.file.StorageMode.ANDROID, events.storageMode)
+            assertEquals(0, events.formChanges)
+        }
         scrollTo(uiString(R.string.midlet_permissions_write))
         composeRule.onNodeWithText(uiString(R.string.midlet_permissions_write)).performClick()
         composeRule.onNodeWithText(uiString(R.string.midlet_permissions_deny)).performClick()
@@ -1010,6 +1017,10 @@ class ConfigComposeTest {
     }
 
     private class RecordingConfigEvents : ConfigFormEvents {
+        var storageMode: org.microemu.cldc.file.StorageMode? = null
+        override fun onStorageModeChanged(mode: org.microemu.cldc.file.StorageMode) {
+            storageMode = mode
+        }
         var filePermission: Pair<Boolean, Int>? = null
         override fun onFilePermissionChanged(write: Boolean, decision: Int) {
             filePermission = write to decision
