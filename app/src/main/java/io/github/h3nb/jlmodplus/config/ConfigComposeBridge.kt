@@ -562,7 +562,6 @@ private fun ConfigDestinationContent(
                 onRequestAction,
             )
             ConfigDestination.System -> {
-                EmulationSection(form, onFormChanged)
                 SystemSection(state, form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
             }
         }
@@ -2000,6 +1999,7 @@ private fun SystemSection(
             }
         }
     }
+    EmulationSection(form, onFormChanged)
     ConfigSection(title = stringResource(R.string.config_system_timing)) {
         val timingModes = TimingMode.values().toList()
         val timingModeOptions = listOf(

@@ -457,7 +457,14 @@ fun ConfigSystemPropertiesEditorScreenshot() {
 fun ConfigSystemPropertiesScreenshot() {
     JLModPlusTheme {
         ConfigScreen(
-            PreviewConfigState,
+            PreviewConfigState.let { base ->
+                ConfigUiState(
+                    base.form, base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+                    base.shaders, base.removableScreenPresets, base.profileStatus, base.profileTemplates,
+                    base.timingControlsEnabled, base.profileNames, base.controllerAvailable,
+                    base.updatePresetName, ConfigUiState.FileAccess(0, 0, emptyList()),
+                )
+            },
             NoOpConfigEvents,
             initialDestination = ConfigDestination.System,
         )

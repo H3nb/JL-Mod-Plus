@@ -107,7 +107,9 @@ public class File {
 		FilenameFilter filter = (dir, name) -> {
             if (!includeHidden && name.charAt(0) == '.') return false;
             try {
-                getFile(pathName + (pathName.endsWith("/") ? "" : "/") + name);
+                // The parent list operation already acquired READ (including a once grant).
+                // Child filtering only checks visibility; it must not prompt once per entry.
+                getFile(pathName + (pathName.endsWith("/") ? "" : "/") + name, 0);
                 return true;
             } catch (SecurityException denied) {
                 return false;
