@@ -15,8 +15,7 @@
  *  limitations under the License.
  */
 
-/* Modified in JL-Mod Plus: converted guest timers use the parent-owned timing bridge while
- * retaining the inherited Apache Timer contracts. */
+/* Modified for JL-Mod Plus. */
 
 package javax.microedition.shell.custom;
 
@@ -420,18 +419,25 @@ public class Timer {
                         continue;
                     }
 
-                    boolean taskCompletedNormally = false;
                     try {
                         task.run();
-                        taskCompletedNormally = true;
-                    } finally {
-                        if (!taskCompletedNormally) {
-                            synchronized (this) {
-                                cancelled = true;
+                    } catch (Exception failure) {
+                        // Preserve the J2ME-Loader/JL-Mod callback compatibility boundary:
+                        // cancel only the failed task, including an already queued fixed-rate
+                        // occurrence. Errors and scheduler failures still escape to worker cleanup.
+                        System.err.println("TimerTask failed; cancelling " + task.getClass().getName());
+                        failure.printStackTrace();
+                        try {
+                            // Preserve guest cleanup hooks without holding the task lock.
+                            task.cancel();
+                        } finally {
+                            // Scheduler cancellation must not depend on an override delegating.
+                            synchronized (task.lock) {
+                                task.cancelled = true;
                             }
                         }
                     }
-                    if (taskCompletedNormally && task.period >= 0 && !task.fixedRate) {
+                    if (task.period >= 0 && !task.fixedRate) {
                         rescheduleFixedDelayTask(task, fixedDelayStartTime, fixedDelayStartWallTime);
                     }
                 }

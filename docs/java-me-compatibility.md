@@ -12,6 +12,35 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 - Do not silently "correct" known-compatible behavior just because Android or desktop Java behaves differently.
 - If documentation is incomplete or ambiguous, prefer preserving known behavior and add a focused characterization/regression test instead of guessing.
 
+## Timer callback failures
+
+Guest `TimerTask.run()` callbacks preserve the J2ME-Loader/JL-Mod compatibility
+policy: an escaping `Exception` cancels only that task. The same Timer can continue
+queued healthy tasks and accept new work. Cancellation also suppresses a fixed-rate
+occurrence that was queued before the failed callback, and fixed-delay callbacks
+are not requeued after failure. The task identity and stack trace are written to
+standard error, which Android exposes through logcat; these caught failures do not
+become fatal session reports by themselves.
+
+Automatic failure cancellation still invokes a guest override of `cancel()` so
+its cleanup runs with the original cancellation state. A `finally` block marks
+the internal task state cancelled under its existing lock, even if that override
+does not delegate to the base implementation. The guest hook runs without the
+task lock held. A new failure from the cancellation hook is not swallowed: it
+still terminates the worker, with the original callback failure already logged.
+
+This is a deliberate compatibility policy, also used by
+[KEmulator nnmod](https://github.com/shinovon/KEmulator/blob/2fe11e46713021f6099fd6ef39916d1d4d0f2e19/src/main/emulator/custom/subclass/TimerThread.java#L61-L66),
+not a guarantee that guest state remains consistent after an exception. It does
+not retry a failed task, repair guest races, or ignore invalid API arguments such
+as a null image passed to `Graphics.drawImage()`.
+
+The catch covers only the callback. `Error` subclasses and failures in scheduler
+bookkeeping still escape, terminate the worker and clear its queue; further
+scheduling on that terminated Timer is rejected. Existing session failure capture
+remains responsible for escaping fatal failures. Normal scheduling, guest clocks,
+speed changes and session-close cleanup retain their existing behavior.
+
 ## MIDlet locale identity
 
 MIDP 2.0 defines `microedition.locale` as the current locale of the emulated device, not as an
