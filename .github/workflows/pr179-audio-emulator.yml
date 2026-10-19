@@ -77,7 +77,11 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash .github/ci/pr179-audio-emulator.sh
+          script: |
+            bash .github/ci/pr179-audio-emulator.sh
+            if [[ "${{ matrix.api }}" == "35" ]]; then
+              bash .github/ci/pr179-native-emulator.sh
+            fi
 
       - name: Upload audio emulator evidence
         if: always()
