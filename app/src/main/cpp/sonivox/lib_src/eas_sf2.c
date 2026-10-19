@@ -351,6 +351,12 @@ static EAS_RESULT Parse_Presets(S_SF2_PARSER* pParser, EAS_BOOL dryRun);
 
 static inline EAS_RESULT Check_gen(EAS_U16 genType, EAS_BOOL isInst)
 {
+    // endOper is a terminator, not a usable generator. Callers index a
+    // fixed-size gens[sfg_endOper] array after this validation.
+    if (genType >= sfg_endOper) {
+        EAS_Report(_EAS_SEVERITY_WARNING, "SF2Parser: Invalid generator type %u\n", genType);
+        return EAS_ERROR_FILE_FORMAT;
+    }
     if (isInst) { // igen
         if (genType == sfg_instrument) {
             EAS_Report(_EAS_SEVERITY_WARNING, "SF2Parser: Found preset-only generator type %u at igen entry\n", genType);

@@ -294,7 +294,8 @@ public class SonivoxRuntimeTest {
 
     @Test public void malformedSf2IndicesAndRiffLengthsFailWithoutOpeningPlayers() throws Exception {
         byte[] valid = AudioBankFixtures.sf2();
-        byte[][] malformed = {valid.clone(), valid.clone(), valid.clone(), valid.clone()};
+        byte[][] malformed = {valid.clone(), valid.clone(), valid.clone(),
+                valid.clone(), valid.clone(), valid.clone()};
         // RIFF size must not overflow Sonivox's signed file positions.
         for (int i = 4; i < 8; i++) malformed[0][i] = (byte) 0xff;
         // 'pgen' instrument generator, 'igen' sampleID generator.
@@ -307,6 +308,11 @@ public class SonivoxRuntimeTest {
         // A zero-length terminal bag table must not underflow its count.
         int ibag = sf2ChunkPayload(valid, "ibag");
         for (int i = ibag - 4; i < ibag; i++) malformed[3][i] = 0;
+        // Preserve the sampleID generator so both invalid generator types
+        // reach Check_gen in the full merged-region pass.
+        malformed[4][igen] = 60; // endOper is not an array index
+        malformed[5][igen] = (byte) 0xff;
+        malformed[5][igen + 1] = 0x7f;
 
         for (int i = 0; i < malformed.length; i++) {
             File bank = fixture(".sf2", malformed[i]);
