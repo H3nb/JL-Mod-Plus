@@ -514,8 +514,8 @@ public class MicroLoader {
 					MidletSystem.setProperty(prop[0], prop[1]);
 				}
 			}
-			// Resolve automatic camera discovery only in this runtime snapshot. Persisted
-			// properties and linked/custom configuration identity remain untouched.
+			// Resolve effective camera availability only in this runtime snapshot.
+			// Persisted properties and linked/custom configuration identity remain untouched.
 			Displayable.setVirtualSize(params.screenWidth, params.screenHeight);
 			if (cameraDefaultDimensions == null) {
 				boolean portrait = Displayable.getVirtualHeight() > Displayable.getVirtualWidth();

@@ -9,126 +9,111 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CameraCapabilitiesTest {
-    @Test fun portraitDiscoveryAndRequestsAgreeWithoutOverridingExplicitProfileSizes() {
+    private val factory = """
+        microedition.platform: Nokia 6233
+        supports.video.capture: true
+        supports.audio.capture: true
+        supports.recording: false
+    """.trimIndent()
+
+    @Test fun factoryTrueAdvertisesSupportedCaptureFormatsWhenCameraExists() {
         val size = CameraCaptureOptions.defaultsForScreen(240, 320)
-        val resolved = CameraCapabilities.resolve(defaults, true, size)
-        val source = CameraCaptureOptions.parseLocator("capture://video?" + resolved[CameraCapabilities.VIDEO_ENCODINGS], size)
+        val resolved = CameraCapabilities.resolve(factory, true, size)
+        assertEquals("true", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
+        val source = CameraCaptureOptions.parseLocator(
+            "capture://video?" + resolved[CameraCapabilities.VIDEO_ENCODINGS], size
+        )
         assertEquals(480 to 640, source.width to source.height)
-        val first = resolved[CameraCapabilities.SNAPSHOT_ENCODINGS]!!.substringBefore(' ')
-        assertEquals(CameraCaptureOptions.parseSnapshot(null, size), CameraCaptureOptions.parseSnapshot(first, size))
-        val custom = defaults.replace("video.snapshot.encodings: auto", "video.snapshot.encodings: encoding=png&width=320&height=240")
-        val advertised = CameraCapabilities.resolve(custom, true, size)[CameraCapabilities.SNAPSHOT_ENCODINGS]
-        assertEquals("encoding=png&width=320&height=240", advertised)
-        val snapshot = CameraCaptureOptions.parseSnapshot(advertised, size)
-        assertEquals(320 to 240, snapshot.width to snapshot.height)
-    }
-
-    private val defaults = """
-        microedition.platform: Nokia 6233
-        supports.audio.capture: true
-        supports.video.capture: auto
-        supports.recording: false
-        video.encodings: auto
-        video.snapshot.encodings: auto
-    """.trimIndent()
-
-    private val legacy = """
-        microedition.configuration: CDLC-1.1
-        microedition.profiles: MIDP-2.0
-        microedition.encoding: ISO-8859-1
-        microedition.platform: Nokia 6233
-        microedition.io.file.FileConnection.version: 1.0
-        microedition.sensor.version: 1
-        microedition.m3g.version: 1.1
-        microedition.media.version: 1.0
-        microedition.pim.version: 1.0
-        supports.mixing: true
-        supports.audio.capture: true
-        supports.video.capture: false
-        supports.recording: false
-        com.siemens.mp.systemfolder.ringingtone: fs/MyStuff/Ringtones
-        com.siemens.mp.systemfolder.pictures: fs/MyStuff/Pictures
-        com.siemens.OSVersion: 11
-        device.imei: 000000000000000
-        com.siemens.IMEI: 000000000000000
-        com.sonyericsson.imei: IMEI 00460101-501594-5-00
-        com.nokia.mid.impl.isa.visual_radio_operator_id: 0
-        com.nokia.mid.impl.isa.visual_radio_channel_freq: 0
-        com.nokia.mid.ui.DirectGraphics.PIXEL_FORMAT: 565
-    """.trimIndent()
-
-    @Test fun factoryLegacyFalseBecomesRuntimeCapabilityWithoutChangingProfileText() {
-        val resolved = CameraCapabilities.resolve(legacy, true)
-        assertEquals("true", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
-        assertTrue(resolved[CameraCapabilities.VIDEO_ENCODINGS]!!.contains("encoding=rgb888"))
-        assertTrue(legacy.contains("supports.video.capture: false"))
-        assertEquals(3, resolved.size)
-    }
-
-    @Test fun freshAutomaticCapabilitiesDescribeTheImplementedSnapshotSubset() {
-        val resolved = CameraCapabilities.resolve(defaults, true)
-        assertEquals("true", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
+        val snapshotEncoding = resolved[CameraCapabilities.SNAPSHOT_ENCODINGS]!!.substringBefore(' ')
+        assertEquals(
+            CameraCaptureOptions.parseSnapshot(null, size),
+            CameraCaptureOptions.parseSnapshot(snapshotEncoding, size)
+        )
         for (encoding in resolved[CameraCapabilities.SNAPSHOT_ENCODINGS]!!.split(' ')) {
             CameraCaptureOptions.parseSnapshot(encoding)
         }
-        CameraCaptureOptions.parseLocator("capture://video?" + resolved[CameraCapabilities.VIDEO_ENCODINGS])
     }
 
-    @Test fun customLegacyFalseIsPreservedBecauseItsProvenanceIsAmbiguous() {
-        val custom = legacy.replace("Nokia 6233", "Custom device")
+    @Test fun explicitFormatsTakePrecedenceWhenCaptureIsEnabled() {
+        val custom = factory + """
+            
+            video.encodings: encoding=rgb888&width=320&height=240
+            video.snapshot.encodings: encoding=png&width=320&height=240
+        """.trimIndent()
         val resolved = CameraCapabilities.resolve(custom, true)
-        assertEquals("false", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
-        assertNull(resolved[CameraCapabilities.VIDEO_ENCODINGS])
-        assertNull(resolved[CameraCapabilities.SNAPSHOT_ENCODINGS])
-    }
-
-    @Test fun explicitFalseInNewTemplateIsRespected() {
-        val requestedFalse = defaults.replace("supports.video.capture: auto", "supports.video.capture: false")
-        assertEquals("false", CameraCapabilities.resolve(requestedFalse, true)[CameraCapabilities.SUPPORTS_CAPTURE])
-    }
-
-    @Test fun absentCameraKeysUseAutomaticDefaultsEvenInCustomProfiles() {
-        val custom = "microedition.platform: Custom device\nsupports.recording: false"
-        val resolved = CameraCapabilities.resolve(custom, true)
-        assertEquals("true", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
         assertEquals(
-            "encoding=jpeg&width=640&height=480 encoding=png&width=640&height=480",
-            resolved[CameraCapabilities.SNAPSHOT_ENCODINGS],
+            "encoding=rgb888&width=320&height=240",
+            resolved[CameraCapabilities.VIDEO_ENCODINGS]
+        )
+        assertEquals(
+            "encoding=png&width=320&height=240",
+            resolved[CameraCapabilities.SNAPSHOT_ENCODINGS]
+        )
+        assertEquals(
+            320 to 240,
+            CameraCaptureOptions.parseSnapshot(resolved[CameraCapabilities.SNAPSHOT_ENCODINGS]).let {
+                it.width to it.height
+            }
         )
     }
 
-    @Test fun missingHardwareRemovesAutomaticEncodingPropertiesAndReportsFalse() {
-        val resolved = CameraCapabilities.resolve(defaults, false)
+    @Test fun oldFalseRemainsFalseWithoutGuessingItsOrigin() {
+        val legacy = """
+            microedition.configuration: CDLC-1.1
+            microedition.platform: Nokia 6233
+            supports.video.capture: false
+        """.trimIndent()
+        val resolved = CameraCapabilities.resolve(legacy, true)
         assertEquals("false", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
         assertNull(resolved[CameraCapabilities.VIDEO_ENCODINGS])
         assertNull(resolved[CameraCapabilities.SNAPSHOT_ENCODINGS])
     }
 
-    @Test fun explicitEncodingOverridesRetainPrecedenceAndDefaultFormatOrder() {
-        val custom = defaults.replace("video.encodings: auto", "video.encodings: encoding=rgb888&width=320&height=240")
-            .replace("video.snapshot.encodings: auto", "video.snapshot.encodings: encoding=png encoding=jpeg")
+    @Test fun explicitFalseDisablesCaptureEvenWithExplicitEncodings() {
+        val custom = factory.replace("supports.video.capture: true", "supports.video.capture: false") +
+            "\nvideo.encodings: encoding=rgb888&width=320&height=240" +
+            "\nvideo.snapshot.encodings: encoding=png"
         val resolved = CameraCapabilities.resolve(custom, true)
-        assertEquals("encoding=rgb888&width=320&height=240", resolved[CameraCapabilities.VIDEO_ENCODINGS])
-        assertEquals("encoding=png encoding=jpeg", resolved[CameraCapabilities.SNAPSHOT_ENCODINGS])
+        assertEquals("false", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertNull(resolved[CameraCapabilities.VIDEO_ENCODINGS])
+        assertNull(resolved[CameraCapabilities.SNAPSHOT_ENCODINGS])
     }
 
-    @Test fun templateRecognitionIgnoresLineOrderAndWhitespaceButNotNonCameraOverrides() {
-        val reordered = legacy.lineSequence().toList().reversed().joinToString("\r\n")
-            .replace("supports.video.capture: false", "supports.video.capture:  false  ")
-        assertEquals("true", CameraCapabilities.resolve(reordered, true)[CameraCapabilities.SUPPORTS_CAPTURE])
-        assertEquals("false", CameraCapabilities.resolve(reordered + "\ncustom.flag: 1", true)[CameraCapabilities.SUPPORTS_CAPTURE])
+    @Test fun falseDoesNotDependOnUnrelatedPropertiesOrLineOrder() {
+        val custom = (factory.replace("supports.video.capture: true", "supports.video.capture: false") +
+            "\ncustom.flag: 1").lineSequence().toList().reversed().joinToString("\r\n")
+        assertEquals("false", CameraCapabilities.resolve(custom, true)[CameraCapabilities.SUPPORTS_CAPTURE])
     }
 
-    @Test fun factoryAndLinkedProfileIdentityStayUnchangedAfterRuntimeResolution() {
-        val factory = legacy
-        val baseline = ProfileModel.fresh(factory)
+    @Test fun absentCameraKeyUsesHardwareAvailabilityWithoutChangingProfile() {
+        val custom = "microedition.platform: Custom device\nsupports.recording: false"
+        val supported = CameraCapabilities.resolve(custom, true)
+        assertEquals("true", supported[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertEquals(
+            "encoding=jpeg&width=640&height=480 encoding=png&width=640&height=480",
+            supported[CameraCapabilities.SNAPSHOT_ENCODINGS]
+        )
+        val unsupported = CameraCapabilities.resolve(custom, false)
+        assertEquals("false", unsupported[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertNull(unsupported[CameraCapabilities.VIDEO_ENCODINGS])
+    }
+
+    @Test fun unavailableHardwareDisablesDeclaredTrue() {
+        val resolved = CameraCapabilities.resolve(factory, false)
+        assertEquals("false", resolved[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertNull(resolved[CameraCapabilities.VIDEO_ENCODINGS])
+        assertNull(resolved[CameraCapabilities.SNAPSHOT_ENCODINGS])
+    }
+
+    @Test fun resolutionDoesNotChangeLinkedProfileIdentity() {
+        val configured = factory.replace("supports.video.capture: true", "supports.video.capture: false")
+        val baseline = ProfileModel.fresh(configured)
         val linked = ProfileConfigMatcher.copyConfig(baseline)
         val before = ProfileConfigMatcher.comparisonSnapshot(linked)
 
-        assertEquals("true", CameraCapabilities.resolve(linked.systemProperties!!, true)[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertEquals("false", CameraCapabilities.resolve(linked.systemProperties!!, true)[CameraCapabilities.SUPPORTS_CAPTURE])
         assertEquals("false", CameraCapabilities.resolve(linked.systemProperties!!, false)[CameraCapabilities.SUPPORTS_CAPTURE])
-
-        assertEquals(factory, linked.systemProperties)
+        assertEquals(configured, linked.systemProperties)
         assertEquals(before, ProfileConfigMatcher.comparisonSnapshot(linked))
         assertTrue(ProfileConfigMatcher.sameConfig(baseline, linked))
     }
