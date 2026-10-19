@@ -554,9 +554,12 @@ public class MicroLoader {
 			Font.applySettings(params);
 
 			KeyMapper.setKeyMapping(params);
-			File sb = new File(workDir + Config.SOUNDBANKS_DIR + params.soundBank);
-			if (sb.exists()) {
-				soundBank = sb.getPath();
+			soundBank = null;
+			if (params.soundBank != null) {
+				File sb = new File(workDir + Config.SOUNDBANKS_DIR + params.soundBank);
+				if (sb.isFile()) {
+					soundBank = sb.getPath();
+				}
 			}
 			if (params.screenBackgroundImage != null) {
 				SkinLayer.init(params, new File(workDir));

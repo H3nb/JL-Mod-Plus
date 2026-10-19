@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <limits>
 #include <stdexcept>
 
 namespace mmapi::eas {
@@ -18,6 +19,38 @@ uint32_t little32(const std::vector<uint8_t> &data, size_t offset) {
         | (uint32_t(data[offset + 2]) << 16) | (uint32_t(data[offset + 3]) << 24);
 }
 [[noreturn]] void corruptRmid() { throw std::runtime_error("Invalid RIFF/RMID container"); }
+}
+DiskFile::DiskFile(const std::string &path) {
+    file = fopen(path.c_str(), "rb");
+    if (!file) throw std::runtime_error("Unable to open synthesis bank");
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file); file = nullptr;
+        throw std::runtime_error("Unable to size synthesis bank");
+    }
+    const long bytes = ftell(file);
+    if (bytes < 0 || bytes > std::numeric_limits<int>::max()) {
+        fclose(file); file = nullptr;
+        throw std::runtime_error("Synthesis bank exceeds Sonivox offset range");
+    }
+    length = static_cast<int>(bytes);
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file); file = nullptr;
+        throw std::runtime_error("Unable to rewind synthesis bank");
+    }
+}
+DiskFile::~DiskFile() { if (file) fclose(file); }
+int DiskFile::size(void *handle) {
+    return static_cast<DiskFile *>(handle)->length;
+}
+int DiskFile::readAt(void *handle, void *buffer, int offset, int count) {
+    auto *self = static_cast<DiskFile *>(handle);
+    if (offset < 0 || count < 0 || offset > self->length) return -1;
+    if (fseek(self->file, offset, SEEK_SET) != 0) return -1;
+    const size_t available = static_cast<size_t>(self->length - offset);
+    const size_t wanted = std::min(static_cast<size_t>(count), available);
+    const size_t read = fread(buffer, 1, wanted, self->file);
+    if (read != wanted && ferror(self->file)) return -1;
+    return static_cast<int>(read);
 }
 MemoryFile::MemoryFile(std::vector<uint8_t> data) : bytes(std::move(data)) {}
 int MemoryFile::size(void *handle) {

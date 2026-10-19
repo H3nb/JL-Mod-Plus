@@ -315,14 +315,19 @@ static EAS_RESULT RIFFNextChunk(S_SF2_PARSER* pParser, EAS_U32* pChunkType, EAS_
         return result;
     }
 
-    *pNextChunkPos += 8;
-    *pNextChunkPos += *pChunkSize;
+    // File offsets are signed 32-bit in Sonivox. Validate both the
+    // claimed RIFF length and its padding before advancing the cursor.
+    const uint64_t dataStart = (uint64_t)(EAS_U32)*pNextChunkPos + 8;
+    const uint64_t next = dataStart + *pChunkSize + (*pChunkSize & 1);
+    if (next > INT32_MAX ||
+        EAS_HWFileSeek(pParser->hwInstData, pParser->fileHandle, (EAS_I32)next) != EAS_SUCCESS)
+        return EAS_ERROR_FILE_FORMAT;
 
-    // Adjust to word boundary
-    if (*pNextChunkPos % 2 != 0) {
-        (*pNextChunkPos)++;
-    }
-
+    // Callers expect the file cursor to remain at the chunk payload.
+    result = EAS_HWFileSeek(pParser->hwInstData, pParser->fileHandle, (EAS_I32)dataStart);
+    if (result != EAS_SUCCESS)
+        return result;
+    *pNextChunkPos = (EAS_I32)next;
     return EAS_SUCCESS;
 }
 
@@ -346,6 +351,12 @@ static EAS_RESULT Parse_Presets(S_SF2_PARSER* pParser, EAS_BOOL dryRun);
 
 static inline EAS_RESULT Check_gen(EAS_U16 genType, EAS_BOOL isInst)
 {
+    // endOper is a terminator, not a usable generator. Callers index a
+    // fixed-size gens[sfg_endOper] array after this validation.
+    if (genType >= sfg_endOper) {
+        EAS_Report(_EAS_SEVERITY_WARNING, "SF2Parser: Invalid generator type %u\n", genType);
+        return EAS_ERROR_FILE_FORMAT;
+    }
     if (isInst) { // igen
         if (genType == sfg_instrument) {
             EAS_Report(_EAS_SEVERITY_WARNING, "SF2Parser: Found preset-only generator type %u at igen entry\n", genType);
@@ -376,6 +387,28 @@ static inline EAS_RESULT Check_gen(EAS_U16 genType, EAS_BOOL isInst)
     return EAS_SUCCESS;
 }
 
+// Success transfers the library arrays to S_DLS; failed parses retain all
+// allocation ownership locally. Instruments can also allocate scratch tables.
+static void ReleaseSF2Parser(S_SF2_PARSER *p, EAS_BOOL failed)
+{
+    if (p->pInsts) {
+        for (EAS_U32 i = 0; i < p->instCount; ++i)
+            EAS_HWFree(p->hwInstData, p->pInsts[i].pSharedArticulationIndices);
+    }
+    EAS_HWFree(p->hwInstData, p->pShdrs);
+    EAS_HWFree(p->hwInstData, p->pInsts);
+    EAS_HWFree(p->hwInstData, p->pInstRegions);
+    if (failed) {
+        EAS_HWFree(p->hwInstData, p->pDLS);
+        EAS_HWFree(p->hwInstData, p->pPresets);
+        EAS_HWFree(p->hwInstData, p->pPresetRegions);
+        EAS_HWFree(p->hwInstData, p->pPresetArticulations);
+        EAS_HWFree(p->hwInstData, p->pSampleDLSOffsets);
+        EAS_HWFree(p->hwInstData, p->pSampleDLSLens);
+        EAS_HWFree(p->hwInstData, p->pSampleDLS);
+    }
+}
+
 EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle, EAS_I32 offset, S_DLS **ppDLS)
 {
     S_SF2_PARSER parser;
@@ -393,40 +426,51 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
 
     result = RIFFNextChunk(&parser, &temp, &parser.fileSize, &nextChunkPos);
     if (result != EAS_SUCCESS) {
-        return result;
+        goto fail;
     }
     parser.fileSize += 8; // include RIFF header size
+    if (parser.fileSize < 12) {
+        result = EAS_ERROR_FILE_FORMAT; goto fail;
+    }
     if (temp != RIFF_IDENTIFIER) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Not a RIFF file (%08x)\n", temp);
-        return EAS_ERROR_FILE_FORMAT;
+        result = EAS_ERROR_FILE_FORMAT; goto fail;
     }
 
     result = EAS_HWGetDWord(parser.hwInstData, parser.fileHandle, &temp, EAS_TRUE);
     if (result != EAS_SUCCESS) {
-        return result;
+        goto fail;
     }
     if (temp != SFBK_IDENTIFIER) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Not a SoundFont file (%08x)\n", temp);
-        return EAS_ERROR_FILE_FORMAT;
+        result = EAS_ERROR_FILE_FORMAT; goto fail;
     }
 
-    // Read chunks
+    // Read chunks. A child may not escape its RIFF container even when
+    // trailing bytes exist in the physical file.
+    const EAS_I32 riffEnd = parser.fileOffset + (EAS_I32)parser.fileSize;
     nextChunkPos = offset + 12; // RIFF <size> sfbk
     while (1) {
-        if (parser.fileOffset + parser.fileSize - nextChunkPos <= 1)  {
-            break; // end of file
+        if (nextChunkPos > riffEnd || (riffEnd - nextChunkPos > 1 &&
+                                        riffEnd - nextChunkPos < 8)) {
+            result = EAS_ERROR_FILE_FORMAT; goto fail;
         }
+        if (riffEnd - nextChunkPos <= 1)
+            break;
 
         EAS_U32 chunkType, chunkSize;
         result = RIFFNextChunk(&parser, &chunkType, &chunkSize, &nextChunkPos);
         if (result != EAS_SUCCESS) {
-            return result;
+            goto fail;
+        }
+        if (nextChunkPos > riffEnd) {
+            result = EAS_ERROR_FILE_FORMAT; goto fail;
         }
 
         EAS_I32 curpos;
         result = EAS_HWFilePos(parser.hwInstData, parser.fileHandle, &curpos);
         if (result != EAS_SUCCESS) {
-            return result;
+            goto fail;
         }
 
         if ((EAS_U32)curpos >= parser.fileOffset + parser.fileSize) {
@@ -437,7 +481,7 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
         case LIST_IDENTIFIER:
             result = EAS_HWGetDWord(parser.hwInstData, parser.fileHandle, &temp, EAS_TRUE);
             if (result != EAS_SUCCESS) {
-                return result;
+                goto fail;
             }
             switch (temp) {
             case INFO_IDENTIFIER:
@@ -446,14 +490,14 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
                 result = Parse_sdta(&parser, curpos, chunkSize);
                 if (result != EAS_SUCCESS) {
                     EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse sdta LIST chunk: %ld\n", result);
-                    return result;
+                    goto fail;
                 }
                 break;
             case PDTA_IDENTIFIER:
                 result = Parse_pdta(&parser, curpos, chunkSize);
                 if (result != EAS_SUCCESS) {
                     EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse pdta LIST chunk: %ld\n", result);
-                    return result;
+                    goto fail;
                 }
                 break;
             default:
@@ -470,24 +514,33 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
     // stage 1: instrument level, dry run
     if (parser.shdrOffest == 0) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: No shdr chunk found in pdta LIST\n");
-        return EAS_ERROR_FILE_FORMAT;
+        result = EAS_ERROR_FILE_FORMAT; goto fail;
     }
     // get sample count and sample data size in S_DLS
     result = Parse_shdrs(&parser, EAS_TRUE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse shdrs (dry): %ld\n", result);
-        return result;
+        goto fail;
     }
 
     if (parser.instOffset == 0) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: No inst chunk found in pdta LIST\n");
-        return EAS_ERROR_FILE_FORMAT;
+        result = EAS_ERROR_FILE_FORMAT; goto fail;
     }
     // get instrument and regions count
     result = Parse_Insts(&parser, EAS_TRUE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse insts (dry): %ld\n", result);
-        return result;
+        goto fail;
+    }
+
+    // S_DLS stores counts in 16 bits. Reject unrepresentable metadata rather
+    // than truncating indices or allocating a bogus size.
+    if (parser.sampleCount == 0 || parser.sampleCount > 65535 ||
+        parser.instCount == 0 || parser.instCount > 65535 ||
+        parser.instRegionCount > 65535) {
+        result = EAS_ERROR_FILE_FORMAT;
+        goto fail;
     }
 
     // stage 2: instrument level, full run
@@ -496,42 +549,50 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
     if (parser.pShdrs == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for shdr structs (%lu bytes)\n",
                    (unsigned long)(sizeof(struct S_SF2_SAMPLE) * parser.sampleCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
     result = Parse_shdrs(&parser, EAS_FALSE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse shdrs: %ld\n", result);
-        return result;
+        goto fail;
     }
     // 2. parse insts
     parser.pInsts = EAS_HWMalloc(parser.hwInstData, sizeof(struct S_SF2_INST) * parser.instCount);
     if (parser.pInsts == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for inst structs (%lu bytes)\n",
                    (unsigned long)(sizeof(struct S_SF2_INST) * parser.instCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
+    memset(parser.pInsts, 0, sizeof(struct S_SF2_INST) * parser.instCount);
     parser.pInstRegions = EAS_HWMalloc(parser.hwInstData, sizeof(struct S_SF2_REGION) * parser.instRegionCount);
     if (parser.pInstRegions == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for inst region structs (%lu bytes)\n",
                    (unsigned long)(sizeof(S_DLS_REGION) * parser.instRegionCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
     result = Parse_Insts(&parser, EAS_FALSE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse insts: %ld\n", result);
-        return result;
+        goto fail;
     }
 
     // stage 3: preset level, dry run
     if (parser.phdrOffset == 0) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: No phdr found in pdta LIST\n");
-        return EAS_ERROR_FILE_FORMAT;
+        result = EAS_ERROR_FILE_FORMAT; goto fail;
     }
 
     result = Parse_Presets(&parser, EAS_TRUE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse presets (dry): %ld\n", result);
-        return result;
+        goto fail;
+    }
+
+    if (parser.presetCount == 0 || parser.presetCount > 65535 ||
+        parser.presetRegionCount == 0 || parser.presetRegionCount > 65535 ||
+        parser.presetArticulationCount == 0 || parser.presetArticulationCount > 65535) {
+        result = EAS_ERROR_FILE_FORMAT;
+        goto fail;
     }
 
     // stage 4: preset level, full run
@@ -539,25 +600,25 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
     if (parser.pPresets == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for preset program structs (%lu bytes)\n",
                    (unsigned long)(sizeof(S_PROGRAM) * parser.presetCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
     parser.pPresetRegions = EAS_HWMalloc(parser.hwInstData, sizeof(S_DLS_REGION) * parser.presetRegionCount);
     if (parser.pPresetRegions == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for preset region structs (%lu bytes)\n",
                    (unsigned long)(sizeof(S_DLS_REGION) * parser.presetRegionCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
     parser.pPresetArticulations = EAS_HWMalloc(parser.hwInstData, sizeof(S_DLS_ARTICULATION) * parser.presetArticulationCount);
     if (parser.pPresetArticulations == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for preset articulation structs (%lu bytes)\n",
                    (unsigned long)(sizeof(S_DLS_ARTICULATION) * parser.presetArticulationCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
     memset(parser.pPresetArticulations, 0, sizeof(S_DLS_ARTICULATION) * parser.presetArticulationCount);
     result = Parse_Presets(&parser, EAS_FALSE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse presets: %ld\n", result);
-        return result;
+        goto fail;
     }
 
     // stage 5: samples
@@ -565,40 +626,40 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
     if (parser.pSampleDLSOffsets == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for sample offsets (%lu bytes)\n",
                    (unsigned long)(sizeof(EAS_U32) * parser.sampleCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
 
     parser.pSampleDLSLens = EAS_HWMalloc(parser.hwInstData, sizeof(EAS_U32) * parser.sampleCount);
     if (parser.pSampleDLSLens == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for sample lengths (%lu bytes)\n",
                    (unsigned long)(sizeof(EAS_U32) * parser.sampleCount));
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
 
     result = Parse_samples(&parser, EAS_TRUE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse samples (dry): %ld\n", result);
-        return result;
+        goto fail;
     }
 
     parser.pSampleDLS = EAS_HWMalloc(parser.hwInstData, parser.sampleDLSSize);
     if (parser.pSampleDLS == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for sample data (%lu bytes)\n",
                    (unsigned long)parser.sampleDLSSize);
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
 
     result = Parse_samples(&parser, EAS_FALSE);
     if (result != EAS_SUCCESS) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to parse samples: %ld\n", result);
-        return result;
+        goto fail;
     }
 
     // stage 6: copy everything to S_DLS
     parser.pDLS = EAS_HWMalloc(hwInstData, sizeof(S_DLS));
     if (parser.pDLS == NULL) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Failed to allocate memory for DLS structure\n");
-        return EAS_ERROR_MALLOC_FAILED;
+        result = EAS_ERROR_MALLOC_FAILED; goto fail;
     }
     memset(parser.pDLS, 0, sizeof(S_DLS));
     parser.pDLS->pDLSPrograms = parser.pPresets;
@@ -616,12 +677,12 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
 
     *ppDLS = parser.pDLS;
 
-    // stage 7: cleanup
-    EAS_HWFree(hwInstData, parser.pShdrs);
-    EAS_HWFree(hwInstData, parser.pInsts);
-    EAS_HWFree(hwInstData, parser.pInstRegions);
-
+    ReleaseSF2Parser(&parser, EAS_FALSE);
     return EAS_SUCCESS;
+
+fail:
+    ReleaseSF2Parser(&parser, EAS_TRUE);
+    return result;
 }
 
 EAS_RESULT SF2Cleanup (EAS_HW_DATA_HANDLE hwInstData, S_DLS *pDLS)
@@ -647,18 +708,23 @@ EAS_RESULT SF2Cleanup (EAS_HW_DATA_HANDLE hwInstData, S_DLS *pDLS)
 static EAS_RESULT Parse_sdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size)
 {
     EAS_RESULT result;
+    if (size < 4)
+        return EAS_ERROR_FILE_FORMAT;
+    const EAS_I32 listEnd = offset + (EAS_I32)size;
     EAS_I32 pos = offset + 4; // skip 'sdta' identifier
-    
+
     while (1) {
-        if (offset + size - pos <= 1) {
-            break; // end of LIST chunk
-        }
+        if (pos > listEnd || (listEnd - pos > 1 && listEnd - pos < 8))
+            return EAS_ERROR_FILE_FORMAT;
+        if (listEnd - pos <= 1)
+            break;
 
         EAS_U32 chunkType, chunkSize;
         result = RIFFNextChunk(pParser, &chunkType, &chunkSize, &pos);
-        if (result != EAS_SUCCESS) {
+        if (result != EAS_SUCCESS)
             return result;
-        }
+        if (pos > listEnd)
+            return EAS_ERROR_FILE_FORMAT;
 
         EAS_I32 curpos;
         result = EAS_HWFilePos(pParser->hwInstData, pParser->fileHandle, &curpos);
@@ -700,6 +766,8 @@ static EAS_RESULT Decode_SF2smpl(S_SF2_PARSER* pParser, struct S_SF2_SAMPLE* pSh
     EAS_RESULT result;
 
     EAS_U32 nSamples = pShdr->end - pShdr->start; // in samples
+    if (nSamples == 0 || nSamples > 0x7fffffffU / sizeof(EAS_SAMPLE) - 1)
+        return EAS_ERROR_FILE_FORMAT;
 
     if (pShdr->loopStart >= pShdr->end || pShdr->loopStart < pShdr->start) {
         EAS_Report(_EAS_SEVERITY_WARNING, "SF2Parser: Invalid loop start %u out of range [%u, %u) of sample %u\n", pShdr->loopStart, pShdr->start, pShdr->end, (unsigned)(pShdr - pParser->pShdrs));
@@ -716,7 +784,9 @@ static EAS_RESULT Decode_SF2smpl(S_SF2_PARSER* pParser, struct S_SF2_SAMPLE* pSh
     }
 
     const EAS_U32 dlsLen = nSamples * sizeof(EAS_SAMPLE);
-    const EAS_U32 dataLen = nSamples * 2;
+    // The interpolation extension is written from loopStart, not read from
+    // the next SF2 sample (or beyond the end of the smpl chunk).
+    const EAS_U32 dataLen = (pShdr->end - pShdr->start) * 2;
 
     if (dryRun) {
         *wroteLength = dlsLen;
@@ -784,6 +854,8 @@ static EAS_RESULT Parse_samples(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
         }
         pParser->pSampleDLSLens[i] = dlsLen;
         if (dryRun) {
+            if (dlsLen > 0x7fffffffU - pParser->sampleDLSSize)
+                return EAS_ERROR_FILE_FORMAT;
             pParser->sampleDLSSize += dlsLen;
         } else {
             pParser->sampleDLSWritten += dlsLen;
@@ -796,18 +868,23 @@ static EAS_RESULT Parse_samples(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
 static EAS_RESULT Parse_pdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size)
 {
     EAS_RESULT result;
+    if (size < 4)
+        return EAS_ERROR_FILE_FORMAT;
+    const EAS_I32 listEnd = offset + (EAS_I32)size;
     EAS_I32 pos = offset + 4; // skip 'pdta' identifier
 
     while (1) {
-        if (offset + size - pos <= 1) {
-            break; // end of LIST chunk
-        }
+        if (pos > listEnd || (listEnd - pos > 1 && listEnd - pos < 8))
+            return EAS_ERROR_FILE_FORMAT;
+        if (listEnd - pos <= 1)
+            break;
 
         EAS_U32 chunkType, chunkSize;
         result = RIFFNextChunk(pParser, &chunkType, &chunkSize, &pos);
-        if (result != EAS_SUCCESS) {
+        if (result != EAS_SUCCESS)
             return result;
-        }
+        if (pos > listEnd)
+            return EAS_ERROR_FILE_FORMAT;
 
         EAS_I32 curpos;
         result = EAS_HWFilePos(pParser->hwInstData, pParser->fileHandle, &curpos);
@@ -823,6 +900,9 @@ static EAS_RESULT Parse_pdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size
             pParser->phdrOffset = curpos - 8; // at the start of the chunk ('phdr' identifier)
             break;
         case PBAG_IDENTIFIER:
+            if (chunkSize < PBAG_SIZE || chunkSize % PBAG_SIZE != 0 ||
+                chunkSize / PBAG_SIZE - 1 > 65535)
+                return EAS_ERROR_FILE_FORMAT;
             pParser->pbagOffset = curpos - 8;
             pParser->pbagCount = (chunkSize / PBAG_SIZE) - 1;
             break;
@@ -836,6 +916,9 @@ static EAS_RESULT Parse_pdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size
             pParser->instOffset = curpos - 8;
             break;
         case IBAG_IDENTIFIER:
+            if (chunkSize < IBAG_SIZE || chunkSize % IBAG_SIZE != 0 ||
+                chunkSize / IBAG_SIZE - 1 > 65535)
+                return EAS_ERROR_FILE_FORMAT;
             pParser->ibagOffset = curpos - 8;
             pParser->ibagCount = (chunkSize / IBAG_SIZE) - 1;
             break;
@@ -874,6 +957,8 @@ static EAS_RESULT Parse_shdrs(S_SF2_PARSER* pParser, EAS_BOOL dryRun) {
         return EAS_ERROR_FILE_FORMAT;
     }
 
+    if (chunkSize < SHDR_SIZE * 2 || chunkSize / SHDR_SIZE - 1 > 65535)
+        return EAS_ERROR_FILE_FORMAT;
     pParser->sampleCount = chunkSize / SHDR_SIZE - 1; // exclude EOS
     if (dryRun) {
         return EAS_SUCCESS;
@@ -895,6 +980,8 @@ static EAS_RESULT Parse_shdrs(S_SF2_PARSER* pParser, EAS_BOOL dryRun) {
             return result;
         }
         pParser->pShdrs[i].end = tmp;
+        if (pParser->pShdrs[i].start >= tmp || tmp > pParser->smplSize / 2)
+            return EAS_ERROR_FILE_FORMAT;
         result = EAS_HWGetDWord(pParser->hwInstData, pParser->fileHandle, &tmp, EAS_FALSE);
         if (result != EAS_SUCCESS) {
             return result;
@@ -952,7 +1039,8 @@ static EAS_RESULT Parse_Insts(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Expected 'inst' chunk, got %08x\n", tmp);
         return EAS_ERROR_FILE_FORMAT;
     }
-    if (chunkSize % INST_SIZE != 0) {
+    if (chunkSize < INST_SIZE * 2 || chunkSize % INST_SIZE != 0 ||
+        chunkSize / INST_SIZE - 1 > 65535) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Invalid inst chunk size %u\n", chunkSize);
         return EAS_ERROR_FILE_FORMAT;
     }
@@ -983,6 +1071,8 @@ static EAS_RESULT Parse_Insts(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
             // EOI's bagIndex is 0
             bagIndex = pParser->ibagCount;
         }
+        if (bagIndex > pParser->ibagCount)
+            return EAS_ERROR_FILE_FORMAT;
 
         if (bagIndex == prevBagIndex) {
             // empty inst
@@ -1130,7 +1220,8 @@ static EAS_RESULT Parse_Presets(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Expected 'phdr' chunk, got %08x\n", tmp);
         return EAS_ERROR_FILE_FORMAT;
     }
-    if (chunkSize % PHDR_SIZE != 0) {
+    if (chunkSize < PHDR_SIZE * 2 || chunkSize % PHDR_SIZE != 0 ||
+        chunkSize / PHDR_SIZE - 1 > 65535) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Invalid phdr chunk size %u\n", chunkSize);
         return EAS_ERROR_FILE_FORMAT;
     }
@@ -1191,6 +1282,8 @@ static EAS_RESULT Parse_Presets(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
             // EOP's bagIndex is 0
             bagIndex = pParser->pbagCount;
         }
+        if (bagIndex > pParser->pbagCount)
+            return EAS_ERROR_FILE_FORMAT;
         if (bagIndex == prevBagIndex) {
             // empty inst
             goto skip;
@@ -1306,6 +1399,10 @@ static EAS_RESULT Parse_pbags(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 bag
             presetGlobalRegion = presetRegion;
             goto skip;
         }
+
+        // A corrupted instrument generator must not index outside the table.
+        if (presetRegion.waveIndex >= pParser->instCount)
+            return EAS_ERROR_FILE_FORMAT;
 
         // merge preset's global region and current region, inst's global region and matching regions
         struct S_SF2_INST* pInst = &pParser->pInsts[presetRegion.waveIndex];
@@ -1523,6 +1620,8 @@ static EAS_RESULT Parse_pbags(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 bag
                 EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Inst %u region %u does not contain sampleID\n", presetRegion.waveIndex, instRegionIndex);
                 return EAS_FAILURE;
             }
+            if (sampleID >= pParser->sampleCount)
+                return EAS_ERROR_FILE_FORMAT;
 
             for (EAS_U32 k = 0; k < pInstRegion->modCount; k++) {
                 if (modCount >= MAX_MODS_IN_MERGED_REGION) {

@@ -969,6 +969,9 @@ EAS_PUBLIC EAS_RESULT EAS_SetPlayMode (EAS_DATA_HANDLE pEASData, EAS_HANDLE pStr
  *----------------------------------------------------------------------------
 */
 EAS_PUBLIC EAS_RESULT EAS_LoadDLSCollection (EAS_DATA_HANDLE pEASData, EAS_HANDLE streamHandle, EAS_FILE_LOCATOR locator);
+// Reference an already-loaded collection in another independently rendered EAS
+// context. The source context must remain alive until this call returns.
+EAS_PUBLIC EAS_RESULT EAS_ShareDLSCollection (EAS_DATA_HANDLE target, EAS_DATA_HANDLE source);
 
 /*----------------------------------------------------------------------------
  * EAS_SetFrameBuffer()

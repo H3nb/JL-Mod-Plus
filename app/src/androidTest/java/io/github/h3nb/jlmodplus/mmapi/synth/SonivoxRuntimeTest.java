@@ -272,6 +272,84 @@ public class SonivoxRuntimeTest {
         }
     }
 
+    @Test public void malformedSf2AfterMetadataParsingReleasesNativeAllocations() throws Exception {
+        byte[] invalid = AudioBankFixtures.sf2().clone();
+        int header = -1;
+        for (int i = 0; i + 4 < invalid.length; ++i) {
+            if (invalid[i] == 'p' && invalid[i + 1] == 'h'
+                    && invalid[i + 2] == 'd' && invalid[i + 3] == 'r') {
+                header = i;
+                break;
+            }
+        }
+        assertTrue("fixture missing phdr", header >= 0);
+        invalid[header] = 'x';
+        File broken = fixture(".sf2", invalid);
+        SynthPlugin plugin = new SynthPlugin(new LibEAS(broken.getAbsolutePath()));
+        for (int i = 0; i < 8; ++i) {
+            expectThrows(MediaException.class, () -> plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+            assertEquals(initialHandles, LibEAS.liveHandles());
+        }
+    }
+
+    @Test public void malformedSf2IndicesAndRiffLengthsFailWithoutOpeningPlayers() throws Exception {
+        byte[] valid = AudioBankFixtures.sf2();
+        byte[][] malformed = {valid.clone(), valid.clone(), valid.clone(),
+                valid.clone(), valid.clone(), valid.clone()};
+        // RIFF size must not overflow Sonivox's signed file positions.
+        for (int i = 4; i < 8; i++) malformed[0][i] = (byte) 0xff;
+        // 'pgen' instrument generator, 'igen' sampleID generator.
+        int pgen = sf2ChunkPayload(valid, "pgen");
+        malformed[1][pgen + 2] = (byte) 0xff;
+        malformed[1][pgen + 3] = 0x7f;
+        int igen = sf2ChunkPayload(valid, "igen");
+        malformed[2][igen + 10] = (byte) 0xff;
+        malformed[2][igen + 11] = 0x7f;
+        // A zero-length terminal bag table must not underflow its count.
+        int ibag = sf2ChunkPayload(valid, "ibag");
+        for (int i = ibag - 4; i < ibag; i++) malformed[3][i] = 0;
+        // Preserve the sampleID generator so both invalid generator types
+        // reach Check_gen in the full merged-region pass.
+        malformed[4][igen] = 60; // endOper is not an array index
+        malformed[5][igen] = (byte) 0xff;
+        malformed[5][igen + 1] = 0x7f;
+
+        for (int i = 0; i < malformed.length; i++) {
+            File bank = fixture(".sf2", malformed[i]);
+            SynthPlugin plugin = new SynthPlugin(new LibEAS(bank.getAbsolutePath()));
+            expectThrows(MediaException.class, () -> plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+            assertEquals("failed SF2 case " + i + " leaked a native handle",
+                    initialHandles, LibEAS.liveHandles());
+        }
+    }
+
+    private static int sf2ChunkPayload(byte[] bytes, String tag) {
+        for (int i = 0; i <= bytes.length - 8; i++) {
+            if (bytes[i] == tag.charAt(0) && bytes[i + 1] == tag.charAt(1)
+                    && bytes[i + 2] == tag.charAt(2) && bytes[i + 3] == tag.charAt(3))
+                return i + 8;
+        }
+        throw new AssertionError("Missing SF2 test chunk " + tag);
+    }
+
+    @Test public void sameSessionCustomBankSurvivesIndependentPlayerClose() throws Exception {
+        File bank = fixture(".sf2", AudioBankFixtures.sf2());
+        LibEAS backend = new LibEAS(bank.getAbsolutePath());
+        File media = fixture(".mid", midi(240, 480));
+        SynthPlugin plugin = new SynthPlugin(backend);
+        Player first = keep(plugin.createPlayer(new PathSource(media)));
+        Player second = keep(plugin.createPlayer(new PathSource(media)));
+        first.prefetch();
+        second.prefetch();
+        first.close();
+        CountDownLatch end = end(second);
+        second.start();
+        assertTrue("peer bank released while still in use", end.await(4, TimeUnit.SECONDS));
+        assertTrue("peer player produced no PCM", stats(second)[2] > 0);
+        second.close();
+        assertEquals(initialHandles, LibEAS.liveHandles());
+    }
+
     /** Optional local bank path in target-private files: never an application preset or distributed asset. */
     @Test public void suppliedLocalSoundBankPlaysAndRepeatedResourcesClose() throws Exception {
         String path = InstrumentationRegistry.getArguments().getString("sonivoxBankPath");

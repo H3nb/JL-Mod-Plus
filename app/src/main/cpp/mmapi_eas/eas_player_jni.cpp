@@ -16,7 +16,8 @@ std::mutex registryLock;
 std::unordered_map<jlong, std::shared_ptr<Player>> registry;
 jlong nextHandle = 1;
 size_t creating = 0;
-struct Session { std::weak_ptr<Engine> engine; int64_t epoch = 0, minimum = 0; bool allowed = false; };
+struct Session { std::weak_ptr<Engine> engine; std::weak_ptr<mmapi::eas::BankPool> banks;
+    int64_t epoch = 0, minimum = 0; bool allowed = false; };
 std::unordered_map<jlong, Session> sessions;
 constexpr size_t MAX_PLAYERS = 16;
 std::shared_ptr<Player> player(jlong handle) {
@@ -130,6 +131,7 @@ extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, 
         auto path = string(env, locator);
         auto font = string(env, bank, true);
         std::shared_ptr<Engine> engine;
+        std::shared_ptr<mmapi::eas::BankPool> banks;
         jlong handle;
         {
             std::lock_guard<std::mutex> lock(registryLock);
@@ -138,11 +140,13 @@ extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, 
             auto &session = sessions.at(sessionId);
             engine = session.engine.lock();
             if (!engine) { engine = std::make_shared<Engine>(); session.engine = engine; }
+            banks = session.banks.lock();
+            if (!banks) { banks = std::make_shared<mmapi::eas::BankPool>(); session.banks = banks; }
             engine->policy(session.minimum, session.allowed);
             handle = nextHandle++; ++creating; reserved = true;
         }
         // Bank and source IO must not hold the handle registry against peer management.
-        auto owned = std::make_shared<Player>(path, font, engine, sampled, videoAudio);
+        auto owned = std::make_shared<Player>(path, font, engine, sampled, videoAudio, banks);
         {
             std::lock_guard<std::mutex> lock(registryLock);
             registry.emplace(handle, std::move(owned)); --creating; reserved = false;

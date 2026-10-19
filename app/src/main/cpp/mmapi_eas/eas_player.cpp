@@ -13,8 +13,9 @@ void checked(EAS_RESULT result, const char *operation) {
 
 }
 
-Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared, bool pcm, bool videoAudio)
-    : engine(std::move(shared)) {
+Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared, bool pcm, bool videoAudio,
+               std::shared_ptr<BankPool> sharedBanks)
+    : engine(std::move(shared)), banks(std::move(sharedBanks)) {
     slot = engine->reserve(this);
     try {
         if (pcm) { sampled = std::make_unique<pcm::Decoder>(locator, videoAudio); duration = sampled->duration(); return; }
@@ -23,8 +24,8 @@ Player::Player(const std::string &locator, const std::string &bank, std::shared_
                 || EAS_Config()->numChannels != 2) throw std::runtime_error("Unsupported Sonivox configuration");
         checked(EAS_SetHeaderSearchFlag(eas, EAS_FALSE), "Disable unbounded header search");
         if (!bank.empty()) {
-            MemoryFile font(MemoryFile::readFile(bank, BANK_LIMIT));
-            checked(EAS_LoadDLSCollection(eas, nullptr, &font.locator), "Load sound bank");
+            activeBank = banks->acquire(bank);
+            checked(EAS_ShareDLSCollection(eas, activeBank->context()), "Attach sound bank");
         }
         checked(EAS_SetVolume(eas, nullptr, 100), "Set synthesis master gain");
         if (locator == "device://midi" || locator == "device://tone")

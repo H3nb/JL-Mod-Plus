@@ -3,6 +3,7 @@
 #define MMAPI_EAS_PLAYER_H
 #include "eas.h"
 #include "eas_file.h"
+#include "eas_bank.h"
 #include "audio_engine.h"
 #include "../mmapi_pcm/pcm_decoder.h"
 #include <oboe/Oboe.h>
@@ -22,6 +23,8 @@ class Player final {
     std::unique_ptr<MemoryFile> source;
     std::unique_ptr<pcm::Decoder> sampled;
     const std::shared_ptr<Engine> engine;
+    const std::shared_ptr<BankPool> banks;
+    std::shared_ptr<SharedBank> activeBank;
     int slot = -1;
     int64_t outputIdentity = 0, seenOutputEpoch = 0;
     bool fatalReported = false;
@@ -66,9 +69,9 @@ public:
     friend class PlayerTest;
     friend class Engine;
     static constexpr size_t MEDIA_LIMIT = 16 * 1024 * 1024;
-    static constexpr size_t BANK_LIMIT = 128 * 1024 * 1024;
     Player(const std::string &locator, const std::string &bank,
-        std::shared_ptr<Engine> engine = std::make_shared<Engine>(), bool pcm = false, bool videoAudio = false);
+        std::shared_ptr<Engine> engine = std::make_shared<Engine>(), bool pcm = false, bool videoAudio = false,
+        std::shared_ptr<BankPool> banks = std::make_shared<BankPool>());
     ~Player();
     void prefetch();
     void start(int64_t policyEpoch = 0);
