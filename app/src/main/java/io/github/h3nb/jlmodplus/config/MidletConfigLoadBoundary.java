@@ -11,6 +11,8 @@ import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+
+import javax.microedition.util.ContextHolder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,6 +33,13 @@ public final class MidletConfigLoadBoundary {
 
 	public static boolean prepare(@NonNull SharedPreferences preferences,
 			@NonNull File configDir, @NonNull File profilesRoot) {
+		return prepare(preferences, configDir, profilesRoot, null);
+	}
+
+	/** Optional defaults keep unit tests independent of Android assets. */
+	static boolean prepare(@NonNull SharedPreferences preferences,
+			@NonNull File configDir, @NonNull File profilesRoot,
+			@Nullable String defaultSystemProperties) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 		try {
 			ProfilesManager.recoverInterruptedSnapshotSync(configDir);
@@ -41,6 +50,9 @@ public final class MidletConfigLoadBoundary {
 
 		PresetLinkage linkage = new PresetLinkage(preferences, configDir);
 		if (!normalizeLegacyBuiltIn(preferences, configDir, linkage)) {
+			return false;
+		}
+		if (!refreshBuiltInSystemProperties(preferences, configDir, linkage, defaultSystemProperties)) {
 			return false;
 		}
 		if (!linkage.isLinked()) {
@@ -71,6 +83,27 @@ public final class MidletConfigLoadBoundary {
 			return true;
 		}
 		}
+	}
+
+	/** Only confirmed Built-in snapshots follow updates to the factory property template. */
+	private static boolean refreshBuiltInSystemProperties(
+			@NonNull SharedPreferences preferences, @NonNull File configDir,
+			@NonNull PresetLinkage linkage, @Nullable String suppliedDefaults) {
+		if (linkage.getOrigin() != null
+				|| !preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false)) {
+			return true;
+		}
+		ProfileModel config = ProfilesManager.loadConfig(configDir, false,
+				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG, true);
+		if (config == null) return false;
+		String defaults = suppliedDefaults != null ? suppliedDefaults
+				: ContextHolder.getAssetAsString("defaults/system.props");
+		String normalized = ConfigFormState.normalizeSystemProperties(defaults);
+		if (normalized.equals(ConfigFormState.normalizeSystemProperties(config.systemProperties))) {
+			return true;
+		}
+		config.systemProperties = normalized;
+		return ProfilesManager.saveConfig(configDir, config);
 	}
 
 	private static boolean normalizeLegacyBuiltIn(@NonNull SharedPreferences preferences,

@@ -14,7 +14,8 @@ This document records durable semantic correctness boundaries for preset/configu
 - LINKED ownership is explicit metadata. File/config equality may detect a no-op but must never create, restore, or promote linked ownership.
 - A user-owned local change detaches linked ownership before its local publication becomes authoritative. Provenance may describe where state came from without implying a live link.
 - Whole-preset activation may establish LINKED ownership only after the complete source snapshot is valid and the local snapshot has been durably materialized.
-- Global default changes are prospective. Existing installed identities keep their current Built-in, CUSTOM, or LINKED state; fresh installation binds the then-current eligible default or a Built-in fallback.
+- Changes to the global named-preset default are prospective. Existing installed identities retain their Built-in, CUSTOM, or LINKED ownership; fresh installation binds the then-current eligible default or a Built-in fallback.
+- Explicitly owned Built-in MIDlet configurations follow current factory system properties when prepared for editing or launch, preserving all other settings. CUSTOM snapshots and named-preset sources retain their properties. Manual reset edits only the system-property draft and follows existing save/ownership rules.
 
 ## Additive configuration fields
 
