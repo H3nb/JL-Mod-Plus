@@ -56,6 +56,8 @@ public class ConfigFormStateTest {
 	@Test
 	public void applyToKeepsLegacyParsingAndFallbackRules() {
 		ProfileModel model = new ProfileModel();
+		// This test isolates the editor text parser from the factory inheritance layer.
+		model.systemPropertyDefaults = "";
 		model.screenBackgroundColor = 0x112233;
 		model.screenBackgroundMode = BackgroundMode.IMMERSIVE;
 		model.vkBgColor = 0x445566;
