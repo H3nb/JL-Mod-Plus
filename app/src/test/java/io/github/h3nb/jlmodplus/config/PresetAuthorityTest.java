@@ -427,7 +427,8 @@ public class PresetAuthorityTest {
             this.appPath = appPath;
             this.preferences = preferences;
             this.resolver = resolver;
-            this.authority = new PresetAuthority(preferences, resolver);
+            this.authority = new PresetAuthority(
+                    preferences, resolver, "microedition.platform: Test Phone\n");
         }
 
         File layoutFile() {

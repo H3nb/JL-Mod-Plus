@@ -122,10 +122,17 @@ final class PresetAuthority {
 
 	@NonNull private final SharedPreferences preferences;
 	@NonNull private final IdentityResolver identities;
+	@Nullable private final String testFactoryProperties;
 
 	PresetAuthority(@NonNull SharedPreferences preferences, @NonNull IdentityResolver identities) {
+		this(preferences, identities, null);
+	}
+
+	PresetAuthority(@NonNull SharedPreferences preferences, @NonNull IdentityResolver identities,
+			@Nullable String testFactoryProperties) {
 		this.preferences = preferences;
 		this.identities = identities;
+		this.testFactoryProperties = testFactoryProperties;
 	}
 
 	@NonNull
@@ -147,7 +154,8 @@ final class PresetAuthority {
 			}
 			synchronized (ProfilesManager.presetSourceLock()) {
 				File configDir = app.configDir();
-				if (!MidletConfigLoadBoundary.prepare(preferences, configDir, app.profilesRoot())) {
+				if (!MidletConfigLoadBoundary.prepare(
+						preferences, configDir, app.profilesRoot(), testFactoryProperties)) {
 					return new PrepareResult(PresetAuthorityContract.RESULT_FAILED, app.appId, false);
 				}
 				ProfilesManager.prepareRuntimeLayout(configDir);
