@@ -381,7 +381,7 @@ public:
             many.push_back(std::make_unique<Player>("device://midi", bank, engine));
             require(many.back()->eas == nullptr, "Create eagerly initializes Sonivox");
         }
-        require(engine->blockCount.load() == 3, "Stable source blocks do not grow on demand");
+        require(engine->blocks.size() == 3, "Stable source blocks do not grow on demand");
         for (int i = 0; i < 3; ++i) activate(*many[i]);
         require(engine->blocks[0]->active.load() == 3 && engine->blocks[1]->active.load() == 0,
             "Idle source blocks claim callback work");
