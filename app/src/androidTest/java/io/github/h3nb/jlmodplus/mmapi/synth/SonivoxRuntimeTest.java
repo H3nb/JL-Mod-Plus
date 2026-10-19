@@ -272,6 +272,26 @@ public class SonivoxRuntimeTest {
         }
     }
 
+    @Test public void malformedSf2AfterMetadataParsingReleasesNativeAllocations() throws Exception {
+        byte[] invalid = AudioBankFixtures.sf2().clone();
+        int header = -1;
+        for (int i = 0; i + 4 < invalid.length; ++i) {
+            if (invalid[i] == 'p' && invalid[i + 1] == 'h'
+                    && invalid[i + 2] == 'd' && invalid[i + 3] == 'r') {
+                header = i;
+                break;
+            }
+        }
+        assertTrue("fixture missing phdr", header >= 0);
+        invalid[header] = 'x';
+        File broken = fixture(".sf2", invalid);
+        SynthPlugin plugin = new SynthPlugin(new LibEAS(broken.getAbsolutePath()));
+        for (int i = 0; i < 8; ++i) {
+            expectThrows(MediaException.class, () -> plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+            assertEquals(initialHandles, LibEAS.liveHandles());
+        }
+    }
+
     @Test public void sameSessionCustomBankSurvivesIndependentPlayerClose() throws Exception {
         File bank = fixture(".sf2", AudioBankFixtures.sf2());
         LibEAS backend = new LibEAS(bank.getAbsolutePath());

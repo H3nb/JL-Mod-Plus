@@ -29,6 +29,11 @@ std::shared_ptr<SharedBank> BankPool::acquire(const std::string &path) {
     // Bank parsing is off the audio callback. Serializing cold loads also
     // prevents two simultaneous players from allocating duplicate large banks.
     std::lock_guard<std::mutex> guard(lock);
+    // Remove stale identities when a preset switches banks during this session.
+    for (auto it = entries.begin(); it != entries.end(); ) {
+        if (it->second.expired()) it = entries.erase(it);
+        else ++it;
+    }
     auto &entry = entries[path];
     if (auto bank = entry.lock()) return bank;
     auto bank = std::make_shared<SharedBank>(path);

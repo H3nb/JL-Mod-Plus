@@ -162,6 +162,10 @@ KDDI `MediaResource`, Sprint `Clip`, and Vodafone `Sound`. Siemens
 advertised as supported. Additional synthesis or codec support beyond the
 formats documented here is not implied by this contract.
 
+The SF2 parser releases partial metadata, sample data and temporary tables on
+parse failures. Its sample allocations are checked against the Sonivox signed
+allocation range, not an arbitrary soundbank file-size ceiling.
+
 The built-in bank and custom SF2/DLS collections retain independent player EAS
 contexts. Custom collections are loaded from a read-only disk-backed locator
 rather than copied into a second full-sized input buffer. Other players in the
