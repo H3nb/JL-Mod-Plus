@@ -174,12 +174,15 @@ public class SonivoxRuntimeTest {
         assertEquals(Player.STARTED, second.getState());
     }
 
-    @Test public void contextLimitRejectsExcessPlayerWithoutLeakingExistingContexts() throws Exception {
+    @Test public void manyLogicalPlayersAreCheapAndPreparedSourcesShareOneOutput() throws Exception {
         assertEquals("qualification requires an idle runtime", 0, initialHandles);
-        for (int index = 0; index < 16; index++) keep(Manager.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
-        assertEquals(16, LibEAS.liveHandles());
-        expectThrows(MediaException.class, () -> Manager.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
-        assertEquals("rejected context changed existing handles", 16, LibEAS.liveHandles());
+        for (int index = 0; index < 96; index++)
+            keep(Manager.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+        assertEquals(96, LibEAS.liveHandles());
+        // All players exist, but only a subset need initialized Sonivox contexts.
+        for (int index = 0; index < 29; index++) players.get(index).prefetch();
+        for (int index = 0; index < 3; index++) players.get(index).start();
+        for (int index = 0; index < 3; index++) assertEquals(Player.STARTED, players.get(index).getState());
         for (Player player : players) player.close();
         assertEquals(0, LibEAS.liveHandles());
     }
@@ -251,11 +254,11 @@ public class SonivoxRuntimeTest {
     }
 
     @Test public void recognizedCorruptMediaAndMissingBankFailWithoutSilentFallback() throws Exception {
-        expectThrows(MediaException.class,
-                () -> Manager.createPlayer(new ByteArrayInputStream(new byte[]{'M','T','h','d',0,0,0,6}), "audio/midi"));
+        expectRealizeFailure(Manager.createPlayer(
+                new ByteArrayInputStream(new byte[]{'M','T','h','d',0,0,0,6}), "audio/midi"));
         LibEAS bank = new LibEAS(new File(InstrumentationRegistry.getInstrumentation()
                 .getTargetContext().getFilesDir(), "missing-qualification.sf2").getAbsolutePath());
-        expectThrows(MediaException.class, () -> new SynthPlugin(bank).createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+        expectRealizeFailure(new SynthPlugin(bank).createPlayer(Manager.MIDI_DEVICE_LOCATOR));
     }
 
     @Test public void generatedSf2AndDlsBanksBothRenderWithIsolatedContexts() throws Exception {
@@ -287,7 +290,7 @@ public class SonivoxRuntimeTest {
         File broken = fixture(".sf2", invalid);
         SynthPlugin plugin = new SynthPlugin(new LibEAS(broken.getAbsolutePath()));
         for (int i = 0; i < 8; ++i) {
-            expectThrows(MediaException.class, () -> plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+            expectRealizeFailure(plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
             assertEquals(initialHandles, LibEAS.liveHandles());
         }
     }
@@ -317,7 +320,7 @@ public class SonivoxRuntimeTest {
         for (int i = 0; i < malformed.length; i++) {
             File bank = fixture(".sf2", malformed[i]);
             SynthPlugin plugin = new SynthPlugin(new LibEAS(bank.getAbsolutePath()));
-            expectThrows(MediaException.class, () -> plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+            expectRealizeFailure(plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
             assertEquals("failed SF2 case " + i + " leaked a native handle",
                     initialHandles, LibEAS.liveHandles());
         }
@@ -389,6 +392,11 @@ public class SonivoxRuntimeTest {
                 InstrumentationRegistry.getInstrumentation().sendStatus(0, status);
             }
         }
+    }
+
+    private static void expectRealizeFailure(Player player) throws Exception {
+        try { expectThrows(MediaException.class, player::realize); }
+        finally { player.close(); }
     }
 
     private Player keep(Player player) { assertNotNull(player); players.add(player); return player; }
