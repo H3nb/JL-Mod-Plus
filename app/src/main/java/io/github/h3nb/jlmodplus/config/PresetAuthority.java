@@ -124,7 +124,6 @@ final class PresetAuthority {
 	@NonNull private final IdentityResolver identities;
 
 	PresetAuthority(@NonNull SharedPreferences preferences, @NonNull IdentityResolver identities) {
-
 		this.preferences = preferences;
 		this.identities = identities;
 	}

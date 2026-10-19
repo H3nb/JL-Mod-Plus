@@ -30,7 +30,7 @@ public final class MidletConfigLoadBoundary {
 	}
 
 	public static boolean prepare(@NonNull SharedPreferences preferences,
-            @NonNull File configDir, @NonNull File profilesRoot) {
+			@NonNull File configDir, @NonNull File profilesRoot) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 		try {
 			ProfilesManager.recoverInterruptedSnapshotSync(configDir);

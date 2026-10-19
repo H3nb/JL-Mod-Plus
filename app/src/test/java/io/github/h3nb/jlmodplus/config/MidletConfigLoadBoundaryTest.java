@@ -39,6 +39,7 @@ public class MidletConfigLoadBoundaryTest {
 	private static final String SYNC_ROLLBACK_DIR = ".preset-sync.rollback";
 	private static final String SYNC_STAGING_DIR = ".preset-sync.tmp";
 	private static final String SYNC_READY_MARKER = ".ready";
+
 	@Test
 	public void legacyBuiltInWithoutLayoutBecomesNumbersAndArrowsBeforeLoad() throws Exception {
 		File profiles = tempDir("profiles-legacy-built-in");
