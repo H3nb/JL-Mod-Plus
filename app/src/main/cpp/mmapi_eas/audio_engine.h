@@ -4,6 +4,7 @@
 #include <oboe/Oboe.h>
 #include <array>
 #include <atomic>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 
@@ -28,8 +29,23 @@ class Engine final : public std::enable_shared_from_this<Engine> {
         Player *reserved = nullptr; // controls only; includes construction reservations.
         std::atomic<Player *> published{nullptr}, hazard{nullptr};
     };
+    // Segments are published once and live until Engine teardown. The callback
+    // never allocates or accesses a container being resized by management.
+    static constexpr size_t SLOTS_PER_BLOCK = 32;
+    static constexpr size_t MAX_BLOCKS = 256; // 8192 sources; safety bound, not a device limit.
+    struct Block {
+        std::array<Slot, SLOTS_PER_BLOCK> slots;
+        std::atomic<unsigned> active{0};
+    };
     std::mutex controls;
-    std::array<Slot, 16> slots;
+    std::array<std::unique_ptr<Block>, MAX_BLOCKS> blocks;
+    std::array<std::atomic<Block *>, MAX_BLOCKS> publishedBlocks{};
+    std::atomic<size_t> blockCount{0};
+    Slot &slotAt(int index) const {
+        auto block = publishedBlocks[static_cast<size_t>(index) / SLOTS_PER_BLOCK]
+            .load(std::memory_order_acquire);
+        return block->slots[static_cast<size_t>(index) % SLOTS_PER_BLOCK];
+    }
     std::shared_ptr<oboe::AudioStream> stream;
     std::shared_ptr<Output> output;
     std::atomic<bool> allowed{true}, fatal{false};
