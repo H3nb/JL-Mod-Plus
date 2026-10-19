@@ -404,8 +404,9 @@ void Player::timeline(int64_t origin) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
     realizeLocked();
     if (!sampled || prepared.load()) throw std::runtime_error("Configure audio timeline before prefetch");
+    auto trace = std::make_unique<std::array<Segment, 128>>();
     sampled->timeline(origin);
-    presentationSegments = std::make_unique<std::array<Segment, 128>>();
+    presentationSegments = std::move(trace);
     presentationDrain = true;
 }
 std::array<int64_t, 8> Player::presentation(int64_t at) {
