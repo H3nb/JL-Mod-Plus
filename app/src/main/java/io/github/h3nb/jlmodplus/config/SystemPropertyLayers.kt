@@ -79,8 +79,11 @@ object SystemPropertyLayers {
 
     /** Saving an unchanged draft must not freeze the inherited factory into overrides. */
     @JvmStatic fun applyEditorText(model: ProfileModel, edited: String?) {
-        val factory = model.systemPropertyDefaults ?: currentFactory()
-        val existing = effective(model.systemPropertyOverrides, factory)
+        // A newly constructed model has no loaded factory provenance yet.
+        // Preserve no-op drafts rather than inventing deletions from a default it never read.
+        val factory = model.systemPropertyDefaults
+        val existing = if (factory == null) format(parse(model.systemProperties))
+            else effective(model.systemPropertyOverrides, factory)
         val supplied = parse(edited)
         if (format(supplied) == existing) {
             model.systemProperties = existing
@@ -92,6 +95,6 @@ object SystemPropertyLayers {
         for (key in defaults.keys) if (!supplied.containsKey(key)) overrides[key] = null
         model.systemPropertyOverrides = overrides
         model.systemPropertyDefaults = factory
-        model.systemProperties = effective(overrides, factory)
+        model.systemProperties = if (factory == null) format(supplied) else effective(overrides, factory)
     }
 }

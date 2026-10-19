@@ -36,7 +36,7 @@ public class ProfilesManagerAtomicSaveTest {
 		ProfileModel profile = new ProfileModel();
 
 		profile.version = ProfileModel.VERSION;
-		profile.systemProperties = "unicode=✓";
+		profile.systemPropertyOverrides = java.util.Collections.singletonMap("unicode", "✓");
 
 		assertTrue(ProfilesManager.saveConfig(directory, profile));
 		File config = new File(directory, Config.MIDLET_CONFIG_FILE);
@@ -44,7 +44,8 @@ public class ProfilesManagerAtomicSaveTest {
 		assertFalse(new File(config.getPath() + ".new").exists());
 		assertFalse(new File(config.getPath() + ".bak").exists());
 		String saved = new String(Files.readAllBytes(config.toPath()), StandardCharsets.UTF_8);
-		assertTrue(saved.contains("SystemProperties"));
+		assertFalse(saved.contains("\"SystemProperties\""));
+		assertTrue(saved.contains("\"SystemPropertyOverrides\""));
 		assertTrue(saved.contains("✓"));
 	}
 

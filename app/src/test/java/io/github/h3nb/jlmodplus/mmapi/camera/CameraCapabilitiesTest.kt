@@ -3,6 +3,7 @@ package io.github.h3nb.jlmodplus.mmapi.camera
 
 import io.github.h3nb.jlmodplus.config.ProfileConfigMatcher
 import io.github.h3nb.jlmodplus.config.ProfileModel
+import io.github.h3nb.jlmodplus.config.SystemPropertyLayers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -111,7 +112,7 @@ class CameraCapabilitiesTest {
 
         assertEquals("false", CameraCapabilities.resolve(linked.systemProperties!!, true)[CameraCapabilities.SUPPORTS_CAPTURE])
         assertEquals("false", CameraCapabilities.resolve(linked.systemProperties!!, false)[CameraCapabilities.SUPPORTS_CAPTURE])
-        assertEquals(configured, linked.systemProperties)
+        assertEquals(SystemPropertyLayers.effective(emptyMap(), configured), linked.systemProperties)
         assertEquals(before, ProfileConfigMatcher.comparisonSnapshot(linked))
         assertTrue(ProfileConfigMatcher.sameConfig(baseline, linked))
     }
