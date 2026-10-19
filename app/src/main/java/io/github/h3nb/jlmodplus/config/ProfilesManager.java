@@ -1313,6 +1313,7 @@ public class ProfilesManager {
 				}
 				return new LoadResult(LoadStatus.MISSING, null, -1, null);
 			}
+			SystemPropertyLayers.hydrate(decoded.model);
 			if (persistMigrations && (decoded.needsPublication || legacy)) {
 				boolean saved = saveConfig(dir, decoded.model);
 				if (!saved && requireMigrationSave) throw new IOException("Unable to publish config migration");

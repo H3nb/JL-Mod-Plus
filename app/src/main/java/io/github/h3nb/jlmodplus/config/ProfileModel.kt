@@ -28,6 +28,7 @@ import java.io.File
 import javax.microedition.lcdui.keyboard.VirtualKeyboard
 import javax.microedition.shell.timing.TimingMode
 import javax.microedition.util.ContextHolder
+import kotlinx.serialization.Transient
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -91,7 +92,9 @@ data class ProfileModel(
     @SerialName("SoundBank") @JvmField var soundBank: String? = null,
     @SerialName("CameraDefaultFacing") @JvmField var cameraDefaultFacing: Int = CameraCaptureOptions.BACK,
     @SerialName("CameraResolution") @JvmField var cameraResolution: Int = CameraCaptureOptions.RESOLUTION_AUTO,
-    @SerialName("SystemProperties") @JvmField var systemProperties: String? = null,
+    @Transient @JvmField var systemProperties: String? = null,
+    @SerialName("SystemPropertyOverrides") @JvmField var systemPropertyOverrides: Map<String, String?> = emptyMap(),
+    @Transient @JvmField var systemPropertyDefaults: String? = null,
     @SerialName("SkipResumeCall") @JvmField var skipResumeCall: Boolean = false,
 ) {
     companion object {
@@ -114,7 +117,9 @@ data class ProfileModel(
             vkButtonShape = VirtualKeyboard.SHAPE_ROUND_RECT, vkAlpha = 64,
             vkBgColor = 0xD0D0D0, vkFgColor = 0x000080,
             vkBgColorSelected = 0x000080, vkFgColorSelected = 0xFFFFFF,
-            vkOutlineColor = 0xFFFFFF, systemProperties = defaultSystemProperties,
+            vkOutlineColor = 0xFFFFFF,
+            systemProperties = SystemPropertyLayers.effective(emptyMap(), defaultSystemProperties),
+            systemPropertyDefaults = defaultSystemProperties,
         )
 
         @JvmStatic fun applyBuiltInTheme(profile: ProfileModel, darkTheme: Boolean) {

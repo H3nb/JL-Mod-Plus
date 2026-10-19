@@ -51,9 +51,14 @@ object ProfileJson {
         } else backgroundMode(tree["ScreenBackgroundMode"]))
         normalized["KeyMappings"] = format.encodeToJsonElement(decodeMappings(tree["KeyMappings"]))
         val model = format.decodeFromJsonElement<ProfileModel>(JsonObject(normalized))
+        if (!tree.containsKey("SystemPropertyOverrides")) {
+            val oldProperties = tree["SystemProperties"]?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
+            model.systemProperties = oldProperties
+            model.systemPropertyOverrides = SystemPropertyLayers.migrate(oldProperties)
+        }
         if (version == 0) {
             if (legacyBoolean(tree["HwAcceleration"])) model.graphicsMode = 3
-            ProfilesManager.updateSystemProperties(model)
+            // Legacy properties are converted by SystemPropertyLayers.
         }
         if (version <= 1) {
             val w = model.screenWidth
@@ -90,6 +95,7 @@ object ProfileJson {
         customKeys = source.customKeys?.ownedList(),
         keyMappings = source.keyMappings.ownedMap(),
         controller = source.controller?.let(::ownedJson),
+        systemPropertyOverrides = Collections.unmodifiableMap(HashMap(source.systemPropertyOverrides)),
     )
 
     @JvmStatic fun ownedJson(value: JsonElement): JsonElement = when (value) {
