@@ -102,7 +102,12 @@ public final class MidletConfigLoadBoundary {
 			return true;
 		}
 		config.systemProperties = normalized;
-		return ProfilesManager.saveConfig(configDir, config);
+		if (ProfilesManager.saveConfig(configDir, config)) return true;
+		// Factory refresh is optional. Recover the previous committed snapshot rather
+		// than blocking launch when the refresh itself could not be persisted.
+		LOGGER.warning("Built-in system property refresh failed; retaining last-known-good config");
+		return ProfilesManager.loadConfig(configDir, false,
+				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG, true) != null;
 	}
 
 	private static boolean normalizeLegacyBuiltIn(@NonNull SharedPreferences preferences,
