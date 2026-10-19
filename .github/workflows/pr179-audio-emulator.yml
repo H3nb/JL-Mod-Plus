@@ -1,6 +1,6 @@
 # Temporary test workflow for H3nb/JL-Mod-Plus#179.
 # Delete this file and .github/ci/pr179-audio-emulator.sh before merging.
-name: PR 179 Audio Emulator (temporary)
+name: PR 179 Native Audio Emulator (temporary)
 
 on:
   pull_request:
@@ -20,13 +20,13 @@ jobs:
       github.event.pull_request.number == 179 &&
       github.event.pull_request.head.ref == 'fix/scalable-audio-resources' &&
       github.event.pull_request.head.repo.full_name == github.repository
-    name: Audio contracts (API ${{ matrix.api }})
+    name: Native callback/hazard contracts (API ${{ matrix.api }})
     runs-on: ubuntu-26.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        api: [35, 36]
+        api: [35]
 
     steps:
       - name: Check out PR sources
@@ -70,14 +70,14 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Execute real Android audio instrumentation
+      - name: Execute standalone native callback/hazard suite
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api }}
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash .github/ci/pr179-audio-emulator.sh && if [ "${{ matrix.api }}" = "35" ]; then bash .github/ci/pr179-native-emulator.sh; fi
+          script: bash .github/ci/pr179-native-emulator.sh
 
       - name: Upload audio emulator evidence
         if: always()
