@@ -76,7 +76,7 @@ class SystemPropertyLayersTest {
         try {
             val config = java.io.File(dir, Config.MIDLET_CONFIG_FILE)
             config.writeText(
-                """{"Version":7,"ScreenWidth":360,"SystemProperties":"microedition.platform: Custom\\nsupports.video.capture: false"}"""
+                """{"Version":7,"ScreenWidth":360,"SystemProperties":"microedition.platform: Custom\nsupports.video.capture: false"}"""
             )
             val first = checkNotNull(ProfilesManager.loadConfig(dir))
             assertEquals(ProfileModel.VERSION, first.version)
