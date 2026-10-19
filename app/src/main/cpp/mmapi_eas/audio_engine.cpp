@@ -289,10 +289,11 @@ std::array<int64_t, 8> Engine::presentation(Player *player, int64_t at) {
     }
     int64_t media = player->presentationOrigin.load();
     const auto generation = player->generation.load();
-    const auto head = player->presentationHead.load(std::memory_order_acquire);
+    const auto head = player->presentationSegments
+        ? player->presentationHead.load(std::memory_order_acquire) : 0;
     bool found = false, mapped = false;
     for (uint32_t n = 0; n < std::min<uint32_t>(head, 128); ++n) {
-        auto &segment = player->presentationSegments[(head - 1 - n) % 128];
+        auto &segment = (*player->presentationSegments)[(head - 1 - n) % 128];
         const auto revision = segment.revision.load(std::memory_order_acquire);
         if (revision & 1) continue;
         const auto first = segment.first.load(), last = segment.last.load();
