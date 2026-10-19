@@ -99,6 +99,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -360,8 +361,15 @@ internal fun ConfigScreen(
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
 
     if (systemPropertiesEditorVisible) {
+        val context = LocalContext.current
+        val defaultProperties = remember(context) {
+            ConfigFormState.normalizeSystemProperties(
+                context.assets.open("defaults/system.props").bufferedReader().use { it.readText() }
+            )
+        }
         ConfigSystemPropertiesPage(
             value = form.systemProperties,
+            defaultValue = defaultProperties,
             onBack = { systemPropertiesEditorVisible = false },
             onSave = { value ->
                 systemPropertiesEditorVisible = false
@@ -2194,11 +2202,13 @@ private fun ConfigSystemPropertiesPreference(
 @Composable
 internal fun ConfigSystemPropertiesPage(
     value: String,
+    defaultValue: String = "",
     onBack: () -> Unit,
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var draft by rememberSaveable(value) { mutableStateOf(value) }
+    var resetConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     val hostView = LocalView.current
     DisposableEffect(hostView, onBack) {
         val callback = object : OnBackPressedCallback(true) {
@@ -2244,6 +2254,16 @@ internal fun ConfigSystemPropertiesPage(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             ConfigMessageBlock(stringResource(R.string.config_system_properties_info))
+            if (defaultValue.isNotEmpty()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(
+                        onClick = { resetConfirmationVisible = true },
+                        enabled = draft != defaultValue,
+                    ) {
+                        Text(stringResource(R.string.config_system_properties_reset))
+                    }
+                }
+            }
             OutlinedTextField(
                 value = draft,
                 onValueChange = { draft = it },
@@ -2252,6 +2272,26 @@ internal fun ConfigSystemPropertiesPage(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             )
         }
+    }
+    if (resetConfirmationVisible) {
+        AlertDialog(
+            onDismissRequest = { resetConfirmationVisible = false },
+            title = { Text(stringResource(R.string.config_system_properties_reset_title)) },
+            text = { Text(stringResource(R.string.config_system_properties_reset_message)) },
+            dismissButton = {
+                TextButton(onClick = { resetConfirmationVisible = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    draft = defaultValue
+                    resetConfirmationVisible = false
+                }) {
+                    Text(stringResource(R.string.config_system_properties_reset))
+                }
+            },
+        )
     }
 }
 
