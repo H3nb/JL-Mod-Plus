@@ -535,7 +535,6 @@ public class MicroLoader {
 			Map<String, String> cameraProperties =
 					io.github.h3nb.jlmodplus.mmapi.camera.CameraCapabilities.resolve(
 							params.systemProperties,
-							ContextHolder.getAssetAsString("defaults/system.props"),
 						io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isCameraAvailable(),
 						cameraDefaultDimensions);
 			for (Map.Entry<String, String> property : cameraProperties.entrySet()) {
