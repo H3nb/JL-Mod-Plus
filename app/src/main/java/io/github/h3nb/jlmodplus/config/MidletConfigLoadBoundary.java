@@ -11,12 +11,11 @@ import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-
-import javax.microedition.util.ContextHolder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+import javax.microedition.util.ContextHolder;
 
 /**
  * Prepares one active MIDlet's materialized config snapshot before any local config/layout read.

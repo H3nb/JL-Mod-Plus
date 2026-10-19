@@ -2280,7 +2280,7 @@ internal fun ConfigSystemPropertiesPage(
             text = { Text(stringResource(R.string.config_system_properties_reset_message)) },
             dismissButton = {
                 TextButton(onClick = { resetConfirmationVisible = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(R.string.CANCEL_CMD))
                 }
             },
             confirmButton = {
