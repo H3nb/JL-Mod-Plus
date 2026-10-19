@@ -2597,6 +2597,20 @@ EAS_PUBLIC EAS_RESULT EAS_LoadDLSCollection (EAS_DATA_HANDLE pEASData, EAS_HANDL
 
     return result;
 }
+// Both contexts have independent voice managers. Only the immutable DLS/SF2
+// collection is shared; DLSAddRef and DLSCleanup manage its lifetime.
+EAS_PUBLIC EAS_RESULT EAS_ShareDLSCollection (EAS_DATA_HANDLE target, EAS_DATA_HANDLE source)
+{
+    if (!target || !source || !target->pVoiceMgr || !source->pVoiceMgr)
+        return EAS_ERROR_INVALID_HANDLE;
+    S_DLS *bank = source->pVoiceMgr->pGlobalDLS;
+    if (!bank) return EAS_ERROR_SOUND_LIBRARY;
+    if (target == source) return EAS_SUCCESS;
+    DLSAddRef(bank);
+    EAS_RESULT result = VMSetGlobalDLSLib(target, bank);
+    if (result != EAS_SUCCESS) DLSCleanup(target->hwInstData, bank);
+    return result;
+}
 #endif
 
 #ifdef EXTERNAL_AUDIO

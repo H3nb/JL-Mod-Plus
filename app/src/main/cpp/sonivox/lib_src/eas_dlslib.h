@@ -126,7 +126,7 @@ typedef struct s_eas_dls_tag
     EAS_U16             numDLSRegions;
     EAS_U16             numDLSArticulations;
     EAS_U16             numDLSSamples;
-    EAS_U8              refCount;
+    EAS_U32             refCount; // atomic operations in DLSAddRef/DLSCleanup
     EAS_U8              libType;
 } S_DLS;
 

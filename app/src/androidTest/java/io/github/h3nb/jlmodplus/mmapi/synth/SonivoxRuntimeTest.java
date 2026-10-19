@@ -272,6 +272,24 @@ public class SonivoxRuntimeTest {
         }
     }
 
+    @Test public void sameSessionCustomBankSurvivesIndependentPlayerClose() throws Exception {
+        File bank = fixture(".sf2", AudioBankFixtures.sf2());
+        LibEAS backend = new LibEAS(bank.getAbsolutePath());
+        File media = fixture(".mid", midi(240, 480));
+        SynthPlugin plugin = new SynthPlugin(backend);
+        Player first = keep(plugin.createPlayer(new PathSource(media)));
+        Player second = keep(plugin.createPlayer(new PathSource(media)));
+        first.prefetch();
+        second.prefetch();
+        first.close();
+        CountDownLatch end = end(second);
+        second.start();
+        assertTrue("peer bank released while still in use", end.await(4, TimeUnit.SECONDS));
+        assertTrue("peer player produced no PCM", stats(second)[2] > 0);
+        second.close();
+        assertEquals(initialHandles, LibEAS.liveHandles());
+    }
+
     /** Optional local bank path in target-private files: never an application preset or distributed asset. */
     @Test public void suppliedLocalSoundBankPlaysAndRepeatedResourcesClose() throws Exception {
         String path = InstrumentationRegistry.getArguments().getString("sonivoxBankPath");

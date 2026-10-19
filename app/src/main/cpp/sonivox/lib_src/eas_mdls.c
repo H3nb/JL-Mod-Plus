@@ -768,25 +768,20 @@ EAS_RESULT DLSParser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
 EAS_RESULT DLSCleanup (EAS_HW_DATA_HANDLE hwInstData, S_DLS *pDLS)
 {
 
-    /* free the allocated memory */
-    if (pDLS)
-    {
-        if (pDLS->refCount)
-        {
-            if (--pDLS->refCount == 0) {
-                if (pDLS->libType == DLSLIB_TYPE_DLS) {
-                    EAS_HWFree(hwInstData, pDLS);
-#ifdef _SF2_SUPPORT
-                } else if (pDLS->libType == DLSLIB_TYPE_SF2) {
-                    return SF2Cleanup(hwInstData, pDLS);
-#endif
-                } else {
-                    return EAS_ERROR_DATA_INCONSISTENCY;
-                }
-            }
-        }
+    if (!pDLS) return EAS_SUCCESS;
+    // Multiple independent EAS contexts can close on different management
+    // threads. Exactly the final reference owns the deallocation.
+    if (__atomic_fetch_sub(&pDLS->refCount, 1, __ATOMIC_ACQ_REL) != 1)
+        return EAS_SUCCESS;
+    if (pDLS->libType == DLSLIB_TYPE_DLS) {
+        EAS_HWFree(hwInstData, pDLS);
+        return EAS_SUCCESS;
     }
-    return EAS_SUCCESS;
+#ifdef _SF2_SUPPORT
+    if (pDLS->libType == DLSLIB_TYPE_SF2)
+        return SF2Cleanup(hwInstData, pDLS);
+#endif
+    return EAS_ERROR_DATA_INCONSISTENCY;
 }
 
 /*----------------------------------------------------------------------------
@@ -798,7 +793,7 @@ EAS_RESULT DLSCleanup (EAS_HW_DATA_HANDLE hwInstData, S_DLS *pDLS)
 void DLSAddRef (S_DLS *pDLS)
 {
     if (pDLS)
-        pDLS->refCount++;
+        __atomic_fetch_add(&pDLS->refCount, 1, __ATOMIC_RELAXED);
 }
 
 /*----------------------------------------------------------------------------

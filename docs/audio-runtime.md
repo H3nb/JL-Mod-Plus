@@ -28,7 +28,9 @@ the contracts above; they are not a requirement to preserve a particular class
 or native backend.
 
 `AudioPlayer` supplies one MMAPI contract for synthesis, sampled audio and file video. Each
-synthesis source owns its EAS context, sequencer, voices and bank collection;
+synthesis source owns its EAS context, sequencer and voices. Within a runtime,
+custom SF2/DLS sample collections are shared by bank identity while in use;
+
 each sampled source owns a native FFmpeg decoder/resampler and bounded PCM ring.
 A native engine per runtime/session mixes both into one float stereo 44.1 kHz
 bus and owns at most one active Oboe output. Java `RuntimeAudioCoordinator`
@@ -160,7 +162,10 @@ KDDI `MediaResource`, Sprint `Clip`, and Vodafone `Sound`. Siemens
 advertised as supported. Additional synthesis or codec support beyond the
 formats documented here is not implied by this contract.
 
-The built-in bank and custom SF2/DLS collections use the same context isolation.
+The built-in bank and custom SF2/DLS collections retain independent player EAS
+contexts. Custom collections are loaded from a read-only disk-backed locator
+rather than copied into a second full-sized input buffer. Other players in the
+same runtime share a parsed collection while each owns its voices and sequencer.
 SF2 support is not complete. In particular, the Nokia controller modulator
 `0x028a -> 0x0011` remains unsupported. Bank playback success does not establish
 reference-device timbre, every preset or drum key, acoustic fidelity, or seamless
