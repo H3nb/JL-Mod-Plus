@@ -18,6 +18,9 @@ struct Event { int64_t type, time, generation, error; };
 // Controls serialize every producer and quiesce callbacks before touching EAS.
 class Player final {
     std::mutex controls;
+    const std::string sourceLocator, bankLocator;
+    const bool pcmMode, videoAudioMode;
+    bool realized = false;
     EAS_DATA_HANDLE eas = nullptr;
     EAS_HANDLE media = nullptr, interactive = nullptr;
     std::unique_ptr<MemoryFile> source;
@@ -40,7 +43,8 @@ class Player final {
     struct Segment {
         std::atomic<int64_t> revision{0}, first{0}, last{0}, begin{0}, end{0}, generation{0}, output{0};
     };
-    std::array<Segment, 128> presentationSegments;
+    // Only video/audio presentation mapping needs this relatively large history.
+    std::unique_ptr<std::array<Segment, 128>> presentationSegments;
     std::atomic<uint32_t> presentationHead{0};
     std::atomic<int64_t> presentationOrigin{0};
     void recordPresentation(int64_t first, int count, int64_t begin, int64_t end, int64_t output);
@@ -49,13 +53,20 @@ class Player final {
     int cursor = 256;
     int interactiveCursor = 256;
     std::atomic<float> left{1}, right{1};
-    std::array<uint8_t, 16384> midi{};
-    std::atomic<uint32_t> midiHead{0}, midiTail{0};
+    // MIDI events are optional even for file synthesizers. Publication is
+    // release/acquire; the callback only reads a queue allocated by management.
+    struct MidiQueue {
+        std::array<uint8_t, 16384> bytes{};
+        std::atomic<uint32_t> head{0}, tail{0};
+    };
+    std::unique_ptr<MidiQueue> ownedMidi;
+    std::atomic<MidiQueue *> midi{nullptr};
     // At most one terminal render event per generation; it freezes rendering.
     std::atomic<int> pending{0}, renderError{0};
     std::atomic<int64_t> eventTime{0}, eventGeneration{0};
     std::atomic<int64_t> frames{0}, callbacks{0}, nonzero{0}, disconnects{0};
     void ensureOpen() const;
+    void realizeLocked();
     void quiesce();
     void runOutput(bool fresh = false);
     void invalidate();
@@ -73,6 +84,7 @@ public:
         std::shared_ptr<Engine> engine = std::make_shared<Engine>(), bool pcm = false, bool videoAudio = false,
         std::shared_ptr<BankPool> banks = std::make_shared<BankPool>());
     ~Player();
+    void realize();
     void prefetch();
     void start(int64_t policyEpoch = 0);
     void activateMidi(int64_t policyEpoch = 0);
