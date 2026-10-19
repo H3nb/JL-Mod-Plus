@@ -115,8 +115,8 @@ class CameraCapabilitiesTest {
     @Test fun templateRecognitionIgnoresLineOrderAndWhitespaceButNotNonCameraOverrides() {
         val reordered = legacy.lineSequence().toList().reversed().joinToString("\r\n")
             .replace("supports.video.capture: false", "supports.video.capture:  false  ")
-        assertEquals("true", CameraCapabilities.resolve(legacy, true)[CameraCapabilities.SUPPORTS_CAPTURE])
-        assertEquals("false", CameraCapabilities.resolve(legacy + "\ncustom.flag: 1", defaults, true)[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertEquals("true", CameraCapabilities.resolve(reordered, true)[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertEquals("false", CameraCapabilities.resolve(reordered + "\ncustom.flag: 1", true)[CameraCapabilities.SUPPORTS_CAPTURE])
     }
 
     @Test fun factoryAndLinkedProfileIdentityStayUnchangedAfterRuntimeResolution() {
@@ -125,8 +125,8 @@ class CameraCapabilitiesTest {
         val linked = ProfileConfigMatcher.copyConfig(baseline)
         val before = ProfileConfigMatcher.comparisonSnapshot(linked)
 
-        assertEquals("true", CameraCapabilities.resolve(linked.systemProperties!!, factory, true)[CameraCapabilities.SUPPORTS_CAPTURE])
-        assertEquals("false", CameraCapabilities.resolve(linked.systemProperties!!, factory, false)[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertEquals("true", CameraCapabilities.resolve(linked.systemProperties!!, true)[CameraCapabilities.SUPPORTS_CAPTURE])
+        assertEquals("false", CameraCapabilities.resolve(linked.systemProperties!!, false)[CameraCapabilities.SUPPORTS_CAPTURE])
 
         assertEquals(factory, linked.systemProperties)
         assertEquals(before, ProfileConfigMatcher.comparisonSnapshot(linked))
