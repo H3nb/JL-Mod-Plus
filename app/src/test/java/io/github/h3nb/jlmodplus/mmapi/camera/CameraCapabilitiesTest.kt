@@ -35,11 +35,9 @@ class CameraCapabilitiesTest {
     }
 
     @Test fun explicitFormatsTakePrecedenceWhenCaptureIsEnabled() {
-        val custom = factory + """
-            
-            video.encodings: encoding=rgb888&width=320&height=240
-            video.snapshot.encodings: encoding=png&width=320&height=240
-        """.trimIndent()
+        val custom = factory +
+            "\nvideo.encodings: encoding=rgb888&width=320&height=240" +
+            "\nvideo.snapshot.encodings: encoding=png&width=320&height=240"
         val resolved = CameraCapabilities.resolve(custom, true)
         assertEquals(
             "encoding=rgb888&width=320&height=240",
