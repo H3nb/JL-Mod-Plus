@@ -15,9 +15,11 @@ namespace {
 std::mutex registryLock;
 std::unordered_map<jlong, std::shared_ptr<Player>> registry;
 jlong nextHandle = 1;
+size_t creating = 0;
 struct Session { std::weak_ptr<Engine> engine; std::weak_ptr<mmapi::eas::BankPool> banks;
     int64_t epoch = 0, minimum = 0; bool allowed = false; };
 std::unordered_map<jlong, Session> sessions;
+constexpr size_t MAX_PLAYERS = 16;
 std::shared_ptr<Player> player(jlong handle) {
     std::lock_guard<std::mutex> lock(registryLock);
     auto found = registry.find(handle);
@@ -124,6 +126,7 @@ extern "C" JNIEXPORT void JNICALL JNI_NAME(closeSession)(JNIEnv *, jclass, jlong
 }
 extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, jstring locator,
         jstring bank, jlong sessionId, jboolean sampled, jboolean videoAudio) {
+    bool reserved = false;
     try {
         auto path = string(env, locator);
         auto font = string(env, bank, true);
@@ -132,6 +135,7 @@ extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, 
         jlong handle;
         {
             std::lock_guard<std::mutex> lock(registryLock);
+            if (registry.size() + creating >= MAX_PLAYERS) throw std::runtime_error("Audio context limit reached (16 Players)");
             if (nextHandle == std::numeric_limits<jlong>::max()) throw std::runtime_error("Audio handle space exhausted");
             auto &session = sessions.at(sessionId);
             engine = session.engine.lock();
@@ -139,16 +143,17 @@ extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, 
             banks = session.banks.lock();
             if (!banks) { banks = std::make_shared<mmapi::eas::BankPool>(); session.banks = banks; }
             engine->policy(session.minimum, session.allowed);
-            handle = nextHandle++;
+            handle = nextHandle++; ++creating; reserved = true;
         }
         // Bank and source IO must not hold the handle registry against peer management.
         auto owned = std::make_shared<Player>(path, font, engine, sampled, videoAudio, banks);
         {
             std::lock_guard<std::mutex> lock(registryLock);
-            registry.emplace(handle, std::move(owned));
+            registry.emplace(handle, std::move(owned)); --creating; reserved = false;
         }
         return handle;
     } catch (...) {
+        if (reserved) { std::lock_guard<std::mutex> lock(registryLock); --creating; }
         translate(env); return 0;
     }
 }
@@ -230,7 +235,7 @@ extern "C" JNIEXPORT jboolean JNICALL JNI_NAME(isOutputSuspended)(JNIEnv *env, j
     try { return player(handle)->suspended(); } catch (...) { translate(env); return false; }
 }
 VOID_METHOD(close, dispose(handle))
-VOID_METHOD(realize, (void)player(handle))
+VOID_METHOD(realize, player(handle)->realize())
 VOID_METHOD(prefetch, player(handle)->prefetch())
 VOID_METHOD(start, player(handle)->start())
 VOID_METHOD(activateMidi, player(handle)->activateMidi())
