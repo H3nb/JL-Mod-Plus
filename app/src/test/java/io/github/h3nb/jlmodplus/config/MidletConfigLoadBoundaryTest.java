@@ -33,7 +33,7 @@ import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 
 public class MidletConfigLoadBoundaryTest {
-	private static final String FACTORY_PROPERTIES = "microedition.platform: Test Phone\\n";
+	private static final String FACTORY_PROPERTIES = "microedition.platform: Test Phone\n";
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_TYPE = 3;
 	private static final int LAYOUT_EOF = -1;

@@ -1006,8 +1006,8 @@ class ConfigComposeTest {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigSystemPropertiesPage(
-                    value = "microedition.platform: Custom\\n",
-                    defaultValue = "microedition.platform: Built-in\\n",
+                    value = "microedition.platform: Custom\n",
+                    defaultValue = "microedition.platform: Built-in\n",
                     onBack = {},
                     onSave = { saved = it },
                 )
@@ -1020,7 +1020,7 @@ class ConfigComposeTest {
         ).performClick()
         assertEquals(null, saved)
         composeRule.onNodeWithText(uiString(R.string.save)).performClick()
-        assertEquals("microedition.platform: Built-in\\n", saved)
+        assertEquals("microedition.platform: Built-in\n", saved)
     }
 
     @Test
