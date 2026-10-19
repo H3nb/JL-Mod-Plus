@@ -33,43 +33,12 @@ import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 
 public class MidletConfigLoadBoundaryTest {
-	private static final String FACTORY_PROPERTIES = "microedition.platform: Test Phone\n";
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_TYPE = 3;
 	private static final int LAYOUT_EOF = -1;
 	private static final String SYNC_ROLLBACK_DIR = ".preset-sync.rollback";
 	private static final String SYNC_STAGING_DIR = ".preset-sync.tmp";
 	private static final String SYNC_READY_MARKER = ".ready";
-
-	@Test
-	public void ownedBuiltInRefreshPreservesOtherSettingsAndIsIdempotent() throws Exception {
-		File profiles = tempDir("factory-refresh-profiles");
-		File target = tempDir("factory-refresh-midlet");
-		writeConfig(target, 360, VirtualKeyboard.TYPE_NUMBERS_ARROWS);
-		FakePreferences preferences = new FakePreferences();
-		preferences.edit().putBoolean(ProfileModel.builtInThemePreferenceKey(target), true).commit();
-
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
-		ProfileModel after = readConfig(target);
-		assertEquals(360, after.screenWidth);
-		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, after.vkType);
-		assertEquals(ConfigFormState.normalizeSystemProperties(FACTORY_PROPERTIES), after.systemProperties);
-		byte[] persisted = Files.readAllBytes(configFile(target).toPath());
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
-		assertArrayEquals(persisted, Files.readAllBytes(configFile(target).toPath()));
-		assertTrue(preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(target), false));
-	}
-
-	@Test
-	public void customFactoryPropertiesRemainUntouched() throws Exception {
-		File profiles = tempDir("custom-refresh-profiles");
-		File target = tempDir("custom-refresh-midlet");
-		writeConfig(target, 360, VirtualKeyboard.TYPE_CUSTOM);
-		byte[] persisted = Files.readAllBytes(configFile(target).toPath());
-		assertTrue(MidletConfigLoadBoundary.prepare(new FakePreferences(), target, profiles, FACTORY_PROPERTIES));
-		assertArrayEquals(persisted, Files.readAllBytes(configFile(target).toPath()));
-	}
-
 	@Test
 	public void legacyBuiltInWithoutLayoutBecomesNumbersAndArrowsBeforeLoad() throws Exception {
 		File profiles = tempDir("profiles-legacy-built-in");
@@ -78,7 +47,7 @@ public class MidletConfigLoadBoundaryTest {
 		FakePreferences preferences = new FakePreferences();
 		preferences.edit().putBoolean(ProfileModel.builtInThemePreferenceKey(target), true).commit();
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		ProfileModel migrated = readConfig(target);
 		assertEquals(ProfileModel.VERSION, migrated.version);
@@ -100,7 +69,7 @@ public class MidletConfigLoadBoundaryTest {
 		FakePreferences preferences = new FakePreferences();
 		preferences.edit().putBoolean(ProfileModel.builtInThemePreferenceKey(target), true).commit();
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		assertFalse(preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(target), false));
 		ProfileModel migrated = readConfig(target);
@@ -123,7 +92,7 @@ public class MidletConfigLoadBoundaryTest {
 		writeConfig(unexpected, 240, VirtualControlsKeyboard.TYPE_DPAD_STANDARD, 6);
 		FakePreferences preferences = new FakePreferences();
 		preferences.edit().putBoolean(ProfileModel.builtInThemePreferenceKey(unexpected), true).commit();
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, unexpected, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, unexpected, profiles));
 		ProfileModel migrated = readConfig(unexpected);
 		assertEquals(ProfileModel.VERSION, migrated.version);
 		assertEquals(BackgroundMode.THEME, migrated.screenBackgroundMode);
@@ -142,7 +111,7 @@ public class MidletConfigLoadBoundaryTest {
 				.putBoolean(ProfileModel.builtInThemePreferenceKey(target), true)
 				.commit();
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		assertEquals(VirtualKeyboard.TYPE_CUSTOM, readConfig(target).vkType);
 		assertEquals("Named", preferences.getString(PresetLinkage.originPreferenceKey(target), null));
@@ -209,7 +178,7 @@ public class MidletConfigLoadBoundaryTest {
 				"linkage must not be inspected before local recovery",
 				syncRollbackDir(target).exists());
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 		assertEquals(176, readConfig(target).screenWidth);
 	}
 
@@ -225,7 +194,7 @@ public class MidletConfigLoadBoundaryTest {
 		writeLayout(target, 2);
 		FakePreferences preferences = linkedPreferences(target, "K800i");
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		assertEquals(360, readConfig(target).screenWidth);
 		assertArrayEquals(readLayout(source), readLayout(target));
@@ -264,7 +233,7 @@ public class MidletConfigLoadBoundaryTest {
 		byte[] oldLayout = readLayout(target);
 		FakePreferences preferences = linkedPreferences(target, "K800i");
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
 		assertArrayEquals(oldLayout, readLayout(target));
@@ -284,7 +253,7 @@ public class MidletConfigLoadBoundaryTest {
 		byte[] oldLayout = readLayout(target);
 		FakePreferences preferences = linkedPreferences(target, "K800i");
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
 		assertArrayEquals(oldLayout, readLayout(target));
@@ -304,7 +273,7 @@ public class MidletConfigLoadBoundaryTest {
 
 		// The source is an invalid complete snapshot (Custom without a layout). syncSnapshot fails,
 		// then the boundary's source-independent recovery succeeds and permits the known-good local load.
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
 		assertFalse(syncRollbackDir(target).exists());
@@ -340,7 +309,7 @@ public class MidletConfigLoadBoundaryTest {
 				.remove(PresetLinkage.linkedPreferenceKey(target))
 				.commit();
 
-		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles, FACTORY_PROPERTIES));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 
 		assertEquals(176, readConfig(target).screenWidth);
 		assertFalse(preferences.getBoolean(PresetLinkage.linkedPreferenceKey(target), false));

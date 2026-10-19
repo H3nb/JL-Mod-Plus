@@ -1412,21 +1412,4 @@ public class ProfilesManager {
 			Log.w(TAG, "Unable to remove stale profile write " + temporary);
 		}
 	}
-
-	public static void updateSystemProperties(ProfileModel params) {
-		String defaultProperties = ContextHolder.getAssetAsString("defaults/system.props");
-		String properties = params.systemProperties;
-		StringBuilder sb = new StringBuilder();
-		if (properties == null) {
-			params.systemProperties = defaultProperties;
-			return;
-		}
-		sb.append(properties);
-		String[] defaults = defaultProperties.split("[\\n\\r]+");
-		for (String line : defaults) {
-			if (properties.contains(line.substring(0, line.indexOf(':')))) continue;
-			sb.append(line).append('\n');
-		}
-		params.systemProperties = sb.toString();
-	}
 }

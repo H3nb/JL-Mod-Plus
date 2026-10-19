@@ -15,7 +15,8 @@ This document records durable semantic correctness boundaries for preset/configu
 - A user-owned local change detaches linked ownership before its local publication becomes authoritative. Provenance may describe where state came from without implying a live link.
 - Whole-preset activation may establish LINKED ownership only after the complete source snapshot is valid and the local snapshot has been durably materialized.
 - Changes to the global named-preset default are prospective. Existing installed identities retain their Built-in, CUSTOM, or LINKED ownership; fresh installation binds the then-current eligible default or a Built-in fallback.
-- Explicitly owned Built-in MIDlet configurations follow current factory system properties when prepared for editing or launch, preserving all other settings. CUSTOM snapshots and named-preset sources retain their properties. Manual reset edits only the system-property draft and follows existing save/ownership rules.
+- System properties use one factory source plus per-profile overrides. Missing override keys inherit current factory values, explicit string values override them, and null overrides remove factory keys. Built-in, CUSTOM, and named presets use the same property inheritance rules without changing preset ownership.
+- Historical full-system-property snapshots are interpreted against the frozen pre-overrides factory and converted to differences on subsequent serialization. The effective text is transient; a manual reset edits the draft and ordinary save/ownership rules apply.
 
 ## Additive configuration fields
 

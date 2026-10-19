@@ -15,7 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
-import javax.microedition.util.ContextHolder;
 
 /**
  * Prepares one active MIDlet's materialized config snapshot before any local config/layout read.
@@ -31,14 +30,7 @@ public final class MidletConfigLoadBoundary {
 	}
 
 	public static boolean prepare(@NonNull SharedPreferences preferences,
-			@NonNull File configDir, @NonNull File profilesRoot) {
-		return prepare(preferences, configDir, profilesRoot, null);
-	}
-
-	/** Optional defaults keep unit tests independent of Android assets. */
-	static boolean prepare(@NonNull SharedPreferences preferences,
-			@NonNull File configDir, @NonNull File profilesRoot,
-			@Nullable String defaultSystemProperties) {
+            @NonNull File configDir, @NonNull File profilesRoot) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 		try {
 			ProfilesManager.recoverInterruptedSnapshotSync(configDir);
@@ -49,9 +41,6 @@ public final class MidletConfigLoadBoundary {
 
 		PresetLinkage linkage = new PresetLinkage(preferences, configDir);
 		if (!normalizeLegacyBuiltIn(preferences, configDir, linkage)) {
-			return false;
-		}
-		if (!refreshBuiltInSystemProperties(preferences, configDir, linkage, defaultSystemProperties)) {
 			return false;
 		}
 		if (!linkage.isLinked()) {
@@ -82,32 +71,6 @@ public final class MidletConfigLoadBoundary {
 			return true;
 		}
 		}
-	}
-
-	/** Only confirmed Built-in snapshots follow updates to the factory property template. */
-	private static boolean refreshBuiltInSystemProperties(
-			@NonNull SharedPreferences preferences, @NonNull File configDir,
-			@NonNull PresetLinkage linkage, @Nullable String suppliedDefaults) {
-		if (linkage.getOrigin() != null
-				|| !preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false)) {
-			return true;
-		}
-		ProfileModel config = ProfilesManager.loadConfig(configDir, false,
-				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG, true);
-		if (config == null) return false;
-		String defaults = suppliedDefaults != null ? suppliedDefaults
-				: ContextHolder.getAssetAsString("defaults/system.props");
-		String normalized = ConfigFormState.normalizeSystemProperties(defaults);
-		if (normalized.equals(ConfigFormState.normalizeSystemProperties(config.systemProperties))) {
-			return true;
-		}
-		config.systemProperties = normalized;
-		if (ProfilesManager.saveConfig(configDir, config)) return true;
-		// Factory refresh is optional. Recover the previous committed snapshot rather
-		// than blocking launch when the refresh itself could not be persisted.
-		LOGGER.warning("Built-in system property refresh failed; retaining last-known-good config");
-		return ProfilesManager.loadConfig(configDir, false,
-				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG, true) != null;
 	}
 
 	private static boolean normalizeLegacyBuiltIn(@NonNull SharedPreferences preferences,
