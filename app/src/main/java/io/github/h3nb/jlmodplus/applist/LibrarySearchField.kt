@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -39,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -88,6 +91,10 @@ internal fun LibrarySearchField(
         textStyle = MaterialTheme.typography.bodyMedium,
         enabled = enabled,
         singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(
+            onDone = { focusManager.clearFocus(force = true) },
+        ),
         shape = MaterialTheme.shapes.large,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

@@ -129,6 +129,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -623,6 +625,7 @@ fun LibraryScreen(
         coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
     }
     val focusManager = LocalFocusManager.current
+    val initialNavigationFocus = remember { FocusRequester() }
     // Indicators may follow the gesture; state-changing navigation commits only after settling.
     val destination = LibraryDestination.entries[pagerState.settledPage]
     val indicatedDestination = LibraryDestination.entries[pagerState.currentPage]
@@ -1063,6 +1066,16 @@ fun LibraryScreen(
     LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
     }
+    // Start on an actual navigation control, not the full-screen Android host or a text field.
+    // Request only when first composed; later tab changes and resumed editing own their focus.
+    LaunchedEffect(Unit) {
+        if (!libraryOverlayVisible && (useNavigationRail ||
+                (showNavigationBar && !imeHidesLibraryChrome && !selectionActiveHere &&
+                    !collectionManageAppsActive))
+        ) {
+            initialNavigationFocus.requestFocus()
+        }
+    }
     val libraryContentModifier = if (!libraryOverlayVisible) {
         Modifier
     } else {
@@ -1080,6 +1093,7 @@ fun LibraryScreen(
             LibraryNavigationRail(
                 selected = indicatedDestination,
                 onSelected = selectDestination,
+                initialFocusRequester = initialNavigationFocus,
             )
         }
 
@@ -1163,6 +1177,7 @@ fun LibraryScreen(
                             LibraryNavigationBar(
                                 selected = indicatedDestination,
                                 onSelected = selectDestination,
+                                initialFocusRequester = initialNavigationFocus,
                             )
                         }
                     }
@@ -1716,6 +1731,7 @@ internal class LibraryChromeScrollHysteresis(
 private fun LibraryNavigationRail(
     selected: LibraryDestination,
     onSelected: (LibraryDestination) -> Unit,
+    initialFocusRequester: FocusRequester,
 ) {
     NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         LibraryNavigationRailItem(
@@ -1724,6 +1740,7 @@ private fun LibraryNavigationRail(
             label = R.string.library_destination_apps,
             icon = R.drawable.ic_apps,
             onSelected = onSelected,
+            initialFocusRequester = initialFocusRequester,
         )
         LibraryNavigationRailItem(
             destination = LibraryDestination.Collections,
@@ -1731,6 +1748,7 @@ private fun LibraryNavigationRail(
             label = R.string.library_destination_collections,
             icon = R.drawable.ic_collections,
             onSelected = onSelected,
+            initialFocusRequester = initialFocusRequester,
         )
         LibraryNavigationRailItem(
             destination = LibraryDestination.More,
@@ -1738,6 +1756,7 @@ private fun LibraryNavigationRail(
             label = R.string.library_destination_more,
             icon = R.drawable.ic_more,
             onSelected = onSelected,
+            initialFocusRequester = initialFocusRequester,
         )
     }
 }
@@ -1749,11 +1768,13 @@ private fun ColumnScope.LibraryNavigationRailItem(
     label: Int,
     icon: Int,
     onSelected: (LibraryDestination) -> Unit,
+    initialFocusRequester: FocusRequester,
 ) {
     val labelText = stringResource(label)
     NavigationRailItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
+        modifier = if (destination == selected) Modifier.focusRequester(initialFocusRequester) else Modifier,
         colors = jlModPlusNavigationRailItemColors(),
         icon = {
             Icon(
@@ -1770,6 +1791,7 @@ private fun ColumnScope.LibraryNavigationRailItem(
 private fun LibraryNavigationBar(
     selected: LibraryDestination,
     onSelected: (LibraryDestination) -> Unit,
+    initialFocusRequester: FocusRequester,
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -1780,6 +1802,7 @@ private fun LibraryNavigationBar(
             label = R.string.library_destination_apps,
             icon = R.drawable.ic_apps,
             onSelected = onSelected,
+            initialFocusRequester = initialFocusRequester,
         )
         LibraryNavigationItem(
             destination = LibraryDestination.Collections,
@@ -1787,6 +1810,7 @@ private fun LibraryNavigationBar(
             label = R.string.library_destination_collections,
             icon = R.drawable.ic_collections,
             onSelected = onSelected,
+            initialFocusRequester = initialFocusRequester,
         )
         LibraryNavigationItem(
             destination = LibraryDestination.More,
@@ -1794,6 +1818,7 @@ private fun LibraryNavigationBar(
             label = R.string.library_destination_more,
             icon = R.drawable.ic_more,
             onSelected = onSelected,
+            initialFocusRequester = initialFocusRequester,
         )
     }
 }
@@ -1805,11 +1830,13 @@ private fun RowScope.LibraryNavigationItem(
     label: Int,
     icon: Int,
     onSelected: (LibraryDestination) -> Unit,
+    initialFocusRequester: FocusRequester,
 ) {
     val labelText = stringResource(label)
     NavigationBarItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
+        modifier = if (destination == selected) Modifier.focusRequester(initialFocusRequester) else Modifier,
         colors = jlModPlusNavigationBarItemColors(),
         icon = {
             Icon(
