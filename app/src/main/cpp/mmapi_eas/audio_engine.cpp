@@ -2,6 +2,7 @@
 #include "audio_engine.h"
 #include "eas_player.h"
 #include <algorithm>
+#include <limits>
 #include <chrono>
 #include <stdexcept>
 #include <thread>
@@ -21,12 +22,11 @@ void checked(oboe::Result result, const char *operation) {
 }
 int Engine::reserve(Player *player) {
     std::lock_guard<std::mutex> lock(controls);
-    const size_t count = blockCount.load(std::memory_order_acquire);
     bool empty = true;
-    for (size_t b = 0; b < count; ++b)
-        for (const auto &slot : blocks[b]->slots) if (slot.reserved) empty = false;
+    for (const auto &block : blocks)
+        for (const auto &slot : block->slots) if (slot.reserved) empty = false;
     if (empty) { identity = nextIdentity.fetch_add(1); fatal.store(false); recoveries = 0; }
-    for (size_t b = 0; b < count; ++b) {
+    for (size_t b = 0; b < blocks.size(); ++b) {
         for (size_t i = 0; i < SLOTS_PER_BLOCK; ++i) {
             auto &slot = blocks[b]->slots[i];
             if (slot.reserved) continue;
@@ -35,23 +35,25 @@ int Engine::reserve(Player *player) {
             return static_cast<int>(b * SLOTS_PER_BLOCK + i);
         }
     }
-    if (count == MAX_BLOCKS)
-        throw std::runtime_error("Runtime audio source table exhausted");
+    if (blocks.size() >= static_cast<size_t>(std::numeric_limits<int>::max()) / SLOTS_PER_BLOCK)
+        throw std::runtime_error("Audio source index space exhausted");
     auto next = std::make_unique<Block>();
     auto *published = next.get();
     published->slots[0].reserved = player;
-    blocks[count] = std::move(next);
-    publishedBlocks[count].store(published, std::memory_order_release);
-    blockCount.store(count + 1, std::memory_order_release);
+    const int index = static_cast<int>(blocks.size() * SLOTS_PER_BLOCK);
+    blocks.push_back(std::move(next));
+    // Publication follows successful ownership transfer; all prior blocks are
+    // stable, and their next pointers are written exactly once.
+    if (lastBlock) lastBlock->next.store(published, std::memory_order_release);
+    else firstBlock.store(published, std::memory_order_release);
+    lastBlock = published;
     player->outputIdentity = identity;
-    return static_cast<int>(count * SLOTS_PER_BLOCK);
+    return index;
 }
 void Engine::detach(Player *player, int index, bool bounded) {
     auto &slot = slotAt(index);
     if (slot.published.exchange(nullptr, std::memory_order_seq_cst) == player) {
-        auto *block = publishedBlocks[static_cast<size_t>(index) / SLOTS_PER_BLOCK]
-            .load(std::memory_order_acquire);
-        block->active.fetch_sub(1, std::memory_order_seq_cst);
+        blockAt(index)->active.fetch_sub(1, std::memory_order_seq_cst);
     }
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
     while (slot.hazard.load(std::memory_order_seq_cst) == player) {
@@ -66,7 +68,7 @@ void Engine::remove(Player *player, int index) {
     std::lock_guard<std::mutex> lock(controls);
     slotAt(index).reserved = nullptr;
     bool prepared = false;
-    for (size_t b = 0; b < blockCount.load(std::memory_order_acquire); ++b)
+    for (size_t b = 0; b < blocks.size(); ++b)
         for (const auto &slot : blocks[b]->slots)
             if (slot.reserved && slot.reserved->prepared.load()) prepared = true;
     if (!prepared) closeOutput();
@@ -80,7 +82,7 @@ bool Engine::granted(const Player *player) const {
         && player->requestEpoch.load(std::memory_order_acquire) >= minimumRequestEpoch.load(std::memory_order_acquire);
 }
 bool Engine::hasActive() const {
-    for (size_t b = 0; b < blockCount.load(std::memory_order_acquire); ++b)
+    for (size_t b = 0; b < blocks.size(); ++b)
         for (const auto &slot : blocks[b]->slots)
             if (slot.reserved && eligible(slot.reserved)) return true;
     return false;
@@ -146,7 +148,7 @@ bool Engine::activate(Player *player, bool fresh) {
         if (fatal.load()) throw std::runtime_error("Runtime output has failed");
         if (!player->prepared.load() || !stream) throw std::runtime_error("Audio source is not prefetched");
         bool peerIntent = false;
-        for (size_t b = 0; b < blockCount.load(std::memory_order_acquire); ++b) {
+        for (size_t b = 0; b < blocks.size(); ++b) {
             for (const auto &slot : blocks[b]->slots) {
                 auto peer = slot.reserved;
                 if (peer && peer != player && peer->requested.load() && peer->prepared.load()
@@ -158,8 +160,7 @@ bool Engine::activate(Player *player, bool fresh) {
         if (needsRecovery()) replaceOutput();
         player->rendering.store(true, std::memory_order_release);
         auto &slot = slotAt(player->slot);
-        auto *block = publishedBlocks[static_cast<size_t>(player->slot) / SLOTS_PER_BLOCK]
-            .load(std::memory_order_acquire);
+        auto *block = blockAt(player->slot);
         // Mark the block active *before* publication: the callback can never
         // skip a newly published source due to an obsolete active count.
         if (!slot.published.load(std::memory_order_seq_cst))
@@ -188,7 +189,7 @@ void Engine::idle() {
 void Engine::release(Player *player) {
     std::lock_guard<std::mutex> lock(controls);
     player->prepared.store(false);
-    for (size_t b = 0; b < blockCount.load(std::memory_order_acquire); ++b)
+    for (size_t b = 0; b < blocks.size(); ++b)
         for (const auto &slot : blocks[b]->slots)
             if (slot.reserved && slot.reserved->prepared.load()) return;
     closeOutput();
@@ -231,9 +232,8 @@ oboe::DataCallbackResult Engine::render(Output &origin, oboe::AudioStream *sink,
         JL_EAS_Realtime(1);
         int progress = 0;
         const int64_t first = sink->getFramesWritten();
-        const size_t blockLimit = blockCount.load(std::memory_order_acquire);
-        for (size_t b = 0; b < blockLimit; ++b) {
-            auto *block = publishedBlocks[b].load(std::memory_order_acquire);
+        for (auto *block = firstBlock.load(std::memory_order_acquire); block;
+                block = block->next.load(std::memory_order_acquire)) {
             if (!block->active.load(std::memory_order_acquire)) continue;
             for (auto &slot : block->slots) {
                 auto player = slot.published.load(std::memory_order_seq_cst);
@@ -313,7 +313,7 @@ std::array<int64_t, 8> Engine::presentation(Player *player, int64_t at) {
 std::array<int64_t, 12> Engine::diagnostics() {
     std::lock_guard<std::mutex> lock(controls);
     int64_t sources = 0, active = 0, xruns = -1, latency = -1;
-    for (size_t b = 0; b < blockCount.load(std::memory_order_acquire); ++b)
+    for (size_t b = 0; b < blocks.size(); ++b)
         for (const auto &slot : blocks[b]->slots)
             if (slot.reserved) { ++sources; active += eligible(slot.reserved); }
     if (stream) {
