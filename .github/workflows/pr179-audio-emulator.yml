@@ -60,6 +60,7 @@ jobs:
           chmod +x gradlew
           echo "JLMOD_BUILD_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail \
+            -I scripts/audio-qualification.init.gradle \
             -PjlmodRuntimeTestAbi=x86_64 \
             :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
 

@@ -11,8 +11,13 @@ adb wait-for-device
 adb logcat -c || true
 adb shell getprop ro.build.version.sdk | tr -d '\r' > "$out/android-api.txt"
 
-./gradlew --daemon --stacktrace --profile -PjlmodRuntimeTestAbi=x86_64 :app:installEmulatorDebug
-adb shell appops set io.github.h3nb.jlmodplus.debug MANAGE_EXTERNAL_STORAGE allow
+# Use the repository's existing isolated application ID, which is required
+# for whole-MIDlet tests and protects the normal debug installation.
+./gradlew --daemon --stacktrace --profile \
+  -I scripts/audio-qualification.init.gradle -PjlmodRuntimeTestAbi=x86_64 \
+  :app:installEmulatorDebug
+app_id="io.github.h3nb.jlmodplus.audioqualification.debug"
+adb shell appops set "$app_id" MANAGE_EXTERNAL_STORAGE allow
 
 mapfile -t test_apks < <(find app/build/outputs/apk/androidTest -type f -name '*.apk' -print | sort)
 if (( ${#test_apks[@]} != 1 )); then
@@ -24,7 +29,7 @@ adb install -r -t "${test_apks[0]}"
 mapfile -t runners < <(
   adb shell pm list instrumentation |
     tr -d '\r' |
-    sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p'
+    sed -n "s/^instrumentation:\\([^ ]*\\) (target=${app_id//./\\.})$/\\1/p"
 )
 if (( ${#runners[@]} != 1 )); then
   printf 'Expected one instrumentation runner, found %d\n' "${#runners[@]}" >&2
@@ -46,7 +51,13 @@ run_batch() {
   local count=0
   selectors=$(IFS=,; echo "${expected[*]}")
   printf '\n=== %s (%d selectors) ===\n' "$name" "${#expected[@]}"
-  timeout --signal=TERM 900 adb shell am instrument -w -r -e class "$selectors" "$runner" > "$log" 2>&1 || rc=$?
+  if [[ "$name" == "midlet-bounded" ]]; then
+    timeout --signal=TERM 900 adb shell am instrument -w -r \
+      -e sonivoxSessionSeconds 30 -e class "$selectors" "$runner" > "$log" 2>&1 || rc=$?
+  else
+    timeout --signal=TERM 900 adb shell am instrument -w -r \
+      -e class "$selectors" "$runner" > "$log" 2>&1 || rc=$?
+  fi
   cat "$log"
   if (( rc != 0 )); then
     printf '%s: instrumentation exited %d\n' "$name" "$rc" >&2
@@ -59,7 +70,12 @@ run_batch() {
     printf '%s: instrumentation did not return completion code -1\n' "$name" >&2
     bad=1
   fi
-  count=$(grep -c 'INSTRUMENTATION_STATUS: test=' "$log" || true)
+  count=$(grep -c 'INSTRUMENTATION_STATUS_CODE: 0' "$log" || true)
+  printf 'Successful test completions: %d\\n' "$count"
+  if grep -Fq 'INSTRUMENTATION_STATUS_CODE: -4' "$log"; then
+    echo "Selected instrumentation skipped a test; cannot claim full coverage." >&2
+    bad=1
+  fi
   if (( count < ${#expected[@]} )); then
     printf '%s: too few test starts (%d)\n' "$name" "$count" >&2
     bad=1
@@ -78,7 +94,7 @@ run_batch() {
       fi
     fi
   done
-  adb shell dumpsys meminfo io.github.h3nb.jlmodplus.debug > "$out/$name-meminfo.txt" 2>&1 || true
+  adb shell dumpsys meminfo "$app_id" > "$out/$name-meminfo.txt" 2>&1 || true
   if (( bad == 0 )); then
     printf '%s\tPASS\t%d\n' "$name" "$count" >> "$out/summary.tsv"
   else
@@ -89,12 +105,31 @@ run_batch() {
 
 ns='io.github.h3nb.jlmodplus.mmapi.synth'
 run_batch scalability "$ns.AudioScalabilityEmulatorTest" "$ns.SonivoxRuntimeTest#manyLogicalPlayersAreCheapAndPreparedSourcesShareOneOutput"
-run_batch synthesis "$ns.SonivoxRuntimeTest"
+# The FileConnection method depends on an active guest filesystem and cannot
+# meaningfully execute in a host-only AudioQualificationActivity.
+# Its coverage remains a separate guest-filesystem integration task.
+run_batch synthesis \
+  "$ns.SonivoxRuntimeTest#stopFreezesTimeResumeAndPausedSeekPreservePlayback" \
+  "$ns.SonivoxRuntimeTest#ultraShortMidiOrdersStartBeforeEndAndFiniteLoopsComplete" \
+  "$ns.SonivoxRuntimeTest#twoPlayersHaveIndependentSequencersAndCloseDoesNotStopPeer" \
+  "$ns.SonivoxRuntimeTest#interactiveMidiBeforeStartAndToneSequenceUseProductionBackend" \
+  "$ns.SonivoxRuntimeTest#ringtoneParsersRecognizeContentsDespiteMidiMimeHint" \
+  "$ns.SonivoxRuntimeTest#recognizedCorruptMediaAndMissingBankFailWithoutSilentFallback" \
+  "$ns.SonivoxRuntimeTest#generatedSf2AndDlsBanksBothRenderWithIsolatedContexts" \
+  "$ns.SonivoxRuntimeTest#malformedSf2AfterMetadataParsingReleasesNativeAllocations" \
+  "$ns.SonivoxRuntimeTest#malformedSf2IndicesAndRiffLengthsFailWithoutOpeningPlayers" \
+  "$ns.SonivoxRuntimeTest#sameSessionCustomBankSurvivesIndependentPlayerClose"
 run_batch mmapi-contract "$ns.SynthPlayerContractTest" "$ns.MidiDeliveryRuntimeTest"
 run_batch sampled "$ns.UnifiedAudioRuntimeTest" 'javax.microedition.media.SampledAudioRuntimeTest'
-run_batch midi-containers "$ns.RmidRuntimeTest"
+run_batch midi-containers \
+  "$ns.RmidRuntimeTest#corruptAndEmbeddedBankContainersFailClearlyAndReleaseSource" \
+  "$ns.RmidRuntimeTest#riffWaveRemainsSampled"
 run_batch focus "$ns.SonivoxFocusRuntimeTest"
-run_batch midlet "$ns.AudioMidletRuntimeTest" "$ns.VideoMidletRuntimeTest"
+# Whole-MIDlet and video tests require the dedicated qualification package.
+# Optional private-bank tests cannot run without a supplied bank.
+run_batch midlet "$ns.AudioMidletRuntimeTest#realMidletRetainsAudioAcrossHostReturnAndRecreationAndGuestStop"
+run_batch midlet-bounded "$ns.AudioMidletRuntimeTest#boundedLoopingMidletSession"
+run_batch video "$ns.VideoMidletRuntimeTest"
 
 cat "$out/summary.tsv"
 if (( failures != 0 )); then
