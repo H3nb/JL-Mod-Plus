@@ -319,9 +319,25 @@ public class AudioMidletRuntimeTest {
         try (FileOutputStream output = new FileOutputStream(file)) { output.write(bytes); }
     }
     private static void removeFixture(File file, File owner) throws Exception {
-        assertTrue("refusing cleanup outside private fixture", file.getCanonicalPath().startsWith(owner.getCanonicalPath() + File.separator));
+        // After the guest process exits, its final filesystem writes may still
+        // race with cleanup on the emulator. Retry only inside this private
+        // fixture, and keep a bounded failure with the precise offending path.
+        long deadline = SystemClock.uptimeMillis() + 2000;
+        do {
+            if (removeFixtureOnce(file, owner)) return;
+            SystemClock.sleep(100);
+        } while (SystemClock.uptimeMillis() < deadline);
+        fail("fixture cleanup failed: " + file.getAbsolutePath()
+                + " remaining=" + java.util.Arrays.toString(file.list()));
+    }
+
+    private static boolean removeFixtureOnce(File file, File owner) throws Exception {
+        assertTrue("refusing cleanup outside private fixture",
+                file.getCanonicalPath().startsWith(owner.getCanonicalPath() + File.separator));
         File[] children = file.listFiles();
-        if (children != null) for (File child : children) removeFixture(child, owner);
-        if (file.exists()) assertTrue("fixture cleanup failed", file.delete());
+        boolean childrenRemoved = true;
+        if (children != null) for (File child : children)
+            childrenRemoved &= removeFixtureOnce(child, owner);
+        return childrenRemoved && (!file.exists() || file.delete());
     }
 }
