@@ -1,6 +1,7 @@
 /* Licensed under the Apache License, Version 2.0. */
 package io.github.h3nb.jlmodplus.config
 
+import java.nio.file.Files
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.*
@@ -70,4 +71,37 @@ class SystemPropertyLayersTest {
         assertEquals(oldModel.systemPropertyOverrides, decoded.systemPropertyOverrides)
         assertFalse(Json.parseToJsonElement(newForm).jsonObject.containsKey("SystemProperties"))
     }
+    @Test fun oldSnapshotMigratesOnceWithoutChangingPresetOwnershipOrOtherSettings() {
+        val dir = Files.createTempDirectory("property-overrides-migration").toFile()
+        try {
+            val config = java.io.File(dir, Config.MIDLET_CONFIG_FILE)
+            config.writeText(
+                """{"Version":7,"ScreenWidth":360,"SystemProperties":"microedition.platform: Custom\\nsupports.video.capture: false"}"""
+            )
+            val first = checkNotNull(ProfilesManager.loadConfig(dir))
+            assertEquals(ProfileModel.VERSION, first.version)
+            assertEquals(360, first.screenWidth)
+            assertEquals("Custom", first.systemPropertyOverrides["microedition.platform"])
+            assertTrue(first.systemPropertyOverrides.containsKey("supports.recording"))
+            assertNull(first.systemPropertyOverrides["supports.recording"])
+            val encoded = config.readText()
+            assertTrue(encoded.contains("\"SystemPropertyOverrides\""))
+            assertFalse(encoded.contains("\"SystemProperties\""))
+            assertTrue(encoded.contains("\"Version\": 8"))
+            val second = checkNotNull(ProfilesManager.loadConfig(dir))
+            assertEquals(first.systemPropertyOverrides, second.systemPropertyOverrides)
+            assertEquals(encoded, config.readText())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test fun v7BackgroundModeDoesNotReenterLegacyThemeMigrationWhenFormatBumps() {
+        val input = """{"Version":7,"ScreenBackgroundMode":${BackgroundMode.CUSTOM},"SystemProperties":null}"""
+        val loaded = ProfileJson.decode(input, themeLinked = true)
+        assertEquals(BackgroundMode.CUSTOM, loaded.model.screenBackgroundMode)
+        assertTrue(loaded.needsPublication)
+        assertEquals(ProfileModel.VERSION, loaded.model.version)
+    }
+
 }

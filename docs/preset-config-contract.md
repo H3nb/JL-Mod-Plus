@@ -16,7 +16,7 @@ This document records durable semantic correctness boundaries for preset/configu
 - Whole-preset activation may establish LINKED ownership only after the complete source snapshot is valid and the local snapshot has been durably materialized.
 - Changes to the global named-preset default are prospective. Existing installed identities retain their Built-in, CUSTOM, or LINKED ownership; fresh installation binds the then-current eligible default or a Built-in fallback.
 - System properties use one factory source plus per-profile overrides. Missing override keys inherit current factory values, explicit string values override them, and null overrides remove factory keys. Built-in, CUSTOM, and named presets use the same property inheritance rules without changing preset ownership.
-- Historical full-system-property snapshots are interpreted against the frozen pre-overrides factory and converted to differences on subsequent serialization. The effective text is transient; a manual reset edits the draft and ordinary save/ownership rules apply.
+- Historical full-system-property snapshots are interpreted against the frozen pre-overrides factory and converted to differences when the version-8 schema is durably published. Older serialized configurations never silently masquerade as an override-schema config. The effective text is transient; a manual reset edits the draft and ordinary save/ownership rules apply.
 
 ## Additive configuration fields
 
