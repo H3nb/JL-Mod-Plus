@@ -11,6 +11,7 @@ import javax.microedition.shell.timing.TimingMode
 import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.json.*
 
 /** One historical input boundary; the generated serializer is the only profile writer. */
@@ -151,7 +152,7 @@ object ProfileJson {
             PrimitiveKind.BOOLEAN -> JsonPrimitive(legacyBoolean(value))
             PrimitiveKind.STRING -> JsonPrimitive(value.jsonPrimitive.content)
             else -> when {
-                descriptor.serialName == "kotlinx.serialization.json.JsonElement" -> value
+                descriptor.serialName == "kotlinx.serialization.json.JsonElement" || descriptor.kind == StructureKind.MAP -> value
                 value is JsonObject -> JsonObject(value.mapNotNull { (key, entry) ->
                     val index = descriptor.getElementIndex(key)
                     when {

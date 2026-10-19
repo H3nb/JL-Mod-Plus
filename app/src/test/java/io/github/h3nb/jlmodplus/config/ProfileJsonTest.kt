@@ -40,12 +40,15 @@ class ProfileJsonTest {
         listOf("HwAcceleration", "ScreenScaleToFit", "ScreenKeepAspectRatio").forEach(oldTree::remove)
         val newTree = Json.parseToJsonElement(output).jsonObject
         val comparableOld = Json.parseToJsonElement(oldTree.toString()).jsonObject.filterValues { it != JsonNull }
+        // New system-property overrides replace the legacy full serialized snapshot.
+        assertFalse(newTree.containsKey("SystemProperties"))
+        assertTrue(newTree.containsKey("SystemPropertyOverrides"))
         // The additive cutout option was not part of the frozen historical schema.
         assertEquals(JsonPrimitive(false), newTree["AllowDisplayCutout"])
         assertEquals(JsonPrimitive(1), newTree["CameraDefaultFacing"])
         assertEquals(JsonPrimitive(0), newTree["CameraResolution"])
         assertTrue(ProfileJson.sameValue(JsonObject(comparableOld),
-            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution"))))
+            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides"))))
     }
 
     @Test fun additiveCameraDefaultsPreserveV7ReadOnlyLoadAndRoundTripExplicitChoices() {
