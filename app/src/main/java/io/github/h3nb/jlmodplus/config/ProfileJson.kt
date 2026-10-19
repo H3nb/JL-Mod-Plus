@@ -55,7 +55,7 @@ object ProfileJson {
         if (!tree.containsKey("SystemPropertyOverrides")) {
             val oldProperties = tree["SystemProperties"]?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
             model.systemProperties = oldProperties
-            model.systemPropertyOverrides = SystemPropertyLayers.migrate(oldProperties)
+            model.systemPropertyOverrides = SystemPropertyLayers.migrate(oldProperties, preserveMissingAsDeleted = version != 0)
         }
         if (version == 0) {
             if (legacyBoolean(tree["HwAcceleration"])) model.graphicsMode = 3

@@ -60,7 +60,7 @@ class SystemPropertyLayersTest {
     }
 
     @Test fun oldSchemaIsImportedButNewSchemaDoesNotRepeatMigration() {
-        val legacy = """{"Version":7,"SystemProperties":"microedition.platform: Custom\\nsupports.video.capture: false"}"""
+        val legacy = """{"Version":7,"SystemProperties":"microedition.platform: Custom\nsupports.video.capture: false"}"""
         val oldModel = ProfileJson.decode(legacy, false).model
         assertEquals("Custom", oldModel.systemPropertyOverrides["microedition.platform"])
         // Historical absent values are tombstones, rather than accidentally reintroduced defaults.

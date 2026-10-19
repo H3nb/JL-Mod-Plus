@@ -52,13 +52,13 @@ object SystemPropertyLayers {
         properties.toSortedMap().entries.joinToString("") { (k, v) -> "$k: $v\n" }
 
     /** Convert historical full snapshots to differences; omitted historical keys stay omitted. */
-    @JvmStatic fun migrate(legacy: String?): Map<String, String?> {
+    @JvmStatic fun migrate(legacy: String?, preserveMissingAsDeleted: Boolean = true): Map<String, String?> {
         if (legacy == null) return emptyMap()
         val old = parse(historicalFactory)
         val supplied = parse(legacy)
         val result = linkedMapOf<String, String?>()
         for ((key, value) in supplied) if (old[key] != value) result[key] = value
-        for (key in old.keys) if (!supplied.containsKey(key)) result[key] = null
+        if (preserveMissingAsDeleted) for (key in old.keys) if (!supplied.containsKey(key)) result[key] = null
         return result
     }
 
