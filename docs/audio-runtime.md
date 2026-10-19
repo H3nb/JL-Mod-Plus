@@ -28,9 +28,10 @@ the contracts above; they are not a requirement to preserve a particular class
 or native backend.
 
 `AudioPlayer` supplies one MMAPI contract for synthesis, sampled audio and file video. Each
-synthesis source owns its EAS context, sequencer and voices. Within a runtime,
+realized synthesis source owns its EAS context, sequencer and voices. Within a runtime,
 custom SF2/DLS sample collections are shared by bank identity while in use;
-each sampled source owns a native FFmpeg decoder/resampler and bounded PCM ring.
+each realized sampled source owns a native FFmpeg decoder/resampler; its bounded
+PCM ring is allocated at prefetch and released at deallocate.
 A native engine per runtime/session mixes both into one float stereo 44.1 kHz
 bus and owns at most one active Oboe output. Java `RuntimeAudioCoordinator`
 owns host/focus policy. A bank choice is captured from the runtime preset when
@@ -40,10 +41,19 @@ Gain and pan apply per source before summation. The bus uses hard clipping to
 [-1, 1], with a clipped-sample diagnostic, and never normalizes by Player count.
 Oboe performs hardware-rate conversion when needed. Sonivox renders directly
 from its memory-backed source; sampled demux/decode/resample runs on a worker.
-Each sampled ring has sixteen 1,024-frame stereo float slots (128 KiB), with at
+Each prepared sampled ring has sixteen 1,024-frame stereo float slots (128 KiB), with at
 most one worker per active source. Prefetch workers finish after filling the ring;
 stop/suspension/deallocation join the worker. Underflow emits silence without
 advancing media time or claiming EOS. Decoder, resampler and ring drain precede EOM.
+
+Logical Player construction allocates neither EAS contexts nor sampled decoders;
+realize initializes and validates the media source. A source receives a stable
+slot from a linked chain of 32-slot mixer blocks published by management.
+Blocks never move or disappear while Engine is alive; the callback skips blocks
+without renderers. Neither a fixed mixer array nor the JNI registry limits
+Player creation to a fixed count. Real allocation failures remain possible.
+Interactive MIDI allocates its queue on first use; only video-audio timelines
+allocate presentation-tracing history.
 
 The callback does no JNI, disk IO, compressed decoding, allocation, blocking lock
 or object destruction. Management detaches a source and waits for its callback
@@ -108,8 +118,8 @@ or reaches EOF before start, rather than returning at the first PCM chunk.
 
 Manager locator, stream, and `DataSource` creation share backend selection.
 Bounded content recognition takes precedence over MIME hints, including Nokia
-OTA bytes labelled `audio/midi`. Recognized corrupt synthesis and bank failures
-are surfaced instead of falling through to sampled playback or a default bank.
+OTA bytes labelled `audio/midi`. Recognized corrupt synthesis and bank failures surface on realize instead
+of falling through to sampled playback or a default bank.
 The source owner disconnects once after close or creation failure. Cached audio
 input is bounded to 64 MiB; caller-owned InputStreams remain caller-owned.
 Recognized WAV, AMR, MP4 and MPEG frame headers bind to the corresponding demuxer.
@@ -268,7 +278,8 @@ Follow [build and validation](development.md) for the toolchain. Instrumentation
 tests generate MIDI, ringtone, single-program SF2/DLS sine-wave, and WAV fixtures.
 They require no user bank or game asset. `SynthPlayerContractTest` uses a fake
 backend for shutdown, close, time, exception, fatal-error, and stale-event
-contracts; `SonivoxRuntimeTest` exercises the production JNI and Manager paths.
+contracts; `SonivoxRuntimeTest` exercises the production JNI and Manager paths, including
+96 logical Players, 29 prepared sources and three concurrently started sources.
 `SampledAudioRuntimeTest` covers host policy and sampled lifecycle.
 `UnifiedAudioRuntimeTest` checks retained formats, demuxer metadata, TimeBase and
 corrupt-source isolation through the production Android bridge.
