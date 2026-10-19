@@ -51,6 +51,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
@@ -165,6 +168,20 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
 
         assertEquals(listOf("Demo"), actions.searches)
+    }
+
+    @Test
+    fun libraryInitiallyFocusesNavigationAndDirectionalKeyMovesToAnotherTab() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+        composeRule.waitForIdle()
+
+        val apps = navigationItem(R.string.library_destination_apps)
+        apps.assertIsFocused()
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+
+        apps.performKeyInput { pressKey(Key.DirectionRight) }
+        navigationItem(R.string.library_destination_collections).assertIsFocused()
     }
 
     @Test
