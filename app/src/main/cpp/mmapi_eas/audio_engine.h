@@ -4,8 +4,10 @@
 #include <oboe/Oboe.h>
 #include <array>
 #include <atomic>
+#include <cstddef>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace mmapi::eas {
 class Player;
@@ -28,8 +30,29 @@ class Engine final : public std::enable_shared_from_this<Engine> {
         Player *reserved = nullptr; // controls only; includes construction reservations.
         std::atomic<Player *> published{nullptr}, hazard{nullptr};
     };
+    // Segments are published once and live until Engine teardown. The callback
+    // never allocates or accesses a container being resized by management.
+    static constexpr size_t SLOTS_PER_BLOCK = 32;
+    struct Block {
+        std::array<Slot, SLOTS_PER_BLOCK> slots;
+        std::atomic<unsigned> active{0};
+        std::atomic<Block *> next{nullptr};
+    };
     std::mutex controls;
-    std::array<Slot, 16> slots;
+    // Ownership changes only with controls held. Published linked nodes never
+    // move or disappear until Engine teardown, after the output is quiescent.
+    std::vector<std::unique_ptr<Block>> blocks;
+    std::atomic<Block *> firstBlock{nullptr};
+    Block *lastBlock = nullptr;
+    Block *blockAt(int index) const {
+        auto *block = firstBlock.load(std::memory_order_acquire);
+        for (size_t n = 0; n < static_cast<size_t>(index) / SLOTS_PER_BLOCK; ++n)
+            block = block->next.load(std::memory_order_acquire);
+        return block;
+    }
+    Slot &slotAt(int index) const {
+        return blockAt(index)->slots[static_cast<size_t>(index) % SLOTS_PER_BLOCK];
+    }
     std::shared_ptr<oboe::AudioStream> stream;
     std::shared_ptr<Output> output;
     std::atomic<bool> allowed{true}, fatal{false};

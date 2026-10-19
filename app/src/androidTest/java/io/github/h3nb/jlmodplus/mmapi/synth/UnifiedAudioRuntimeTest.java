@@ -114,7 +114,7 @@ public class UnifiedAudioRuntimeTest {
         assertSame(Manager.getSystemTimeBase(), player.getTimeBase());
     }
 
-    @Test public void corruptSampledCreationDoesNotCloseOrReplacePlayingPeer() throws Exception {
+    @Test public void corruptSampledRealizationDoesNotCloseOrReplacePlayingPeer() throws Exception {
         Player peer = asset("effect.mp3", null);
         peer.setLoopCount(-1); peer.start();
         await(() -> peer.getMediaTime() > 50000, 3000, "Peer did not start");
@@ -122,7 +122,9 @@ public class UnifiedAudioRuntimeTest {
         int handles = LibEAS.liveHandles();
         try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext().getAssets()
                 .open("audio/corrupt.wav")) {
-            expectThrows(MediaException.class, () -> Manager.createPlayer(input, "audio/mpeg"));
+            Player corrupt = Manager.createPlayer(input, "audio/mpeg");
+            try { expectThrows(MediaException.class, corrupt::realize); }
+            finally { corrupt.close(); }
         }
         assertEquals(handles, LibEAS.liveHandles());
         long frames = stats(peer)[0];

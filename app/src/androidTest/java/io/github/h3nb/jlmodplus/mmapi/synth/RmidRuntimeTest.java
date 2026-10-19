@@ -127,9 +127,12 @@ public class RmidRuntimeTest {
                 riff("RMID", data, chunk("LIST", join(ascii("INFO"), bank)))};
         for (int index = 0; index < corrupt.length; index++) {
             MemorySource source = new MemorySource(corrupt[index]);
-            MediaException error = expectThrows(MediaException.class, () -> Manager.createPlayer(source));
-            assertTrue("RMID failure was hidden by fallback: " + error,
-                    error.getMessage().contains(index >= 6 ? "embedded DLS" : "RIFF/RMID"));
+            Player candidate = Manager.createPlayer(source);
+            try {
+                MediaException error = expectThrows(MediaException.class, candidate::realize);
+                assertTrue("RMID failure was hidden by fallback: " + error,
+                        error.getMessage().contains(index >= 6 ? "embedded DLS" : "RIFF/RMID"));
+            } finally { candidate.close(); }
             assertEquals(1, source.connects); assertEquals(1, source.disconnects);
             assertEquals("corrupt RMID leaked native handle", initialHandles, LibEAS.liveHandles());
         }

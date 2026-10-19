@@ -46,7 +46,8 @@ bool retained(AVCodecID id) {
 }
 struct Decoder::State {
     struct Chunk { std::array<float, CHUNK * 2> samples{}; int count = 0; int64_t pts = 0; };
-    std::array<Chunk, SLOTS> ring;
+    // The decoded-audio ring is scarce prepared state, not decoder metadata.
+    std::unique_ptr<std::array<Chunk, SLOTS>> ring;
     std::atomic<uint32_t> head{0}, tail{0};
     int cursor = 0; // consumer only; reset only after detaching/joining
     std::atomic<int64_t> position{0}, consumed{0}, underflow{0}, audible{0};
@@ -203,7 +204,7 @@ struct Decoder::State {
     bool queueStaging() {
         auto write = head.load(std::memory_order_relaxed);
         if (write - tail.load(std::memory_order_acquire) == SLOTS) return false;
-        Chunk &chunk = ring[write % SLOTS];
+        Chunk &chunk = (*ring)[write % SLOTS];
         chunk.count = std::min(CHUNK, stagingFrames - stagingCursor);
         chunk.pts = av_sat_add64(stagingPts, static_cast<int64_t>(stagingCursor) * 1000000 / RATE);
         std::copy_n(staging.data() + stagingCursor * 2, chunk.count * 2, chunk.samples.data());
@@ -346,6 +347,7 @@ struct Decoder::State {
 Decoder::Decoder(const std::string &path, bool videoAudio) : state(std::make_unique<State>()) { state->open(path, videoAudio); }
 Decoder::~Decoder() = default;
 void Decoder::prefetch() {
+    if (!state->ring) state->ring = std::make_unique<std::array<State::Chunk, SLOTS>>();
     state->run(false);
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
     // The bounded prefetch worker exits at a full ring or EOF. One available
@@ -356,9 +358,17 @@ void Decoder::prefetch() {
     }
     check(state->failure.load(), "Prefetch sampled audio");
 }
-void Decoder::resume() { state->join(); state->run(true); }
+void Decoder::resume() {
+    state->join();
+    if (!state->ring) state->ring = std::make_unique<std::array<State::Chunk, SLOTS>>();
+    state->run(true);
+}
 void Decoder::pause() { state->join(); }
-void Decoder::deallocate() { state->join(); seek(time()); }
+void Decoder::deallocate() {
+    state->join();
+    seek(time());
+    state->ring.reset(); // Quiesced by Player before releasing prepared PCM storage.
+}
 void Decoder::timeline(int64_t origin) {
     state->join();
     if (state->containerTimeline) throw std::runtime_error("Audio timeline already configured");
@@ -399,7 +409,7 @@ int Decoder::read(float *bus, int frames, float left, float right) {
     while (copied < frames) {
         auto read = state->tail.load(std::memory_order_relaxed);
         if (read == state->head.load(std::memory_order_acquire)) break;
-        auto &chunk = state->ring[read % SLOTS];
+        auto &chunk = (*state->ring)[read % SLOTS];
         if (state->containerTimeline) {
             const int64_t pts = av_sat_add64(chunk.pts, static_cast<int64_t>(state->cursor) * 1000000 / RATE);
             const int64_t gap = av_sat_sub64(pts, state->position.load(std::memory_order_relaxed));

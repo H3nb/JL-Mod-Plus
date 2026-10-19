@@ -83,6 +83,7 @@ class PlayerTest {
 public:
     static void presentationMapping(const std::string &pcm) {
         Player player("device://midi", ""); activate(player);
+        player.presentationSegments = std::make_unique<std::array<Player::Segment, 128>>();
         auto stream=static_cast<TestStream *>(player.engine->stream.get());
         stream->timestampAvailable=true; stream->written=200; stream->presented=50;
         player.recordPresentation(0,100,100000,102267,player.engine->outputEpoch);
@@ -306,13 +307,13 @@ public:
             return x == 32000 * .75f / 32768;
         }), "Mixer normalizes by source count or loses gain");
         auto claimed = one.slot;
-        engine->slots[claimed].hazard.store(&one);
+        engine->slotAt(claimed).hazard.store(&one);
         std::promise<void> entered;
         auto closing = std::async(std::launch::async, [&] { entered.set_value(); one.shutdown(); });
         entered.get_future().wait();
         require(closing.wait_for(std::chrono::milliseconds(20)) == std::future_status::timeout,
             "Close frees a source claimed by callback");
-        engine->slots[claimed].hazard.store(nullptr); closing.get();
+        engine->slotAt(claimed).hazard.store(nullptr); closing.get();
         require(engine->stream && two.prepared.load(), "Acknowledged close frees peer output");
         engine->output->onError(engine->stream.get(), oboe::Result::ErrorInternal);
         Event terminal{};
@@ -373,12 +374,34 @@ public:
         synth.shutdown(); reference.shutdown();
         std::puts("PASS: mixed PCM+synthesis, consumed clock, seek/deallocate, finite drain/loops and local failure isolation");
     }
+    static void scalableSources(const std::string &bank) {
+        auto engine = std::make_shared<Engine>();
+        std::vector<std::unique_ptr<Player>> many;
+        for (int i = 0; i < 96; ++i) {
+            many.push_back(std::make_unique<Player>("device://midi", bank, engine));
+            require(many.back()->eas == nullptr, "Create eagerly initializes Sonivox");
+        }
+        require(engine->blocks.size() == 3, "Stable source blocks do not grow on demand");
+        for (int i = 0; i < 3; ++i) activate(*many[i]);
+        require(engine->blocks[0]->active.load() == 3 && engine->blocks[1]->active.load() == 0,
+            "Idle source blocks claim callback work");
+        auto audio = render(*many.front(), {257, 511});
+        require(audio.size() == 1536, "Many idle sources corrupt callback buffer");
+        for (auto &source : many) source->shutdown();
+        require(engine->blocks[0]->active.load() == 0, "Detached sources remain published");
+        Player reused("device://midi", bank, engine);
+        require(reused.slot == 0, "Closed source slot cannot be reused");
+        reused.shutdown();
+        std::puts("PASS: 96 lightweight Players, segmented source slots and active-block gating");
+    }
     static void run(const std::string &bank, const std::string &pcm) {
+        scalableSources(bank);
         presentationMapping(pcm);
         outputRecovery(bank);
         sharedSources(bank);
         if (!pcm.empty()) mixedPcm(bank, pcm);
         Player regular("device://midi", bank), varied("device://midi", bank);
+        regular.realize(); varied.realize();
         uint8_t note[] = {0xc0, 0, 0x90, 60, 100};
         require(EAS_WriteMIDIStream(regular.eas, regular.interactive, note, sizeof(note)) == EAS_SUCCESS, "MIDI note");
         require(EAS_WriteMIDIStream(varied.eas, varied.interactive, note, sizeof(note)) == EAS_SUCCESS, "MIDI note");
@@ -408,7 +431,7 @@ public:
         catch (const std::runtime_error &) { unsupported = true; }
         require(unsupported, "Interactive seek accepted");
         varied.prefetch();
-        varied.midiHead.store(varied.midiTail.load());
+        if (auto *queue = varied.midi.load()) queue->head.store(queue->tail.load());
         uint8_t large[16384]{};
         require(varied.writeMidi(large, sizeof(large)) == sizeof(large), "MIDI queue capacity");
         require(varied.writeMidi(large, 1) == -1, "MIDI queue overflow accepted");

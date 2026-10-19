@@ -15,29 +15,46 @@ void checked(EAS_RESULT result, const char *operation) {
 
 Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared, bool pcm, bool videoAudio,
                std::shared_ptr<BankPool> sharedBanks)
-    : engine(std::move(shared)), banks(std::move(sharedBanks)) {
+    : sourceLocator(locator), bankLocator(bank), pcmMode(pcm), videoAudioMode(videoAudio),
+      engine(std::move(shared)), banks(std::move(sharedBanks)) {
+    // Creation preserves the MMAPI handle; expensive source preparation is REALIZED.
     slot = engine->reserve(this);
+}
+void Player::realizeLocked() {
+    ensureOpen();
+    if (realized) return;
     try {
-        if (pcm) { sampled = std::make_unique<pcm::Decoder>(locator, videoAudio); duration = sampled->duration(); return; }
-        checked(EAS_Init(&eas), "Initialize Sonivox");
-        if (EAS_Config()->sampleRate != 44100 || EAS_Config()->mixBufferSize != 256
-                || EAS_Config()->numChannels != 2) throw std::runtime_error("Unsupported Sonivox configuration");
-        checked(EAS_SetHeaderSearchFlag(eas, EAS_FALSE), "Disable unbounded header search");
-        if (!bank.empty()) {
-            activeBank = banks->acquire(bank);
-            checked(EAS_ShareDLSCollection(eas, activeBank->context()), "Attach sound bank");
+        if (pcmMode) {
+            sampled = std::make_unique<pcm::Decoder>(sourceLocator, videoAudioMode);
+            duration = sampled->duration();
+        } else {
+            checked(EAS_Init(&eas), "Initialize Sonivox");
+            if (EAS_Config()->sampleRate != 44100 || EAS_Config()->mixBufferSize != 256
+                    || EAS_Config()->numChannels != 2)
+                throw std::runtime_error("Unsupported Sonivox configuration");
+            checked(EAS_SetHeaderSearchFlag(eas, EAS_FALSE), "Disable unbounded header search");
+            if (!bankLocator.empty()) {
+                activeBank = banks->acquire(bankLocator);
+                checked(EAS_ShareDLSCollection(eas, activeBank->context()), "Attach sound bank");
+            }
+            checked(EAS_SetVolume(eas, nullptr, 100), "Set synthesis master gain");
+            if (sourceLocator == "device://midi" || sourceLocator == "device://tone")
+                checked(EAS_OpenMIDIStream(eas, &interactive, nullptr), "Open interactive MIDI");
+            else openMedia(MemoryFile::readFile(sourceLocator, MEDIA_LIMIT));
         }
-        checked(EAS_SetVolume(eas, nullptr, 100), "Set synthesis master gain");
-        if (locator == "device://midi" || locator == "device://tone")
-            checked(EAS_OpenMIDIStream(eas, &interactive, nullptr), "Open interactive MIDI");
-        else openMedia(MemoryFile::readFile(locator, MEDIA_LIMIT));
+        realized = true;
     } catch (...) {
         closeMedia();
         if (eas) EAS_Shutdown(eas);
         eas = nullptr;
-        engine->remove(this, slot);
+        activeBank.reset();
+        sampled.reset();
         throw;
     }
+}
+void Player::realize() {
+    std::lock_guard<std::mutex> lock(controls);
+    realizeLocked();
 }
 Player::~Player() { shutdown(); }
 void Player::ensureOpen() const {
@@ -80,12 +97,13 @@ void Player::openMedia(std::vector<uint8_t> bytes) {
     duration = milliseconds >= 0 ? static_cast<int64_t>(milliseconds) * 1000 : -1;
     checked(EAS_OpenMIDIStream(eas, &interactive, media), "Open MIDI control stream");
     position.store(0); blockEndTime = 0; cursor = interactiveCursor = 256;
-    midiTail.store(midiHead.load());
+    if (auto *queue = midi.load(std::memory_order_acquire))
+        queue->tail.store(queue->head.load(std::memory_order_acquire), std::memory_order_release);
     ended = false; midiOnly = false; requested = false;
 }
 void Player::prefetch() {
     std::lock_guard<std::mutex> lock(controls);
-    ensureOpen();
+    realizeLocked();
     if (sampled) sampled->prefetch();
     engine->prepare(this);
 }
@@ -179,7 +197,7 @@ void Player::repeat(int count) {
 }
 void Player::data(std::vector<uint8_t> bytes) {
     std::lock_guard<std::mutex> lock(controls);
-    ensureOpen();
+    realizeLocked();
     if (sampled) throw std::runtime_error("Sampled Player has no ToneControl source");
     quiesce(); invalidate(); openMedia(std::move(bytes));
 }
@@ -187,14 +205,21 @@ int Player::writeMidi(const uint8_t *bytes, int length) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
     if (sampled) throw std::runtime_error("Sampled Player has no MIDI control");
     if (!prepared.load()) throw std::runtime_error("MIDI requires prefetched output");
-    uint32_t head = midiHead.load(std::memory_order_relaxed);
-    uint32_t tail = midiTail.load(std::memory_order_acquire);
-    // All JNI producers serialize under controls; callback is the sole consumer.
-    // Return rejection for the entire write; never partially enqueue an event.
-    if (length < 0 || static_cast<uint32_t>(length) > midi.size() - (head - tail))
+    // MIDI event buffers are needed only by sources using interactive control.
+    auto *queue = midi.load(std::memory_order_acquire);
+    if (!queue) {
+        auto created = std::make_unique<MidiQueue>();
+        queue = created.get();
+        ownedMidi = std::move(created);
+        midi.store(queue, std::memory_order_release);
+    }
+    uint32_t head = queue->head.load(std::memory_order_relaxed);
+    uint32_t tail = queue->tail.load(std::memory_order_acquire);
+    // JNI producers serialize under controls; callback is the sole consumer.
+    if (length < 0 || static_cast<uint32_t>(length) > queue->bytes.size() - (head - tail))
         return -1;
-    for (int i = 0; i < length; ++i) midi[(head + i) % midi.size()] = bytes[i];
-    midiHead.store(head + length, std::memory_order_release);
+    for (int i = 0; i < length; ++i) queue->bytes[(head + i) % queue->bytes.size()] = bytes[i];
+    queue->head.store(head + length, std::memory_order_release);
     return length;
 }
 void Player::signal(int type, int error) {
@@ -204,19 +229,21 @@ void Player::signal(int type, int error) {
     pending.store(type, std::memory_order_release);
 }
 void Player::drainMidi() {
-    uint32_t tail = midiTail.load(std::memory_order_relaxed);
-    const uint32_t head = midiHead.load(std::memory_order_acquire);
+    auto *queue = midi.load(std::memory_order_acquire);
+    if (!queue) return;
+    uint32_t tail = queue->tail.load(std::memory_order_relaxed);
+    const uint32_t head = queue->head.load(std::memory_order_acquire);
     std::array<uint8_t, 1024> bytes{};
     // Bound work per render block; even an adversarial producer cannot starve audio.
     int remainingBytes = 4096;
     while (tail != head && remainingBytes > 0) {
         int count = std::min<uint32_t>(head - tail, std::min<int>(bytes.size(), remainingBytes));
-        for (int i = 0; i < count; ++i) bytes[i] = midi[(tail + i) % midi.size()];
+        for (int i = 0; i < count; ++i) bytes[i] = queue->bytes[(tail + i) % queue->bytes.size()];
         EAS_RESULT result = EAS_WriteMIDIStream(eas, interactive, bytes.data(), count);
         if (result != EAS_SUCCESS) { signal(3, result); break; }
         tail += count; remainingBytes -= count;
     }
-    midiTail.store(tail, std::memory_order_release);
+    queue->tail.store(tail, std::memory_order_release);
 }
 bool Player::renderBlock(bool onlyMidi) {
     drainMidi();
@@ -365,7 +392,7 @@ int Player::mix(float *out, int32_t count) {
 }
 void Player::recordPresentation(int64_t first, int count, int64_t begin, int64_t end, int64_t output) {
     const auto head = presentationHead.load(std::memory_order_relaxed);
-    auto &segment = presentationSegments[head % 128];
+    auto &segment = (*presentationSegments)[head % 128];
     segment.revision.fetch_add(1, std::memory_order_acq_rel);
     segment.first.store(first); segment.last.store(first + count);
     segment.begin.store(begin); segment.end.store(end);
@@ -375,8 +402,12 @@ void Player::recordPresentation(int64_t first, int count, int64_t begin, int64_t
 }
 void Player::timeline(int64_t origin) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    realizeLocked();
     if (!sampled || prepared.load()) throw std::runtime_error("Configure audio timeline before prefetch");
-    sampled->timeline(origin); presentationDrain = true;
+    auto trace = std::make_unique<std::array<Segment, 128>>();
+    sampled->timeline(origin);
+    presentationSegments = std::move(trace);
+    presentationDrain = true;
 }
 std::array<int64_t, 8> Player::presentation(int64_t at) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen(); return engine->presentation(this, at);
