@@ -48,6 +48,7 @@ printf 'Sonivox archive: %s\nAudio dependency prefix: %s\nOboe includes: %s\n' "
   "$repo/app/src/test/native/sonivox_runtime_test.cpp" \
   "$cpp/mmapi_eas/eas_player.cpp" "$cpp/mmapi_pcm/pcm_decoder.cpp" \
   "$cpp/mmapi_eas/audio_engine.cpp" "$cpp/mmapi_eas/eas_file.cpp" \
+  "$cpp/mmapi_eas/eas_bank.cpp" \
   "$temp/host.o" "$archive" \
   "-L$prefix/lib" -lavformat -lavcodec -lswresample -lavutil \
   "-L$native_dir" -loboe -llog -landroid \
