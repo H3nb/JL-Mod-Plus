@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace mmapi::eas {
 class Player;
@@ -32,19 +33,25 @@ class Engine final : public std::enable_shared_from_this<Engine> {
     // Segments are published once and live until Engine teardown. The callback
     // never allocates or accesses a container being resized by management.
     static constexpr size_t SLOTS_PER_BLOCK = 32;
-    static constexpr size_t MAX_BLOCKS = 256; // 8192 sources; safety bound, not a device limit.
     struct Block {
         std::array<Slot, SLOTS_PER_BLOCK> slots;
         std::atomic<unsigned> active{0};
+        std::atomic<Block *> next{nullptr};
     };
     std::mutex controls;
-    std::array<std::unique_ptr<Block>, MAX_BLOCKS> blocks;
-    std::array<std::atomic<Block *>, MAX_BLOCKS> publishedBlocks{};
-    std::atomic<size_t> blockCount{0};
+    // Ownership changes only with controls held. Published linked nodes never
+    // move or disappear until Engine teardown, after the output is quiescent.
+    std::vector<std::unique_ptr<Block>> blocks;
+    std::atomic<Block *> firstBlock{nullptr};
+    Block *lastBlock = nullptr;
+    Block *blockAt(int index) const {
+        auto *block = firstBlock.load(std::memory_order_acquire);
+        for (size_t n = 0; n < static_cast<size_t>(index) / SLOTS_PER_BLOCK; ++n)
+            block = block->next.load(std::memory_order_acquire);
+        return block;
+    }
     Slot &slotAt(int index) const {
-        auto block = publishedBlocks[static_cast<size_t>(index) / SLOTS_PER_BLOCK]
-            .load(std::memory_order_acquire);
-        return block->slots[static_cast<size_t>(index) % SLOTS_PER_BLOCK];
+        return blockAt(index)->slots[static_cast<size_t>(index) % SLOTS_PER_BLOCK];
     }
     std::shared_ptr<oboe::AudioStream> stream;
     std::shared_ptr<Output> output;
