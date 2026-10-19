@@ -292,6 +292,40 @@ public class SonivoxRuntimeTest {
         }
     }
 
+    @Test public void malformedSf2IndicesAndRiffLengthsFailWithoutOpeningPlayers() throws Exception {
+        byte[] valid = AudioBankFixtures.sf2();
+        byte[][] malformed = {valid.clone(), valid.clone(), valid.clone(), valid.clone()};
+        // RIFF size must not overflow Sonivox's signed file positions.
+        for (int i = 4; i < 8; i++) malformed[0][i] = (byte) 0xff;
+        // 'pgen' instrument generator, 'igen' sampleID generator.
+        int pgen = sf2ChunkPayload(valid, "pgen");
+        malformed[1][pgen + 2] = (byte) 0xff;
+        malformed[1][pgen + 3] = 0x7f;
+        int igen = sf2ChunkPayload(valid, "igen");
+        malformed[2][igen + 10] = (byte) 0xff;
+        malformed[2][igen + 11] = 0x7f;
+        // A zero-length terminal bag table must not underflow its count.
+        int ibag = sf2ChunkPayload(valid, "ibag");
+        for (int i = ibag - 4; i < ibag; i++) malformed[3][i] = 0;
+
+        for (int i = 0; i < malformed.length; i++) {
+            File bank = fixture(".sf2", malformed[i]);
+            SynthPlugin plugin = new SynthPlugin(new LibEAS(bank.getAbsolutePath()));
+            expectThrows(MediaException.class, () -> plugin.createPlayer(Manager.MIDI_DEVICE_LOCATOR));
+            assertEquals("failed SF2 case " + i + " leaked a native handle",
+                    initialHandles, LibEAS.liveHandles());
+        }
+    }
+
+    private static int sf2ChunkPayload(byte[] bytes, String tag) {
+        for (int i = 0; i <= bytes.length - 8; i++) {
+            if (bytes[i] == tag.charAt(0) && bytes[i + 1] == tag.charAt(1)
+                    && bytes[i + 2] == tag.charAt(2) && bytes[i + 3] == tag.charAt(3))
+                return i + 8;
+        }
+        throw new AssertionError("Missing SF2 test chunk " + tag);
+    }
+
     @Test public void sameSessionCustomBankSurvivesIndependentPlayerClose() throws Exception {
         File bank = fixture(".sf2", AudioBankFixtures.sf2());
         LibEAS backend = new LibEAS(bank.getAbsolutePath());

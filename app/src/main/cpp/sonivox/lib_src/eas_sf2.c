@@ -315,14 +315,19 @@ static EAS_RESULT RIFFNextChunk(S_SF2_PARSER* pParser, EAS_U32* pChunkType, EAS_
         return result;
     }
 
-    *pNextChunkPos += 8;
-    *pNextChunkPos += *pChunkSize;
+    // File offsets are signed 32-bit in Sonivox. Validate both the
+    // claimed RIFF length and its padding before advancing the cursor.
+    const uint64_t dataStart = (uint64_t)(EAS_U32)*pNextChunkPos + 8;
+    const uint64_t next = dataStart + *pChunkSize + (*pChunkSize & 1);
+    if (next > INT32_MAX ||
+        EAS_HWFileSeek(pParser->hwInstData, pParser->fileHandle, (EAS_I32)next) != EAS_SUCCESS)
+        return EAS_ERROR_FILE_FORMAT;
 
-    // Adjust to word boundary
-    if (*pNextChunkPos % 2 != 0) {
-        (*pNextChunkPos)++;
-    }
-
+    // Callers expect the file cursor to remain at the chunk payload.
+    result = EAS_HWFileSeek(pParser->hwInstData, pParser->fileHandle, (EAS_I32)dataStart);
+    if (result != EAS_SUCCESS)
+        return result;
+    *pNextChunkPos = (EAS_I32)next;
     return EAS_SUCCESS;
 }
 
@@ -418,6 +423,9 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
         goto fail;
     }
     parser.fileSize += 8; // include RIFF header size
+    if (parser.fileSize < 12) {
+        result = EAS_ERROR_FILE_FORMAT; goto fail;
+    }
     if (temp != RIFF_IDENTIFIER) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Not a RIFF file (%08x)\n", temp);
         result = EAS_ERROR_FILE_FORMAT; goto fail;
@@ -432,17 +440,25 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
         result = EAS_ERROR_FILE_FORMAT; goto fail;
     }
 
-    // Read chunks
+    // Read chunks. A child may not escape its RIFF container even when
+    // trailing bytes exist in the physical file.
+    const EAS_I32 riffEnd = parser.fileOffset + (EAS_I32)parser.fileSize;
     nextChunkPos = offset + 12; // RIFF <size> sfbk
     while (1) {
-        if (parser.fileOffset + parser.fileSize - nextChunkPos <= 1)  {
-            break; // end of file
+        if (nextChunkPos > riffEnd || (riffEnd - nextChunkPos > 1 &&
+                                        riffEnd - nextChunkPos < 8)) {
+            result = EAS_ERROR_FILE_FORMAT; goto fail;
         }
+        if (riffEnd - nextChunkPos <= 1)
+            break;
 
         EAS_U32 chunkType, chunkSize;
         result = RIFFNextChunk(&parser, &chunkType, &chunkSize, &nextChunkPos);
         if (result != EAS_SUCCESS) {
             goto fail;
+        }
+        if (nextChunkPos > riffEnd) {
+            result = EAS_ERROR_FILE_FORMAT; goto fail;
         }
 
         EAS_I32 curpos;
@@ -660,7 +676,7 @@ EAS_RESULT SF2Parser (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle,
 
 fail:
     ReleaseSF2Parser(&parser, EAS_TRUE);
-    goto fail;
+    return result;
 }
 
 EAS_RESULT SF2Cleanup (EAS_HW_DATA_HANDLE hwInstData, S_DLS *pDLS)
@@ -686,18 +702,23 @@ EAS_RESULT SF2Cleanup (EAS_HW_DATA_HANDLE hwInstData, S_DLS *pDLS)
 static EAS_RESULT Parse_sdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size)
 {
     EAS_RESULT result;
+    if (size < 4)
+        return EAS_ERROR_FILE_FORMAT;
+    const EAS_I32 listEnd = offset + (EAS_I32)size;
     EAS_I32 pos = offset + 4; // skip 'sdta' identifier
-    
+
     while (1) {
-        if (offset + size - pos <= 1) {
-            break; // end of LIST chunk
-        }
+        if (pos > listEnd || (listEnd - pos > 1 && listEnd - pos < 8))
+            return EAS_ERROR_FILE_FORMAT;
+        if (listEnd - pos <= 1)
+            break;
 
         EAS_U32 chunkType, chunkSize;
         result = RIFFNextChunk(pParser, &chunkType, &chunkSize, &pos);
-        if (result != EAS_SUCCESS) {
+        if (result != EAS_SUCCESS)
             return result;
-        }
+        if (pos > listEnd)
+            return EAS_ERROR_FILE_FORMAT;
 
         EAS_I32 curpos;
         result = EAS_HWFilePos(pParser->hwInstData, pParser->fileHandle, &curpos);
@@ -841,18 +862,23 @@ static EAS_RESULT Parse_samples(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
 static EAS_RESULT Parse_pdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size)
 {
     EAS_RESULT result;
+    if (size < 4)
+        return EAS_ERROR_FILE_FORMAT;
+    const EAS_I32 listEnd = offset + (EAS_I32)size;
     EAS_I32 pos = offset + 4; // skip 'pdta' identifier
 
     while (1) {
-        if (offset + size - pos <= 1) {
-            break; // end of LIST chunk
-        }
+        if (pos > listEnd || (listEnd - pos > 1 && listEnd - pos < 8))
+            return EAS_ERROR_FILE_FORMAT;
+        if (listEnd - pos <= 1)
+            break;
 
         EAS_U32 chunkType, chunkSize;
         result = RIFFNextChunk(pParser, &chunkType, &chunkSize, &pos);
-        if (result != EAS_SUCCESS) {
+        if (result != EAS_SUCCESS)
             return result;
-        }
+        if (pos > listEnd)
+            return EAS_ERROR_FILE_FORMAT;
 
         EAS_I32 curpos;
         result = EAS_HWFilePos(pParser->hwInstData, pParser->fileHandle, &curpos);
@@ -868,6 +894,9 @@ static EAS_RESULT Parse_pdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size
             pParser->phdrOffset = curpos - 8; // at the start of the chunk ('phdr' identifier)
             break;
         case PBAG_IDENTIFIER:
+            if (chunkSize < PBAG_SIZE || chunkSize % PBAG_SIZE != 0 ||
+                chunkSize / PBAG_SIZE - 1 > 65535)
+                return EAS_ERROR_FILE_FORMAT;
             pParser->pbagOffset = curpos - 8;
             pParser->pbagCount = (chunkSize / PBAG_SIZE) - 1;
             break;
@@ -881,6 +910,9 @@ static EAS_RESULT Parse_pdta(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 size
             pParser->instOffset = curpos - 8;
             break;
         case IBAG_IDENTIFIER:
+            if (chunkSize < IBAG_SIZE || chunkSize % IBAG_SIZE != 0 ||
+                chunkSize / IBAG_SIZE - 1 > 65535)
+                return EAS_ERROR_FILE_FORMAT;
             pParser->ibagOffset = curpos - 8;
             pParser->ibagCount = (chunkSize / IBAG_SIZE) - 1;
             break;
@@ -1001,7 +1033,8 @@ static EAS_RESULT Parse_Insts(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Expected 'inst' chunk, got %08x\n", tmp);
         return EAS_ERROR_FILE_FORMAT;
     }
-    if (chunkSize % INST_SIZE != 0) {
+    if (chunkSize < INST_SIZE * 2 || chunkSize % INST_SIZE != 0 ||
+        chunkSize / INST_SIZE - 1 > 65535) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Invalid inst chunk size %u\n", chunkSize);
         return EAS_ERROR_FILE_FORMAT;
     }
@@ -1032,6 +1065,8 @@ static EAS_RESULT Parse_Insts(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
             // EOI's bagIndex is 0
             bagIndex = pParser->ibagCount;
         }
+        if (bagIndex > pParser->ibagCount)
+            return EAS_ERROR_FILE_FORMAT;
 
         if (bagIndex == prevBagIndex) {
             // empty inst
@@ -1179,7 +1214,8 @@ static EAS_RESULT Parse_Presets(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Expected 'phdr' chunk, got %08x\n", tmp);
         return EAS_ERROR_FILE_FORMAT;
     }
-    if (chunkSize % PHDR_SIZE != 0) {
+    if (chunkSize < PHDR_SIZE * 2 || chunkSize % PHDR_SIZE != 0 ||
+        chunkSize / PHDR_SIZE - 1 > 65535) {
         EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Invalid phdr chunk size %u\n", chunkSize);
         return EAS_ERROR_FILE_FORMAT;
     }
@@ -1240,6 +1276,8 @@ static EAS_RESULT Parse_Presets(S_SF2_PARSER* pParser, EAS_BOOL dryRun)
             // EOP's bagIndex is 0
             bagIndex = pParser->pbagCount;
         }
+        if (bagIndex > pParser->pbagCount)
+            return EAS_ERROR_FILE_FORMAT;
         if (bagIndex == prevBagIndex) {
             // empty inst
             goto skip;
@@ -1355,6 +1393,10 @@ static EAS_RESULT Parse_pbags(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 bag
             presetGlobalRegion = presetRegion;
             goto skip;
         }
+
+        // A corrupted instrument generator must not index outside the table.
+        if (presetRegion.waveIndex >= pParser->instCount)
+            return EAS_ERROR_FILE_FORMAT;
 
         // merge preset's global region and current region, inst's global region and matching regions
         struct S_SF2_INST* pInst = &pParser->pInsts[presetRegion.waveIndex];
@@ -1572,6 +1614,8 @@ static EAS_RESULT Parse_pbags(S_SF2_PARSER* pParser, EAS_I32 offset, EAS_U32 bag
                 EAS_Report(_EAS_SEVERITY_ERROR, "SF2Parser: Inst %u region %u does not contain sampleID\n", presetRegion.waveIndex, instRegionIndex);
                 return EAS_FAILURE;
             }
+            if (sampleID >= pParser->sampleCount)
+                return EAS_ERROR_FILE_FORMAT;
 
             for (EAS_U32 k = 0; k < pInstRegion->modCount; k++) {
                 if (modCount >= MAX_MODS_IN_MERGED_REGION) {

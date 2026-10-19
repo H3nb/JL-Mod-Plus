@@ -30,7 +30,6 @@ or native backend.
 `AudioPlayer` supplies one MMAPI contract for synthesis, sampled audio and file video. Each
 synthesis source owns its EAS context, sequencer and voices. Within a runtime,
 custom SF2/DLS sample collections are shared by bank identity while in use;
-
 each sampled source owns a native FFmpeg decoder/resampler and bounded PCM ring.
 A native engine per runtime/session mixes both into one float stereo 44.1 kHz
 bus and owns at most one active Oboe output. Java `RuntimeAudioCoordinator`
