@@ -98,7 +98,7 @@ data class ProfileModel(
     @SerialName("SkipResumeCall") @JvmField var skipResumeCall: Boolean = false,
 ) {
     companion object {
-        const val VERSION = 7
+        const val VERSION = 8
 
         @JvmStatic fun builtInThemePreferenceKey(configDir: File): String =
             "config_profile_builtin_theme:" + configDir.absolutePath

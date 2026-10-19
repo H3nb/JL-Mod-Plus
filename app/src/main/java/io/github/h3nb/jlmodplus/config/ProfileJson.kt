@@ -47,7 +47,7 @@ object ProfileJson {
             if (name == "Controller" || name == "controller") normalized["Controller"] = value
         }
         normalized.remove("controller")
-        normalized["ScreenBackgroundMode"] = JsonPrimitive(if (version < ProfileModel.VERSION) {
+        normalized["ScreenBackgroundMode"] = JsonPrimitive(if (version < 7) {
             if (themeLinked) BackgroundMode.THEME else BackgroundMode.CUSTOM
         } else backgroundMode(tree["ScreenBackgroundMode"]))
         normalized["KeyMappings"] = format.encodeToJsonElement(decodeMappings(tree["KeyMappings"]))
