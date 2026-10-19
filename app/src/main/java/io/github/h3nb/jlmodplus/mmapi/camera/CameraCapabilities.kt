@@ -6,34 +6,26 @@ object CameraCapabilities {
     const val SUPPORTS_CAPTURE = "supports.video.capture"
     const val VIDEO_ENCODINGS = "video.encodings"
     const val SNAPSHOT_ENCODINGS = "video.snapshot.encodings"
-    private val managedKeys = setOf(SUPPORTS_CAPTURE, VIDEO_ENCODINGS, SNAPSHOT_ENCODINGS)
-
     /**
-     * A complete legacy factory template inherited its old false capability. A
-     * customized legacy template cannot reveal whether false was intentional, so
-     * preserve it. Explicit encoding strings always retain their final precedence.
-     * Null values remove unsupported automatic properties left by a prior runtime.
+     * The configured property is a JSR-135 boolean, not an "auto" sentinel.
+     * An absent key preserves hardware-based discovery for older custom profiles.
      */
     @JvmStatic
     @JvmOverloads
-    fun resolve(properties: String, defaultProperties: String, available: Boolean,
+    fun resolve(properties: String, available: Boolean,
                 dimensions: CameraCaptureOptions.Dimensions = CameraCaptureOptions.Dimensions()): Map<String, String?> {
         val profile = parse(properties)
-        val defaults = parse(defaultProperties)
-        val inheritedLegacyFalse = profile[SUPPORTS_CAPTURE] == "false" &&
-            profile.filterKeys { it !in managedKeys } == defaults.filterKeys { it !in managedKeys }
-        val requestedSupport = profile[SUPPORTS_CAPTURE].takeUnless { inheritedLegacyFalse }
-        val support = explicit(requestedSupport) ?: available.toString()
-        val automaticCapture = available && support == "true"
+        val captureEnabled = available && profile[SUPPORTS_CAPTURE] != "false"
+        val support = captureEnabled.toString()
         val size = "width=${dimensions.width}&height=${dimensions.height}"
         return linkedMapOf(
             SUPPORTS_CAPTURE to support,
-            VIDEO_ENCODINGS to (explicit(profile[VIDEO_ENCODINGS]) ?: if (automaticCapture) {
-                "encoding=rgb888&$size"
-            } else null),
-            SNAPSHOT_ENCODINGS to (explicit(profile[SNAPSHOT_ENCODINGS]) ?: if (automaticCapture) {
-                "encoding=jpeg&$size encoding=png&$size"
-            } else null),
+            VIDEO_ENCODINGS to if (captureEnabled) {
+                explicit(profile[VIDEO_ENCODINGS]) ?: "encoding=rgb888&$size"
+            } else null,
+            SNAPSHOT_ENCODINGS to if (captureEnabled) {
+                explicit(profile[SNAPSHOT_ENCODINGS]) ?: "encoding=jpeg&$size encoding=png&$size"
+            } else null,
         )
     }
 

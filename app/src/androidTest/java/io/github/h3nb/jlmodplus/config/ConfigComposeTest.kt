@@ -1001,6 +1001,29 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun resetSystemPropertiesChangesOnlyDraftUntilSave() {
+        var saved: String? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigSystemPropertiesPage(
+                    value = "microedition.platform: Custom\n",
+                    defaultValue = "microedition.platform: Built-in\n",
+                    onBack = {},
+                    onSave = { saved = it },
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.config_system_properties_reset)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_system_properties_reset_title)).assertExists()
+        composeRule.onNode(
+            hasText(uiString(R.string.config_system_properties_reset)) and hasAnyAncestor(isDialog())
+        ).performClick()
+        assertEquals(null, saved)
+        composeRule.onNodeWithText(uiString(R.string.save)).performClick()
+        assertEquals("microedition.platform: Built-in\n", saved)
+    }
+
+    @Test
     fun systemPropertiesUseFocusedEditorAndHideDelayUsesMilliseconds() {
         val events = RecordingConfigEvents()
         val baseState = sampleState()

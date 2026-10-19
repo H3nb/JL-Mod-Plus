@@ -11,6 +11,7 @@ import javax.microedition.shell.timing.TimingMode
 import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.json.*
 
 /** One historical input boundary; the generated serializer is the only profile writer. */
@@ -46,14 +47,19 @@ object ProfileJson {
             if (name == "Controller" || name == "controller") normalized["Controller"] = value
         }
         normalized.remove("controller")
-        normalized["ScreenBackgroundMode"] = JsonPrimitive(if (version < ProfileModel.VERSION) {
+        normalized["ScreenBackgroundMode"] = JsonPrimitive(if (version < 7) {
             if (themeLinked) BackgroundMode.THEME else BackgroundMode.CUSTOM
         } else backgroundMode(tree["ScreenBackgroundMode"]))
         normalized["KeyMappings"] = format.encodeToJsonElement(decodeMappings(tree["KeyMappings"]))
         val model = format.decodeFromJsonElement<ProfileModel>(JsonObject(normalized))
+        if (!tree.containsKey("SystemPropertyOverrides")) {
+            val oldProperties = tree["SystemProperties"]?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
+            model.systemProperties = oldProperties
+            model.systemPropertyOverrides = SystemPropertyLayers.migrate(oldProperties, preserveMissingAsDeleted = version != 0)
+        }
         if (version == 0) {
             if (legacyBoolean(tree["HwAcceleration"])) model.graphicsMode = 3
-            ProfilesManager.updateSystemProperties(model)
+            // Legacy properties are converted by SystemPropertyLayers.
         }
         if (version <= 1) {
             val w = model.screenWidth
@@ -90,6 +96,7 @@ object ProfileJson {
         customKeys = source.customKeys?.ownedList(),
         keyMappings = source.keyMappings.ownedMap(),
         controller = source.controller?.let(::ownedJson),
+        systemPropertyOverrides = Collections.unmodifiableMap(HashMap(source.systemPropertyOverrides)),
     )
 
     @JvmStatic fun ownedJson(value: JsonElement): JsonElement = when (value) {
@@ -145,7 +152,7 @@ object ProfileJson {
             PrimitiveKind.BOOLEAN -> JsonPrimitive(legacyBoolean(value))
             PrimitiveKind.STRING -> JsonPrimitive(value.jsonPrimitive.content)
             else -> when {
-                descriptor.serialName == "kotlinx.serialization.json.JsonElement" -> value
+                descriptor.serialName == "kotlinx.serialization.json.JsonElement" || descriptor.kind == StructureKind.MAP -> value
                 value is JsonObject -> JsonObject(value.mapNotNull { (key, entry) ->
                     val index = descriptor.getElementIndex(key)
                     when {

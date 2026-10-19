@@ -259,7 +259,7 @@ public final class ConfigFormState {
 		params.cameraDefaultFacing = cameraDefaultFacing;
 		params.cameraResolution = cameraResolution;
 		params.controller = controller;
-		params.systemProperties = normalizeSystemProperties(systemProperties);
+		SystemPropertyLayers.applyEditorText(params, systemProperties);
 		return params;
 	}
 

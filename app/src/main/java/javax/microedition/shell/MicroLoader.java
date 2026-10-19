@@ -514,8 +514,8 @@ public class MicroLoader {
 					MidletSystem.setProperty(prop[0], prop[1]);
 				}
 			}
-			// Resolve automatic camera discovery only in this runtime snapshot. Persisted
-			// properties and linked/custom configuration identity remain untouched.
+			// Resolve effective camera availability only in this runtime snapshot.
+			// Persisted properties and linked/custom configuration identity remain untouched.
 			Displayable.setVirtualSize(params.screenWidth, params.screenHeight);
 			if (cameraDefaultDimensions == null) {
 				boolean portrait = Displayable.getVirtualHeight() > Displayable.getVirtualWidth();
@@ -535,7 +535,6 @@ public class MicroLoader {
 			Map<String, String> cameraProperties =
 					io.github.h3nb.jlmodplus.mmapi.camera.CameraCapabilities.resolve(
 							params.systemProperties,
-							ContextHolder.getAssetAsString("defaults/system.props"),
 						io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isCameraAvailable(),
 						cameraDefaultDimensions);
 			for (Map.Entry<String, String> property : cameraProperties.entrySet()) {

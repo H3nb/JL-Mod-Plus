@@ -18,7 +18,7 @@ class ProfileJsonTest {
         val decoded = ProfileJson.decode(input, false)
         val model = decoded.model
         assertEquals(7, decoded.sourceVersion)
-        assertFalse(decoded.needsPublication)
+        assertTrue(decoded.needsPublication)
         // Expectations are independent of the new writer.
         assertEquals(176, model.screenWidth)
         assertEquals(208, model.screenHeight)
@@ -40,20 +40,23 @@ class ProfileJsonTest {
         listOf("HwAcceleration", "ScreenScaleToFit", "ScreenKeepAspectRatio").forEach(oldTree::remove)
         val newTree = Json.parseToJsonElement(output).jsonObject
         val comparableOld = Json.parseToJsonElement(oldTree.toString()).jsonObject.filterValues { it != JsonNull }
+        // New system-property overrides replace the legacy full serialized snapshot.
+        assertFalse(newTree.containsKey("SystemProperties"))
+        assertTrue(newTree.containsKey("SystemPropertyOverrides"))
         // The additive cutout option was not part of the frozen historical schema.
         assertEquals(JsonPrimitive(false), newTree["AllowDisplayCutout"])
         assertEquals(JsonPrimitive(1), newTree["CameraDefaultFacing"])
         assertEquals(JsonPrimitive(0), newTree["CameraResolution"])
         assertTrue(ProfileJson.sameValue(JsonObject(comparableOld),
-            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution"))))
+            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides"))))
     }
 
-    @Test fun additiveCameraDefaultsPreserveV7ReadOnlyLoadAndRoundTripExplicitChoices() {
+    @Test fun cameraDefaultsMigrateV7SnapshotAndRoundTripExplicitChoices() {
         val input = fixture("gson-v7.json")
         val decoded = ProfileJson.decode(input, false)
         assertEquals(1, decoded.model.cameraDefaultFacing)
         assertEquals(0, decoded.model.cameraResolution)
-        assertFalse(decoded.needsPublication)
+        assertTrue(decoded.needsPublication)
         val explicitDefaults = ProfileJson.decode(
             JsonObject(Json.parseToJsonElement(input).jsonObject + mapOf(
                 "CameraDefaultFacing" to JsonPrimitive(1), "CameraResolution" to JsonPrimitive(0),
@@ -64,7 +67,8 @@ class ProfileJsonTest {
         val file = File(directory, Config.MIDLET_CONFIG_FILE).apply { writeText(input) }
         try {
             val loaded = checkNotNull(ProfilesManager.loadConfig(directory))
-            assertEquals(input, file.readText())
+            assertTrue(file.readText().contains("SystemPropertyOverrides"))
+            assertFalse(file.readText().contains("\"SystemProperties\""))
             assertEquals(setOf(file.name), directory.list()!!.toSet())
             val changed = ProfileConfigMatcher.copyConfig(loaded).apply {
                 cameraDefaultFacing = 0
@@ -75,17 +79,17 @@ class ProfileJsonTest {
             val reread = checkNotNull(ProfilesManager.loadConfig(directory))
             assertEquals(0, reread.cameraDefaultFacing)
             assertEquals(2, reread.cameraResolution)
-            assertEquals(7, reread.version)
+            assertEquals(ProfileModel.VERSION, reread.version)
             assertEquals(loaded.controller, reread.controller)
             assertTrue(ProfileConfigMatcher.sameConfig(changed, reread))
         } finally { directory.deleteRecursively() }
         val invalid = ProfileJson.decode("""{"Version":7,"CameraDefaultFacing":99,"CameraResolution":-1}""", false)
         assertEquals(1, invalid.model.cameraDefaultFacing)
         assertEquals(0, invalid.model.cameraResolution)
-        assertFalse(invalid.needsPublication)
+        assertTrue(invalid.needsPublication)
     }
 
-    @Test fun additiveCutoutOptionDefaultsOffWithoutPublishingOrChangingEffectiveConfig() {
+    @Test fun cutoutOptionStaysOffWhenV7PropertiesAreMigrated() {
         val input = fixture("gson-v7.json")
         assertFalse(Json.parseToJsonElement(input).jsonObject.containsKey("AllowDisplayCutout"))
         val decoded = ProfileJson.decode(input, false)
@@ -94,14 +98,15 @@ class ProfileJsonTest {
                 ("AllowDisplayCutout" to JsonPrimitive(false))).toString(), false,
         )
         assertFalse(decoded.model.allowDisplayCutout)
-        assertFalse(decoded.needsPublication)
+        assertTrue(decoded.needsPublication)
         assertTrue(ProfileConfigMatcher.sameConfig(decoded.model, explicitOff.model))
 
         val directory = Files.createTempDirectory("profile-cutout-default").toFile()
         val config = File(directory, Config.MIDLET_CONFIG_FILE).apply { writeText(input) }
         try {
             assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
-            assertEquals(input, config.readText())
+            assertTrue(config.readText().contains("SystemPropertyOverrides"))
+            assertFalse(config.readText().contains("\"SystemProperties\""))
             assertEquals(setOf(config.name), directory.list()!!.toSet())
             assertTrue(ProfilesManager.saveConfig(directory, decoded.model))
             assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
@@ -144,7 +149,7 @@ class ProfileJsonTest {
         assertEquals(2, v2.model.screenScaleType)
         assertEquals(BackgroundMode.THEME, v2.model.screenBackgroundMode)
         assertEquals(BackgroundMode.CUSTOM, ProfileJson.decode(v1, false).model.screenBackgroundMode)
-        assertEquals(7, v2.model.version)
+        assertEquals(ProfileModel.VERSION, v2.model.version)
         assertTrue(v2.needsPublication)
         val map = mapOf<String, Any?>("Version" to 2, "KeyMappings" to """[{"key":131,"value":0},{"key":132,"value":-2147483648}]""")
         assertEquals(mapOf(131 to 0, 132 to Int.MIN_VALUE), ProfileJson.decodeXml(map, false).model.keyMappings)
@@ -227,11 +232,11 @@ class ProfileJsonTest {
             ProfilesManager.loadConfigResult(dir, true, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false).status
         })
         assertEquals("broken", config.readText())
-        config.writeText("""{"Version":8,"ScreenWidth":999}""")
+        config.writeText("""{"Version":9,"ScreenWidth":999}""")
         val before = dir.listFiles()!!.associate { it.name to it.readBytes().toList() }
         val result = ProfilesManager.loadConfigResult(dir, true, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false)
         assertEquals(ProfilesManager.LoadStatus.UNSUPPORTED_VERSION, result.status)
-        assertEquals(8, result.sourceVersion)
+        assertEquals(9, result.sourceVersion)
         assertEquals(before, dir.listFiles()!!.associate { it.name to it.readBytes().toList() })
         assertTrue(layout.exists() && data.exists() && xml.exists())
     }

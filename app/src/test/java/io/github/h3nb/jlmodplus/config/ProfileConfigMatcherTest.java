@@ -243,7 +243,7 @@ public class ProfileConfigMatcherTest {
 		String migrated = new String(
 				Files.readAllBytes(new File(directory, "config.json").toPath()),
 				StandardCharsets.UTF_8);
-		assertTrue(migrated.contains("\"Version\": 7"));
+		assertTrue(migrated.contains("\"Version\": 8"));
 		assertFalse(migrated.contains("EmulationSpeedPercent"));
 		assertFalse(migrated.contains("ShowEmulationSpeed"));
 		assertTrue(migrated.contains("\"TimingMode\": 1"));
