@@ -4,7 +4,7 @@
 package javax.microedition.lcdui;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
@@ -19,12 +19,22 @@ public class GraphicsArgumentValidationTest {
 		for (int[] rgb : new int[][]{
 				{-1, 0, 0}, {256, 0, 0}, {0, -1, 0},
 				{0, 256, 0}, {0, 0, -1}, {0, 0, 256}}) {
-			assertThrows(IllegalArgumentException.class,
-					() -> graphics.setColor(rgb[0], rgb[1], rgb[2]));
+			try {
+				graphics.setColor(rgb[0], rgb[1], rgb[2]);
+				fail("Out-of-range RGB component must be rejected");
+			} catch (IllegalArgumentException expected) {
+				// MIDP requires rejection without changing drawing state.
+			}
 			assertEquals(0x7F123456, graphics.getColorAlpha());
 		}
-		assertThrows(IllegalArgumentException.class, () -> graphics.setGrayScale(-1));
-		assertThrows(IllegalArgumentException.class, () -> graphics.setGrayScale(256));
+		for (int gray : new int[]{-1, 256}) {
+			try {
+				graphics.setGrayScale(gray);
+				fail("Out-of-range grayscale must be rejected");
+			} catch (IllegalArgumentException expected) {
+				// Keep the previous color on failure.
+			}
+		}
 		assertEquals(0x7F123456, graphics.getColorAlpha());
 	}
 
@@ -47,8 +57,12 @@ public class GraphicsArgumentValidationTest {
 		for (int style : new int[]{Graphics.DOTTED, Graphics.SOLID}) {
 			graphics.setStrokeStyle(style);
 			for (int invalid : new int[]{-1, 2, Integer.MAX_VALUE}) {
-				assertThrows(IllegalArgumentException.class,
-						() -> graphics.setStrokeStyle(invalid));
+				try {
+					graphics.setStrokeStyle(invalid);
+					fail("Unknown stroke style must be rejected");
+				} catch (IllegalArgumentException expected) {
+					// No change to the previously selected stroke style.
+				}
 				assertEquals(style, graphics.getStrokeStyle());
 			}
 		}
