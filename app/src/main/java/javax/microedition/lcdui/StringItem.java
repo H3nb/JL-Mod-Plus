@@ -54,6 +54,7 @@ public class StringItem extends Item {
 	}
 
 	public StringItem(String label, String text, int appearanceMode) {
+		validateAppearanceMode(appearanceMode);
 		setLabel(label);
 		setText(text);
 		this.appearanceMode = appearanceMode;

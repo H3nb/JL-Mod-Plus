@@ -43,6 +43,7 @@ public class ImageItem extends Item {
 	}
 
 	public ImageItem(String label, Image image, int layout, String altText, int appearanceMode) {
+		validateAppearanceMode(appearanceMode);
 		setLabel(label);
 		setImage(image);
 		setLayout(layout);
