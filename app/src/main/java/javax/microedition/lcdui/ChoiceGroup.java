@@ -356,6 +356,9 @@ public class ChoiceGroup extends Item implements Choice {
 	@Override
 	View getItemContentView() {
 		Context context = ContextHolder.getActivity();
+		if (context == null) {
+			context = ContextHolder.getAppContext();
+		}
 
 		switch (choiceType) {
 			case EXCLUSIVE, MULTIPLE -> {
@@ -413,13 +416,14 @@ public class ChoiceGroup extends Item implements Choice {
 		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 			synchronized (items) {
 				CompoundItem item = items.get(position);
-				if (!item.isSelected()) {
-					for (CompoundItem it : items) {
-						it.setSelected(false);
-					}
-					item.setSelected(true);
-					adapter.notifyDataSetChanged();
+				if (item.isSelected()) {
+					return;
 				}
+				for (CompoundItem it : items) {
+					it.setSelected(false);
+				}
+				item.setSelected(true);
+				adapter.notifyDataSetChanged();
 			}
 			postStateChanged();
 		}
