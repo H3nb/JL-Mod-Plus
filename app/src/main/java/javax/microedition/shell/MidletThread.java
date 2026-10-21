@@ -68,6 +68,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private final MidletSessionJournal journal;
 	private final MidletLifecycleState lifecycle = new MidletLifecycleState();
 	private final AtomicBoolean fatalFailureClaimed = new AtomicBoolean();
+	private final AtomicBoolean exitWatchdogArmed = new AtomicBoolean();
 	private final Object terminationLock = new Object();
 	private final Object guestExecutionToken = new Object();
 	private final UncaughtExceptionHandler sessionUncaughtHandler = this::handleUncaughtSessionFailure;
@@ -310,10 +311,16 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			}
 		}
 		current.send(DESTROY);
+		// A guest can block the MidletMain Looper inside startApp() before DESTROY is dequeued.
+		// Host Exit must guarantee progress without invoking guest callbacks on another thread.
+		current.startForceDestroyWatchdog();
 		return true;
 	}
 
 	private void startForceDestroyWatchdog() {
+		if (!exitWatchdogArmed.compareAndSet(false, true)) {
+			return;
+		}
 		new Thread(() -> {
 			try {
 				Thread.sleep(1000);
@@ -322,16 +329,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				return;
 			}
 			synchronized (terminationLock) {
-				// The watchdog is strictly for a destroyApp(true) callback which is still executing
-				// past the existing timeout. Successful teardown clears the callback phase first.
-				if (!lifecycle.isDestroyCallbackInProgress()
-						|| fatalFailureClaimed.get() || terminalFinalized) {
+				if (fatalFailureClaimed.get() || terminalFinalized) {
 					return;
 				}
 			}
-			// Use the same terminal destination as successful destruction. The guest callback may
-			// still be hung, but the Android host can return to Library before process cleanup.
-			terminateIntentional(MidletSessionJournal.Outcome.USER_STOP);
+			// Preserve a guest self-destruction that linearized before the host timeout.
+			// Otherwise this is a user stop even if the DESTROY message is still queued.
+			terminateIntentional(lifecycle.isSelfDestroyed()
+					? MidletSessionJournal.Outcome.MIDLET_REQUEST
+					: MidletSessionJournal.Outcome.USER_STOP);
 		}, "ForceDestroyTimer").start();
 	}
 
@@ -480,7 +486,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				capturePrimarySessionFailure(Thread.currentThread(), primaryFailure);
 			}
 			if (cleanupCommitted && midlet != null) {
-				invokeUnconditionalDestroy("cleanup after startApp failure", false);
+				invokeUnconditionalDestroy("cleanup after startApp failure");
 				lifecycle.completeDestroy();
 			}
 			Log.e(TAG, "startApp failed; MIDlet terminated after best-effort cleanup", primaryFailure);
@@ -514,7 +520,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				capturePrimarySessionFailure(Thread.currentThread(), primaryFailure);
 			}
 			if (cleanupCommitted && midlet != null) {
-				invokeUnconditionalDestroy("cleanup after pauseApp failure", false);
+				invokeUnconditionalDestroy("cleanup after pauseApp failure");
 				lifecycle.completeDestroy();
 			}
 			Log.e(TAG, "pauseApp failed; MIDlet terminated after best-effort cleanup", primaryFailure);
@@ -534,15 +540,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 		requestIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP, true);
 		transitionJournal(MidletSessionJournal.Stage.STOPPING);
-		invokeUnconditionalDestroy("normal MIDlet destruction", true);
+		invokeUnconditionalDestroy("normal MIDlet destruction");
 		lifecycle.completeDestroy();
 		terminateIntentional(MidletSessionJournal.Outcome.USER_STOP);
 	}
 
-	private void invokeUnconditionalDestroy(String reason, boolean armWatchdog) {
-		if (armWatchdog) {
-			startForceDestroyWatchdog();
-		}
+	private void invokeUnconditionalDestroy(String reason) {
 		try {
 			midlet.destroyApp(true);
 		} catch (MIDletStateChangeException ignored) {
