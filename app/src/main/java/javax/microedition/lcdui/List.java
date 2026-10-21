@@ -42,7 +42,7 @@ public class List extends Screen implements Choice {
 
 	private ListView view;
 	private int fitPolicy;
-	private Command selectCommand = SELECT_COMMAND;
+	private volatile Command selectCommand = SELECT_COMMAND;
 
 	private final SimpleEvent msgSetSelection = new SimpleEvent() {
 		@Override
@@ -86,15 +86,24 @@ public class List extends Screen implements Choice {
 	}
 
 	public void setSelectCommand(Command cmd) {
-		if (selectCommand != SELECT_COMMAND) {
-			removeCommand(selectCommand);
+		if (listType != IMPLICIT) {
+			return;
 		}
+		// Command membership and the role of selection command are distinct.
+		// In particular, replacing a selection command does not remove the
+		// previous ordinary command from this List.
+		if (cmd != null && cmd != SELECT_COMMAND) {
+			addCommand(cmd);
+		}
+		selectCommand = cmd;
+	}
 
-		if (cmd != null) {
-			addCommand(selectCommand = cmd);
-		} else {
-			selectCommand = SELECT_COMMAND;
+	@Override
+	public void removeCommand(Command cmd) {
+		if (listType == IMPLICIT && selectCommand == cmd) {
+			selectCommand = null;
 		}
+		super.removeCommand(cmd);
 	}
 
 	@Override
@@ -383,6 +392,9 @@ public class List extends Screen implements Choice {
 
 	void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		synchronized (items) {
+			if (position < 0 || position >= items.size()) {
+				return;
+			}
 			CompoundItem item = items.get(position);
 			if (listType == MULTIPLE) {
 				item.setSelected(!item.isSelected());
@@ -398,7 +410,10 @@ public class List extends Screen implements Choice {
 			}
 		}
 		if (listType == IMPLICIT) {
-			fireCommandAction(selectCommand);
+			Command command = selectCommand;
+			if (command != null) {
+				fireCommandAction(command);
+			}
 		}
 	}
 
