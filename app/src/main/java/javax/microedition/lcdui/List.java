@@ -124,10 +124,15 @@ public class List extends Screen implements Choice {
 			if (elementNum < 0 || elementNum >= size) {
 				throw new IndexOutOfBoundsException("elementNum = " + elementNum + ", but size = " + size);
 			}
-			items.remove(elementNum);
+			boolean wasSelected = items.remove(elementNum).isSelected();
+			if (wasSelected && listType != MULTIPLE && !items.isEmpty()) {
+				// Preserve the same element when possible; select the nearest
+				// remaining neighbor only when the selected element was deleted.
+				items.get(Math.min(elementNum, items.size() - 1)).setSelected(true);
+			}
 			adapter.notifyDataSetChanged();
 		}
-		if (size == 1 && listType == IMPLICIT && view != null) {
+		if (listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
 		}
 	}
@@ -225,7 +230,7 @@ public class List extends Screen implements Choice {
 			items.add(elementNum, new CompoundItem(stringPart, imagePart, select));
 			adapter.notifyDataSetChanged();
 		}
-		if (size == 0 && listType == IMPLICIT && view != null) {
+		if (listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
 		}
 	}
@@ -276,13 +281,17 @@ public class List extends Screen implements Choice {
 				return;
 			}
 
+			if (size == 0) {
+				return;
+			}
+			int selectedIndex = 0;
 			for (int i = 0; i < size; i++) {
 				if (selectedArray[i]) {
-					setSelectedIndex(i, true);
-					return;
+					selectedIndex = i;
+					break;
 				}
 			}
-			setSelectedIndex(0, true);
+			setSelectedIndex(selectedIndex, true);
 		}
 	}
 
