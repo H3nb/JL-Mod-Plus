@@ -326,6 +326,9 @@ public class ChoiceGroup extends Item implements Choice {
 
 	@Override
 	public void setFitPolicy(int fitPolicy) {
+		if (fitPolicy < TEXT_WRAP_DEFAULT || fitPolicy > TEXT_WRAP_OFF) {
+			throw new IllegalArgumentException("Invalid fit policy: " + fitPolicy);
+		}
 		this.fitPolicy = fitPolicy;
 	}
 

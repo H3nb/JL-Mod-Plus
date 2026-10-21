@@ -42,6 +42,12 @@ public class Command implements Comparable<Command> {
 	}
 
 	public Command(String shortLabel, String longLabel, int commandType, int priority) {
+		if (shortLabel == null) {
+			throw new NullPointerException("shortLabel");
+		}
+		if (commandType < SCREEN || commandType > ITEM) {
+			throw new IllegalArgumentException("Invalid command type: " + commandType);
+		}
 		this.shortLabel = shortLabel;
 		this.longLabel = longLabel;
 		this.commandType = commandType;
