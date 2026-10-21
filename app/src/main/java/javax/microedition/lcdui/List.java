@@ -370,6 +370,9 @@ public class List extends Screen implements Choice {
 	View getScreenView() {
 		if (view == null) {
 			Context context = ContextHolder.getActivity();
+			if (context == null) {
+				context = ContextHolder.getAppContext();
+			}
 			view = new ListView(context);
 			view.setAdapter(adapter);
 
