@@ -32,6 +32,21 @@ public class CanvasVisibilityTest {
 	}
 
 	@Test
+	public void renewedHostForegroundMustPassItsOwnBarrier() {
+		Display.initDisplay();
+		long first = Display.requestForeground();
+		assertTrue(Display.grantForeground(first));
+		assertEquals(first, Display.currentGrantedForegroundGeneration());
+
+		long second = Display.requestForeground();
+		assertEquals("A new request invalidates the previous committed grant", 0L,
+				Display.currentGrantedForegroundGeneration());
+		assertFalse(Display.grantForeground(first));
+		assertTrue(Display.grantForeground(second));
+		assertEquals(second, Display.currentGrantedForegroundGeneration());
+	}
+
+	@Test
 	public void canvasVisibilityDependsOnlyOnGuestAndRealHostPresentationFacts() {
 		assertFalse(Canvas.isPresentationVisible(false, true, true, true));
 		assertFalse(Canvas.isPresentationVisible(true, false, true, true));

@@ -109,12 +109,22 @@ public class Display {
 	}
 
 	/**
-	 * Begins a new Android/MIDP foreground request. The request is committed at the LCDUI barrier so host presentation never waits for
-	 * MIDlet.startApp(), and a superseded host edge cannot regain foreground.
+	 * Starts a new host foreground edge. It remains pending until the LCDUI barrier
+	 * grants this exact generation, independently of guest startApp() completion.
 	 */
-	public static synchronized long requestForeground() {
-		runtimeForegroundRequested = true;
-		return ++runtimeForegroundGeneration;
+	public static long requestForeground() {
+		Display current;
+		long generation;
+		synchronized (Display.class) {
+			runtimeForegroundRequested = true;
+			runtimeForegroundGranted = false;
+			generation = ++runtimeForegroundGeneration;
+			current = instance;
+		}
+		if (current != null) {
+			current.updateForegroundGranted(false, generation);
+		}
+		return generation;
 	}
 
 	/**
