@@ -42,6 +42,10 @@ public class CompoundListAdapter extends CompoundAdapter implements ListAdapter 
 	public CompoundListAdapter(int type, ArrayList<CompoundItem> items) {
 		super(items);
 		Context context = ContextHolder.getActivity();
+		if (context == null) {
+			// MIDlets may construct LCDUI objects before an Activity is attached.
+			context = ContextHolder.getAppContext();
+		}
 		int accent = LegacyThemeColors.accent(context);
 		highlightColor = (accent & 0x00FFFFFF) | (0x33 << 24);
 		switch (type) {
