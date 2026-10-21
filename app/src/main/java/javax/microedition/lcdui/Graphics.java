@@ -220,6 +220,9 @@ public class Graphics implements
 	}
 
 	public void setColor(int r, int g, int b) {
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+			throw new IllegalArgumentException("RGB components must be in range 0..255");
+		}
 		drawPaint.setARGB(255, r, g, b);
 		fillPaint.setARGB(255, r, g, b);
 	}
@@ -262,6 +265,9 @@ public class Graphics implements
 	}
 
 	public void setStrokeStyle(int stroke) {
+		if (stroke != SOLID && stroke != DOTTED) {
+			throw new IllegalArgumentException("Invalid stroke style: " + stroke);
+		}
 		this.stroke = stroke;
 
 		if (stroke == DOTTED) {
