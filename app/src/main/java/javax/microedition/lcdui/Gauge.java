@@ -39,7 +39,7 @@ public class Gauge extends Item {
 	private final SeekBarListener seekBarListener = new SeekBarListener();
 
 	// Guest-visible state is authoritative, including while no Android View exists.
-	private volatile ProgressBar progressBar;
+	volatile ProgressBar progressBar;
 	private int value;
 	private int maxValue;
 	// Invalidates queued incremental frames after a mode/value transition.
