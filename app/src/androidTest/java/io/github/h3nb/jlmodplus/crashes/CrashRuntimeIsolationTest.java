@@ -425,6 +425,15 @@ public class CrashRuntimeIsolationTest {
 
 	@Test
 	public void hungUserExitReturnsToLibraryAndTerminatesWithoutCrashReport() throws Exception {
+		assertHostExitTerminatesHungCallback(LifecycleMidlet.MODE_DESTROY_HANG);
+	}
+
+	@Test
+	public void hungStartAppCanExitWithoutExecutingDestroyAppConcurrently() throws Exception {
+		assertHostExitTerminatesHungCallback(LifecycleMidlet.MODE_START_HANG);
+	}
+
+	private static void assertHostExitTerminatesHungCallback(String mode) throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		String processName = context.getPackageName() + ":midlet";
 		int mainPid = Process.myPid();
@@ -440,7 +449,7 @@ public class CrashRuntimeIsolationTest {
 			prepareLifecycleFixture(context, root, appDir);
 			assertTrue(preferences.edit()
 					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
-			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_DESTROY_HANG, marker);
+			writeLifecycleManifest(appDir, mode, marker);
 			launchLifecycleMidlet(context, appDir);
 			awaitMarker(marker);
 			awaitActivityOnTop(context, MicroActivity.class);
@@ -458,6 +467,46 @@ public class CrashRuntimeIsolationTest {
 			assertEquals(MidletSessionJournal.Stage.COMPLETED, journal.stage);
 			assertEquals(MidletSessionJournal.Outcome.USER_STOP, journal.outcome);
 			assertNoNewLifecycleFailure(context, baselineIds);
+		} finally {
+			killRemoteProcessBestEffort(context, processName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
+	public void canvasCanBecomeShownAndPaintWhileStartAppIsStillRunning() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String processName = context.getPackageName() + ":midlet";
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File marker = new File(root, "lifecycle.marker");
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			for (String mode : new String[]{
+					LifecycleMidlet.MODE_SHOWN_DURING_START,
+					LifecycleMidlet.MODE_PAINT_DURING_START}) {
+				clearMarker(marker);
+				writeLifecycleManifest(appDir, mode, marker);
+				launchLifecycleMidlet(context, appDir);
+				awaitMarker(marker);
+				MidletSessionStore.State state = MidletSessionStore.read(context);
+				assertNotNull(state);
+				awaitJournalStage(context, state.getGeneration(), MidletSessionJournal.Stage.RUNNING);
+				launchLifecycleControl(context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY);
+				assertRemoteProcessStops(context, processName);
+				assertNoNewLifecycleFailure(context, baselineIds);
+			}
 		} finally {
 			killRemoteProcessBestEffort(context, processName);
 			MidletSessionStore.clear(context);
