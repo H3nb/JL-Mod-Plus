@@ -768,6 +768,11 @@ public class MicroActivity extends AppCompatActivity {
 			display.setHostVisible(true);
 		}
 		Display.postAfterPendingCallbacks(() -> {
+			Log.d("PR181Trace", "barrier gen=" + foregroundGeneration
+					+ " current=" + (ContextHolder.getActivity() == this)
+					+ " visible=" + isVisible()
+					+ " hasHeap=" + MidletThread.hasRuntimeHeap()
+					+ " selected=" + MidletThread.isRuntimeSelected());
 			if (ContextHolder.getActivity() != this || !isVisible()
 					|| (MidletThread.hasRuntimeHeap() && !MidletThread.isRuntimeSelected())
 					|| !Display.grantForeground(foregroundGeneration)) {

@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import android.util.Log;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.io.Connector;
@@ -119,14 +120,21 @@ public final class LifecycleMidlet extends MIDlet {
 			// startup dependencies without embedding either game's implementation.
 			boolean awaitPaint = MODE_PAINT_DURING_START.equals(mode);
 			AtomicBoolean painted = new AtomicBoolean();
+			Log.d("PR181Trace", "fixture before Canvas mode=" + mode);
 			Canvas canvas = new Canvas() {
 				@Override
 				protected void paint(Graphics graphics) {
 					painted.set(true);
 				}
 			};
+			Log.d("PR181Trace", "fixture after Canvas ctor");
 			Display.getDisplay(this).setCurrent(canvas);
+			Log.d("PR181Trace", "fixture after setCurrent");
 			for (int attempt = 0; attempt < 100; attempt++) {
+				if (attempt == 0 || attempt == 40 || attempt == 95) {
+					Log.d("PR181Trace", "fixture attempt=" + attempt
+							+ " shown=" + canvas.isShown() + " painted=" + painted.get());
+				}
 				if (canvas.isShown() && (!awaitPaint || painted.get())) {
 					writeMarker(getAppProperty(MARKER_PROPERTY));
 					return;

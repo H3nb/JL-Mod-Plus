@@ -20,6 +20,7 @@
 package javax.microedition.lcdui;
 
 import androidx.appcompat.app.AlertDialog;
+import android.util.Log;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -120,6 +121,7 @@ public class Display {
 			runtimeForegroundGranted = false;
 			generation = ++runtimeForegroundGeneration;
 			current = instance;
+			Log.d("PR181Trace", "request gen=" + generation + " instance=" + (current != null));
 		}
 		if (current != null) {
 			current.updateForegroundGranted(false, generation);
@@ -173,6 +175,7 @@ public class Display {
 			}
 			runtimeForegroundGranted = true;
 			current = instance;
+			Log.d("PR181Trace", "grant gen=" + generation + " instance=" + (current != null));
 		}
 		if (current != null) {
 			current.updateForegroundGranted(true, generation);
