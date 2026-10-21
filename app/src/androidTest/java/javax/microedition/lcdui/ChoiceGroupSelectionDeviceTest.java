@@ -3,7 +3,7 @@ package javax.microedition.lcdui;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -38,10 +38,20 @@ public class ChoiceGroupSelectionDeviceTest {
 		assertEquals(0, choice.getSelectedIndex());
 		choice.setSelectedFlags(new boolean[]{true, true});
 		assertEquals(0, choice.getSelectedIndex());
-		assertThrows(IllegalArgumentException.class,
-				() -> choice.setSelectedFlags(new boolean[1]));
-		assertThrows(NullPointerException.class,
-				() -> choice.setSelectedFlags(null));
+		try {
+			choice.setSelectedFlags(new boolean[1]);
+			fail("Too-short selection array must be rejected");
+		} catch (IllegalArgumentException expected) {
+			// MIDP requires rejection before changing the selection.
+		}
+		assertEquals(0, choice.getSelectedIndex());
+		try {
+			choice.setSelectedFlags(null);
+			fail("Null selection array must be rejected");
+		} catch (NullPointerException expected) {
+			// Explicit catch avoids relying on a newer host-only JUnit helper.
+		}
+		assertEquals(0, choice.getSelectedIndex());
 	}
 
 	@Test
