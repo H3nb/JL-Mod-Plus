@@ -81,7 +81,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private volatile Throwable primaryFailureThrowable;
 	private boolean primaryFailureCaptureAttempted;
 	private MidletSessionJournal.Outcome requestedTerminationOutcome;
-	private long displayForegroundGeneration;
 	private volatile boolean runtimeSelected = true;
 	private boolean returnToLibraryOnTermination = true;
 	private volatile boolean terminalFinalized;
@@ -347,7 +346,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		send(INIT);
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null && activity.isVisible()) {
-			long foregroundGeneration = Display.currentForegroundRequestGeneration();
+			long foregroundGeneration = Display.currentGrantedForegroundGeneration();
 			if (foregroundGeneration != 0L) {
 				send(AMS_FOREGROUND, foregroundGeneration);
 			}
@@ -372,10 +371,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	@Override
 	public boolean handleMessage(@NonNull Message msg) {
 		if (msg.what == AMS_FOREGROUND && msg.obj instanceof Long generation) {
-			if (!runtimeSelected || !Display.isForegroundRequestCurrent(generation)) {
+			if (!runtimeSelected || Display.currentGrantedForegroundGeneration() != generation) {
 				return true;
 			}
-			displayForegroundGeneration = generation;
 		}
 		handleSignal(msg.what);
 		return true;
@@ -386,7 +384,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			case INIT -> initializeMidlet();
 			case AMS_FOREGROUND -> {
 				lifecycle.setAmsForeground(true);
-				activateAndReconcileDisplay();
+				activateIfNeeded();
 			}
 			case AMS_BACKGROUND -> {
 				lifecycle.setAmsForeground(false);
@@ -400,7 +398,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				}
 			}
 			case GUEST_DESTROYED -> finishSelfDestructionIfNeeded();
-			case RESUME_REQUEST -> activateAndReconcileDisplay();
+			case RESUME_REQUEST -> activateIfNeeded();
 		}
 	}
 
@@ -435,25 +433,13 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (finishSelfDestructionIfNeeded()) {
 			return;
 		}
-		activateAndReconcileDisplay();
-	}
-
-	private void activateAndReconcileDisplay() {
-		if (!runtimeSelected) {
-			return;
-		}
 		activateIfNeeded();
-		if (!runtimeSelected || lifecycle.isDestroyed() || !lifecycle.isAmsForeground()) {
-			return;
-		}
-		MidletLifecycleState.State state = lifecycle.state();
-		if (state == MidletLifecycleState.State.ACTIVE
-				|| (state == MidletLifecycleState.State.PAUSED && lifecycle.isResumeRequired())) {
-			Display.grantForeground(displayForegroundGeneration);
-		}
 	}
 
 	private void activateIfNeeded() {
+		if (!runtimeSelected) {
+			return;
+		}
 		MidletLifecycleState.StartAction action =
 				lifecycle.tryBeginStart(microLoader.params.skipResumeCall);
 		if (action == MidletLifecycleState.StartAction.NONE) {

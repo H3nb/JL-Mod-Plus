@@ -755,8 +755,8 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	/**
-	 * Android visibility is only the host fact. AMS activation is queued behind earlier LCDUI
-	 * callbacks; MidletMain grants display foreground only after startApp() succeeds.
+	 * Commit LCDUI foreground after earlier callbacks, independently of MIDlet.startApp().
+	 * MIDlet lifecycle callbacks remain serialized by MidletMain.
 	 */
 	void beginAmsForegroundTransition() {
 		if (ContextHolder.getActivity() != this) {
@@ -767,8 +767,14 @@ public class MicroActivity extends AppCompatActivity {
 		if (display != null) {
 			display.setHostVisible(true);
 		}
-		Display.postAfterPendingCallbacks(
-				() -> MidletThread.amsForeground(foregroundGeneration));
+		Display.postAfterPendingCallbacks(() -> {
+			if (ContextHolder.getActivity() != this || !isVisible()
+					|| (MidletThread.hasRuntimeHeap() && !MidletThread.isRuntimeSelected())
+					|| !Display.grantForeground(foregroundGeneration)) {
+				return;
+			}
+			MidletThread.amsForeground(foregroundGeneration);
+		});
 	}
 
 	/**

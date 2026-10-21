@@ -74,6 +74,8 @@ public class Display {
 	private final Object stateLock = new Object();
 	private boolean hostVisible;
 	private boolean displayForeground;
+	/** Rejects presentation updates from superseded Android foreground edges. */
+	private long appliedForegroundGeneration;
 
 	/**
 	 * Applies the Display-owned presentation facts while their transaction lock is still held.
@@ -87,13 +89,14 @@ public class Display {
 
 	public static synchronized Display getDisplay(MIDlet midlet) {
 		if (instance == null && midlet != null) {
-			instance = new Display(runtimeForegroundGranted);
+			instance = new Display(runtimeForegroundGranted, runtimeForegroundGeneration);
 		}
 		return instance;
 	}
 
-	private Display(boolean foregroundGranted) {
+	private Display(boolean foregroundGranted, long generation) {
 		displayForeground = foregroundGranted;
+		appliedForegroundGeneration = generation;
 		MicroActivity activity = ContextHolder.getActivity();
 		hostVisible = activity != null && activity.isVisible();
 	}
@@ -106,8 +109,8 @@ public class Display {
 	}
 
 	/**
-	 * Begins a new Android/MIDP foreground request. The returned generation must be carried through
-	 * the serialized AMS callback so a slow earlier startApp() cannot grant a newer host edge.
+	 * Begins a new Android/MIDP foreground request. The request is committed at the LCDUI barrier so host presentation never waits for
+	 * MIDlet.startApp(), and a superseded host edge cannot regain foreground.
 	 */
 	public static synchronized long requestForeground() {
 		runtimeForegroundRequested = true;
@@ -120,20 +123,27 @@ public class Display {
 	 */
 	public static void revokeForeground() {
 		Display current;
+		long generation;
 		synchronized (Display.class) {
 			runtimeForegroundRequested = false;
 			runtimeForegroundGranted = false;
-			runtimeForegroundGeneration++;
+			generation = ++runtimeForegroundGeneration;
 			current = instance;
 		}
 		if (current != null) {
-			current.updateForegroundGranted(false);
+			current.updateForegroundGranted(false, generation);
 		}
+	}
+
+	/** Returns only foreground ownership committed by the LCDUI barrier, not a pending request. */
+	public static synchronized long currentGrantedForegroundGeneration() {
+		return runtimeForegroundRequested && runtimeForegroundGranted
+				? runtimeForegroundGeneration : 0L;
 	}
 
 	/**
 	 * Grants display ownership only if the activation still belongs to the latest foreground edge.
-	 * This is the stale-completion fence for rapid Home/return while startApp() is still executing.
+	 * This fences rapid Home/return even when startApp() has not returned.
 	 */
 	public static synchronized long currentForegroundRequestGeneration() {
 		return runtimeForegroundRequested ? runtimeForegroundGeneration : 0L;
@@ -155,13 +165,17 @@ public class Display {
 			current = instance;
 		}
 		if (current != null) {
-			current.updateForegroundGranted(true);
+			current.updateForegroundGranted(true, generation);
 		}
 		return true;
 	}
 
-	private void updateForegroundGranted(boolean granted) {
+	private void updateForegroundGranted(boolean granted, long generation) {
 		synchronized (stateLock) {
+			if (generation < appliedForegroundGeneration) {
+				return;
+			}
+			appliedForegroundGeneration = generation;
 			if (displayForeground == granted) {
 				return;
 			}
