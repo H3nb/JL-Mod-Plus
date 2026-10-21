@@ -773,7 +773,9 @@ public class MicroActivity extends AppCompatActivity {
 					+ " visible=" + isVisible()
 					+ " hasHeap=" + MidletThread.hasRuntimeHeap()
 					+ " selected=" + MidletThread.isRuntimeSelected());
-			if (ContextHolder.getActivity() != this || !isVisible()
+			// onStart() may enqueue this barrier before LifecycleRegistry publishes STARTED.
+			// The generation fence and current-host check cover onStop and host replacement.
+			if (ContextHolder.getActivity() != this
 					|| (MidletThread.hasRuntimeHeap() && !MidletThread.isRuntimeSelected())
 					|| !Display.grantForeground(foregroundGeneration)) {
 				return;
