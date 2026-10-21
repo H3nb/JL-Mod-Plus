@@ -15,14 +15,35 @@ public class CanvasVisibilityTest {
 		Display.initDisplay();
 		long firstForeground = Display.requestForeground();
 		assertEquals(firstForeground, Display.currentForegroundRequestGeneration());
+		assertEquals("Request alone is not a grant", 0L,
+				Display.currentGrantedForegroundGeneration());
 		Display.revokeForeground();
 		assertEquals(0L, Display.currentForegroundRequestGeneration());
 		long returnedForeground = Display.requestForeground();
 
 		assertFalse(Display.isForegroundRequestCurrent(firstForeground));
 		assertFalse(Display.grantForeground(firstForeground));
+		assertEquals(0L, Display.currentGrantedForegroundGeneration());
 		assertTrue(Display.isForegroundRequestCurrent(returnedForeground));
 		assertTrue(Display.grantForeground(returnedForeground));
+		assertEquals(returnedForeground, Display.currentGrantedForegroundGeneration());
+		Display.revokeForeground();
+		assertEquals(0L, Display.currentGrantedForegroundGeneration());
+	}
+
+	@Test
+	public void renewedHostForegroundMustPassItsOwnBarrier() {
+		Display.initDisplay();
+		long first = Display.requestForeground();
+		assertTrue(Display.grantForeground(first));
+		assertEquals(first, Display.currentGrantedForegroundGeneration());
+
+		long second = Display.requestForeground();
+		assertEquals("A new request invalidates the previous committed grant", 0L,
+				Display.currentGrantedForegroundGeneration());
+		assertFalse(Display.grantForeground(first));
+		assertTrue(Display.grantForeground(second));
+		assertEquals(second, Display.currentGrantedForegroundGeneration());
 	}
 
 	@Test

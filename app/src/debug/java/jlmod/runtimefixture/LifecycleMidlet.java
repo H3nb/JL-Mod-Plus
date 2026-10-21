@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.file.FileConnection;
@@ -46,6 +47,9 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_WORKER_DESTROY = "worker-destroy";
 	public static final String MODE_HOLD = "hold";
 	public static final String MODE_DESTROY_HANG = "destroy-hang";
+	public static final String MODE_START_HANG = "start-hang";
+	public static final String MODE_SHOWN_DURING_START = "shown-during-start";
+	public static final String MODE_PAINT_DURING_START = "paint-during-start";
 	public static final String MODE_BACKGROUND = "background";
 	public static final String MODE_END_KEY_BACKGROUND = "end-key-background";
 	public static final String MODE_CSI_STYLE_EXIT = "csi-style-exit";
@@ -101,6 +105,40 @@ public final class LifecycleMidlet extends MIDlet {
 		if (MODE_HOLD.equals(mode) || MODE_DESTROY_HANG.equals(mode)) {
 			writeMarker(getAppProperty(MARKER_PROPERTY));
 			return;
+		}
+		if (MODE_START_HANG.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			for (;;) {
+				try {
+					Thread.sleep(60_000L);
+				} catch (InterruptedException ignored) {}
+			}
+		}
+		if (MODE_SHOWN_DURING_START.equals(mode) || MODE_PAINT_DURING_START.equals(mode)) {
+			// These two MIDlets characterize the AoE isShown() and Tankzors paint-driven
+			// startup dependencies without embedding either game's implementation.
+			boolean awaitPaint = MODE_PAINT_DURING_START.equals(mode);
+			AtomicBoolean painted = new AtomicBoolean();
+			Canvas canvas = new Canvas() {
+				@Override
+				protected void paint(Graphics graphics) {
+					painted.set(true);
+				}
+			};
+			Display.getDisplay(this).setCurrent(canvas);
+			for (int attempt = 0; attempt < 100; attempt++) {
+				if (canvas.isShown() && (!awaitPaint || painted.get())) {
+					writeMarker(getAppProperty(MARKER_PROPERTY));
+					return;
+				}
+				try {
+					Thread.sleep(50L);
+				} catch (InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+					throw new IllegalStateException("Startup fixture interrupted", interrupted);
+				}
+			}
+			throw new IllegalStateException("Canvas was not presented during startApp()");
 		}
 		if (MODE_BACKGROUND.equals(mode)) {
 			Display display = Display.getDisplay(this);
