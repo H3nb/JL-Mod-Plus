@@ -2,6 +2,8 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2021-2026 Yury Kharchenko
  *
+ * Modified for JL-Mod Plus.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -43,6 +45,7 @@ public class ImageItem extends Item {
 	}
 
 	public ImageItem(String label, Image image, int layout, String altText, int appearanceMode) {
+		validateAppearanceMode(appearanceMode);
 		setLabel(label);
 		setImage(image);
 		setLayout(layout);

@@ -3,6 +3,8 @@
  * Copyright 2018 Nikita Shakarun
  * Copyright 2022-2023 Yury Kharchenko
  *
+ * Modified for JL-Mod Plus.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,6 +44,12 @@ public class Command implements Comparable<Command> {
 	}
 
 	public Command(String shortLabel, String longLabel, int commandType, int priority) {
+		if (shortLabel == null) {
+			throw new NullPointerException("shortLabel");
+		}
+		if (commandType < SCREEN || commandType > ITEM) {
+			throw new IllegalArgumentException("Invalid command type: " + commandType);
+		}
 		this.shortLabel = shortLabel;
 		this.longLabel = longLabel;
 		this.commandType = commandType;

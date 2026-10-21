@@ -3,6 +3,8 @@
  * Copyright 2017-2019 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
  *
+ * Modified for JL-Mod Plus.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -328,6 +330,9 @@ public class List extends Screen implements Choice {
 
 	@Override
 	public void setFitPolicy(int fitPolicy) {
+		if (fitPolicy < TEXT_WRAP_DEFAULT || fitPolicy > TEXT_WRAP_OFF) {
+			throw new IllegalArgumentException("Invalid fit policy: " + fitPolicy);
+		}
 		this.fitPolicy = fitPolicy;
 	}
 

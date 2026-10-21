@@ -2,6 +2,8 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2019-2026 Yury Kharchenko
  *
+ * Modified for JL-Mod Plus.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -56,6 +58,9 @@ public abstract class Item {
 
 	private static final int HORIZONTAL_GRAVITY_MASK = 3;
 	private static final int VERTICAL_GRAVITY_MASK = 48;
+	private static final int VALID_LAYOUT_MASK = LAYOUT_CENTER | LAYOUT_VCENTER
+			| LAYOUT_NEWLINE_BEFORE | LAYOUT_NEWLINE_AFTER | LAYOUT_SHRINK | LAYOUT_EXPAND
+			| LAYOUT_VSHRINK | LAYOUT_VEXPAND | LAYOUT_2;
 
 	final ArrayList<Command> commands = new ArrayList<>();
 	ItemCommandListener listener = null;
@@ -187,7 +192,16 @@ public abstract class Item {
 		if (owner instanceof Alert) {
 			throw new IllegalStateException("Item is owned by Alert");
 		}
+		if ((value & ~VALID_LAYOUT_MASK) != 0) {
+			throw new IllegalArgumentException("Invalid layout directives: " + value);
+		}
 		layoutMode = value;
+	}
+
+	static void validateAppearanceMode(int mode) {
+		if (mode != PLAIN && mode != HYPERLINK && mode != BUTTON) {
+			throw new IllegalArgumentException("Invalid appearance mode: " + mode);
+		}
 	}
 
 	public void setPreferredSize(int width, int height) {
