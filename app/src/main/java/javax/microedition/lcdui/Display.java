@@ -248,8 +248,8 @@ public class Display {
 	}
 
 	/**
-	 * Posts a non-blocking serialization barrier behind all LCDUI callbacks already queued.
-	 * The runnable itself must only signal another owner; it must not execute guest lifecycle code.
+	 * Posts a non-blocking barrier after already queued LCDUI callbacks. Its continuation may
+	 * commit host presentation ownership or signal AMS, but never executes guest lifecycle code.
 	 */
 	public static void postAfterPendingCallbacks(Runnable runnable) {
 		queue.postBarrier(runnable);
