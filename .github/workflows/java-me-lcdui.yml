@@ -9,6 +9,7 @@ on:
       - 'app/src/main/java/javax/microedition/lcdui/ChoiceGroup.java'
       - 'app/src/main/java/javax/microedition/lcdui/list/**'
       - 'app/src/androidTest/java/javax/microedition/lcdui/MidpStageBDeviceTest.java'
+      - 'app/src/androidTest/java/javax/microedition/lcdui/ChoiceGroupSelectionDeviceTest.java'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/midp/**'
       - '.github/workflows/java-me-lcdui.yml'
   workflow_dispatch:
