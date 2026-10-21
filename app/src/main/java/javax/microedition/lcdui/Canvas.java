@@ -705,9 +705,6 @@ public abstract class Canvas extends Displayable {
 			this.displayForeground = displayForeground;
 			nextVisible = isPresentationVisible(
 					this.currentDisplayable, this.hostVisible, this.displayForeground, surfaceUsable);
-			Log.d("PR181Trace", "canvas current=" + currentDisplayable
-					+ " host=" + hostVisible + " fg=" + displayForeground
-					+ " surface=" + surfaceUsable + " shown=" + nextVisible);
 			changed = visible != nextVisible;
 			if (changed) {
 				setEffectiveVisibilityLocked(nextVisible);
@@ -723,7 +720,6 @@ public abstract class Canvas extends Displayable {
 		boolean changed;
 		synchronized (visibilityLock) {
 			surfaceUsable = usable;
-			Log.d("PR181Trace", "surface usable=" + usable);
 			nextVisible = isPresentationVisible(
 					currentDisplayable, hostVisible, displayForeground, surfaceUsable);
 			changed = visible != nextVisible;
@@ -1034,7 +1030,6 @@ public abstract class Canvas extends Displayable {
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	public View getDisplayableView() {
-		Log.d("PR181Trace", "getDisplayableView graphicsMode=" + settings.graphicsMode);
 		if (layout == null) {
 			layout = (LinearLayout) super.getDisplayableView();
 			MicroActivity activity = ContextHolder.getActivity();

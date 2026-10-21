@@ -768,13 +768,8 @@ public class MicroActivity extends AppCompatActivity {
 			display.setHostVisible(true);
 		}
 		Display.postAfterPendingCallbacks(() -> {
-			Log.d("PR181Trace", "barrier gen=" + foregroundGeneration
-					+ " current=" + (ContextHolder.getActivity() == this)
-					+ " visible=" + isVisible()
-					+ " hasHeap=" + MidletThread.hasRuntimeHeap()
-					+ " selected=" + MidletThread.isRuntimeSelected());
-			// onStart() may enqueue this barrier before LifecycleRegistry publishes STARTED.
-			// The generation fence and current-host check cover onStop and host replacement.
+			// onStart() can enqueue this barrier before LifecycleRegistry publishes STARTED.
+			// The committed generation and current-host checks already fence out stale grants.
 			if (ContextHolder.getActivity() != this
 					|| (MidletThread.hasRuntimeHeap() && !MidletThread.isRuntimeSelected())
 					|| !Display.grantForeground(foregroundGeneration)) {
