@@ -34,84 +34,150 @@ public class Gauge extends Item {
 	public static final int INCREMENTAL_UPDATING = 3;
 	public static final int INDEFINITE = -1;
 
+
 	private final boolean interactive;
 	private final SeekBarListener seekBarListener = new SeekBarListener();
 
-	ProgressBar progressBar;
+	// Guest-visible state is authoritative, including while no Android View exists.
+	private volatile ProgressBar progressBar;
 	private int value;
 	private int maxValue;
+	// Invalidates queued incremental frames after a mode/value transition.
+	private long animationEpoch;
 
 	public Gauge(String label, boolean interactive, int maxValue, int initialValue) {
 		setLabel(label);
-
 		this.interactive = interactive;
 		setMaxValue(maxValue);
 		setValue(initialValue);
 	}
 
-	public int getValue() {
+	public synchronized int getValue() {
 		return value;
 	}
 
-	public void setValue(int value) {
-		this.value = value;
-		if (this.maxValue == INDEFINITE && !interactive) {
-			return;
-		}
-		ViewHandler.postEvent(new SimpleEvent() {
-			@Override
-			public void process() {
-				ProgressBar progressBar = Gauge.this.progressBar;
-				if (progressBar != null) {
-					progressBar.setProgress(value);
-				}
-			}
-		});
-	}
-
-	public int getMaxValue() {
+	public synchronized int getMaxValue() {
 		return maxValue;
-	}
-
-	public void setMaxValue(int maxValue) {
-		this.maxValue = maxValue;
-		ViewHandler.postEvent(new SimpleEvent() {
-			@Override
-			public void process() {
-				ProgressBar progressBar = Gauge.this.progressBar;
-				if (progressBar == null) {
-					return;
-				}
-				if (maxValue != INDEFINITE || interactive) {
-					progressBar.setIndeterminate(false);
-					progressBar.setMax(maxValue);
-				} else {
-					progressBar.setIndeterminate(true);
-				}
-			}
-		});
 	}
 
 	public boolean isInteractive() {
 		return interactive;
 	}
 
+	public synchronized void setValue(int newValue) {
+		if (maxValue == INDEFINITE) {
+			if (newValue < CONTINUOUS_IDLE || newValue > INCREMENTAL_UPDATING) {
+				throw new IllegalArgumentException("Invalid indefinite Gauge state: " + newValue);
+			}
+		} else {
+			newValue = Math.max(0, Math.min(newValue, maxValue));
+		}
+
+		if (value == INCREMENTAL_UPDATING && newValue != INCREMENTAL_UPDATING) {
+			animationEpoch++;
+		}
+		value = newValue;
+
+		// Each call with INCREMENTAL_UPDATING is a frame advance, even when
+		// getValue() continues to return the same integer.
+		postViewUpdate(maxValue == INDEFINITE && newValue == INCREMENTAL_UPDATING);
+	}
+
+	public synchronized void setMaxValue(int newMax) {
+		if (interactive ? newMax <= 0 : newMax != INDEFINITE && newMax <= 0) {
+			throw new IllegalArgumentException("Invalid Gauge maximum: " + newMax);
+		}
+
+		int oldMax = maxValue;
+		if (oldMax != newMax) {
+			animationEpoch++;
+			if (oldMax == INDEFINITE) {
+				if (newMax != INDEFINITE) {
+					value = 0;
+				}
+			} else if (newMax == INDEFINITE) {
+				value = CONTINUOUS_IDLE;
+			} else {
+				value = Math.min(value, newMax);
+			}
+		}
+		maxValue = newMax;
+		postViewUpdate(false);
+	}
+
+	/**
+	 * UI state is a projection of the current guest model. Queued snapshots
+	 * must never restore older values after more recent MIDlet calls.
+	 */
+	private void postViewUpdate(boolean incrementalStep) {
+		ProgressBar target = progressBar;
+		if (target == null) {
+			return;
+		}
+		long epoch = animationEpoch;
+		ViewHandler.postEvent(() -> {
+			if (progressBar != target) {
+				return;
+			}
+			int currentMax;
+			int currentValue;
+			boolean step;
+			synchronized (Gauge.this) {
+				currentMax = maxValue;
+				currentValue = value;
+				step = incrementalStep && animationEpoch == epoch;
+			}
+			updateProgressBar(target, currentMax, currentValue, step);
+		});
+	}
+
+	private void updateProgressBar(ProgressBar bar, int currentMax, int currentValue,
+			boolean incrementalStep) {
+		if (currentMax != INDEFINITE) {
+			bar.setIndeterminate(false);
+			bar.setMax(currentMax);
+			bar.setProgress(currentValue);
+			return;
+		}
+
+		if (currentValue == CONTINUOUS_RUNNING) {
+			bar.setIndeterminate(true);
+			return;
+		}
+
+		// Continuous idle and incremental idle are static. For incremental
+		// updating, advance an activity frame (not a completion percentage).
+		boolean wasIndeterminate = bar.isIndeterminate();
+		bar.setIndeterminate(false);
+		bar.setMax(4);
+		if (wasIndeterminate || currentValue == CONTINUOUS_IDLE) {
+			bar.setProgress(0);
+		}
+		if (currentValue == INCREMENTAL_UPDATING && incrementalStep) {
+			bar.setProgress(bar.getProgress() % 4 + 1);
+		}
+	}
+
 	@Override
 	View getItemContentView() {
 		if (progressBar == null) {
 			Context activity = ContextHolder.getActivity();
+			ProgressBar bar;
 			if (interactive) {
-				progressBar = new AppCompatSeekBar(activity);
-				((SeekBar) progressBar).setOnSeekBarChangeListener(seekBarListener);
+				bar = new AppCompatSeekBar(activity);
+				((SeekBar) bar).setOnSeekBarChangeListener(seekBarListener);
 			} else {
-				progressBar = new ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal);
-				progressBar.setIndeterminate(maxValue == INDEFINITE);
+				bar = new ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal);
 			}
-
-			progressBar.setMax(maxValue);
-			progressBar.setProgress(value);
+			int currentMax;
+			int currentValue;
+			synchronized (this) {
+				currentMax = maxValue;
+				currentValue = value;
+				progressBar = bar;
+			}
+			updateProgressBar(bar, currentMax, currentValue, false);
 		}
-
 		return progressBar;
 	}
 
@@ -123,8 +189,16 @@ public class Gauge extends Item {
 	private class SeekBarListener implements SeekBar.OnSeekBarChangeListener {
 		@Override
 		public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-			if (fromUser) {
-				value = progress;
+			if (!fromUser) {
+				return;
+			}
+			boolean changed;
+			synchronized (Gauge.this) {
+				int normalized = Math.max(0, Math.min(progress, maxValue));
+				changed = value != normalized;
+				value = normalized;
+			}
+			if (changed) {
 				postStateChanged();
 			}
 		}
