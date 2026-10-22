@@ -19,6 +19,7 @@ public final class PlatformRequestHandler {
     private static final Handler UI = new Handler(Looper.getMainLooper());
     private static long generation;
     private static Runnable pendingDismiss;
+    private static MicroActivity pendingHost;
 
     public static void cancelPending() {
         UI.post(() -> {
@@ -27,9 +28,19 @@ public final class PlatformRequestHandler {
         });
     }
 
+    /** Only the Activity that owns the choice can cancel it during host recreation. */
+    public static void cancelForHost(MicroActivity host) {
+        UI.post(() -> {
+            if (pendingHost != host) return;
+            generation++;
+            dismissPending();
+        });
+    }
+
     private static void dismissPending() {
         Runnable dismiss = pendingDismiss;
         pendingDismiss = null;
+        pendingHost = null;
         if (dismiss != null) dismiss.run();
     }
 
@@ -43,11 +54,13 @@ public final class PlatformRequestHandler {
                     () -> {
                         if (request != generation) return;
                         pendingDismiss = null;
+                        pendingHost = null;
                         launch(host, install);
                     },
                     () -> {
                         if (request != generation) return;
                         pendingDismiss = null;
+                        pendingHost = null;
                         Intent chooser = Intent.createChooser(external,
                                 host.getString(R.string.platform_package_browser));
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -57,8 +70,12 @@ public final class PlatformRequestHandler {
                         launch(host, chooser);
                     },
                     () -> {
-                        if (request == generation) pendingDismiss = null;
+                        if (request == generation) {
+                            pendingDismiss = null;
+                            pendingHost = null;
+                        }
                     });
+            if (pendingDismiss != null) pendingHost = host;
         });
     }
 
