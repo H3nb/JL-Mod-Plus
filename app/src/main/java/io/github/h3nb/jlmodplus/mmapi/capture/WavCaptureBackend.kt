@@ -28,22 +28,7 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
     private var samples = 0L
 
     override fun begin(file: File) {
-        MicrophoneAccess.require()
         try {
-            val minimum = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT)
-            if (minimum <= 0) throw MediaException("Microphone format unavailable")
-            val context = ContextHolder.getAppContext()
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
-                PackageManager.PERMISSION_GRANTED) throw SecurityException("Microphone permission revoked")
-            val record = AudioRecord(MediaRecorder.AudioSource.MIC, RATE,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                maxOf(minimum * 2, 4096))
-            if (record.state != AudioRecord.STATE_INITIALIZED) {
-                record.release()
-                throw MediaException("Microphone could not be initialized")
-            }
-            device = record
             val writer = RandomAccessFile(file, "rw")
             output = writer
             writer.setLength(0)
@@ -61,7 +46,8 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
     override fun resume() {
         if (capturing) return
         readError?.let { throw MediaException("Microphone read failed: " + it.message) }
-        val record = device ?: throw MediaException("Microphone is unavailable")
+        MicrophoneAccess.require()
+        val record = device ?: openDevice().also { device = it }
         try {
             record.startRecording()
             if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
@@ -114,6 +100,30 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
         }
         reader = null
         readError?.let { throw MediaException("Microphone capture failed: " + it.message) }
+    }
+
+    /** Release the exclusive input device without discarding previously recorded bytes. */
+    fun deallocate() {
+        pause()
+        device?.release()
+        device = null
+    }
+
+    private fun openDevice(): AudioRecord {
+        val minimum = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT)
+        if (minimum <= 0) throw MediaException("Microphone format unavailable")
+        val context = ContextHolder.getAppContext()
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED) throw SecurityException("Microphone permission revoked")
+        val record = AudioRecord(MediaRecorder.AudioSource.MIC, RATE,
+            AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
+            maxOf(minimum * 2, 4096))
+        if (record.state != AudioRecord.STATE_INITIALIZED) {
+            record.release()
+            throw MediaException("Microphone could not be initialized")
+        }
+        return record
     }
 
     override fun finish() {
