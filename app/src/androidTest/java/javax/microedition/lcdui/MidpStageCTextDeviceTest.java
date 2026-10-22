@@ -68,6 +68,8 @@ public class MidpStageCTextDeviceTest {
             EditText editor = model.getView(InstrumentationRegistry.getInstrumentation().getTargetContext(), null);
             assertTrue((editor.getImeOptions() & EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0);
             assertNotNull(editor.getTransformationMethod());
+            model.setConstraints(TextField.ANY | TextField.PASSWORD | TextField.UNEDITABLE);
+            assertFalse(editor.isTextSelectable());
             model.setConstraints(TextField.ANY);
             assertEquals(0, editor.getImeOptions() & EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
             assertNull(editor.getTransformationMethod());

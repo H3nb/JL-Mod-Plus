@@ -196,7 +196,8 @@ class TextFieldImpl {
             boolean editable = (settings & TextField.UNEDITABLE) == 0;
             editor.setFocusableInTouchMode(editable);
             editor.setFocusable(editable);
-            editor.setTextIsSelectable(!editable);
+            // Read-only text may be selectable, but copying an obscured password must not reveal it.
+            editor.setTextIsSelectable(!editable && !password);
             int options = editor.getImeOptions() & ~EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                     (settings & (TextField.PASSWORD | TextField.SENSITIVE)) != 0) {
