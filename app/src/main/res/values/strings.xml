@@ -1169,6 +1169,7 @@
     <string name="runtime_camera_use_front">Use front camera</string>
     <string name="runtime_camera_use_rear">Use rear camera</string>
     <string name="runtime_camera_switch_failed">Could not switch cameras.</string>
+    <string name="runtime_camera_switch_recording">Stop recording before switching cameras.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Reset to default</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Reset system properties?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Replace the editor contents with the current JL-Mod Plus defaults? Other settings will remain unchanged. Save to apply the reset.</string>

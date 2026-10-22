@@ -515,6 +515,10 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onSwitchCamera() {
+						if (CameraRuntime.isRecording()) {
+							toast(R.string.runtime_camera_switch_recording);
+							return;
+						}
 						CameraRuntime.switchCamera(message -> toast(R.string.runtime_camera_switch_failed));
 					}
 

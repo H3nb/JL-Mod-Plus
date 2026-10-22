@@ -372,21 +372,22 @@ class RuntimeMenuComposeTest {
             .assertIsDisplayed()
 
         composeRule.runOnIdle { state.value = state.value.copy(cameraSwitching = true) }
-        composeRule.onNodeWithContentDescription(front).assertIsDisplayed().assertIsNotEnabled()
-            .performTouchInput { click() }
-        assertEquals(listOf("camera"), events)
-        // A Form-based MIDlet can record immediately. Keep the switch control
-        // discoverable while the video encoder is busy, but do not let it tear
-        // down the current MP4 recording.
+        // A busy camera remains actionable so the host can explain the restriction.
+        // CameraRuntime still rejects the actual switch while recording.
+        composeRule.onNodeWithContentDescription(front).assertIsDisplayed().assertIsEnabled()
+            .performClick()
+        assertEquals(listOf("camera", "camera"), events)
+        // The same explanatory action remains reachable on Form-based MIDlets.
         composeRule.runOnIdle { state.value = state.value.copy(isCanvas = false, cameraSwitching = true) }
-        composeRule.onNodeWithContentDescription(front).assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(front).assertIsDisplayed().assertIsEnabled().performClick()
+        assertEquals(listOf("camera", "camera", "camera"), events)
         composeRule.runOnIdle {
             state.value = state.value.copy(cameraFrontFacing = true, cameraSwitching = false)
         }
         composeRule.onAllNodesWithContentDescription(front).assertCountEquals(0)
         composeRule.onNodeWithContentDescription(rear).assertIsDisplayed().assertIsEnabled().performClick()
         composeRule.onAllNodesWithContentDescription(uiString(R.string.take_screenshot)).assertCountEquals(0)
-        assertEquals(listOf("camera", "camera"), events)
+        assertEquals(listOf("camera", "camera", "camera", "camera"), events)
         composeRule.runOnIdle { state.value = state.value.copy(cameraSwitchAvailable = false) }
         composeRule.onAllNodesWithContentDescription(rear).assertCountEquals(0)
     }
@@ -418,9 +419,9 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText(label).performScrollTo().assertIsDisplayed().performClick()
         assertEquals(listOf("dismiss", "camera"), events)
         composeRule.runOnIdle { state.value = state.value.copy(toolbarVisible = false, cameraSwitching = true) }
-        composeRule.onNodeWithText(label).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
-            .performTouchInput { click() }
-        assertEquals(listOf("dismiss", "camera"), events)
+        composeRule.onNodeWithText(label).performScrollTo().assertIsDisplayed().assertIsEnabled()
+            .performClick()
+        assertEquals(listOf("dismiss", "camera", "dismiss", "camera"), events)
     }
 
     @Test

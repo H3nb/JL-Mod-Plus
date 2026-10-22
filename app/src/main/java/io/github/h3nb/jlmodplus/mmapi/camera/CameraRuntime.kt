@@ -711,6 +711,8 @@ object CameraRuntime {
         } catch (_: Exception) { false }
     }
     @JvmStatic fun isFrontCamera() = (binding?.facing ?: overrideFacing) == CameraSelector.LENS_FACING_FRONT
+    /** Whether switching the lens would interrupt a pending or active MP4 session. */
+    @JvmStatic fun isRecording() = recordingSession != null
     @JvmStatic fun isSwitchingCamera() = recordingSession != null || switchFailure != null || capturing != null || binding?.ready == false
     @JvmStatic fun switchCamera(onFailure: SwitchFailure) {
         if (!canSwitchCamera() || isSwitchingCamera()) { onFailure.accept("Camera is not ready"); return }
