@@ -33,8 +33,13 @@ for variant in x86_64 universal; do
   native_dir="$native_root/x86_64"
   echo "Checking extracted $variant native libraries in $native_dir"
   adb shell "test -f '$native_dir/libc++_shared.so'"
+  # Match runtime-smoke setup so startup reaches the app instead of Settings.
+  adb shell appops set "$package" MANAGE_EXTERNAL_STORAGE allow
+  adb shell am force-stop "$package"
   adb shell am start -W -n "$package/ru.playsoftware.j2meloader.LauncherActivity" \
     | tee "$output/$variant-launch.txt"
+  grep -q '^Status: ok' "$output/$variant-launch.txt"
+  grep -q "^Activity: $package/" "$output/$variant-launch.txt"
   sleep 5
   adb shell pidof "$package"
   adb shell am force-stop "$package"
