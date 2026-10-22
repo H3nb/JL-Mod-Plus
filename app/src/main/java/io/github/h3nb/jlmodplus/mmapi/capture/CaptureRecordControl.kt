@@ -33,6 +33,7 @@ internal class CaptureRecordControl(
     private var begun = false
     private var scratch: File? = null
     private var closed = false
+    private var failureMessage: String? = null
 
     override fun getContentType(): String = backend.contentType
 
@@ -57,6 +58,7 @@ internal class CaptureRecordControl(
     @Synchronized override fun startRecord() {
         checkAvailable()
         check(destination != null) { "Recording destination is not set" }
+        check(failureMessage == null) { "Recording failed; reset before starting again" }
         if (armed) return
         armed = true
         if (playerState() == Player.STARTED) activate()
@@ -121,6 +123,7 @@ internal class CaptureRecordControl(
         if (destination == null) return
         try {
             armed = false
+            failureMessage?.let { throw IOException("Recording failed: $it") }
             suspendCapture()
             if (begun) {
                 backend.finish()
@@ -148,6 +151,7 @@ internal class CaptureRecordControl(
             scratch = null
             begun = false
             running = false
+            failureMessage = null
         }
         // A successful reset keeps the previously selected destination.
     }
@@ -156,6 +160,27 @@ internal class CaptureRecordControl(
         require(size > 0) { "Record size limit must be positive" }
         // JSR-135 explicitly permits rejecting unsupported limits.
         throw MediaException("Record size limits are not supported")
+    }
+
+    /**
+     * Called outside the guest recording operation. A matching scratch file
+     * rejects late platform callbacks from an older session.
+     */
+    @Synchronized fun backendFailed(file: File, reason: String) {
+        if (closed || scratch != file || failureMessage != null) return
+        failureMessage = reason
+        armed = false
+        running = false
+        begun = false
+        try { backend.abandon() } catch (_: Exception) {}
+        scratch?.delete()
+        scratch = null
+        event(PlayerListener.RECORD_ERROR, reason)
+    }
+
+    /** CameraX cannot preserve an active encoder across hardware deallocation. */
+    @Synchronized fun cameraDeallocated() {
+        scratch?.let { backendFailed(it, "Video recording interrupted by deallocate") }
     }
 
     @Synchronized fun close() {
@@ -174,6 +199,7 @@ internal class CaptureRecordControl(
         begun = false
         running = false
         armed = false
+        failureMessage = null
         try { backend.abandon() } catch (_: Exception) {}
     }
 
