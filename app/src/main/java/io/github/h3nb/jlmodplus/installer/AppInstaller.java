@@ -707,7 +707,7 @@ public class AppInstaller {
                                 appDirName,
                                 visibilityError -> {
                                     releaseReplacementLock(heldReplacementLock);
-                            executionPermit.close();
+                                    executionPermit.close();
                                     if (emitter.isDisposed()) return;
                                     if (visibilityError != null) emitter.onError(new InstallerFailure(
                                             "Installed files need Library recovery", visibilityError));
