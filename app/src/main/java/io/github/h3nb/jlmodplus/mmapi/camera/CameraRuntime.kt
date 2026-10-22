@@ -111,7 +111,10 @@ object CameraRuntime {
         var streamObserver: Observer<PreviewView.StreamState>? = null
         var open = false
         var streaming = view == null
-        val ready get() = open && streaming
+        var previewConnected = false
+        // A recording must not wait for the MIDlet's Form to be shown:
+        // some MIDlets call Player.start() before Display.setCurrent(Form).
+        val ready get() = open && (streaming || video != null)
     }
 
     internal fun generation() = epoch.get()
@@ -478,7 +481,9 @@ object CameraRuntime {
 
     private fun bind(cameras: ProcessCameraProvider, activity: MicroActivity, player: CameraCapturePlayer) {
         val lens = facing(player, cameras)
-        val container = player.previewContainer?.takeIf { it.isAttachedToWindow && it.isShown }
+        val container = player.previewContainer?.takeIf {
+            recordingSession?.player === player || (it.isAttachedToWindow && it.isShown)
+        }
         // A new View starts at IDLE. Reusing PreviewView can expose its old STREAMING value
         // before the new camera has produced a frame, especially during a lens switch.
         val view = container?.let {
@@ -510,7 +515,13 @@ object CameraRuntime {
             // PreviewView mirrors front cameras by default, including pre-API33. Cancel that
             // display transform so the guest and its encoded image both see physical pixels.
             view.scaleX = if (lens == CameraSelector.LENS_FACING_FRONT) -1f else 1f
-            preview.setSurfaceProvider(view.surfaceProvider)
+            // A detached GUI Item has no display Surface yet. Bind the Preview
+            // use case together with VideoCapture, but supply its Surface only
+            // after the Form is attached; do not unbind the active recorder.
+            if (view.isAttachedToWindow && view.isShown) {
+                preview.setSurfaceProvider(view.surfaceProvider)
+                next.previewConnected = true
+            }
             group.addUseCase(preview)
         }
         binding = next
@@ -579,7 +590,8 @@ object CameraRuntime {
         // Preserve TextureView's normal draw/update path under the cover: STREAMING
         // depends on its frame-update callback, not just the arrival of a camera buffer.
         (current.view?.parent as? FrameLayout)?.foreground =
-            if (current.ready && current.player.getState() == Player.STARTED) null else ColorDrawable(Color.BLACK)
+            if ((current.view == null || current.streaming) &&
+                current.player.getState() == Player.STARTED) null else ColorDrawable(Color.BLACK)
     }
 
     private fun newPreview(context: Context) = PreviewView(context).apply {
@@ -608,14 +620,23 @@ object CameraRuntime {
         presentationChanged(player)
     }
     private fun presentationChanged(player: CameraCapturePlayer) = post {
-        if (owner === player && recordingSession == null) {
-            val shown = player.previewContainer?.let { it.isAttachedToWindow && it.isShown } == true
-            val current = binding
-            if (current != null && ((current.view != null) != shown ||
-                        (current.view != null && current.view.parent !== player.previewContainer))) {
-                unbind()
-                drain()
+        if (owner !== player) return@post
+        val shown = player.previewContainer?.let { it.isAttachedToWindow && it.isShown } == true
+        val current = binding
+        if (recordingSession != null) {
+            // Preview was reserved at recording bind time even if the MIDlet
+            // had not displayed its GUI primitive. Connect it in place.
+            if (shown && current?.view?.parent === player.previewContainer &&
+                current.preview != null && !current.previewConnected) {
+                current.previewConnected = true
+                current.preview.setSurfaceProvider(current.view.surfaceProvider)
             }
+            return@post
+        }
+        if (current != null && ((current.view != null) != shown ||
+                    (current.view != null && current.view.parent !== player.previewContainer))) {
+            unbind()
+            drain()
         }
     }
 
@@ -656,7 +677,7 @@ object CameraRuntime {
         val cameras = provider ?: return false
         val player = binding?.player ?: owner?.takeIf { switchFailure != null } ?: return false
         return try {
-            recordingSession == null && valid(player) && foreground &&
+            valid(player) && foreground &&
                 cameras.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) && cameras.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
         } catch (_: Exception) { false }
     }

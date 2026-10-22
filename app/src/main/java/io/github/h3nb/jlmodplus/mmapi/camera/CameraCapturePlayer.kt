@@ -19,7 +19,7 @@ import javax.microedition.shell.MidletSystem
 import io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay
 import io.github.h3nb.jlmodplus.mmapi.capture.CaptureRecordControl
 
-/** JSR-135 live source. No recorder, audio output, or file decoder participates. */
+/** JSR-135 live camera source; the optional RecordControl shares its hardware owner. */
 class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: String) : Player {
     private val defaultDimensions = CameraRuntime.defaultDimensions
     internal val defaultFacing = CameraRuntime.defaultFacing
