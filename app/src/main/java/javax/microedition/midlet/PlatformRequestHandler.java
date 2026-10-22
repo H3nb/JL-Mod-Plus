@@ -9,8 +9,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
-
 import javax.microedition.shell.MicroActivity;
 
 import io.github.h3nb.jlmodplus.MainActivity;
@@ -20,30 +18,36 @@ import io.github.h3nb.jlmodplus.R;
 public final class PlatformRequestHandler {
     private static final Handler UI = new Handler(Looper.getMainLooper());
     private static long generation;
-    private static AlertDialog pending;
+    private static Runnable pendingDismiss;
 
     public static void cancelPending() {
         UI.post(() -> {
             generation++;
-            if (pending != null) pending.dismiss();
-            pending = null;
+            dismissPending();
         });
+    }
+
+    private static void dismissPending() {
+        Runnable dismiss = pendingDismiss;
+        pendingDismiss = null;
+        if (dismiss != null) dismiss.run();
     }
 
     public static void offerPackage(MicroActivity host, Intent install, Intent external) {
         UI.post(() -> {
             if (host.isFinishing() || host.isDestroyed() || !host.isVisible()) return;
             generation++;
-            if (pending != null) pending.dismiss();
+            dismissPending();
             final long request = generation;
-            AlertDialog dialog = new AlertDialog.Builder(host)
-                    .setTitle(R.string.platform_package_choice_title)
-                    .setMessage(R.string.platform_package_choice_message)
-                    .setPositiveButton(R.string.platform_package_install, (ignored, which) -> {
-                        if (request == generation) launch(host, install);
-                    })
-                    .setNeutralButton(R.string.platform_package_browser, (ignored, which) -> {
+            pendingDismiss = host.showPlatformPackageChoice(
+                    () -> {
                         if (request != generation) return;
+                        pendingDismiss = null;
+                        launch(host, install);
+                    },
+                    () -> {
+                        if (request != generation) return;
+                        pendingDismiss = null;
                         Intent chooser = Intent.createChooser(external,
                                 host.getString(R.string.platform_package_browser));
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -51,14 +55,10 @@ public final class PlatformRequestHandler {
                                     new ComponentName[]{new ComponentName(host, MainActivity.class)});
                         }
                         launch(host, chooser);
-                    })
-                    .setNegativeButton(android.R.string.cancel, (ignored, which) -> { })
-                    .create();
-            dialog.setOnDismissListener(ignored -> {
-                if (pending == dialog) pending = null;
-            });
-            pending = dialog;
-            dialog.show();
+                    },
+                    () -> {
+                        if (request == generation) pendingDismiss = null;
+                    });
         });
     }
 
