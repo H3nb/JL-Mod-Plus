@@ -131,12 +131,13 @@ disposable API 35 x86_64 emulator with animations enabled:
 Review the executed test reports; compilation by default Android CI does not
 substitute for the connected run. This suite validates host UI behavior, not
 native game execution or physical-device frame pacing.
-A separate [Java ME graphics workflow](../.github/workflows/java-me-graphics.yml)
-runs Nokia polygon, MIDP triangle and core Graphics color, primitive, clip,
-lifecycle and bitmap-rebind instrumentation on API 23 and 36 when the
-corresponding renderer, Image/DirectUtils bridge, tests, or workflow change. It
-uses `jlmodNativeBuild=false`: these bitmap contracts do not exercise native
-audio, game execution, or the final OpenGL presentation stage.
+Java ME LCDUI and graphics instrumentation suites remain in
+`app/src/androidTest/` for targeted validation. Use a temporary PR-scoped
+emulator workflow on API levels relevant to a compatibility change, inspect
+the executed test reports, and remove that workflow before merging. Keep
+Android CI and Release as the permanent CI/publishing workflows.
+Bitmap contracts can use `jlmodNativeBuild=false`: they do not exercise
+native audio, game execution, or final OpenGL presentation.
 A documentation-only commit on a PR that also changes code can still trigger CI
 and cancel an earlier PR run, because path filtering uses the whole PR diff.
 For UI or runtime changes, use the affected checks in [UI ownership](ui-ownership-map.md)
