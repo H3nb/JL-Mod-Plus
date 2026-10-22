@@ -17,13 +17,17 @@ class CaptureRecordControlTest {
     private class Stub : CaptureRecordControl.Backend {
         override val contentType = "audio/wav"
         var lastFile: File? = null
+        var failPause = false
         val actions = ArrayList<String>()
         override fun begin(file: File) {
             lastFile = file
             actions.add("begin")
             file.writeBytes(byteArrayOf(1, 2, 3))
         }
-        override fun pause() { actions.add("pause") }
+        override fun pause() {
+            actions.add("pause")
+            if (failPause) throw MediaException("Capture device disconnected")
+        }
         override fun resume() { actions.add("resume") }
         override fun finish() { actions.add("finish") }
         override fun abandon() { actions.add("abandon") }
@@ -114,6 +118,28 @@ class CaptureRecordControlTest {
             control.startRecord()
             throw AssertionError("Commit must clear the recording destination")
         } catch (_: IllegalStateException) {}
+        control.close()
+    }
+
+    @Test fun synchronousPauseFailureEmitsOneErrorAndInvalidatesOutput() {
+        val stub = Stub()
+        stub.failPause = true
+        val events = ArrayList<String>()
+        val control = CaptureRecordControl(stub, { Player.STARTED }, { 0L },
+            { kind, _ -> events.add(kind) })
+        control.setRecordStream(ByteArrayOutputStream())
+        control.startRecord()
+        try {
+            control.stopRecord()
+            throw AssertionError("A failed pause must be propagated")
+        } catch (_: IllegalStateException) {}
+        control.backendFailed(stub.lastFile!!, "Late duplicate")
+        assertEquals(1, events.count { it == PlayerListener.RECORD_ERROR })
+        try {
+            control.commit()
+            throw AssertionError("A failed capture must not commit")
+        } catch (_: java.io.IOException) {}
+        assertEquals(1, events.count { it == PlayerListener.RECORD_ERROR })
         control.close()
     }
 
