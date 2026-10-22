@@ -96,7 +96,7 @@ public final class MidletKeepAliveService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && ACTION_STOP_FOR_INSTALL.equals(intent.getAction())) {
-            MidletThread.destroyApp(false);
+            MidletThread.stopForInstallation();
             return START_NOT_STICKY;
         }
         if (intent != null && ACTION_STOP_EMULATOR.equals(intent.getAction())) {

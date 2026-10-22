@@ -286,6 +286,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 	}
 
+	/** Library-owned update request; leave foreground selection to the installer. */
+	public static boolean stopForInstallation() {
+		return destroyApp(false);
+	}
+
 	static boolean destroyApp() {
 		return destroyApp(true);
 	}
