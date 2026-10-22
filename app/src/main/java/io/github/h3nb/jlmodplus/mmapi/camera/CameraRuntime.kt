@@ -317,7 +317,11 @@ object CameraRuntime {
             val output = FileOutputOptions.Builder(session.file)
                 .setFileSizeLimit(64L * 1024 * 1024).build()
             var pending = video.output.prepareRecording(activity, output)
-            if (session.microphone) pending = pending.withAudioEnabled()
+            if (session.microphone) {
+                if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) !=
+                    PackageManager.PERMISSION_GRANTED) throw SecurityException("Microphone permission revoked")
+                pending = pending.withAudioEnabled()
+            }
             session.recorder = pending.start(ContextCompat.getMainExecutor(activity)) { event ->
                 if (recordingSession !== session) return@start
                 when (event) {

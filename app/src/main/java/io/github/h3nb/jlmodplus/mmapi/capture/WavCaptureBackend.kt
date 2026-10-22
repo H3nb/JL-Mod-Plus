@@ -33,6 +33,9 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
             val minimum = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT)
             if (minimum <= 0) throw MediaException("Microphone format unavailable")
+            val context = ContextHolder.getAppContext()
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
+                PackageManager.PERMISSION_GRANTED) throw SecurityException("Microphone permission revoked")
             val record = AudioRecord(MediaRecorder.AudioSource.MIC, RATE,
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                 maxOf(minimum * 2, 4096))
