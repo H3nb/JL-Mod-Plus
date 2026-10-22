@@ -16,8 +16,10 @@ import org.junit.runner.RunWith
 class CaptureRecordControlTest {
     private class Stub : CaptureRecordControl.Backend {
         override val contentType = "audio/wav"
+        var lastFile: File? = null
         val actions = ArrayList<String>()
         override fun begin(file: File) {
+            lastFile = file
             actions.add("begin")
             file.writeBytes(byteArrayOf(1, 2, 3))
         }
@@ -69,6 +71,73 @@ class CaptureRecordControlTest {
             throw AssertionError("Must set another destination after commit")
         } catch (_: IllegalStateException) {}
         control.close()
+    }
+
+    @Test fun backendFailureIsReportedOnceAndRejectedUntilReset() {
+        val stub = Stub()
+        val events = ArrayList<String>()
+        val bytes = ByteArrayOutputStream()
+        val control = CaptureRecordControl(stub, { Player.STARTED }, { 0L },
+            { kind, _ -> events.add(kind) })
+        control.setRecordStream(bytes)
+        control.startRecord()
+        val failedFile = stub.lastFile!!
+        control.backendFailed(failedFile, "Device disconnected")
+        control.backendFailed(failedFile, "Stale failure")
+        assertEquals(1, events.count { it == PlayerListener.RECORD_ERROR })
+        try {
+            control.startRecord()
+            throw AssertionError("A failed recording cannot resume without reset")
+        } catch (_: IllegalStateException) {}
+        control.reset()
+        control.startRecord()
+        control.commit()
+        assertEquals(3, bytes.size())
+        control.close()
+    }
+
+    @Test fun failedCameraDeallocationCannotSilentlyCommitOrResume() {
+        val stub = Stub()
+        val events = ArrayList<String>()
+        val control = CaptureRecordControl(stub, { Player.STARTED }, { 0L },
+            { kind, _ -> events.add(kind) })
+        control.setRecordStream(ByteArrayOutputStream())
+        control.startRecord()
+        control.playerStopped()
+        control.cameraDeallocated()
+        assertEquals(1, events.count { it == PlayerListener.RECORD_ERROR })
+        try {
+            control.commit()
+            throw AssertionError("A lost video session is not a successful MP4")
+        } catch (_: java.io.IOException) {}
+        try {
+            control.startRecord()
+            throw AssertionError("Commit must clear the recording destination")
+        } catch (_: IllegalStateException) {}
+        control.close()
+    }
+
+    @Test fun audioPlayerEnforcesRealizationAndClosedState() {
+        val player = AudioCapturePlayer()
+        try {
+            try { player.getContentType(); throw AssertionError("Player unrealized") }
+            catch (_: IllegalStateException) {}
+            try { player.getTimeBase(); throw AssertionError("Player unrealized") }
+            catch (_: IllegalStateException) {}
+            try { player.setTimeBase(null); throw AssertionError("Player unrealized") }
+            catch (_: IllegalStateException) {}
+            player.realize()
+            assertEquals("audio/raw", player.getContentType())
+        } finally { player.close() }
+        try { player.deallocate(); throw AssertionError("Player closed") }
+        catch (_: IllegalStateException) {}
+    }
+
+    @Test fun runtimeTeardownClosesUnreleasedAudioPlayers() {
+        val player = AudioCapturePlayer()
+        player.realize()
+        AudioCapturePlayer.closeForRuntime()
+        assertEquals(Player.CLOSED, player.getState())
     }
 
     @Test fun unsupportedLimitIsReported() {
