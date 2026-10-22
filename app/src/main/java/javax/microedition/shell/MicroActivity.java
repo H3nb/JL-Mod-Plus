@@ -87,6 +87,7 @@ import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 import javax.microedition.lcdui.skin.SkinLayer;
+import javax.microedition.midlet.PlatformRequestHandler;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.util.ContextHolder;
@@ -845,6 +846,7 @@ public class MicroActivity extends AppCompatActivity {
 		Runnable processCleanup = pendingTerminalProcessCleanup;
 		pendingTerminalProcessCleanup = null;
 		try {
+			PlatformRequestHandler.cancelForHost(this);
 			CameraRuntime.onHostDestroyed(this);
 			boolean currentHost = ContextHolder.getActivity() == this;
 			if (currentHost) {
