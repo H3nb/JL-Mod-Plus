@@ -57,7 +57,7 @@ public class TextField extends Item {
 	}
 
 	public void insert(char[] data, int offset, int length, int position) {
-		insert(new String(data, offset, length), position);
+		textField.insert(data, offset, length, position);
 	}
 
 	public String getString() {
@@ -65,7 +65,7 @@ public class TextField extends Item {
 	}
 
 	public int size() {
-		return getString().length();
+		return textField.size();
 	}
 
 	public int setMaxSize(int maxSize) {
@@ -88,7 +88,7 @@ public class TextField extends Item {
 	}
 
 	public void setChars(char[] data, int offset, int length) {
-		setString(new String(data, offset, length));
+		textField.setChars(data, offset, length);
 	}
 
 	public int getChars(char[] data) {

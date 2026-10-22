@@ -45,7 +45,7 @@ public class TextBox extends Screen {
 	}
 
 	public void insert(char[] data, int offset, int length, int position) {
-		insert(new String(data, offset, length), position);
+		textField.insert(data, offset, length, position);
 	}
 
 	public String getString() {
@@ -76,7 +76,7 @@ public class TextBox extends Screen {
 	}
 
 	public void setChars(char[] data, int offset, int length) {
-		setString(new String(data, offset, length));
+		textField.setChars(data, offset, length);
 	}
 
 	public int getChars(char[] data) {
@@ -93,7 +93,7 @@ public class TextBox extends Screen {
 
 	@Override
 	View getScreenView() {
-		EditText et = textField.getView(ContextHolder.getActivity(), null);
+		EditText et = textField.getView(ContextHolder.getActivity(), null, true);
 		et.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 		et.setGravity(Gravity.TOP);
 		return et;
