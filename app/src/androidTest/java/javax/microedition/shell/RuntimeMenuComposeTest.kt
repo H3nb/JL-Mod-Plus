@@ -375,8 +375,13 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithContentDescription(front).assertIsDisplayed().assertIsNotEnabled()
             .performTouchInput { click() }
         assertEquals(listOf("camera"), events)
+        // A Form-based MIDlet can record immediately. Keep the switch control
+        // discoverable while the video encoder is busy, but do not let it tear
+        // down the current MP4 recording.
+        composeRule.runOnIdle { state.value = state.value.copy(isCanvas = false, cameraSwitching = true) }
+        composeRule.onNodeWithContentDescription(front).assertIsDisplayed().assertIsNotEnabled()
         composeRule.runOnIdle {
-            state.value = state.value.copy(isCanvas = false, cameraFrontFacing = true, cameraSwitching = false)
+            state.value = state.value.copy(cameraFrontFacing = true, cameraSwitching = false)
         }
         composeRule.onAllNodesWithContentDescription(front).assertCountEquals(0)
         composeRule.onNodeWithContentDescription(rear).assertIsDisplayed().assertIsEnabled().performClick()
