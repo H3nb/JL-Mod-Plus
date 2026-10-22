@@ -85,6 +85,7 @@ Apply the scope and design priorities in [AGENTS.md](../AGENTS.md).
 ## Versioning
 
 - `versionName` follows Semantic Versioning; apply the semantics appropriate to the current major version.
+- New pre-releases use `X.Y.Z-alpha`, `X.Y.Z-beta`, or `X.Y.Z-rc`, without a numeric suffix. Use a new base version for another release in the same stage; keep historical numbered versions unchanged.
 - Android `versionCode` must increase monotonically for published application IDs.
 - Published app versions and Android codes are allocated by the guarded release workflow. Never reuse a published tag or mutate its APK assets. The legacy `main` branch is not the Stable release source.
 - Do not bump versions as an unrelated side effect.
