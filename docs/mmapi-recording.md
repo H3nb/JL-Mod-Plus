@@ -52,6 +52,12 @@ No eager Android view is created merely because an offscreen VideoControl
 was initialized. Verify on hardware that attaching the Preview surface does
 not interrupt or finalize the MP4 recording.
 
-The camera-switch shortcut remains discoverable when both lenses exist, but is
-disabled while recording. Switching the active camera would invalidate a single
-uninterrupted recording; it is available again after the recording is finished.
+The camera-switch shortcut remains actionable when both lenses exist. During
+recording, it explains why switching is unavailable; CameraRuntime blocks the
+hardware change until the MP4 session has finished.
+
+Audio Player deallocation releases the microphone without discarding captured WAV
+bytes. CameraX cannot preserve an MP4 encoder across Player deallocation, so an
+active capture reports RECORD_ERROR and must be reset or unsuccessfully committed
+instead of silently resuming an invalid session. Unclosed audio Players are
+closed at the end of their MIDlet runtime.
