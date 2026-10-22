@@ -337,17 +337,37 @@ suppress Configuration Cache problems as warnings.
 
 ### Release checks
 
-The release workflow excludes documentation-only pushes to `alpha`, validates app
-and dexlib JVM tests, and preserves diagnostic reports on failure. Publishing still
-requires successful validation, release assembly, and signature verification.
-PR debug validation does not exercise R8/release-only behavior; validate the release
-variant before merging changes to shrinking, signing, release configuration, or
-dependencies that can affect it. Manual release dispatch publishes an APK and is
-not a substitute for a non-publishing release build check.
+Android CI owns PR validation: debug assembly, app/dexlib JVM tests, instrumentation
+compilation, lint, and screenshot checks. Merge only the latest executable/build
+state with passing relevant checks; a new squash SHA or documentation-only change
+does not by itself invalidate that evidence. The manual release workflow builds and
+verifies the release artifacts without repeating the debug validation suite.
+
+For changes to shrinking, native packaging, release configuration, or relevant
+dependencies, run **Android CI** with mode **release-check** on the PR branch.
+It builds the release variant with R8 and all four ABIs, checks APK contents, and
+stages the same assets as publishing. It installs and launches the x86_64 and
+universal APKs on an API 35 emulator with 16 KB pages using a disposable test key.
+This checks installation, native extraction, and startup; it does not qualify all
+MIDlet/audio/3D behavior or physical ARM devices. Artifacts are unsigned and use
+`0.0.0-ci`; they are not production updates. No release signing secrets, tags, or
+published releases are used. Normal PR validation does not run this mode.
+
+Release APKs compress native libraries to reduce download size. Installation
+extracts those libraries and can consume more device storage than loading them
+directly from the APK. Native code and 16 KB ELF alignment are unchanged. Debug
+packaging retains the Android plugin defaults. R8 mappings are published as gzip
+files; decompress them before Retrace. Download notes and asset labels distinguish
+installable APKs from developer files, while metadata/checksums remain available.
 
 Published APK identities are allocated by the release workflow rather than edited in
 `gradle.properties`. On GitHub Actions, use **Release JL-Mod Plus** with the full
-SemVer value (for example, `0.2.0-alpha.1`), without a leading `v`. Only
+SemVer value (for example, `0.2.3-alpha`, `0.2.3-beta`, `0.2.3-rc`, or `0.2.3`),
+without a leading `v`. New pre-releases use no numeric suffix. Use a new base version
+for another publication in the same stage; never overwrite an existing tag or APK.
+Historical numbered pre-releases remain readable and participate in version ordering.
+For example, `0.2.2-alpha` is older than the published `0.2.2-alpha.1`; migrate with
+a newer version such as `0.2.3-alpha`. Only
 `alpha` permits pre-release publication. Stable publication requires a separately
 prepared `stable` branch based on the JL-Mod Plus codebase; the legacy `main`
 branch is not a release source.
@@ -359,3 +379,7 @@ and publishes APK assets together with `release-info.json` and checksums. Existi
 after draft creation requires investigation; do not reuse an existing tag or
 overwrite published assets. The working branch does not publish automatically.
 `gradle.properties` remains the default identity for non-publishing builds.
+The publishing and manual release-check jobs can populate Gradle Build Cache on
+`alpha` (and publishing on `stable`); PR-scoped cache entries cannot be read back
+by the base branch. Use the existing cacheable native dependency tasks instead of
+adding a second cache of compiled native outputs.

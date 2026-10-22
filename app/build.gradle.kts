@@ -431,6 +431,12 @@ androidComponents {
         variantBuilder.enable = false
     }
 
+    onVariants(selector().withBuildType("release")) { variant ->
+        // Direct APK downloads trade installation-time extraction for smaller transfers.
+        // This does not change the native binaries or their 16 KB ELF alignment.
+        variant.packaging.jniLibs.useLegacyPackaging.set(true)
+    }
+
     onVariants { variant ->
         val generateBuildIdentityResource = tasks.register<GenerateBuildIdentityResourceTask>(
             "generate${variant.name.replaceFirstChar { it.uppercaseChar() }}BuildIdentityResource"
