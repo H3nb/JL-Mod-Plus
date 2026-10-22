@@ -911,7 +911,8 @@ public class AppInstaller {
         if (!approvedRunningReplacement) {
             throw new InstallerFailure("Running MIDlet update needs confirmation; retry installation");
         }
-        MidletKeepAliveService.stopForInstallation(libraryViewModel.getApplication());
+        MidletKeepAliveService.stopForInstallation(libraryViewModel.getApplication(),
+                targetDir.getCanonicalPath(), currentApp.getId());
         for (int tries = 0; tries < 100; tries++) {
             checkCancelled();
             try {

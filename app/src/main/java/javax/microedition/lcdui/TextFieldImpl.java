@@ -50,6 +50,8 @@ class TextFieldImpl {
     private volatile int caret;
     /** Only accessed on the main Android thread. Programmatic EditText changes are not guest input. */
     private boolean applyingHostState;
+    private int displayedConstraints = Integer.MIN_VALUE;
+    private int displayedMaxSize = -1;
 
     void setString(String text) {
         value.setString(text);
@@ -110,8 +112,13 @@ class TextFieldImpl {
         if (editor == null) return;
         applyingHostState = true;
         try {
-            editor.setFilters(new InputFilter[]{new InputFilter.LengthFilter(value.getMaxSize())});
-            configureInput(editor);
+            if (displayedConstraints != value.getConstraints()) {
+                configureInput(editor);
+            }
+            if (displayedMaxSize != value.getMaxSize()) {
+                editor.setFilters(new InputFilter[]{new InputFilter.LengthFilter(value.getMaxSize())});
+                displayedMaxSize = value.getMaxSize();
+            }
             String wanted = value.getString();
             if (!editor.getText().toString().equals(wanted)) {
                 int selection = editor.getSelectionEnd();
@@ -157,8 +164,8 @@ class TextFieldImpl {
                 && (type & TYPE_CLASS_TEXT) == TYPE_CLASS_TEXT) {
             type |= TYPE_TEXT_FLAG_MULTI_LINE;
         }
-        if (editor.getInputType() != type) editor.setInputType(type);
         editor.setSingleLine(false);
+        if (editor.getInputType() != type) editor.setInputType(type);
         editor.setHorizontallyScrolling(false);
         editor.setMaxLines(editor instanceof GuestEditText guest && guest.textBox ? 50 : 4);
         editor.setEnabled((constraints & TextField.UNEDITABLE) == 0);
@@ -169,6 +176,7 @@ class TextFieldImpl {
             imeOptions |= EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING;
         }
         editor.setImeOptions(imeOptions);
+        displayedConstraints = constraints;
     }
 
     EditText getView(Context context, Item item) {
@@ -177,8 +185,9 @@ class TextFieldImpl {
         textview = editor;
         applyingHostState = true;
         try {
-            editor.setFilters(new InputFilter[]{new InputFilter.LengthFilter(value.getMaxSize())});
             configureInput(editor);
+            editor.setFilters(new InputFilter[]{new InputFilter.LengthFilter(value.getMaxSize())});
+            displayedMaxSize = value.getMaxSize();
             editor.setText(value.getString());
             editor.setSelection(editor.length());
             caret = editor.length();
@@ -209,6 +218,8 @@ class TextFieldImpl {
 
     void clearScreenView() {
         textview = null; // Old TextWatchers can no longer publish into the guest model.
+        displayedConstraints = Integer.MIN_VALUE;
+        displayedMaxSize = -1;
     }
 
     private final class GuestEditText extends AppCompatEditText {
