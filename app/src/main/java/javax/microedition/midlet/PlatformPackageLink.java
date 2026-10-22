@@ -3,7 +3,7 @@ package javax.microedition.midlet;
 
 import java.net.URI;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
 import java.util.Locale;
 
 /** Conservative hint for presenting Java ME installation choices, never a content validator. */
@@ -24,10 +24,10 @@ final class PlatformPackageLink {
             int equal = pair.indexOf('=');
             if (equal < 0) continue;
             try {
-                String value = URLDecoder.decode(pair.substring(equal + 1), StandardCharsets.UTF_8);
+                String value = URLDecoder.decode(pair.substring(equal + 1), "UTF-8");
                 // Legacy download frontends may put a relative archive path in a redirect parameter.
                 if (hasPackageExtension(value)) return true;
-            } catch (IllegalArgumentException malformed) {
+            } catch (IllegalArgumentException | UnsupportedEncodingException malformed) {
                 // A malformed redirect hint must not change ordinary browser routing.
             }
         }
