@@ -20,6 +20,12 @@ open class AudioCapturePlayer : Player {
         private val hostPauses = Executors.newSingleThreadExecutor { task ->
             Thread(task, "MidletMicHostPause").apply { isDaemon = true }
         }
+        /** The runtime owns Players even when a MIDlet forgets Player.close(). */
+        @JvmStatic fun closeForRuntime() {
+            for (player in live.toList()) {
+                try { player.close() } catch (_: Exception) {}
+            }
+        }
         @JvmStatic fun pauseForHost() {
             hostPauses.execute {
                 for (player in live) {
@@ -37,7 +43,8 @@ open class AudioCapturePlayer : Player {
     @Volatile private var state = Player.UNREALIZED
     @Volatile private var elapsedMicros = 0L
     @Volatile private var startedAt = 0L
-    private val recorder = CaptureRecordControl(WavCaptureBackend(), { state },
+    private val backend = WavCaptureBackend()
+    private val recorder = CaptureRecordControl(backend, { state },
         { getMediaTime() }, { kind, data -> event(kind, data) })
 
     @Synchronized override fun realize() {
@@ -79,8 +86,10 @@ open class AudioCapturePlayer : Player {
     }
 
     @Synchronized override fun deallocate() {
-        if (state == Player.CLOSED) return
+        checkOpen()
         stop()
+        // Preserve the pending WAV output, but release the exclusive microphone.
+        backend.deallocate()
         if (state >= Player.PREFETCHED) state = Player.REALIZED
     }
 
@@ -97,20 +106,25 @@ open class AudioCapturePlayer : Player {
         check(state != Player.CLOSED) { "Player is closed" }
     }
 
+    private fun checkRealized() {
+        checkOpen()
+        check(state != Player.UNREALIZED) { "Player is unrealized" }
+    }
+
     private fun mediaTime(): Long = elapsedMicros + if (state == Player.STARTED)
         (System.nanoTime() - startedAt) / 1000 else 0
 
     override fun getMediaTime(): Long { checkOpen(); return mediaTime() }
     override fun getDuration(): Long { checkOpen(); return Player.TIME_UNKNOWN }
-    override fun getContentType(): String { checkOpen(); return "audio/raw" }
+    override fun getContentType(): String { checkRealized(); return "audio/raw" }
     override fun getState() = state
-    override fun getTimeBase(): TimeBase { checkOpen(); return Manager.getSystemTimeBase() }
+    override fun getTimeBase(): TimeBase { checkRealized(); return Manager.getSystemTimeBase() }
     override fun setTimeBase(master: TimeBase?) {
-        checkOpen()
+        checkRealized()
         if (state == Player.STARTED) throw IllegalStateException("Player started")
         if (master != null && master !== Manager.getSystemTimeBase()) throw MediaException("Unsupported time base")
     }
-    override fun setMediaTime(now: Long): Long { checkOpen(); throw MediaException("Live source cannot seek") }
+    override fun setMediaTime(now: Long): Long { checkRealized(); throw MediaException("Live source cannot seek") }
     override fun setLoopCount(count: Int) {
         checkOpen()
         if (state == Player.STARTED) throw IllegalStateException("Player started")
