@@ -111,9 +111,12 @@ internal class CaptureRecordControl(
             running = false
             event(PlayerListener.RECORD_STOPPED, mediaTime())
         } catch (failure: Exception) {
+            val reason = failure.message ?: "Recording interrupted"
             armed = false
             running = false
-            event(PlayerListener.RECORD_ERROR, failure.message ?: "Recording interrupted")
+            val file = scratch
+            if (file != null) backendFailed(file, reason)
+            else event(PlayerListener.RECORD_ERROR, reason)
             throw IllegalStateException("Could not pause capture", failure)
         }
     }
@@ -133,7 +136,9 @@ internal class CaptureRecordControl(
                 destination!!.flush()
             }
         } catch (failure: Exception) {
-            event(PlayerListener.RECORD_ERROR, failure.message ?: "Recording commit failed")
+            // A previously delivered backend failure must not emit a duplicate.
+            if (failureMessage == null)
+                event(PlayerListener.RECORD_ERROR, failure.message ?: "Recording commit failed")
             throw if (failure is IOException) failure else IOException("Recording commit failed", failure)
         } finally {
             clearSession()
