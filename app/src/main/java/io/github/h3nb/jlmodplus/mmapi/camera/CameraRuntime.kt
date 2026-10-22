@@ -2,6 +2,15 @@
 package io.github.h3nb.jlmodplus.mmapi.camera
 
 import android.Manifest
+import java.io.File
+import androidx.camera.video.FileOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
+import androidx.camera.core.UseCase
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Handler
@@ -61,7 +70,7 @@ object CameraRuntime {
             @Suppress("DEPRECATION")
             val display = activity.windowManager.defaultDisplay
             // A 180-degree turn can change display rotation without a configuration callback.
-            if (foreground && display.displayId == displayId && current.rotation != display.rotation) {
+            if (foreground && recordingSession == null && display.displayId == displayId && current.rotation != display.rotation) {
                 unbind()
                 drain()
             }
@@ -80,11 +89,23 @@ object CameraRuntime {
     private var switchFailure: SwitchFailure? = null
     private var previousFacing: Int? = null
     private var capturing: CameraCall<ByteArray>? = null
+    private var recordingSession: VideoSession? = null
+    private class VideoSession(
+        val player: CameraCapturePlayer, val file: File, val microphone: Boolean,
+        val started: CameraCall<Unit>,
+    ) {
+        var launched = false
+        var recorder: Recording? = null
+        var finalized = false
+        var problem: MediaException? = null
+        var finalCall: CameraCall<Unit>? = null
+    }
     private val pending = ArrayList<Pending>()
 
     private class Pending(val player: CameraCapturePlayer, val call: CameraCall<*>, val ready: (Binding) -> Unit)
     private class Binding(val player: CameraCapturePlayer, val view: PreviewView?, val facing: Int,
-                          val rotation: Int, val capture: ImageCapture, val preview: Preview?) {
+                          val rotation: Int, val capture: ImageCapture?, val preview: Preview?,
+                          val video: VideoCapture<Recorder>?) {
         lateinit var camera: Camera
         lateinit var cameraObserver: Observer<CameraState>
         var streamObserver: Observer<PreviewView.StreamState>? = null
@@ -125,6 +146,7 @@ object CameraRuntime {
         for (player in players) if (player.runtimeGeneration < generation) player.close()
         post {
             if (epoch.get() == generation) {
+                abortRecording("Camera session ended")
                 unbind()
                 owner = null
                 overrideFacing = null
@@ -143,6 +165,7 @@ object CameraRuntime {
     @JvmStatic fun attachHost(activity: MicroActivity, requestPermission: Runnable, refreshActions: Runnable) {
         if (host !== activity) {
             owner?.hostSuspended()
+            abortRecording("Camera host changed")
             unbind()
             host = activity
             foreground = false
@@ -170,6 +193,7 @@ object CameraRuntime {
             owner?.hostSuspended()
             failPending(MediaException("Camera host is not active"))
         }
+        abortRecording("Camera host is not active")
         unbind()
         finishSwitch("Camera host is not active")
         notifyMenu()
@@ -187,8 +211,10 @@ object CameraRuntime {
     }
     @JvmStatic fun onHostConfigurationChanged(activity: MicroActivity) {
         if (host !== activity) return
-        unbind()
-        drain()
+        if (recordingSession == null) {
+            unbind()
+            drain()
+        }
     }
     @JvmStatic fun onPermissionResult(activity: MicroActivity, granted: Boolean) {
         if (host !== activity) return
@@ -213,11 +239,136 @@ object CameraRuntime {
         val call = CameraCall<ByteArray>(20_000)
         return player.waitFor(call) {
             post {
-                if (capturing != null || switchFailure != null) call.fail(MediaException("Camera is busy"))
+                if (capturing != null || switchFailure != null || recordingSession != null)
+                    call.fail(MediaException("Camera is busy"))
                 else enqueue(Pending(player, call) { capture(it, call, options) })
             }
         }
     }
+    /** All CameraX binding and Recording objects stay on the Android main thread. */
+    internal fun beginRecording(player: CameraCapturePlayer, file: File, microphone: Boolean) {
+        val call = CameraCall<Unit>(40_000)
+        player.waitFor(call) {
+            post {
+                if (!valid(player) || owner !== player || !foreground ||
+                    recordingSession != null || capturing != null) {
+                    call.fail(MediaException("Camera is unavailable for recording"))
+                } else {
+                    recordingSession = VideoSession(player, file, microphone, call)
+                    unbind()
+                    drain()
+                }
+            }
+        }
+    }
+
+    internal fun pauseRecording(player: CameraCapturePlayer) = recordingCommand(player) { it.pause() }
+    internal fun resumeRecording(player: CameraCapturePlayer) = recordingCommand(player) { it.resume() }
+
+    private fun recordingCommand(player: CameraCapturePlayer, operation: (Recording) -> Unit) {
+        val call = CameraCall<Unit>(10_000)
+        player.waitFor(call) {
+            post {
+                val session = recordingSession
+                val active = session?.recorder
+                if (session?.player !== player || active == null || session.problem != null) {
+                    call.fail(MediaException("Video recording is no longer active"))
+                } else {
+                    try { operation(active); call.complete(Unit) }
+                    catch (failure: Exception) { call.fail(cameraFailure(failure)) }
+                }
+            }
+        }
+    }
+
+    internal fun finishRecording(player: CameraCapturePlayer) {
+        val call = CameraCall<Unit>(45_000)
+        player.waitFor(call) {
+            post {
+                val session = recordingSession
+                if (session?.player !== player) {
+                    call.fail(MediaException("Video recording no longer exists"))
+                } else {
+                    session.finalCall = call
+                    if (session.finalized) completeVideo(session)
+                    else try { session.recorder?.stop()
+                        ?: call.fail(MediaException("Video recorder never started"))
+                    } catch (failure: Exception) { call.fail(cameraFailure(failure)) }
+                }
+            }
+        }
+    }
+
+    internal fun abandonRecording(player: CameraCapturePlayer) = post {
+        if (recordingSession?.player === player) {
+            abortRecording("Recording abandoned")
+            unbind()
+            drain()
+        }
+    }
+
+    private fun startVideo(current: Binding) {
+        val session = recordingSession ?: return
+        if (session.launched || current.player !== session.player) return
+        val video = current.video ?: return
+        val activity = host ?: return
+        session.launched = true
+        try {
+            val output = FileOutputOptions.Builder(session.file)
+                .setFileSizeLimit(64L * 1024 * 1024).build()
+            var pending = video.output.prepareRecording(activity, output)
+            if (session.microphone) pending = pending.withAudioEnabled()
+            session.recorder = pending.start(ContextCompat.getMainExecutor(activity)) { event ->
+                if (recordingSession !== session) return@start
+                when (event) {
+                    is VideoRecordEvent.Start -> session.started.complete(Unit)
+                    is VideoRecordEvent.Finalize -> {
+                        session.finalized = true
+                        if (event.hasError()) session.problem = MediaException(
+                            "Video recording failed: " + event.error)
+                        if (!session.started.isComplete) session.started.fail(
+                            session.problem ?: MediaException("Recording ended before starting"))
+                        if (session.finalCall == null && session.problem != null) {
+                            session.player.postEvent(javax.microedition.media.PlayerListener.RECORD_ERROR,
+                                session.problem!!.message)
+                        }
+                        if (session.finalCall != null) completeVideo(session)
+                    }
+                }
+            }
+        } catch (failure: Exception) {
+            session.problem = MediaException("Video recorder failed: " + failure.message)
+            session.started.fail(session.problem!!)
+            session.finalCall?.fail(session.problem!!)
+            recordingSession = null
+            unbind()
+            drain()
+        }
+    }
+
+    private fun completeVideo(session: VideoSession) {
+        val call = session.finalCall
+        val error = session.problem
+        if (error != null) call?.fail(error) else call?.complete(Unit)
+        if (recordingSession === session) {
+            recordingSession = null
+            unbind()
+            drain()
+        }
+    }
+
+    private fun abortRecording(reason: String) {
+        val session = recordingSession ?: return
+        recordingSession = null
+        val failure = MediaException(reason)
+        session.started.fail(failure)
+        session.finalCall?.fail(failure)
+        try { session.recorder?.close() } catch (_: Exception) {}
+        if (session.launched) {
+            session.player.postEvent(javax.microedition.media.PlayerListener.RECORD_ERROR, reason)
+        }
+    }
+
     private fun enqueue(request: Pending) {
         if (request.call.isComplete) return
         if (!valid(request.player)) { request.call.fail(MediaException("Camera session ended")); return }
@@ -232,8 +383,9 @@ object CameraRuntime {
     }
     private fun discardPending() {
         pending.removeAll { it.call.isComplete || !valid(it.player) }
-        if (capturing?.isComplete == true) unbind()
+        if (capturing?.isComplete == true && recordingSession == null) unbind()
         if (owner?.let { !valid(it) || (it.getState() < Player.PREFETCHED && pending.isEmpty()) } == true) {
+            abortRecording("Camera owner released")
             unbind()
             owner = null
         }
@@ -249,6 +401,7 @@ object CameraRuntime {
         post {
             pending.removeAll { it.player === player }
             if (owner === player) {
+                abortRecording("Camera Player released")
                 unbind()
                 owner = null
                 finishSwitch("Camera Player released")
@@ -290,6 +443,7 @@ object CameraRuntime {
             player.hostResumed()
             finishSwitch(null)
             updatePreviewVisibility()
+            startVideo(current)
             val ready = pending.toList()
             pending.clear()
             for (request in ready) {
@@ -330,14 +484,18 @@ object CameraRuntime {
             .setResolutionStrategy(ResolutionStrategy(Size(1280, 960), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
             .setResolutionFilter { sizes, _ -> sizes.filter { it.width.toLong() * it.height <= 4_194_304L } }
             .build()
-        val capture = ImageCapture.Builder().setResolutionSelector(resolution)
+        val video = if (recordingSession?.player === player) VideoCapture.withOutput(
+            Recorder.Builder().setQualitySelector(QualitySelector.from(Quality.LOWEST)).build()
+        ) else null
+        val capture = if (video == null) ImageCapture.Builder().setResolutionSelector(resolution)
             .setTargetRotation(rotation).setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .setOutputFormat(ImageCapture.OUTPUT_FORMAT_JPEG).build()
+            .setOutputFormat(ImageCapture.OUTPUT_FORMAT_JPEG).build() else null
         val preview = view?.let { Preview.Builder().setResolutionSelector(resolution).setTargetRotation(rotation).build() }
-        val next = Binding(player, view, lens, rotation, capture, preview)
+        val next = Binding(player, view, lens, rotation, capture, preview, video)
         val group = UseCaseGroup.Builder().setViewPort(ViewPort.Builder(
             Rational(player.source.width, player.source.height), rotation).setScaleType(ViewPort.FILL_CENTER).build())
-            .addUseCase(capture)
+        if (capture != null) group.addUseCase(capture)
+        if (video != null) group.addUseCase(video)
         if (preview != null && view != null) {
             // PreviewView mirrors front cameras by default, including pre-API33. Cancel that
             // display transform so the guest and its encoded image both see physical pixels.
@@ -378,12 +536,13 @@ object CameraRuntime {
             (old.view?.parent as? FrameLayout)?.removeView(old.view)
             old.camera.cameraInfo.cameraState.removeObserver(old.cameraObserver)
             old.streamObserver?.let { old.view?.previewStreamState?.removeObserver(it) }
-            if (old.preview != null) provider?.unbind(old.capture, old.preview)
-            else provider?.unbind(old.capture)
+            val cases = listOfNotNull<UseCase>(old.capture, old.preview, old.video)
+            if (cases.isNotEmpty()) provider?.unbind(*cases.toTypedArray())
         }
     }
     private fun backendFailed(failure: Exception) {
         val player = owner
+        abortRecording(failure.message ?: "Camera backend failed")
         unbind()
         failPending(cameraFailure(failure))
         if (switchFailure != null) {
@@ -439,7 +598,7 @@ object CameraRuntime {
         presentationChanged(player)
     }
     private fun presentationChanged(player: CameraCapturePlayer) = post {
-        if (owner === player) {
+        if (owner === player && recordingSession == null) {
             val shown = player.previewContainer?.let { it.isAttachedToWindow && it.isShown } == true
             val current = binding
             if (current != null && ((current.view != null) != shown ||
@@ -454,7 +613,9 @@ object CameraRuntime {
         if (capturing != null || switchFailure != null) { call.fail(MediaException("Camera is busy")); return }
         capturing = call
         notifyMenu()
-        current.capture.takePicture(worker, object : ImageCapture.OnImageCapturedCallback() {
+        val still = current.capture
+        if (still == null) { call.fail(MediaException("Snapshot unavailable during video recording")); return }
+        still.takePicture(worker, object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 try {
                     if (!call.isComplete) {
@@ -485,12 +646,12 @@ object CameraRuntime {
         val cameras = provider ?: return false
         val player = binding?.player ?: owner?.takeIf { switchFailure != null } ?: return false
         return try {
-            valid(player) && foreground &&
+            recordingSession == null && valid(player) && foreground &&
                 cameras.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) && cameras.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
         } catch (_: Exception) { false }
     }
     @JvmStatic fun isFrontCamera() = (binding?.facing ?: overrideFacing) == CameraSelector.LENS_FACING_FRONT
-    @JvmStatic fun isSwitchingCamera() = switchFailure != null || capturing != null || binding?.ready == false
+    @JvmStatic fun isSwitchingCamera() = recordingSession != null || switchFailure != null || capturing != null || binding?.ready == false
     @JvmStatic fun switchCamera(onFailure: SwitchFailure) {
         if (!canSwitchCamera() || isSwitchingCamera()) { onFailure.accept("Camera is not ready"); return }
         previousFacing = overrideFacing
