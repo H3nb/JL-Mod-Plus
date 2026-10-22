@@ -4,6 +4,8 @@ package javax.microedition.lcdui;
 import static org.junit.Assert.*;
 import android.text.InputType;
 import android.widget.EditText;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
@@ -40,6 +42,43 @@ public class MidpStageCTextDeviceTest {
             editor.setText("12345");
             assertEquals("-15", model.getString());
         });
+    }
+
+    @Test public void apiChangesDoNotSendUserItemStateEvents() {
+        final TextFieldImpl model = new TextFieldImpl();
+        model.setMaxSize(30);
+        model.setConstraints(TextField.ANY);
+        final CountingItem item = new CountingItem();
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            EditText editor = model.getView(InstrumentationRegistry.getInstrumentation().getTargetContext(), item);
+            model.setString("guest");
+            assertEquals(0, item.events);
+            editor.setText("user");
+            assertEquals(1, item.events);
+            model.insert("!", 4);
+            assertEquals(1, item.events);
+        });
+    }
+
+    @Test public void sensitiveInputDisablesImeLearningAndCanBeRestored() {
+        final TextFieldImpl model = new TextFieldImpl();
+        model.setMaxSize(30);
+        model.setConstraints(TextField.ANY | TextField.PASSWORD);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            EditText editor = model.getView(InstrumentationRegistry.getInstrumentation().getTargetContext(), null);
+            assertTrue((editor.getImeOptions() & EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0);
+            assertNotNull(editor.getTransformationMethod());
+            model.setConstraints(TextField.ANY);
+            assertEquals(0, editor.getImeOptions() & EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
+            assertNull(editor.getTransformationMethod());
+        });
+    }
+
+    private static final class CountingItem extends Item {
+        int events;
+        @Override void postStateChanged() { events++; }
+        @Override View getItemContentView() { return null; }
+        @Override void clearItemContentView() {}
     }
 
     @Test public void programmaticChangesDoNotBounceThroughEditorAsUserEdits() {
