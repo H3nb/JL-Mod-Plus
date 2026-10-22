@@ -1359,6 +1359,14 @@ public class MicroActivity extends AppCompatActivity {
 		return getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
 	}
 
+    /** Route host-owned Java ME package decisions through the existing Material 3 runtime surface. */
+    @Nullable
+    public Runnable showPlatformPackageChoice(Runnable onInstall, Runnable onBrowser,
+            Runnable onCancel) {
+        return runtimeMenuController == null ? null
+                : runtimeMenuController.showPlatformPackageChoice(onInstall, onBrowser, onCancel);
+    }
+
 	public void showExitConfirmation() {
 		if (runtimeMenuController != null) {
 			runtimeMenuController.showExitConfirmation();
