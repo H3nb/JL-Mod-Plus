@@ -73,7 +73,7 @@ public class Manager {
 			try (InputStream stream = Connector.openInputStream(locator)) {
 				return createPlayer(stream, type);
 			}
-		} else if (locator.startsWith("capture://video") || locator.startsWith("capture://devcam")) {
+		} else if (locator.startsWith("capture://video") || "capture://audio_video".equals(locator) || locator.startsWith("capture://devcam")) {
 			// Construction validates the supported MMAPI locator. Hardware and camera
 			// permission acquisition belong to the Player's prefetch/start lifecycle.
 			return new CameraCapturePlayer(locator);

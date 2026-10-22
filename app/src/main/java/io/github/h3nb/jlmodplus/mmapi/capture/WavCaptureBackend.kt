@@ -28,7 +28,7 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
     private var samples = 0L
 
     override fun begin(file: File) {
-        requireMicrophone()
+        MicrophoneAccess.require()
         try {
             val minimum = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT)
@@ -168,30 +168,6 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
 
     private fun le32(file: RandomAccessFile, value: Int) {
         le16(file, value and 65535); le16(file, value ushr 16)
-    }
-
-    private fun requireMicrophone() {
-        val host = ContextHolder.getActivity() ?: throw MediaException("No active MIDlet host")
-        if (ContextCompat.checkSelfPermission(host, Manifest.permission.RECORD_AUDIO) ==
-            PackageManager.PERMISSION_GRANTED) return
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            throw MediaException("Microphone permission cannot be awaited on the UI thread")
-        }
-        val ready = CountDownLatch(1)
-        var granted = false
-        host.runOnUiThread {
-            host.requestRecordingAudioPermission { accepted ->
-                granted = accepted
-                ready.countDown()
-            }
-        }
-        try {
-            if (!ready.await(60, TimeUnit.SECONDS)) throw MediaException("Microphone permission timed out")
-        } catch (interrupted: InterruptedException) {
-            Thread.currentThread().interrupt()
-            throw MediaException("Microphone permission interrupted")
-        }
-        if (!granted) throw SecurityException("Microphone permission denied")
     }
 
     companion object {

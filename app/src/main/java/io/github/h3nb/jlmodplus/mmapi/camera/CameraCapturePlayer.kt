@@ -17,6 +17,7 @@ import javax.microedition.media.PlayerListener
 import javax.microedition.media.TimeBase
 import javax.microedition.shell.MidletSystem
 import io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay
+import io.github.h3nb.jlmodplus.mmapi.capture.CaptureRecordControl
 
 /** JSR-135 live source. No recorder, audio output, or file decoder participates. */
 class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: String) : Player {
@@ -40,6 +41,10 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
         override fun detachView(view: View) = CameraRuntime.detachPreview(this@CameraCapturePlayer, view)
         override fun getSnapshot(type: String?): ByteArray = snapshot(type)
     }).apply { setSizeListener { postEvent(PlayerListener.SIZE_CHANGED, this) } }
+
+    private val recordControl = CaptureRecordControl(
+        CameraVideoRecorder(this, source.microphone),
+        { getState() }, { getMediaTime() }, { kind, data -> postEvent(kind, data) })
 
     init { CameraRuntime.register(this) }
 
@@ -69,6 +74,7 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
         realize()
         if (state == Player.STARTED) return
         CameraRuntime.prepared(this, true)
+        recordControl.playerStarted()
     }
 
     internal fun markPrepared(start: Boolean, call: CameraCall<Unit>) = synchronized(lock) {
@@ -85,6 +91,7 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
 
     override fun stop() {
         checkOpen()
+        recordControl.playerStopped()
         synchronized(lock) {
             checkOpen()
             cancelCalls("Camera Player was stopped")
@@ -106,6 +113,7 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        recordControl.close()
         cancelCalls("Camera Player was closed")
         synchronized(lock) { state = Player.CLOSED }
         CameraRuntime.release(this)
@@ -197,10 +205,11 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
         requireNotNull(type) { "Control name must not be null" }
         return when (type) {
             "VideoControl", "GUIControl", "javax.microedition.media.control.VideoControl", "javax.microedition.media.control.GUIControl" -> display
+            "RecordControl", "javax.microedition.media.control.RecordControl" -> recordControl
             else -> null
         }
     }
-    override fun getControls(): Array<Control> { checkRealized(); return arrayOf(display) }
+    override fun getControls(): Array<Control> { checkRealized(); return arrayOf(display, recordControl) }
     override fun addPlayerListener(listener: PlayerListener?) { checkOpen(); if (listener != null) listeners.addIfAbsent(listener) }
     override fun removePlayerListener(listener: PlayerListener?) { checkOpen(); if (listener != null) listeners.remove(listener) }
 }
