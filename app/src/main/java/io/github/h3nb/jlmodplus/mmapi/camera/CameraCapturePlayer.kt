@@ -2,6 +2,7 @@
 package io.github.h3nb.jlmodplus.mmapi.camera
 
 import android.content.Context
+import java.io.File
 import android.view.View
 import android.widget.FrameLayout
 import java.util.concurrent.CopyOnWriteArrayList
@@ -108,6 +109,7 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
         checkOpen()
         stop()
         synchronized(lock) { checkOpen(); if (state >= Player.PREFETCHED) state = Player.REALIZED }
+        recordControl.cameraDeallocated()
         CameraRuntime.release(this)
     }
 
@@ -120,6 +122,11 @@ class CameraCapturePlayer @Throws(MediaException::class) constructor(locator: St
         display.close()
         postEvent(PlayerListener.CLOSED, null)
         events.shutdown()
+    }
+
+    internal fun recordingFailed(file: File, reason: String) {
+        try { events.execute { recordControl.backendFailed(file, reason) } }
+        catch (_: RejectedExecutionException) { /* Player already closed. */ }
     }
 
     internal fun fail(message: String) {
