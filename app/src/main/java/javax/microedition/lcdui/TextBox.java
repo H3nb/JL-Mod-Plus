@@ -94,7 +94,7 @@ public class TextBox extends Screen {
 	@Override
 	View getScreenView() {
 		EditText et = textField.getView(ContextHolder.getActivity(), null, true);
-		et.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+		et.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 		et.setGravity(Gravity.TOP);
 		return et;
 	}

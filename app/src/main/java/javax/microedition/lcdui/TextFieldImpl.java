@@ -214,6 +214,10 @@ class TextFieldImpl {
         if (editor == null) return;
         // Detach first: callbacks from a released Android view cannot mutate the new MIDP model.
         textview = null;
-        editor.setOnFocusChangeListener(null);
+        // Guest setCurrent() can detach a Screen off the Android UI thread.
+        // Reject callbacks immediately; clean up the old View on its owner thread.
+        Runnable detach = () -> editor.setOnFocusChangeListener(null);
+        if (Looper.myLooper() == Looper.getMainLooper()) detach.run();
+        else ViewHandler.postEvent(detach);
     }
 }
