@@ -43,12 +43,13 @@ preview/snapshot regression cases. CI assembly does not establish physical captu
 
 Some legacy MIDlets (including J2MEVideoMe) initialize the `VideoControl` GUI
 primitive, start recording, and only then call `Display.setCurrent(Form)`.
-The capture runtime must reserve a Preview use case alongside VideoCapture
-before recording starts, even when the Form is not yet attached. The GUI Item
-prepares its host view on the Android main thread; once it becomes visible the
-Preview surface is connected to the existing binding rather than unbinding an
-active recorder. Recorder startup must not block waiting for a detached Form's
-first preview frame. Verify on hardware that attaching the Preview surface does
+The capture runtime reserves a Preview use case alongside VideoCapture
+before recording starts, even when no VideoControl GUI view exists yet. Once
+the Form is shown, the camera owner installs a PreviewView and connects its
+surface to the existing Preview use case, without unbinding VideoCapture.
+Recorder startup must not block waiting for a Form's first preview frame.
+No eager Android view is created merely because an offscreen VideoControl
+was initialized. Verify on hardware that attaching the Preview surface does
 not interrupt or finalize the MP4 recording.
 
 The camera-switch shortcut remains discoverable when both lenses exist, but is

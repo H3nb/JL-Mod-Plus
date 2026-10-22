@@ -14,7 +14,6 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.VideoItem;
 import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.media.MediaException;
-import javax.microedition.util.ContextHolder;
 import javax.microedition.media.control.VideoControl;
 
 /** Guest geometry, separate video producer Surface, and main-thread View lifetime. */
@@ -103,20 +102,6 @@ public final class VideoDisplay implements VideoControl {
         this.mode = mode;
         visible = true;
         item = new VideoItem(this);
-        if (content != null) {
-            // A MIDlet may start recording before displaying the Form containing this
-            // Item. Prepare the camera view on the main thread now so a recording
-            // binding can reserve Preview before the MP4 session begins. This does
-            // not attach a View or acquire the camera hardware.
-            ViewHandler.postEvent(() -> {
-                synchronized (VideoDisplay.this) {
-                    if (!closed && this.mode == USE_GUI_PRIMITIVE && view == null) {
-                        Context activity = ContextHolder.getActivity();
-                        if (activity != null) createView(activity);
-                    }
-                }
-            });
-        }
         return item;
     }
 

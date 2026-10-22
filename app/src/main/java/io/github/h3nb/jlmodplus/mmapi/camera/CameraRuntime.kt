@@ -103,7 +103,7 @@ object CameraRuntime {
     private val pending = ArrayList<Pending>()
 
     private class Pending(val player: CameraCapturePlayer, val call: CameraCall<*>, val ready: (Binding) -> Unit)
-    private class Binding(val player: CameraCapturePlayer, val view: PreviewView?, val facing: Int,
+    private class Binding(val player: CameraCapturePlayer, var view: PreviewView?, val facing: Int,
                           val rotation: Int, val capture: ImageCapture?, val preview: Preview?,
                           val video: VideoCapture<Recorder>?) {
         lateinit var camera: Camera
@@ -481,9 +481,7 @@ object CameraRuntime {
 
     private fun bind(cameras: ProcessCameraProvider, activity: MicroActivity, player: CameraCapturePlayer) {
         val lens = facing(player, cameras)
-        val container = player.previewContainer?.takeIf {
-            recordingSession?.player === player || (it.isAttachedToWindow && it.isShown)
-        }
+        val container = player.previewContainer?.takeIf { it.isAttachedToWindow && it.isShown }
         // A new View starts at IDLE. Reusing PreviewView can expose its old STREAMING value
         // before the new camera has produced a frame, especially during a lens switch.
         val view = container?.let {
@@ -505,20 +503,22 @@ object CameraRuntime {
         val capture = if (video == null) ImageCapture.Builder().setResolutionSelector(resolution)
             .setTargetRotation(rotation).setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .setOutputFormat(ImageCapture.OUTPUT_FORMAT_JPEG).build() else null
-        val preview = view?.let { Preview.Builder().setResolutionSelector(resolution).setTargetRotation(rotation).build() }
+        // Reserve the Preview use case with VideoCapture even if the MIDlet has
+        // not initialized or displayed VideoControl yet. Its SurfaceProvider may
+        // be connected after recording starts, without unbinding VideoCapture.
+        val preview = if (video != null || view != null)
+            Preview.Builder().setResolutionSelector(resolution).setTargetRotation(rotation).build()
+        else null
         val next = Binding(player, view, lens, rotation, capture, preview, video)
         val group = UseCaseGroup.Builder().setViewPort(ViewPort.Builder(
             Rational(player.source.width, player.source.height), rotation).setScaleType(ViewPort.FILL_CENTER).build())
         if (capture != null) group.addUseCase(capture)
         if (video != null) group.addUseCase(video)
-        if (preview != null && view != null) {
-            // PreviewView mirrors front cameras by default, including pre-API33. Cancel that
-            // display transform so the guest and its encoded image both see physical pixels.
-            view.scaleX = if (lens == CameraSelector.LENS_FACING_FRONT) -1f else 1f
-            // A detached GUI Item has no display Surface yet. Bind the Preview
-            // use case together with VideoCapture, but supply its Surface only
-            // after the Form is attached; do not unbind the active recorder.
-            if (view.isAttachedToWindow && view.isShown) {
+        if (preview != null) {
+            if (view != null) {
+                // PreviewView mirrors front cameras by default; cancel display
+                // mirroring to retain the PR #175 physical-pixel convention.
+                view.scaleX = if (lens == CameraSelector.LENS_FACING_FRONT) -1f else 1f
                 preview.setSurfaceProvider(view.surfaceProvider)
                 next.previewConnected = true
             }
@@ -624,15 +624,40 @@ object CameraRuntime {
         val shown = player.previewContainer?.let { it.isAttachedToWindow && it.isShown } == true
         val current = binding
         if (recordingSession != null) {
-            // Preview was reserved at recording bind time even if the MIDlet
-            // had not displayed its GUI primitive. Connect it in place.
-            if (shown && current != null && !current.previewConnected) {
-                val view = current.view
-                val preview = current.preview
-                if (view?.parent === player.previewContainer && preview != null) {
-                    current.previewConnected = true
-                    preview.setSurfaceProvider(view.surfaceProvider)
+            // MIDlets may call Player.start() before displaying the VideoItem.
+            // Preview was already included in the VideoCapture use-case group.
+            // Supply its surface when the Form arrives; never unbind the recorder.
+            if (shown && current != null && current.preview != null) {
+                val container = player.previewContainer ?: return@post
+                var view = current.view
+                if (view?.parent !== container) {
+                    // The Player can acquire its recording source before a
+                    // VideoControl GUI primitive even exists.
+                    val created = newPreview(container.context)
+                    container.foreground = ColorDrawable(Color.BLACK)
+                    container.removeAllViews()
+                    container.addView(created, FrameLayout.LayoutParams(-1, -1, Gravity.CENTER))
+                    current.view = created
+                    current.streaming = false
+                    created.scaleX = if (current.facing == CameraSelector.LENS_FACING_FRONT) -1f else 1f
+                    val observer = Observer<PreviewView.StreamState> { state ->
+                        if (binding === current) {
+                            current.streaming = state == PreviewView.StreamState.STREAMING
+                            updatePreviewVisibility()
+                            drain()
+                        }
+                    }
+                    current.streamObserver?.let { old -> view?.previewStreamState?.removeObserver(old) }
+                    current.streamObserver = observer
+                    created.previewStreamState.observeForever(observer)
+                    view = created
+                    current.previewConnected = false
                 }
+                if (!current.previewConnected && view != null) {
+                    current.previewConnected = true
+                    current.preview.setSurfaceProvider(view.surfaceProvider)
+                }
+                updatePreviewVisibility()
             }
             return@post
         }
