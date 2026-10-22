@@ -62,10 +62,17 @@ public class PushRegistryImpl implements PushRegistryDelegate, Implementation {
 	}
 
 	public void registerConnection(String connection, String midlet, String filter) throws ClassNotFoundException,
-			IOException {
-		// TODO Auto-generated method stub
-
-	}
+            IOException {
+        if (connection == null || filter == null) {
+            throw new IllegalArgumentException("Push connection and filter must be non-null");
+        }
+        if (midlet == null) {
+            throw new ClassNotFoundException("MIDlet class must be non-null");
+        }
+        // Inbound push requires an AMS listener while the MIDlet is not running.
+        // No such backend exists: silently accepting would promise wakeups that never occur.
+        throw new ConnectionNotFoundException("Push delivery is not supported");
+    }
 
 	public boolean unregisterConnection(String connection) {
 		// TODO Auto-generated method stub
