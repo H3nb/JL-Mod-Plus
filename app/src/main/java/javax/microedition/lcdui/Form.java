@@ -28,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.util.ContextHolder;
@@ -51,13 +52,16 @@ public class Form extends Screen {
 		if (elements == null) {
 			return;
 		}
+		// Validate the whole batch before assigning any owner. A repeated Item
+		// reference would otherwise pass the ownership check twice.
+		IdentityHashMap<Item, Boolean> seen = new IdentityHashMap<>();
 		for (int i = 0, elementsLength = elements.length; i < elementsLength; i++) {
 			Item item = elements[i];
 			if (item == null) {
 				throw new NullPointerException("Item at index " + i + " is null");
 			}
-			if (item.hasOwner()) {
-				throw new IllegalStateException("Item at index " + i + " is already owned by another container");
+			if (item.hasOwner() || seen.put(item, Boolean.TRUE) != null) {
+				throw new IllegalStateException("Item at index " + i + " is already owned by a container");
 			}
 		}
 		for (Item item : elements) {
