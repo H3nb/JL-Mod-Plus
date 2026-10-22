@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-INPUT = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(alpha|beta|rc)\.([1-9]\d*))?$")
+INPUT = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(alpha|beta|rc))?$")
 SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?$")
 
 
@@ -78,7 +78,7 @@ def published_code(tag, has_metadata, repo):
 
 def allocate(version, branch, releases, code_for):
     if INPUT.fullmatch(version) is None:
-        raise ValueError("Use X.Y.Z[-alpha.N|-beta.N|-rc.N] without v")
+        raise ValueError("Use X.Y.Z[-alpha|-beta|-rc] without v; use a new version for each publication")
     preview = "-" in version
     if (branch, preview) not in (("alpha", True), ("stable", False)):
         raise ValueError("Preview must use alpha; Stable must use stable (not legacy main)")
@@ -90,7 +90,7 @@ def allocate(version, branch, releases, code_for):
         previous = tag.removeprefix("v")
         if previous == "0.1.0-dev.8.1.d09e75e":
             if preview and compare(version, previous) <= 0:
-                raise ValueError("Use 0.2.0-alpha.1 or newer after legacy dev releases")
+                raise ValueError("Use 0.2.0-alpha or newer after legacy dev releases")
             continue
         if (preview or not was_preview) and compare(version, previous) <= 0:
             raise ValueError("Version must exceed " + previous)

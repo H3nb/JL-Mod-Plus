@@ -12,6 +12,11 @@ spec.loader.exec_module(release)
 class ReleasePolicyTests(unittest.TestCase):
     def test_semver(self):
         cases = (
+            ("0.2.3-alpha", "0.2.2-alpha.1"),
+            ("0.2.2-alpha.1", "0.2.2-alpha"),
+            ("0.2.2-beta", "0.2.2-alpha.1"),
+            ("0.2.2-rc", "0.2.2-beta"),
+            ("0.2.2", "0.2.2-rc"),
             ("0.2.0-alpha.1", "0.1.0-alpha.20"),
             ("0.2.0-alpha.10", "0.2.0-alpha.9"),
             ("0.2.0-beta.1", "0.2.0-alpha.99"),
@@ -24,27 +29,34 @@ class ReleasePolicyTests(unittest.TestCase):
 
     def test_input_validation(self):
         for item in ("v0.2.0", "0.2.0-alpha.0", "0.2.0-alpha.01",
-                     "00.2.0", "0.2.0-nightly.1", "0.2.0+build"):
+                     "00.2.0", "0.2.0-nightly.1", "0.2.0+build", "0.2.0-alpha.1"):
             with self.assertRaises(ValueError):
                 release.allocate(item, "alpha", (), lambda *_: 1)
 
     def test_legacy_dev_migration(self):
         prior = (("v0.1.0-dev.8.1.d09e75e", True, False),)
         with self.assertRaises(ValueError):
-            release.allocate("0.1.0-alpha.2", "alpha", prior, lambda *_: 1)
+            release.allocate("0.1.0-alpha", "alpha", prior, lambda *_: 1)
         self.assertEqual(
-            release.allocate("0.2.0-alpha.1", "alpha", prior, lambda *_: 1),
+            release.allocate("0.2.0-alpha", "alpha", prior, lambda *_: 1),
             (2, True),
         )
 
     def test_allocation_and_channels(self):
         prior = (("v0.2.0-alpha.3", True, True), ("v0.1.0", False, True))
-        self.assertEqual(release.allocate("0.2.0-beta.1", "alpha", prior, lambda *_: 15), (16, True))
+        self.assertEqual(release.allocate("0.2.0-beta", "alpha", prior, lambda *_: 15), (16, True))
         self.assertEqual(release.allocate("0.1.1", "stable", prior, lambda *_: 15), (16, False))
-        for name, branch in (("0.2.0-alpha.2", "alpha"), ("0.2.0", "alpha"),
-                             ("0.2.0-alpha.4", "main")):
+        for name, branch in (("0.2.0-alpha", "alpha"), ("0.2.0", "alpha"),
+                             ("0.2.1-alpha", "main")):
             with self.assertRaises(ValueError):
                 release.allocate(name, branch, prior, lambda *_: 15)
+
+    def test_publication_identity_is_unique_across_channels(self):
+        prior = (("v0.2.3-alpha", True, True),)
+        with self.assertRaisesRegex(ValueError, "already exists"):
+            release.allocate("0.2.3-alpha", "alpha", prior, lambda *_: 23)
+        self.assertEqual(release.allocate("0.2.3-beta", "alpha", prior, lambda *_: 23), (24, True))
+        self.assertEqual(release.allocate("0.2.3", "stable", prior, lambda *_: 23), (24, False))
 
 
 if __name__ == "__main__":
