@@ -418,7 +418,7 @@ public class InstallerDialog extends DialogFragment {
                 return;
             }
             if (activeReplacementNotified) {
-                message += "\\n\\n" + getString(R.string.installer_running_update_warning);
+                message += "\n\n" + getString(R.string.installer_running_update_warning);
             }
         }
         if (installer.getJar() == null) {
