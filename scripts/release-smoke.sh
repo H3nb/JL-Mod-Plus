@@ -25,8 +25,13 @@ for variant in x86_64 universal; do
   "$apksigner" verify "$apk"
   adb install --no-streaming "$apk"
   adb shell dumpsys package "$package" > "$output/$variant-package.txt"
-  native_dir="$(sed -nE 's/^[[:space:]]*nativeLibraryDir=(.*)/\1/p' "$output/$variant-package.txt" | tr -d '\r')"
-  [[ -n "$native_dir" ]]
+  native_root="$(sed -nE 's/^[[:space:]]*legacyNativeLibraryDir=(.*)/\1/p' "$output/$variant-package.txt" | tr -d '\r')"
+  if [[ -z "$native_root" ]]; then
+    echo "Missing installed native library directory for $variant" >&2
+    exit 1
+  fi
+  native_dir="$native_root/x86_64"
+  echo "Checking extracted $variant native libraries in $native_dir"
   adb shell "test -f '$native_dir/libc++_shared.so'"
   adb shell am start -W -n "$package/ru.playsoftware.j2meloader.LauncherActivity" \
     | tee "$output/$variant-launch.txt"
