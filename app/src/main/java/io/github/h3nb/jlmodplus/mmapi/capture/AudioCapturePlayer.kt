@@ -93,10 +93,11 @@ open class AudioCapturePlayer : Player {
 
     @Synchronized override fun deallocate() {
         checkOpen()
-        stop()
-        // Preserve the pending WAV output, but release the exclusive microphone.
-        backend.deallocate()
-        if (state >= Player.PREFETCHED) state = Player.REALIZED
+        try { stop() } finally {
+            // Even a failed pause must release the exclusive input hardware.
+            try { backend.deallocate() }
+            finally { if (state >= Player.PREFETCHED) state = Player.REALIZED }
+        }
     }
 
     @Synchronized override fun close() {
