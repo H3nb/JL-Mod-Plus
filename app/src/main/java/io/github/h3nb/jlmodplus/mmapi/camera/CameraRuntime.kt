@@ -560,7 +560,13 @@ object CameraRuntime {
     }
     private fun backendFailed(failure: Exception) {
         val player = owner
-        abortRecording(failure.message ?: "Camera backend failed")
+        val reason = failure.message ?: "Camera backend failed"
+        // A fatal camera error closes the Player below. Queue RECORD_ERROR first:
+        // deferring both state cleanup and notification would lose the event
+        // when Player.close() discards the pending recording callback.
+        if (recordingSession?.launched == true)
+            recordingSession?.player?.postEvent(javax.microedition.media.PlayerListener.RECORD_ERROR, reason)
+        abortRecording(reason, false)
         unbind()
         failPending(cameraFailure(failure))
         if (switchFailure != null) {
