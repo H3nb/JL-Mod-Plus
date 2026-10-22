@@ -6,7 +6,21 @@ set -euo pipefail
 package='io.github.h3nb.jlmodplus'
 output='ci-artifacts/release-smoke'
 mkdir -p "$output"
-trap 'adb logcat -d > "$output/logcat.txt" || true' EXIT
+collect_diagnostics() {
+  local result=$?
+  adb logcat -d > "$output/logcat.txt" || true
+  if (( result != 0 )); then
+    echo 'Release startup failed; last crash-buffer records:' >&2
+    adb logcat -b crash -d | tail -n 200 >&2 || true
+    echo 'Application exit history:' >&2
+    adb shell dumpsys activity exit-info "$package" > "$output/exit-info.txt" || true
+    cat "$output/exit-info.txt" >&2
+    echo 'Last system log records:' >&2
+    tail -n 200 "$output/logcat.txt" >&2
+  fi
+  return "$result"
+}
+trap collect_diagnostics EXIT
 [[ "$(adb shell getconf PAGE_SIZE | tr -d '\r')" == 16384 ]]
 [[ "$(adb shell getprop ro.product.cpu.abi | tr -d '\r')" == x86_64 ]]
 
@@ -41,7 +55,10 @@ for variant in x86_64 universal; do
   grep -q '^Status: ok' "$output/$variant-launch.txt"
   grep -q "^Activity: $package/" "$output/$variant-launch.txt"
   sleep 5
-  adb shell pidof "$package"
+  if ! adb shell pidof "$package"; then
+    echo "$variant app process exited after launch" >&2
+    exit 1
+  fi
   adb shell am force-stop "$package"
   adb uninstall "$package"
   rm "$apk"

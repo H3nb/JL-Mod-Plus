@@ -197,7 +197,6 @@ plugins {
     alias(libs.plugins.androidx.room3)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.compose.screenshot)
     alias(libs.plugins.ksp)
 }
 
@@ -295,7 +294,6 @@ if (nativeBuildEnabled) {
 }
 
 android {
-    experimentalProperties["android.experimental.enableScreenshotTest"] = true
     compileSdk = compileSdkVersion
     if (nativeBuildEnabled) {
         ndkVersion = selectedNdkVersion
@@ -374,6 +372,17 @@ android {
         // Analyze project dependencies through the app lint graph so library lint can be
         // scheduled with the app instead of requiring a second top-level lint invocation.
         checkDependencies = true
+    }
+
+    testOptions {
+        screenshotTests.create("screenshotTest") {
+            engineVersion = libs.versions.compose.screenshot.get()
+            targetVariants.add("emulatorDebug")
+            dependencies {
+                implementation(libs.androidx.compose.ui.tooling)
+                implementation(libs.screenshot.validation.api)
+            }
+        }
     }
 
     flavorDimensions += "default"
@@ -537,8 +546,6 @@ dependencies {
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
-    screenshotTestImplementation(libs.screenshot.validation.api)
 
     testImplementation(libs.junit)
     // Frozen v7 reader oracle only; Gson is absent from application runtime/APKs.

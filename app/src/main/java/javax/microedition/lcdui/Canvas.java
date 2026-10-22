@@ -288,13 +288,6 @@ public abstract class Canvas extends Displayable {
 		return base <= 0 ? 0 : base * (speedPercent / 100.0);
 	}
 
-	/** Active reported display rate, independent of the maximum used by compatibility pacing. */
-	public float getPerformanceDisplayHz() {
-		SurfaceView view = innerView;
-		android.view.Display display = view == null ? null : view.getDisplay();
-		return display == null ? Float.NaN : display.getRefreshRate();
-	}
-
 	public String getPerformanceRenderer() {
 		return switch (settings.graphicsMode) {
 			case 1 -> "GLES";

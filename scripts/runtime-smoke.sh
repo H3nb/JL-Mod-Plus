@@ -110,32 +110,9 @@ run_selector_batch() {
   fi
   cat "$instrumentation_log"
 
-  if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|INSTRUMENTATION_ABORTED|Process crashed|No tests found' "$instrumentation_log"; then
-    echo "Instrumentation reported a runtime-smoke failure in batch: $batch_name." >&2
-    exit 1
-  fi
-  if ! grep -Fq 'INSTRUMENTATION_CODE: -1' "$instrumentation_log"; then
-    echo "Instrumentation batch did not report successful completion: $batch_name." >&2
-    exit 1
-  fi
+  python3 scripts/runtime-smoke-results.py \
+    --log "$instrumentation_log" --output "$verified_selectors" "${batch[@]}"
 
-  for selector in "${batch[@]}"; do
-    local class_name="${selector%%#*}"
-    if ! grep -Fq "INSTRUMENTATION_STATUS: class=$class_name" "$instrumentation_log"; then
-      echo "Selected class did not execute: $selector" >&2
-      exit 1
-    fi
-
-    if [[ "$selector" == *'#'* ]]; then
-      local method_name="${selector#*#}"
-      if ! grep -Fq "INSTRUMENTATION_STATUS: test=$method_name" "$instrumentation_log"; then
-        echo "Selected method did not execute: $selector" >&2
-        exit 1
-      fi
-    fi
-
-    printf 'PASS\t%s\n' "$selector" >> "$verified_selectors"
-  done
 }
 
 run_selector_batch main "${selectors[@]}"
