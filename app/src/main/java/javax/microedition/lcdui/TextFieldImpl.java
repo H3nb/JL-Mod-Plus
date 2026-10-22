@@ -189,7 +189,6 @@ class TextFieldImpl {
         updatingView = true;
         try {
             editor.setInputType(inputType);
-            editor.setTransformationMethod(password ? PasswordTransformationMethod.getInstance() : null);
             editor.setSingleLine(kind != TextField.ANY);
             editor.setHorizontallyScrolling(false);
             if (kind == TextField.ANY) editor.setMaxLines(textBox ? Integer.MAX_VALUE : 3);
@@ -204,6 +203,9 @@ class TextFieldImpl {
                 options |= EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING;
             }
             editor.setImeOptions(options);
+            // setSingleLine/setTextIsSelectable may reset the TextView transformer.
+            // Apply masking last, and remove it when PASSWORD is disabled.
+            editor.setTransformationMethod(password ? PasswordTransformationMethod.getInstance() : null);
         } finally {
             updatingView = false;
         }

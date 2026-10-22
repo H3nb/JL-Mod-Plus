@@ -18,5 +18,10 @@ runner=$(adb shell pm list instrumentation | tr -d '\r' |
 if [[ -z "$runner" ]]; then echo 'Instrumentation runner not available' >&2; exit 1; fi
 adb shell am instrument -w -r -e class 'javax.microedition.lcdui.MidpStageCTextDeviceTest' "$runner" |
   tee ci-artifacts/stage-c-device.txt
+if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|INSTRUMENTATION_ABORTED|INSTRUMENTATION_STATUS_CODE: -2|Process crashed|No tests found' ci-artifacts/stage-c-device.txt; then
+  echo 'Android instrumentation reported failures.' >&2
+  exit 1
+fi
+grep -Fq 'OK (5 tests)' ci-artifacts/stage-c-device.txt
 grep -Fq 'INSTRUMENTATION_CODE: -1' ci-artifacts/stage-c-device.txt
 grep -Fq 'INSTRUMENTATION_STATUS: class=javax.microedition.lcdui.MidpStageCTextDeviceTest' ci-artifacts/stage-c-device.txt
