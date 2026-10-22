@@ -105,8 +105,8 @@ final class InstallerDownload {
             return SourceKind.KJX;
         }
         int first = 0;
-        while (first < count && (header[first] == ' ' || header[first] == '\\n'
-                || header[first] == '\\r' || header[first] == '\\t')) first++;
+        while (first < count && (header[first] == ' ' || header[first] == '\n'
+                || header[first] == '\r' || header[first] == '\t')) first++;
         if (first < count && header[first] == '<') {
             throw new IOException("The download returned an HTML page instead of a Java ME package");
         }
