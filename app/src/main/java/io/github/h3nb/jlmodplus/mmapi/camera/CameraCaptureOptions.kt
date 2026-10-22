@@ -74,7 +74,7 @@ object CameraCaptureOptions {
         val separator = locator.indexOf('?')
         val device = if (separator < 0) locator else locator.substring(0, separator)
         val facing = when (device) {
-            "capture://video", "capture://audio_video" -> null
+            "capture://video", "capture://audio_video", "capture://image" -> null
             "capture://devcam0" -> BACK
             "capture://devcam1" -> FRONT
             else -> throw MediaException("Unsupported camera locator: $device")

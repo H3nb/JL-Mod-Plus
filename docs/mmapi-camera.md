@@ -16,6 +16,7 @@ and the independent debug MIDlet. The
 | Locator | Emulated camera |
 | --- | --- |
 | `capture://video` | Configured default camera; rear when unspecified; falls back if the preferred direction is unavailable |
+| `capture://image` | Legacy Nokia-style still-camera locator; mapped to the same default camera for `VideoControl.getSnapshot()` |
 | `capture://devcam0` | Rear camera |
 | `capture://devcam1` | Front camera |
 

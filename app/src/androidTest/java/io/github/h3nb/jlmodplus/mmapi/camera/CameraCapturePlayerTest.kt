@@ -69,6 +69,17 @@ class CameraCapturePlayerTest {
     }
 
     @Test
+    fun legacyStillImageLocatorCanExposeVideoControlWithoutStartingCamera() {
+        val player = Manager.createPlayer("capture://image")
+        try {
+            assertEquals(Player.UNREALIZED, player.getState())
+            player.realize()
+            assertEquals("video/raw", player.getContentType())
+            assertTrue(player.getControl("VideoControl") is javax.microedition.media.control.VideoControl)
+        } finally { player.close() }
+    }
+
+    @Test
     fun realizationExposesPhotoAndRecordControlsWithoutPrefetchingHardware() {
         val player = CameraCapturePlayer("capture://video")
         try {
