@@ -283,19 +283,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                             )
                         }
                     }
-                    packageChoice?.let { choice ->
-                        ControllerDialogInputScope(
-                            onControllerKeyEvent = dialogKeyDispatcher,
-                            onControllerMotionEvent = dialogMotionDispatcher,
-                            onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
-                        ) {
-                            PlatformPackageChoiceDialog(
-                                onInstall = { resolvePackageChoice(choice, choice.onInstall) },
-                                onBrowser = { resolvePackageChoice(choice, choice.onBrowser) },
-                                onCancel = { resolvePackageChoice(choice, choice.onCancel) },
-                            )
-                        }
-                    }
                     filePermissionPrompt?.let { prompt ->
                         ControllerDialogInputScope(
                             onControllerKeyEvent = dialogKeyDispatcher,
@@ -318,6 +305,19 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                                 state = hostDialogState,
                                 actions = hostDialogActions,
                                 onDismiss = { changeControllerSurface { hostDialogState = null } },
+                            )
+                        }
+                    }
+                    packageChoice?.let { choice ->
+                        ControllerDialogInputScope(
+                            onControllerKeyEvent = dialogKeyDispatcher,
+                            onControllerMotionEvent = dialogMotionDispatcher,
+                            onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                        ) {
+                            PlatformPackageChoiceDialog(
+                                onInstall = { resolvePackageChoice(choice, choice.onInstall) },
+                                onBrowser = { resolvePackageChoice(choice, choice.onBrowser) },
+                                onCancel = { resolvePackageChoice(choice, choice.onCancel) },
                             )
                         }
                     }
