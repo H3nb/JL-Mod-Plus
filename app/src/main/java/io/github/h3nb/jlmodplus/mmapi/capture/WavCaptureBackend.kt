@@ -17,7 +17,9 @@ import javax.microedition.media.MediaException
 import javax.microedition.util.ContextHolder
 
 /** Mono PCM capture: no native encoder or SDK-24 pause dependency. */
-internal class WavCaptureBackend : CaptureRecordControl.Backend {
+internal class WavCaptureBackend(
+    private val onFailure: (File, String) -> Unit = { _, _ -> },
+) : CaptureRecordControl.Backend {
     override val contentType = "audio/wav"
     private val guard = Any()
     private var device: AudioRecord? = null
@@ -26,6 +28,7 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
     @Volatile private var capturing = false
     @Volatile private var readError: IOException? = null
     private var samples = 0L
+    private var scratch: File? = null
 
     override fun begin(file: File) {
         try {
@@ -35,6 +38,7 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
             writer.write(ByteArray(44))
             samples = 0
             readError = null
+            scratch = file
             resume()
         } catch (failure: Exception) {
             abandon()
@@ -72,6 +76,7 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
                 } catch (failure: Exception) {
                     readError = if (failure is IOException) failure else IOException(failure)
                     capturing = false
+                    scratch?.let { onFailure(it, readError?.message ?: "Microphone capture failed") }
                 }
             }, "MidletAudioCapture").apply { isDaemon = true; start() }
         } catch (failure: Exception) {
@@ -157,6 +162,7 @@ internal class WavCaptureBackend : CaptureRecordControl.Backend {
         device = null
         try { output?.close() } catch (_: IOException) {}
         output = null
+        scratch = null
     }
 
     private fun writeHeader(writer: RandomAccessFile, length: Long) {
