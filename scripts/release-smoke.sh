@@ -12,6 +12,11 @@ collect_diagnostics() {
   if (( result != 0 )); then
     echo 'Release startup failed; last crash-buffer records:' >&2
     adb logcat -b crash -d | tail -n 200 >&2 || true
+    echo 'Application exit history:' >&2
+    adb shell dumpsys activity exit-info "$package" > "$output/exit-info.txt" || true
+    cat "$output/exit-info.txt" >&2
+    echo 'Last system log records:' >&2
+    tail -n 200 "$output/logcat.txt" >&2
   fi
   return "$result"
 }
