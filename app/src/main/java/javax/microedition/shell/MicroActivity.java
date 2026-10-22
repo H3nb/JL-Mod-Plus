@@ -842,6 +842,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (pendingRecordingAudioPermission == null) {
+			io.github.h3nb.jlmodplus.mmapi.capture.AudioCapturePlayer.pauseForHost();
+		}
 		CameraRuntime.onHostPaused(this);
 		if (ContextHolder.getActivity() == this
 				&& (memoryEditorController == null || !memoryEditorController.isEditorOnTop())) {

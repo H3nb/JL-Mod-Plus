@@ -2,6 +2,7 @@
 package io.github.h3nb.jlmodplus.mmapi.capture
 
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import javax.microedition.media.Control
@@ -13,6 +14,22 @@ import javax.microedition.media.TimeBase
 
 /** Capture-only Player. No audio playback service or global output audio focus. */
 open class AudioCapturePlayer : Player {
+    companion object {
+        private val live = java.util.Collections.newSetFromMap(
+            ConcurrentHashMap<AudioCapturePlayer, Boolean>())
+        private val hostPauses = Executors.newSingleThreadExecutor { task ->
+            Thread(task, "MidletMicHostPause").apply { isDaemon = true }
+        }
+        @JvmStatic fun pauseForHost() {
+            hostPauses.execute {
+                for (player in live) {
+                    try { if (player.getState() == Player.STARTED) player.stop() }
+                    catch (_: Exception) {}
+                }
+            }
+        }
+    }
+    init { live.add(this) }
     private val listeners = CopyOnWriteArrayList<PlayerListener>()
     private val callbacks = Executors.newSingleThreadExecutor { task ->
         Thread(task, "MidletAudioEvents").apply { isDaemon = true }
@@ -42,7 +59,8 @@ open class AudioCapturePlayer : Player {
         catch (failure: Exception) {
             elapsedMicros = mediaTime()
             state = Player.PREFETCHED
-            throw if (failure is MediaException) failure else MediaException(
+            throw if (failure is SecurityException) failure else
+                if (failure is MediaException) failure else MediaException(
                 "Microphone Player could not start: " + failure.message)
         }
         event(PlayerListener.STARTED, mediaTime())
@@ -69,6 +87,7 @@ open class AudioCapturePlayer : Player {
     @Synchronized override fun close() {
         if (state == Player.CLOSED) return
         recorder.close()
+        live.remove(this)
         state = Player.CLOSED
         event(PlayerListener.CLOSED, null)
         callbacks.shutdown()
