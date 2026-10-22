@@ -341,10 +341,8 @@ object CameraRuntime {
                             "Video recording failed: " + event.error)
                         if (!session.started.isComplete) session.started.fail(
                             session.problem ?: MediaException("Recording ended before starting"))
-                        if (session.finalCall == null && session.problem != null) {
-                            session.player.postEvent(javax.microedition.media.PlayerListener.RECORD_ERROR,
-                                session.problem!!.message)
-                        }
+                        if (session.finalCall == null && session.problem != null)
+                            session.player.recordingFailed(session.file, session.problem!!.message ?: "Recording failed")
                         if (session.finalCall != null) completeVideo(session)
                     }
                 }
@@ -377,9 +375,8 @@ object CameraRuntime {
         session.started.fail(failure)
         session.finalCall?.fail(failure)
         try { session.recorder?.close() } catch (_: Exception) {}
-        if (session.launched && reportError) {
-            session.player.postEvent(javax.microedition.media.PlayerListener.RECORD_ERROR, reason)
-        }
+        if (session.launched && reportError)
+            session.player.recordingFailed(session.file, reason)
     }
 
     private fun enqueue(request: Pending) {
