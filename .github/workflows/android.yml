@@ -109,7 +109,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash -n scripts/runtime-smoke.sh scripts/release-smoke.sh
+          bash -n scripts/runtime-smoke.sh
+          bash -n scripts/release-smoke.sh
           python3 -B -m unittest discover -s scripts/tests -p 'test_*.py' -v
 
       - name: Assemble arm64 debug APK
@@ -379,8 +380,7 @@ jobs:
 
   release-check:
     name: Release packaging and startup
-    # Temporary PR execution while this release path is being introduced.
-    if: inputs.mode == 'release-check' || github.head_ref == 'ci/streamline-release'
+    if: inputs.mode == 'release-check'
     runs-on: ubuntu-26.04
     timeout-minutes: 55
     steps:
@@ -465,7 +465,7 @@ jobs:
 
   ci:
     # Preserve the required PR check name; maintenance cannot satisfy it.
-    name: build
+    name: ${{ (inputs.mode || 'validate') == 'validate' && 'build' || 'maintenance-status' }}
     needs: [build, screenshots, lint]
     if: ${{ always() && (inputs.mode || 'validate') == 'validate' }}
     runs-on: ubuntu-26.04
