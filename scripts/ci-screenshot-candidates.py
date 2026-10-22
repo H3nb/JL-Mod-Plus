@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 
 REFERENCES = Path("app/src/screenshotTestDefaultEmulatorDebug/reference")
 BUILD_ROOT = Path("app/build")
-REPORT = Path("app/build/test-results/testEmulatorDebugScreenshotTestDefaultTestSuite")
+REPORT = Path("app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results")
 OUTPUT = Path("screenshot-candidates")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 COMPARISON_FAILURES = {

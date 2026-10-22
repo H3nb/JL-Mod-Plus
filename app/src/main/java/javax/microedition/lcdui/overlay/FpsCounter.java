@@ -19,6 +19,7 @@ package javax.microedition.lcdui.overlay;
 import static io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions.*;
 
 import android.graphics.RectF;
+import android.view.Display;
 import android.view.View;
 import androidx.core.content.ContextCompat;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import io.github.h3nb.jlmodplus.R;
 /** Host diagnostics: sampling/formatting off the UI thread, drawing without guest input ownership. */
 public class FpsCounter extends TimerTask implements Layer {
 	private final View view;
+	private final Display display;
 	private final Canvas owner;
 	private final FrameMetrics metrics;
 	private final TimingSession timingSession;
@@ -63,6 +65,9 @@ public class FpsCounter extends TimerTask implements Layer {
 		this.owner = owner;
 		this.mask = sanitize(mask);
 		this.position = sanitizePosition(position);
+		// Resolve the View's display on the surface lifecycle's UI thread. The worker
+		// can query the Display's current rate without accessing the View hierarchy.
+		display = (this.mask & DISPLAY) != 0 ? view.getDisplay() : null;
 		contentColor = ContextCompat.getColor(view.getContext(), R.color.fps_overlay_content);
 		resources = new PerformanceResources(view.getContext(), this.mask);
 		if (this.mask == 0) {
@@ -128,7 +133,7 @@ public class FpsCounter extends TimerTask implements Layer {
 			if (timing != null) v.speedPercent = timing.speedPercent();
 		}
 		if ((mask & RENDERER) != 0) v.renderer = owner.getPerformanceRenderer();
-		if ((mask & DISPLAY) != 0) v.displayHz = owner.getPerformanceDisplayHz();
+		if ((mask & DISPLAY) != 0) v.displayHz = display == null ? Float.NaN : display.getRefreshRate();
 		PerformanceDiagnostics diagnostics = owner.getPerformanceDiagnostics();
 		if (diagnostics != null) {
 			PerformanceDiagnostics.Snapshot diagnosticSnapshot = diagnostics.snapshot(now);

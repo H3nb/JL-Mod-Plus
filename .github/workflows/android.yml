@@ -307,14 +307,6 @@ jobs:
           set -euo pipefail
           ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:testEmulatorDebugScreenshotTestDefaultTestSuite
 
-      - name: Diagnose missing screenshot task reports
-        if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
-        shell: bash
-        run: |
-          if [[ ! -d app/build/test-results/testEmulatorDebugScreenshotTestDefaultTestSuite ]]; then
-            ./gradlew --daemon -PjlmodNativeBuild=false :app:tasks --all
-          fi
-
       - name: Package existing screenshot renders after comparison failure
         id: candidates
         if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
@@ -339,7 +331,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: >-
           python3 scripts/ci-results.py --no-skips
-          --tests 'screenshots=app/build/test-results/testEmulatorDebugScreenshotTestDefaultTestSuite/TEST-*.xml'
+          --tests 'screenshots=app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results/TEST-*.xml'
           --output ci-artifacts/screenshot-results.json
 
       - name: Upload screenshot diagnostics
@@ -350,7 +342,7 @@ jobs:
           path: |
             ci-artifacts/screenshot-results.*
             app/build/reports/tests/testEmulatorDebugScreenshotTestDefaultTestSuite/**
-            app/build/test-results/testEmulatorDebugScreenshotTestDefaultTestSuite/**
+            app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results/**
             build/reports/problems/**
             build/reports/profile/**
           if-no-files-found: warn

@@ -215,7 +215,8 @@ standalone `com.android.compose.screenshot` plugin. Sources remain under
 `:app:testEmulatorDebugScreenshotTestDefaultTestSuite`; the update task is
 `:app:updateEmulatorDebugScreenshotTestDefaultTestSuite`. HTML reports are under
 `app/build/reports/tests/testEmulatorDebugScreenshotTestDefaultTestSuite/`, with
-JUnit XML under the matching `app/build/test-results/` directory.
+JUnit XML and original renderer output under
+`app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results/`.
 This experimental AGP API is pinned; recheck task/report contracts on upgrades.
 
 ### Screenshot updates without a local Android toolchain
