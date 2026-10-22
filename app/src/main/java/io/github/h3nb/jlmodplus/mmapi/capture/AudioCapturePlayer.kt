@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.mmapi.capture
 
+import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -43,9 +44,14 @@ open class AudioCapturePlayer : Player {
     @Volatile private var state = Player.UNREALIZED
     @Volatile private var elapsedMicros = 0L
     @Volatile private var startedAt = 0L
-    private val backend = WavCaptureBackend()
+    private val backend = WavCaptureBackend { file, reason -> reportCaptureError(file, reason) }
     private val recorder = CaptureRecordControl(backend, { state },
         { getMediaTime() }, { kind, data -> event(kind, data) })
+
+    private fun reportCaptureError(file: File, reason: String) {
+        try { callbacks.execute { recorder.backendFailed(file, reason) } }
+        catch (_: RejectedExecutionException) { /* Closed session. */ }
+    }
 
     @Synchronized override fun realize() {
         checkOpen()
