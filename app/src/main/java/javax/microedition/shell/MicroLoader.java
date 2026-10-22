@@ -207,6 +207,7 @@ public class MicroLoader {
 		RuntimeAudioCoordinator audio = audioSession;
 		audioSession = null;
 		if (audio != null) {
+			io.github.h3nb.jlmodplus.mmapi.capture.AudioCapturePlayer.closeForRuntime();
 			io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.closeRuntime();
 			audio.close();
 		}
