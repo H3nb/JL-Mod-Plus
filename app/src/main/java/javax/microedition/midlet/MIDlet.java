@@ -111,9 +111,24 @@ public abstract class MIDlet {
             Intent intent;
             boolean suiteInstall = isSuiteInstallUrl(target);
             if (suiteInstall) {
+                // Resolve virtual-file suites through the existing FileProvider, rather
+                // than handing the installer an emulator-private file:// location.
+                Uri installTarget = target;
+                if ("file".equalsIgnoreCase(scheme)) {
+                    FileSystemFileConnection connection =
+                            (FileSystemFileConnection) Connector.open(url, Connector.READ);
+                    try {
+                        installTarget = connection.getURI();
+                    } finally {
+                        connection.close();
+                    }
+                }
                 // The existing installer owns download, confirmation and cancellation.
-                intent = new Intent(Intent.ACTION_VIEW, target);
+                intent = new Intent(Intent.ACTION_VIEW, installTarget);
                 intent.setClass(activity, io.github.h3nb.jlmodplus.MainActivity.class);
+                if ("file".equalsIgnoreCase(scheme)) {
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
             } else if ("tel".equalsIgnoreCase(scheme)) {
                 // ACTION_DIAL requires the user to place the call explicitly.
                 intent = new Intent(Intent.ACTION_DIAL, target);

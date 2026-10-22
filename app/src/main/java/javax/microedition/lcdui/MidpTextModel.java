@@ -79,6 +79,7 @@ final class MidpTextModel {
         if (text.isEmpty()) return true;
         return switch (constraints & TextField.CONSTRAINT_MASK) {
             case TextField.NUMERIC -> {
+                if (!text.matches("-?[0-9]+")) yield false;
                 try { Integer.parseInt(text); yield true; }
                 catch (NumberFormatException ignored) { yield false; }
             }

@@ -40,6 +40,7 @@ public class MidpTextModelTest {
         m.setConstraints(TextField.NUMERIC);
         m.setString("2147483647");
         assertThrows(IllegalArgumentException.class, () -> m.setString("2147483648"));
+        assertThrows(IllegalArgumentException.class, () -> m.setString("+12"));
         assertTrue(MidpTextModel.incompleteDraft("-", TextField.NUMERIC));
         m.setConstraints(TextField.DECIMAL);
         for (String valid : new String[]{".5","-1.","123","-0.01"}) m.setString(valid);
