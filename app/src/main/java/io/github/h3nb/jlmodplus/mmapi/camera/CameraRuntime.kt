@@ -661,8 +661,9 @@ object CameraRuntime {
             }
             return@post
         }
-        if (current != null && ((current.view != null) != shown ||
-                    (current.view != null && current.view.parent !== player.previewContainer))) {
+        val currentView = current?.view
+        if (current != null && ((currentView != null) != shown ||
+                    (currentView != null && currentView.parent !== player.previewContainer))) {
             unbind()
             drain()
         }
