@@ -2,6 +2,8 @@
 package javax.microedition.shell
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -29,29 +31,37 @@ internal fun PlatformPackageChoiceDialog(
         modifier = Modifier.imePadding(),
         onDismissRequest = onCancel,
         title = { Text(stringResource(R.string.platform_package_choice_title)) },
-        text = { Text(stringResource(R.string.platform_package_choice_message)) },
-        confirmButton = {
+        // One scrollable body keeps every action reachable when the IME or landscape leaves
+        // little vertical space; portrait presentation remains content-wrapped and compact.
+        textScrollable = false,
+        text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(
-                    onClick = onInstall,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                Text(stringResource(R.string.platform_package_choice_message))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(stringResource(R.string.platform_package_install))
-                }
-                OutlinedButton(
-                    onClick = onBrowser,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                ) {
-                    Text(stringResource(R.string.platform_package_browser))
-                }
-                TextButton(
-                    onClick = onCancel,
-                    modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp),
-                ) {
-                    Text(stringResource(android.R.string.cancel))
+                    Button(
+                        onClick = onInstall,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    ) {
+                        Text(stringResource(R.string.platform_package_install))
+                    }
+                    OutlinedButton(
+                        onClick = onBrowser,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    ) {
+                        Text(stringResource(R.string.platform_package_browser))
+                    }
+                    TextButton(
+                        onClick = onCancel,
+                        modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp),
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
                 }
             }
         },
