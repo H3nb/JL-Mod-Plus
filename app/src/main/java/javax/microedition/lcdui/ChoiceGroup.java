@@ -122,10 +122,13 @@ public class ChoiceGroup extends Item implements Choice {
 			if (elementNum < 0 || elementNum >= size) {
 				throw new IndexOutOfBoundsException("elementNum = " + elementNum + ", but size = " + size);
 			}
-			items.remove(elementNum);
+			boolean wasSelected = items.remove(elementNum).isSelected();
+			if (wasSelected && choiceType != MULTIPLE && !items.isEmpty()) {
+				items.get(Math.min(elementNum, items.size() - 1)).setSelected(true);
+			}
 			adapter.notifyDataSetChanged();
 		}
-		if (size == 1 && choiceType == POPUP && view != null) {
+		if (choiceType == POPUP && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
 		}
 	}
@@ -223,7 +226,7 @@ public class ChoiceGroup extends Item implements Choice {
 			items.add(elementNum, new CompoundItem(stringPart, imagePart, select));
 			adapter.notifyDataSetChanged();
 		}
-		if (size == 0 && choiceType == POPUP && view != null) {
+		if (choiceType == POPUP && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
 		}
 	}
@@ -274,13 +277,17 @@ public class ChoiceGroup extends Item implements Choice {
 				return;
 			}
 
+			if (size == 0) {
+				return;
+			}
+			int selectedIndex = 0;
 			for (int i = 0; i < size; i++) {
 				if (selectedArray[i]) {
-					setSelectedIndex(i, true);
-					return;
+					selectedIndex = i;
+					break;
 				}
 			}
-			setSelectedIndex(0, true);
+			setSelectedIndex(selectedIndex, true);
 		}
 	}
 
@@ -349,6 +356,9 @@ public class ChoiceGroup extends Item implements Choice {
 	@Override
 	View getItemContentView() {
 		Context context = ContextHolder.getActivity();
+		if (context == null) {
+			context = ContextHolder.getAppContext();
+		}
 
 		switch (choiceType) {
 			case EXCLUSIVE, MULTIPLE -> {
@@ -406,13 +416,14 @@ public class ChoiceGroup extends Item implements Choice {
 		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 			synchronized (items) {
 				CompoundItem item = items.get(position);
-				if (!item.isSelected()) {
-					for (CompoundItem it : items) {
-						it.setSelected(false);
-					}
-					item.setSelected(true);
-					adapter.notifyDataSetChanged();
+				if (item.isSelected()) {
+					return;
 				}
+				for (CompoundItem it : items) {
+					it.setSelected(false);
+				}
+				item.setSelected(true);
+				adapter.notifyDataSetChanged();
 			}
 			postStateChanged();
 		}

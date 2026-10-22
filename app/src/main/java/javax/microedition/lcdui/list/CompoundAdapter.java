@@ -72,7 +72,8 @@ public abstract class CompoundAdapter implements Adapter {
 
 	@Override
 	public boolean hasStableIds() {
-		return true;
+		// IDs are positional; inserts and deletes reassign them to other items.
+		return false;
 	}
 
 	@Override

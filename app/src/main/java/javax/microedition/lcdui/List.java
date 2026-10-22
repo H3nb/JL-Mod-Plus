@@ -42,7 +42,7 @@ public class List extends Screen implements Choice {
 
 	private ListView view;
 	private int fitPolicy;
-	private Command selectCommand = SELECT_COMMAND;
+	private volatile Command selectCommand = SELECT_COMMAND;
 
 	private final SimpleEvent msgSetSelection = new SimpleEvent() {
 		@Override
@@ -86,15 +86,24 @@ public class List extends Screen implements Choice {
 	}
 
 	public void setSelectCommand(Command cmd) {
-		if (selectCommand != SELECT_COMMAND) {
-			removeCommand(selectCommand);
+		if (listType != IMPLICIT) {
+			return;
 		}
+		// Command membership and the role of selection command are distinct.
+		// In particular, replacing a selection command does not remove the
+		// previous ordinary command from this List.
+		if (cmd != null && cmd != SELECT_COMMAND) {
+			addCommand(cmd);
+		}
+		selectCommand = cmd;
+	}
 
-		if (cmd != null) {
-			addCommand(selectCommand = cmd);
-		} else {
-			selectCommand = SELECT_COMMAND;
+	@Override
+	public void removeCommand(Command cmd) {
+		if (listType == IMPLICIT && selectCommand == cmd) {
+			selectCommand = null;
 		}
+		super.removeCommand(cmd);
 	}
 
 	@Override
@@ -124,10 +133,15 @@ public class List extends Screen implements Choice {
 			if (elementNum < 0 || elementNum >= size) {
 				throw new IndexOutOfBoundsException("elementNum = " + elementNum + ", but size = " + size);
 			}
-			items.remove(elementNum);
+			boolean wasSelected = items.remove(elementNum).isSelected();
+			if (wasSelected && listType != MULTIPLE && !items.isEmpty()) {
+				// Preserve the same element when possible; select the nearest
+				// remaining neighbor only when the selected element was deleted.
+				items.get(Math.min(elementNum, items.size() - 1)).setSelected(true);
+			}
 			adapter.notifyDataSetChanged();
 		}
-		if (size == 1 && listType == IMPLICIT && view != null) {
+		if (listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
 		}
 	}
@@ -225,7 +239,7 @@ public class List extends Screen implements Choice {
 			items.add(elementNum, new CompoundItem(stringPart, imagePart, select));
 			adapter.notifyDataSetChanged();
 		}
-		if (size == 0 && listType == IMPLICIT && view != null) {
+		if (listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
 		}
 	}
@@ -276,13 +290,17 @@ public class List extends Screen implements Choice {
 				return;
 			}
 
+			if (size == 0) {
+				return;
+			}
+			int selectedIndex = 0;
 			for (int i = 0; i < size; i++) {
 				if (selectedArray[i]) {
-					setSelectedIndex(i, true);
-					return;
+					selectedIndex = i;
+					break;
 				}
 			}
-			setSelectedIndex(0, true);
+			setSelectedIndex(selectedIndex, true);
 		}
 	}
 
@@ -352,6 +370,9 @@ public class List extends Screen implements Choice {
 	View getScreenView() {
 		if (view == null) {
 			Context context = ContextHolder.getActivity();
+			if (context == null) {
+				context = ContextHolder.getAppContext();
+			}
 			view = new ListView(context);
 			view.setAdapter(adapter);
 
@@ -374,6 +395,9 @@ public class List extends Screen implements Choice {
 
 	void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		synchronized (items) {
+			if (position < 0 || position >= items.size()) {
+				return;
+			}
 			CompoundItem item = items.get(position);
 			if (listType == MULTIPLE) {
 				item.setSelected(!item.isSelected());
@@ -389,7 +413,10 @@ public class List extends Screen implements Choice {
 			}
 		}
 		if (listType == IMPLICIT) {
-			fireCommandAction(selectCommand);
+			Command command = selectCommand;
+			if (command != null) {
+				fireCommandAction(command);
+			}
 		}
 	}
 

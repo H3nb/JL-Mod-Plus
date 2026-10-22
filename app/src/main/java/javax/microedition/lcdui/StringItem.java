@@ -37,6 +37,7 @@ public class StringItem extends Item {
 	private String text;
 	private TextView textview;
 	private final int appearanceMode;
+	private Font preferredFont;
 
 	private final SimpleEvent msgSetText = new SimpleEvent() {
 		@Override
@@ -75,10 +76,13 @@ public class StringItem extends Item {
 	}
 
 	public Font getFont() {
-		return Font.getDefaultFont();
+		// MIDP requires returning the application's hint even if the UI
+		// chooses not to use it when rendering this StringItem.
+		return preferredFont != null ? preferredFont : Font.getDefaultFont();
 	}
 
 	public void setFont(Font font) {
+		preferredFont = font;
 	}
 
 	public int getAppearanceMode() {
