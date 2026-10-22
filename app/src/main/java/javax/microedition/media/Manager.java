@@ -73,16 +73,50 @@ public class Manager {
 			try (InputStream stream = Connector.openInputStream(locator)) {
 				return createPlayer(stream, type);
 			}
-		} else if (locator.startsWith("capture://video") || "capture://audio_video".equals(locator) || locator.startsWith("capture://devcam")) {
+		} else if (locator.startsWith("capture://video") || locator.startsWith("capture://audio_video") || locator.startsWith("capture://devcam")) {
 			// Construction validates the supported MMAPI locator. Hardware and camera
 			// permission acquisition belong to the Player's prefetch/start lifecycle.
 			return new CameraCapturePlayer(locator);
-		} else if (CAPTURE_AUDIO_LOCATOR.equals(locator)) {
+		} else if ((CAPTURE_AUDIO_LOCATOR.equals(locator) || locator.startsWith(CAPTURE_AUDIO_LOCATOR + "?"))) {
+            validateAudioCaptureLocator(locator);
 			return new RecordPlayer();
 		} else {
 			throw new MediaException("Unsupported media locator: " + locator);
 		}
 	}
+
+    /** Only advertise the PCM parameters that the one audio capture backend can produce. */
+    private static void validateAudioCaptureLocator(String locator) throws MediaException {
+        if (CAPTURE_AUDIO_LOCATOR.equals(locator)) return;
+        String query = locator.substring(CAPTURE_AUDIO_LOCATOR.length() + 1);
+        if (query.isEmpty()) throw new MediaException("Empty audio capture parameters");
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (String part : query.split("&", -1)) {
+            int equals = part.indexOf('=');
+            if (equals <= 0 || equals == part.length() - 1 ||
+                    part.indexOf('=', equals + 1) >= 0) {
+                throw new MediaException("Malformed audio capture parameter");
+            }
+            String key = part.substring(0, equals);
+            String value = part.substring(equals + 1);
+            if (!seen.add(key)) throw new MediaException("Repeated audio capture parameter");
+            switch (key) {
+                case "encoding":
+                    if (!"pcm".equalsIgnoreCase(value)) throw new MediaException("Unsupported audio encoding");
+                    break;
+                case "rate":
+                    if (!"16000".equals(value)) throw new MediaException("Unsupported audio rate");
+                    break;
+                case "bits":
+                    if (!"16".equals(value)) throw new MediaException("Unsupported audio bit depth");
+                    break;
+                case "channels":
+                    if (!"1".equals(value)) throw new MediaException("Unsupported audio channels");
+                    break;
+                default: throw new MediaException("Unsupported audio capture parameter");
+            }
+        }
+    }
 
 	public static Player createPlayer(DataSource source) throws IOException, MediaException {
 		if (source == null) {

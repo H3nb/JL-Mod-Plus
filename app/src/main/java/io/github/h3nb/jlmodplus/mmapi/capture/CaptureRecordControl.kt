@@ -140,11 +140,15 @@ internal class CaptureRecordControl(
     @Synchronized override fun reset() {
         if (closed) return
         armed = false
-        suspendCapture()
-        backend.abandon()
-        scratch?.delete()
-        scratch = null
-        begun = false
+        try {
+            suspendCapture()
+        } finally {
+            backend.abandon()
+            scratch?.delete()
+            scratch = null
+            begun = false
+            running = false
+        }
         // A successful reset keeps the previously selected destination.
     }
 
@@ -158,7 +162,6 @@ internal class CaptureRecordControl(
         if (closed) return
         closed = true
         armed = false
-        try { backend.abandon() } catch (_: Exception) {}
         clearSession()
     }
 

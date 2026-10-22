@@ -615,10 +615,10 @@ object CameraRuntime {
 
     private fun capture(current: Binding, call: CameraCall<ByteArray>, options: CameraCaptureOptions.Snapshot) {
         if (capturing != null || switchFailure != null) { call.fail(MediaException("Camera is busy")); return }
-        capturing = call
-        notifyMenu()
         val still = current.capture
         if (still == null) { call.fail(MediaException("Snapshot unavailable during video recording")); return }
+        capturing = call
+        notifyMenu()
         still.takePicture(worker, object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 try {
