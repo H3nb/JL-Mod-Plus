@@ -248,17 +248,23 @@ object CameraRuntime {
     /** All CameraX binding and Recording objects stay on the Android main thread. */
     internal fun beginRecording(player: CameraCapturePlayer, file: File, microphone: Boolean) {
         val call = CameraCall<Unit>(40_000)
-        player.waitFor(call) {
-            post {
-                if (!valid(player) || owner !== player || !foreground ||
-                    recordingSession != null || capturing != null) {
-                    call.fail(MediaException("Camera is unavailable for recording"))
-                } else {
-                    recordingSession = VideoSession(player, file, microphone, call)
-                    unbind()
-                    drain()
+        try {
+            player.waitFor(call) {
+                post {
+                    if (!valid(player) || owner !== player || !foreground ||
+                        recordingSession != null || capturing != null) {
+                        call.fail(MediaException("Camera is unavailable for recording"))
+                    } else {
+                        recordingSession = VideoSession(player, file, microphone, call)
+                        unbind()
+                        drain()
+                    }
                 }
             }
+        } catch (failure: Exception) {
+            // A delayed camera callback must not start capture after the guest timed out.
+            abandonRecording(player)
+            throw failure
         }
     }
 
@@ -301,7 +307,7 @@ object CameraRuntime {
 
     internal fun abandonRecording(player: CameraCapturePlayer) = post {
         if (recordingSession?.player === player) {
-            abortRecording("Recording abandoned")
+            abortRecording("Recording discarded", false)
             unbind()
             drain()
         }
@@ -361,14 +367,14 @@ object CameraRuntime {
         }
     }
 
-    private fun abortRecording(reason: String) {
+    private fun abortRecording(reason: String, reportError: Boolean = true) {
         val session = recordingSession ?: return
         recordingSession = null
         val failure = MediaException(reason)
         session.started.fail(failure)
         session.finalCall?.fail(failure)
         try { session.recorder?.close() } catch (_: Exception) {}
-        if (session.launched) {
+        if (session.launched && reportError) {
             session.player.postEvent(javax.microedition.media.PlayerListener.RECORD_ERROR, reason)
         }
     }
