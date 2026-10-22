@@ -36,6 +36,7 @@ import javax.microedition.lcdui.Display;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.MidletThread;
 import javax.microedition.util.ContextHolder;
+import io.github.h3nb.jlmodplus.MainActivity;
 
 public abstract class MIDlet {
 	private static final String TAG = "MIDlet";
@@ -93,44 +94,59 @@ public abstract class MIDlet {
 	 */
 	public abstract void destroyApp(boolean unconditional) throws MIDletStateChangeException;
 
-	public boolean platformRequest(String url) throws ConnectionNotFoundException {
-		try {
-			Intent intent = new Intent(Intent.ACTION_VIEW);
-			if (url.startsWith("file://")) {
-				FileSystemFileConnection fileConnection =
-						(FileSystemFileConnection) Connector.open(url, Connector.READ);
-				try {
-					intent.setData(fileConnection.getURI());
-					intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-				} finally {
-					fileConnection.close();
-				}
-			} else {
-				intent.setData(Uri.parse(url));
-			}
-			MicroActivity activity = ContextHolder.getActivity();
-			Context launchContext = activity;
-			if (launchContext == null) {
-				launchContext = ContextHolder.getAppContext();
-				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			}
-			if (activity != null) {
-				activity.beginExternalAndroidHandoff();
-			}
-			try {
-				launchContext.startActivity(intent);
-			} catch (ActivityNotFoundException | SecurityException launchFailure) {
-				if (activity != null) {
-					activity.cancelExternalAndroidHandoff();
-				}
-				throw launchFailure;
-			}
-		} catch (ActivityNotFoundException | SecurityException | IOException e) {
-			throw new ConnectionNotFoundException();
-		}
+    public boolean platformRequest(String url) throws ConnectionNotFoundException {
+        if (url == null) throw new NullPointerException("url");
+        if (url.isEmpty()) {
+            PlatformRequestHandler.cancelPending();
+            return false;
+        }
+        MicroActivity activity = ContextHolder.getActivity();
+        // Android may silently reject background Activity launches. Never claim a delivered
+        // request when no visible host can hand it to the platform.
+        if (activity == null || !activity.isVisible()) {
+            throw new ConnectionNotFoundException("No foreground MIDlet host");
+        }
+        final Intent external;
+        final android.net.Uri target;
+        try {
+            if (url.startsWith("file://")) {
+                FileSystemFileConnection file = (FileSystemFileConnection)
+                        Connector.open(url, Connector.READ);
+                try {
+                    target = file.getURI();
+                } finally {
+                    file.close();
+                }
+                external = new Intent(Intent.ACTION_VIEW, target)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                target = Uri.parse(url);
+                String scheme = target.getScheme();
+                external = new Intent("tel".equalsIgnoreCase(scheme)
+                        ? Intent.ACTION_DIAL : Intent.ACTION_VIEW, target);
+            }
+        } catch (IOException | IllegalArgumentException error) {
+            throw new ConnectionNotFoundException("Invalid or inaccessible platform request");
+        }
 
-		return true;
-	}
+        if (PlatformPackageLink.isPackageLink(url)) {
+            Intent installer = new Intent(activity, MainActivity.class)
+                    .setAction(Intent.ACTION_VIEW)
+                    .setData(target)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            PlatformRequestHandler.offerPackage(activity, installer, external);
+            return false; // The runtime can remain paused while Library owns the installer.
+        }
+
+        activity.beginExternalAndroidHandoff();
+        try {
+            activity.startActivity(external);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            activity.cancelExternalAndroidHandoff();
+            throw new ConnectionNotFoundException("No handler for platform request");
+        }
+        return false; // MIDP: this means the suite does NOT have to exit first.
+    }
 
 	public final int checkPermission(String permission) {
 		return javax.microedition.shell.MidletPermissionManager.checkPermission(permission);

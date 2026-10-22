@@ -1172,4 +1172,9 @@
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Reset to default</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Reset system properties?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Replace the editor contents with the current JL-Mod Plus defaults? Other settings will remain unchanged. Save to apply the reset.</string>
+    <string name="platform_package_choice_title">Open Java ME package</string>
+    <string name="platform_package_choice_message">Install this application in JL-Mod Plus or open the link in an external browser?</string>
+    <string name="platform_package_install">Install in JL-Mod Plus</string>
+    <string name="platform_package_browser">Open in browser</string>
+    <string name="platform_package_unavailable">No application can open this link.</string>
 </resources>
