@@ -58,6 +58,8 @@ internal class WavCaptureBackend(
                 throw MediaException("Microphone could not start")
             }
             capturing = true
+            // Bind error callbacks to this recording, not a subsequently reset one.
+            val recordingFile = scratch ?: throw MediaException("Missing recording file")
             reader = Thread({
                 val bytes = ByteArray(4096)
                 try {
@@ -76,7 +78,7 @@ internal class WavCaptureBackend(
                 } catch (failure: Exception) {
                     readError = if (failure is IOException) failure else IOException(failure)
                     capturing = false
-                    scratch?.let { onFailure(it, readError?.message ?: "Microphone capture failed") }
+                    onFailure(recordingFile, readError?.message ?: "Microphone capture failed")
                 }
             }, "MidletAudioCapture").apply { isDaemon = true; start() }
         } catch (failure: Exception) {
@@ -109,9 +111,10 @@ internal class WavCaptureBackend(
 
     /** Release the exclusive input device without discarding previously recorded bytes. */
     fun deallocate() {
-        pause()
-        device?.release()
-        device = null
+        try { pause() } finally {
+            device?.release()
+            device = null
+        }
     }
 
     private fun openDevice(): AudioRecord {
