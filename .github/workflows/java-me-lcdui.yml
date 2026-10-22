@@ -5,11 +5,14 @@ on:
     branches: [alpha, main]
     paths:
       - 'app/src/main/java/javax/microedition/lcdui/Gauge.java'
+      - 'app/src/main/java/javax/microedition/lcdui/StringItem.java'
+      - 'app/src/main/java/javax/microedition/lcdui/Form.java'
       - 'app/src/main/java/javax/microedition/lcdui/List.java'
       - 'app/src/main/java/javax/microedition/lcdui/ChoiceGroup.java'
       - 'app/src/main/java/javax/microedition/lcdui/list/**'
       - 'app/src/androidTest/java/javax/microedition/lcdui/MidpStageBDeviceTest.java'
       - 'app/src/androidTest/java/javax/microedition/lcdui/ChoiceGroupSelectionDeviceTest.java'
+      - 'app/src/androidTest/java/javax/microedition/lcdui/MidpStageACompletionDeviceTest.java'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/midp/**'
       - '.github/workflows/java-me-lcdui.yml'
   workflow_dispatch:
