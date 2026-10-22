@@ -69,7 +69,7 @@ class CameraCapturePlayerTest {
     }
 
     @Test
-    fun realizationExposesOnlyPhotoControlsWithoutPrefetchingHardware() {
+    fun realizationExposesPhotoAndRecordControlsWithoutPrefetchingHardware() {
         val player = CameraCapturePlayer("capture://video")
         try {
             assertEquals(Player.UNREALIZED, player.getState())
@@ -80,12 +80,12 @@ class CameraCapturePlayerTest {
             player.realize()
             assertEquals(Player.REALIZED, player.getState())
             assertEquals("video/raw", player.getContentType())
-            assertEquals(1, player.getControls().size)
+            assertEquals(2, player.getControls().size)
             assertSame(player.display, player.getControl("VideoControl"))
             assertSame(player.display, player.getControl("javax.microedition.media.control.VideoControl"))
             assertSame(player.display, player.getControl("GUIControl"))
             assertSame(player.display, player.getControl("javax.microedition.media.control.GUIControl"))
-            assertNull(player.getControl("RecordControl"))
+            assertTrue(player.getControl("RecordControl") is javax.microedition.media.control.RecordControl)
             assertNull(player.getControl("VolumeControl"))
             assertNull(player.getControl("CameraControl"))
             assertFalse(CameraRuntime.canSwitchCamera())

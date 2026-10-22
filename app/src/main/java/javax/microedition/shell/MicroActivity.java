@@ -148,11 +148,17 @@ public class MicroActivity extends AppCompatActivity {
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(),
 					granted -> CameraRuntime.onPermissionResult(this, granted));
 	private java.util.function.Consumer<Boolean> pendingRecordingAudioPermission;
+	private boolean recordingAudioGrantedWhilePaused;
 	private final ActivityResultLauncher<String> recordingAudioPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
 				java.util.function.Consumer<Boolean> waiter = pendingRecordingAudioPermission;
-				pendingRecordingAudioPermission = null;
-				if (waiter != null) waiter.accept(granted);
+				if (waiter != null && granted &&
+						!getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+					recordingAudioGrantedWhilePaused = true;
+				} else {
+					pendingRecordingAudioPermission = null;
+					if (waiter != null) waiter.accept(granted);
+				}
 			});
 	public void requestRecordingAudioPermission(java.util.function.Consumer<Boolean> callback) {
 		if (pendingRecordingAudioPermission != null) {
@@ -815,6 +821,12 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onResume() {
 		super.onResume();
 		CameraRuntime.onHostResumed(this);
+		if (recordingAudioGrantedWhilePaused) {
+			recordingAudioGrantedWhilePaused = false;
+			java.util.function.Consumer<Boolean> waiting = pendingRecordingAudioPermission;
+			pendingRecordingAudioPermission = null;
+			if (waiting != null) waiting.accept(true);
+		}
 		io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(true);
 		if (pendingMidletLaunch) {
 			pendingMidletLaunch = false;

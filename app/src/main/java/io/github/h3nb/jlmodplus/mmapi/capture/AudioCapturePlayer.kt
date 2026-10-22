@@ -18,8 +18,8 @@ open class AudioCapturePlayer : Player {
         Thread(task, "MidletAudioEvents").apply { isDaemon = true }
     }
     @Volatile private var state = Player.UNREALIZED
-    private var elapsedMicros = 0L
-    private var startedAt = 0L
+    @Volatile private var elapsedMicros = 0L
+    @Volatile private var startedAt = 0L
     private val recorder = CaptureRecordControl(WavCaptureBackend(), { state },
         { getMediaTime() }, { kind, data -> event(kind, data) })
 
@@ -81,7 +81,7 @@ open class AudioCapturePlayer : Player {
     private fun mediaTime(): Long = elapsedMicros + if (state == Player.STARTED)
         (System.nanoTime() - startedAt) / 1000 else 0
 
-    @Synchronized override fun getMediaTime(): Long { checkOpen(); return mediaTime() }
+    override fun getMediaTime(): Long { checkOpen(); return mediaTime() }
     override fun getDuration(): Long { checkOpen(); return Player.TIME_UNKNOWN }
     override fun getContentType(): String { checkOpen(); return "audio/raw" }
     override fun getState() = state

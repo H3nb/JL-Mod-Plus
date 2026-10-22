@@ -1,9 +1,9 @@
 # MMAPI camera capture
 
-The camera subset implements JSR-135 preview and still snapshots. Recording,
-microphone capture, gallery saving and JSR-234 camera controls are outside this
-subset. `capture://video` names a live camera source; it does not promise a
-`RecordControl`.
+The camera subset implements JSR-135 preview and still snapshots. Minimal
+`RecordControl` recording is documented in [MMAPI recording](mmapi-recording.md).
+Gallery saving and JSR-234 controls remain outside this subset.
+`capture://video` names a live camera source with optional MP4 recording.
 
 For a new camera issue, start with the
 [device evidence and troubleshooting guide](camera-pr175-device-investigation.md).
