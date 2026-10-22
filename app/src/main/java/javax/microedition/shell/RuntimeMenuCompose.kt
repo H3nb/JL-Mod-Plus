@@ -917,7 +917,8 @@ private fun RuntimeToolbar(
                                 icon = R.drawable.ic_camera_switch,
                                 label = if (state.cameraFrontFacing) R.string.runtime_camera_use_rear
                                     else R.string.runtime_camera_use_front,
-                                enabled = !state.cameraSwitching,
+                                // Let the user ask to switch even while recording: the host
+                                // explains why it is temporarily unavailable.
                                 onClick = actions::onSwitchCamera,
                             )
                         }
@@ -1098,7 +1099,7 @@ internal fun runtimeMenuEntries(
         action(
             if (state.cameraFrontFacing) R.string.runtime_camera_use_rear else R.string.runtime_camera_use_front,
             R.drawable.ic_camera_switch,
-            enabled = !state.cameraSwitching,
+            // The host must explain busy states instead of silently ignoring taps.
             callback = actions::onSwitchCamera,
         )
     }

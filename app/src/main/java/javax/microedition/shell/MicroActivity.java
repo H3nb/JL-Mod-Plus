@@ -147,6 +147,29 @@ public class MicroActivity extends AppCompatActivity {
 	private final ActivityResultLauncher<String> cameraPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(),
 					granted -> CameraRuntime.onPermissionResult(this, granted));
+	public interface AudioPermissionResult { void onResult(boolean granted); }
+	private AudioPermissionResult pendingRecordingAudioPermission;
+	private boolean recordingAudioGrantedWhilePaused;
+	private final ActivityResultLauncher<String> recordingAudioPermissionLauncher =
+			registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+				AudioPermissionResult waiter = pendingRecordingAudioPermission;
+				if (waiter != null && granted &&
+						!getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+					recordingAudioGrantedWhilePaused = true;
+				} else {
+					pendingRecordingAudioPermission = null;
+					if (waiter != null) waiter.onResult(granted);
+				}
+			});
+	public void requestRecordingAudioPermission(AudioPermissionResult callback) {
+		if (pendingRecordingAudioPermission != null) {
+			callback.onResult(false);
+			return;
+		}
+		pendingRecordingAudioPermission = callback;
+		recordingAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+	}
+
 	private ControllerInputRouter controllerInputRouter;
 	private long controllerTargetGeneration = 1L;
 	private MemoryEditorBubbleController memoryEditorController;
@@ -492,6 +515,10 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onSwitchCamera() {
+						if (CameraRuntime.isRecording()) {
+							toast(R.string.runtime_camera_switch_recording);
+							return;
+						}
 						CameraRuntime.switchCamera(message -> toast(R.string.runtime_camera_switch_failed));
 					}
 
@@ -799,6 +826,12 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onResume() {
 		super.onResume();
 		CameraRuntime.onHostResumed(this);
+		if (recordingAudioGrantedWhilePaused) {
+			recordingAudioGrantedWhilePaused = false;
+			AudioPermissionResult waiting = pendingRecordingAudioPermission;
+			pendingRecordingAudioPermission = null;
+			if (waiting != null) waiting.onResult(true);
+		}
 		io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(true);
 		if (pendingMidletLaunch) {
 			pendingMidletLaunch = false;
@@ -813,6 +846,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (pendingRecordingAudioPermission == null) {
+			io.github.h3nb.jlmodplus.mmapi.capture.AudioCapturePlayer.pauseForHost();
+		}
 		CameraRuntime.onHostPaused(this);
 		if (ContextHolder.getActivity() == this
 				&& (memoryEditorController == null || !memoryEditorController.isEditorOnTop())) {
@@ -846,6 +882,9 @@ public class MicroActivity extends AppCompatActivity {
 		pendingTerminalProcessCleanup = null;
 		try {
 			CameraRuntime.onHostDestroyed(this);
+			AudioPermissionResult audioPermission = pendingRecordingAudioPermission;
+			pendingRecordingAudioPermission = null;
+			if (audioPermission != null) audioPermission.onResult(false);
 			boolean currentHost = ContextHolder.getActivity() == this;
 			if (currentHost) {
 				MidletPermissionManager.cancelPending();

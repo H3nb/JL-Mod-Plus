@@ -207,6 +207,7 @@ public class MicroLoader {
 		RuntimeAudioCoordinator audio = audioSession;
 		audioSession = null;
 		if (audio != null) {
+			io.github.h3nb.jlmodplus.mmapi.capture.AudioCapturePlayer.closeForRuntime();
 			io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.closeRuntime();
 			audio.close();
 		}
@@ -536,7 +537,9 @@ public class MicroLoader {
 					io.github.h3nb.jlmodplus.mmapi.camera.CameraCapabilities.resolve(
 							params.systemProperties,
 						io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isCameraAvailable(),
-						cameraDefaultDimensions);
+						cameraDefaultDimensions,
+                        ContextHolder.getAppContext().getPackageManager()
+                                .hasSystemFeature(android.content.pm.PackageManager.FEATURE_MICROPHONE));
 			for (Map.Entry<String, String> property : cameraProperties.entrySet()) {
 				MidletSystem.setProperty(property.getKey(), property.getValue());
 			}

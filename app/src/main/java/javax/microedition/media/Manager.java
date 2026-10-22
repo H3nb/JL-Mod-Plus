@@ -73,17 +73,50 @@ public class Manager {
 			try (InputStream stream = Connector.openInputStream(locator)) {
 				return createPlayer(stream, type);
 			}
-		} else if (locator.startsWith("capture://video") || locator.startsWith("capture://devcam")) {
+		} else if (locator.startsWith("capture://video") || "capture://image".equals(locator) || locator.startsWith("capture://audio_video") || locator.startsWith("capture://devcam")) {
 			// Construction validates the supported MMAPI locator. Hardware and camera
 			// permission acquisition belong to the Player's prefetch/start lifecycle.
 			return new CameraCapturePlayer(locator);
-		} else if (locator.startsWith(CAPTURE_AUDIO_LOCATOR) &&
-				ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
+		} else if ((CAPTURE_AUDIO_LOCATOR.equals(locator) || locator.startsWith(CAPTURE_AUDIO_LOCATOR + "?"))) {
+            validateAudioCaptureLocator(locator);
 			return new RecordPlayer();
 		} else {
 			throw new MediaException("Unsupported media locator: " + locator);
 		}
 	}
+
+    /** Only advertise the PCM parameters that the one audio capture backend can produce. */
+    private static void validateAudioCaptureLocator(String locator) throws MediaException {
+        if (CAPTURE_AUDIO_LOCATOR.equals(locator)) return;
+        String query = locator.substring(CAPTURE_AUDIO_LOCATOR.length() + 1);
+        if (query.isEmpty()) throw new MediaException("Empty audio capture parameters");
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (String part : query.split("&", -1)) {
+            int equals = part.indexOf('=');
+            if (equals <= 0 || equals == part.length() - 1 ||
+                    part.indexOf('=', equals + 1) >= 0) {
+                throw new MediaException("Malformed audio capture parameter");
+            }
+            String key = part.substring(0, equals);
+            String value = part.substring(equals + 1);
+            if (!seen.add(key)) throw new MediaException("Repeated audio capture parameter");
+            switch (key) {
+                case "encoding":
+                    if (!"pcm".equalsIgnoreCase(value)) throw new MediaException("Unsupported audio encoding");
+                    break;
+                case "rate":
+                    if (!"16000".equals(value)) throw new MediaException("Unsupported audio rate");
+                    break;
+                case "bits":
+                    if (!"16".equals(value)) throw new MediaException("Unsupported audio bit depth");
+                    break;
+                case "channels":
+                    if (!"1".equals(value)) throw new MediaException("Unsupported audio channels");
+                    break;
+                default: throw new MediaException("Unsupported audio capture parameter");
+            }
+        }
+    }
 
 	public static Player createPlayer(DataSource source) throws IOException, MediaException {
 		if (source == null) {
@@ -145,7 +178,7 @@ public class Manager {
 
 	public static String[] getSupportedContentTypes(String protocol) {
 		if ("device".equals(protocol)) return new String[]{"audio/midi", "audio/x-tone-seq"};
-		if ("capture".equals(protocol)) return new String[]{"video/raw"};
+		if ("capture".equals(protocol)) return new String[]{"video/raw", "audio/raw"};
 		if (protocol != null && !"file".equals(protocol) && !"resource".equals(protocol)) return new String[0];
 		String[] types = new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
@@ -153,14 +186,16 @@ public class Manager {
 				"audio/mobile-xmf", "audio/imelody", "text/x-imelody", "audio/rtttl", "audio/x-rtttl",
 				"audio/ota", "audio/x-ota", "video/mp4", "video/3gpp"};
 		if (protocol != null) return types;
-		String[] allTypes = Arrays.copyOf(types, types.length + 1);
+		String[] allTypes = Arrays.copyOf(types, types.length + 2);
 		allTypes[types.length] = "video/raw";
+		allTypes[types.length + 1] = "audio/raw";
 		return allTypes;
 	}
 
 	public static String[] getSupportedProtocols(String contentType) {
 		if (contentType == null) return new String[]{"device", "file", "resource", "capture"};
-		if ("video/raw".equalsIgnoreCase(contentType)) return new String[]{"capture"};
+		if ("video/raw".equalsIgnoreCase(contentType) || "audio/raw".equalsIgnoreCase(contentType))
+            return new String[]{"capture"};
 		if ("audio/midi".equalsIgnoreCase(contentType) ||
 				"audio/x-tone-seq".equalsIgnoreCase(contentType)) return new String[]{"device", "file", "resource"};
 		for (String supported : getSupportedContentTypes(null)) {

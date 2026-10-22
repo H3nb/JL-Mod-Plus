@@ -60,7 +60,7 @@ object CameraCaptureOptions {
         throw MediaException("No camera is available")
     }
 
-    data class Source(val facing: Int?, val width: Int, val height: Int)
+    data class Source(val facing: Int?, val width: Int, val height: Int, val microphone: Boolean = false)
 
     enum class Format { JPEG, PNG }
 
@@ -74,7 +74,7 @@ object CameraCaptureOptions {
         val separator = locator.indexOf('?')
         val device = if (separator < 0) locator else locator.substring(0, separator)
         val facing = when (device) {
-            "capture://video" -> null
+            "capture://video", "capture://audio_video", "capture://image" -> null
             "capture://devcam0" -> BACK
             "capture://devcam1" -> FRONT
             else -> throw MediaException("Unsupported camera locator: $device")
@@ -86,7 +86,7 @@ object CameraCaptureOptions {
             throw MediaException("Unsupported camera source encoding: $encoding")
         }
         val (width, height) = dimensions(parameters, defaults)
-        return Source(facing, width, height)
+        return Source(facing, width, height, device == "capture://audio_video")
     }
 
     /**

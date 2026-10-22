@@ -159,7 +159,7 @@ class RuntimeMenuLayoutTest {
     }
 
     @Test
-    fun busyCameraSwitchCannotDispatchOrDismissMenuFromAnyInputPath() {
+    fun busyCameraSwitchStillDispatchesNoticeWithoutChangingTheCamera() {
         val events = mutableListOf<String>()
         val actions = object : NoOpMenuActions() {
             override fun onSwitchCamera() { events += "switch" }
@@ -168,12 +168,14 @@ class RuntimeMenuLayoutTest {
             canvas.copy(cameraSwitchAvailable = true, cameraSwitching = switching),
             emptyList(), false, actions, { events += "dismiss" }, {},
         ).single { it.label == R.string.runtime_camera_use_front }
+        // The runtime action is intentional: CameraRuntime refuses a busy
+        // camera switch, while MicroActivity shows the specific explanation.
         val busy = switchEntry(true)
-        assertFalse(busy.enabled)
+        assertTrue(busy.enabled)
         busy.activate()
-        assertTrue(events.isEmpty())
-        switchEntry(false).activate()
         assertEquals(listOf("dismiss", "switch"), events)
+        switchEntry(false).activate()
+        assertEquals(listOf("dismiss", "switch", "dismiss", "switch"), events)
     }
 
     @Test

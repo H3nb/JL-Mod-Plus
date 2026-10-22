@@ -73,6 +73,18 @@ class CameraCaptureOptionsTest {
         assertEquals(CameraCaptureOptions.FRONT, CameraCaptureOptions.parseLocator("capture://devcam1").facing)
     }
 
+    @Test fun legacyStillCaptureLocatorUsesTheExistingCameraSource() {
+        // Nokia-era MIDlets use capture://image for getSnapshot, not video recording.
+        // This is an explicit compatibility alias, not a new capture backend.
+        assertEquals(
+            CameraCaptureOptions.parseLocator("capture://video"),
+            CameraCaptureOptions.parseLocator("capture://image"),
+        )
+        assertThrows(MediaException::class.java) {
+            CameraCaptureOptions.parseLocator("capture://imagegarbage")
+        }
+    }
+
     @Test fun rawSourceParametersDoNotSelectSnapshotEncoding() {
         assertEquals(
             CameraCaptureOptions.Source(CameraCaptureOptions.FRONT, 320, 240),
