@@ -255,7 +255,7 @@ public class AppInstaller {
 
         boolean isLocal = srcFile != null;
         if (!isLocal && uri != null && ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))) {
-            downloadJad();
+            downloadSource();
             isLocal = false;
         } else if (!isLocal && uri != null) {
             srcFile = scratch.materialize(uri);
@@ -436,12 +436,24 @@ public class AppInstaller {
         }
     }
 
-    private void downloadJad() throws IOException {
+    private void downloadSource() throws IOException {
         stage(Stage.DOWNLOADING);
-        srcFile = scratch.file("download.jad");
+        File downloaded = scratch.file("download.source");
         java.net.URI finalUri = InstallerDownload.download(
-                InstallerDownload.resolve(null, uri.toString()), srcFile,
+                InstallerDownload.resolve(null, uri.toString()), downloaded,
                 () -> cancelled, (bytes, total) -> {});
+        InstallerDownload.SourceKind kind = InstallerDownload.detectSource(downloaded);
+        String extension = switch (kind) {
+            case JAR -> ".jar";
+            case JAD -> ".jad";
+            case KJX -> ".kjx";
+        };
+        File classified = scratch.file("download" + extension);
+        if (!downloaded.renameTo(classified)) {
+            throw new IOException("Unable to classify downloaded Java ME source");
+        }
+        srcFile = classified;
+        // JAD relative MIDlet-Jar-URL values resolve against the final HTTP redirect target.
         uri = Uri.parse(finalUri.toString());
     }
     /** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
