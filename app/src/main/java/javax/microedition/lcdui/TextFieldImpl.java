@@ -92,7 +92,7 @@ class TextFieldImpl {
 
     int getConstraints() { return model.getConstraints(); }
 
-    int getCaretPosition() { return caret; }
+    int getCaretPosition() { return Math.min(caret, model.size()); }
 
     void delete(int offset, int length) {
         model.delete(offset, length);
@@ -118,16 +118,11 @@ class TextFieldImpl {
                     if (textview != editor || updatingView) return;
                     String candidate = editable.toString();
                     caret = Math.max(0, editor.getSelectionEnd());
-                    if (candidate.equals(model.getString())) return;
-                    if (candidate.length() > model.getMaxSize()) {
-                        applyText(editor);
-                        return;
-                    }
-                    if (MidpTextModel.validText(candidate, model.getConstraints())) {
-                        model.setString(candidate);
+                    if (model.acceptUserText(candidate)) {
                         if (item != null) item.postStateChanged();
-                    } else if (!MidpTextModel.incompleteDraft(candidate, model.getConstraints())) {
-                        // Invalid paste or unrepresentable IME value: never expose it to the MIDlet.
+                    } else if (!candidate.equals(model.getString()) &&
+                            !MidpTextModel.incompleteDraft(candidate, model.getConstraints())) {
+                        // Invalid paste, over-capacity data or a concurrent guest edit.
                         applyText(editor);
                     }
                 }

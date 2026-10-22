@@ -20,5 +20,7 @@ public class PushRegistryUnsupportedTest {
         assertThrows(IllegalArgumentException.class, () -> impl.registerConnection(null, "App", "*"));
         assertThrows(IllegalArgumentException.class, () -> impl.registerConnection("socket://:1", "App", null));
         assertThrows(ClassNotFoundException.class, () -> impl.registerConnection("socket://:1", null, "*"));
+        assertThrows(IllegalArgumentException.class, () -> impl.registerConnection("bad-url", "App", "*"));
+        assertThrows(ClassNotFoundException.class, () -> impl.registerAlarm(null, 123L));
     }
 }

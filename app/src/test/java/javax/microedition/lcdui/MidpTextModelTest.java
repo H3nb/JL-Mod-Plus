@@ -17,6 +17,9 @@ public class MidpTextModelTest {
         assertEquals("-2", m.getString());
         assertThrows(StringIndexOutOfBoundsException.class, () -> m.delete(0, 9));
         assertEquals("-2", m.getString());
+        assertFalse(m.acceptUserText("not numeric"));
+        assertTrue(m.acceptUserText("-3"));
+        assertEquals("-3", m.getString());
     }
 
     @Test public void capacityAndConstraintTransitions() {

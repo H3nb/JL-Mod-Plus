@@ -57,7 +57,7 @@ public class PushRegistryImpl implements PushRegistryDelegate, Implementation {
 	}
 
 	public long registerAlarm(String midlet, long time) throws ClassNotFoundException, ConnectionNotFoundException {
-		// TODO Auto-generated method stub
+        if (midlet == null) throw new ClassNotFoundException("MIDlet class must be non-null");
 		throw new ConnectionNotFoundException();
 	}
 
@@ -68,6 +68,9 @@ public class PushRegistryImpl implements PushRegistryDelegate, Implementation {
         }
         if (midlet == null) {
             throw new ClassNotFoundException("MIDlet class must be non-null");
+        }
+        if (connection.indexOf("://") <= 0) {
+            throw new IllegalArgumentException("Invalid push connection URL");
         }
         // Inbound push requires an AMS listener while the MIDlet is not running.
         // No such backend exists: silently accepting would promise wakeups that never occur.

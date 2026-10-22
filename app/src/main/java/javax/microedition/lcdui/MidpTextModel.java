@@ -15,6 +15,18 @@ final class MidpTextModel {
     synchronized int getMaxSize() { return maxSize; }
     synchronized int getConstraints() { return constraints; }
 
+    /**
+     * Accept user input only when it still fits the current constraints/capacity.
+     * Synchronized validation and commit prevent guest-setter races from
+     * surfacing IllegalArgumentException on the Android main thread.
+     */
+    synchronized boolean acceptUserText(String candidate) {
+        if (candidate.equals(text) || candidate.length() > maxSize
+                || !validText(candidate, constraints)) return false;
+        text = candidate;
+        return true;
+    }
+
     synchronized void setString(String value) {
         String candidate = value == null ? "" : value;
         checkCandidate(candidate, maxSize, constraints);
