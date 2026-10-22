@@ -31,8 +31,8 @@ The examples use PowerShell. On POSIX shells, replace `./gradlew.bat` with `./gr
 | dexlib JVM unit tests | `./gradlew.bat :dexlib:testDebugUnitTest` |
 | Library migration tests | `./gradlew.bat :app:testEmulatorDebugUnitTest --tests io.github.h3nb.jlmodplus.librarydb.LibraryMigrationTest` |
 | Lint | `./gradlew.bat :app:lintEmulatorDebug :dexlib:lintDebug` |
-| Compose screenshot comparison | `./gradlew.bat :app:validateEmulatorDebugScreenshotTest` |
-| Generate candidate screenshot references | `./gradlew.bat :app:updateEmulatorDebugScreenshotTest` (inspect changes before accepting) |
+| Compose screenshot comparison | `./gradlew.bat :app:testScreenshotTestDefaultEmulatorDebugTestSuite` |
+| Generate candidate screenshot references | `./gradlew.bat :app:updateScreenshotTestDefaultEmulatorDebugTestSuite` (inspect changes before accepting) |
 | Debug APK | `./gradlew.bat :app:assembleEmulatorDebug` |
 | Instrumentation APK compilation | `./gradlew.bat :app:assembleEmulatorDebugAndroidTest` |
 | Instrumentation on a connected x86_64 emulator | `./gradlew.bat -PjlmodRuntimeTestAbi=x86_64 :app:connectedEmulatorDebugAndroidTest` |
@@ -111,7 +111,7 @@ The goal is useful regression confidence, not test count or coverage percentage.
 - `app/src/test/`: JUnit tests, including Library migration files reconstructed from `app/schemas/` using bundled SQLite.
 - `dexlib/src/test/`: JUnit tests for bytecode transformation and related dexlib contracts.
 - `app/src/androidTest/`: AndroidJUnitRunner tests, including Compose interaction, file-picker intents, database, and runtime boundary checks on Android.
-- `app/src/screenshotTest/`: Compose Preview Screenshot Testing cases. Committed references are under `app/src/screenshotTestEmulatorDebug/reference/`; inspect rendered images before accepting reference changes.
+- `app/src/screenshotTest/`: Compose Preview Screenshot Testing cases. Committed references are under `app/src/screenshotTestDefaultEmulatorDebug/reference/`; inspect rendered images before accepting reference changes.
 
 The default Android CI mode runs lint, app and dexlib JVM unit tests, screenshot
 validation, and app/instrumentation assembly. The broader connected runtime suite runs
@@ -151,7 +151,7 @@ Inspect the run for the relevant source revision and the specific task results;
 a green workflow proves only the checks it executed. Report the run/commit,
 checks passed, and any compiled-only, skipped, or unverified behavior.
 
-Android CI has three modes. Select the intended branch under **Run workflow**;
+Android CI has four modes. Select the intended branch under **Run workflow**;
 the run records the exact checked-out commit. Normal PR validation checks the
 temporary merge commit with the base branch, so its build identity can differ
 from the PR head. Manual dispatch checks the selected branch revision instead.
@@ -159,8 +159,9 @@ from the PR head. Manual dispatch checks the selected branch revision instead.
 | Mode | Result |
 | --- | --- |
 | `validate` (default; automatic on PRs) | Parallel lint and build/test jobs, followed by the required `build` status; comparison failures also produce reviewable candidates from the same render |
-| `update-screenshots` (manual) | Renderer-generated candidate references and a binary patch for review; does not validate or publish the app |
+| `update-screenshots` (manual) | Select the open PR branch and supply `pr_number`; packages changed references with a versioned manifest and binary patch for review |
 | `runtime-smoke` (manual) | Selected existing instrumentation tests on one fresh API 35 x86_64 emulator; does not run the full Android suite or replace normal PR validation |
+| `release-check` (manual) | Builds unsigned release APKs and checks packaging/startup on a 16 KB emulator; does not publish a release |
 
 Maintenance modes use distinct check names and concurrency groups. Generating
 candidates or passing the runtime subset does not satisfy the PR `build` check.
@@ -171,9 +172,15 @@ The debug APK artifact is uploaded immediately after successful assembly and
 staging, before validation finishes. Its `BUILD-INFO.txt` records the source commit
 and run URL and labels it unverified. The final `build` check requires `Build and tests`, `Screenshot validation`,
 and `Lint` to succeed. `JL-Mod-Plus-ci-diagnostics` contains
-`ci-artifacts/validation.txt`, app/dexlib test reports, screenshot reports, and
+`ci-artifacts/validation.txt`, `unit-results.json`/`.md`, app/dexlib test reports, and
 connected-test reports/logcat when run. `JL-Mod-Plus-lint-diagnostics` contains lint
-reports. The validation file records its own job's step outcomes, not the separate
+reports and `lint-results.json`/`.md`. Screenshot reports and
+`screenshot-results.json`/`.md` are in `JL-Mod-Plus-screenshot-diagnostics`.
+The same compact counts and missing-report diagnostics appear in job logs and
+step summaries, allowing connector-only review without downloading every report.
+Required missing/empty test reports fail the job; skipped screenshot cases also
+fail. Summaries count actual XML testcases and do not claim fresh execution when
+Gradle may have restored cached results. The validation file records its own job's step outcomes, not the separate
 lint result; consult the final `build` check for overall status. The early APK
 artifact is not rewritten. Artifact availability does not mean validation passed.
 Inspect the individual reports when a combined step fails.
@@ -198,20 +205,33 @@ and trace/source identity. Use official Android/Perfetto tooling rather than
 assuming the removed PR-specific harness still exists. Profiling is an
 investigation activity, not a routine merge check.
 
+### Screenshot suite configuration
+
+Screenshot testing uses AGP 9.5 test suites and engine `0.0.1-alpha16`, without the
+standalone `com.android.compose.screenshot` plugin. Sources remain under
+`app/src/screenshotTest/kotlin`; the `screenshotTest` suite targets only
+`emulatorDebug`. References live under
+`app/src/screenshotTestDefaultEmulatorDebug/reference`. The test task is
+`:app:testScreenshotTestDefaultEmulatorDebugTestSuite`; the update task is
+`:app:updateScreenshotTestDefaultEmulatorDebugTestSuite`. HTML reports are under
+`app/build/reports/tests/testScreenshotTestDefaultEmulatorDebugTestSuite/`, with
+JUnit XML under the matching `app/build/test-results/` directory.
+This experimental AGP API is pinned; recheck task/report contracts on upgrades.
+
 ### Screenshot updates without a local Android toolchain
 
 1. Diagnose the mismatch from the `validate` run's screenshot report and authorized UI change.
 2. For supported comparison failures, the run automatically uploads `JL-Mod-Plus-screenshot-candidates`. It contains `before/`, `after/`, `diff/` where available, `changes.txt`, `source-commit.txt`, `source-context.json`, and `baselines.patch`. These are the original PNG bytes from validation; there is no second render and no automatic baseline acceptance.
 3. Compare the images and confirm the recorded build/head/base commits match the source being reviewed. PR renders include the temporary merge with the base branch. If either branch has changed in a relevant way, regenerate before accepting the images.
 4. From the repository root, use `git apply --check path/to/baselines.patch`, then apply the reviewed patch. If only some changes are justified, transfer only those renderer-produced files. Automatic candidates cover supported mismatches only, not obsolete-reference cleanup or every rendering failure.
-5. For deliberate full regeneration or cases without automatic candidates, dispatch `mode=update-screenshots` on the intended branch. This runs the official update task and packages all references as `before/` and `after/`, with `changes.txt`, `source-commit.txt`, and a binary patch. Inspect added, renamed, and obsolete references. Skip patch application when the patch is empty.
+5. For deliberate full regeneration or cases without automatic candidates, dispatch `mode=update-screenshots` on the exact HEAD branch of an open same-repository PR and supply its `pr_number`. This runs the official update task and packages only changed references with the same manifest and binary patch as automatic candidates. No artifact is produced when nothing changed. Inspect additions, replacements and deletions individually; an obsolete reference must be deliberately removed, not assumed deleted by the renderer.
 6. Commit accepted references and run normal validation again. Candidate packaging/generation does not change the failed validation result. Never accept unrelated visual changes just to make CI green.
 
-The automatic packager reads the pinned plugin's XML reference/actual/diff mapping,
+The automatic packager reads the pinned screenshot engine's XML reference/actual/diff mapping,
 accepts only recognized image-comparison failures, and excludes other failures.
 Missing or invalid output remains a diagnostic problem, not an acceptable baseline.
 Its temporary Git index leaves both committed references and the real index intact.
-Review this mapping when updating the screenshot plugin. Scripts and GitHub tools
+Review this mapping when updating AGP or the screenshot engine. Scripts and GitHub tools
 may transfer images unchanged; they must not redraw expected pixels. No patch is
 automatically committed.
 
@@ -230,8 +250,8 @@ local Android checkout. This is a convenience path, not a review bypass: promote
 only renderer output that was already inspected and judged to be the intended
 design.
 
-For a failed normal `validate` run that produced
-`JL-Mod-Plus-screenshot-candidates`:
+For a failed PR `validate` run, or a successful PR-bound manual
+`update-screenshots` run, that produced `JL-Mod-Plus-screenshot-candidates`:
 
 1. Inspect the candidate artifact. Review `before/`, `after/`, and `diff/`
    for every candidate and confirm `changes.txt` and `source-context.json`
@@ -241,7 +261,8 @@ For a failed normal `validate` run that produced
    - `head_sha`: the PR head SHA and the workflow run's PR head;
    - `base_sha`: the PR base SHA recorded for that reviewed state;
    - `build_sha`: `build_commit` from `source-context.json`, which must be
-     the synthetic merge commit whose parents are `base_sha` then `head_sha`;
+     the synthetic merge commit whose parents are `base_sha` then `head_sha` for
+     PR validation, or exactly `head_sha` for manual generation;
    - `run_id`: the Android CI workflow run ID;
    - `artifact_id`: the ID of the
      `JL-Mod-Plus-screenshot-candidates` artifact from that run;
@@ -255,7 +276,7 @@ For a failed normal `validate` run that produced
 
 ```text
 /jlmod-promote-screenshots
-{"head_sha":"<40-hex PR head>","base_sha":"<40-hex PR base>","build_sha":"<40-hex reviewed merge commit>","run_id":123456789,"artifact_id":123456789,"artifact_digest":"sha256:<64-hex digest>"}
+{"head_sha":"<40-hex PR head>","base_sha":"<40-hex PR base>","build_sha":"<40-hex reviewed build commit>","run_id":123456789,"artifact_id":123456789,"artifact_digest":"sha256:<64-hex digest>"}
 ```
 
 The first line must be exactly `/jlmod-promote-screenshots`. The JSON object must
@@ -263,10 +284,13 @@ contain exactly the six fields above. The promotion workflow accepts only an ope
 same-repository PR and only a comment authored by the repository owner.
 
 The trusted workflow validates the PR head/base, Android CI run, artifact ID and
-digest, synthetic merge parents, artifact `source-context.json`, candidate list,
-and `before`/current-golden equality. It rejects artifacts containing
-non-comparison screenshot failures. On success it writes only the reviewed
-`after/` PNGs, verifies that no other paths are staged, commits them with the
+downloaded archive digest, run attempt, PR identity, build provenance, manifest
+and `before`/current-golden equality. Manifest version 2 lists each operation
+(`add`, `replace`, `delete`) and SHA-256 of each present image. Automatic comparison
+candidates may only replace references; additions/deletions require successful
+manual generation and explicit image review. It rejects artifacts containing
+non-comparison failures or skipped cases. On success it applies only the reviewed
+operations, verifies that no other paths are staged, commits them with the
 provenance recorded in the commit message, pushes with a force-with-lease against
 the exact reviewed HEAD, and explicitly dispatches final normal Android CI
 validation. It does not re-render or synthesize the references during promotion.
@@ -276,6 +300,11 @@ state, identify which provenance or candidate assumption changed, review the
 replacement evidence, and submit a fresh request. Do not weaken the workflow,
 edit the artifact, guess missing identifiers, or bypass the final validation to
 make a stale request succeed.
+
+Promotion tooling is loaded from the default branch, never from the PR being
+promoted. A PR changing the manifest/tooling cannot use that new protocol until
+the trusted version is integrated; use a local reviewed binary patch for the
+migration itself. Old manifests must be regenerated after this migration.
 
 A local checkout may still use the reviewed `baselines.patch` route above. The
 promotion path exists so GitHub-only agents can complete the same reviewed update
@@ -294,6 +323,12 @@ private temporary workdir and restore the prior preference; they require no
 commercial assets or custom soundbanks. It uses the
 emulator's default English locale, disables animations, and captures logcat before
 the emulator shuts down. Tests share one fresh installation and run without sharding.
+
+`runtime-smoke-results.py` pairs each class/method start with its terminal success.
+Ignored/assumption-failed tests, unmatched completions, duplicate results, incomplete
+batches and missing selectors fail verification. `selectors.txt` records PASS only
+after the whole batch verifies; `*.verified.txt` lists the actual successful methods.
+The suite remains on JUnit 4/AndroidJUnitRunner; JUnit 5 migration is deferred.
 
 Keep this mode opt-in and use it when its selected runtime boundaries are relevant.
 Record which selected tests actually ran; the rest of `androidTest`
@@ -322,6 +357,11 @@ of setup/observer failure, cleanup ordering, and preservation of the original er
 CI reuses a Gradle daemon across steps in the same job and preserves supported
 Gradle User Home and Build Cache state. Configuration Cache is enabled project-wide,
 and CI keeps compatibility strict with `--configuration-cache-problems=fail`.
+Cross-run Configuration Cache storage uses the optional repository secret
+`GRADLE_ENCRYPTION_KEY` supported by `setup-gradle`. Without it, builds still work
+but encrypted configuration entries are not persisted across runners. Fork PRs
+have no secret and remain cache read-only. Supplying the secret is an administrator
+operation; workflow configuration alone is not evidence of cache reuse.
 Lint runs independently with the normal native-enabled Android model so it validates
 production-equivalent configuration. Screenshot-only validation may use
 `-PjlmodNativeBuild=false` because it does not consume native outputs and can avoid

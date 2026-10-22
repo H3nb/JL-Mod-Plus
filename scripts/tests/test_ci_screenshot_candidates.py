@@ -215,6 +215,19 @@ class ScreenshotCandidatesTest(unittest.TestCase):
             context = json.loads((output / "source-context.json").read_text(encoding="utf-8"))
             self.assertEqual(["PreviewTest.rendererFailure"], context["excluded_failures"])
 
+    def test_suite_directory_collects_split_xml_and_excludes_skips(self):
+        temporary, references, build_root, report, reference, actual, _ = self.fixture()
+        with temporary:
+            directory = report.parent / 'reports'
+            self.write_report(directory/'TEST-one.xml', [{
+                'failure': 'com.android.tools.screenshot.ImageComparisonAssertionError',
+                'properties': {'PreviewScreenshot.refImagePath': reference, 'PreviewScreenshot.newImagePath': actual},
+            }])
+            (directory/'TEST-two.xml').write_text('<testsuite><testcase classname="Other" name="skipped"><skipped/></testcase></testsuite>')
+            found, excluded = candidates.collect_candidates(directory, references, build_root)
+            self.assertEqual(1, len(found))
+            self.assertEqual(['Other.skipped (skipped)'], excluded)
+
 
 if __name__ == "__main__":
     unittest.main()
