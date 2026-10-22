@@ -1,0 +1,131 @@
+// SPDX-License-Identifier: Apache-2.0
+package io.github.h3nb.jlmodplus.mmapi.capture
+
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
+import javax.microedition.media.Control
+import javax.microedition.media.Manager
+import javax.microedition.media.MediaException
+import javax.microedition.media.Player
+import javax.microedition.media.PlayerListener
+import javax.microedition.media.TimeBase
+
+/** Capture-only Player. No audio playback service or global output audio focus. */
+open class AudioCapturePlayer : Player {
+    private val listeners = CopyOnWriteArrayList<PlayerListener>()
+    private val callbacks = Executors.newSingleThreadExecutor { task ->
+        Thread(task, "MidletAudioEvents").apply { isDaemon = true }
+    }
+    @Volatile private var state = Player.UNREALIZED
+    private var elapsedMicros = 0L
+    private var startedAt = 0L
+    private val recorder = CaptureRecordControl(WavCaptureBackend(), { state },
+        { getMediaTime() }, { kind, data -> event(kind, data) })
+
+    @Synchronized override fun realize() {
+        checkOpen()
+        if (state == Player.UNREALIZED) state = Player.REALIZED
+    }
+
+    @Synchronized override fun prefetch() {
+        realize()
+        if (state < Player.PREFETCHED) state = Player.PREFETCHED
+    }
+
+    @Synchronized override fun start() {
+        prefetch()
+        if (state == Player.STARTED) return
+        startedAt = System.nanoTime()
+        state = Player.STARTED
+        try { recorder.playerStarted() }
+        catch (failure: Exception) {
+            elapsedMicros = mediaTime()
+            state = Player.PREFETCHED
+            throw if (failure is MediaException) failure else MediaException(
+                "Microphone Player could not start: " + failure.message)
+        }
+        event(PlayerListener.STARTED, mediaTime())
+    }
+
+    @Synchronized override fun stop() {
+        checkOpen()
+        if (state != Player.STARTED) return
+        try { recorder.playerStopped() }
+        finally {
+            elapsedMicros = mediaTime()
+            startedAt = 0
+            state = Player.PREFETCHED
+            event(PlayerListener.STOPPED, elapsedMicros)
+        }
+    }
+
+    @Synchronized override fun deallocate() {
+        if (state == Player.CLOSED) return
+        stop()
+        if (state >= Player.PREFETCHED) state = Player.REALIZED
+    }
+
+    @Synchronized override fun close() {
+        if (state == Player.CLOSED) return
+        recorder.close()
+        state = Player.CLOSED
+        event(PlayerListener.CLOSED, null)
+        callbacks.shutdown()
+    }
+
+    private fun checkOpen() {
+        check(state != Player.CLOSED) { "Player is closed" }
+    }
+
+    private fun mediaTime(): Long = elapsedMicros + if (state == Player.STARTED)
+        (System.nanoTime() - startedAt) / 1000 else 0
+
+    @Synchronized override fun getMediaTime(): Long { checkOpen(); return mediaTime() }
+    override fun getDuration(): Long { checkOpen(); return Player.TIME_UNKNOWN }
+    override fun getContentType(): String { checkOpen(); return "audio/raw" }
+    override fun getState() = state
+    override fun getTimeBase(): TimeBase { checkOpen(); return Manager.getSystemTimeBase() }
+    override fun setTimeBase(master: TimeBase?) {
+        checkOpen()
+        if (state == Player.STARTED) throw IllegalStateException("Player started")
+        if (master != null && master !== Manager.getSystemTimeBase()) throw MediaException("Unsupported time base")
+    }
+    override fun setMediaTime(now: Long): Long { checkOpen(); throw MediaException("Live source cannot seek") }
+    override fun setLoopCount(count: Int) {
+        checkOpen()
+        if (state == Player.STARTED) throw IllegalStateException("Player started")
+        require(count == -1 || count > 0)
+    }
+    override fun getControl(type: String?): Control? {
+        checkOpen()
+        if (state == Player.UNREALIZED) throw IllegalStateException("Player unrealized")
+        return when (type) {
+            "RecordControl", "javax.microedition.media.control.RecordControl" -> recorder
+            else -> null
+        }
+    }
+    override fun getControls(): Array<Control> {
+        checkOpen()
+        if (state == Player.UNREALIZED) throw IllegalStateException("Player unrealized")
+        return arrayOf(recorder)
+    }
+    override fun addPlayerListener(listener: PlayerListener?) {
+        checkOpen()
+        if (listener != null) listeners.addIfAbsent(listener)
+    }
+    override fun removePlayerListener(listener: PlayerListener?) {
+        checkOpen()
+        if (listener != null) listeners.remove(listener)
+    }
+    private fun event(kind: String, value: Any?) {
+        try {
+            callbacks.execute {
+                for (listener in listeners) {
+                    try { listener.playerUpdate(this, kind, value) }
+                    catch (_: Exception) { }
+                }
+            }
+        } catch (_: RejectedExecutionException) { }
+    }
+}

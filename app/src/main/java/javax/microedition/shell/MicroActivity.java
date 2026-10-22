@@ -147,6 +147,22 @@ public class MicroActivity extends AppCompatActivity {
 	private final ActivityResultLauncher<String> cameraPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(),
 					granted -> CameraRuntime.onPermissionResult(this, granted));
+	private java.util.function.Consumer<Boolean> pendingRecordingAudioPermission;
+	private final ActivityResultLauncher<String> recordingAudioPermissionLauncher =
+			registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+				java.util.function.Consumer<Boolean> waiter = pendingRecordingAudioPermission;
+				pendingRecordingAudioPermission = null;
+				if (waiter != null) waiter.accept(granted);
+			});
+	public void requestRecordingAudioPermission(java.util.function.Consumer<Boolean> callback) {
+		if (pendingRecordingAudioPermission != null) {
+			callback.accept(false);
+			return;
+		}
+		pendingRecordingAudioPermission = callback;
+		recordingAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+	}
+
 	private ControllerInputRouter controllerInputRouter;
 	private long controllerTargetGeneration = 1L;
 	private MemoryEditorBubbleController memoryEditorController;
@@ -846,6 +862,9 @@ public class MicroActivity extends AppCompatActivity {
 		pendingTerminalProcessCleanup = null;
 		try {
 			CameraRuntime.onHostDestroyed(this);
+			java.util.function.Consumer<Boolean> audioPermission = pendingRecordingAudioPermission;
+			pendingRecordingAudioPermission = null;
+			if (audioPermission != null) audioPermission.accept(false);
 			boolean currentHost = ContextHolder.getActivity() == this;
 			if (currentHost) {
 				MidletPermissionManager.cancelPending();

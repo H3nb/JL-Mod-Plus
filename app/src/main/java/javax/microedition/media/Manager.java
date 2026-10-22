@@ -77,8 +77,7 @@ public class Manager {
 			// Construction validates the supported MMAPI locator. Hardware and camera
 			// permission acquisition belong to the Player's prefetch/start lifecycle.
 			return new CameraCapturePlayer(locator);
-		} else if (locator.startsWith(CAPTURE_AUDIO_LOCATOR) &&
-				ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
+		} else if (CAPTURE_AUDIO_LOCATOR.equals(locator)) {
 			return new RecordPlayer();
 		} else {
 			throw new MediaException("Unsupported media locator: " + locator);
