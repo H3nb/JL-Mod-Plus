@@ -626,10 +626,13 @@ object CameraRuntime {
         if (recordingSession != null) {
             // Preview was reserved at recording bind time even if the MIDlet
             // had not displayed its GUI primitive. Connect it in place.
-            if (shown && current?.view?.parent === player.previewContainer &&
-                current.preview != null && !current.previewConnected) {
-                current.previewConnected = true
-                current.preview.setSurfaceProvider(current.view.surfaceProvider)
+            if (shown && current != null && !current.previewConnected) {
+                val view = current.view
+                val preview = current.preview
+                if (view?.parent === player.previewContainer && preview != null) {
+                    current.previewConnected = true
+                    preview.setSurfaceProvider(view.surfaceProvider)
+                }
             }
             return@post
         }
