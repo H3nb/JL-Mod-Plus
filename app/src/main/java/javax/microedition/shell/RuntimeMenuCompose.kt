@@ -173,6 +173,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var limitFpsVisible by mutableStateOf(false)
     private var emulationSpeedVisible by mutableStateOf(false)
     private var filePermissionPrompt by mutableStateOf<FilePermissionPrompt?>(null)
+    private var packageChoice by mutableStateOf<PlatformPackageChoice?>(null)
     private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
     private var virtualKeyboardPage by mutableStateOf(false)
     private var controllerFocusIndex by mutableIntStateOf(0)
@@ -279,6 +280,19 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                                     changeControllerSurface { emulationSpeedVisible = false }
                                     actions.onResetEmulationSpeed()
                                 },
+                            )
+                        }
+                    }
+                    packageChoice?.let { choice ->
+                        ControllerDialogInputScope(
+                            onControllerKeyEvent = dialogKeyDispatcher,
+                            onControllerMotionEvent = dialogMotionDispatcher,
+                            onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                        ) {
+                            PlatformPackageChoiceDialog(
+                                onInstall = { resolvePackageChoice(choice, choice.onInstall) },
+                                onBrowser = { resolvePackageChoice(choice, choice.onBrowser) },
+                                onCancel = { resolvePackageChoice(choice, choice.onCancel) },
                             )
                         }
                     }
@@ -414,10 +428,12 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             || emulationSpeedVisible
             || hostDialogState != null
             || filePermissionPrompt != null
+            || packageChoice != null
 
     fun closeMenu() {
         if (!isMenuVisible()) return
         val cancelledPermission = filePermissionPrompt
+        val cancelledPackage = packageChoice
         val continueVirtualKeyboardEdit =
             hostDialogState is RuntimeHostDialogState.FinishVirtualKeyboardEdit
         changeControllerSurface {
@@ -426,11 +442,13 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             emulationSpeedVisible = false
             hostDialogState = null
             filePermissionPrompt = null
+            packageChoice = null
             virtualKeyboardPage = false
             controllerFocusIndex = 0
             controllerFocusVisible = false
         }
         cancelledPermission?.onChoice?.accept(MidletPermissionManager.CANCEL)
+        cancelledPackage?.onCancel?.run()
         if (continueVirtualKeyboardEdit) {
             hostDialogActions?.onVirtualKeyboardEditContinued()
         }
@@ -439,7 +457,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     /** Routes controller focus while the runtime menu or one of its dialogs owns the input. */
     fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
         if (!isMenuVisible()) return false
-        if (filePermissionPrompt != null || hostDialogState != null || limitFpsVisible || emulationSpeedVisible) {
+        if (filePermissionPrompt != null || packageChoice != null
+                || hostDialogState != null || limitFpsVisible || emulationSpeedVisible) {
             // Dialog semantics stay inside Compose. Preserve both DOWN and UP so a focused Compose
             // control receives a complete Activate key sequence. Consume during composition
             // hand-off as well so no controller edge can leak into the MIDlet behind the modal.
@@ -487,6 +506,25 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             controllerFocusIndex = 0
         },
     )
+
+    /** An app-owned decision in the existing runtime Compose tree; guest state remains untouched. */
+    fun showPlatformPackageChoice(
+        onInstall: Runnable,
+        onBrowser: Runnable,
+        onCancel: Runnable,
+    ): Runnable {
+        val choice = PlatformPackageChoice(onInstall, onBrowser, onCancel)
+        changeControllerSurface { packageChoice = choice }
+        return Runnable {
+            if (packageChoice === choice) changeControllerSurface { packageChoice = null }
+        }
+    }
+
+    private fun resolvePackageChoice(choice: PlatformPackageChoice, action: Runnable) {
+        if (packageChoice !== choice) return
+        changeControllerSurface { packageChoice = null }
+        action.run()
+    }
 
     /** Called only on the host thread. The returned handle dismisses only this request. */
     fun showFilePermissionPrompt(write: Boolean, onChoice: MidletPermissionManager.Choice): Runnable? {
@@ -551,6 +589,12 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         changeControllerSurface { hostDialogState = RuntimeHostDialogState.LayoutEditGuide }
     }
 }
+
+private data class PlatformPackageChoice(
+    val onInstall: Runnable,
+    val onBrowser: Runnable,
+    val onCancel: Runnable,
+)
 
 private data class RuntimeMenuDialogLayout(
     val modifier: Modifier,
