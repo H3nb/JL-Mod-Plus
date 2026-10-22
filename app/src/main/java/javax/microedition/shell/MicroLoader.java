@@ -536,7 +536,9 @@ public class MicroLoader {
 					io.github.h3nb.jlmodplus.mmapi.camera.CameraCapabilities.resolve(
 							params.systemProperties,
 						io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime.isCameraAvailable(),
-						cameraDefaultDimensions);
+						cameraDefaultDimensions,
+                        ContextHolder.getAppContext().getPackageManager()
+                                .hasSystemFeature(android.content.pm.PackageManager.FEATURE_MICROPHONE));
 			for (Map.Entry<String, String> property : cameraProperties.entrySet()) {
 				MidletSystem.setProperty(property.getKey(), property.getValue());
 			}

@@ -144,7 +144,7 @@ public class Manager {
 
 	public static String[] getSupportedContentTypes(String protocol) {
 		if ("device".equals(protocol)) return new String[]{"audio/midi", "audio/x-tone-seq"};
-		if ("capture".equals(protocol)) return new String[]{"video/raw"};
+		if ("capture".equals(protocol)) return new String[]{"video/raw", "audio/raw"};
 		if (protocol != null && !"file".equals(protocol) && !"resource".equals(protocol)) return new String[0];
 		String[] types = new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
@@ -152,14 +152,16 @@ public class Manager {
 				"audio/mobile-xmf", "audio/imelody", "text/x-imelody", "audio/rtttl", "audio/x-rtttl",
 				"audio/ota", "audio/x-ota", "video/mp4", "video/3gpp"};
 		if (protocol != null) return types;
-		String[] allTypes = Arrays.copyOf(types, types.length + 1);
+		String[] allTypes = Arrays.copyOf(types, types.length + 2);
 		allTypes[types.length] = "video/raw";
+		allTypes[types.length + 1] = "audio/raw";
 		return allTypes;
 	}
 
 	public static String[] getSupportedProtocols(String contentType) {
 		if (contentType == null) return new String[]{"device", "file", "resource", "capture"};
-		if ("video/raw".equalsIgnoreCase(contentType)) return new String[]{"capture"};
+		if ("video/raw".equalsIgnoreCase(contentType) || "audio/raw".equalsIgnoreCase(contentType))
+            return new String[]{"capture"};
 		if ("audio/midi".equalsIgnoreCase(contentType) ||
 				"audio/x-tone-seq".equalsIgnoreCase(contentType)) return new String[]{"device", "file", "resource"};
 		for (String supported : getSupportedContentTypes(null)) {
