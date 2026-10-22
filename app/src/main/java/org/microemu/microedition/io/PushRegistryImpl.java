@@ -34,7 +34,7 @@ import javax.microedition.io.ConnectionNotFoundException;
 
 /**
  *
- * Default empty implemenation
+ * Default implementation: no push connection or alarm delivery backend is installed.
  *
  * @author vlads
  */
@@ -42,33 +42,36 @@ import javax.microedition.io.ConnectionNotFoundException;
 public class PushRegistryImpl implements PushRegistryDelegate, Implementation {
 
 	public String getFilter(String connection) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public String getMIDlet(String connection) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public String[] listConnections(boolean available) {
-		// TODO Auto-generated method stub
 		return new String[0];
 	}
 
 	public long registerAlarm(String midlet, long time) throws ClassNotFoundException, ConnectionNotFoundException {
-		// TODO Auto-generated method stub
-		throw new ConnectionNotFoundException();
+		if (midlet == null) throw new ClassNotFoundException("MIDlet is null");
+		throw new ConnectionNotFoundException("Push alarms are not supported");
 	}
 
 	public void registerConnection(String connection, String midlet, String filter) throws ClassNotFoundException,
 			IOException {
-		// TODO Auto-generated method stub
-
+		if (connection == null || filter == null) {
+			throw new IllegalArgumentException("Push connection and filter must not be null");
+		}
+		if (midlet == null) throw new ClassNotFoundException("MIDlet is null");
+		if (connection.isEmpty() || filter.isEmpty()) {
+			throw new IllegalArgumentException("Invalid push connection or filter");
+		}
+		// Do not claim registration success without an AMS listener capable of delivering it.
+		throw new ConnectionNotFoundException("Push connections are not supported");
 	}
 
 	public boolean unregisterConnection(String connection) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
