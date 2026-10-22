@@ -41,19 +41,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: |
-            set -euo pipefail
-            chmod +x gradlew
-            ./gradlew --daemon -PjlmodRuntimeTestAbi=x86_64 -PjlmodNativeBuild=false :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
-            mapfile -t test_apks < <(find app/build/outputs/apk/androidTest -name '*.apk' -type f -print)
-            test "${#test_apks[@]}" -eq 1
-            adb install -r -t "${test_apks[0]}"
-            runner=$(adb shell pm list instrumentation | tr -d '\r' | sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p')
-            test -n "$runner"
-            mkdir -p ci-artifacts
-            adb shell am instrument -w -r -e class 'javax.microedition.lcdui.MidpStageCTextDeviceTest' "$runner" | tee ci-artifacts/stage-c-device.txt
-            grep -Fq 'INSTRUMENTATION_CODE: -1' ci-artifacts/stage-c-device.txt
-            grep -Fq 'INSTRUMENTATION_STATUS: class=javax.microedition.lcdui.MidpStageCTextDeviceTest' ci-artifacts/stage-c-device.txt
+          script: bash scripts/midp-stage-c-device.sh
       - name: Upload device test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
