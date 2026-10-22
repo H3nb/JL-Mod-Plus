@@ -31,8 +31,8 @@ The examples use PowerShell. On POSIX shells, replace `./gradlew.bat` with `./gr
 | dexlib JVM unit tests | `./gradlew.bat :dexlib:testDebugUnitTest` |
 | Library migration tests | `./gradlew.bat :app:testEmulatorDebugUnitTest --tests io.github.h3nb.jlmodplus.librarydb.LibraryMigrationTest` |
 | Lint | `./gradlew.bat :app:lintEmulatorDebug :dexlib:lintDebug` |
-| Compose screenshot comparison | `./gradlew.bat :app:testScreenshotTestDefaultEmulatorDebugTestSuite` |
-| Generate candidate screenshot references | `./gradlew.bat :app:updateScreenshotTestDefaultEmulatorDebugTestSuite` (inspect changes before accepting) |
+| Compose screenshot comparison | `./gradlew.bat :app:testEmulatorDebugScreenshotTestDefaultTestSuite` |
+| Generate candidate screenshot references | `./gradlew.bat :app:updateEmulatorDebugScreenshotTestDefaultTestSuite` (inspect changes before accepting) |
 | Debug APK | `./gradlew.bat :app:assembleEmulatorDebug` |
 | Instrumentation APK compilation | `./gradlew.bat :app:assembleEmulatorDebugAndroidTest` |
 | Instrumentation on a connected x86_64 emulator | `./gradlew.bat -PjlmodRuntimeTestAbi=x86_64 :app:connectedEmulatorDebugAndroidTest` |
@@ -212,9 +212,9 @@ standalone `com.android.compose.screenshot` plugin. Sources remain under
 `app/src/screenshotTest/kotlin`; the `screenshotTest` suite targets only
 `emulatorDebug`. References live under
 `app/src/screenshotTestDefaultEmulatorDebug/reference`. The test task is
-`:app:testScreenshotTestDefaultEmulatorDebugTestSuite`; the update task is
-`:app:updateScreenshotTestDefaultEmulatorDebugTestSuite`. HTML reports are under
-`app/build/reports/tests/testScreenshotTestDefaultEmulatorDebugTestSuite/`, with
+`:app:testEmulatorDebugScreenshotTestDefaultTestSuite`; the update task is
+`:app:updateEmulatorDebugScreenshotTestDefaultTestSuite`. HTML reports are under
+`app/build/reports/tests/testEmulatorDebugScreenshotTestDefaultTestSuite/`, with
 JUnit XML under the matching `app/build/test-results/` directory.
 This experimental AGP API is pinned; recheck task/report contracts on upgrades.
 

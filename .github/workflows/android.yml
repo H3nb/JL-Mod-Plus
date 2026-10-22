@@ -179,7 +179,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/ci-screenshot-candidates.py --prepare-update "$PR_NUMBER"
-          ./gradlew --daemon --stacktrace --profile -PjlmodNativeBuild=false :app:updateScreenshotTestDefaultEmulatorDebugTestSuite
+          ./gradlew --daemon --stacktrace --profile -PjlmodNativeBuild=false :app:updateEmulatorDebugScreenshotTestDefaultTestSuite
           python3 scripts/ci-screenshot-candidates.py --updated
 
       - name: Upload manually generated screenshot candidates for review
@@ -305,7 +305,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:testScreenshotTestDefaultEmulatorDebugTestSuite
+          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:testEmulatorDebugScreenshotTestDefaultTestSuite
+
+      - name: Diagnose missing screenshot task reports
+        if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
+        shell: bash
+        run: |
+          if [[ ! -d app/build/test-results/testEmulatorDebugScreenshotTestDefaultTestSuite ]]; then
+            ./gradlew --daemon -PjlmodNativeBuild=false :app:tasks --all
+          fi
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
@@ -331,7 +339,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: >-
           python3 scripts/ci-results.py --no-skips
-          --tests 'screenshots=app/build/test-results/testScreenshotTestDefaultEmulatorDebugTestSuite/TEST-*.xml'
+          --tests 'screenshots=app/build/test-results/testEmulatorDebugScreenshotTestDefaultTestSuite/TEST-*.xml'
           --output ci-artifacts/screenshot-results.json
 
       - name: Upload screenshot diagnostics
@@ -341,8 +349,8 @@ jobs:
           name: JL-Mod-Plus-screenshot-diagnostics
           path: |
             ci-artifacts/screenshot-results.*
-            app/build/reports/tests/testScreenshotTestDefaultEmulatorDebugTestSuite/**
-            app/build/test-results/testScreenshotTestDefaultEmulatorDebugTestSuite/**
+            app/build/reports/tests/testEmulatorDebugScreenshotTestDefaultTestSuite/**
+            app/build/test-results/testEmulatorDebugScreenshotTestDefaultTestSuite/**
             build/reports/problems/**
             build/reports/profile/**
           if-no-files-found: warn
