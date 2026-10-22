@@ -1173,4 +1173,10 @@
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Reset to default</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Reset system properties?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Replace the editor contents with the current JL-Mod Plus defaults? Other settings will remain unchanged. Save to apply the reset.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME package detected</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">This link points to a Java ME package. What would you like to do?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Install in JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Open in browser</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">No application can open this link.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">This application is currently running. Installing will stop it before its files are replaced. Unsaved progress may be lost.</string>
 </resources>

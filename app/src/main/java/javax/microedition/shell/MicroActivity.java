@@ -87,6 +87,7 @@ import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 import javax.microedition.lcdui.skin.SkinLayer;
+import javax.microedition.midlet.PlatformRequestHandler;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.util.ContextHolder;
@@ -881,6 +882,7 @@ public class MicroActivity extends AppCompatActivity {
 		Runnable processCleanup = pendingTerminalProcessCleanup;
 		pendingTerminalProcessCleanup = null;
 		try {
+			PlatformRequestHandler.cancelForHost(this);
 			CameraRuntime.onHostDestroyed(this);
 			AudioPermissionResult audioPermission = pendingRecordingAudioPermission;
 			pendingRecordingAudioPermission = null;
@@ -1397,6 +1399,14 @@ public class MicroActivity extends AppCompatActivity {
 	public boolean isVisible() {
 		return getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
 	}
+
+    /** Route host-owned Java ME package decisions through the existing Material 3 runtime surface. */
+    @Nullable
+    public Runnable showPlatformPackageChoice(Runnable onInstall, Runnable onBrowser,
+            Runnable onCancel) {
+        return runtimeMenuController == null ? null
+                : runtimeMenuController.showPlatformPackageChoice(onInstall, onBrowser, onCancel);
+    }
 
 	public void showExitConfirmation() {
 		if (runtimeMenuController != null) {

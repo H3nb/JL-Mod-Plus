@@ -286,6 +286,16 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 	}
 
+	/** Library-owned update request; leave foreground selection to the installer. */
+	public static boolean stopForInstallation(String installedPath, long appId) {
+		MidletThread current = instance;
+		if (current == null || current.lifecycle.isDestroyed()
+				|| !current.microLoader.matchesRuntime(installedPath, appId)) {
+			return false;
+		}
+		return destroyApp(false);
+	}
+
 	static boolean destroyApp() {
 		return destroyApp(true);
 	}

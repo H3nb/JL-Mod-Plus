@@ -1087,4 +1087,10 @@
     <string name="config_system_properties_reset">Pulihkan bawaan</string>
     <string name="config_system_properties_reset_title">Pulihkan properti sistem?</string>
     <string name="config_system_properties_reset_message">Ganti isi editor dengan properti bawaan JL-Mod Plus terbaru? Pengaturan lain tetap utuh. Simpan untuk menerapkan perubahan.</string>
+    <string name="platform_package_choice_title">Paket Java ME terdeteksi</string>
+    <string name="platform_package_choice_message">Tautan ini mengarah ke paket Java ME. Apa yang ingin Anda lakukan?</string>
+    <string name="platform_package_install">Instal di JL-Mod Plus</string>
+    <string name="platform_package_browser">Buka di browser</string>
+    <string name="platform_package_unavailable">Tidak ada aplikasi yang dapat membuka tautan ini.</string>
+    <string name="installer_running_update_warning">Aplikasi ini sedang berjalan. Instalasi akan menghentikannya sebelum berkas diganti. Progres yang belum disimpan mungkin hilang.</string>
 </resources>

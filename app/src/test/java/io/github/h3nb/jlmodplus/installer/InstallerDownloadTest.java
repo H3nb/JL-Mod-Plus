@@ -67,6 +67,25 @@ public class InstallerDownloadTest {
         assertRejectedResponse("HTTP/1.1 302 Found\r\nLocation: /start\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
     }
 
+
+    @Test public void detectsActualArchiveAfterRedirectAndRejectsHtml() throws Exception {
+        File jar = temporary.newFile("archive-with-no-extension");
+        Files.write(jar.toPath(), new byte[] {'P', 'K', 3, 4, 0, 0});
+        assertEquals(InstallerDownload.SourceKind.JAR, InstallerDownload.detectSource(jar));
+
+        File jad = temporary.newFile("misnamed.jar");
+        Files.writeString(jad.toPath(), "MIDlet-Name: Example\\r\\nMIDlet-Jar-URL: game.jar\\r\\n");
+        assertEquals(InstallerDownload.SourceKind.JAD, InstallerDownload.detectSource(jad));
+
+        File kjx = temporary.newFile("application.dat");
+        Files.write(kjx.toPath(), new byte[] {'K', 'J', 'X', 1});
+        assertEquals(InstallerDownload.SourceKind.KJX, InstallerDownload.detectSource(kjx));
+
+        File html = temporary.newFile("redirect-result.jar");
+        Files.writeString(html.toPath(), "  <html>Not a package</html>");
+        assertThrows(IOException.class, () -> InstallerDownload.detectSource(html));
+    }
+
     private void assertRejectedResponse(String response) throws Exception {
         try (ServerSocket server = new ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress())) {
             server.setSoTimeout(5000);

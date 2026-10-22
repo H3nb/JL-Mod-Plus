@@ -4,6 +4,7 @@ package io.github.h3nb.jlmodplus.installer;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -85,6 +86,31 @@ final class InstallerDownload {
             // Scratch's owner also removes its directory on completion and after stale requests.
             if (partial.exists()) partial.delete();
         }
+    }
+
+    enum SourceKind { JAD, JAR, KJX }
+
+    /** Infer the downloaded format from bytes, not the endpoint path or server MIME. */
+    static SourceKind detectSource(File file) throws IOException {
+        byte[] header = new byte[16];
+        int count;
+        try (FileInputStream input = new FileInputStream(file)) {
+            count = input.read(header);
+        }
+        if (count < 1) throw new IOException("Downloaded source is empty");
+        if (count >= 2 && header[0] == 'P' && header[1] == 'K') {
+            return SourceKind.JAR; // Archive structure and MIDlet manifest are validated downstream.
+        }
+        if (count >= 3 && header[0] == 'K' && header[1] == 'J' && header[2] == 'X') {
+            return SourceKind.KJX;
+        }
+        int first = 0;
+        while (first < count && (header[first] == ' ' || header[first] == '\n'
+                || header[first] == '\r' || header[first] == '\t')) first++;
+        if (first < count && header[first] == '<') {
+            throw new IOException("The download returned an HTML page instead of a Java ME package");
+        }
+        return SourceKind.JAD; // Descriptor parser enforces JAD's required attributes.
     }
 
     private static void checkCancelled(Cancellation cancelled) throws InterruptedIOException {
