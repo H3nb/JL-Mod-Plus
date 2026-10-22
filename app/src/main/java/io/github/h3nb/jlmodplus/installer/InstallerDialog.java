@@ -71,6 +71,7 @@ public class InstallerDialog extends DialogFragment {
 	private boolean bundleWorkerInFlight;
 	private boolean restoredInstance;
 	private boolean operationRunning;
+	private boolean activeReplacementNotified;
 	private boolean cancelRequested;
 	private volatile boolean destroyed;
 	private volatile boolean workerExecuting;
@@ -194,6 +195,7 @@ public class InstallerDialog extends DialogFragment {
 		return new InstallerActions() {
 			@Override
 			public void onInstall() {
+				if (installer != null) installer.approveRunningReplacement(activeReplacementNotified);
 				if (primaryAction != null) primaryAction.run();
 			}
 
@@ -406,7 +408,20 @@ public class InstallerDialog extends DialogFragment {
 			message += "\n\n" + getString(isBundleRequest()
 					? R.string.library_import_restore_existing : R.string.installer_existing_data_preserved);
 		}
-		if (installer.getJar() == null) {
+		activeReplacementNotified = false;
+        if (status == AppInstaller.STATUS_EQUAL || status == AppInstaller.STATUS_SAME
+                || status == AppInstaller.STATUS_NEWER || status == AppInstaller.STATUS_OLDER) {
+            try {
+                activeReplacementNotified = installer.isRunningReplacementTarget();
+            } catch (IOException error) {
+                onError(error);
+                return;
+            }
+            if (activeReplacementNotified) {
+                message += "\\n\\n" + getString(R.string.installer_running_update_warning);
+            }
+        }
+        if (installer.getJar() == null) {
 			message = message + "\n" + getString(R.string.warn_install_from_net);
 		}
 		currentTitle = nd.getName();

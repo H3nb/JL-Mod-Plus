@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryInstallRecovery;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.librarydb.WorkDirLayout;
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
+import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.ConverterException;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
@@ -94,6 +96,7 @@ public class AppInstaller {
     private final File resolvedJar;
 
     private volatile boolean cancelled;
+    private volatile boolean approvedRunningReplacement;
     private boolean useSourceDirectly;
     private InspectionIndex inspectionIndex;
     private Uri uri;
@@ -125,6 +128,13 @@ public class AppInstaller {
     void setProgress(Progress progress) { this.progress = progress; }
     /** Use direct input only for preflight or for sources already copied into request-owned scratch. */
     void setUseSourceDirectly() { useSourceDirectly = true; }
+
+    void approveRunningReplacement(boolean approved) { approvedRunningReplacement = approved; }
+
+    boolean isRunningReplacementTarget() throws IOException {
+        return currentApp != null && targetDir != null && RuntimeStorageLease.isActive(
+                libraryViewModel.getApplication().getFilesDir(), targetDir);
+    }
 
     /** Read-only Library projection for one batch review; never used to authorize an installation. */
     void setInspectionIndex(InspectionIndex index) { inspectionIndex = index; }
@@ -482,6 +492,7 @@ public class AppInstaller {
         stage(Stage.WAITING);
         final InstallerExecutionCoordinator.Permit executionPermit = InstallerExecutionCoordinator.acquire(() -> cancelled);
         boolean handedOff = false;
+        RuntimeStorageLease replacementLock = null;
         try {
             checkCancelled();
             verifyActiveGeneration();
@@ -572,6 +583,8 @@ public class AppInstaller {
                 verifyRequestedGeneration();
                 requireRequestedAppIdentity();
             }
+            // The target installation is never replaced while its guest heap can read it.
+            replacementLock = acquireReplacementLock();
 
             File replacementBackup = null;
             File freshConfigDir = null;
@@ -647,6 +660,7 @@ public class AppInstaller {
             installedPath = targetDir.getAbsolutePath();
             long iconRevision = LibraryIconRevision.fromFile(child(targetDir, Config.MIDLET_ICON_FILE));
             final File recoveryBackup = replacementBackup;
+            final RuntimeStorageLease heldReplacementLock = replacementLock;
 
             clearCache();
             deleteTemp();
@@ -663,6 +677,7 @@ public class AppInstaller {
                     System.currentTimeMillis(),
                     (value, error) -> {
                         if (error != null) {
+                            releaseReplacementLock(heldReplacementLock);
                             executionPermit.close();
                             // Keep recoveryBackup. Startup reconciliation will refresh this exact storage key
                             // without deleting the successfully published replacement.
@@ -671,6 +686,7 @@ public class AppInstaller {
                             return;
                         }
                         if (value == null) {
+                            releaseReplacementLock(heldReplacementLock);
                             executionPermit.close();
                             if (!emitter.isDisposed()) {
                                 emitter.onError(new IllegalStateException(
@@ -690,7 +706,8 @@ public class AppInstaller {
                                 installedId,
                                 appDirName,
                                 visibilityError -> {
-                                    executionPermit.close();
+                                    releaseReplacementLock(heldReplacementLock);
+                            executionPermit.close();
                                     if (emitter.isDisposed()) return;
                                     if (visibilityError != null) emitter.onError(new InstallerFailure(
                                             "Installed files need Library recovery", visibilityError));
@@ -706,6 +723,7 @@ public class AppInstaller {
             throw error;
         } finally {
             if (!handedOff) {
+                releaseReplacementLock(replacementLock);
                 deleteTemp();
                 executionPermit.close();
             }
@@ -878,6 +896,43 @@ public class AppInstaller {
         java.net.URI base = uri == null ? null : java.net.URI.create(uri.toString());
         InstallerDownload.download(InstallerDownload.resolve(base, newDesc.getJarUrl()), srcJar,
                 () -> cancelled, (bytes, total) -> {});
+    }
+
+    /**
+     * Hold the runtime's OS lease until publication and the Library visibility callback finish.
+     * If the user approved replacing a running MIDlet, ask that exact runtime process to exit
+     * first; another runtime cannot attach while this lock is held.
+     */
+    private RuntimeStorageLease acquireReplacementLock() throws IOException {
+        if (currentApp == null) return null;
+        File filesDir = libraryViewModel.getApplication().getFilesDir();
+        RuntimeStorageLease held = RuntimeStorageLease.acquire(filesDir, targetDir);
+        if (held != null) return held;
+        if (!approvedRunningReplacement) {
+            throw new InstallerFailure("Running MIDlet update needs confirmation; retry installation");
+        }
+        MidletKeepAliveService.stopForInstallation(libraryViewModel.getApplication());
+        for (int tries = 0; tries < 100; tries++) {
+            checkCancelled();
+            try {
+                Thread.sleep(100L);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new InterruptedIOException("Interrupted while waiting for MIDlet to exit");
+            }
+            held = RuntimeStorageLease.acquire(filesDir, targetDir);
+            if (held != null) return held;
+        }
+        throw new InstallerFailure("Running MIDlet did not stop; existing installation was not replaced");
+    }
+
+    private static void releaseReplacementLock(RuntimeStorageLease held) {
+        if (held == null) return;
+        try {
+            held.close();
+        } catch (IOException error) {
+            Log.w(TAG, "Unable to release installed application lease", error);
+        }
     }
 
     void cancel() { cancelled = true; }

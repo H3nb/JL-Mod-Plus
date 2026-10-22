@@ -1091,4 +1091,5 @@
     <string name="platform_package_install">Instal di JL-Mod Plus</string>
     <string name="platform_package_browser">Buka di browser</string>
     <string name="platform_package_unavailable">Tidak ada aplikasi yang dapat membuka tautan ini.</string>
+    <string name="installer_running_update_warning">Aplikasi ini sedang berjalan. Instalasi akan menghentikannya sebelum berkas diganti. Progres yang belum disimpan mungkin hilang.</string>
 </resources>

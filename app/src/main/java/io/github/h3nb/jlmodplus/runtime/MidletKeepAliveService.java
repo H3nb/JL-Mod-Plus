@@ -35,6 +35,7 @@ public final class MidletKeepAliveService extends Service {
     private static final String CHANNEL_ID = "midlet_runtime";
     private static final int NOTIFICATION_ID = 0x4a4c;
     private static final String ACTION_STOP_EMULATOR = "runtime.STOP_EMULATOR";
+    private static final String ACTION_STOP_FOR_INSTALL = "runtime.STOP_FOR_INSTALL";
 
     /** Finalize the guest in its process before the main process closes the emulator. */
     public static void exitEmulator(Context context) {
@@ -44,6 +45,16 @@ public final class MidletKeepAliveService extends Service {
         } catch (RuntimeException error) {
             Log.w(TAG, "Unable to request emulator stop", error);
             EmulatorShutdownService.request(context);
+        }
+    }
+
+    /** Request a graceful stop of the currently running guest, without closing the Library. */
+    public static void stopForInstallation(Context context) throws java.io.IOException {
+        try {
+            context.startService(new Intent(context, MidletKeepAliveService.class)
+                    .setAction(ACTION_STOP_FOR_INSTALL));
+        } catch (RuntimeException failure) {
+            throw new java.io.IOException("Unable to request running MIDlet shutdown", failure);
         }
     }
 
@@ -84,6 +95,10 @@ public final class MidletKeepAliveService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && ACTION_STOP_FOR_INSTALL.equals(intent.getAction())) {
+            MidletThread.destroyApp(false);
+            return START_NOT_STICKY;
+        }
         if (intent != null && ACTION_STOP_EMULATOR.equals(intent.getAction())) {
             MidletThread.stopEmulator(getApplicationContext());
             return START_NOT_STICKY;
