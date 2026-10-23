@@ -78,7 +78,7 @@ class ScreenshotRoundtripTest(unittest.TestCase):
             target = root/'checkout'
             subprocess.run(['git','clone','-q',str(root),str(target)], check=True)
             state = root/'state.json'
-            state.write_text(json.dumps(dict(request=request, repo='owner/repo', pr=10, branch='fixture', paths=paths)))
+            state.write_text(json.dumps(dict(request=request, repo='owner/repo', pr=10, branch='fixture', paths=paths, default_branch='alpha')))
             calls = []
             real_call = promotion.call
             def call(*args, **kwargs):
@@ -89,6 +89,8 @@ class ScreenshotRoundtripTest(unittest.TestCase):
             def gh(path, method='GET', payload=None):
                 if method != 'GET':
                     calls.append((path, method, payload))
+                    if path.endswith('/dispatches'):
+                        return dict(workflow_run_id=123, html_url='https://github.com/owner/repo/actions/runs/123')
                     return None
                 current = subprocess.check_output(['git','rev-parse','HEAD'], cwd=target, text=True).strip()
                 return dict(state='open', head=dict(sha=current, ref='fixture'), base=dict(sha='2'*40))

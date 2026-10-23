@@ -42,3 +42,7 @@ debug.keystore
 .cxx/
 
 /.kotlin/
+
+# Local CI evidence and Python helper bytecode
+/ci-artifacts/
+__pycache__/

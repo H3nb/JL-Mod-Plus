@@ -138,29 +138,37 @@ class ScreenshotPromotionTest(unittest.TestCase):
             self.assertEqual(122, len(promotion.safe_bundle(archive, self.request)[0]))
 
     def test_inspect_binds_manual_and_pr_artifacts_to_owner_run_and_exact_pr(self):
-        scenarios = ['pull_request', 'workflow_dispatch', 'stale-base', 'wrong-attempt', 'wrong-workflow', 'wrong-owner', 'tampered-zip']
+        scenarios = ['pull_request', 'workflow_dispatch', 'branch-comparison', 'trusted-manual', 'trusted-comparison',
+                     'wrong-source-title', 'wrong-default-branch', 'wrong-artifact-revision',
+                     'stale-base', 'wrong-attempt', 'wrong-workflow', 'wrong-owner', 'tampered-zip']
         for scenario in scenarios:
             with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
-                manual = scenario == 'workflow_dispatch'
-                self.request['build_sha'] = self.request['head_sha'] if manual else '3'*40
+                trusted = scenario.startswith('trusted-') or scenario.startswith('wrong-source-') or scenario in ('wrong-default-branch', 'wrong-artifact-revision')
+                dispatched = trusted or scenario in ('workflow_dispatch', 'branch-comparison')
+                manual = dispatched and scenario not in ('trusted-comparison', 'branch-comparison')
+                self.request['build_sha'] = self.request['head_sha'] if dispatched else '3'*40
                 archive = root/'source.zip'
                 self.write_bundle(archive, context_change=lambda c: c.update(generation='manual' if manual else 'comparison'))
                 self.request['artifact_digest'] = 'sha256:'+hashlib.sha256(archive.read_bytes()).hexdigest()
                 if scenario == 'tampered-zip':
                     self.request['artifact_digest'] = 'sha256:'+'0'*64
                 event = dict(issue=dict(number=7, pull_request={"url":"fixture"}), sender=dict(id=2 if scenario=='wrong-owner' else 1),
-                             repository=dict(full_name='owner/repo', owner=dict(id=1)), comment=dict(body=self.command()))
+                             repository=dict(full_name='owner/repo', owner=dict(id=1), default_branch='alpha'), comment=dict(body=self.command()))
                 event_path = root/'event.json'
                 event_path.write_text(json.dumps(event))
                 pr = dict(state='open', head=dict(sha=self.request['head_sha'], ref='topic', repo=dict(full_name='owner/repo')),
                           base=dict(sha='5'*40 if scenario=='stale-base' else self.request['base_sha']))
-                run = dict(name='Android CI', event='workflow_dispatch' if manual else 'pull_request',
-                           head_sha=self.request['head_sha'], head_repository=dict(full_name='owner/repo'),
+                workflow_sha = '6'*40 if trusted else self.request['head_sha']
+                title_sha = '7'*40 if scenario == 'wrong-source-title' else self.request['head_sha']
+                run = dict(name='Android CI', event='workflow_dispatch' if dispatched else 'pull_request',
+                           head_sha=workflow_sha, head_repository=dict(full_name='owner/repo'),
+                           head_branch='other' if scenario == 'wrong-default-branch' else 'alpha',
+                           display_title=f"PR 7 | {'update-screenshots' if manual else 'screenshots'} | {title_sha} | test - | request comment-123",
                            path='.github/workflows/other.yml' if scenario=='wrong-workflow' else '.github/workflows/android.yml',
                            status='completed', conclusion='success' if manual else 'failure', run_attempt=2 if scenario=='wrong-attempt' else 1)
                 artifact = dict(name=promotion.ARTIFACT_NAME, expired=False, digest=self.request['artifact_digest'],
-                                workflow_run=dict(id=10, head_sha=self.request['head_sha']))
+                                workflow_run=dict(id=10, head_sha='9'*40 if scenario == 'wrong-artifact-revision' else workflow_sha))
                 def gh(path):
                     if '/pulls/' in path: return pr
                     if '/actions/runs/' in path: return run
@@ -171,12 +179,60 @@ class ScreenshotPromotionTest(unittest.TestCase):
                         shutil.copyfileobj(source, binary_stdout)
                 args = argparse.Namespace(event=event_path, artifact=root/'download.zip', state=root/'state.json')
                 with mock.patch.object(promotion, 'gh', side_effect=gh), mock.patch.object(promotion, 'call', side_effect=download), mock.patch.dict(os.environ, GITHUB_REPOSITORY='owner/repo', GITHUB_OUTPUT=str(root/'output')):
-                    if scenario in ('pull_request','workflow_dispatch'):
+                    if scenario in ('pull_request','workflow_dispatch', 'branch-comparison', 'trusted-manual', 'trusted-comparison'):
                         promotion.inspect(args)
                         self.assertEqual([self.path], json.loads(args.state.read_text())['paths'])
                     else:
                         with self.assertRaises(promotion.Reject):
                             promotion.inspect(args)
+
+    def test_dispatch_failure_preserves_promoted_sha_and_recovery_without_accepting_again(self):
+        promoted = '8'*40
+        state = dict(repo='owner/repo', pr=7, request=self.request, paths=[self.path], default_branch='alpha')
+        calls = []
+        def gh(path, method='GET', payload=None):
+            calls.append((path, method, payload))
+            if '/pulls/' in path:
+                return dict(head=dict(sha=promoted))
+            if path.endswith('/dispatches'):
+                raise promotion.Reject('network response lost')
+            return dict(id=999)
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory)/'state.json'
+            summary_path = Path(directory)/'summary.md'
+            with mock.patch.object(promotion, 'gh', side_effect=gh), mock.patch.dict(os.environ, GITHUB_STEP_SUMMARY=str(summary_path)):
+                with self.assertRaisesRegex(promotion.Reject, f'Partial success.*{promoted}'):
+                    promotion.finish_promotion(state_path, state, promoted)
+            result = json.loads(state_path.read_text())['promotion_result']
+            self.assertEqual('partial-success', result['status'])
+            self.assertEqual(promoted, result['promoted_sha'])
+            dispatch = next(call for call in calls if call[0].endswith('/dispatches'))
+            self.assertEqual('alpha', dispatch[2]['ref'])
+            self.assertEqual(promoted, dispatch[2]['inputs']['expected_sha'])
+            self.assertEqual(promoted, dispatch[2]['inputs']['source_sha'])
+            summary = summary_path.read_text()
+            self.assertIn(f'/jlmod-ci validate --sha {promoted}', summary)
+            self.assertIn('Do not accept the old candidate again', summary)
+
+    def test_reply_failure_does_not_dispatch_again_after_successful_push(self):
+        promoted = '8'*40
+        state = dict(repo='owner/repo', pr=7, request=self.request, paths=[self.path], default_branch='alpha')
+        dispatches = []
+        def gh(path, method='GET', payload=None):
+            if '/pulls/' in path:
+                return dict(head=dict(sha=promoted))
+            if path.endswith('/dispatches'):
+                dispatches.append(payload)
+                return dict(workflow_run_id=123, html_url='https://github.com/owner/repo/actions/runs/123')
+            raise promotion.Reject('reply unavailable')
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory)/'state.json'
+            with mock.patch.object(promotion, 'gh', side_effect=gh):
+                promotion.finish_promotion(state_path, state, promoted)
+            self.assertEqual(1, len(dispatches))
+            result = json.loads(state_path.read_text())['promotion_result']
+            self.assertEqual('validation-dispatched', result['status'])
+            self.assertEqual(123, result['run_id'])
 
 
 if __name__ == "__main__":

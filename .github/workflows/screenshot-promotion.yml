@@ -18,7 +18,7 @@ jobs:
     if: >-
       github.event.issue.pull_request != null &&
       github.event.sender.id == github.event.repository.owner.id &&
-      startsWith(github.event.comment.body, '/jlmod-promote-screenshots')
+      startsWith(github.event.comment.body, format('/jlmod-promote-screenshots{0}', fromJSON('"\n"')))
     runs-on: ubuntu-26.04
     timeout-minutes: 10
 
@@ -56,3 +56,12 @@ jobs:
           --artifact "$RUNNER_TEMP/screenshot-candidates.zip"
           --state "$RUNNER_TEMP/screenshot-promotion.json"
           --target target
+
+      - name: Upload promotion recovery state
+        if: ${{ !cancelled() && steps.inspect.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: JL-Mod-Plus-screenshot-promotion-state
+          path: ${{ runner.temp }}/screenshot-promotion.json
+          if-no-files-found: error
+          retention-days: 7

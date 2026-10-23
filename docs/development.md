@@ -151,22 +151,34 @@ Inspect the run for the relevant source revision and the specific task results;
 a green workflow proves only the checks it executed. Report the run/commit,
 checks passed, and any compiled-only, skipped, or unverified behavior.
 
-Android CI has four modes. Select the intended branch under **Run workflow**;
-the run records the exact checked-out commit. Normal PR validation checks the
-temporary merge commit with the base branch, so its build identity can differ
-from the PR head. Manual dispatch checks the selected branch revision instead.
+Android CI keeps automatic PR validation and manual **Run workflow**/`gh`
+dispatch. [PR CI commands and recovery](ci-commands.md) documents the shared
+profiles, focused selectors, CLI/local examples, authorized identities, exact-source
+requests, run discovery, recovery and the default-branch bootstrap canary.
+Normal PR validation checks the temporary merge commit with the base branch;
+its built source differs from PR HEAD. Comment requests use the trusted
+default-branch workflow definition and the explicit current PR HEAD source.
 
 | Mode | Result |
 | --- | --- |
-| `validate` (default; automatic on PRs) | Parallel lint and build/test jobs, followed by the required `build` status; comparison failures also produce reviewable candidates from the same render |
-| `update-screenshots` (manual) | Select the open PR branch and supply `pr_number`; packages changed references with a versioned manifest and binary patch for review |
-| `runtime-smoke` (manual) | Selected existing instrumentation tests on one fresh API 35 x86_64 emulator; does not run the full Android suite or replace normal PR validation |
-| `release-check` (manual) | Builds unsigned release APKs and checks packaging/startup on a 16 KB emulator; does not publish a release |
+| `validate` (default; automatic on PRs) | Parallel build/tests, screenshots and lint, followed by the aggregate `build` status; instrumentation is compile-only |
+| `unit` | One app JVM class/method filter with fresh execution of the selected test task |
+| `instrumentation` | One AndroidJUnitRunner class/method selector on API 35 x86_64 |
+| `screenshots` | Compare screenshot references without accepting changes |
+| `update-screenshots` | Generate and package changed references for an open same-repository PR; review is still required |
+| `runtime-smoke` | Existing selected runtime contracts on API 35 x86_64 |
+| `release-check` | Unsigned release packaging, ELF alignment and startup qualification on a 16 KB emulator; no publication |
+| `host-native` | Existing Sonivox allocation/RMID regressions executed on the Linux host; no device execution |
 
-Maintenance modes use distinct check names and concurrency groups. Generating
-candidates or passing the runtime subset does not satisfy the PR `build` check.
-Dispatch options require the workflow to be available through GitHub's default
-branch; do not add a temporary push-triggered updater when dispatch is unavailable.
+Maintenance modes use distinct check names. Generating candidates or passing a
+focused/runtime subset does not satisfy the full PR `build` status. Manual
+investigations with different selectors/profiles do not cancel each other.
+Dispatch options and comment handlers require the workflow on GitHub's default
+branch; a PR version alone cannot establish live comment-trigger evidence.
+Every issue comment executes zero handler jobs and allocates zero runners;
+GitHub may still record skipped workflows. Ordinary/quoted PR comments and
+outsiders cannot allocate a controller runner. See the command guide for the
+explicit actor-ID policy and its one-time connector onboarding.
 
 The debug APK artifact is uploaded immediately after successful assembly and
 staging, before validation finishes. Its `BUILD-INFO.txt` records the source commit
@@ -178,9 +190,9 @@ reports and `lint-results.json`/`.md`. Screenshot reports and
 `screenshot-results.json`/`.md` are in `JL-Mod-Plus-screenshot-diagnostics`.
 The same compact counts and missing-report diagnostics appear in job logs and
 step summaries, allowing connector-only review without downloading every report.
-Required missing/empty test reports fail the job; skipped screenshot cases also
-fail. Summaries count actual XML testcases and do not claim fresh execution when
-Gradle may have restored cached results. The validation file records its own job's step outcomes, not the separate
+Required missing/empty/stale reports and all-skipped test suites fail the job;
+any skipped screenshot case also fails. Summaries count actual XML testcases and
+do not claim fresh execution when Gradle may have restored cached results. The validation file records its own job's step outcomes, not the separate
 lint result; consult the final `build` check for overall status. The early APK
 artifact is not rewritten. Artifact availability does not mean validation passed.
 Inspect the individual reports when a combined step fails.
@@ -225,7 +237,7 @@ This experimental AGP API is pinned; recheck task/report contracts on upgrades.
 2. For supported comparison failures, the run automatically uploads `JL-Mod-Plus-screenshot-candidates`. It contains `before/`, `after/`, `diff/` where available, `changes.txt`, `source-commit.txt`, `source-context.json`, and `baselines.patch`. These are the original PNG bytes from validation; there is no second render and no automatic baseline acceptance.
 3. Compare the images and confirm the recorded build/head/base commits match the source being reviewed. PR renders include the temporary merge with the base branch. If either branch has changed in a relevant way, regenerate before accepting the images.
 4. From the repository root, use `git apply --check path/to/baselines.patch`, then apply the reviewed patch. If only some changes are justified, transfer only those renderer-produced files. Automatic candidates cover supported mismatches only, not obsolete-reference cleanup or every rendering failure.
-5. For deliberate full regeneration or cases without automatic candidates, dispatch `mode=update-screenshots` on the exact HEAD branch of an open same-repository PR and supply its `pr_number`. This runs the official update task and packages only changed references with the same manifest and binary patch as automatic candidates. No artifact is produced when nothing changed. Inspect additions, replacements and deletions individually; an obsolete reference must be deliberately removed, not assumed deleted by the renderer.
+5. For deliberate full regeneration or cases without automatic candidates, use `/jlmod-ci update-screenshots` on an open same-repository PR, or dispatch `mode=update-screenshots` with its `pr_number` and exact source inputs as described in [PR CI commands](ci-commands.md#github-cli-ui-and-local-equivalents). This runs the official update task and packages only changed references with the same manifest and binary patch as automatic candidates. No artifact is produced when nothing changed. Inspect additions, replacements and deletions individually; an obsolete reference must be deliberately removed, not assumed deleted by the renderer.
 6. Commit accepted references and run normal validation again. Candidate packaging/generation does not change the failed validation result. Never accept unrelated visual changes just to make CI green.
 
 The automatic packager reads the pinned screenshot engine's XML reference/actual/diff mapping,
@@ -238,7 +250,8 @@ automatically committed.
 
 If rendering or inspection is unavailable, preserve the references, complete other
 scoped work, and report the precise gap and next required check. Missing checks
-remain verification gaps; they do not authorize bypassing required merge checks.
+remain verification gaps and must be reported. Merge authority remains with the
+maintainer; this workflow adds no protection or mandatory checks.
 
 ### GitHub-only reviewed screenshot promotion
 
@@ -294,7 +307,14 @@ non-comparison failures or skipped cases. On success it applies only the reviewe
 operations, verifies that no other paths are staged, commits them with the
 provenance recorded in the commit message, pushes with a force-with-lease against
 the exact reviewed HEAD, and explicitly dispatches final normal Android CI
-validation. It does not re-render or synthesize the references during promotion.
+validation of the new SHA using the default-branch definition. It does not re-render
+or synthesize the references during promotion.
+
+If references were pushed but final dispatch failed, the result reports partial
+success with the new promoted SHA and request ID. Inspect that request's runs
+before retrying validation. Validate the promoted SHA through the ordinary
+comment/gh/UI path; do not accept the old candidate again from its replaced HEAD.
+See [request recovery](ci-commands.md#find-results-and-recover-a-request).
 
 If promotion is rejected, keep the guardrails intact. Refresh PR/run/artifact
 state, identify which provenance or candidate assumption changed, review the
@@ -371,7 +391,10 @@ NDK provisioning without weakening app lint coverage.
 Each invocation writes an HTML timing profile under
 `build/reports/profile/`, included in diagnostic artifacts. Compare equivalent task
 sets and cache conditions before attributing timing differences to an optimization;
-measure time to APK separately from time to completed validation.
+measure time to APK separately from time to completed validation. See
+[measurement methodology](ci-commands.md#measuring-ci-efficiency) for phase timing,
+cold/warm controls, repeated comparisons and the pending cross-run cache-reuse
+experiments. Existing historical timings do not establish a benchmark or speedup.
 
 Do not run `clean` routinely, discard relevant checks to improve timings, or
 suppress Configuration Cache problems as warnings.
@@ -379,15 +402,20 @@ suppress Configuration Cache problems as warnings.
 ### Release checks
 
 Android CI owns PR validation: debug assembly, app/dexlib JVM tests, instrumentation
-compilation, lint, and screenshot checks. Merge only the latest executable/build
-state with passing relevant checks; a new squash SHA or documentation-only change
-does not by itself invalidate that evidence. The manual release workflow builds and
-verifies the release artifacts without repeating the debug validation suite.
+compilation, lint, and screenshot checks. Record evidence for the latest
+executable/build state; a new squash SHA or documentation-only change does not by
+itself invalidate that evidence. Alpha retains maintainer discretion for special
+merges; these profiles add no required checks, reviewer policy or merge queue. The
+manual release workflow builds and verifies release artifacts without repeating
+the debug validation suite or requiring CI-evidence checks before publication.
 
 For changes to shrinking, native packaging, release configuration, or relevant
-dependencies, run **Android CI** with mode **release-check** on the PR branch.
+dependencies, run **Android CI** with mode **release-check** for the exact PR
+source, using the default-branch dispatch path in [PR CI commands](ci-commands.md).
 It builds the release variant with R8 and all four ABIs, checks APK contents, and
-stages the same assets as publishing. It installs and launches the x86_64 and
+stages the same assets as publishing. Qualification checks every packaged
+arm64-v8a/x86_64 library's ELF LOAD alignment; ZIP alignment or install success
+alone does not establish that property. It installs and launches the x86_64 and
 universal APKs on an API 35 emulator with 16 KB pages using a disposable test key.
 This checks installation, native extraction, and startup; it does not qualify all
 MIDlet/audio/3D behavior or physical ARM devices. Artifacts are unsigned and use

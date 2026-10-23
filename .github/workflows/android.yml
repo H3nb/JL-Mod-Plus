@@ -1,4 +1,6 @@
 name: Android CI
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' && format('PR {0} | {1} | {2} | test {3} | request {4}', inputs.pr_number || '-', inputs.mode, inputs.expected_sha || inputs.source_sha || github.sha, inputs.selector_key || '-', inputs.request_id || format('ui-{0}', github.run_id)) || format('PR {0} | validate | {1} | automatic', github.event.pull_request.number, github.event.pull_request.head.sha) }}
 
 on:
   pull_request:
@@ -18,11 +20,35 @@ on:
         default: validate
         options:
           - validate
+          - unit
+          - instrumentation
+          - screenshots
+          - host-native
           - update-screenshots
           - runtime-smoke
           - release-check
       pr_number:
-        description: 'Open same-repository PR number (required for update-screenshots; select its branch)'
+        description: 'Open same-repository PR (required with source_sha and for candidates)'
+        type: string
+        default: ''
+      test_selector:
+        description: 'One unit class/method or instrumentation Class#method (focused modes only)'
+        type: string
+        default: ''
+      selector_key:
+        description: 'Optional SHA256 selector key (first 16 hex); controller sets this for deduplication'
+        type: string
+        default: ''
+      expected_sha:
+        description: 'Exact expected source revision; stale requests fail before Android setup'
+        type: string
+        default: ''
+      source_sha:
+        description: 'Exact same-repo PR HEAD to checkout with the selected workflow definition'
+        type: string
+        default: ''
+      request_id:
+        description: 'Traceable request ID; defaults to ui-RUN_ID'
         type: string
         default: ''
 
@@ -30,17 +56,97 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-ci-${{ github.event_name }}-${{ github.ref }}-${{ inputs.mode || 'validate' }}
-  cancel-in-progress: true
+  # Only automatic validation cancels older revisions. Manual investigations are independent.
+  group: android-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.mode || 'validate' }}-${{ github.event_name == 'workflow_dispatch' && (inputs.request_id || github.run_id) || 'automatic' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
+  source:
+    name: Verify requested source
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
     permissions:
       contents: read
       pull-requests: read
-    if: inputs.mode != 'release-check'
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      pr_head: ${{ steps.source.outputs.pr_head }}
+      pr_base: ${{ steps.source.outputs.pr_base }}
+      pr_number: ${{ steps.source.outputs.pr_number }}
+      request_id: ${{ steps.source.outputs.request_id }}
+    steps:
+      # Inline code is part of the workflow definition. No PR code or checkout in this job.
+      - name: Resolve and verify exact revision before setup
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SELECTOR_KEY: ${{ inputs.selector_key }}
+          TEST_SELECTOR: ${{ inputs.test_selector }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+          EVENT_PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          EVENT_PR_BASE: ${{ github.event.pull_request.base.sha }}
+          REQUEST_ID: ${{ inputs.request_id || format('ui-{0}', github.run_id) }}
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import hashlib, json, os, re, subprocess
+          env = os.environ
+          source, expected = env['SOURCE_SHA'], env['EXPECTED_SHA']
+          if not re.fullmatch('[0-9a-f]{40}', source) or (expected and source != expected):
+              raise SystemExit('Stale request: expected SHA differs from selected source')
+          if not re.fullmatch('[A-Za-z0-9_-]{1,80}', env['REQUEST_ID']):
+              raise SystemExit('Invalid request ID')
+          key = hashlib.sha256(env['TEST_SELECTOR'].encode()).hexdigest()[:16] if env['TEST_SELECTOR'] else '-'
+          if env['SELECTOR_KEY'] and env['SELECTOR_KEY'] != key:
+              raise SystemExit('Selector key does not match requested test')
+          number = env['PR_NUMBER']
+          head, base = env['EVENT_PR_HEAD'], env['EVENT_PR_BASE']
+          if env['GITHUB_EVENT_NAME'] == 'workflow_dispatch' and number:
+              if not re.fullmatch('[1-9][0-9]{0,9}', number):
+                  raise SystemExit('Invalid PR number')
+              pr = json.loads(subprocess.check_output([
+                  'gh', 'api', '-H', 'X-GitHub-Api-Version: 2026-03-10',
+                  'repos/' + env['GITHUB_REPOSITORY'] + '/pulls/' + number], text=True))
+              if pr['state'] != 'open' or pr['head']['repo']['full_name'] != env['GITHUB_REPOSITORY']:
+                  raise SystemExit('Dispatch requires an open same-repository PR')
+              head, base = pr['head']['sha'], pr['base']['sha']
+              if source != head:
+                  raise SystemExit('Stale request: PR HEAD moved; submit a new request for its current SHA')
+          elif env['GITHUB_EVENT_NAME'] == 'workflow_dispatch' and source != env['GITHUB_SHA']:
+              raise SystemExit('An explicit source revision requires a PR number')
+          values = dict(sha=source, pr_head=head, pr_base=base, pr_number=number, request_id=env['REQUEST_ID'])
+          with open(env['GITHUB_OUTPUT'], 'a') as output:
+              for key, value in values.items():
+                  output.write(key + '=' + value + '\n')
+          print(json.dumps(dict(schema_version=1, workflow_revision=env['GITHUB_SHA'], **values), indent=2))
+          PYTHON
+
+  helpers:
+    needs: source
+    uses: ./.github/workflows/workflow-checks.yml
+    with:
+      source_sha: ${{ needs.source.outputs.sha }}
+    permissions:
+      contents: read
+
+  build:
+    needs: [source, helpers]
+    env:
+      EXPECTED_SHA: ${{ needs.source.outputs.sha }}
+      PR_HEAD_SHA: ${{ needs.source.outputs.pr_head }}
+      PR_BASE_SHA: ${{ needs.source.outputs.pr_base }}
+      PR_NUMBER: ${{ needs.source.outputs.pr_number }}
+      CI_REQUEST_ID: ${{ needs.source.outputs.request_id }}
+      CI_PROFILE: ${{ inputs.mode || 'validate' }}
+      CI_SELECTOR: ${{ inputs.test_selector }}
+    permissions:
+      contents: read
+      pull-requests: read
+    if: ${{ !contains(fromJSON('["release-check","screenshots","host-native"]'), inputs.mode) }}
     # Maintenance runs must not report the same check name as PR validation.
-    name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || 'Build and tests' }}
+    name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || inputs.mode == 'unit' && 'focused-unit' || inputs.mode == 'instrumentation' && 'focused-instrumentation' || 'Build and tests' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
 
@@ -48,8 +154,13 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.source.outputs.sha }}
           persist-credentials: false
           submodules: recursive
+
+      - name: Verify checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - name: Restore shared debug keystore
         if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
@@ -95,7 +206,7 @@ jobs:
           packages: 'platform-tools platforms;android-37.0'
 
       - name: Provision NDK r30 for native-producing modes
-        if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') != 'update-screenshots'
+        if: ${{ !contains(fromJSON('["unit","update-screenshots"]'), inputs.mode) }}
         run: sdkmanager 'ndk;30.0.16248370' >/dev/null
 
       - name: Prepare build identity
@@ -106,20 +217,18 @@ jobs:
         run: |
           set -euo pipefail
           case "$MODE" in
-            validate|update-screenshots|runtime-smoke) ;;
+            validate|unit|instrumentation|update-screenshots|runtime-smoke) ;;
             *) echo "Unsupported CI mode: $MODE" >&2; exit 1 ;;
           esac
           chmod +x gradlew
           echo "JLMOD_BUILD_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: CI helper tests
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          bash -n scripts/runtime-smoke.sh
-          bash -n scripts/release-smoke.sh
-          python3 -B -m unittest discover -s scripts/tests -p 'test_*.py' -v
+      - name: Run focused JVM tests
+        id: focused_unit
+        if: inputs.mode == 'unit'
+        env:
+          TEST_SELECTOR: ${{ inputs.test_selector }}
+        run: python3 -B scripts/ci-profile.py unit --test "$TEST_SELECTOR"
 
       - name: Assemble arm64 debug APK
         id: assemble
@@ -132,8 +241,6 @@ jobs:
       - name: Stage APK for early device testing
         id: stage_apk
         if: ${{ !cancelled() && steps.assemble.outcome == 'success' }}
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           mkdir -p ci-apk
           cp app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk ci-apk/
@@ -162,11 +269,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tasks=(
-            :app:testEmulatorDebugUnitTest
-            :dexlib:testDebugUnitTest
-            :app:assembleEmulatorDebugAndroidTest
-          )
+          tasks=(:app:testEmulatorDebugUnitTest)
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            rm -rf app/build/test-results/testEmulatorDebugUnitTest dexlib/build/test-results/testDebugUnitTest
+            tasks+=(--rerun)
+          fi
+          tasks+=(:dexlib:testDebugUnitTest)
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then tasks+=(--rerun); fi
+          tasks+=(:app:assembleEmulatorDebugAndroidTest)
           ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}"
 
       - name: Generate screenshot candidates on manual request
@@ -192,7 +302,7 @@ jobs:
           retention-days: 7
 
       - name: Enable emulator acceleration
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'instrumentation') }}
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
@@ -209,16 +319,30 @@ jobs:
           disable-animations: true
           script: bash scripts/runtime-smoke.sh
 
+      - name: Run focused instrumentation on API 35
+        id: focused_instrumentation
+        if: ${{ success() && inputs.mode == 'instrumentation' }}
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          TEST_SELECTOR: ${{ inputs.test_selector }}
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: python3 -B scripts/ci-profile.py instrumentation --test "$TEST_SELECTOR"
+
       - name: Record validation results
         if: always()
         shell: bash
         env:
           MODE: ${{ inputs.mode || 'validate' }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           ASSEMBLE_RESULT: ${{ steps.assemble.outcome }}
           VALIDATION_RESULT: ${{ steps.validation.outcome }}
           UPDATE_RESULT: ${{ steps.update_candidates.outcome }}
           RUNTIME_RESULT: ${{ steps.runtime.outcome }}
+          FOCUSED_UNIT_RESULT: ${{ steps.focused_unit.outcome }}
+          FOCUSED_INSTRUMENTATION_RESULT: ${{ steps.focused_instrumentation.outcome }}
         run: |
           mkdir -p ci-artifacts
           {
@@ -230,19 +354,37 @@ jobs:
             echo "Tests and instrumentation compilation: $VALIDATION_RESULT"
             echo "Manual screenshot generation: $UPDATE_RESULT"
             echo "Selected runtime tests: $RUNTIME_RESULT"
+            echo "Focused unit tests: $FOCUSED_UNIT_RESULT"
+            echo "Focused instrumentation: $FOCUSED_INSTRUMENTATION_RESULT"
             echo 'Screenshot validation and lint run in separate jobs. The final build check requires all validation jobs to succeed.'
             echo 'An APK artifact is not evidence that validation passed. Inspect the task reports.'
           } | tee ci-artifacts/validation.txt >> "$GITHUB_STEP_SUMMARY"
 
       - name: Summarize required unit test results
         if: ${{ always() && (inputs.mode || 'validate') == 'validate' }}
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: >-
           python3 scripts/ci-results.py
           --tests 'app=app/build/test-results/testEmulatorDebugUnitTest/TEST-*.xml'
           --tests 'dexlib=dexlib/build/test-results/testDebugUnitTest/TEST-*.xml'
+          --task :app:testEmulatorDebugUnitTest --task :dexlib:testDebugUnitTest
+          --scope 'validate unit results; instrumentation compile-only; lint/screenshots in separate jobs'
           --output ci-artifacts/unit-results.json
+
+      - name: Summarize runtime or candidate operation
+        if: ${{ always() && (inputs.mode == 'runtime-smoke' || inputs.mode == 'update-screenshots') }}
+        env:
+          OPERATION_RESULT: ${{ inputs.mode == 'runtime-smoke' && steps.runtime.outcome || steps.update_candidates.outcome }}
+        shell: bash
+        run: |
+          case "$OPERATION_RESULT" in
+            success) outcome=passed ;;
+            failure) outcome=failed ;;
+            cancelled) outcome=cancelled ;;
+            *) outcome=not-run ;;
+          esac
+          python3 scripts/ci-results.py --operation-result "$outcome" \
+            --scope 'Selected runtime contracts or candidate generation only; see detailed logs; no baseline acceptance' \
+            --output ci-artifacts/operation-results.json
 
       - name: Upload CI diagnostics
         if: always()
@@ -259,24 +401,40 @@ jobs:
             build/reports/problems/**
             build/reports/profile/**
             ci-artifacts/validation.txt
-            ci-artifacts/unit-results.*
+            ci-artifacts/*-results.*
+            ci-artifacts/*-timing.json
             ci-artifacts/runtime-smoke/**
             runtime-logcat.txt
+            ci-artifacts/instrumentation-*.txt
           if-no-files-found: warn
           retention-days: 7
 
 
   screenshots:
+    needs: [source, helpers]
+    env:
+      EXPECTED_SHA: ${{ needs.source.outputs.sha }}
+      PR_HEAD_SHA: ${{ needs.source.outputs.pr_head }}
+      PR_BASE_SHA: ${{ needs.source.outputs.pr_base }}
+      PR_NUMBER: ${{ needs.source.outputs.pr_number }}
+      CI_REQUEST_ID: ${{ needs.source.outputs.request_id }}
+      CI_PROFILE: ${{ inputs.mode || 'validate' }}
+      CI_SELECTOR: ${{ inputs.test_selector }}
     name: Screenshot validation
-    if: (inputs.mode || 'validate') == 'validate'
+    if: (inputs.mode || 'validate') == 'validate' || inputs.mode == 'screenshots'
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
       - name: Check out sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.source.outputs.sha }}
           persist-credentials: false
           submodules: recursive
+
+      - name: Verify checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - name: Set up JDK 21
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -305,15 +463,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:testEmulatorDebugScreenshotTestDefaultTestSuite
+          task=(:app:testEmulatorDebugScreenshotTestDefaultTestSuite)
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            rm -rf app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results
+            task+=(--rerun)
+          fi
+          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false "${task[@]}"
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
         if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: python3 scripts/ci-screenshot-candidates.py
 
       - name: Upload screenshot candidates for review
@@ -327,11 +486,10 @@ jobs:
 
       - name: Summarize required screenshot results
         if: always()
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: >-
           python3 scripts/ci-results.py --no-skips
           --tests 'screenshots=app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results/TEST-*.xml'
+          --task :app:testEmulatorDebugScreenshotTestDefaultTestSuite
           --output ci-artifacts/screenshot-results.json
 
       - name: Upload screenshot diagnostics
@@ -349,6 +507,15 @@ jobs:
           retention-days: 7
 
   lint:
+    needs: [source, helpers]
+    env:
+      EXPECTED_SHA: ${{ needs.source.outputs.sha }}
+      PR_HEAD_SHA: ${{ needs.source.outputs.pr_head }}
+      PR_BASE_SHA: ${{ needs.source.outputs.pr_base }}
+      PR_NUMBER: ${{ needs.source.outputs.pr_number }}
+      CI_REQUEST_ID: ${{ needs.source.outputs.request_id }}
+      CI_PROFILE: ${{ inputs.mode || 'validate' }}
+      CI_SELECTOR: ${{ inputs.test_selector }}
     name: Lint
     if: (inputs.mode || 'validate') == 'validate'
     runs-on: ubuntu-26.04
@@ -357,8 +524,13 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.source.outputs.sha }}
           persist-credentials: false
           submodules: recursive
+
+      - name: Verify checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - name: Set up JDK 21
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -390,11 +562,10 @@ jobs:
 
       - name: Summarize required lint results
         if: always()
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: >-
           python3 scripts/ci-results.py
           --lint 'app-and-dependencies=app/build/reports/lint-results-emulatorDebug.xml'
+          --task :app:lintEmulatorDebug
           --output ci-artifacts/lint-results.json
 
       - name: Upload lint diagnostics
@@ -418,6 +589,15 @@ jobs:
 
 
   release-check:
+    needs: [source, helpers]
+    env:
+      EXPECTED_SHA: ${{ needs.source.outputs.sha }}
+      PR_HEAD_SHA: ${{ needs.source.outputs.pr_head }}
+      PR_BASE_SHA: ${{ needs.source.outputs.pr_base }}
+      PR_NUMBER: ${{ needs.source.outputs.pr_number }}
+      CI_REQUEST_ID: ${{ needs.source.outputs.request_id }}
+      CI_PROFILE: ${{ inputs.mode || 'validate' }}
+      CI_SELECTOR: ${{ inputs.test_selector }}
     name: Release packaging and startup
     if: inputs.mode == 'release-check'
     runs-on: ubuntu-26.04
@@ -426,8 +606,13 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.source.outputs.sha }}
           persist-credentials: false
           submodules: recursive
+
+      - name: Verify checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - name: Set up JDK 21
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -448,11 +633,13 @@ jobs:
           packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
 
       - name: Build and stage unsigned release APKs
+        id: release_assembly
         shell: bash
         run: |
           set -euo pipefail
           chmod +x gradlew
-          export JLMOD_BUILD_COMMIT="$(git rev-parse HEAD)"
+          JLMOD_BUILD_COMMIT="$(git rev-parse HEAD)"
+          export JLMOD_BUILD_COMMIT
           python3 -B -m unittest discover -s scripts/tests -p 'test_*release*.py' -v
           ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail \
             -Pjlmod.versionName=0.0.0-ci -Pjlmod.versionCode=1 :app:assembleEmulatorRelease
@@ -466,6 +653,7 @@ jobs:
             echo "Source commit: $JLMOD_BUILD_COMMIT"
             echo 'Download links in release-notes.md are a preview only.'
           } > dist/BUILD-INFO.txt
+          python3 scripts/check-elf-alignment.py dist/*.apk
 
       - name: Upload unsigned release artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -483,6 +671,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Install and launch release APKs with 16 KB pages
+        id: release_startup
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
@@ -490,6 +679,25 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: bash scripts/release-smoke.sh
+
+      - name: Summarize release qualification operation
+        if: always()
+        env:
+          ASSEMBLY_RESULT: ${{ steps.release_assembly.outcome }}
+          STARTUP_RESULT: ${{ steps.release_startup.outcome }}
+        shell: bash
+        run: |
+          outcome=not-run
+          if [[ "$ASSEMBLY_RESULT" == failure || "$STARTUP_RESULT" == failure ]]; then
+            outcome=failed
+          elif [[ "$ASSEMBLY_RESULT" == cancelled || "$STARTUP_RESULT" == cancelled ]]; then
+            outcome=cancelled
+          elif [[ "$ASSEMBLY_RESULT" == success && "$STARTUP_RESULT" == success ]]; then
+            outcome=passed
+          fi
+          python3 scripts/ci-results.py --operation-result "$outcome" \
+            --scope 'Unsigned release assembly; all packaged 64-bit ELF LOAD checks; x86_64/universal startup on 16 KB emulator' \
+            --output ci-artifacts/release-smoke/operation-results.json
 
       - name: Upload release check diagnostics
         if: always()
@@ -499,7 +707,61 @@ jobs:
           path: |
             build/reports/profile/**
             build/reports/problems/**
-            ci-artifacts/release-smoke/*.txt
+            ci-artifacts/release-smoke/**
+          if-no-files-found: warn
+          retention-days: 7
+
+  host-native:
+    name: Host native regressions
+    needs: [source, helpers]
+    if: inputs.mode == 'host-native'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    env:
+      EXPECTED_SHA: ${{ needs.source.outputs.sha }}
+      CI_PROFILE: host-native
+      CI_REQUEST_ID: ${{ needs.source.outputs.request_id }}
+      PR_NUMBER: ${{ needs.source.outputs.pr_number }}
+      PR_HEAD_SHA: ${{ needs.source.outputs.pr_head }}
+      PR_BASE_SHA: ${{ needs.source.outputs.pr_base }}
+    steps:
+      - name: Check out exact sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - name: Verify source and host tool availability
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          command -v pwsh
+          command -v gcc
+          command -v g++
+      - name: Run allocation and RMID regressions
+        id: native
+        run: |
+          pwsh -NoProfile -File app/src/test/native/run-sonivox-allocation.ps1 -Compiler gcc
+          pwsh -NoProfile -File app/src/test/native/run-sonivox-rmid.ps1 -Compiler g++
+
+      - name: Summarize host regression operation
+        if: always()
+        env:
+          NATIVE_RESULT: ${{ steps.native.outcome }}
+        run: |
+          case "$NATIVE_RESULT" in
+            success) outcome=passed ;;
+            failure) outcome=failed ;;
+            cancelled) outcome=cancelled ;;
+            *) outcome=not-run ;;
+          esac
+          python3 scripts/ci-results.py --operation-result "$outcome" \
+            --scope 'Host allocation/RMID executable regressions; no DLS bank fixture, Android/device execution, or JUnit counts' \
+            --output ci-artifacts/native-results.json
+      - name: Upload host evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: JL-Mod-Plus-host-native-diagnostics
+          path: ci-artifacts/native-results.*
           if-no-files-found: warn
           retention-days: 7
 
@@ -518,7 +780,9 @@ jobs:
           SCREENSHOT_RESULT: ${{ needs.screenshots.result }}
           LINT_RESULT: ${{ needs.lint.result }}
         run: |
-          echo "Build and tests: $BUILD_RESULT" >> "$GITHUB_STEP_SUMMARY"
-          echo "Screenshot validation: $SCREENSHOT_RESULT" >> "$GITHUB_STEP_SUMMARY"
-          echo "Lint: $LINT_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "Build and tests: $BUILD_RESULT"
+            echo "Screenshot validation: $SCREENSHOT_RESULT"
+            echo "Lint: $LINT_RESULT"
+          } >> "$GITHUB_STEP_SUMMARY"
           [[ "$BUILD_RESULT" == 'success' && "$SCREENSHOT_RESULT" == 'success' && "$LINT_RESULT" == 'success' ]]

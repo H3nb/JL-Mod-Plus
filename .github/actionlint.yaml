@@ -1,0 +1,4 @@
+# actionlint 1.7.12 predates this hosted runner label already used by CI.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04

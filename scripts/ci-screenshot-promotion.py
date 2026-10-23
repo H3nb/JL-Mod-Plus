@@ -48,7 +48,7 @@ def call(*args, cwd=None, input_text=None, binary_stdout=None):
 
 
 def gh(path, method="GET", payload=None):
-    args = ["gh", "api", path]
+    args = ["gh", "api", "-H", "X-GitHub-Api-Version: 2026-03-10", path]
     if method != "GET":
         args += ["--method", method, "--input", "-"]
     text = call(*args, input_text=json.dumps(payload) if payload is not None else None)
@@ -171,6 +171,22 @@ def event_request(event_path):
     return event, parse_request((event.get("comment") or {}).get("body") or "")
 
 
+def dispatch_generation(run, request, pr_number, default_branch):
+    """Bind a trusted workflow definition separately from its checked-out PR source."""
+    fields = run.get("display_title", "").split(" | ")
+    if ((run.get("head_branch") == default_branch or run.get("head_sha") == request["head_sha"]) and len(fields) == 5
+            and fields[0] == f"PR {pr_number}" and fields[2] == request["head_sha"]
+            and fields[3] == "test -" and re.fullmatch(r"request [A-Za-z0-9_.-]{1,100}", fields[4])):
+        if fields[1] == "update-screenshots":
+            return "manual"
+        if fields[1] in ("validate", "screenshots"):
+            return "comparison"
+    # Existing direct gh/UI requests on the PR branch retain their original contract.
+    if run.get("head_sha") == request["head_sha"]:
+        return "manual"
+    raise Reject("Dispatched screenshot run does not identify the reviewed PR source.")
+
+
 def inspect(args):
     event, request = event_request(args.event)
     repo = event["repository"]["full_name"]
@@ -186,7 +202,6 @@ def inspect(args):
     run = gh(f"repos/{repo}/actions/runs/{request['run_id']}")
     if (run.get("name") != "Android CI" or run.get("path") != ".github/workflows/android.yml" or
             run.get("status") != "completed" or run.get("event") not in ("pull_request", "workflow_dispatch") or
-            run.get("head_sha") != request["head_sha"] or
             (run.get("head_repository") or {}).get("full_name") != repo):
         raise Reject("Reviewed workflow run provenance is invalid.")
     artifact = gh(f"repos/{repo}/actions/artifacts/{request['artifact_id']}")
@@ -194,14 +209,21 @@ def inspect(args):
     if (artifact.get("name") != ARTIFACT_NAME or artifact.get("expired") or
             artifact.get("digest") != request["artifact_digest"] or
             workflow_run.get("id") != request["run_id"] or
-            workflow_run.get("head_sha") != request["head_sha"]):
+            workflow_run.get("head_sha") != run.get("head_sha")):
         raise Reject("Reviewed artifact provenance is invalid.")
     if run["event"] == "pull_request":
+        if run.get("head_sha") != request["head_sha"]:
+            raise Reject("Reviewed PR workflow has a different HEAD.")
         build = gh(f"repos/{repo}/commits/{request['build_sha']}")
         if [item["sha"] for item in build.get("parents", [])] != [request["base_sha"], request["head_sha"]]:
             raise Reject("Screenshot build is not the expected base/head merge commit.")
-    elif request["build_sha"] != request["head_sha"] or run.get("conclusion") != "success":
-        raise Reject("Manual screenshot build must be the reviewed PR HEAD.")
+        expected_mode = "comparison"
+    else:
+        expected_mode = dispatch_generation(run, request, pr_number, event["repository"]["default_branch"])
+        if request["build_sha"] != request["head_sha"]:
+            raise Reject("Dispatched screenshot build must be the reviewed PR HEAD.")
+        if expected_mode == "manual" and run.get("conclusion") != "success":
+            raise Reject("Manual screenshot generation did not succeed.")
 
     artifact_path = Path(args.artifact)
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,11 +234,11 @@ def inspect(args):
     paths, _ = safe_bundle(artifact_path, request)
     with zipfile.ZipFile(artifact_path) as archive:
         context = json.loads(archive.read("source-context.json"))
-    expected_mode = "manual" if run["event"] == "workflow_dispatch" else "comparison"
     if (context["generation"] != expected_mode or context.get("pr_number") != str(pr_number)
             or context.get("run_attempt") != str(run.get("run_attempt"))):
         raise Reject("Screenshot generation mode, PR or run attempt does not match.")
-    state = {"version": 1, "repo": repo, "pr": pr_number, "branch": head["ref"], "request": request, "paths": paths}
+    state = {"version": 1, "repo": repo, "pr": pr_number, "branch": head["ref"], "request": request, "paths": paths,
+             "default_branch": event["repository"]["default_branch"]}
     Path(args.state).write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
         output.write(f"head_sha={request['head_sha']}\n")
@@ -281,26 +303,66 @@ def promote(args):
     branch = state["branch"]
     lease = f"refs/heads/{branch}:{request['head_sha']}"
     call("git", "push", f"--force-with-lease={lease}", "origin", f"HEAD:refs/heads/{branch}", cwd=target)
-    for _ in range(6):
-        if gh(f"repos/{repo}/pulls/{pr_number}")["head"]["sha"] == promoted:
-            break
-        time.sleep(1)
-    else:
-        raise Reject("Promoted commit did not become pull-request HEAD.")
-    gh(f"repos/{repo}/actions/workflows/android.yml/dispatches", "POST", {"ref": branch, "inputs": {"mode": "validate"}})
+    finish_promotion(args.state, state, promoted)
+
+
+def finish_promotion(state_path, state, promoted):
+    """A successful push is irreversible here, even when follow-up validation fails."""
+    request, repo, pr_number = state["request"], state["repo"], state["pr"]
+    request_id = f"promotion-{request['artifact_id']}-{promoted[:12]}"
+    result = dict(schema_version=1, status="partial-success", source_sha=request["head_sha"],
+                  promoted_sha=promoted, request_id=request_id, run_url=None)
+    error = None
     try:
-        gh(f"repos/{repo}/issues/{pr_number}/comments", "POST", {"body": "\n".join([
-            "<!-- jlmod-screenshot-promotion-result:v1 -->",
-            "Reviewed screenshot references were promoted without re-rendering.",
-            "",
-            f"- Source HEAD: `{request['head_sha']}`",
-            f"- Promoted commit: `{promoted}`",
-            f"- Candidates: {len(paths)}",
-            f"- Artifact: `{request['artifact_id']}`",
-            "- Final Android CI validation was dispatched explicitly.",
-        ])})
-    except Reject as error:
-        print(f"Screenshot promotion warning: result comment failed: {error}", file=sys.stderr)
+        for _ in range(6):
+            if gh(f"repos/{repo}/pulls/{pr_number}")["head"]["sha"] == promoted:
+                break
+            time.sleep(1)
+        else:
+            raise Reject("Promoted commit did not become pull-request HEAD.")
+        response = gh(f"repos/{repo}/actions/workflows/android.yml/dispatches", "POST", {
+            "ref": state["default_branch"], "inputs": {
+                "mode": "validate", "pr_number": str(pr_number), "source_sha": promoted,
+                "expected_sha": promoted, "request_id": request_id,
+            },
+        })
+        if not isinstance(response, dict) or not response.get("workflow_run_id") or not response.get("html_url"):
+            raise Reject("Dispatch response did not identify a run; inspect the request ID before retrying.")
+        result.update(status="validation-dispatched", run_url=response["html_url"], run_id=response["workflow_run_id"])
+    except (Reject, KeyError, OSError, json.JSONDecodeError) as failure:
+        error = str(failure)
+        result["validation_error"] = error
+    state["promotion_result"] = result
+    Path(state_path).write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result, indent=2))
+    lines = [
+        "<!-- jlmod-screenshot-promotion-result:v1 -->",
+        "Reviewed screenshot references were promoted without re-rendering.", "",
+        f"- Source HEAD: `{request['head_sha']}`", f"- Promoted commit: `{promoted}`",
+        f"- Candidates: {len(state['paths'])}", f"- Artifact: `{request['artifact_id']}`",
+        f"- Validation request: `{request_id}`",
+    ]
+    if error:
+        lines.extend([
+            "- **Partial success:** baseline push succeeded; validation dispatch is unconfirmed.",
+            f"- Diagnosis: {error}",
+            f"- Inspect runs for request `{request_id}` first. If no run exists, validate the new HEAD with "
+            f"`/jlmod-ci validate --sha {promoted}` or gh/UI using this exact SHA.",
+            "- Do not accept the old candidate again; its source HEAD has already been replaced.",
+        ])
+    else:
+        lines.append(f"- Final Android CI validation: {result['run_url']}")
+    summary = "\n".join(lines) + "\n"
+    print(summary)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as output:
+            output.write(summary)
+    try:
+        gh(f"repos/{repo}/issues/{pr_number}/comments", "POST", {"body": summary})
+    except Reject as failure:
+        print(f"Screenshot promotion warning: result comment failed: {failure}", file=sys.stderr)
+    if error:
+        raise Reject(f"Partial success: baseline pushed at {promoted}; validation unconfirmed: {error}")
 
 
 def main():

@@ -1,0 +1,44 @@
+name: PR CI commands
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+# Serialize short dispatch decisions for one PR, preserving queued requests.
+concurrency:
+  group: ci-command-${{ github.event.issue.number }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  dispatch:
+    # Evaluate the PR object, explicit numeric identity token and deliberate
+    # command prefix before allocating a runner. Empty policy grants nobody.
+    if: >-
+      github.event.issue.pull_request != null &&
+      (github.event.sender.id == github.event.repository.owner.id ||
+       contains(vars.JLMOD_CI_ACTOR_IDS, format('|{0}|', github.event.sender.id))) &&
+      startsWith(github.event.comment.body, '/jlmod-ci ') &&
+      !contains(github.event.comment.body, fromJSON('"\n"')) &&
+      !contains(github.event.comment.body, fromJSON('"\r"'))
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: write
+      issues: write
+    steps:
+      - name: Check out trusted controller only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: scripts
+      - name: Validate and dispatch exact PR request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JLMOD_CI_ACTOR_IDS: ${{ vars.JLMOD_CI_ACTOR_IDS }}
+        run: python3 -B scripts/ci-commands.py --event "$GITHUB_EVENT_PATH"

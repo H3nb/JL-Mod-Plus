@@ -72,11 +72,18 @@ Apply the scope and design priorities in [AGENTS.md](../AGENTS.md).
 - Before publishing PR bodies, comments, release notes, documentation, or other GitHub-rendered text, check that generated references cannot silently resolve through fork-network or cross-repository context to an unrelated project.
 ### CI discipline
 
+[PR CI commands and recovery](ci-commands.md) defines the focused profiles,
+comment/gh/UI/local paths, actor onboarding, exact-source identity, diagnostics,
+recovery and postmerge canary. Comment handlers reject issue events before any
+runner allocation. Test permission does not grant screenshot acceptance, merge
+or publication authority. Keep these operations separate; alpha remains flexible
+and the publishing workflow has no CI-evidence gate.
+
 - GitHub workflows already run automatically for matching PR changes. Check the current workflow triggers, path filters, and required checks before deciding to run or skip validation; do not assume each push must produce a fresh full build.
 - Use `[skip ci]` for documentation/policy-only commits and other commits that do not alter executable or validated inputs. Do **not** use it for production source, tests, assets/resources, build dependencies/configuration, workflow behavior, or validation scripts. An intermediate commit containing such changes is not docs-only merely because a later commit will finish the work.
 - Group logically related edits into meaningful checkpoints before pushing when feasible; with GitHub-only access, use a coherent Git tree/commit update rather than one separate push per file. Do not manufacture no-op commits, rerun all workflows to obtain an arbitrary green badge, or automatically retry failures before inspecting evidence.
 - Prefer the narrowest relevant test during iteration. When a run fails, classify the first failure (test assertion, product regression, infrastructure, stale baseline, or unrelated) and rerun only when the cause or changed state justifies it. A rerun cannot substitute for diagnosing an actual test failure.
-- Before merge, verify that the **latest executable/testable state** has passing evidence for the relevant required checks. Documentation-only commits after that state do not change executable inputs, but GitHub skip instructions or path filters may leave required checks pending; inspect branch-protection and PR status and use the documented validation path when needed, rather than masking the missing check.
+- Before proposing merge, report evidence for the **latest executable/testable state**, including failures and pending checks. Documentation-only commits after that state do not change executable inputs, but GitHub skip instructions or path filters may leave check records pending; inspect the actual PR state and use the documented validation path when needed. Alpha retains maintainer discretion for exceptional merges; do not add protection, required checks or reviewer policy through CI maintenance.
 - A commit message with `[skip ci]` does not itself establish successful validation, and required check behavior depends on workflow trigger configuration. Never skip to conceal failures or bypass final review.
 - For screenshot mismatches using only GitHub connector access, follow [GitHub-only reviewed screenshot promotion](development.md#github-only-reviewed-screenshot-promotion); do not redraw or force-update references.
 - Prefer Squash Merge when PR history is mostly WIP, experiments, fixups, or reversions. Preserve individual commits only when they are intentionally useful for history, revert, or bisect.
