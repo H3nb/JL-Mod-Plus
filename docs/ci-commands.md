@@ -78,7 +78,11 @@ be submitted as same-repository comment requests.
 
 The controller's write token is used only for metadata, dispatch and the result
 reply. It is not passed to PR code. Test jobs have read permissions and do not
-receive release signing credentials. Dispatching a workflow directly on a PR
+receive release signing credentials. Explicit PR-source dispatches make
+`setup-gradle` read-only so their cache outputs are not saved into the workflow
+default-branch scope. This is an authorized same-repository code-execution path;
+the actor allowlist is not an isolation boundary for arbitrary untrusted code.
+Dispatching a workflow directly on a PR
 branch runs that branch's workflow definition, so a SHA check alone cannot make
 such a definition trusted. Prefer the default-branch definition plus explicit PR
 source inputs; maintainers testing workflow changes must review that definition

@@ -184,3 +184,44 @@ verifySource({selector: 'package.NewRegressionTest#regressionCase'});
 verifySource({selector: 'package.NewRegressionTest#regressionCase', selectorKey: '0000000000000000', succeeds: false, diagnostic: 'Selector key'});
 verifySource({selectorKey: '0000000000000000', succeeds: false, diagnostic: 'Selector key'});
 console.log(`Source guard: ${sourceCases} actual-inline-code fixtures passed; setup dependency and profile contracts passed.`);
+
+// Explicit-source dispatch runs a trusted default-branch workflow with PR inputs.
+// Its outputs must never populate the default branch's Gradle cache scope.
+let cacheCases = 0;
+for (const [id, job] of Object.entries(android.jobs)) {
+  const setup = job.steps?.find(step => step.uses?.startsWith('gradle/actions/setup-gradle@'));
+  if (!setup) continue;
+  const expression = setup.with['cache-read-only'];
+  for (const [event, source, headRepo, readOnly] of [
+    ['workflow_dispatch', sha('a'), 'test/repo', true],
+    ['workflow_dispatch', '', 'test/repo', false],
+    ['pull_request', '', 'test/repo', false],
+    ['pull_request', '', 'outsider/fork', true]
+  ]) {
+    const fixture = {github: {event_name: event, repository: 'test/repo',
+      event: {pull_request: {head: {repo: {full_name: headRepo}}}}},
+      inputs: {source_sha: source}, vars: {}, needs: {}};
+    const actual = evaluate(expression, fixture);
+    assert.equal(actual.kind, data.Kind.Boolean, `${id}: cache policy must yield a boolean`);
+    assert.equal(actual.value, readOnly, `${id}: wrong cache write policy for ${event}, source=${source}, repo=${headRepo}`);
+    cacheCases++;
+  }
+}
+assert.equal(cacheCases, 16, 'All four Gradle-owning jobs must enforce cache trust boundaries');
+console.log(`Cache policy: ${cacheCases} fixtures passed against actual setup-gradle expressions.`);
+
+// Even callers reusing a request ID cannot cancel a different manual selector.
+const render = (template, fixture) => template.replace(/\$\{\{([\s\S]*?)\}\}/g, (_, expression) => evaluate(expression, fixture).coerceString());
+const concurrencyContext = (event, run, profile, selector) => ({
+  github: {event_name: event, run_id: run, event: event === 'pull_request' ? {pull_request: {number: 8}} : {}},
+  inputs: {mode: profile, request_id: 'reused-manual-id', test_selector: selector}, vars: {}, needs: {}
+});
+const manualFirst = concurrencyContext('workflow_dispatch', '20', 'unit', 'p.FirstTest');
+const manualSecond = concurrencyContext('workflow_dispatch', '21', 'unit', 'p.SecondTest');
+assert.notEqual(render(android.concurrency.group, manualFirst), render(android.concurrency.group, manualSecond));
+assert.equal(evaluate(android.concurrency['cancel-in-progress'], manualFirst).value, false);
+const automaticFirst = concurrencyContext('pull_request', '20', 'validate', '');
+const automaticSecond = concurrencyContext('pull_request', '21', 'validate', '');
+assert.equal(render(android.concurrency.group, automaticFirst), render(android.concurrency.group, automaticSecond));
+assert.equal(evaluate(android.concurrency['cancel-in-progress'], automaticFirst).value, true);
+console.log('Concurrency: manual investigations remain independent; automatic revisions share their PR group.');
