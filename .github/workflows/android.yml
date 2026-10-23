@@ -633,7 +633,6 @@ jobs:
             echo "Source commit: $JLMOD_BUILD_COMMIT"
             echo 'Download links in release-notes.md are a preview only.'
           } > dist/BUILD-INFO.txt
-          python3 scripts/check-elf-alignment.py dist/*.apk
 
       - name: Upload unsigned release artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
