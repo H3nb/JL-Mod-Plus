@@ -23,6 +23,7 @@ on:
           - unit
           - instrumentation
           - screenshots
+          - host-native
           - update-screenshots
           - runtime-smoke
           - release-check
@@ -149,7 +150,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    if: ${{ !contains(fromJSON('["release-check","screenshots"]'), inputs.mode) }}
+    if: ${{ !contains(fromJSON('["release-check","screenshots","host-native"]'), inputs.mode) }}
     # Maintenance runs must not report the same check name as PR validation.
     name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || inputs.mode == 'unit' && 'focused-unit' || inputs.mode == 'instrumentation' && 'focused-instrumentation' || 'Build and tests' }}
     runs-on: ubuntu-26.04
@@ -633,6 +634,7 @@ jobs:
             echo "Source commit: $JLMOD_BUILD_COMMIT"
             echo 'Download links in release-notes.md are a preview only.'
           } > dist/BUILD-INFO.txt
+          python3 scripts/check-elf-alignment.py dist/*.apk
 
       - name: Upload unsigned release artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -665,7 +667,7 @@ jobs:
           STEP_OUTCOME: ${{ job.status != 'success' && job.status || steps.release_startup.outcome }}
         run: >-
           python3 scripts/ci-results.py --step-outcome "$STEP_OUTCOME"
-          --scope 'Unsigned release assembly; x86_64/universal startup on 16 KB emulator'
+          --scope 'Unsigned release assembly; all packaged 64-bit ELF LOAD checks; x86_64/universal startup on 16 KB emulator'
           --output ci-artifacts/release-smoke/operation-results.json
 
       - name: Upload release check diagnostics
@@ -677,6 +679,54 @@ jobs:
             build/reports/profile/**
             build/reports/problems/**
             ci-artifacts/release-smoke/**
+          if-no-files-found: warn
+          retention-days: 7
+
+  host-native:
+    name: Host native regressions
+    needs: preflight
+    if: inputs.mode == 'host-native'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    env:
+      EXPECTED_SHA: ${{ needs.preflight.outputs.sha }}
+      CI_PROFILE: host-native
+      CI_REQUEST_ID: ${{ needs.preflight.outputs.request_id }}
+      PR_NUMBER: ${{ needs.preflight.outputs.pr_number }}
+      PR_HEAD_SHA: ${{ needs.preflight.outputs.pr_head }}
+      PR_BASE_SHA: ${{ needs.preflight.outputs.pr_base }}
+    steps:
+      - name: Check out exact sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+      - name: Verify source and host tool availability
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          command -v pwsh
+          command -v gcc
+          command -v g++
+      - name: Run allocation and RMID regressions
+        id: native
+        run: |
+          pwsh -NoProfile -File app/src/test/native/run-sonivox-allocation.ps1 -Compiler gcc
+          pwsh -NoProfile -File app/src/test/native/run-sonivox-rmid.ps1 -Compiler g++
+
+      - name: Summarize host regression operation
+        if: always()
+        env:
+          STEP_OUTCOME: ${{ job.status != 'success' && job.status || steps.native.outcome }}
+        run: >-
+          python3 scripts/ci-results.py --step-outcome "$STEP_OUTCOME"
+          --scope 'Host allocation/RMID executable regressions; no DLS bank fixture, Android/device execution, or JUnit counts'
+          --output ci-artifacts/native-results.json
+      - name: Upload host evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: JL-Mod-Plus-host-native-diagnostics
+          path: ci-artifacts/native-results.*
           if-no-files-found: warn
           retention-days: 7
 

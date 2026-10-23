@@ -400,7 +400,9 @@ For changes to shrinking, native packaging, release configuration, or relevant
 dependencies, run **Android CI** with mode **release-check** for the exact PR
 source, using the default-branch dispatch path in [PR CI commands](ci-commands.md).
 It builds the release variant with R8 and all four ABIs, checks APK contents, and
-stages the same assets as publishing. It installs and launches the x86_64 and
+stages the same assets as publishing. Qualification checks every packaged
+arm64-v8a/x86_64 library's ELF LOAD alignment; ZIP alignment or install success
+alone does not establish that property. It installs and launches the x86_64 and
 universal APKs on an API 35 emulator with 16 KB pages using a disposable test key.
 This checks installation, native extraction, and startup; it does not qualify all
 MIDlet/audio/3D behavior or physical ARM devices. Artifacts are unsigned and use

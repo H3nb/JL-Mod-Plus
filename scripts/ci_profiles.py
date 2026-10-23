@@ -3,7 +3,7 @@
 import re
 
 PROFILES = ('validate', 'unit', 'instrumentation', 'screenshots', 'update-screenshots',
-            'runtime-smoke', 'release-check')
+            'runtime-smoke', 'release-check', 'host-native')
 CLASS = r'[^\W\d][\w$]*(?:\.[^\W\d][\w$]*)+'
 UNIT = re.compile(r'[\w$*]+(?:\.[\w$*]+)+(?:[\w$* .\[\](),=\-]*)', re.UNICODE)
 INSTRUMENTATION = re.compile(CLASS + r'(?:#[\w$][\w$ \[\]()=\-]*)?', re.UNICODE)

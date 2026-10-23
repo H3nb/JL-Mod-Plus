@@ -21,7 +21,8 @@ that comment. Edited/deleted comments do not trigger the `created` listener.
 | `/jlmod-ci screenshots` | Screenshot comparison; does not accept or update references |
 | `/jlmod-ci update-screenshots` | Generate and package changed screenshot candidates for review; does not accept them |
 | `/jlmod-ci runtime-smoke` | Existing selected runtime contracts on API 35 x86_64; does not run the whole instrumentation suite |
-| `/jlmod-ci release-check` | Unsigned release packaging and startup qualification on a 16 KB emulator; does not publish |
+| `/jlmod-ci release-check` | Unsigned release packaging, all packaged 64-bit ELF LOAD checks and startup qualification on a 16 KB emulator; does not publish |
+| `/jlmod-ci host-native` | Existing Sonivox allocation/RMID regressions executed on Linux; no Android/device execution |
 
 `unit` and `instrumentation` require exactly one `--test` selector. A newly added
 class/method needs no CI class allowlist. Unit filters use Gradle `--tests`
@@ -145,6 +146,14 @@ respectively `:app:testEmulatorDebugScreenshotTestDefaultTestSuite` and
 connected emulator for runtime smoke. Release qualification uses the workflow's
 release assembly/staging steps followed by `bash scripts/release-smoke.sh`; the
 latter expects staged APKs and a 16 KB emulator, not an arbitrary debug build.
+For the host-native equivalent, install PowerShell, `gcc` and `g++`, then run:
+
+```bash
+pwsh -NoProfile -File app/src/test/native/run-sonivox-allocation.ps1 -Compiler gcc
+pwsh -NoProfile -File app/src/test/native/run-sonivox-rmid.ps1 -Compiler g++
+```
+
+Host execution differs from native compilation and device execution.
 Do not disable existing isolation for runtime tests that mutate global state.
 
 ## Find results and recover a request
