@@ -10,9 +10,7 @@ $sources = [regex]::Matches($sourceList, '(?:host_src|lib_src)/[a-zA-Z0-9_]+\.c'
 $testOutput = Join-Path ([IO.Path]::GetTempPath()) ('jl-sonivox-allocation-' + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $testOutput | Out-Null
 $executable = Join-Path $testOutput 'sonivox_allocation_test.exe'
-# glibc hides M_PI in strict C11 unless its default math extensions are enabled.
-# This affects the host regression build only; Android's native flags are unchanged.
-& $Compiler -std=c11 -D_DEFAULT_SOURCE -O2 -Wno-attributes -DJL_EAS_TEST_ALLOCATOR "-I$cpp/sonivox/host_src" `
+& $Compiler -std=c11 -O2 -Wno-attributes -DJL_EAS_TEST_ALLOCATOR "-I$cpp/sonivox/host_src" `
     "-I$cpp/sonivox/lib_src" "-I$cpp/sonivox/fakes" $sources "$cpp/mmapi_eas/eas_host.c" `
     (Join-Path $PSScriptRoot 'sonivox_allocation_test.c') -lm -o $executable
 if ($LASTEXITCODE) { throw 'Allocation fault test compilation failed.' }

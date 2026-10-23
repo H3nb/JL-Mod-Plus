@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Small shared CI profile contract. Inputs are data, never Gradle tasks or shell code."""
+"""CI profile names and selector syntax; execution remains with the existing runners."""
 import re
 
 PROFILES = ('validate', 'unit', 'instrumentation', 'screenshots', 'update-screenshots',
-            'runtime-smoke', 'release-check', 'host-native')
+            'runtime-smoke', 'release-check')
 CLASS = r'[^\W\d][\w$]*(?:\.[^\W\d][\w$]*)+'
 UNIT = re.compile(r'[\w$*]+(?:\.[\w$*]+)+(?:[\w$* .\[\](),=\-]*)', re.UNICODE)
 INSTRUMENTATION = re.compile(CLASS + r'(?:#[\w$][\w$ \[\]()=\-]*)?', re.UNICODE)

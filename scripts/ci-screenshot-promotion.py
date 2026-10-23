@@ -13,6 +13,8 @@ import sys
 import time
 import zipfile
 
+from ci_run import parse_run_title
+
 COMMAND = "/jlmod-promote-screenshots"
 ARTIFACT_NAME = "JL-Mod-Plus-screenshot-candidates"
 REFERENCE_PREFIX = "app/src/screenshotTestDefaultEmulatorDebug/reference/"
@@ -173,13 +175,13 @@ def event_request(event_path):
 
 def dispatch_generation(run, request, pr_number, default_branch):
     """Bind a trusted workflow definition separately from its checked-out PR source."""
-    fields = run.get("display_title", "").split(" | ")
-    if ((run.get("head_branch") == default_branch or run.get("head_sha") == request["head_sha"]) and len(fields) == 5
-            and fields[0] == f"PR {pr_number}" and fields[2] == request["head_sha"]
-            and fields[3] == "test -" and re.fullmatch(r"request [A-Za-z0-9_.-]{1,100}", fields[4])):
-        if fields[1] == "update-screenshots":
+    identity = parse_run_title(run.get("display_title", ""))
+    if ((run.get("head_branch") == default_branch or run.get("head_sha") == request["head_sha"]) and identity
+            and identity["pr_number"] == str(pr_number) and identity["source_sha"] == request["head_sha"]
+            and identity["selector_key"] == "-"):
+        if identity["mode"] == "update-screenshots":
             return "manual"
-        if fields[1] in ("validate", "screenshots"):
+        if identity["mode"] in ("validate", "screenshots"):
             return "comparison"
     # Existing direct gh/UI requests on the PR branch retain their original contract.
     if run.get("head_sha") == request["head_sha"]:
@@ -323,7 +325,7 @@ def finish_promotion(state_path, state, promoted):
         response = gh(f"repos/{repo}/actions/workflows/android.yml/dispatches", "POST", {
             "ref": state["default_branch"], "inputs": {
                 "mode": "validate", "pr_number": str(pr_number), "source_sha": promoted,
-                "expected_sha": promoted, "request_id": request_id,
+                "request_id": request_id,
             },
         })
         if not isinstance(response, dict) or not response.get("workflow_run_id") or not response.get("html_url"):

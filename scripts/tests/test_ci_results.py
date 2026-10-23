@@ -60,15 +60,12 @@ class CIResultsTest(unittest.TestCase):
                               locations=[dict(path='app/src/Main.kt', line='12', column='3')]), value['findings'][0])
         self.assertFalse(value['problems'])
 
-    def test_stale_report_is_not_counted_as_new_execution(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / 'TEST-test.xml'
-            path.write_text('<testsuite><testcase name="pass"/></testsuite>')
-            os.utime(path, (1000, 1000))
-            value = results.test_results(str(path), since=1001)
-            self.assertEqual('unavailable', value['status'])
-            self.assertEqual(0, value['executed_count'])
-            self.assertIn('Stale XML reports excluded: 1', value['problems'])
+    def test_step_outcomes_use_required_step_precedence(self):
+        for steps, expected in [(['success'], 'passed'), (['success', 'failure'], 'failed'),
+                                (['cancelled', 'failure'], 'failed'), (['success', 'cancelled'], 'cancelled'),
+                                (['success', 'skipped'], 'not-run'), (['success', ''], 'not-run')]:
+            with self.subTest(steps=steps):
+                self.assertEqual(expected, results.step_outcome(steps))
 
     def test_cli_json_context_stdout_and_expected_revision(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -148,17 +145,65 @@ class CIResultsTest(unittest.TestCase):
             self.assertEqual(2, process.returncode)
             self.assertFalse(output.exists())
             for status in results.OUTCOMES:
-                process = subprocess.run(command + ['--operation-result', status],
+                process = subprocess.run(command + ['--outcome', status],
                                          cwd=Path(results.__file__).resolve().parents[1],
                                          text=True, capture_output=True)
                 self.assertEqual(0 if status == 'passed' else 1, process.returncode, process.stderr)
                 value = json.loads(output.read_text())
                 self.assertEqual(status, value['outcome'])
-                self.assertEqual(status, value['operation_result'])
                 self.assertIsNone(value['executed_count'])
                 self.assertIsNone(value['requested_count'])
                 self.assertEqual({}, value['suites'])
                 self.assertIn('test counts unavailable', process.stdout)
-            process = subprocess.run(command + ['--operation-result', 'passed', '--tests', 'unit=missing'],
+            process = subprocess.run(command + ['--step-outcome', 'success', '--tests', 'unit=missing'],
                                      cwd=Path(results.__file__).resolve().parents[1], capture_output=True)
-            self.assertEqual(2, process.returncode)
+            self.assertEqual(1, process.returncode)
+            self.assertEqual('failed', json.loads(output.read_text())['outcome'])
+
+    def test_successful_xml_does_not_hide_failed_compile_or_assembly_step(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / 'TEST.xml'
+            output = Path(directory) / 'result.json'
+            report.write_text('<testsuite><testcase name="passed"/></testsuite>')
+            process = subprocess.run([sys.executable, str(Path(results.__file__)), '--tests', f'unit={report}',
+                                      '--step-outcome', 'success', '--step-outcome', 'failure',
+                                      '--output', str(output)], cwd=Path(results.__file__).resolve().parents[1],
+                                     capture_output=True)
+            self.assertEqual(1, process.returncode)
+            value = json.loads(output.read_text())
+            self.assertEqual('failed', value['outcome'])
+            self.assertEqual('passed', value['suites']['unit']['status'])
+
+    def test_runtime_counts_are_crosschecked_against_actual_complete_batches(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            records = ''.join(f'INSTRUMENTATION_STATUS: class=p.RuntimeTest\nINSTRUMENTATION_STATUS: test=case\nINSTRUMENTATION_STATUS_CODE: {code}\n' for code in [1, 0])
+            (root / 'main.txt').write_text(records + 'INSTRUMENTATION_CODE: -1\n')
+            (root / 'main.verified.txt').write_text('p.RuntimeTest#case\n')
+            (root / 'selectors.txt').write_text('PASS\tp.RuntimeTest\n')
+            suite = results.runtime_results(root)
+            self.assertEqual(1, suite['executed_count'])
+            self.assertEqual({'passed': 1}, suite['counts'])
+            self.assertIn('completed batches only', suite['count_scope'])
+            # A forged/truncated verified file must not manufacture another case.
+            (root / 'main.verified.txt').write_text('p.RuntimeTest#case\np.RuntimeTest#missing\n')
+            with self.assertRaises(ValueError):
+                results.runtime_results(root)
+
+    def test_runtime_failed_later_batch_keeps_partial_counts_and_failed_outcome(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            records = ''.join(f'INSTRUMENTATION_STATUS: class=p.RuntimeTest\nINSTRUMENTATION_STATUS: test=case\nINSTRUMENTATION_STATUS_CODE: {code}\n' for code in [1, 0])
+            (root / 'main.txt').write_text(records + 'INSTRUMENTATION_CODE: -1\n')
+            (root / 'main.verified.txt').write_text('p.RuntimeTest#case\n')
+            (root / 'selectors.txt').write_text('PASS\tp.RuntimeTest\n')
+            (root / 'isolated.txt').write_text('INSTRUMENTATION_FAILED: Process crashed\n')
+            output = root / 'result.json'
+            process = subprocess.run([sys.executable, str(Path(results.__file__)), '--runtime-results', directory,
+                                      '--step-outcome', 'failure', '--output', str(output)],
+                                     cwd=Path(results.__file__).resolve().parents[1], text=True, capture_output=True)
+            self.assertEqual(1, process.returncode, process.stderr)
+            value = json.loads(output.read_text())
+            self.assertEqual('failed', value['outcome'])
+            self.assertEqual(1, value['executed_count'])
+            self.assertIn('failed/incomplete batch counts are unavailable', process.stdout)

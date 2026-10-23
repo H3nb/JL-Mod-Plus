@@ -159,43 +159,21 @@ Normal PR validation checks the temporary merge commit with the base branch;
 its built source differs from PR HEAD. Comment requests use the trusted
 default-branch workflow definition and the explicit current PR HEAD source.
 
-| Mode | Result |
-| --- | --- |
-| `validate` (default; automatic on PRs) | Parallel build/tests, screenshots and lint, followed by the aggregate `build` status; instrumentation is compile-only |
-| `unit` | One app JVM class/method filter with fresh execution of the selected test task |
-| `instrumentation` | One AndroidJUnitRunner class/method selector on API 35 x86_64 |
-| `screenshots` | Compare screenshot references without accepting changes |
-| `update-screenshots` | Generate and package changed references for an open same-repository PR; review is still required |
-| `runtime-smoke` | Existing selected runtime contracts on API 35 x86_64 |
-| `release-check` | Unsigned release packaging, ELF alignment and startup qualification on a 16 KB emulator; no publication |
-| `host-native` | Existing Sonivox allocation/RMID regressions executed on the Linux host; no device execution |
+The command guide is the canonical profile/selector and recovery reference.
+Focused/manual modes use distinct check names and do not satisfy full PR
+validation. Every issue comment skips all handler jobs before runner allocation;
+GitHub may still record a skipped workflow. Live comment canaries require the
+handler on the default branch.
 
-Maintenance modes use distinct check names. Generating candidates or passing a
-focused/runtime subset does not satisfy the full PR `build` status. Manual
-investigations with different selectors/profiles do not cancel each other.
-Dispatch options and comment handlers require the workflow on GitHub's default
-branch; a PR version alone cannot establish live comment-trigger evidence.
-Every issue comment executes zero handler jobs and allocates zero runners;
-GitHub may still record skipped workflows. Ordinary/quoted PR comments and
-outsiders cannot allocate a controller runner. See the command guide for the
-explicit actor-ID policy and its one-time connector onboarding.
-
-The debug APK artifact is uploaded immediately after successful assembly and
-staging, before validation finishes. Its `BUILD-INFO.txt` records the source commit
-and run URL and labels it unverified. The final `build` check requires `Build and tests`, `Screenshot validation`,
-and `Lint` to succeed. `JL-Mod-Plus-ci-diagnostics` contains
-`ci-artifacts/validation.txt`, `unit-results.json`/`.md`, app/dexlib test reports, and
-connected-test reports/logcat when run. `JL-Mod-Plus-lint-diagnostics` contains lint
-reports and `lint-results.json`/`.md`. Screenshot reports and
-`screenshot-results.json`/`.md` are in `JL-Mod-Plus-screenshot-diagnostics`.
-The same compact counts and missing-report diagnostics appear in job logs and
-step summaries, allowing connector-only review without downloading every report.
-Required missing/empty/stale reports and all-skipped test suites fail the job;
-any skipped screenshot case also fails. Summaries count actual XML testcases and
-do not claim fresh execution when Gradle may have restored cached results. The validation file records its own job's step outcomes, not the separate
-lint result; consult the final `build` check for overall status. The early APK
-artifact is not rewritten. Artifact availability does not mean validation passed.
-Inspect the individual reports when a combined step fails.
+The debug APK is uploaded after assembly, before validation completes. Its
+`BUILD-INFO.txt` records the revision/run and labels it unverified. The aggregate
+`build` check requires build/tests, screenshots and lint to succeed. Per-job
+schema-v2 JSON and matching Markdown reports appear in logs, summaries and
+seven-day diagnostic artifacts; original XML/HTML/logs remain alongside them.
+Test reports with missing/empty results or no executed cases fail; screenshot
+reports also reject skipped cases. Cached XML is not claimed as fresh execution.
+See [results and recovery](ci-commands.md#find-results-and-recover-a-request)
+for exact identities, scope, cancellation, artifact expiry and retry behavior.
 
 ### Historical Library performance evidence
 
@@ -403,8 +381,7 @@ Each invocation writes an HTML timing profile under
 sets and cache conditions before attributing timing differences to an optimization;
 measure time to APK separately from time to completed validation. See
 [measurement methodology](ci-commands.md#measuring-ci-efficiency) for phase timing,
-cold/warm controls, repeated comparisons and the pending cross-run cache-reuse
-experiments. Existing historical timings do not establish a benchmark or speedup.
+cold/warm controls and repeated comparisons. Existing historical timings do not establish a benchmark or speedup.
 
 Do not run `clean` routinely, discard relevant checks to improve timings, or
 suppress Configuration Cache problems as warnings.
@@ -423,9 +400,7 @@ For changes to shrinking, native packaging, release configuration, or relevant
 dependencies, run **Android CI** with mode **release-check** for the exact PR
 source, using the default-branch dispatch path in [PR CI commands](ci-commands.md).
 It builds the release variant with R8 and all four ABIs, checks APK contents, and
-stages the same assets as publishing. Qualification checks every packaged
-arm64-v8a/x86_64 library's ELF LOAD alignment; ZIP alignment or install success
-alone does not establish that property. It installs and launches the x86_64 and
+stages the same assets as publishing. It installs and launches the x86_64 and
 universal APKs on an API 35 emulator with 16 KB pages using a disposable test key.
 This checks installation, native extraction, and startup; it does not qualify all
 MIDlet/audio/3D behavior or physical ARM devices. Artifacts are unsigned and use

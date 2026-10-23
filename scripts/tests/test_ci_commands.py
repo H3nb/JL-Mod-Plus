@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 import copy
-import hashlib
 import importlib.util
 import os
 from pathlib import Path
@@ -10,14 +9,15 @@ from unittest.mock import patch
 
 SCRIPTS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
+from ci_run import run_title, selector_key
 spec = importlib.util.spec_from_file_location('ci_commands', SCRIPTS / 'ci-commands.py')
 commands = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(commands)
 REPO = 'owner/project'
 SHA = 'a' * 40
-INPUTS = dict(mode='unit', pr_number='42', expected_sha=SHA, source_sha=SHA,
+INPUTS = dict(mode='unit', pr_number='42', source_sha=SHA,
               request_id='comment-123', test_selector='package.NewRegressionTest',
-              selector_key=hashlib.sha256(b'package.NewRegressionTest').hexdigest()[:16])
+              selector_key=selector_key('package.NewRegressionTest'))
 EVENT = dict(action='created', sender=dict(id=7),
              repository=dict(full_name=REPO, owner=dict(id=7), default_branch='alpha'),
              issue=dict(number=42, pull_request=dict(url='pr')),
@@ -26,7 +26,7 @@ PR = dict(state='open', head=dict(sha=SHA, repo=dict(full_name=REPO)),
           base=dict(repo=dict(full_name=REPO)))
 RUN = dict(path='.github/workflows/android.yml', head_branch='alpha',
            head_repository=dict(full_name=REPO), status='in_progress',
-           display_title=commands.title(INPUTS), html_url='https://github.com/owner/project/actions/runs/9')
+           display_title=run_title(INPUTS), html_url='https://github.com/owner/project/actions/runs/9')
 
 
 class CICommandsTest(unittest.TestCase):
@@ -94,14 +94,50 @@ class CICommandsTest(unittest.TestCase):
         for request_id, status, expected in [('comment-123', 'completed', True),
                                               ('comment-456', 'queued', True),
                                               ('comment-456', 'completed', False)]:
-            run = {**RUN, 'display_title': commands.title({**INPUTS, 'request_id': request_id}), 'status': status}
+            run = {**RUN, 'display_title': run_title({**INPUTS, 'request_id': request_id}), 'status': status}
             with patch.object(commands, 'api', return_value={'workflow_runs': [run]}):
                 self.assertEqual(expected, commands.find_run(REPO, INPUTS, 'alpha') is not None)
         for changed in ({'head_branch': 'untrusted-branch'}, {'path': '.github/workflows/other.yml'},
                         {'head_repository': {'full_name': 'fork/project'}},
-                        {'display_title': commands.title({**INPUTS, 'expected_sha': 'b'*40})}):
+                        {'display_title': run_title({**INPUTS, 'source_sha': 'b'*40})}):
             with patch.object(commands, 'api', return_value={'workflow_runs': [{**RUN, **changed}]}):
                 self.assertIsNone(commands.find_run(REPO, INPUTS, 'alpha'))
+
+    def test_original_request_wins_over_newer_identical_active_request_across_pages(self):
+        active = {**RUN, 'display_title': run_title({**INPUTS, 'request_id': 'comment-456'}),
+                  'html_url': 'https://example.test/other-request'}
+        original = {**RUN, 'status': 'completed'}
+        with patch.object(commands, 'api', side_effect=[{'workflow_runs': [active] * 100},
+                                                        {'workflow_runs': [original]}]) as api:
+            self.assertEqual(original, commands.find_run(REPO, INPUTS, 'alpha'))
+        self.assertEqual(2, api.call_count)
+
+    @patch.dict(os.environ, GITHUB_REPOSITORY=REPO)
+    def test_retry_recovers_original_revision_before_reading_moved_head(self):
+        replies = []
+        def api(path, method='GET', payload=None):
+            if '/runs?' in path:
+                return {'workflow_runs': [{**RUN, 'status': 'completed'}]}
+            if path.endswith('/comments'):
+                replies.append(payload['body'])
+                return {}
+            self.fail('Recovery must not resolve current HEAD or redispatch: ' + path)
+        with patch.object(commands, 'api', side_effect=api):
+            self.assertEqual(RUN['html_url'], commands.process(EVENT, '', rerun=True))
+        self.assertIn(SHA, replies[0])
+        self.assertIn('original revision', replies[0])
+
+    @patch.dict(os.environ, GITHUB_REPOSITORY=REPO)
+    def test_retry_without_visible_request_never_refreshes_head_or_dispatches(self):
+        def api(path, method='GET', payload=None):
+            if '/runs?' in path:
+                return {'workflow_runs': []}
+            if path.endswith('/comments'):
+                return {}
+            self.fail('Uncertain retry must not resolve HEAD or dispatch: ' + path)
+        with patch.object(commands, 'api', side_effect=api):
+            with self.assertRaisesRegex(commands.Reject, 'controller retry'):
+                commands.process(EVENT, '', rerun=True)
 
     def test_lost_dispatch_response_recovers_exact_request_without_second_post(self):
         calls = []
@@ -137,7 +173,11 @@ class CICommandsTest(unittest.TestCase):
         event = copy.deepcopy(EVENT)
         event['comment']['body'] += ' --sha ' + 'b'*40
         for pr, value in [(PR, event), ({**PR, 'head': {'sha': SHA, 'repo': {'full_name': 'fork/project'}}}, EVENT)]:
-            with patch.object(commands, 'api', side_effect=[pr, {}]) as api:
+            def answer(path, method='GET', payload=None):
+                if '/runs?' in path:
+                    return {'workflow_runs': []}
+                return pr if '/pulls/' in path else {}
+            with patch.object(commands, 'api', side_effect=answer) as api:
                 with self.assertRaises(commands.Reject):
                     commands.process(value, '')
             self.assertFalse(any(c.args[0].endswith('/dispatches') for c in api.call_args_list))

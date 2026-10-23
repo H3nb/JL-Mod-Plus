@@ -21,8 +21,7 @@ that comment. Edited/deleted comments do not trigger the `created` listener.
 | `/jlmod-ci screenshots` | Screenshot comparison; does not accept or update references |
 | `/jlmod-ci update-screenshots` | Generate and package changed screenshot candidates for review; does not accept them |
 | `/jlmod-ci runtime-smoke` | Existing selected runtime contracts on API 35 x86_64; does not run the whole instrumentation suite |
-| `/jlmod-ci release-check` | Unsigned release packaging, ELF LOAD alignment checks and startup qualification on a 16 KB emulator; does not publish |
-| `/jlmod-ci host-native` | Existing Sonivox allocation and RMID regressions compiled and executed on the Linux host; does not test Android devices |
+| `/jlmod-ci release-check` | Unsigned release packaging and startup qualification on a 16 KB emulator; does not publish |
 
 `unit` and `instrumentation` require exactly one `--test` selector. A newly added
 class/method needs no CI class allowlist. Unit filters use Gradle `--tests`
@@ -49,11 +48,9 @@ status grant no access. Configure only identities deliberately trusted to execut
 same-repository PR code. Valid authorized requests need no per-run approval.
 
 For connector onboarding, inspect the authenticated profile and the actual comment
-sender identity once, then configure the observed ID if necessary. During the
-23 October 2026 implementation inspection the connector profile was owner `H3nb`,
-ID `93023716`. This does not establish an app ID or guarantee another session's
-identity. If a connector comments as a separate app/bot, verify that numeric sender
-ID rather than guessing it. The ordinary test allowlist grants no screenshot
+sender identity once, then configure its observed numeric ID if necessary. A
+connector may comment as a separate app/bot; verify its sender ID rather than
+guessing it or assuming it matches the authenticated user. The ordinary test allowlist grants no screenshot
 acceptance, merge, or publication authority.
 
 Both comment workflows check the PR object and authorization in `jobs.<id>.if`
@@ -69,7 +66,7 @@ receives an automatic reply from this mechanism.
 The controller loads trusted tooling from the repository default branch. It
 requires an open same-repository PR, resolves HEAD/base through GitHub, and
 dispatches `android.yml` on the default branch with explicit `source_sha`,
-`expected_sha`, PR number and request ID. The test workflow checks out the requested
+PR number and request ID. The test workflow checks out the requested
 source and verifies its revision and current PR HEAD before Android setup/build.
 A moving HEAD produces a stale failure; it does not silently test another revision.
 Automatic PR validation retains its synthetic merge source and records that
@@ -92,8 +89,7 @@ before using the branch's manual dispatch route.
 
 The Actions **Run workflow** UI and `gh workflow run` remain supported. To use the
 trusted default-branch definition, select `alpha` (recheck the actual default
-branch), provide the PR number, set `source_sha` and `expected_sha` to current PR
-HEAD, and choose a unique `request_id`. `unit`/`instrumentation` also take
+branch), provide the PR number, set `source_sha` to current PR HEAD, and choose a unique `request_id`. `unit`/`instrumentation` also take
 `test_selector`; `selector_key` is optional (the controller supplies its SHA-256
 fingerprint for deduplication). A manual branch-only run remains possible for profiles that do
 not require a PR; its checked-out revision is recorded and it does not claim to be
@@ -107,7 +103,7 @@ SOURCE_SHA=$(gh pr view "$PR_NUMBER" --repo H3nb/JL-Mod-Plus --json headRefOid -
 REQUEST_ID="manual-$(date -u +%Y%m%dT%H%M%SZ)"
 gh workflow run android.yml --repo H3nb/JL-Mod-Plus --ref alpha \
   -f mode=unit -f pr_number="$PR_NUMBER" -f source_sha="$SOURCE_SHA" \
-  -f expected_sha="$SOURCE_SHA" -f request_id="$REQUEST_ID" \
+  -f request_id="$REQUEST_ID" \
   -f test_selector='package.NewRegressionTest'
 ```
 
@@ -131,7 +127,9 @@ a local device's API is your responsibility to record. The helper removes only
 the selected profile's old result directory and forces only its test task with
 Gradle `--rerun`; dependencies may reuse cache. A failed Gradle command, unmatched
 selector, missing/empty/stale reports or all-skipped suite cannot become PASS.
-JUnit 4 and AndroidJUnitRunner remain in place.
+Handled SIGINT/SIGTERM records cancellation in the same result JSON. Hard runner
+termination may prevent finalization; use the GitHub job status/logs when no report
+can be written. JUnit 4 and AndroidJUnitRunner remain in place.
 
 Workflow/helper changes can be checked before Android setup with
 `bash scripts/check-workflows.sh` on Linux x86_64 with Python, Node/npm and network
@@ -147,14 +145,6 @@ respectively `:app:testEmulatorDebugScreenshotTestDefaultTestSuite` and
 connected emulator for runtime smoke. Release qualification uses the workflow's
 release assembly/staging steps followed by `bash scripts/release-smoke.sh`; the
 latter expects staged APKs and a 16 KB emulator, not an arbitrary debug build.
-For host regressions run, with PowerShell, `gcc` and `g++` available on Linux:
-
-```bash
-pwsh -NoProfile -File app/src/test/native/run-sonivox-allocation.ps1 -Compiler gcc
-pwsh -NoProfile -File app/src/test/native/run-sonivox-rmid.ps1 -Compiler g++
-```
-
-These host executables are distinct from native compilation and device execution.
 Do not disable existing isolation for runtime tests that mutate global state.
 
 ## Find results and recover a request
@@ -176,8 +166,8 @@ built/expected/tree/PR/base revisions, profile/selectors/tasks, request/run/atte
 job identity, counts and scope. Outcomes distinguish `passed`, `failed`,
 `cancelled`, `not-run`, `skipped-by-policy` and `unavailable`. Unknown requested
 counts, cache outcomes, timings and artifact metadata remain unknown. Non-XML
-operations record the explicit whole-step outcome with unknown test counts;
-startup/packaging/host execution do not manufacture JUnit test totals. XML-derived
+operations preserve step outcomes. Runtime counts come from verified completed
+instrumentation batches; startup/packaging do not manufacture JUnit test totals. XML-derived
 counts alone do not prove fresh task execution; focused runs explicitly force
 the selected task. Summaries are bounded; detailed XML/logs remain in diagnostic
 artifacts. Artifact metadata may become available only after upload: inspect the
@@ -186,9 +176,10 @@ expire after seven days; an expired artifact needs fresh evidence, not a guessed
 ID or reused acceptance request. An early APK is labeled unverified and is not a
 passing validation verdict.
 
-Controller decisions for one PR are serialized. They reuse an identical active
-profile/selector/SHA run and recover an already dispatched exact request from run
-history. Manual requests with different profiles/selectors do not cancel each
+Controller decisions for one PR are serialized. They recover the exact request before reading current PR HEAD, so its original
+revision remains stable after HEAD moves. For new requests they reuse an identical
+active profile/selector/SHA run. Exact request matches take precedence over other
+active runs across the bounded history search. Manual requests with different profiles/selectors do not cancel each
 other. Automatic validation may cancel superseded PR revisions. This is bounded
 coordination with GitHub's eventually consistent API, not exactly-once execution.
 If dispatch or its reply is lost, inspect controller logs and search the full run
@@ -222,15 +213,12 @@ policy tests, actionlint and branch-dispatched workflow tests are separate evide
 from the postmerge comment canary. Integration is a maintainer action; this work
 does not authorize merging to enable a test.
 
-At the 23 October 2026 inspection, `alpha` contained
-`.github/workflows/screenshot-promotion.yml`, but workflow ID `375170287` still
-reported `state: deleted` and had no runs. File presence does not prove registration.
-The path/state/default-branch/run history must be checked again after integration;
-no rename or enable action is presumed to cure it. If GitHub still does not
-register it, capture API responses and workflow validation errors, then investigate
-with repository administration access. Configuration/activation is distinct from
-proving a trigger actually works. A connector lacking dispatch/enable capability
-must report that limitation; generic fetch rejection is not proof of deletion.
+Check screenshot promotion's workflow path, registration state, default branch,
+validation errors and run history separately. A file's presence does not prove
+registration or a working trigger. If it reports deleted or remains unregistered,
+capture the API/configuration evidence and investigate with repository admin
+access; neither a rename nor enable action is presumed to fix it. A connector
+without dispatch/enable capability must report that limitation.
 
 After integration, use a harmless current same-repository PR for these canaries:
 
@@ -270,8 +258,8 @@ Measure queue, setup, download, execution, upload and cache-post time separately
 plus time to APK, first test feedback, final verdict and total runner time. Compare
 identical source/task/ABI/toolchain/runner/signing configurations with recorded
 cold/warm state, multiple observations and individual values plus median/range.
-Three runs do not establish p95. Focused timing JSON measures its invocation only;
-unknown phases remain null. Verify cross-run Configuration Cache **reuse**, not
+Three runs do not establish p95. Focused result JSON measures only its invocation duration; unknown phases remain
+unknown. Verify cross-run Configuration Cache **reuse**, not
 merely local storage. An encryption key is necessary but not sufficient: the
 pinned Enhanced provider also gates saving project-cache entries on separate
 opt-in and Develocity-trial eligibility; the Basic provider caches Gradle User Home only.

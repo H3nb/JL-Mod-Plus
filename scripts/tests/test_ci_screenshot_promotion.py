@@ -7,12 +7,14 @@ import json
 from pathlib import Path
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 import zipfile
 from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SCRIPTS))
 spec = importlib.util.spec_from_file_location("promotion", SCRIPTS / "ci-screenshot-promotion.py")
 promotion = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(promotion)
@@ -208,7 +210,7 @@ class ScreenshotPromotionTest(unittest.TestCase):
             self.assertEqual(promoted, result['promoted_sha'])
             dispatch = next(call for call in calls if call[0].endswith('/dispatches'))
             self.assertEqual('alpha', dispatch[2]['ref'])
-            self.assertEqual(promoted, dispatch[2]['inputs']['expected_sha'])
+            self.assertNotIn('expected_sha', dispatch[2]['inputs'])
             self.assertEqual(promoted, dispatch[2]['inputs']['source_sha'])
             summary = summary_path.read_text()
             self.assertIn(f'/jlmod-ci validate --sha {promoted}', summary)

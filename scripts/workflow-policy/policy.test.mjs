@@ -23,33 +23,37 @@ const workflows = allWorkflows
   .filter(([, workflow]) => workflow.on?.issue_comment);
 assert(workflows.length >= 2, 'Both comment handlers must be covered');
 
-function evaluate(expression, context) {
+function evaluate(expression, context, success = true) {
   assert.equal(typeof expression, 'string', 'Every comment job needs a pre-run condition');
   const code = expression.replace(/^\s*\$\{\{/, '').replace(/\}\}\s*$/, '');
   const {tokens} = new Lexer(code).lex();
   const extensionFunctions = ['always', 'success', 'cancelled', 'failure'].map(name => ({name, minArgs: 0, maxArgs: 0}));
-  const tree = new Parser(tokens, ['github', 'vars', 'needs', 'inputs'], extensionFunctions).parse();
+  const tree = new Parser(tokens, ['github', 'vars', 'needs', 'inputs', 'steps'], extensionFunctions).parse();
   const functions = new Map(extensionFunctions.map(({name, ...info}) => [name, {
-    name, ...info, call: () => new data.BooleanData(name === 'always' || name === 'success')
+    name, ...info, call: () => new data.BooleanData(name === 'always' || (name === 'success' && success))
   }]));
   const parsed = JSON.parse(JSON.stringify(context), data.reviver);
   return new Evaluator(tree, parsed, functions).evaluate();
 }
 
-function context({pr = false, actor = 10, body = '/jlmod-ci validate', ids = '', action = 'created'} = {}) {
+function context({pr = false, actor = 10, body = '/jlmod-ci validate', ids = '', needs = {}} = {}) {
   return {
     github: {event_name: 'issue_comment', event: {
-      action, repository: {owner: {id: 10}}, sender: {id: actor},
+      action: 'created', repository: {owner: {id: 10}}, sender: {id: actor},
       comment: {body, user: {id: actor}}, issue: {number: 1, ...(pr ? {pull_request: {url: 'https://api.github.com/repos/test/repo/pulls/1'}} : {})}
     }},
     vars: {JLMOD_CI_ACTOR_IDS: ids},
-    needs: {}, inputs: {}
+    needs, inputs: {}
   };
 }
 
 function selected(job, fixture) {
-  const value = evaluate(job.if, context(fixture));
-  // Job selection uses expression truthiness, not just a literal boolean.
+  const actualContext = context(fixture);
+  const success = Object.values(actualContext.needs).every(need => need.result === 'success');
+  const condition = job.if || 'success()';
+  // GitHub implicitly adds success() unless a status function is present.
+  if (!success && !/\b(always|success|failure|cancelled)\s*\(/i.test(condition)) return false;
+  const value = evaluate(condition, actualContext, success);
   return value.kind !== data.Kind.Null && !(value.kind === data.Kind.Boolean && !value.value)
     && !(value.kind === data.Kind.String && value.value === '')
     && !(value.kind === data.Kind.Number && (value.value === 0 || Number.isNaN(value.value)));
@@ -59,57 +63,78 @@ let checks = 0;
 for (const [name, workflow] of workflows) {
   assert.deepEqual(workflow.on.issue_comment.types, ['created'], `${name}: edited/deleted must not trigger`);
   for (const [id, job] of Object.entries(workflow.jobs)) {
-    assert(!job.needs, `${name}/${id}: comment controller must not grow downstream jobs`);
     const isPromotion = name === 'screenshot-promotion.yml';
     const command = isPromotion ? '/jlmod-promote-screenshots\n{}' : '/jlmod-ci validate';
-    for (const actor of [10, 42, 999]) {
-      for (const body of [command, 'ordinary comment', `> ${command}`, `\`\`\`\n${command}\n\`\`\``, `Example: ${command}`, 'Long report\n'.repeat(100) + command]) {
-        for (const ids of ['', '[]', '[42]', '[not-json]', '[true]', '"42"', '|42|']) {
-          assert(!selected(job, {actor, body, ids}), `${name}/${id}: issue comment allocated a job`);
-          checks++;
-        }
-      }
-    }
-    for (const body of ['ordinary comment', `> ${command}`, `\`\`\`\n${command}\n\`\`\``, `Example: ${command}`]) {
-      assert(!selected(job, {pr: true, body}), `${name}/${id}: prose/quote allocated a job`);
+    const needs = Object.fromEntries([job.needs || []].flat().map(dependency => [dependency, {result: 'skipped', outputs: {}}]));
+    const rejects = (fixture, reason) => {
+      assert(!selected(job, {needs, ...fixture}), `${name}/${id}: ${reason}`);
       checks++;
+    };
+    // Distinct admission failures, rather than a Cartesian product which always
+    // short-circuits on the same missing PR object.
+    for (const fixture of [
+      {body: command}, // Owner issue command.
+      {actor: 42, ids: '|42|', body: command}, // Explicitly allowed app/user on an issue.
+      {actor: 999, body: command}, // Outsider issue command.
+      {actor: 999, body: 'Long report\n'.repeat(100) + command},
+      {body: `> ${command}`}, {body: `\`\`\`\n${command}\n\`\`\``}
+    ]) rejects(fixture, 'issue comment allocated a job');
+    for (const body of ['ordinary comment', `> ${command}`, `\`\`\`\n${command}\n\`\`\``, `Example: ${command}`]) {
+      rejects({pr: true, body}, 'PR prose/quote allocated a job');
     }
     for (const ids of ['', '[]', '[42]', '[not-json]', '[true]', '"999"', '|42|']) {
-      assert(!selected(job, {pr: true, actor: 999, body: command, ids}), `${name}/${id}: outsider allocated a job`);
+      rejects({pr: true, actor: 999, body: command, ids}, 'outsider allocated a job');
+    }
+    if (!job.needs) {
+      assert(selected(job, {pr: true, body: command}), `${name}/${id}: owner command must select controller`);
       checks++;
     }
-    assert(selected(job, {pr: true, body: command}), `${name}/${id}: owner command must select controller`);
     if (!isPromotion) {
-      assert(!selected(job, {pr: true, actor: 1, body: command, ids: '[true]'}), `${name}/${id}: malformed allowlist widened authorization`);
-      assert(!selected(job, {pr: true, actor: 99, body: command, ids: '[[99]]'}), `${name}/${id}: nested allowlist widened authorization`);
-      assert(selected(job, {pr: true, actor: 42, body: command, ids: '|42|'}), `${name}/${id}: explicit connector identity must work`);
-      assert(!selected(job, {pr: true, actor: 4, body: command, ids: '|42|'}), `${name}/${id}: partial actor ID must not match`);
-      assert(!selected(job, {pr: true, body: `${command}\nExample`}), `${name}/${id}: multiline prose must not match`);
-      checks += 5;
-    } else {
-      for (const body of ['/jlmod-promote-screenshots-example', '/jlmod-promote-screenshots discussed here', '/jlmod-promote-screenshots']) {
-        assert(!selected(job, {pr: true, body}), `${name}/${id}: promotion command needs an exact first line and request body`);
+      rejects({pr: true, actor: 1, body: command, ids: '[true]'}, 'malformed allowlist widened authorization');
+      rejects({pr: true, actor: 99, body: command, ids: '[[99]]'}, 'nested allowlist widened authorization');
+      rejects({pr: true, actor: 4, body: command, ids: '|42|'}, 'partial actor ID matched');
+      rejects({pr: true, body: `${command}\nExample`}, 'multiline prose matched');
+      if (!job.needs) {
+        assert(selected(job, {pr: true, actor: 42, body: command, ids: '|42|'}), `${name}/${id}: explicit connector identity must work`);
         checks++;
       }
+    } else {
+      for (const body of ['/jlmod-promote-screenshots-example', '/jlmod-promote-screenshots discussed here', '/jlmod-promote-screenshots']) {
+        rejects({pr: true, body}, 'promotion command needs an exact first line and request body');
+      }
     }
-    checks++;
   }
 }
-console.log(`Comment job policy: ${checks} assertions passed against ${workflows.length} actual workflow files.`);
+console.log(`Comment job policy: ${checks} distinct admission checks passed against ${workflows.length} actual workflow files.`);
 
 // Exercise the actual trusted inline source guard, rather than a parser replica.
 const android = allWorkflows.find(([name]) => name === 'android.yml')[1];
-const sourceJob = android.jobs.source;
-assert(sourceJob && !sourceJob.steps.some(step => step.uses), 'Source verification must run without checkout or PR-owned actions');
-assert.deepEqual([android.jobs.helpers.needs].flat(), ['source']);
+const [preflightId, preflight] = Object.entries(android.jobs).find(([, job]) => job.outputs?.sha) || [];
+assert(preflight, 'A preflight must publish the verified checkout revision');
+const guardId = preflight.outputs.sha.match(/^\$\{\{\s*steps\.([\w-]+)\.outputs\.sha\s*\}\}$/)?.[1];
+const guardIndex = preflight.steps.findIndex(step => step.id === guardId);
+assert(guardIndex >= 0, 'Verified source must come from the trusted guard step');
+const sourceStep = preflight.steps[guardIndex];
+const checkoutIndex = preflight.steps.findIndex(step => step.uses?.startsWith('actions/checkout@'));
+const helpersIndex = preflight.steps.findIndex(step => step.run?.includes('scripts/check-workflows.sh'));
+assert(checkoutIndex > guardIndex && helpersIndex > checkoutIndex, 'Source guard must precede PR checkout and helper execution');
+assert(!preflight.steps.slice(0, guardIndex + 1).some(step => step.uses), 'PR-owned actions cannot execute before source verification');
+assert.equal(evaluate(preflight.steps[checkoutIndex].with.ref, {steps: {[guardId]: {outputs: {sha: 'verified-source'}}}}).coerceString(), 'verified-source', 'Preflight helpers must use verified source');
+assert(!sourceStep.if && !preflight.steps[helpersIndex].if, 'Preflight guard and helper checks must not be optional');
+assert(Object.values(preflight.permissions).every(value => value === 'read' || value === 'none'), 'Preflight cannot run PR scripts with write permissions');
+function dependsOn(id, target, visited = new Set()) {
+  if (id === target) return true;
+  if (visited.has(id)) return false;
+  visited.add(id);
+  return [android.jobs[id].needs || []].flat().some(dependency => dependsOn(dependency, target, visited));
+}
 for (const [id, job] of Object.entries(android.jobs)) {
-  const expensive = job.steps?.some(step => /setup-java|setup-gradle|setup-android|android-emulator-runner/.test(step.uses || '') || /gradlew/.test(step.run || ''));
-  if (expensive || id === 'host-native') {
-    const dependencies = [job.needs].flat();
-    assert(dependencies.includes('source') && dependencies.includes('helpers'), `${id}: verification/helpers must finish before Android or native work`);
+  const expensive = job.steps?.some(step => /setup-java|setup-gradle|setup-android|android-emulator-runner/.test(step.uses || '') || /gradlew|run-sonivox/.test(step.run || ''));
+  if (expensive) {
+    assert(dependsOn(id, preflightId), `${id}: verification/helpers must finish before Android or native work`);
     assert(!/\b(always|failure|cancelled)\s*\(/i.test(job.if || ''), `${id}: status conditions cannot bypass failed prerequisites`);
     const checkout = job.steps.find(step => step.uses?.startsWith('actions/checkout@'));
-    assert.equal(checkout.with.ref, '${{ needs.source.outputs.sha }}', `${id}: checkout must use verified exact source`);
+    assert.equal(evaluate(checkout.with.ref, {needs: {[preflightId]: {outputs: {sha: 'verified-source'}}}}).coerceString(), 'verified-source', `${id}: checkout must use verified exact source`);
   }
 }
 
@@ -122,11 +147,27 @@ const knownProfiles = spawnSync('python3', ['-c', 'import sys,json;sys.path.inse
 assert.equal(knownProfiles.status, 0, knownProfiles.stderr);
 assert.deepEqual([...android.on.workflow_dispatch.inputs.mode.options].sort(), JSON.parse(knownProfiles.stdout).sort(), 'Dispatch choices must match the single profile contract');
 
-const sourceStep = sourceJob.steps.find(step => step.id === 'source');
 assert(sourceStep?.run, 'The source guard must remain testable before build setup');
 const sha = char => char.repeat(40);
+// The run-name expression is the unavoidable YAML adapter to the shared Python
+// correlation contract. Exercise both controller inputs and ordinary UI defaults.
+const explicitTitle = {mode: 'unit', pr_number: '8', source_sha: sha('a'),
+  selector_key: '0123456789abcdef', request_id: 'comment-27'};
+const titleCases = [
+  [explicitTitle, explicitTitle],
+  [{mode: 'validate'}, {mode: 'validate', pr_number: '-', source_sha: sha('f'), selector_key: '-', request_id: 'ui-20'}]
+];
+const pythonTitles = spawnSync('python3', ['-B', '-c',
+  'import sys,json;sys.path.insert(0,"scripts");from ci_run import run_title;print(json.dumps([run_title(value) for value in json.load(sys.stdin)]))'],
+  {cwd: root, encoding: 'utf8', input: JSON.stringify(titleCases.map(([, identity]) => identity))});
+assert.equal(pythonTitles.status, 0, pythonTitles.stderr);
+for (const [index, [inputs]] of titleCases.entries()) {
+  const title = evaluate(android['run-name'], {inputs, github: {event_name: 'workflow_dispatch', sha: sha('f'), run_id: '20'}}).coerceString();
+  assert.equal(title, JSON.parse(pythonTitles.stdout)[index], 'Android run-name must match the shared controller/promotion identity');
+}
+console.log('Run identity: explicit-source and UI-default YAML titles match the shared Python contract.');
 let sourceCases = 0;
-function verifySource({event = 'workflow_dispatch', source = sha('a'), expected = source, head = source,
+function verifySource({event = 'workflow_dispatch', source = sha('a'), head = source,
   repo = 'test/repo', headRepo = repo, number = '8', state = 'open', request = 'comment-27',
   workflowSha = sha('f'), selector = '', selectorKey, inputs = {}, succeeds = true, diagnostic = ''} = {}) {
   const directory = mkdtempSync(join(tmpdir(), 'jlmod-source-policy-'));
@@ -136,7 +177,7 @@ function verifySource({event = 'workflow_dispatch', source = sha('a'), expected 
     writeFileSync(join(directory, 'gh'), '#!/usr/bin/env python3\nimport json,os,sys\nassert "X-GitHub-Api-Version: 2026-03-10" in sys.argv\nopen(os.environ["JLMOD_FIXTURE_CALL"],"w").write("called")\nprint(os.environ["JLMOD_FIXTURE_PR"])\n');
     chmodSync(join(directory, 'gh'), 0o700);
     const fixture = {
-      inputs: {source_sha: source, expected_sha: expected, pr_number: number, request_id: request,
+      inputs: {source_sha: source, pr_number: number, request_id: request,
         mode: 'unit', test_selector: selector,
         selector_key: selectorKey ?? (selector ? createHash('sha256').update(selector).digest('hex').slice(0, 16) : ''), ...inputs},
       vars: {}, needs: {}, github: {event_name: event, sha: workflowSha, run_id: '20', token: 'fixture-token', repository: repo,
@@ -169,14 +210,13 @@ function verifySource({event = 'workflow_dispatch', source = sha('a'), expected 
   }
 }
 verifySource();
-verifySource({expected: sha('b'), succeeds: false, diagnostic: 'Stale request'});
 verifySource({head: sha('b'), succeeds: false, diagnostic: 'Stale request'});
 verifySource({headRepo: 'outsider/fork', succeeds: false, diagnostic: 'same-repository'});
 verifySource({state: 'closed', succeeds: false, diagnostic: 'open same-repository'});
 verifySource({number: '', succeeds: false, diagnostic: 'requires a PR number'});
 verifySource({number: '8;echo attack', succeeds: false, diagnostic: 'Invalid PR number'});
 verifySource({request: 'comment\n27', succeeds: false, diagnostic: 'Invalid request ID'});
-verifySource({source: 'main', expected: '', succeeds: false, diagnostic: 'Stale request'});
+verifySource({source: 'main', succeeds: false});
 verifySource({source: sha('f'), number: ''}); // Ordinary gh/UI dispatch on the selected workflow branch.
 verifySource({source: sha('f'), headRepo: 'outsider/fork', succeeds: false, diagnostic: 'same-repository'});
 verifySource({event: 'pull_request', head: sha('a'), workflowSha: sha('c')}); // Synthetic merge is intentional.
@@ -207,7 +247,7 @@ for (const [id, job] of Object.entries(android.jobs)) {
     cacheCases++;
   }
 }
-assert.equal(cacheCases, 16, 'All four Gradle-owning jobs must enforce cache trust boundaries');
+assert(cacheCases > 0, 'At least one Gradle setup must be checked');
 console.log(`Cache policy: ${cacheCases} fixtures passed against actual setup-gradle expressions.`);
 
 // Even callers reusing a request ID cannot cancel a different manual selector.

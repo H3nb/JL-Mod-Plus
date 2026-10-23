@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -28,6 +29,54 @@ def plan(profile, selector):
     raise ValueError('This runner accepts unit or instrumentation; other profiles use documented workflow tasks')
 
 
+class Cancelled(Exception):
+    pass
+
+
+def run_task(command):
+    """Forward cancellation to the task, then allow the caller to publish evidence."""
+    def interrupted(signum, _frame):
+        raise Cancelled(signum)
+
+    previous = {signum: signal.signal(signum, interrupted) for signum in (signal.SIGINT, signal.SIGTERM)}
+    task = None
+    try:
+        task = subprocess.Popen(command, start_new_session=os.name != 'nt')
+        return task.wait()
+    except Cancelled as error:
+        # A second cancellation must not interrupt task cleanup. A hard runner kill
+        # can still prevent result publication; GitHub's run status remains authoritative.
+        for signum in previous:
+            signal.signal(signum, signal.SIG_IGN)
+        signum = error.args[0]
+        if task is not None:
+            try:
+                if os.name == 'nt':
+                    task.terminate()
+                else:
+                    os.killpg(task.pid, signum)
+            except ProcessLookupError:
+                pass  # The task may have exited between cancellation and signal delivery.
+            try:
+                task.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    if os.name == 'nt':
+                        task.kill()
+                    else:
+                        os.killpg(task.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                task.wait()
+        return 128 + signum
+    except OSError as error:
+        print(f'Cannot execute test task: {error}', file=sys.stderr)
+        return 127
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('profile', choices=['unit', 'instrumentation'])
@@ -44,27 +93,29 @@ def main():
     if args.dry_run:
         return
     for directory in directories:
-        shutil.rmtree(directory, ignore_errors=True)
-    started = time.time()
+        try:
+            shutil.rmtree(directory)
+        except FileNotFoundError:
+            pass
+        # Permission and other cleanup errors fail before Gradle; stale reports
+        # must never be accepted as output of this forced invocation.
+    started = time.monotonic()
     artifacts = Path('ci-artifacts')
     artifacts.mkdir(exist_ok=True)
     # No shell; selector is one Gradle/runner argument. Only the selected test task is forced.
-    outcome = subprocess.run(command, check=False).returncode
+    outcome = run_task(command)
+    elapsed = round(time.monotonic() - started, 3)
     environment = dict(os.environ, CI_PROFILE=args.profile, CI_SELECTOR=args.test,
                        CI_TASKS=json.dumps(tasks), CI_EXECUTION='Selected test task forced with --rerun; dependencies may reuse cache.')
-    reporter = [sys.executable, '-B', 'scripts/ci-results.py', '--reports-since', str(started),
+    reporter = [sys.executable, '-B', 'scripts/ci-results.py',
+                '--execution-seconds', str(elapsed), '--task-returncode', str(outcome),
                 '--scope', 'filtered run; instrumentation executes on API 35 x86_64 in CI' if args.profile == 'instrumentation' else 'filtered app JVM run',
                 '--output', str(artifacts / (args.profile + '-results.json'))]
     for directory in directories:
         reporter += ['--tests', args.profile + '=' + directory + '/**/TEST-*.xml'] if args.profile == 'instrumentation' else ['--tests', args.profile + '=' + directory + '/TEST-*.xml']
     if outcome:
-        reporter += ['--outcome', 'cancelled' if outcome in (130, -2, -15) else 'failed']
+        reporter += ['--outcome', 'cancelled' if outcome in (130, 143, -2, -15) else 'failed']
     reported = subprocess.run(reporter, env=environment, check=False).returncode
-    timing = dict(schema_version=1, profile=args.profile, selector=args.test, tasks=tasks,
-                  execution_seconds=round(time.time() - started, 3), task_returncode=outcome,
-                  cache_outcome='unknown', queue_seconds=None, setup_seconds=None,
-                  download_seconds=None, upload_seconds=None, cache_post_seconds=None)
-    (artifacts / (args.profile + '-timing.json')).write_text(json.dumps(timing, indent=2) + '\n', encoding='utf-8')
     raise SystemExit(outcome or reported)
 
 

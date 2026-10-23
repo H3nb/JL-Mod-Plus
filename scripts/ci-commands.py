@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """Dispatch trusted Android CI for deliberate, authorized PR comment requests."""
 import argparse
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -12,6 +11,7 @@ import sys
 import time
 
 from ci_profiles import PROFILES, validate_selector
+from ci_run import parse_run_title, selector_key
 
 COMMAND = '/jlmod-ci'
 SHA = re.compile(r'[0-9a-f]{40}')
@@ -87,14 +87,10 @@ def api(path, method='GET', payload=None):
         raise Reject('GitHub API returned unreadable JSON.') from error
 
 
-def title(inputs):
-    return (f"PR {inputs['pr_number']} | {inputs['mode']} | {inputs['expected_sha']} | "
-            f"test {inputs.get('selector_key') or '-'} | request {inputs['request_id']}")
-
-
 def find_run(repo, inputs, default_branch, active_identical=True):
-    expected = title(inputs)
-    prefix = expected.rsplit(' | request ', 1)[0] + ' | request '
+    # Exact request identity wins over another active identical request, including
+    # across pages. Recovery can omit source_sha to find the original revision.
+    active = None
     for page in range(1, 11):
         data = api(f'repos/{repo}/actions/workflows/{WORKFLOW}/runs?event=workflow_dispatch&per_page=100&page={page}')
         runs = data.get('workflow_runs', [])
@@ -102,11 +98,17 @@ def find_run(repo, inputs, default_branch, active_identical=True):
             if (run.get('path') != '.github/workflows/android.yml' or run.get('head_branch') != default_branch
                     or (run.get('head_repository') or {}).get('full_name') != repo):
                 continue
-            actual = run.get('display_title', '')
-            if actual == expected or (active_identical and actual.startswith(prefix) and run.get('status') != 'completed'):
+            actual = parse_run_title(run.get('display_title', ''))
+            if not actual or any(actual[key] != inputs[key] for key in ('pr_number', 'mode', 'selector_key')):
+                continue
+            if inputs.get('source_sha') and actual['source_sha'] != inputs['source_sha']:
+                continue
+            if actual['request_id'] == inputs['request_id']:
                 return run
+            if active_identical and inputs.get('source_sha') and run.get('status') != 'completed' and active is None:
+                active = run
         if len(runs) < 100:
-            return None
+            return active
     raise Reject('Run history search reached 1,000 entries; inspect history before dispatching again.')
 
 
@@ -149,25 +151,35 @@ def process(event, actor_ids, rerun=False):
     if type(comment_id) is not int or comment_id <= 0:
         raise Reject('Invalid comment request ID.')
     request_id = f'comment-{comment_id}'
+    default_branch = event['repository']['default_branch']
+    inputs = dict(mode=request['mode'], test_selector=request['test_selector'],
+                  pr_number=str(pr_number), request_id=request_id,
+                  selector_key=selector_key(request['test_selector']))
     try:
-        pr = api(f'repos/{repo}/pulls/{pr_number}')
-        if (pr.get('state') != 'open' or (pr.get('head', {}).get('repo') or {}).get('full_name') != repo
-                or (pr.get('base', {}).get('repo') or {}).get('full_name') != repo):
-            raise Reject('CI commands require an open same-repository PR; fork PRs use the existing PR CI policy.')
-        head = pr['head']['sha']
-        if not SHA.fullmatch(head):
-            raise Reject('Invalid PR head SHA.')
-        if request['expected_sha'] and request['expected_sha'] != head:
-            raise Reject(f'Stale request: expected {request["expected_sha"]}, current PR HEAD is {head}.')
-        inputs = {**request, 'pr_number': str(pr_number), 'expected_sha': head,
-                  'source_sha': head, 'request_id': request_id,
-                  'selector_key': hashlib.sha256(request['test_selector'].encode('utf-8')).hexdigest()[:16] if request['test_selector'] else '-'}
-        url, status = dispatch(repo, event['repository']['default_branch'], inputs, rerun)
+        existing = find_run(repo, {**inputs, 'source_sha': request['expected_sha']},
+                            default_branch, active_identical=False)
+        if existing:
+            inputs['source_sha'] = parse_run_title(existing['display_title'])['source_sha']
+            url, status = existing['html_url'], 'Original request recovered at its original revision; no new dispatch.'
+        else:
+            if rerun:
+                raise Reject('No matching run is visible on this controller retry. Inspect Actions history before creating a new request; no automatic redispatch.')
+            pr = api(f'repos/{repo}/pulls/{pr_number}')
+            if (pr.get('state') != 'open' or (pr.get('head', {}).get('repo') or {}).get('full_name') != repo
+                    or (pr.get('base', {}).get('repo') or {}).get('full_name') != repo):
+                raise Reject('CI commands require an open same-repository PR; fork PRs use the existing PR CI policy.')
+            head = pr['head']['sha']
+            if not SHA.fullmatch(head):
+                raise Reject('Invalid PR head SHA.')
+            if request['expected_sha'] and request['expected_sha'] != head:
+                raise Reject(f'Stale request: expected {request["expected_sha"]}, current PR HEAD is {head}.')
+            inputs['source_sha'] = head
+            url, status = dispatch(repo, default_branch, inputs)
     except Reject as error:
         reply(repo, pr_number, f'<!-- jlmod-ci:{request_id} -->\nRequest `{request_id}` was not confirmed: {error}')
         raise
     body = (f'<!-- jlmod-ci:{request_id} -->\n{status}\n\n'
-            f'{url}\n\nPR {pr_number}; profile `{inputs["mode"]}`; source `{head}`; '
+            f'{url}\n\nPR {pr_number}; profile `{inputs["mode"]}`; source `{inputs["source_sha"]}`; '
             f'selector `{inputs["test_selector"] or "none"}`; request `{request_id}`. '
             'Read the run logs/summary for the result; dispatch is not a passing test verdict.')
     reply(repo, pr_number, body)
