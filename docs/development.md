@@ -378,11 +378,21 @@ of setup/observer failure, cleanup ordering, and preservation of the original er
 CI reuses a Gradle daemon across steps in the same job and preserves supported
 Gradle User Home and Build Cache state. Configuration Cache is enabled project-wide,
 and CI keeps compatibility strict with `--configuration-cache-problems=fail`.
-Cross-run Configuration Cache storage uses the optional repository secret
-`GRADLE_ENCRYPTION_KEY` supported by `setup-gradle`. Without it, builds still work
-but encrypted configuration entries are not persisted across runners. Fork PRs
-have no secret and remain cache read-only. Supplying the secret is an administrator
-operation; workflow configuration alone is not evidence of cache reuse.
+`GRADLE_ENCRYPTION_KEY` is necessary for supported encrypted Configuration Cache
+persistence, but setting it does not establish persistence or reuse. In pinned
+`setup-gradle` v6.4.0, saving Enhanced project-cache entries has separate opt-in
+and Develocity-trial eligibility checks before encryption-key/Gradle-version checks;
+see its [project-cache contract](https://github.com/gradle/actions/blob/3f5f9adaf7d9fecd50b5935e54106014257a94e6/sources/vendor/gradle-actions-caching/index.d.ts#L58)
+and [cache-service implementation](https://github.com/gradle/actions/blob/3f5f9adaf7d9fecd50b5935e54106014257a94e6/sources/src/cache-service.ts#L33).
+This repository does not configure project-cache opt-in or a Develocity trial.
+The [Basic provider](https://github.com/gradle/actions/blob/3f5f9adaf7d9fecd50b5935e54106014257a94e6/sources/src/cache-service-basic.ts#L156)
+only persists supported Gradle User Home state, not the project's `.gradle`
+Configuration Cache. Local Configuration Cache storage is distinct from restoring
+and reusing it on another runner. Verify restore/reuse logs and record run
+identities before crediting cross-run Configuration Cache reuse. A blank project-cache report does not establish a particular
+licensing or support status. Changing project-cache eligibility or licensing is a separate decision;
+do not enable it solely to obtain a cache hit. Fork PRs have no secret and remain cache
+read-only; do not print key values when checking configuration.
 Lint runs independently with the normal native-enabled Android model so it validates
 production-equivalent configuration. Screenshot-only validation may use
 `-PjlmodNativeBuild=false` because it does not consume native outputs and can avoid

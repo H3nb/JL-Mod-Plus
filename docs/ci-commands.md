@@ -272,10 +272,17 @@ identical source/task/ABI/toolchain/runner/signing configurations with recorded
 cold/warm state, multiple observations and individual values plus median/range.
 Three runs do not establish p95. Focused timing JSON measures its invocation only;
 unknown phases remain null. Verify cross-run Configuration Cache **reuse**, not
-merely storage, with encryption configured without printing secrets. Investigate
-native-task inputs, cache scope/availability and eviction before adding caches.
-Repeated comparable GitHub runs are still needed before any efficiency claim or
-job/cache topology change. Keep the simpler configuration when experiments show
+merely local storage. An encryption key is necessary but not sufficient: the
+pinned Enhanced provider also gates saving project-cache entries on separate
+opt-in and Develocity-trial eligibility; the Basic provider caches Gradle User Home only.
+The repo configures neither project-cache opt-in nor a trial. Do not infer
+cross-run reuse from an encryption input or a local "entry stored" message.
+See the [pinned implementation and limits](development.md#ci-performance).
+Treat blank support output as unknown, preserve the current licensing/configuration
+boundary, and never print encryption secrets. Investigate native-task inputs,
+cache scope/availability and eviction before adding caches.
+Require repeated comparable observations before claiming efficiency gains or
+changing job/cache topology. Keep the simpler configuration when experiments show
 no benefit. Never delete shared caches for experiments.
 
 These commands add no required checks, reviewers, merge queue or protection rules.
