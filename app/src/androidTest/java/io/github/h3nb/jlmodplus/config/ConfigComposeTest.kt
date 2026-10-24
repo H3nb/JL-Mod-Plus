@@ -131,6 +131,9 @@ class ConfigComposeTest {
         composeRule.onNodeWithContentDescription("Start").assertExists()
         composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
 
+        scrollTo(uiString(R.string.config_maintenance))
+        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertExists()
+
         composeRule.onNodeWithContentDescription("Display").performClick()
         composeRule.onNodeWithText(uiString(R.string.config_display_appearance)).assertExists()
         scrollTo(uiString(R.string.config_display_text))
@@ -151,8 +154,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithContentDescription("System").performClick()
         scrollTo(uiString(R.string.PREF_SYS_PROPS))
         composeRule.onNodeWithText(uiString(R.string.PREF_SYS_PROPS)).assertExists()
-        scrollTo(uiString(R.string.config_maintenance))
-        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertDoesNotExist()
         composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
     }
 
