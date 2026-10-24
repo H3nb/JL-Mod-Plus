@@ -291,6 +291,7 @@ internal fun BulkInstallSurface(
                         is BulkInstallViewModel.State.Review -> {
                             when {
                                 showSingle && state.plan.items.isEmpty() -> EmptySingleReviewContent(
+                                    plan = state.plan,
                                     onClose = onClose,
                                 )
                                 showSingle && state.plan.items.size == 1 -> SingleReviewContent(
@@ -447,9 +448,16 @@ private fun SingleReviewContent(
 }
 
 @Composable
-private fun EmptySingleReviewContent(onClose: () -> Unit) {
+private fun EmptySingleReviewContent(plan: BulkInstallPlan, onClose: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.bulk_install_empty))
+        if (plan.warnings.isNotEmpty()) {
+            Text(
+                plan.warnings.joinToString("\n"),
+                color = MaterialTheme.colorScheme.tertiary,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(onClick = onClose) { Text(stringResource(R.string.close)) }
         }
