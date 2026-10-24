@@ -146,6 +146,9 @@ object BulkInstallPlanner {
                 vendor = descriptor.vendor,
                 version = descriptor.version,
                 installedVersion = installer.currentVersion,
+                reviewedTarget = candidates.singleOrNull()?.let {
+                    ReviewedInstallTarget(it.id, it.storageKey)
+                },
                 descriptorAttributes = HashMap(descriptor.attrs),
                 sourceFingerprint = sourceFingerprint(unit.sourceFiles, digestCache, isActive),
                 jarFingerprint = jar?.takeIf(File::isFile)?.let { hashFile(it, digestCache, isActive) },
