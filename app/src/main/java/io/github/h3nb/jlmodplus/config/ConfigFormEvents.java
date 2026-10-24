@@ -104,6 +104,8 @@ public interface ConfigFormEvents {
 	default void onGamepadHelp() {
 	}
 
+	enum AssetKind { SKIN, SOUNDBANK }
+
 	enum PresetApplyScope {
 		SETTINGS,
 		KEYBOARD_LAYOUT,

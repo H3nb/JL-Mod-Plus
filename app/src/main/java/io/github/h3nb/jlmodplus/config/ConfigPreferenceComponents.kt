@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -33,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -197,8 +201,13 @@ internal fun ConfigChoicePreference(
     enabled: Boolean = true,
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
+    onImport: (() -> Unit)? = null,
+    onRename: ((String, String) -> Unit)? = null,
+    onDelete: ((String) -> Unit)? = null,
 ) {
     var dialogVisible by remember(selected, options) { mutableStateOf(false) }
+    var renameFile by remember { mutableStateOf<String?>(null) }
+    var deleteFile by remember { mutableStateOf<String?>(null) }
     ConfigValuePreference(
         title = title,
         description = description,
@@ -219,6 +228,68 @@ internal fun ConfigChoicePreference(
             onSelected = { index ->
                 dialogVisible = false
                 onSelected(index)
+            },
+            onImport = onImport?.let { action ->
+                { dialogVisible = false; action() }
+            },
+            onRename = onRename?.let {
+                { name: String -> dialogVisible = false; renameFile = name }
+            },
+            onDelete = onDelete?.let {
+                { name: String -> dialogVisible = false; deleteFile = name }
+            },
+        )
+    }
+    renameFile?.let { file ->
+        val extension = file.substringAfterLast('.', "")
+        val originalStem = if (extension.isEmpty()) file else file.dropLast(extension.length + 1)
+        var draft by remember(file) { mutableStateOf(originalStem) }
+        AlertDialog(
+            onDismissRequest = { renameFile = null },
+            title = { Text(stringResource(R.string.config_asset_rename)) },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = draft,
+                        onValueChange = { draft = it },
+                        label = { Text(stringResource(R.string.config_asset_name)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (extension.isNotEmpty()) Text(".$extension")
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = draft.isNotBlank() && draft.trim() != originalStem,
+                    onClick = {
+                        renameFile = null
+                        onRename?.invoke(file, draft)
+                    },
+                ) { Text(stringResource(R.string.save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { renameFile = null }) {
+                    Text(stringResource(R.string.CANCEL_CMD))
+                }
+            },
+        )
+    }
+    deleteFile?.let { file ->
+        AlertDialog(
+            onDismissRequest = { deleteFile = null },
+            title = { Text(stringResource(R.string.config_asset_delete)) },
+            text = { Text(stringResource(R.string.config_asset_delete_confirmation, file)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteFile = null
+                    onDelete?.invoke(file)
+                }) { Text(stringResource(R.string.config_asset_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteFile = null }) {
+                    Text(stringResource(R.string.CANCEL_CMD))
+                }
             },
         )
     }

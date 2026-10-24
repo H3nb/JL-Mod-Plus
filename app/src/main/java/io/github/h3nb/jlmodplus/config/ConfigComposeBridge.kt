@@ -60,6 +60,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -566,7 +568,7 @@ private fun ConfigDestinationContent(
                 FontSection(form, state, onFormChanged)
             }
             ConfigDestination.Media -> {
-                AudioSection(form, state, onFormChanged)
+                AudioSection(form, state, onFormChanged, events)
                 CameraSection(form, onFormChanged)
             }
             ConfigDestination.Controls -> InputSection(
@@ -865,6 +867,9 @@ private fun ScreenSection(
                     ).build(),
                 )
             },
+            onImport = { events.onImportAsset(ConfigFormEvents.AssetKind.SKIN) },
+            onRename = { old, stem -> events.onRenameAsset(ConfigFormEvents.AssetKind.SKIN, old, stem) },
+            onDelete = { name -> events.onDeleteAsset(ConfigFormEvents.AssetKind.SKIN, name) },
         )
         val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
         ConfigChoicePreference(
@@ -1976,6 +1981,7 @@ private fun AudioSection(
     form: ConfigFormState,
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
+    events: ConfigFormEvents,
 ) {
     ConfigSection(title = stringResource(R.string.pref_audio_title)) {
         val selected = state.soundBanks.indexOfFirst { option ->
@@ -1993,6 +1999,9 @@ private fun AudioSection(
                         .build(),
                 )
             },
+            onImport = { events.onImportAsset(ConfigFormEvents.AssetKind.SOUNDBANK) },
+            onRename = { old, stem -> events.onRenameAsset(ConfigFormEvents.AssetKind.SOUNDBANK, old, stem) },
+            onDelete = { name -> events.onDeleteAsset(ConfigFormEvents.AssetKind.SOUNDBANK, name) },
         )
     }
 }
@@ -2633,6 +2642,9 @@ internal fun ConfigChoiceDialog(
     options: List<String>,
     onDismissRequest: () -> Unit,
     onSelected: (Int) -> Unit,
+    onImport: (() -> Unit)? = null,
+    onRename: ((String) -> Unit)? = null,
+    onDelete: ((String) -> Unit)? = null,
 ) {
     val maxListHeight = adaptiveDialogLayout().maxHeight
     AlertDialog(
@@ -2677,6 +2689,42 @@ internal fun ConfigChoiceDialog(
                                         onClick = null,
                                     )
                                 },
+                                trailingContent = {
+                                    if (index > 0 && (onRename != null || onDelete != null)) {
+                                        var expanded by remember(option) { mutableStateOf(false) }
+                                        Box {
+                                            IconButton(onClick = { expanded = true }) {
+                                                Icon(
+                                                    painterResource(R.drawable.ic_more_vert),
+                                                    contentDescription = stringResource(R.string.config_asset_actions),
+                                                )
+                                            }
+                                            DropdownMenu(
+                                                expanded = expanded,
+                                                onDismissRequest = { expanded = false },
+                                            ) {
+                                                if (onRename != null) {
+                                                    DropdownMenuItem(
+                                                        text = { Text(stringResource(R.string.config_asset_rename)) },
+                                                        onClick = {
+                                                            expanded = false
+                                                            onRename(option)
+                                                        },
+                                                    )
+                                                }
+                                                if (onDelete != null) {
+                                                    DropdownMenuItem(
+                                                        text = { Text(stringResource(R.string.config_asset_delete)) },
+                                                        onClick = {
+                                                            expanded = false
+                                                            onDelete(option)
+                                                        },
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .selectable(
@@ -2690,6 +2738,16 @@ internal fun ConfigChoiceDialog(
                     ScrollableContentHint(
                         visible = canScrollForward,
                         modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
+                if (onImport != null) {
+                    TextButton(onClick = onImport) {
+                        Text(stringResource(R.string.config_asset_add))
+                    }
+                    Text(
+                        text = stringResource(R.string.config_asset_copy_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }

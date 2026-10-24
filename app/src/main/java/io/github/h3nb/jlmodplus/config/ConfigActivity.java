@@ -32,6 +32,8 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
 
 import android.content.Intent;
+import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -47,6 +49,7 @@ import android.view.MotionEvent;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,6 +58,7 @@ import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,6 +80,10 @@ import javax.microedition.util.ContextHolder;
 
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
+import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
+import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_LAST_PATH;
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.config.model.Size;
 import io.github.h3nb.jlmodplus.settings.KeyMapperActivity;
@@ -113,6 +121,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private static final String STATE_PROFILE_EDIT_MODE = "profile_edit_mode";
 	private static final String STATE_PROFILE_EDIT_TOKEN = "profile_edit_token";
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
+	private static final String STATE_PENDING_ASSET = "pending_asset_import";
+	private static final String STATE_SKIP_ASSET_RESUME = "skip_asset_picker_reload";
 
 	private final ArrayList<Size> screenPresets = new ArrayList<>();
 	private final ArrayList<Size> removableScreenPresets = new ArrayList<>();
@@ -167,6 +177,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Nullable private String permissionFingerprint;
 	private boolean fileAccessBusy;
 	private final ExecutorService profileMetadataExecutor = Executors.newSingleThreadExecutor();
+	private final ExecutorService assetFileExecutor = Executors.newSingleThreadExecutor();
+	@Nullable private ConfigFormEvents.AssetKind pendingAssetImport;
+	private boolean skipNextAssetPickerReload;
+	private final ActivityResultLauncher<Intent> assetPickerLauncher = registerForActivityResult(
+			new FilePickerResultContract(), this::onAssetPicked);
 	@Nullable private String profileOrigin;
 	@Nullable private PresetLinkage presetLinkage;
 	@Nullable private GamepadCalibrationSession gamepadCalibration;
@@ -233,6 +248,26 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onEncodingSelected(@NonNull String charset) {
 			applyCharset(charset);
+		}
+
+		@Override
+		public void onImportAsset(AssetKind kind) {
+			openAssetPicker(kind);
+		}
+
+		@Override
+		public void onRenameAsset(AssetKind kind, String oldName, String newStem) {
+			runAssetAction(kind, oldName, (root, assetKind) ->
+					new AssetOutcome(ConfigAssetFiles.rename(root, assetKind, oldName, newStem),
+							R.string.config_asset_renamed));
+		}
+
+		@Override
+		public void onDeleteAsset(AssetKind kind, String name) {
+			runAssetAction(kind, name, (root, assetKind) -> {
+				ConfigAssetFiles.delete(root, assetKind, name);
+				return new AssetOutcome(null, R.string.config_asset_deleted, name);
+			});
 		}
 
 		@Override
@@ -332,6 +367,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		String action = intent.getAction();
 		isProfile = ACTION_EDIT_PROFILE.equals(action);
 		needShow = isProfile || ACTION_EDIT.equals(action);
+		if (savedInstanceState != null) {
+			String pending = savedInstanceState.getString(STATE_PENDING_ASSET);
+			if (pending != null) {
+				try { pendingAssetImport = ConfigFormEvents.AssetKind.valueOf(pending); }
+				catch (IllegalArgumentException ignored) { pendingAssetImport = null; }
+			}
+			skipNextAssetPickerReload = savedInstanceState.getBoolean(STATE_SKIP_ASSET_RESUME);
+		}
 		Uri intentData = intent.getData();
 		String path = intentData != null && "file".equals(intentData.getScheme())
 				? intentData.getPath() : intent.getDataString();
@@ -1132,8 +1175,127 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				outState.putString(STATE_PROFILE_EDIT_TOKEN, profileEditSession.token);
 			}
 		}
+		if (pendingAssetImport != null) outState.putString(STATE_PENDING_ASSET, pendingAssetImport.name());
+		outState.putBoolean(STATE_SKIP_ASSET_RESUME, skipNextAssetPickerReload);
 		super.onSaveInstanceState(outState);
 	}
+
+
+    private static ConfigAssetFiles.Kind fileKind(ConfigFormEvents.AssetKind kind) {
+        return kind == ConfigFormEvents.AssetKind.SKIN
+                ? ConfigAssetFiles.Kind.SKIN : ConfigAssetFiles.Kind.SOUNDBANK;
+    }
+
+    private void openAssetPicker(ConfigFormEvents.AssetKind kind) {
+        if (workDir == null || pendingAssetImport != null || operationRunning) return;
+        pendingAssetImport = kind;
+        skipNextAssetPickerReload = true;
+        Intent intent = new Intent(this, FilteredFilePickerActivity.class);
+        intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
+        intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false);
+        intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, true);
+        intent.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
+        intent.putExtra(FilePickerContract.EXTRA_TITLE,
+                getString(kind == ConfigFormEvents.AssetKind.SKIN
+                        ? R.string.pref_skin_title : R.string.pref_soundbank_title));
+        intent.putStringArrayListExtra(FilePickerContract.EXTRA_ALLOWED_EXTENSIONS,
+                new ArrayList<>(Arrays.asList(fileKind(kind).extensions)));
+        String start = hostPreferences.getString(PREF_LAST_PATH, null);
+        if (start == null) start = Environment.getExternalStorageDirectory().getAbsolutePath();
+        intent.putExtra(FilePickerContract.EXTRA_START_PATH, start);
+        assetPickerLauncher.launch(intent);
+    }
+
+    private void onAssetPicked(List<Uri> uris) {
+        ConfigFormEvents.AssetKind kind = pendingAssetImport;
+        pendingAssetImport = null;
+        if (kind == null || uris.isEmpty() || workDir == null) return;
+        Uri uri = uris.get(0);
+        if (uri.getPath() == null || (uri.getScheme() != null && !"file".equals(uri.getScheme()))) {
+            ThemedToast.show(this, R.string.config_asset_invalid, Toast.LENGTH_SHORT);
+            return;
+        }
+        File source = new File(uri.getPath());
+        hostPreferences.edit().putString(PREF_LAST_PATH, source.getParent()).apply();
+        runAssetAction(kind, null, (root, assetKind) -> {
+            if (assetKind == ConfigAssetFiles.Kind.SKIN) {
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(source.getPath(), bounds);
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                    throw new IOException("Invalid asset format");
+                }
+            }
+            ConfigAssetFiles.Imported result = ConfigAssetFiles.importFile(root, assetKind, source);
+            return new AssetOutcome(result.name, result.copied
+                    ? R.string.config_asset_imported : R.string.config_asset_reused);
+        });
+    }
+
+    private interface AssetAction {
+        AssetOutcome execute(File root, ConfigAssetFiles.Kind kind) throws IOException;
+    }
+
+    private static final class AssetOutcome {
+        @Nullable final String selectedName;
+        final int message;
+        final String displayName;
+
+        AssetOutcome(@Nullable String name, int message) {
+            this(name, message, name);
+        }
+
+        AssetOutcome(@Nullable String selectedName, int message, String displayName) {
+            this.selectedName = selectedName;
+            this.message = message;
+            this.displayName = displayName;
+        }
+    }
+
+    private void runAssetAction(ConfigFormEvents.AssetKind kind, @Nullable String oldName,
+                                AssetAction action) {
+        if (workDir == null || currentForm == null) return;
+        File root = new File(workDir);
+        assetFileExecutor.execute(() -> {
+            try {
+                AssetOutcome result = action.execute(root, fileKind(kind));
+                runOnUiThread(() -> {
+                    if (isDestroyed() || isFinishing() || currentForm == null) return;
+                    initSkinOptions();
+                    initSoundBankOptions();
+                    String selected = kind == ConfigFormEvents.AssetKind.SKIN
+                            ? currentForm.screenBackgroundImage : currentForm.soundBank;
+                    if (oldName == null || Objects.equals(oldName, selected)) {
+                        ConfigFormState.Builder builder = currentForm.toBuilder();
+                        if (kind == ConfigFormEvents.AssetKind.SKIN) {
+                            builder.screenBackgroundImage(result.selectedName);
+                        } else {
+                            builder.soundBank(result.selectedName);
+                        }
+                        updateForm(builder.build());
+                    } else if (composeController != null) {
+                        composeController.update(createUiState());
+                    }
+                    ThemedToast.show(this, getString(result.message, result.displayName),
+                            Toast.LENGTH_SHORT);
+                });
+            } catch (IOException | RuntimeException failure) {
+                Log.w(TAG, "Asset file action failed", failure);
+                runOnUiThread(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    String message = failure.getMessage();
+                    int resource = "Asset name already used".equals(message)
+                            ? R.string.config_asset_name_conflict
+                            : ("Unsupported asset".equals(message)
+                                    || "Invalid asset file".equals(message)
+                                    || "Invalid asset format".equals(message))
+                            ? R.string.config_asset_invalid
+                            : R.string.config_asset_operation_failed;
+                    ThemedToast.show(this, resource, Toast.LENGTH_SHORT);
+                });
+            }
+        });
+    }
 
 	private void initSkinOptions() {
 		skinOptions.clear();
@@ -1143,7 +1305,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			dir.mkdirs();
 		}
 		skinOptions.add(getString(R.string.pref_skin_not_set));
-		String[] files = dir.list((d, n) -> new File(d, n).isFile());
+		String[] files = dir.list((d, n) -> !n.startsWith(".asset-import-") && new File(d, n).isFile());
 		if (files != null) {
 			Arrays.sort(files, (o1, o2) -> {
 				int res = o1.compareToIgnoreCase(o2);
@@ -1161,7 +1323,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			dir.mkdirs();
 		}
 		soundBankOptions.add(getString(R.string.default_label, "Android"));
-		String[] files = dir.list((d, n) -> new File(d, n).isFile());
+		String[] files = dir.list((d, n) -> !n.startsWith(".asset-import-") && new File(d, n).isFile());
 		if (files != null) {
 			Arrays.sort(files, (o1, o2) -> {
 				int res = o1.compareToIgnoreCase(o2);
@@ -1372,7 +1534,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		super.onResume();
 		refreshFileAccess();
 		if (needShow) {
-			loadParams(true);
+			if (skipNextAssetPickerReload) skipNextAssetPickerReload = false;
+			else loadParams(true);
 			if (isProfile && profileEditorResumeObserved) {
 				// A return from a native editor may have changed the isolated draft. Keeping the
 				// editor dirty is safer than committing that writer's result implicitly.
@@ -1390,6 +1553,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		getWindow().getDecorView().removeCallbacks(gamepadCalibrationTicker);
 		profileMetadataExecutor.shutdownNow();
+		assetFileExecutor.shutdownNow();
 		if (isProfile && !isChangingConfigurations()) {
 			ProfilesManager.releasePresetEditSession(profileEditSession);
 			if (profileEditDraftDir != null) FileUtils.deleteDirectory(profileEditDraftDir);
