@@ -4,7 +4,6 @@
  */
 package io.github.h3nb.jlmodplus.config
 
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
 import android.view.WindowManager
@@ -54,8 +53,6 @@ class TemporaryCutoutQualificationTest {
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
                 activity.window.attributes = attributes
             }
-            activity.requestedOrientation = if (expectedOrientation == Configuration.ORIENTATION_PORTRAIT)
-                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             ViewCompat.requestApplyInsets(activity.window.decorView)
         }
         rule.waitUntil(30_000) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p ci-artifacts/pr193-cutout
-trap 'adb logcat -d -v threadtime > ci-artifacts/pr193-cutout/logcat.txt 2>&1 || true; adb shell cmd overlay disable --user 0 com.android.internal.display.cutout.emulation.tall >/dev/null 2>&1 || true; adb shell cmd window set-user-rotation free >/dev/null 2>&1 || true' EXIT
+trap 'adb logcat -d -v threadtime > ci-artifacts/pr193-cutout/logcat.txt 2>&1 || true; adb shell cmd overlay disable --user 0 com.android.internal.display.cutout.emulation.tall >/dev/null 2>&1 || true; adb shell cmd window user-rotation free >/dev/null 2>&1 || true' EXIT
 ./gradlew --daemon --stacktrace --profile -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
 mapfile -t apks < <(find app/build/outputs/apk/androidTest -type f -name '*.apk' -print | sort)
 [[ "${#apks[@]}" -eq 1 ]] || { printf 'Expected one Android test APK, got %s\\n' "${#apks[@]}" >&2; exit 1; }
@@ -22,7 +22,13 @@ run_case() {
     local label="$1" expected="$2" orientation="$3"
     echo "Running real-window cutout test: $label ($expected, $orientation)"
     local log="ci-artifacts/pr193-cutout/${label}.txt"
-    # On a real emulator, rotating the Activity exercises display configuration and inset dispatch.
+    # Set physical display rotation *before* launching the Activity, avoiding test-host recreation.
+    if [[ "$orientation" == "landscape" ]]; then
+        adb shell cmd window user-rotation lock 1
+    else
+        adb shell cmd window user-rotation lock 0
+    fi
+    sleep 3
     if ! adb shell am instrument -w -r \
         -e class "$selector" \
         -e cutoutMode "$expected" \
