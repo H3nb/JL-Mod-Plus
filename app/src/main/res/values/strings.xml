@@ -713,6 +713,9 @@
     <string name="bulk_install_source">Source: %1$s</string>
     <string name="bulk_install_action_separate_copy">Install as separate copy</string>
     <string name="bulk_install_action_jar_only">Install JAR only</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Review JAR only</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Only the JAR will be installed. Review its app name, version, and installed-app status before continuing.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">If this app is running, installing will stop it before replacing its files. Unsaved progress may be lost.</string>
     <string name="bulk_install_status_new">New</string>
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>

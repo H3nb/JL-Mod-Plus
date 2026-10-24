@@ -77,6 +77,20 @@ data class BulkSourceUnit(
     val diagnosticDetail: String? = null,
 )
 
+/** Exact Library row reviewed for an explicit single-source replacement. */
+data class ReviewedInstallTarget(val id: Long, val storageKey: String) {
+    fun matches(id: Long, storageKey: String) = this.id == id && this.storageKey == storageKey
+}
+
+internal fun BulkInstallStatus.replacesInstalledApp() = when (this) {
+    BulkInstallStatus.Update,
+    BulkInstallStatus.Downgrade,
+    BulkInstallStatus.AlreadyInstalled,
+    BulkInstallStatus.ReinstallOrVariant,
+    -> true
+    else -> false
+}
+
 data class BulkInstallItem(
     val id: String,
     val unit: BulkSourceUnit,
@@ -84,6 +98,7 @@ data class BulkInstallItem(
     val vendor: String,
     val version: String,
     val installedVersion: String? = null,
+    val reviewedTarget: ReviewedInstallTarget? = null,
     val descriptorAttributes: Map<String, String> = emptyMap(),
     val sourceFingerprint: String = "",
     val jarFingerprint: String? = null,
@@ -135,6 +150,25 @@ data class BulkInstallPlan(
 ) {
     val selectedCount: Int
         get() = items.count { it.selected && it.action != BulkInstallAction.Skip }
+}
+
+
+/**
+ * One discovered install unit is a confirmation, not a batch selection.
+ * Keep the batch planner's preflight classification, but require an explicit tap for
+ * reinstalls, downgrades, mismatched JAD/JAR pairs, and ambiguous installed matches.
+ */
+internal fun singleInstallAction(item: BulkInstallItem): BulkInstallAction? {
+    if (item.unit.reinstallAppId != null) return null
+    if (item.status.replacesInstalledApp() && item.reviewedTarget == null) return null
+    if (item.status == BulkInstallStatus.AlreadyInstalled) return BulkInstallAction.Reinstall
+    if (!item.installable) return null
+    return when (item.status) {
+        BulkInstallStatus.AmbiguousInstalledMatch -> BulkInstallAction.InstallSeparateCopy
+        BulkInstallStatus.JadJarMismatch ->
+            if (item.unit.jarFile != null) BulkInstallAction.InstallJarOnly else null
+        else -> BulkInstallAction.Install
+    }
 }
 
 enum class BulkInstallResultKind {

@@ -136,6 +136,10 @@ class BulkInstallerDialog : DialogFragment() {
                     val state by bulkViewModel.state.collectAsState()
                     BulkInstallSurface(
                         state = state,
+                        explicitSourceSelection = arguments?.getStringArrayList(ARG_SOURCES) != null,
+                        singlePresentation = bulkViewModel.useSingleInstallPresentation,
+                        onInstallSingle = { bulkViewModel.executeSingle(libraryViewModel) },
+                        onReviewJarOnly = { bulkViewModel.reviewJarOnly(libraryViewModel) },
                         onToggle = bulkViewModel::toggle,
                         onRecommended = bulkViewModel::selectRecommended,
                         onClear = bulkViewModel::clearSelection,
@@ -227,6 +231,10 @@ internal fun BulkInstallSurface(
     onRetry: () -> Unit,
     onCancel: () -> Unit,
     onClose: () -> Unit,
+    explicitSourceSelection: Boolean = false,
+    singlePresentation: Boolean = false,
+    onInstallSingle: () -> Unit = onInstall,
+    onReviewJarOnly: () -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -234,6 +242,7 @@ internal fun BulkInstallSurface(
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentAlignment = Alignment.Center,
     ) {
+        val showSingle = explicitSourceSelection && singlePresentation
         val compactWidth = maxWidth < 360.dp
         val compactHeight = maxHeight < 480.dp
         val compactHeader = compactWidth || compactHeight
@@ -258,14 +267,18 @@ internal fun BulkInstallSurface(
                         ),
                     verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
                 ) {
-                    val titleRes = when (state) {
-                        is BulkInstallViewModel.State.Finished -> {
+                    val titleRes = when {
+                        showSingle || (explicitSourceSelection &&
+                            (state is BulkInstallViewModel.State.Idle ||
+                                state is BulkInstallViewModel.State.Planning ||
+                                state is BulkInstallViewModel.State.Error)) ->
+                            R.string.installer_title
+                        state is BulkInstallViewModel.State.Finished ->
                             if (state.cancelled || state.fatalError != null) {
                                 R.string.bulk_install_cancelled
                             } else {
                                 R.string.bulk_install_complete
                             }
-                        }
                         else -> R.string.bulk_install_title
                     }
                     Text(
@@ -277,19 +290,35 @@ internal fun BulkInstallSurface(
                     when (state) {
                         BulkInstallViewModel.State.Idle -> PlanningContent(onClose = onClose)
                         is BulkInstallViewModel.State.Planning -> PlanningContent(state.sourceLabel, onClose)
-                        is BulkInstallViewModel.State.Review -> ReviewContent(
-                            plan = state.plan,
-                            onToggle = onToggle,
-                            onRecommended = onRecommended,
-                            onClear = onClear,
-                            onInstall = onInstall,
-                            onClose = onClose,
-                            compactHeader = compactHeader,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
+                        is BulkInstallViewModel.State.Review -> {
+                            when {
+                                showSingle && state.plan.items.isEmpty() -> EmptySingleReviewContent(
+                                    plan = state.plan,
+                                    onClose = onClose,
+                                )
+                                showSingle && state.plan.items.size == 1 -> SingleReviewContent(
+                                    plan = state.plan,
+                                    onInstall = onInstallSingle,
+                                    onReviewJarOnly = onReviewJarOnly,
+                                    onClose = onClose,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                                else -> ReviewContent(
+                                    plan = state.plan,
+                                    onToggle = onToggle,
+                                    onRecommended = onRecommended,
+                                    onClear = onClear,
+                                    onInstall = onInstall,
+                                    onClose = onClose,
+                                    compactHeader = compactHeader,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                            }
+                        }
                         is BulkInstallViewModel.State.Running -> RunningContent(
                             state = state,
                             onCancel = onCancel,
+                            single = showSingle,
                             modifier = Modifier.weight(1f, fill = false),
                         )
                         is BulkInstallViewModel.State.Finished -> FinishedContent(
@@ -297,6 +326,7 @@ internal fun BulkInstallSurface(
                             onClose = onClose,
                             onRetry = onRetry,
                             compactHeight = compactHeight,
+                            single = showSingle,
                             modifier = Modifier.weight(1f, fill = false),
                         )
                         is BulkInstallViewModel.State.Error -> ErrorContent(
@@ -335,6 +365,126 @@ private fun PlanningContent(label: String? = null, onClose: () -> Unit) {
 }
 
 private enum class ReviewFilter { All, Selected, Attention }
+
+
+/** A single discovered MIDlet needs one confirmation, not batch filters or checkboxes. */
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun SingleReviewContent(
+    plan: BulkInstallPlan,
+    onInstall: () -> Unit,
+    onReviewJarOnly: () -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val item = plan.items.single()
+    val action = singleInstallAction(item)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(item.name, style = MaterialTheme.typography.titleMedium)
+            val details = listOf(item.vendor, item.version).filter(String::isNotBlank)
+            if (details.isNotEmpty()) {
+                Text(
+                    details.joinToString(" · "),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Text(statusLabel(item), style = MaterialTheme.typography.labelLarge)
+            if (item.status == BulkInstallStatus.AlreadyInstalled ||
+                item.status == BulkInstallStatus.ReinstallOrVariant) {
+                Text(stringResource(R.string.reinstall))
+            }
+            if (item.status == BulkInstallStatus.Update ||
+                item.status == BulkInstallStatus.Downgrade) {
+                item.installedVersion?.let { current ->
+                    Text(stringResource(
+                        if (item.status == BulkInstallStatus.Update) {
+                            R.string.reinstall_newest
+                        } else {
+                            R.string.reinstall_older
+                        },
+                        item.version,
+                        current,
+                    ))
+                }
+            }
+            if (item.status.replacesInstalledApp()) {
+                Text(
+                    stringResource(R.string.installer_existing_data_preserved),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    stringResource(R.string.single_install_running_replacement_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            item.effectiveReviewReason?.let { reason ->
+                Text(
+                    bulkInstallReviewReasonText(LocalResources.current, reason),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (plan.warnings.isNotEmpty()) {
+                Text(
+                    plan.warnings.joinToString("\n"),
+                    color = MaterialTheme.colorScheme.tertiary,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        HorizontalDivider()
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
+            if (action != null) {
+                Button(onClick = if (action == BulkInstallAction.InstallJarOnly) {
+                    onReviewJarOnly
+                } else {
+                    onInstall
+                }) {
+                    Text(stringResource(when (action) {
+                        BulkInstallAction.Reinstall -> R.string.action_reinstall
+                        BulkInstallAction.InstallSeparateCopy -> R.string.installer_separate_copy
+                        BulkInstallAction.InstallJarOnly -> R.string.single_install_review_jar_only
+                        else -> R.string.install
+                    }))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptySingleReviewContent(plan: BulkInstallPlan, onClose: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.bulk_install_empty))
+        if (plan.warnings.isNotEmpty()) {
+            Text(
+                plan.warnings.joinToString("\n"),
+                color = MaterialTheme.colorScheme.tertiary,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Button(onClick = onClose) { Text(stringResource(R.string.close)) }
+        }
+    }
+}
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -621,6 +771,7 @@ private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
 private fun RunningContent(
     state: BulkInstallViewModel.State.Running,
     onCancel: () -> Unit,
+    single: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val progress = if (state.total == 0) 0f else state.completed.toFloat() / state.total.toFloat()
@@ -642,7 +793,7 @@ private fun RunningContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(progressLabel)
+            if (!single) Text(progressLabel)
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth().semantics { contentDescription = progressLabel },
@@ -653,7 +804,7 @@ private fun RunningContent(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            ResultCounters(state.results)
+            if (!single) ResultCounters(state.results)
             state.stageLabel?.let { Text(stringResource(it)) }
             if (state.cancelRequested) {
                 Text(
@@ -676,6 +827,7 @@ private fun FinishedContent(
     onClose: () -> Unit,
     onRetry: () -> Unit,
     compactHeight: Boolean,
+    single: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -714,7 +866,7 @@ private fun FinishedContent(
                         }
                     }
                 }
-                item { ResultCounters(state.results) }
+                if (!single) item { ResultCounters(state.results) }
                 items(state.results, key = { it.itemId }) { result ->
                     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Text(result.name, style = MaterialTheme.typography.titleSmall)
