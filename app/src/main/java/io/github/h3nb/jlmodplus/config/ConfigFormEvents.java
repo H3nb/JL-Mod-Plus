@@ -53,6 +53,14 @@ public interface ConfigFormEvents {
 
     default void onFilePermissionChanged(boolean write, int decision) {}
 
+    /** Shared workdir asset operations; the host owns I/O and result handling. */
+    default void onImportAsset(@NonNull AssetKind kind) {}
+
+    default void onRenameAsset(@NonNull AssetKind kind,
+                              @NonNull String oldName, @NonNull String newStem) {}
+
+    default void onDeleteAsset(@NonNull AssetKind kind, @NonNull String name) {}
+
     /** Copies a user-selected legacy Siemens file within this installation only. */
     default void onImportLegacyPrivateFile(@NonNull String relativePath) {}
 
