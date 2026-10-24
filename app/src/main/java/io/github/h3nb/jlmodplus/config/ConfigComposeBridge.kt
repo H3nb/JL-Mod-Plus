@@ -104,6 +104,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.platform.testTag
@@ -601,8 +602,9 @@ private fun ConfigDestinationContent(
 @Composable
 private fun deviceHasDisplayCutout(density: androidx.compose.ui.unit.Density): Boolean {
     val cutout = WindowInsets.displayCutout
-    val hasSafeInset = cutout.getLeft(density) > 0 || cutout.getTop(density) > 0 ||
-        cutout.getRight(density) > 0 || cutout.getBottom(density) > 0
+    val layoutDirection = LocalLayoutDirection.current
+    val hasSafeInset = cutout.getLeft(density, layoutDirection) > 0 || cutout.getTop(density) > 0 ||
+        cutout.getRight(density, layoutDirection) > 0 || cutout.getBottom(density) > 0
     val physical = ViewCompat.getRootWindowInsets(LocalView.current)?.displayCutout
     return hasSafeInset || physical?.boundingRects?.any { !it.isEmpty } == true
 }
