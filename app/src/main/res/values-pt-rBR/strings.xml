@@ -1096,8 +1096,8 @@
         <item quantity="other">%1$d arquivos de classe Java foram ignorados porque não foi possível lê-los. Os recursos que os usam podem não funcionar.</item>
         <item quantity="many">%1$d de arquivos de classe Java foram ignorados porque não foi possível lê-los. Os recursos que os usam podem não funcionar.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Expandir para a área do recorte da tela</string>
-    <string name="pref_midlet_display_cutout_summary">Permite que a exibição do MIDlet use a área ao redor do recorte da tela. Parte da exibição pode ficar encoberta.</string>
+    <string name="config_avoid_camera_cutout_title">Evitar a área da câmera ou do recorte</string>
+    <string name="config_avoid_camera_cutout_summary">Mantém o jogo fora da área da câmera frontal ou do recorte da tela. Ative se os controles ficarem cobertos.</string>
     <string name="pref_runtime_fullscreen_title">Tela cheia</string>
     <string name="pref_runtime_fullscreen_summary">Oculta a barra de ferramentas durante o jogo. Aplica-se a todos os MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Não foi possível acessar a configuração de tela cheia. Tente novamente.</string>

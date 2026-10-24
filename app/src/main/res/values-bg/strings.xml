@@ -1063,8 +1063,8 @@
         <item quantity="one">Избран е %1$d</item>
         <item quantity="other">Избрани са %1$d</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Разширяване в зоната на изреза на дисплея</string>
-    <string name="pref_midlet_display_cutout_summary">Позволява на изгледа на MIDlet да използва зоната около изреза на дисплея. Част от изгледа може да бъде закрита.</string>
+    <string name="config_avoid_camera_cutout_title">Избягване на зоната на камерата или изреза</string>
+    <string name="config_avoid_camera_cutout_summary">Дръжте играта далеч от предната камера или изреза на екрана. Включете, ако контролите са закрити.</string>
     <string name="pref_runtime_fullscreen_title">Цял екран</string>
     <string name="pref_runtime_fullscreen_summary">Скриване на лентата с инструменти по време на игра. Важи за всички MIDlet приложения.</string>
     <string name="runtime_fullscreen_update_failed">Няма достъп до настройката за цял екран. Опитайте отново.</string>

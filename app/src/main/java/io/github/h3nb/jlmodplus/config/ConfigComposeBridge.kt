@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -116,6 +117,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.view.ViewCompat
 import kotlinx.coroutines.launch
 import javax.microedition.shell.timing.TimingMode
 import javax.microedition.lcdui.keyboard.VirtualControlAppearance
@@ -304,6 +306,7 @@ internal fun ConfigScreen(
     isProfile: Boolean = false,
     backRequest: Int = 0,
     initialDestination: ConfigDestination? = null,
+    cutoutSupportOverride: Boolean? = null,
     menuActions: ConfigMenuActions? = null,
     colorPicker: ColorPickerRequest? = null,
     encodingPicker: EncodingPickerRequest? = null,
@@ -361,6 +364,7 @@ internal fun ConfigScreen(
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
 
     if (systemPropertiesEditorVisible) {
         val context = LocalContext.current
@@ -440,6 +444,7 @@ internal fun ConfigScreen(
                                     onFormChanged = updateForm,
                                     events = events,
                                     isProfile = isProfile,
+                                    cutoutAvailable = cutoutAvailable,
                                     onRequestAction = { pendingAction = it },
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
                                     onUsePreset = { presetPickerVisible = true },
@@ -546,6 +551,7 @@ private fun ConfigDestinationContent(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     isProfile: Boolean,
+    cutoutAvailable: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
     onUsePreset: () -> Unit,
@@ -563,6 +569,7 @@ private fun ConfigDestinationContent(
                 onSavePreset = onSavePreset,
                 showPresetSummary = !isProfile,
                 showClearData = !isProfile,
+                cutoutAvailable = cutoutAvailable,
                 onRequestAction = onRequestAction,
             )
             ConfigDestination.Display -> {
@@ -587,6 +594,19 @@ private fun ConfigDestinationContent(
     }
 }
 
+/** Cutout capability is derived from the current window, never persisted in a profile.
+ * Reading Compose insets observes attachment/rotation. Physical rectangles also cover
+ * camera holes that do not consume a display edge's safe inset.
+ */
+@Composable
+private fun deviceHasDisplayCutout(density: androidx.compose.ui.unit.Density): Boolean {
+    val cutout = WindowInsets.displayCutout
+    val hasSafeInset = cutout.getLeft(density) > 0 || cutout.getTop(density) > 0 ||
+        cutout.getRight(density) > 0 || cutout.getBottom(density) > 0
+    val physical = ViewCompat.getRootWindowInsets(LocalView.current)?.displayCutout
+    return hasSafeInset || physical?.boundingRects?.any { !it.isEmpty } == true
+}
+
 @Composable
 private fun GeneralDestination(
     state: ConfigUiState,
@@ -597,6 +617,7 @@ private fun GeneralDestination(
     onSavePreset: () -> Unit,
     showPresetSummary: Boolean,
     showClearData: Boolean,
+    cutoutAvailable: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
 ) {
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
@@ -646,14 +667,16 @@ private fun GeneralDestination(
                 },
             )
         }
-        ConfigSwitchPreference(
-            title = stringResource(R.string.config_avoid_camera_cutout_title),
-            description = stringResource(R.string.config_avoid_camera_cutout_summary),
-            checked = !form.allowDisplayCutout,
-            onCheckedChange = { avoidCutout ->
-                onFormChanged(form.toBuilder().allowDisplayCutout(!avoidCutout).build())
-            },
-        )
+        if (cutoutAvailable) {
+            ConfigSwitchPreference(
+                title = stringResource(R.string.config_avoid_camera_cutout_title),
+                description = stringResource(R.string.config_avoid_camera_cutout_summary),
+                checked = !form.allowDisplayCutout,
+                onCheckedChange = { avoidCutout ->
+                    onFormChanged(form.toBuilder().allowDisplayCutout(!avoidCutout).build())
+                },
+            )
+        }
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_FORCE_FULLSCREEN),
             description = stringResource(R.string.config_help_force_fullscreen),

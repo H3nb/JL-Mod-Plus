@@ -78,8 +78,10 @@ non-Canvas Displayables.
 - The runtime window draws edge-to-edge. Toolbar controls independently avoid
   cutouts, waterfall edges and reported rounded corners. Guest Canvas bounds
   follow the profile's `AllowDisplayCutout` flag (default true since schema v9).
-  The user-facing "Avoid camera/notch area" option inverts this flag: enabling it
-  reserves a safe guest rectangle while leaving the window edge-to-edge. The
+  On devices with a reported display cutout, the user-facing "Avoid camera/notch area"
+  option inverts this flag: enabling it reserves a safe guest rectangle while leaving
+  the window edge-to-edge. The option is hidden if the window has no cutout, without
+  modifying the stored profile field. The
   padded host area uses the Canvas background fallback color (Custom color or
   Theme color; Immersive uses the theme base), not an unrelated Activity surface.
   Restoring the runtime refreshes chrome and requests insets even when fullscreen

@@ -1129,8 +1129,8 @@
         <item quantity="many">Вибрано %1$d</item>
         <item quantity="other">Вибрано %1$d</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Розширювати в область вирізу дисплея</string>
-    <string name="pref_midlet_display_cutout_summary">Дозволити екрану MIDlet використовувати область навколо вирізу дисплея. Частина екрана може бути закрита.</string>
+    <string name="config_avoid_camera_cutout_title">Уникати області камери або вирізу екрана</string>
+    <string name="config_avoid_camera_cutout_summary">Гра не заходить в область фронтальної камери або вирізу екрана. Увімкніть, якщо елементи керування перекриті.</string>
     <string name="pref_runtime_fullscreen_title">Повний екран</string>
     <string name="pref_runtime_fullscreen_summary">Приховувати панель інструментів під час гри. Застосовується до всіх MIDlet.</string>
     <string name="runtime_fullscreen_update_failed">Не вдалося отримати доступ до налаштування повного екрана. Спробуйте ще раз.</string>

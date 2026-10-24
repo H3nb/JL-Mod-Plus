@@ -1096,8 +1096,8 @@
         <item quantity="other">Foram ignorados %1$d ficheiros de classe Java porque não foi possível lê-los. As funcionalidades que os utilizam poderão não funcionar.</item>
         <item quantity="many">Foram ignorados %1$d de ficheiros de classe Java porque não foi possível lê-los. As funcionalidades que os utilizam poderão não funcionar.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Expandir para a área do recorte do ecrã</string>
-    <string name="pref_midlet_display_cutout_summary">Permite que a apresentação do MIDlet use a área em redor do recorte do ecrã. Parte da apresentação pode ficar oculta.</string>
+    <string name="config_avoid_camera_cutout_title">Evitar a área da câmara ou do recorte</string>
+    <string name="config_avoid_camera_cutout_summary">Mantém o jogo fora da área da câmara frontal ou do recorte do ecrã. Ative se os controlos ficarem tapados.</string>
     <string name="pref_runtime_fullscreen_title">Ecrã inteiro</string>
     <string name="pref_runtime_fullscreen_summary">Oculta a barra de ferramentas durante o jogo. Aplica-se a todos os MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Não foi possível aceder à definição de ecrã inteiro. Tenta novamente.</string>

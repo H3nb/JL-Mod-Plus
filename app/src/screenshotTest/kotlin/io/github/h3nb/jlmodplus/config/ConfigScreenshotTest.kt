@@ -163,7 +163,7 @@ fun ConfigLargeFontFormScreenshot() {
 @Composable
 fun ConfigQuickScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, cutoutSupportOverride = true)
     }
 }
 
@@ -178,7 +178,7 @@ fun ConfigQuickScreenshot() {
 @Composable
 fun ConfigQuickDarkScreenshot() {
     JLModPlusTheme(darkTheme = true) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, cutoutSupportOverride = true)
     }
 }
 

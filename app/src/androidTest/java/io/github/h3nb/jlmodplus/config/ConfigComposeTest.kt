@@ -112,6 +112,47 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun cutoutPreferenceIsHiddenWithoutCutoutAndDoesNotModifyStoredValue() {
+        val base = sampleState()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(base, RecordingConfigEvents(), cutoutSupportOverride = false)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.config_avoid_camera_cutout_title)).assertDoesNotExist()
+        assertTrue(base.form.allowDisplayCutout)
+    }
+
+    @Test
+    fun cutoutPreferenceCanOptOutWhileKeepingOtherFields() {
+        val base = sampleState()
+        val draft = mutableStateOf(base.form)
+        val events = object : ConfigFormEvents by RecordingConfigEvents() {
+            override fun onFormChanged(form: ConfigFormState) { draft.value = form }
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(
+                    ConfigUiState(
+                        draft.value, base.screenPresets, base.fontPresets, base.skins,
+                        base.soundBanks, base.shaders, base.removableScreenPresets,
+                        base.profileStatus,
+                    ),
+                    events,
+                    cutoutSupportOverride = true,
+                )
+            }
+        }
+        scrollTo(uiString(R.string.config_avoid_camera_cutout_title))
+        composeRule.onNodeWithText(uiString(R.string.config_avoid_camera_cutout_title)).performClick()
+        composeRule.runOnIdle {
+            assertFalse(draft.value.allowDisplayCutout)
+            assertEquals(base.form.screenWidth, draft.value.screenWidth)
+            assertEquals(base.form.screenHeight, draft.value.screenHeight)
+        }
+    }
+
+    @Test
     fun configRendersGeneralAndAdaptiveDestinations() {
         composeRule.setContent {
             JLModPlusTheme {

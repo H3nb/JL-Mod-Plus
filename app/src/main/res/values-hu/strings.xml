@@ -1063,8 +1063,8 @@
         <item quantity="one">%1$d kijelölve</item>
         <item quantity="other">%1$d kijelölve</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Kiterjesztés a kijelzőkivágás területére</string>
-    <string name="pref_midlet_display_cutout_summary">A MIDlet megjelenítése használhatja a kijelzőkivágás körüli területet. A megjelenítés egy része takarásba kerülhet.</string>
+    <string name="config_avoid_camera_cutout_title">Kamera- és kijelzőkivágás elkerülése</string>
+    <string name="config_avoid_camera_cutout_summary">A játék nem takarja el az előlapi kamera vagy a kijelzőkivágás területét. Kapcsolja be, ha a vezérlők takarásba kerülnek.</string>
     <string name="pref_runtime_fullscreen_title">Teljes képernyő</string>
     <string name="pref_runtime_fullscreen_summary">Az eszköztár elrejtése játék közben. Minden MIDletre érvényes.</string>
     <string name="runtime_fullscreen_update_failed">A teljes képernyő beállítása nem érhető el. Próbáld újra.</string>

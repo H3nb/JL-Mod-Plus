@@ -1063,8 +1063,8 @@
         <item quantity="one">%1$d Java-luokkatiedosto ohitettiin, koska sitä ei voitu lukea. Sitä käyttävät ominaisuudet eivät ehkä toimi.</item>
         <item quantity="other">%1$d Java-luokkatiedostoa ohitettiin, koska niitä ei voitu lukea. Niitä käyttävät ominaisuudet eivät ehkä toimi.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Laajenna näytön loven alueelle</string>
-    <string name="pref_midlet_display_cutout_summary">Salli MIDlet-näkymän käyttää näytön loven ympärillä olevaa aluetta. Osa näkymästä voi peittyä.</string>
+    <string name="config_avoid_camera_cutout_title">Vältä kameran tai näyttöloven aluetta</string>
+    <string name="config_avoid_camera_cutout_summary">Pitää pelin poissa etukameran tai näyttöloven alueelta. Ota käyttöön, jos ohjaimet peittyvät.</string>
     <string name="pref_runtime_fullscreen_title">Koko näyttö</string>
     <string name="pref_runtime_fullscreen_summary">Piilota työkalupalkki pelatessa. Koskee kaikkia MIDlet-sovelluksia.</string>
     <string name="runtime_fullscreen_update_failed">Koko näytön asetusta ei voitu käyttää. Yritä uudelleen.</string>

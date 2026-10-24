@@ -1030,8 +1030,8 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="other">Đã chọn %1$d mục</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Mở rộng vào vùng khuyết màn hình</string>
-    <string name="pref_midlet_display_cutout_summary">Cho phép giao diện MIDlet sử dụng vùng quanh phần khuyết màn hình. Một phần giao diện có thể bị che khuất.</string>
+    <string name="config_avoid_camera_cutout_title">Tránh vùng camera hoặc phần khuyết màn hình</string>
+    <string name="config_avoid_camera_cutout_summary">Giữ nội dung trò chơi tránh xa camera trước hoặc phần khuyết màn hình. Bật nếu các nút điều khiển bị che.</string>
     <string name="pref_runtime_fullscreen_title">Toàn màn hình</string>
     <string name="pref_runtime_fullscreen_summary">Ẩn thanh công cụ khi chơi. Áp dụng cho tất cả MIDlet.</string>
     <string name="runtime_fullscreen_update_failed">Không thể truy cập cài đặt toàn màn hình. Hãy thử lại.</string>

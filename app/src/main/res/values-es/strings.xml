@@ -1096,8 +1096,8 @@
         <item quantity="other">Se omitieron %1$d archivos de clase Java porque no se pudieron leer. Las funciones que los usan podrían no funcionar.</item>
         <item quantity="many">Se omitieron %1$d de archivos de clase Java porque no se pudieron leer. Las funciones que los usan podrían no funcionar.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Expandir al área del recorte de pantalla</string>
-    <string name="pref_midlet_display_cutout_summary">Permite que la pantalla del MIDlet use el área alrededor del recorte de pantalla. Parte de su contenido podría quedar oculto.</string>
+    <string name="config_avoid_camera_cutout_title">Evitar la zona de la cámara o el recorte</string>
+    <string name="config_avoid_camera_cutout_summary">Mantiene el juego alejado de la cámara frontal o del recorte de pantalla. Actívalo si los controles quedan tapados.</string>
     <string name="pref_runtime_fullscreen_title">Pantalla completa</string>
     <string name="pref_runtime_fullscreen_summary">Oculta la barra de herramientas al jugar. Se aplica a todos los MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">No se pudo acceder al ajuste de pantalla completa. Vuelve a intentarlo.</string>

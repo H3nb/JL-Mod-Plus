@@ -1195,8 +1195,8 @@
         <item quantity="many">%1$d تقريرًا محددًا</item>
         <item quantity="other">%1$d تقرير محدد</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">التوسيع إلى منطقة اقتطاع الشاشة</string>
-    <string name="pref_midlet_display_cutout_summary">السماح لواجهة MIDlet باستخدام المنطقة المحيطة باقتطاع الشاشة. قد يُحجب جزء من الواجهة.</string>
+    <string name="config_avoid_camera_cutout_title">تجنّب منطقة الكاميرا أو فتحة الشاشة</string>
+    <string name="config_avoid_camera_cutout_summary">أبقِ اللعبة بعيدة عن الكاميرا الأمامية أو فتحة الشاشة. فعّل الخيار إذا كانت أدوات التحكم محجوبة.</string>
     <string name="pref_runtime_fullscreen_title">ملء الشاشة</string>
     <string name="pref_runtime_fullscreen_summary">إخفاء شريط الأدوات أثناء اللعب. يسري على جميع تطبيقات MIDlet.</string>
     <string name="runtime_fullscreen_update_failed">تعذّر الوصول إلى إعداد ملء الشاشة. حاول مرة أخرى.</string>

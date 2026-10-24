@@ -1063,8 +1063,8 @@
         <item quantity="one">%1$d gekies</item>
         <item quantity="other">%1$d gekies</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Brei uit na die skermuitsnyding se area</string>
-    <string name="pref_midlet_display_cutout_summary">Laat die MIDlet-vertoning die area rondom die skermuitsnyding gebruik. ’n Deel van die vertoning kan bedek word.</string>
+    <string name="config_avoid_camera_cutout_title">Vermy die kamera- of skermuitsnyding</string>
+    <string name="config_avoid_camera_cutout_summary">Hou die speletjie weg van die voorkamera of skermuitsnyding. Skakel aan as kontroles bedek word.</string>
     <string name="pref_runtime_fullscreen_title">Volskerm</string>
     <string name="pref_runtime_fullscreen_summary">Versteek die nutsbalk terwyl jy speel. Geld vir alle MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Kon nie toegang tot die volskerminstelling kry nie. Probeer weer.</string>
