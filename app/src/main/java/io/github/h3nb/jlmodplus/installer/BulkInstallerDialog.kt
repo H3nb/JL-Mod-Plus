@@ -365,6 +365,7 @@ private enum class ReviewFilter { All, Selected, Attention }
 
 /** A single discovered MIDlet needs one confirmation, not batch filters or checkboxes. */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun SingleReviewContent(
     plan: BulkInstallPlan,
     onInstall: () -> Unit,
@@ -425,14 +426,13 @@ private fun SingleReviewContent(
             }
         }
         HorizontalDivider()
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
             if (action != null) {
-                Spacer(Modifier.size(8.dp))
                 Button(onClick = onInstall) {
                     Text(stringResource(when (action) {
                         BulkInstallAction.Reinstall -> R.string.action_reinstall
