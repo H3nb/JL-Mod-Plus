@@ -641,11 +641,11 @@ private fun GeneralDestination(
             )
         }
         ConfigSwitchPreference(
-            title = stringResource(R.string.pref_midlet_display_cutout_title),
-            description = stringResource(R.string.pref_midlet_display_cutout_summary),
-            checked = form.allowDisplayCutout,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().allowDisplayCutout(checked).build())
+            title = stringResource(R.string.config_avoid_camera_cutout_title),
+            description = stringResource(R.string.config_avoid_camera_cutout_summary),
+            checked = !form.allowDisplayCutout,
+            onCheckedChange = { avoidCutout ->
+                onFormChanged(form.toBuilder().allowDisplayCutout(!avoidCutout).build())
             },
         )
         ConfigSwitchPreference(
