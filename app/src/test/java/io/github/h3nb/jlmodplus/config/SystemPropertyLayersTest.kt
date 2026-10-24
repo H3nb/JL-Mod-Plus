@@ -87,7 +87,7 @@ class SystemPropertyLayersTest {
             val encoded = config.readText()
             assertTrue(encoded.contains("\"SystemPropertyOverrides\""))
             assertFalse(encoded.contains("\"SystemProperties\""))
-            assertTrue(encoded.contains("\"Version\": 8"))
+            assertTrue(encoded.contains("\"Version\": ${ProfileModel.VERSION}"))
             val second = checkNotNull(ProfilesManager.loadConfig(dir))
             assertEquals(first.systemPropertyOverrides, second.systemPropertyOverrides)
             assertEquals(encoded, config.readText())

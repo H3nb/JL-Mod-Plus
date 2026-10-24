@@ -126,15 +126,17 @@ public class ConfigActivityLinkedPresetDecisionTest {
 		// Equality also cannot promote existing CUSTOM ownership into a named link.
 		assertTrue(ConfigActivity.resolveNamedPresetStatus(false, "K800i", true, null).modified);
 
-		ConfigFormState expanded = unchanged.toBuilder().allowDisplayCutout(true).build();
-		ProfileModel changed = ProfileConfigMatcher.effectiveConfig(legacy, expanded);
-		assertTrue(changed.allowDisplayCutout);
-		assertTrue(ConfigActivity.hasEffectiveDraftDivergence(legacy, expanded, baseline));
-		assertTrue(ConfigActivity.shouldDetachBuiltInThemeLink(true, false, legacy, expanded, baseline));
-		assertTrue(ConfigFormState.fromProfile(changed, "").toBuilder().build().allowDisplayCutout);
-		assertTrue(ProfileJson.decode(ProfileJson.encode(changed), false).model.allowDisplayCutout);
+		// v9 expands into cutouts by default; opting out is a real profile-owned change.
+		assertTrue(legacy.allowDisplayCutout);
+		ConfigFormState safeArea = unchanged.toBuilder().allowDisplayCutout(false).build();
+		ProfileModel changed = ProfileConfigMatcher.effectiveConfig(legacy, safeArea);
+		assertFalse(changed.allowDisplayCutout);
+		assertTrue(ConfigActivity.hasEffectiveDraftDivergence(legacy, safeArea, baseline));
+		assertTrue(ConfigActivity.shouldDetachBuiltInThemeLink(true, false, legacy, safeArea, baseline));
+		assertFalse(ConfigFormState.fromProfile(changed, "").toBuilder().build().allowDisplayCutout);
+		assertFalse(ProfileJson.decode(ProfileJson.encode(changed), false).model.allowDisplayCutout);
 		assertFalse(ConfigActivity.hasEffectiveDraftDivergence(
-				legacy, expanded.toBuilder().allowDisplayCutout(false).build(), baseline));
+				legacy, safeArea.toBuilder().allowDisplayCutout(true).build(), baseline));
 	}
 
 	@Test
