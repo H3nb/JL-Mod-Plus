@@ -121,7 +121,7 @@ class BulkInstallViewModel : ViewModel() {
                         },
                     ))
                 }
-                useSingleInstallPresentation = plan.items.size <= 1
+                useSingleInstallPresentation = plan.items.size <= 1 && omittedSourcesWarning == null
                 mutableState.value = State.Review(if (omittedSourcesWarning == null) {
                     plan
                 } else {
