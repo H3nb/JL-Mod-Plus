@@ -31,6 +31,9 @@ class SingleInstallActionTest {
             name = "Game",
             vendor = "Test",
             version = "1.0",
+            reviewedTarget = if (status.replacesInstalledApp()) {
+                ReviewedInstallTarget(7L, "saved-game")
+            } else null,
             status = status,
             action = BulkInstallAction.Skip,
             selected = false,
@@ -64,6 +67,16 @@ class SingleInstallActionTest {
             singleInstallAction(source(BulkInstallStatus.JadJarMismatch)),
         )
         assertNull(singleInstallAction(source(BulkInstallStatus.JadJarMismatch, jarAvailable = false)))
+    }
+
+    @Test
+    fun replacementMustMatchTheReviewedLibraryRow() {
+        val reviewed = ReviewedInstallTarget(7L, "saved-game")
+        assertEquals(true, reviewed.matches(7L, "saved-game"))
+        assertEquals(false, reviewed.matches(7L, "other-copy"))
+        assertEquals(false, reviewed.matches(8L, "saved-game"))
+        assertNull(singleInstallAction(source(BulkInstallStatus.Update).copy(reviewedTarget = null)))
+        assertNull(singleInstallAction(source(BulkInstallStatus.AlreadyInstalled).copy(reviewedTarget = null)))
     }
 
     @Test
