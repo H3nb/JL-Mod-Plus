@@ -632,6 +632,9 @@
     <string name="bulk_install_source">Sumber: %1$s</string>
     <string name="bulk_install_action_separate_copy">Instal sebagai salinan terpisah</string>
     <string name="bulk_install_action_jar_only">Instal JAR saja</string>
+    <string name="single_install_review_jar_only">Tinjau JAR saja</string>
+    <string name="single_install_jar_only_notice">Hanya JAR yang akan diinstal. Periksa nama aplikasi, versi, dan status aplikasi yang sudah terpasang sebelum melanjutkan.</string>
+    <string name="single_install_running_replacement_warning">Jika aplikasi ini sedang berjalan, instalasi akan menghentikannya sebelum mengganti berkasnya. Progres yang belum disimpan mungkin hilang.</string>
     <string name="bulk_install_status_new">Baru</string>
     <string name="bulk_install_status_update">Pembaruan</string>
     <string name="bulk_install_status_downgrade">Versi lebih lama</string>
