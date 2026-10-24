@@ -137,6 +137,24 @@ data class BulkInstallPlan(
         get() = items.count { it.selected && it.action != BulkInstallAction.Skip }
 }
 
+
+/**
+ * One discovered install unit is a confirmation, not a batch selection.
+ * Keep the batch planner's preflight classification, but require an explicit tap for
+ * reinstalls, downgrades, mismatched JAD/JAR pairs, and ambiguous installed matches.
+ */
+internal fun singleInstallAction(item: BulkInstallItem): BulkInstallAction? {
+    if (item.unit.reinstallAppId != null) return null
+    if (item.status == BulkInstallStatus.AlreadyInstalled) return BulkInstallAction.Reinstall
+    if (!item.installable) return null
+    return when (item.status) {
+        BulkInstallStatus.AmbiguousInstalledMatch -> BulkInstallAction.InstallSeparateCopy
+        BulkInstallStatus.JadJarMismatch ->
+            if (item.unit.jarFile != null) BulkInstallAction.InstallJarOnly else null
+        else -> BulkInstallAction.Install
+    }
+}
+
 enum class BulkInstallResultKind {
     Installed,
     Updated,
