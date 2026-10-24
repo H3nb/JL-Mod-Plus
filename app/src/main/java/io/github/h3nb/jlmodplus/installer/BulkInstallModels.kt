@@ -77,6 +77,20 @@ data class BulkSourceUnit(
     val diagnosticDetail: String? = null,
 )
 
+/** Exact Library row reviewed for an explicit single-source replacement. */
+data class ReviewedInstallTarget(val id: Long, val storageKey: String) {
+    fun matches(id: Long, storageKey: String) = this.id == id && this.storageKey == storageKey
+}
+
+internal fun BulkInstallStatus.replacesInstalledApp() = when (this) {
+    BulkInstallStatus.Update,
+    BulkInstallStatus.Downgrade,
+    BulkInstallStatus.AlreadyInstalled,
+    BulkInstallStatus.ReinstallOrVariant,
+    -> true
+    else -> false
+}
+
 data class BulkInstallItem(
     val id: String,
     val unit: BulkSourceUnit,
@@ -84,6 +98,7 @@ data class BulkInstallItem(
     val vendor: String,
     val version: String,
     val installedVersion: String? = null,
+    val reviewedTarget: ReviewedInstallTarget? = null,
     val descriptorAttributes: Map<String, String> = emptyMap(),
     val sourceFingerprint: String = "",
     val jarFingerprint: String? = null,
@@ -145,6 +160,7 @@ data class BulkInstallPlan(
  */
 internal fun singleInstallAction(item: BulkInstallItem): BulkInstallAction? {
     if (item.unit.reinstallAppId != null) return null
+    if (item.status.replacesInstalledApp() && item.reviewedTarget == null) return null
     if (item.status == BulkInstallStatus.AlreadyInstalled) return BulkInstallAction.Reinstall
     if (!item.installable) return null
     return when (item.status) {
