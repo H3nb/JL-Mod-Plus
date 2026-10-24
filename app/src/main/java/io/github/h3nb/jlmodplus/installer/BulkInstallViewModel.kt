@@ -376,14 +376,53 @@ class BulkInstallViewModel : ViewModel() {
         if (!useSingleInstallPresentation) return
         val item = review.plan.items.singleOrNull() ?: return
         val action = singleInstallAction(item) ?: return
+        // The JAR identity must be independently reviewed before installing.
+        if (action == BulkInstallAction.InstallJarOnly) return
         executePlan(library, review.plan.copy(items = listOf(item.copy(
             action = action,
             selected = true,
-        ))))
+        ))), singleConfirmed = true)
+    }
+
+    fun reviewJarOnly(library: LibraryViewModel) {
+        val review = mutableState.value as? State.Review ?: return
+        if (!useSingleInstallPresentation || executionJob != null || planningJob != null) return
+        val item = review.plan.items.singleOrNull() ?: return
+        if (singleInstallAction(item) != BulkInstallAction.InstallJarOnly) return
+        val jar = item.unit.jarFile ?: return
+        val originalWarnings = review.plan.warnings
+        mutableState.value = State.Planning()
+        planningJob = viewModelScope.launch {
+            try {
+                val job = coroutineContext[Job]
+                val replanned = withContext(Dispatchers.IO) {
+                    BulkInstallPlanner.planExplicit(listOf(jar), library) {
+                        job?.isActive == true
+                    }
+                }
+                check(replanned.items.size == 1) { "JAR review must contain exactly one app" }
+                val notice = library.getApplication<Application>()
+                    .getString(R.string.single_install_jar_only_notice)
+                mutableState.value = State.Review(replanned.copy(
+                    warnings = originalWarnings + notice,
+                ))
+            } catch (_: CancellationException) {
+                if (mutableState.value is State.Planning) mutableState.value = State.Idle
+            } catch (error: Throwable) {
+                mutableState.value = State.Error(boundedMessage(error))
+            } finally {
+                planningJob = null
+                if (closeRequested.get()) cleanupSourceStage()
+            }
+        }
     }
 
     /** Starts a prepared plan without exposing the optional review surface to the user. */
-    private fun executePlan(library: LibraryViewModel, plan: BulkInstallPlan) {
+    private fun executePlan(
+        library: LibraryViewModel,
+        plan: BulkInstallPlan,
+        singleConfirmed: Boolean = false,
+    ) {
         if (executionJob != null) return
         val selected = plan.items.filter { it.selected && it.action != BulkInstallAction.Skip }
         if (selected.isEmpty()) {
@@ -423,7 +462,7 @@ class BulkInstallViewModel : ViewModel() {
                         cancelRequested = cancelRequested.get(),
                     )
                     try {
-                        results += executeItem(plan, item, library)
+                        results += executeItem(plan, item, library, singleConfirmed)
                     } catch (error: FatalBatchException) {
                         val detail = boundedMessage(error.cause ?: error)
                         results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
@@ -473,6 +512,7 @@ class BulkInstallViewModel : ViewModel() {
         plan: BulkInstallPlan,
         item: BulkInstallItem,
         library: LibraryViewModel,
+        singleConfirmed: Boolean,
     ): BulkInstallResult {
         if (!library.isReadyGeneration(plan.generation, plan.workdir)) {
             throw FatalBatchException(IllegalStateException("Library generation changed before batch item execution"))
@@ -580,6 +620,16 @@ class BulkInstallViewModel : ViewModel() {
                 mapInstallerStatus(currentCode)
             }
 
+            if (singleConfirmed && item.preflightStatus.replacesInstalledApp()) {
+                val reviewed = item.reviewedTarget
+                val target = candidates.singleOrNull()
+                if (reviewed == null || target == null ||
+                    !reviewed.matches(target.id, target.storageKey)) {
+                    return failed(item, library.getApplication<Application>()
+                        .getString(R.string.bulk_install_library_changed))
+                }
+            }
+
             if (currentStatus == BulkInstallStatus.AlreadyInstalled && item.action != BulkInstallAction.Reinstall) {
                 if (!item.bundlePayloadAvailable || bundleImport == null) {
                     return BulkInstallResult(
@@ -612,6 +662,11 @@ class BulkInstallViewModel : ViewModel() {
                 )
             }
 
+            // Consent is scoped to this reviewed single replacement. Bulk installs do not
+            // obtain permission to stop a running game through this path.
+            if (singleConfirmed && item.preflightStatus.replacesInstalledApp()) {
+                activeInstaller.approveRunningReplacement(true)
+            }
             val installCode = Single.create<Int>(activeInstaller::install).blockingGet()
             if (installCode != AppInstaller.STATUS_SUCCESS) {
                 return failed(item, "Installer stopped with status $installCode")
