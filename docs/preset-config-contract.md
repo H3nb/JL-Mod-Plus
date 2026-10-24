@@ -20,11 +20,13 @@ This document records durable semantic correctness boundaries for preset/configu
 
 ## Additive configuration fields
 
-`AllowDisplayCutout` is a profile-owned boolean with default false. A missing
-field in an older profile is equivalent to explicit false. Reading the field
-must not force publication, bump the configuration version, detach LINKED
-ownership or replace Built-in ownership with CUSTOM. Normal serialization writes
-the field; a real user change follows the existing effective-change rules.
+`AllowDisplayCutout` is a profile-owned boolean that defaults to true in schema
+version 9. Profiles from version 8 or earlier migrate to true, including explicit
+old false values; this is a one-time change of the prior cutout policy. Version 9
+profiles preserve an explicit false opt-out. The UI exposes the inverse choice as
+"Avoid camera/notch area"; it does not create a second persisted flag. Migration
+uses existing atomic config publication without changing LINKED or Built-in
+ownership. An explicit user change follows existing effective-change rules.
 
 `CameraDefaultFacing` (rear 1, front 0) and `CameraResolution` (automatic 0,
 portrait 1, landscape 2) are profile-owned values. Missing or invalid values use

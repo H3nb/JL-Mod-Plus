@@ -131,6 +131,9 @@ class ConfigComposeTest {
         composeRule.onNodeWithContentDescription("Start").assertExists()
         composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
 
+        scrollTo(uiString(R.string.config_maintenance))
+        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertExists()
+
         composeRule.onNodeWithContentDescription("Display").performClick()
         composeRule.onNodeWithText(uiString(R.string.config_display_appearance)).assertExists()
         scrollTo(uiString(R.string.config_display_text))
@@ -151,8 +154,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithContentDescription("System").performClick()
         scrollTo(uiString(R.string.PREF_SYS_PROPS))
         composeRule.onNodeWithText(uiString(R.string.PREF_SYS_PROPS)).assertExists()
-        scrollTo(uiString(R.string.config_maintenance))
-        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertDoesNotExist()
         composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
     }
 
@@ -758,7 +760,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun destructiveActionsLiveInSystemAndRequireExplicitConfirmation() {
+    fun destructiveActionsLiveInGeneralAndRequireExplicitConfirmation() {
         val menuActions = RecordingMenuActions()
         composeRule.setContent {
             JLModPlusTheme {
@@ -770,12 +772,13 @@ class ConfigComposeTest {
             }
         }
 
-        repeat(4) {
-            composeRule.onRoot().performTouchInput { swipeLeft() }
-            composeRule.waitForIdle()
-        }
-        scrollTo(uiString(R.string.PREF_SYS_PROPS))
-        composeRule.onNodeWithText(uiString(R.string.PREF_SYS_PROPS)).assertIsDisplayed()
+        // System no longer contains destructive actions; General does.
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_system)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("config_reset_settings_action").assertDoesNotExist()
+        composeRule.onNodeWithTag("config_clear_data_action").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_general)).performClick()
+        composeRule.waitForIdle()
         scrollTo(uiString(R.string.config_reset_all_settings))
         composeRule.onNodeWithTag("config_reset_settings_action").assertIsDisplayed().performClick()
         composeRule.waitForIdle()
@@ -793,7 +796,7 @@ class ConfigComposeTest {
         composeRule.onNode(hasText(uiString(R.string.config_delete_app_data)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         assertEquals(1, menuActions.clearDataCalls)
 
-        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_controls)).performClick()
         composeRule.waitForIdle()
         scrollTo(uiString(R.string.RESET_LAYOUT_CMD))
         composeRule.onNodeWithText(uiString(R.string.RESET_LAYOUT_CMD)).performClick()
@@ -808,7 +811,7 @@ class ConfigComposeTest {
                     sampleState(),
                     RecordingConfigEvents(),
                     isProfile = true,
-                    initialDestination = ConfigDestination.System,
+                    initialDestination = ConfigDestination.Basic,
                     menuActions = RecordingMenuActions(),
                 )
             }

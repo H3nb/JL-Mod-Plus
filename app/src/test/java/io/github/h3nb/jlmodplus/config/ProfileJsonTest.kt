@@ -44,7 +44,7 @@ class ProfileJsonTest {
         assertFalse(newTree.containsKey("SystemProperties"))
         assertTrue(newTree.containsKey("SystemPropertyOverrides"))
         // The additive cutout option was not part of the frozen historical schema.
-        assertEquals(JsonPrimitive(false), newTree["AllowDisplayCutout"])
+        assertEquals(JsonPrimitive(true), newTree["AllowDisplayCutout"])
         assertEquals(JsonPrimitive(1), newTree["CameraDefaultFacing"])
         assertEquals(JsonPrimitive(0), newTree["CameraResolution"])
         assertTrue(ProfileJson.sameValue(JsonObject(comparableOld),
@@ -89,28 +89,36 @@ class ProfileJsonTest {
         assertTrue(invalid.needsPublication)
     }
 
-    @Test fun cutoutOptionStaysOffWhenV7PropertiesAreMigrated() {
+    @Test fun oldCutoutSettingsMigrateOnceAndV9SafeAreaOptOutPersists() {
         val input = fixture("gson-v7.json")
         assertFalse(Json.parseToJsonElement(input).jsonObject.containsKey("AllowDisplayCutout"))
         val decoded = ProfileJson.decode(input, false)
-        val explicitOff = ProfileJson.decode(
-            JsonObject(Json.parseToJsonElement(input).jsonObject +
-                ("AllowDisplayCutout" to JsonPrimitive(false))).toString(), false,
+        val explicitOldOff = ProfileJson.decode(
+            """{"Version":8,"AllowDisplayCutout":false}""", false,
         )
-        assertFalse(decoded.model.allowDisplayCutout)
+        assertTrue(ProfileModel.fresh("factory: value").allowDisplayCutout)
+        assertTrue(decoded.model.allowDisplayCutout)
+        assertTrue(explicitOldOff.model.allowDisplayCutout)
         assertTrue(decoded.needsPublication)
-        assertTrue(ProfileConfigMatcher.sameConfig(decoded.model, explicitOff.model))
+        assertTrue(explicitOldOff.needsPublication)
 
         val directory = Files.createTempDirectory("profile-cutout-default").toFile()
         val config = File(directory, Config.MIDLET_CONFIG_FILE).apply { writeText(input) }
         try {
-            assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
-            assertTrue(config.readText().contains("SystemPropertyOverrides"))
-            assertFalse(config.readText().contains("\"SystemProperties\""))
+            assertTrue(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
+            assertEquals(JsonPrimitive(9), Json.parseToJsonElement(config.readText()).jsonObject["Version"])
+            assertEquals(JsonPrimitive(true), Json.parseToJsonElement(config.readText()).jsonObject["AllowDisplayCutout"])
             assertEquals(setOf(config.name), directory.list()!!.toSet())
-            assertTrue(ProfilesManager.saveConfig(directory, decoded.model))
-            assertFalse(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
+
+            val optOut = checkNotNull(ProfilesManager.loadConfig(directory)).apply {
+                allowDisplayCutout = false
+            }
+            assertTrue(ProfilesManager.saveConfig(directory, optOut))
+            val reopened = checkNotNull(ProfilesManager.loadConfig(directory))
+            assertFalse(reopened.allowDisplayCutout)
+            assertEquals(ProfileModel.VERSION, reopened.version)
             assertEquals(JsonPrimitive(false), Json.parseToJsonElement(config.readText()).jsonObject["AllowDisplayCutout"])
+            assertFalse(ProfileJson.decode(config.readText(), false).needsPublication)
         } finally {
             directory.deleteRecursively()
         }
@@ -232,11 +240,11 @@ class ProfileJsonTest {
             ProfilesManager.loadConfigResult(dir, true, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false).status
         })
         assertEquals("broken", config.readText())
-        config.writeText("""{"Version":9,"ScreenWidth":999}""")
+        config.writeText("""{"Version":10,"ScreenWidth":999}""")
         val before = dir.listFiles()!!.associate { it.name to it.readBytes().toList() }
         val result = ProfilesManager.loadConfigResult(dir, true, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false)
         assertEquals(ProfilesManager.LoadStatus.UNSUPPORTED_VERSION, result.status)
-        assertEquals(9, result.sourceVersion)
+        assertEquals(10, result.sourceVersion)
         assertEquals(before, dir.listFiles()!!.associate { it.name to it.readBytes().toList() })
         assertTrue(layout.exists() && data.exists() && xml.exists())
     }

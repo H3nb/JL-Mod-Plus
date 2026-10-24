@@ -168,7 +168,7 @@ class ProfileMigrationInstrumentationTest {
             assertTrue(model.systemProperties!!.contains("microedition."))
             assertFalse(File(dir, "config.xml").exists())
             val reopened = checkNotNull(ProfilesManager.loadConfig(dir))
-            assertEquals(7, reopened.version)
+            assertEquals(ProfileModel.VERSION, reopened.version)
             assertEquals(128, reopened.screenWidth)
             assertEquals(listOf(1.25f, 2.5f), reopened.shader!!.values)
 

@@ -1067,6 +1067,8 @@
     <string name="memory_editor_increment_step">Langkah</string>
     <string name="memory_editor_increment_invalid">Gunakan satu tipe bilangan bulat dan nilai dalam rentangnya.</string>
     <string name="memory_editor_increment_preview">Pratinjau: %1$s</string>
+    <string name="config_avoid_camera_cutout_title">Hindari area kamera/notch</string>
+    <string name="config_avoid_camera_cutout_summary">Jauhkan tampilan game dari kamera depan atau potongan layar. Aktifkan jika kontrol game tertutup.</string>
     <string name="pref_midlet_display_cutout_title">Perluas ke area potongan layar</string>
     <string name="pref_midlet_display_cutout_summary">Izinkan tampilan MIDlet menggunakan area di sekitar potongan layar. Sebagian tampilan mungkin tertutup.</string>
     <string name="pref_runtime_fullscreen_title">Layar penuh</string>

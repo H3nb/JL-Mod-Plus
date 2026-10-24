@@ -47,6 +47,9 @@ object ProfileJson {
             if (name == "Controller" || name == "controller") normalized["Controller"] = value
         }
         normalized.remove("controller")
+        // v9 adopts full-screen drawing by default; earlier cutout choices are reset once.
+        // After migration, a user-selected safe-area opt-out remains authoritative.
+        if (version < 9) normalized["AllowDisplayCutout"] = JsonPrimitive(true)
         normalized["ScreenBackgroundMode"] = JsonPrimitive(if (version < 7) {
             if (themeLinked) BackgroundMode.THEME else BackgroundMode.CUSTOM
         } else backgroundMode(tree["ScreenBackgroundMode"]))

@@ -562,6 +562,8 @@ private fun ConfigDestinationContent(
                 onUsePreset = onUsePreset,
                 onSavePreset = onSavePreset,
                 showPresetSummary = !isProfile,
+                showClearData = !isProfile,
+                onRequestAction = onRequestAction,
             )
             ConfigDestination.Display -> {
                 ScreenSection(form, state, onFormChanged, events)
@@ -579,7 +581,7 @@ private fun ConfigDestinationContent(
                 onRequestAction,
             )
             ConfigDestination.System -> {
-                SystemSection(state, form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
+                SystemSection(state, form, onFormChanged, events, !isProfile, onEditSystemProperties)
             }
         }
     }
@@ -594,6 +596,8 @@ private fun GeneralDestination(
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     showPresetSummary: Boolean,
+    showClearData: Boolean,
+    onRequestAction: (ConfigAction) -> Unit,
 ) {
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
     if (showPresetSummary) {
@@ -643,11 +647,11 @@ private fun GeneralDestination(
             )
         }
         ConfigSwitchPreference(
-            title = stringResource(R.string.pref_midlet_display_cutout_title),
-            description = stringResource(R.string.pref_midlet_display_cutout_summary),
-            checked = form.allowDisplayCutout,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().allowDisplayCutout(checked).build())
+            title = stringResource(R.string.config_avoid_camera_cutout_title),
+            description = stringResource(R.string.config_avoid_camera_cutout_summary),
+            checked = !form.allowDisplayCutout,
+            onCheckedChange = { avoidCutout ->
+                onFormChanged(form.toBuilder().allowDisplayCutout(!avoidCutout).build())
             },
         )
         ConfigSwitchPreference(
@@ -676,6 +680,24 @@ private fun GeneralDestination(
                 onFormChanged(form.toBuilder().touchInput(checked).build())
             },
         )
+    }
+    ConfigSection(title = stringResource(R.string.config_maintenance)) {
+        ConfigActionPreference(
+            title = stringResource(R.string.config_reset_all_settings),
+            description = stringResource(R.string.config_reset_all_settings_summary),
+            destructive = true,
+            testTag = "config_reset_settings_action",
+            onClick = { onRequestAction(ConfigAction.ResetSettings) },
+        )
+        if (showClearData) {
+            ConfigActionPreference(
+                title = stringResource(R.string.config_delete_app_data),
+                description = stringResource(R.string.config_delete_app_data_summary),
+                destructive = true,
+                testTag = "config_clear_data_action",
+                onClick = { onRequestAction(ConfigAction.ClearData) },
+            )
+        }
     }
     if (presetsDialogVisible) {
         val selectedPreset = form.screenWidth.toIntOrNull()?.let { width ->
@@ -2050,7 +2072,6 @@ private fun SystemSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     showClearData: Boolean,
-    onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
 ) {
     if (showClearData) {
@@ -2169,24 +2190,7 @@ private fun SystemSection(
         }
     }
 
-    ConfigSection(title = stringResource(R.string.config_maintenance)) {
-        ConfigActionPreference(
-  title = stringResource(R.string.config_reset_all_settings),
-  description = stringResource(R.string.config_reset_all_settings_summary),
-  destructive = true,
-  testTag = "config_reset_settings_action",
-  onClick = { onRequestAction(ConfigAction.ResetSettings) },
-        )
-        if (showClearData) {
-  ConfigActionPreference(
-      title = stringResource(R.string.config_delete_app_data),
-      description = stringResource(R.string.config_delete_app_data_summary),
-      destructive = true,
-      testTag = "config_clear_data_action",
-      onClick = { onRequestAction(ConfigAction.ClearData) },
-  )
-        }
-    }
+
 }
 
 @Composable
