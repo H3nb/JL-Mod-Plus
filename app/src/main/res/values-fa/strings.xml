@@ -1096,4 +1096,15 @@
     <string name="runtime_camera_use_front">استفاده از دوربین جلو</string>
     <string name="runtime_camera_use_rear">استفاده از دوربین پشت</string>
     <string name="runtime_camera_switch_failed">تعویض دوربین ممکن نشد.</string>
+    <string name="config_asset_add">+ افزودن از فایل</string>
+    <string name="config_asset_copy_hint">یک نسخه در پوشهٔ کاری ذخیره می‌شود و فایل اصلی در جای خود باقی می‌ماند.</string>
+    <string name="config_asset_name">نام فایل</string>
+    <string name="config_asset_delete_confirmation">فایل %1$s از پوشهٔ کاری حذف شود؟ ممکن است MIDletهای دیگر نیز از آن استفاده کنند. نسخه‌های موجود در جاهای دیگر تغییری نمی‌کنند.</string>
+    <string name="config_asset_imported">کپی و انتخاب شد: %1$s</string>
+    <string name="config_asset_reused">فایل موجود انتخاب شد: %1$s</string>
+    <string name="config_asset_renamed">نام به %1$s تغییر کرد</string>
+    <string name="config_asset_deleted">حذف شد: %1$s</string>
+    <string name="config_asset_invalid">فایل نامعتبر یا پشتیبانی‌نشده است.</string>
+    <string name="config_asset_operation_failed">عملیات فایل تکمیل نشد.</string>
+    <string name="config_asset_busy">ابتدا عملیات در حال انجام فایل را تمام کنید.</string>
 </resources>

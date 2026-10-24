@@ -1063,4 +1063,15 @@
     <string name="runtime_camera_use_front">Sử dụng camera trước</string>
     <string name="runtime_camera_use_rear">Sử dụng camera sau</string>
     <string name="runtime_camera_switch_failed">Không thể chuyển đổi camera.</string>
+    <string name="config_asset_add">+ Thêm từ tệp</string>
+    <string name="config_asset_copy_hint">Một bản sao được lưu vào thư mục làm việc; tệp gốc vẫn ở vị trí cũ.</string>
+    <string name="config_asset_name">Tên tệp</string>
+    <string name="config_asset_delete_confirmation">Xóa %1$s khỏi thư mục làm việc? MIDlet khác có thể đang sử dụng tệp này. Các bản sao ở nơi khác không bị ảnh hưởng.</string>
+    <string name="config_asset_imported">Đã sao chép và chọn: %1$s</string>
+    <string name="config_asset_reused">Đã chọn tệp hiện có: %1$s</string>
+    <string name="config_asset_renamed">Đã đổi tên thành %1$s</string>
+    <string name="config_asset_deleted">Đã xóa: %1$s</string>
+    <string name="config_asset_invalid">Tệp không hợp lệ hoặc không được hỗ trợ.</string>
+    <string name="config_asset_operation_failed">Không thể hoàn tất thao tác với tệp.</string>
+    <string name="config_asset_busy">Hãy hoàn tất thao tác với tệp hiện tại trước.</string>
 </resources>

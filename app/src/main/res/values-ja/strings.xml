@@ -1063,4 +1063,15 @@
     <string name="runtime_camera_use_front">前面カメラを使用</string>
     <string name="runtime_camera_use_rear">背面カメラを使用</string>
     <string name="runtime_camera_switch_failed">カメラを切り替えられませんでした。</string>
+    <string name="config_asset_add">＋ ファイルから追加</string>
+    <string name="config_asset_copy_hint">作業フォルダーにコピーします。元のファイルはそのまま残ります。</string>
+    <string name="config_asset_name">ファイル名</string>
+    <string name="config_asset_delete_confirmation">作業フォルダーから %1$s を削除しますか？ 他のMIDletが使用している可能性があります。別の場所にあるコピーには影響しません。</string>
+    <string name="config_asset_imported">コピーして選択しました: %1$s</string>
+    <string name="config_asset_reused">既存のファイルを選択しました: %1$s</string>
+    <string name="config_asset_renamed">名前を %1$s に変更しました</string>
+    <string name="config_asset_deleted">削除しました: %1$s</string>
+    <string name="config_asset_invalid">無効なファイル、または未対応のファイルです。</string>
+    <string name="config_asset_operation_failed">ファイル操作を完了できませんでした。</string>
+    <string name="config_asset_busy">現在のファイル操作が終わってから実行してください。</string>
 </resources>

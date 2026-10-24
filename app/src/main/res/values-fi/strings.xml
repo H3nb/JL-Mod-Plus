@@ -1096,4 +1096,15 @@
     <string name="runtime_camera_use_front">Käytä etukameraa</string>
     <string name="runtime_camera_use_rear">Käytä takakameraa</string>
     <string name="runtime_camera_switch_failed">Kameran vaihto epäonnistui.</string>
+    <string name="config_asset_add">+ Lisää tiedostosta</string>
+    <string name="config_asset_copy_hint">Kopio tallennetaan työkansioon; alkuperäinen tiedosto jää paikalleen.</string>
+    <string name="config_asset_name">Tiedostonimi</string>
+    <string name="config_asset_delete_confirmation">Poistetaanko %1$s työkansiosta? Myös muut MIDlet-sovellukset voivat käyttää sitä. Muualla olevat kopiot eivät muutu.</string>
+    <string name="config_asset_imported">Kopioitu ja valittu: %1$s</string>
+    <string name="config_asset_reused">Olemassa oleva tiedosto valittu: %1$s</string>
+    <string name="config_asset_renamed">Nimetty uudelleen: %1$s</string>
+    <string name="config_asset_deleted">Poistettu: %1$s</string>
+    <string name="config_asset_invalid">Virheellinen tai tukematon tiedosto.</string>
+    <string name="config_asset_operation_failed">Tiedostotoimintoa ei voitu suorittaa.</string>
+    <string name="config_asset_busy">Viimeistele ensin käynnissä oleva tiedostotoiminto.</string>
 </resources>

@@ -1096,4 +1096,15 @@
     <string name="config_camera_resolution_auto">ස්වයංක්‍රීය</string>
     <string name="config_camera_resolution_portrait">480×640 — සිරස්</string>
     <string name="config_camera_resolution_landscape">640×480 — තිරස්</string>
+    <string name="config_asset_add">+ ගොනුවකින් එක් කරන්න</string>
+    <string name="config_asset_copy_hint">පිටපතක් වැඩ ෆෝල්ඩරයට සුරැකේ; මුල් ගොනුව තිබූ තැනම පවතී.</string>
+    <string name="config_asset_name">ගොනු නම</string>
+    <string name="config_asset_delete_confirmation">වැඩ ෆෝල්ඩරයෙන් %1$s මකන්නද? වෙනත් MIDlet ද එය භාවිත කළ හැක. වෙනත් ස්ථානවල පිටපත්වලට බලපෑමක් නැත.</string>
+    <string name="config_asset_imported">පිටපත් කර තෝරා ඇත: %1$s</string>
+    <string name="config_asset_reused">පවතින ගොනුව තෝරා ඇත: %1$s</string>
+    <string name="config_asset_renamed">නම %1$s ලෙස වෙනස් කළා</string>
+    <string name="config_asset_deleted">මකා ඇත: %1$s</string>
+    <string name="config_asset_invalid">වලංගු නොවන හෝ සහය නොදක්වන ගොනුවකි.</string>
+    <string name="config_asset_operation_failed">ගොනු ක්‍රියාව අවසන් කිරීමට නොහැකි විය.</string>
+    <string name="config_asset_busy">පළමුව දැනට ක්‍රියාත්මක ගොනු ක්‍රියාව අවසන් කරන්න.</string>
 </resources>

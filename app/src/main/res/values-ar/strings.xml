@@ -1228,4 +1228,15 @@
     <string name="runtime_camera_use_front">استخدام الكاميرا الأمامية</string>
     <string name="runtime_camera_use_rear">استخدام الكاميرا الخلفية</string>
     <string name="runtime_camera_switch_failed">تعذر تبديل الكاميرا.</string>
+    <string name="config_asset_add">+ إضافة من ملف</string>
+    <string name="config_asset_copy_hint">تُحفظ نسخة في مجلد العمل، ويبقى الملف الأصلي في مكانه.</string>
+    <string name="config_asset_name">اسم الملف</string>
+    <string name="config_asset_delete_confirmation">هل تريد حذف %1$s من مجلد العمل؟ قد تستخدمه تطبيقات MIDlet أخرى. لن تتأثر النسخ الموجودة في أماكن أخرى.</string>
+    <string name="config_asset_imported">تم النسخ والتحديد: %1$s</string>
+    <string name="config_asset_reused">تم تحديد الملف الموجود: %1$s</string>
+    <string name="config_asset_renamed">تمت إعادة التسمية إلى %1$s</string>
+    <string name="config_asset_deleted">تم حذف %1$s</string>
+    <string name="config_asset_invalid">ملف غير صالح أو غير مدعوم.</string>
+    <string name="config_asset_operation_failed">تعذر إكمال العملية على الملف.</string>
+    <string name="config_asset_busy">أكمل عملية الملف الحالية أولاً.</string>
 </resources>

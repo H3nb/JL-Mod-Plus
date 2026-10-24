@@ -1128,4 +1128,15 @@
     <string name="runtime_camera_use_front">Utilitza la càmera frontal</string>
     <string name="runtime_camera_use_rear">Utilitza la càmera posterior</string>
     <string name="runtime_camera_switch_failed">No s’ha pogut canviar de càmera.</string>
+    <string name="config_asset_add">+ Afegeix des d’un fitxer</string>
+    <string name="config_asset_copy_hint">Es desa una còpia a la carpeta de treball; el fitxer original es manté al mateix lloc.</string>
+    <string name="config_asset_name">Nom del fitxer</string>
+    <string name="config_asset_delete_confirmation">Vols suprimir %1$s de la carpeta de treball? Altres MIDlets el poden utilitzar. Les còpies en altres ubicacions no es modificaran.</string>
+    <string name="config_asset_imported">Copiat i seleccionat: %1$s</string>
+    <string name="config_asset_reused">Fitxer existent seleccionat: %1$s</string>
+    <string name="config_asset_renamed">Nom canviat a %1$s</string>
+    <string name="config_asset_deleted">S’ha suprimit %1$s</string>
+    <string name="config_asset_invalid">Fitxer no vàlid o no compatible.</string>
+    <string name="config_asset_operation_failed">No s’ha pogut completar l’operació amb el fitxer.</string>
+    <string name="config_asset_busy">Acaba primer l’operació amb el fitxer en curs.</string>
 </resources>

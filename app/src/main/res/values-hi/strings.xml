@@ -1096,4 +1096,15 @@
     <string name="runtime_camera_use_front">सामने का कैमरा इस्तेमाल करें</string>
     <string name="runtime_camera_use_rear">पीछे का कैमरा इस्तेमाल करें</string>
     <string name="runtime_camera_switch_failed">कैमरा बदला नहीं जा सका।</string>
+    <string name="config_asset_add">+ फ़ाइल से जोड़ें</string>
+    <string name="config_asset_copy_hint">एक कॉपी कार्य फ़ोल्डर में रखी जाएगी; मूल फ़ाइल अपनी जगह बनी रहेगी।</string>
+    <string name="config_asset_name">फ़ाइल का नाम</string>
+    <string name="config_asset_delete_confirmation">कार्य फ़ोल्डर से %1$s मिटाएँ? अन्य MIDlet भी इसका उपयोग कर सकते हैं। दूसरी जगह की कॉपियों पर असर नहीं पड़ेगा।</string>
+    <string name="config_asset_imported">कॉपी करके चुना गया: %1$s</string>
+    <string name="config_asset_reused">मौजूदा फ़ाइल चुनी गई: %1$s</string>
+    <string name="config_asset_renamed">नाम बदलकर %1$s किया गया</string>
+    <string name="config_asset_deleted">मिटाया गया: %1$s</string>
+    <string name="config_asset_invalid">अमान्य या असमर्थित फ़ाइल।</string>
+    <string name="config_asset_operation_failed">फ़ाइल से जुड़ी कार्रवाई पूरी नहीं हो सकी।</string>
+    <string name="config_asset_busy">पहले चल रही फ़ाइल कार्रवाई पूरी करें।</string>
 </resources>

@@ -1097,4 +1097,15 @@
     <string name="runtime_camera_use_front">Ön kamerayı kullan</string>
     <string name="runtime_camera_use_rear">Arka kamerayı kullan</string>
     <string name="runtime_camera_switch_failed">Kamera değiştirilemedi.</string>
+    <string name="config_asset_add">+ Dosyadan ekle</string>
+    <string name="config_asset_copy_hint">Bir kopyası çalışma klasörüne kaydedilir; özgün dosya yerinde kalır.</string>
+    <string name="config_asset_name">Dosya adı</string>
+    <string name="config_asset_delete_confirmation">%1$s çalışma klasöründen silinsin mi? Diğer MIDlet’ler de bu dosyayı kullanıyor olabilir. Başka yerlerdeki kopyalar etkilenmez.</string>
+    <string name="config_asset_imported">Kopyalandı ve seçildi: %1$s</string>
+    <string name="config_asset_reused">Mevcut dosya seçildi: %1$s</string>
+    <string name="config_asset_renamed">Adı %1$s olarak değiştirildi</string>
+    <string name="config_asset_deleted">Silindi: %1$s</string>
+    <string name="config_asset_invalid">Geçersiz veya desteklenmeyen dosya.</string>
+    <string name="config_asset_operation_failed">Dosya işlemi tamamlanamadı.</string>
+    <string name="config_asset_busy">Önce devam eden dosya işlemini tamamlayın.</string>
 </resources>

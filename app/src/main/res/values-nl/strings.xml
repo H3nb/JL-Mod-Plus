@@ -1096,4 +1096,15 @@
     <string name="runtime_camera_use_front">Frontcamera gebruiken</string>
     <string name="runtime_camera_use_rear">Achtercamera gebruiken</string>
     <string name="runtime_camera_switch_failed">Kan niet van camera wisselen.</string>
+    <string name="config_asset_add">+ Toevoegen uit bestand</string>
+    <string name="config_asset_copy_hint">Er wordt een kopie in de werkmap opgeslagen; het oorspronkelijke bestand blijft staan.</string>
+    <string name="config_asset_name">Bestandsnaam</string>
+    <string name="config_asset_delete_confirmation">%1$s uit de werkmap verwijderen? Andere MIDlets gebruiken dit bestand mogelijk ook. Kopieën op andere locaties blijven behouden.</string>
+    <string name="config_asset_imported">Gekopieerd en geselecteerd: %1$s</string>
+    <string name="config_asset_reused">Bestaand bestand geselecteerd: %1$s</string>
+    <string name="config_asset_renamed">Hernoemd naar %1$s</string>
+    <string name="config_asset_deleted">Verwijderd: %1$s</string>
+    <string name="config_asset_invalid">Ongeldig of niet-ondersteund bestand.</string>
+    <string name="config_asset_operation_failed">De bestandsbewerking kon niet worden voltooid.</string>
+    <string name="config_asset_busy">Voltooi eerst de lopende bestandsbewerking.</string>
 </resources>

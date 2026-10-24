@@ -1096,4 +1096,15 @@
     <string name="runtime_camera_use_front">Använd främre kameran</string>
     <string name="runtime_camera_use_rear">Använd bakre kameran</string>
     <string name="runtime_camera_switch_failed">Det gick inte att byta kamera.</string>
+    <string name="config_asset_add">+ Lägg till från fil</string>
+    <string name="config_asset_copy_hint">En kopia sparas i arbetsmappen; originalfilen ligger kvar där den är.</string>
+    <string name="config_asset_name">Filnamn</string>
+    <string name="config_asset_delete_confirmation">Ta bort %1$s från arbetsmappen? Andra MIDlets kan använda filen. Kopior på andra platser påverkas inte.</string>
+    <string name="config_asset_imported">Kopierad och vald: %1$s</string>
+    <string name="config_asset_reused">Befintlig fil vald: %1$s</string>
+    <string name="config_asset_renamed">Bytte namn till %1$s</string>
+    <string name="config_asset_deleted">Borttagen: %1$s</string>
+    <string name="config_asset_invalid">Ogiltig eller ej stödd fil.</string>
+    <string name="config_asset_operation_failed">Det gick inte att slutföra filåtgärden.</string>
+    <string name="config_asset_busy">Slutför den pågående filåtgärden först.</string>
 </resources>
