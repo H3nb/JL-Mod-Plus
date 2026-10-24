@@ -1095,4 +1095,15 @@
     <string name="runtime_camera_use_front">Χρήση μπροστινής κάμερας</string>
     <string name="runtime_camera_use_rear">Χρήση πίσω κάμερας</string>
     <string name="runtime_camera_switch_failed">Δεν ήταν δυνατή η εναλλαγή κάμερας.</string>
+    <string name="config_asset_add">+ Προσθήκη από αρχείο</string>
+    <string name="config_asset_copy_hint">Ένα αντίγραφο αποθηκεύεται στον φάκελο εργασίας· το αρχικό αρχείο παραμένει στη θέση του.</string>
+    <string name="config_asset_name">Όνομα αρχείου</string>
+    <string name="config_asset_delete_confirmation">Να διαγραφεί το %1$s από τον φάκελο εργασίας; Μπορεί να το χρησιμοποιούν και άλλα MIDlet. Τα αντίγραφα σε άλλες θέσεις δεν επηρεάζονται.</string>
+    <string name="config_asset_imported">Αντιγράφηκε και επιλέχθηκε: %1$s</string>
+    <string name="config_asset_reused">Επιλέχθηκε υπάρχον αρχείο: %1$s</string>
+    <string name="config_asset_renamed">Μετονομάστηκε σε %1$s</string>
+    <string name="config_asset_deleted">Διαγράφηκε: %1$s</string>
+    <string name="config_asset_invalid">Μη έγκυρο ή μη υποστηριζόμενο αρχείο.</string>
+    <string name="config_asset_operation_failed">Δεν ήταν δυνατή η ολοκλήρωση της λειτουργίας αρχείου.</string>
+    <string name="config_asset_busy">Ολοκληρώστε πρώτα την τρέχουσα λειτουργία αρχείου.</string>
 </resources>

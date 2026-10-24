@@ -1162,4 +1162,15 @@
     <string name="runtime_camera_use_front">Użyj przedniego aparatu</string>
     <string name="runtime_camera_use_rear">Użyj tylnego aparatu</string>
     <string name="runtime_camera_switch_failed">Nie udało się przełączyć aparatu.</string>
+    <string name="config_asset_add">+ Dodaj z pliku</string>
+    <string name="config_asset_copy_hint">Kopia zostanie zapisana w folderze roboczym; oryginalny plik pozostanie na swoim miejscu.</string>
+    <string name="config_asset_name">Nazwa pliku</string>
+    <string name="config_asset_delete_confirmation">Usunąć %1$s z folderu roboczego? Inne MIDlety mogą korzystać z tego pliku. Kopie w innych miejscach pozostaną bez zmian.</string>
+    <string name="config_asset_imported">Skopiowano i wybrano: %1$s</string>
+    <string name="config_asset_reused">Wybrano istniejący plik: %1$s</string>
+    <string name="config_asset_renamed">Zmieniono nazwę na %1$s</string>
+    <string name="config_asset_deleted">Usunięto: %1$s</string>
+    <string name="config_asset_invalid">Nieprawidłowy lub nieobsługiwany plik.</string>
+    <string name="config_asset_operation_failed">Nie udało się ukończyć operacji na pliku.</string>
+    <string name="config_asset_busy">Najpierw zakończ bieżącą operację na pliku.</string>
 </resources>

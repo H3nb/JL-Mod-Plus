@@ -1182,4 +1182,15 @@
     <string name="platform_package_browser" tools:ignore="MissingTranslation">Open in browser</string>
     <string name="platform_package_unavailable" tools:ignore="MissingTranslation">No application can open this link.</string>
     <string name="installer_running_update_warning" tools:ignore="MissingTranslation">This application is currently running. Installing will stop it before its files are replaced. Unsaved progress may be lost.</string>
+    <string name="config_asset_add">+ Add from file</string>
+    <string name="config_asset_copy_hint">Copied into the work folder; the original file stays where it is.</string>
+    <string name="config_asset_name">File name</string>
+    <string name="config_asset_delete_confirmation">Delete %1$s from the work folder? Other MIDlets may also use this file. Copies elsewhere are unaffected.</string>
+    <string name="config_asset_imported">Copied and selected: %1$s</string>
+    <string name="config_asset_reused">Existing file selected: %1$s</string>
+    <string name="config_asset_renamed">Renamed to %1$s</string>
+    <string name="config_asset_deleted">Deleted %1$s</string>
+    <string name="config_asset_invalid">Unsupported or invalid file.</string>
+    <string name="config_asset_operation_failed">Could not complete the file operation.</string>
+    <string name="config_asset_busy">Finish the current file operation first.</string>
 </resources>

@@ -1162,4 +1162,15 @@
     <string name="runtime_camera_use_front">Использовать фронтальную камеру</string>
     <string name="runtime_camera_use_rear">Использовать заднюю камеру</string>
     <string name="runtime_camera_switch_failed">Не удалось переключить камеру.</string>
+    <string name="config_asset_add">+ Добавить из файла</string>
+    <string name="config_asset_copy_hint">Копия сохраняется в рабочей папке, а исходный файл остаётся на месте.</string>
+    <string name="config_asset_name">Имя файла</string>
+    <string name="config_asset_delete_confirmation">Удалить %1$s из рабочей папки? Файл может использоваться другими MIDlet. Копии в других местах не пострадают.</string>
+    <string name="config_asset_imported">Скопировано и выбрано: %1$s</string>
+    <string name="config_asset_reused">Выбран существующий файл: %1$s</string>
+    <string name="config_asset_renamed">Переименовано в %1$s</string>
+    <string name="config_asset_deleted">Удалено: %1$s</string>
+    <string name="config_asset_invalid">Недопустимый или неподдерживаемый файл.</string>
+    <string name="config_asset_operation_failed">Не удалось завершить операцию с файлом.</string>
+    <string name="config_asset_busy">Сначала завершите текущую операцию с файлом.</string>
 </resources>

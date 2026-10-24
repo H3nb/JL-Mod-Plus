@@ -1129,4 +1129,15 @@
     <string name="runtime_camera_use_front">Usa la fotocamera anteriore</string>
     <string name="runtime_camera_use_rear">Usa la fotocamera posteriore</string>
     <string name="runtime_camera_switch_failed">Impossibile cambiare fotocamera.</string>
+    <string name="config_asset_add">+ Aggiungi da file</string>
+    <string name="config_asset_copy_hint">Una copia viene salvata nella cartella di lavoro; il file originale resta al suo posto.</string>
+    <string name="config_asset_name">Nome file</string>
+    <string name="config_asset_delete_confirmation">Eliminare %1$s dalla cartella di lavoro? Altri MIDlet potrebbero usarlo. Le copie presenti altrove non saranno interessate.</string>
+    <string name="config_asset_imported">Copiato e selezionato: %1$s</string>
+    <string name="config_asset_reused">File esistente selezionato: %1$s</string>
+    <string name="config_asset_renamed">Rinominato in %1$s</string>
+    <string name="config_asset_deleted">Eliminato: %1$s</string>
+    <string name="config_asset_invalid">File non valido o non supportato.</string>
+    <string name="config_asset_operation_failed">Impossibile completare l’operazione sul file.</string>
+    <string name="config_asset_busy">Completa prima l’operazione sul file in corso.</string>
 </resources>

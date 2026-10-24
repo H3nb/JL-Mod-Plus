@@ -1096,4 +1096,15 @@
     <string name="runtime_camera_use_front">Алдыңғы камераны пайдалану</string>
     <string name="runtime_camera_use_rear">Артқы камераны пайдалану</string>
     <string name="runtime_camera_switch_failed">Камераны ауыстыру мүмкін болмады.</string>
+    <string name="config_asset_add">+ Файлдан қосу</string>
+    <string name="config_asset_copy_hint">Көшірме жұмыс қалтасына сақталады, ал бастапқы файл өз орнында қалады.</string>
+    <string name="config_asset_name">Файл атауы</string>
+    <string name="config_asset_delete_confirmation">%1$s файлын жұмыс қалтасынан жою керек пе? Оны басқа MIDlet-тер де пайдалануы мүмкін. Басқа жердегі көшірмелер өзгермейді.</string>
+    <string name="config_asset_imported">Көшіріліп, таңдалды: %1$s</string>
+    <string name="config_asset_reused">Бар файл таңдалды: %1$s</string>
+    <string name="config_asset_renamed">Атауы %1$s болып өзгертілді</string>
+    <string name="config_asset_deleted">Жойылды: %1$s</string>
+    <string name="config_asset_invalid">Жарамсыз немесе қолдау көрсетілмейтін файл.</string>
+    <string name="config_asset_operation_failed">Файл әрекетін аяқтау мүмкін болмады.</string>
+    <string name="config_asset_busy">Алдымен ағымдағы файл әрекетін аяқтаңыз.</string>
 </resources>

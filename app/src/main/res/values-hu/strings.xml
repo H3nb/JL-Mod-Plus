@@ -1096,4 +1096,15 @@
     <string name="runtime_camera_use_front">Előlapi kamera használata</string>
     <string name="runtime_camera_use_rear">Hátlapi kamera használata</string>
     <string name="runtime_camera_switch_failed">Nem sikerült kamerát váltani.</string>
+    <string name="config_asset_add">+ Hozzáadás fájlból</string>
+    <string name="config_asset_copy_hint">A másolat a munkamappába kerül; az eredeti fájl a helyén marad.</string>
+    <string name="config_asset_name">Fájlnév</string>
+    <string name="config_asset_delete_confirmation">Törlöd a(z) %1$s fájlt a munkamappából? Más MIDletek is használhatják. A máshol lévő másolatokat ez nem érinti.</string>
+    <string name="config_asset_imported">Másolva és kiválasztva: %1$s</string>
+    <string name="config_asset_reused">Meglévő fájl kiválasztva: %1$s</string>
+    <string name="config_asset_renamed">Átnevezve erre: %1$s</string>
+    <string name="config_asset_deleted">Törölve: %1$s</string>
+    <string name="config_asset_invalid">Érvénytelen vagy nem támogatott fájl.</string>
+    <string name="config_asset_operation_failed">A fájlművelet nem fejezhető be.</string>
+    <string name="config_asset_busy">Előbb fejezd be a folyamatban lévő fájlműveletet.</string>
 </resources>

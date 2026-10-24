@@ -1096,4 +1096,15 @@
     <string name="config_camera_resolution_auto">ସ୍ୱୟଂଚାଳିତ</string>
     <string name="config_camera_resolution_portrait">480×640 — ପୋର୍ଟ୍ରେଟ୍</string>
     <string name="config_camera_resolution_landscape">640×480 — ଲ୍ୟାଣ୍ଡସ୍କେପ୍</string>
+    <string name="config_asset_add">+ ଫାଇଲରୁ ଯୋଡ଼ନ୍ତୁ</string>
+    <string name="config_asset_copy_hint">ଏକ କପି କାର୍ଯ୍ୟ ଫୋଲ୍ଡରରେ ସଞ୍ଚୟ ହେବ; ମୂଳ ଫାଇଲ ନିଜ ସ୍ଥାନରେ ରହିବ।</string>
+    <string name="config_asset_name">ଫାଇଲ ନାମ</string>
+    <string name="config_asset_delete_confirmation">କାର୍ଯ୍ୟ ଫୋଲ୍ଡରରୁ %1$s ବିଲୋପ କରିବେ? ଅନ୍ୟ MIDlet ମଧ୍ୟ ଏହାକୁ ବ୍ୟବହାର କରୁଥାଇପାରେ। ଅନ୍ୟ ସ୍ଥାନର କପି ପ୍ରଭାବିତ ହେବ ନାହିଁ।</string>
+    <string name="config_asset_imported">କପି କରି ଚୟନ ହୋଇଛି: %1$s</string>
+    <string name="config_asset_reused">ଥିବା ଫାଇଲ ଚୟନ ହୋଇଛି: %1$s</string>
+    <string name="config_asset_renamed">ନାମ %1$s କୁ ବଦଳାଗଲା</string>
+    <string name="config_asset_deleted">ବିଲୋପ ହୋଇଛି: %1$s</string>
+    <string name="config_asset_invalid">ଅବୈଧ ବା ଅସମର୍ଥିତ ଫାଇଲ।</string>
+    <string name="config_asset_operation_failed">ଫାଇଲ କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ।</string>
+    <string name="config_asset_busy">ପ୍ରଥମେ ଚାଲୁଥିବା ଫାଇଲ କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ।</string>
 </resources>

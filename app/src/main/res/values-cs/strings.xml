@@ -1162,4 +1162,15 @@
     <string name="runtime_camera_use_front">Použít přední fotoaparát</string>
     <string name="runtime_camera_use_rear">Použít zadní fotoaparát</string>
     <string name="runtime_camera_switch_failed">Nepodařilo se přepnout fotoaparát.</string>
+    <string name="config_asset_add">+ Přidat ze souboru</string>
+    <string name="config_asset_copy_hint">Kopie se uloží do pracovní složky; původní soubor zůstane na svém místě.</string>
+    <string name="config_asset_name">Název souboru</string>
+    <string name="config_asset_delete_confirmation">Smazat %1$s z pracovní složky? Soubor mohou používat i jiné MIDlety. Kopie jinde zůstanou nedotčené.</string>
+    <string name="config_asset_imported">Zkopírováno a vybráno: %1$s</string>
+    <string name="config_asset_reused">Vybrán existující soubor: %1$s</string>
+    <string name="config_asset_renamed">Přejmenováno na %1$s</string>
+    <string name="config_asset_deleted">Smazáno: %1$s</string>
+    <string name="config_asset_invalid">Neplatný nebo nepodporovaný soubor.</string>
+    <string name="config_asset_operation_failed">Operaci se souborem nelze dokončit.</string>
+    <string name="config_asset_busy">Nejprve dokončete probíhající operaci se souborem.</string>
 </resources>
