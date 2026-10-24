@@ -111,6 +111,52 @@ class InstallerComposeTest {
     }
 
     @Test
+    fun mismatchedJadRequiresJarIdentityReviewBeforeInstallation() {
+        var jarReviews = 0
+        var installations = 0
+        val jad = File("game-a.jad")
+        val jar = File("game-b.jar")
+        val item = BulkInstallItem(
+            id = "mismatch",
+            unit = BulkSourceUnit(
+                id = "mismatch",
+                origin = BulkSourceOrigin.ExplicitSelection,
+                kind = BulkSourceKind.JadJarPair,
+                primaryFile = jad,
+                sourceFiles = listOf(jad, jar),
+                jadFile = jad,
+                jarFile = jar,
+            ),
+            name = "Game A",
+            vendor = "Publisher A",
+            version = "1.0",
+            status = BulkInstallStatus.JadJarMismatch,
+            action = BulkInstallAction.Skip,
+            selected = false,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                BulkInstallSurface(
+                    state = BulkInstallViewModel.State.Review(
+                        BulkInstallPlan(1, File("/workdir"), listOf(item)),
+                    ),
+                    onToggle = {}, onRecommended = {}, onClear = {}, onInstall = {},
+                    onRetry = {}, onCancel = {}, onClose = {},
+                    explicitSourceSelection = true, singlePresentation = true,
+                    onInstallSingle = { installations++ },
+                    onReviewJarOnly = { jarReviews++ },
+                )
+            }
+        }
+        composeRule.onNodeWithText("Game A").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            uiString(R.string.single_install_review_jar_only),
+        ).performClick()
+        assertEquals(1, jarReviews)
+        assertEquals(0, installations)
+    }
+
+    @Test
     fun compactHeightConfirmationScrollsToAllActions() {
         val actions = RecordingInstallerActions()
         composeRule.setContent {
