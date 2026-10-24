@@ -64,6 +64,9 @@ class BulkInstallViewModel : ViewModel() {
     private var bundleImport: LibraryUniversalBundleStager.PreparedBundle? = null
     private var previousResults: List<BulkInstallResult> = emptyList()
     private var sourceStage: File? = null
+    // Set once per explicit picker result; retries keep the original presentation mode.
+    var useSingleInstallPresentation: Boolean = false
+        private set
 
     fun reviewUnfinished(library: LibraryViewModel) {
         val finished = mutableState.value as? State.Finished ?: return
@@ -118,6 +121,7 @@ class BulkInstallViewModel : ViewModel() {
                         },
                     ))
                 }
+                useSingleInstallPresentation = plan.items.size <= 1
                 mutableState.value = State.Review(if (omittedSourcesWarning == null) {
                     plan
                 } else {
@@ -367,6 +371,17 @@ class BulkInstallViewModel : ViewModel() {
         executePlan(library, review.plan)
     }
 
+    fun executeSingle(library: LibraryViewModel) {
+        val review = mutableState.value as? State.Review ?: return
+        if (!useSingleInstallPresentation) return
+        val item = review.plan.items.singleOrNull() ?: return
+        val action = singleInstallAction(item) ?: return
+        executePlan(library, review.plan.copy(items = listOf(item.copy(
+            action = action,
+            selected = true,
+        ))))
+    }
+
     /** Starts a prepared plan without exposing the optional review surface to the user. */
     private fun executePlan(library: LibraryViewModel, plan: BulkInstallPlan) {
         if (executionJob != null) return
@@ -565,7 +580,7 @@ class BulkInstallViewModel : ViewModel() {
                 mapInstallerStatus(currentCode)
             }
 
-            if (currentStatus == BulkInstallStatus.AlreadyInstalled) {
+            if (currentStatus == BulkInstallStatus.AlreadyInstalled && item.action != BulkInstallAction.Reinstall) {
                 if (!item.bundlePayloadAvailable || bundleImport == null) {
                     return BulkInstallResult(
                         item.id,
@@ -688,7 +703,12 @@ class BulkInstallViewModel : ViewModel() {
         installedMatches: Int,
     ): Boolean = when (item.action) {
         BulkInstallAction.Reinstall ->
-            item.unit.reinstallAppId != null && currentStatus == BulkInstallStatus.ReinstallOrVariant
+            if (item.unit.reinstallAppId != null) {
+                currentStatus == BulkInstallStatus.ReinstallOrVariant
+            } else {
+                item.preflightStatus == BulkInstallStatus.AlreadyInstalled &&
+                    currentStatus == BulkInstallStatus.AlreadyInstalled && installedMatches == 1
+            }
         BulkInstallAction.InstallSeparateCopy ->
             installedMatches > 1 && currentStatus == BulkInstallStatus.AmbiguousInstalledMatch
 
