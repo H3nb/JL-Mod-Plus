@@ -64,6 +64,53 @@ class InstallerComposeTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun oneDiscoveredMidletUsesSingleInstallConfirmation() {
+        var installs = 0
+        val jar = File("demo.jar")
+        val item = BulkInstallItem(
+            id = "demo",
+            unit = BulkSourceUnit(
+                id = "demo",
+                origin = BulkSourceOrigin.ExplicitSelection,
+                kind = BulkSourceKind.JarOnly,
+                primaryFile = jar,
+                sourceFiles = listOf(jar),
+                jarFile = jar,
+            ),
+            name = "Demo",
+            vendor = "Studio",
+            version = "1.0",
+            status = BulkInstallStatus.New,
+            action = BulkInstallAction.Install,
+            selected = true,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                BulkInstallSurface(
+                    state = BulkInstallViewModel.State.Review(
+                        BulkInstallPlan(1, File("/workdir"), listOf(item)),
+                    ),
+                    onToggle = {},
+                    onRecommended = {},
+                    onClear = {},
+                    onInstall = {},
+                    onRetry = {},
+                    onCancel = {},
+                    onClose = {},
+                    explicitSourceSelection = true,
+                    singlePresentation = true,
+                    onInstallSingle = { installs++ },
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.installer_title)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(uiString(R.string.bulk_install_title)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.bulk_install_filter_all)).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.install)).performClick()
+        assertEquals(1, installs)
+    }
+
+    @Test
     fun compactHeightConfirmationScrollsToAllActions() {
         val actions = RecordingInstallerActions()
         composeRule.setContent {
