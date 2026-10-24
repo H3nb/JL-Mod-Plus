@@ -189,7 +189,9 @@ public class MicroActivity extends AppCompatActivity {
 			this::refreshVirtualKeyboardEditorChrome;
 	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
 			(sharedPreferences, key) -> {
-				if (PREF_THEME.equals(key)) refreshRuntimeBackground();
+				if (PREF_THEME.equals(key) && binding != null) {
+					binding.getRoot().post(this::refreshRuntimeBackground);
+				}
 			};
 	private final View.OnLayoutChangeListener overlayAnchorLayoutListener =
 			(view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
@@ -2056,6 +2058,8 @@ public class MicroActivity extends AppCompatActivity {
 			}
 			presentedDisplayable = next;
 			refreshRuntimeBackground();
+			// onResume may precede the first mounted guest; resolve its insets when attached.
+			ViewCompat.requestApplyInsets(binding.getRoot());
 			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}
 	}
