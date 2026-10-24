@@ -184,6 +184,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private AssetTaskModel assetTasks;
 	@Nullable private ConfigFormEvents.AssetKind pendingAssetImport;
 	private boolean skipNextAssetPickerReload;
+	/** A retained asset result applied after the last onPause must survive onResume's disk reload. */
+	private boolean assetResultAppliedAfterPause;
 	private final ActivityResultLauncher<Intent> assetPickerLauncher = registerForActivityResult(
 			new FilePickerResultContract(), this::onAssetPicked);
 	@Nullable private String profileOrigin;
@@ -1355,6 +1357,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
                 builder.soundBank(outcome.selectedName);
             }
             updateForm(builder.build());
+            assetResultAppliedAfterPause = true;
         } else if (composeController != null) {
             composeController.update(createUiState());
         }
@@ -1581,6 +1584,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	public void onPause() {
+		assetResultAppliedAfterPause = false;
 		cancelGamepadCalibration();
 		if (controllerInputRouter != null) {
 			controllerInputRouter.clear();
@@ -1602,8 +1606,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				initSkinOptions();
 				initSoundBankOptions();
 			}
-			if (skipNextAssetPickerReload) skipNextAssetPickerReload = false;
-			else loadParams(true);
+			if (skipNextAssetPickerReload || assetResultAppliedAfterPause) {
+				skipNextAssetPickerReload = false;
+				assetResultAppliedAfterPause = false;
+			} else {
+				loadParams(true);
+			}
 			if (isProfile && profileEditorResumeObserved) {
 				// A return from a native editor may have changed the isolated draft. Keeping the
 				// editor dirty is safer than committing that writer's result implicitly.
