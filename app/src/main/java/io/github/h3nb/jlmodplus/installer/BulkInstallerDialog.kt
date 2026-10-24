@@ -139,6 +139,7 @@ class BulkInstallerDialog : DialogFragment() {
                         explicitSourceSelection = arguments?.getStringArrayList(ARG_SOURCES) != null,
                         singlePresentation = bulkViewModel.useSingleInstallPresentation,
                         onInstallSingle = { bulkViewModel.executeSingle(libraryViewModel) },
+                        onReviewJarOnly = { bulkViewModel.reviewJarOnly(libraryViewModel) },
                         onToggle = bulkViewModel::toggle,
                         onRecommended = bulkViewModel::selectRecommended,
                         onClear = bulkViewModel::clearSelection,
@@ -233,6 +234,7 @@ internal fun BulkInstallSurface(
     explicitSourceSelection: Boolean = false,
     singlePresentation: Boolean = false,
     onInstallSingle: () -> Unit = onInstall,
+    onReviewJarOnly: () -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -297,6 +299,7 @@ internal fun BulkInstallSurface(
                                 showSingle && state.plan.items.size == 1 -> SingleReviewContent(
                                     plan = state.plan,
                                     onInstall = onInstallSingle,
+                                    onReviewJarOnly = onReviewJarOnly,
                                     onClose = onClose,
                                     modifier = Modifier.weight(1f, fill = false),
                                 )
@@ -370,6 +373,7 @@ private enum class ReviewFilter { All, Selected, Attention }
 private fun SingleReviewContent(
     plan: BulkInstallPlan,
     onInstall: () -> Unit,
+    onReviewJarOnly: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -396,19 +400,33 @@ private fun SingleReviewContent(
                 )
             }
             Text(statusLabel(item), style = MaterialTheme.typography.labelLarge)
-            if (item.status == BulkInstallStatus.AlreadyInstalled) {
+            if (item.status == BulkInstallStatus.AlreadyInstalled ||
+                item.status == BulkInstallStatus.ReinstallOrVariant) {
                 Text(stringResource(R.string.reinstall))
             }
-            if (item.status in setOf(
-                    BulkInstallStatus.AlreadyInstalled,
-                    BulkInstallStatus.ReinstallOrVariant,
-                    BulkInstallStatus.Downgrade,
-                    BulkInstallStatus.Update,
-                )
-            ) {
+            if (item.status == BulkInstallStatus.Update ||
+                item.status == BulkInstallStatus.Downgrade) {
+                item.installedVersion?.let { current ->
+                    Text(stringResource(
+                        if (item.status == BulkInstallStatus.Update) {
+                            R.string.reinstall_newest
+                        } else {
+                            R.string.reinstall_older
+                        },
+                        item.version,
+                        current,
+                    ))
+                }
+            }
+            if (item.status.replacesInstalledApp()) {
                 Text(
                     stringResource(R.string.installer_existing_data_preserved),
                     style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    stringResource(R.string.single_install_running_replacement_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             item.effectiveReviewReason?.let { reason ->
@@ -434,11 +452,15 @@ private fun SingleReviewContent(
         ) {
             TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
             if (action != null) {
-                Button(onClick = onInstall) {
+                Button(onClick = if (action == BulkInstallAction.InstallJarOnly) {
+                    onReviewJarOnly
+                } else {
+                    onInstall
+                }) {
                     Text(stringResource(when (action) {
                         BulkInstallAction.Reinstall -> R.string.action_reinstall
                         BulkInstallAction.InstallSeparateCopy -> R.string.installer_separate_copy
-                        BulkInstallAction.InstallJarOnly -> R.string.bulk_install_action_jar_only
+                        BulkInstallAction.InstallJarOnly -> R.string.single_install_review_jar_only
                         else -> R.string.install
                     }))
                 }
