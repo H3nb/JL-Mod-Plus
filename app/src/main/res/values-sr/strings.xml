@@ -1128,4 +1128,15 @@
     <string name="runtime_camera_use_front">Користи предњу камеру</string>
     <string name="runtime_camera_use_rear">Користи задњу камеру</string>
     <string name="runtime_camera_switch_failed">Није могуће променити камеру.</string>
+    <string name="config_asset_add">+ Додај из датотеке</string>
+    <string name="config_asset_copy_hint">Копија се чува у радној фасцикли; оригинална датотека остаје на свом месту.</string>
+    <string name="config_asset_name">Назив датотеке</string>
+    <string name="config_asset_delete_confirmation">Обрисати %1$s из радне фасцикле? Могуће је да је користе и други MIDlet-и. Копије на другим местима неће бити погођене.</string>
+    <string name="config_asset_imported">Копирано и изабрано: %1$s</string>
+    <string name="config_asset_reused">Изабрана постојећа датотека: %1$s</string>
+    <string name="config_asset_renamed">Преименовано у %1$s</string>
+    <string name="config_asset_deleted">Обрисано: %1$s</string>
+    <string name="config_asset_invalid">Неважећа или неподржана датотека.</string>
+    <string name="config_asset_operation_failed">Радња над датотеком није могла да се доврши.</string>
+    <string name="config_asset_busy">Прво довршите текућу радњу над датотеком.</string>
 </resources>

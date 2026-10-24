@@ -1063,4 +1063,15 @@
     <string name="runtime_camera_use_front">ใช้กล้องหน้า</string>
     <string name="runtime_camera_use_rear">ใช้กล้องหลัง</string>
     <string name="runtime_camera_switch_failed">สลับกล้องไม่สำเร็จ</string>
+    <string name="config_asset_add">+ เพิ่มจากไฟล์</string>
+    <string name="config_asset_copy_hint">ระบบจะเก็บสำเนาไว้ในโฟลเดอร์ทำงาน ส่วนไฟล์ต้นฉบับจะยังอยู่ที่เดิม</string>
+    <string name="config_asset_name">ชื่อไฟล์</string>
+    <string name="config_asset_delete_confirmation">ลบ %1$s ออกจากโฟลเดอร์ทำงานหรือไม่? MIDlet อื่นอาจใช้งานไฟล์นี้อยู่ สำเนาที่ตำแหน่งอื่นจะไม่ได้รับผลกระทบ</string>
+    <string name="config_asset_imported">คัดลอกและเลือกแล้ว: %1$s</string>
+    <string name="config_asset_reused">เลือกไฟล์ที่มีอยู่แล้ว: %1$s</string>
+    <string name="config_asset_renamed">เปลี่ยนชื่อเป็น %1$s แล้ว</string>
+    <string name="config_asset_deleted">ลบแล้ว: %1$s</string>
+    <string name="config_asset_invalid">ไฟล์ไม่ถูกต้องหรือไม่รองรับ</string>
+    <string name="config_asset_operation_failed">ไม่สามารถดำเนินการกับไฟล์ให้เสร็จสิ้นได้</string>
+    <string name="config_asset_busy">โปรดรอให้การดำเนินการกับไฟล์ปัจจุบันเสร็จสิ้นก่อน</string>
 </resources>

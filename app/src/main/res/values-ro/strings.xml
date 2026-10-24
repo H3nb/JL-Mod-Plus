@@ -1129,4 +1129,15 @@
     <string name="runtime_camera_use_front">Folosește camera frontală</string>
     <string name="runtime_camera_use_rear">Folosește camera din spate</string>
     <string name="runtime_camera_switch_failed">Nu s-a putut schimba camera.</string>
+    <string name="config_asset_add">+ Adaugă din fișier</string>
+    <string name="config_asset_copy_hint">O copie este salvată în folderul de lucru; fișierul original rămâne la locul lui.</string>
+    <string name="config_asset_name">Nume fișier</string>
+    <string name="config_asset_delete_confirmation">Ștergi %1$s din folderul de lucru? Este posibil să fie folosit și de alte MIDlet-uri. Copiile din alte locații nu vor fi afectate.</string>
+    <string name="config_asset_imported">Copiat și selectat: %1$s</string>
+    <string name="config_asset_reused">Fișier existent selectat: %1$s</string>
+    <string name="config_asset_renamed">Redenumit în %1$s</string>
+    <string name="config_asset_deleted">Șters: %1$s</string>
+    <string name="config_asset_invalid">Fișier nevalid sau neacceptat.</string>
+    <string name="config_asset_operation_failed">Operația cu fișierul nu a putut fi finalizată.</string>
+    <string name="config_asset_busy">Finalizează mai întâi operația în curs cu fișierul.</string>
 </resources>

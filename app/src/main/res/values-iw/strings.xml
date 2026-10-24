@@ -1129,4 +1129,15 @@
     <string name="runtime_camera_use_front">שימוש במצלמה הקדמית</string>
     <string name="runtime_camera_use_rear">שימוש במצלמה האחורית</string>
     <string name="runtime_camera_switch_failed">לא ניתן להחליף מצלמה.</string>
+    <string name="config_asset_add">+ הוספה מקובץ</string>
+    <string name="config_asset_copy_hint">עותק נשמר בתיקיית העבודה; הקובץ המקורי נשאר במקומו.</string>
+    <string name="config_asset_name">שם הקובץ</string>
+    <string name="config_asset_delete_confirmation">למחוק את %1$s מתיקיית העבודה? ייתכן שגם יישומוני MIDlet אחרים משתמשים בו. עותקים במקומות אחרים לא יושפעו.</string>
+    <string name="config_asset_imported">הועתק ונבחר: %1$s</string>
+    <string name="config_asset_reused">נבחר קובץ קיים: %1$s</string>
+    <string name="config_asset_renamed">השם שונה ל־%1$s</string>
+    <string name="config_asset_deleted">נמחק: %1$s</string>
+    <string name="config_asset_invalid">קובץ לא תקין או לא נתמך.</string>
+    <string name="config_asset_operation_failed">לא ניתן להשלים את הפעולה בקובץ.</string>
+    <string name="config_asset_busy">יש לסיים תחילה את פעולת הקובץ הנוכחית.</string>
 </resources>

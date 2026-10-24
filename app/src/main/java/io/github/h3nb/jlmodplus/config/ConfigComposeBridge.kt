@@ -2696,7 +2696,7 @@ internal fun ConfigChoiceDialog(
                                             IconButton(onClick = { expanded = true }) {
                                                 Icon(
                                                     painterResource(R.drawable.ic_more_vert),
-                                                    contentDescription = stringResource(R.string.config_asset_actions),
+                                                    contentDescription = stringResource(R.string.profile_more_actions, option),
                                                 )
                                             }
                                             DropdownMenu(
@@ -2705,7 +2705,7 @@ internal fun ConfigChoiceDialog(
                                             ) {
                                                 if (onRename != null) {
                                                     DropdownMenuItem(
-                                                        text = { Text(stringResource(R.string.config_asset_rename)) },
+                                                        text = { Text(stringResource(R.string.action_context_rename)) },
                                                         onClick = {
                                                             expanded = false
                                                             onRename(option)
@@ -2714,7 +2714,7 @@ internal fun ConfigChoiceDialog(
                                                 }
                                                 if (onDelete != null) {
                                                     DropdownMenuItem(
-                                                        text = { Text(stringResource(R.string.config_asset_delete)) },
+                                                        text = { Text(stringResource(R.string.action_context_delete)) },
                                                         onClick = {
                                                             expanded = false
                                                             onDelete(option)

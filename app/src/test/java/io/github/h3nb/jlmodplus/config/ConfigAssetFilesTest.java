@@ -81,6 +81,52 @@ public class ConfigAssetFilesTest {
         assertFalse(new File(root, "soundbanks/Renamed.sf2").exists());
     }
 
+
+    @Test public void simultaneousImportsCannotOverwriteEachOther() throws Exception {
+        File root = temporary.newFolder("concurrent");
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(6);
+        java.util.concurrent.CountDownLatch go = new java.util.concurrent.CountDownLatch(1);
+        java.util.List<java.util.concurrent.Future<ConfigAssetFiles.Imported>> tasks = new java.util.ArrayList<>();
+        try {
+            for (int i = 0; i < 6; i++) {
+                final byte id = (byte) (i + 1);
+                File source = bank(temporary.newFolder("concurrent-" + i), "Shared.sf2", id);
+                tasks.add(pool.submit(() -> {
+                    go.await();
+                    return ConfigAssetFiles.importFile(root,
+                            ConfigAssetFiles.Kind.SOUNDBANK, source);
+                }));
+            }
+            go.countDown();
+            java.util.Set<String> names = new java.util.HashSet<>();
+            for (java.util.concurrent.Future<ConfigAssetFiles.Imported> task : tasks) {
+                assertTrue(names.add(task.get().name));
+            }
+            assertEquals(6, names.size());
+            for (String name : names) {
+                assertTrue(new File(root, "soundbanks/" + name).isFile());
+            }
+            assertEquals(6, new File(root, "soundbanks").listFiles().length);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test public void interruptedImportDoesNotPublishIncompleteFile() throws Exception {
+        File root = temporary.newFolder("interrupt");
+        File source = bank(temporary.newFolder("interrupt-source"), "Bank.sf2", (byte) 3);
+        Thread.currentThread().interrupt();
+        try {
+            ConfigAssetFiles.importFile(root, ConfigAssetFiles.Kind.SOUNDBANK, source);
+            fail("interrupted import must not publish");
+        } catch (IOException expected) {
+            assertEquals(0, ConfigAssetFiles.directory(
+                    root, ConfigAssetFiles.Kind.SOUNDBANK).listFiles().length);
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
     @Test public void invalidFileDoesNotPublish() throws Exception {
         File root = temporary.newFolder("workdir");
         File source = temporary.newFile("Broken.sf2");

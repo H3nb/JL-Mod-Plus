@@ -632,6 +632,9 @@
     <string name="bulk_install_source">Sumber: %1$s</string>
     <string name="bulk_install_action_separate_copy">Instal sebagai salinan terpisah</string>
     <string name="bulk_install_action_jar_only">Instal JAR saja</string>
+    <string name="single_install_review_jar_only">Tinjau JAR saja</string>
+    <string name="single_install_jar_only_notice">Hanya JAR yang akan diinstal. Periksa nama aplikasi, versi, dan status aplikasi yang sudah terpasang sebelum melanjutkan.</string>
+    <string name="single_install_running_replacement_warning">Jika aplikasi ini sedang berjalan, instalasi akan menghentikannya sebelum mengganti berkasnya. Progres yang belum disimpan mungkin hilang.</string>
     <string name="bulk_install_status_new">Baru</string>
     <string name="bulk_install_status_update">Pembaruan</string>
     <string name="bulk_install_status_downgrade">Versi lebih lama</string>
@@ -1093,18 +1096,15 @@
     <string name="platform_package_browser">Buka di browser</string>
     <string name="platform_package_unavailable">Tidak ada aplikasi yang dapat membuka tautan ini.</string>
     <string name="installer_running_update_warning">Aplikasi ini sedang berjalan. Instalasi akan menghentikannya sebelum berkas diganti. Progres yang belum disimpan mungkin hilang.</string>
-    <string name="config_asset_actions">Opsi file</string>
     <string name="config_asset_add">+ Tambah dari file</string>
     <string name="config_asset_copy_hint">Disalin ke folder kerja; file asli tetap di tempatnya.</string>
-    <string name="config_asset_rename">Ganti nama</string>
-    <string name="config_asset_delete">Hapus file</string>
     <string name="config_asset_name">Nama file</string>
     <string name="config_asset_delete_confirmation">Hapus %1$s dari folder kerja? MIDlet lain mungkin juga menggunakan file ini. Salinan di lokasi lain tidak terpengaruh.</string>
     <string name="config_asset_imported">Disalin dan dipilih: %1$s</string>
     <string name="config_asset_reused">File yang tersedia dipilih: %1$s</string>
     <string name="config_asset_renamed">Nama diubah menjadi %1$s</string>
     <string name="config_asset_deleted">%1$s dihapus</string>
-    <string name="config_asset_name_conflict">Nama file tersebut sudah digunakan.</string>
     <string name="config_asset_invalid">File tidak valid atau tidak didukung.</string>
     <string name="config_asset_operation_failed">Operasi file tidak dapat diselesaikan.</string>
+    <string name="config_asset_busy">Selesaikan operasi file yang sedang berjalan terlebih dahulu.</string>
 </resources>

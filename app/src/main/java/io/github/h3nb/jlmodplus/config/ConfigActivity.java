@@ -55,6 +55,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -177,7 +181,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Nullable private String permissionFingerprint;
 	private boolean fileAccessBusy;
 	private final ExecutorService profileMetadataExecutor = Executors.newSingleThreadExecutor();
-	private final ExecutorService assetFileExecutor = Executors.newSingleThreadExecutor();
+	private AssetTaskModel assetTasks;
 	@Nullable private ConfigFormEvents.AssetKind pendingAssetImport;
 	private boolean skipNextAssetPickerReload;
 	private final ActivityResultLauncher<Intent> assetPickerLauncher = registerForActivityResult(
@@ -518,6 +522,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		initSkinOptions();
 		initShaderSpinner();
 		currentForm = formFromParams();
+		assetTasks = new ViewModelProvider(this).get(AssetTaskModel.class);
+		assetTasks.completed.observe(this, this::onAssetActionComplete);
 		composeController = new ConfigComposeController(
 				composeView,
 				createUiState(),
@@ -1252,49 +1258,107 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
         }
     }
 
+    /** Retains an I/O job across configuration changes, never the Activity or its form. */
+    public static final class AssetTaskModel extends ViewModel {
+        private final ExecutorService worker = Executors.newSingleThreadExecutor();
+        private final MutableLiveData<AssetTaskResult> pending = new MutableLiveData<>();
+        final LiveData<AssetTaskResult> completed = pending;
+        private boolean busy;
+
+        boolean submit(File root, ConfigFormEvents.AssetKind kind, @Nullable String oldName,
+                       AssetAction action) {
+            if (busy) return false;
+            busy = true;
+            worker.execute(() -> {
+                AssetOutcome outcome = null;
+                Exception failure = null;
+                try {
+                    outcome = action.execute(root, fileKind(kind));
+                } catch (IOException | RuntimeException ex) {
+                    failure = ex;
+                }
+                pending.postValue(new AssetTaskResult(root, kind, oldName, outcome, failure));
+            });
+            return true;
+        }
+
+        void acknowledge() {
+            busy = false;
+            pending.setValue(null);
+        }
+
+        @Override
+        protected void onCleared() {
+            worker.shutdownNow();
+        }
+    }
+
+    private static final class AssetTaskResult {
+        final File root;
+        final ConfigFormEvents.AssetKind kind;
+        @Nullable final String oldName;
+        @Nullable final AssetOutcome outcome;
+        @Nullable final Exception failure;
+
+        AssetTaskResult(File root, ConfigFormEvents.AssetKind kind,
+                        @Nullable String oldName, @Nullable AssetOutcome outcome,
+                        @Nullable Exception failure) {
+            this.root = root;
+            this.kind = kind;
+            this.oldName = oldName;
+            this.outcome = outcome;
+            this.failure = failure;
+        }
+    }
+
     private void runAssetAction(ConfigFormEvents.AssetKind kind, @Nullable String oldName,
                                 AssetAction action) {
-        if (workDir == null || currentForm == null) return;
-        File root = new File(workDir);
-        assetFileExecutor.execute(() -> {
-            try {
-                AssetOutcome result = action.execute(root, fileKind(kind));
-                runOnUiThread(() -> {
-                    if (isDestroyed() || isFinishing() || currentForm == null) return;
-                    initSkinOptions();
-                    initSoundBankOptions();
-                    String selected = kind == ConfigFormEvents.AssetKind.SKIN
-                            ? currentForm.screenBackgroundImage : currentForm.soundBank;
-                    if (oldName == null || Objects.equals(oldName, selected)) {
-                        ConfigFormState.Builder builder = currentForm.toBuilder();
-                        if (kind == ConfigFormEvents.AssetKind.SKIN) {
-                            builder.screenBackgroundImage(result.selectedName);
-                        } else {
-                            builder.soundBank(result.selectedName);
-                        }
-                        updateForm(builder.build());
-                    } else if (composeController != null) {
-                        composeController.update(createUiState());
-                    }
-                    ThemedToast.show(this, getString(result.message, result.displayName),
-                            Toast.LENGTH_SHORT);
-                });
-            } catch (IOException | RuntimeException failure) {
-                Log.w(TAG, "Asset file action failed", failure);
-                runOnUiThread(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    String message = failure.getMessage();
-                    int resource = "Asset name already used".equals(message)
-                            ? R.string.config_asset_name_conflict
-                            : ("Unsupported asset".equals(message)
-                                    || "Invalid asset file".equals(message)
-                                    || "Invalid asset format".equals(message))
-                            ? R.string.config_asset_invalid
-                            : R.string.config_asset_operation_failed;
-                    ThemedToast.show(this, resource, Toast.LENGTH_SHORT);
-                });
+        if (workDir == null || currentForm == null || assetTasks == null) return;
+        if (!assetTasks.submit(new File(workDir), kind, oldName, action)) {
+            ThemedToast.show(this, R.string.config_asset_busy, Toast.LENGTH_SHORT);
+        }
+    }
+
+    private void onAssetActionComplete(@Nullable AssetTaskResult result) {
+        if (result == null || assetTasks == null) return;
+        // Never apply retained work to a different folder or a closing editor.
+        if (workDir == null || !result.root.equals(new File(workDir))
+                || currentForm == null || isFinishing() || isDestroyed()) {
+            assetTasks.acknowledge();
+            return;
+        }
+        assetTasks.acknowledge();
+        if (result.failure != null) {
+            Log.w(TAG, "Asset file action failed", result.failure);
+            String message = result.failure.getMessage();
+            int resource = "Asset name already used".equals(message)
+                    || result.failure instanceof ConfigAssetFiles.NameConflictException
+                    ? R.string.file_picker_folder_exists
+                    : ("Unsupported asset".equals(message)
+                        || "Invalid asset file".equals(message)
+                        || "Invalid asset format".equals(message))
+                    ? R.string.config_asset_invalid : R.string.config_asset_operation_failed;
+            ThemedToast.show(this, resource, Toast.LENGTH_SHORT);
+            return;
+        }
+        AssetOutcome outcome = result.outcome;
+        if (outcome == null) return;
+        initSkinOptions();
+        initSoundBankOptions();
+        String selected = result.kind == ConfigFormEvents.AssetKind.SKIN
+                ? currentForm.screenBackgroundImage : currentForm.soundBank;
+        if (result.oldName == null || Objects.equals(result.oldName, selected)) {
+            ConfigFormState.Builder builder = currentForm.toBuilder();
+            if (result.kind == ConfigFormEvents.AssetKind.SKIN) {
+                builder.screenBackgroundImage(outcome.selectedName);
+            } else {
+                builder.soundBank(outcome.selectedName);
             }
-        });
+            updateForm(builder.build());
+        } else if (composeController != null) {
+            composeController.update(createUiState());
+        }
+        ThemedToast.show(this, getString(outcome.message, outcome.displayName), Toast.LENGTH_SHORT);
     }
 
 	private void initSkinOptions() {
@@ -1534,6 +1598,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		super.onResume();
 		refreshFileAccess();
 		if (needShow) {
+			if (workDir != null) {
+				initSkinOptions();
+				initSoundBankOptions();
+			}
 			if (skipNextAssetPickerReload) skipNextAssetPickerReload = false;
 			else loadParams(true);
 			if (isProfile && profileEditorResumeObserved) {
@@ -1553,7 +1621,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		getWindow().getDecorView().removeCallbacks(gamepadCalibrationTicker);
 		profileMetadataExecutor.shutdownNow();
-		assetFileExecutor.shutdownNow();
 		if (isProfile && !isChangingConfigurations()) {
 			ProfilesManager.releasePresetEditSession(profileEditSession);
 			if (profileEditDraftDir != null) FileUtils.deleteDirectory(profileEditDraftDir);

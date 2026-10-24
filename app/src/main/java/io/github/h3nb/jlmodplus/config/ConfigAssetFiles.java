@@ -15,6 +15,10 @@
 package io.github.h3nb.jlmodplus.config;
 
 import androidx.annotation.NonNull;
+import android.os.Build;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.OsConstants;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,6 +49,10 @@ public final class ConfigAssetFiles {
             this.name = name;
             this.copied = copied;
         }
+    }
+
+    public static final class NameConflictException extends IOException {
+        NameConflictException(String path) { super("Asset name already used: " + path); }
     }
 
     private ConfigAssetFiles() {}
@@ -143,7 +151,7 @@ public final class ConfigAssetFiles {
         return true;
     }
 
-    public static Imported importFile(File workdir, Kind kind, File source) throws IOException {
+    public static synchronized Imported importFile(File workdir, Kind kind, File source) throws IOException {
         File dir = directory(workdir, kind);
         String original = source.getName();
         checkName(original);
@@ -168,22 +176,66 @@ public final class ConfigAssetFiles {
                  FileOutputStream output = new FileOutputStream(staged)) {
                 byte[] buffer = new byte[32 * 1024];
                 int n;
-                while ((n = input.read(buffer)) != -1) output.write(buffer, 0, n);
+                while ((n = input.read(buffer)) != -1) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        throw new IOException("Asset operation was interrupted");
+                    }
+                    output.write(buffer, 0, n);
+                }
                 output.getFD().sync();
             }
             checkHeader(kind, staged);
             File target = new File(dir, candidate);
-            if (existingName(dir, candidate) != null || !staged.renameTo(target)) {
-                throw new IOException("Could not publish asset without overwriting existing file");
-            }
+            publishWithoutReplacing(staged, target);
             return new Imported(candidate, true);
         } finally {
             staged.delete();
         }
     }
 
+    /**
+     * Publishes without replacing an existing target. A hard link makes completed content
+     * visible atomically when the workdir filesystem supports it. External/FUSE storage
+     * often does not support links, so reserve the destination with createNewFile (O_EXCL)
+     * and copy the completed source only after that reservation succeeds.
+     */
+    private static void publishWithoutReplacing(File source, File target) throws IOException {
+        if (Thread.currentThread().isInterrupted()) throw new IOException("Asset operation was interrupted");
+        if (target.exists()) throw new NameConflictException(target.getPath());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            try {
+                Os.link(source.getPath(), target.getPath());
+                return;
+            } catch (ErrnoException failure) {
+                if (failure.errno == OsConstants.EEXIST) {
+                    throw new NameConflictException(target.getPath());
+                }
+                // Some external/FUSE filesystems do not support links. Use O_EXCL below.
+            }
+        }
+        if (!target.createNewFile()) throw new NameConflictException(target.getPath());
+        boolean published = false;
+        try {
+            try (FileInputStream input = new FileInputStream(source);
+                 FileOutputStream output = new FileOutputStream(target)) {
+                byte[] buffer = new byte[32 * 1024];
+                int count;
+                while ((count = input.read(buffer)) != -1) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        throw new IOException("Asset operation was interrupted");
+                    }
+                    output.write(buffer, 0, count);
+                }
+                output.getFD().sync();
+            }
+            published = true;
+        } finally {
+            if (!published) target.delete();
+        }
+    }
+
     /** The extension is retained so renaming cannot accidentally change file format. */
-    public static String rename(File workdir, Kind kind, String oldName, String newStem)
+    public static synchronized String rename(File workdir, Kind kind, String oldName, String newStem)
             throws IOException {
         File dir = directory(workdir, kind);
         File source = existingAsset(dir, oldName);
@@ -196,13 +248,18 @@ public final class ConfigAssetFiles {
         if (occupied != null && !occupied.equals(source)) {
             throw new IOException("Asset name already used");
         }
-        if (!source.renameTo(new File(dir, destinationName))) {
-            throw new IOException("Could not rename asset");
+        File target = new File(dir, destinationName);
+        publishWithoutReplacing(source, target);
+        if (!source.delete()) {
+            if (!target.delete()) {
+                throw new IOException("Renamed copy was created but the source could not be removed");
+            }
+            throw new IOException("Could not remove the original asset");
         }
         return destinationName;
     }
 
-    public static void delete(File workdir, Kind kind, String name) throws IOException {
+    public static synchronized void delete(File workdir, Kind kind, String name) throws IOException {
         File source = existingAsset(directory(workdir, kind), name);
         if (!source.delete()) throw new IOException("Could not delete asset");
     }

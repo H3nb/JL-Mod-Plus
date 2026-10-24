@@ -246,7 +246,7 @@ internal fun ConfigChoicePreference(
         var draft by remember(file) { mutableStateOf(originalStem) }
         AlertDialog(
             onDismissRequest = { renameFile = null },
-            title = { Text(stringResource(R.string.config_asset_rename)) },
+            title = { Text(stringResource(R.string.action_context_rename)) },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
@@ -278,13 +278,13 @@ internal fun ConfigChoicePreference(
     deleteFile?.let { file ->
         AlertDialog(
             onDismissRequest = { deleteFile = null },
-            title = { Text(stringResource(R.string.config_asset_delete)) },
+            title = { Text(stringResource(R.string.action_context_delete)) },
             text = { Text(stringResource(R.string.config_asset_delete_confirmation, file)) },
             confirmButton = {
                 TextButton(onClick = {
                     deleteFile = null
                     onDelete?.invoke(file)
-                }) { Text(stringResource(R.string.config_asset_delete)) }
+                }) { Text(stringResource(R.string.action_context_delete)) }
             },
             dismissButton = {
                 TextButton(onClick = { deleteFile = null }) {

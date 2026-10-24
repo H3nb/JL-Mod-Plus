@@ -1095,4 +1095,15 @@
     <string name="runtime_camera_use_front">Bruk frontkamera</string>
     <string name="runtime_camera_use_rear">Bruk bakkamera</string>
     <string name="runtime_camera_switch_failed">Kunne ikke bytte kamera.</string>
+    <string name="config_asset_add">+ Legg til fra fil</string>
+    <string name="config_asset_copy_hint">En kopi lagres i arbeidsmappen; originalfilen blir liggende der den er.</string>
+    <string name="config_asset_name">Filnavn</string>
+    <string name="config_asset_delete_confirmation">Slette %1$s fra arbeidsmappen? Andre MIDlet-er kan bruke filen. Kopier andre steder blir ikke påvirket.</string>
+    <string name="config_asset_imported">Kopiert og valgt: %1$s</string>
+    <string name="config_asset_reused">Eksisterende fil valgt: %1$s</string>
+    <string name="config_asset_renamed">Endret navn til %1$s</string>
+    <string name="config_asset_deleted">Slettet: %1$s</string>
+    <string name="config_asset_invalid">Ugyldig eller ikke-støttet fil.</string>
+    <string name="config_asset_operation_failed">Kunne ikke fullføre filoperasjonen.</string>
+    <string name="config_asset_busy">Fullfør den pågående filoperasjonen først.</string>
 </resources>

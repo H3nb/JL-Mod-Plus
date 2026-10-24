@@ -713,6 +713,9 @@
     <string name="bulk_install_source">Source: %1$s</string>
     <string name="bulk_install_action_separate_copy">Install as separate copy</string>
     <string name="bulk_install_action_jar_only">Install JAR only</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Review JAR only</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Only the JAR will be installed. Review its app name, version, and installed-app status before continuing.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">If this app is running, installing will stop it before replacing its files. Unsaved progress may be lost.</string>
     <string name="bulk_install_status_new">New</string>
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>
@@ -1179,18 +1182,15 @@
     <string name="platform_package_browser" tools:ignore="MissingTranslation">Open in browser</string>
     <string name="platform_package_unavailable" tools:ignore="MissingTranslation">No application can open this link.</string>
     <string name="installer_running_update_warning" tools:ignore="MissingTranslation">This application is currently running. Installing will stop it before its files are replaced. Unsaved progress may be lost.</string>
-    <string name="config_asset_actions" tools:ignore="MissingTranslation">File options</string>
-    <string name="config_asset_add" tools:ignore="MissingTranslation">+ Add from file</string>
-    <string name="config_asset_copy_hint" tools:ignore="MissingTranslation">Copied into the work folder; the original file stays where it is.</string>
-    <string name="config_asset_rename" tools:ignore="MissingTranslation">Rename</string>
-    <string name="config_asset_delete" tools:ignore="MissingTranslation">Delete file</string>
-    <string name="config_asset_name" tools:ignore="MissingTranslation">File name</string>
-    <string name="config_asset_delete_confirmation" tools:ignore="MissingTranslation">Delete %1$s from the work folder? Other MIDlets may also use this file. Copies elsewhere are unaffected.</string>
-    <string name="config_asset_imported" tools:ignore="MissingTranslation">Copied and selected: %1$s</string>
-    <string name="config_asset_reused" tools:ignore="MissingTranslation">Existing file selected: %1$s</string>
-    <string name="config_asset_renamed" tools:ignore="MissingTranslation">Renamed to %1$s</string>
-    <string name="config_asset_deleted" tools:ignore="MissingTranslation">Deleted %1$s</string>
-    <string name="config_asset_name_conflict" tools:ignore="MissingTranslation">That file name is already in use.</string>
-    <string name="config_asset_invalid" tools:ignore="MissingTranslation">Unsupported or invalid file.</string>
-    <string name="config_asset_operation_failed" tools:ignore="MissingTranslation">Could not complete the file operation.</string>
+    <string name="config_asset_add">+ Add from file</string>
+    <string name="config_asset_copy_hint">Copied into the work folder; the original file stays where it is.</string>
+    <string name="config_asset_name">File name</string>
+    <string name="config_asset_delete_confirmation">Delete %1$s from the work folder? Other MIDlets may also use this file. Copies elsewhere are unaffected.</string>
+    <string name="config_asset_imported">Copied and selected: %1$s</string>
+    <string name="config_asset_reused">Existing file selected: %1$s</string>
+    <string name="config_asset_renamed">Renamed to %1$s</string>
+    <string name="config_asset_deleted">Deleted %1$s</string>
+    <string name="config_asset_invalid">Unsupported or invalid file.</string>
+    <string name="config_asset_operation_failed">Could not complete the file operation.</string>
+    <string name="config_asset_busy">Finish the current file operation first.</string>
 </resources>
