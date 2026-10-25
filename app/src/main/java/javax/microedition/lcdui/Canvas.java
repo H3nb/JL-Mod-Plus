@@ -514,12 +514,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void drawAmbient(android.graphics.Canvas canvas, long nowNs) {
-		if (!ambientLayoutValid) return;
-		if (isDynamicSolidMode()) {
-			sampleAmbientIfDue(nowNs);
-			return;
-		}
-		if (!isImmersiveMode()) return;
+		if (!isImmersiveMode() || !ambientLayoutValid) return;
 		updateAmbientCanvas(nowNs);
 		synchronized (ambientLock) {
 			if (ambientCanvasRenderer != null) {
@@ -834,6 +829,7 @@ public abstract class Canvas extends Displayable {
 		try {
 			long nowNs = SystemClock.elapsedRealtimeNanos();
 			g.bind(canvas);
+			if (isDynamicSolidMode()) sampleAmbientIfDue(nowNs);
 			g.clear(effectiveBackgroundArgb());
 			drawAmbient(canvas, nowNs);
 			SkinLayer skinLayer = SkinLayer.getInstance();
@@ -867,7 +863,7 @@ public abstract class Canvas extends Displayable {
 			if (needsAnother) {
 				requestAnotherPresentation(!presented);
 			}
-			if (presented && isImmersiveMode()) {
+			if (presented && isReactiveBackground()) {
 				scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
 			}
 		}
@@ -1440,8 +1436,10 @@ public abstract class Canvas extends Displayable {
 				}
 				CanvasWrapper g = this.canvasWrapper;
 				g.bind(lockedCanvas);
+				long nowNs = SystemClock.elapsedRealtimeNanos();
+				if (isDynamicSolidMode()) sampleAmbientIfDue(nowNs);
 				g.clear(effectiveBackgroundArgb());
-				drawAmbient(lockedCanvas, SystemClock.elapsedRealtimeNanos());
+				drawAmbient(lockedCanvas, nowNs);
 				SkinLayer skinLayer = SkinLayer.getInstance();
 				int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
 				lockedCanvas.clipRect(p, p, displayWidth - p, displayHeight - p);
@@ -1472,6 +1470,7 @@ public abstract class Canvas extends Displayable {
 				diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 						submitStarted, System.nanoTime());
 			}
+			if (isReactiveBackground()) scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
 			return PresentationResult.presented(frameSequence, hostRevision);
 		} catch (Exception e) {
 			Log.w(TAG, "repaintScreen: " + e);
@@ -1739,7 +1738,7 @@ public abstract class Canvas extends Displayable {
 				if (needsAnother) {
 					requestAnotherPresentation(!presented);
 				}
-				if (presented && isImmersiveMode()) {
+				if (presented && isReactiveBackground()) {
 					scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
 				}
 			}
