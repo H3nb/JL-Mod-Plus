@@ -93,12 +93,12 @@ internal fun LibraryMetadataLocalizedDescriptions(
                     OutlinedTextField(
                         value = text,
                         onValueChange = { value ->
-                            val normalized = value.takeUnless {
-                                it.isBlank() || it.trim() == source[locale]
-                            }
-                            onChange(if (normalized == null) overrides - locale
-                                else overrides + (locale to normalized))
-                            if (normalized != null) pending = null
+                            // Keep even an empty in-progress edit visible. Normalization happens
+                            // when saving, not during typing; otherwise clearing a source string
+                            // instantly restores it and prevents replacing the entire text.
+                            onChange(if (value == source[locale]) overrides - locale
+                                else overrides + (locale to value))
+                            pending = null
                         },
                         label = { Text("$name · $locale") },
                         minLines = 3,
