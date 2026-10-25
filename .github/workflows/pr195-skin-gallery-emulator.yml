@@ -49,6 +49,24 @@ jobs:
           script: |
             chmod +x gradlew
             ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.config.ControlSkinManagerComposeTest :app:connectedEmulatorDebugAndroidTest
+      - name: Report executed UI tests and failures
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          paths = list(Path('app/build/outputs/androidTest-results/connected').rglob('TEST-*.xml'))
+          print('XML reports:', len(paths))
+          for path in paths:
+              root = ET.parse(path).getroot()
+              print('Report:', path, root.attrib)
+              for case in root.iter('testcase'):
+                  print('Case:', case.attrib)
+                  for kind in ('failure', 'error', 'skipped'):
+                      bad = case.find(kind)
+                      if bad is not None:
+                          print(kind, bad.attrib, (bad.text or '')[:12000])
+          PY
       - name: Confirm UI test executed successfully
         if: always()
         run: |
