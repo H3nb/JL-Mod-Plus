@@ -60,13 +60,20 @@ slot and state when imported through the editor.
 
 ## Editing and ownership
 
-The Compose library manager is opened from MIDlet virtual-controls settings.
-Set edits (create, import, rename, duplicate, mode, delete) are saved globally
-immediately. **Use this set** returns only the chosen ID to the current MIDlet's
-unsaved config draft; saving or discarding that selection follows the ordinary
-profile ownership and preset linkage rules. Renaming keeps the ID; duplicating
-creates a new one. Deleting a set leaves older references harmless: runtime
-falls back to built-in controls.
+The Compose manager opens from MIDlet virtual-controls settings. Its compact
+library selects a set by tapping its row, and the overflow menu edits or
+manages the set. The editor arranges keys as a numeric keypad, navigation pad,
+and other buttons; tapping a key opens an in-place bottom sheet with normal
+and pressed image previews and an icon/full-button mode selector.
+
+Set edits (create, image import/removal, rename, duplicate, mode, delete) are
+saved globally after each successful operation; there is no redundant Save
+button in the image editor. Creating a set selects it for the current MIDlet.
+Selecting an existing set from the list returns its ID to ConfigActivity,
+which follows its existing config persistence and preset-ownership rules.
+Renaming keeps the ID; duplicating creates a new one. Deleting the selected
+set clears the MIDlet selection on return. Other MIDlets holding references
+to a deleted set harmlessly fall back to built-in buttons.
 
 The editor accepts PNG/WebP up to 8 MiB and 2048 pixels on either axis. Files
 replaced through the editor are staged before publication. External filesystem
