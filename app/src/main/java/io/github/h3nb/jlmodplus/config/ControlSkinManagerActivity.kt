@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -29,7 +28,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,7 +51,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -135,7 +132,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             notifyError(getString(R.string.control_skin_invalid_image))
             return@registerForActivityResult
         }
-        perform(editId = target.setId) {
+        perform {
             contentResolver.openInputStream(uri)?.use {
                 ControlSkinStore.importImage(workdir, target.setId, target.key, target.pressed, it, suffix)
             } ?: error("Cannot read image")
@@ -160,7 +157,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         view.setContent { JLModPlusTheme { ManagerScreen() } }
         setContentView(view)
-        perform(editId = editingId) { editingId }
+        perform { editingId }
     }
 
     override fun onSaveInstanceState(state: Bundle) {
@@ -185,7 +182,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     }
 
     /** Serializes writes, refreshes list/counts and decodes previews off the UI thread. */
-    private fun perform(editId: String? = editingId, action: () -> String?) {
+    private fun perform(action: () -> String?) {
         if (busy) return
         busy = true
         worker.execute {
@@ -229,7 +226,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         if (busy) return
         editingId = id
         selectedKey = null
-        perform(editId = id) { id }
+        perform { id }
     }
 
     private fun choose(id: String?) {
@@ -282,14 +279,14 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     }
 
     private fun updateMode(setId: String, key: String, mode: String) {
-        perform(editId = setId) {
+        perform {
             ControlSkinStore.setMode(workdir, setId, key, mode)
             setId
         }
     }
 
     private fun removeImage(setId: String, key: String, pressed: Boolean) {
-        perform(editId = setId) {
+        perform {
             ControlSkinStore.removeImage(workdir, setId, key, pressed)
             setId
         }
@@ -349,10 +346,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize().padding(padding),
                 )
             } else {
-                Editor(
-                    set = currentSet,
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                )
+                Editor(modifier = Modifier.fillMaxSize().padding(padding))
             }
         }
 
@@ -482,7 +476,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun Editor(set: ControlSkinStore.SetInfo, modifier: Modifier) {
+    private fun Editor(modifier: Modifier) {
         Column(modifier.verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
             KeyGroup(stringResource(R.string.control_skin_numeric), numeric)
@@ -544,7 +538,10 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         if (bitmap == null) {
                             Text(label(key), color = Color(0xFF000000.toInt() or fg),
-                                style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                style = if (key.startsWith("soft_") || key == "fire")
+                                    MaterialTheme.typography.labelMedium
+                                else MaterialTheme.typography.titleMedium,
+                                maxLines = 1)
                         } else {
                             Image(bitmap.asImageBitmap(), contentDescription = null,
                                 contentScale = ContentScale.Fit,
@@ -626,7 +623,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     onPick = { pickImage(set.id, key, true) },
                     onRemove = { removeImage(set.id, key, true) },
                     hint = if (!normalAvailable) stringResource(R.string.control_skin_pressed_requires_normal)
-                        else if (images.pressed == null) stringResource(R.string.control_skin_pressed_auto)
+                        else if (images?.pressed == null) stringResource(R.string.control_skin_pressed_auto)
                         else null,
                 )
             }
