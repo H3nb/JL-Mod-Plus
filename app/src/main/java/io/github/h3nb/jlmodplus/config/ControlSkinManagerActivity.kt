@@ -5,9 +5,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -68,10 +68,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.filepicker.FilePickerContract
+import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract
+import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat
 import java.io.File
+import java.util.Locale
 import java.util.concurrent.Executors
 
 /**
@@ -122,25 +126,32 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private var deleteId by mutableStateOf<String?>(null)
     private var busy by mutableStateOf(false)
     private var importTarget: ImportTarget? = null
+    private var lastPickerPath: String? = null
 
-    private val picker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    private val picker = registerForActivityResult(FilePickerResultContract()) { uris ->
         val target = importTarget
         importTarget = null
-        if (target == null || uri == null) return@registerForActivityResult
-        val mime = contentResolver.getType(uri)
-        val suffix = when (mime) {
-            "image/png" -> ".png"
-            "image/webp" -> ".webp"
+        val uri = uris.firstOrNull() ?: return@registerForActivityResult
+        if (target == null || (uri.scheme != null && uri.scheme != "file")
+            || uri.path.isNullOrBlank()) {
+            notifyError(getString(R.string.control_skin_invalid_image))
+            return@registerForActivityResult
+        }
+        val source = File(requireNotNull(uri.path))
+        val suffix = when (source.extension.lowercase(Locale.ROOT)) {
+            "png" -> ".png"
+            "webp" -> ".webp"
             else -> null
         }
         if (suffix == null) {
             notifyError(getString(R.string.control_skin_invalid_image))
             return@registerForActivityResult
         }
+        lastPickerPath = source.parent
         perform {
-            contentResolver.openInputStream(uri)?.use {
+            source.inputStream().use {
                 ControlSkinStore.importImage(workdir, target.setId, target.key, target.pressed, it, suffix)
-            } ?: error("Cannot read image")
+            }
             target.setId
         }
     }
@@ -153,6 +164,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             savedInstanceState.getString("selected") else intent.getStringExtra(EXTRA_SELECTED)
         editingId = savedInstanceState?.getString("editing")
         selectedKey = savedInstanceState?.getString("key")
+        lastPickerPath = savedInstanceState?.getString("picker_path")
         importTarget = savedInstanceState?.getString("import_id")?.let { id ->
             val key = savedInstanceState.getString("import_key")
             if (key == null) null else ImportTarget(id, key, savedInstanceState.getBoolean("import_pressed"))
@@ -169,6 +181,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         state.putString("selected", selectedId)
         state.putString("editing", editingId)
         state.putString("key", selectedKey)
+        state.putString("picker_path", lastPickerPath)
         importTarget?.let {
             state.putString("import_id", it.setId)
             state.putString("import_key", it.key)
@@ -292,7 +305,17 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
     private fun pickImage(setId: String, key: String, pressed: Boolean) {
         importTarget = ImportTarget(setId, key, pressed)
-        picker.launch(arrayOf("image/png", "image/webp"))
+        picker.launch(Intent(this, FilteredFilePickerActivity::class.java).apply {
+            putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE)
+            putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false)
+            putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, true)
+            putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false)
+            putExtra(FilePickerContract.EXTRA_TITLE, getString(R.string.control_skin_pick_image))
+            putStringArrayListExtra(
+                FilePickerContract.EXTRA_ALLOWED_EXTENSIONS, arrayListOf(".png", ".webp"))
+            putExtra(FilePickerContract.EXTRA_START_PATH,
+                lastPickerPath ?: Environment.getExternalStorageDirectory().absolutePath)
+        })
     }
 
     private fun back() {
