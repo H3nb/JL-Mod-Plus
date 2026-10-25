@@ -1132,8 +1132,8 @@
     <string name="control_skin_remove_image">Hapus</string>
     <string name="control_skin_manage">Kelola set</string>
     <string name="control_skin_manage_named">Kelola %1$s</string>
-    <string name="control_skin_count">%1$d tombol dikustomisasi</string>
-    <string name="control_skin_empty">Buat set untuk mengubah gambar tombol.</string>
+    <string name="control_skin_count">%1$d kontrol dikustomisasi</string>
+    <string name="control_skin_empty">Buat set untuk mengubah gambar kontrol.</string>
     <string name="control_skin_numeric">Keypad</string>
     <string name="control_skin_navigation">Navigasi</string>
     <string name="control_skin_other">Tombol lainnya</string>
@@ -1146,4 +1146,16 @@
     <string name="control_skin_soft_right">Soft R</string>
     <string name="control_skin_fire">Fire</string>
     <string name="control_skin_menu">Menu</string>
+    <string name="control_skin_movement">Kontrol gerak</string>
+    <string name="control_skin_dpad">D-pad</string>
+    <string name="control_skin_analog">Stik analog</string>
+    <string name="control_skin_dpad_base">Gambar D-pad</string>
+    <string name="control_skin_overlay_up">Lapisan atas</string>
+    <string name="control_skin_overlay_down">Lapisan bawah</string>
+    <string name="control_skin_overlay_left">Lapisan kiri</string>
+    <string name="control_skin_overlay_right">Lapisan kanan</string>
+    <string name="control_skin_analog_base">Gambar dasar</string>
+    <string name="control_skin_analog_thumb">Gambar thumb</string>
+    <string name="control_skin_analog_thumb_pressed">Gambar thumb aktif</string>
+    <string name="control_skin_group_hint">Gambar hanya mengubah tampilan. Sesuaikan posisi lapisan dalam gambar; tata letak dan sentuhan tidak berubah.</string>
 </resources>

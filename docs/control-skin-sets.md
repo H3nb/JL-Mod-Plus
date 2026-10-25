@@ -13,7 +13,16 @@ skins/controls/Fantasy/
   key_5.png
   key_5_pressed.png
   key_fire.webp
+  dpad_base.png
+  dpad_up.png
+  analog_base.webp
+  analog_thumb.png
+  analog_thumb_pressed.png
 ```
+
+Grouped image layers use the literal stems above, each with .png or .webp
+extension. All eight slots are optional. D-pad overlays use the same full-size
+canvas as the D-pad base to allow exact composition for diagonal presses.
 
 One folder is one set. The folder name is the display name and can be renamed.
 `skin.json` stores an independent UUID, so renaming through the editor does
@@ -53,8 +62,21 @@ slot and state when imported through the editor.
   default controls. The global keyboard opacity still applies.
 - A skin set never alters game input, pressed-key delivery, touch rectangles,
   virtual-key visibility or the persisted binary keyboard layout.
-- The legacy 28 button slots are supported now; grouped D-pad and analog remain
-  governed by their current independent renderer.
+- The legacy 28 button slots retain their existing icon/full and pressed rules.
+- Grouped D-pad and analog skins only replace appearance. The D-pad uses a full
+  `dpad_base` image and optional transparent `dpad_up`, `dpad_down`,
+  `dpad_left`, and `dpad_right` overlays. Active diagonal input composites
+  two direction overlays over the base; no synthetic pressed image is generated.
+  Directional overlays without a base image are inactive.
+- The analog stick can independently replace `analog_base` and
+  `analog_thumb`. An optional `analog_thumb_pressed` image replaces the
+  thumb while active; without it the normal thumb stays visible.
+  A pressed-only thumb without a normal thumb is inactive.
+- Grouped images use the existing control bounding boxes (D-pad: full diameter;
+  analog: existing shell and thumb sizes). Images fill their designated bounds;
+  designers must prepare their layers and transparent padding accordingly.
+  Image transparency, visible shape, and artwork do not change input hitboxes,
+  thumb travel, control geometry, or key delivery.
 - Images are decoded and sampled once when the MIDlet starts, not per frame.
   The runtime reads global assets but does not create or modify set metadata.
 

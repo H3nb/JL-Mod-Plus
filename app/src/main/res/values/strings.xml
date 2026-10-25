@@ -1218,8 +1218,8 @@
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Remove</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Manage set</string>
     <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Manage %1$s</string>
-    <string name="control_skin_count" tools:ignore="MissingTranslation">%1$d customized buttons</string>
-    <string name="control_skin_empty" tools:ignore="MissingTranslation">Create a set to customize button images.</string>
+    <string name="control_skin_count" tools:ignore="MissingTranslation">%1$d customized controls</string>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Create a set to customize control images.</string>
     <string name="control_skin_numeric" tools:ignore="MissingTranslation">Keypad</string>
     <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigation</string>
     <string name="control_skin_other" tools:ignore="MissingTranslation">Other buttons</string>
@@ -1232,4 +1232,16 @@
     <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Soft R</string>
     <string name="control_skin_fire" tools:ignore="MissingTranslation">Fire</string>
     <string name="control_skin_menu" tools:ignore="MissingTranslation">Menu</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Movement controls</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Analog stick</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">D-pad image</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Up overlay</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Down overlay</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Left overlay</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Right overlay</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Base image</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Thumb image</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Active thumb image</string>
+    <string name="control_skin_group_hint" tools:ignore="MissingTranslation">Images change appearance only. Align layers in your images; layout and touch behavior stay unchanged.</string>
 </resources>

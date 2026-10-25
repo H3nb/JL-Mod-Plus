@@ -118,6 +118,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private var sets by mutableStateOf<List<ControlSkinStore.SetInfo>>(emptyList())
     private var counts by mutableStateOf<Map<String, Int>>(emptyMap())
     private var previews by mutableStateOf<Map<String, Images>>(emptyMap())
+    private var groupedPreviews by mutableStateOf<Map<String, Bitmap?>>(emptyMap())
     private var editingId by mutableStateOf<String?>(null)
     private var selectedId by mutableStateOf<String?>(null)
     private var selectedKey by mutableStateOf<String?>(null)
@@ -150,7 +151,11 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         lastPickerPath = source.parent
         perform {
             source.inputStream().use {
-                ControlSkinStore.importImage(workdir, target.setId, target.key, target.pressed, it, suffix)
+                if (ControlSkinStore.validKey(target.key)) {
+                    ControlSkinStore.importImage(workdir, target.setId, target.key, target.pressed, it, suffix)
+                } else {
+                    ControlSkinStore.importAsset(workdir, target.setId, target.key, it, suffix)
+                }
             }
             target.setId
         }
@@ -218,11 +223,16 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                         ControlSkinStore.mode(folder, key),
                     )
                 }
+                val grouped = if (folder == null) emptyMap() else
+                    ControlSkinStore.GROUPED_ASSETS.associateWith { stem ->
+                        thumbnail(ControlSkinStore.asset(folder, stem))
+                    }
                 runOnUiThread {
                     if (isDestroyed || isFinishing) return@runOnUiThread
                     sets = listing
                     counts = summary
                     previews = images
+                    groupedPreviews = grouped
                     editingId = if (folder != null) nextEditor else null
                     if (editingId == null) selectedKey = null
                     busy = false
@@ -298,7 +308,11 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
     private fun removeImage(setId: String, key: String, pressed: Boolean) {
         perform {
-            ControlSkinStore.removeImage(workdir, setId, key, pressed)
+            if (ControlSkinStore.validKey(key)) {
+                ControlSkinStore.removeImage(workdir, setId, key, pressed)
+            } else {
+                ControlSkinStore.removeAsset(workdir, setId, key)
+            }
             setId
         }
     }
@@ -324,6 +338,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         else if (editingId != null) {
             editingId = null
             previews = emptyMap()
+            groupedPreviews = emptyMap()
         } else finish()
     }
 
@@ -394,7 +409,8 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
         val key = selectedKey
         if (currentSet != null && key != null) {
-            ButtonSheet(currentSet, key)
+            if (key == "dpad" || key == "analog") GroupSheet(currentSet, key)
+            else ButtonSheet(currentSet, key)
         }
     }
 
@@ -507,6 +523,60 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             KeyGroup(stringResource(R.string.control_skin_numeric), numeric)
             KeyGroup(stringResource(R.string.control_skin_navigation), navigation)
             KeyGroup(stringResource(R.string.control_skin_other), other)
+            GroupedControls()
+        }
+    }
+
+    @Composable
+    private fun GroupedControls() {
+        Column(Modifier.widthIn(max = 460.dp).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.control_skin_movement),
+                style = MaterialTheme.typography.titleMedium)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("dpad", "analog").forEach { group ->
+                    val customized = if (group == "dpad") groupedPreviews["dpad_base"] != null
+                        else groupedPreviews["analog_base"] != null || groupedPreviews["analog_thumb"] != null
+                    Surface(
+                        modifier = Modifier.weight(1f).height(112.dp)
+                            .clickable(enabled = !busy, role = Role.Button) { selectedKey = group },
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        border = if (customized)
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                    ) {
+                        Column(Modifier.fillMaxSize().padding(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            GroupPreview(group, Modifier.size(68.dp))
+                            Text(stringResource(if (group == "dpad") R.string.control_skin_dpad
+                                else R.string.control_skin_analog),
+                                style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun GroupPreview(group: String, modifier: Modifier) {
+        Box(modifier, contentAlignment = Alignment.Center) {
+            val base = groupedPreviews[if (group == "dpad") "dpad_base" else "analog_base"]
+            if (base == null) {
+                Text(if (group == "dpad") "✚" else "◉",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.headlineMedium)
+            } else {
+                Image(base.asImageBitmap(), contentDescription = null,
+                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
+            }
+            if (group == "analog") {
+                groupedPreviews["analog_thumb"]?.let { thumb ->
+                    Image(thumb.asImageBitmap(), contentDescription = null,
+                        contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(0.48f))
+                }
+            }
         }
     }
 
@@ -604,6 +674,68 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         "fire" -> stringResource(R.string.control_skin_fire)
         "menu" -> stringResource(R.string.control_skin_menu)
         else -> key.uppercase()
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun GroupSheet(set: ControlSkinStore.SetInfo, group: String) {
+        val slots = if (group == "dpad") listOf(
+            "dpad_base" to R.string.control_skin_dpad_base,
+            "dpad_up" to R.string.control_skin_overlay_up,
+            "dpad_down" to R.string.control_skin_overlay_down,
+            "dpad_left" to R.string.control_skin_overlay_left,
+            "dpad_right" to R.string.control_skin_overlay_right,
+        ) else listOf(
+            "analog_base" to R.string.control_skin_analog_base,
+            "analog_thumb" to R.string.control_skin_analog_thumb,
+            "analog_thumb_pressed" to R.string.control_skin_analog_thumb_pressed,
+        )
+        ModalBottomSheet(onDismissRequest = { selectedKey = null }) {
+            Column(Modifier.fillMaxWidth()
+                .heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.78f).dp)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(stringResource(if (group == "dpad") R.string.control_skin_dpad
+                    else R.string.control_skin_analog), style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.control_skin_group_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall)
+                slots.forEach { (stem, title) ->
+                    GroupImageSlot(set.id, stem, stringResource(title))
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun GroupImageSlot(setId: String, stem: String, title: String) {
+        val bitmap = groupedPreviews[stem]
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(68.dp), contentAlignment = Alignment.Center) {
+                    if (bitmap != null) {
+                        Image(bitmap.asImageBitmap(), contentDescription = null,
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier.fillMaxSize())
+                    } else {
+                        Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                TextButton(onClick = { pickImage(setId, stem, false) },
+                    enabled = !busy, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(if (bitmap == null) R.string.control_skin_pick_image
+                        else R.string.control_skin_change_image))
+                }
+                if (bitmap != null) {
+                    IconButton(onClick = { removeImage(setId, stem, false) }, enabled = !busy) {
+                        Icon(painterResource(R.drawable.ic_delete),
+                            contentDescription = stringResource(R.string.control_skin_remove_image))
+                    }
+                }
+            }
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
