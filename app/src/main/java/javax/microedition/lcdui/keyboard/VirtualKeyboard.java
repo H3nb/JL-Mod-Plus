@@ -1874,7 +1874,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (visible && (layoutEditMode != LAYOUT_EOF ||
 				settings.vkAlpha > 0 || settings.vkForceOpacity)) {
 			boolean keypadLegendContext = hasVisibleNumericKeypadContext();
-				for (int i = 0; i < keypad.length; i++) {
+			for (int i = 0; i < keypad.length; i++) {
 				VirtualKey key = keypad[i];
 				if (key.visible) key.paint(g, keypadLegendContext, i);
 			}
