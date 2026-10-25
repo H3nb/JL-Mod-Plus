@@ -60,23 +60,28 @@ jobs:
           script: |
             chmod +x gradlew
             ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.config.ControlSkinStoreTest,javax.microedition.lcdui.keyboard.VirtualKeyboardLegendRenderingTest,javax.microedition.lcdui.keyboard.LegacyVirtualKeyboardTouchTest :app:connectedEmulatorDebugAndroidTest
-            python3 - <<'PY'
-            from pathlib import Path
-            import xml.etree.ElementTree as ET
-            reports = list(Path("app/build/outputs/androidTest-results/connected").rglob("TEST-*.xml"))
-            if not reports:
-                raise SystemExit("No executed Android instrumentation XML reports")
-            totals = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
-            for report in reports:
-                node = ET.parse(report).getroot()
-                suites = [node] if node.tag == "testsuite" else list(node.findall("testsuite"))
-                for suite in suites:
-                    for field in totals:
-                        totals[field] += int(suite.get(field, 0))
-            print(f"Android executed tests: {totals}; reports={len(reports)}")
-            if totals["tests"] < 14 or any(totals[field] for field in ("failures", "errors", "skipped")):
-                raise SystemExit("Android instrumentation evidence incomplete or failed")
-            PY
+
+      - name: Verify executed Android test reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          reports = list(Path("app/build/outputs/androidTest-results/connected").rglob("TEST-*.xml"))
+          if not reports:
+              raise SystemExit("No executed Android instrumentation XML reports")
+          totals = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
+          for report in reports:
+              node = ET.parse(report).getroot()
+              suites = [node] if node.tag == "testsuite" else list(node.findall("testsuite"))
+              for suite in suites:
+                  for field in totals:
+                      totals[field] += int(suite.get(field, 0))
+          print(f"Android executed tests: {totals}; reports={len(reports)}")
+          if totals["tests"] < 14 or any(totals[field] for field in ("failures", "errors", "skipped")):
+              raise SystemExit("Android instrumentation evidence incomplete or failed")
+          PY
 
       - name: Upload connected Android test evidence
         if: always()
