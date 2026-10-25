@@ -919,7 +919,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_normal))
             .assertIsSelected()
         composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_pressed))
-            .performClick()
+            .performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_pressed))
             .assertIsSelected()
         composeRule.onNodeWithText(uiString(R.string.config_controls_color_button_normal)).assertExists()
