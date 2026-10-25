@@ -1243,6 +1243,8 @@
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Base image</string>
     <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Thumb image</string>
     <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Active thumb image</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Preview directions</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Preview %1$s</string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Default</string>
     <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Customized</string>
 </resources>

@@ -272,12 +272,23 @@ public final class ControlSkinStore {
         if (!set.folder.delete()) throw new IOException("Cannot remove set folder");
     }
 
-    public static String mode(File folder, String key) {
-        JSONObject json = metadata(folder);
+    private static String mode(JSONObject json, String key) {
         String defaultMode = json.optString("defaultMode", "icon");
-        String mode = json.optJSONObject("buttons") == null ? defaultMode :
-                json.optJSONObject("buttons").optString("key_" + key, defaultMode);
-        return "full".equals(mode) ? "full" : "icon";
+        JSONObject buttons = json.optJSONObject("buttons");
+        String value = buttons == null ? defaultMode : buttons.optString("key_" + key, defaultMode);
+        return "full".equals(value) ? "full" : "icon";
+    }
+
+    public static String mode(File folder, String key) {
+        return mode(metadata(folder), key);
+    }
+
+    /** Resolve all key modes from one metadata snapshot. */
+    public static Map<String, String> modes(File folder) {
+        JSONObject json = metadata(folder);
+        Map<String, String> result = new LinkedHashMap<>();
+        for (String key : KEYS) result.put(key, mode(json, key));
+        return result;
     }
 
     public static synchronized void setMode(File workdir, String setId, String key, String mode) throws IOException {

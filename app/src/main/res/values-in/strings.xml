@@ -1157,6 +1157,8 @@
     <string name="control_skin_analog_base">Gambar dasar</string>
     <string name="control_skin_analog_thumb">Gambar thumb</string>
     <string name="control_skin_analog_thumb_pressed">Gambar thumb aktif</string>
+    <string name="control_skin_preview_directions">Pratinjau arah</string>
+    <string name="control_skin_preview_direction">Pratinjau %1$s</string>
     <string name="control_skin_builtin_preview">Bawaan</string>
     <string name="control_skin_custom_preview">Kustom</string>
 </resources>

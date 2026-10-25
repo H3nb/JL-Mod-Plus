@@ -75,6 +75,27 @@ public class ControlSkinStoreTest {
         } catch (java.io.IOException expected) { }
         assertEquals("icon", ControlSkinStore.mode(set.folder, "5"));
     }
+
+    @Test public void modeSnapshotReadsDefaultsAndOverridesWithoutReusingStaleMetadata()
+            throws Exception {
+        File workdir = temp.newFolder("mode-snapshot-work");
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Mode Snapshot");
+        ControlSkinStore.setMode(workdir, set.id, "5", "full");
+        ControlSkinStore.setMode(workdir, set.id, "fire", "full");
+        java.util.Map<String, String> snapshot = ControlSkinStore.modes(set.folder);
+        assertEquals(ControlSkinStore.KEYS.length, snapshot.size());
+        for (String key : ControlSkinStore.KEYS) {
+            assertEquals(ControlSkinStore.mode(set.folder, key), snapshot.get(key));
+        }
+        assertEquals("icon", snapshot.get("6"));
+        assertEquals("full", snapshot.get("5"));
+        assertEquals("full", snapshot.get("fire"));
+        ControlSkinStore.setMode(workdir, set.id, "5", "icon");
+        assertEquals("full", snapshot.get("5"));
+        assertEquals("icon", ControlSkinStore.modes(set.folder).get("5"));
+        assertEquals("full", ControlSkinStore.modes(set.folder).get("fire"));
+    }
+
     @Test public void customizedCountTracksNormalSlotsNotImageFiles() throws Exception {
         File workdir = temp.newFolder("work");
         ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Counted");

@@ -42,6 +42,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
@@ -57,6 +58,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +73,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -103,6 +106,12 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         private val numeric = listOf(
             listOf("1", "2", "3"), listOf("4", "5", "6"),
             listOf("7", "8", "9"), listOf("star", "0", "pound"),
+        )
+        private val dpadPreviewDirections = listOf(
+            Triple("dpad_up", "dpad_down", "↑"),
+            Triple("dpad_down", "dpad_up", "↓"),
+            Triple("dpad_left", "dpad_right", "←"),
+            Triple("dpad_right", "dpad_left", "→"),
         )
         private val navigation = listOf(
             listOf("up_left", "up", "up_right"),
@@ -223,11 +232,12 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     set.id to ControlSkinStore.countCustomizedButtons(set.folder)
                 }
                 val folder = listing.firstOrNull { it.id == nextEditor }?.folder
+                val modes = if (folder == null) emptyMap() else ControlSkinStore.modes(folder)
                 val images = if (folder == null) emptyMap() else ControlSkinStore.KEYS.associateWith { key ->
                     Images(
                         thumbnail(ControlSkinStore.image(folder, key, false)),
                         thumbnail(ControlSkinStore.image(folder, key, true)),
-                        ControlSkinStore.mode(folder, key),
+                        modes[key] ?: "icon",
                     )
                 }
                 val grouped = if (folder == null) emptyMap() else
@@ -621,13 +631,28 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
     /** Previews show the actual visual layers, including built-in components for partial skins. */
     @Composable
-    private fun GroupPreview(group: String, modifier: Modifier) {
+    private fun GroupPreview(
+        group: String,
+        modifier: Modifier,
+        directions: Set<String> = emptySet(),
+    ) {
         val base = groupedPreviews[if (group == "dpad") "dpad_base" else "analog_base"]
         Box(modifier, contentAlignment = Alignment.Center) {
             if (group == "dpad") {
                 if (base == null) BuiltinDpadPreview(Modifier.fillMaxSize())
-                else Image(base.asImageBitmap(), contentDescription = null,
-                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
+                else {
+                    Image(base.asImageBitmap(), contentDescription = null,
+                        contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
+                    dpadPreviewDirections.forEach { (stem, _, _) ->
+                        if (stem in directions) {
+                            groupedPreviews[stem]?.let { overlay ->
+                                Image(overlay.asImageBitmap(), contentDescription = null,
+                                    contentScale = ContentScale.FillBounds,
+                                    modifier = Modifier.fillMaxSize().testTag("control_skin_preview_$stem"))
+                            }
+                        }
+                    }
+                }
             } else {
                 if (base == null) BuiltinAnalogPreview(Modifier.fillMaxSize(), base = true, thumb = false)
                 else Image(base.asImageBitmap(), contentDescription = null,
@@ -814,11 +839,20 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         modifier: Modifier,
         horizontal: Boolean,
     ) {
+        var previewDirections by remember(key) { mutableStateOf<Set<String>>(emptySet()) }
+        val previewControls: @Composable () -> Unit = {
+            if (key == "dpad") {
+                DpadPreviewToggles(previewDirections) { previewDirections = it }
+            }
+        }
         if (horizontal) {
             Row(modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                    DetailPreview(key, Modifier.size(112.dp))
+                Column(Modifier.weight(1f).fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally) {
+                    DetailPreview(key, Modifier.size(112.dp), previewDirections)
+                    previewControls()
                 }
                 Column(Modifier.weight(1.5f).fillMaxHeight()
                     .verticalScroll(rememberScrollState()),
@@ -835,7 +869,8 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     else if (key == "analog") stringResource(R.string.control_skin_analog)
                     else stringResource(R.string.control_skin_edit_named, label(key)),
                     style = MaterialTheme.typography.titleLarge)
-                DetailPreview(key, Modifier.size(104.dp))
+                DetailPreview(key, Modifier.size(104.dp), previewDirections)
+                previewControls()
                 Column(Modifier.widthIn(max = 560.dp).fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     DetailFields(set, key)
@@ -845,11 +880,53 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun DetailPreview(key: String, modifier: Modifier) {
+    private fun DetailPreview(key: String, modifier: Modifier, directions: Set<String>) {
         if (key == "dpad" || key == "analog") {
-            GroupPreview(key, modifier)
+            GroupPreview(key, modifier, directions)
         } else {
             KeyPreview(key, previews[key], pressed = false, modifier = modifier)
+        }
+    }
+
+    /** Preview-only state; horizontal + vertical overlays can compose a diagonal. */
+    @Composable
+    private fun DpadPreviewToggles(
+        directions: Set<String>,
+        onDirectionsChanged: (Set<String>) -> Unit,
+    ) {
+        if (groupedPreviews["dpad_base"] == null) return
+        val available = dpadPreviewDirections.filter { (stem, _, _) ->
+            groupedPreviews[stem] != null
+        }
+        if (available.isEmpty()) return
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.control_skin_preview_directions),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall)
+            Row(horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically) {
+                available.forEach { (stem, opposite, arrow) ->
+                    val spokenName = stringResource(R.string.control_skin_preview_direction,
+                        stringResource(when (stem) {
+                            "dpad_up" -> R.string.control_skin_overlay_up
+                            "dpad_down" -> R.string.control_skin_overlay_down
+                            "dpad_left" -> R.string.control_skin_overlay_left
+                            else -> R.string.control_skin_overlay_right
+                        }))
+                    IconToggleButton(
+                        checked = stem in directions,
+                        onCheckedChange = { checked ->
+                            onDirectionsChanged(if (checked) (directions - opposite) + stem
+                                else directions - stem)
+                        },
+                        modifier = Modifier.size(48.dp).semantics { contentDescription = spokenName },
+                    ) {
+                        Text(arrow, style = MaterialTheme.typography.titleLarge,
+                            color = if (stem in directions) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
         }
     }
 

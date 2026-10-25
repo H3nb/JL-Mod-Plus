@@ -108,7 +108,10 @@ same global skin assets.
 
 The editor uses a bottom sheet when vertical space permits, or a split
 preview/asset-detail page in short, wide windows. Grouped controls present a
-composite preview and a compact list of individual image slots. The legacy
+composite preview and a compact list of individual image slots. In the D-pad
+detail editor, available directional overlays can be toggled independently;
+selecting a horizontal and a vertical direction previews their diagonal
+composition. The legacy
 button editor retains its icon/full mode and normal/pressed image slots.
 Previews use MIDlet appearance colors for built-in controls and available
 custom layers; they do not simulate movement or affect the actual control

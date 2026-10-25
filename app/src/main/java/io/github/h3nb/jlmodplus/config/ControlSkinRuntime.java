@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import java.io.File;
+import java.util.Map;
 
 /** Immutable bitmap snapshot; the entire skin shares one planned raster budget. */
 public final class ControlSkinRuntime {
@@ -87,6 +88,7 @@ public final class ControlSkinRuntime {
         try {
             ControlSkinStore.SetInfo set = ControlSkinStore.findReadonly(workdir, selectedId);
             if (set == null) return new ControlSkinRuntime();
+            Map<String, String> modes = ControlSkinStore.modes(set.folder);
             int keyTarget = clampSide(keySide);
             int movementTarget = clampSide(movementSide);
             int thumbTarget = Math.max(1, Math.round(movementTarget * 0.48f));
@@ -119,13 +121,18 @@ public final class ControlSkinRuntime {
                     long bytes = 0;
                     for (int i = 0; i < SLOTS; i++) {
                         if (assets[i] == null) continue;
+                        // Do not decode visual layers whose required parent failed to load.
+                        if (i >= 1 && i <= 4 && decoded[0] == null) continue;
+                        if (i == 7 && decoded[6] == null) continue;
+                        if (i >= GROUPED && (i - GROUPED) % 2 == 1
+                                && decoded[i - 1] == null) continue;
                         Bitmap bitmap = decode(assets[i], quality);
                         if (bitmap == null) continue; // Invalid image, independent fallback.
                         decoded[i] = bitmap;
                         bytes += bitmap.getAllocationByteCount();
                         if (bytes > MAX_BITMAP_BYTES) throw new BudgetExceeded();
                     }
-                    return publish(set.folder, decoded);
+                    return publish(modes, decoded);
                 } catch (BudgetExceeded | OutOfMemoryError failure) {
                     recycle(decoded);
                     quality *= 0.75f;
@@ -207,7 +214,7 @@ public final class ControlSkinRuntime {
         }
     }
 
-    private static ControlSkinRuntime publish(File folder, Bitmap[] decoded) {
+    private static ControlSkinRuntime publish(Map<String, String> modes, Bitmap[] decoded) {
         ControlSkinRuntime skin = new ControlSkinRuntime();
         if (decoded[0] != null) {
             skin.dpad = new Dpad(decoded[0], decoded[1], decoded[2], decoded[3], decoded[4]);
@@ -219,7 +226,7 @@ public final class ControlSkinRuntime {
             int slot = GROUPED + i * 2;
             if (decoded[slot] == null) continue;
             skin.buttons[i] = new Button(decoded[slot], decoded[slot + 1],
-                    "full".equals(ControlSkinStore.mode(folder, ControlSkinStore.KEYS[i])));
+                    "full".equals(modes.get(ControlSkinStore.KEYS[i])));
         }
         return skin;
     }
