@@ -155,9 +155,12 @@ private fun LibraryDescriptionLanguagePicker(
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     val locales = remember(displayLocale) {
-        Locale.getISOLanguages()
-            .filter { it.length == 2 && MidletDescriptionLocalization.isValidLocale(it) }
+        Locale.getISOLanguages().asSequence()
+            .map { Locale.forLanguageTag(it).toLanguageTag() }
+            .filter(MidletDescriptionLocalization::isValidLocale)
+            .distinct()
             .sortedBy { Locale.forLanguageTag(it).getDisplayName(displayLocale).lowercase(displayLocale) }
+            .toList()
     }
     val typed = canonicalMidpDescriptionLocale(query)
     val results = remember(query, displayLocale, excluded) {
