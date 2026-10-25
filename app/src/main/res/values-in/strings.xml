@@ -1128,4 +1128,20 @@
     <string name="control_skin_operation_failed">Gagal mengubah set skin kontrol.</string>
     <string name="control_skin_missing">Set tidak tersedia (tombol bawaan)</string>
     <string name="control_skin_remove_image">Hapus</string>
+    <string name="control_skin_manage">Kelola set</string>
+    <string name="control_skin_manage_named">Kelola %1$s</string>
+    <string name="control_skin_count">%1$d tombol dikustomisasi</string>
+    <string name="control_skin_empty">Buat set untuk mengubah gambar tombol.</string>
+    <string name="control_skin_numeric">Keypad</string>
+    <string name="control_skin_navigation">Navigasi</string>
+    <string name="control_skin_other">Tombol lainnya</string>
+    <string name="control_skin_pressed_requires_normal">Tambahkan gambar normal terlebih dahulu.</string>
+    <string name="control_skin_pressed_auto">Efek tekan otomatis</string>
+    <string name="control_skin_edit_named">Tombol %1$s</string>
+    <string name="control_skin_change_image">Ganti</string>
+    <string name="control_skin_pick_image">Pilih gambar</string>
+    <string name="control_skin_soft_left">Soft L</string>
+    <string name="control_skin_soft_right">Soft R</string>
+    <string name="control_skin_fire">Fire</string>
+    <string name="control_skin_menu">Menu</string>
 </resources>
