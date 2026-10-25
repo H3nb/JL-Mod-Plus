@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import android.graphics.Bitmap
@@ -365,6 +366,8 @@ interface LibraryActions {
         version: String,
         description: String,
         localizedOverrides: Map<String, String>,
+        mainIcon: LibraryIconDraft?,
+        portraitIcon: LibraryIconDraft?,
         callback: LibraryViewModel.MutationCallback<Unit>,
     ) = callback.complete(null, IllegalStateException("Metadata saving is unavailable"))
 
@@ -372,6 +375,12 @@ interface LibraryActions {
     fun onPickIconByDatabaseId(databaseId: Long) = Unit
     fun onPickIconByDatabaseId(databaseId: Long, portrait: Boolean) =
         onPickIconByDatabaseId(databaseId)
+    fun onPickIconByDatabaseId(
+        databaseId: Long, portrait: Boolean, callback: LibraryViewModel.MutationCallback<String>,
+    ) = callback.complete(null, IllegalStateException("Icon picker is unavailable"))
+    fun onPrepareOriginalIcon(
+        databaseId: Long, callback: LibraryViewModel.MutationCallback<String>,
+    ) = callback.complete(null, IllegalStateException("Original icon is unavailable"))
     fun onResetIcon(appId: Int) = Unit
     fun onResetIcon(appId: Int, portrait: Boolean) = onResetIcon(appId)
     fun onLayoutChange(layout: LibraryLayout)
@@ -648,6 +657,7 @@ fun LibraryScreen(
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
+    var metadataBackRequest by remember { mutableIntStateOf(0) }
     var metadataCapturedAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
     var metadataCapturedViewport by remember { mutableStateOf<LibraryViewportSnapshot?>(null) }
     var metadataRestoreRequest by remember { mutableStateOf<MetadataRestoreRequest?>(null) }
@@ -953,6 +963,7 @@ fun LibraryScreen(
         metadataCapturedAnchor = null
         metadataCapturedViewport = null
         metadataTarget = null
+        metadataBackRequest = 0
     }
 
     LaunchedEffect(controllerEvents, appsViewport) {
@@ -1005,7 +1016,7 @@ fun LibraryScreen(
                     }
                     LibraryControllerCommand.Back -> when {
                         currentControllerRenameTarget != null -> renameTarget = null
-                        currentControllerMetadataTarget != null -> closeMetadataEditor()
+                        currentControllerMetadataTarget != null -> metadataBackRequest++
                         currentControllerDeleteTarget != null -> deleteTarget = null
                         currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
                         currentControllerInfoDialog != null -> infoDialog = null
@@ -1484,10 +1495,11 @@ fun LibraryScreen(
                     LibraryMetadataEditorScreen(
                     app = app,
                     onBack = ::closeMetadataEditor,
+                    backRequest = metadataBackRequest,
                     onLoadDescriptions = { callback ->
                         actions.onLoadLocalizedDescriptions(app.id, callback)
                     },
-                    onSaveLocalized = { title, vendor, description, translations, onResult ->
+                    onSaveLocalized = { title, vendor, description, translations, mainIcon, portraitIcon, onResult ->
                         val restoreRequest = metadataCapturedAnchor?.let { anchor ->
                             MetadataRestoreRequest(
                                 anchor = anchor,
@@ -1505,6 +1517,8 @@ fun LibraryScreen(
                             app.version,
                             description,
                             translations,
+                            mainIcon,
+                            portraitIcon,
                         ) { _, error ->
                             onResult(error == null)
                             if (error == null &&
@@ -1515,10 +1529,12 @@ fun LibraryScreen(
                     },
                     iconShape = state.iconShape,
                     enhancedIcons = state.enhancedIcons,
-                    onPickIcon = { portrait ->
-                        actions.onPickIconByDatabaseId(app.databaseId, portrait)
+                    onPickIcon = { portrait, callback ->
+                        actions.onPickIconByDatabaseId(app.databaseId, portrait, callback)
                     },
-                    onResetIcon = { portrait -> actions.onResetIcon(app.id, portrait) },
+                    onPrepareOriginalIcon = { callback ->
+                        actions.onPrepareOriginalIcon(app.databaseId, callback)
+                    },
                     )
                 }
             }
@@ -1590,6 +1606,7 @@ fun LibraryScreen(
                     } else {
                         null
                     }
+                    metadataBackRequest = 0
                     metadataTarget = app
                 }
             } else {

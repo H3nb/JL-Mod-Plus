@@ -90,6 +90,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconOverride;
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
@@ -128,6 +129,7 @@ public class AppsListFragment extends Fragment {
 
     private long pendingIconDatabaseId = NO_GENERATION;
     private boolean pendingIconPortrait;
+    @Nullable private LibraryViewModel.MutationCallback<String> pendingIconDraftCallback;
     private String pendingIconWorkdir;
     private long pendingIconGeneration = NO_GENERATION;
     private final ActivityResultLauncher<Intent> iconPickerLauncher = registerForActivityResult(
@@ -373,14 +375,17 @@ public class AppsListFragment extends Fragment {
                                          @NonNull String vendor, @NonNull String version,
                                          @NonNull String description,
                                          @NonNull Map<String, String> translations,
+                                         @Nullable LibraryIconDraft mainIcon,
+                                         @Nullable LibraryIconDraft portraitIcon,
                                          @NonNull LibraryViewModel.MutationCallback<kotlin.Unit> callback) {
                 LibraryAppRow row = findRow(appId);
                 if (row == null) {
                     callback.complete(null, new IllegalStateException("Library app is not available"));
                     return;
                 }
-                libraryViewModel.updateMetadata(
+                libraryViewModel.saveEditedMetadata(
                         row.getId(), title, vendor, version, description, translations,
+                        mainIcon, portraitIcon,
                         (ignored, error) -> {
                             if (error != null) showError(error);
                             callback.complete(ignored, error);
@@ -408,6 +413,28 @@ public class AppsListFragment extends Fragment {
                         ".webp",
                         ".gif",
                         ".bmp"));
+            }
+
+            @Override
+            public void onPickIconByDatabaseId(
+                    long databaseId, boolean portrait,
+                    @NonNull LibraryViewModel.MutationCallback<String> callback) {
+                if (pendingIconDraftCallback != null) {
+                    pendingIconDraftCallback.complete(null,
+                            new IllegalStateException("Icon selection was replaced"));
+                }
+                pendingIconDraftCallback = callback;
+                onPickIconByDatabaseId(databaseId, portrait);
+            }
+
+            @Override
+            public void onPrepareOriginalIcon(
+                    long databaseId,
+                    @NonNull LibraryViewModel.MutationCallback<String> callback) {
+                libraryViewModel.prepareOriginalIconDraft(databaseId, (path, error) -> {
+                    if (error != null) showError(error);
+                    callback.complete(path, error);
+                });
             }
 
             @Override
@@ -1321,15 +1348,33 @@ public class AppsListFragment extends Fragment {
     private void onIconPicked(Uri uri) {
         long databaseId = pendingIconDatabaseId;
         boolean portrait = pendingIconPortrait;
+        LibraryViewModel.MutationCallback<String> draftCallback = pendingIconDraftCallback;
+        pendingIconDraftCallback = null;
         String workdir = pendingIconWorkdir;
         long generation = pendingIconGeneration;
         pendingIconDatabaseId = NO_GENERATION;
         pendingIconPortrait = false;
         pendingIconWorkdir = null;
         pendingIconGeneration = NO_GENERATION;
-        if (uri == null || databaseId == NO_GENERATION || !isAdded() ||
+        if (uri == null) {
+            if (draftCallback != null) draftCallback.complete(null, null);
+            return;
+        }
+        if (databaseId == NO_GENERATION || !isAdded() ||
                 activeWorkdir == null || !activeWorkdir.getAbsolutePath().equals(workdir) ||
-                activeGeneration != generation) return;
+                activeGeneration != generation) {
+            if (draftCallback != null) {
+                draftCallback.complete(null, new IllegalStateException("Library changed during icon selection"));
+            }
+            return;
+        }
+        if (draftCallback != null) {
+            libraryViewModel.prepareIconDraft(uri, (path, error) -> {
+                if (error != null) showError(error);
+                draftCallback.complete(path, error);
+            });
+            return;
+        }
         libraryViewModel.updateIcon(databaseId, uri, portrait, (ignored, error) -> {
             if (error != null) showError(error);
             else if (isAdded() && composeController != null) {

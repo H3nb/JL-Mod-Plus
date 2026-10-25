@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
@@ -358,6 +359,102 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 description = description,
                 localizedOverrides = localizedOverrides,
             )
+        }
+    }
+
+    /** Prepare a preview without touching the installed or durable icon files. */
+    fun prepareIconDraft(source: Uri, callback: MutationCallback<String>) {
+        launchMutation(callback) {
+            withContext(Dispatchers.IO) {
+                LibraryIconOverride.prepare(getApplication(), source).absolutePath
+            }
+        }
+    }
+
+    fun prepareOriginalIconDraft(appId: Long, callback: MutationCallback<String>) {
+        val generation = readyGeneration()
+        val app = try { generation?.let { repository.currentApp(it, appId) } }
+        catch (_: IllegalStateException) { null }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            withContext(Dispatchers.IO) {
+                LibraryIconOverride.prepareOriginalPreview(
+                    getApplication(), generation.emulatorDir, app.storageKey,
+                )
+            }
+        }
+    }
+
+    /** Apply both icon drafts and metadata as one editor save with filesystem rollback on error. */
+    fun saveEditedMetadata(
+        appId: Long,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+        localizedOverrides: Map<String, String>,
+        mainIcon: LibraryIconDraft?,
+        portraitIcon: LibraryIconDraft?,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val app = try { generation?.let { repository.currentApp(it, appId) } }
+        catch (_: IllegalStateException) { null }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            var published: LibraryIconOverride.PublishedDrafts? = null
+            try {
+                if (mainIcon != null || portraitIcon != null) {
+                    published = withContext(Dispatchers.IO) {
+                        acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                            val current = repository.currentApp(generation, app.id)
+                            check(current?.storageKey == app.storageKey) {
+                                "Library icon target changed before save"
+                            }
+                            LibraryIconOverride.publishDrafts(
+                                generation.emulatorDir,
+                                app.storageKey,
+                                getApplication<Application>().cacheDir,
+                                mainIcon,
+                                portraitIcon,
+                            )
+                        }
+                    }
+                    repository.setIconRevision(
+                        generation, app.id,
+                        LibraryIconRevision.nextAfterEdit(app.iconRevision),
+                    )
+                }
+                // Last fallible persistent step: Room owns a transaction for text and locales.
+                repository.setMetadataOverrides(
+                    expected = generation,
+                    appId = app.id,
+                    title = title,
+                    vendor = vendor,
+                    version = version,
+                    description = description,
+                    localizedOverrides = localizedOverrides,
+                )
+            } catch (error: Throwable) {
+                try {
+                    withContext(NonCancellable + Dispatchers.IO) {
+                        published?.restore()
+                    }
+                } catch (restore: Throwable) {
+                    error.addSuppressed(restore)
+                }
+                throw error
+            } finally {
+                withContext(NonCancellable + Dispatchers.IO) {
+                    published?.close()
+                }
+            }
         }
     }
 

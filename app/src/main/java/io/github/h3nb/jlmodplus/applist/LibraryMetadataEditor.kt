@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
@@ -43,6 +44,7 @@ import androidx.compose.runtime.saveable.Saver
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import androidx.compose.runtime.getValue
@@ -58,6 +60,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog
+import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val localizedOverridesSaver = Saver<Map<String, String>, ArrayList<String>>(
     save = { translations ->
@@ -72,15 +76,20 @@ private val localizedOverridesSaver = Saver<Map<String, String>, ArrayList<Strin
 internal fun LibraryMetadataEditorScreen(
     app: LibraryAppUiItem,
     onBack: () -> Unit,
+    backRequest: Int = 0,
     onLoadDescriptions: (LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>) -> Unit = {
         it.complete(LibraryLocalizedDescriptionEditorData(emptyMap(), emptyMap()), null)
     },
     onSaveLocalized: (
         title: String, vendor: String, description: String,
-        translations: Map<String, String>, onResult: (Boolean) -> Unit,
-    ) -> Unit = { _, _, _, _, done -> done(false) },
-    onPickIcon: (portrait: Boolean) -> Unit = {},
-    onResetIcon: (portrait: Boolean) -> Unit = {},
+        translations: Map<String, String>,
+        mainIcon: LibraryIconDraft?, portraitIcon: LibraryIconDraft?,
+        onResult: (Boolean) -> Unit,
+    ) -> Unit = { _, _, _, _, _, _, done -> done(false) },
+    onPickIcon: (portrait: Boolean, callback: LibraryViewModel.MutationCallback<String>) -> Unit =
+        { _, callback -> callback.complete(null, null) },
+    onPrepareOriginalIcon: (callback: LibraryViewModel.MutationCallback<String>) -> Unit =
+        { callback -> callback.complete(null, null) },
     iconShape: LibraryIconShape = LibraryIconShape.Round,
     enhancedIcons: Boolean = true,
 ) {
@@ -88,6 +97,68 @@ internal fun LibraryMetadataEditorScreen(
     var vendor by rememberSaveable(app.databaseId) { mutableStateOf(app.author) }
     var description by rememberSaveable(app.databaseId) { mutableStateOf(app.defaultDescription) }
     var confirmDiscard by rememberSaveable(app.databaseId) { mutableStateOf(false) }
+    val mainDraftState = remember(app.databaseId) { mutableStateOf<LibraryIconDraft?>(null) }
+    val portraitDraftState = remember(app.databaseId) { mutableStateOf<LibraryIconDraft?>(null) }
+    var mainDraft by mainDraftState
+    var portraitDraft by portraitDraftState
+    val editAlive = remember(app.databaseId) { AtomicBoolean(true) }
+
+    // Draft images live in the app cache only while this editor owns them.
+    DisposableEffect(app.databaseId) {
+        editAlive.set(true)
+        onDispose {
+            editAlive.set(false)
+            listOfNotNull(mainDraftState.value?.previewPath, portraitDraftState.value?.previewPath)
+                .filter(String::isNotEmpty).forEach { File(it).delete() }
+        }
+    }
+    val setIconDraft: (Boolean, LibraryIconDraft?) -> Unit = { portrait, next ->
+        val prior = if (portrait) portraitDraft else mainDraft
+        if (portrait) portraitDraft = next else mainDraft = next
+        if (prior?.previewPath != null && prior.previewPath != next?.previewPath) {
+            File(prior.previewPath).delete()
+        }
+    }
+    val chooseIcon: (Boolean) -> Unit = { portrait ->
+        onPickIcon(portrait, LibraryViewModel.MutationCallback { path, error ->
+            if (!editAlive.get()) {
+                if (path != null) File(path).delete()
+            } else if (error == null && !path.isNullOrBlank()) {
+                setIconDraft(portrait, LibraryIconDraft(reset = false, previewPath = path))
+            }
+        })
+    }
+    val resetIcon: (Boolean) -> Unit = { portrait ->
+        if (portrait) {
+            setIconDraft(true, if (app.portraitIconPath.isNullOrBlank()) null
+                else LibraryIconDraft(reset = true))
+        } else if (!app.hasCustomIcon) {
+            setIconDraft(false, null)
+        } else {
+            onPrepareOriginalIcon(LibraryViewModel.MutationCallback { path, error ->
+                if (!editAlive.get()) {
+                    if (!path.isNullOrBlank()) File(path).delete()
+                } else if (error == null && path != null) {
+                    setIconDraft(false, LibraryIconDraft(reset = true, previewPath = path))
+                }
+            })
+        }
+    }
+    val previewApp = app.copy(
+        iconPath = when {
+            mainDraft?.reset == true -> mainDraft?.previewPath?.takeIf(String::isNotEmpty)
+            mainDraft != null -> mainDraft?.previewPath
+            else -> app.iconPath
+        },
+        portraitIconPath = when {
+            portraitDraft?.reset == true -> null
+            portraitDraft != null -> portraitDraft?.previewPath
+            else -> app.portraitIconPath
+        },
+        hasCustomIcon = if (mainDraft != null) !mainDraft!!.reset else app.hasCustomIcon,
+        iconRevision = if (mainDraft != null || portraitDraft != null) app.iconRevision + 1L
+            else app.iconRevision,
+    )
     var draftTranslations by rememberSaveable(app.databaseId, stateSaver = localizedOverridesSaver) {
         mutableStateOf<Map<String, String>>(emptyMap())
     }
@@ -119,7 +190,8 @@ internal fun LibraryMetadataEditorScreen(
     }
     val changed = title.trim() != app.title ||
         vendor.trim() != app.author || description.trim() != app.defaultDescription ||
-        (descriptionsLoaded && draftTranslations != originalOverrides)
+        (descriptionsLoaded && draftTranslations != originalOverrides) ||
+        mainDraft != null || portraitDraft != null
     val valid = title.trim().isNotEmpty()
     val requestBack = {
         if (!saving) {
@@ -128,6 +200,9 @@ internal fun LibraryMetadataEditorScreen(
     }
 
     BackHandler(onBack = requestBack)
+    LaunchedEffect(backRequest) {
+        if (backRequest > 0) requestBack()
+    }
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
@@ -148,7 +223,7 @@ internal fun LibraryMetadataEditorScreen(
                             saving = true
                             onSaveLocalized(
                                 title.trim(), vendor.trim(), description.trim(),
-                                draftTranslations,
+                                draftTranslations, mainDraft, portraitDraft,
                             ) { success -> if (!success) saving = false }
                         },
                     ) {
@@ -177,9 +252,9 @@ internal fun LibraryMetadataEditorScreen(
                         verticalAlignment = Alignment.Top,
                     ) {
                         LibraryMetadataIconPanel(
-                            app = app,
-                            onPickIcon = onPickIcon,
-                            onResetIcon = onResetIcon,
+                            app = previewApp,
+                            onPickIcon = chooseIcon,
+                            onResetIcon = resetIcon,
                             iconShape = iconShape,
                             enhancedIcons = enhancedIcons,
                             modifier = Modifier.width(260.dp),
@@ -206,9 +281,9 @@ internal fun LibraryMetadataEditorScreen(
                     }
                 } else {
                     LibraryMetadataIconPanel(
-                        app = app,
-                        onPickIcon = onPickIcon,
-                        onResetIcon = onResetIcon,
+                        app = previewApp,
+                        onPickIcon = chooseIcon,
+                        onResetIcon = resetIcon,
                         iconShape = iconShape,
                         enhancedIcons = enhancedIcons,
                         modifier = Modifier.fillMaxWidth(),
@@ -241,15 +316,27 @@ internal fun LibraryMetadataEditorScreen(
         AdaptiveAlertDialog(
             onDismissRequest = { confirmDiscard = false },
             title = { Text(stringResource(R.string.library_metadata_discard_title)) },
-            text = { Text(stringResource(R.string.library_metadata_discard_message)) },
             confirmButton = {
-                TextButton(onClick = { confirmDiscard = false; onBack() }) {
-                    Text(stringResource(R.string.library_metadata_discard))
+                TextButton(
+                    enabled = valid && descriptionsLoaded && !saving,
+                    onClick = {
+                        confirmDiscard = false
+                        saving = true
+                        onSaveLocalized(
+                            title.trim(), vendor.trim(), description.trim(),
+                            draftTranslations, mainDraft, portraitDraft,
+                        ) { success -> if (!success) saving = false }
+                    },
+                ) {
+                    Text(stringResource(R.string.library_metadata_save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { confirmDiscard = false }) {
                     Text(stringResource(android.R.string.cancel))
+                }
+                TextButton(onClick = { confirmDiscard = false; onBack() }) {
+                    Text(stringResource(R.string.library_metadata_discard))
                 }
             },
         )
@@ -312,12 +399,12 @@ private fun LibraryMetadataIconRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier.width(76.dp).height(92.dp),
+            modifier = Modifier.width(76.dp).height(96.dp),
             contentAlignment = Alignment.Center,
         ) {
             LibraryIconSlot(
                 app = app,
-                modifier = Modifier.width(if (portrait) 66.dp else 72.dp),
+                modifier = Modifier.width(72.dp),
                 contentSize = null,
                 iconRatio = if (portrait) LibraryIconRatio.Portrait else LibraryIconRatio.Square,
                 iconShape = iconShape,
@@ -353,7 +440,7 @@ private fun LibraryMetadataIconRow(
                     IconButton(onClick = onResetIcon) {
                         Icon(
                             painter = painterResource(
-                                if (portrait) R.drawable.ic_remove else R.drawable.ic_refresh,
+                                R.drawable.ic_refresh,
                             ),
                             contentDescription = stringResource(
                                 if (portrait) R.string.library_metadata_remove_portrait

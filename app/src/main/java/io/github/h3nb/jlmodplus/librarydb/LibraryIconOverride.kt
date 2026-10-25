@@ -29,7 +29,128 @@ import io.github.h3nb.jlmodplus.jar.Descriptor
  * icon consumed by the existing Library/shortcut code and is synchronized at explicit edit/reset or
  * reinstall publish points.
  */
+/** Null means unchanged; a reset restores the retained source (or removes portrait artwork). */
+data class LibraryIconDraft(val reset: Boolean, val previewPath: String? = null)
+
 object LibraryIconOverride {
+    /**
+     * Backups cover both the durable main override and effective converted icon. A caller must
+     * finish the Room mutation before [PublishedDrafts.close]; on failure, restore first.
+     */
+    class PublishedDrafts internal constructor(
+        private val snapshots: List<Pair<File, File?>>,
+    ) : AutoCloseable {
+        fun restore() {
+            var failure: IOException? = null
+            for ((target, backup) in snapshots.asReversed()) {
+                try {
+                    if (backup == null) {
+                        if (target.exists() && !target.delete()) {
+                            throw IOException("Unable to remove staged icon: ${target.absolutePath}")
+                        }
+                    } else {
+                        copyAtomically(backup, target)
+                    }
+                } catch (error: IOException) {
+                    if (failure == null) failure = error else failure.addSuppressed(error)
+                }
+            }
+            failure?.let { throw it }
+        }
+
+        override fun close() {
+            snapshots.forEach { (_, backup) -> backup?.delete() }
+        }
+    }
+
+    /** Read the retained source icon for an editor reset preview, without publishing it. */
+    fun prepareOriginalPreview(context: Context, emulatorDir: File, storageKey: String): String {
+        requireSafeStorageKey(storageKey)
+        val appDir = appDirectory(emulatorDir, storageKey)
+        val descriptorFile = File(appDir.absolutePath + Config.MIDLET_MANIFEST_FILE)
+        val retainedJar = File(appDir.absolutePath + Config.MIDLET_RES_FILE)
+        if (!descriptorFile.isFile || !retainedJar.isFile) {
+            throw IOException("Retained source metadata is unavailable for icon preview")
+        }
+        val sourcePath = Descriptor(descriptorFile, false).icon?.trim()
+            ?.takeIf(String::isNotEmpty) ?: return ""
+        val temp = File.createTempFile("library-source-icon-", ".png", context.cacheDir)
+        try {
+            ZipUtils.unzipEntry(retainedJar, sourcePath, temp)
+            if (!temp.isFile || temp.length() == 0L) {
+                throw IOException("Retained source icon is unavailable")
+            }
+            return temp.absolutePath
+        } catch (error: Throwable) {
+            temp.delete()
+            throw error
+        }
+    }
+
+    /**
+     * Publish staged icons with a complete file snapshot so a failed metadata save can restore
+     * the previous durable and effective images. The caller owns cleanup and rollback.
+     */
+    fun publishDrafts(
+        emulatorDir: File,
+        storageKey: String,
+        cacheDir: File,
+        main: LibraryIconDraft?,
+        portrait: LibraryIconDraft?,
+    ): PublishedDrafts {
+        requireSafeStorageKey(storageKey)
+        val targets = buildList {
+            if (main != null) {
+                add(persistedOverrideFile(emulatorDir, storageKey))
+                add(effectiveIconFile(emulatorDir, storageKey))
+            }
+            if (portrait != null) add(portraitOverrideFile(emulatorDir, storageKey))
+        }
+        val snapshots = mutableListOf<Pair<File, File?>>()
+        try {
+            targets.forEach { target ->
+                val snapshot = if (target.isFile) {
+                    File.createTempFile("library-icon-backup-", ".png", cacheDir).also {
+                        target.copyTo(it, overwrite = true)
+                    }
+                } else null
+                snapshots += target to snapshot
+            }
+            val published = PublishedDrafts(snapshots)
+            try {
+                when {
+                    main?.reset == true -> resetToOriginal(emulatorDir, storageKey)
+                    main != null -> installPrepared(
+                        emulatorDir, storageKey, stagedFile(main, cacheDir),
+                    )
+                }
+                when {
+                    portrait?.reset == true -> resetPortrait(emulatorDir, storageKey)
+                    portrait != null -> installPortraitPrepared(
+                        emulatorDir, storageKey, stagedFile(portrait, cacheDir),
+                    )
+                }
+            } catch (error: Throwable) {
+                try { published.restore() } catch (restore: Throwable) { error.addSuppressed(restore) }
+                throw error
+            }
+            return published
+        } catch (error: Throwable) {
+            snapshots.forEach { (_, backup) -> backup?.delete() }
+            throw error
+        }
+    }
+
+    private fun stagedFile(draft: LibraryIconDraft, cacheDir: File): File {
+        require(!draft.reset)
+        val file = File(draft.previewPath ?: throw IOException("Missing staged icon"))
+            .canonicalFile
+        if (file.parentFile != cacheDir.canonicalFile || !file.isFile || file.length() == 0L) {
+            throw IOException("Staged icon is no longer available")
+        }
+        return file
+    }
+
     private const val CONVERTED_DIR = "converted"
     private const val CONFIGS_DIR = "configs"
     private const val CUSTOM_ICON_FILE = "icon.custom.png"
