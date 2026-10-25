@@ -106,6 +106,44 @@ class LibraryIconRefreshTest {
         assertSlotRatio(LibraryIconRatio.Square)
     }
 
+    @Test
+    fun portraitOverrideUsesItsOwnArtworkAndFallsBackOnRemoval() {
+        val main = File(iconDirectory, "main.png")
+        val portrait = File(iconDirectory, "portrait.png")
+        writeIcon(main, Color.RED)
+        writeIcon(portrait, Color.BLUE)
+        val app = mutableStateOf(
+            LibraryAppUiItem(1, "Demo", "Vendor", "1.0", main.path, true,
+                iconRevision = 1L, portraitIconPath = portrait.path),
+        )
+        val ratio = mutableStateOf(LibraryIconRatio.Portrait)
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryIconSlot(
+                    app = app.value,
+                    modifier = Modifier.width(64.dp).testTag("icon-artwork"),
+                    contentSize = 64.dp,
+                    iconRatio = ratio.value,
+                    enhancedIcons = false,
+                )
+            }
+        }
+        waitForArtwork(Color.BLUE)
+        composeRule.runOnIdle { ratio.value = LibraryIconRatio.Square }
+        waitForArtwork(Color.RED)
+        composeRule.runOnIdle { ratio.value = LibraryIconRatio.Portrait }
+        waitForArtwork(Color.BLUE)
+
+        writeIcon(portrait, Color.GREEN)
+        composeRule.runOnIdle { app.value = app.value.copy(iconRevision = 2L) }
+        waitForArtwork(Color.GREEN)
+
+        composeRule.runOnIdle {
+            app.value = app.value.copy(iconRevision = 3L, portraitIconPath = null)
+        }
+        waitForArtwork(Color.RED)
+    }
+
     private fun assertSlotRatio(ratio: LibraryIconRatio) {
         val image = composeRule.onNodeWithTag("icon-artwork").captureToImage()
         assertEquals(image.width / ratio.widthToHeight, image.height.toFloat(), 1f)

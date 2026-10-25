@@ -297,6 +297,8 @@ data class LibraryAppUiItem(
     /** Stable Room identity; [id] remains a transient Compose/host bridge id. */
     val databaseId: Long = id.toLong(),
     val defaultDescription: String = description,
+    val portraitIconPath: String? = null,
+    val hasCustomIcon: Boolean = false,
 )
 
 private data class MetadataRestoreRequest(
@@ -357,7 +359,10 @@ interface LibraryActions {
     ) = Unit
     fun onPickIcon(appId: Int) = Unit
     fun onPickIconByDatabaseId(databaseId: Long) = Unit
+    fun onPickIconByDatabaseId(databaseId: Long, portrait: Boolean) =
+        onPickIconByDatabaseId(databaseId)
     fun onResetIcon(appId: Int) = Unit
+    fun onResetIcon(appId: Int, portrait: Boolean) = onResetIcon(appId)
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onIconShapeChange(iconShape: LibraryIconShape) = Unit
@@ -1486,8 +1491,12 @@ fun LibraryScreen(
                             description,
                         )
                     },
-                    onPickIcon = { actions.onPickIconByDatabaseId(app.databaseId) },
-                    onResetIcon = { actions.onResetIcon(app.id) },
+                    iconShape = state.iconShape,
+                    enhancedIcons = state.enhancedIcons,
+                    onPickIcon = { portrait ->
+                        actions.onPickIconByDatabaseId(app.databaseId, portrait)
+                    },
+                    onResetIcon = { portrait -> actions.onResetIcon(app.id, portrait) },
                 )
             }
         }
@@ -3286,7 +3295,23 @@ private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(
 private fun normalizeLibraryIcon(
     fileSource: Bitmap,
     enhanceIcon: Boolean,
+    preserveArtwork: Boolean = false,
 ): LibraryNormalizedIcon? {
+    if (preserveArtwork) {
+        // A supplied 3:4 composition is intentional. Keep its pixels/scale intact while
+        // retaining optional background-color adaptation from the existing analysis.
+        val analysis = if (enhanceIcon) fileSource.analyzeLibraryIcon() else null
+        return LibraryNormalizedIcon(
+            bitmap = fileSource.asImageBitmap(),
+            filterQuality = fileSource.libraryFilterQuality(),
+            representativeColor = null,
+            presentationMode = LibraryIconPresentationMode.SafeFit,
+            visualScale = 1f,
+            foregroundLuminance = analysis?.foregroundLuminance ?: 0.5f,
+            tileColor = analysis?.edgeFillColor?.toComposeLibraryColor()
+                ?: analysis?.backingColor?.toComposeLibraryColor(),
+        )
+    }
     if (!enhanceIcon) {
         return LibraryNormalizedIcon(
             bitmap = fileSource.asImageBitmap(),
@@ -3998,14 +4023,16 @@ private fun rememberLibraryIcon(
     app: LibraryAppUiItem,
     contentSize: Dp,
     enhancedIcons: Boolean,
+    preserveArtwork: Boolean = false,
 ): LibraryNormalizedIcon? {
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
-    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, enhancedIcons) {
+    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, enhancedIcons, preserveArtwork) {
         libraryIconCacheKey(
             app.iconPath,
             app.iconRevision,
             contentSizePx,
             enhancedIcons,
+            preserveArtwork,
         )
     }
     // produceState restarts its producer for new keys but retains the previous value. Give each
@@ -4032,6 +4059,7 @@ private fun rememberLibraryIcon(
                         normalizeLibraryIcon(
                             fileSource = bitmap,
                             enhanceIcon = enhancedIcons,
+                            preserveArtwork = preserveArtwork,
                         )
                     } finally {
                         android.os.Trace.endSection()
@@ -4050,8 +4078,9 @@ private fun libraryIconCacheKey(
     iconRevision: Long,
     targetSizePx: Int,
     enhancedIcons: Boolean,
+    preserveArtwork: Boolean,
 ): String {
-    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:$enhancedIcons"
+    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:$enhancedIcons:$preserveArtwork"
 }
 
 @Composable
@@ -4087,10 +4116,13 @@ private fun LibraryIconSlotContent(
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean,
 ) {
-    val icon = if (app.iconPath.isNullOrBlank()) {
+    val portraitArtwork = iconRatio == LibraryIconRatio.Portrait &&
+        !app.portraitIconPath.isNullOrBlank()
+    val displayApp = if (portraitArtwork) app.copy(iconPath = app.portraitIconPath) else app
+    val icon = if (displayApp.iconPath.isNullOrBlank()) {
         null
     } else {
-        rememberLibraryIcon(app, artworkSize, enhancedIcons)
+        rememberLibraryIcon(displayApp, artworkSize, enhancedIcons, preserveArtwork = portraitArtwork)
     }
     val isFallback = icon == null ||
         icon.presentationMode == LibraryIconPresentationMode.Fallback

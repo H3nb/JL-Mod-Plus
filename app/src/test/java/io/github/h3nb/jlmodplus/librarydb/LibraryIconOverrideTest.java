@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.librarydb;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -34,4 +35,26 @@ public class LibraryIconOverrideTest {
 		assertArrayEquals(contents, Files.readAllBytes(effective.toPath()));
 		assertNotEquals(0L, revision);
 	}
+    @Test
+    public void portraitOverrideDoesNotReplaceCanonicalIconAndCanBeRemoved() throws Exception {
+        File root = Files.createTempDirectory("jlmod-portrait-override").toFile();
+        File source = new File(root, "artwork.png");
+        File canonical = new File(root, "converted/demo/icon.png");
+        assertTrue(canonical.getParentFile().mkdirs());
+        byte[] primary = new byte[]{3, 2, 1};
+        byte[] artwork = new byte[]{9, 8, 7};
+        Files.write(canonical.toPath(), primary);
+        Files.write(source.toPath(), artwork);
+
+        long revision = LibraryIconOverride.installPortraitPrepared(root, "demo", source);
+        File portrait = LibraryIconOverride.portraitOverrideFile(root, "demo");
+
+        assertNotEquals(0L, revision);
+        assertTrue(portrait.isFile());
+        assertArrayEquals(artwork, Files.readAllBytes(portrait.toPath()));
+        assertArrayEquals(primary, Files.readAllBytes(canonical.toPath()));
+        LibraryIconOverride.resetPortrait(root, "demo");
+        assertFalse(portrait.exists());
+        assertArrayEquals(primary, Files.readAllBytes(canonical.toPath()));
+    }
 }

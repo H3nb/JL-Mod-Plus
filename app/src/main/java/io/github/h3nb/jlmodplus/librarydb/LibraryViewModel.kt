@@ -366,7 +366,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun updateIcon(appId: Long, source: Uri, callback: MutationCallback<Unit>) {
+    fun updateIcon(appId: Long, source: Uri, callback: MutationCallback<Unit>) =
+        updateIcon(appId, source, false, callback)
+
+    fun updateIcon(appId: Long, source: Uri, portrait: Boolean, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         val app = try {
             generation?.let { repository.currentApp(it, appId) }
@@ -388,17 +391,22 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                         check(current?.storageKey == app.storageKey) {
                             "Library icon target changed before filesystem publish"
                         }
-                        LibraryIconOverride.installPrepared(
-                            generation.emulatorDir,
-                            app.storageKey,
-                            prepared,
-                        )
+                        if (portrait) {
+                            LibraryIconOverride.installPortraitPrepared(
+                                generation.emulatorDir, app.storageKey, prepared,
+                            )
+                        } else {
+                            LibraryIconOverride.installPrepared(
+                                generation.emulatorDir, app.storageKey, prepared,
+                            )
+                        }
                     }
                 }
                 repository.setIconRevision(
                     generation,
                     app.id,
-                    distinctIconRevision(fileRevision, app.iconRevision),
+                    if (portrait) invalidateIconRevision(app.iconRevision)
+                    else distinctIconRevision(fileRevision, app.iconRevision),
                 )
             } finally {
                 withContext(Dispatchers.IO) { prepared.delete() }
@@ -406,7 +414,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun resetIcon(appId: Long, callback: MutationCallback<Unit>) {
+    fun resetIcon(appId: Long, callback: MutationCallback<Unit>) =
+        resetIcon(appId, false, callback)
+
+    fun resetIcon(appId: Long, portrait: Boolean, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         val app = try {
             generation?.let { repository.currentApp(it, appId) }
@@ -424,13 +435,19 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     check(current?.storageKey == app.storageKey) {
                         "Library icon target changed before reset"
                     }
-                    LibraryIconOverride.resetToOriginal(generation.emulatorDir, app.storageKey)
+                    if (portrait) {
+                        LibraryIconOverride.resetPortrait(generation.emulatorDir, app.storageKey)
+                        0L
+                    } else {
+                        LibraryIconOverride.resetToOriginal(generation.emulatorDir, app.storageKey)
+                    }
                 }
             }
             repository.setIconRevision(
                 generation,
                 app.id,
-                distinctIconRevision(fileRevision, app.iconRevision),
+                if (portrait) invalidateIconRevision(app.iconRevision)
+                else distinctIconRevision(fileRevision, app.iconRevision),
             )
         }
     }
@@ -519,7 +536,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             }
         }
         val resolvedIconRevision = outcome.iconRevision?.let { revision ->
-            distinctIconRevision(revision, app.iconRevision)
+            // Restoring configs/ may replace portrait art even when the canonical icon is absent.
+            if (revision == 0L) invalidateIconRevision(app.iconRevision)
+            else distinctIconRevision(revision, app.iconRevision)
         } ?: app.iconRevision
         val sourceMetadata = outcome.sourceMetadata
         if (sourceMetadata != null) {
@@ -951,6 +970,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     } catch (_: SecurityException) {
         file.absoluteFile
     }
+
+    /** A database-backed invalidation token for either Library artwork source. */
+    private fun invalidateIconRevision(previousRevision: Long): Long =
+        previousRevision xor Long.MIN_VALUE
 
     private fun distinctIconRevision(fileRevision: Long, previousRevision: Long): Long {
         if (fileRevision == 0L || fileRevision != previousRevision) return fileRevision

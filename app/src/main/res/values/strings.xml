@@ -903,6 +903,15 @@
     <string name="library_metadata_vendor">Vendor</string>
     <string name="library_metadata_description">Description</string>
     <string name="library_metadata_reset_to_original">Reset to original</string>
+    <string name="library_metadata_main_icon">Main</string>
+    <string name="library_metadata_portrait_icon">3:4</string>
+    <string name="library_metadata_follows_main">Uses main icon</string>
+    <string name="library_metadata_change">Change</string>
+    <string name="library_metadata_remove_portrait">Remove 3:4 icon</string>
+    <string name="library_metadata_icon_updated">Icon updated</string>
+    <string name="library_metadata_discard_title">Discard changes?</string>
+    <string name="library_metadata_discard_message">Unsaved text changes will be lost. Icon changes are already saved.</string>
+    <string name="library_metadata_discard">Discard</string>
     <string name="library_metadata_save">Save</string>
 
     <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>

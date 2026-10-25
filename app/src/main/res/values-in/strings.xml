@@ -835,6 +835,15 @@
     <string name="library_metadata_vendor">Vendor</string>
     <string name="library_metadata_description">Deskripsi</string>
     <string name="library_metadata_reset_to_original">Kembalikan ke aslinya</string>
+    <string name="library_metadata_main_icon">Utama</string>
+    <string name="library_metadata_portrait_icon">3:4</string>
+    <string name="library_metadata_follows_main">Mengikuti ikon utama</string>
+    <string name="library_metadata_change">Ganti</string>
+    <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>
+    <string name="library_metadata_icon_updated">Ikon diperbarui</string>
+    <string name="library_metadata_discard_title">Buang perubahan?</string>
+    <string name="library_metadata_discard_message">Perubahan teks yang belum disimpan akan hilang. Perubahan ikon sudah tersimpan.</string>
+    <string name="library_metadata_discard">Buang</string>
     <string name="library_metadata_save">Simpan</string>
 
     <string name="perf_overlay_title">Overlay performa</string>

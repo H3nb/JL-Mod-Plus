@@ -160,6 +160,34 @@ object LibraryIconOverride {
         return LibraryIconRevision.fromFile(effectiveIconFile(emulatorDir, storageKey))
     }
 
+    /** Portrait artwork is Library-only; it never replaces the canonical MIDlet/shortcut icon. */
+    @JvmStatic
+    fun portraitOverrideFile(emulatorDir: File, storageKey: String): File {
+        requireSafeStorageKey(storageKey)
+        return File(File(File(emulatorDir, CONFIGS_DIR), storageKey), "icon.custom.3x4.png")
+    }
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun installPortraitPrepared(emulatorDir: File, storageKey: String, preparedPng: File): Long {
+        requireSafeStorageKey(storageKey)
+        if (!preparedPng.isFile || preparedPng.length() <= 0L) {
+            throw IOException("Prepared portrait icon is unavailable")
+        }
+        val target = portraitOverrideFile(emulatorDir, storageKey)
+        copyAtomically(preparedPng, target)
+        return LibraryIconRevision.fromFile(target)
+    }
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun resetPortrait(emulatorDir: File, storageKey: String) {
+        val target = portraitOverrideFile(emulatorDir, storageKey)
+        if (target.exists() && !target.delete()) {
+            throw IOException("Unable to remove portrait icon override")
+        }
+    }
+
     /** Restore the icon extracted from the retained source JAR and remove the durable user override. */
     @JvmStatic
     @Throws(IOException::class)

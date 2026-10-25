@@ -105,6 +105,12 @@ public class AppsListFragment extends Fragment {
     private static final long NO_GENERATION = Long.MIN_VALUE;
     private static final String STATE_PENDING_ICON_DATABASE_ID =
             "apps_list.pending_icon_database_id";
+    private static final String STATE_PENDING_ICON_PORTRAIT =
+            "apps_list.pending_icon_portrait";
+    private static final String STATE_PENDING_ICON_WORKDIR =
+            "apps_list.pending_icon_workdir";
+    private static final String STATE_PENDING_ICON_GENERATION =
+            "apps_list.pending_icon_generation";
 
     private final ActivityResultLauncher<Intent> openFileLauncher = registerForActivityResult(
             new FilePickerResultContract(),
@@ -119,6 +125,9 @@ public class AppsListFragment extends Fragment {
             uris -> onImportBundlePicked(uris.isEmpty() ? null : uris.get(0)));
 
     private long pendingIconDatabaseId = NO_GENERATION;
+    private boolean pendingIconPortrait;
+    private String pendingIconWorkdir;
+    private long pendingIconGeneration = NO_GENERATION;
     private final ActivityResultLauncher<Intent> iconPickerLauncher = registerForActivityResult(
             new FilePickerResultContract(),
             uris -> onIconPicked(uris.isEmpty() ? null : uris.get(0)));
@@ -158,6 +167,10 @@ public class AppsListFragment extends Fragment {
         if (savedInstanceState != null) {
             pendingIconDatabaseId = savedInstanceState.getLong(
                     STATE_PENDING_ICON_DATABASE_ID, NO_GENERATION);
+            pendingIconPortrait = savedInstanceState.getBoolean(STATE_PENDING_ICON_PORTRAIT);
+            pendingIconWorkdir = savedInstanceState.getString(STATE_PENDING_ICON_WORKDIR);
+            pendingIconGeneration = savedInstanceState.getLong(
+                    STATE_PENDING_ICON_GENERATION, NO_GENERATION);
         }
         FragmentActivity activity = requireActivity();
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
@@ -167,6 +180,9 @@ public class AppsListFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putLong(STATE_PENDING_ICON_DATABASE_ID, pendingIconDatabaseId);
+        outState.putBoolean(STATE_PENDING_ICON_PORTRAIT, pendingIconPortrait);
+        outState.putString(STATE_PENDING_ICON_WORKDIR, pendingIconWorkdir);
+        outState.putLong(STATE_PENDING_ICON_GENERATION, pendingIconGeneration);
         super.onSaveInstanceState(outState);
     }
 
@@ -353,7 +369,15 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onPickIconByDatabaseId(long databaseId) {
+                onPickIconByDatabaseId(databaseId, false);
+            }
+
+            @Override
+            public void onPickIconByDatabaseId(long databaseId, boolean portrait) {
                 pendingIconDatabaseId = databaseId;
+                pendingIconPortrait = portrait;
+                pendingIconWorkdir = activeWorkdir == null ? null : activeWorkdir.getAbsolutePath();
+                pendingIconGeneration = activeGeneration;
                 iconPickerLauncher.launch(createFilePickerIntent(
                         false,
                         true,
@@ -368,10 +392,18 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onResetIcon(int appId) {
+                onResetIcon(appId, false);
+            }
+
+            @Override
+            public void onResetIcon(int appId, boolean portrait) {
                 LibraryAppRow row = findRow(appId);
                 if (row == null) return;
-                libraryViewModel.resetIcon(row.getId(), (ignored, error) -> {
+                libraryViewModel.resetIcon(row.getId(), portrait, (ignored, error) -> {
                     if (error != null) showError(error);
+                    else if (isAdded() && composeController != null) {
+                        composeController.showNotice(getString(R.string.library_metadata_icon_updated));
+                    }
                 });
             }
 
@@ -1091,9 +1123,12 @@ public class AppsListFragment extends Fragment {
 
         int uiId = uiIdFor(row.getId());
         rowsByUiId.put(uiId, row);
-        String iconPath = row.getIconRevision() == 0L
-                ? null
-                : new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
+        // iconRevision invalidates both artwork sources; it does not establish presence.
+        File primaryIcon = new File(appPath(row) + Config.MIDLET_ICON_FILE);
+        String iconPath = primaryIcon.isFile() ? primaryIcon.getAbsolutePath() : null;
+        File configDir = new File(new File(activeWorkdir, "configs"), row.getStorageKey());
+        File portraitIcon = new File(configDir, "icon.custom.3x4.png");
+        File customIcon = new File(configDir, "icon.custom.png");
         LibraryAppUiItem item = new LibraryAppUiItem(
                 uiId,
                 row.getTitle(),
@@ -1111,7 +1146,9 @@ public class AppsListFragment extends Fragment {
                 row.getPlayCount(),
                 row.getTotalPlayTimeMs(),
                 row.getId(),
-                row.getDescription());
+                row.getDescription(),
+                portraitIcon.isFile() ? portraitIcon.getAbsolutePath() : null,
+                customIcon.isFile());
         cachedRowsByDatabaseId.put(row.getId(), row);
         cachedUiItemsByDatabaseId.put(row.getId(), item);
         return item;
@@ -1262,10 +1299,21 @@ public class AppsListFragment extends Fragment {
 
     private void onIconPicked(Uri uri) {
         long databaseId = pendingIconDatabaseId;
+        boolean portrait = pendingIconPortrait;
+        String workdir = pendingIconWorkdir;
+        long generation = pendingIconGeneration;
         pendingIconDatabaseId = NO_GENERATION;
-        if (uri == null || databaseId == NO_GENERATION || !isAdded()) return;
-        libraryViewModel.updateIcon(databaseId, uri, (ignored, error) -> {
+        pendingIconPortrait = false;
+        pendingIconWorkdir = null;
+        pendingIconGeneration = NO_GENERATION;
+        if (uri == null || databaseId == NO_GENERATION || !isAdded() ||
+                activeWorkdir == null || !activeWorkdir.getAbsolutePath().equals(workdir) ||
+                activeGeneration != generation) return;
+        libraryViewModel.updateIcon(databaseId, uri, portrait, (ignored, error) -> {
             if (error != null) showError(error);
+            else if (isAdded() && composeController != null) {
+                composeController.showNotice(getString(R.string.library_metadata_icon_updated));
+            }
         });
     }
 }
