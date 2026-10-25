@@ -95,4 +95,76 @@ public class ControlSkinStoreTest {
         assertNotNull(ControlSkinStore.image(set.folder, "5", true));
     }
 
+    @Test public void deletingSetWithUnsupportedDirectoryKeepsExistingImages() throws Exception {
+        File workdir = temp.newFolder("work");
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Manual");
+        File normal = new File(set.folder, "key_5.png");
+        assertTrue(normal.createNewFile());
+        File extra = new File(set.folder, "nested");
+        assertTrue(extra.mkdir());
+
+        try {
+            ControlSkinStore.delete(workdir, set.id);
+            fail("a set with unsupported entries must not be partially deleted");
+        } catch (java.io.IOException expected) { }
+
+        assertTrue(normal.isFile());
+        assertTrue(new File(set.folder, "skin.json").isFile());
+        assertTrue(extra.isDirectory());
+        assertNotNull(ControlSkinStore.findReadonly(workdir, set.id));
+    }
+
+    @Test public void removingInvalidKeyCannotTouchAnotherFile() throws Exception {
+        File workdir = temp.newFolder("work");
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Guarded");
+        File normal = new File(set.folder, "key_5.png");
+        assertTrue(normal.createNewFile());
+
+        try {
+            ControlSkinStore.removeImage(workdir, set.id, "../5", false);
+            fail("invalid key must be rejected");
+        } catch (java.io.IOException expected) { }
+
+        assertTrue(normal.isFile());
+    }
+
+    @Test public void runtimeLoadsFullAndPressedAssetsAndFallsBackForInvalidNormal()
+            throws Exception {
+        File workdir = temp.newFolder("work");
+        File configDir = new File(new File(workdir, "configs"), "Example");
+        assertTrue(configDir.mkdirs());
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Runtime");
+        android.graphics.Bitmap image = android.graphics.Bitmap.createBitmap(
+                8, 8, android.graphics.Bitmap.Config.ARGB_8888);
+        java.io.ByteArrayOutputStream png = new java.io.ByteArrayOutputStream();
+        try {
+            image.eraseColor(android.graphics.Color.MAGENTA);
+            assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, png));
+        } finally {
+            image.recycle();
+        }
+
+        byte[] data = png.toByteArray();
+        ControlSkinStore.importImage(workdir, set.id, "5", false,
+                new java.io.ByteArrayInputStream(data), ".png");
+        ControlSkinStore.importImage(workdir, set.id, "5", true,
+                new java.io.ByteArrayInputStream(data), ".png");
+        ControlSkinStore.setMode(workdir, set.id, "5", "full");
+        // A present but undecodable normal image must keep the built-in button.
+        try (FileOutputStream out = new FileOutputStream(new File(set.folder, "key_fire.png"))) {
+            out.write("invalid".getBytes(StandardCharsets.UTF_8));
+        }
+
+        ControlSkinRuntime runtime = ControlSkinRuntime.load(configDir, set.id);
+        ControlSkinRuntime.Button five = runtime.get(4);
+        assertNotNull(five);
+        assertTrue(five.full);
+        assertNotNull(five.normal);
+        assertNotNull(five.pressed);
+        assertEquals(8, five.normal.getWidth());
+        assertNull(runtime.get(24)); // fire has an invalid image
+        assertNull(runtime.get(-1));
+        assertNull(ControlSkinRuntime.load(configDir, null).get(4));
+    }
+
 }
