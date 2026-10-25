@@ -178,6 +178,10 @@ class ConfigComposeController @JvmOverloads constructor(
                         colorPicker = null
                         events.onColorPicked(field, value)
                     },
+                    onBackgroundColorPicked = { value, dynamic ->
+                        colorPicker = null
+                        events.onBackgroundColorPicked(value, dynamic)
+                    },
                     onEncodingPickerDismiss = { encodingPicker = null },
                     onEncodingSelected = { charset ->
                         encodingPicker = null
@@ -201,8 +205,8 @@ class ConfigComposeController @JvmOverloads constructor(
         state = nextState
     }
 
-    fun showColorPicker(field: ConfigFormEvents.ColorField, initialHex: String) {
-        colorPicker = ColorPickerRequest(field, initialHex)
+    fun showColorPicker(field: ConfigFormEvents.ColorField, initialHex: String, dynamic: Boolean) {
+        colorPicker = ColorPickerRequest(field, initialHex, dynamic)
     }
 
     /** Drops a host-owned picker that became invalid while the draft was changing. */
@@ -277,6 +281,7 @@ class ConfigComposeController @JvmOverloads constructor(
 data class ColorPickerRequest(
     val field: ConfigFormEvents.ColorField,
     val initialHex: String,
+    val dynamic: Boolean = false,
 )
 
 data class EncodingPickerRequest(
@@ -316,6 +321,7 @@ internal fun ConfigScreen(
     gamepadCalibration: GamepadCalibrationUiState? = null,
     onColorPickerDismiss: () -> Unit = {},
     onColorPicked: (ConfigFormEvents.ColorField, String) -> Unit = { _, _ -> },
+    onBackgroundColorPicked: (String, Boolean) -> Unit = { _, _ -> },
     onEncodingPickerDismiss: () -> Unit = {},
     onEncodingSelected: (String) -> Unit = {},
     onGamepadHelpDismiss: () -> Unit = {},
@@ -462,8 +468,16 @@ internal fun ConfigScreen(
     colorPicker?.let { request ->
         ConfigColorPickerDialog(
             initialHex = request.initialHex,
+            allowDynamic = request.field == ConfigFormEvents.ColorField.SCREEN_BACKGROUND,
+            initialDynamic = request.dynamic,
             onDismissRequest = onColorPickerDismiss,
-            onConfirm = { value -> onColorPicked(request.field, value) },
+            onConfirm = { value, dynamic ->
+                if (request.field == ConfigFormEvents.ColorField.SCREEN_BACKGROUND) {
+                    onBackgroundColorPicked(value, dynamic)
+                } else {
+                    onColorPicked(request.field, value)
+                }
+            },
         )
     }
 
@@ -882,22 +896,28 @@ private fun ScreenSection(
         val backgroundDescription = when (backgroundMode) {
             BackgroundMode.THEME -> stringResource(R.string.config_background_theme_help)
             BackgroundMode.IMMERSIVE -> stringResource(R.string.config_background_immersive_help)
+            BackgroundMode.DYNAMIC_SOLID -> stringResource(R.string.config_background_dynamic_help)
             else -> stringResource(R.string.config_help_background)
         }
         ConfigChoicePreference(
             title = stringResource(R.string.config_background_mode),
             description = backgroundDescription,
-            selected = backgroundModes[backgroundMode],
+            selected = backgroundModes[if (backgroundMode == BackgroundMode.DYNAMIC_SOLID) 0 else backgroundMode],
             options = backgroundModes,
             onSelected = { index ->
                 onFormChanged(form.toBuilder().screenBackgroundMode(index).build())
             },
         )
-        if (backgroundMode == BackgroundMode.CUSTOM) {
+        if (backgroundMode == BackgroundMode.CUSTOM || backgroundMode == BackgroundMode.DYNAMIC_SOLID) {
             ConfigColorPreference(
                 title = stringResource(R.string.config_background_custom_color),
-                description = stringResource(R.string.config_help_background_custom_color),
+                description = stringResource(
+                    if (backgroundMode == BackgroundMode.DYNAMIC_SOLID)
+                        R.string.config_background_dynamic_help else R.string.config_help_background_custom_color
+                ),
                 value = form.screenBackground,
+                displayLabel = if (backgroundMode == BackgroundMode.DYNAMIC_SOLID)
+                    stringResource(R.string.config_background_dynamic) else null,
                 onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
             )
         }

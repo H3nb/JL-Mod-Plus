@@ -1108,4 +1108,6 @@
     <string name="config_asset_invalid">Geçersiz veya desteklenmeyen dosya.</string>
     <string name="config_asset_operation_failed">Dosya işlemi tamamlanamadı.</string>
     <string name="config_asset_busy">Önce devam eden dosya işlemini tamamlayın.</string>
+    <string name="config_background_dynamic">Dinamik renk</string>
+    <string name="config_background_dynamic_help">MIDlet ekranına yumuşakça uyum sağlayan tek bir düz renk kullanır.</string>
 </resources>

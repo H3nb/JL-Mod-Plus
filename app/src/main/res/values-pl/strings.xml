@@ -1173,4 +1173,6 @@
     <string name="config_asset_invalid">Nieprawidłowy lub nieobsługiwany plik.</string>
     <string name="config_asset_operation_failed">Nie udało się ukończyć operacji na pliku.</string>
     <string name="config_asset_busy">Najpierw zakończ bieżącą operację na pliku.</string>
+    <string name="config_background_dynamic">Dynamiczny kolor</string>
+    <string name="config_background_dynamic_help">Używa jednolitego koloru, który płynnie dopasowuje się do ekranu MIDletu.</string>
 </resources>

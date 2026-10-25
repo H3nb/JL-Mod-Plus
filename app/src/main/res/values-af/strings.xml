@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">Ongeldige of nie-ondersteunde lêer.</string>
     <string name="config_asset_operation_failed">Kon nie die lêerhandeling voltooi nie.</string>
     <string name="config_asset_busy">Voltooi eers die huidige lêerhandeling.</string>
+    <string name="config_background_dynamic">Dinamiese kleur</string>
+    <string name="config_background_dynamic_help">Gebruik een enkele soliede kleur wat geleidelik by die MIDlet-skerm aanpas.</string>
 </resources>

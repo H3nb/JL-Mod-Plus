@@ -1173,4 +1173,6 @@
     <string name="config_asset_invalid">Недійсний або непідтримуваний файл.</string>
     <string name="config_asset_operation_failed">Не вдалося завершити операцію з файлом.</string>
     <string name="config_asset_busy">Спершу завершіть поточну операцію з файлом.</string>
+    <string name="config_background_dynamic">Динамічний колір</string>
+    <string name="config_background_dynamic_help">Використовує один суцільний колір, який плавно підлаштовується під екран MIDlet.</string>
 </resources>

@@ -1074,4 +1074,6 @@
     <string name="config_asset_invalid">無効なファイル、または未対応のファイルです。</string>
     <string name="config_asset_operation_failed">ファイル操作を完了できませんでした。</string>
     <string name="config_asset_busy">現在のファイル操作が終わってから実行してください。</string>
+    <string name="config_background_dynamic">動的な色</string>
+    <string name="config_background_dynamic_help">MIDletの画面に合わせて滑らかに変化する単色を使用します。</string>
 </resources>

@@ -1074,4 +1074,6 @@
     <string name="config_asset_invalid">Tệp không hợp lệ hoặc không được hỗ trợ.</string>
     <string name="config_asset_operation_failed">Không thể hoàn tất thao tác với tệp.</string>
     <string name="config_asset_busy">Hãy hoàn tất thao tác với tệp hiện tại trước.</string>
+    <string name="config_background_dynamic">Màu động</string>
+    <string name="config_background_dynamic_help">Dùng một màu nền đồng nhất thay đổi mượt mà theo màn hình MIDlet.</string>
 </resources>

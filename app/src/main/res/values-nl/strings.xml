@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">Ongeldig of niet-ondersteund bestand.</string>
     <string name="config_asset_operation_failed">De bestandsbewerking kon niet worden voltooid.</string>
     <string name="config_asset_busy">Voltooi eerst de lopende bestandsbewerking.</string>
+    <string name="config_background_dynamic">Dynamische kleur</string>
+    <string name="config_background_dynamic_help">Gebruikt één egale kleur die zich vloeiend aanpast aan het MIDlet-scherm.</string>
 </resources>

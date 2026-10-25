@@ -229,7 +229,7 @@ fun ConfigColorPickerScreenshot() {
         ConfigColorPickerDialog(
             initialHex = "D0D0D0",
             onDismissRequest = {},
-            onConfirm = {},
+            onConfirm = { _, _ -> },
         )
     }
 }
@@ -248,7 +248,7 @@ fun ConfigColorPickerDarkScreenshot() {
         ConfigColorPickerDialog(
             initialHex = "D0D0D0",
             onDismissRequest = {},
-            onConfirm = {},
+            onConfirm = { _, _ -> },
         )
     }
 }
@@ -288,7 +288,7 @@ fun ConfigColorPickerLandscapeScreenshot() {
         ConfigColorPickerDialog(
             initialHex = "D0D0D0",
             onDismissRequest = {},
-            onConfirm = {},
+            onConfirm = { _, _ -> },
         )
     }
 }
