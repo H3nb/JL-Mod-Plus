@@ -40,7 +40,7 @@ public final class ControlSkinRuntime {
         File workdir = configs == null ? null : configs.getParentFile();
         if (workdir == null) return skin;
         try {
-            ControlSkinStore.SetInfo set = ControlSkinStore.find(workdir, selectedId);
+            ControlSkinStore.SetInfo set = ControlSkinStore.findReadonly(workdir, selectedId);
             if (set == null) return skin;
             long used = 0;
             for (int i = 0; i < ControlSkinStore.KEYS.length; i++) {
