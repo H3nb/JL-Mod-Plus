@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -35,7 +36,10 @@ class ControlSkinManagerComposeTest {
                 rule.waitUntil(10_000) {
                     rule.onAllNodesWithText(set.name).fetchSemanticsNodes().isNotEmpty()
                 }
-                rule.onNodeWithText(set.name).performClick()
+                rule.onNodeWithContentDescription(
+                    context.getString(R.string.control_skin_manage_named, set.name)
+                ).performClick()
+                rule.onNodeWithText(context.getString(R.string.control_skin_edit)).performClick()
                 val movement = context.getString(R.string.control_skin_movement)
                 val keypad = context.getString(R.string.control_skin_numeric)
                 val navigation = context.getString(R.string.control_skin_navigation)
