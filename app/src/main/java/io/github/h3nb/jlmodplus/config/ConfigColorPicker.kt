@@ -158,10 +158,10 @@ internal fun ConfigColorPickerDialog(
                                         }
                                     },
                                 )
-                                if (!dynamic) ColorPickerHint()
+                                ColorPickerHint(enabled = !dynamic)
                                 if (allowDynamic) {
                                     DynamicColorOption(checked = dynamic, onCheckedChange = { dynamic = it })
-                                    if (dynamic) DynamicColorHint()
+                                    DynamicColorHint()
                                 }
                             }
                         }
@@ -201,10 +201,10 @@ internal fun ConfigColorPickerDialog(
                                     }
                                 },
                             )
-                            if (!dynamic) ColorPickerHint()
+                            ColorPickerHint(enabled = !dynamic)
                             if (allowDynamic) {
                                 DynamicColorOption(checked = dynamic, onCheckedChange = { dynamic = it })
-                                if (dynamic) DynamicColorHint()
+                                DynamicColorHint()
                             }
                         }
                     }
@@ -302,11 +302,13 @@ private fun ColorValueInput(
 }
 
 @Composable
-private fun ColorPickerHint() {
+private fun ColorPickerHint(enabled: Boolean) {
     Text(
         text = stringResource(R.string.config_color_picker_hint),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+            alpha = if (enabled) 1f else 0.38f,
+        ),
     )
 }
 
