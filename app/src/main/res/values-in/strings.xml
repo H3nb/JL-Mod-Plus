@@ -692,8 +692,6 @@
     <string name="config_controls_opaque_outside">Kontrol tanpa transparansi di luar layar MIDlet</string>
     <string name="config_controls_opaque_outside_help">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti opasitas yang dipilih.</string>
     <string name="config_controls_connect_controller">Hubungkan pengontrol untuk kalibrasi</string>
-    <string name="config_controls_color_labels">Label &amp; simbol</string>
-    <string name="config_controls_color_buttons">Tombol</string>
     <string name="config_controls_color_skin_notice">Skin tombol penuh dapat menggantikan warna, bentuk, dan garis tepi tombol bawaan.</string>
     <string name="config_current_value">Nilai saat ini</string>
     <string name="config_screen_size">Ukuran layar</string>

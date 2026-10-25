@@ -762,8 +762,6 @@
     <string name="config_controls_opaque_outside" tools:ignore="MissingTranslation">Show controls without transparency outside the MIDlet screen</string>
     <string name="config_controls_opaque_outside_help" tools:ignore="MissingTranslation">Controls outside the MIDlet screen ignore opacity. Controls over the screen still follow the selected opacity.</string>
     <string name="config_controls_connect_controller" tools:ignore="MissingTranslation">Connect a controller to calibrate</string>
-    <string name="config_controls_color_labels" tools:ignore="MissingTranslation">Labels &amp; symbols</string>
-    <string name="config_controls_color_buttons" tools:ignore="MissingTranslation">Buttons</string>
     <string name="config_controls_color_skin_notice" tools:ignore="MissingTranslation">A full-button skin can replace the default button colors, shape, and outline.</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
