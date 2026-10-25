@@ -268,7 +268,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                                         Image(image.asImageBitmap(), contentDescription = null,
                                             modifier = Modifier.size(48.dp))
                                     } else {
-                                        Text("—", modifier = Modifier.padding(14.dp))
+                                        Text(key.uppercase(), modifier = Modifier.padding(14.dp))
                                     }
                                     Text(key.replace('_', ' '), style = MaterialTheme.typography.labelSmall,
                                         maxLines = 2)
@@ -370,7 +370,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                             }) { Text(stringResource(R.string.control_skin_normal_image)) }
                             if (normal != null) {
                                 TextButton(onClick = { modify { ControlSkinStore.removeImage(workdir, setId, key, false) } }) {
-                                    Text("×")
+                                    Text(stringResource(R.string.control_skin_remove_image))
                                 }
                             }
                         }
