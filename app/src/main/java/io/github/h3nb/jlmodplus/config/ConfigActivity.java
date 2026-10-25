@@ -281,6 +281,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			intent.putExtra(ControlSkinManagerActivity.EXTRA_WORKDIR, workDir);
 			intent.putExtra(ControlSkinManagerActivity.EXTRA_SELECTED,
 					currentForm == null ? null : currentForm.controlSkinSetId);
+			if (currentForm != null) {
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_SHAPE, currentForm.vkButtonShape);
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_BG,
+						previewColor(currentForm.vkBackground, params.vkBgColor));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_BG_PRESSED,
+						previewColor(currentForm.vkSelectedBackground, params.vkBgColorSelected));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_FG,
+						previewColor(currentForm.vkForeground, params.vkFgColor));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_FG_PRESSED,
+						previewColor(currentForm.vkSelectedForeground, params.vkFgColorSelected));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_OUTLINE,
+						previewColor(currentForm.vkOutline, params.vkOutlineColor));
+			}
 			controlSkinEditorLauncher.launch(intent);
 		}
 
@@ -1813,6 +1826,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			Log.e(TAG, "saveParams", t);
 			return false;
 		}
+	}
+
+	private static int previewColor(String value, int fallback) {
+		try { return Integer.parseInt(value, 16) & 0xFFFFFF; }
+		catch (NumberFormatException error) { return fallback & 0xFFFFFF; }
 	}
 
 	private void refreshFileAccess() {
