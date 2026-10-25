@@ -24,6 +24,7 @@ internal class LibraryDescriptionCatalog {
         val configStamp: Stamp,
         val legacyConfigStamp: Stamp,
         val descriptions: Map<String, String>,
+        val hasLocalizedContent: Boolean,
         val systemProperties: String?,
     )
 
@@ -54,20 +55,24 @@ internal class LibraryDescriptionCatalog {
             val configStamp = configFile.stamp()
             val legacyConfigStamp = legacyConfigFile.stamp()
             val prior = entries[app.storageKey]
+            val hasOverrides = !overridesByApp[app.id].isNullOrEmpty()
             val entry = if (prior != null && prior.descriptorStamp == descriptorStamp
                 && prior.configStamp == configStamp
-                && prior.legacyConfigStamp == legacyConfigStamp) {
+                && prior.legacyConfigStamp == legacyConfigStamp
+                && prior.hasLocalizedContent == (prior.descriptions.isNotEmpty() || hasOverrides)) {
                 prior
             } else {
                 val descriptions = readSourceDescriptions(descriptorFile)
+                val hasLocalizedContent = descriptions.isNotEmpty() || hasOverrides
                 val systemProperties = try {
-                    if (configFile.isFile || legacyConfigFile.isFile) {
+                    if (hasLocalizedContent && (configFile.isFile || legacyConfigFile.isFile)) {
                         ProfilesManager.loadPreparedMidletConfig(configDir, false)?.systemProperties
                     } else null
                 } catch (_: Exception) {
                     null
                 }
-                Cached(descriptorStamp, configStamp, legacyConfigStamp, descriptions, systemProperties)
+                Cached(descriptorStamp, configStamp, legacyConfigStamp,
+                    descriptions, hasLocalizedContent, systemProperties)
                     .also { entries[app.storageKey] = it }
             }
             val overrides = overridesByApp[app.id].orEmpty()
