@@ -50,6 +50,7 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -186,6 +187,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean skipNextAssetPickerReload;
 	/** A retained asset result applied after the last onPause must survive onResume's disk reload. */
 	private boolean assetResultAppliedAfterPause;
+	private final ActivityResultLauncher<Intent> controlSkinEditorLauncher = registerForActivityResult(
+			new ActivityResultContracts.StartActivityForResult(), result -> {
+				if (result.getResultCode() == RESULT_OK && result.getData() != null
+						&& currentForm != null) {
+					String id = result.getData().getStringExtra(ControlSkinManagerActivity.EXTRA_SELECTED);
+					updateForm(currentForm.toBuilder().controlSkinSetId(id).build());
+					skipNextAssetPickerReload = true;
+				}
+			});
+
 	private final ActivityResultLauncher<Intent> assetPickerLauncher = registerForActivityResult(
 			new FilePickerResultContract(), this::onAssetPicked);
 	@Nullable private String profileOrigin;
@@ -254,6 +265,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onEncodingSelected(@NonNull String charset) {
 			applyCharset(charset);
+		}
+
+		@Override
+		public void onManageControlSkins() {
+			if (workDir == null) return;
+			skipNextAssetPickerReload = true;
+			Intent intent = new Intent(ConfigActivity.this, ControlSkinManagerActivity.class);
+			intent.putExtra(ControlSkinManagerActivity.EXTRA_WORKDIR, workDir);
+			intent.putExtra(ControlSkinManagerActivity.EXTRA_SELECTED,
+					currentForm == null ? null : currentForm.controlSkinSetId);
+			controlSkinEditorLauncher.launch(intent);
 		}
 
 		@Override
@@ -2555,10 +2577,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					hasSettings ? info.config.screenHeight : 0,
 					hasSettings ? info.config.orientation : 0));
 		}
-		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
+		ConfigUiState result = new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				profileNames, hasControllerDevice(), updatePresetName, fileAccessBusy ? null : fileAccess);
+		ControlSkinStore.SetInfo skin = workDir == null ? null
+				: ControlSkinStore.findReadonly(new File(workDir), state.controlSkinSetId);
+		result.controlSkinName = state.controlSkinSetId == null
+				? getString(R.string.control_skin_default)
+				: skin == null ? getString(R.string.control_skin_missing) : skin.name;
+		return result;
 	}
 
 	private boolean hasCompatibleTimingTransform() {
