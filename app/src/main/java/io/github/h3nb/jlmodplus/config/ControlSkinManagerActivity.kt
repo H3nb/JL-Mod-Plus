@@ -519,7 +519,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         val full = images?.mode == "full" && images.normal != null
         val shape = when (intent.getIntExtra(EXTRA_KEY_SHAPE, 2)) {
             0 -> androidx.compose.foundation.shape.CircleShape
-            1 -> androidx.compose.foundation.shape.RectangleShape
+            1 -> androidx.compose.ui.graphics.RectangleShape
             else -> androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
         }
         Box(modifier, contentAlignment = Alignment.Center) {
