@@ -1,0 +1,93 @@
+# PR #195 disposable Android device validation. Remove after reviewing actual test results.
+name: PR 195 control skin emulator
+
+on:
+  pull_request:
+    branches: [alpha]
+    paths:
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/config/ControlSkinStore.java'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/config/ControlSkinStoreTest.java'
+      - '.github/workflows/pr195-control-skin-emulator.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr195-control-skin-emulator-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  control-skins:
+    if: github.event.pull_request.number == 195
+    name: PR 195 Android instrumentation
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out PR merge revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run control skin and legacy keyboard instrumented tests
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            chmod +x gradlew
+            ./gradlew --daemon --stacktrace \
+              -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 \
+              -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.config.ControlSkinStoreTest,javax.microedition.lcdui.keyboard.VirtualKeyboardLegendRenderingTest,javax.microedition.lcdui.keyboard.LegacyVirtualKeyboardTouchTest \
+              :app:connectedEmulatorDebugAndroidTest
+            python3 - <<'PY'
+            from pathlib import Path
+            import xml.etree.ElementTree as ET
+            reports = list(Path("app/build/outputs/androidTest-results/connected").rglob("TEST-*.xml"))
+            if not reports:
+                raise SystemExit("No executed Android instrumentation XML reports")
+            totals = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
+            for report in reports:
+                node = ET.parse(report).getroot()
+                suites = [node] if node.tag == "testsuite" else list(node.findall("testsuite"))
+                for suite in suites:
+                    for field in totals:
+                        totals[field] += int(suite.get(field, 0))
+            print(f"Android executed tests: {totals}; reports={len(reports)}")
+            if totals["tests"] < 14 or any(totals[field] for field in ("failures", "errors", "skipped")):
+                raise SystemExit("Android instrumentation evidence incomplete or failed")
+            PY
+
+      - name: Upload connected Android test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr195-control-skin-device-results
+          path: |
+            app/build/outputs/androidTest-results/connected/**
+            app/build/reports/androidTests/connected/**
+          if-no-files-found: warn
+          retention-days: 7
