@@ -1127,4 +1127,5 @@
     <string name="control_skin_invalid_image">Pilih gambar PNG atau WebP.</string>
     <string name="control_skin_operation_failed">Gagal mengubah set skin kontrol.</string>
     <string name="control_skin_missing">Set tidak tersedia (tombol bawaan)</string>
+    <string name="control_skin_remove_image">Hapus</string>
 </resources>
