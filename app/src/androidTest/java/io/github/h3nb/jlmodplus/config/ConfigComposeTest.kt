@@ -916,6 +916,14 @@ class ConfigComposeTest {
         scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
         composeRule.onNodeWithTag("controls_colors_section").assertExists()
         composeRule.onNodeWithTag("virtual_controls_color_preview").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_normal))
+            .assertIsSelected()
+        composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_pressed))
+            .performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_pressed))
+            .assertIsSelected()
+        composeRule.onNodeWithText(uiString(R.string.config_controls_color_button_normal)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_controls_color_label_normal)).assertExists()
         val samples = listOf(
             "color_normal_button" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND,
             "color_pressed_button" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND,
@@ -961,6 +969,7 @@ class ConfigComposeTest {
             }
         }
         scrollTo(uiString(R.string.control_skin_title))
+        composeRule.onNodeWithText(uiString(R.string.config_controls_skin_help)).assertExists()
         val shape = composeRule.onNodeWithText(uiString(R.string.pref_button_shape_title))
             .fetchSemanticsNode().boundsInRoot
         val skin = composeRule.onNodeWithText(uiString(R.string.control_skin_title))

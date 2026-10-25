@@ -59,7 +59,7 @@ internal fun ConfigControlsColorOptions(
     val options = listOf(
         ControlColorOption(
             R.string.config_controls_color_button_normal,
-            R.string.PREF_VK_BACK,
+            R.string.config_controls_color_button_normal,
             form.vkBackground,
             ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND,
             "color_normal_button",
@@ -73,7 +73,7 @@ internal fun ConfigControlsColorOptions(
         ),
         ControlColorOption(
             R.string.config_controls_color_label_normal,
-            R.string.PREF_VK_FORE,
+            R.string.config_controls_color_label_normal,
             form.vkForeground,
             ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND,
             "color_normal_labels",

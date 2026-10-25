@@ -746,15 +746,15 @@
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
     <string name="config_virtual_controls_color_preview">Color preview</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Released</string>
     <string name="config_virtual_controls_preview_pressed">Pressed</string>
     <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
     <string name="config_controls_maintenance">Layout</string>
     <string name="config_controls_customization" tools:ignore="MissingTranslation">Customization</string>
-    <string name="config_controls_skin_help" tools:ignore="MissingTranslation">Selects the skin for this MIDlet. Editing a skin also affects other MIDlets using the same set.</string>
-    <string name="config_controls_color_button_normal" tools:ignore="MissingTranslation">Normal button</string>
+    <string name="config_controls_skin_help" tools:ignore="MissingTranslation">Changes the appearance of keypad buttons, the D-pad, and the analog stick using custom images.</string>
+    <string name="config_controls_color_button_normal" tools:ignore="MissingTranslation">Released button</string>
     <string name="config_controls_color_button_pressed" tools:ignore="MissingTranslation">Pressed button</string>
-    <string name="config_controls_color_label_normal" tools:ignore="MissingTranslation">Normal label</string>
+    <string name="config_controls_color_label_normal" tools:ignore="MissingTranslation">Released label</string>
     <string name="config_controls_color_label_pressed" tools:ignore="MissingTranslation">Pressed label</string>
     <string name="config_controls_color_outline_short" tools:ignore="MissingTranslation">Outline</string>
     <string name="config_controls_disabled_hint" tools:ignore="MissingTranslation">Virtual controls are off in General. You can still customize them here.</string>

@@ -1781,7 +1781,7 @@ internal fun VirtualControlsColorPreview(form: ConfigFormState) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             FilterChip(
                 selected = !pressed,
