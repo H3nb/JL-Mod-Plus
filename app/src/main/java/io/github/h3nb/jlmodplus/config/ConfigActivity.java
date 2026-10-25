@@ -156,6 +156,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean profileDraftDirty;
 	private boolean profileEditorResumeObserved;
 	private ConfigFormState currentForm;
+	@Nullable private String cachedControlSkinId;
+	@Nullable private String cachedControlSkinName;
 	private ConfigComposeController composeController;
 	private ProfileModel builtInDefaultParams;
 	/** True when this app config is the built-in template and should track host theme changes. */
@@ -192,6 +194,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				if (result.getResultCode() == RESULT_OK && result.getData() != null
 						&& currentForm != null) {
 					String id = result.getData().getStringExtra(ControlSkinManagerActivity.EXTRA_SELECTED);
+					cachedControlSkinId = null;
+					cachedControlSkinName = null;
 					updateForm(currentForm.toBuilder().controlSkinSetId(id).build());
 					skipNextAssetPickerReload = true;
 				}
@@ -270,6 +274,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onManageControlSkins() {
 			if (workDir == null) return;
+			cachedControlSkinId = null;
+			cachedControlSkinName = null;
 			skipNextAssetPickerReload = true;
 			Intent intent = new Intent(ConfigActivity.this, ControlSkinManagerActivity.class);
 			intent.putExtra(ControlSkinManagerActivity.EXTRA_WORKDIR, workDir);
@@ -2581,11 +2587,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				profileNames, hasControllerDevice(), updatePresetName, fileAccessBusy ? null : fileAccess);
-		ControlSkinStore.SetInfo skin = workDir == null ? null
-				: ControlSkinStore.findReadonly(new File(workDir), state.controlSkinSetId);
-		result.controlSkinName = state.controlSkinSetId == null
-				? getString(R.string.control_skin_default)
-				: skin == null ? getString(R.string.control_skin_missing) : skin.name;
+		if (state.controlSkinSetId == null) {
+			result.controlSkinName = getString(R.string.control_skin_default);
+		} else {
+			if (!state.controlSkinSetId.equals(cachedControlSkinId) || cachedControlSkinName == null) {
+				ControlSkinStore.SetInfo skin = workDir == null ? null
+						: ControlSkinStore.findReadonly(new File(workDir), state.controlSkinSetId);
+				cachedControlSkinName = skin == null ? getString(R.string.control_skin_missing) : skin.name;
+				cachedControlSkinId = state.controlSkinSetId;
+			}
+			result.controlSkinName = cachedControlSkinName;
+		}
 		return result;
 	}
 
