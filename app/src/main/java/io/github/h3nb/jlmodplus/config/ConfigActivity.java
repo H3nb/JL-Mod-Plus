@@ -191,14 +191,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean assetResultAppliedAfterPause;
 	private final ActivityResultLauncher<Intent> controlSkinEditorLauncher = registerForActivityResult(
 			new ActivityResultContracts.StartActivityForResult(), result -> {
+				cachedControlSkinId = null;
+				cachedControlSkinName = null;
 				if (result.getResultCode() == RESULT_OK && result.getData() != null
 						&& currentForm != null) {
 					String id = result.getData().getStringExtra(ControlSkinManagerActivity.EXTRA_SELECTED);
-					cachedControlSkinId = null;
-					cachedControlSkinName = null;
 					updateForm(currentForm.toBuilder().controlSkinSetId(id).build());
-					skipNextAssetPickerReload = true;
+				} else if (currentForm != null && composeController != null) {
+					// A shared set can be renamed without changing this MIDlet's selection.
+					composeController.update(createUiState());
 				}
+				skipNextAssetPickerReload = true;
 			});
 
 	private final ActivityResultLauncher<Intent> assetPickerLauncher = registerForActivityResult(
