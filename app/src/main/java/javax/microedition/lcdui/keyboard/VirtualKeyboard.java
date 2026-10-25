@@ -227,6 +227,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private LayoutEditObserver layoutEditObserver;
 	private final ControlSkinRuntime controlSkin;
 
+	protected final ControlSkinRuntime getControlSkin() { return controlSkin; }
+
 	public VirtualKeyboard(ProfileModel settings, java.io.File configDir) {
 		this(settings, configDir, true);
 	}

@@ -18,6 +18,11 @@ public final class ControlSkinStore {
         "soft_left", "soft_right", "d", "c", "up_left", "up", "up_right",
         "left", "right", "down_left", "down", "down_right", "fire", "a", "b", "menu"
     };
+    /** Full-canvas visual layers; independent of legacy key image modes. */
+    public static final String[] GROUPED_ASSETS = {
+        "dpad_base", "dpad_up", "dpad_down", "dpad_left", "dpad_right",
+        "analog_base", "analog_thumb", "analog_thumb_pressed"
+    };
     private static final int MAX_IMAGE_BYTES = 8 * 1024 * 1024;
     private static final int MAX_DIMENSION = 2048;
     private static final String META = "skin.json";
@@ -40,6 +45,24 @@ public final class ControlSkinStore {
     public static boolean validKey(String key) {
         for (String candidate : KEYS) if (candidate.equals(key)) return true;
         return false;
+    }
+
+    public static boolean validAsset(String stem) {
+        for (String key : KEYS) {
+            if (stem.equals("key_" + key) || stem.equals("key_" + key + "_pressed")) return true;
+        }
+        for (String asset : GROUPED_ASSETS) if (asset.equals(stem)) return true;
+        return false;
+    }
+
+    private static String imageStem(String key, boolean pressed) {
+        return "key_" + key + (pressed ? "_pressed" : "");
+    }
+
+    private static String fileStem(String filename) {
+        String suffix = filename.endsWith(".png") ? ".png" :
+                filename.endsWith(".webp") ? ".webp" : "";
+        return suffix.isEmpty() ? "" : filename.substring(0, filename.length() - suffix.length());
     }
 
     private static String safeName(String name) throws IOException {
@@ -210,17 +233,7 @@ public final class ControlSkinStore {
             for (File file : files) {
                 if (!file.isFile() || file.getName().equals(META)) continue;
                 String filename = file.getName();
-                boolean allowed = false;
-                for (String key : KEYS) {
-                    if (filename.equals("key_" + key + ".png")
-                            || filename.equals("key_" + key + ".webp")
-                            || filename.equals("key_" + key + "_pressed.png")
-                            || filename.equals("key_" + key + "_pressed.webp")) {
-                        allowed = true;
-                        break;
-                    }
-                }
-                if (allowed) {
+                if (validAsset(fileStem(filename))) {
                     try (FileInputStream in = new FileInputStream(file);
                          FileOutputStream out = new FileOutputStream(new File(copy.folder, filename))) {
                         byte[] buf = new byte[8192]; int n;
@@ -285,26 +298,36 @@ public final class ControlSkinStore {
 
     @Nullable
     public static File image(File folder, String key, boolean pressed) {
-        if (!validKey(key)) return null;
-        String stem = "key_" + key + (pressed ? "_pressed" : "");
+        return validKey(key) ? asset(folder, imageStem(key, pressed)) : null;
+    }
+
+    @Nullable
+    public static File asset(File folder, String stem) {
+        if (!validAsset(stem)) return null;
         File png = new File(folder, stem + ".png");
         if (png.isFile()) return png;
         File webp = new File(folder, stem + ".webp");
         return webp.isFile() ? webp : null;
     }
 
-    /** Count customized keys, not image files: pressed-only assets are inactive. */
+    /** Count customized controls, not individual overlay files. */
     public static int countCustomizedButtons(File folder) {
         int count = 0;
-        for (String key : KEYS) {
-            if (image(folder, key, false) != null) count++;
-        }
+        for (String key : KEYS) if (image(folder, key, false) != null) count++;
+        if (asset(folder, "dpad_base") != null) count++;
+        if (asset(folder, "analog_base") != null || asset(folder, "analog_thumb") != null) count++;
         return count;
     }
 
     public static synchronized void importImage(File workdir, String setId, String key,
             boolean pressed, InputStream source, String suffix) throws IOException {
-        if (!validKey(key) || (!".png".equals(suffix) && !".webp".equals(suffix))) {
+        if (!validKey(key)) throw new IOException("Unsupported image");
+        importAsset(workdir, setId, imageStem(key, pressed), source, suffix);
+    }
+
+    public static synchronized void importAsset(File workdir, String setId, String stem,
+            InputStream source, String suffix) throws IOException {
+        if (!validAsset(stem) || (!".png".equals(suffix) && !".webp".equals(suffix))) {
             throw new IOException("Unsupported image");
         }
         File folder = required(workdir, setId).folder;
@@ -329,7 +352,6 @@ public final class ControlSkinStore {
                         || "image/webp".equals(options.outMimeType) && ".webp".equals(suffix))) {
                 throw new IOException("Invalid or oversized PNG/WebP");
             }
-            String stem = "key_" + key + (pressed ? "_pressed" : "");
             File target = new File(folder, stem + suffix);
             atomicRename(temp, target);
             File alternate = new File(folder, stem + (".png".equals(suffix) ? ".webp" : ".png"));
@@ -340,10 +362,16 @@ public final class ControlSkinStore {
     public static synchronized void removeImage(File workdir, String setId,
             String key, boolean pressed) throws IOException {
         if (!validKey(key)) throw new IOException("Invalid button key");
+        removeAsset(workdir, setId, imageStem(key, pressed));
+    }
+
+    public static synchronized void removeAsset(File workdir, String setId, String stem)
+            throws IOException {
+        if (!validAsset(stem)) throw new IOException("Invalid control skin slot");
         File folder = required(workdir, setId).folder;
         for (String suffix : new String[]{".png", ".webp"}) {
-            File file = new File(folder, "key_" + key + (pressed ? "_pressed" : "") + suffix);
-            if (file.exists() && !file.delete()) throw new IOException("Cannot delete button image");
+            File file = new File(folder, stem + suffix);
+            if (file.exists() && !file.delete()) throw new IOException("Cannot delete control image");
         }
     }
 }

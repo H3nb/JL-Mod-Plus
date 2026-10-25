@@ -23,13 +23,48 @@ public final class ControlSkinRuntime {
         }
     }
 
+    public static final class Dpad {
+        public final Bitmap base, up, down, left, right;
+        Dpad(Bitmap base, Bitmap up, Bitmap down, Bitmap left, Bitmap right) {
+            this.base = base; this.up = up; this.down = down;
+            this.left = left; this.right = right;
+        }
+    }
+
+    public static final class Analog {
+        @Nullable public final Bitmap base, thumb, thumbPressed;
+        Analog(Bitmap base, Bitmap thumb, Bitmap thumbPressed) {
+            this.base = base; this.thumb = thumb; this.thumbPressed = thumbPressed;
+        }
+    }
+
     private final Button[] buttons = new Button[ControlSkinStore.KEYS.length];
+    @Nullable private Dpad dpad;
+    @Nullable private Analog analog;
+    private long usedBytes;
 
     private ControlSkinRuntime() {}
 
     @Nullable
     public Button get(int index) {
         return index >= 0 && index < buttons.length ? buttons[index] : null;
+    }
+
+    @Nullable public Dpad dpad() { return dpad; }
+    @Nullable public Analog analog() { return analog; }
+
+    /** Shared startup decode budget for keys and grouped controls. */
+    @Nullable private Bitmap loadAsset(File folder, String stem) {
+        File file = ControlSkinStore.asset(folder, stem);
+        Bitmap bitmap = file == null ? null : decode(file);
+        if (bitmap == null) return null;
+        long bytes = bitmap.getByteCount();
+        if (usedBytes + bytes > MAX_BITMAP_BYTES) {
+            bitmap.recycle();
+            return null;
+        }
+        usedBytes += bytes;
+        return bitmap;
     }
 
     public static ControlSkinRuntime load(File configDir, String selectedId) {
@@ -41,28 +76,25 @@ public final class ControlSkinRuntime {
         try {
             ControlSkinStore.SetInfo set = ControlSkinStore.findReadonly(workdir, selectedId);
             if (set == null) return skin;
-            long used = 0;
+            Bitmap dpadBase = skin.loadAsset(set.folder, "dpad_base");
+            if (dpadBase != null) {
+                skin.dpad = new Dpad(dpadBase,
+                        skin.loadAsset(set.folder, "dpad_up"),
+                        skin.loadAsset(set.folder, "dpad_down"),
+                        skin.loadAsset(set.folder, "dpad_left"),
+                        skin.loadAsset(set.folder, "dpad_right"));
+            }
+            Bitmap analogBase = skin.loadAsset(set.folder, "analog_base");
+            Bitmap analogThumb = skin.loadAsset(set.folder, "analog_thumb");
+            if (analogBase != null || analogThumb != null) {
+                skin.analog = new Analog(analogBase, analogThumb,
+                        analogThumb == null ? null : skin.loadAsset(set.folder, "analog_thumb_pressed"));
+            }
             for (int i = 0; i < ControlSkinStore.KEYS.length; i++) {
                 String key = ControlSkinStore.KEYS[i];
-                File normalFile = ControlSkinStore.image(set.folder, key, false);
-                if (normalFile == null) continue;
-                Bitmap normal = decode(normalFile);
+                Bitmap normal = skin.loadAsset(set.folder, "key_" + key);
                 if (normal == null) continue;
-                long normalBytes = normal.getByteCount();
-                if (used + normalBytes > MAX_BITMAP_BYTES) {
-                    normal.recycle();
-                    break;
-                }
-                used += normalBytes;
-                File pressedFile = ControlSkinStore.image(set.folder, key, true);
-                Bitmap pressed = pressedFile == null ? null : decode(pressedFile);
-                if (pressed != null) {
-                    long pressedBytes = pressed.getByteCount();
-                    if (used + pressedBytes > MAX_BITMAP_BYTES) {
-                        pressed.recycle();
-                        pressed = null;
-                    } else used += pressedBytes;
-                }
+                Bitmap pressed = skin.loadAsset(set.folder, "key_" + key + "_pressed");
                 skin.buttons[i] = new Button(normal, pressed,
                         "full".equals(ControlSkinStore.mode(set.folder, key)));
             }
