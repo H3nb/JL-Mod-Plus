@@ -1140,4 +1140,6 @@
     <string name="config_asset_invalid">Fichier invalide ou non pris en charge.</string>
     <string name="config_asset_operation_failed">Impossible de terminer l’opération sur le fichier.</string>
     <string name="config_asset_busy">Terminez d’abord l’opération sur le fichier en cours.</string>
+    <string name="config_background_dynamic">Couleur dynamique</string>
+    <string name="config_background_dynamic_help">Utilise une couleur unie qui s’adapte progressivement à l’écran du MIDlet.</string>
 </resources>

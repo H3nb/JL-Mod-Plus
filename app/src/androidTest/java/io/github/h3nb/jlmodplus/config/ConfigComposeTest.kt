@@ -952,7 +952,9 @@ class ConfigComposeTest {
                         ConfigFormEvents.ColorField.SCREEN_BACKGROUND,
                         "D0D0D0",
                     ),
-                    onColorPicked = { _, value -> picked = value },
+                    onBackgroundColorPicked = { value, dynamic ->
+                        if (!dynamic) picked = value
+                    },
                 )
             }
         }
@@ -969,7 +971,7 @@ class ConfigComposeTest {
                 ConfigColorPickerDialog(
                     initialHex = "D0D0D0",
                     onDismissRequest = {},
-                    onConfirm = {},
+                    onConfirm = { _, _ -> },
                 )
             }
         }
@@ -978,6 +980,31 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Enter exactly six hexadecimal digits.").assertExists()
         composeRule.onNodeWithText("OK").assertIsNotEnabled()
+    }
+
+    @Test
+    fun dynamicBackgroundPickerPreservesManualHex() {
+        var selectedColor: String? = null
+        var selectedDynamic: Boolean? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigColorPickerDialog(
+                    initialHex = "AABBCC",
+                    allowDynamic = true,
+                    onDismissRequest = {},
+                    onConfirm = { value, dynamic ->
+                        selectedColor = value
+                        selectedDynamic = dynamic
+                    },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Dynamic color").performClick()
+        composeRule.onNodeWithText("AABBCC").assertDoesNotExist()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("AABBCC", selectedColor)
+        assertEquals(true, selectedDynamic)
     }
 
     @Test

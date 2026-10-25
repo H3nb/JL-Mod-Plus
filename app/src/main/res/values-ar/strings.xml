@@ -1239,4 +1239,6 @@
     <string name="config_asset_invalid">ملف غير صالح أو غير مدعوم.</string>
     <string name="config_asset_operation_failed">تعذر إكمال العملية على الملف.</string>
     <string name="config_asset_busy">أكمل عملية الملف الحالية أولاً.</string>
+    <string name="config_background_dynamic">لون ديناميكي</string>
+    <string name="config_background_dynamic_help">يستخدم لونًا موحدًا يتكيف بسلاسة مع شاشة MIDlet.</string>
 </resources>

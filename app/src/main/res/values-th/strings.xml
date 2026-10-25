@@ -1074,4 +1074,6 @@
     <string name="config_asset_invalid">ไฟล์ไม่ถูกต้องหรือไม่รองรับ</string>
     <string name="config_asset_operation_failed">ไม่สามารถดำเนินการกับไฟล์ให้เสร็จสิ้นได้</string>
     <string name="config_asset_busy">โปรดรอให้การดำเนินการกับไฟล์ปัจจุบันเสร็จสิ้นก่อน</string>
+    <string name="config_background_dynamic">สีแบบไดนามิก</string>
+    <string name="config_background_dynamic_help">ใช้สีพื้นแบบเดียวที่ปรับอย่างนุ่มนวลตามหน้าจอ MIDlet</string>
 </resources>

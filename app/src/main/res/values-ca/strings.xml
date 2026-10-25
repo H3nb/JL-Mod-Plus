@@ -1139,4 +1139,6 @@
     <string name="config_asset_invalid">Fitxer no vàlid o no compatible.</string>
     <string name="config_asset_operation_failed">No s’ha pogut completar l’operació amb el fitxer.</string>
     <string name="config_asset_busy">Acaba primer l’operació amb el fitxer en curs.</string>
+    <string name="config_background_dynamic">Color dinàmic</string>
+    <string name="config_background_dynamic_help">Utilitza un únic color uniforme que s’adapta suaument a la pantalla del MIDlet.</string>
 </resources>

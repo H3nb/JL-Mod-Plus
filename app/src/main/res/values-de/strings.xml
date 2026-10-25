@@ -1108,4 +1108,6 @@
     <string name="config_asset_invalid">Ungültige oder nicht unterstützte Datei.</string>
     <string name="config_asset_operation_failed">Der Dateivorgang konnte nicht abgeschlossen werden.</string>
     <string name="config_asset_busy">Schließe zuerst den laufenden Dateivorgang ab.</string>
+    <string name="config_background_dynamic">Dynamische Farbe</string>
+    <string name="config_background_dynamic_help">Verwendet eine einheitliche Farbe, die sich sanft an den MIDlet-Bildschirm anpasst.</string>
 </resources>

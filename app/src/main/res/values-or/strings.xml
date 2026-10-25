@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">ଅବୈଧ ବା ଅସମର୍ଥିତ ଫାଇଲ।</string>
     <string name="config_asset_operation_failed">ଫାଇଲ କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ।</string>
     <string name="config_asset_busy">ପ୍ରଥମେ ଚାଲୁଥିବା ଫାଇଲ କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ।</string>
+    <string name="config_background_dynamic">ଗତିଶୀଳ ରଙ୍ଗ</string>
+    <string name="config_background_dynamic_help">MIDlet ପରଦା ସହ ସୁଗମ ଭାବରେ ବଦଳୁଥିବା ଗୋଟିଏ ଏକରଙ୍ଗିଆ ପୃଷ୍ଠଭୂମି ବ୍ୟବହାର କରେ।</string>
 </resources>

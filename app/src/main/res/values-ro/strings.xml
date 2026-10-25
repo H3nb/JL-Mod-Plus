@@ -1140,4 +1140,6 @@
     <string name="config_asset_invalid">Fișier nevalid sau neacceptat.</string>
     <string name="config_asset_operation_failed">Operația cu fișierul nu a putut fi finalizată.</string>
     <string name="config_asset_busy">Finalizează mai întâi operația în curs cu fișierul.</string>
+    <string name="config_background_dynamic">Culoare dinamică</string>
+    <string name="config_background_dynamic_help">Folosește o singură culoare uniformă, care se adaptează lin la ecranul MIDlet.</string>
 </resources>

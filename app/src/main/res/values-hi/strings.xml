@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">अमान्य या असमर्थित फ़ाइल।</string>
     <string name="config_asset_operation_failed">फ़ाइल से जुड़ी कार्रवाई पूरी नहीं हो सकी।</string>
     <string name="config_asset_busy">पहले चल रही फ़ाइल कार्रवाई पूरी करें।</string>
+    <string name="config_background_dynamic">गतिशील रंग</string>
+    <string name="config_background_dynamic_help">MIDlet स्क्रीन के अनुसार धीरे-धीरे बदलने वाला एक समान रंग इस्तेमाल करता है।</string>
 </resources>

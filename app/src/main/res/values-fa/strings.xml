@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">فایل نامعتبر یا پشتیبانی‌نشده است.</string>
     <string name="config_asset_operation_failed">عملیات فایل تکمیل نشد.</string>
     <string name="config_asset_busy">ابتدا عملیات در حال انجام فایل را تمام کنید.</string>
+    <string name="config_background_dynamic">رنگ پویا</string>
+    <string name="config_background_dynamic_help">از یک رنگ یکدست استفاده می‌کند که به‌آرامی با صفحهٔ MIDlet هماهنگ می‌شود.</string>
 </resources>

@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">වලංගු නොවන හෝ සහය නොදක්වන ගොනුවකි.</string>
     <string name="config_asset_operation_failed">ගොනු ක්‍රියාව අවසන් කිරීමට නොහැකි විය.</string>
     <string name="config_asset_busy">පළමුව දැනට ක්‍රියාත්මක ගොනු ක්‍රියාව අවසන් කරන්න.</string>
+    <string name="config_background_dynamic">ගතික වර්ණය</string>
+    <string name="config_background_dynamic_help">MIDlet තිරයට සුමටව ගැළපෙන තනි පැහැයක් භාවිත කරයි.</string>
 </resources>

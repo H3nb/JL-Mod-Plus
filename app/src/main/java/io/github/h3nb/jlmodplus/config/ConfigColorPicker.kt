@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -96,43 +98,79 @@ internal fun ConfigColorPickerDialog(
         title = { Text(stringResource(R.string.config_color_picker_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (allowDynamic) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = dynamic, onCheckedChange = { dynamic = it })
-                        Text(stringResource(R.string.config_background_dynamic))
+                if (dynamic) {
+                    DynamicColorOption(checked = true, onCheckedChange = { dynamic = it })
+                    Text(
+                        text = stringResource(R.string.config_background_dynamic_help),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else BoxWithConstraints {
+                    val useTwoPane = maxWidth >= 480.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) &&
+                        maxWidth > maxHeight && maxHeight != Dp.Infinity
+                    val pickerHeight = if (maxHeight == Dp.Infinity) {
+                        180.dp
+                    } else {
+                        (maxHeight * if (useTwoPane) 0.68f else 0.38f)
+                            .coerceIn(96.dp, 180.dp)
                     }
-                    if (dynamic) {
-                        Text(
-                            text = stringResource(R.string.config_background_dynamic_help),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                if (!dynamic) BoxWithConstraints {
-                val useTwoPane = maxWidth >= 480.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) &&
-                    maxWidth > maxHeight && maxHeight != Dp.Infinity
-                val pickerHeight = if (maxHeight == Dp.Infinity) {
-                    180.dp
-                } else {
-                    (maxHeight * if (useTwoPane) 0.68f else 0.38f)
-                        .coerceIn(96.dp, 180.dp)
-                }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (useTwoPane) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(scrollState),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.Top,
-                        ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        if (useTwoPane) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .verticalScroll(scrollState),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.Top,
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    SaturationValuePicker(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        hue = hsv[0],
+                                        saturation = hsv[1],
+                                        value = hsv[2],
+                                        height = pickerHeight,
+                                        onChanged = { saturation, value ->
+                                            updateHsv(saturation = saturation, value = value)
+                                        },
+                                    )
+                                    HuePicker(
+                                        hue = hsv[0],
+                                        onChanged = { hue -> updateHsv(hue = hue) },
+                                    )
+                                }
+                                Column(
+                                    modifier = Modifier.weight(0.85f),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    ColorValueInput(
+                                        hexText = hexText,
+                                        color = color,
+                                        hexIsValid = hexIsValid,
+                                        showPreview = true,
+                                        onHexChanged = { value ->
+                                            val normalized = normalizePickerHex(value)
+                                            hexText = normalized
+                                            if (normalized.length == 6) {
+                                                hsv = parseHsv(normalized)
+                                            }
+                                        },
+                                    )
+                                    if (allowDynamic) {
+                                        DynamicColorOption(checked = false, onCheckedChange = { dynamic = it })
+                                    }
+                                    ColorPickerHint()
+                                }
+                            }
+                        } else {
                             Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.verticalScroll(scrollState),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 SaturationValuePicker(
-                                    modifier = Modifier.fillMaxWidth(),
                                     hue = hsv[0],
                                     saturation = hsv[1],
                                     value = hsv[2],
@@ -145,11 +183,6 @@ internal fun ConfigColorPickerDialog(
                                     hue = hsv[0],
                                     onChanged = { hue -> updateHsv(hue = hue) },
                                 )
-                            }
-                            Column(
-                                modifier = Modifier.weight(0.85f),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
                                 ColorValueInput(
                                     hexText = hexText,
                                     color = color,
@@ -163,49 +196,18 @@ internal fun ConfigColorPickerDialog(
                                         }
                                     },
                                 )
+                                if (allowDynamic) {
+                                    DynamicColorOption(checked = false, onCheckedChange = { dynamic = it })
+                                }
                                 ColorPickerHint()
                             }
                         }
-                    } else {
-                        Column(
-                            modifier = Modifier.verticalScroll(scrollState),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            SaturationValuePicker(
-                                hue = hsv[0],
-                                saturation = hsv[1],
-                                value = hsv[2],
-                                height = pickerHeight,
-                                onChanged = { saturation, value ->
-                                    updateHsv(saturation = saturation, value = value)
-                                },
-                            )
-                            HuePicker(
-                                hue = hsv[0],
-                                onChanged = { hue -> updateHsv(hue = hue) },
-                            )
-                            ColorValueInput(
-                                hexText = hexText,
-                                color = color,
-                                hexIsValid = hexIsValid,
-                                showPreview = true,
-                                onHexChanged = { value ->
-                                    val normalized = normalizePickerHex(value)
-                                    hexText = normalized
-                                    if (normalized.length == 6) {
-                                        hsv = parseHsv(normalized)
-                                    }
-                                },
-                            )
-                            ColorPickerHint()
-                        }
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
                     }
-                    ScrollableContentHint(
-                        visible = canScrollForward,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
                 }
-            }
             }
         },
         confirmButton = {
@@ -222,6 +224,23 @@ internal fun ConfigColorPickerDialog(
             }
         },
     )
+}
+
+@Composable
+private fun DynamicColorOption(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Checkbox(checked = checked, onCheckedChange = null)
+        Text(stringResource(R.string.config_background_dynamic))
+    }
 }
 
 @Composable

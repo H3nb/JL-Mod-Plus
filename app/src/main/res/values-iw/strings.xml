@@ -1140,4 +1140,6 @@
     <string name="config_asset_invalid">קובץ לא תקין או לא נתמך.</string>
     <string name="config_asset_operation_failed">לא ניתן להשלים את הפעולה בקובץ.</string>
     <string name="config_asset_busy">יש לסיים תחילה את פעולת הקובץ הנוכחית.</string>
+    <string name="config_background_dynamic">צבע דינמי</string>
+    <string name="config_background_dynamic_help">משתמש בצבע אחיד המשתנה בהדרגה בהתאם למסך ה-MIDlet.</string>
 </resources>

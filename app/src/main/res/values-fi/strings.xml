@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">Virheellinen tai tukematon tiedosto.</string>
     <string name="config_asset_operation_failed">Tiedostotoimintoa ei voitu suorittaa.</string>
     <string name="config_asset_busy">Viimeistele ensin käynnissä oleva tiedostotoiminto.</string>
+    <string name="config_background_dynamic">Dynaaminen väri</string>
+    <string name="config_background_dynamic_help">Käyttää yhtä tasaista väriä, joka mukautuu pehmeästi MIDletin näyttöön.</string>
 </resources>
