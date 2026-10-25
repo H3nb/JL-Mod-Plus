@@ -354,7 +354,7 @@
     <string name="config_controls_color_label_pressed">Etykieta po wciśnięciu</string>
     <string name="config_controls_color_outline_short">Obramowanie</string>
     <string name="config_controls_disabled_hint">Sterowanie wirtualne jest wyłączone w sekcji Ogólne. Nadal możesz je tutaj dostosować.</string>
-    <string name="config_controls_opacity_help">Reguluje przezroczystość sterowania wirtualnego: 0% oznacza pełną przezroczystość, a 100% brak przezroczystości.</string>
+    <string name="config_controls_opacity_help" formatted="false">Reguluje przezroczystość sterowania wirtualnego: 0% oznacza pełną przezroczystość, a 100% brak przezroczystości.</string>
     <string name="config_controls_opaque_outside">Pokazuj sterowanie poza ekranem MIDletu bez przezroczystości</string>
     <string name="config_controls_opaque_outside_help">Elementy sterowania poza ekranem MIDletu ignorują ustawienie nieprzezroczystości. Elementy na ekranie nadal używają wybranej wartości.</string>
     <string name="config_controls_connect_controller">Podłącz kontroler, aby go skalibrować</string>

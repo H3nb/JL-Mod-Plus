@@ -421,7 +421,7 @@
     <string name="config_controls_color_label_pressed">تسمية مضغوطة</string>
     <string name="config_controls_color_outline_short">الحدود</string>
     <string name="config_controls_disabled_hint">أدوات التحكم الافتراضية معطّلة في قسم عام. لا يزال بإمكانك تخصيصها هنا.</string>
-    <string name="config_controls_opacity_help">يضبط شفافية أدوات التحكم الافتراضية: 0% شفاف تمامًا؛ و100% غير شفاف.</string>
+    <string name="config_controls_opacity_help" formatted="false">يضبط شفافية أدوات التحكم الافتراضية: 0% شفاف تمامًا؛ و100% غير شفاف.</string>
     <string name="config_controls_opaque_outside">إظهار أدوات التحكم خارج شاشة MIDlet دون شفافية</string>
     <string name="config_controls_opaque_outside_help">تتجاهل أدوات التحكم خارج شاشة MIDlet إعداد الشفافية، بينما تظل الأدوات فوق الشاشة ملتزمة بالقيمة المحددة.</string>
     <string name="config_controls_connect_controller">وصّل وحدة تحكم لمعايرتها</string>

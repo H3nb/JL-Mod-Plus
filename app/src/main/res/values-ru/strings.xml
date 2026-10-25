@@ -816,7 +816,7 @@
     <string name="config_controls_color_label_pressed">Подпись при нажатии</string>
     <string name="config_controls_color_outline_short">Контур</string>
     <string name="config_controls_disabled_hint">Виртуальные элементы управления отключены в разделе «Основные». Их по-прежнему можно настроить здесь.</string>
-    <string name="config_controls_opacity_help">Настраивает прозрачность виртуальных элементов управления: 0% — полностью прозрачно, 100% — непрозрачно.</string>
+    <string name="config_controls_opacity_help" formatted="false">Настраивает прозрачность виртуальных элементов управления: 0% — полностью прозрачно, 100% — непрозрачно.</string>
     <string name="config_controls_opaque_outside">Показывать элементы управления вне экрана MIDlet непрозрачными</string>
     <string name="config_controls_opaque_outside_help">Элементы управления за пределами экрана MIDlet игнорируют настройку непрозрачности. Элементы поверх экрана используют выбранное значение.</string>
     <string name="config_controls_connect_controller">Подключите контроллер для калибровки</string>

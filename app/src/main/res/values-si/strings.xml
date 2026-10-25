@@ -287,7 +287,7 @@
     <string name="config_controls_color_label_pressed">ලේබලය ඔබා ඇත</string>
     <string name="config_controls_color_outline_short">මායිම් රේඛාව</string>
     <string name="config_controls_disabled_hint">සාමාන්‍ය කොටසේ අතථ්‍ය පාලක ක්‍රියාවිරහිතයි. ඔබට මෙහිදී ඒවා අභිරුචිකරණය කළ හැකිය.</string>
-    <string name="config_controls_opacity_help">අතථ්‍ය පාලකවල විනිවිදභාවය සකසයි: 0% සම්පූර්ණයෙන් විනිවිද පෙනෙන අතර 100% විනිවිද නොපෙනේ.</string>
+    <string name="config_controls_opacity_help" formatted="false">අතථ්‍ය පාලකවල විනිවිදභාවය සකසයි: 0% සම්පූර්ණයෙන් විනිවිද පෙනෙන අතර 100% විනිවිද නොපෙනේ.</string>
     <string name="config_controls_opaque_outside">MIDlet තිරයෙන් පිටත පාලක විනිවිදභාවයකින් තොරව පෙන්වන්න</string>
     <string name="config_controls_opaque_outside_help">MIDlet තිරයෙන් පිටත පාලක විනිවිදභාව සැකසුම නොසලකයි. තිරය මත ඇති පාලක තෝරාගත් අගය දිගටම භාවිත කරයි.</string>
     <string name="config_controls_connect_controller">ක්‍රමාංකනය කිරීමට පාලකයක් සම්බන්ධ කරන්න</string>

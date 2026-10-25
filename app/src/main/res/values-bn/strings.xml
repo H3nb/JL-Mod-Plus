@@ -343,7 +343,7 @@
     <string name="config_controls_color_label_pressed">লেবেল চাপা</string>
     <string name="config_controls_color_outline_short">সীমানা</string>
     <string name="config_controls_disabled_hint">সাধারণ বিভাগে ভার্চুয়াল কন্ট্রোল বন্ধ আছে। তবুও এখানে এগুলোর চেহারা বদলাতে পারবেন।</string>
-    <string name="config_controls_opacity_help">ভার্চুয়াল কন্ট্রোলের স্বচ্ছতা নির্ধারণ করে: 0% পুরোপুরি স্বচ্ছ, 100% অস্বচ্ছ।</string>
+    <string name="config_controls_opacity_help" formatted="false">ভার্চুয়াল কন্ট্রোলের স্বচ্ছতা নির্ধারণ করে: 0% পুরোপুরি স্বচ্ছ, 100% অস্বচ্ছ।</string>
     <string name="config_controls_opaque_outside">MIDlet স্ক্রিনের বাইরে কন্ট্রোল সম্পূর্ণ অস্বচ্ছ দেখান</string>
     <string name="config_controls_opaque_outside_help">MIDlet স্ক্রিনের বাইরের কন্ট্রোলে স্বচ্ছতার সেটিং প্রযোজ্য নয়। স্ক্রিনের ওপরের কন্ট্রোলে নির্বাচিত স্বচ্ছতা বজায় থাকে।</string>
     <string name="config_controls_connect_controller">ক্যালিব্রেট করতে কন্ট্রোলার সংযুক্ত করুন</string>

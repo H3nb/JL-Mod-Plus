@@ -294,7 +294,7 @@
     <string name="config_controls_color_label_pressed">Etiket gedruk</string>
     <string name="config_controls_color_outline_short">Omtrek</string>
     <string name="config_controls_disabled_hint">Virtuele beheerknoppies is afgeskakel onder Algemeen. Jy kan hulle steeds hier aanpas.</string>
-    <string name="config_controls_opacity_help">Pas die deursigtigheid van virtuele beheerknoppies aan: 0% is heeltemal deursigtig; 100% is nie deursigtig nie.</string>
+    <string name="config_controls_opacity_help" formatted="false">Pas die deursigtigheid van virtuele beheerknoppies aan: 0% is heeltemal deursigtig; 100% is nie deursigtig nie.</string>
     <string name="config_controls_opaque_outside">Wys beheerknoppies sonder deursigtigheid buite die MIDlet-skerm</string>
     <string name="config_controls_opaque_outside_help">Beheerknoppies buite die MIDlet-skerm ignoreer die opasiteitsinstelling. Beheerknoppies oor die skerm gebruik steeds die gekose opasiteit.</string>
     <string name="config_controls_connect_controller">Koppel ’n beheerder om te kalibreer</string>

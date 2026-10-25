@@ -298,7 +298,7 @@
     <string name="config_controls_color_label_pressed">Etiqueta premuda</string>
     <string name="config_controls_color_outline_short">Contorn</string>
     <string name="config_controls_disabled_hint">Els controls virtuals estan desactivats a General. Encara els pots personalitzar aquí.</string>
-    <string name="config_controls_opacity_help">Ajusta la transparència dels controls virtuals: el 0% és del tot transparent i el 100% és opac.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ajusta la transparència dels controls virtuals: el 0% és del tot transparent i el 100% és opac.</string>
     <string name="config_controls_opaque_outside">Mostra els controls fora de la pantalla del MIDlet sense transparència</string>
     <string name="config_controls_opaque_outside_help">Els controls fora de la pantalla del MIDlet ignoren l’opacitat configurada. Els que se superposen a la pantalla la continuen respectant.</string>
     <string name="config_controls_connect_controller">Connecta un comandament per calibrar-lo</string>

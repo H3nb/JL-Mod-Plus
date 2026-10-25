@@ -401,7 +401,7 @@
     <string name="config_controls_color_label_pressed">लेबल दबाया गया</string>
     <string name="config_controls_color_outline_short">बॉर्डर</string>
     <string name="config_controls_disabled_hint">सामान्य में वर्चुअल कंट्रोल बंद हैं। आप यहाँ इन्हें फिर भी कस्टमाइज़ कर सकते हैं।</string>
-    <string name="config_controls_opacity_help">वर्चुअल कंट्रोल की पारदर्शिता बदलता है: 0% पूरी तरह पारदर्शी और 100% अपारदर्शी है।</string>
+    <string name="config_controls_opacity_help" formatted="false">वर्चुअल कंट्रोल की पारदर्शिता बदलता है: 0% पूरी तरह पारदर्शी और 100% अपारदर्शी है।</string>
     <string name="config_controls_opaque_outside">MIDlet स्क्रीन के बाहर के कंट्रोल पूरी तरह अपारदर्शी दिखाएँ</string>
     <string name="config_controls_opaque_outside_help">MIDlet स्क्रीन के बाहर के कंट्रोल अपारदर्शिता सेटिंग को नज़रअंदाज़ करते हैं। स्क्रीन पर मौजूद कंट्रोल चुनी गई सेटिंग का पालन करते हैं।</string>
     <string name="config_controls_connect_controller">कैलिब्रेट करने के लिए कंट्रोलर कनेक्ट करें</string>

@@ -362,7 +362,7 @@
     <string name="config_controls_color_label_pressed">Felirat lenyomva</string>
     <string name="config_controls_color_outline_short">Körvonal</string>
     <string name="config_controls_disabled_hint">A virtuális vezérlők ki vannak kapcsolva az Általános részben. Itt továbbra is testreszabhatók.</string>
-    <string name="config_controls_opacity_help">A virtuális vezérlők átlátszóságát állítja: 0% teljesen átlátszó, 100% átlátszatlan.</string>
+    <string name="config_controls_opacity_help" formatted="false">A virtuális vezérlők átlátszóságát állítja: 0% teljesen átlátszó, 100% átlátszatlan.</string>
     <string name="config_controls_opaque_outside">Vezérlők megjelenítése átlátszóság nélkül a MIDlet képernyőjén kívül</string>
     <string name="config_controls_opaque_outside_help">A MIDlet képernyőjén kívüli vezérlők figyelmen kívül hagyják az átlátszatlansági beállítást. A képernyőn lévők továbbra is a választott értéket használják.</string>
     <string name="config_controls_connect_controller">Csatlakoztasson vezérlőt a kalibráláshoz</string>

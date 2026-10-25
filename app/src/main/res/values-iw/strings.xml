@@ -299,7 +299,7 @@
     <string name="config_controls_color_label_pressed">תווית במצב לחוץ</string>
     <string name="config_controls_color_outline_short">קו מתאר</string>
     <string name="config_controls_disabled_hint">הפקדים הווירטואליים כבויים בקטגוריה כללי. עדיין אפשר להתאים אותם כאן.</string>
-    <string name="config_controls_opacity_help">מכוונן את השקיפות של הפקדים הווירטואליים: 0% שקוף לחלוטין ו־100% אטום.</string>
+    <string name="config_controls_opacity_help" formatted="false">מכוונן את השקיפות של הפקדים הווירטואליים: 0% שקוף לחלוטין ו־100% אטום.</string>
     <string name="config_controls_opaque_outside">הצגת פקדים ללא שקיפות מחוץ למסך ה־MIDlet</string>
     <string name="config_controls_opaque_outside_help">פקדים מחוץ למסך ה־MIDlet מתעלמים מהגדרת האטימות. פקדים שמעל המסך ממשיכים להשתמש בערך שנבחר.</string>
     <string name="config_controls_connect_controller">חברו בקר כדי לכייל אותו</string>

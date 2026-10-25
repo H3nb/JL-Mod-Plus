@@ -399,7 +399,7 @@
     <string name="config_controls_color_label_pressed">Basılı etiket</string>
     <string name="config_controls_color_outline_short">Kenarlık</string>
     <string name="config_controls_disabled_hint">Sanal kontroller Genel bölümünde kapalı. Yine de burada özelleştirebilirsiniz.</string>
-    <string name="config_controls_opacity_help">Sanal kontrollerin saydamlığını ayarlar: %0 tamamen saydam, %100 tamamen opaktır.</string>
+    <string name="config_controls_opacity_help" formatted="false">Sanal kontrollerin saydamlığını ayarlar: %0 tamamen saydam, %100 tamamen opaktır.</string>
     <string name="config_controls_opaque_outside">MIDlet ekranı dışındaki kontrolleri saydam olmadan göster</string>
     <string name="config_controls_opaque_outside_help">MIDlet ekranı dışındaki kontroller opaklık ayarını yok sayar. Ekran üzerindekiler seçilen değeri kullanmaya devam eder.</string>
     <string name="config_controls_connect_controller">Kalibre etmek için bir kontrol cihazı bağlayın</string>

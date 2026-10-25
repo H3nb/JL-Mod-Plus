@@ -684,7 +684,7 @@
     <string name="config_controls_color_label_pressed">Label ingedrukt</string>
     <string name="config_controls_color_outline_short">Omlijning</string>
     <string name="config_controls_disabled_hint">Virtuele bediening staat uit onder Basis. Je kunt deze hier nog steeds aanpassen.</string>
-    <string name="config_controls_opacity_help">Past de transparantie van virtuele bediening aan: 0% is volledig transparant en 100% ondoorzichtig.</string>
+    <string name="config_controls_opacity_help" formatted="false">Past de transparantie van virtuele bediening aan: 0% is volledig transparant en 100% ondoorzichtig.</string>
     <string name="config_controls_opaque_outside">Bediening buiten het MIDlet-scherm ondoorzichtig weergeven</string>
     <string name="config_controls_opaque_outside_help">Bediening buiten het MIDlet-scherm negeert de ingestelde dekking. Bediening boven het scherm blijft de gekozen dekking gebruiken.</string>
     <string name="config_controls_connect_controller">Sluit een controller aan om te kalibreren</string>

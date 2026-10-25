@@ -719,7 +719,7 @@
     <string name="config_controls_color_label_pressed">Libellé à l’appui</string>
     <string name="config_controls_color_outline_short">Contour</string>
     <string name="config_controls_disabled_hint">Les commandes virtuelles sont désactivées dans Général. Vous pouvez tout de même les personnaliser ici.</string>
-    <string name="config_controls_opacity_help">Règle la transparence des commandes virtuelles : 0 % est entièrement transparent et 100 % opaque.</string>
+    <string name="config_controls_opacity_help" formatted="false">Règle la transparence des commandes virtuelles : 0 % est entièrement transparent et 100 % opaque.</string>
     <string name="config_controls_opaque_outside">Afficher les commandes hors de l’écran du MIDlet sans transparence</string>
     <string name="config_controls_opaque_outside_help">Les commandes situées hors de l’écran du MIDlet ignorent le réglage d’opacité. Celles qui sont sur l’écran continuent d’utiliser la valeur choisie.</string>
     <string name="config_controls_connect_controller">Connectez une manette pour la calibrer</string>

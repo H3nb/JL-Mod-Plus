@@ -339,7 +339,7 @@
     <string name="config_controls_color_label_pressed">Басылғандағы жазу</string>
     <string name="config_controls_color_outline_short">Жиек</string>
     <string name="config_controls_disabled_hint">Виртуалды басқару элементтері Жалпы бөлімінде өшірілген. Оларды мұнда бәрібір баптауға болады.</string>
-    <string name="config_controls_opacity_help">Виртуалды басқару элементтерінің мөлдірлігін реттейді: 0% толық мөлдір, 100% мөлдір емес.</string>
+    <string name="config_controls_opacity_help" formatted="false">Виртуалды басқару элементтерінің мөлдірлігін реттейді: 0% толық мөлдір, 100% мөлдір емес.</string>
     <string name="config_controls_opaque_outside">MIDlet экранының сыртындағы басқару элементтерін мөлдірліксіз көрсету</string>
     <string name="config_controls_opaque_outside_help">MIDlet экранының сыртындағы басқару элементтері мөлдірлік параметрін ескермейді. Экран үстіндегілері таңдалған мәнді қолданады.</string>
     <string name="config_controls_connect_controller">Калибрлеу үшін контроллерді қосыңыз</string>

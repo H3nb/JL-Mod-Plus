@@ -719,7 +719,7 @@
     <string name="config_controls_color_label_pressed">Etichetta alla pressione</string>
     <string name="config_controls_color_outline_short">Contorno</string>
     <string name="config_controls_disabled_hint">I controlli virtuali sono disattivati in Base. Puoi comunque personalizzarli qui.</string>
-    <string name="config_controls_opacity_help">Regola la trasparenza dei controlli virtuali: 0% è completamente trasparente e 100% è opaco.</string>
+    <string name="config_controls_opacity_help" formatted="false">Regola la trasparenza dei controlli virtuali: 0% è completamente trasparente e 100% è opaco.</string>
     <string name="config_controls_opaque_outside">Mostra i controlli fuori dallo schermo MIDlet senza trasparenza</string>
     <string name="config_controls_opaque_outside_help">I controlli fuori dallo schermo MIDlet ignorano l’opacità impostata. Quelli sovrapposti allo schermo usano ancora il valore selezionato.</string>
     <string name="config_controls_connect_controller">Collega un controller per calibrarlo</string>

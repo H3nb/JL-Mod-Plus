@@ -684,7 +684,7 @@
     <string name="config_controls_color_label_pressed">Etiket trykket</string>
     <string name="config_controls_color_outline_short">Kontur</string>
     <string name="config_controls_disabled_hint">Virtuelle kontroller er slået fra under Basis. Du kan stadig tilpasse dem her.</string>
-    <string name="config_controls_opacity_help">Justerer gennemsigtigheden af virtuelle kontroller: 0 % er helt gennemsigtigt, og 100 % er uigennemsigtigt.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerer gennemsigtigheden af virtuelle kontroller: 0 % er helt gennemsigtigt, og 100 % er uigennemsigtigt.</string>
     <string name="config_controls_opaque_outside">Vis kontroller uden gennemsigtighed uden for MIDlet-skærmen</string>
     <string name="config_controls_opaque_outside_help">Kontroller uden for MIDlet-skærmen ignorerer opacitetsindstillingen. Kontroller over skærmen følger stadig den valgte opacitet.</string>
     <string name="config_controls_connect_controller">Tilslut en controller for at kalibrere</string>

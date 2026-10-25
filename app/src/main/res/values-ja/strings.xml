@@ -351,7 +351,7 @@
     <string name="config_controls_color_label_pressed">押した状態のラベル</string>
     <string name="config_controls_color_outline_short">枠線</string>
     <string name="config_controls_disabled_hint">「全般」で仮想コントロールがオフになっています。ここで見た目を変更することはできます。</string>
-    <string name="config_controls_opacity_help">仮想コントロールの透明度を調整します。0% は完全に透明、100% は不透明です。</string>
+    <string name="config_controls_opacity_help" formatted="false">仮想コントロールの透明度を調整します。0% は完全に透明、100% は不透明です。</string>
     <string name="config_controls_opaque_outside">MIDlet 画面の外側のコントロールを不透明にする</string>
     <string name="config_controls_opaque_outside_help">MIDlet 画面の外側では不透明度の設定を無視します。画面上に重なるコントロールには選択した値が適用されます。</string>
     <string name="config_controls_connect_controller">調整するにはコントローラーを接続してください</string>

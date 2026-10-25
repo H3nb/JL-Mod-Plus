@@ -684,7 +684,7 @@
     <string name="config_controls_color_label_pressed">Painetun painikkeen teksti</string>
     <string name="config_controls_color_outline_short">Ääriviiva</string>
     <string name="config_controls_disabled_hint">Virtuaaliohjaimet on poistettu käytöstä Perus-osiossa. Voit silti mukauttaa niitä täällä.</string>
-    <string name="config_controls_opacity_help">Säätää virtuaaliohjainten läpinäkyvyyttä: 0 % on täysin läpinäkyvä ja 100 % peittävä.</string>
+    <string name="config_controls_opacity_help" formatted="false">Säätää virtuaaliohjainten läpinäkyvyyttä: 0 % on täysin läpinäkyvä ja 100 % peittävä.</string>
     <string name="config_controls_opaque_outside">Näytä MIDlet-näytön ulkopuoliset ohjaimet ilman läpinäkyvyyttä</string>
     <string name="config_controls_opaque_outside_help">MIDlet-näytön ulkopuoliset ohjaimet ohittavat peittävyysasetuksen. Näytön päällä olevat käyttävät edelleen valittua peittävyyttä.</string>
     <string name="config_controls_connect_controller">Yhdistä ohjain kalibrointia varten</string>

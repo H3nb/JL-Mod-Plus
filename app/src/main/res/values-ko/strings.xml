@@ -366,7 +366,7 @@
     <string name="config_controls_color_label_pressed">누른 상태의 레이블</string>
     <string name="config_controls_color_outline_short">테두리</string>
     <string name="config_controls_disabled_hint">일반에서 가상 컨트롤이 꺼져 있습니다. 여기에서 모양은 계속 바꿀 수 있습니다.</string>
-    <string name="config_controls_opacity_help">가상 컨트롤의 투명도를 조절합니다. 0%는 완전히 투명하고 100%는 불투명합니다.</string>
+    <string name="config_controls_opacity_help" formatted="false">가상 컨트롤의 투명도를 조절합니다. 0%는 완전히 투명하고 100%는 불투명합니다.</string>
     <string name="config_controls_opaque_outside">MIDlet 화면 밖의 컨트롤을 불투명하게 표시</string>
     <string name="config_controls_opaque_outside_help">MIDlet 화면 밖의 컨트롤에는 불투명도 설정이 적용되지 않습니다. 화면 위의 컨트롤에는 선택한 값이 계속 적용됩니다.</string>
     <string name="config_controls_connect_controller">보정하려면 컨트롤러를 연결하세요</string>

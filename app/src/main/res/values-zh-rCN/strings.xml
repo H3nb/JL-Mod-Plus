@@ -396,7 +396,7 @@
     <string name="config_controls_color_label_pressed">按下时的标签</string>
     <string name="config_controls_color_outline_short">边框</string>
     <string name="config_controls_disabled_hint">虚拟控件已在“常规”中关闭，但仍可在此自定义。</string>
-    <string name="config_controls_opacity_help">调整虚拟控件的透明度：0% 表示完全透明，100% 表示不透明。</string>
+    <string name="config_controls_opacity_help" formatted="false">调整虚拟控件的透明度：0% 表示完全透明，100% 表示不透明。</string>
     <string name="config_controls_opaque_outside">在 MIDlet 屏幕外不透明地显示控件</string>
     <string name="config_controls_opaque_outside_help">MIDlet 屏幕外的控件不受不透明度设置影响。覆盖屏幕的控件仍使用所选值。</string>
     <string name="config_controls_connect_controller">连接控制器以进行校准</string>

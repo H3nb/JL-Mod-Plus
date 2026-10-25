@@ -333,7 +333,7 @@
     <string name="config_controls_color_label_pressed">ଲେବଲ୍ ଦବାଯାଇଛି</string>
     <string name="config_controls_color_outline_short">ଧାର</string>
     <string name="config_controls_disabled_hint">ସାଧାରଣ ବିଭାଗରେ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବନ୍ଦ ଅଛି। ଏଠାରେ ଆପଣ ଏହାକୁ କଷ୍ଟମାଇଜ୍ କରିପାରିବେ।</string>
-    <string name="config_controls_opacity_help">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣର ସ୍ୱଚ୍ଛତା ବଦଳାଏ: 0% ସମ୍ପୂର୍ଣ୍ଣ ସ୍ୱଚ୍ଛ ଏବଂ 100% ଅସ୍ୱଚ୍ଛ।</string>
+    <string name="config_controls_opacity_help" formatted="false">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣର ସ୍ୱଚ୍ଛତା ବଦଳାଏ: 0% ସମ୍ପୂର୍ଣ୍ଣ ସ୍ୱଚ୍ଛ ଏବଂ 100% ଅସ୍ୱଚ୍ଛ।</string>
     <string name="config_controls_opaque_outside">MIDlet ସ୍କ୍ରିନ୍ ବାହାରେ ନିୟନ୍ତ୍ରଣକୁ ସ୍ୱଚ୍ଛତା ବିନା ଦେଖାନ୍ତୁ</string>
     <string name="config_controls_opaque_outside_help">MIDlet ସ୍କ୍ରିନ୍ ବାହାରର ନିୟନ୍ତ୍ରଣରେ ସ୍ୱଚ୍ଛତା ସେଟିଂ ଲାଗୁ ହୁଏ ନାହିଁ। ସ୍କ୍ରିନ୍ ଉପରର ନିୟନ୍ତ୍ରଣ ଚୟନ କରାଯାଇଥିବା ମୂଲ୍ୟ ବ୍ୟବହାର କରେ।</string>
     <string name="config_controls_connect_controller">କ୍ୟାଲିବ୍ରେଟ୍ କରିବାକୁ କଣ୍ଟ୍ରୋଲର୍ ସଂଯୋଗ କରନ୍ତୁ</string>

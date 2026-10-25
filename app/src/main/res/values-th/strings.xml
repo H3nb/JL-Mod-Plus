@@ -326,7 +326,7 @@
     <string name="config_controls_color_label_pressed">ป้ายชื่อขณะกด</string>
     <string name="config_controls_color_outline_short">เส้นขอบ</string>
     <string name="config_controls_disabled_hint">ตัวควบคุมเสมือนปิดอยู่ในหัวข้อทั่วไป แต่คุณยังปรับแต่งได้ที่นี่</string>
-    <string name="config_controls_opacity_help">ปรับความโปร่งใสของตัวควบคุมเสมือน: 0% โปร่งใสทั้งหมด และ 100% ทึบแสง</string>
+    <string name="config_controls_opacity_help" formatted="false">ปรับความโปร่งใสของตัวควบคุมเสมือน: 0% โปร่งใสทั้งหมด และ 100% ทึบแสง</string>
     <string name="config_controls_opaque_outside">แสดงตัวควบคุมนอกหน้าจอ MIDlet แบบทึบแสง</string>
     <string name="config_controls_opaque_outside_help">ตัวควบคุมนอกหน้าจอ MIDlet จะไม่ใช้ค่าความทึบแสงที่ตั้งไว้ ส่วนตัวควบคุมบนหน้าจอยังคงใช้ค่าที่เลือก</string>
     <string name="config_controls_connect_controller">เชื่อมต่อคอนโทรลเลอร์เพื่อปรับเทียบ</string>

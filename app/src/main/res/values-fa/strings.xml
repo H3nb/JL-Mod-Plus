@@ -354,7 +354,7 @@
     <string name="config_controls_color_label_pressed">برچسب هنگام فشار</string>
     <string name="config_controls_color_outline_short">حاشیه</string>
     <string name="config_controls_disabled_hint">کنترل‌های مجازی در بخش عمومی خاموش‌اند. بااین‌حال می‌توانید آن‌ها را اینجا سفارشی کنید.</string>
-    <string name="config_controls_opacity_help">شفافیت کنترل‌های مجازی را تنظیم می‌کند: ۰٪ کاملاً شفاف و ۱۰۰٪ بدون شفافیت است.</string>
+    <string name="config_controls_opacity_help" formatted="false">شفافیت کنترل‌های مجازی را تنظیم می‌کند: ۰٪ کاملاً شفاف و ۱۰۰٪ بدون شفافیت است.</string>
     <string name="config_controls_opaque_outside">نمایش کنترل‌ها بدون شفافیت در بیرون صفحهٔ MIDlet</string>
     <string name="config_controls_opaque_outside_help">کنترل‌های بیرون صفحهٔ MIDlet تنظیم شفافیت را نادیده می‌گیرند. کنترل‌های روی صفحه همچنان از مقدار انتخاب‌شده پیروی می‌کنند.</string>
     <string name="config_controls_connect_controller">برای کالیبره‌کردن، کنترلر را وصل کنید</string>

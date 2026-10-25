@@ -389,7 +389,7 @@
     <string name="config_controls_color_label_pressed">Nhãn khi nhấn</string>
     <string name="config_controls_color_outline_short">Đường viền</string>
     <string name="config_controls_disabled_hint">Điều khiển ảo đang tắt trong mục Chung. Bạn vẫn có thể tùy chỉnh tại đây.</string>
-    <string name="config_controls_opacity_help">Điều chỉnh độ trong suốt của điều khiển ảo: 0% hoàn toàn trong suốt, 100% hoàn toàn không trong suốt.</string>
+    <string name="config_controls_opacity_help" formatted="false">Điều chỉnh độ trong suốt của điều khiển ảo: 0% hoàn toàn trong suốt, 100% hoàn toàn không trong suốt.</string>
     <string name="config_controls_opaque_outside">Hiển thị điều khiển ngoài màn hình MIDlet không trong suốt</string>
     <string name="config_controls_opaque_outside_help">Điều khiển bên ngoài màn hình MIDlet bỏ qua cài đặt độ mờ. Điều khiển nằm trên màn hình vẫn dùng giá trị đã chọn.</string>
     <string name="config_controls_connect_controller">Kết nối tay cầm để hiệu chỉnh</string>

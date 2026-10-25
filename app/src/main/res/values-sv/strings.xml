@@ -684,7 +684,7 @@
     <string name="config_controls_color_label_pressed">Etikett vid tryck</string>
     <string name="config_controls_color_outline_short">Kontur</string>
     <string name="config_controls_disabled_hint">Virtuella kontroller är avstängda under Grundläggande. Du kan fortfarande anpassa dem här.</string>
-    <string name="config_controls_opacity_help">Justerar genomskinligheten hos virtuella kontroller: 0 % är helt genomskinligt och 100 % ogenomskinligt.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerar genomskinligheten hos virtuella kontroller: 0 % är helt genomskinligt och 100 % ogenomskinligt.</string>
     <string name="config_controls_opaque_outside">Visa kontroller utan genomskinlighet utanför MIDlet-skärmen</string>
     <string name="config_controls_opaque_outside_help">Kontroller utanför MIDlet-skärmen ignorerar inställningen för opacitet. Kontroller över skärmen använder fortfarande det valda värdet.</string>
     <string name="config_controls_connect_controller">Anslut en handkontroll för kalibrering</string>

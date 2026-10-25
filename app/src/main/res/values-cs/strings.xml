@@ -411,7 +411,7 @@
     <string name="config_controls_color_label_pressed">Popisek při stisknutí</string>
     <string name="config_controls_color_outline_short">Obrys</string>
     <string name="config_controls_disabled_hint">Virtuální ovládací prvky jsou vypnuté v části Obecné. I tak je zde můžete upravit.</string>
-    <string name="config_controls_opacity_help">Upravuje průhlednost virtuálních ovládacích prvků: 0 % je zcela průhledné a 100 % neprůhledné.</string>
+    <string name="config_controls_opacity_help" formatted="false">Upravuje průhlednost virtuálních ovládacích prvků: 0 % je zcela průhledné a 100 % neprůhledné.</string>
     <string name="config_controls_opaque_outside">Zobrazovat ovládací prvky mimo obrazovku MIDletu neprůhledně</string>
     <string name="config_controls_opaque_outside_help">Ovládací prvky mimo obrazovku MIDletu ignorují nastavenou průhlednost. Prvky nad obrazovkou ji nadále používají.</string>
     <string name="config_controls_connect_controller">Pro kalibraci připojte ovladač</string>

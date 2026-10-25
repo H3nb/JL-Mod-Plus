@@ -338,7 +338,7 @@
     <string name="config_controls_color_label_pressed">按下時的標籤</string>
     <string name="config_controls_color_outline_short">外框</string>
     <string name="config_controls_disabled_hint">虛擬控制項已在「一般」中關閉，但仍可在此自訂。</string>
-    <string name="config_controls_opacity_help">調整虛擬控制項的透明度：0% 代表完全透明，100% 代表不透明。</string>
+    <string name="config_controls_opacity_help" formatted="false">調整虛擬控制項的透明度：0% 代表完全透明，100% 代表不透明。</string>
     <string name="config_controls_opaque_outside">在 MIDlet 畫面外以不透明方式顯示控制項</string>
     <string name="config_controls_opaque_outside_help">MIDlet 畫面外的控制項不受不透明度設定影響。覆蓋畫面的控制項仍使用所選值。</string>
     <string name="config_controls_connect_controller">連接控制器以進行校準</string>

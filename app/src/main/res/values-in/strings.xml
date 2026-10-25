@@ -688,7 +688,7 @@
     <string name="config_controls_color_label_pressed">Label ditekan</string>
     <string name="config_controls_color_outline_short">Garis tepi</string>
     <string name="config_controls_disabled_hint">Kontrol virtual nonaktif di Umum. Kustomisasi tetap bisa diubah.</string>
-    <string name="config_controls_opacity_help">Mengatur transparansi kontrol virtual: 0% sepenuhnya transparan; 100% tanpa transparansi.</string>
+    <string name="config_controls_opacity_help" formatted="false">Mengatur transparansi kontrol virtual: 0% sepenuhnya transparan; 100% tanpa transparansi.</string>
     <string name="config_controls_opaque_outside">Kontrol tanpa transparansi di luar layar MIDlet</string>
     <string name="config_controls_opaque_outside_help">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti opasitas yang dipilih.</string>
     <string name="config_controls_connect_controller">Hubungkan pengontrol untuk kalibrasi</string>

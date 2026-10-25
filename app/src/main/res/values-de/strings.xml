@@ -691,7 +691,7 @@
     <string name="config_controls_color_label_pressed">Beschriftung gedrückt</string>
     <string name="config_controls_color_outline_short">Umrandung</string>
     <string name="config_controls_disabled_hint">Die virtuellen Steuerelemente sind unter Grundlagen deaktiviert. Du kannst sie hier trotzdem anpassen.</string>
-    <string name="config_controls_opacity_help">Passt die Transparenz der virtuellen Steuerelemente an: 0 % ist vollständig transparent, 100 % undurchsichtig.</string>
+    <string name="config_controls_opacity_help" formatted="false">Passt die Transparenz der virtuellen Steuerelemente an: 0 % ist vollständig transparent, 100 % undurchsichtig.</string>
     <string name="config_controls_opaque_outside">Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig anzeigen</string>
     <string name="config_controls_opaque_outside_help">Steuerelemente außerhalb des MIDlet-Bildschirms ignorieren die Deckkrafteinstellung. Steuerelemente über dem Bildschirm verwenden weiterhin den gewählten Wert.</string>
     <string name="config_controls_connect_controller">Controller zum Kalibrieren verbinden</string>

@@ -293,7 +293,7 @@
     <string name="config_controls_color_label_pressed">Etikett trykket inn</string>
     <string name="config_controls_color_outline_short">Kontur</string>
     <string name="config_controls_disabled_hint">Virtuelle kontroller er slått av under Generelt. Du kan fortsatt tilpasse dem her.</string>
-    <string name="config_controls_opacity_help">Justerer gjennomsiktigheten til virtuelle kontroller: 0 % er helt gjennomsiktig og 100 % ugjennomsiktig.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerer gjennomsiktigheten til virtuelle kontroller: 0 % er helt gjennomsiktig og 100 % ugjennomsiktig.</string>
     <string name="config_controls_opaque_outside">Vis kontroller uten gjennomsiktighet utenfor MIDlet-skjermen</string>
     <string name="config_controls_opaque_outside_help">Kontroller utenfor MIDlet-skjermen ignorerer opasitetsinnstillingen. Kontroller over skjermen bruker fortsatt den valgte opasiteten.</string>
     <string name="config_controls_connect_controller">Koble til en kontroller for å kalibrere</string>

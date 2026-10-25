@@ -298,7 +298,7 @@
     <string name="config_controls_color_label_pressed">Ознака при притиску</string>
     <string name="config_controls_color_outline_short">Контура</string>
     <string name="config_controls_disabled_hint">Виртуалне контроле су искључене у одељку Опште. И даље их можете прилагођавати овде.</string>
-    <string name="config_controls_opacity_help">Подешава провидност виртуалних контрола: 0% је потпуно провидно, а 100% непрозирно.</string>
+    <string name="config_controls_opacity_help" formatted="false">Подешава провидност виртуалних контрола: 0% је потпуно провидно, а 100% непрозирно.</string>
     <string name="config_controls_opaque_outside">Прикажи контроле ван екрана MIDlet-а без провидности</string>
     <string name="config_controls_opaque_outside_help">Контроле ван екрана MIDlet-а занемарују подешену непрозирност. Контроле преко екрана и даље користе изабрану вредност.</string>
     <string name="config_controls_connect_controller">Повежите контролер ради калибрације</string>

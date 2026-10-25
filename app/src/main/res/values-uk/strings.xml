@@ -409,7 +409,7 @@
     <string name="config_controls_color_label_pressed">Напис під час натискання</string>
     <string name="config_controls_color_outline_short">Контур</string>
     <string name="config_controls_disabled_hint">Віртуальні елементи керування вимкнено в розділі «Загальні». Тут їх усе одно можна налаштувати.</string>
-    <string name="config_controls_opacity_help">Налаштовує прозорість віртуальних елементів керування: 0% — повністю прозорі, 100% — непрозорі.</string>
+    <string name="config_controls_opacity_help" formatted="false">Налаштовує прозорість віртуальних елементів керування: 0% — повністю прозорі, 100% — непрозорі.</string>
     <string name="config_controls_opaque_outside">Показувати елементи керування за межами екрана MIDlet непрозорими</string>
     <string name="config_controls_opaque_outside_help">Елементи керування за межами екрана MIDlet ігнорують налаштовану непрозорість. Елементи поверх екрана й надалі використовують вибране значення.</string>
     <string name="config_controls_connect_controller">Підключіть контролер для калібрування</string>

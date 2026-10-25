@@ -293,7 +293,7 @@
     <string name="config_controls_color_label_pressed">Ετικέτα με πάτημα</string>
     <string name="config_controls_color_outline_short">Περίγραμμα</string>
     <string name="config_controls_disabled_hint">Τα εικονικά χειριστήρια είναι απενεργοποιημένα στα Γενικά. Μπορείτε όμως να τα προσαρμόσετε εδώ.</string>
-    <string name="config_controls_opacity_help">Ρυθμίζει τη διαφάνεια των εικονικών χειριστηρίων: 0% πλήρως διαφανή, 100% αδιαφανή.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ρυθμίζει τη διαφάνεια των εικονικών χειριστηρίων: 0% πλήρως διαφανή, 100% αδιαφανή.</string>
     <string name="config_controls_opaque_outside">Εμφάνιση χειριστηρίων χωρίς διαφάνεια εκτός της οθόνης MIDlet</string>
     <string name="config_controls_opaque_outside_help">Τα χειριστήρια έξω από την οθόνη MIDlet αγνοούν τη ρύθμιση αδιαφάνειας. Όσα βρίσκονται πάνω στην οθόνη εξακολουθούν να τη χρησιμοποιούν.</string>
     <string name="config_controls_connect_controller">Συνδέστε χειριστήριο για βαθμονόμηση</string>

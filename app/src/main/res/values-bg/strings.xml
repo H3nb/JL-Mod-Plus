@@ -381,7 +381,7 @@
     <string name="config_controls_color_label_pressed">Надпис при натискане</string>
     <string name="config_controls_color_outline_short">Контур</string>
     <string name="config_controls_disabled_hint">Виртуалните контроли са изключени в „Общи“. Все пак можете да ги персонализирате тук.</string>
-    <string name="config_controls_opacity_help">Настройва прозрачността на виртуалните контроли: 0% е напълно прозрачно, а 100% е непрозрачно.</string>
+    <string name="config_controls_opacity_help" formatted="false">Настройва прозрачността на виртуалните контроли: 0% е напълно прозрачно, а 100% е непрозрачно.</string>
     <string name="config_controls_opaque_outside">Показване на контролите извън екрана на MIDlet без прозрачност</string>
     <string name="config_controls_opaque_outside_help">Контролите извън екрана на MIDlet не използват зададената прозрачност. Тези върху екрана продължават да я използват.</string>
     <string name="config_controls_connect_controller">Свържете контролер за калибриране</string>

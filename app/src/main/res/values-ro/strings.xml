@@ -349,7 +349,7 @@
     <string name="config_controls_color_label_pressed">Etichetă la apăsare</string>
     <string name="config_controls_color_outline_short">Contur</string>
     <string name="config_controls_disabled_hint">Comenzile virtuale sunt dezactivate în General. Le poți personaliza în continuare aici.</string>
-    <string name="config_controls_opacity_help">Reglează transparența comenzilor virtuale: 0% înseamnă complet transparent, iar 100% complet opac.</string>
+    <string name="config_controls_opacity_help" formatted="false">Reglează transparența comenzilor virtuale: 0% înseamnă complet transparent, iar 100% complet opac.</string>
     <string name="config_controls_opaque_outside">Afișează comenzile fără transparență în afara ecranului MIDlet</string>
     <string name="config_controls_opaque_outside_help">Comenzile din afara ecranului MIDlet ignoră opacitatea setată. Cele de deasupra ecranului folosesc în continuare valoarea aleasă.</string>
     <string name="config_controls_connect_controller">Conectează un controler pentru calibrare</string>
