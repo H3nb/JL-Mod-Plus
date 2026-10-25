@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 
@@ -162,8 +163,8 @@ private fun ColorMatrix(
     Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1.3f))
-            Text(normal, Modifier.weight(1f), style = MaterialTheme.typography.labelMedium)
-            Text(pressed, Modifier.weight(1f), style = MaterialTheme.typography.labelMedium)
+            Text(normal, Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+            Text(pressed, Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
         }
         ColorMatrixRow(
             title = stringResource(R.string.config_controls_color_labels),

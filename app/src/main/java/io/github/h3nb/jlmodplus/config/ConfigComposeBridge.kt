@@ -1725,7 +1725,7 @@ private fun InputSection(
     ConfigSection(title = stringResource(R.string.config_controls_customization)) {
         ConfigCompactValuePreference(
             title = stringResource(R.string.control_skin_title),
-            value = state.controlSkinName,
+            value = state.controlSkinName.ifBlank { stringResource(R.string.control_skin_default) },
             onClick = events::onManageControlSkins,
         )
         val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()

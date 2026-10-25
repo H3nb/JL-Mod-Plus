@@ -100,9 +100,10 @@ internal fun ConfigCompactValuePreference(
     onClick: () -> Unit,
     enabled: Boolean = true,
     destructive: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
@@ -144,7 +145,7 @@ internal fun ConfigValuePreference(
     compact: Boolean = false,
 ) {
     if (compact && message == null) {
-        ConfigCompactValuePreference(title, value, onClick, enabled)
+        ConfigCompactValuePreference(title, value, onClick, enabled, modifier = modifier)
         return
     }
     Column(

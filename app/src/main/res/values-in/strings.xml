@@ -764,7 +764,7 @@
     <string name="config_help_key_layout">Menentukan skema kode tombol yang dilaporkan ke MIDlet.</string>
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke aksi keypad Java ME.</string>
     <string name="config_help_vk_button_shape">Menentukan bentuk tombol keypad. D-pad dan stik analog tetap menggunakan bentuk masing-masing.</string>
-    <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Pengaturan.</string>
+    <string name="config_help_vk_feedback">Memerlukan getaran aktif di Pengaturan.</string>
     <string name="config_help_vk_alpha">Mengatur opasitas kontrol virtual: 0 = transparan sepenuhnya; 255 = buram sepenuhnya.</string>
     <string name="config_help_vk_force_opacity">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
     <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini saat menutupi layar MIDlet. Nilai 0 menonaktifkannya.</string>
