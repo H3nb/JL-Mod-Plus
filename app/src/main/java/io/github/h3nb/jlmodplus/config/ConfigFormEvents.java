@@ -64,6 +64,9 @@ public interface ConfigFormEvents {
     /** Copies a user-selected legacy Siemens file within this installation only. */
     default void onImportLegacyPrivateFile(@NonNull String relativePath) {}
 
+	/** Opens the global virtual control skin library, preserving the per-MIDlet draft. */
+	default void onManageControlSkins() { }
+
 	/** Opens preset management from the General destination. */
 	default void onManageProfiles() {
 	}
