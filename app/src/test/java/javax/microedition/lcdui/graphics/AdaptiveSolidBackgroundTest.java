@@ -32,6 +32,32 @@ public class AdaptiveSolidBackgroundTest {
         assertTrue((color & 255) <= 150);
     }
 
+    @Test public void nearTiedPaletteDoesNotFlipWhenCameraMoves() {
+        AdaptiveSolidBackground background = new AdaptiveSolidBackground(0xFF000000);
+        int a = background.representativeColor(twoToneGrid(15), 0xFF000000);
+        int b = background.representativeColor(twoToneGrid(17), 0xFF000000);
+        // Both colors contribute even though the largest bin changes.
+        assertTrue((a & 255) > 40);
+        assertTrue(((a >>> 8) & 255) > 40);
+        assertTrue(distanceSquared(a, b) < 22 * 22);
+    }
+
+    private static int[] twoToneGrid(int blueColumns) {
+        int[] pixels = new int[AmbientColorSampler.GRID_COLOR_COUNT];
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = i % AmbientColorSampler.GRID_SIZE < blueColumns
+                    ? 0xFF0044FF : 0xFF00DD00;
+        }
+        return pixels;
+    }
+
+    private static int distanceSquared(int a, int b) {
+        int dr = ((a >>> 16) & 255) - ((b >>> 16) & 255);
+        int dg = ((a >>> 8) & 255) - ((b >>> 8) & 255);
+        int db = (a & 255) - (b & 255);
+        return dr * dr + dg * dg + db * db;
+    }
+
     @Test public void transparentPixelsUseFallbackAndDoNotLeakOldFrame() {
         AdaptiveSolidBackground background = new AdaptiveSolidBackground(0xFF000000);
         int[] pixels = grid(0x00000000);
