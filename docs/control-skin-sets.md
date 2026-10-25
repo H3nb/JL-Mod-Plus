@@ -99,10 +99,10 @@ renderer.
 
 Set edits (create, image import/removal, rename, duplicate, mode, delete) are
 saved globally after each successful operation; there is no redundant Save
-button in the image editor. Creating or duplicating a set opens its editor without changing the active
-MIDlet selection. Tapping a set row in the library explicitly selects it and
-returns its ID to ConfigActivity,
-which follows its existing config persistence and preset-ownership rules.
+button in the image editor. Creating or duplicating a set opens its editor
+without changing the active MIDlet selection. Tapping a set row in the library
+explicitly selects it and returns its ID to ConfigActivity, which follows its
+existing config persistence and preset-ownership rules.
 Renaming keeps the ID; duplicating creates a new one. Deleting the selected
 set clears the MIDlet selection on return. Other MIDlets holding references
 to a deleted set harmlessly fall back to built-in buttons.
@@ -110,5 +110,4 @@ to a deleted set harmlessly fall back to built-in buttons.
 The editor accepts PNG/WebP up to 8 MiB and 2048 pixels on either axis. Files
 replaced through the editor are staged before publication. External filesystem
 changes are picked up on the next library scan or MIDlet launch; there is no
-runtime hot-reload, SVG conversion, or grouped-control asset contract in this
-initial release.
+runtime hot-reload or SVG conversion in this release.
