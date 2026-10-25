@@ -1074,4 +1074,6 @@
     <string name="config_asset_invalid">유효하지 않거나 지원하지 않는 파일입니다.</string>
     <string name="config_asset_operation_failed">파일 작업을 완료하지 못했습니다.</string>
     <string name="config_asset_busy">현재 파일 작업을 먼저 완료하세요.</string>
+    <string name="config_background_dynamic">동적 색상</string>
+    <string name="config_background_dynamic_help">MIDlet 화면에 맞춰 부드럽게 변하는 단색을 사용합니다.</string>
 </resources>

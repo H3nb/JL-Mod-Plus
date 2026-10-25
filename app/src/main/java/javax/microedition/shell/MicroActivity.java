@@ -1013,6 +1013,11 @@ public class MicroActivity extends AppCompatActivity {
 		if (current instanceof Canvas canvas) {
 			canvas.updateBackgroundTheme(background);
 			background = canvas.getHostBackgroundArgb();
+			canvas.setHostBackgroundObserver(color -> {
+				if (current == canvas && binding != null) {
+					binding.displayableContainer.setBackgroundColor(color);
+				}
+			});
 		}
 		// The renderer is inside this padded container; the padding itself remains host-owned.
 		if (binding != null) binding.displayableContainer.setBackgroundColor(background);

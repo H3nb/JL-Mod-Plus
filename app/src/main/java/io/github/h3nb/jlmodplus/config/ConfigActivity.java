@@ -260,6 +260,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
+		public void onBackgroundColorPicked(@NonNull String value, boolean dynamic) {
+			if (currentForm != null && (currentForm.screenBackgroundMode == BackgroundMode.CUSTOM
+					|| currentForm.screenBackgroundMode == BackgroundMode.DYNAMIC_SOLID)) {
+				ConfigFormState edited = setColorValue(currentForm, ColorField.SCREEN_BACKGROUND, value);
+				updateForm(edited.toBuilder().screenBackgroundMode(
+						dynamic ? BackgroundMode.DYNAMIC_SOLID : BackgroundMode.CUSTOM).build());
+			}
+		}
+
+		@Override
 		public void onKeyMappings() {
 			openKeyMappings();
 		}
@@ -2453,8 +2463,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void showColorPicker(ColorField field) {
 		if (composeController != null && currentForm != null
 				&& (field != ColorField.SCREEN_BACKGROUND
-				|| currentForm.screenBackgroundMode == BackgroundMode.CUSTOM)) {
-			composeController.showColorPicker(field, colorValue(currentForm, field));
+				|| currentForm.screenBackgroundMode == BackgroundMode.CUSTOM
+				|| currentForm.screenBackgroundMode == BackgroundMode.DYNAMIC_SOLID)) {
+			composeController.showColorPicker(field, colorValue(currentForm, field),
+					currentForm.screenBackgroundMode == BackgroundMode.DYNAMIC_SOLID);
 		}
 	}
 
@@ -2701,7 +2713,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void updateForm(ConfigFormState state) {
 		currentForm = state;
-		if (state.screenBackgroundMode != BackgroundMode.CUSTOM && composeController != null) {
+		if (state.screenBackgroundMode != BackgroundMode.CUSTOM
+				&& state.screenBackgroundMode != BackgroundMode.DYNAMIC_SOLID
+				&& composeController != null) {
 			composeController.dismissColorPicker(ColorField.SCREEN_BACKGROUND);
 		}
 		if (isProfile) profileDraftDirty = true;

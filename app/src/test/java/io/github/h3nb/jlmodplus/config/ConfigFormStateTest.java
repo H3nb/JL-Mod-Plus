@@ -149,6 +149,24 @@ public class ConfigFormStateTest {
 	}
 
 	@Test
+	public void dynamicBackgroundModeRoundTripsWithoutDiscardingManualColor() {
+		ProfileModel profile = new ProfileModel();
+		profile.screenBackgroundColor = 0x276A9F;
+		profile.screenBackgroundMode = BackgroundMode.DYNAMIC_SOLID;
+		ConfigFormState draft = ConfigFormState.fromProfile(profile, "");
+		assertEquals(BackgroundMode.DYNAMIC_SOLID, draft.screenBackgroundMode);
+		assertEquals("276A9F", draft.screenBackground);
+		ProfileModel restored = draft.applyTo(new ProfileModel());
+		assertEquals(BackgroundMode.DYNAMIC_SOLID, restored.screenBackgroundMode);
+		assertEquals(0x276A9F, restored.screenBackgroundColor);
+		ProfileModel manual = draft.toBuilder()
+				.screenBackgroundMode(BackgroundMode.CUSTOM).build().applyTo(new ProfileModel());
+		assertEquals(BackgroundMode.CUSTOM, manual.screenBackgroundMode);
+		assertEquals(0x276A9F, manual.screenBackgroundColor);
+		assertEquals(BackgroundMode.CUSTOM, BackgroundMode.sanitize(999));
+	}
+
+	@Test
 	public void automaticScalingDropsLegacyRatiosAndResetsManualRatio() {
 		ProfileModel model = new ProfileModel();
 		model.screenScaleType = 1;

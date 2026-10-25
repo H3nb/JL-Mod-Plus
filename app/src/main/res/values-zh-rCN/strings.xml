@@ -1074,4 +1074,6 @@
     <string name="config_asset_invalid">文件无效或不受支持。</string>
     <string name="config_asset_operation_failed">无法完成文件操作。</string>
     <string name="config_asset_busy">请先完成当前的文件操作。</string>
+    <string name="config_background_dynamic">动态颜色</string>
+    <string name="config_background_dynamic_help">使用随 MIDlet 画面平滑变化的纯色背景。</string>
 </resources>

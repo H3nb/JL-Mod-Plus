@@ -1139,4 +1139,6 @@
     <string name="config_asset_invalid">Неважећа или неподржана датотека.</string>
     <string name="config_asset_operation_failed">Радња над датотеком није могла да се доврши.</string>
     <string name="config_asset_busy">Прво довршите текућу радњу над датотеком.</string>
+    <string name="config_background_dynamic">Динамичка боја</string>
+    <string name="config_background_dynamic_help">Користи једну једноличну боју која се постепено прилагођава MIDlet екрану.</string>
 </resources>

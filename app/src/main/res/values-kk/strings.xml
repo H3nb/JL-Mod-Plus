@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">Жарамсыз немесе қолдау көрсетілмейтін файл.</string>
     <string name="config_asset_operation_failed">Файл әрекетін аяқтау мүмкін болмады.</string>
     <string name="config_asset_busy">Алдымен ағымдағы файл әрекетін аяқтаңыз.</string>
+    <string name="config_background_dynamic">Динамикалық түс</string>
+    <string name="config_background_dynamic_help">MIDlet экранына біртіндеп бейімделетін біртұтас түсті қолданады.</string>
 </resources>

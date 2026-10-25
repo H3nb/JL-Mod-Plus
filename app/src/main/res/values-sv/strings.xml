@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">Ogiltig eller ej stödd fil.</string>
     <string name="config_asset_operation_failed">Det gick inte att slutföra filåtgärden.</string>
     <string name="config_asset_busy">Slutför den pågående filåtgärden först.</string>
+    <string name="config_background_dynamic">Dynamisk färg</string>
+    <string name="config_background_dynamic_help">Använder en enda enfärgad bakgrund som anpassas mjukt efter MIDlet-skärmen.</string>
 </resources>

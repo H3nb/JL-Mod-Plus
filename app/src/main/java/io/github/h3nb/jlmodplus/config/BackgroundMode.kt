@@ -12,10 +12,11 @@ object BackgroundMode {
     const val CUSTOM = 0
     const val THEME = 1
     const val IMMERSIVE = 2
+    const val DYNAMIC_SOLID = 3
 
     @JvmStatic
     fun sanitize(mode: Int): Int = when (mode) {
-        THEME, IMMERSIVE -> mode
+        THEME, IMMERSIVE, DYNAMIC_SOLID -> mode
         else -> CUSTOM
     }
 }

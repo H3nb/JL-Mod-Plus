@@ -1140,4 +1140,6 @@
     <string name="config_asset_invalid">Arquivo inválido ou não compatível.</string>
     <string name="config_asset_operation_failed">Não foi possível concluir a operação no arquivo.</string>
     <string name="config_asset_busy">Conclua primeiro a operação de arquivo em andamento.</string>
+    <string name="config_background_dynamic">Cor dinâmica</string>
+    <string name="config_background_dynamic_help">Usa uma cor sólida que se adapta suavemente à tela do MIDlet.</string>
 </resources>

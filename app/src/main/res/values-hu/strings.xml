@@ -1107,4 +1107,6 @@
     <string name="config_asset_invalid">Érvénytelen vagy nem támogatott fájl.</string>
     <string name="config_asset_operation_failed">A fájlművelet nem fejezhető be.</string>
     <string name="config_asset_busy">Előbb fejezd be a folyamatban lévő fájlműveletet.</string>
+    <string name="config_background_dynamic">Dinamikus szín</string>
+    <string name="config_background_dynamic_help">Egyetlen egyszínű hátteret használ, amely finoman igazodik a MIDlet képernyőjéhez.</string>
 </resources>

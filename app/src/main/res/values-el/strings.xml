@@ -1106,4 +1106,6 @@
     <string name="config_asset_invalid">Μη έγκυρο ή μη υποστηριζόμενο αρχείο.</string>
     <string name="config_asset_operation_failed">Δεν ήταν δυνατή η ολοκλήρωση της λειτουργίας αρχείου.</string>
     <string name="config_asset_busy">Ολοκληρώστε πρώτα την τρέχουσα λειτουργία αρχείου.</string>
+    <string name="config_background_dynamic">Δυναμικό χρώμα</string>
+    <string name="config_background_dynamic_help">Χρησιμοποιεί ένα ενιαίο χρώμα που προσαρμόζεται ομαλά στην οθόνη του MIDlet.</string>
 </resources>

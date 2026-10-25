@@ -28,9 +28,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -42,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -49,8 +52,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
@@ -68,10 +73,13 @@ import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 internal fun ConfigColorPickerDialog(
     initialHex: String,
     onDismissRequest: () -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Boolean) -> Unit,
+    allowDynamic: Boolean = false,
+    initialDynamic: Boolean = false,
 ) {
     var hsv by remember(initialHex) { mutableStateOf(parseHsv(initialHex)) }
     var hexText by remember(initialHex) { mutableStateOf(formatHsv(hsv)) }
+    var dynamic by remember(initialDynamic) { mutableStateOf(allowDynamic && initialDynamic) }
     val color = Color.hsv(hsv[0], hsv[1], hsv[2])
     val hexIsValid = hexText.length == 6
     val scrollState = rememberScrollState()
@@ -86,10 +94,12 @@ internal fun ConfigColorPickerDialog(
         hexText = formatHsv(hsv)
     }
 
+    val dialogTitle = if (allowDynamic) R.string.config_background_custom_color
+        else R.string.config_color_picker_title
     AlertDialog(
         textScrollable = false,
         onDismissRequest = onDismissRequest,
-        title = { Text(stringResource(R.string.config_color_picker_title)) },
+        title = { Text(stringResource(dialogTitle)) },
         text = {
             BoxWithConstraints {
                 val useTwoPane = maxWidth >= 480.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) &&
@@ -110,11 +120,12 @@ internal fun ConfigColorPickerDialog(
                             verticalAlignment = Alignment.Top,
                         ) {
                             Column(
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).alpha(if (dynamic) 0.38f else 1f),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 SaturationValuePicker(
                                     modifier = Modifier.fillMaxWidth(),
+                                    enabled = !dynamic,
                                     hue = hsv[0],
                                     saturation = hsv[1],
                                     value = hsv[2],
@@ -124,6 +135,7 @@ internal fun ConfigColorPickerDialog(
                                     },
                                 )
                                 HuePicker(
+                                    enabled = !dynamic,
                                     hue = hsv[0],
                                     onChanged = { hue -> updateHsv(hue = hue) },
                                 )
@@ -133,6 +145,7 @@ internal fun ConfigColorPickerDialog(
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 ColorValueInput(
+                                    enabled = !dynamic,
                                     hexText = hexText,
                                     color = color,
                                     hexIsValid = hexIsValid,
@@ -145,7 +158,11 @@ internal fun ConfigColorPickerDialog(
                                         }
                                     },
                                 )
-                                ColorPickerHint()
+                                ColorPickerHint(enabled = !dynamic)
+                                if (allowDynamic) {
+                                    DynamicColorOption(checked = dynamic, onCheckedChange = { dynamic = it })
+                                    DynamicColorHint()
+                                }
                             }
                         }
                     } else {
@@ -154,6 +171,8 @@ internal fun ConfigColorPickerDialog(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             SaturationValuePicker(
+                                modifier = Modifier.alpha(if (dynamic) 0.38f else 1f),
+                                enabled = !dynamic,
                                 hue = hsv[0],
                                 saturation = hsv[1],
                                 value = hsv[2],
@@ -163,10 +182,13 @@ internal fun ConfigColorPickerDialog(
                                 },
                             )
                             HuePicker(
+                                modifier = Modifier.alpha(if (dynamic) 0.38f else 1f),
+                                enabled = !dynamic,
                                 hue = hsv[0],
                                 onChanged = { hue -> updateHsv(hue = hue) },
                             )
                             ColorValueInput(
+                                enabled = !dynamic,
                                 hexText = hexText,
                                 color = color,
                                 hexIsValid = hexIsValid,
@@ -179,7 +201,11 @@ internal fun ConfigColorPickerDialog(
                                     }
                                 },
                             )
-                            ColorPickerHint()
+                            ColorPickerHint(enabled = !dynamic)
+                            if (allowDynamic) {
+                                DynamicColorOption(checked = dynamic, onCheckedChange = { dynamic = it })
+                                DynamicColorHint()
+                            }
                         }
                     }
                     ScrollableContentHint(
@@ -191,8 +217,8 @@ internal fun ConfigColorPickerDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(formatHsv(hsv)) },
-                enabled = hexIsValid,
+                onClick = { onConfirm(formatHsv(hsv), dynamic) },
+                enabled = dynamic || hexIsValid,
             ) {
                 Text(stringResource(android.R.string.ok))
             }
@@ -206,7 +232,34 @@ internal fun ConfigColorPickerDialog(
 }
 
 @Composable
+private fun DynamicColorOption(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Checkbox(checked = checked, onCheckedChange = null)
+        Text(stringResource(R.string.config_background_dynamic))
+    }
+}
+
+@Composable
+private fun DynamicColorHint() {
+    Text(
+        text = stringResource(R.string.config_background_dynamic_help),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
 private fun ColorValueInput(
+    enabled: Boolean,
     hexText: String,
     color: Color,
     hexIsValid: Boolean,
@@ -222,6 +275,7 @@ private fun ColorValueInput(
             Box(
                 modifier = Modifier
                     .size(48.dp)
+                    .alpha(if (enabled) 1f else 0.38f)
                     .clip(MaterialTheme.shapes.small)
                     .background(color),
             )
@@ -229,14 +283,15 @@ private fun ColorValueInput(
         OutlinedTextField(
             value = hexText,
             onValueChange = onHexChanged,
+            enabled = enabled,
             modifier = Modifier.weight(1f),
             label = { Text(stringResource(R.string.config_color_picker_hex)) },
-            supportingText = if (!hexIsValid) {
+            supportingText = if (enabled && !hexIsValid) {
                 { Text(stringResource(R.string.config_color_picker_invalid)) }
             } else {
                 null
             },
-            isError = !hexIsValid,
+            isError = enabled && !hexIsValid,
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Characters,
@@ -247,17 +302,20 @@ private fun ColorValueInput(
 }
 
 @Composable
-private fun ColorPickerHint() {
+private fun ColorPickerHint(enabled: Boolean) {
     Text(
         text = stringResource(R.string.config_color_picker_hint),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+            alpha = if (enabled) 1f else 0.38f,
+        ),
     )
 }
 
 @Composable
 private fun SaturationValuePicker(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     hue: Float,
     saturation: Float,
     value: Float,
@@ -273,17 +331,18 @@ private fun SaturationValuePicker(
             .clip(MaterialTheme.shapes.medium)
             .semantics {
                 contentDescription = pickerDescription
+                if (!enabled) disabled()
             }
-            .pointerInput(hue) {
-                detectTapGestures { position ->
+            .pointerInput(hue, enabled) {
+                if (enabled) detectTapGestures { position ->
                     onChanged(
                         normalizeCoordinate(position.x, size.width),
                         1f - normalizeCoordinate(position.y, size.height),
                     )
                 }
             }
-            .pointerInput(hue) {
-                detectDragGestures { change, _ ->
+            .pointerInput(hue, enabled) {
+                if (enabled) detectDragGestures { change, _ ->
                     change.consume()
                     onChanged(
                         normalizeCoordinate(change.position.x, size.width),
@@ -317,6 +376,8 @@ private fun SaturationValuePicker(
 
 @Composable
 private fun HuePicker(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     hue: Float,
     onChanged: (Float) -> Unit,
 ) {
@@ -325,7 +386,7 @@ private fun HuePicker(
     }
     val pickerDescription = stringResource(R.string.config_color_picker_hue)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(48.dp)
             .semantics {
@@ -334,18 +395,19 @@ private fun HuePicker(
                     current = hue.coerceIn(0f, 360f),
                     range = 0f..360f,
                 )
-                setProgress { targetHue ->
+                if (!enabled) disabled()
+                else setProgress { targetHue ->
                     onChanged(targetHue.coerceIn(0f, 360f))
                     true
                 }
             }
-            .pointerInput(Unit) {
-                detectTapGestures { position ->
+            .pointerInput(enabled) {
+                if (enabled) detectTapGestures { position ->
                     onChanged(normalizeCoordinate(position.x, size.width) * 360f)
                 }
             }
-            .pointerInput(Unit) {
-                detectDragGestures { change, _ ->
+            .pointerInput(enabled) {
+                if (enabled) detectDragGestures { change, _ ->
                     change.consume()
                     onChanged(normalizeCoordinate(change.position.x, size.width) * 360f)
                 }

@@ -952,7 +952,9 @@ class ConfigComposeTest {
                         ConfigFormEvents.ColorField.SCREEN_BACKGROUND,
                         "D0D0D0",
                     ),
-                    onColorPicked = { _, value -> picked = value },
+                    onBackgroundColorPicked = { value, dynamic ->
+                        if (!dynamic) picked = value
+                    },
                 )
             }
         }
@@ -969,7 +971,7 @@ class ConfigComposeTest {
                 ConfigColorPickerDialog(
                     initialHex = "D0D0D0",
                     onDismissRequest = {},
-                    onConfirm = {},
+                    onConfirm = { _, _ -> },
                 )
             }
         }
@@ -978,6 +980,68 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Enter exactly six hexadecimal digits.").assertExists()
         composeRule.onNodeWithText("OK").assertIsNotEnabled()
+    }
+
+    @Test
+    fun dynamicBackgroundPickerPreservesManualHex() {
+        var selectedColor: String? = null
+        var selectedDynamic: Boolean? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigColorPickerDialog(
+                    initialHex = "AABBCC",
+                    allowDynamic = true,
+                    onDismissRequest = {},
+                    onConfirm = { value, dynamic ->
+                        selectedColor = value
+                        selectedDynamic = dynamic
+                    },
+                )
+            }
+        }
+
+        val dynamicDescription = uiString(R.string.config_background_dynamic_help)
+        val manualDescription = uiString(R.string.config_color_picker_hint)
+        composeRule.onNodeWithText(dynamicDescription).assertExists()
+        composeRule.onNodeWithText(manualDescription).assertExists()
+
+        composeRule.onNodeWithText("Dynamic color").performClick()
+        composeRule.onNodeWithText("AABBCC").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Saturation and brightness").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Hue").assertIsNotEnabled()
+        // Both explanations stay visible; only the manual editing controls become disabled.
+        composeRule.onNodeWithText(dynamicDescription).assertExists()
+        composeRule.onNodeWithText(manualDescription).assertExists()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("AABBCC", selectedColor)
+        assertEquals(true, selectedDynamic)
+    }
+
+    @Test
+    fun dynamicBackgroundPickerCanReturnToManualEditingWithoutLosingColor() {
+        var picked: Pair<String, Boolean>? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigColorPickerDialog(
+                    initialHex = "AABBCC",
+                    allowDynamic = true,
+                    initialDynamic = true,
+                    onDismissRequest = {},
+                    onConfirm = { value, dynamic -> picked = value to dynamic },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("AABBCC").assertIsNotEnabled()
+        composeRule.onNodeWithText(uiString(R.string.config_background_dynamic_help)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_color_picker_hint)).assertExists()
+        composeRule.onNodeWithText("Dynamic color").performClick()
+        composeRule.onNodeWithText("AABBCC").assertIsEnabled()
+        composeRule.onNodeWithText(uiString(R.string.config_background_dynamic_help)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_color_picker_hint)).assertExists()
+        composeRule.onNodeWithText("AABBCC").performTextReplacement("112233")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("112233" to false, picked)
     }
 
     @Test

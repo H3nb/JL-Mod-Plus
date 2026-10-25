@@ -1173,4 +1173,6 @@
     <string name="config_asset_invalid">Neplatný nebo nepodporovaný soubor.</string>
     <string name="config_asset_operation_failed">Operaci se souborem nelze dokončit.</string>
     <string name="config_asset_busy">Nejprve dokončete probíhající operaci se souborem.</string>
+    <string name="config_background_dynamic">Dynamická barva</string>
+    <string name="config_background_dynamic_help">Používá jednu jednolitou barvu, která se plynule přizpůsobuje obrazovce MIDletu.</string>
 </resources>
