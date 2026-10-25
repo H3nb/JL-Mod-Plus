@@ -357,7 +357,6 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
-            @Override
             public void onLoadLocalizedDescriptions(
                     int appId,
                     @NonNull LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData> callback) {
