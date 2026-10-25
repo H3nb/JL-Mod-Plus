@@ -127,14 +127,25 @@ public final class AdaptiveSolidBackground {
             greens[bin] += (long) green * importance;
             blues[bin] += (long) blue * importance;
         }
-        int best = 0;
-        for (int i = 1; i < weights.length; i++) {
-            if (weights[i] > weights[best]) best = i;
+        // Hard bin winners cause abrupt hue jumps when similarly populated
+        // colors trade places. Let every populated bin contribute, with a
+        // modest preference for more common colors (weight raised to 1.5).
+        double total = 0.0;
+        double redSum = 0.0;
+        double greenSum = 0.0;
+        double blueSum = 0.0;
+        for (int i = 0; i < weights.length; i++) {
+            if (weights[i] == 0) continue;
+            double vote = weights[i] * Math.sqrt(weights[i]);
+            total += vote;
+            redSum += vote * reds[i] / weights[i];
+            greenSum += vote * greens[i] / weights[i];
+            blueSum += vote * blues[i] / weights[i];
         }
-        if (weights[best] == 0) return baseArgb | 0xFF000000;
-        int red = (int) (reds[best] / weights[best]);
-        int green = (int) (greens[best] / weights[best]);
-        int blue = (int) (blues[best] / weights[best]);
+        if (total == 0.0) return baseArgb | 0xFF000000;
+        int red = (int) Math.round(redSum / total);
+        int green = (int) Math.round(greenSum / total);
+        int blue = (int) Math.round(blueSum / total);
         // Subtle muted tones complement the LCD without competing for attention.
         int luminance = (54 * red + 183 * green + 19 * blue) >>> 8;
         return 0xFF000000
