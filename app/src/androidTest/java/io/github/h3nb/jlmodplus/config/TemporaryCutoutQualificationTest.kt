@@ -4,6 +4,7 @@
  */
 package io.github.h3nb.jlmodplus.config
 
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
 import android.view.WindowManager
@@ -44,6 +45,20 @@ class TemporaryCutoutQualificationTest {
             "landscape" -> Configuration.ORIENTATION_LANDSCAPE
             else -> error("Explicit orientation=portrait or landscape is required")
         }
+        // Rotation may recreate ComponentActivity; always read the rule's current Activity,
+        // not an obsolete instance captured before the configuration transition.
+        val initialActivity = rule.activity
+        rule.runOnUiThread {
+            initialActivity.requestedOrientation =
+                if (expectedOrientation == Configuration.ORIENTATION_PORTRAIT)
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        }
+        rule.waitUntil(30_000) {
+            val live = rule.activity
+            live.resources.configuration.orientation == expectedOrientation &&
+                ViewCompat.getRootWindowInsets(live.window.decorView) != null
+        }
         val activity = rule.activity
         rule.runOnUiThread {
             WindowCompat.setDecorFitsSystemWindows(activity.window, false)
@@ -55,11 +70,10 @@ class TemporaryCutoutQualificationTest {
             }
             ViewCompat.requestApplyInsets(activity.window.decorView)
         }
-        rule.waitUntil(30_000) {
-            activity.resources.configuration.orientation == expectedOrientation &&
-                ViewCompat.getRootWindowInsets(activity.window.decorView) != null
+        rule.waitUntil(15_000) {
+            ViewCompat.getRootWindowInsets(rule.activity.window.decorView) != null
         }
-        val actualCutout = ViewCompat.getRootWindowInsets(activity.window.decorView)
+        val actualCutout = ViewCompat.getRootWindowInsets(rule.activity.window.decorView)
             ?.displayCutout?.boundingRects?.any { !it.isEmpty } == true
         assertEquals("Android window reports the overlay cutout geometry", expectedCutout, actualCutout)
 
