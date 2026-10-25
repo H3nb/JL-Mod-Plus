@@ -260,4 +260,75 @@ public class ControlSkinStoreTest {
         assertEquals(1, ControlSkinStore.countCustomizedButtons(set.folder));
     }
 
+    @Test public void completeSkinDoesNotDropLateSlotsWhenImagesExceedBudget()
+            throws Exception {
+        File workdir = temp.newFolder("complete-skin-work");
+        File configDir = new File(new File(workdir, "configs"), "Complete");
+        assertTrue(configDir.mkdirs());
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Full Neon");
+        android.graphics.Bitmap image = android.graphics.Bitmap.createBitmap(
+                512, 512, android.graphics.Bitmap.Config.ARGB_8888);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        try {
+            image.eraseColor(android.graphics.Color.CYAN);
+            assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out));
+        } finally { image.recycle(); }
+        byte[] data = out.toByteArray();
+        for (String key : ControlSkinStore.KEYS) {
+            ControlSkinStore.importImage(workdir, set.id, key, false,
+                    new java.io.ByteArrayInputStream(data), ".png");
+            ControlSkinStore.importImage(workdir, set.id, key, true,
+                    new java.io.ByteArrayInputStream(data), ".png");
+        }
+        for (String stem : ControlSkinStore.GROUPED_ASSETS) {
+            ControlSkinStore.importAsset(workdir, set.id, stem,
+                    new java.io.ByteArrayInputStream(data), ".png");
+        }
+
+        // 64 fully expanded ARGB images would need 64 MiB. The last button and
+        // all pressed states must still be present after proportional scaling.
+        ControlSkinRuntime skin = ControlSkinRuntime.load(configDir, set.id);
+        long bytes = 0;
+        for (int i = 0; i < ControlSkinStore.KEYS.length; i++) {
+            ControlSkinRuntime.Button button = skin.get(i);
+            assertNotNull("Missing button " + i, button);
+            assertNotNull(button.pressed);
+            assertEquals(skin.get(0).normal.getWidth(), button.normal.getWidth());
+            bytes += button.normal.getAllocationByteCount();
+            bytes += button.pressed.getAllocationByteCount();
+        }
+        assertNotNull(skin.dpad());
+        assertNotNull(skin.analog());
+        for (android.graphics.Bitmap bitmap : new android.graphics.Bitmap[]{
+                skin.dpad().base, skin.dpad().up, skin.dpad().down, skin.dpad().left,
+                skin.dpad().right, skin.analog().base, skin.analog().thumb,
+                skin.analog().thumbPressed}) {
+            assertNotNull(bitmap);
+            bytes += bitmap.getAllocationByteCount();
+        }
+        assertTrue("Allocated " + bytes + " bitmap bytes",
+                bytes <= 24L * 1024 * 1024);
+        assertTrue("Full set should be sampled", skin.get(0).normal.getWidth() < 512);
+    }
+
+    @Test public void sparseSkinKeepsFullDetailUntilDisplayNeedsLess() throws Exception {
+        File workdir = temp.newFolder("sparse-skin-work");
+        File configDir = new File(new File(workdir, "configs"), "Sparse");
+        assertTrue(configDir.mkdirs());
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Single Key");
+        android.graphics.Bitmap image = android.graphics.Bitmap.createBitmap(
+                320, 320, android.graphics.Bitmap.Config.ARGB_8888);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        try {
+            assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out));
+        } finally { image.recycle(); }
+        ControlSkinStore.importImage(workdir, set.id, "5", false,
+                new java.io.ByteArrayInputStream(out.toByteArray()), ".png");
+        assertEquals(320, ControlSkinRuntime.load(configDir, set.id).get(4).normal.getWidth());
+        int width = ControlSkinRuntime.load(configDir, set.id, 200, 512)
+                .get(4).normal.getWidth();
+        assertTrue("The display-sized raster should be close to 200px: " + width,
+                width >= 195 && width <= 201);
+    }
+
 }

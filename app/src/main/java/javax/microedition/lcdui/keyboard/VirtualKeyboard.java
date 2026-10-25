@@ -235,7 +235,14 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	protected VirtualKeyboard(ProfileModel settings, java.io.File configDir, boolean recoverPersistentLayout) {
 		this.settings = settings;
-		this.controlSkin = ControlSkinRuntime.load(configDir, settings.controlSkinSetId);
+		// Preserve a single skin snapshot across portrait/landscape and layout changes.
+		// Raster targets follow the display's short edge, with extra room for scaling.
+		int shortest = Math.max(1, Math.min(
+				ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()));
+		int keyTarget = Math.min(512, Math.max(96, Math.round(shortest * 0.25f)));
+		int movementTarget = Math.min(512, Math.max(128, Math.round(shortest * 0.68f)));
+		this.controlSkin = ControlSkinRuntime.load(configDir, settings.controlSkinSetId,
+				keyTarget, movementTarget);
 		this.saveFile = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		if (recoverPersistentLayout) recoverLayoutFile();
 

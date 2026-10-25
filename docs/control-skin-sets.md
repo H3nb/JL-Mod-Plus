@@ -80,6 +80,24 @@ slot and state when imported through the editor.
 - Images are decoded and sampled once when the MIDlet starts, not per frame.
   The runtime reads global assets but does not create or modify set metadata.
 
+
+### Bitmap preparation and memory
+
+The original PNG/WebP files are never modified. On MIDlet launch, the runtime
+inventories source dimensions and plans all rasterized images as a single set.
+Display-sized keypad, movement, and thumb targets share one proportional quality
+factor when the combined allocation would exceed 24 MiB. A sparse set retains
+higher quality; a full set stays within budget without giving earlier slots
+priority over later keys.
+
+All planned images are decoded off the drawing path into a temporary snapshot.
+Actual bitmap allocations are checked before publication. When a complete
+attempt exceeds the budget, its bitmaps are recycled and the whole set is retried
+at lower quality. Absent or undecodable individual images still use built-in
+fallbacks; if the complete set cannot fit safely, the runtime uses built-in
+controls rather than silently dropping whichever skin slots load last.
+The image snapshot remains stable through orientation/layout changes.
+
 ## Editing and ownership
 
 The Compose manager opens from MIDlet virtual-controls settings. Its compact
