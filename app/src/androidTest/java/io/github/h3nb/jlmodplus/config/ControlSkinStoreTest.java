@@ -75,4 +75,24 @@ public class ControlSkinStoreTest {
         } catch (java.io.IOException expected) { }
         assertEquals("icon", ControlSkinStore.mode(set.folder, "5"));
     }
+    @Test public void customizedCountTracksNormalSlotsNotImageFiles() throws Exception {
+        File workdir = temp.newFolder("work");
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Counted");
+        assertEquals(0, ControlSkinStore.countCustomizedButtons(set.folder));
+
+        // A pressed-only image cannot replace the built-in button.
+        assertTrue(new File(set.folder, "key_5_pressed.png").createNewFile());
+        assertEquals(0, ControlSkinStore.countCustomizedButtons(set.folder));
+
+        assertTrue(new File(set.folder, "key_5.png").createNewFile());
+        assertEquals(1, ControlSkinStore.countCustomizedButtons(set.folder));
+        assertTrue(new File(set.folder, "key_fire.webp").createNewFile());
+        assertEquals(2, ControlSkinStore.countCustomizedButtons(set.folder));
+
+        ControlSkinStore.removeImage(workdir, set.id, "5", false);
+        assertEquals(1, ControlSkinStore.countCustomizedButtons(set.folder));
+        // The pressed asset is intentionally kept if the normal image is removed.
+        assertNotNull(ControlSkinStore.image(set.folder, "5", true));
+    }
+
 }
