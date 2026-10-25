@@ -1213,4 +1213,5 @@
     <string name="control_skin_invalid_image">Choose a PNG or WebP image.</string>
     <string name="control_skin_operation_failed">Could not modify control skin set.</string>
     <string name="control_skin_missing">Unavailable set (default controls)</string>
+    <string name="control_skin_remove_image">Remove</string>
 </resources>
