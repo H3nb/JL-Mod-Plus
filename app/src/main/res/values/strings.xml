@@ -1193,25 +1193,25 @@
     <string name="config_asset_invalid">Unsupported or invalid file.</string>
     <string name="config_asset_operation_failed">Could not complete the file operation.</string>
     <string name="config_asset_busy">Finish the current file operation first.</string>
-    <string name="control_skin_title">Control skin</string>
-    <string name="control_skin_create">Create set</string>
-    <string name="control_skin_default">Default buttons</string>
-    <string name="control_skin_edit">Edit</string>
-    <string name="control_skin_use">Use this set</string>
-    <string name="control_skin_rename">Rename</string>
-    <string name="control_skin_duplicate">Duplicate</string>
-    <string name="control_skin_delete">Delete</string>
-    <string name="control_skin_buttons">Buttons</string>
-    <string name="control_skin_global_note">Edits to this set affect every MIDlet using it. Changes are saved immediately.</string>
-    <string name="control_skin_name">Set name</string>
-    <string name="control_skin_mode">Image mode</string>
-    <string name="control_skin_icon">Icon only</string>
-    <string name="control_skin_full">Full button</string>
-    <string name="control_skin_normal_image">Normal image</string>
-    <string name="control_skin_pressed_image">Pressed image</string>
-    <string name="control_skin_delete_warning">Delete this global skin set and all its images? MIDlets using it will fall back to default controls.</string>
-    <string name="control_skin_invalid_image">Choose a PNG or WebP image.</string>
-    <string name="control_skin_operation_failed">Could not modify control skin set.</string>
-    <string name="control_skin_missing">Unavailable set (default controls)</string>
-    <string name="control_skin_remove_image">Remove</string>
+    <string name="control_skin_title" tools:ignore="MissingTranslation">Control skin</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Create set</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Default buttons</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Edit</string>
+    <string name="control_skin_use" tools:ignore="MissingTranslation">Use this set</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Rename</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplicate</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="control_skin_buttons" tools:ignore="MissingTranslation">Buttons</string>
+    <string name="control_skin_global_note" tools:ignore="MissingTranslation">Edits to this set affect every MIDlet using it. Changes are saved immediately.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Set name</string>
+    <string name="control_skin_mode" tools:ignore="MissingTranslation">Image mode</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Icon only</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Full button</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normal image</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Pressed image</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Delete this global skin set and all its images? MIDlets using it will fall back to default controls.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Choose a PNG or WebP image.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Could not modify control skin set.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Unavailable set (default controls)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Remove</string>
 </resources>
