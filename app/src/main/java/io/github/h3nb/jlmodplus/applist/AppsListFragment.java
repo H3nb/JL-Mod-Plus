@@ -110,6 +110,8 @@ public class AppsListFragment extends Fragment {
             "apps_list.pending_icon_database_id";
     private static final String STATE_PENDING_ICON_PORTRAIT =
             "apps_list.pending_icon_portrait";
+    private static final String STATE_PENDING_ICON_DRAFT =
+            "apps_list.pending_icon_draft";
     private static final String STATE_PENDING_ICON_WORKDIR =
             "apps_list.pending_icon_workdir";
     private static final String STATE_PENDING_ICON_GENERATION =
@@ -129,6 +131,7 @@ public class AppsListFragment extends Fragment {
 
     private long pendingIconDatabaseId = NO_GENERATION;
     private boolean pendingIconPortrait;
+    private boolean pendingIconWasDraft;
     @Nullable private LibraryViewModel.MutationCallback<String> pendingIconDraftCallback;
     private String pendingIconWorkdir;
     private long pendingIconGeneration = NO_GENERATION;
@@ -172,6 +175,7 @@ public class AppsListFragment extends Fragment {
             pendingIconDatabaseId = savedInstanceState.getLong(
                     STATE_PENDING_ICON_DATABASE_ID, NO_GENERATION);
             pendingIconPortrait = savedInstanceState.getBoolean(STATE_PENDING_ICON_PORTRAIT);
+            pendingIconWasDraft = savedInstanceState.getBoolean(STATE_PENDING_ICON_DRAFT);
             pendingIconWorkdir = savedInstanceState.getString(STATE_PENDING_ICON_WORKDIR);
             pendingIconGeneration = savedInstanceState.getLong(
                     STATE_PENDING_ICON_GENERATION, NO_GENERATION);
@@ -185,6 +189,7 @@ public class AppsListFragment extends Fragment {
     public void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putLong(STATE_PENDING_ICON_DATABASE_ID, pendingIconDatabaseId);
         outState.putBoolean(STATE_PENDING_ICON_PORTRAIT, pendingIconPortrait);
+        outState.putBoolean(STATE_PENDING_ICON_DRAFT, pendingIconWasDraft);
         outState.putString(STATE_PENDING_ICON_WORKDIR, pendingIconWorkdir);
         outState.putLong(STATE_PENDING_ICON_GENERATION, pendingIconGeneration);
         super.onSaveInstanceState(outState);
@@ -401,6 +406,7 @@ public class AppsListFragment extends Fragment {
             public void onPickIconByDatabaseId(long databaseId, boolean portrait) {
                 pendingIconDatabaseId = databaseId;
                 pendingIconPortrait = portrait;
+                pendingIconWasDraft = false;
                 pendingIconWorkdir = activeWorkdir == null ? null : activeWorkdir.getAbsolutePath();
                 pendingIconGeneration = activeGeneration;
                 iconPickerLauncher.launch(createFilePickerIntent(
@@ -425,6 +431,7 @@ public class AppsListFragment extends Fragment {
                 }
                 pendingIconDraftCallback = callback;
                 onPickIconByDatabaseId(databaseId, portrait);
+                pendingIconWasDraft = true;
             }
 
             @Override
@@ -1349,7 +1356,9 @@ public class AppsListFragment extends Fragment {
         long databaseId = pendingIconDatabaseId;
         boolean portrait = pendingIconPortrait;
         LibraryViewModel.MutationCallback<String> draftCallback = pendingIconDraftCallback;
+        boolean wasDraft = pendingIconWasDraft;
         pendingIconDraftCallback = null;
+        pendingIconWasDraft = false;
         String workdir = pendingIconWorkdir;
         long generation = pendingIconGeneration;
         pendingIconDatabaseId = NO_GENERATION;
@@ -1368,6 +1377,9 @@ public class AppsListFragment extends Fragment {
             }
             return;
         }
+        // A draft picker restored after process recreation has no live editor callback.
+        // Never reinterpret its result as a legacy immediate-save action.
+        if (wasDraft && draftCallback == null) return;
         if (draftCallback != null) {
             libraryViewModel.prepareIconDraft(uri, (path, error) -> {
                 if (error != null) showError(error);

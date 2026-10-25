@@ -68,4 +68,66 @@ public class LibraryIconOverrideTest {
         assertFalse(portrait.exists());
         assertArrayEquals(primary, Files.readAllBytes(canonical.toPath()));
     }
+
+    @Test
+    public void draftPublishCanRestoreBothMainAndPortraitAfterMetadataFailure() throws Exception {
+        File root = Files.createTempDirectory("jlmod-icon-draft").toFile();
+        File cache = new File(root, "cache");
+        assertTrue(cache.mkdirs());
+        File staged = new File(cache, "staged.png");
+        Files.write(staged.toPath(), new byte[]{7, 7, 7});
+
+        File effective = LibraryIconOverride.effectiveIconFile(root, "demo");
+        File durable = LibraryIconOverride.persistedOverrideFile(root, "demo");
+        File portrait = LibraryIconOverride.portraitOverrideFile(root, "demo");
+        assertTrue(effective.getParentFile().mkdirs());
+        assertTrue(durable.getParentFile().mkdirs());
+        Files.write(effective.toPath(), new byte[]{1, 2});
+        Files.write(durable.toPath(), new byte[]{1, 2});
+        Files.write(portrait.toPath(), new byte[]{3, 4});
+
+        LibraryIconOverride.PublishedDrafts published = LibraryIconOverride.publishDrafts(
+                root, "demo", cache,
+                new LibraryIconDraft(false, staged.getAbsolutePath()),
+                new LibraryIconDraft(true, null));
+        try {
+            assertArrayEquals(new byte[]{7, 7, 7}, Files.readAllBytes(effective.toPath()));
+            assertArrayEquals(new byte[]{7, 7, 7}, Files.readAllBytes(durable.toPath()));
+            assertFalse(portrait.exists());
+            published.restore();
+        } finally {
+            published.close();
+        }
+        assertArrayEquals(new byte[]{1, 2}, Files.readAllBytes(effective.toPath()));
+        assertArrayEquals(new byte[]{1, 2}, Files.readAllBytes(durable.toPath()));
+        assertArrayEquals(new byte[]{3, 4}, Files.readAllBytes(portrait.toPath()));
+    }
+
+    @Test
+    public void invalidSecondDraftDoesNotPartiallyPublishFirstIcon() throws Exception {
+        File root = Files.createTempDirectory("jlmod-icon-draft-error").toFile();
+        File cache = new File(root, "cache");
+        assertTrue(cache.mkdirs());
+        File staged = new File(cache, "main.png");
+        Files.write(staged.toPath(), new byte[]{8, 9});
+        File effective = LibraryIconOverride.effectiveIconFile(root, "demo");
+        File durable = LibraryIconOverride.persistedOverrideFile(root, "demo");
+        assertTrue(effective.getParentFile().mkdirs());
+        assertTrue(durable.getParentFile().mkdirs());
+        Files.write(effective.toPath(), new byte[]{1});
+        Files.write(durable.toPath(), new byte[]{1});
+
+        boolean failed = false;
+        try {
+            LibraryIconOverride.publishDrafts(
+                    root, "demo", cache,
+                    new LibraryIconDraft(false, staged.getAbsolutePath()),
+                    new LibraryIconDraft(false, new File(root, "outside.png").getAbsolutePath()));
+        } catch (java.io.IOException expected) {
+            failed = true;
+        }
+        assertTrue("Invalid portrait staging should fail", failed);
+        assertArrayEquals(new byte[]{1}, Files.readAllBytes(effective.toPath()));
+        assertArrayEquals(new byte[]{1}, Files.readAllBytes(durable.toPath()));
+    }
 }
