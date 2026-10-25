@@ -1117,4 +1117,10 @@
     <string name="config_asset_busy">पहले चल रही फ़ाइल कार्रवाई पूरी करें।</string>
     <string name="config_background_dynamic">गतिशील रंग</string>
     <string name="config_background_dynamic_help">MIDlet स्क्रीन के अनुसार धीरे-धीरे बदलने वाला एक समान रंग इस्तेमाल करता है।</string>
+    <string name="library_metadata_default_description">डिफ़ॉल्ट विवरण</string>
+    <string name="library_metadata_other_languages">अन्य भाषाएँ</string>
+    <string name="library_metadata_add_language">+ भाषा जोड़ें</string>
+    <string name="library_metadata_language_search">भाषा खोजें या लोकेल कोड दर्ज करें</string>
+    <string name="library_metadata_remove_language">विवरण हटाएँ</string>
+    <string name="library_metadata_language_load_failed">भाषा विवरण लोड नहीं हो सके। मेटाडेटा संपादन फिर से खोलें।</string>
 </resources>

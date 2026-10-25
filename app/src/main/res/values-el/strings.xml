@@ -1116,4 +1116,10 @@
     <string name="config_asset_busy">Ολοκληρώστε πρώτα την τρέχουσα λειτουργία αρχείου.</string>
     <string name="config_background_dynamic">Δυναμικό χρώμα</string>
     <string name="config_background_dynamic_help">Χρησιμοποιεί ένα ενιαίο χρώμα που προσαρμόζεται ομαλά στην οθόνη του MIDlet.</string>
+    <string name="library_metadata_default_description">Προεπιλεγμένη περιγραφή</string>
+    <string name="library_metadata_other_languages">Άλλες γλώσσες</string>
+    <string name="library_metadata_add_language">+ Προσθήκη γλώσσας</string>
+    <string name="library_metadata_language_search">Αναζήτηση γλώσσας ή εισαγωγή κωδικού</string>
+    <string name="library_metadata_remove_language">Κατάργηση περιγραφής</string>
+    <string name="library_metadata_language_load_failed">Αδύνατη η φόρτωση περιγραφών. Ανοίξτε ξανά την επεξεργασία μεταδεδομένων.</string>
 </resources>

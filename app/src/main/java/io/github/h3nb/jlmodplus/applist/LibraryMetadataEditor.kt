@@ -32,6 +32,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.Saver
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
+import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,13 +52,28 @@ import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog
 
+private val localizedOverridesSaver = Saver<MutableState<Map<String, String>>, ArrayList<String>>(
+    save = { state -> ArrayList(state.value.flatMap { (locale, text) -> listOf(locale, text) }) },
+    restore = { values -> mutableStateOf(values.chunked(2).associate { it[0] to it[1] }) },
+)
+
 /** Edits presentation metadata; original MIDlet descriptor values remain immutable. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LibraryMetadataEditorScreen(
     app: LibraryAppUiItem,
     onBack: () -> Unit,
-    onSave: (title: String, vendor: String, description: String) -> Unit,
+    onSave: (title: String, vendor: String, description: String) -> Unit = { _, _, _ -> },
+    onLoadDescriptions: (LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>) -> Unit = {
+        it.complete(LibraryLocalizedDescriptionEditorData(emptyMap(), emptyMap()), null)
+    },
+    onSaveLocalized: (
+        title: String, vendor: String, description: String,
+        translations: Map<String, String>, onResult: (Boolean) -> Unit,
+    ) -> Unit = { title, vendor, description, _, done ->
+        onSave(title, vendor, description)
+        done(true)
+    },
     onPickIcon: (portrait: Boolean) -> Unit = {},
     onResetIcon: (portrait: Boolean) -> Unit = {},
     iconShape: LibraryIconShape = LibraryIconShape.Round,
@@ -60,8 +83,37 @@ internal fun LibraryMetadataEditorScreen(
     var vendor by rememberSaveable(app.databaseId) { mutableStateOf(app.author) }
     var description by rememberSaveable(app.databaseId) { mutableStateOf(app.defaultDescription) }
     var confirmDiscard by rememberSaveable(app.databaseId) { mutableStateOf(false) }
+    var draftTranslations by rememberSaveable(app.databaseId, stateSaver = localizedOverridesSaver) {
+        mutableStateOf<Map<String, String>>(emptyMap())
+    }
+    var draftInitialized by rememberSaveable(app.databaseId) { mutableStateOf(false) }
+    var sourceTranslations by remember(app.databaseId) { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var originalOverrides by remember(app.databaseId) { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var descriptionsLoaded by remember(app.databaseId) { mutableStateOf(false) }
+    var loadFailed by remember(app.databaseId) { mutableStateOf(false) }
+    var saving by remember(app.databaseId) { mutableStateOf(false) }
+    LaunchedEffect(app.databaseId) {
+        val context = currentCoroutineContext()
+        onLoadDescriptions(LibraryViewModel.MutationCallback { data, error ->
+            if (context.isActive) {
+                if (error == null && data != null) {
+                    sourceTranslations = data.source
+                    originalOverrides = data.overrides
+                    if (!draftInitialized) {
+                        draftTranslations = data.overrides
+                        draftInitialized = true
+                    }
+                    descriptionsLoaded = true
+                } else {
+                    loadFailed = true
+                }
+            }
+        })
+        awaitCancellation()
+    }
     val changed = title.trim() != app.title ||
-        vendor.trim() != app.author || description.trim() != app.defaultDescription
+        vendor.trim() != app.author || description.trim() != app.defaultDescription ||
+        (descriptionsLoaded && draftTranslations != originalOverrides)
     val valid = title.trim().isNotEmpty()
     val requestBack = {
         if (changed) confirmDiscard = true else onBack()
@@ -83,8 +135,14 @@ internal fun LibraryMetadataEditorScreen(
                 },
                 actions = {
                     TextButton(
-                        enabled = valid && changed,
-                        onClick = { onSave(title.trim(), vendor.trim(), description.trim()) },
+                        enabled = valid && changed && descriptionsLoaded && !saving,
+                        onClick = {
+                            saving = true
+                            onSaveLocalized(
+                                title.trim(), vendor.trim(), description.trim(),
+                                draftTranslations,
+                            ) { success -> if (!success) saving = false }
+                        },
                     ) {
                         Text(stringResource(R.string.library_metadata_save))
                     }
@@ -126,6 +184,11 @@ internal fun LibraryMetadataEditorScreen(
                             onTitleChange = { title = it },
                             onVendorChange = { vendor = it },
                             onDescriptionChange = { description = it },
+                            sourceTranslations = sourceTranslations,
+                            translations = draftTranslations,
+                            descriptionsLoaded = descriptionsLoaded,
+                            loadFailed = loadFailed,
+                            onTranslationsChange = { draftTranslations = it },
                             modifier = Modifier.weight(1f).widthIn(max = 760.dp),
                         )
                     }
@@ -146,6 +209,11 @@ internal fun LibraryMetadataEditorScreen(
                         onTitleChange = { title = it },
                         onVendorChange = { vendor = it },
                         onDescriptionChange = { description = it },
+                        sourceTranslations = sourceTranslations,
+                        translations = draftTranslations,
+                        descriptionsLoaded = descriptionsLoaded,
+                        loadFailed = loadFailed,
+                        onTranslationsChange = { draftTranslations = it },
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                     )
                 }
@@ -310,6 +378,11 @@ private fun LibraryMetadataFields(
     onTitleChange: (String) -> Unit,
     onVendorChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    sourceTranslations: Map<String, String>,
+    translations: Map<String, String>,
+    descriptionsLoaded: Boolean,
+    loadFailed: Boolean,
+    onTranslationsChange: (Map<String, String>) -> Unit,
     modifier: Modifier,
 ) {
     Column(
@@ -332,12 +405,25 @@ private fun LibraryMetadataFields(
             singleLine = true,
         )
         LibraryMetadataField(
-            label = R.string.library_metadata_description,
+            label = R.string.library_metadata_default_description,
             value = description,
             source = app.sourceDescription,
             onValueChange = onDescriptionChange,
             singleLine = false,
         )
+        if (descriptionsLoaded) {
+            LibraryMetadataLocalizedDescriptions(
+                source = sourceTranslations,
+                overrides = translations,
+                onChange = onTranslationsChange,
+            )
+        } else if (loadFailed) {
+            Text(
+                text = stringResource(R.string.library_metadata_language_load_failed),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }
 

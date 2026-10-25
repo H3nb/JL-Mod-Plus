@@ -108,6 +108,23 @@ data class LibraryCollectionAppEntity(
     val addedAt: Long,
 )
 
+@Entity(
+    tableName = "library_description_overrides",
+    primaryKeys = ["app_id", "locale"],
+    foreignKeys = [ForeignKey(
+        entity = LibraryAppEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["app_id"],
+        onDelete = ForeignKey.CASCADE,
+    )],
+    indices = [Index(value = ["app_id"])],
+)
+data class LibraryDescriptionOverrideEntity(
+    @ColumnInfo(name = "app_id") val appId: Long,
+    val locale: String,
+    val description: String,
+)
+
 /** Exactly-once play-stat reconciliation receipt. Intentionally has no app foreign key. */
 @Entity(tableName = "play_stat_receipts")
 data class PlayStatReceiptEntity(

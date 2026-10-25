@@ -59,6 +59,11 @@ public final class MidletDescriptionLocalization {
     }
 
     /** MIDP locale: two-letter lower-case language, optional upper-case region and variant. */
+    /** Accepts the MIDP locale identifiers used by descriptor descriptions. */
+    public static boolean isValidLocale(String locale) {
+        return validLocale(locale);
+    }
+
     static boolean validLocale(String locale) {
         String[] fields = locale.split("-", -1);
         if (fields[0].length() != 2

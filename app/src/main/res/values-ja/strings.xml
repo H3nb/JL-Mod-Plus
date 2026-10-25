@@ -1084,4 +1084,10 @@
     <string name="config_asset_busy">現在のファイル操作が終わってから実行してください。</string>
     <string name="config_background_dynamic">動的な色</string>
     <string name="config_background_dynamic_help">MIDletの画面に合わせて滑らかに変化する単色を使用します。</string>
+    <string name="library_metadata_default_description">既定の説明</string>
+    <string name="library_metadata_other_languages">その他の言語</string>
+    <string name="library_metadata_add_language">+ 言語を追加</string>
+    <string name="library_metadata_language_search">言語を検索またはロケールを入力</string>
+    <string name="library_metadata_remove_language">説明を削除</string>
+    <string name="library_metadata_language_load_failed">説明を読み込めませんでした。メタデータ編集を開き直してください。</string>
 </resources>

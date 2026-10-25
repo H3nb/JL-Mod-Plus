@@ -1084,4 +1084,10 @@
     <string name="config_asset_busy">현재 파일 작업을 먼저 완료하세요.</string>
     <string name="config_background_dynamic">동적 색상</string>
     <string name="config_background_dynamic_help">MIDlet 화면에 맞춰 부드럽게 변하는 단색을 사용합니다.</string>
+    <string name="library_metadata_default_description">기본 설명</string>
+    <string name="library_metadata_other_languages">다른 언어</string>
+    <string name="library_metadata_add_language">+ 언어 추가</string>
+    <string name="library_metadata_language_search">언어 검색 또는 로캘 코드 입력</string>
+    <string name="library_metadata_remove_language">설명 삭제</string>
+    <string name="library_metadata_language_load_failed">설명을 불러올 수 없습니다. 메타데이터 편집을 다시 여세요.</string>
 </resources>

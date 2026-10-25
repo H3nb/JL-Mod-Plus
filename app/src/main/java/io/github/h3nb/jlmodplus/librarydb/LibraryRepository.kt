@@ -8,6 +8,7 @@ package io.github.h3nb.jlmodplus.librarydb
 
 import java.io.File
 import java.io.IOException
+import io.github.h3nb.jlmodplus.jar.MidletDescriptionLocalization
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -55,6 +56,7 @@ class LibraryRepository(
             val bootstrapFailures: List<LibraryScanner.Failure> = emptyList(),
             val legacyImportFailure: String? = null,
             val reconciliationFailures: List<LibraryScanner.Failure> = emptyList(),
+            val descriptionOverrides: Map<Long, Map<String, String>> = emptyMap(),
         ) : State
         data class Error(
             val generation: Long,
@@ -163,31 +165,43 @@ class LibraryRepository(
         vendor: String,
         version: String,
         description: String,
+        localizedOverrides: Map<String, String>? = null,
     ) {
+        val original = if (localizedOverrides != null) {
+            val row = currentApp(expected, appId) ?: error("Library app disappeared: $appId")
+            withContext(Dispatchers.IO) {
+                LibraryDescriptionCatalog.readSourceDescriptions(expected.emulatorDir, row.storageKey)
+            }
+        } else emptyMap()
+        val translations = localizedOverrides?.mapNotNull { (locale, text) ->
+            require(MidletDescriptionLocalization.isValidLocale(locale)) { "Invalid MIDP locale: $locale" }
+            val trimmed = text.trim()
+            if (trimmed.isEmpty() || trimmed == original[locale]) null else locale to trimmed
+        }?.toMap()
         withActiveDatabase(expected) { dao ->
             val app = dao.getApp(appId) ?: error("Library app disappeared: $appId")
             val customTitle = normalizeOverride(title, app.sourceTitle, requireNonBlank = true)
             val customVendor = normalizeOverride(vendor, app.sourceVendor)
             val customVersion = normalizeOverride(version, app.sourceVersion)
             val customDescription = normalizeOverride(description, app.sourceDescription.orEmpty())
-            check(
-                dao.updateCustomMetadata(
-                    appId = appId,
-                    customTitle = customTitle,
-                    customVendor = customVendor,
-                    customVersion = customVersion,
-                    customDescription = customDescription,
-                ) == 1,
-            ) { "Unable to update Library metadata for app $appId" }
+            if (translations != null) {
+                dao.replaceMetadataAndDescriptions(
+                    appId, customTitle, customVendor, customVersion, customDescription, translations,
+                )
+            } else {
+                check(
+                    dao.updateCustomMetadata(
+                        appId, customTitle, customVendor, customVersion, customDescription,
+                    ) == 1,
+                ) { "Unable to update Library metadata for app $appId" }
+            }
         }
     }
 
     suspend fun resetMetadataOverrides(expected: LibraryGenerationToken, appId: Long) {
         withActiveDatabase(expected) { dao ->
             check(dao.getApp(appId) != null) { "Library app disappeared: $appId" }
-            check(dao.resetCustomMetadata(appId) == 1) {
-                "Unable to reset Library metadata for app $appId"
-            }
+            dao.resetAllMetadata(appId)
         }
     }
 
@@ -379,9 +393,12 @@ class LibraryRepository(
             }
 
             val dao = openedDatabase.libraryDao()
-            combine(dao.observeApps(), dao.observeCollections()) { apps, collections ->
-                apps to collections
-            }.collect { (apps, collections) ->
+            combine(
+                dao.observeApps(), dao.observeCollections(), dao.observeDescriptionOverrides(),
+            ) { apps, collections, descriptions ->
+                Triple(apps, collections, descriptions.groupBy { it.appId }
+                    .mapValues { (_, values) -> values.associate { it.locale to it.description } })
+            }.collect { (apps, collections, descriptions) ->
                 currentCoroutineContext().ensureActive()
                 ensureCurrent(request)
                 publishIfCurrent(request, State.Ready(
@@ -389,6 +406,7 @@ class LibraryRepository(
                     emulatorDir = emulatorDir,
                     apps = apps,
                     collections = collections,
+                    descriptionOverrides = descriptions,
                     bootstrapFailures = bootstrap.failures,
                     legacyImportFailure = bootstrap.legacyImportFailure,
                     reconciliationFailures = reconciliation.failures,

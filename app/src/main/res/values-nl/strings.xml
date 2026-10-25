@@ -1117,4 +1117,10 @@
     <string name="config_asset_busy">Voltooi eerst de lopende bestandsbewerking.</string>
     <string name="config_background_dynamic">Dynamische kleur</string>
     <string name="config_background_dynamic_help">Gebruikt één egale kleur die zich vloeiend aanpast aan het MIDlet-scherm.</string>
+    <string name="library_metadata_default_description">Standaardbeschrijving</string>
+    <string name="library_metadata_other_languages">Andere talen</string>
+    <string name="library_metadata_add_language">+ Taal toevoegen</string>
+    <string name="library_metadata_language_search">Zoek taal of voer landcode in</string>
+    <string name="library_metadata_remove_language">Beschrijving verwijderen</string>
+    <string name="library_metadata_language_load_failed">Beschrijvingen konden niet worden geladen. Open metadata bewerken opnieuw.</string>
 </resources>

@@ -1084,4 +1084,10 @@
     <string name="config_asset_busy">โปรดรอให้การดำเนินการกับไฟล์ปัจจุบันเสร็จสิ้นก่อน</string>
     <string name="config_background_dynamic">สีแบบไดนามิก</string>
     <string name="config_background_dynamic_help">ใช้สีพื้นแบบเดียวที่ปรับอย่างนุ่มนวลตามหน้าจอ MIDlet</string>
+    <string name="library_metadata_default_description">คำอธิบายเริ่มต้น</string>
+    <string name="library_metadata_other_languages">ภาษาอื่น</string>
+    <string name="library_metadata_add_language">+ เพิ่มภาษา</string>
+    <string name="library_metadata_language_search">ค้นหาภาษาหรือป้อนรหัสภาษา</string>
+    <string name="library_metadata_remove_language">ลบคำอธิบาย</string>
+    <string name="library_metadata_language_load_failed">โหลดคำอธิบายไม่ได้ โปรดเปิดแก้ไขข้อมูลเมตาอีกครั้ง</string>
 </resources>

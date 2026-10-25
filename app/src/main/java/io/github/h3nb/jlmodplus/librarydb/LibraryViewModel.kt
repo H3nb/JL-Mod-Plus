@@ -59,6 +59,12 @@ import javax.microedition.shell.MidletLocaleResolver
 import io.github.h3nb.jlmodplus.util.Constants.PREF_APP_SORT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR
 
+/** Source descriptor texts and user-owned Library translations for one MIDlet. */
+data class LibraryLocalizedDescriptionEditorData(
+    val source: Map<String, String>,
+    val overrides: Map<String, String>,
+)
+
 /** Activity-scoped Room 3 Library facade with Java-friendly observation/mutation boundaries. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LibraryViewModel(application: Application) : AndroidViewModel(application),
@@ -327,6 +333,16 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         version: String,
         description: String,
         callback: MutationCallback<Unit>,
+    ) = updateMetadata(appId, title, vendor, version, description, null, callback)
+
+    fun updateMetadata(
+        appId: Long,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+        localizedOverrides: Map<String, String>?,
+        callback: MutationCallback<Unit>,
     ) {
         val generation = readyGeneration()
         val app = try {
@@ -346,7 +362,39 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 vendor = vendor,
                 version = version,
                 description = description,
+                localizedOverrides = localizedOverrides,
             )
+        }
+    }
+
+    fun loadLocalizedDescriptions(
+        appId: Long,
+        callback: MutationCallback<LibraryLocalizedDescriptionEditorData>,
+    ) {
+        val generation = readyGeneration()
+        val app = try { generation?.let { repository.currentApp(it, appId) } }
+        catch (_: IllegalStateException) { null }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        scope.launch {
+            try {
+                val source = withContext(Dispatchers.IO) {
+                    LibraryDescriptionCatalog.readSourceDescriptions(generation.emulatorDir, app.storageKey)
+                }
+                val ready = repository.state.value as? LibraryRepository.State.Ready
+                check(ready != null && repository.isReadyGeneration(generation)) {
+                    "Library work directory changed while loading descriptions"
+                }
+                callback.complete(
+                    LibraryLocalizedDescriptionEditorData(
+                        source, ready.descriptionOverrides[app.id].orEmpty(),
+                    ), null,
+                )
+            } catch (error: Exception) {
+                callback.complete(null, error)
+            }
         }
     }
 
@@ -1086,6 +1134,7 @@ internal fun libraryDisplayStates(
                     descriptionCatalogMutex.withLock {
                         descriptionCatalog.resolve(
                             state.emulatorDir, state.apps, input.descriptionLocale.value,
+                            state.descriptionOverrides,
                         ) { context.ensureActive() }
                     }
                 }

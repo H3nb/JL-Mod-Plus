@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
+import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
@@ -357,6 +359,24 @@ interface LibraryActions {
         version: String,
         description: String,
     ) = Unit
+    fun onLoadLocalizedDescriptions(
+        appId: Int,
+        callback: LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>,
+    ) = callback.complete(LibraryLocalizedDescriptionEditorData(emptyMap(), emptyMap()), null)
+
+    fun onUpdateMetadata(
+        appId: Int,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+        localizedOverrides: Map<String, String>,
+        callback: LibraryViewModel.MutationCallback<Unit>,
+    ) {
+        onUpdateMetadata(appId, title, vendor, version, description)
+        callback.complete(Unit, null)
+    }
+
     fun onPickIcon(appId: Int) = Unit
     fun onPickIconByDatabaseId(databaseId: Long) = Unit
     fun onPickIconByDatabaseId(databaseId: Long, portrait: Boolean) =
@@ -1471,7 +1491,10 @@ fun LibraryScreen(
                 LibraryMetadataEditorScreen(
                     app = app,
                     onBack = ::closeMetadataEditor,
-                    onSave = { title, vendor, description ->
+                    onLoadDescriptions = { callback ->
+                        actions.onLoadLocalizedDescriptions(app.id, callback)
+                    },
+                    onSaveLocalized = { title, vendor, description, translations, onResult ->
                         val restoreRequest = metadataCapturedAnchor?.let { anchor ->
                             MetadataRestoreRequest(
                                 anchor = anchor,
@@ -1482,14 +1505,17 @@ fun LibraryScreen(
                                 viewport = metadataCapturedViewport,
                             )
                         }
-                        closeMetadataEditor(restoreRequest)
                         actions.onUpdateMetadata(
                             app.id,
                             title,
                             vendor,
                             app.version,
                             description,
-                        )
+                            translations,
+                        ) { _, error ->
+                            onResult(error == null)
+                            if (error == null) closeMetadataEditor(restoreRequest)
+                        }
                     },
                     iconShape = state.iconShape,
                     enhancedIcons = state.enhancedIcons,

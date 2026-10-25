@@ -87,6 +87,7 @@ import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
+import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconOverride;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
@@ -365,6 +366,37 @@ public class AppsListFragment extends Fragment {
                         row.getId(), title, vendor, version, description,
                         (ignored, error) -> {
                             if (error != null) showError(error);
+                        });
+            }
+
+            @Override
+            public void onLoadLocalizedDescriptions(
+                    int appId,
+                    @NonNull LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData> callback) {
+                LibraryAppRow row = findRow(appId);
+                if (row == null) {
+                    callback.complete(null, new IllegalStateException("Library app is not available"));
+                    return;
+                }
+                libraryViewModel.loadLocalizedDescriptions(row.getId(), callback);
+            }
+
+            @Override
+            public void onUpdateMetadata(int appId, @NonNull String title,
+                                         @NonNull String vendor, @NonNull String version,
+                                         @NonNull String description,
+                                         @NonNull Map<String, String> translations,
+                                         @NonNull LibraryViewModel.MutationCallback<kotlin.Unit> callback) {
+                LibraryAppRow row = findRow(appId);
+                if (row == null) {
+                    callback.complete(null, new IllegalStateException("Library app is not available"));
+                    return;
+                }
+                libraryViewModel.updateMetadata(
+                        row.getId(), title, vendor, version, description, translations,
+                        (ignored, error) -> {
+                            if (error != null) showError(error);
+                            callback.complete(ignored, error);
                         });
             }
 

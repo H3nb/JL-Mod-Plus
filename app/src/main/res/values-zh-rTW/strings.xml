@@ -1084,4 +1084,10 @@
     <string name="config_asset_busy">請先完成目前的檔案操作。</string>
     <string name="config_background_dynamic">動態色彩</string>
     <string name="config_background_dynamic_help">使用隨 MIDlet 畫面平滑變化的純色背景。</string>
+    <string name="library_metadata_default_description">預設描述</string>
+    <string name="library_metadata_other_languages">其他語言</string>
+    <string name="library_metadata_add_language">+ 新增語言</string>
+    <string name="library_metadata_language_search">搜尋語言或輸入地區代碼</string>
+    <string name="library_metadata_remove_language">移除描述</string>
+    <string name="library_metadata_language_load_failed">無法載入語言描述。請重新開啟中繼資料編輯頁面。</string>
 </resources>

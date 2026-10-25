@@ -26,6 +26,7 @@ import java.io.File
         LibraryAppEntity::class,
         LibraryCollectionEntity::class,
         LibraryCollectionAppEntity::class,
+        LibraryDescriptionOverrideEntity::class,
         PlayStatReceiptEntity::class,
         LibraryStateEntity::class,
     ],
@@ -37,7 +38,7 @@ abstract class LibraryDatabase : RoomDatabase() {
 
     companion object {
         const val FILE_NAME = "JL-Mod-library.db"
-        const val SCHEMA_VERSION = 2
+        const val SCHEMA_VERSION = 3
 
         /**
          * Opens the Library catalog inside the supplied emulator/work directory. An absolute path

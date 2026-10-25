@@ -1117,4 +1117,10 @@
     <string name="config_asset_busy">Алдымен ағымдағы файл әрекетін аяқтаңыз.</string>
     <string name="config_background_dynamic">Динамикалық түс</string>
     <string name="config_background_dynamic_help">MIDlet экранына біртіндеп бейімделетін біртұтас түсті қолданады.</string>
+    <string name="library_metadata_default_description">Әдепкі сипаттама</string>
+    <string name="library_metadata_other_languages">Басқа тілдер</string>
+    <string name="library_metadata_add_language">+ Тіл қосу</string>
+    <string name="library_metadata_language_search">Тілді іздеу немесе жергілікті кодты енгізу</string>
+    <string name="library_metadata_remove_language">Сипаттаманы жою</string>
+    <string name="library_metadata_language_load_failed">Сипаттамалар жүктелмеді. Метадеректерді өңдеуді қайта ашыңыз.</string>
 </resources>

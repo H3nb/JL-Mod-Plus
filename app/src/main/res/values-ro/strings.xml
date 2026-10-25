@@ -1150,4 +1150,10 @@
     <string name="config_asset_busy">Finalizează mai întâi operația în curs cu fișierul.</string>
     <string name="config_background_dynamic">Culoare dinamică</string>
     <string name="config_background_dynamic_help">Folosește o singură culoare uniformă, care se adaptează lin la ecranul MIDlet.</string>
+    <string name="library_metadata_default_description">Descriere implicită</string>
+    <string name="library_metadata_other_languages">Alte limbi</string>
+    <string name="library_metadata_add_language">+ Adaugă limbă</string>
+    <string name="library_metadata_language_search">Caută o limbă sau introdu un cod</string>
+    <string name="library_metadata_remove_language">Elimină descrierea</string>
+    <string name="library_metadata_language_load_failed">Descrierile nu au putut fi încărcate. Redeschide editarea metadatelor.</string>
 </resources>

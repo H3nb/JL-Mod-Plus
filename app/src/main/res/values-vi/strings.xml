@@ -1084,4 +1084,10 @@
     <string name="config_asset_busy">Hãy hoàn tất thao tác với tệp hiện tại trước.</string>
     <string name="config_background_dynamic">Màu động</string>
     <string name="config_background_dynamic_help">Dùng một màu nền đồng nhất thay đổi mượt mà theo màn hình MIDlet.</string>
+    <string name="library_metadata_default_description">Mô tả mặc định</string>
+    <string name="library_metadata_other_languages">Ngôn ngữ khác</string>
+    <string name="library_metadata_add_language">+ Thêm ngôn ngữ</string>
+    <string name="library_metadata_language_search">Tìm ngôn ngữ hoặc nhập mã vùng</string>
+    <string name="library_metadata_remove_language">Xóa mô tả</string>
+    <string name="library_metadata_language_load_failed">Không thể tải mô tả. Hãy mở lại phần chỉnh sửa siêu dữ liệu.</string>
 </resources>

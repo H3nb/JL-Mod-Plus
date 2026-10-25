@@ -1150,4 +1150,10 @@
     <string name="config_asset_busy">יש לסיים תחילה את פעולת הקובץ הנוכחית.</string>
     <string name="config_background_dynamic">צבע דינמי</string>
     <string name="config_background_dynamic_help">משתמש בצבע אחיד המשתנה בהדרגה בהתאם למסך ה-MIDlet.</string>
+    <string name="library_metadata_default_description">תיאור ברירת מחדל</string>
+    <string name="library_metadata_other_languages">שפות אחרות</string>
+    <string name="library_metadata_add_language">+ הוספת שפה</string>
+    <string name="library_metadata_language_search">חיפוש שפה או הזנת קוד אזור</string>
+    <string name="library_metadata_remove_language">הסרת התיאור</string>
+    <string name="library_metadata_language_load_failed">לא ניתן לטעון תיאורים. יש לפתוח שוב את עריכת המטא־נתונים.</string>
 </resources>

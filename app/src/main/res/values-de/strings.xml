@@ -1118,4 +1118,10 @@
     <string name="config_asset_busy">Schließe zuerst den laufenden Dateivorgang ab.</string>
     <string name="config_background_dynamic">Dynamische Farbe</string>
     <string name="config_background_dynamic_help">Verwendet eine einheitliche Farbe, die sich sanft an den MIDlet-Bildschirm anpasst.</string>
+    <string name="library_metadata_default_description">Standardbeschreibung</string>
+    <string name="library_metadata_other_languages">Weitere Sprachen</string>
+    <string name="library_metadata_add_language">+ Sprache hinzufügen</string>
+    <string name="library_metadata_language_search">Sprache suchen oder Gebietsschema eingeben</string>
+    <string name="library_metadata_remove_language">Beschreibung entfernen</string>
+    <string name="library_metadata_language_load_failed">Sprachbeschreibungen konnten nicht geladen werden. Metadaten erneut öffnen.</string>
 </resources>

@@ -34,6 +34,7 @@ internal class LibraryDescriptionCatalog {
         emulatorDir: File,
         apps: List<LibraryAppRow>,
         deviceLocale: String?,
+        overridesByApp: Map<Long, Map<String, String>> = emptyMap(),
         checkActive: () -> Unit = {},
     ): Map<Long, String> {
         if (root != emulatorDir) {
@@ -58,15 +59,9 @@ internal class LibraryDescriptionCatalog {
                 && prior.legacyConfigStamp == legacyConfigStamp) {
                 prior
             } else {
-                val descriptions = try {
-                    if (descriptorFile.isFile) {
-                        MidletDescriptionLocalization.extract(Descriptor(descriptorFile, false).attrs)
-                    } else emptyMap()
-                } catch (_: Exception) {
-                    emptyMap()
-                }
+                val descriptions = readSourceDescriptions(descriptorFile)
                 val systemProperties = try {
-                    if (descriptions.isNotEmpty() && (configFile.isFile || legacyConfigFile.isFile)) {
+                    if (configFile.isFile || legacyConfigFile.isFile) {
                         ProfilesManager.loadPreparedMidletConfig(configDir, false)?.systemProperties
                     } else null
                 } catch (_: Exception) {
@@ -75,11 +70,12 @@ internal class LibraryDescriptionCatalog {
                 Cached(descriptorStamp, configStamp, legacyConfigStamp, descriptions, systemProperties)
                     .also { entries[app.storageKey] = it }
             }
-            if (entry.descriptions.isEmpty()) continue
+            val overrides = overridesByApp[app.id].orEmpty()
+            if (entry.descriptions.isEmpty() && overrides.isEmpty()) continue
             val effectiveLocale = MidletLocaleResolver.withSystemProperties(
                 deviceLocale, entry.systemProperties)
             val text = MidletDescriptionLocalization.resolve(
-                entry.descriptions, effectiveLocale, app.description)
+                entry.descriptions + overrides, effectiveLocale, app.description)
             if (text != null && text != app.description) localized[app.id] = text
         }
         entries.keys.retainAll(activeKeys)
@@ -88,4 +84,17 @@ internal class LibraryDescriptionCatalog {
     }
 
     private fun File.stamp(): Stamp = Stamp(lastModified(), length())
+
+    companion object {
+        /** Descriptor content is reconstructible; callers perform disk reads off the UI thread. */
+        fun readSourceDescriptions(emulatorDir: File, storageKey: String): Map<String, String> =
+            readSourceDescriptions(File(emulatorDir, "converted/$storageKey/converted.dex.conf"))
+
+        private fun readSourceDescriptions(file: File): Map<String, String> = try {
+            if (file.isFile) MidletDescriptionLocalization.extract(Descriptor(file, false).attrs)
+            else emptyMap()
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
 }

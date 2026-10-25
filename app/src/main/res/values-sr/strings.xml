@@ -1149,4 +1149,10 @@
     <string name="config_asset_busy">Прво довршите текућу радњу над датотеком.</string>
     <string name="config_background_dynamic">Динамичка боја</string>
     <string name="config_background_dynamic_help">Користи једну једноличну боју која се постепено прилагођава MIDlet екрану.</string>
+    <string name="library_metadata_default_description">Подразумевани опис</string>
+    <string name="library_metadata_other_languages">Други језици</string>
+    <string name="library_metadata_add_language">+ Додај језик</string>
+    <string name="library_metadata_language_search">Претражи језик или унеси код</string>
+    <string name="library_metadata_remove_language">Уклони опис</string>
+    <string name="library_metadata_language_load_failed">Описи нису учитани. Поново отвори уређивање метаподатака.</string>
 </resources>

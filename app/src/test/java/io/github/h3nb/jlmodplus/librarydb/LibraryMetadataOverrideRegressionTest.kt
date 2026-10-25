@@ -97,6 +97,47 @@ class LibraryMetadataOverrideRegressionTest {
         }
     }
 
+    @Test
+    fun localizedEditsAreAtomicAndResetWithMetadata() = runBlocking {
+        val root = temporaryFolder.newFolder("localized-metadata")
+        createConvertedApp(root)
+        repository.setEmulatorDirectory(root)
+        val ready = awaitReady(root)
+        val token = LibraryGenerationToken(ready.generation, ready.emulatorDir)
+        val appId = ready.apps.single().id
+        repository.setMetadataOverrides(
+            token, appId, "Custom title", "Vendor", "1.0", "Edited default",
+            localizedOverrides = mapOf("en" to "User English", "id" to "Petualangan"),
+        )
+        val localized = awaitReady(root) { state ->
+            state.descriptionOverrides[appId]?.size == 2
+        }
+        assertEquals("User English", localized.descriptionOverrides[appId]?.get("en"))
+        assertEquals("Edited default", localized.apps.single().description)
+
+        // An unrelated default edit must not discard localized user-owned data.
+        repository.setMetadataOverrides(token, appId, "Custom title", "Vendor", "1.0", "New default")
+        val next = awaitReady(root) { state ->
+            state.apps.single().description == "New default"
+        }
+        assertEquals("Petualangan", next.descriptionOverrides[appId]?.get("id"))
+
+        repository.setMetadataOverrides(
+            token, appId, "Custom title", "Vendor", "1.0", "New default",
+            localizedOverrides = mapOf("id" to "Petualangan"),
+        )
+        val removedEnglish = awaitReady(root) { state ->
+            state.descriptionOverrides[appId]?.size == 1
+        }
+        assertEquals(setOf("id"), removedEnglish.descriptionOverrides[appId]?.keys)
+        repository.resetMetadataOverrides(token, appId)
+        val reset = awaitReady(root) { state ->
+            state.descriptionOverrides[appId].isNullOrEmpty() &&
+                state.apps.single().description == "Source description"
+        }
+        assertTrue(reset.descriptionOverrides[appId].isNullOrEmpty())
+    }
+
     private suspend fun awaitReady(
         root: File,
         predicate: (LibraryRepository.State.Ready) -> Boolean = { true },

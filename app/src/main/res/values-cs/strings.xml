@@ -1183,4 +1183,10 @@
     <string name="config_asset_busy">Nejprve dokončete probíhající operaci se souborem.</string>
     <string name="config_background_dynamic">Dynamická barva</string>
     <string name="config_background_dynamic_help">Používá jednu jednolitou barvu, která se plynule přizpůsobuje obrazovce MIDletu.</string>
+    <string name="library_metadata_default_description">Výchozí popis</string>
+    <string name="library_metadata_other_languages">Další jazyky</string>
+    <string name="library_metadata_add_language">+ Přidat jazyk</string>
+    <string name="library_metadata_language_search">Hledat jazyk nebo zadat kód</string>
+    <string name="library_metadata_remove_language">Odebrat popis</string>
+    <string name="library_metadata_language_load_failed">Popisy nelze načíst. Znovu otevřete úpravu metadat.</string>
 </resources>

@@ -1117,4 +1117,10 @@
     <string name="config_asset_busy">Първо завършете текущата операция с файла.</string>
     <string name="config_background_dynamic">Динамичен цвят</string>
     <string name="config_background_dynamic_help">Използва един плътен цвят, който плавно се приспособява към екрана на MIDlet.</string>
+    <string name="library_metadata_default_description">Описание по подразбиране</string>
+    <string name="library_metadata_other_languages">Други езици</string>
+    <string name="library_metadata_add_language">+ Добавяне на език</string>
+    <string name="library_metadata_language_search">Търсене на език или въвеждане на код</string>
+    <string name="library_metadata_remove_language">Премахване на описанието</string>
+    <string name="library_metadata_language_load_failed">Описанията не могат да се заредят. Отворете редактора отново.</string>
 </resources>

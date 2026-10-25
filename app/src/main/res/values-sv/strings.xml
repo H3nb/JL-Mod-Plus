@@ -1117,4 +1117,10 @@
     <string name="config_asset_busy">Slutför den pågående filåtgärden först.</string>
     <string name="config_background_dynamic">Dynamisk färg</string>
     <string name="config_background_dynamic_help">Använder en enda enfärgad bakgrund som anpassas mjukt efter MIDlet-skärmen.</string>
+    <string name="library_metadata_default_description">Standardbeskrivning</string>
+    <string name="library_metadata_other_languages">Andra språk</string>
+    <string name="library_metadata_add_language">+ Lägg till språk</string>
+    <string name="library_metadata_language_search">Sök språk eller ange språkkod</string>
+    <string name="library_metadata_remove_language">Ta bort beskrivning</string>
+    <string name="library_metadata_language_load_failed">Beskrivningarna kunde inte läsas in. Öppna metadataredigeringen igen.</string>
 </resources>

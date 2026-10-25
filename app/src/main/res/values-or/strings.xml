@@ -1117,4 +1117,10 @@
     <string name="config_asset_busy">ପ୍ରଥମେ ଚାଲୁଥିବା ଫାଇଲ କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ।</string>
     <string name="config_background_dynamic">ଗତିଶୀଳ ରଙ୍ଗ</string>
     <string name="config_background_dynamic_help">MIDlet ପରଦା ସହ ସୁଗମ ଭାବରେ ବଦଳୁଥିବା ଗୋଟିଏ ଏକରଙ୍ଗିଆ ପୃଷ୍ଠଭୂମି ବ୍ୟବହାର କରେ।</string>
+    <string name="library_metadata_default_description">ଡିଫଲ୍ଟ ବିବରଣୀ</string>
+    <string name="library_metadata_other_languages">ଅନ୍ୟ ଭାଷା</string>
+    <string name="library_metadata_add_language">+ ଭାଷା ଯୋଡ଼ନ୍ତୁ</string>
+    <string name="library_metadata_language_search">ଭାଷା ଖୋଜନ୍ତୁ କିମ୍ବା ଲୋକେଲ କୋଡ୍ ଦିଅନ୍ତୁ</string>
+    <string name="library_metadata_remove_language">ବିବରଣୀ ହଟାନ୍ତୁ</string>
+    <string name="library_metadata_language_load_failed">ବିବରଣୀ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ। ମେଟାଡାଟା ପୁଣି ଖୋଲନ୍ତୁ।</string>
 </resources>

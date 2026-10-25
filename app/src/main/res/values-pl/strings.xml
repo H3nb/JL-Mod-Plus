@@ -1183,4 +1183,10 @@
     <string name="config_asset_busy">Najpierw zakończ bieżącą operację na pliku.</string>
     <string name="config_background_dynamic">Dynamiczny kolor</string>
     <string name="config_background_dynamic_help">Używa jednolitego koloru, który płynnie dopasowuje się do ekranu MIDletu.</string>
+    <string name="library_metadata_default_description">Opis domyślny</string>
+    <string name="library_metadata_other_languages">Inne języki</string>
+    <string name="library_metadata_add_language">+ Dodaj język</string>
+    <string name="library_metadata_language_search">Wyszukaj język lub wpisz kod regionu</string>
+    <string name="library_metadata_remove_language">Usuń opis</string>
+    <string name="library_metadata_language_load_failed">Nie udało się wczytać opisów. Otwórz ponownie edycję metadanych.</string>
 </resources>

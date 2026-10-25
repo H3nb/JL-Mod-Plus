@@ -1118,4 +1118,10 @@
     <string name="config_asset_busy">Önce devam eden dosya işlemini tamamlayın.</string>
     <string name="config_background_dynamic">Dinamik renk</string>
     <string name="config_background_dynamic_help">MIDlet ekranına yumuşakça uyum sağlayan tek bir düz renk kullanır.</string>
+    <string name="library_metadata_default_description">Varsayılan açıklama</string>
+    <string name="library_metadata_other_languages">Diğer diller</string>
+    <string name="library_metadata_add_language">+ Dil ekle</string>
+    <string name="library_metadata_language_search">Dil ara veya yerel ayar kodu gir</string>
+    <string name="library_metadata_remove_language">Açıklamayı kaldır</string>
+    <string name="library_metadata_language_load_failed">Açıklamalar yüklenemedi. Meta veri düzenlemeyi yeniden açın.</string>
 </resources>
