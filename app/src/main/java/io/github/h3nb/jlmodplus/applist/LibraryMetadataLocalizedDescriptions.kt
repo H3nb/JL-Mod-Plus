@@ -53,7 +53,7 @@ internal fun LibraryMetadataLocalizedDescriptions(
     val displayLocale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
     val keys = remember(source, overrides, pending) {
         (source.keys + overrides.keys + listOfNotNull(pending)).distinct()
-            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
+            .sortedWith(String.CASE_INSENSITIVE_ORDER)
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
