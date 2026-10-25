@@ -252,6 +252,7 @@ jobs:
           path: |
             app/build/reports/tests/**
             app/build/test-results/**
+            app/schemas/io.github.h3nb.jlmodplus.librarydb.LibraryDatabase/3.json
             dexlib/build/reports/tests/**
             dexlib/build/test-results/**
             app/build/reports/androidTests/**

@@ -50,7 +50,7 @@ internal fun LibraryMetadataLocalizedDescriptions(
     var expanded by rememberSaveable { mutableStateOf<String?>(null) }
     var pending by rememberSaveable { mutableStateOf<String?>(null) }
     var showPicker by rememberSaveable { mutableStateOf(false) }
-    val displayLocale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
+    val displayLocale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.ENGLISH
     val keys = remember(source, overrides, pending) {
         (source.keys + overrides.keys + listOfNotNull(pending)).distinct()
             .sortedWith(String.CASE_INSENSITIVE_ORDER)
