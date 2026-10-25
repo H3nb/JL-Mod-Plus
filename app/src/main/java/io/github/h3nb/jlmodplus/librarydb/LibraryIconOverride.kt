@@ -91,6 +91,7 @@ object LibraryIconOverride {
      * Publish staged icons with a complete file snapshot so a failed metadata save can restore
      * the previous durable and effective images. The caller owns cleanup and rollback.
      */
+    @JvmStatic
     fun publishDrafts(
         emulatorDir: File,
         storageKey: String,
