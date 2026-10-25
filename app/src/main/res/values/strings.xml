@@ -1272,7 +1272,7 @@
     <string name="library_metadata_default_description">Default description</string>
     <string name="library_metadata_other_languages">Other languages</string>
     <string name="library_metadata_add_language">+ Add language</string>
-    <string name="library_metadata_language_search">Search language or enter locale</string>
+    <string name="library_metadata_language_search">Search language or locale code</string>
     <string name="library_metadata_remove_language">Remove description</string>
     <string name="library_metadata_language_load_failed">Could not load language descriptions. Reopen Edit metadata to try again.</string>
 </resources>

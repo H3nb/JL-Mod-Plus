@@ -1185,7 +1185,7 @@
     <string name="library_metadata_default_description">Deskripsi default</string>
     <string name="library_metadata_other_languages">Bahasa lain</string>
     <string name="library_metadata_add_language">+ Tambah bahasa</string>
-    <string name="library_metadata_language_search">Cari bahasa atau masukkan kode locale</string>
+    <string name="library_metadata_language_search">Cari bahasa atau kode</string>
     <string name="library_metadata_remove_language">Hapus deskripsi</string>
     <string name="library_metadata_language_load_failed">Gagal memuat deskripsi bahasa. Buka kembali Edit metadata untuk mencoba lagi.</string>
 </resources>

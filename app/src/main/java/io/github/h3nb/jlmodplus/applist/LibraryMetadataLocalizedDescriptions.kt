@@ -10,21 +10,26 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.os.ConfigurationCompat
 import androidx.compose.ui.platform.LocalConfiguration
@@ -56,11 +61,14 @@ internal fun LibraryMetadataLocalizedDescriptions(
             .sortedWith(String.CASE_INSENSITIVE_ORDER)
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 stringResource(R.string.library_metadata_other_languages),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 12.dp),
             )
             TextButton(onClick = { showPicker = true }) {
                 Text(stringResource(R.string.library_metadata_add_language))
@@ -71,14 +79,26 @@ internal fun LibraryMetadataLocalizedDescriptions(
                 Locale.forLanguageTag(locale).getDisplayName(displayLocale)
             }
             val text = overrides[locale] ?: source[locale].orEmpty()
+            val bringIntoView = remember(locale) { BringIntoViewRequester() }
+            LaunchedEffect(expanded, showPicker) {
+                if (expanded == locale && !showPicker) {
+                    bringIntoView.bringIntoView()
+                }
+            }
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        expanded = if (expanded == locale) null else locale
-                    }.padding(vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .bringIntoViewRequester(bringIntoView)
+                        .clickable { expanded = if (expanded == locale) null else locale }
+                        .padding(vertical = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text("$name · $locale", style = MaterialTheme.typography.bodyLarge)
+                    Text(name, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        locale,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     if (text.isNotBlank() && expanded != locale) {
                         Text(
                             text = text,
@@ -93,9 +113,8 @@ internal fun LibraryMetadataLocalizedDescriptions(
                     OutlinedTextField(
                         value = text,
                         onValueChange = { value ->
-                            // Keep even an empty in-progress edit visible. Normalization happens
-                            // when saving, not during typing; otherwise clearing a source string
-                            // instantly restores it and prevents replacing the entire text.
+                            // Retain a blank in-progress edit until save, rather than restoring
+                            // descriptor text while the user replaces a whole description.
                             onChange(if (value == source[locale]) overrides - locale
                                 else overrides + (locale to value))
                             pending = null
@@ -117,6 +136,7 @@ internal fun LibraryMetadataLocalizedDescriptions(
                         }
                     }
                 }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
     }
@@ -162,40 +182,57 @@ private fun LibraryDescriptionLanguagePicker(
             .sortedBy { Locale.forLanguageTag(it).getDisplayName(displayLocale).lowercase(displayLocale) }
             .toList()
     }
-    val typed = canonicalMidpDescriptionLocale(query)
-    val results = remember(query, displayLocale, excluded) {
-        locales.filter { code ->
-            code !in excluded && (code.contains(query.trim(), ignoreCase = true) ||
-                Locale.forLanguageTag(code).getDisplayName(displayLocale)
-                    .contains(query.trim(), ignoreCase = true))
+    val trimmed = query.trim()
+    val typed = canonicalMidpDescriptionLocale(trimmed)
+    val available = remember(locales, excluded) { locales.filterNot { it in excluded } }
+    val suggestions = remember(available, displayLocale) {
+        listOf(displayLocale.language.lowercase(Locale.ROOT), "en")
+            .distinct().filter { it in available }
+    }
+    val results = remember(trimmed, available, suggestions, displayLocale) {
+        if (trimmed.isEmpty()) {
+            suggestions + available.filterNot { it in suggestions }
+        } else {
+            available.filter { code ->
+                code.contains(trimmed, ignoreCase = true) ||
+                    Locale.forLanguageTag(code).getDisplayName(displayLocale)
+                        .contains(trimmed, ignoreCase = true)
+            }
         }
     }
+    val customLocale = typed?.takeIf { it !in excluded && it !in locales }
     AdaptiveAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.library_metadata_add_language)) },
+        title = { Text(stringResource(R.string.library_metadata_other_languages)) },
+        textScrollable = false,
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text(stringResource(R.string.library_metadata_language_search)) },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.library_metadata_language_search),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                // Region-specific codes and descriptor variants can be entered directly.
-                if (typed != null && typed !in excluded && typed !in locales) {
-                    TextButton(onClick = { onSelect(typed) }, modifier = Modifier.fillMaxWidth()) {
-                        Text("${Locale.forLanguageTag(typed).getDisplayName(displayLocale)} · $typed")
+                LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
+                    if (customLocale != null) {
+                        item(key = "custom:$customLocale") {
+                            LanguageChoiceRow(customLocale, displayLocale) { onSelect(customLocale) }
+                        }
                     }
-                }
-                LazyColumn(modifier = Modifier.heightIn(max = 280.dp)) {
                     items(results, key = { it }) { locale ->
-                        Text(
-                            text = "${Locale.forLanguageTag(locale).getDisplayName(displayLocale)} · $locale",
-                            modifier = Modifier.fillMaxWidth().clickable { onSelect(locale) }
-                                .padding(vertical = 12.dp, horizontal = 8.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
+                        LanguageChoiceRow(locale, displayLocale) { onSelect(locale) }
+                        if (trimmed.isEmpty() && locale == suggestions.lastOrNull() &&
+                            results.size > suggestions.size
+                        ) {
+                            HorizontalDivider()
+                        }
                     }
                 }
             }
@@ -206,4 +243,32 @@ private fun LibraryDescriptionLanguagePicker(
             }
         },
     )
+}
+
+@Composable
+private fun LanguageChoiceRow(
+    locale: String,
+    displayLocale: Locale,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = Locale.forLanguageTag(locale).getDisplayName(displayLocale),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = locale,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
+    }
 }
