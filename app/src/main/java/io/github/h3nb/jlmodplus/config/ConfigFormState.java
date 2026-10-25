@@ -192,7 +192,7 @@ public final class ConfigFormState {
 				.touchInput(params.touchInput)
 				.keyCodesLayout(params.keyCodesLayout)
 				.controlSkinSetId(params.controlSkinSetId)
-			.vkButtonShape(params.vkButtonShape)
+				.vkButtonShape(params.vkButtonShape)
 				.vkAlpha(params.vkAlpha)
 				.vkHideDelay(optionalInt(params.vkHideDelay))
 				.vkBackground(formatColor(params.vkBgColor))
