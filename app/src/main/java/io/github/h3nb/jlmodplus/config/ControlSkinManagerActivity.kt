@@ -591,7 +591,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     else groupedPreviews["analog_base"] != null || groupedPreviews["analog_thumb"] != null
                 Surface(
                     modifier = Modifier.fillMaxWidth()
-                        .clickable(enabled = !busy, role = Role.Button) { selectedKey = group }
+                        .clickable(enabled = !busy, role = Role.Button) { selectedKey = group },
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                     border = if (customized)
