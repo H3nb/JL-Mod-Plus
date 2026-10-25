@@ -195,9 +195,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 val nextEditor = action()
                 val listing = ControlSkinStore.list(workdir)
                 val summary = listing.associate { set ->
-                    set.id to ControlSkinStore.KEYS.count { key ->
-                        ControlSkinStore.image(set.folder, key, false) != null
-                    }
+                    set.id to ControlSkinStore.countCustomizedButtons(set.folder)
                 }
                 val folder = listing.firstOrNull { it.id == nextEditor }?.folder
                 val images = if (folder == null) emptyMap() else ControlSkinStore.KEYS.associateWith { key ->
