@@ -248,13 +248,8 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         perform {
             when (prompt.action) {
                 NameAction.CREATE -> {
-                    val created = ControlSkinStore.create(workdir, name)
-                    // Creating a set from a MIDlet also selects it, but keeps editing open.
-                    runOnUiThread {
-                        selectedId = created.id
-                        setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_SELECTED, created.id))
-                    }
-                    created.id
+                    // A global set can be prepared without changing this MIDlet's selection.
+                    ControlSkinStore.create(workdir, name).id
                 }
                 NameAction.RENAME -> {
                     val id = requireNotNull(prompt.setId)
