@@ -1001,10 +1001,36 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Dynamic color").performClick()
-        composeRule.onNodeWithText("AABBCC").assertDoesNotExist()
+        composeRule.onNodeWithText("AABBCC").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Saturation and brightness").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Hue").assertIsNotEnabled()
+        composeRule.onNodeWithText("Uses one solid color that adjusts smoothly to the MIDlet screen.").assertExists()
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("AABBCC", selectedColor)
         assertEquals(true, selectedDynamic)
+    }
+
+    @Test
+    fun dynamicBackgroundPickerCanReturnToManualEditingWithoutLosingColor() {
+        var picked: Pair<String, Boolean>? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigColorPickerDialog(
+                    initialHex = "AABBCC",
+                    allowDynamic = true,
+                    initialDynamic = true,
+                    onDismissRequest = {},
+                    onConfirm = { value, dynamic -> picked = value to dynamic },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("AABBCC").assertIsNotEnabled()
+        composeRule.onNodeWithText("Dynamic color").performClick()
+        composeRule.onNodeWithText("AABBCC").assertIsEnabled()
+        composeRule.onNodeWithText("AABBCC").performTextReplacement("112233")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("112233" to false, picked)
     }
 
     @Test
