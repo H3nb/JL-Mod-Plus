@@ -49,6 +49,7 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.ControlSkinRuntime;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.input.HostCommand;
@@ -224,6 +225,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private VirtualKey controllerKeypadPressed;
 	private long pointerSourceSequence;
 	private LayoutEditObserver layoutEditObserver;
+	private final ControlSkinRuntime controlSkin;
+
+	protected final ControlSkinRuntime getControlSkin() { return controlSkin; }
 
 	public VirtualKeyboard(ProfileModel settings, java.io.File configDir) {
 		this(settings, configDir, true);
@@ -231,6 +235,14 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	protected VirtualKeyboard(ProfileModel settings, java.io.File configDir, boolean recoverPersistentLayout) {
 		this.settings = settings;
+		// Preserve a single skin snapshot across portrait/landscape and layout changes.
+		// Raster targets follow the display's short edge, with extra room for scaling.
+		int shortest = Math.max(1, Math.min(
+				ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()));
+		int keyTarget = Math.min(512, Math.max(96, Math.round(shortest * 0.25f)));
+		int movementTarget = Math.min(512, Math.max(128, Math.round(shortest * 0.68f)));
+		this.controlSkin = ControlSkinRuntime.load(configDir, settings.controlSkinSetId,
+				keyTarget, movementTarget);
 		this.saveFile = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		if (recoverPersistentLayout) recoverLayoutFile();
 
@@ -1871,10 +1883,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (visible && (layoutEditMode != LAYOUT_EOF ||
 				settings.vkAlpha > 0 || settings.vkForceOpacity)) {
 			boolean keypadLegendContext = hasVisibleNumericKeypadContext();
-			for (VirtualKey key : keypad) {
-				if (key.visible) {
-					key.paint(g, keypadLegendContext);
-				}
+			for (int i = 0; i < keypad.length; i++) {
+				VirtualKey key = keypad[i];
+				if (key.visible) key.paint(g, keypadLegendContext, i);
 			}
 		}
 		if (controllerKeypadVisible && screen != null) {
@@ -2278,6 +2289,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		final String label;
 		final int keyCode;
 		final RectF rect = new RectF();
+		final RectF imageBounds = new RectF();
 		final PointF snapOffset = new PointF();
 		int snapOrigin;
 		int snapMode;
@@ -2303,7 +2315,15 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			return visible && rect.contains(x, y);
 		}
 
-		void paint(CanvasWrapper g, boolean keypadLegendContext) {
+		void paint(CanvasWrapper g, boolean keypadLegendContext, int slot) {
+			ControlSkinRuntime.Button custom = controlSkin.get(slot);
+			boolean editingSkin = layoutEditMode != LAYOUT_EOF;
+			if (custom != null && custom.full) {
+				int opacity = editingSkin ? 85 : VirtualControlAppearance.opacity(settings.vkAlpha, false, opaque);
+				g.drawControlBitmap(selected && custom.pressed != null ? custom.pressed : custom.normal,
+						rect, opacity, selected && custom.pressed == null);
+				return;
+			}
 			int bgColor = VirtualControlAppearance.background(settings, selected);
 			int fgColor = VirtualControlAppearance.foreground(settings, selected);
 			boolean editing = layoutEditMode != LAYOUT_EOF;
@@ -2328,7 +2348,19 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					g.strokeControlOval(rect, outline, stroke);
 				}
 			}
-			paintKeyLabel(g, this, rect, keypadLegendContext);
+			if (custom != null) {
+				android.graphics.Bitmap bitmap = selected && custom.pressed != null ? custom.pressed : custom.normal;
+				float width = rect.width() * 0.8f;
+				float height = rect.height() * 0.8f;
+				float ratio = Math.min(width / bitmap.getWidth(), height / bitmap.getHeight());
+				width = bitmap.getWidth() * ratio;
+				height = bitmap.getHeight() * ratio;
+				imageBounds.set(rect.centerX() - width / 2f, rect.centerY() - height / 2f,
+						rect.centerX() + width / 2f, rect.centerY() + height / 2f);
+				g.drawControlBitmap(bitmap, imageBounds, editingSkin ? 85 : alpha >>> 24, false);
+			} else {
+				paintKeyLabel(g, this, rect, keypadLegendContext);
+			}
 		}
 
 		@NonNull

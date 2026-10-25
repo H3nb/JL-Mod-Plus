@@ -208,6 +208,11 @@
             android:targetActivity=".MainActivity"
             android:exported="true" />
         <activity
+            android:name=".config.ControlSkinManagerActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
             android:name=".config.ConfigActivity"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar"

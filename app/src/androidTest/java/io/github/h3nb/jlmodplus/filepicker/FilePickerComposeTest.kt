@@ -70,13 +70,13 @@ class FilePickerComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Search").performClick()
-        composeRule.onNodeWithText("Search").assertExists()
-        composeRule.onNodeWithContentDescription("Sort").performClick()
-        composeRule.onNodeWithText("Name A–Z").assertExists()
-        composeRule.onNodeWithText("Modified Newest").assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_search)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.file_picker_search)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_sort)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.file_picker_sort_name_ascending)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.file_picker_sort_modified_newest)).assertExists()
         composeRule.onNodeWithText("zeta.jar").assertExists()
-        composeRule.onNodeWithText("Modified Newest").performClick()
+        composeRule.onNodeWithText(uiString(R.string.file_picker_sort_modified_newest)).performClick()
         assertEquals("sort:MODIFIED_NEWEST", events.get())
     }
 

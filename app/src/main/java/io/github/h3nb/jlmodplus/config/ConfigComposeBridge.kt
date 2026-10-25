@@ -1694,6 +1694,11 @@ private fun InputSection(
                 options = shapeOptions,
                 onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
             )
+            ConfigActionPreference(
+                title = stringResource(R.string.control_skin_title),
+                description = state.controlSkinName,
+                onClick = events::onManageControlSkins,
+            )
             ConfigSwitchPreference(
                 title = stringResource(R.string.PREF_VK_FEEDBACK),
                 description = stringResource(R.string.config_help_vk_feedback),

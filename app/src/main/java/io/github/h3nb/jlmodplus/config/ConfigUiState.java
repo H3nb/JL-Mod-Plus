@@ -33,6 +33,8 @@ import io.github.h3nb.jlmodplus.config.model.Size;
  * renders this snapshot and emits {@link ConfigFormEvents} callbacks.
  */
 public final class ConfigUiState {
+	/** Transient name of the globally selected control skin. */
+	public String controlSkinName = "";
 	@NonNull
 	public final ConfigFormState form;
 	@NonNull
