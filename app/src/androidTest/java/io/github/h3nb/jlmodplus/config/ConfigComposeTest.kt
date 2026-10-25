@@ -906,20 +906,46 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun advancedControlsRenderColorPreferencesWithoutCrashing() {
+    fun controlsColorEditorUsesACompactMatrixAndPreservesPickerFields() {
+        val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Controls)
             }
         }
+        scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
+        composeRule.onNodeWithTag("controls_colors_entry").performClick()
+        composeRule.onNodeWithTag("virtual_controls_color_preview").assertExists()
+        composeRule.onNodeWithTag("color_normal_labels").performClick()
+        assertEquals(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND, events.colorPickerField)
+        composeRule.onNodeWithTag("color_pressed_button").performClick()
+        assertEquals(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND, events.colorPickerField)
+        composeRule.onNodeWithTag("color_outline").performClick()
+        assertEquals(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE, events.colorPickerField)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithTag("controls_colors_entry").assertExists()
+        composeRule.onNodeWithTag("color_outline").assertDoesNotExist()
+    }
 
-        composeRule.waitForIdle()
-        scrollTo(uiString(R.string.PREF_VK_FORE))
-        composeRule.onNode(hasText(uiString(R.string.PREF_VK_FORE)) and hasText("#000080")).assertExists()
-        scrollTo(uiString(R.string.PREF_VK_BACK))
-        composeRule.onNodeWithText(uiString(R.string.PREF_VK_BACK)).assertExists()
-        scrollTo(uiString(R.string.PREF_VK_OUTLINE))
-        composeRule.onNodeWithText(uiString(R.string.PREF_VK_OUTLINE)).assertExists()
+    @Test
+    fun controlsCustomizationRemainsAvailableWhenVirtualControlsAreOff() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().showKeyboard(false).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)).assertDoesNotExist()
+        scrollTo(uiString(R.string.config_controls_customization))
+        composeRule.onNodeWithText(uiString(R.string.config_controls_disabled_hint)).assertExists()
+        scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
+        composeRule.onNodeWithTag("controls_colors_entry").performClick()
+        composeRule.onNodeWithTag("color_outline").assertExists()
     }
 
     @Test
@@ -932,9 +958,9 @@ class ConfigComposeTest {
         }
 
         scrollTo(uiString(R.string.PREF_VK_ALPHA))
-        composeRule.onNodeWithText("64").performClick()
+        composeRule.onNodeWithText("25%").performClick()
         composeRule.onNode(hasText("Opacity") and hasAnyAncestor(isDialog())).assertExists()
-        composeRule.onNode(hasSetTextAction()).performTextReplacement("128")
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("50")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals(128, events.lastForm?.vkAlpha)
     }

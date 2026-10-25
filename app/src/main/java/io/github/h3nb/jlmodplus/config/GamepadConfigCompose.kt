@@ -50,6 +50,7 @@ internal fun GamepadInputPreferences(
     controllerAvailable: Boolean,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
+    compact: Boolean = false,
 ) {
     val opaqueController = form.controller != null && form.controller !is kotlinx.serialization.json.JsonObject
     val resolved = remember(form.controller) {
@@ -82,6 +83,7 @@ internal fun GamepadInputPreferences(
         enabled = supported,
         message = compatibilityMessage,
         messageLevel = ConfigMessageLevel.Warning,
+        compact = compact,
         onSelected = { index ->
             if (!supported) return@ConfigChoicePreference
             val nextLeft = when (index) {
@@ -107,12 +109,23 @@ internal fun GamepadInputPreferences(
             onFormChanged(form.toBuilder().controller(next.toJson()).build())
         },
     )
-    ConfigActionPreference(
-        title = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate),
-        description = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate_summary),
-        enabled = supported && controllerAvailable,
-        onClick = events::onGamepadCalibration,
-    )
+    if (compact) {
+        ConfigCompactValuePreference(
+            title = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate),
+            value = if (!controllerAvailable) {
+                androidx.compose.ui.res.stringResource(R.string.config_controls_connect_controller)
+            } else null,
+            enabled = supported && controllerAvailable,
+            onClick = events::onGamepadCalibration,
+        )
+    } else {
+        ConfigActionPreference(
+            title = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate),
+            description = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate_summary),
+            enabled = supported && controllerAvailable,
+            onClick = events::onGamepadCalibration,
+        )
+    }
 }
 
 @Composable

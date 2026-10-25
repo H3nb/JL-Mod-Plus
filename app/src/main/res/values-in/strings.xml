@@ -138,7 +138,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Persegi panjang</string>
     <string name="pref_button_shape_round">Persegi panjang membulat</string>
-    <string name="pref_button_shape_title">Bentuk tombol</string>
+    <string name="pref_button_shape_title">Bentuk tombol keypad</string>
     <string name="pref_category_experimental">Eksperimental</string>
     <string name="pref_emulator_dir">Direktori kerja</string>
     <string name="pref_encoding_title">Pengodean</string>
@@ -679,7 +679,16 @@
     <string name="config_virtual_controls_preview_normal">Normal</string>
     <string name="config_virtual_controls_preview_pressed">Ditekan</string>
     <string name="config_virtual_controls_preview_hint">Ketuk untuk melihat warna saat ditekan. Pratinjau menggunakan opasitas yang dipilih.</string>
-    <string name="config_controls_maintenance">Tata letak kontrol virtual</string>
+    <string name="config_controls_maintenance">Tata letak</string>
+    <string name="config_controls_customization">Kustomisasi</string>
+    <string name="config_controls_disabled_hint">Kontrol virtual nonaktif di Umum. Kustomisasi tetap bisa diubah.</string>
+    <string name="config_controls_opacity_help">0% transparan sepenuhnya; 100% tanpa transparansi.</string>
+    <string name="config_controls_opaque_outside">Opak di luar layar MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Abaikan opasitas hanya di luar layar MIDlet.</string>
+    <string name="config_controls_connect_controller">Hubungkan pengontrol untuk kalibrasi</string>
+    <string name="config_controls_color_labels">Label &amp; simbol</string>
+    <string name="config_controls_color_buttons">Tombol</string>
+    <string name="config_controls_color_skin_notice">Skin tombol penuh dapat menggantikan warna dan garis tepi tombol.</string>
     <string name="config_current_value">Nilai saat ini</string>
     <string name="config_screen_size">Ukuran layar</string>
     <string name="config_maintenance">Atur ulang dan data</string>

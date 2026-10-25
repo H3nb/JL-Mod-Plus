@@ -58,6 +58,7 @@ import io.github.h3nb.jlmodplus.input.HostCommand
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -334,6 +335,7 @@ internal fun ConfigScreen(
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
+    var controlColorsVisible by rememberSaveable { mutableStateOf(false) }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
@@ -341,7 +343,9 @@ internal fun ConfigScreen(
         events.onFormChanged(next)
     }
     val requestBack = {
-        if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
+        if (controlColorsVisible) {
+            controlColorsVisible = false
+        } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
             discardProfileChangesVisible = true
         } else {
             menuActions?.onBack()
@@ -368,6 +372,7 @@ internal fun ConfigScreen(
             pagerScope.launch { pagerState.navigateToTab(index) }
         }
     }
+    val controlsScrollState = rememberScrollState()
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
@@ -388,6 +393,13 @@ internal fun ConfigScreen(
                 systemPropertiesEditorVisible = false
                 updateForm(form.toBuilder().systemProperties(value).build())
             },
+            modifier = modifier,
+        )
+    } else if (controlColorsVisible) {
+        ConfigControlsColorsPage(
+            form = form,
+            onBack = { controlColorsVisible = false },
+            onColorPicker = events::onColorPicker,
             modifier = modifier,
         )
     } else {
@@ -431,7 +443,8 @@ internal fun ConfigScreen(
                         .padding(padding)
                         .consumeWindowInsets(padding),
                 ) { page ->
-                        val pageScrollState = rememberScrollState()
+                        val pageScrollState = if (destinations[page] == ConfigDestination.Controls)
+                            controlsScrollState else rememberScrollState()
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -456,6 +469,7 @@ internal fun ConfigScreen(
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
                                     onUsePreset = { presetPickerVisible = true },
                                     onSavePreset = { savePresetVisible = true },
+                                    onOpenControlColors = { controlColorsVisible = true },
                                     modifier = Modifier.widthIn(max = 880.dp),
                                 )
                             }
@@ -571,6 +585,7 @@ private fun ConfigDestinationContent(
     onEditSystemProperties: () -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
+    onOpenControlColors: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -601,6 +616,7 @@ private fun ConfigDestinationContent(
                 onFormChanged,
                 events,
                 onRequestAction,
+                onOpenControlColors,
             )
             ConfigDestination.System -> {
                 SystemSection(state, form, onFormChanged, events, !isProfile, onEditSystemProperties)
@@ -1656,6 +1672,7 @@ private fun InputSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
+    onOpenControlColors: () -> Unit,
 ) {
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
@@ -1664,11 +1681,11 @@ private fun InputSection(
             description = stringResource(R.string.config_help_key_layout),
             selected = layoutOptions.getOrElse(form.keyCodesLayout) { layoutOptions.firstOrNull().orEmpty() },
             options = layoutOptions,
+            compact = true,
             onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },
         )
-        ConfigActionPreference(
+        ConfigCompactValuePreference(
             title = stringResource(R.string.pref_map_keys),
-            description = stringResource(R.string.config_help_key_mapping),
             onClick = events::onKeyMappings,
         )
         GamepadInputPreferences(
@@ -1676,98 +1693,72 @@ private fun InputSection(
             controllerAvailable = state.controllerAvailable,
             onFormChanged = onFormChanged,
             events = events,
+            compact = true,
         )
     }
     ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard)) {
+        if (!form.showKeyboard) {
+            Text(
+                text = stringResource(R.string.config_controls_disabled_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
         ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-            description = stringResource(R.string.config_help_virtual_keyboard),
-            checked = form.showKeyboard,
-            onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
+            title = stringResource(R.string.PREF_VK_FEEDBACK),
+            description = stringResource(R.string.config_help_vk_feedback),
+            checked = form.vkFeedback,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },
         )
-        if (form.showKeyboard) {
-            val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
-            ConfigChoicePreference(
-                title = stringResource(R.string.pref_button_shape_title),
-                description = stringResource(R.string.config_help_vk_button_shape),
-                selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },
-                options = shapeOptions,
-                onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
-            )
-            ConfigActionPreference(
-                title = stringResource(R.string.control_skin_title),
-                description = state.controlSkinName,
-                onClick = events::onManageControlSkins,
-            )
-            ConfigSwitchPreference(
-                title = stringResource(R.string.PREF_VK_FEEDBACK),
-                description = stringResource(R.string.config_help_vk_feedback),
-                checked = form.vkFeedback,
-                onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },
-            )
-            ConfigSliderPreference(
-                title = stringResource(R.string.PREF_VK_ALPHA),
-                description = stringResource(R.string.config_help_vk_alpha),
-                value = form.vkAlpha,
-                valueRange = 0..255,
-                onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },
-            )
-            ConfigSwitchPreference(
-                title = stringResource(R.string.PREF_VK_FORCE_OPACITY),
-                description = stringResource(R.string.config_help_vk_force_opacity),
-                checked = form.vkForceOpacity,
-                onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
-            )
-            ConfigNumberPreference(
-                title = stringResource(R.string.PREF_VK_HIDE_DELAY),
-                description = stringResource(R.string.config_help_vk_hide_delay),
-                value = form.vkHideDelay,
-                fallbackLabel = stringResource(R.string.pref_vk_hide_hint),
-                valueSuffix = stringResource(R.string.PREF_UNIT_MS),
-                keyboardType = KeyboardType.Number,
-                onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
-            )
-        }
+        ConfigNumberPreference(
+            title = stringResource(R.string.PREF_VK_HIDE_DELAY),
+            description = stringResource(R.string.config_help_vk_hide_delay),
+            value = form.vkHideDelay,
+            fallbackLabel = stringResource(R.string.pref_vk_hide_hint),
+            valueSuffix = stringResource(R.string.PREF_UNIT_MS),
+            keyboardType = KeyboardType.Number,
+            compact = true,
+            onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
+        )
     }
-    ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard_colors)) {
-        if (form.showKeyboard) {
-            VirtualControlsColorPreview(form)
-            ConfigColorPreference(
-                title = stringResource(R.string.PREF_VK_FORE),
-                description = stringResource(R.string.config_help_vk_foreground),
-                value = form.vkForeground,
-                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },
-            )
-            ConfigColorPreference(
-                title = stringResource(R.string.PREF_VK_BACK),
-                description = stringResource(R.string.config_help_vk_background),
-                value = form.vkBackground,
-                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },
-            )
-            ConfigColorPreference(
-                title = stringResource(R.string.PREF_VK_SEL_FORE),
-                description = stringResource(R.string.config_help_vk_selected_foreground),
-                value = form.vkSelectedForeground,
-                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND) },
-            )
-            ConfigColorPreference(
-                title = stringResource(R.string.PREF_VK_SEL_BACK),
-                description = stringResource(R.string.config_help_vk_selected_background),
-                value = form.vkSelectedBackground,
-                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND) },
-            )
-            ConfigColorPreference(
-                title = stringResource(R.string.PREF_VK_OUTLINE),
-                description = stringResource(R.string.config_help_vk_outline),
-                value = form.vkOutline,
-                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },
-            )
-        }
+    ConfigSection(title = stringResource(R.string.config_controls_customization)) {
+        ConfigCompactValuePreference(
+            title = stringResource(R.string.control_skin_title),
+            value = state.controlSkinName,
+            onClick = events::onManageControlSkins,
+        )
+        val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_button_shape_title),
+            description = stringResource(R.string.config_help_vk_button_shape),
+            selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },
+            options = shapeOptions,
+            compact = true,
+            onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
+        )
+        ConfigSliderPreference(
+            title = stringResource(R.string.PREF_VK_ALPHA),
+            description = stringResource(R.string.config_controls_opacity_help),
+            value = (form.vkAlpha.coerceIn(0, 255) * 100f / 255f).roundToInt(),
+            valueRange = 0..100,
+            compact = true,
+            valueSuffix = "%",
+            onSelected = { percent ->
+                onFormChanged(form.toBuilder().vkAlpha((percent * 255f / 100f).roundToInt()).build())
+            },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.config_controls_opaque_outside),
+            description = stringResource(R.string.config_controls_opaque_outside_help),
+            checked = form.vkForceOpacity,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
+        )
+        ConfigControlsColorsEntry(form, onOpenControlColors)
     }
     ConfigSection(title = stringResource(R.string.config_controls_maintenance)) {
-        ConfigActionPreference(
+        ConfigCompactValuePreference(
             title = stringResource(R.string.RESET_LAYOUT_CMD),
-            description = stringResource(R.string.config_help_reset_layout),
             destructive = true,
             onClick = { onRequestAction(ConfigAction.ResetLayout) },
         )
@@ -1775,7 +1766,7 @@ private fun InputSection(
 }
 
 @Composable
-private fun VirtualControlsColorPreview(form: ConfigFormState) {
+internal fun VirtualControlsColorPreview(form: ConfigFormState) {
     var pressed by rememberSaveable { mutableStateOf(false) }
     val background = parseColor(form.vkBackground)
     val foreground = parseColor(form.vkForeground)
@@ -1793,26 +1784,27 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
         modifier = Modifier
             .fillMaxWidth()
             .testTag("virtual_controls_color_preview")
-            .clickable(role = Role.Button) { pressed = !pressed }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        Text(
+            text = stringResource(R.string.config_virtual_controls_color_preview),
+            style = MaterialTheme.typography.titleSmall,
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(R.string.config_virtual_controls_color_preview),
-                style = MaterialTheme.typography.titleSmall,
+            FilterChip(
+                selected = !pressed,
+                onClick = { pressed = false },
+                label = { Text(stringResource(R.string.config_virtual_controls_preview_normal)) },
             )
-            Text(
-                text = stringResource(
-                    if (pressed) R.string.config_virtual_controls_preview_pressed
-                    else R.string.config_virtual_controls_preview_normal,
-                ),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+            FilterChip(
+                selected = pressed,
+                onClick = { pressed = true },
+                label = { Text(stringResource(R.string.config_virtual_controls_preview_pressed)) },
             )
         }
         Row(
@@ -1843,11 +1835,6 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
                 background, selectedBackground, outline, pressed,
             )
         }
-        Text(
-            text = stringResource(R.string.config_virtual_controls_preview_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

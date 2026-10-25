@@ -181,7 +181,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rectangle</string>
     <string name="pref_button_shape_round">Rounded rectangle</string>
-    <string name="pref_button_shape_title">Button shape</string>
+    <string name="pref_button_shape_title">Keypad button shape</string>
     <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Working directory</string>
     <string name="pref_encoding_title">Encoding</string>
@@ -749,7 +749,16 @@
     <string name="config_virtual_controls_preview_normal">Normal</string>
     <string name="config_virtual_controls_preview_pressed">Pressed</string>
     <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
-    <string name="config_controls_maintenance">Virtual controls layout</string>
+    <string name="config_controls_maintenance">Layout</string>
+    <string name="config_controls_customization">Customization</string>
+    <string name="config_controls_disabled_hint">Virtual controls are off in General. You can still customize them here.</string>
+    <string name="config_controls_opacity_help">0% is transparent; 100% is opaque.</string>
+    <string name="config_controls_opaque_outside">Opaque outside the MIDlet screen</string>
+    <string name="config_controls_opaque_outside_help">Ignore opacity only outside the MIDlet screen.</string>
+    <string name="config_controls_connect_controller">Connect a controller to calibrate</string>
+    <string name="config_controls_color_labels">Labels &amp; symbols</string>
+    <string name="config_controls_color_buttons">Buttons</string>
+    <string name="config_controls_color_skin_notice">Full-button skins can replace button colors and outlines.</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
     <string name="config_reset_all_settings">Reset all settings</string>
