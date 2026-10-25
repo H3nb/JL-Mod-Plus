@@ -219,6 +219,12 @@ public abstract class Canvas extends Displayable {
 	private volatile boolean ambientLayoutValid;
 	private volatile boolean ambientHostScheduled;
 	private final Runnable ambientHostRunnable = this::runAmbientHostTick;
+	private volatile BackgroundColorObserver hostBackgroundObserver;
+
+	/** Renderer-independent host padding observer. Delivered on the UI thread. */
+	public interface BackgroundColorObserver {
+		void onBackgroundColor(int argb);
+	}
 	private Handler uiHandler;
 	private Overlay overlay;
 	private OverlayView controllerOverlayView;
@@ -361,6 +367,18 @@ public abstract class Canvas extends Displayable {
 		return effectiveBackgroundArgb();
 	}
 
+	public void setHostBackgroundObserver(BackgroundColorObserver observer) {
+		hostBackgroundObserver = observer;
+	}
+
+	private void notifyHostBackground() {
+		if (!isDynamicSolidMode() || innerView == null || hostBackgroundObserver == null) return;
+		innerView.post(() -> {
+			BackgroundColorObserver observer = hostBackgroundObserver;
+			if (observer != null) observer.onBackgroundColor(effectiveBackgroundArgb());
+		});
+	}
+
 	private void ensureAmbientState() {
 		if (!isReactiveBackground()) return;
 		synchronized (ambientLock) {
@@ -477,6 +495,7 @@ public abstract class Canvas extends Displayable {
 		}
 		lastAmbientSampleSequence = sampledSequence;
 		ambientGeometryDirty = false;
+		if (isDynamicSolidMode()) notifyHostBackground();
 		return true;
 	}
 
@@ -524,6 +543,7 @@ public abstract class Canvas extends Displayable {
 		boolean active = isAmbientTransitioning();
 		boolean samplePending = hasAmbientSamplePending();
 		if ((samplePending && now >= nextAmbientSampleNs) || active) invalidateAmbientHost();
+		if (active) notifyHostBackground();
 		if (active || (samplePending && now < nextAmbientSampleNs)) {
 			scheduleAmbientHostTick(active ? AMBIENT_HOST_INTERVAL_NS : nextAmbientSampleNs - now);
 		}
