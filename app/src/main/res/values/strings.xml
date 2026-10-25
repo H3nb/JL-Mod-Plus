@@ -1243,5 +1243,6 @@
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Base image</string>
     <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Thumb image</string>
     <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Active thumb image</string>
-    <string name="control_skin_group_hint" tools:ignore="MissingTranslation">Images change appearance only. Align layers in your images; layout and touch behavior stay unchanged.</string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Default</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Customized</string>
 </resources>

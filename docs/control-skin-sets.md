@@ -84,9 +84,18 @@ slot and state when imported through the editor.
 
 The Compose manager opens from MIDlet virtual-controls settings. Its compact
 library selects a set by tapping its row, and the overflow menu edits or
-manages the set. The editor arranges keys as a numeric keypad, navigation pad,
-and other buttons; tapping a key opens an in-place bottom sheet with normal
-and pressed image previews and an icon/full-button mode selector.
+manages the set. The editor groups movement controls, numeric keys, navigation,
+and other buttons. On compact windows groups scroll in one column; wider
+windows arrange them across two or three columns. Each group still edits the
+same global skin assets.
+
+The editor uses a bottom sheet when vertical space permits, or a split
+preview/asset-detail page in short, wide windows. Grouped controls present a
+composite preview and a compact list of individual image slots. The legacy
+button editor retains its icon/full mode and normal/pressed image slots.
+Previews use MIDlet appearance colors for built-in controls and available
+custom layers; they do not simulate movement or affect the actual control
+renderer.
 
 Set edits (create, image import/removal, rename, duplicate, mode, delete) are
 saved globally after each successful operation; there is no redundant Save

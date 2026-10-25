@@ -13,7 +13,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -593,7 +592,6 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 Surface(
                     modifier = Modifier.fillMaxWidth()
                         .clickable(enabled = !busy, role = Role.Button) { selectedKey = group }
-                        .semantics { contentDescription = if (group == "dpad") "D-pad" else "Analog" },
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                     border = if (customized)
@@ -612,8 +610,9 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text("›", style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(painterResource(R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -632,7 +631,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             } else {
                 if (base == null) BuiltinAnalogPreview(Modifier.fillMaxSize(), base = true, thumb = false)
                 else Image(base.asImageBitmap(), contentDescription = null,
-                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
+                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(0.94f))
                 val thumb = groupedPreviews["analog_thumb"]
                 if (thumb == null) BuiltinAnalogPreview(Modifier.fillMaxSize(), base = false, thumb = true)
                 else Image(thumb.asImageBitmap(), contentDescription = null,

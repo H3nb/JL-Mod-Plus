@@ -1157,5 +1157,6 @@
     <string name="control_skin_analog_base">Gambar dasar</string>
     <string name="control_skin_analog_thumb">Gambar thumb</string>
     <string name="control_skin_analog_thumb_pressed">Gambar thumb aktif</string>
-    <string name="control_skin_group_hint">Gambar hanya mengubah tampilan. Sesuaikan posisi lapisan dalam gambar; tata letak dan sentuhan tidak berubah.</string>
+    <string name="control_skin_builtin_preview">Bawaan</string>
+    <string name="control_skin_custom_preview">Kustom</string>
 </resources>
