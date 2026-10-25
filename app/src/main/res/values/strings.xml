@@ -781,6 +781,8 @@
     <string name="config_background_immersive">Immersive</string>
     <string name="config_background_theme_help">Uses the JL-Mod Plus theme color around the MIDlet screen.</string>
     <string name="config_background_immersive_help">Fills unused space with colors sampled from the MIDlet screen.</string>
+    <string name="config_background_dynamic">Dynamic color</string>
+    <string name="config_background_dynamic_help">Uses one solid color that adjusts smoothly to the MIDlet screen.</string>
     <string name="config_background_custom_color">Background color</string>
     <string name="config_help_background_custom_color">Sets the color of unused space around the MIDlet screen.</string>
     <string name="config_help_skin">Shows an optional image or frame around the MIDlet screen.</string>

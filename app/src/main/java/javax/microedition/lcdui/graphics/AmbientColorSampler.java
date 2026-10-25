@@ -98,6 +98,14 @@ public final class AmbientColorSampler {
         }
     }
 
+    /** Reads the same reusable captured grid for the solid-color strategy. */
+    public boolean readCapturedPixels(int[] destination) {
+        if (gridBitmap == null || gridBitmap.isRecycled() || destination == null
+                || destination.length < GRID_COLOR_COUNT) return false;
+        gridBitmap.getPixels(destination, 0, GRID_SIZE, 0, 0, GRID_SIZE, GRID_SIZE);
+        return true;
+    }
+
     static float srgbChannelToLinear(int value) {
         return SRGB_TO_LINEAR[value & 0xFF];
     }

@@ -382,6 +382,7 @@ internal fun ConfigColorPreference(
     description: String,
     value: String,
     onClick: () -> Unit,
+    displayLabel: String? = null,
 ) {
     Column(
         modifier = Modifier
@@ -401,15 +402,17 @@ internal fun ConfigColorPreference(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(MaterialTheme.shapes.extraSmall)
-                    .background(configColor(value))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
-            )
+            if (displayLabel == null) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(MaterialTheme.shapes.extraSmall)
+                        .background(configColor(value))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
+                )
+            }
             Text(
-                text = "#${value.ifEmpty { "000000" }}",
+                text = displayLabel ?: "#${value.ifEmpty { "000000" }}",
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,

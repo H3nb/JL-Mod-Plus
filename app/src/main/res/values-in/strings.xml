@@ -713,6 +713,8 @@
     <string name="config_background_immersive">Imersif</string>
     <string name="config_background_theme_help">Menggunakan warna latar tema JL-Mod Plus di area sekitar layar MIDlet.</string>
     <string name="config_background_immersive_help">Mengisi area di sekitar layar MIDlet dengan warna yang diambil dari layar.</string>
+    <string name="config_background_dynamic">Warna dinamis</string>
+    <string name="config_background_dynamic_help">Menggunakan satu warna solid yang menyesuaikan secara halus dengan tampilan MIDlet.</string>
     <string name="config_background_custom_color">Warna latar belakang</string>
     <string name="config_help_background_custom_color">Menentukan warna yang digunakan di area sekitar layar MIDlet.</string>
     <string name="config_help_skin">Menampilkan skin atau bingkai opsional di sekitar layar MIDlet.</string>

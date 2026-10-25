@@ -31,6 +31,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -68,10 +69,13 @@ import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 internal fun ConfigColorPickerDialog(
     initialHex: String,
     onDismissRequest: () -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Boolean) -> Unit,
+    allowDynamic: Boolean = false,
+    initialDynamic: Boolean = false,
 ) {
     var hsv by remember(initialHex) { mutableStateOf(parseHsv(initialHex)) }
     var hexText by remember(initialHex) { mutableStateOf(formatHsv(hsv)) }
+    var dynamic by remember(initialDynamic) { mutableStateOf(allowDynamic && initialDynamic) }
     val color = Color.hsv(hsv[0], hsv[1], hsv[2])
     val hexIsValid = hexText.length == 6
     val scrollState = rememberScrollState()
@@ -91,7 +95,21 @@ internal fun ConfigColorPickerDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_color_picker_title)) },
         text = {
-            BoxWithConstraints {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (allowDynamic) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = dynamic, onCheckedChange = { dynamic = it })
+                        Text(stringResource(R.string.config_background_dynamic))
+                    }
+                    if (dynamic) {
+                        Text(
+                            text = stringResource(R.string.config_background_dynamic_help),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                if (!dynamic) BoxWithConstraints {
                 val useTwoPane = maxWidth >= 480.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) &&
                     maxWidth > maxHeight && maxHeight != Dp.Infinity
                 val pickerHeight = if (maxHeight == Dp.Infinity) {
@@ -188,11 +206,12 @@ internal fun ConfigColorPickerDialog(
                     )
                 }
             }
+            }
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(formatHsv(hsv)) },
-                enabled = hexIsValid,
+                onClick = { onConfirm(formatHsv(hsv), dynamic) },
+                enabled = dynamic || hexIsValid,
             ) {
                 Text(stringResource(android.R.string.ok))
             }

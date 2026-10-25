@@ -107,6 +107,7 @@ import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions;
 import io.github.h3nb.jlmodplus.input.GuestKeyLedgerAdapter;
 import io.github.h3nb.jlmodplus.input.ControllerPointerConsumer;
+import javax.microedition.lcdui.graphics.AdaptiveSolidBackground;
 import javax.microedition.lcdui.graphics.AmbientCanvasRenderer;
 import javax.microedition.lcdui.graphics.AmbientColorField;
 import javax.microedition.lcdui.graphics.AmbientColorSampler;
@@ -200,6 +201,8 @@ public abstract class Canvas extends Displayable {
 	private volatile int displayMaximumFps;
 	private final Object ambientLock = new Object();
 	private final AmbientColorSampler ambientSampler = new AmbientColorSampler();
+	private final int[] adaptivePixels = new int[AmbientColorSampler.GRID_COLOR_COUNT];
+	private AdaptiveSolidBackground adaptiveSolid;
 	private AmbientColorField ambientField;
 	private AmbientCanvasRenderer ambientCanvasRenderer;
 	private AmbientMesh ambientMesh;
@@ -318,11 +321,12 @@ public abstract class Canvas extends Displayable {
 	/** Receives a host-owned theme snapshot; render paths never read preferences or Compose state. */
 	public void updateBackgroundTheme(int argb) {
 		themeBackgroundArgb = argb | Color.BLACK;
-		if (!isImmersiveMode()) return;
+		if (!isReactiveBackground()) return;
 		long now = SystemClock.elapsedRealtimeNanos();
 		synchronized (ambientLock) {
 			ensureAmbientStateLocked();
-			ambientField.setBaseColor(themeBackgroundArgb, now, false);
+			if (isDynamicSolidMode()) adaptiveSolid.setFallback(themeBackgroundArgb);
+			else ambientField.setBaseColor(themeBackgroundArgb, now, false);
 		}
 		invalidateAmbientHost();
 	}
@@ -331,7 +335,21 @@ public abstract class Canvas extends Displayable {
 		return BackgroundMode.sanitize(settings.screenBackgroundMode) == BackgroundMode.IMMERSIVE;
 	}
 
+	private boolean isDynamicSolidMode() {
+		return BackgroundMode.sanitize(settings.screenBackgroundMode) == BackgroundMode.DYNAMIC_SOLID;
+	}
+
+	private boolean isReactiveBackground() {
+		return isImmersiveMode() || isDynamicSolidMode();
+	}
+
 	private int effectiveBackgroundArgb() {
+		if (isDynamicSolidMode()) {
+			synchronized (ambientLock) {
+				return adaptiveSolid == null ? themeBackgroundArgb
+						: adaptiveSolid.colorAt(SystemClock.elapsedRealtimeNanos());
+			}
+		}
 		return isImmersiveMode() || BackgroundMode.sanitize(settings.screenBackgroundMode)
 				== BackgroundMode.THEME
 				? themeBackgroundArgb
@@ -344,13 +362,17 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void ensureAmbientState() {
-		if (!isImmersiveMode()) return;
+		if (!isReactiveBackground()) return;
 		synchronized (ambientLock) {
 			ensureAmbientStateLocked();
 		}
 	}
 
 	private void ensureAmbientStateLocked() {
+		if (isDynamicSolidMode()) {
+			if (adaptiveSolid == null) adaptiveSolid = new AdaptiveSolidBackground(themeBackgroundArgb);
+			return;
+		}
 		if (ambientField == null) {
 			ambientField = new AmbientColorField();
 			ambientField.resetToBase(themeBackgroundArgb);
@@ -365,7 +387,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void configureAmbientGeometry() {
-		if (!isImmersiveMode()) {
+		if (!isReactiveBackground()) {
 			synchronized (ambientLock) {
 				ambientLayoutValid = false;
 				ambientGeometryDirty = true;
@@ -392,6 +414,7 @@ public abstract class Canvas extends Displayable {
 			ambientGeometryDirty = true;
 			if (layoutValid) {
 				ensureAmbientStateLocked();
+				if (isImmersiveMode()) {
 				if (settings.graphicsMode == 1) {
 					ambientMesh.build(displayWidth, displayHeight, ambientGameRect);
 					for (int i = 0; i < ambientMesh.vertexCount(); i++) {
@@ -404,6 +427,7 @@ public abstract class Canvas extends Displayable {
 							displayWidth / (float) displayHeight);
 				} else {
 					ambientCanvasRenderer.configure(displayWidth, displayHeight, ambientGameRect);
+				}
 				}
 			}
 			ambientLayoutValid = layoutValid;
@@ -419,7 +443,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private boolean sampleAmbientIfDue(long nowNs) {
-		if (!isImmersiveMode() || !visible || !ambientLayoutValid || nowNs < nextAmbientSampleNs) {
+		if (!isReactiveBackground() || !visible || !ambientLayoutValid || nowNs < nextAmbientSampleNs) {
 			return false;
 		}
 		boolean sampled = false;
@@ -435,12 +459,21 @@ public abstract class Canvas extends Displayable {
 				}
 			}
 		}
-		nextAmbientSampleNs = nowNs + AmbientColorField.SAMPLE_INTERVAL_NS;
+		nextAmbientSampleNs = nowNs + (isDynamicSolidMode()
+				? AdaptiveSolidBackground.SAMPLE_INTERVAL_NS : AmbientColorField.SAMPLE_INTERVAL_NS);
 		if (!sampled) return false;
-		ambientSampler.toneCapturedGrid(themeBackgroundArgb, ambientTargetLinear);
-		synchronized (ambientLock) {
-			if (ambientField == null || !ambientLayoutValid || !isImmersiveMode()) return false;
-			ambientField.setTarget(ambientTargetLinear, nowNs, false);
+		if (isDynamicSolidMode()) {
+			if (!ambientSampler.readCapturedPixels(adaptivePixels)) return false;
+			synchronized (ambientLock) {
+				if (adaptiveSolid == null || !ambientLayoutValid) return false;
+				adaptiveSolid.setGrid(adaptivePixels, nowNs);
+			}
+		} else {
+			ambientSampler.toneCapturedGrid(themeBackgroundArgb, ambientTargetLinear);
+			synchronized (ambientLock) {
+				if (ambientField == null || !ambientLayoutValid || !isImmersiveMode()) return false;
+				ambientField.setTarget(ambientTargetLinear, nowNs, false);
+			}
 		}
 		lastAmbientSampleSequence = sampledSequence;
 		ambientGeometryDirty = false;
@@ -462,7 +495,12 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void drawAmbient(android.graphics.Canvas canvas, long nowNs) {
-		if (!isImmersiveMode() || !ambientLayoutValid) return;
+		if (!ambientLayoutValid) return;
+		if (isDynamicSolidMode()) {
+			sampleAmbientIfDue(nowNs);
+			return;
+		}
+		if (!isImmersiveMode()) return;
 		updateAmbientCanvas(nowNs);
 		synchronized (ambientLock) {
 			if (ambientCanvasRenderer != null) {
@@ -472,7 +510,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void invalidateAmbientHost() {
-		if (!isImmersiveMode() || !visible || !ambientLayoutValid) return;
+		if (!isReactiveBackground() || !visible || !ambientLayoutValid) return;
 		long generation = presentationMailbox.generation();
 		if (presentationMailbox.invalidateHost(generation) != 0L) {
 			requestFlushToScreen();
@@ -481,12 +519,9 @@ public abstract class Canvas extends Displayable {
 
 	private void runAmbientHostTick() {
 		ambientHostScheduled = false;
-		if (!visible || !isImmersiveMode() || !ambientLayoutValid) return;
+		if (!visible || !isReactiveBackground() || !ambientLayoutValid) return;
 		long now = SystemClock.elapsedRealtimeNanos();
-		boolean active;
-		synchronized (ambientLock) {
-			active = ambientField != null && ambientField.isTransitioning();
-		}
+		boolean active = isAmbientTransitioning();
 		boolean samplePending = hasAmbientSamplePending();
 		if ((samplePending && now >= nextAmbientSampleNs) || active) invalidateAmbientHost();
 		if (active || (samplePending && now < nextAmbientSampleNs)) {
@@ -495,7 +530,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void scheduleAmbientHostTick(long delayNs) {
-		if (ambientHostScheduled || innerView == null || !isImmersiveMode() || !visible
+		if (ambientHostScheduled || innerView == null || !isReactiveBackground() || !visible
 				|| (!hasAmbientSamplePending() && !isAmbientTransitioning())) return;
 		ambientHostScheduled = true;
 		long delayMs = Math.max(1L, Math.min(1000L, (delayNs + 999_999L) / 1_000_000L));
@@ -512,7 +547,9 @@ public abstract class Canvas extends Displayable {
 
 	private boolean isAmbientTransitioning() {
 		synchronized (ambientLock) {
-			return ambientField != null && ambientField.isTransitioning();
+			return isDynamicSolidMode()
+					? adaptiveSolid != null && adaptiveSolid.isTransitioning()
+					: ambientField != null && ambientField.isTransitioning();
 		}
 	}
 
@@ -1625,6 +1662,7 @@ public abstract class Canvas extends Displayable {
 			boolean presented = false;
 			try {
 				long nowNs = SystemClock.elapsedRealtimeNanos();
+				if (isDynamicSolidMode()) sampleAmbientIfDue(nowNs);
 				glDisable(GL_SCISSOR_TEST);
 				int c = effectiveBackgroundArgb();
 				glClearColor((c >> 16 & 0xff) / 255.0f, (c >> 8 & 0xff) / 255.0f,

@@ -34,6 +34,11 @@ public interface ConfigFormEvents {
 	/** Called after the host-owned picker confirms a six-digit RGB value. */
 	void onColorPicked(ColorField field, String value);
 
+	/** Commits the custom background color and dynamic state as one draft edit. */
+	default void onBackgroundColorPicked(String value, boolean dynamic) {
+		onColorPicked(ColorField.SCREEN_BACKGROUND, value);
+	}
+
 	void onKeyMappings();
 
 	void onEncodingPicker();
