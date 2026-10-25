@@ -1096,8 +1096,8 @@
         <item quantity="other">%1$d fichiers de classe Java ont été ignorés car ils n’ont pas pu être lus. Les fonctionnalités qui les utilisent peuvent ne pas fonctionner.</item>
         <item quantity="many">%1$d fichiers de classe Java ont été ignorés car ils n’ont pas pu être lus. Les fonctionnalités qui les utilisent peuvent ne pas fonctionner.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Étendre à la zone de l’encoche de l’écran</string>
-    <string name="pref_midlet_display_cutout_summary">Permet à l’affichage du MIDlet d’utiliser la zone autour de l’encoche de l’écran. Une partie de l’affichage peut être masquée.</string>
+    <string name="config_avoid_camera_cutout_title">Éviter la zone de la caméra ou de l’encoche</string>
+    <string name="config_avoid_camera_cutout_summary">Garde le jeu à l’écart de la caméra avant ou de l’encoche. Activez si les commandes sont masquées.</string>
     <string name="pref_runtime_fullscreen_title">Plein écran</string>
     <string name="pref_runtime_fullscreen_summary">Masque la barre d’outils pendant le jeu. S’applique à tous les MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Impossible d’accéder au réglage du plein écran. Réessayez.</string>

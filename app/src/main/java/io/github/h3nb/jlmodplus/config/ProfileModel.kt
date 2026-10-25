@@ -58,7 +58,7 @@ data class ProfileModel(
     @SerialName("TimingMode") @JvmField var timingMode: Int = TimingMode.FULL_GUEST_TIME,
     @SerialName("FpsLimit") @JvmField var fpsLimit: Int = 0,
     @SerialName("ForceFullscreen") @JvmField var forceFullscreen: Boolean = false,
-    @SerialName("AllowDisplayCutout") @JvmField var allowDisplayCutout: Boolean = false,
+    @SerialName("AllowDisplayCutout") @JvmField var allowDisplayCutout: Boolean = true,
     @SerialName("FontSizeSmall") @JvmField var fontSizeSmall: Int = 0,
     @SerialName("FontSizeMedium") @JvmField var fontSizeMedium: Int = 0,
     @SerialName("FontSizeLarge") @JvmField var fontSizeLarge: Int = 0,
@@ -98,7 +98,7 @@ data class ProfileModel(
     @SerialName("SkipResumeCall") @JvmField var skipResumeCall: Boolean = false,
 ) {
     companion object {
-        const val VERSION = 8
+        const val VERSION = 9
 
         @JvmStatic fun builtInThemePreferenceKey(configDir: File): String =
             "config_profile_builtin_theme:" + configDir.absolutePath

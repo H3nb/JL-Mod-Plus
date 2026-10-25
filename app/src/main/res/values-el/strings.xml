@@ -1062,8 +1062,8 @@
         <item quantity="one">%1$d επιλεγμένη</item>
         <item quantity="other">%1$d επιλεγμένες</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Επέκταση στην περιοχή εγκοπής οθόνης</string>
-    <string name="pref_midlet_display_cutout_summary">Επιτρέπει στην προβολή του MIDlet να χρησιμοποιεί την περιοχή γύρω από την εγκοπή της οθόνης. Μέρος της προβολής ενδέχεται να καλύπτεται.</string>
+    <string name="config_avoid_camera_cutout_title">Αποφυγή περιοχής κάμερας ή εγκοπής</string>
+    <string name="config_avoid_camera_cutout_summary">Κρατήστε το παιχνίδι μακριά από την μπροστινή κάμερα ή την εγκοπή της οθόνης. Ενεργοποιήστε αν καλύπτονται τα χειριστήρια.</string>
     <string name="pref_runtime_fullscreen_title">Πλήρης οθόνη</string>
     <string name="pref_runtime_fullscreen_summary">Απόκρυψη της γραμμής εργαλείων κατά το παιχνίδι. Ισχύει για όλα τα MIDlet.</string>
     <string name="runtime_fullscreen_update_failed">Δεν ήταν δυνατή η πρόσβαση στη ρύθμιση πλήρους οθόνης. Δοκιμάστε ξανά.</string>

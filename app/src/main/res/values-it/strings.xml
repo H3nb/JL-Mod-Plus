@@ -1096,8 +1096,8 @@
         <item quantity="other">%1$d file di classe Java sono stati saltati perché non è stato possibile leggerli. Le funzionalità che li usano potrebbero non funzionare.</item>
         <item quantity="many">%1$d di file di classe Java sono stati saltati perché non è stato possibile leggerli. Le funzionalità che li usano potrebbero non funzionare.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Estendi all’area del ritaglio del display</string>
-    <string name="pref_midlet_display_cutout_summary">Consenti alla schermata del MIDlet di usare l’area attorno al ritaglio del display. Parte della schermata potrebbe essere coperta.</string>
+    <string name="config_avoid_camera_cutout_title">Evita l’area della fotocamera o del ritaglio</string>
+    <string name="config_avoid_camera_cutout_summary">Mantiene il gioco lontano dalla fotocamera anteriore o dal ritaglio dello schermo. Attiva se i comandi risultano coperti.</string>
     <string name="pref_runtime_fullscreen_title">Schermo intero</string>
     <string name="pref_runtime_fullscreen_summary">Nasconde la barra degli strumenti durante il gioco. Si applica a tutti i MIDlet.</string>
     <string name="runtime_fullscreen_update_failed">Impossibile accedere all’impostazione dello schermo intero. Riprova.</string>

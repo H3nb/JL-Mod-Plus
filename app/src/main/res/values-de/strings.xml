@@ -1064,8 +1064,8 @@
         <item quantity="one">%1$d Java-Klassendatei wurde übersprungen, weil sie nicht gelesen werden konnte. Funktionen, die sie verwenden, funktionieren möglicherweise nicht.</item>
         <item quantity="other">%1$d Java-Klassendateien wurden übersprungen, weil sie nicht gelesen werden konnten. Funktionen, die sie verwenden, funktionieren möglicherweise nicht.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">In den Display-Ausschnitt erweitern</string>
-    <string name="pref_midlet_display_cutout_summary">Die MIDlet-Anzeige darf den Bereich um den Display-Ausschnitt nutzen. Ein Teil der Anzeige kann verdeckt werden.</string>
+    <string name="config_avoid_camera_cutout_title">Kamerabereich oder Displayausschnitt meiden</string>
+    <string name="config_avoid_camera_cutout_summary">Hält das Spiel vom Bereich der Frontkamera oder des Displayausschnitts fern. Aktivieren, wenn Bedienelemente verdeckt werden.</string>
     <string name="pref_runtime_fullscreen_title">Vollbild</string>
     <string name="pref_runtime_fullscreen_summary">Die Symbolleiste beim Spielen ausblenden. Gilt für alle MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Auf die Vollbildeinstellung konnte nicht zugegriffen werden. Versuche es erneut.</string>

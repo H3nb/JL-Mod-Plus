@@ -1063,8 +1063,8 @@
     <string name="pref_accent_rose">Жидек реңкті қызғылт</string>
     <string name="pref_accent_teal">Нефрит реңкті көкшіл жасыл</string>
     <string name="pref_accent_violet">Орхидея реңкті күлгін</string>
-    <string name="pref_midlet_display_cutout_title">Дисплей ойығының аймағына кеңейту</string>
-    <string name="pref_midlet_display_cutout_summary">MIDlet көрінісіне дисплей ойығының айналасындағы аймақты пайдалануға рұқсат беру. Көріністің бір бөлігі жабылып қалуы мүмкін.</string>
+    <string name="config_avoid_camera_cutout_title">Камера мен дисплей ойығын айналып өту</string>
+    <string name="config_avoid_camera_cutout_summary">Ойынды алдыңғы камера немесе дисплей ойығы орналасқан аймақтан тыс көрсетеді. Басқару түймелері жабылса, қосыңыз.</string>
     <string name="pref_runtime_fullscreen_title">Толық экран</string>
     <string name="pref_runtime_fullscreen_summary">Ойын кезінде саймандар панелін жасыру. Барлық MIDlet қолданбаларына қолданылады.</string>
     <string name="runtime_fullscreen_update_failed">Толық экран параметріне қол жеткізу мүмкін болмады. Қайталап көріңіз.</string>

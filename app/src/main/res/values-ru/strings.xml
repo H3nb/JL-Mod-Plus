@@ -1129,8 +1129,8 @@
         <item quantity="many">Пропущено %1$d файлов классов Java, поскольку их не удалось прочитать. Использующие их функции могут не работать.</item>
         <item quantity="other">Файлы классов Java пропущены, поскольку их не удалось прочитать: %1$d. Использующие их функции могут не работать.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Расширять в область выреза дисплея</string>
-    <string name="pref_midlet_display_cutout_summary">Разрешить экрану MIDlet использовать область вокруг выреза дисплея. Часть экрана может быть закрыта.</string>
+    <string name="config_avoid_camera_cutout_title">Избегать области камеры или выреза экрана</string>
+    <string name="config_avoid_camera_cutout_summary">Игра не будет заходить на область фронтальной камеры или выреза экрана. Включите, если элементы управления перекрываются.</string>
     <string name="pref_runtime_fullscreen_title">Полный экран</string>
     <string name="pref_runtime_fullscreen_summary">Скрывать панель инструментов во время игры. Применяется ко всем MIDlet.</string>
     <string name="runtime_fullscreen_update_failed">Не удалось получить доступ к настройке полного экрана. Повторите попытку.</string>

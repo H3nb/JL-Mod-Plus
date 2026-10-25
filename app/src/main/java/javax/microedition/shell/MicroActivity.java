@@ -189,7 +189,9 @@ public class MicroActivity extends AppCompatActivity {
 			this::refreshVirtualKeyboardEditorChrome;
 	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
 			(sharedPreferences, key) -> {
-				if (PREF_THEME.equals(key)) refreshCanvasBackground();
+				if (PREF_THEME.equals(key) && binding != null) {
+					binding.getRoot().post(this::refreshRuntimeBackground);
+				}
 			};
 	private final View.OnLayoutChangeListener overlayAnchorLayoutListener =
 			(view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
@@ -839,7 +841,11 @@ public class MicroActivity extends AppCompatActivity {
 			loadMIDlet();
 		}
 		externalAndroidHandoff = false;
-		refreshCanvasBackground();
+		refreshRuntimeBackground();
+		// Returning to the runtime must apply the current cutout policy even when
+		// fullscreen did not change and no system-bar callback is dispatched.
+		refreshRuntimeChrome();
+		ViewCompat.requestApplyInsets(binding.getRoot());
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostResumed();
 		}
@@ -869,7 +875,7 @@ public class MicroActivity extends AppCompatActivity {
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		CameraRuntime.onHostConfigurationChanged(this);
-		refreshCanvasBackground();
+		refreshRuntimeBackground();
 		if (binding != null) {
 			ViewCompat.requestApplyInsets(binding.getRoot());
 			binding.getRoot().post(() -> applyGuestInsets(current));
@@ -1002,10 +1008,14 @@ public class MicroActivity extends AppCompatActivity {
 		}
 	}
 
-	private void refreshCanvasBackground() {
+	private void refreshRuntimeBackground() {
+		int background = AppBackgroundColors.argb(ProfileModel.isDarkTheme(this));
 		if (current instanceof Canvas canvas) {
-			canvas.updateBackgroundTheme(AppBackgroundColors.argb(ProfileModel.isDarkTheme(this)));
+			canvas.updateBackgroundTheme(background);
+			background = canvas.getHostBackgroundArgb();
 		}
+		// The renderer is inside this padded container; the padding itself remains host-owned.
+		if (binding != null) binding.displayableContainer.setBackgroundColor(background);
 	}
 
 	private void hideSoftInput() {
@@ -2047,7 +2057,9 @@ public class MicroActivity extends AppCompatActivity {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
 			presentedDisplayable = next;
-			refreshCanvasBackground();
+			refreshRuntimeBackground();
+			// onResume may precede the first mounted guest; resolve its insets when attached.
+			ViewCompat.requestApplyInsets(binding.getRoot());
 			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}
 	}

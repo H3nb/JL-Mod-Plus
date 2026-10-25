@@ -77,9 +77,16 @@ non-Canvas Displayables.
   insets, density and text scale rather than a device model or orientation alone.
 - The runtime window draws edge-to-edge. Toolbar controls independently avoid
   cutouts, waterfall edges and reported rounded corners. Guest Canvas bounds
-  follow the profile's `AllowDisplayCutout` flag (default false); enabling it
-  permits game content under a cutout. Existing virtual-control layout, resize,
-  input and persistence behavior remain unchanged.
+  follow the profile's `AllowDisplayCutout` flag (default true since schema v9).
+  On devices with a reported display cutout, the user-facing "Avoid camera/notch area"
+  option inverts this flag: enabling it reserves a safe guest rectangle while leaving
+  the window edge-to-edge. The option is hidden if the window has no cutout, without
+  modifying the stored profile field. The
+  padded host area uses the Canvas background fallback color (Custom color or
+  Theme color; Immersive uses the theme base), not an unrelated Activity surface.
+  Restoring the runtime refreshes chrome and requests insets even when fullscreen
+  is unchanged. Existing virtual-control layout, input, and persistence semantics
+  remain unchanged.
   APIs without rounded-corner information retain the standard control margins.
 - Fullscreen uses the inverse existing global toolbar preference, written only
   by the main-process fullscreen authority. Settings and the runtime use its

@@ -348,7 +348,7 @@ public final class ConfigFormState {
 		private boolean immediateMode;
 		private boolean parallelRedrawScreen;
 		private boolean forceFullscreen;
-		private boolean allowDisplayCutout;
+		private boolean allowDisplayCutout = true;
 		private boolean showFps;
 		private int performanceOverlayMetrics = PerformanceOverlayOptions.STANDARD;
 		private int performanceOverlayPosition = PerformanceOverlayOptions.TOP_LEFT;

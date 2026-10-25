@@ -338,6 +338,11 @@ public abstract class Canvas extends Displayable {
 				: settings.screenBackgroundColor | Color.BLACK;
 	}
 
+	/** Same fallback color as the renderer, for host space outside the padded game surface. */
+	public int getHostBackgroundArgb() {
+		return effectiveBackgroundArgb();
+	}
+
 	private void ensureAmbientState() {
 		if (!isImmersiveMode()) return;
 		synchronized (ambientLock) {

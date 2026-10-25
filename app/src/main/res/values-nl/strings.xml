@@ -1063,8 +1063,8 @@
         <item quantity="one">%1$d Java-klassebestand is overgeslagen omdat het niet kon worden gelezen. Functies die het gebruiken werken mogelijk niet.</item>
         <item quantity="other">%1$d Java-klassebestanden zijn overgeslagen omdat ze niet konden worden gelezen. Functies die ze gebruiken werken mogelijk niet.</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Uitbreiden naar de schermuitsparing</string>
-    <string name="pref_midlet_display_cutout_summary">Laat de MIDlet-weergave de ruimte rondom de schermuitsparing gebruiken. Een deel van de weergave kan worden bedekt.</string>
+    <string name="config_avoid_camera_cutout_title">Camera- en schermuitsparing vermijden</string>
+    <string name="config_avoid_camera_cutout_summary">Houdt het spel weg van de frontcamera of schermuitsparing. Schakel in als bedieningselementen worden bedekt.</string>
     <string name="pref_runtime_fullscreen_title">Volledig scherm</string>
     <string name="pref_runtime_fullscreen_summary">Verberg de werkbalk tijdens het spelen. Geldt voor alle MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">Geen toegang tot de instelling voor volledig scherm. Probeer het opnieuw.</string>

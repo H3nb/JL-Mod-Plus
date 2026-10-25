@@ -1095,8 +1095,8 @@
         <item quantity="many">%1$d seleccionats</item>
         <item quantity="other">%1$d seleccionats</item>
     </plurals>
-    <string name="pref_midlet_display_cutout_title">Amplia a l’àrea del retall de pantalla</string>
-    <string name="pref_midlet_display_cutout_summary">Permet que la pantalla del MIDlet utilitzi l’àrea al voltant del retall de pantalla. Una part del contingut pot quedar tapada.</string>
+    <string name="config_avoid_camera_cutout_title">Evita la zona de la càmera o del retall</string>
+    <string name="config_avoid_camera_cutout_summary">Mantén el joc fora de la càmera frontal o del retall de pantalla. Activa-ho si els controls queden tapats.</string>
     <string name="pref_runtime_fullscreen_title">Pantalla completa</string>
     <string name="pref_runtime_fullscreen_summary">Amaga la barra d’eines mentre jugues. S’aplica a tots els MIDlets.</string>
     <string name="runtime_fullscreen_update_failed">No s’ha pogut accedir a l’ajust de pantalla completa. Torna-ho a provar.</string>
