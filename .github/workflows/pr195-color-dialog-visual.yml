@@ -1,0 +1,93 @@
+name: PR195 Color Dialog Visual Validation
+
+on:
+  pull_request:
+    branches: [alpha]
+    paths:
+      - '.github/workflows/pr195-color-dialog-visual.yml'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/config/ConfigColorPicker.kt'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/config/**'
+
+permissions:
+  contents: read
+
+jobs:
+  portrait-and-landscape:
+    if: ${{ github.event.pull_request.number == 195 && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout PR sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Gradle setup
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: KVM accelerator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run UI contracts and capture screenshots in portrait and landscape
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            chmod +x gradlew
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+            mapfile -t test_apks < <(find app/build/outputs/apk/androidTest -type f -name '*.apk' -print)
+            [[ ${#test_apks[@]} -eq 1 ]]
+            adb install -r -t "${test_apks[0]}"
+            mapfile -t runners < <(adb shell pm list instrumentation | tr -d '\r' | sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p')
+            [[ ${#runners[@]} -eq 1 ]]
+            mkdir -p ci-artifacts/color-picker ci-artifacts/color-picker/screenshots
+            selectors=(
+              'io.github.h3nb.jlmodplus.config.ColorPickerVisualProbeTest#capturePickerInBothDynamicStates'
+              'io.github.h3nb.jlmodplus.config.ConfigComposeTest#dynamicBackgroundPickerPreservesManualHex'
+              'io.github.h3nb.jlmodplus.config.ConfigComposeTest#dynamicBackgroundPickerCanReturnToManualEditingWithoutLosingColor'
+            )
+            for orientation in portrait landscape; do
+              rotation=0
+              if [[ "$orientation" == landscape ]]; then rotation=1; fi
+              adb shell cmd window user-rotation lock "$rotation"
+              sleep 3
+              log="ci-artifacts/color-picker/${orientation}.txt"
+              IFS=, selector_arg="${selectors[*]}"
+              adb shell am instrument -w -r -e class "$selector_arg" "${runners[0]}" > "$log" 2>&1 || { cat "$log"; exit 1; }
+              cat "$log"
+              python3 scripts/runtime-smoke-results.py --log "$log" --output ci-artifacts/color-picker/passed.txt "${selectors[@]}"
+            done
+            adb pull /sdcard/Android/data/io.github.h3nb.jlmodplus.debug/files/color-picker-probe/ ci-artifacts/color-picker/screenshots/
+            test -f ci-artifacts/color-picker/screenshots/color-picker-probe/portrait-manual.png
+            test -f ci-artifacts/color-picker/screenshots/color-picker-probe/portrait-dynamic.png
+            test -f ci-artifacts/color-picker/screenshots/color-picker-probe/landscape-manual.png
+            test -f ci-artifacts/color-picker/screenshots/color-picker-probe/landscape-dynamic.png
+
+      - name: Upload rendered screenshots and evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr195-color-picker-visual-proof
+          path: ci-artifacts/color-picker/**
+          retention-days: 7
+          if-no-files-found: warn
