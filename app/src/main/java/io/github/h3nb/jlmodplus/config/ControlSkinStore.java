@@ -288,6 +288,15 @@ public final class ControlSkinStore {
         return webp.isFile() ? webp : null;
     }
 
+    /** Count customized keys, not image files: pressed-only assets are inactive. */
+    public static int countCustomizedButtons(File folder) {
+        int count = 0;
+        for (String key : KEYS) {
+            if (image(folder, key, false) != null) count++;
+        }
+        return count;
+    }
+
     public static synchronized void importImage(File workdir, String setId, String key,
             boolean pressed, InputStream source, String suffix) throws IOException {
         if (!validKey(key) || (!".png".equals(suffix) && !".webp".equals(suffix))) {
