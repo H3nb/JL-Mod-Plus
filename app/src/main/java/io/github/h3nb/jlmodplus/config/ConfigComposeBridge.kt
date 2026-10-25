@@ -335,7 +335,6 @@ internal fun ConfigScreen(
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
-    var controlColorsVisible by rememberSaveable { mutableStateOf(false) }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
@@ -343,9 +342,7 @@ internal fun ConfigScreen(
         events.onFormChanged(next)
     }
     val requestBack = {
-        if (controlColorsVisible) {
-            controlColorsVisible = false
-        } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
+        if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
             discardProfileChangesVisible = true
         } else {
             menuActions?.onBack()
@@ -372,7 +369,6 @@ internal fun ConfigScreen(
             pagerScope.launch { pagerState.navigateToTab(index) }
         }
     }
-    val controlsScrollState = rememberScrollState()
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
@@ -393,13 +389,6 @@ internal fun ConfigScreen(
                 systemPropertiesEditorVisible = false
                 updateForm(form.toBuilder().systemProperties(value).build())
             },
-            modifier = modifier,
-        )
-    } else if (controlColorsVisible) {
-        ConfigControlsColorsPage(
-            form = form,
-            onBack = { controlColorsVisible = false },
-            onColorPicker = events::onColorPicker,
             modifier = modifier,
         )
     } else {
@@ -443,8 +432,7 @@ internal fun ConfigScreen(
                         .padding(padding)
                         .consumeWindowInsets(padding),
                 ) { page ->
-                        val pageScrollState = if (destinations[page] == ConfigDestination.Controls)
-                            controlsScrollState else rememberScrollState()
+                        val pageScrollState = rememberScrollState()
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -469,7 +457,6 @@ internal fun ConfigScreen(
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
                                     onUsePreset = { presetPickerVisible = true },
                                     onSavePreset = { savePresetVisible = true },
-                                    onOpenControlColors = { controlColorsVisible = true },
                                     modifier = Modifier.widthIn(max = 880.dp),
                                 )
                             }
@@ -585,7 +572,6 @@ private fun ConfigDestinationContent(
     onEditSystemProperties: () -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
-    onOpenControlColors: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -616,7 +602,6 @@ private fun ConfigDestinationContent(
                 onFormChanged,
                 events,
                 onRequestAction,
-                onOpenControlColors,
             )
             ConfigDestination.System -> {
                 SystemSection(state, form, onFormChanged, events, !isProfile, onEditSystemProperties)
@@ -1672,7 +1657,6 @@ private fun InputSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
-    onOpenControlColors: () -> Unit,
 ) {
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
@@ -1686,6 +1670,7 @@ private fun InputSection(
         )
         ConfigCompactValuePreference(
             title = stringResource(R.string.pref_map_keys),
+            description = stringResource(R.string.config_help_key_mapping),
             onClick = events::onKeyMappings,
         )
         GamepadInputPreferences(
@@ -1723,11 +1708,6 @@ private fun InputSection(
         )
     }
     ConfigSection(title = stringResource(R.string.config_controls_customization)) {
-        ConfigCompactValuePreference(
-            title = stringResource(R.string.control_skin_title),
-            value = state.controlSkinName.ifBlank { stringResource(R.string.control_skin_default) },
-            onClick = events::onManageControlSkins,
-        )
         val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
         ConfigChoicePreference(
             title = stringResource(R.string.pref_button_shape_title),
@@ -1736,6 +1716,12 @@ private fun InputSection(
             options = shapeOptions,
             compact = true,
             onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
+        )
+        ConfigCompactValuePreference(
+            title = stringResource(R.string.control_skin_title),
+            description = stringResource(R.string.config_controls_skin_help),
+            value = state.controlSkinName.ifBlank { stringResource(R.string.control_skin_default) },
+            onClick = events::onManageControlSkins,
         )
         ConfigSliderPreference(
             title = stringResource(R.string.PREF_VK_ALPHA),
@@ -1754,11 +1740,12 @@ private fun InputSection(
             checked = form.vkForceOpacity,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
         )
-        ConfigControlsColorsEntry(form, onOpenControlColors)
+        ConfigControlsColorOptions(form, events::onColorPicker)
     }
     ConfigSection(title = stringResource(R.string.config_controls_maintenance)) {
         ConfigCompactValuePreference(
             title = stringResource(R.string.RESET_LAYOUT_CMD),
+            description = stringResource(R.string.config_help_reset_layout),
             destructive = true,
             onClick = { onRequestAction(ConfigAction.ResetLayout) },
         )
@@ -1794,7 +1781,7 @@ internal fun VirtualControlsColorPreview(form: ConfigFormState) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.Center,
         ) {
             FilterChip(
                 selected = !pressed,
@@ -1811,7 +1798,7 @@ internal fun VirtualControlsColorPreview(form: ConfigFormState) {
             modifier = Modifier
                 .fillMaxWidth()
                 .alpha(previewOpacity),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(

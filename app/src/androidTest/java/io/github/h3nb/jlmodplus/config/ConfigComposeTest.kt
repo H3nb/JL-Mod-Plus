@@ -906,7 +906,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun controlsColorEditorUsesACompactMatrixAndPreservesPickerFields() {
+    fun controlsColorsStayInlineAndEachSwatchOpensTheExpectedPicker() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
@@ -914,21 +914,25 @@ class ConfigComposeTest {
             }
         }
         scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
-        composeRule.onNodeWithTag("controls_colors_entry").performClick()
+        composeRule.onNodeWithTag("controls_colors_section").assertExists()
         composeRule.onNodeWithTag("virtual_controls_color_preview").assertExists()
-        composeRule.onNodeWithTag("color_normal_labels").performClick()
-        assertEquals(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND, events.colorPickerField)
-        composeRule.onNodeWithTag("color_pressed_button").performClick()
-        assertEquals(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND, events.colorPickerField)
-        composeRule.onNodeWithTag("color_outline").performClick()
-        assertEquals(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE, events.colorPickerField)
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
-        composeRule.onNodeWithTag("controls_colors_entry").assertExists()
-        composeRule.onNodeWithTag("color_outline").assertDoesNotExist()
+        val samples = listOf(
+            "color_normal_button" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND,
+            "color_pressed_button" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND,
+            "color_normal_labels" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND,
+            "color_pressed_labels" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND,
+            "color_outline" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE,
+        )
+        samples.forEach { (tag, field) ->
+            composeRule.onNodeWithTag(tag).performScrollTo().performClick()
+            assertEquals(field, events.colorPickerField)
+        }
+        // The MIDlet toolbar remains accessible; no secondary destination was opened.
+        composeRule.onNodeWithContentDescription(uiString(R.string.START_CMD)).assertExists()
     }
 
     @Test
-    fun controlsCustomizationRemainsAvailableWhenVirtualControlsAreOff() {
+    fun controlDescriptionsAndColorsRemainAvailableWhileVirtualControlsAreOff() {
         val base = sampleState()
         val state = ConfigUiState(
             base.form.toBuilder().showKeyboard(false).build(),
@@ -941,11 +945,27 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)).assertDoesNotExist()
-        scrollTo(uiString(R.string.config_controls_customization))
+        composeRule.onNodeWithText(uiString(R.string.config_help_key_layout)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.config_controls_disabled_hint)).assertExists()
+        scrollTo(uiString(R.string.config_controls_customization))
+        composeRule.onNodeWithText(uiString(R.string.config_help_vk_button_shape)).assertExists()
         scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
-        composeRule.onNodeWithTag("controls_colors_entry").performClick()
         composeRule.onNodeWithTag("color_outline").assertExists()
+    }
+
+    @Test
+    fun keypadShapePrecedesSkinSelection() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
+            }
+        }
+        scrollTo(uiString(R.string.control_skin_title))
+        val shape = composeRule.onNodeWithText(uiString(R.string.pref_button_shape_title))
+            .fetchSemanticsNode().boundsInRoot
+        val skin = composeRule.onNodeWithText(uiString(R.string.control_skin_title))
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue("Keypad shape must precede skin", shape.bottom <= skin.top)
     }
 
     @Test

@@ -112,6 +112,7 @@ internal fun GamepadInputPreferences(
     if (compact) {
         ConfigCompactValuePreference(
             title = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate),
+            description = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate_summary),
             value = if (!controllerAvailable) {
                 androidx.compose.ui.res.stringResource(R.string.config_controls_connect_controller)
             } else null,

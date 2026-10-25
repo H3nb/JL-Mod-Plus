@@ -751,14 +751,20 @@
     <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
     <string name="config_controls_maintenance">Layout</string>
     <string name="config_controls_customization" tools:ignore="MissingTranslation">Customization</string>
+    <string name="config_controls_skin_help" tools:ignore="MissingTranslation">Selects the skin for this MIDlet. Editing a skin also affects other MIDlets using the same set.</string>
+    <string name="config_controls_color_button_normal" tools:ignore="MissingTranslation">Normal button</string>
+    <string name="config_controls_color_button_pressed" tools:ignore="MissingTranslation">Pressed button</string>
+    <string name="config_controls_color_label_normal" tools:ignore="MissingTranslation">Normal label</string>
+    <string name="config_controls_color_label_pressed" tools:ignore="MissingTranslation">Pressed label</string>
+    <string name="config_controls_color_outline_short" tools:ignore="MissingTranslation">Outline</string>
     <string name="config_controls_disabled_hint" tools:ignore="MissingTranslation">Virtual controls are off in General. You can still customize them here.</string>
-    <string name="config_controls_opacity_help" tools:ignore="MissingTranslation">0% is transparent; 100% is opaque.</string>
-    <string name="config_controls_opaque_outside" tools:ignore="MissingTranslation">Opaque outside the MIDlet screen</string>
-    <string name="config_controls_opaque_outside_help" tools:ignore="MissingTranslation">Ignore opacity only outside the MIDlet screen.</string>
+    <string name="config_controls_opacity_help" tools:ignore="MissingTranslation">Adjusts virtual control transparency: 0% is fully transparent; 100% is fully visible.</string>
+    <string name="config_controls_opaque_outside" tools:ignore="MissingTranslation">Show controls without transparency outside the MIDlet screen</string>
+    <string name="config_controls_opaque_outside_help" tools:ignore="MissingTranslation">Controls outside the MIDlet screen ignore opacity. Controls over the screen still follow the selected opacity.</string>
     <string name="config_controls_connect_controller" tools:ignore="MissingTranslation">Connect a controller to calibrate</string>
     <string name="config_controls_color_labels" tools:ignore="MissingTranslation">Labels &amp; symbols</string>
     <string name="config_controls_color_buttons" tools:ignore="MissingTranslation">Buttons</string>
-    <string name="config_controls_color_skin_notice" tools:ignore="MissingTranslation">Full-button skins can replace button colors and outlines.</string>
+    <string name="config_controls_color_skin_notice" tools:ignore="MissingTranslation">A full-button skin can replace the default button colors, shape, and outline.</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
     <string name="config_reset_all_settings">Reset all settings</string>
@@ -829,13 +835,13 @@
     <string name="config_help_font_presets">Applies font sizes suited to common J2ME screen resolutions.</string>
     <string name="config_help_font_dimensions">Applies Android’s font scale to Java ME font sizes.</string>
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
-    <string name="config_help_key_layout">Chooses the key code layout reported to the MIDlet.</string>
+    <string name="config_help_key_layout">Selects the key-code scheme reported to the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
-    <string name="config_help_vk_button_shape">Sets the shape of keypad buttons. The D-pad and analog stick keep their own shapes.</string>
-    <string name="config_help_vk_feedback">Requires vibration enabled in Settings.</string>
+    <string name="config_help_vk_button_shape">Sets the default keypad button shape. The D-pad and analog stick have their own shapes.</string>
+    <string name="config_help_vk_feedback">Vibrates when a virtual control is pressed if vibration is enabled in Settings.</string>
     <string name="config_help_vk_alpha">Sets control opacity: 0 = fully transparent; 255 = fully opaque.</string>
     <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>
-    <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. Set to 0 to disable auto-hide.</string>
+    <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. A value of 0 disables auto-hide.</string>
     <string name="config_help_vk_foreground">Sets the label and symbol color on virtual-control buttons.</string>
     <string name="config_help_vk_background">Sets the base color of virtual-control buttons.</string>
     <string name="config_help_vk_selected_foreground">Sets the label and symbol color while a virtual-control button is pressed.</string>
@@ -1204,7 +1210,7 @@
     <string name="config_asset_invalid">Unsupported or invalid file.</string>
     <string name="config_asset_operation_failed">Could not complete the file operation.</string>
     <string name="config_asset_busy">Finish the current file operation first.</string>
-    <string name="control_skin_title" tools:ignore="MissingTranslation">Control skin</string>
+    <string name="control_skin_title" tools:ignore="MissingTranslation">Virtual control skin</string>
     <string name="control_skin_create" tools:ignore="MissingTranslation">Create set</string>
     <string name="control_skin_default" tools:ignore="MissingTranslation">Default buttons</string>
     <string name="control_skin_edit" tools:ignore="MissingTranslation">Edit</string>

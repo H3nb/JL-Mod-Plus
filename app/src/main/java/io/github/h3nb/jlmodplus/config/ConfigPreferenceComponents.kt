@@ -91,7 +91,6 @@ internal fun ConfigSection(
     }
 }
 
-
 /** A single accessible target for compact configuration rows. Values remain visible and localized. */
 @Composable
 internal fun ConfigCompactValuePreference(
@@ -101,6 +100,7 @@ internal fun ConfigCompactValuePreference(
     enabled: Boolean = true,
     destructive: Boolean = false,
     modifier: Modifier = Modifier,
+    description: String? = null,
 ) {
     Column(
         modifier = modifier
@@ -119,11 +119,19 @@ internal fun ConfigCompactValuePreference(
                 else -> MaterialTheme.colorScheme.onSurface
             },
         )
+        if (!description.isNullOrEmpty()) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+            )
+        }
         if (!value.isNullOrEmpty()) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.labelLarge,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -145,7 +153,7 @@ internal fun ConfigValuePreference(
     compact: Boolean = false,
 ) {
     if (compact && message == null) {
-        ConfigCompactValuePreference(title, value, onClick, enabled, modifier = modifier)
+        ConfigCompactValuePreference(title, value, onClick, enabled, modifier = modifier, description = description)
         return
     }
     Column(
