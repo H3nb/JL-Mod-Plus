@@ -23,12 +23,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat
 import java.io.File
 import java.util.concurrent.Executors
@@ -485,7 +486,8 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     @Composable
     private fun Editor(modifier: Modifier) {
         Column(modifier.verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally) {
             KeyGroup(stringResource(R.string.control_skin_numeric), numeric)
             KeyGroup(stringResource(R.string.control_skin_navigation), navigation)
             KeyGroup(stringResource(R.string.control_skin_other), other)
@@ -494,23 +496,18 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
     @Composable
     private fun KeyGroup(title: String, rows: List<List<String>>) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.widthIn(max = 460.dp).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             rows.forEach { keys ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     keys.forEach { key ->
                         val visual = previews[key]
+                        val spokenName = stringResource(R.string.control_skin_edit_named, label(key))
                         Surface(
                             modifier = Modifier.weight(1f).height(84.dp)
                                 .clickable(enabled = !busy, role = Role.Button) { selectedKey = key }
-                                .semantics {
-                                    contentDescription = getString(R.string.control_skin_edit_named,
-                                        when (key) {
-                                            "star" -> "*"
-                                            "pound" -> "#"
-                                            else -> key.replace('_', ' ')
-                                        })
-                                },
+                                .semantics { contentDescription = spokenName },
                             shape = MaterialTheme.shapes.medium,
                             color = MaterialTheme.colorScheme.surfaceContainerLow,
                             border = if (visual?.normal != null)
