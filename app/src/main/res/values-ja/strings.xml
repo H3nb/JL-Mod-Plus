@@ -261,14 +261,6 @@
     <string name="library_metadata_icon">アイコン</string>
     <string name="library_metadata_name">名前</string>
     <string name="library_metadata_reset_to_original">元の状態に戻す</string>
-    <string name="library_metadata_main_icon">メイン</string>
-    <string name="library_metadata_follows_main">メインアイコンを使用</string>
-    <string name="library_metadata_change">変更</string>
-    <string name="library_metadata_remove_portrait">3:4 アイコンを削除</string>
-    <string name="library_metadata_icon_updated">アイコンを更新しました</string>
-    <string name="library_metadata_discard_title">変更を破棄しますか？</string>
-    <string name="library_metadata_discard_message">保存していないテキストの変更は失われます。アイコンの変更はすでに保存されています。</string>
-    <string name="library_metadata_discard">破棄</string>
     <string name="library_metadata_save">保存</string>
     <string name="library_metadata_vendor">提供元</string>
     <string name="library_no_matches">「%1$s」に一致する項目がありません</string>
@@ -349,7 +341,21 @@
     <string name="config_color_picker_title">色を選択</string>
     <string name="config_controller_help_body_compact">コントローラーのボタンは、キーボードや端末のキーと同じキー割り当てを使用します。アナログスティックは MIDlet に方向入力のみを送ります。Android の戻る操作は通常どおり動作し、M に割り当てた物理ボタンは実行中の MIDlet メニューを開きます。</string>
     <string name="config_controls_key_input">物理入力</string>
-    <string name="config_controls_maintenance">仮想コントロールの配置</string>
+    <string name="config_controls_maintenance">配置</string>
+    <string name="control_skin_title">仮想コントロールのスキン</string>
+    <string name="config_controls_customization">カスタマイズ</string>
+    <string name="config_controls_skin_help">カスタム画像を使って、キーパッドボタン、方向パッド、アナログスティックの見た目を変更します。</string>
+    <string name="config_controls_color_button_normal">ボタンを離した状態</string>
+    <string name="config_controls_color_button_pressed">ボタンを押した状態</string>
+    <string name="config_controls_color_label_normal">離した状態のラベル</string>
+    <string name="config_controls_color_label_pressed">押した状態のラベル</string>
+    <string name="config_controls_color_outline_short">枠線</string>
+    <string name="config_controls_disabled_hint">「全般」で仮想コントロールがオフになっています。ここで見た目を変更することはできます。</string>
+    <string name="config_controls_opacity_help" formatted="false">仮想コントロールの透明度を調整します。0% は完全に透明、100% は不透明です。</string>
+    <string name="config_controls_opaque_outside">MIDlet 画面の外側のコントロールを不透明にする</string>
+    <string name="config_controls_opaque_outside_help">MIDlet 画面の外側では不透明度の設定を無視します。画面上に重なるコントロールには選択した値が適用されます。</string>
+    <string name="config_controls_connect_controller">調整するにはコントローラーを接続してください</string>
+    <string name="config_controls_color_skin_notice">ボタン全体を覆うスキンは、標準の色、形状、枠線を置き換える場合があります。</string>
     <string name="config_controls_virtual_keyboard">仮想コントロール</string>
     <string name="config_controls_virtual_keyboard_colors">仮想コントロールの色</string>
     <string name="config_current_screen_size">現在のサイズ：%1$s</string>
@@ -481,7 +487,7 @@
     <string name="config_help_virtual_keyboard">この MIDlet の画面上に操作用のコントロールを表示します。</string>
     <string name="config_help_vk_alpha">コントロールの不透明度を設定します。0 = 完全に透明、255 = 完全に不透明。</string>
     <string name="config_help_vk_background">仮想コントロールのボタンの基本色を設定します。</string>
-    <string name="config_help_vk_button_shape">キーパッドのボタンの形状を設定します。方向パッドとアナログスティックの形状は変わりません。</string>
+    <string name="config_help_vk_button_shape">キーパッドボタンの標準の形状を設定します。方向パッドとアナログスティックにはそれぞれ固有の形状があります。</string>
     <string name="config_help_vk_feedback">設定で振動が有効な場合、仮想コントロールを押すと振動します。</string>
     <string name="config_help_vk_force_opacity">MIDlet 画面の外のコントロールを不透明にします。画面に重なるコントロールには設定した不透明度を使用します。</string>
     <string name="config_help_vk_foreground">仮想コントロールのボタンに表示する文字と記号の色を設定します。</string>
@@ -506,7 +512,7 @@
     <string name="config_timing_mode_real_wall">システム時間</string>
     <string name="config_virtual_controls_color_preview">色のプレビュー</string>
     <string name="config_virtual_controls_preview_hint">タップして押したときの色を確認します。サンプルには選択した不透明度を使用します。</string>
-    <string name="config_virtual_controls_preview_normal">通常</string>
+    <string name="config_virtual_controls_preview_normal">離した状態</string>
     <string name="config_virtual_controls_preview_pressed">押下中</string>
     <string name="config_warning_filter_shader">線形フィルタリングは画面シェーダーの処理前に入力を滑らかにするため、出力の鮮明さが低下する場合があります。</string>
     <string name="layout_edit_continue">編集を続ける</string>
@@ -941,7 +947,7 @@
     <string name="pref_button_shape_oval">楕円</string>
     <string name="pref_button_shape_rect">長方形</string>
     <string name="pref_button_shape_round">角丸長方形</string>
-    <string name="pref_button_shape_title">ボタンの形</string>
+    <string name="pref_button_shape_title">キーパッドボタンの形状</string>
     <string name="pref_category_experimental">実験的機能</string>
     <string name="pref_graphics_mode_title">グラフィックスモード</string>
     <string name="pref_language">アプリの言語</string>
@@ -1084,6 +1090,14 @@
     <string name="config_asset_busy">現在のファイル操作が終わってから実行してください。</string>
     <string name="config_background_dynamic">動的な色</string>
     <string name="config_background_dynamic_help">MIDletの画面に合わせて滑らかに変化する単色を使用します。</string>
+    <string name="library_metadata_main_icon">メイン</string>
+    <string name="library_metadata_follows_main">メインアイコンを使用</string>
+    <string name="library_metadata_change">変更</string>
+    <string name="library_metadata_remove_portrait">3:4 アイコンを削除</string>
+    <string name="library_metadata_icon_updated">アイコンを更新しました</string>
+    <string name="library_metadata_discard_title">変更を破棄しますか？</string>
+    <string name="library_metadata_discard_message">保存していないテキストの変更は失われます。アイコンの変更はすでに保存されています。</string>
+    <string name="library_metadata_discard">破棄</string>
     <string name="library_metadata_default_description">既定の説明</string>
     <string name="library_metadata_other_languages">その他の言語</string>
     <string name="library_metadata_add_language">+ 言語を追加</string>

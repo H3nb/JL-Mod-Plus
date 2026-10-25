@@ -199,7 +199,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rektangel</string>
     <string name="pref_button_shape_round">Afrundet rektangel</string>
-    <string name="pref_button_shape_title">Knapform</string>
+    <string name="pref_button_shape_title">Form på tastaturknapper</string>
     <string name="pref_category_experimental">Eksperimentelle/midlertidige indstillinger</string>
     <string name="pref_emulator_dir">Arbejdsmappe</string>
     <string name="pref_encoding_title">Tegnkodning</string>
@@ -674,7 +674,21 @@
     <string name="config_controls_key_input">Fysisk input</string>
     <string name="config_controls_virtual_keyboard">Virtuelle kontroller</string>
     <string name="config_controls_virtual_keyboard_colors">Farver på virtuelle kontroller</string>
-    <string name="config_controls_maintenance">Layout for virtuelle kontroller</string>
+    <string name="config_controls_maintenance">Layout</string>
+    <string name="control_skin_title">Skin til virtuelle kontroller</string>
+    <string name="config_controls_customization">Tilpasning</string>
+    <string name="config_controls_skin_help">Ændrer udseendet af tastaturknapperne, D-pad og den analoge styrepind med brugerdefinerede billeder.</string>
+    <string name="config_controls_color_button_normal">Knap sluppet</string>
+    <string name="config_controls_color_button_pressed">Knap trykket</string>
+    <string name="config_controls_color_label_normal">Etiket sluppet</string>
+    <string name="config_controls_color_label_pressed">Etiket trykket</string>
+    <string name="config_controls_color_outline_short">Kontur</string>
+    <string name="config_controls_disabled_hint">Virtuelle kontroller er slået fra under Basis. Du kan stadig tilpasse dem her.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerer gennemsigtigheden af virtuelle kontroller: 0 % er helt gennemsigtigt, og 100 % er uigennemsigtigt.</string>
+    <string name="config_controls_opaque_outside">Vis kontroller uden gennemsigtighed uden for MIDlet-skærmen</string>
+    <string name="config_controls_opaque_outside_help">Kontroller uden for MIDlet-skærmen ignorerer opacitetsindstillingen. Kontroller over skærmen følger stadig den valgte opacitet.</string>
+    <string name="config_controls_connect_controller">Tilslut en controller for at kalibrere</string>
+    <string name="config_controls_color_skin_notice">Et skin, der dækker hele knappen, kan erstatte standardfarverne, formen og konturen.</string>
     <string name="config_current_value">Aktuel værdi</string>
     <string name="config_maintenance">Nulstil &amp; data</string>
     <string name="config_reset_all_settings">Nulstil alle indstillinger</string>
@@ -742,7 +756,7 @@
     <string name="config_help_font_aa">Udjævner kanterne på gengivet tekst.</string>
     <string name="config_help_key_layout">Vælger det tastekodelayout, som MIDlet bruger.</string>
     <string name="config_help_key_mapping">Tildeler Android-taster og -knapper til J2ME-tastaturhandlinger.</string>
-    <string name="config_help_vk_button_shape">Indstiller formen på tastaturknapper. D-pad og analog stick beholder deres egne former.</string>
+    <string name="config_help_vk_button_shape">Indstiller standardformen på tastaturknapperne. D-pad og analog stick har deres egne former.</string>
     <string name="config_help_vk_feedback">Vibrerer ved tryk på virtuelle kontroller, når vibration er aktiveret i Indstillinger.</string>
     <string name="config_help_vk_alpha">Indstiller de virtuelle kontrollers opacitet: 0 = helt gennemsigtige; 255 = helt uigennemsigtige.</string>
     <string name="config_help_vk_force_opacity">Gør kontroller uden for MIDlet-skærmen ugennemsigtige. Kontroller over skærmen bruger den indstillede gennemsigtighed.</string>
@@ -820,14 +834,6 @@
     <string name="library_metadata_vendor">Leverandør</string>
     <string name="library_metadata_description">Beskrivelse</string>
     <string name="library_metadata_reset_to_original">Nulstil til original</string>
-    <string name="library_metadata_main_icon">Primært</string>
-    <string name="library_metadata_follows_main">Bruger primært ikon</string>
-    <string name="library_metadata_change">Skift</string>
-    <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
-    <string name="library_metadata_icon_updated">Ikon opdateret</string>
-    <string name="library_metadata_discard_title">Kassér ændringer?</string>
-    <string name="library_metadata_discard_message">Ikke-gemte tekstændringer går tabt. Ændringer af ikoner er allerede gemt.</string>
-    <string name="library_metadata_discard">Kassér</string>
     <string name="library_metadata_save">Gem</string>
     <string name="library_hide_grid_titles_summary">Vis kun MIDlet-ikoner i gittervisning.</string>
     <string name="library_show_list_description_summary">Vis beskrivelsen for hver MIDlet under titel og version.</string>
@@ -988,7 +994,7 @@
     <string name="bulk_install_unreadable_archives">Ulæselige arkiver: %1$d</string>
     <string name="config_virtual_controls_color_preview">Farvevisning</string>
     <string name="config_virtual_controls_preview_hint">Tryk for at se farverne ved tryk. Eksemplet bruger den valgte opacitet.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Sluppet</string>
     <string name="config_virtual_controls_preview_pressed">Trykket</string>
     <string name="config_warning_filter_shader">Lineær filtrering udglatter billedet, før skærmshaderen behandler det, og kan reducere skarpheden i resultatet.</string>
     <string name="install_done_with_warning">Applikation installeret med advarsler.</string>
@@ -1117,6 +1123,14 @@
     <string name="config_asset_busy">Afslut først den igangværende filhandling.</string>
     <string name="config_background_dynamic">Dynamisk farve</string>
     <string name="config_background_dynamic_help">Bruger én ensartet farve, der tilpasser sig MIDlet-skærmen gradvist.</string>
+    <string name="library_metadata_main_icon">Primært</string>
+    <string name="library_metadata_follows_main">Bruger primært ikon</string>
+    <string name="library_metadata_change">Skift</string>
+    <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
+    <string name="library_metadata_icon_updated">Ikon opdateret</string>
+    <string name="library_metadata_discard_title">Kassér ændringer?</string>
+    <string name="library_metadata_discard_message">Ikke-gemte tekstændringer går tabt. Ændringer af ikoner er allerede gemt.</string>
+    <string name="library_metadata_discard">Kassér</string>
     <string name="library_metadata_default_description">Standardbeskrivelse</string>
     <string name="library_metadata_other_languages">Andre sprog</string>
     <string name="library_metadata_add_language">+ Tilføj sprog</string>

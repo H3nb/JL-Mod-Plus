@@ -199,14 +199,6 @@
     <string name="library_metadata_icon">අයිකනය</string>
     <string name="library_metadata_name">නම</string>
     <string name="library_metadata_reset_to_original">මුල් තත්ත්වයට යළි සකසන්න</string>
-    <string name="library_metadata_main_icon">ප්‍රධාන</string>
-    <string name="library_metadata_follows_main">ප්‍රධාන නිරූපකය භාවිත කරයි</string>
-    <string name="library_metadata_change">වෙනස් කරන්න</string>
-    <string name="library_metadata_remove_portrait">3:4 නිරූපකය ඉවත් කරන්න</string>
-    <string name="library_metadata_icon_updated">නිරූපකය යාවත්කාලීන විය</string>
-    <string name="library_metadata_discard_title">වෙනස්කම් ඉවත දමන්නද?</string>
-    <string name="library_metadata_discard_message">සුරැකී නැති පෙළ වෙනස්කම් නැති වේ. නිරූපකයේ වෙනස්කම් දැනටමත් සුරැකී ඇත.</string>
-    <string name="library_metadata_discard">ඉවත දමන්න</string>
     <string name="library_metadata_save">සුරකින්න</string>
     <string name="library_metadata_vendor">සැපයුම්කරු</string>
     <string name="library_no_matches">“%1$s” සඳහා ගැළපීම් නැත</string>
@@ -285,7 +277,21 @@
     <string name="config_color_picker_saturation_value">වර්ණ සන්තෘප්තිය සහ දීප්තිය</string>
     <string name="config_color_picker_title">වර්ණය තෝරන්න</string>
     <string name="config_controls_key_input">භෞතික ආදානය</string>
-    <string name="config_controls_maintenance">අතථ්‍ය පාලක පිරිසැලසුම</string>
+    <string name="config_controls_maintenance">පිරිසැලසුම</string>
+    <string name="control_skin_title">අතථ්‍ය පාලක ස්කින්</string>
+    <string name="config_controls_customization">අභිරුචිකරණය</string>
+    <string name="config_controls_skin_help">අභිරුචි රූප භාවිතයෙන් යතුරු පුවරු බොත්තම්, D-pad සහ ඇනලොග් ස්ටික්වල පෙනුම වෙනස් කරයි.</string>
+    <string name="config_controls_color_button_normal">බොත්තම මුදාහැර ඇත</string>
+    <string name="config_controls_color_button_pressed">බොත්තම ඔබා ඇත</string>
+    <string name="config_controls_color_label_normal">ලේබලය මුදාහැර ඇත</string>
+    <string name="config_controls_color_label_pressed">ලේබලය ඔබා ඇත</string>
+    <string name="config_controls_color_outline_short">මායිම් රේඛාව</string>
+    <string name="config_controls_disabled_hint">සාමාන්‍ය කොටසේ අතථ්‍ය පාලක ක්‍රියාවිරහිතයි. ඔබට මෙහිදී ඒවා අභිරුචිකරණය කළ හැකිය.</string>
+    <string name="config_controls_opacity_help" formatted="false">අතථ්‍ය පාලකවල විනිවිදභාවය සකසයි: 0% සම්පූර්ණයෙන් විනිවිද පෙනෙන අතර 100% විනිවිද නොපෙනේ.</string>
+    <string name="config_controls_opaque_outside">MIDlet තිරයෙන් පිටත පාලක විනිවිදභාවයකින් තොරව පෙන්වන්න</string>
+    <string name="config_controls_opaque_outside_help">MIDlet තිරයෙන් පිටත පාලක විනිවිදභාව සැකසුම නොසලකයි. තිරය මත ඇති පාලක තෝරාගත් අගය දිගටම භාවිත කරයි.</string>
+    <string name="config_controls_connect_controller">ක්‍රමාංකනය කිරීමට පාලකයක් සම්බන්ධ කරන්න</string>
+    <string name="config_controls_color_skin_notice">මුළු බොත්තමම ආවරණය කරන ස්කින් එකක් පෙරනිමි වර්ණ, හැඩය සහ මායිම ප්‍රතිස්ථාපනය කළ හැකිය.</string>
     <string name="config_controls_virtual_keyboard">අතථ්‍ය පාලක</string>
     <string name="config_controls_virtual_keyboard_colors">අතථ්‍ය පාලක වර්ණ</string>
     <string name="config_current_screen_size">වත්මන් ප්‍රමාණය: %1$s</string>
@@ -351,7 +357,7 @@
     <string name="config_timing_mode_full_guest">අනුකරණ කාලය</string>
     <string name="config_timing_mode_real_wall">පද්ධති කාලය</string>
     <string name="config_virtual_controls_color_preview">වර්ණ පෙරදසුන</string>
-    <string name="config_virtual_controls_preview_normal">සාමාන්‍ය</string>
+    <string name="config_virtual_controls_preview_normal">මුදාහැර ඇත</string>
     <string name="config_virtual_controls_preview_pressed">ඔබා ඇත</string>
     <string name="layout_edit_continue">සංස්කරණය කරගෙන යන්න</string>
     <string name="layout_edit_discard">වෙනස්කම් ඉවත දමන්න</string>
@@ -609,7 +615,7 @@
     <string name="pref_button_shape_oval">ඕවලාකාර</string>
     <string name="pref_button_shape_rect">සෘජුකෝණාස්‍රය</string>
     <string name="pref_button_shape_round">වටකුරු කොන් සහිත සෘජුකෝණාස්‍රය</string>
-    <string name="pref_button_shape_title">බොත්තමේ හැඩය</string>
+    <string name="pref_button_shape_title">යතුරු පුවරු බොත්තම්වල හැඩය</string>
     <string name="pref_category_experimental">පර්යේෂණාත්මක</string>
     <string name="pref_encoding_title">කේතනය</string>
     <string name="pref_graphics_hw_gles">දෘඪාංග ත්වරණය (OpenGL ES)</string>
@@ -957,7 +963,7 @@
     <string name="config_help_font_presets">පොදු J2ME තිර විභේදනවලට ගැළපෙන අකුරු ප්‍රමාණ යොදයි.</string>
     <string name="config_help_key_layout">MIDlet වෙත දන්වන යතුරු කේත පිරිසැලසුම තෝරයි.</string>
     <string name="config_help_key_mapping">භෞතික Android යතුරු සහ බොත්තම් Java ME යතුරු පුවරු ක්‍රියාවලට පවරයි.</string>
-    <string name="config_help_vk_button_shape">යතුරු පුවරු බොත්තම්වල හැඩය සකසයි. D-pad සහ ඇනලොග් ස්ටික් ඒවායේම හැඩ රඳවා ගනියි.</string>
+    <string name="config_help_vk_button_shape">යතුරු පුවරු බොත්තම්වල පෙරනිමි හැඩය සකසයි. D-pad සහ ඇනලොග් ස්ටික් සඳහා වෙනම හැඩයන් ඇත.</string>
     <string name="config_help_vk_feedback">සැකසුම් තුළ කම්පනය සබල කර ඇති විට අතථ්‍ය පාලක එබීමේදී කම්පනය කරයි.</string>
     <string name="config_help_vk_alpha">පාලකවල පාරාන්ධතාව සකසයි: 0 = සම්පූර්ණයෙන් පාරදෘශ්‍ය; 255 = සම්පූර්ණයෙන් පාරාන්ධ.</string>
     <string name="config_help_vk_force_opacity">MIDlet තිරයෙන් පිටත පාලක පාරාන්ධ කරයි. තිරය මත ඇති පාලක වින්‍යාසගත පාරාන්ධතාව භාවිත කරයි.</string>
@@ -1117,6 +1123,14 @@
     <string name="config_asset_busy">පළමුව දැනට ක්‍රියාත්මක ගොනු ක්‍රියාව අවසන් කරන්න.</string>
     <string name="config_background_dynamic">ගතික වර්ණය</string>
     <string name="config_background_dynamic_help">MIDlet තිරයට සුමටව ගැළපෙන තනි පැහැයක් භාවිත කරයි.</string>
+    <string name="library_metadata_main_icon">ප්‍රධාන</string>
+    <string name="library_metadata_follows_main">ප්‍රධාන නිරූපකය භාවිත කරයි</string>
+    <string name="library_metadata_change">වෙනස් කරන්න</string>
+    <string name="library_metadata_remove_portrait">3:4 නිරූපකය ඉවත් කරන්න</string>
+    <string name="library_metadata_icon_updated">නිරූපකය යාවත්කාලීන විය</string>
+    <string name="library_metadata_discard_title">වෙනස්කම් ඉවත දමන්නද?</string>
+    <string name="library_metadata_discard_message">සුරැකී නැති පෙළ වෙනස්කම් නැති වේ. නිරූපකයේ වෙනස්කම් දැනටමත් සුරැකී ඇත.</string>
+    <string name="library_metadata_discard">ඉවත දමන්න</string>
     <string name="library_metadata_default_description">පෙරනිමි විස්තරය</string>
     <string name="library_metadata_other_languages">වෙනත් භාෂා</string>
     <string name="library_metadata_add_language">+ භාෂාවක් එක් කරන්න</string>

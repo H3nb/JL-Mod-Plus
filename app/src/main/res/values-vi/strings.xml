@@ -52,7 +52,7 @@
     <string name="pref_button_shape_oval">Ôvan</string>
     <string name="pref_button_shape_rect">Hình chữ nhật</string>
     <string name="pref_button_shape_round">Hình chữ nhật bo góc</string>
-    <string name="pref_button_shape_title">Kiểu nút</string>
+    <string name="pref_button_shape_title">Hình dạng nút bàn phím</string>
     <string name="pref_emulator_dir">Thư mục làm việc</string>
     <string name="pref_encoding_title">Bảng mã ký tự</string>
     <string name="PREF_FILTER">Lọc tuyến tính</string>
@@ -299,14 +299,6 @@
     <string name="library_metadata_icon">Biểu tượng</string>
     <string name="library_metadata_name">Tên</string>
     <string name="library_metadata_reset_to_original">Khôi phục bản gốc</string>
-    <string name="library_metadata_main_icon">Chính</string>
-    <string name="library_metadata_follows_main">Dùng biểu tượng chính</string>
-    <string name="library_metadata_change">Thay đổi</string>
-    <string name="library_metadata_remove_portrait">Xóa biểu tượng 3:4</string>
-    <string name="library_metadata_icon_updated">Đã cập nhật biểu tượng</string>
-    <string name="library_metadata_discard_title">Hủy thay đổi?</string>
-    <string name="library_metadata_discard_message">Các thay đổi văn bản chưa lưu sẽ bị mất. Thay đổi biểu tượng đã được lưu.</string>
-    <string name="library_metadata_discard">Hủy</string>
     <string name="library_metadata_save">Lưu</string>
     <string name="library_metadata_vendor">Nhà cung cấp</string>
     <string name="library_no_matches">Không có kết quả phù hợp với “%1$s”</string>
@@ -387,7 +379,21 @@
     <string name="config_color_picker_title">Chọn màu</string>
     <string name="config_controller_help_body_compact">Các nút tay cầm dùng cùng ánh xạ phím với bàn phím và phím điện thoại. Cần analog chỉ gửi đầu vào định hướng đến MIDlet. Nút Quay lại của Android vẫn hoạt động bình thường; mọi nút vật lý được ánh xạ tới M sẽ mở menu MIDlet đang chạy.</string>
     <string name="config_controls_key_input">Đầu vào vật lý</string>
-    <string name="config_controls_maintenance">Bố cục điều khiển ảo</string>
+    <string name="config_controls_maintenance">Bố cục</string>
+    <string name="control_skin_title">Giao diện điều khiển ảo</string>
+    <string name="config_controls_customization">Tùy chỉnh</string>
+    <string name="config_controls_skin_help">Thay đổi giao diện nút bàn phím, phím điều hướng và cần analog bằng hình ảnh tùy chỉnh.</string>
+    <string name="config_controls_color_button_normal">Nút đã thả</string>
+    <string name="config_controls_color_button_pressed">Nút đang nhấn</string>
+    <string name="config_controls_color_label_normal">Nhãn khi thả</string>
+    <string name="config_controls_color_label_pressed">Nhãn khi nhấn</string>
+    <string name="config_controls_color_outline_short">Đường viền</string>
+    <string name="config_controls_disabled_hint">Điều khiển ảo đang tắt trong mục Chung. Bạn vẫn có thể tùy chỉnh tại đây.</string>
+    <string name="config_controls_opacity_help" formatted="false">Điều chỉnh độ trong suốt của điều khiển ảo: 0% hoàn toàn trong suốt, 100% hoàn toàn không trong suốt.</string>
+    <string name="config_controls_opaque_outside">Hiển thị điều khiển ngoài màn hình MIDlet không trong suốt</string>
+    <string name="config_controls_opaque_outside_help">Điều khiển bên ngoài màn hình MIDlet bỏ qua cài đặt độ mờ. Điều khiển nằm trên màn hình vẫn dùng giá trị đã chọn.</string>
+    <string name="config_controls_connect_controller">Kết nối tay cầm để hiệu chỉnh</string>
+    <string name="config_controls_color_skin_notice">Giao diện phủ toàn bộ nút có thể thay thế màu sắc, hình dạng và đường viền mặc định.</string>
     <string name="config_controls_virtual_keyboard">Điều khiển ảo</string>
     <string name="config_controls_virtual_keyboard_colors">Màu điều khiển ảo</string>
     <string name="config_current_screen_size">Kích thước hiện tại: %1$s</string>
@@ -519,7 +525,7 @@
     <string name="config_help_virtual_keyboard">Hiển thị điều khiển trên màn hình cho MIDlet này.</string>
     <string name="config_help_vk_alpha">Đặt độ mờ đục của điều khiển: 0 = hoàn toàn trong suốt; 255 = hoàn toàn đục.</string>
     <string name="config_help_vk_background">Đặt màu nền cơ bản của các nút điều khiển ảo.</string>
-    <string name="config_help_vk_button_shape">Đặt hình dạng các nút bàn phím. Phím điều hướng và cần analog giữ nguyên hình dạng riêng.</string>
+    <string name="config_help_vk_button_shape">Thiết lập hình dạng mặc định của các nút bàn phím. Phím điều hướng và cần analog có hình dạng riêng.</string>
     <string name="config_help_vk_feedback">Rung khi nhấn điều khiển ảo nếu đã bật rung trong Cài đặt.</string>
     <string name="config_help_vk_force_opacity">Làm điều khiển bên ngoài màn hình MIDlet hoàn toàn đục. Điều khiển trên màn hình dùng độ mờ đục đã đặt.</string>
     <string name="config_help_vk_foreground">Đặt màu nhãn và ký hiệu trên các nút điều khiển ảo.</string>
@@ -544,7 +550,7 @@
     <string name="config_timing_mode_real_wall">Thời gian hệ thống</string>
     <string name="config_virtual_controls_color_preview">Xem trước màu</string>
     <string name="config_virtual_controls_preview_hint">Chạm để xem trước màu khi nhấn. Mẫu dùng độ mờ đục đã chọn.</string>
-    <string name="config_virtual_controls_preview_normal">Bình thường</string>
+    <string name="config_virtual_controls_preview_normal">Đã thả</string>
     <string name="config_virtual_controls_preview_pressed">Đang nhấn</string>
     <string name="config_warning_filter_shader">Lọc tuyến tính làm mượt đầu vào trước khi bộ đổ bóng màn hình xử lý và có thể làm giảm độ sắc nét của đầu ra.</string>
     <string name="layout_edit_continue">Tiếp tục chỉnh sửa</string>
@@ -1084,6 +1090,14 @@
     <string name="config_asset_busy">Hãy hoàn tất thao tác với tệp hiện tại trước.</string>
     <string name="config_background_dynamic">Màu động</string>
     <string name="config_background_dynamic_help">Dùng một màu nền đồng nhất thay đổi mượt mà theo màn hình MIDlet.</string>
+    <string name="library_metadata_main_icon">Chính</string>
+    <string name="library_metadata_follows_main">Dùng biểu tượng chính</string>
+    <string name="library_metadata_change">Thay đổi</string>
+    <string name="library_metadata_remove_portrait">Xóa biểu tượng 3:4</string>
+    <string name="library_metadata_icon_updated">Đã cập nhật biểu tượng</string>
+    <string name="library_metadata_discard_title">Hủy thay đổi?</string>
+    <string name="library_metadata_discard_message">Các thay đổi văn bản chưa lưu sẽ bị mất. Thay đổi biểu tượng đã được lưu.</string>
+    <string name="library_metadata_discard">Hủy</string>
     <string name="library_metadata_default_description">Mô tả mặc định</string>
     <string name="library_metadata_other_languages">Ngôn ngữ khác</string>
     <string name="library_metadata_add_language">+ Thêm ngôn ngữ</string>

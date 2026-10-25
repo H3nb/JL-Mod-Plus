@@ -906,20 +906,75 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun advancedControlsRenderColorPreferencesWithoutCrashing() {
+    fun controlsColorsStayInlineAndEachSwatchOpensTheExpectedPicker() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Controls)
+            }
+        }
+        scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
+        composeRule.onNodeWithTag("controls_colors_section").assertExists()
+        composeRule.onNodeWithTag("virtual_controls_color_preview").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_normal))
+            .assertIsSelected()
+        composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_pressed))
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_virtual_controls_preview_pressed))
+            .assertIsSelected()
+        composeRule.onNodeWithText(uiString(R.string.config_controls_color_button_normal)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_controls_color_label_normal)).assertExists()
+        val samples = listOf(
+            "color_normal_button" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND,
+            "color_pressed_button" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND,
+            "color_normal_labels" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND,
+            "color_pressed_labels" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND,
+            "color_outline" to ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE,
+        )
+        samples.forEach { (tag, field) ->
+            composeRule.onNodeWithTag(tag).performScrollTo().performClick()
+            assertEquals(field, events.colorPickerField)
+        }
+        // The MIDlet toolbar remains accessible; no secondary destination was opened.
+        composeRule.onNodeWithContentDescription(uiString(R.string.START_CMD)).assertExists()
+    }
+
+    @Test
+    fun controlDescriptionsAndColorsRemainAvailableWhileVirtualControlsAreOff() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().showKeyboard(false).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.config_help_key_layout)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_controls_disabled_hint)).assertExists()
+        scrollTo(uiString(R.string.config_controls_customization))
+        composeRule.onNodeWithText(uiString(R.string.config_help_vk_button_shape)).assertExists()
+        scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
+        composeRule.onNodeWithTag("color_outline").assertExists()
+    }
+
+    @Test
+    fun keypadShapePrecedesSkinSelection() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
             }
         }
-
-        composeRule.waitForIdle()
-        scrollTo(uiString(R.string.PREF_VK_FORE))
-        composeRule.onNode(hasText(uiString(R.string.PREF_VK_FORE)) and hasText("#000080")).assertExists()
-        scrollTo(uiString(R.string.PREF_VK_BACK))
-        composeRule.onNodeWithText(uiString(R.string.PREF_VK_BACK)).assertExists()
-        scrollTo(uiString(R.string.PREF_VK_OUTLINE))
-        composeRule.onNodeWithText(uiString(R.string.PREF_VK_OUTLINE)).assertExists()
+        scrollTo(uiString(R.string.control_skin_title))
+        composeRule.onNodeWithText(uiString(R.string.config_controls_skin_help)).assertExists()
+        val shape = composeRule.onNodeWithText(uiString(R.string.pref_button_shape_title))
+            .fetchSemanticsNode().boundsInRoot
+        val skin = composeRule.onNodeWithText(uiString(R.string.control_skin_title))
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue("Keypad shape must precede skin", shape.bottom <= skin.top)
     }
 
     @Test
@@ -932,11 +987,32 @@ class ConfigComposeTest {
         }
 
         scrollTo(uiString(R.string.PREF_VK_ALPHA))
-        composeRule.onNodeWithText("64").performClick()
+        composeRule.onNodeWithText("25%").performClick()
         composeRule.onNode(hasText("Opacity") and hasAnyAncestor(isDialog())).assertExists()
-        composeRule.onNode(hasSetTextAction()).performTextReplacement("128")
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("50")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals(128, events.lastForm?.vkAlpha)
+    }
+
+    @Test
+    fun acceptingRoundedOpacityWithoutEditingPreservesStoredValue() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().vkAlpha(254).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, events, initialDestination = ConfigDestination.Controls)
+            }
+        }
+        scrollTo(uiString(R.string.PREF_VK_ALPHA))
+        composeRule.onNodeWithText("100%").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(0, events.formChanges)
+        assertEquals(254, state.form.vkAlpha)
     }
 
     @Test

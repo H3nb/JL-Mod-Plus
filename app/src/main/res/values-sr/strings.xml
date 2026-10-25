@@ -198,14 +198,6 @@
     <string name="library_metadata_icon">Икона</string>
     <string name="library_metadata_name">Назив</string>
     <string name="library_metadata_reset_to_original">Врати на оригинал</string>
-    <string name="library_metadata_main_icon">Главна</string>
-    <string name="library_metadata_follows_main">Користи главну икону</string>
-    <string name="library_metadata_change">Промени</string>
-    <string name="library_metadata_remove_portrait">Уклони икону 3:4</string>
-    <string name="library_metadata_icon_updated">Икона је ажурирана</string>
-    <string name="library_metadata_discard_title">Одбацити измене?</string>
-    <string name="library_metadata_discard_message">Несачуване измене текста ће бити изгубљене. Измене иконе су већ сачуване.</string>
-    <string name="library_metadata_discard">Одбаци</string>
     <string name="library_metadata_save">Сачувај</string>
     <string name="library_metadata_vendor">Добављач</string>
     <string name="library_no_matches">Нема подударања за „%1$s“</string>
@@ -296,7 +288,21 @@
     <string name="config_color_picker_title">Изабери боју</string>
     <string name="config_controller_help_body_compact">Дугмад контролера користе исте доделе као тастери тастатуре и телефона. Аналогна палица шаље MIDlet-у само усмерени унос. Android дугме Назад задржава уобичајено понашање; свако физичко дугме додељено тастеру M отвара мени MIDlet-а током рада.</string>
     <string name="config_controls_key_input">Физички унос</string>
-    <string name="config_controls_maintenance">Распоред виртуалних контрола</string>
+    <string name="config_controls_maintenance">Распоред</string>
+    <string name="control_skin_title">Скин виртуалних контрола</string>
+    <string name="config_controls_customization">Прилагођавање</string>
+    <string name="config_controls_skin_help">Мења изглед дугмади тастатуре, D-pad-а и аналогне палице помоћу прилагођених слика.</string>
+    <string name="config_controls_color_button_normal">Дугме отпуштено</string>
+    <string name="config_controls_color_button_pressed">Дугме притиснуто</string>
+    <string name="config_controls_color_label_normal">Ознака при отпуштању</string>
+    <string name="config_controls_color_label_pressed">Ознака при притиску</string>
+    <string name="config_controls_color_outline_short">Контура</string>
+    <string name="config_controls_disabled_hint">Виртуалне контроле су искључене у одељку Опште. И даље их можете прилагођавати овде.</string>
+    <string name="config_controls_opacity_help" formatted="false">Подешава провидност виртуалних контрола: 0% је потпуно провидно, а 100% непрозирно.</string>
+    <string name="config_controls_opaque_outside">Прикажи контроле ван екрана MIDlet-а без провидности</string>
+    <string name="config_controls_opaque_outside_help">Контроле ван екрана MIDlet-а занемарују подешену непрозирност. Контроле преко екрана и даље користе изабрану вредност.</string>
+    <string name="config_controls_connect_controller">Повежите контролер ради калибрације</string>
+    <string name="config_controls_color_skin_notice">Скин који прекрива цело дугме може заменити подразумеване боје, облик и контуру.</string>
     <string name="config_controls_virtual_keyboard">Виртуалне контроле</string>
     <string name="config_controls_virtual_keyboard_colors">Боје виртуалних контрола</string>
     <string name="config_current_screen_size">Тренутна величина: %1$s</string>
@@ -428,7 +434,7 @@
     <string name="config_help_virtual_keyboard">Приказује контроле на екрану за овај MIDlet.</string>
     <string name="config_help_vk_alpha">Поставља непрозирност контрола: 0 = потпуно прозирне; 255 = потпуно непрозирне.</string>
     <string name="config_help_vk_background">Поставља основну боју дугмади виртуалних контрола.</string>
-    <string name="config_help_vk_button_shape">Поставља облик дугмади тастатуре. D-pad и аналогна палица задржавају своје облике.</string>
+    <string name="config_help_vk_button_shape">Поставља подразумевани облик дугмади тастатуре. D-pad и аналогна палица имају сопствене облике.</string>
     <string name="config_help_vk_feedback">Вибрира при притиску виртуалних контрола када је вибрација омогућена у Подешавањима.</string>
     <string name="config_help_vk_force_opacity">Чини контроле изван екрана MIDlet-а непрозирним. Контроле преко екрана користе подешену непрозирност.</string>
     <string name="config_help_vk_foreground">Поставља боју ознака и симбола на дугмадима виртуалних контрола.</string>
@@ -453,7 +459,7 @@
     <string name="config_timing_mode_real_wall">Системско време</string>
     <string name="config_virtual_controls_color_preview">Преглед боје</string>
     <string name="config_virtual_controls_preview_hint">Додирните за преглед боја при притиску. Узорак користи изабрану непрозирност.</string>
-    <string name="config_virtual_controls_preview_normal">Нормално</string>
+    <string name="config_virtual_controls_preview_normal">Отпуштено</string>
     <string name="config_virtual_controls_preview_pressed">Притиснуто</string>
     <string name="config_warning_filter_shader">Линеарно филтрирање ублажава улаз пре обраде шејдером екрана и може да смањи оштрину резултата.</string>
     <string name="layout_edit_continue">Настави уређивање</string>
@@ -979,7 +985,7 @@
     <string name="pref_button_shape_oval">Овал</string>
     <string name="pref_button_shape_rect">Правоугаоник</string>
     <string name="pref_button_shape_round">Заобљени правоугаоник</string>
-    <string name="pref_button_shape_title">Облик дугмади</string>
+    <string name="pref_button_shape_title">Облик дугмади тастатуре</string>
     <string name="pref_category_experimental">Експериментално</string>
     <string name="pref_emulator_dir">Радни директоријум</string>
     <string name="pref_encoding_title">Кодирање знакова</string>
@@ -1149,6 +1155,14 @@
     <string name="config_asset_busy">Прво довршите текућу радњу над датотеком.</string>
     <string name="config_background_dynamic">Динамичка боја</string>
     <string name="config_background_dynamic_help">Користи једну једноличну боју која се постепено прилагођава MIDlet екрану.</string>
+    <string name="library_metadata_main_icon">Главна</string>
+    <string name="library_metadata_follows_main">Користи главну икону</string>
+    <string name="library_metadata_change">Промени</string>
+    <string name="library_metadata_remove_portrait">Уклони икону 3:4</string>
+    <string name="library_metadata_icon_updated">Икона је ажурирана</string>
+    <string name="library_metadata_discard_title">Одбацити измене?</string>
+    <string name="library_metadata_discard_message">Несачуване измене текста ће бити изгубљене. Измене иконе су већ сачуване.</string>
+    <string name="library_metadata_discard">Одбаци</string>
     <string name="library_metadata_default_description">Подразумевани опис</string>
     <string name="library_metadata_other_languages">Други језици</string>
     <string name="library_metadata_add_language">+ Додај језик</string>

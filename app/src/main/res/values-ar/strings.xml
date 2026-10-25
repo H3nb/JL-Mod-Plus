@@ -56,7 +56,7 @@
     <string name="pref_button_shape_oval">شكل بيضاوي</string>
     <string name="pref_button_shape_rect">مستطيل</string>
     <string name="pref_button_shape_round">مستطيل مستدير الزوايا</string>
-    <string name="pref_button_shape_title">شكل الزر</string>
+    <string name="pref_button_shape_title">شكل أزرار لوحة المفاتيح</string>
     <string name="pref_category_experimental">تجريبي</string>
     <string name="pref_emulator_dir">مجلد العمل</string>
     <string name="pref_encoding_title">الترميز</string>
@@ -306,14 +306,6 @@
     <string name="library_metadata_icon">الأيقونة</string>
     <string name="library_metadata_name">الاسم</string>
     <string name="library_metadata_reset_to_original">إعادة إلى الأصل</string>
-    <string name="library_metadata_main_icon">الرئيسية</string>
-    <string name="library_metadata_follows_main">يستخدم الأيقونة الرئيسية</string>
-    <string name="library_metadata_change">تغيير</string>
-    <string name="library_metadata_remove_portrait">إزالة أيقونة 3:4</string>
-    <string name="library_metadata_icon_updated">تم تحديث الأيقونة</string>
-    <string name="library_metadata_discard_title">هل تريد تجاهل التغييرات؟</string>
-    <string name="library_metadata_discard_message">ستُفقد تغييرات النص غير المحفوظة. تم حفظ تغييرات الأيقونة بالفعل.</string>
-    <string name="library_metadata_discard">تجاهل</string>
     <string name="library_metadata_save">حفظ</string>
     <string name="library_metadata_vendor">المورّد</string>
     <string name="library_no_matches">لا توجد نتائج مطابقة لـ \"%1$s\"</string>
@@ -419,7 +411,21 @@
     <string name="config_color_picker_title">اختيار لون</string>
     <string name="config_controller_help_body_compact">تستخدم أزرار وحدة التحكم تعيينات المفاتيح نفسها المستخدمة للوحة المفاتيح ومفاتيح الهاتف. ترسل العصا التناظرية إدخال الاتجاهات فقط إلى MIDlet. يحتفظ زر الرجوع في Android بسلوكه المعتاد؛ ويفتح أي زر فعلي معيّن إلى M قائمة MIDlet أثناء التشغيل.</string>
     <string name="config_controls_key_input">الإدخال الفعلي</string>
-    <string name="config_controls_maintenance">تخطيط أدوات التحكم الافتراضية</string>
+    <string name="config_controls_maintenance">التخطيط</string>
+    <string name="control_skin_title">مظهر أدوات التحكم الافتراضية</string>
+    <string name="config_controls_customization">التخصيص</string>
+    <string name="config_controls_skin_help">يغيّر مظهر أزرار لوحة المفاتيح ولوحة الاتجاهات والعصا التناظرية باستخدام صور مخصصة.</string>
+    <string name="config_controls_color_button_normal">زر غير مضغوط</string>
+    <string name="config_controls_color_button_pressed">زر مضغوط</string>
+    <string name="config_controls_color_label_normal">تسمية غير مضغوطة</string>
+    <string name="config_controls_color_label_pressed">تسمية مضغوطة</string>
+    <string name="config_controls_color_outline_short">الحدود</string>
+    <string name="config_controls_disabled_hint">أدوات التحكم الافتراضية معطّلة في قسم عام. لا يزال بإمكانك تخصيصها هنا.</string>
+    <string name="config_controls_opacity_help" formatted="false">يضبط شفافية أدوات التحكم الافتراضية: 0% شفاف تمامًا؛ و100% غير شفاف.</string>
+    <string name="config_controls_opaque_outside">إظهار أدوات التحكم خارج شاشة MIDlet دون شفافية</string>
+    <string name="config_controls_opaque_outside_help">تتجاهل أدوات التحكم خارج شاشة MIDlet إعداد الشفافية، بينما تظل الأدوات فوق الشاشة ملتزمة بالقيمة المحددة.</string>
+    <string name="config_controls_connect_controller">وصّل وحدة تحكم لمعايرتها</string>
+    <string name="config_controls_color_skin_notice">قد يستبدل المظهر الذي يغطي الزر بالكامل ألوان الأزرار الافتراضية وأشكالها وحدودها.</string>
     <string name="config_controls_virtual_keyboard">أدوات التحكم الافتراضية</string>
     <string name="config_controls_virtual_keyboard_colors">ألوان أدوات التحكم الافتراضية</string>
     <string name="config_current_screen_size">الحجم الحالي: %1$s</string>
@@ -551,7 +557,7 @@
     <string name="config_help_virtual_keyboard">يعرض أدوات تحكم على الشاشة لـ MIDlet هذا.</string>
     <string name="config_help_vk_alpha">يضبط عتامة أدوات التحكم: 0 = شفاف بالكامل؛ 255 = معتم بالكامل.</string>
     <string name="config_help_vk_background">يضبط اللون الأساسي لأزرار أدوات التحكم الافتراضية.</string>
-    <string name="config_help_vk_button_shape">يضبط شكل أزرار لوحة المفاتيح. تحتفظ لوحة الاتجاهات والعصا التناظرية بشكليهما.</string>
+    <string name="config_help_vk_button_shape">يضبط الشكل الافتراضي لأزرار لوحة المفاتيح. تحتفظ لوحة الاتجاهات والعصا التناظرية بشكليهما.</string>
     <string name="config_help_vk_feedback">يهتز عند الضغط على أدوات التحكم الافتراضية إذا كان الاهتزاز مفعّلًا في الإعدادات.</string>
     <string name="config_help_vk_force_opacity">يجعل أدوات التحكم خارج شاشة MIDlet معتمة. تستخدم أدوات التحكم فوق الشاشة العتامة المحددة.</string>
     <string name="config_help_vk_foreground">يضبط لون التسميات والرموز على أزرار أدوات التحكم الافتراضية.</string>
@@ -576,7 +582,7 @@
     <string name="config_timing_mode_real_wall">وقت النظام</string>
     <string name="config_virtual_controls_color_preview">معاينة الألوان</string>
     <string name="config_virtual_controls_preview_hint">انقر لمعاينة ألوان الضغط. تستخدم العينة العتامة المحددة.</string>
-    <string name="config_virtual_controls_preview_normal">عادي</string>
+    <string name="config_virtual_controls_preview_normal">غير مضغوط</string>
     <string name="config_virtual_controls_preview_pressed">مضغوط</string>
     <string name="config_warning_filter_shader">ينعّم الترشيح الخطي الإدخال قبل معالجة مظلّل الشاشة له، وقد يقلل حدة الناتج.</string>
     <string name="layout_edit_continue">متابعة التحرير</string>
@@ -1249,6 +1255,14 @@
     <string name="config_asset_busy">أكمل عملية الملف الحالية أولاً.</string>
     <string name="config_background_dynamic">لون ديناميكي</string>
     <string name="config_background_dynamic_help">يستخدم لونًا موحدًا يتكيف بسلاسة مع شاشة MIDlet.</string>
+    <string name="library_metadata_main_icon">الرئيسية</string>
+    <string name="library_metadata_follows_main">يستخدم الأيقونة الرئيسية</string>
+    <string name="library_metadata_change">تغيير</string>
+    <string name="library_metadata_remove_portrait">إزالة أيقونة 3:4</string>
+    <string name="library_metadata_icon_updated">تم تحديث الأيقونة</string>
+    <string name="library_metadata_discard_title">هل تريد تجاهل التغييرات؟</string>
+    <string name="library_metadata_discard_message">ستُفقد تغييرات النص غير المحفوظة. تم حفظ تغييرات الأيقونة بالفعل.</string>
+    <string name="library_metadata_discard">تجاهل</string>
     <string name="library_metadata_default_description">الوصف الافتراضي</string>
     <string name="library_metadata_other_languages">لغات أخرى</string>
     <string name="library_metadata_add_language">+ إضافة لغة</string>

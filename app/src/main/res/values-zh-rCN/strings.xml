@@ -56,7 +56,7 @@
     <string name="pref_button_shape_oval">椭圆形</string>
     <string name="pref_button_shape_rect">矩形</string>
     <string name="pref_button_shape_round">圆角矩形</string>
-    <string name="pref_button_shape_title">按钮形状</string>
+    <string name="pref_button_shape_title">键盘按钮形状</string>
     <string name="pref_category_experimental">实验性功能</string>
     <string name="pref_emulator_dir">工作目录</string>
     <string name="pref_encoding_title">字符编码</string>
@@ -306,14 +306,6 @@
     <string name="library_metadata_icon">图标</string>
     <string name="library_metadata_name">名称</string>
     <string name="library_metadata_reset_to_original">恢复原始内容</string>
-    <string name="library_metadata_main_icon">主图标</string>
-    <string name="library_metadata_follows_main">使用主图标</string>
-    <string name="library_metadata_change">更换</string>
-    <string name="library_metadata_remove_portrait">移除 3:4 图标</string>
-    <string name="library_metadata_icon_updated">图标已更新</string>
-    <string name="library_metadata_discard_title">放弃更改？</string>
-    <string name="library_metadata_discard_message">未保存的文字更改将丢失。图标更改已保存。</string>
-    <string name="library_metadata_discard">放弃</string>
     <string name="library_metadata_save">保存</string>
     <string name="library_metadata_vendor">发布商</string>
     <string name="library_no_matches">没有与“%1$s”匹配的结果</string>
@@ -394,7 +386,21 @@
     <string name="config_color_picker_title">选择颜色</string>
     <string name="config_controller_help_body_compact">控制器按钮与键盘及手机按键使用相同的按键映射。模拟摇杆只向 MIDlet 发送方向输入。Android 返回键保持正常行为；映射为 M 的任何实体按钮都会打开运行中的 MIDlet 菜单。</string>
     <string name="config_controls_key_input">实体输入</string>
-    <string name="config_controls_maintenance">虚拟控件布局</string>
+    <string name="config_controls_maintenance">布局</string>
+    <string name="control_skin_title">虚拟控件皮肤</string>
+    <string name="config_controls_customization">自定义</string>
+    <string name="config_controls_skin_help">通过自定义图片更改键盘按钮、方向键和模拟摇杆的外观。</string>
+    <string name="config_controls_color_button_normal">按钮松开</string>
+    <string name="config_controls_color_button_pressed">按钮按下</string>
+    <string name="config_controls_color_label_normal">松开时的标签</string>
+    <string name="config_controls_color_label_pressed">按下时的标签</string>
+    <string name="config_controls_color_outline_short">边框</string>
+    <string name="config_controls_disabled_hint">虚拟控件已在“常规”中关闭，但仍可在此自定义。</string>
+    <string name="config_controls_opacity_help" formatted="false">调整虚拟控件的透明度：0% 表示完全透明，100% 表示不透明。</string>
+    <string name="config_controls_opaque_outside">在 MIDlet 屏幕外不透明地显示控件</string>
+    <string name="config_controls_opaque_outside_help">MIDlet 屏幕外的控件不受不透明度设置影响。覆盖屏幕的控件仍使用所选值。</string>
+    <string name="config_controls_connect_controller">连接控制器以进行校准</string>
+    <string name="config_controls_color_skin_notice">覆盖整个按钮的皮肤可能替换默认的颜色、形状和边框。</string>
     <string name="config_controls_virtual_keyboard">虚拟控件</string>
     <string name="config_controls_virtual_keyboard_colors">虚拟控件颜色</string>
     <string name="config_current_screen_size">当前尺寸：%1$s</string>
@@ -526,7 +532,7 @@
     <string name="config_help_virtual_keyboard">为此 MIDlet 显示屏幕控件。</string>
     <string name="config_help_vk_alpha">设置控件不透明度：0 = 完全透明；255 = 完全不透明。</string>
     <string name="config_help_vk_background">设置虚拟控件按钮的基础颜色。</string>
-    <string name="config_help_vk_button_shape">设置键盘按钮的形状。方向键和模拟摇杆保持各自的形状。</string>
+    <string name="config_help_vk_button_shape">设置键盘按钮的默认形状。方向键和模拟摇杆使用各自的形状。</string>
     <string name="config_help_vk_feedback">在“设置”中启用振动时，按下虚拟控件会振动。</string>
     <string name="config_help_vk_force_opacity">使 MIDlet 屏幕外的控件不透明。屏幕上的控件使用设定的不透明度。</string>
     <string name="config_help_vk_foreground">设置虚拟控件按钮上文字和符号的颜色。</string>
@@ -551,7 +557,7 @@
     <string name="config_timing_mode_real_wall">系统时间</string>
     <string name="config_virtual_controls_color_preview">颜色预览</string>
     <string name="config_virtual_controls_preview_hint">点击预览按下时的颜色。示例使用所选不透明度。</string>
-    <string name="config_virtual_controls_preview_normal">正常</string>
+    <string name="config_virtual_controls_preview_normal">松开</string>
     <string name="config_virtual_controls_preview_pressed">按下</string>
     <string name="config_warning_filter_shader">线性过滤会在屏幕着色器处理输入前将其平滑化，可能降低输出的清晰度。</string>
     <string name="layout_edit_continue">继续编辑</string>
@@ -1084,6 +1090,14 @@
     <string name="config_asset_busy">请先完成当前的文件操作。</string>
     <string name="config_background_dynamic">动态颜色</string>
     <string name="config_background_dynamic_help">使用随 MIDlet 画面平滑变化的纯色背景。</string>
+    <string name="library_metadata_main_icon">主图标</string>
+    <string name="library_metadata_follows_main">使用主图标</string>
+    <string name="library_metadata_change">更换</string>
+    <string name="library_metadata_remove_portrait">移除 3:4 图标</string>
+    <string name="library_metadata_icon_updated">图标已更新</string>
+    <string name="library_metadata_discard_title">放弃更改？</string>
+    <string name="library_metadata_discard_message">未保存的文字更改将丢失。图标更改已保存。</string>
+    <string name="library_metadata_discard">放弃</string>
     <string name="library_metadata_default_description">默认描述</string>
     <string name="library_metadata_other_languages">其他语言</string>
     <string name="library_metadata_add_language">+ 添加语言</string>

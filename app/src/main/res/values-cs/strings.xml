@@ -56,7 +56,7 @@
     <string name="pref_button_shape_oval">Ovál</string>
     <string name="pref_button_shape_rect">Obdélník</string>
     <string name="pref_button_shape_round">Zaoblený obdélník</string>
-    <string name="pref_button_shape_title">Tvar tlačítka</string>
+    <string name="pref_button_shape_title">Tvar tlačítek klávesnice</string>
     <string name="pref_category_experimental">Experimentální</string>
     <string name="pref_emulator_dir">Pracovní adresář</string>
     <string name="pref_encoding_title">Kódování</string>
@@ -306,14 +306,6 @@
     <string name="library_metadata_icon">Ikona</string>
     <string name="library_metadata_name">Název</string>
     <string name="library_metadata_reset_to_original">Obnovit původní</string>
-    <string name="library_metadata_main_icon">Hlavní</string>
-    <string name="library_metadata_follows_main">Používá hlavní ikonu</string>
-    <string name="library_metadata_change">Změnit</string>
-    <string name="library_metadata_remove_portrait">Odebrat ikonu 3:4</string>
-    <string name="library_metadata_icon_updated">Ikona aktualizována</string>
-    <string name="library_metadata_discard_title">Zahodit změny?</string>
-    <string name="library_metadata_discard_message">Neuložené změny textu budou ztraceny. Změny ikon jsou již uloženy.</string>
-    <string name="library_metadata_discard">Zahodit</string>
     <string name="library_metadata_save">Uložit</string>
     <string name="library_metadata_vendor">Dodavatel</string>
     <string name="library_no_matches">Žádné výsledky pro „%1$s“</string>
@@ -409,7 +401,21 @@
     <string name="config_color_picker_title">Vybrat barvu</string>
     <string name="config_controller_help_body_compact">Tlačítka ovladače používají stejné mapování jako klávesy klávesnice a telefonu. Analogová páčka odesílá MIDletu pouze směrový vstup. Tlačítko Zpět v Androidu funguje obvyklým způsobem; libovolné fyzické tlačítko namapované na M otevře nabídku spuštěného MIDletu.</string>
     <string name="config_controls_key_input">Fyzický vstup</string>
-    <string name="config_controls_maintenance">Rozložení virtuálních ovládacích prvků</string>
+    <string name="config_controls_maintenance">Rozložení</string>
+    <string name="control_skin_title">Vzhled virtuálních ovládacích prvků</string>
+    <string name="config_controls_customization">Přizpůsobení</string>
+    <string name="config_controls_skin_help">Mění vzhled tlačítek klávesnice, směrového kříže a analogové páčky pomocí vlastních obrázků.</string>
+    <string name="config_controls_color_button_normal">Uvolněné tlačítko</string>
+    <string name="config_controls_color_button_pressed">Stisknuté tlačítko</string>
+    <string name="config_controls_color_label_normal">Popisek při uvolnění</string>
+    <string name="config_controls_color_label_pressed">Popisek při stisknutí</string>
+    <string name="config_controls_color_outline_short">Obrys</string>
+    <string name="config_controls_disabled_hint">Virtuální ovládací prvky jsou vypnuté v části Obecné. I tak je zde můžete upravit.</string>
+    <string name="config_controls_opacity_help" formatted="false">Upravuje průhlednost virtuálních ovládacích prvků: 0 % je zcela průhledné a 100 % neprůhledné.</string>
+    <string name="config_controls_opaque_outside">Zobrazovat ovládací prvky mimo obrazovku MIDletu neprůhledně</string>
+    <string name="config_controls_opaque_outside_help">Ovládací prvky mimo obrazovku MIDletu ignorují nastavenou průhlednost. Prvky nad obrazovkou ji nadále používají.</string>
+    <string name="config_controls_connect_controller">Pro kalibraci připojte ovladač</string>
+    <string name="config_controls_color_skin_notice">Vzhled pokrývající celé tlačítko může nahradit jeho výchozí barvy, tvar a obrys.</string>
     <string name="config_controls_virtual_keyboard">Virtuální ovládací prvky</string>
     <string name="config_controls_virtual_keyboard_colors">Barvy virtuálních ovládacích prvků</string>
     <string name="config_current_screen_size">Aktuální velikost: %1$s</string>
@@ -541,7 +547,7 @@
     <string name="config_help_virtual_keyboard">Zobrazí ovládací prvky na obrazovce pro tento MIDlet.</string>
     <string name="config_help_vk_alpha">Nastaví neprůhlednost ovládacích prvků: 0 = zcela průhledné; 255 = zcela neprůhledné.</string>
     <string name="config_help_vk_background">Nastaví základní barvu tlačítek virtuálních ovládacích prvků.</string>
-    <string name="config_help_vk_button_shape">Nastaví tvar tlačítek klávesnice. Směrový kříž a analogová páčka si ponechají vlastní tvary.</string>
+    <string name="config_help_vk_button_shape">Nastavuje výchozí tvar tlačítek klávesnice. Směrový kříž a analogová páčka mají vlastní tvary.</string>
     <string name="config_help_vk_feedback">Při stisknutí virtuálních ovládacích prvků zavibruje, pokud jsou v Nastavení povoleny vibrace.</string>
     <string name="config_help_vk_force_opacity">Ovládací prvky mimo obrazovku MIDletu budou neprůhledné. Prvky nad obrazovkou použijí nastavenou neprůhlednost.</string>
     <string name="config_help_vk_foreground">Nastaví barvu popisků a symbolů na tlačítkách virtuálních ovládacích prvků.</string>
@@ -566,7 +572,7 @@
     <string name="config_timing_mode_real_wall">Systémový čas</string>
     <string name="config_virtual_controls_color_preview">Náhled barev</string>
     <string name="config_virtual_controls_preview_hint">Klepnutím zobrazíte náhled barev při stisknutí. Ukázka používá vybranou neprůhlednost.</string>
-    <string name="config_virtual_controls_preview_normal">Běžné</string>
+    <string name="config_virtual_controls_preview_normal">Uvolněné</string>
     <string name="config_virtual_controls_preview_pressed">Stisknuté</string>
     <string name="config_warning_filter_shader">Lineární filtrování vyhladí vstup před zpracováním shaderem obrazovky a může snížit ostrost výstupu.</string>
     <string name="layout_edit_continue">Pokračovat v úpravách</string>
@@ -1183,6 +1189,14 @@
     <string name="config_asset_busy">Nejprve dokončete probíhající operaci se souborem.</string>
     <string name="config_background_dynamic">Dynamická barva</string>
     <string name="config_background_dynamic_help">Používá jednu jednolitou barvu, která se plynule přizpůsobuje obrazovce MIDletu.</string>
+    <string name="library_metadata_main_icon">Hlavní</string>
+    <string name="library_metadata_follows_main">Používá hlavní ikonu</string>
+    <string name="library_metadata_change">Změnit</string>
+    <string name="library_metadata_remove_portrait">Odebrat ikonu 3:4</string>
+    <string name="library_metadata_icon_updated">Ikona aktualizována</string>
+    <string name="library_metadata_discard_title">Zahodit změny?</string>
+    <string name="library_metadata_discard_message">Neuložené změny textu budou ztraceny. Změny ikon jsou již uloženy.</string>
+    <string name="library_metadata_discard">Zahodit</string>
     <string name="library_metadata_default_description">Výchozí popis</string>
     <string name="library_metadata_other_languages">Další jazyky</string>
     <string name="library_metadata_add_language">+ Přidat jazyk</string>

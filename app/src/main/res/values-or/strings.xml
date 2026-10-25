@@ -44,7 +44,7 @@
     <string name="pref_button_shape_oval">ଓଭାଲ୍</string>
     <string name="pref_button_shape_rect">ଆୟତକ୍ଷେତ୍ର</string>
     <string name="pref_button_shape_round">ଗୋଲାକାର କୋଣ ଥିବା ଆୟତକ୍ଷେତ୍ର</string>
-    <string name="pref_button_shape_title">ବଟନ୍ ଆକୃତି</string>
+    <string name="pref_button_shape_title">କୀପ୍ୟାଡ୍ ବଟନ୍‌ର ଆକୃତି</string>
     <string name="pref_emulator_dir">ୱାର୍କିଂ ଡିରେକ୍ଟୋରୀ</string>
     <string name="pref_encoding_title">ଏନକୋଡିଂ</string>
     <string name="PREF_FONT_LARGE">ବଡ଼</string>
@@ -245,14 +245,6 @@
     <string name="library_metadata_icon">ଆଇକନ୍</string>
     <string name="library_metadata_name">ନାମ</string>
     <string name="library_metadata_reset_to_original">ମୂଳ ଅବସ୍ଥାକୁ ଫେରାନ୍ତୁ</string>
-    <string name="library_metadata_main_icon">ମୁଖ୍ୟ</string>
-    <string name="library_metadata_follows_main">ମୁଖ୍ୟ ଆଇକନ୍ ବ୍ୟବହାର କରୁଛି</string>
-    <string name="library_metadata_change">ବଦଳାନ୍ତୁ</string>
-    <string name="library_metadata_remove_portrait">3:4 ଆଇକନ୍ ହଟାନ୍ତୁ</string>
-    <string name="library_metadata_icon_updated">ଆଇକନ୍ ଅପଡେଟ୍ ହୋଇଛି</string>
-    <string name="library_metadata_discard_title">ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ବାତିଲ୍ କରିବେ କି?</string>
-    <string name="library_metadata_discard_message">ସଞ୍ଚୟ ହୋଇନଥିବା ଲେଖା ପରିବର୍ତ୍ତନ ହଜିଯିବ। ଆଇକନ୍ ପରିବର୍ତ୍ତନ ପୂର୍ବରୁ ସଞ୍ଚୟ ହୋଇଛି।</string>
-    <string name="library_metadata_discard">ବାତିଲ୍ କରନ୍ତୁ</string>
     <string name="library_metadata_save">ସଞ୍ଚୟ କରନ୍ତୁ</string>
     <string name="library_metadata_vendor">ସଫ୍ଟୱେର୍ ପ୍ରଦାନକାରୀ</string>
     <string name="library_no_matches">“%1$s” ସହ କୌଣସି ମେଳ ନାହିଁ</string>
@@ -331,7 +323,21 @@
     <string name="config_color_picker_saturation_value">ରଙ୍ଗ ସନ୍ତୃପ୍ତି ଓ ଉଜ୍ଜ୍ୱଳତା</string>
     <string name="config_color_picker_title">ରଙ୍ଗ ବାଛନ୍ତୁ</string>
     <string name="config_controls_key_input">ଭୌତିକ ଇନପୁଟ୍</string>
-    <string name="config_controls_maintenance">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣର ବିନ୍ୟାସ</string>
+    <string name="config_controls_maintenance">ବିନ୍ୟାସ</string>
+    <string name="control_skin_title">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣର ସ୍କିନ୍</string>
+    <string name="config_controls_customization">କଷ୍ଟମାଇଜେସନ୍</string>
+    <string name="config_controls_skin_help">ନିଜ ପସନ୍ଦର ଛବି ବ୍ୟବହାର କରି କୀପ୍ୟାଡ୍ ବଟନ୍, D-pad ଓ ଆନାଲଗ୍ ଷ୍ଟିକ୍‌ର ଦୃଶ୍ୟ ବଦଳାଏ।</string>
+    <string name="config_controls_color_button_normal">ବଟନ୍ ଛଡ଼ାଯାଇଛି</string>
+    <string name="config_controls_color_button_pressed">ବଟନ୍ ଦବାଯାଇଛି</string>
+    <string name="config_controls_color_label_normal">ଲେବଲ୍ ଛଡ଼ାଯାଇଛି</string>
+    <string name="config_controls_color_label_pressed">ଲେବଲ୍ ଦବାଯାଇଛି</string>
+    <string name="config_controls_color_outline_short">ଧାର</string>
+    <string name="config_controls_disabled_hint">ସାଧାରଣ ବିଭାଗରେ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବନ୍ଦ ଅଛି। ଏଠାରେ ଆପଣ ଏହାକୁ କଷ୍ଟମାଇଜ୍ କରିପାରିବେ।</string>
+    <string name="config_controls_opacity_help" formatted="false">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣର ସ୍ୱଚ୍ଛତା ବଦଳାଏ: 0% ସମ୍ପୂର୍ଣ୍ଣ ସ୍ୱଚ୍ଛ ଏବଂ 100% ଅସ୍ୱଚ୍ଛ।</string>
+    <string name="config_controls_opaque_outside">MIDlet ସ୍କ୍ରିନ୍ ବାହାରେ ନିୟନ୍ତ୍ରଣକୁ ସ୍ୱଚ୍ଛତା ବିନା ଦେଖାନ୍ତୁ</string>
+    <string name="config_controls_opaque_outside_help">MIDlet ସ୍କ୍ରିନ୍ ବାହାରର ନିୟନ୍ତ୍ରଣରେ ସ୍ୱଚ୍ଛତା ସେଟିଂ ଲାଗୁ ହୁଏ ନାହିଁ। ସ୍କ୍ରିନ୍ ଉପରର ନିୟନ୍ତ୍ରଣ ଚୟନ କରାଯାଇଥିବା ମୂଲ୍ୟ ବ୍ୟବହାର କରେ।</string>
+    <string name="config_controls_connect_controller">କ୍ୟାଲିବ୍ରେଟ୍ କରିବାକୁ କଣ୍ଟ୍ରୋଲର୍ ସଂଯୋଗ କରନ୍ତୁ</string>
+    <string name="config_controls_color_skin_notice">ପୂରା ବଟନ୍‌କୁ ଢାଙ୍କୁଥିବା ସ୍କିନ୍ ଡିଫଲ୍ଟ ରଙ୍ଗ, ଆକୃତି ଓ ଧାରକୁ ବଦଳାଇପାରେ।</string>
     <string name="config_controls_virtual_keyboard">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ</string>
     <string name="config_controls_virtual_keyboard_colors">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣର ରଙ୍ଗ</string>
     <string name="config_current_screen_size">ବର୍ତ୍ତମାନର ଆକାର: %1$s</string>
@@ -397,7 +403,7 @@
     <string name="config_timing_mode_full_guest">ଏମୁଲେସନ୍ ସମୟ</string>
     <string name="config_timing_mode_real_wall">ସିଷ୍ଟମ୍ ସମୟ</string>
     <string name="config_virtual_controls_color_preview">ରଙ୍ଗ ପୂର୍ବଦର୍ଶନ</string>
-    <string name="config_virtual_controls_preview_normal">ସାଧାରଣ</string>
+    <string name="config_virtual_controls_preview_normal">ଛଡ଼ାଯାଇଛି</string>
     <string name="config_virtual_controls_preview_pressed">ଦବାଯାଇଛି</string>
     <string name="layout_edit_continue">ସମ୍ପାଦନା ଜାରି ରଖନ୍ତୁ</string>
     <string name="layout_edit_discard">ପରିବର୍ତ୍ତନ ତ୍ୟାଗ କରନ୍ତୁ</string>
@@ -816,7 +822,7 @@
     <string name="config_help_virtual_keyboard">ଏହି MIDlet ପାଇଁ ସ୍କ୍ରିନ୍‌ରେ ନିୟନ୍ତ୍ରଣ ଦେଖାଏ।</string>
     <string name="config_help_vk_alpha">ନିୟନ୍ତ୍ରଣର ଅସ୍ୱଚ୍ଛତା ନିର୍ଦ୍ଧାରଣ କରେ: ୦ = ସମ୍ପୂର୍ଣ୍ଣ ସ୍ୱଚ୍ଛ; ୨୫୫ = ସମ୍ପୂର୍ଣ୍ଣ ଅସ୍ୱଚ୍ଛ।</string>
     <string name="config_help_vk_background">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବଟନ୍‌ର ମୂଳ ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
-    <string name="config_help_vk_button_shape">କୀପ୍ୟାଡ୍ ବଟନ୍‌ର ଆକୃତି ନିର୍ଦ୍ଧାରଣ କରେ। D-pad ଓ ଆନାଲଗ୍ ଷ୍ଟିକ୍ ନିଜ ନିଜ ଆକୃତିରେ ରହେ।</string>
+    <string name="config_help_vk_button_shape">କୀପ୍ୟାଡ୍ ବଟନ୍‌ର ଡିଫଲ୍ଟ ଆକୃତି ନିର୍ଦ୍ଧାରଣ କରେ। D-pad ଓ ଆନାଲଗ୍ ଷ୍ଟିକ୍‌ର ନିଜସ୍ୱ ଆକୃତି ରହିଛି।</string>
     <string name="config_help_vk_feedback">ସେଟିଂସ୍‌ରେ କମ୍ପନ ସକ୍ରିୟ ଥିଲେ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ଦବାଇବା ସମୟରେ କମ୍ପନ କରେ।</string>
     <string name="config_help_vk_force_opacity">MIDlet ସ୍କ୍ରିନ୍ ବାହାରେ ଥିବା ନିୟନ୍ତ୍ରଣକୁ ଅସ୍ୱଚ୍ଛ କରେ। ସ୍କ୍ରିନ୍ ଉପରେ ଥିବା ନିୟନ୍ତ୍ରଣ ନିର୍ଦ୍ଧାରିତ ଅସ୍ୱଚ୍ଛତା ବ୍ୟବହାର କରେ।</string>
     <string name="config_help_vk_foreground">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବଟନ୍‌ର ଲେବଲ୍ ଓ ପ୍ରତୀକର ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
@@ -1117,6 +1123,14 @@
     <string name="config_asset_busy">ପ୍ରଥମେ ଚାଲୁଥିବା ଫାଇଲ କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ।</string>
     <string name="config_background_dynamic">ଗତିଶୀଳ ରଙ୍ଗ</string>
     <string name="config_background_dynamic_help">MIDlet ପରଦା ସହ ସୁଗମ ଭାବରେ ବଦଳୁଥିବା ଗୋଟିଏ ଏକରଙ୍ଗିଆ ପୃଷ୍ଠଭୂମି ବ୍ୟବହାର କରେ।</string>
+    <string name="library_metadata_main_icon">ମୁଖ୍ୟ</string>
+    <string name="library_metadata_follows_main">ମୁଖ୍ୟ ଆଇକନ୍ ବ୍ୟବହାର କରୁଛି</string>
+    <string name="library_metadata_change">ବଦଳାନ୍ତୁ</string>
+    <string name="library_metadata_remove_portrait">3:4 ଆଇକନ୍ ହଟାନ୍ତୁ</string>
+    <string name="library_metadata_icon_updated">ଆଇକନ୍ ଅପଡେଟ୍ ହୋଇଛି</string>
+    <string name="library_metadata_discard_title">ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ବାତିଲ୍ କରିବେ କି?</string>
+    <string name="library_metadata_discard_message">ସଞ୍ଚୟ ହୋଇନଥିବା ଲେଖା ପରିବର୍ତ୍ତନ ହଜିଯିବ। ଆଇକନ୍ ପରିବର୍ତ୍ତନ ପୂର୍ବରୁ ସଞ୍ଚୟ ହୋଇଛି।</string>
+    <string name="library_metadata_discard">ବାତିଲ୍ କରନ୍ତୁ</string>
     <string name="library_metadata_default_description">ଡିଫଲ୍ଟ ବିବରଣୀ</string>
     <string name="library_metadata_other_languages">ଅନ୍ୟ ଭାଷା</string>
     <string name="library_metadata_add_language">+ ଭାଷା ଯୋଡ଼ନ୍ତୁ</string>

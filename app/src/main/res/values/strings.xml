@@ -181,7 +181,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rectangle</string>
     <string name="pref_button_shape_round">Rounded rectangle</string>
-    <string name="pref_button_shape_title">Button shape</string>
+    <string name="pref_button_shape_title">Keypad button shape</string>
     <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Working directory</string>
     <string name="pref_encoding_title">Encoding</string>
@@ -746,10 +746,23 @@
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
     <string name="config_virtual_controls_color_preview">Color preview</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Released</string>
     <string name="config_virtual_controls_preview_pressed">Pressed</string>
     <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
-    <string name="config_controls_maintenance">Virtual controls layout</string>
+    <string name="config_controls_maintenance">Layout</string>
+    <string name="config_controls_customization">Customization</string>
+    <string name="config_controls_skin_help">Changes the appearance of keypad buttons, the D-pad, and the analog stick using custom images.</string>
+    <string name="config_controls_color_button_normal">Released button</string>
+    <string name="config_controls_color_button_pressed">Pressed button</string>
+    <string name="config_controls_color_label_normal">Released label</string>
+    <string name="config_controls_color_label_pressed">Pressed label</string>
+    <string name="config_controls_color_outline_short">Outline</string>
+    <string name="config_controls_disabled_hint">Virtual controls are off in General. You can still customize them here.</string>
+    <string name="config_controls_opacity_help" formatted="false">Adjusts virtual control transparency: 0% is fully transparent; 100% is fully visible.</string>
+    <string name="config_controls_opaque_outside">Show controls without transparency outside the MIDlet screen</string>
+    <string name="config_controls_opaque_outside_help">Controls outside the MIDlet screen ignore opacity. Controls over the screen still follow the selected opacity.</string>
+    <string name="config_controls_connect_controller">Connect a controller to calibrate</string>
+    <string name="config_controls_color_skin_notice">A full-button skin can replace the default button colors, shape, and outline.</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
     <string name="config_reset_all_settings">Reset all settings</string>
@@ -820,13 +833,13 @@
     <string name="config_help_font_presets">Applies font sizes suited to common J2ME screen resolutions.</string>
     <string name="config_help_font_dimensions">Applies Android’s font scale to Java ME font sizes.</string>
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
-    <string name="config_help_key_layout">Chooses the key code layout reported to the MIDlet.</string>
+    <string name="config_help_key_layout">Selects the key-code scheme reported to the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
-    <string name="config_help_vk_button_shape">Sets the shape of keypad buttons. The D-pad and analog stick keep their own shapes.</string>
-    <string name="config_help_vk_feedback">Vibrates on virtual-control presses when vibration is enabled in Settings.</string>
+    <string name="config_help_vk_button_shape">Sets the default keypad button shape. The D-pad and analog stick have their own shapes.</string>
+    <string name="config_help_vk_feedback">Vibrates when a virtual control is pressed if vibration is enabled in Settings.</string>
     <string name="config_help_vk_alpha">Sets control opacity: 0 = fully transparent; 255 = fully opaque.</string>
     <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>
-    <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. Set to 0 to disable auto-hide.</string>
+    <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. A value of 0 disables auto-hide.</string>
     <string name="config_help_vk_foreground">Sets the label and symbol color on virtual-control buttons.</string>
     <string name="config_help_vk_background">Sets the base color of virtual-control buttons.</string>
     <string name="config_help_vk_selected_foreground">Sets the label and symbol color while a virtual-control button is pressed.</string>
@@ -903,15 +916,6 @@
     <string name="library_metadata_vendor">Vendor</string>
     <string name="library_metadata_description">Description</string>
     <string name="library_metadata_reset_to_original">Reset to original</string>
-    <string name="library_metadata_main_icon">Main</string>
-    <string name="library_metadata_portrait_icon" translatable="false">3:4</string>
-    <string name="library_metadata_follows_main">Uses main icon</string>
-    <string name="library_metadata_change">Change</string>
-    <string name="library_metadata_remove_portrait">Remove 3:4 icon</string>
-    <string name="library_metadata_icon_updated">Icon updated</string>
-    <string name="library_metadata_discard_title">Discard changes?</string>
-    <string name="library_metadata_discard_message">Unsaved text changes will be lost. Icon changes are already saved.</string>
-    <string name="library_metadata_discard">Discard</string>
     <string name="library_metadata_save">Save</string>
 
     <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>
@@ -1204,13 +1208,7 @@
     <string name="config_asset_invalid">Unsupported or invalid file.</string>
     <string name="config_asset_operation_failed">Could not complete the file operation.</string>
     <string name="config_asset_busy">Finish the current file operation first.</string>
-    <string name="library_metadata_default_description">Default description</string>
-    <string name="library_metadata_other_languages">Other languages</string>
-    <string name="library_metadata_add_language">+ Add language</string>
-    <string name="library_metadata_language_search">Search language or enter locale</string>
-    <string name="library_metadata_remove_language">Remove description</string>
-    <string name="library_metadata_language_load_failed">Could not load language descriptions. Reopen Edit metadata to try again.</string>
-    <string name="control_skin_title" tools:ignore="MissingTranslation">Control skin</string>
+    <string name="control_skin_title">Virtual control skin</string>
     <string name="control_skin_create" tools:ignore="MissingTranslation">Create set</string>
     <string name="control_skin_default" tools:ignore="MissingTranslation">Default buttons</string>
     <string name="control_skin_edit" tools:ignore="MissingTranslation">Edit</string>
@@ -1262,4 +1260,19 @@
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Preview %1$s</string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Default</string>
     <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Customized</string>
+    <string name="library_metadata_main_icon">Main</string>
+    <string name="library_metadata_portrait_icon" translatable="false">3:4</string>
+    <string name="library_metadata_follows_main">Uses main icon</string>
+    <string name="library_metadata_change">Change</string>
+    <string name="library_metadata_remove_portrait">Remove 3:4 icon</string>
+    <string name="library_metadata_icon_updated">Icon updated</string>
+    <string name="library_metadata_discard_title">Discard changes?</string>
+    <string name="library_metadata_discard_message">Unsaved text changes will be lost. Icon changes are already saved.</string>
+    <string name="library_metadata_discard">Discard</string>
+    <string name="library_metadata_default_description">Default description</string>
+    <string name="library_metadata_other_languages">Other languages</string>
+    <string name="library_metadata_add_language">+ Add language</string>
+    <string name="library_metadata_language_search">Search language or enter locale</string>
+    <string name="library_metadata_remove_language">Remove description</string>
+    <string name="library_metadata_language_load_failed">Could not load language descriptions. Reopen Edit metadata to try again.</string>
 </resources>

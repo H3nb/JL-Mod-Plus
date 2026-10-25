@@ -26,7 +26,7 @@
     <string name="permission_request_failed">Această aplicație necesită permisiunea de scriere în stocare.</string>
     <string name="pref_app_sort_date">Data adăugării</string>
     <string name="pref_app_sort_name">Nume</string>
-    <string name="pref_button_shape_title">Formă buton</string>
+    <string name="pref_button_shape_title">Forma butoanelor tastaturii</string>
     <string name="pref_encoding_title">Codificare</string>
     <string name="PREF_FILTER">Filtrare liniară</string>
     <string name="PREF_FONT_LARGE">Mare</string>
@@ -249,14 +249,6 @@
     <string name="library_metadata_icon">Pictogramă</string>
     <string name="library_metadata_name">Nume</string>
     <string name="library_metadata_reset_to_original">Resetează la original</string>
-    <string name="library_metadata_main_icon">Principală</string>
-    <string name="library_metadata_follows_main">Folosește pictograma principală</string>
-    <string name="library_metadata_change">Schimbă</string>
-    <string name="library_metadata_remove_portrait">Elimină pictograma 3:4</string>
-    <string name="library_metadata_icon_updated">Pictogramă actualizată</string>
-    <string name="library_metadata_discard_title">Renunțați la modificări?</string>
-    <string name="library_metadata_discard_message">Modificările textului nesalvate se vor pierde. Modificările pictogramei au fost deja salvate.</string>
-    <string name="library_metadata_discard">Renunță</string>
     <string name="library_metadata_save">Salvează</string>
     <string name="library_metadata_vendor">Furnizor</string>
     <string name="library_no_matches">Niciun rezultat pentru „%1$s”</string>
@@ -347,7 +339,21 @@
     <string name="config_color_picker_title">Alegeți culoarea</string>
     <string name="config_controller_help_body_compact">Butoanele controlerului folosesc aceleași mapări ca tastele tastaturii și ale telefonului. Stickul analogic trimite MIDletului doar intrări direcționale. Butonul Înapoi din Android își păstrează comportamentul obișnuit; orice buton fizic mapat la M deschide meniul MIDletului în execuție.</string>
     <string name="config_controls_key_input">Intrare fizică</string>
-    <string name="config_controls_maintenance">Aranjamentul comenzilor virtuale</string>
+    <string name="config_controls_maintenance">Aranjament</string>
+    <string name="control_skin_title">Aspectul comenzilor virtuale</string>
+    <string name="config_controls_customization">Personalizare</string>
+    <string name="config_controls_skin_help">Schimbă aspectul butoanelor tastaturii, al padului direcțional și al stickului analogic folosind imagini personalizate.</string>
+    <string name="config_controls_color_button_normal">Buton eliberat</string>
+    <string name="config_controls_color_button_pressed">Buton apăsat</string>
+    <string name="config_controls_color_label_normal">Etichetă la eliberare</string>
+    <string name="config_controls_color_label_pressed">Etichetă la apăsare</string>
+    <string name="config_controls_color_outline_short">Contur</string>
+    <string name="config_controls_disabled_hint">Comenzile virtuale sunt dezactivate în General. Le poți personaliza în continuare aici.</string>
+    <string name="config_controls_opacity_help" formatted="false">Reglează transparența comenzilor virtuale: 0% înseamnă complet transparent, iar 100% complet opac.</string>
+    <string name="config_controls_opaque_outside">Afișează comenzile fără transparență în afara ecranului MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Comenzile din afara ecranului MIDlet ignoră opacitatea setată. Cele de deasupra ecranului folosesc în continuare valoarea aleasă.</string>
+    <string name="config_controls_connect_controller">Conectează un controler pentru calibrare</string>
+    <string name="config_controls_color_skin_notice">Un aspect care acoperă întregul buton poate înlocui culorile, forma și conturul implicite.</string>
     <string name="config_controls_virtual_keyboard">Comenzi virtuale</string>
     <string name="config_controls_virtual_keyboard_colors">Culorile comenzilor virtuale</string>
     <string name="config_current_screen_size">Dimensiune actuală: %1$s</string>
@@ -479,7 +485,7 @@
     <string name="config_help_virtual_keyboard">Afișează comenzi pe ecran pentru acest MIDlet.</string>
     <string name="config_help_vk_alpha">Setează opacitatea comenzilor: 0 = complet transparente; 255 = complet opace.</string>
     <string name="config_help_vk_background">Setează culoarea de bază a butoanelor comenzilor virtuale.</string>
-    <string name="config_help_vk_button_shape">Setează forma butoanelor tastaturii. Padul direcțional și stickul analogic își păstrează propriile forme.</string>
+    <string name="config_help_vk_button_shape">Setează forma implicită a butoanelor tastaturii. Padul direcțional și stickul analogic au forme proprii.</string>
     <string name="config_help_vk_feedback">Vibrează la apăsarea comenzilor virtuale când vibrațiile sunt activate în Setări.</string>
     <string name="config_help_vk_force_opacity">Face opace comenzile din afara ecranului MIDletului. Comenzile de deasupra ecranului folosesc opacitatea configurată.</string>
     <string name="config_help_vk_foreground">Setează culoarea etichetelor și simbolurilor de pe butoanele comenzilor virtuale.</string>
@@ -504,7 +510,7 @@
     <string name="config_timing_mode_real_wall">Timp de sistem</string>
     <string name="config_virtual_controls_color_preview">Previzualizarea culorilor</string>
     <string name="config_virtual_controls_preview_hint">Atingeți pentru a previzualiza culorile la apăsare. Exemplul folosește opacitatea selectată.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Eliberat</string>
     <string name="config_virtual_controls_preview_pressed">Apăsat</string>
     <string name="config_warning_filter_shader">Filtrarea liniară netezește imaginea de intrare înainte de procesarea cu shaderul ecranului și poate reduce claritatea rezultatului.</string>
     <string name="layout_edit_continue">Continuați editarea</string>
@@ -1150,6 +1156,14 @@
     <string name="config_asset_busy">Finalizează mai întâi operația în curs cu fișierul.</string>
     <string name="config_background_dynamic">Culoare dinamică</string>
     <string name="config_background_dynamic_help">Folosește o singură culoare uniformă, care se adaptează lin la ecranul MIDlet.</string>
+    <string name="library_metadata_main_icon">Principală</string>
+    <string name="library_metadata_follows_main">Folosește pictograma principală</string>
+    <string name="library_metadata_change">Schimbă</string>
+    <string name="library_metadata_remove_portrait">Elimină pictograma 3:4</string>
+    <string name="library_metadata_icon_updated">Pictogramă actualizată</string>
+    <string name="library_metadata_discard_title">Renunțați la modificări?</string>
+    <string name="library_metadata_discard_message">Modificările textului nesalvate se vor pierde. Modificările pictogramei au fost deja salvate.</string>
+    <string name="library_metadata_discard">Renunță</string>
     <string name="library_metadata_default_description">Descriere implicită</string>
     <string name="library_metadata_other_languages">Alte limbi</string>
     <string name="library_metadata_add_language">+ Adaugă limbă</string>

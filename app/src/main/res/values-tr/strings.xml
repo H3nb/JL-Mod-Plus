@@ -56,7 +56,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Dikdörtgen</string>
     <string name="pref_button_shape_round">Yuvarlatılmış dikdörtgen</string>
-    <string name="pref_button_shape_title">Tuş şekli</string>
+    <string name="pref_button_shape_title">Tuş takımı düğmelerinin şekli</string>
     <string name="pref_category_experimental">Deneysel</string>
     <string name="pref_emulator_dir">Çalışma dizini</string>
     <string name="pref_encoding_title">Kodlama</string>
@@ -304,14 +304,6 @@
     <string name="library_metadata_icon">Simge</string>
     <string name="library_metadata_name">Ad</string>
     <string name="library_metadata_reset_to_original">Özgün hâline sıfırla</string>
-    <string name="library_metadata_main_icon">Ana</string>
-    <string name="library_metadata_follows_main">Ana simgeyi kullanır</string>
-    <string name="library_metadata_change">Değiştir</string>
-    <string name="library_metadata_remove_portrait">3:4 simgesini kaldır</string>
-    <string name="library_metadata_icon_updated">Simge güncellendi</string>
-    <string name="library_metadata_discard_title">Değişiklikler silinsin mi?</string>
-    <string name="library_metadata_discard_message">Kaydedilmemiş metin değişiklikleri kaybolacak. Simge değişiklikleri zaten kaydedildi.</string>
-    <string name="library_metadata_discard">Vazgeç</string>
     <string name="library_metadata_save">Kaydet</string>
     <string name="library_metadata_vendor">Sağlayıcı</string>
     <string name="library_no_matches">\"%1$s\" için eşleşme yok</string>
@@ -397,7 +389,21 @@
     <string name="config_color_picker_title">Renk seç</string>
     <string name="config_controller_help_body_compact">Kontrolcü düğmeleri, klavye ve telefon tuşlarıyla aynı tuş eşlemelerini kullanır. Analog çubuk MIDlet\'e yalnızca yön girdisi gönderir. Android Geri düğmesi normal davranışını korur; M\'ye eşlenen herhangi bir fiziksel düğme çalışma sırasında MIDlet menüsünü açar.</string>
     <string name="config_controls_key_input">Fiziksel giriş</string>
-    <string name="config_controls_maintenance">Sanal kontrol düzeni</string>
+    <string name="config_controls_maintenance">Düzen</string>
+    <string name="control_skin_title">Sanal kontrol kaplaması</string>
+    <string name="config_controls_customization">Özelleştirme</string>
+    <string name="config_controls_skin_help">Özel görseller kullanarak tuş takımı düğmelerinin, yön tuşlarının ve analog çubuğun görünümünü değiştirir.</string>
+    <string name="config_controls_color_button_normal">Bırakılan tuş</string>
+    <string name="config_controls_color_button_pressed">Basılı tuş</string>
+    <string name="config_controls_color_label_normal">Bırakılan etiket</string>
+    <string name="config_controls_color_label_pressed">Basılı etiket</string>
+    <string name="config_controls_color_outline_short">Kenarlık</string>
+    <string name="config_controls_disabled_hint">Sanal kontroller Genel bölümünde kapalı. Yine de burada özelleştirebilirsiniz.</string>
+    <string name="config_controls_opacity_help" formatted="false">Sanal kontrollerin saydamlığını ayarlar: %0 tamamen saydam, %100 tamamen opaktır.</string>
+    <string name="config_controls_opaque_outside">MIDlet ekranı dışındaki kontrolleri saydam olmadan göster</string>
+    <string name="config_controls_opaque_outside_help">MIDlet ekranı dışındaki kontroller opaklık ayarını yok sayar. Ekran üzerindekiler seçilen değeri kullanmaya devam eder.</string>
+    <string name="config_controls_connect_controller">Kalibre etmek için bir kontrol cihazı bağlayın</string>
+    <string name="config_controls_color_skin_notice">Tüm düğmeyi kaplayan bir kaplama, varsayılan renklerin, şeklin ve kenarlığın yerini alabilir.</string>
     <string name="config_controls_virtual_keyboard">Sanal kontroller</string>
     <string name="config_controls_virtual_keyboard_colors">Sanal kontrol renkleri</string>
     <string name="config_current_screen_size">Geçerli boyut: %1$s</string>
@@ -529,7 +535,7 @@
     <string name="config_help_virtual_keyboard">Bu MIDlet için ekran kontrollerini gösterir.</string>
     <string name="config_help_vk_alpha">Kontrol opaklığını ayarlar: 0 = tamamen saydam; 255 = tamamen opak.</string>
     <string name="config_help_vk_background">Sanal kontrol düğmelerinin temel rengini ayarlar.</string>
-    <string name="config_help_vk_button_shape">Tuş takımı düğmelerinin şeklini ayarlar. Yön tuşları ve analog çubuk kendi şekillerini korur.</string>
+    <string name="config_help_vk_button_shape">Tuş takımı düğmelerinin varsayılan şeklini ayarlar. Yön tuşları ve analog çubuğun kendi şekilleri vardır.</string>
     <string name="config_help_vk_feedback">Ayarlarda titreşim etkinse sanal kontrollere basıldığında titreşir.</string>
     <string name="config_help_vk_force_opacity">MIDlet ekranının dışındaki kontrolleri opak yapar. Ekranın üzerindeki kontroller ayarlanan opaklığı kullanır.</string>
     <string name="config_help_vk_foreground">Sanal kontrol düğmelerindeki etiket ve simgelerin rengini ayarlar.</string>
@@ -554,7 +560,7 @@
     <string name="config_timing_mode_real_wall">Sistem zamanı</string>
     <string name="config_virtual_controls_color_preview">Renk önizlemesi</string>
     <string name="config_virtual_controls_preview_hint">Basılı durum renklerini önizlemek için dokunun. Örnek seçilen opaklığı kullanır.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Bırakıldı</string>
     <string name="config_virtual_controls_preview_pressed">Basılı</string>
     <string name="config_warning_filter_shader">Doğrusal filtreleme, ekran gölgelendiricisi işlemeden önce girdiyi yumuşatır ve çıktı keskinliğini azaltabilir.</string>
     <string name="layout_edit_continue">Düzenlemeye devam et</string>
@@ -1118,6 +1124,14 @@
     <string name="config_asset_busy">Önce devam eden dosya işlemini tamamlayın.</string>
     <string name="config_background_dynamic">Dinamik renk</string>
     <string name="config_background_dynamic_help">MIDlet ekranına yumuşakça uyum sağlayan tek bir düz renk kullanır.</string>
+    <string name="library_metadata_main_icon">Ana</string>
+    <string name="library_metadata_follows_main">Ana simgeyi kullanır</string>
+    <string name="library_metadata_change">Değiştir</string>
+    <string name="library_metadata_remove_portrait">3:4 simgesini kaldır</string>
+    <string name="library_metadata_icon_updated">Simge güncellendi</string>
+    <string name="library_metadata_discard_title">Değişiklikler silinsin mi?</string>
+    <string name="library_metadata_discard_message">Kaydedilmemiş metin değişiklikleri kaybolacak. Simge değişiklikleri zaten kaydedildi.</string>
+    <string name="library_metadata_discard">Vazgeç</string>
     <string name="library_metadata_default_description">Varsayılan açıklama</string>
     <string name="library_metadata_other_languages">Diğer diller</string>
     <string name="library_metadata_add_language">+ Dil ekle</string>
