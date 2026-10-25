@@ -110,7 +110,8 @@ class LibraryMetadataOverrideRegressionTest {
             localizedOverrides = mapOf("en" to "User English", "id" to "Petualangan"),
         )
         val localized = awaitReady(root) { state ->
-            state.descriptionOverrides[appId]?.size == 2
+            state.descriptionOverrides[appId]?.size == 2 &&
+                state.apps.singleOrNull()?.description == "Edited default"
         }
         assertEquals("User English", localized.descriptionOverrides[appId]?.get("en"))
         assertEquals("Edited default", localized.apps.single().description)
