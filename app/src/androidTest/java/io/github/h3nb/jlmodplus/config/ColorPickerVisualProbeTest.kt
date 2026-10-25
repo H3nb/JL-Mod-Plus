@@ -59,7 +59,7 @@ class ColorPickerVisualProbeTest {
             val shot = instrumentation.uiAutomation.takeScreenshot()
             val folder = File(context.getExternalFilesDir(null), "color-picker-probe")
             assertTrue(folder.exists() || folder.mkdirs())
-            FileOutputStream(File(folder, "$" + "{orientation}-$" + "{state}.png")).use { out ->
+            FileOutputStream(File(folder, "${orientation}-${state}.png")).use { out ->
                 assertTrue(shot.compress(Bitmap.CompressFormat.PNG, 100, out))
             }
             shot.recycle()
