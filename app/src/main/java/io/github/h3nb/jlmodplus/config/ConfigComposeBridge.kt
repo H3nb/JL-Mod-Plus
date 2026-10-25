@@ -1723,15 +1723,19 @@ private fun InputSection(
             value = state.controlSkinName.ifBlank { stringResource(R.string.control_skin_default) },
             onClick = events::onManageControlSkins,
         )
+        val displayedOpacity = (form.vkAlpha.coerceIn(0, 255) * 100f / 255f).roundToInt()
         ConfigSliderPreference(
             title = stringResource(R.string.PREF_VK_ALPHA),
             description = stringResource(R.string.config_controls_opacity_help),
-            value = (form.vkAlpha.coerceIn(0, 255) * 100f / 255f).roundToInt(),
+            value = displayedOpacity,
             valueRange = 0..100,
             compact = true,
             valueSuffix = "%",
             onSelected = { percent ->
-                onFormChanged(form.toBuilder().vkAlpha((percent * 255f / 100f).roundToInt()).build())
+                // Preserve the precise stored value when a rounded percentage was not changed.
+                if (percent != displayedOpacity) {
+                    onFormChanged(form.toBuilder().vkAlpha((percent * 255f / 100f).roundToInt()).build())
+                }
             },
         )
         ConfigSwitchPreference(

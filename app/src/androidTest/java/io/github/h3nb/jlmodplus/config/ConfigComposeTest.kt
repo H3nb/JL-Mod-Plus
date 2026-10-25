@@ -995,6 +995,27 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun acceptingRoundedOpacityWithoutEditingPreservesStoredValue() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().vkAlpha(254).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, events, initialDestination = ConfigDestination.Controls)
+            }
+        }
+        scrollTo(uiString(R.string.PREF_VK_ALPHA))
+        composeRule.onNodeWithText("100%").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(0, events.formChanges)
+        assertEquals(254, state.form.vkAlpha)
+    }
+
+    @Test
     fun colorPickerConfirmsCurrentValueWithoutExternalDependency() {
         var picked: String? = null
         composeRule.setContent {
