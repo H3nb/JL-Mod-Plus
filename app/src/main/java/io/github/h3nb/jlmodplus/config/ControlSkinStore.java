@@ -243,8 +243,13 @@ public final class ControlSkinStore {
     private static void removeContents(File folder) throws IOException {
         File[] files = folder.listFiles();
         if (files == null) throw new IOException("Cannot list set");
+        // Reject unsupported entries before deleting anything. A manually added
+        // subdirectory must not leave a half-deleted set behind.
         for (File file : files) {
-            if (!file.isFile() || !file.delete()) throw new IOException("Cannot delete set asset");
+            if (!file.isFile()) throw new IOException("Cannot delete set asset");
+        }
+        for (File file : files) {
+            if (!file.delete()) throw new IOException("Cannot delete set asset");
         }
     }
 
@@ -334,6 +339,7 @@ public final class ControlSkinStore {
 
     public static synchronized void removeImage(File workdir, String setId,
             String key, boolean pressed) throws IOException {
+        if (!validKey(key)) throw new IOException("Invalid button key");
         File folder = required(workdir, setId).folder;
         for (String suffix : new String[]{".png", ".webp"}) {
             File file = new File(folder, "key_" + key + (pressed ? "_pressed" : "") + suffix);
