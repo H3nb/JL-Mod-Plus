@@ -2,8 +2,6 @@ package io.github.h3nb.jlmodplus.config
 
 import android.content.res.Configuration
 import android.graphics.Bitmap
-import androidx.compose.ui.test.assertExists
-import androidx.compose.ui.test.fetchSemanticsNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
