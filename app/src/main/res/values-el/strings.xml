@@ -283,7 +283,21 @@
     <string name="config_color_picker_title">Επιλογή χρώματος</string>
     <string name="config_controller_help_body_compact">Τα κουμπιά του χειριστηρίου χρησιμοποιούν τις ίδιες αντιστοιχίσεις με τα πλήκτρα του πληκτρολογίου και του τηλεφώνου. Ο αναλογικός μοχλός στέλνει μόνο είσοδο κατεύθυνσης στο MIDlet. Το Πίσω του Android διατηρεί την κανονική συμπεριφορά του· οποιοδήποτε φυσικό κουμπί αντιστοιχισμένο στο M ανοίγει το μενού του MIDlet κατά την εκτέλεση.</string>
     <string name="config_controls_key_input">Φυσική είσοδος</string>
-    <string name="config_controls_maintenance">Διάταξη εικονικών χειριστηρίων</string>
+    <string name="config_controls_maintenance">Διάταξη</string>
+    <string name="control_skin_title">Εμφάνιση εικονικών χειριστηρίων</string>
+    <string name="config_controls_customization">Προσαρμογή</string>
+    <string name="config_controls_skin_help">Αλλάζει την εμφάνιση των κουμπιών του πληκτρολογίου, του D-pad και του αναλογικού μοχλού με προσαρμοσμένες εικόνες.</string>
+    <string name="config_controls_color_button_normal">Κουμπί αφημένο</string>
+    <string name="config_controls_color_button_pressed">Κουμπί πατημένο</string>
+    <string name="config_controls_color_label_normal">Ετικέτα χωρίς πάτημα</string>
+    <string name="config_controls_color_label_pressed">Ετικέτα με πάτημα</string>
+    <string name="config_controls_color_outline_short">Περίγραμμα</string>
+    <string name="config_controls_disabled_hint">Τα εικονικά χειριστήρια είναι απενεργοποιημένα στα Γενικά. Μπορείτε όμως να τα προσαρμόσετε εδώ.</string>
+    <string name="config_controls_opacity_help">Ρυθμίζει τη διαφάνεια των εικονικών χειριστηρίων: 0% πλήρως διαφανή, 100% αδιαφανή.</string>
+    <string name="config_controls_opaque_outside">Εμφάνιση χειριστηρίων χωρίς διαφάνεια εκτός της οθόνης MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Τα χειριστήρια έξω από την οθόνη MIDlet αγνοούν τη ρύθμιση αδιαφάνειας. Όσα βρίσκονται πάνω στην οθόνη εξακολουθούν να τη χρησιμοποιούν.</string>
+    <string name="config_controls_connect_controller">Συνδέστε χειριστήριο για βαθμονόμηση</string>
+    <string name="config_controls_color_skin_notice">Μια εμφάνιση πλήρους κουμπιού μπορεί να αντικαταστήσει τα προεπιλεγμένα χρώματα, το σχήμα και το περίγραμμα.</string>
     <string name="config_controls_virtual_keyboard">Εικονικά χειριστήρια</string>
     <string name="config_controls_virtual_keyboard_colors">Χρώματα εικονικών χειριστηρίων</string>
     <string name="config_current_screen_size">Τρέχον μέγεθος: %1$s</string>
@@ -415,7 +429,7 @@
     <string name="config_help_virtual_keyboard">Εμφανίζει χειριστήρια στην οθόνη για αυτό το MIDlet.</string>
     <string name="config_help_vk_alpha">Ορίζει την αδιαφάνεια των χειριστηρίων: 0 = πλήρως διαφανή· 255 = πλήρως αδιαφανή.</string>
     <string name="config_help_vk_background">Ορίζει το βασικό χρώμα των κουμπιών των εικονικών χειριστηρίων.</string>
-    <string name="config_help_vk_button_shape">Ορίζει το σχήμα των κουμπιών του πληκτρολογίου. Το D-pad και ο αναλογικός μοχλός διατηρούν τα δικά τους σχήματα.</string>
+    <string name="config_help_vk_button_shape">Ορίζει το προεπιλεγμένο σχήμα των κουμπιών του πληκτρολογίου. Το D-pad και ο αναλογικός μοχλός έχουν δικά τους σχήματα.</string>
     <string name="config_help_vk_feedback">Δονείται όταν πατάτε εικονικά χειριστήρια, εφόσον η δόνηση είναι ενεργοποιημένη στις Ρυθμίσεις.</string>
     <string name="config_help_vk_force_opacity">Κάνει αδιαφανή τα χειριστήρια έξω από την οθόνη του MIDlet. Τα χειριστήρια πάνω στην οθόνη χρησιμοποιούν τη ρυθμισμένη αδιαφάνεια.</string>
     <string name="config_help_vk_foreground">Ορίζει το χρώμα ετικετών και συμβόλων στα κουμπιά των εικονικών χειριστηρίων.</string>
@@ -440,7 +454,7 @@
     <string name="config_timing_mode_real_wall">Χρόνος συστήματος</string>
     <string name="config_virtual_controls_color_preview">Προεπισκόπηση χρώματος</string>
     <string name="config_virtual_controls_preview_hint">Πατήστε για προεπισκόπηση των χρωμάτων κατά το πάτημα. Το δείγμα χρησιμοποιεί την επιλεγμένη αδιαφάνεια.</string>
-    <string name="config_virtual_controls_preview_normal">Κανονικό</string>
+    <string name="config_virtual_controls_preview_normal">Αφημένο</string>
     <string name="config_virtual_controls_preview_pressed">Πατημένο</string>
     <string name="config_warning_filter_shader">Το γραμμικό φιλτράρισμα εξομαλύνει την είσοδο πριν από την επεξεργασία της από το shader οθόνης και μπορεί να μειώσει την ευκρίνεια του αποτελέσματος.</string>
     <string name="layout_edit_continue">Συνέχιση επεξεργασίας</string>
@@ -941,7 +955,7 @@
     <string name="pref_button_shape_oval">Οβάλ</string>
     <string name="pref_button_shape_rect">Ορθογώνιο</string>
     <string name="pref_button_shape_round">Ορθογώνιο με στρογγυλεμένες γωνίες</string>
-    <string name="pref_button_shape_title">Σχήμα κουμπιών</string>
+    <string name="pref_button_shape_title">Σχήμα κουμπιών πληκτρολογίου</string>
     <string name="pref_category_experimental">Πειραματικά</string>
     <string name="pref_emulator_dir">Κατάλογος εργασίας</string>
     <string name="pref_encoding_title">Κωδικοποίηση</string>

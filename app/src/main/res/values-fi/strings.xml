@@ -195,7 +195,7 @@
     <string name="pref_button_shape_oval">Soikea</string>
     <string name="pref_button_shape_rect">Suorakulmio</string>
     <string name="pref_button_shape_round">Pyöristetty suorakulmio</string>
-    <string name="pref_button_shape_title">Painikkeen muoto</string>
+    <string name="pref_button_shape_title">Näppäimistöpainikkeiden muoto</string>
     <string name="pref_category_experimental">Kokeelliset/tilapäiset asetukset</string>
     <string name="pref_emulator_dir">Työkansio</string>
     <string name="pref_encoding_title">Merkistökoodaus</string>
@@ -674,7 +674,21 @@
     <string name="config_controls_key_input">Fyysinen syöttö</string>
     <string name="config_controls_virtual_keyboard">Virtuaaliohjaimet</string>
     <string name="config_controls_virtual_keyboard_colors">Virtuaaliohjainten värit</string>
-    <string name="config_controls_maintenance">Virtuaaliohjainten asettelu</string>
+    <string name="config_controls_maintenance">Asettelu</string>
+    <string name="control_skin_title">Virtuaaliohjainten ulkoasu</string>
+    <string name="config_controls_customization">Mukauttaminen</string>
+    <string name="config_controls_skin_help">Muuttaa näppäimistöpainikkeiden, suuntaohjaimen ja analogisen sauvan ulkoasua omilla kuvilla.</string>
+    <string name="config_controls_color_button_normal">Vapautettu painike</string>
+    <string name="config_controls_color_button_pressed">Painettu painike</string>
+    <string name="config_controls_color_label_normal">Vapautetun painikkeen teksti</string>
+    <string name="config_controls_color_label_pressed">Painetun painikkeen teksti</string>
+    <string name="config_controls_color_outline_short">Ääriviiva</string>
+    <string name="config_controls_disabled_hint">Virtuaaliohjaimet on poistettu käytöstä Perus-osiossa. Voit silti mukauttaa niitä täällä.</string>
+    <string name="config_controls_opacity_help">Säätää virtuaaliohjainten läpinäkyvyyttä: 0 % on täysin läpinäkyvä ja 100 % peittävä.</string>
+    <string name="config_controls_opaque_outside">Näytä MIDlet-näytön ulkopuoliset ohjaimet ilman läpinäkyvyyttä</string>
+    <string name="config_controls_opaque_outside_help">MIDlet-näytön ulkopuoliset ohjaimet ohittavat peittävyysasetuksen. Näytön päällä olevat käyttävät edelleen valittua peittävyyttä.</string>
+    <string name="config_controls_connect_controller">Yhdistä ohjain kalibrointia varten</string>
+    <string name="config_controls_color_skin_notice">Koko painikkeen peittävä ulkoasu voi korvata oletusvärit, muodon ja ääriviivan.</string>
     <string name="config_current_value">Nykyinen arvo</string>
     <string name="config_maintenance">Nollaus &amp; tiedot</string>
     <string name="config_reset_all_settings">Nollaa kaikki asetukset</string>
@@ -742,7 +756,7 @@
     <string name="config_help_font_aa">Pehmentää renderöidyn tekstin reunoja.</string>
     <string name="config_help_key_layout">Valitsee MIDlet-sovelluksen käyttämän näppäinkoodiasettelun.</string>
     <string name="config_help_key_mapping">Määrittää Android-näppäimet ja -painikkeet J2ME-näppäimistötoiminnoille.</string>
-    <string name="config_help_vk_button_shape">Asettaa näppäimistön painikkeiden muodon. D-pad ja analoginen sauva säilyttävät omat muotonsa.</string>
+    <string name="config_help_vk_button_shape">Määrittää näppäimistöpainikkeiden oletusmuodon. Suuntaohjaimella ja analogisella sauvalla on omat muotonsa.</string>
     <string name="config_help_vk_feedback">Värisee virtuaaliohjainten painalluksista, kun värinä on käytössä asetuksissa.</string>
     <string name="config_help_vk_alpha">Asettaa ohjainten peittävyyden: 0 = täysin läpinäkyvä; 255 = täysin peittävä.</string>
     <string name="config_help_vk_force_opacity">Tekee MIDlet-näytön ulkopuolisista ohjaimista peittäviä. Näytön päällä olevat ohjaimet käyttävät määritettyä peittävyyttä.</string>
@@ -980,7 +994,7 @@
     <string name="bulk_install_unreadable_archives">Arkistot, joita ei voi lukea: %1$d</string>
     <string name="config_virtual_controls_color_preview">Värien esikatselu</string>
     <string name="config_virtual_controls_preview_hint">Napauta nähdäksesi painetun tilan värit. Esimerkki käyttää valittua peittävyyttä.</string>
-    <string name="config_virtual_controls_preview_normal">Normaali</string>
+    <string name="config_virtual_controls_preview_normal">Vapautettu</string>
     <string name="config_virtual_controls_preview_pressed">Painettu</string>
     <string name="config_warning_filter_shader">Lineaarinen suodatus tasoittaa syötekuvaa ennen näyttövarjostimen käsittelyä ja voi vähentää lopputuloksen terävyyttä.</string>
     <string name="install_done_with_warning">Sovellus asennettu varoituksin.</string>

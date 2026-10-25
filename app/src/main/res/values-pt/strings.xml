@@ -46,7 +46,7 @@
     <string name="pref_app_sort_name">Nome</string>
     <string name="pref_button_shape_rect">Retângulo</string>
     <string name="pref_button_shape_round">Retângulo arredondado</string>
-    <string name="pref_button_shape_title">Formato dos botões</string>
+    <string name="pref_button_shape_title">Forma dos botões do teclado</string>
     <string name="pref_emulator_dir">Diretório de trabalho</string>
     <string name="pref_encoding_title">Codificação</string>
     <string name="PREF_FILTER">Filtragem linear</string>
@@ -709,7 +709,21 @@
     <string name="config_controls_key_input">Entrada física</string>
     <string name="config_controls_virtual_keyboard">Controlos virtuais</string>
     <string name="config_controls_virtual_keyboard_colors">Cores dos controlos virtuais</string>
-    <string name="config_controls_maintenance">Esquema dos controlos virtuais</string>
+    <string name="config_controls_maintenance">Esquema</string>
+    <string name="control_skin_title">Skin dos controlos virtuais</string>
+    <string name="config_controls_customization">Personalização</string>
+    <string name="config_controls_skin_help">Altera o aspeto dos botões do teclado, do D-pad e do stick analógico com imagens personalizadas.</string>
+    <string name="config_controls_color_button_normal">Botão solto</string>
+    <string name="config_controls_color_button_pressed">Botão premido</string>
+    <string name="config_controls_color_label_normal">Rótulo solto</string>
+    <string name="config_controls_color_label_pressed">Rótulo premido</string>
+    <string name="config_controls_color_outline_short">Contorno</string>
+    <string name="config_controls_disabled_hint">Os controlos virtuais estão desativados em Básico. Ainda pode personalizá-los aqui.</string>
+    <string name="config_controls_opacity_help">Ajusta a transparência dos controlos virtuais: 0% é totalmente transparente e 100% é opaco.</string>
+    <string name="config_controls_opaque_outside">Mostrar controlos sem transparência fora do ecrã do MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Os controlos fora do ecrã do MIDlet ignoram a opacidade definida. Os controlos sobre o ecrã continuam a usar o valor escolhido.</string>
+    <string name="config_controls_connect_controller">Ligue um comando para o calibrar</string>
+    <string name="config_controls_color_skin_notice">Uma skin que cobre todo o botão pode substituir as cores, a forma e o contorno predefinidos.</string>
     <string name="config_current_value">Valor atual</string>
     <string name="config_maintenance">Reposição e dados</string>
     <string name="config_reset_all_settings">Repor todas as definições</string>
@@ -777,7 +791,7 @@
     <string name="config_help_font_aa">Suaviza as margens do texto renderizado.</string>
     <string name="config_help_key_layout">Escolhe o esquema de códigos de tecla usado pelo MIDlet.</string>
     <string name="config_help_key_mapping">Mapeia teclas e botões Android para ações do teclado J2ME.</string>
-    <string name="config_help_vk_button_shape">Define a forma dos botões do teclado. O D-pad e o stick analógico mantêm as suas próprias formas.</string>
+    <string name="config_help_vk_button_shape">Define a forma predefinida dos botões do teclado. O D-pad e o stick analógico têm formas próprias.</string>
     <string name="config_help_vk_feedback">Vibra ao premir os controlos virtuais quando a vibração está ativada nas Definições.</string>
     <string name="config_help_vk_alpha">Define a opacidade dos controlos: 0 = totalmente transparentes; 255 = totalmente opacos.</string>
     <string name="config_help_vk_force_opacity">Torna opacos os controlos fora do ecrã do MIDlet. Os controlos sobre o ecrã usam a opacidade configurada.</string>
@@ -1011,7 +1025,7 @@
     <string name="bulk_install_unreadable_archives">Arquivos comprimidos ilegíveis: %1$d</string>
     <string name="config_virtual_controls_color_preview">Pré-visualização da cor</string>
     <string name="config_virtual_controls_preview_hint">Toque para pré-visualizar as cores ao premir. A amostra usa a opacidade selecionada.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Solto</string>
     <string name="config_virtual_controls_preview_pressed">Premido</string>
     <string name="config_warning_filter_shader">A filtragem linear suaviza a imagem antes de o shader do ecrã a processar e pode reduzir a nitidez do resultado.</string>
     <string name="install_done_with_warning">Aplicação instalada com avisos.</string>

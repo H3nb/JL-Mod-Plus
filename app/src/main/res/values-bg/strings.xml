@@ -47,7 +47,7 @@
     <string name="pref_button_shape_oval">Овал</string>
     <string name="pref_button_shape_rect">Правоъгълник</string>
     <string name="pref_button_shape_round">Заоблен правоъгълник</string>
-    <string name="pref_button_shape_title">Форма на бутона</string>
+    <string name="pref_button_shape_title">Форма на бутоните на клавиатурата</string>
     <string name="pref_emulator_dir">Работна директория</string>
     <string name="pref_encoding_title">Кодиране</string>
     <string name="PREF_FILTER">Линейно филтриране</string>
@@ -371,7 +371,21 @@
     <string name="config_color_picker_title">Избор на цвят</string>
     <string name="config_controller_help_body_compact">Бутоните на контролера използват същите съпоставяния като клавишите на клавиатурата и телефона. Аналоговият стик изпраща само вход за посоки към MIDlet. Бутонът „Назад“ на Android запазва обичайното си поведение; всеки физически бутон, съпоставен с M, отваря менюто на работещия MIDlet.</string>
     <string name="config_controls_key_input">Физически вход</string>
-    <string name="config_controls_maintenance">Подредба на виртуалните контроли</string>
+    <string name="config_controls_maintenance">Подредба</string>
+    <string name="control_skin_title">Облик на виртуалните контроли</string>
+    <string name="config_controls_customization">Персонализиране</string>
+    <string name="config_controls_skin_help">Променя вида на бутоните на клавиатурата, кръстачката и аналоговия стик с изображения по избор.</string>
+    <string name="config_controls_color_button_normal">Отпуснат бутон</string>
+    <string name="config_controls_color_button_pressed">Натиснат бутон</string>
+    <string name="config_controls_color_label_normal">Надпис при отпускане</string>
+    <string name="config_controls_color_label_pressed">Надпис при натискане</string>
+    <string name="config_controls_color_outline_short">Контур</string>
+    <string name="config_controls_disabled_hint">Виртуалните контроли са изключени в „Общи“. Все пак можете да ги персонализирате тук.</string>
+    <string name="config_controls_opacity_help">Настройва прозрачността на виртуалните контроли: 0% е напълно прозрачно, а 100% е непрозрачно.</string>
+    <string name="config_controls_opaque_outside">Показване на контролите извън екрана на MIDlet без прозрачност</string>
+    <string name="config_controls_opaque_outside_help">Контролите извън екрана на MIDlet не използват зададената прозрачност. Тези върху екрана продължават да я използват.</string>
+    <string name="config_controls_connect_controller">Свържете контролер за калибриране</string>
+    <string name="config_controls_color_skin_notice">Облик, покриващ целия бутон, може да замени стандартните му цветове, форма и контур.</string>
     <string name="config_controls_virtual_keyboard">Виртуални контроли</string>
     <string name="config_controls_virtual_keyboard_colors">Цветове на виртуалните контроли</string>
     <string name="config_current_screen_size">Текущ размер: %1$s</string>
@@ -503,7 +517,7 @@
     <string name="config_help_virtual_keyboard">Показва екранни контроли за този MIDlet.</string>
     <string name="config_help_vk_alpha">Задава непрозрачността на контролите: 0 = напълно прозрачни; 255 = напълно непрозрачни.</string>
     <string name="config_help_vk_background">Задава основния цвят на бутоните на виртуалните контроли.</string>
-    <string name="config_help_vk_button_shape">Задава формата на бутоните на клавиатурата. Кръстачката и аналоговият стик запазват собствените си форми.</string>
+    <string name="config_help_vk_button_shape">Задава стандартната форма на бутоните на клавиатурата. Кръстачката и аналоговият стик имат собствени форми.</string>
     <string name="config_help_vk_feedback">Вибрира при натискане на виртуалните контроли, когато вибрацията е включена в „Настройки“.</string>
     <string name="config_help_vk_force_opacity">Прави непрозрачни контролите извън екрана на MIDlet. Контролите върху екрана използват зададената непрозрачност.</string>
     <string name="config_help_vk_foreground">Задава цвета на надписите и символите върху бутоните на виртуалните контроли.</string>
@@ -528,7 +542,7 @@
     <string name="config_timing_mode_real_wall">Системно време</string>
     <string name="config_virtual_controls_color_preview">Преглед на цветовете</string>
     <string name="config_virtual_controls_preview_hint">Докоснете, за да видите цветовете при натискане. Примерът използва избраната непрозрачност.</string>
-    <string name="config_virtual_controls_preview_normal">Нормално</string>
+    <string name="config_virtual_controls_preview_normal">Отпуснато</string>
     <string name="config_virtual_controls_preview_pressed">Натиснато</string>
     <string name="config_warning_filter_shader">Линейното филтриране изглажда входа, преди екранният шейдър да го обработи, и може да намали резкостта на изхода.</string>
     <string name="layout_edit_continue">Продължаване на редактирането</string>

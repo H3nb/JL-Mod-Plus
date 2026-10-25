@@ -32,7 +32,7 @@
     <string name="permission_request_failed">این برنامه به مجوز نوشتن در حافظه نیاز دارد</string>
     <string name="pref_app_sort_date">تاریخ افزودن</string>
     <string name="pref_app_sort_name">نام</string>
-    <string name="pref_button_shape_title">شکل دکمه</string>
+    <string name="pref_button_shape_title">شکل دکمه‌های صفحه‌کلید</string>
     <string name="pref_encoding_title">کدگذاری نویسه‌ها</string>
     <string name="PREF_FILTER">فیلتر خطی</string>
     <string name="PREF_FONT_LARGE">بزرگ</string>
@@ -344,7 +344,21 @@
     <string name="config_color_picker_title">انتخاب رنگ</string>
     <string name="config_controller_help_body_compact">دکمه‌های کنترلر از همان نگاشت کلیدهای صفحه‌کلید و تلفن استفاده می‌کنند. دستهٔ آنالوگ فقط ورودی جهت را به MIDlet می‌فرستد. دکمهٔ بازگشت Android رفتار معمول خود را حفظ می‌کند؛ هر دکمهٔ فیزیکی که به M نگاشت شود، منوی MIDlet را هنگام اجرا باز می‌کند.</string>
     <string name="config_controls_key_input">ورودی فیزیکی</string>
-    <string name="config_controls_maintenance">چیدمان کنترل‌های مجازی</string>
+    <string name="config_controls_maintenance">چیدمان</string>
+    <string name="control_skin_title">پوستهٔ کنترل‌های مجازی</string>
+    <string name="config_controls_customization">سفارشی‌سازی</string>
+    <string name="config_controls_skin_help">ظاهر دکمه‌های صفحه‌کلید، کلید جهت و دستهٔ آنالوگ را با تصاویر دلخواه تغییر می‌دهد.</string>
+    <string name="config_controls_color_button_normal">دکمهٔ رهاشده</string>
+    <string name="config_controls_color_button_pressed">دکمهٔ فشرده</string>
+    <string name="config_controls_color_label_normal">برچسب در حالت رها</string>
+    <string name="config_controls_color_label_pressed">برچسب هنگام فشار</string>
+    <string name="config_controls_color_outline_short">حاشیه</string>
+    <string name="config_controls_disabled_hint">کنترل‌های مجازی در بخش عمومی خاموش‌اند. بااین‌حال می‌توانید آن‌ها را اینجا سفارشی کنید.</string>
+    <string name="config_controls_opacity_help">شفافیت کنترل‌های مجازی را تنظیم می‌کند: ۰٪ کاملاً شفاف و ۱۰۰٪ بدون شفافیت است.</string>
+    <string name="config_controls_opaque_outside">نمایش کنترل‌ها بدون شفافیت در بیرون صفحهٔ MIDlet</string>
+    <string name="config_controls_opaque_outside_help">کنترل‌های بیرون صفحهٔ MIDlet تنظیم شفافیت را نادیده می‌گیرند. کنترل‌های روی صفحه همچنان از مقدار انتخاب‌شده پیروی می‌کنند.</string>
+    <string name="config_controls_connect_controller">برای کالیبره‌کردن، کنترلر را وصل کنید</string>
+    <string name="config_controls_color_skin_notice">پوستهٔ تمام‌دکمه‌ای می‌تواند رنگ، شکل و حاشیهٔ پیش‌فرض دکمه‌ها را جایگزین کند.</string>
     <string name="config_controls_virtual_keyboard">کنترل‌های مجازی</string>
     <string name="config_controls_virtual_keyboard_colors">رنگ‌های کنترل‌های مجازی</string>
     <string name="config_current_screen_size">اندازهٔ فعلی: %1$s</string>
@@ -476,7 +490,7 @@
     <string name="config_help_virtual_keyboard">کنترل‌های روی صفحه را برای این MIDlet نمایش می‌دهد.</string>
     <string name="config_help_vk_alpha">میزان کدری کنترل‌ها را تنظیم می‌کند: ۰ = کاملاً شفاف؛ ۲۵۵ = کاملاً کدر.</string>
     <string name="config_help_vk_background">رنگ پایهٔ دکمه‌های کنترل‌های مجازی را تنظیم می‌کند.</string>
-    <string name="config_help_vk_button_shape">شکل دکمه‌های صفحه‌کلید را تنظیم می‌کند. کلید جهت و دستهٔ آنالوگ شکل خود را حفظ می‌کنند.</string>
+    <string name="config_help_vk_button_shape">شکل پیش‌فرض دکمه‌های صفحه‌کلید را تنظیم می‌کند. کلید جهت و دستهٔ آنالوگ شکل مخصوص خود را دارند.</string>
     <string name="config_help_vk_feedback">اگر لرزش در تنظیمات فعال باشد، با فشردن کنترل‌های مجازی می‌لرزد.</string>
     <string name="config_help_vk_force_opacity">کنترل‌های بیرون از صفحهٔ MIDlet را کدر می‌کند. کنترل‌های روی صفحه از میزان کدری تنظیم‌شده استفاده می‌کنند.</string>
     <string name="config_help_vk_foreground">رنگ برچسب‌ها و نمادهای دکمه‌های کنترل‌های مجازی را تنظیم می‌کند.</string>
@@ -501,7 +515,7 @@
     <string name="config_timing_mode_real_wall">زمان سیستم</string>
     <string name="config_virtual_controls_color_preview">پیش‌نمایش رنگ</string>
     <string name="config_virtual_controls_preview_hint">برای پیش‌نمایش رنگ‌های حالت فشرده ضربه بزنید. نمونه از میزان کدری انتخاب‌شده استفاده می‌کند.</string>
-    <string name="config_virtual_controls_preview_normal">عادی</string>
+    <string name="config_virtual_controls_preview_normal">رهاشده</string>
     <string name="config_virtual_controls_preview_pressed">فشرده</string>
     <string name="config_warning_filter_shader">فیلتر خطی ورودی را پیش از پردازش سایه‌زن صفحه هموار می‌کند و ممکن است وضوح خروجی را کاهش دهد.</string>
     <string name="layout_edit_continue">ادامهٔ ویرایش</string>

@@ -26,7 +26,7 @@
     <string name="permission_request_failed">এই অ্যাপের স্টোরেজে লেখার অনুমতি প্রয়োজন।</string>
     <string name="pref_app_sort_date">যোগ করার তারিখ</string>
     <string name="pref_app_sort_name">নাম</string>
-    <string name="pref_button_shape_title">বাটনের আকৃতি</string>
+    <string name="pref_button_shape_title">কীপ্যাড বাটনের আকৃতি</string>
     <string name="pref_encoding_title">এনকোডিং</string>
     <string name="PREF_FILTER">লিনিয়ার ফিল্টারিং</string>
     <string name="PREF_FONT_LARGE">বড়</string>
@@ -333,7 +333,21 @@
     <string name="config_color_picker_title">রং বেছে নিন</string>
     <string name="config_controller_help_body_compact">কন্ট্রোলারের বোতামগুলি কীবোর্ড ও ফোনের কী-এর মতো একই কী ম্যাপিং ব্যবহার করে। অ্যানালগ স্টিক MIDlet-এ শুধু দিকের ইনপুট পাঠায়। Android-এর ফিরে যাওয়ার বোতাম স্বাভাবিকভাবে কাজ করে; M-এ ম্যাপ করা যেকোনো ভৌত বোতাম চলমান MIDlet-এর মেনু খোলে।</string>
     <string name="config_controls_key_input">ভৌত ইনপুট</string>
-    <string name="config_controls_maintenance">ভার্চুয়াল কন্ট্রোলের বিন্যাস</string>
+    <string name="config_controls_maintenance">বিন্যাস</string>
+    <string name="control_skin_title">ভার্চুয়াল কন্ট্রোলের স্কিন</string>
+    <string name="config_controls_customization">কাস্টমাইজেশন</string>
+    <string name="config_controls_skin_help">নিজস্ব ছবি ব্যবহার করে কীপ্যাড বাটন, D-pad ও অ্যানালগ স্টিকের চেহারা পরিবর্তন করে।</string>
+    <string name="config_controls_color_button_normal">বাটন ছাড়া</string>
+    <string name="config_controls_color_button_pressed">বাটন চাপা</string>
+    <string name="config_controls_color_label_normal">লেবেল ছাড়া</string>
+    <string name="config_controls_color_label_pressed">লেবেল চাপা</string>
+    <string name="config_controls_color_outline_short">সীমানা</string>
+    <string name="config_controls_disabled_hint">সাধারণ বিভাগে ভার্চুয়াল কন্ট্রোল বন্ধ আছে। তবুও এখানে এগুলোর চেহারা বদলাতে পারবেন।</string>
+    <string name="config_controls_opacity_help">ভার্চুয়াল কন্ট্রোলের স্বচ্ছতা নির্ধারণ করে: 0% পুরোপুরি স্বচ্ছ, 100% অস্বচ্ছ।</string>
+    <string name="config_controls_opaque_outside">MIDlet স্ক্রিনের বাইরে কন্ট্রোল সম্পূর্ণ অস্বচ্ছ দেখান</string>
+    <string name="config_controls_opaque_outside_help">MIDlet স্ক্রিনের বাইরের কন্ট্রোলে স্বচ্ছতার সেটিং প্রযোজ্য নয়। স্ক্রিনের ওপরের কন্ট্রোলে নির্বাচিত স্বচ্ছতা বজায় থাকে।</string>
+    <string name="config_controls_connect_controller">ক্যালিব্রেট করতে কন্ট্রোলার সংযুক্ত করুন</string>
+    <string name="config_controls_color_skin_notice">সম্পূর্ণ বাটনজুড়ে ব্যবহৃত স্কিন ডিফল্ট রং, আকৃতি ও সীমানা বদলে দিতে পারে।</string>
     <string name="config_controls_virtual_keyboard">ভার্চুয়াল কন্ট্রোল</string>
     <string name="config_controls_virtual_keyboard_colors">ভার্চুয়াল কন্ট্রোলের রং</string>
     <string name="config_current_screen_size">বর্তমান আকার: %1$s</string>
@@ -465,7 +479,7 @@
     <string name="config_help_virtual_keyboard">এই MIDlet-এর জন্য স্ক্রিনে কন্ট্রোল দেখায়।</string>
     <string name="config_help_vk_alpha">কন্ট্রোলের অস্বচ্ছতা নির্ধারণ করে: 0 = পুরোপুরি স্বচ্ছ; 255 = পুরোপুরি অস্বচ্ছ।</string>
     <string name="config_help_vk_background">ভার্চুয়াল কন্ট্রোলের বোতামগুলির মূল রং নির্ধারণ করে।</string>
-    <string name="config_help_vk_button_shape">কীপ্যাড বোতামের আকৃতি নির্ধারণ করে। D-pad ও অ্যানালগ স্টিক নিজস্ব আকৃতি বজায় রাখে।</string>
+    <string name="config_help_vk_button_shape">কীপ্যাড বাটনের ডিফল্ট আকৃতি নির্ধারণ করে। D-pad ও অ্যানালগ স্টিকের নিজস্ব আকৃতি রয়েছে।</string>
     <string name="config_help_vk_feedback">সেটিংসে কম্পন সক্রিয় থাকলে ভার্চুয়াল কন্ট্রোল চাপলে কম্পন হয়।</string>
     <string name="config_help_vk_force_opacity">MIDlet স্ক্রিনের বাইরের কন্ট্রোল অস্বচ্ছ করে। স্ক্রিনের ওপরের কন্ট্রোল নির্ধারিত অস্বচ্ছতা ব্যবহার করে।</string>
     <string name="config_help_vk_foreground">ভার্চুয়াল কন্ট্রোলের বোতামে লেবেল ও চিহ্নের রং নির্ধারণ করে।</string>
@@ -490,7 +504,7 @@
     <string name="config_timing_mode_real_wall">সিস্টেম সময়</string>
     <string name="config_virtual_controls_color_preview">রঙের পূর্বরূপ</string>
     <string name="config_virtual_controls_preview_hint">চাপলে যে রং দেখা যায় তার পূর্বরূপ দেখতে ট্যাপ করুন। নমুনায় বেছে নেওয়া অস্বচ্ছতা ব্যবহার করা হয়।</string>
-    <string name="config_virtual_controls_preview_normal">স্বাভাবিক</string>
+    <string name="config_virtual_controls_preview_normal">ছাড়া অবস্থায়</string>
     <string name="config_virtual_controls_preview_pressed">চাপা অবস্থায়</string>
     <string name="config_warning_filter_shader">স্ক্রিন শেডার প্রক্রিয়া করার আগে লিনিয়ার ফিল্টারিং ইনপুট মসৃণ করে এবং আউটপুটের তীক্ষ্ণতা কমতে পারে।</string>
     <string name="layout_edit_continue">সম্পাদনা চালিয়ে যান</string>

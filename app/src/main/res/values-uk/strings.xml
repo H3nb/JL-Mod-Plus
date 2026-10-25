@@ -56,7 +56,7 @@
     <string name="pref_button_shape_oval">Овал</string>
     <string name="pref_button_shape_rect">Прямокутник</string>
     <string name="pref_button_shape_round">Заокруглений прямокутник</string>
-    <string name="pref_button_shape_title">Форма кнопок</string>
+    <string name="pref_button_shape_title">Форма кнопок клавіатури</string>
     <string name="pref_category_experimental">Експериментальні</string>
     <string name="pref_emulator_dir">Робоча директорія</string>
     <string name="pref_encoding_title">Кодування</string>
@@ -399,7 +399,21 @@
     <string name="config_color_picker_title">Вибрати колір</string>
     <string name="config_controller_help_body_compact">Кнопки контролера використовують ті самі призначення, що й клавіші клавіатури та телефона. Аналоговий стік передає MIDlet лише введення напрямків. Кнопка «Назад» в Android працює як зазвичай; будь-яка фізична кнопка, призначена для M, відкриває меню запущеного MIDlet.</string>
     <string name="config_controls_key_input">Фізичне введення</string>
-    <string name="config_controls_maintenance">Розташування віртуальних елементів керування</string>
+    <string name="config_controls_maintenance">Розташування</string>
+    <string name="control_skin_title">Оформлення віртуальних елементів керування</string>
+    <string name="config_controls_customization">Налаштування вигляду</string>
+    <string name="config_controls_skin_help">Змінює вигляд кнопок клавіатури, хрестовини й аналогового стіка за допомогою власних зображень.</string>
+    <string name="config_controls_color_button_normal">Кнопку відпущено</string>
+    <string name="config_controls_color_button_pressed">Кнопку натиснуто</string>
+    <string name="config_controls_color_label_normal">Напис після відпускання</string>
+    <string name="config_controls_color_label_pressed">Напис під час натискання</string>
+    <string name="config_controls_color_outline_short">Контур</string>
+    <string name="config_controls_disabled_hint">Віртуальні елементи керування вимкнено в розділі «Загальні». Тут їх усе одно можна налаштувати.</string>
+    <string name="config_controls_opacity_help">Налаштовує прозорість віртуальних елементів керування: 0% — повністю прозорі, 100% — непрозорі.</string>
+    <string name="config_controls_opaque_outside">Показувати елементи керування за межами екрана MIDlet непрозорими</string>
+    <string name="config_controls_opaque_outside_help">Елементи керування за межами екрана MIDlet ігнорують налаштовану непрозорість. Елементи поверх екрана й надалі використовують вибране значення.</string>
+    <string name="config_controls_connect_controller">Підключіть контролер для калібрування</string>
+    <string name="config_controls_color_skin_notice">Оформлення, що покриває всю кнопку, може замінити стандартні кольори, форму й контур.</string>
     <string name="config_controls_virtual_keyboard">Віртуальні елементи керування</string>
     <string name="config_controls_virtual_keyboard_colors">Кольори віртуальних елементів керування</string>
     <string name="config_current_screen_size">Поточний розмір: %1$s</string>
@@ -531,7 +545,7 @@
     <string name="config_help_virtual_keyboard">Показує екранні елементи керування для цього MIDlet.</string>
     <string name="config_help_vk_alpha">Задає непрозорість елементів керування: 0 = повністю прозорі; 255 = повністю непрозорі.</string>
     <string name="config_help_vk_background">Задає основний колір кнопок віртуальних елементів керування.</string>
-    <string name="config_help_vk_button_shape">Задає форму кнопок клавіатури. Хрестовина й аналоговий стік зберігають власні форми.</string>
+    <string name="config_help_vk_button_shape">Задає стандартну форму кнопок клавіатури. Хрестовина й аналоговий стік мають власні форми.</string>
     <string name="config_help_vk_feedback">Вібрує під час натискання віртуальних елементів керування, якщо вібрацію ввімкнено в Налаштуваннях.</string>
     <string name="config_help_vk_force_opacity">Робить елементи керування поза екраном MIDlet непрозорими. Елементи поверх екрана використовують задану непрозорість.</string>
     <string name="config_help_vk_foreground">Задає колір написів і символів на кнопках віртуальних елементів керування.</string>
@@ -556,7 +570,7 @@
     <string name="config_timing_mode_real_wall">Системний час</string>
     <string name="config_virtual_controls_color_preview">Попередній перегляд кольорів</string>
     <string name="config_virtual_controls_preview_hint">Торкніться, щоб переглянути кольори під час натискання. Зразок використовує вибрану непрозорість.</string>
-    <string name="config_virtual_controls_preview_normal">Звичайний</string>
+    <string name="config_virtual_controls_preview_normal">Відпущено</string>
     <string name="config_virtual_controls_preview_pressed">Натиснутий</string>
     <string name="config_warning_filter_shader">Лінійна фільтрація згладжує вхідне зображення перед обробкою шейдером екрана й може знизити чіткість результату.</string>
     <string name="layout_edit_continue">Продовжити редагування</string>

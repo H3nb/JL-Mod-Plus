@@ -288,7 +288,21 @@
     <string name="config_color_picker_title">Tria un color</string>
     <string name="config_controller_help_body_compact">Els botons del comandament fan servir les mateixes assignacions que les tecles del teclat i del telèfon. La palanca analògica només envia entrades de direcció al MIDlet. Enrere d\'Android manté el comportament habitual; qualsevol botó físic assignat a M obre el menú del MIDlet durant l\'execució.</string>
     <string name="config_controls_key_input">Entrada física</string>
-    <string name="config_controls_maintenance">Disposició dels controls virtuals</string>
+    <string name="config_controls_maintenance">Disposició</string>
+    <string name="control_skin_title">Aspecte dels controls virtuals</string>
+    <string name="config_controls_customization">Personalització</string>
+    <string name="config_controls_skin_help">Canvia l’aspecte dels botons del teclat, la creueta i la palanca analògica amb imatges personalitzades.</string>
+    <string name="config_controls_color_button_normal">Botó alliberat</string>
+    <string name="config_controls_color_button_pressed">Botó premut</string>
+    <string name="config_controls_color_label_normal">Etiqueta en repòs</string>
+    <string name="config_controls_color_label_pressed">Etiqueta premuda</string>
+    <string name="config_controls_color_outline_short">Contorn</string>
+    <string name="config_controls_disabled_hint">Els controls virtuals estan desactivats a General. Encara els pots personalitzar aquí.</string>
+    <string name="config_controls_opacity_help">Ajusta la transparència dels controls virtuals: el 0% és del tot transparent i el 100% és opac.</string>
+    <string name="config_controls_opaque_outside">Mostra els controls fora de la pantalla del MIDlet sense transparència</string>
+    <string name="config_controls_opaque_outside_help">Els controls fora de la pantalla del MIDlet ignoren l’opacitat configurada. Els que se superposen a la pantalla la continuen respectant.</string>
+    <string name="config_controls_connect_controller">Connecta un comandament per calibrar-lo</string>
+    <string name="config_controls_color_skin_notice">Una aparença que cobreix tot el botó pot substituir els colors, la forma i el contorn predeterminats.</string>
     <string name="config_controls_virtual_keyboard">Controls virtuals</string>
     <string name="config_controls_virtual_keyboard_colors">Colors dels controls virtuals</string>
     <string name="config_current_screen_size">Mida actual: %1$s</string>
@@ -420,7 +434,7 @@
     <string name="config_help_virtual_keyboard">Mostra controls en pantalla per a aquest MIDlet.</string>
     <string name="config_help_vk_alpha">Defineix l\'opacitat dels controls: 0 = completament transparents; 255 = completament opacs.</string>
     <string name="config_help_vk_background">Defineix el color de base dels botons dels controls virtuals.</string>
-    <string name="config_help_vk_button_shape">Defineix la forma dels botons del teclat. La creueta i la palanca analògica mantenen les seves formes.</string>
+    <string name="config_help_vk_button_shape">Defineix la forma predeterminada dels botons del teclat. La creueta i la palanca analògica tenen formes pròpies.</string>
     <string name="config_help_vk_feedback">Vibra en prémer els controls virtuals quan la vibració està activada a Configuració.</string>
     <string name="config_help_vk_force_opacity">Fa opacs els controls que són fora de la pantalla del MIDlet. Els controls sobre la pantalla fan servir l\'opacitat configurada.</string>
     <string name="config_help_vk_foreground">Defineix el color de les etiquetes i els símbols dels botons dels controls virtuals.</string>
@@ -445,7 +459,7 @@
     <string name="config_timing_mode_real_wall">Temps del sistema</string>
     <string name="config_virtual_controls_color_preview">Previsualització del color</string>
     <string name="config_virtual_controls_preview_hint">Toqueu per previsualitzar els colors en prémer. La mostra fa servir l\'opacitat seleccionada.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Alliberat</string>
     <string name="config_virtual_controls_preview_pressed">Premut</string>
     <string name="config_warning_filter_shader">El filtratge lineal suavitza l\'entrada abans que el shader de pantalla la processi i pot reduir la nitidesa del resultat.</string>
     <string name="layout_edit_continue">Continua editant</string>
@@ -971,7 +985,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rectangle</string>
     <string name="pref_button_shape_round">Rectangle arrodonit</string>
-    <string name="pref_button_shape_title">Forma dels botons</string>
+    <string name="pref_button_shape_title">Forma dels botons del teclat</string>
     <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Directori de treball</string>
     <string name="pref_encoding_title">Codificació</string>

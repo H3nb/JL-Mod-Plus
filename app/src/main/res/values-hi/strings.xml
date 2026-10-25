@@ -56,7 +56,7 @@
     <string name="pref_button_shape_oval">अंडाकार</string>
     <string name="pref_button_shape_rect">आयत</string>
     <string name="pref_button_shape_round">गोल कोनों वाला आयत</string>
-    <string name="pref_button_shape_title">बटन का आकार</string>
+    <string name="pref_button_shape_title">कीपैड बटन का आकार</string>
     <string name="pref_category_experimental">प्रायोगिक</string>
     <string name="pref_emulator_dir">कार्यशील डायरेक्टरी</string>
     <string name="pref_encoding_title">एन्कोडिंग</string>
@@ -391,7 +391,21 @@
     <string name="config_color_picker_title">रंग चुनें</string>
     <string name="config_controller_help_body_compact">कंट्रोलर के बटन, कीबोर्ड और फ़ोन की कुंजियों वाली की मैपिंग का ही उपयोग करते हैं। एनालॉग स्टिक MIDlet को केवल दिशा का इनपुट भेजती है। Android का वापस बटन सामान्य रूप से काम करता है; M से मैप किया गया कोई भी भौतिक बटन चल रहे MIDlet का मेन्यू खोलता है।</string>
     <string name="config_controls_key_input">भौतिक इनपुट</string>
-    <string name="config_controls_maintenance">वर्चुअल कंट्रोल का लेआउट</string>
+    <string name="config_controls_maintenance">लेआउट</string>
+    <string name="control_skin_title">वर्चुअल कंट्रोल की स्किन</string>
+    <string name="config_controls_customization">कस्टमाइज़ेशन</string>
+    <string name="config_controls_skin_help">कस्टम इमेज से कीपैड बटन, D-pad और एनालॉग स्टिक का रूप बदलता है।</string>
+    <string name="config_controls_color_button_normal">बटन छोड़ा गया</string>
+    <string name="config_controls_color_button_pressed">बटन दबाया गया</string>
+    <string name="config_controls_color_label_normal">लेबल छोड़ा गया</string>
+    <string name="config_controls_color_label_pressed">लेबल दबाया गया</string>
+    <string name="config_controls_color_outline_short">बॉर्डर</string>
+    <string name="config_controls_disabled_hint">सामान्य में वर्चुअल कंट्रोल बंद हैं। आप यहाँ इन्हें फिर भी कस्टमाइज़ कर सकते हैं।</string>
+    <string name="config_controls_opacity_help">वर्चुअल कंट्रोल की पारदर्शिता बदलता है: 0% पूरी तरह पारदर्शी और 100% अपारदर्शी है।</string>
+    <string name="config_controls_opaque_outside">MIDlet स्क्रीन के बाहर के कंट्रोल पूरी तरह अपारदर्शी दिखाएँ</string>
+    <string name="config_controls_opaque_outside_help">MIDlet स्क्रीन के बाहर के कंट्रोल अपारदर्शिता सेटिंग को नज़रअंदाज़ करते हैं। स्क्रीन पर मौजूद कंट्रोल चुनी गई सेटिंग का पालन करते हैं।</string>
+    <string name="config_controls_connect_controller">कैलिब्रेट करने के लिए कंट्रोलर कनेक्ट करें</string>
+    <string name="config_controls_color_skin_notice">पूरे बटन की स्किन डिफ़ॉल्ट रंग, आकार और बॉर्डर की जगह ले सकती है।</string>
     <string name="config_controls_virtual_keyboard">वर्चुअल कंट्रोल</string>
     <string name="config_controls_virtual_keyboard_colors">वर्चुअल कंट्रोल के रंग</string>
     <string name="config_current_screen_size">मौजूदा आकार: %1$s</string>
@@ -523,7 +537,7 @@
     <string name="config_help_virtual_keyboard">इस MIDlet के लिए स्क्रीन पर कंट्रोल दिखाता है।</string>
     <string name="config_help_vk_alpha">कंट्रोल की अपारदर्शिता सेट करता है: 0 = पूरी तरह पारदर्शी; 255 = पूरी तरह अपारदर्शी।</string>
     <string name="config_help_vk_background">वर्चुअल कंट्रोल के बटनों का मूल रंग सेट करता है।</string>
-    <string name="config_help_vk_button_shape">कीपैड बटनों का आकार सेट करता है। D-pad और एनालॉग स्टिक अपने आकार बनाए रखते हैं।</string>
+    <string name="config_help_vk_button_shape">कीपैड बटन का डिफ़ॉल्ट आकार सेट करता है। D-pad और एनालॉग स्टिक के अपने आकार होते हैं।</string>
     <string name="config_help_vk_feedback">सेटिंग में कंपन सक्षम होने पर वर्चुअल कंट्रोल दबाने से कंपन होता है।</string>
     <string name="config_help_vk_force_opacity">MIDlet स्क्रीन से बाहर के कंट्रोल अपारदर्शी बनाता है। स्क्रीन के ऊपर के कंट्रोल तय की गई अपारदर्शिता का उपयोग करते हैं।</string>
     <string name="config_help_vk_foreground">वर्चुअल कंट्रोल के बटनों पर लेबल और चिह्नों का रंग सेट करता है।</string>
@@ -548,7 +562,7 @@
     <string name="config_timing_mode_real_wall">सिस्टम समय</string>
     <string name="config_virtual_controls_color_preview">रंग का पूर्वावलोकन</string>
     <string name="config_virtual_controls_preview_hint">दबाए जाने के रंगों का पूर्वावलोकन देखने के लिए टैप करें। नमूना चुनी गई अपारदर्शिता का उपयोग करता है।</string>
-    <string name="config_virtual_controls_preview_normal">सामान्य</string>
+    <string name="config_virtual_controls_preview_normal">छोड़ा गया</string>
     <string name="config_virtual_controls_preview_pressed">दबाया गया</string>
     <string name="config_warning_filter_shader">स्क्रीन शेडर द्वारा प्रोसेस किए जाने से पहले लीनियर फ़िल्टरिंग इनपुट को चिकना करती है और आउटपुट की तीक्ष्णता घट सकती है।</string>
     <string name="layout_edit_continue">संपादन जारी रखें</string>
