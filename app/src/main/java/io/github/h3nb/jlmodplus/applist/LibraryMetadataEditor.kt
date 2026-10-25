@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.Saver
 import kotlinx.coroutines.awaitCancellation
@@ -52,9 +51,11 @@ import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog
 
-private val localizedOverridesSaver = Saver<MutableState<Map<String, String>>, ArrayList<String>>(
-    save = { state -> ArrayList(state.value.flatMap { (locale, text) -> listOf(locale, text) }) },
-    restore = { values -> mutableStateOf(values.chunked(2).associate { it[0] to it[1] }) },
+private val localizedOverridesSaver = Saver<Map<String, String>, ArrayList<String>>(
+    save = { translations ->
+        ArrayList(translations.flatMap { (locale, text) -> listOf(locale, text) })
+    },
+    restore = { values -> values.chunked(2).associate { it[0] to it[1] } },
 )
 
 /** Edits presentation metadata; original MIDlet descriptor values remain immutable. */
