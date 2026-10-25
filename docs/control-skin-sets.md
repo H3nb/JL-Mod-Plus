@@ -80,7 +80,6 @@ slot and state when imported through the editor.
 - Images are decoded and sampled once when the MIDlet starts, not per frame.
   The runtime reads global assets but does not create or modify set metadata.
 
-
 ### Bitmap preparation and memory
 
 The original PNG/WebP files are never modified. On MIDlet launch, the runtime
