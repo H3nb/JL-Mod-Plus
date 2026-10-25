@@ -10,6 +10,15 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
+import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,7 +68,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -347,10 +355,18 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private fun ManagerScreen() {
         BackHandler(enabled = busy || editingId != null) { if (!busy) back() }
         val currentSet = sets.firstOrNull { it.id == editingId }
+        // Short, wide windows need the full height for editing rather than a bottom sheet.
+        val inlineDetail = currentSet != null && selectedKey != null &&
+            availableWindowHeightDp() < 480.dp && availableWindowWidthDp() >= 600.dp
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(currentSet?.name ?: stringResource(R.string.control_skin_title),
+                    title = { Text(if (inlineDetail) {
+                        val key = requireNotNull(selectedKey)
+                        if (key == "dpad") stringResource(R.string.control_skin_dpad)
+                        else if (key == "analog") stringResource(R.string.control_skin_analog)
+                        else stringResource(R.string.control_skin_edit_named, label(key))
+                    } else currentSet?.name ?: stringResource(R.string.control_skin_title),
                         maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     navigationIcon = {
                         IconButton(onClick = ::back, enabled = !busy) {
@@ -359,12 +375,12 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                         }
                     },
                     actions = {
-                        if (currentSet == null) {
+                        if (!inlineDetail && currentSet == null) {
                             IconButton(onClick = { editName(NameAction.CREATE, null) }, enabled = !busy) {
                                 Icon(painterResource(R.drawable.ic_add),
                                     contentDescription = stringResource(R.string.control_skin_create))
                             }
-                        } else {
+                        } else if (!inlineDetail && currentSet != null) {
                             Box {
                                 IconButton(onClick = { menuId = currentSet.id }, enabled = !busy) {
                                     Icon(painterResource(R.drawable.ic_more_vert),
@@ -378,7 +394,10 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             },
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
-                if (currentSet == null) {
+                if (inlineDetail && currentSet != null && selectedKey != null) {
+                    DetailEditor(currentSet, requireNotNull(selectedKey),
+                        Modifier.fillMaxSize(), horizontal = true)
+                } else if (currentSet == null) {
                     Library(modifier = Modifier.fillMaxSize())
                 } else {
                     Editor(modifier = Modifier.fillMaxSize())
@@ -408,16 +427,19 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         }
 
         val key = selectedKey
-        if (currentSet != null && key != null) {
-            if (key == "dpad" || key == "analog") GroupSheet(currentSet, key)
-            else ButtonSheet(currentSet, key)
+        if (currentSet != null && key != null && !inlineDetail) {
+            ModalBottomSheet(onDismissRequest = { selectedKey = null }) {
+                DetailEditor(currentSet, key, Modifier.fillMaxWidth()
+                    .heightIn(max = availableWindowHeightDp() * 0.82f), horizontal = false)
+            }
         }
     }
 
     @Composable
     private fun Library(modifier: Modifier = Modifier) {
+        Box(modifier, contentAlignment = Alignment.TopCenter) {
         LazyColumn(
-            modifier = modifier,
+            modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth(),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -450,6 +472,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                         style = MaterialTheme.typography.bodyMedium)
                 }
             }
+        }
         }
     }
 
@@ -517,41 +540,41 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
     @Composable
     private fun Editor(modifier: Modifier) {
-        Column(modifier.verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally) {
-            KeyGroup(stringResource(R.string.control_skin_numeric), numeric)
-            KeyGroup(stringResource(R.string.control_skin_navigation), navigation)
-            KeyGroup(stringResource(R.string.control_skin_other), other)
-            GroupedControls()
-        }
-    }
-
-    @Composable
-    private fun GroupedControls() {
-        Column(Modifier.widthIn(max = 460.dp).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.control_skin_movement),
-                style = MaterialTheme.typography.titleMedium)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("dpad", "analog").forEach { group ->
-                    val customized = if (group == "dpad") groupedPreviews["dpad_base"] != null
-                        else groupedPreviews["analog_base"] != null || groupedPreviews["analog_thumb"] != null
-                    Surface(
-                        modifier = Modifier.weight(1f).height(112.dp)
-                            .clickable(enabled = !busy, role = Role.Button) { selectedKey = group },
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        border = if (customized)
-                            BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
-                    ) {
-                        Column(Modifier.fillMaxSize().padding(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            GroupPreview(group, Modifier.size(68.dp))
-                            Text(stringResource(if (group == "dpad") R.string.control_skin_dpad
-                                else R.string.control_skin_analog),
-                                style = MaterialTheme.typography.labelMedium)
+        BoxWithConstraints(modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+            val columns = when {
+                maxWidth >= 900.dp -> 3
+                maxWidth >= 600.dp -> 2
+                else -> 1
+            }
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                if (columns == 1) {
+                    Column(Modifier.widthIn(max = 460.dp).fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        GroupedControls()
+                        KeyGroup(stringResource(R.string.control_skin_numeric), numeric)
+                        KeyGroup(stringResource(R.string.control_skin_navigation), navigation)
+                        KeyGroup(stringResource(R.string.control_skin_other), other)
+                    }
+                } else {
+                    Row(Modifier.widthIn(max = 1200.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            KeyGroup(stringResource(R.string.control_skin_numeric), numeric)
+                            if (columns == 2) GroupedControls()
+                        }
+                        Column(Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            KeyGroup(stringResource(R.string.control_skin_navigation), navigation)
+                            if (columns == 3) GroupedControls()
+                            else KeyGroup(stringResource(R.string.control_skin_other), other)
+                        }
+                        if (columns == 3) {
+                            Column(Modifier.weight(1f)) {
+                                KeyGroup(stringResource(R.string.control_skin_other), other)
+                            }
                         }
                     }
                 }
@@ -560,29 +583,138 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun GroupPreview(group: String, modifier: Modifier) {
-        Box(modifier, contentAlignment = Alignment.Center) {
-            val base = groupedPreviews[if (group == "dpad") "dpad_base" else "analog_base"]
-            if (base == null) {
-                Text(if (group == "dpad") "✚" else "◉",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.headlineMedium)
-            } else {
-                Image(base.asImageBitmap(), contentDescription = null,
-                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
-            }
-            if (group == "analog") {
-                groupedPreviews["analog_thumb"]?.let { thumb ->
-                    Image(thumb.asImageBitmap(), contentDescription = null,
-                        contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(0.48f))
+    private fun GroupedControls() {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.control_skin_movement),
+                style = MaterialTheme.typography.titleMedium)
+            listOf("dpad", "analog").forEach { group ->
+                val customized = if (group == "dpad") groupedPreviews["dpad_base"] != null
+                    else groupedPreviews["analog_base"] != null || groupedPreviews["analog_thumb"] != null
+                Surface(
+                    modifier = Modifier.fillMaxWidth()
+                        .clickable(enabled = !busy, role = Role.Button) { selectedKey = group }
+                        .semantics { contentDescription = if (group == "dpad") "D-pad" else "Analog" },
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = if (customized)
+                        BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                ) {
+                    Row(Modifier.fillMaxWidth().heightIn(min = 76.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        GroupPreview(group, Modifier.size(52.dp))
+                        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                            Text(stringResource(if (group == "dpad") R.string.control_skin_dpad
+                                else R.string.control_skin_analog),
+                                style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(if (customized) R.string.control_skin_custom_preview
+                                else R.string.control_skin_builtin_preview),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text("›", style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
+            }
+        }
+    }
+
+    /** Previews show the actual visual layers, including built-in components for partial skins. */
+    @Composable
+    private fun GroupPreview(group: String, modifier: Modifier) {
+        val base = groupedPreviews[if (group == "dpad") "dpad_base" else "analog_base"]
+        Box(modifier, contentAlignment = Alignment.Center) {
+            if (group == "dpad") {
+                if (base == null) BuiltinDpadPreview(Modifier.fillMaxSize())
+                else Image(base.asImageBitmap(), contentDescription = null,
+                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
+            } else {
+                if (base == null) BuiltinAnalogPreview(Modifier.fillMaxSize(), base = true, thumb = false)
+                else Image(base.asImageBitmap(), contentDescription = null,
+                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
+                val thumb = groupedPreviews["analog_thumb"]
+                if (thumb == null) BuiltinAnalogPreview(Modifier.fillMaxSize(), base = false, thumb = true)
+                else Image(thumb.asImageBitmap(), contentDescription = null,
+                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(0.45f))
+            }
+        }
+    }
+
+    @Composable
+    private fun BuiltinDpadPreview(modifier: Modifier) {
+        val background = Color(0xFF000000.toInt() or intent.getIntExtra(EXTRA_KEY_BG, 0x3F3F3F))
+        val outline = Color(0xFF000000.toInt() or intent.getIntExtra(EXTRA_KEY_OUTLINE, 0xFFFFFF))
+        val foreground = Color(0xFF000000.toInt() or intent.getIntExtra(EXTRA_KEY_FG, 0xFFFFFF))
+        Canvas(modifier) {
+            val r = size.minDimension * 0.48f
+            val x = size.width / 2f
+            val y = size.height / 2f
+            val a = r * 0.34f
+            val shape = Path().apply {
+                moveTo(x - a, y - r); lineTo(x + a, y - r)
+                lineTo(x + a, y - a); lineTo(x + r, y - a)
+                lineTo(x + r, y + a); lineTo(x + a, y + a)
+                lineTo(x + a, y + r); lineTo(x - a, y + r)
+                lineTo(x - a, y + a); lineTo(x - r, y + a)
+                lineTo(x - r, y - a); lineTo(x - a, y - a)
+                close()
+            }
+            drawPath(shape, background)
+            drawPath(shape, outline, style = Stroke(width = 1.dp.toPx()))
+            drawCircle(background, radius = r * 0.18f, center = Offset(x, y))
+            // Cardinal marks follow the grouped control's built-in directions.
+            val mark = r * 0.10f
+            listOf(Offset(x, y - r * 0.64f), Offset(x, y + r * 0.64f),
+                Offset(x - r * 0.64f, y), Offset(x + r * 0.64f, y))
+                .forEachIndexed { index, center ->
+                    val arrow = Path().apply {
+                        when (index) {
+                            0 -> { moveTo(center.x, center.y - mark)
+                                lineTo(center.x - mark, center.y + mark)
+                                lineTo(center.x + mark, center.y + mark) }
+                            1 -> { moveTo(center.x, center.y + mark)
+                                lineTo(center.x - mark, center.y - mark)
+                                lineTo(center.x + mark, center.y - mark) }
+                            2 -> { moveTo(center.x - mark, center.y)
+                                lineTo(center.x + mark, center.y - mark)
+                                lineTo(center.x + mark, center.y + mark) }
+                            else -> { moveTo(center.x + mark, center.y)
+                                lineTo(center.x - mark, center.y - mark)
+                                lineTo(center.x - mark, center.y + mark) }
+                        }
+                        close()
+                    }
+                    drawPath(arrow, foreground)
+                }
+        }
+    }
+
+    @Composable
+    private fun BuiltinAnalogPreview(modifier: Modifier, base: Boolean, thumb: Boolean) {
+        val background = Color(0xFF000000.toInt() or intent.getIntExtra(EXTRA_KEY_BG, 0x3F3F3F))
+        val outline = Color(0xFF000000.toInt() or intent.getIntExtra(EXTRA_KEY_OUTLINE, 0xFFFFFF))
+        val selected = Color(0xFF000000.toInt() or intent.getIntExtra(EXTRA_KEY_BG_PRESSED, 0x5F5F5F))
+        Canvas(modifier) {
+            val r = size.minDimension * 0.5f
+            val center = Offset(size.width / 2f, size.height / 2f)
+            if (base) {
+                drawCircle(background, radius = r * 0.94f, center = center)
+                drawCircle(outline, radius = r * 0.94f, center = center,
+                    style = Stroke(width = 1.dp.toPx()))
+                drawCircle(background.copy(alpha = 0.75f), radius = r * 0.70f, center = center)
+            }
+            if (thumb) {
+                drawCircle(selected, radius = r * 0.45f, center = center)
+                drawCircle(outline, radius = r * 0.45f, center = center,
+                    style = Stroke(width = 1.dp.toPx()))
             }
         }
     }
 
     @Composable
     private fun KeyGroup(title: String, rows: List<List<String>>) {
-        Column(Modifier.widthIn(max = 460.dp).fillMaxWidth(),
+        Column(Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             rows.forEach { keys ->
@@ -591,7 +723,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                         val visual = previews[key]
                         val spokenName = stringResource(R.string.control_skin_edit_named, label(key))
                         Surface(
-                            modifier = Modifier.weight(1f).height(84.dp)
+                            modifier = Modifier.weight(1f).height(80.dp)
                                 .clickable(enabled = !busy, role = Role.Button) { selectedKey = key }
                                 .semantics { contentDescription = spokenName },
                             shape = MaterialTheme.shapes.medium,
@@ -599,7 +731,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                             border = if (visual?.normal != null)
                                 BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
                         ) {
-                            Box(Modifier.fillMaxSize().padding(12.dp), contentAlignment = Alignment.Center) {
+                            Box(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
                                 KeyPreview(key, visual, pressed = false, modifier = Modifier.size(58.dp))
                             }
                         }
@@ -676,151 +808,145 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         else -> key.uppercase()
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun GroupSheet(set: ControlSkinStore.SetInfo, group: String) {
-        val slots = if (group == "dpad") listOf(
-            "dpad_base" to R.string.control_skin_dpad_base,
-            "dpad_up" to R.string.control_skin_overlay_up,
-            "dpad_down" to R.string.control_skin_overlay_down,
-            "dpad_left" to R.string.control_skin_overlay_left,
-            "dpad_right" to R.string.control_skin_overlay_right,
-        ) else listOf(
-            "analog_base" to R.string.control_skin_analog_base,
-            "analog_thumb" to R.string.control_skin_analog_thumb,
-            "analog_thumb_pressed" to R.string.control_skin_analog_thumb_pressed,
-        )
-        ModalBottomSheet(onDismissRequest = { selectedKey = null }) {
-            Column(Modifier.fillMaxWidth()
-                .heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.78f).dp)
-                .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(stringResource(if (group == "dpad") R.string.control_skin_dpad
-                    else R.string.control_skin_analog), style = MaterialTheme.typography.titleLarge)
-                Text(stringResource(R.string.control_skin_group_hint),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall)
-                slots.forEach { (stem, title) ->
-                    GroupImageSlot(set.id, stem, stringResource(title))
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun GroupImageSlot(setId: String, stem: String, title: String) {
-        val bitmap = groupedPreviews[stem]
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall)
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(68.dp), contentAlignment = Alignment.Center) {
-                    if (bitmap != null) {
-                        Image(bitmap.asImageBitmap(), contentDescription = null,
-                            contentScale = ContentScale.FillBounds,
-                            modifier = Modifier.fillMaxSize())
-                    } else {
-                        Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                TextButton(onClick = { pickImage(setId, stem, false) },
-                    enabled = !busy, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(if (bitmap == null) R.string.control_skin_pick_image
-                        else R.string.control_skin_change_image))
-                }
-                if (bitmap != null) {
-                    IconButton(onClick = { removeImage(setId, stem, false) }, enabled = !busy) {
-                        Icon(painterResource(R.drawable.ic_delete),
-                            contentDescription = stringResource(R.string.control_skin_remove_image))
-                    }
-                }
-            }
-        }
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    private fun ButtonSheet(set: ControlSkinStore.SetInfo, key: String) {
-        val images = previews[key]
-        val mode = images?.mode ?: "icon"
-        val normalAvailable = images?.normal != null
-        ModalBottomSheet(onDismissRequest = { selectedKey = null }) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-                    .heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.78f).dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(stringResource(R.string.control_skin_edit_named, label(key)),
-                    style = MaterialTheme.typography.titleLarge)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    listOf(
-                        "icon" to stringResource(R.string.control_skin_icon),
-                        "full" to stringResource(R.string.control_skin_full),
-                    ).forEachIndexed { index, (value, title) ->
-                        SegmentedButton(
-                            selected = mode == value,
-                            onClick = { updateMode(set.id, key, value) },
-                            enabled = !busy,
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
-                        ) { Text(title, maxLines = 1) }
-                    }
-                }
-                ImageSlot(
-                    title = stringResource(R.string.control_skin_normal_image),
-                    key = key, images = images, pressed = false,
-                    hasImage = normalAvailable,
-                    enabled = !busy,
-                    onPick = { pickImage(set.id, key, false) },
-                    onRemove = { removeImage(set.id, key, false) },
-                )
-                ImageSlot(
-                    title = stringResource(R.string.control_skin_pressed_image),
-                    key = key, images = images, pressed = true,
-                    hasImage = images?.pressed != null,
-                    enabled = !busy && normalAvailable,
-                    onPick = { pickImage(set.id, key, true) },
-                    onRemove = { removeImage(set.id, key, true) },
-                    hint = if (!normalAvailable) stringResource(R.string.control_skin_pressed_requires_normal)
-                        else if (images?.pressed == null) stringResource(R.string.control_skin_pressed_auto)
-                        else null,
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun ImageSlot(
-        title: String,
+    private fun DetailEditor(
+        set: ControlSkinStore.SetInfo,
         key: String,
-        images: Images?,
-        pressed: Boolean,
-        hasImage: Boolean,
+        modifier: Modifier,
+        horizontal: Boolean,
+    ) {
+        if (horizontal) {
+            Row(modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(24.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                    DetailPreview(key, Modifier.size(112.dp))
+                }
+                Column(Modifier.weight(1.5f).fillMaxHeight()
+                    .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DetailFields(set, key)
+                }
+            }
+        } else {
+            Column(modifier.verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(if (key == "dpad") stringResource(R.string.control_skin_dpad)
+                    else if (key == "analog") stringResource(R.string.control_skin_analog)
+                    else stringResource(R.string.control_skin_edit_named, label(key)),
+                    style = MaterialTheme.typography.titleLarge)
+                DetailPreview(key, Modifier.size(104.dp))
+                Column(Modifier.widthIn(max = 560.dp).fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DetailFields(set, key)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun DetailPreview(key: String, modifier: Modifier) {
+        if (key == "dpad" || key == "analog") {
+            GroupPreview(key, modifier)
+        } else {
+            KeyPreview(key, previews[key], pressed = false, modifier = modifier)
+        }
+    }
+
+    @Composable
+    private fun DetailFields(set: ControlSkinStore.SetInfo, key: String) {
+        if (key == "dpad" || key == "analog") {
+            val slots = if (key == "dpad") listOf(
+                "dpad_base" to R.string.control_skin_dpad_base,
+                "dpad_up" to R.string.control_skin_overlay_up,
+                "dpad_down" to R.string.control_skin_overlay_down,
+                "dpad_left" to R.string.control_skin_overlay_left,
+                "dpad_right" to R.string.control_skin_overlay_right,
+            ) else listOf(
+                "analog_base" to R.string.control_skin_analog_base,
+                "analog_thumb" to R.string.control_skin_analog_thumb,
+                "analog_thumb_pressed" to R.string.control_skin_analog_thumb_pressed,
+            )
+            slots.forEach { (stem, title) ->
+                AssetRow(
+                    title = stringResource(title),
+                    bitmap = groupedPreviews[stem],
+                    enabled = !busy,
+                    onPick = { pickImage(set.id, stem, false) },
+                    onRemove = { removeImage(set.id, stem, false) },
+                )
+            }
+        } else {
+            val images = previews[key]
+            val mode = images?.mode ?: "icon"
+            val normalAvailable = images?.normal != null
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                listOf(
+                    "icon" to stringResource(R.string.control_skin_icon),
+                    "full" to stringResource(R.string.control_skin_full),
+                ).forEachIndexed { index, (value, title) ->
+                    SegmentedButton(
+                        selected = mode == value,
+                        onClick = { updateMode(set.id, key, value) },
+                        enabled = !busy,
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                    ) { Text(title, maxLines = 1) }
+                }
+            }
+            AssetRow(
+                title = stringResource(R.string.control_skin_normal_image),
+                bitmap = images?.normal, enabled = !busy,
+                onPick = { pickImage(set.id, key, false) },
+                onRemove = { removeImage(set.id, key, false) },
+            )
+            AssetRow(
+                title = stringResource(R.string.control_skin_pressed_image),
+                bitmap = images?.pressed,
+                enabled = !busy && normalAvailable,
+                onPick = { pickImage(set.id, key, true) },
+                onRemove = { removeImage(set.id, key, true) },
+                hint = if (!normalAvailable)
+                    stringResource(R.string.control_skin_pressed_requires_normal)
+                else null,
+            )
+        }
+    }
+
+    @Composable
+    private fun AssetRow(
+        title: String,
+        bitmap: Bitmap?,
         enabled: Boolean,
         onPick: () -> Unit,
         onRemove: () -> Unit,
         hint: String? = null,
     ) {
-        Column {
-            Text(title, style = MaterialTheme.typography.titleSmall)
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                KeyPreview(key, images, pressed, Modifier.size(68.dp))
-                Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                    TextButton(onClick = onPick, enabled = enabled) {
-                        Text(stringResource(if (hasImage) R.string.control_skin_change_image
-                            else R.string.control_skin_pick_image))
-                    }
-                    hint?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+        Row(Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                if (bitmap == null) {
+                    Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    Image(bitmap.asImageBitmap(), contentDescription = null,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.fillMaxSize())
                 }
-                if (hasImage) {
-                    IconButton(onClick = onRemove, enabled = !busy) {
-                        Icon(painterResource(R.drawable.ic_delete),
-                            contentDescription = stringResource(R.string.control_skin_remove_image))
-                    }
+            }
+            Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            TextButton(onClick = onPick, enabled = enabled) {
+                Text(stringResource(if (bitmap == null) R.string.control_skin_pick_image
+                    else R.string.control_skin_change_image), maxLines = 1)
+            }
+            if (bitmap != null) {
+                IconButton(onClick = onRemove, enabled = !busy) {
+                    Icon(painterResource(R.drawable.ic_delete),
+                        contentDescription = stringResource(R.string.control_skin_remove_image))
                 }
             }
         }
