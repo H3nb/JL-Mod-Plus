@@ -49,6 +49,7 @@ public final class ConfigFormState {
 	public final String vkSelectedBackground;
 	public final String vkSelectedForeground;
 	public final String vkOutline;
+	@Nullable public final String controlSkinSetId;
 	public final String systemProperties;
 
 	@Nullable
@@ -108,6 +109,7 @@ public final class ConfigFormState {
 		vkSelectedBackground = builder.vkSelectedBackground;
 		vkSelectedForeground = builder.vkSelectedForeground;
 		vkOutline = builder.vkOutline;
+		controlSkinSetId = builder.controlSkinSetId;
 		systemProperties = builder.systemProperties;
 		screenBackgroundImage = builder.screenBackgroundImage;
 		soundBank = builder.soundBank;
@@ -189,7 +191,8 @@ public final class ConfigFormState {
 				.vkForceOpacity(params.vkForceOpacity)
 				.touchInput(params.touchInput)
 				.keyCodesLayout(params.keyCodesLayout)
-				.vkButtonShape(params.vkButtonShape)
+				.controlSkinSetId(params.controlSkinSetId)
+			.vkButtonShape(params.vkButtonShape)
 				.vkAlpha(params.vkAlpha)
 				.vkHideDelay(optionalInt(params.vkHideDelay))
 				.vkBackground(formatColor(params.vkBgColor))
@@ -246,6 +249,7 @@ public final class ConfigFormState {
 		params.touchInput = touchInput;
 
 		params.keyCodesLayout = keyCodesLayout;
+		params.controlSkinSetId = controlSkinSetId;
 		params.vkButtonShape = vkButtonShape;
 		params.vkAlpha = vkAlpha;
 		params.vkHideDelay = parseInt(vkHideDelay, 0);
@@ -329,6 +333,7 @@ public final class ConfigFormState {
 		private String vkSelectedBackground = "";
 		private String vkSelectedForeground = "";
 		private String vkOutline = "";
+		private String controlSkinSetId;
 		private String systemProperties = "";
 		private String screenBackgroundImage;
 		private String soundBank;
@@ -382,6 +387,7 @@ public final class ConfigFormState {
 			vkSelectedBackground = source.vkSelectedBackground;
 			vkSelectedForeground = source.vkSelectedForeground;
 			vkOutline = source.vkOutline;
+			controlSkinSetId = source.controlSkinSetId;
 			systemProperties = source.systemProperties;
 			screenBackgroundImage = source.screenBackgroundImage;
 			soundBank = source.soundBank;
@@ -432,6 +438,7 @@ public final class ConfigFormState {
 		public Builder vkSelectedBackground(String value) { vkSelectedBackground = value; return this; }
 		public Builder vkSelectedForeground(String value) { vkSelectedForeground = value; return this; }
 		public Builder vkOutline(String value) { vkOutline = value; return this; }
+		public Builder controlSkinSetId(String value) { controlSkinSetId = value; return this; }
 		public Builder systemProperties(String value) { systemProperties = value; return this; }
 		public Builder screenBackgroundImage(String value) { screenBackgroundImage = value; return this; }
 		public Builder soundBank(String value) { soundBank = value; return this; }
