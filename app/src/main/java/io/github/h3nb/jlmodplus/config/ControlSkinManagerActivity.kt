@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -34,6 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -61,6 +63,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -309,7 +313,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun ManagerScreen() {
-        BackHandler(enabled = editingId != null && !busy) { back() }
+        BackHandler(enabled = busy || editingId != null) { if (!busy) back() }
         val currentSet = sets.firstOrNull { it.id == editingId }
         Scaffold(
             topBar = {
@@ -341,12 +345,15 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 )
             },
         ) { padding ->
-            if (currentSet == null) {
-                Library(
-                    modifier = Modifier.fillMaxSize().padding(padding),
+            Box(Modifier.fillMaxSize().padding(padding)) {
+                if (currentSet == null) {
+                    Library(modifier = Modifier.fillMaxSize())
+                } else {
+                    Editor(modifier = Modifier.fillMaxSize())
+                }
+                if (busy) LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),
                 )
-            } else {
-                Editor(modifier = Modifier.fillMaxSize().padding(padding))
             }
         }
 
@@ -424,7 +431,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
-                .clickable(enabled = !busy, role = Role.RadioButton, onClick = onSelect)
+                .selectable(selected = selected, enabled = !busy, role = Role.RadioButton, onClick = onSelect)
                 .heightIn(min = 64.dp).padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -495,7 +502,15 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                         val visual = previews[key]
                         Surface(
                             modifier = Modifier.weight(1f).height(84.dp)
-                                .clickable(enabled = !busy) { selectedKey = key },
+                                .clickable(enabled = !busy, role = Role.Button) { selectedKey = key }
+                                .semantics {
+                                    contentDescription = getString(R.string.control_skin_edit_named,
+                                        when (key) {
+                                            "star" -> "*"
+                                            "pound" -> "#"
+                                            else -> key.replace('_', ' ')
+                                        })
+                                },
                             shape = MaterialTheme.shapes.medium,
                             color = MaterialTheme.colorScheme.surfaceContainerLow,
                             border = if (visual?.normal != null)
