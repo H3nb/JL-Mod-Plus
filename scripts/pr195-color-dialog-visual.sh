@@ -14,9 +14,13 @@ selectors=(
   'io.github.h3nb.jlmodplus.config.ConfigComposeTest#dynamicBackgroundPickerCanReturnToManualEditingWithoutLosingColor'
 )
 for orientation in portrait landscape; do
-  rotation=0
-  if [[ "$orientation" == landscape ]]; then rotation=1; fi
-  adb shell cmd window user-rotation lock "$rotation"
+  # Match the logical viewport, not just the display rotation setting.
+  # The headless emulator can ignore a rotation request and remain portrait.
+  viewport="360x720"
+  if [[ "$orientation" == landscape ]]; then viewport="720x360"; fi
+  adb shell cmd window user-rotation lock 0
+  adb shell wm size "$viewport"
+  adb shell wm size
   sleep 3
   log="ci-artifacts/color-picker/${orientation}.txt"
   IFS=, selector_arg="${selectors[*]}"
