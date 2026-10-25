@@ -95,7 +95,7 @@
     <string name="pref_button_shape_oval">Овал</string>
     <string name="pref_button_shape_rect">Прямоугольник</string>
     <string name="pref_button_shape_round">Скруглённый прямоугольник</string>
-    <string name="pref_button_shape_title">Форма кнопок</string>
+    <string name="pref_button_shape_title">Форма кнопок клавиатуры</string>
     <string name="pref_category_experimental">Экспериментальные/временные параметры</string>
     <string name="pref_emulator_dir">Рабочая папка</string>
     <string name="pref_encoding_title">Кодировка</string>
@@ -806,7 +806,21 @@
     <string name="config_controls_key_input">Физический ввод</string>
     <string name="config_controls_virtual_keyboard">Виртуальные элементы управления</string>
     <string name="config_controls_virtual_keyboard_colors">Цвета виртуальных элементов управления</string>
-    <string name="config_controls_maintenance">Раскладка виртуальных элементов управления</string>
+    <string name="config_controls_maintenance">Расположение</string>
+    <string name="control_skin_title">Оформление виртуальных элементов управления</string>
+    <string name="config_controls_customization">Настройка внешнего вида</string>
+    <string name="config_controls_skin_help">Меняет внешний вид кнопок клавиатуры, крестовины и аналогового стика с помощью пользовательских изображений.</string>
+    <string name="config_controls_color_button_normal">Кнопка отпущена</string>
+    <string name="config_controls_color_button_pressed">Кнопка нажата</string>
+    <string name="config_controls_color_label_normal">Подпись при отпускании</string>
+    <string name="config_controls_color_label_pressed">Подпись при нажатии</string>
+    <string name="config_controls_color_outline_short">Контур</string>
+    <string name="config_controls_disabled_hint">Виртуальные элементы управления отключены в разделе «Основные». Их по-прежнему можно настроить здесь.</string>
+    <string name="config_controls_opacity_help" formatted="false">Настраивает прозрачность виртуальных элементов управления: 0% — полностью прозрачно, 100% — непрозрачно.</string>
+    <string name="config_controls_opaque_outside">Показывать элементы управления вне экрана MIDlet непрозрачными</string>
+    <string name="config_controls_opaque_outside_help">Элементы управления за пределами экрана MIDlet игнорируют настройку непрозрачности. Элементы поверх экрана используют выбранное значение.</string>
+    <string name="config_controls_connect_controller">Подключите контроллер для калибровки</string>
+    <string name="config_controls_color_skin_notice">Оформление, полностью покрывающее кнопку, может заменить стандартные цвета, форму и контур.</string>
     <string name="config_current_value">Текущее значение</string>
     <string name="config_maintenance">Сброс и данные</string>
     <string name="config_reset_all_settings">Сбросить все настройки</string>
@@ -868,7 +882,7 @@
     <string name="config_help_font_aa">Сглаживает края отображаемого текста.</string>
     <string name="config_help_key_layout">Выбирает раскладку кодов клавиш, используемую MIDlet.</string>
     <string name="config_help_key_mapping">Сопоставляет клавиши и кнопки Android с действиями клавиатуры J2ME.</string>
-    <string name="config_help_vk_button_shape">Задаёт форму кнопок клавиатуры. D-pad и аналоговый стик сохраняют собственную форму.</string>
+    <string name="config_help_vk_button_shape">Задаёт стандартную форму кнопок клавиатуры. Крестовина и аналоговый стик имеют собственную форму.</string>
     <string name="config_help_vk_feedback">Вибрирует при нажатии виртуальных элементов управления, если вибрация включена в настройках.</string>
     <string name="config_help_vk_alpha">Задаёт непрозрачность элементов управления: 0 = полностью прозрачные; 255 = полностью непрозрачные.</string>
     <string name="config_help_vk_hide_delay">Скрывает элементы управления после этой задержки, когда они перекрывают экран MIDlet. Установите 0, чтобы отключить автоскрытие.</string>
@@ -1042,7 +1056,7 @@
     <string name="bulk_install_unreadable_archives">Нечитаемые архивы: %1$d</string>
     <string name="config_virtual_controls_color_preview">Предпросмотр цветов</string>
     <string name="config_virtual_controls_preview_hint">Нажмите для просмотра цветов в нажатом состоянии. В примере используется выбранная непрозрачность.</string>
-    <string name="config_virtual_controls_preview_normal">Обычное</string>
+    <string name="config_virtual_controls_preview_normal">Отпущено</string>
     <string name="config_virtual_controls_preview_pressed">Нажатое</string>
     <string name="config_warning_filter_shader">Линейная фильтрация сглаживает изображение перед обработкой шейдером экрана и может снизить чёткость результата.</string>
     <string name="install_done_with_warning">Приложение установлено с предупреждениями.</string>

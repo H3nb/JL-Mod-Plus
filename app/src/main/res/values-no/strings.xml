@@ -283,7 +283,21 @@
     <string name="config_color_picker_title">Velg farge</string>
     <string name="config_controller_help_body_compact">Kontrollerknappene bruker de samme tastetilordningene som tastatur- og telefontastene. Analogspaken sender bare retningsinndata til MIDlet-en. Androids Tilbake beholder sin vanlige virkemåte; enhver fysisk knapp tilordnet M åpner MIDlet-menyen under kjøring.</string>
     <string name="config_controls_key_input">Fysiske inndata</string>
-    <string name="config_controls_maintenance">Oppsett for virtuelle kontroller</string>
+    <string name="config_controls_maintenance">Oppsett</string>
+    <string name="control_skin_title">Utseende for virtuelle kontroller</string>
+    <string name="config_controls_customization">Tilpasning</string>
+    <string name="config_controls_skin_help">Endrer utseendet på tastaturknappene, D-pad og analogspaken ved hjelp av egne bilder.</string>
+    <string name="config_controls_color_button_normal">Knapp sluppet</string>
+    <string name="config_controls_color_button_pressed">Knapp trykket inn</string>
+    <string name="config_controls_color_label_normal">Etikett sluppet</string>
+    <string name="config_controls_color_label_pressed">Etikett trykket inn</string>
+    <string name="config_controls_color_outline_short">Kontur</string>
+    <string name="config_controls_disabled_hint">Virtuelle kontroller er slått av under Generelt. Du kan fortsatt tilpasse dem her.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerer gjennomsiktigheten til virtuelle kontroller: 0 % er helt gjennomsiktig og 100 % ugjennomsiktig.</string>
+    <string name="config_controls_opaque_outside">Vis kontroller uten gjennomsiktighet utenfor MIDlet-skjermen</string>
+    <string name="config_controls_opaque_outside_help">Kontroller utenfor MIDlet-skjermen ignorerer opasitetsinnstillingen. Kontroller over skjermen bruker fortsatt den valgte opasiteten.</string>
+    <string name="config_controls_connect_controller">Koble til en kontroller for å kalibrere</string>
+    <string name="config_controls_color_skin_notice">Et heldekkende knappeskinn kan erstatte standardfargene, formen og konturen.</string>
     <string name="config_controls_virtual_keyboard">Virtuelle kontroller</string>
     <string name="config_controls_virtual_keyboard_colors">Farger for virtuelle kontroller</string>
     <string name="config_current_screen_size">Gjeldende størrelse: %1$s</string>
@@ -415,7 +429,7 @@
     <string name="config_help_virtual_keyboard">Viser skjermkontroller for denne MIDlet-en.</string>
     <string name="config_help_vk_alpha">Angir kontrollenes ugjennomsiktighet: 0 = helt gjennomsiktig; 255 = helt ugjennomsiktig.</string>
     <string name="config_help_vk_background">Angir grunnfargen på knappene for virtuelle kontroller.</string>
-    <string name="config_help_vk_button_shape">Angir formen på tastaturknappene. D-pad og analogspaken beholder sine egne former.</string>
+    <string name="config_help_vk_button_shape">Angir standardformen på tastaturknappene. D-pad og analogspaken har sine egne former.</string>
     <string name="config_help_vk_feedback">Vibrerer ved trykk på virtuelle kontroller når vibrasjon er aktivert i Innstillinger.</string>
     <string name="config_help_vk_force_opacity">Gjør kontroller utenfor MIDlet-skjermen ugjennomsiktige. Kontroller over skjermen bruker den angitte ugjennomsiktigheten.</string>
     <string name="config_help_vk_foreground">Angir fargen på etiketter og symboler på knappene for virtuelle kontroller.</string>
@@ -440,7 +454,7 @@
     <string name="config_timing_mode_real_wall">Systemtid</string>
     <string name="config_virtual_controls_color_preview">Fargeforhåndsvisning</string>
     <string name="config_virtual_controls_preview_hint">Trykk for å forhåndsvise fargene ved knappetrykk. Eksemplet bruker valgt ugjennomsiktighet.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Sluppet</string>
     <string name="config_virtual_controls_preview_pressed">Trykket inn</string>
     <string name="config_warning_filter_shader">Lineær filtrering jevner ut inndata før skjermshaderen behandler dem og kan redusere skarpheten på resultatet.</string>
     <string name="layout_edit_continue">Fortsett redigering</string>
@@ -941,7 +955,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rektangel</string>
     <string name="pref_button_shape_round">Avrundet rektangel</string>
-    <string name="pref_button_shape_title">Knappeform</string>
+    <string name="pref_button_shape_title">Form på tastaturknapper</string>
     <string name="pref_category_experimental">Eksperimentelt</string>
     <string name="pref_emulator_dir">Arbeidsmappe</string>
     <string name="pref_encoding_title">Tegnkoding</string>

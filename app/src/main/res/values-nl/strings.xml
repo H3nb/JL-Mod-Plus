@@ -46,7 +46,7 @@
     <string name="pref_button_shape_oval">Ovaal</string>
     <string name="pref_button_shape_rect">Rechthoek</string>
     <string name="pref_button_shape_round">Afgeronde rechthoek</string>
-    <string name="pref_button_shape_title">Knop vorm</string>
+    <string name="pref_button_shape_title">Vorm van toetsenblokknoppen</string>
     <string name="pref_emulator_dir">Werkfolder</string>
     <string name="pref_encoding_title">Tekencodering</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-aliasing</string>
@@ -674,7 +674,21 @@
     <string name="config_controls_key_input">Fysieke invoer</string>
     <string name="config_controls_virtual_keyboard">Virtuele bediening</string>
     <string name="config_controls_virtual_keyboard_colors">Kleuren van virtuele bediening</string>
-    <string name="config_controls_maintenance">Indeling virtuele bediening</string>
+    <string name="config_controls_maintenance">Indeling</string>
+    <string name="control_skin_title">Skin voor virtuele bediening</string>
+    <string name="config_controls_customization">Aanpassen</string>
+    <string name="config_controls_skin_help">Verandert het uiterlijk van de toetsenblokknoppen, de D-pad en de analoge stick met aangepaste afbeeldingen.</string>
+    <string name="config_controls_color_button_normal">Knop losgelaten</string>
+    <string name="config_controls_color_button_pressed">Knop ingedrukt</string>
+    <string name="config_controls_color_label_normal">Label losgelaten</string>
+    <string name="config_controls_color_label_pressed">Label ingedrukt</string>
+    <string name="config_controls_color_outline_short">Omlijning</string>
+    <string name="config_controls_disabled_hint">Virtuele bediening staat uit onder Basis. Je kunt deze hier nog steeds aanpassen.</string>
+    <string name="config_controls_opacity_help" formatted="false">Past de transparantie van virtuele bediening aan: 0% is volledig transparant en 100% ondoorzichtig.</string>
+    <string name="config_controls_opaque_outside">Bediening buiten het MIDlet-scherm ondoorzichtig weergeven</string>
+    <string name="config_controls_opaque_outside_help">Bediening buiten het MIDlet-scherm negeert de ingestelde dekking. Bediening boven het scherm blijft de gekozen dekking gebruiken.</string>
+    <string name="config_controls_connect_controller">Sluit een controller aan om te kalibreren</string>
+    <string name="config_controls_color_skin_notice">Een skin voor de hele knop kan de standaardkleuren, vorm en omlijning vervangen.</string>
     <string name="config_current_value">Huidige waarde</string>
     <string name="config_maintenance">Resetten &amp; gegevens</string>
     <string name="config_reset_all_settings">Alle instellingen resetten</string>
@@ -742,7 +756,7 @@
     <string name="config_help_font_aa">Maakt randen van gerenderde tekst vloeiender.</string>
     <string name="config_help_key_layout">Kiest de toetscode-indeling die door de MIDlet wordt gebruikt.</string>
     <string name="config_help_key_mapping">Wijst Android-toetsen en -knoppen toe aan J2ME-toetsenblokacties.</string>
-    <string name="config_help_vk_button_shape">Stelt de vorm van toetsenblokknoppen in. De D-pad en analoge stick behouden hun eigen vormen.</string>
+    <string name="config_help_vk_button_shape">Stelt de standaardvorm van de toetsenblokknoppen in. De D-pad en analoge stick hebben hun eigen vormen.</string>
     <string name="config_help_vk_feedback">Trilt bij het indrukken van virtuele bedieningselementen wanneer trillen is ingeschakeld in Instellingen.</string>
     <string name="config_help_vk_alpha">Stelt de dekking van de bedieningselementen in: 0 = volledig transparant; 255 = volledig ondoorzichtig.</string>
     <string name="config_help_vk_force_opacity">Maakt bediening buiten het MIDlet-scherm ondoorzichtig. Bediening boven het scherm gebruikt de ingestelde dekking.</string>
@@ -980,7 +994,7 @@
     <string name="bulk_install_unreadable_archives">Onleesbare archieven: %1$d</string>
     <string name="config_virtual_controls_color_preview">Kleurvoorbeeld</string>
     <string name="config_virtual_controls_preview_hint">Tik om de kleuren in ingedrukte toestand te bekijken. Het voorbeeld gebruikt de geselecteerde dekking.</string>
-    <string name="config_virtual_controls_preview_normal">Normaal</string>
+    <string name="config_virtual_controls_preview_normal">Losgelaten</string>
     <string name="config_virtual_controls_preview_pressed">Ingedrukt</string>
     <string name="config_warning_filter_shader">Lineaire filtering maakt het invoerbeeld glad voordat de schermshader het verwerkt en kan de scherpte van het resultaat verminderen.</string>
     <string name="install_done_with_warning">App geïnstalleerd met waarschuwingen.</string>

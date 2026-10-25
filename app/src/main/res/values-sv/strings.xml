@@ -174,7 +174,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rektangel</string>
     <string name="pref_button_shape_round">Rundad rektangel</string>
-    <string name="pref_button_shape_title">Knappform</string>
+    <string name="pref_button_shape_title">Form på knappsatsens knappar</string>
     <string name="pref_category_experimental">Experimentella/tillfälliga alternativ</string>
     <string name="pref_emulator_dir">Arbetsmapp</string>
     <string name="pref_encoding_title">Teckenkodning</string>
@@ -674,7 +674,21 @@
     <string name="config_controls_key_input">Fysisk inmatning</string>
     <string name="config_controls_virtual_keyboard">Virtuella kontroller</string>
     <string name="config_controls_virtual_keyboard_colors">Virtuella kontrollers färger</string>
-    <string name="config_controls_maintenance">Layout för virtuella kontroller</string>
+    <string name="config_controls_maintenance">Layout</string>
+    <string name="control_skin_title">Skal för virtuella kontroller</string>
+    <string name="config_controls_customization">Anpassning</string>
+    <string name="config_controls_skin_help">Ändrar utseendet på knappsatsens knappar, D-paden och den analoga spaken med egna bilder.</string>
+    <string name="config_controls_color_button_normal">Knapp släppt</string>
+    <string name="config_controls_color_button_pressed">Knapp nedtryckt</string>
+    <string name="config_controls_color_label_normal">Etikett vid släpp</string>
+    <string name="config_controls_color_label_pressed">Etikett vid tryck</string>
+    <string name="config_controls_color_outline_short">Kontur</string>
+    <string name="config_controls_disabled_hint">Virtuella kontroller är avstängda under Grundläggande. Du kan fortfarande anpassa dem här.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerar genomskinligheten hos virtuella kontroller: 0 % är helt genomskinligt och 100 % ogenomskinligt.</string>
+    <string name="config_controls_opaque_outside">Visa kontroller utan genomskinlighet utanför MIDlet-skärmen</string>
+    <string name="config_controls_opaque_outside_help">Kontroller utanför MIDlet-skärmen ignorerar inställningen för opacitet. Kontroller över skärmen använder fortfarande det valda värdet.</string>
+    <string name="config_controls_connect_controller">Anslut en handkontroll för kalibrering</string>
+    <string name="config_controls_color_skin_notice">Ett skal som täcker hela knappen kan ersätta standardfärgerna, formen och konturen.</string>
     <string name="config_current_value">Aktuellt värde</string>
     <string name="config_maintenance">Återställning &amp; data</string>
     <string name="config_reset_all_settings">Återställ alla inställningar</string>
@@ -742,7 +756,7 @@
     <string name="config_help_font_aa">Jämnar ut kanterna på renderad text.</string>
     <string name="config_help_key_layout">Väljer den tangentkodslayout som MIDlet-appen använder.</string>
     <string name="config_help_key_mapping">Tilldelar Android-tangenter och -knappar till J2ME-knappsatsåtgärder.</string>
-    <string name="config_help_vk_button_shape">Ställer in formen på knappsatsens knappar. D-paden och den analoga spaken behåller sina egna former.</string>
+    <string name="config_help_vk_button_shape">Ställer in standardformen på knappsatsens knappar. D-paden och den analoga spaken har egna former.</string>
     <string name="config_help_vk_feedback">Vibrerar vid tryck på virtuella kontroller när vibration är aktiverad i Inställningar.</string>
     <string name="config_help_vk_alpha">Ställer in kontrollernas opacitet: 0 = helt transparenta; 255 = helt ogenomskinliga.</string>
     <string name="config_help_vk_force_opacity">Gör kontroller utanför MIDlet-skärmen ogenomskinliga. Kontroller ovanpå skärmen använder den inställda opaciteten.</string>
@@ -980,7 +994,7 @@
     <string name="bulk_install_unreadable_archives">Oläsbara arkiv: %1$d</string>
     <string name="config_virtual_controls_color_preview">Färgförhandsvisning</string>
     <string name="config_virtual_controls_preview_hint">Tryck för att förhandsvisa färgerna i nedtryckt läge. Exemplet använder vald opacitet.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Släppt</string>
     <string name="config_virtual_controls_preview_pressed">Nedtryckt</string>
     <string name="config_warning_filter_shader">Linjär filtrering jämnar ut bilden innan skärmshadern bearbetar den och kan minska skärpan i resultatet.</string>
     <string name="install_done_with_warning">Applikationen installerades med varningar.</string>

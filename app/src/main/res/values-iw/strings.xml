@@ -289,7 +289,21 @@
     <string name="config_color_picker_title">בחירת צבע</string>
     <string name="config_controller_help_body_compact">כפתורי הבקר משתמשים באותם מיפויי מקשים כמו מקשי המקלדת והטלפון. המוט האנלוגי שולח ל־MIDlet רק קלט כיווני. כפתור החזרה של Android שומר על התנהגותו הרגילה; כל כפתור פיזי שממופה ל־M פותח את תפריט ה־MIDlet בזמן הריצה.</string>
     <string name="config_controls_key_input">קלט פיזי</string>
-    <string name="config_controls_maintenance">פריסת פקדים וירטואליים</string>
+    <string name="config_controls_maintenance">פריסה</string>
+    <string name="control_skin_title">ערכת מראה לפקדים וירטואליים</string>
+    <string name="config_controls_customization">התאמה אישית</string>
+    <string name="config_controls_skin_help">משנה את המראה של לחצני לוח המקשים, לוח הכיוונים והמוט האנלוגי באמצעות תמונות מותאמות אישית.</string>
+    <string name="config_controls_color_button_normal">לחצן משוחרר</string>
+    <string name="config_controls_color_button_pressed">לחצן לחוץ</string>
+    <string name="config_controls_color_label_normal">תווית במצב משוחרר</string>
+    <string name="config_controls_color_label_pressed">תווית במצב לחוץ</string>
+    <string name="config_controls_color_outline_short">קו מתאר</string>
+    <string name="config_controls_disabled_hint">הפקדים הווירטואליים כבויים בקטגוריה כללי. עדיין אפשר להתאים אותם כאן.</string>
+    <string name="config_controls_opacity_help" formatted="false">מכוונן את השקיפות של הפקדים הווירטואליים: 0% שקוף לחלוטין ו־100% אטום.</string>
+    <string name="config_controls_opaque_outside">הצגת פקדים ללא שקיפות מחוץ למסך ה־MIDlet</string>
+    <string name="config_controls_opaque_outside_help">פקדים מחוץ למסך ה־MIDlet מתעלמים מהגדרת האטימות. פקדים שמעל המסך ממשיכים להשתמש בערך שנבחר.</string>
+    <string name="config_controls_connect_controller">חברו בקר כדי לכייל אותו</string>
+    <string name="config_controls_color_skin_notice">ערכת מראה שמכסה את כל הלחצן יכולה להחליף את צבעיו, צורתו וקו המתאר שלו כברירת מחדל.</string>
     <string name="config_controls_virtual_keyboard">פקדים וירטואליים</string>
     <string name="config_controls_virtual_keyboard_colors">צבעי הפקדים הווירטואליים</string>
     <string name="config_current_screen_size">גודל נוכחי: %1$s</string>
@@ -421,7 +435,7 @@
     <string name="config_help_virtual_keyboard">מציג פקדים על המסך עבור ה־MIDlet הזה.</string>
     <string name="config_help_vk_alpha">מגדיר את אטימות הפקדים: 0 = שקוף לחלוטין; 255 = אטום לחלוטין.</string>
     <string name="config_help_vk_background">מגדיר את צבע הבסיס של כפתורי הפקדים הווירטואליים.</string>
-    <string name="config_help_vk_button_shape">מגדיר את צורת כפתורי לוח המקשים. צלב הכיוונים והמוט האנלוגי שומרים על צורתם.</string>
+    <string name="config_help_vk_button_shape">מגדיר את צורת ברירת המחדל של לחצני לוח המקשים. ללוח הכיוונים ולמוט האנלוגי יש צורות משלהם.</string>
     <string name="config_help_vk_feedback">רוטט בלחיצה על פקדים וירטואליים כאשר הרטט מופעל בהגדרות.</string>
     <string name="config_help_vk_force_opacity">הופך פקדים מחוץ למסך ה־MIDlet לאטומים. פקדים מעל המסך משתמשים באטימות שהוגדרה.</string>
     <string name="config_help_vk_foreground">מגדיר את צבע התוויות והסמלים בכפתורי הפקדים הווירטואליים.</string>
@@ -446,7 +460,7 @@
     <string name="config_timing_mode_real_wall">זמן מערכת</string>
     <string name="config_virtual_controls_color_preview">תצוגה מקדימה של צבע</string>
     <string name="config_virtual_controls_preview_hint">הקישו לתצוגה מקדימה של הצבעים במצב לחוץ. הדוגמה משתמשת באטימות שנבחרה.</string>
-    <string name="config_virtual_controls_preview_normal">רגיל</string>
+    <string name="config_virtual_controls_preview_normal">משוחרר</string>
     <string name="config_virtual_controls_preview_pressed">לחוץ</string>
     <string name="config_warning_filter_shader">סינון ליניארי מחליק את הקלט לפני ששיידר המסך מעבד אותו, ועשוי להפחית את חדות הפלט.</string>
     <string name="layout_edit_continue">המשך עריכה</string>
@@ -972,7 +986,7 @@
     <string name="pref_button_shape_oval">אליפסה</string>
     <string name="pref_button_shape_rect">מלבן</string>
     <string name="pref_button_shape_round">מלבן עם פינות מעוגלות</string>
-    <string name="pref_button_shape_title">צורת כפתור</string>
+    <string name="pref_button_shape_title">צורת לחצני לוח המקשים</string>
     <string name="pref_category_experimental">ניסיוני</string>
     <string name="pref_emulator_dir">תיקיית עבודה</string>
     <string name="pref_encoding_title">קידוד</string>

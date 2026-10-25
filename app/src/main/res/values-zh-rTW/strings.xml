@@ -27,7 +27,7 @@
     <string name="permission_request_failed">此應用程式需要儲存空間寫入權限。</string>
     <string name="pref_app_sort_date">加入日期</string>
     <string name="pref_app_sort_name">名稱</string>
-    <string name="pref_button_shape_title">按鈕形狀</string>
+    <string name="pref_button_shape_title">鍵盤按鈕形狀</string>
     <string name="pref_encoding_title">字元編碼</string>
     <string name="PREF_FILTER">線性濾波</string>
     <string name="PREF_FONT_LARGE">大</string>
@@ -328,7 +328,21 @@
     <string name="config_color_picker_title">選擇顏色</string>
     <string name="config_controller_help_body_compact">控制器按鈕與鍵盤及手機按鍵使用相同的按鍵對應。類比搖桿只向 MIDlet 傳送方向輸入。Android 返回鍵維持正常行為；對應至 M 的任何實體按鈕都會開啟執行中的 MIDlet 選單。</string>
     <string name="config_controls_key_input">實體輸入</string>
-    <string name="config_controls_maintenance">虛擬控制項配置</string>
+    <string name="config_controls_maintenance">配置</string>
+    <string name="control_skin_title">虛擬控制項外觀</string>
+    <string name="config_controls_customization">自訂</string>
+    <string name="config_controls_skin_help">透過自訂圖片變更鍵盤按鈕、方向鍵與類比搖桿的外觀。</string>
+    <string name="config_controls_color_button_normal">按鈕放開</string>
+    <string name="config_controls_color_button_pressed">按鈕按下</string>
+    <string name="config_controls_color_label_normal">放開時的標籤</string>
+    <string name="config_controls_color_label_pressed">按下時的標籤</string>
+    <string name="config_controls_color_outline_short">外框</string>
+    <string name="config_controls_disabled_hint">虛擬控制項已在「一般」中關閉，但仍可在此自訂。</string>
+    <string name="config_controls_opacity_help" formatted="false">調整虛擬控制項的透明度：0% 代表完全透明，100% 代表不透明。</string>
+    <string name="config_controls_opaque_outside">在 MIDlet 畫面外以不透明方式顯示控制項</string>
+    <string name="config_controls_opaque_outside_help">MIDlet 畫面外的控制項不受不透明度設定影響。覆蓋畫面的控制項仍使用所選值。</string>
+    <string name="config_controls_connect_controller">連接控制器以進行校準</string>
+    <string name="config_controls_color_skin_notice">覆蓋整個按鈕的外觀可能取代預設的顏色、形狀與外框。</string>
     <string name="config_controls_virtual_keyboard">虛擬控制項</string>
     <string name="config_controls_virtual_keyboard_colors">虛擬控制項顏色</string>
     <string name="config_current_screen_size">目前尺寸：%1$s</string>
@@ -460,7 +474,7 @@
     <string name="config_help_virtual_keyboard">為此 MIDlet 顯示螢幕上的控制項。</string>
     <string name="config_help_vk_alpha">設定控制項不透明度：0 = 完全透明；255 = 完全不透明。</string>
     <string name="config_help_vk_background">設定虛擬控制項按鈕的基礎顏色。</string>
-    <string name="config_help_vk_button_shape">設定鍵盤按鈕的形狀。方向鍵和類比搖桿維持各自的形狀。</string>
+    <string name="config_help_vk_button_shape">設定鍵盤按鈕的預設形狀。方向鍵與類比搖桿使用各自的形狀。</string>
     <string name="config_help_vk_feedback">在「設定」中啟用震動時，按下虛擬控制項會震動。</string>
     <string name="config_help_vk_force_opacity">使 MIDlet 畫面外的控制項不透明。畫面上的控制項使用設定的不透明度。</string>
     <string name="config_help_vk_foreground">設定虛擬控制項按鈕上文字與符號的顏色。</string>
@@ -485,7 +499,7 @@
     <string name="config_timing_mode_real_wall">系統時間</string>
     <string name="config_virtual_controls_color_preview">顏色預覽</string>
     <string name="config_virtual_controls_preview_hint">點選以預覽按下時的顏色。範例使用選取的不透明度。</string>
-    <string name="config_virtual_controls_preview_normal">一般</string>
+    <string name="config_virtual_controls_preview_normal">放開</string>
     <string name="config_virtual_controls_preview_pressed">按下</string>
     <string name="config_warning_filter_shader">線性濾波會在螢幕著色器處理輸入前使其平滑，可能降低輸出的清晰度。</string>
     <string name="layout_edit_continue">繼續編輯</string>

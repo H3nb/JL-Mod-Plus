@@ -284,7 +284,21 @@
     <string name="config_color_picker_title">Kies kleur</string>
     <string name="config_controller_help_body_compact">Beheerderknoppies gebruik dieselfde sleuteltoewysings as sleutelbord- en telefoonsleutels. Die analoogstokkie stuur slegs rigtinginvoer na die MIDlet. Android se Terug-knoppie behou sy normale gedrag; enige fisiese knoppie wat aan M toegewys is, maak die MIDlet-kieslys tydens uitvoering oop.</string>
     <string name="config_controls_key_input">Fisiese invoer</string>
-    <string name="config_controls_maintenance">Virtuele beheeruitleg</string>
+    <string name="config_controls_maintenance">Uitleg</string>
+    <string name="control_skin_title">Vel vir virtuele beheerknoppies</string>
+    <string name="config_controls_customization">Aanpassing</string>
+    <string name="config_controls_skin_help">Verander die voorkoms van sleutelbordknoppies, die D-pad en die analoogstokkie met pasgemaakte beelde.</string>
+    <string name="config_controls_color_button_normal">Knoppie losgelaat</string>
+    <string name="config_controls_color_button_pressed">Knoppie gedruk</string>
+    <string name="config_controls_color_label_normal">Etiket losgelaat</string>
+    <string name="config_controls_color_label_pressed">Etiket gedruk</string>
+    <string name="config_controls_color_outline_short">Omtrek</string>
+    <string name="config_controls_disabled_hint">Virtuele beheerknoppies is afgeskakel onder Algemeen. Jy kan hulle steeds hier aanpas.</string>
+    <string name="config_controls_opacity_help" formatted="false">Pas die deursigtigheid van virtuele beheerknoppies aan: 0% is heeltemal deursigtig; 100% is nie deursigtig nie.</string>
+    <string name="config_controls_opaque_outside">Wys beheerknoppies sonder deursigtigheid buite die MIDlet-skerm</string>
+    <string name="config_controls_opaque_outside_help">Beheerknoppies buite die MIDlet-skerm ignoreer die opasiteitsinstelling. Beheerknoppies oor die skerm gebruik steeds die gekose opasiteit.</string>
+    <string name="config_controls_connect_controller">Koppel ’n beheerder om te kalibreer</string>
+    <string name="config_controls_color_skin_notice">’n Vel vir die hele knoppie kan die standaardkleure, vorm en omtrek van knoppies vervang.</string>
     <string name="config_controls_virtual_keyboard">Virtuele beheerknoppies</string>
     <string name="config_controls_virtual_keyboard_colors">Virtuele beheerknoppies se kleure</string>
     <string name="config_current_screen_size">Huidige grootte: %1$s</string>
@@ -416,7 +430,7 @@
     <string name="config_help_virtual_keyboard">Wys beheerknoppies op die skerm vir hierdie MIDlet.</string>
     <string name="config_help_vk_alpha">Stel beheerknoppies se ondeursigtigheid: 0 = heeltemal deursigtig; 255 = heeltemal ondeursigtig.</string>
     <string name="config_help_vk_background">Stel die basiskleur van virtuele beheerknoppies.</string>
-    <string name="config_help_vk_button_shape">Stel die vorm van sleutelbordknoppies. Die D-pad en analoogstokkie behou hul eie vorms.</string>
+    <string name="config_help_vk_button_shape">Stel die standaardvorm van sleutelbordknoppies in. Die D-pad en analoogstokkie het hul eie vorms.</string>
     <string name="config_help_vk_feedback">Vibreer wanneer virtuele beheerknoppies gedruk word, mits vibrasie in Instellings geaktiveer is.</string>
     <string name="config_help_vk_force_opacity">Maak beheerknoppies buite die MIDlet-skerm ondeursigtig. Beheerknoppies oor die skerm gebruik die ingestelde ondeursigtigheid.</string>
     <string name="config_help_vk_foreground">Stel die etiket- en simboolkleur op virtuele beheerknoppies.</string>
@@ -441,7 +455,7 @@
     <string name="config_timing_mode_real_wall">Stelseltyd</string>
     <string name="config_virtual_controls_color_preview">Kleurvoorskou</string>
     <string name="config_virtual_controls_preview_hint">Tik om gedrukte kleure te voorskou. Die voorbeeld gebruik die gekose ondeursigtigheid.</string>
-    <string name="config_virtual_controls_preview_normal">Normaal</string>
+    <string name="config_virtual_controls_preview_normal">Losgelaat</string>
     <string name="config_virtual_controls_preview_pressed">Gedruk</string>
     <string name="config_warning_filter_shader">Lineêre filtering maak die invoer gladder voordat die skermshader dit verwerk en kan die skerpte van die uitvoer verminder.</string>
     <string name="layout_edit_continue">Gaan voort met wysiging</string>
@@ -942,7 +956,7 @@
     <string name="pref_button_shape_oval">Ovaal</string>
     <string name="pref_button_shape_rect">Reghoek</string>
     <string name="pref_button_shape_round">Afgeronde reghoek</string>
-    <string name="pref_button_shape_title">Knoppievorm</string>
+    <string name="pref_button_shape_title">Vorm van sleutelbordknoppies</string>
     <string name="pref_category_experimental">Eksperimenteel</string>
     <string name="pref_emulator_dir">Werkgids</string>
     <string name="pref_encoding_title">Karakterenkodering</string>

@@ -64,7 +64,7 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rechteckig</string>
     <string name="pref_button_shape_round">Abgerundetes Rechteck</string>
-    <string name="pref_button_shape_title">Tastenform</string>
+    <string name="pref_button_shape_title">Form der Tastenfeldtasten</string>
     <string name="pref_emulator_dir">Arbeitsverzeichnis</string>
     <string name="pref_encoding_title">Zeichenkodierung</string>
     <string name="PREF_FILTER">Lineare Filterung</string>
@@ -681,7 +681,21 @@
     <string name="config_controls_key_input">Physische Eingabe</string>
     <string name="config_controls_virtual_keyboard">Virtuelle Steuerelemente</string>
     <string name="config_controls_virtual_keyboard_colors">Farben virtueller Steuerelemente</string>
-    <string name="config_controls_maintenance">Layout virtueller Steuerelemente</string>
+    <string name="config_controls_maintenance">Layout</string>
+    <string name="control_skin_title">Skin für virtuelle Steuerelemente</string>
+    <string name="config_controls_customization">Anpassung</string>
+    <string name="config_controls_skin_help">Ändert das Aussehen der Tastenfeldtasten, des Steuerkreuzes und des Analogsticks mit eigenen Bildern.</string>
+    <string name="config_controls_color_button_normal">Taste losgelassen</string>
+    <string name="config_controls_color_button_pressed">Taste gedrückt</string>
+    <string name="config_controls_color_label_normal">Beschriftung losgelassen</string>
+    <string name="config_controls_color_label_pressed">Beschriftung gedrückt</string>
+    <string name="config_controls_color_outline_short">Umrandung</string>
+    <string name="config_controls_disabled_hint">Die virtuellen Steuerelemente sind unter Grundlagen deaktiviert. Du kannst sie hier trotzdem anpassen.</string>
+    <string name="config_controls_opacity_help" formatted="false">Passt die Transparenz der virtuellen Steuerelemente an: 0 % ist vollständig transparent, 100 % undurchsichtig.</string>
+    <string name="config_controls_opaque_outside">Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig anzeigen</string>
+    <string name="config_controls_opaque_outside_help">Steuerelemente außerhalb des MIDlet-Bildschirms ignorieren die Deckkrafteinstellung. Steuerelemente über dem Bildschirm verwenden weiterhin den gewählten Wert.</string>
+    <string name="config_controls_connect_controller">Controller zum Kalibrieren verbinden</string>
+    <string name="config_controls_color_skin_notice">Ein vollflächiger Tasten-Skin kann die Standardfarben, die Form und die Umrandung ersetzen.</string>
     <string name="config_current_value">Aktueller Wert</string>
     <string name="config_maintenance">Zurücksetzen &amp; Daten</string>
     <string name="config_reset_all_settings">Alle Einstellungen zurücksetzen</string>
@@ -749,7 +763,7 @@
     <string name="config_help_font_aa">Glättet die Kanten des gerenderten Textes.</string>
     <string name="config_help_key_layout">Wählt das vom MIDlet verwendete Tastencode-Layout.</string>
     <string name="config_help_key_mapping">Ordnet Android-Tasten und -Schaltflächen J2ME-Tastenfeldaktionen zu.</string>
-    <string name="config_help_vk_button_shape">Legt die Form der Tastenfeldtasten fest. D-Pad und Analogstick behalten ihre eigenen Formen.</string>
+    <string name="config_help_vk_button_shape">Legt die Standardform der Tastenfeldtasten fest. Das Steuerkreuz und der Analogstick haben eigene Formen.</string>
     <string name="config_help_vk_feedback">Vibriert bei Betätigung virtueller Steuerelemente, wenn Vibration in den Einstellungen aktiviert ist.</string>
     <string name="config_help_vk_alpha">Legt die Deckkraft der Steuerelemente fest: 0 = vollständig transparent; 255 = vollständig deckend.</string>
     <string name="config_help_vk_force_opacity">Macht Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig. Steuerelemente über dem Bildschirm verwenden die konfigurierte Deckkraft.</string>
@@ -980,7 +994,7 @@
     <string name="bulk_install_unreadable_archives">Nicht lesbare Archive: %1$d</string>
     <string name="config_virtual_controls_color_preview">Farbvorschau</string>
     <string name="config_virtual_controls_preview_hint">Tippe, um die Farben im gedrückten Zustand zu sehen. Das Beispiel verwendet die gewählte Deckkraft.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Losgelassen</string>
     <string name="config_virtual_controls_preview_pressed">Gedrückt</string>
     <string name="config_warning_filter_shader">Lineare Filterung glättet das Eingangsbild vor der Verarbeitung durch den Bildschirm-Shader und kann die Schärfe des Ergebnisses verringern.</string>
     <string name="install_done_with_warning">Anwendung mit Warnungen installiert.</string>

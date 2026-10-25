@@ -91,6 +91,55 @@ internal fun ConfigSection(
     }
 }
 
+/** A single accessible target for compact configuration rows. Values remain visible and localized. */
+@Composable
+internal fun ConfigCompactValuePreference(
+    title: String,
+    value: String? = null,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    destructive: Boolean = false,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = when {
+                !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA)
+                destructive -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurface
+            },
+        )
+        if (!description.isNullOrEmpty()) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+            )
+        }
+        if (!value.isNullOrEmpty()) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
 @Composable
 internal fun ConfigValuePreference(
     title: String,
@@ -101,7 +150,12 @@ internal fun ConfigValuePreference(
     enabled: Boolean = true,
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
+    compact: Boolean = false,
 ) {
+    if (compact && message == null) {
+        ConfigCompactValuePreference(title, value, onClick, enabled, modifier = modifier, description = description)
+        return
+    }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -146,7 +200,7 @@ internal fun ConfigValuePreference(
 @Composable
 internal fun ConfigSwitchPreference(
     title: String,
-    description: String,
+    description: String?,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -176,12 +230,14 @@ internal fun ConfigSwitchPreference(
                 color = if (enabled) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
             )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            )
+            if (!description.isNullOrEmpty()) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+                )
+            }
             if (message != null) {
                 ConfigInlineMessage(message, messageLevel)
             }
@@ -204,6 +260,7 @@ internal fun ConfigChoicePreference(
     onImport: (() -> Unit)? = null,
     onRename: ((String, String) -> Unit)? = null,
     onDelete: ((String) -> Unit)? = null,
+    compact: Boolean = false,
 ) {
     var dialogVisible by remember(selected, options) { mutableStateOf(false) }
     var renameFile by remember { mutableStateOf<String?>(null) }
@@ -215,6 +272,7 @@ internal fun ConfigChoicePreference(
         enabled = enabled && options.isNotEmpty(),
         message = message,
         messageLevel = messageLevel,
+        compact = compact,
         modifier = modifier,
         onClick = { dialogVisible = true },
     )
@@ -308,6 +366,7 @@ internal fun ConfigNumberPreference(
     valueSuffix: String? = null,
     resetValue: String? = null,
     validIntegerRange: IntRange? = null,
+    compact: Boolean = false,
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
     val display = buildString {
@@ -321,6 +380,7 @@ internal fun ConfigNumberPreference(
         title = title,
         description = description,
         value = display,
+        compact = compact,
         enabled = enabled,
         modifier = modifier,
         onClick = { dialogVisible = true },
@@ -352,12 +412,15 @@ internal fun ConfigSliderPreference(
     valueRange: IntRange,
     onSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
+    valueSuffix: String = "",
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
     ConfigValuePreference(
         title = title,
         description = description,
-        value = value.toString(),
+        value = "$value$valueSuffix",
+        compact = compact,
         modifier = modifier,
         onClick = { dialogVisible = true },
     )

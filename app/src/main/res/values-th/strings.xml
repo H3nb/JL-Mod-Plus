@@ -24,7 +24,7 @@
     <string name="permission_request_failed">แอปฯนี้ต้องใช้สิทธิ์ในการเขียนที่เก็บข้อมูล</string>
     <string name="pref_app_sort_date">วันที่เพิ่ม</string>
     <string name="pref_app_sort_name">ชื่อ</string>
-    <string name="pref_button_shape_title">รูปร่างปุ่ม</string>
+    <string name="pref_button_shape_title">รูปร่างปุ่มแป้นกด</string>
     <string name="PREF_FILTER">การกรองแบบเชิงเส้น</string>
     <string name="PREF_FONT_LARGE">ใหญ่</string>
     <string name="PREF_FONT_MEDIUM">ปานกลาง</string>
@@ -316,7 +316,21 @@
     <string name="config_color_picker_title">เลือกสี</string>
     <string name="config_controller_help_body_compact">ปุ่มคอนโทรลเลอร์ใช้การแมปเดียวกับแป้นพิมพ์และปุ่มโทรศัพท์ ก้านอนาล็อกส่งเฉพาะอินพุตทิศทางไปยัง MIDlet ปุ่มย้อนกลับของ Android ยังทำงานตามปกติ ส่วนปุ่มจริงที่แมปเป็น M จะเปิดเมนู MIDlet ขณะทำงาน</string>
     <string name="config_controls_key_input">อินพุตจากอุปกรณ์จริง</string>
-    <string name="config_controls_maintenance">รูปแบบการจัดวางตัวควบคุมเสมือน</string>
+    <string name="config_controls_maintenance">การจัดวาง</string>
+    <string name="control_skin_title">สกินตัวควบคุมเสมือน</string>
+    <string name="config_controls_customization">การปรับแต่ง</string>
+    <string name="config_controls_skin_help">เปลี่ยนรูปลักษณ์ปุ่มแป้นกด แป้นทิศทาง และก้านอนาล็อกด้วยภาพที่กำหนดเอง</string>
+    <string name="config_controls_color_button_normal">ปุ่มเมื่อปล่อย</string>
+    <string name="config_controls_color_button_pressed">ปุ่มขณะกด</string>
+    <string name="config_controls_color_label_normal">ป้ายชื่อเมื่อปล่อย</string>
+    <string name="config_controls_color_label_pressed">ป้ายชื่อขณะกด</string>
+    <string name="config_controls_color_outline_short">เส้นขอบ</string>
+    <string name="config_controls_disabled_hint">ตัวควบคุมเสมือนปิดอยู่ในหัวข้อทั่วไป แต่คุณยังปรับแต่งได้ที่นี่</string>
+    <string name="config_controls_opacity_help" formatted="false">ปรับความโปร่งใสของตัวควบคุมเสมือน: 0% โปร่งใสทั้งหมด และ 100% ทึบแสง</string>
+    <string name="config_controls_opaque_outside">แสดงตัวควบคุมนอกหน้าจอ MIDlet แบบทึบแสง</string>
+    <string name="config_controls_opaque_outside_help">ตัวควบคุมนอกหน้าจอ MIDlet จะไม่ใช้ค่าความทึบแสงที่ตั้งไว้ ส่วนตัวควบคุมบนหน้าจอยังคงใช้ค่าที่เลือก</string>
+    <string name="config_controls_connect_controller">เชื่อมต่อคอนโทรลเลอร์เพื่อปรับเทียบ</string>
+    <string name="config_controls_color_skin_notice">สกินที่ครอบคลุมทั้งปุ่มอาจแทนที่สี รูปร่าง และเส้นขอบเริ่มต้น</string>
     <string name="config_controls_virtual_keyboard">ตัวควบคุมเสมือน</string>
     <string name="config_controls_virtual_keyboard_colors">สีตัวควบคุมเสมือน</string>
     <string name="config_current_screen_size">ขนาดปัจจุบัน: %1$s</string>
@@ -448,7 +462,7 @@
     <string name="config_help_virtual_keyboard">แสดงตัวควบคุมบนหน้าจอสำหรับ MIDlet นี้</string>
     <string name="config_help_vk_alpha">ตั้งความทึบของตัวควบคุม: 0 = โปร่งใสทั้งหมด; 255 = ทึบทั้งหมด</string>
     <string name="config_help_vk_background">ตั้งสีพื้นฐานของปุ่มตัวควบคุมเสมือน</string>
-    <string name="config_help_vk_button_shape">ตั้งรูปทรงของปุ่มแป้นปุ่ม โดยแป้นทิศทางและก้านอนาล็อกยังคงรูปทรงของตัวเอง</string>
+    <string name="config_help_vk_button_shape">กำหนดรูปร่างเริ่มต้นของปุ่มแป้นกด ส่วนแป้นทิศทางและก้านอนาล็อกมีรูปร่างของตนเอง</string>
     <string name="config_help_vk_feedback">สั่นเมื่อกดตัวควบคุมเสมือนหากเปิดใช้การสั่นในการตั้งค่า</string>
     <string name="config_help_vk_force_opacity">ทำให้ตัวควบคุมนอกหน้าจอ MIDlet ทึบ ตัวควบคุมบนหน้าจอใช้ความทึบที่ตั้งไว้</string>
     <string name="config_help_vk_foreground">ตั้งสีข้อความและสัญลักษณ์บนปุ่มตัวควบคุมเสมือน</string>
@@ -473,7 +487,7 @@
     <string name="config_timing_mode_real_wall">เวลาระบบ</string>
     <string name="config_virtual_controls_color_preview">ตัวอย่างสี</string>
     <string name="config_virtual_controls_preview_hint">แตะเพื่อดูตัวอย่างสีขณะกด ตัวอย่างใช้ความทึบที่เลือกไว้</string>
-    <string name="config_virtual_controls_preview_normal">ปกติ</string>
+    <string name="config_virtual_controls_preview_normal">ปล่อย</string>
     <string name="config_virtual_controls_preview_pressed">ขณะกด</string>
     <string name="config_warning_filter_shader">การกรองเชิงเส้นทำให้อินพุตเรียบขึ้นก่อนที่เชดเดอร์หน้าจอจะประมวลผล และอาจลดความคมชัดของผลลัพธ์</string>
     <string name="layout_edit_continue">แก้ไขต่อ</string>

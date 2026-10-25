@@ -68,7 +68,7 @@
     <string name="pref_button_shape_oval">Ovale</string>
     <string name="pref_button_shape_rect">Rectangulaire</string>
     <string name="pref_button_shape_round">Rectangle arrondi</string>
-    <string name="pref_button_shape_title">Forme des boutons</string>
+    <string name="pref_button_shape_title">Forme des boutons du clavier</string>
     <string name="pref_emulator_dir">Répertoire de travail</string>
     <string name="pref_encoding_title">Encodage des caractères</string>
     <string name="PREF_FILTER">Filtrage linéaire</string>
@@ -709,7 +709,21 @@
     <string name="config_controls_key_input">Entrée physique</string>
     <string name="config_controls_virtual_keyboard">Commandes virtuelles</string>
     <string name="config_controls_virtual_keyboard_colors">Couleurs des commandes virtuelles</string>
-    <string name="config_controls_maintenance">Disposition des commandes virtuelles</string>
+    <string name="config_controls_maintenance">Disposition</string>
+    <string name="control_skin_title">Apparence des commandes virtuelles</string>
+    <string name="config_controls_customization">Personnalisation</string>
+    <string name="config_controls_skin_help">Modifie l’apparence des boutons du pavé, de la croix directionnelle et du stick analogique avec des images personnalisées.</string>
+    <string name="config_controls_color_button_normal">Bouton relâché</string>
+    <string name="config_controls_color_button_pressed">Bouton enfoncé</string>
+    <string name="config_controls_color_label_normal">Libellé au relâchement</string>
+    <string name="config_controls_color_label_pressed">Libellé à l’appui</string>
+    <string name="config_controls_color_outline_short">Contour</string>
+    <string name="config_controls_disabled_hint">Les commandes virtuelles sont désactivées dans Général. Vous pouvez tout de même les personnaliser ici.</string>
+    <string name="config_controls_opacity_help" formatted="false">Règle la transparence des commandes virtuelles : 0 % est entièrement transparent et 100 % opaque.</string>
+    <string name="config_controls_opaque_outside">Afficher les commandes hors de l’écran du MIDlet sans transparence</string>
+    <string name="config_controls_opaque_outside_help">Les commandes situées hors de l’écran du MIDlet ignorent le réglage d’opacité. Celles qui sont sur l’écran continuent d’utiliser la valeur choisie.</string>
+    <string name="config_controls_connect_controller">Connectez une manette pour la calibrer</string>
+    <string name="config_controls_color_skin_notice">Une apparence couvrant tout le bouton peut remplacer ses couleurs, sa forme et son contour par défaut.</string>
     <string name="config_current_value">Valeur actuelle</string>
     <string name="config_maintenance">Réinitialisation et données</string>
     <string name="config_reset_all_settings">Réinitialiser tous les paramètres</string>
@@ -777,7 +791,7 @@
     <string name="config_help_font_aa">Lisse les bords du texte rendu.</string>
     <string name="config_help_key_layout">Choisit la disposition des codes de touches utilisée par le MIDlet.</string>
     <string name="config_help_key_mapping">Associe les touches et boutons Android aux actions du pavé J2ME.</string>
-    <string name="config_help_vk_button_shape">Définit la forme des boutons du pavé. La croix directionnelle et le stick analogique conservent leurs propres formes.</string>
+    <string name="config_help_vk_button_shape">Définit la forme par défaut des boutons du pavé. La croix directionnelle et le stick analogique ont leurs propres formes.</string>
     <string name="config_help_vk_feedback">Fait vibrer l’appareil lors d’un appui sur les commandes virtuelles si la vibration est activée dans les Paramètres.</string>
     <string name="config_help_vk_alpha">Définit l’opacité des commandes : 0 = entièrement transparentes ; 255 = entièrement opaques.</string>
     <string name="config_help_vk_force_opacity">Rend opaques les commandes hors de l’écran du MIDlet. Les commandes superposées à l’écran utilisent l’opacité configurée.</string>
@@ -1011,7 +1025,7 @@
     <string name="bulk_install_unreadable_archives">Archives illisibles : %1$d</string>
     <string name="config_virtual_controls_color_preview">Aperçu des couleurs</string>
     <string name="config_virtual_controls_preview_hint">Appuyez pour voir les couleurs à l’état appuyé. L’exemple utilise l’opacité sélectionnée.</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Relâché</string>
     <string name="config_virtual_controls_preview_pressed">Appuyé</string>
     <string name="config_warning_filter_shader">Le filtrage linéaire lisse l’image avant son traitement par le shader d’écran et peut réduire la netteté du résultat.</string>
     <string name="install_done_with_warning">Application installée avec des avertissements.</string>

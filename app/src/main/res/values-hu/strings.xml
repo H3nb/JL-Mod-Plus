@@ -37,7 +37,7 @@
     <string name="pref_button_shape_oval">Ovális</string>
     <string name="pref_button_shape_rect">Téglalap</string>
     <string name="pref_button_shape_round">Lekerekített téglalap</string>
-    <string name="pref_button_shape_title">Gombforma</string>
+    <string name="pref_button_shape_title">Billentyűzetgombok alakja</string>
     <string name="pref_emulator_dir">Munkakönyvtár</string>
     <string name="pref_encoding_title">Kódolás</string>
     <string name="PREF_FILTER">Lineáris szűrés</string>
@@ -352,7 +352,21 @@
     <string name="config_color_picker_title">Szín kiválasztása</string>
     <string name="config_controller_help_body_compact">A vezérlő gombjai ugyanazokat a hozzárendeléseket használják, mint a billentyűzet és a telefon billentyűi. Az analóg kar csak iránybevitelt küld a MIDletnek. Az Android Vissza gombja a szokásos módon működik; az M-hez rendelt bármely fizikai gomb megnyitja a futó MIDlet menüjét.</string>
     <string name="config_controls_key_input">Fizikai bevitel</string>
-    <string name="config_controls_maintenance">Virtuális vezérlők elrendezése</string>
+    <string name="config_controls_maintenance">Elrendezés</string>
+    <string name="control_skin_title">Virtuális vezérlők kinézete</string>
+    <string name="config_controls_customization">Testreszabás</string>
+    <string name="config_controls_skin_help">Egyéni képekkel módosítja a billentyűzetgombok, az iránygomb és az analóg kar megjelenését.</string>
+    <string name="config_controls_color_button_normal">Felengedett gomb</string>
+    <string name="config_controls_color_button_pressed">Lenyomott gomb</string>
+    <string name="config_controls_color_label_normal">Felirat felengedve</string>
+    <string name="config_controls_color_label_pressed">Felirat lenyomva</string>
+    <string name="config_controls_color_outline_short">Körvonal</string>
+    <string name="config_controls_disabled_hint">A virtuális vezérlők ki vannak kapcsolva az Általános részben. Itt továbbra is testreszabhatók.</string>
+    <string name="config_controls_opacity_help" formatted="false">A virtuális vezérlők átlátszóságát állítja: 0% teljesen átlátszó, 100% átlátszatlan.</string>
+    <string name="config_controls_opaque_outside">Vezérlők megjelenítése átlátszóság nélkül a MIDlet képernyőjén kívül</string>
+    <string name="config_controls_opaque_outside_help">A MIDlet képernyőjén kívüli vezérlők figyelmen kívül hagyják az átlátszatlansági beállítást. A képernyőn lévők továbbra is a választott értéket használják.</string>
+    <string name="config_controls_connect_controller">Csatlakoztasson vezérlőt a kalibráláshoz</string>
+    <string name="config_controls_color_skin_notice">Az egész gombot lefedő kinézet felülírhatja az alapértelmezett színeket, alakot és körvonalat.</string>
     <string name="config_controls_virtual_keyboard">Virtuális vezérlők</string>
     <string name="config_controls_virtual_keyboard_colors">Virtuális vezérlők színei</string>
     <string name="config_current_screen_size">Jelenlegi méret: %1$s</string>
@@ -484,7 +498,7 @@
     <string name="config_help_virtual_keyboard">Képernyőn megjelenő vezérlőket mutat ehhez a MIDlethez.</string>
     <string name="config_help_vk_alpha">Beállítja a vezérlők átlátszatlanságát: 0 = teljesen átlátszó; 255 = teljesen átlátszatlan.</string>
     <string name="config_help_vk_background">Beállítja a virtuális vezérlők gombjainak alapszínét.</string>
-    <string name="config_help_vk_button_shape">Beállítja a billentyűzet gombjainak alakját. Az iránygomb és az analóg kar megtartja a saját alakját.</string>
+    <string name="config_help_vk_button_shape">Beállítja a billentyűzetgombok alapértelmezett alakját. Az iránygombnak és az analóg karnak saját alakja van.</string>
     <string name="config_help_vk_feedback">Rezeg a virtuális vezérlők megnyomásakor, ha a rezgés engedélyezett a Beállításokban.</string>
     <string name="config_help_vk_force_opacity">Átlátszatlanná teszi a MIDlet képernyőjén kívüli vezérlőket. A képernyőt fedő vezérlők a beállított átlátszatlanságot használják.</string>
     <string name="config_help_vk_foreground">Beállítja a virtuális vezérlők gombjain látható feliratok és szimbólumok színét.</string>
@@ -509,7 +523,7 @@
     <string name="config_timing_mode_real_wall">Rendszeridő</string>
     <string name="config_virtual_controls_color_preview">Színelőnézet</string>
     <string name="config_virtual_controls_preview_hint">Koppintson a megnyomott állapot színeinek előnézetéhez. A minta a kiválasztott átlátszatlanságot használja.</string>
-    <string name="config_virtual_controls_preview_normal">Normál</string>
+    <string name="config_virtual_controls_preview_normal">Felengedve</string>
     <string name="config_virtual_controls_preview_pressed">Megnyomva</string>
     <string name="config_warning_filter_shader">A lineáris szűrés kisimítja a bemenetet, mielőtt a képernyő shaderje feldolgozza, és csökkentheti a kimenet élességét.</string>
     <string name="layout_edit_continue">Szerkesztés folytatása</string>

@@ -26,7 +26,7 @@
     <string name="permission_request_failed">Ta aplikacja wymaga uprawnienia do zapisu w pamięci urządzenia.</string>
     <string name="pref_app_sort_date">Data dodania</string>
     <string name="pref_app_sort_name">Nazwa</string>
-    <string name="pref_button_shape_title">Kształt przycisków</string>
+    <string name="pref_button_shape_title">Kształt przycisków klawiatury</string>
     <string name="pref_encoding_title">Kodowanie</string>
     <string name="PREF_FILTER">Filtrowanie liniowe</string>
     <string name="PREF_FONT_LARGE">Duży</string>
@@ -344,7 +344,21 @@
     <string name="config_color_picker_title">Wybierz kolor</string>
     <string name="config_controller_help_body_compact">Przyciski kontrolera używają tego samego mapowania co klawisze klawiatury i telefonu. Drążek analogowy wysyła do MIDletu tylko dane kierunkowe. Przycisk Wstecz w Androidzie zachowuje zwykłe działanie; dowolny fizyczny przycisk przypisany do M otwiera menu uruchomionego MIDletu.</string>
     <string name="config_controls_key_input">Wejście fizyczne</string>
-    <string name="config_controls_maintenance">Układ sterowania wirtualnego</string>
+    <string name="config_controls_maintenance">Układ</string>
+    <string name="control_skin_title">Skórka sterowania wirtualnego</string>
+    <string name="config_controls_customization">Dostosowywanie</string>
+    <string name="config_controls_skin_help">Zmienia wygląd przycisków klawiatury, krzyżaka i drążka analogowego za pomocą własnych obrazów.</string>
+    <string name="config_controls_color_button_normal">Przycisk zwolniony</string>
+    <string name="config_controls_color_button_pressed">Przycisk wciśnięty</string>
+    <string name="config_controls_color_label_normal">Etykieta po zwolnieniu</string>
+    <string name="config_controls_color_label_pressed">Etykieta po wciśnięciu</string>
+    <string name="config_controls_color_outline_short">Obramowanie</string>
+    <string name="config_controls_disabled_hint">Sterowanie wirtualne jest wyłączone w sekcji Ogólne. Nadal możesz je tutaj dostosować.</string>
+    <string name="config_controls_opacity_help" formatted="false">Reguluje przezroczystość sterowania wirtualnego: 0% oznacza pełną przezroczystość, a 100% brak przezroczystości.</string>
+    <string name="config_controls_opaque_outside">Pokazuj sterowanie poza ekranem MIDletu bez przezroczystości</string>
+    <string name="config_controls_opaque_outside_help">Elementy sterowania poza ekranem MIDletu ignorują ustawienie nieprzezroczystości. Elementy na ekranie nadal używają wybranej wartości.</string>
+    <string name="config_controls_connect_controller">Podłącz kontroler, aby go skalibrować</string>
+    <string name="config_controls_color_skin_notice">Skórka obejmująca cały przycisk może zastąpić jego domyślne kolory, kształt i obramowanie.</string>
     <string name="config_controls_virtual_keyboard">Sterowanie wirtualne</string>
     <string name="config_controls_virtual_keyboard_colors">Kolory sterowania wirtualnego</string>
     <string name="config_current_screen_size">Bieżący rozmiar: %1$s</string>
@@ -476,7 +490,7 @@
     <string name="config_help_virtual_keyboard">Wyświetla ekranowe elementy sterujące dla tego MIDletu.</string>
     <string name="config_help_vk_alpha">Ustawia nieprzezroczystość sterowania: 0 = całkowicie przezroczyste; 255 = całkowicie nieprzezroczyste.</string>
     <string name="config_help_vk_background">Ustawia podstawowy kolor przycisków sterowania wirtualnego.</string>
-    <string name="config_help_vk_button_shape">Ustawia kształt przycisków klawiatury. Krzyżak i drążek analogowy zachowują własne kształty.</string>
+    <string name="config_help_vk_button_shape">Ustawia domyślny kształt przycisków klawiatury. Krzyżak i drążek analogowy mają własne kształty.</string>
     <string name="config_help_vk_feedback">Wibruje przy naciskaniu sterowania wirtualnego, gdy wibracje są włączone w Ustawieniach.</string>
     <string name="config_help_vk_force_opacity">Sprawia, że sterowanie poza ekranem MIDletu jest nieprzezroczyste. Elementy nad ekranem używają ustawionej nieprzezroczystości.</string>
     <string name="config_help_vk_foreground">Ustawia kolor etykiet i symboli na przyciskach sterowania wirtualnego.</string>
@@ -501,7 +515,7 @@
     <string name="config_timing_mode_real_wall">Czas systemowy</string>
     <string name="config_virtual_controls_color_preview">Podgląd kolorów</string>
     <string name="config_virtual_controls_preview_hint">Dotknij, aby zobaczyć kolory przy naciśnięciu. Przykład używa wybranej nieprzezroczystości.</string>
-    <string name="config_virtual_controls_preview_normal">Zwykłe</string>
+    <string name="config_virtual_controls_preview_normal">Zwolnione</string>
     <string name="config_virtual_controls_preview_pressed">Naciśnięte</string>
     <string name="config_warning_filter_shader">Filtrowanie liniowe wygładza obraz wejściowy przed przetworzeniem przez shader ekranu i może zmniejszyć ostrość obrazu wyjściowego.</string>
     <string name="layout_edit_continue">Kontynuuj edycję</string>

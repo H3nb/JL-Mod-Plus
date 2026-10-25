@@ -329,7 +329,21 @@
     <string name="config_color_picker_saturation_value">Қанықтық және жарықтық</string>
     <string name="config_color_picker_title">Түсті таңдау</string>
     <string name="config_controls_key_input">Физикалық енгізу</string>
-    <string name="config_controls_maintenance">Виртуалды басқару элементтерінің орналасуы</string>
+    <string name="config_controls_maintenance">Орналасу</string>
+    <string name="control_skin_title">Виртуалды басқару элементтерінің скині</string>
+    <string name="config_controls_customization">Баптау</string>
+    <string name="config_controls_skin_help">Таңдамалы суреттер арқылы пернетақта батырмаларының, D-pad пен аналогтық таяқшаның көрінісін өзгертеді.</string>
+    <string name="config_controls_color_button_normal">Жіберілген батырма</string>
+    <string name="config_controls_color_button_pressed">Басылған батырма</string>
+    <string name="config_controls_color_label_normal">Жіберілгендегі жазу</string>
+    <string name="config_controls_color_label_pressed">Басылғандағы жазу</string>
+    <string name="config_controls_color_outline_short">Жиек</string>
+    <string name="config_controls_disabled_hint">Виртуалды басқару элементтері Жалпы бөлімінде өшірілген. Оларды мұнда бәрібір баптауға болады.</string>
+    <string name="config_controls_opacity_help" formatted="false">Виртуалды басқару элементтерінің мөлдірлігін реттейді: 0% толық мөлдір, 100% мөлдір емес.</string>
+    <string name="config_controls_opaque_outside">MIDlet экранының сыртындағы басқару элементтерін мөлдірліксіз көрсету</string>
+    <string name="config_controls_opaque_outside_help">MIDlet экранының сыртындағы басқару элементтері мөлдірлік параметрін ескермейді. Экран үстіндегілері таңдалған мәнді қолданады.</string>
+    <string name="config_controls_connect_controller">Калибрлеу үшін контроллерді қосыңыз</string>
+    <string name="config_controls_color_skin_notice">Батырманы толық жабатын скин әдепкі түстерді, пішінді және жиекті алмастыра алады.</string>
     <string name="config_controls_virtual_keyboard">Виртуалды басқару элементтері</string>
     <string name="config_controls_virtual_keyboard_colors">Виртуалды басқару элементтерінің түстері</string>
     <string name="config_current_screen_size">Қазіргі өлшем: %1$s</string>
@@ -416,7 +430,7 @@
     <string name="config_timing_mode_full_guest">Эмуляция уақыты</string>
     <string name="config_timing_mode_real_wall">Жүйе уақыты</string>
     <string name="config_virtual_controls_color_preview">Түсті алдын ала қарау</string>
-    <string name="config_virtual_controls_preview_normal">Қалыпты</string>
+    <string name="config_virtual_controls_preview_normal">Жіберілген</string>
     <string name="config_virtual_controls_preview_pressed">Басылған</string>
     <string name="layout_edit_continue">Өңдеуді жалғастыру</string>
     <string name="layout_edit_discard">Өзгерістерден бас тарту</string>
@@ -707,7 +721,7 @@
     <string name="pref_button_shape_oval">Сопақ</string>
     <string name="pref_button_shape_rect">Тіктөртбұрыш</string>
     <string name="pref_button_shape_round">Бұрыштары дөңгеленген тіктөртбұрыш</string>
-    <string name="pref_button_shape_title">Батырма пішіні</string>
+    <string name="pref_button_shape_title">Пернетақта батырмаларының пішіні</string>
     <string name="pref_encoding_title">Таңбаларды кодтау</string>
     <string name="pref_graphics_hw_gles">Құрылғылық үдету (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Құрылғылық үдету (Surface)</string>
@@ -781,7 +795,7 @@
     <string name="config_help_timing_unavailable">Осы орнатылған MIDlet үшін уақыт баптаулары қолжетімсіз. Оларды іске қосу үшін MIDlet бағдарламасын қайта орнатыңыз немесе қайта түрлендіріңіз.</string>
     <string name="config_help_touch_input">MIDlet бағдарламасына сенсорлық экраннан меңзер енгізуін қабылдауға мүмкіндік береді.</string>
     <string name="config_help_vk_background">Виртуалды басқару батырмаларының негізгі түсін орнатады.</string>
-    <string name="config_help_vk_button_shape">Пернетақта батырмаларының пішінін орнатады. D-pad пен аналогтық таяқша өз пішіндерін сақтайды.</string>
+    <string name="config_help_vk_button_shape">Пернетақта батырмаларының әдепкі пішінін орнатады. D-pad пен аналогтық таяқшаның өз пішіндері бар.</string>
     <string name="config_help_vk_feedback">Баптауларда діріл іске қосылғанда виртуалды басқару элементтерін басу кезінде дірілдетеді.</string>
     <string name="config_help_vk_foreground">Виртуалды басқару батырмаларындағы жазулар мен таңбалардың түсін орнатады.</string>
     <string name="config_help_vk_hide_delay">Басқару элементтері MIDlet экранын жауып тұрғанда оларды осы кідірістен кейін жасырады. Автоматты жасыруды сөндіру үшін 0 мәнін орнатыңыз.</string>
