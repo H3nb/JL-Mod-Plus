@@ -53,8 +53,7 @@ public final class ControlSkinStore {
 
     private static File checkedFolder(File workdir, File folder) throws IOException {
         File root = directory(workdir).getCanonicalFile();
-        if (!folder.getAbsoluteFile().toPath().normalize().equals(folder.getCanonicalFile().toPath())
-                || !root.equals(folder.getCanonicalFile().getParentFile())) {
+        if (!root.equals(folder.getCanonicalFile().getParentFile())) {
             throw new IOException("Unsafe control skin path");
         }
         return folder;
@@ -89,8 +88,10 @@ public final class ControlSkinStore {
     }
 
     private static void saveMeta(File folder, JSONObject json) throws IOException {
-        json.put("version", 1);
-        if (id(json).isEmpty()) json.put("id", UUID.randomUUID().toString());
+        try {
+            json.put("version", 1);
+            if (id(json).isEmpty()) json.put("id", UUID.randomUUID().toString());
+        } catch (org.json.JSONException e) { throw new IOException(e); }
         File temp = File.createTempFile(".skin-", ".tmp", folder);
         try {
             try (FileOutputStream out = new FileOutputStream(temp)) {
@@ -137,6 +138,24 @@ public final class ControlSkinStore {
         if (setId == null || setId.isEmpty()) return null;
         for (SetInfo set : list(workdir)) if (set.id.equals(setId)) return set;
         return null;
+    }
+
+    /** Read-only resolution for the isolated MIDlet process. */
+    @Nullable public static SetInfo findReadonly(File workdir, String setId) {
+        if (setId == null || setId.isEmpty()) return null;
+        File[] folders = directory(workdir).listFiles(File::isDirectory);
+        if (folders == null) return null;
+        SetInfo match = null;
+        for (File folder : folders) {
+            try {
+                checkedFolder(workdir, folder);
+                if (setId.equals(id(metadata(folder)))) {
+                    if (match != null) return null; // Ambiguous external duplicate.
+                    match = new SetInfo(setId, folder);
+                }
+            } catch (IOException ignored) { }
+        }
+        return match;
     }
 
     private static SetInfo required(File root, String setId) throws IOException {
