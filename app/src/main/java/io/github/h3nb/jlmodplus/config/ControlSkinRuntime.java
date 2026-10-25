@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
 
 /** Immutable, predecoded appearance for one MIDlet runtime; no I/O during drawing. */
 public final class ControlSkinRuntime {
@@ -67,7 +66,7 @@ public final class ControlSkinRuntime {
                 skin.buttons[i] = new Button(normal, pressed,
                         "full".equals(ControlSkinStore.mode(set.folder, key)));
             }
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             Log.w(TAG, "Could not load selected button skin; using default controls", e);
         }
         return skin;
