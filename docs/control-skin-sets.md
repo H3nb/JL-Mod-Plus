@@ -68,8 +68,9 @@ and pressed image previews and an icon/full-button mode selector.
 
 Set edits (create, image import/removal, rename, duplicate, mode, delete) are
 saved globally after each successful operation; there is no redundant Save
-button in the image editor. Creating a set selects it for the current MIDlet.
-Selecting an existing set from the list returns its ID to ConfigActivity,
+button in the image editor. Creating or duplicating a set opens its editor without changing the active
+MIDlet selection. Tapping a set row in the library explicitly selects it and
+returns its ID to ConfigActivity,
 which follows its existing config persistence and preset-ownership rules.
 Renaming keeps the ID; duplicating creates a new one. Deleting the selected
 set clears the MIDlet selection on return. Other MIDlets holding references
