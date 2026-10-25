@@ -59,10 +59,7 @@ jobs:
           disable-animations: true
           script: |
             chmod +x gradlew
-            ./gradlew --daemon --stacktrace \
-              -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 \
-              -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.config.ControlSkinStoreTest,javax.microedition.lcdui.keyboard.VirtualKeyboardLegendRenderingTest,javax.microedition.lcdui.keyboard.LegacyVirtualKeyboardTouchTest \
-              :app:connectedEmulatorDebugAndroidTest
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.config.ControlSkinStoreTest,javax.microedition.lcdui.keyboard.VirtualKeyboardLegendRenderingTest,javax.microedition.lcdui.keyboard.LegacyVirtualKeyboardTouchTest :app:connectedEmulatorDebugAndroidTest
             python3 - <<'PY'
             from pathlib import Path
             import xml.etree.ElementTree as ET
