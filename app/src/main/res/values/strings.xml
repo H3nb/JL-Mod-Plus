@@ -1214,4 +1214,20 @@
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Could not modify control skin set.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Unavailable set (default controls)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Remove</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Manage set</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Manage %1$s</string>
+    <string name="control_skin_count" tools:ignore="MissingTranslation">%1$d customized buttons</string>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Create a set to customize button images.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Keypad</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigation</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Other buttons</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Add a normal image first.</string>
+    <string name="control_skin_pressed_auto" tools:ignore="MissingTranslation">Automatic press effect</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Button %1$s</string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Change</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Choose image</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Soft L</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Soft R</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Fire</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Menu</string>
 </resources>
