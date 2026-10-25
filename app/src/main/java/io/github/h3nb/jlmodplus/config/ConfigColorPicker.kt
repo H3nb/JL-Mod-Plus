@@ -104,14 +104,21 @@ internal fun ConfigColorPickerDialog(
             BoxWithConstraints {
                 val useTwoPane = maxWidth >= 480.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) &&
                     maxWidth > maxHeight && maxHeight != Dp.Infinity
+                // Leave space for the always-visible dynamic explanation in compact dialogs.
                 val pickerHeight = if (maxHeight == Dp.Infinity) {
-                    180.dp
+                    if (allowDynamic) 132.dp else 180.dp
                 } else {
-                    (maxHeight * if (useTwoPane) 0.68f else 0.38f)
-                        .coerceIn(96.dp, 180.dp)
+                    (maxHeight * if (allowDynamic) 0.30f else if (useTwoPane) 0.68f else 0.38f)
+                        .coerceIn(96.dp, if (allowDynamic) 144.dp else 180.dp)
                 }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (useTwoPane) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    // Manual controls may scroll on short screens, but the dynamic mode
+                    // and its explanation must remain visible without scrolling.
+                    Box(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
+                        if (useTwoPane) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -159,10 +166,6 @@ internal fun ConfigColorPickerDialog(
                                     },
                                 )
                                 ColorPickerHint(enabled = !dynamic)
-                                if (allowDynamic) {
-                                    DynamicColorOption(checked = dynamic, onCheckedChange = { dynamic = it })
-                                    DynamicColorHint()
-                                }
                             }
                         }
                     } else {
@@ -202,16 +205,19 @@ internal fun ConfigColorPickerDialog(
                                 },
                             )
                             ColorPickerHint(enabled = !dynamic)
-                            if (allowDynamic) {
-                                DynamicColorOption(checked = dynamic, onCheckedChange = { dynamic = it })
-                                DynamicColorHint()
-                            }
                         }
                     }
-                    ScrollableContentHint(
-                        visible = canScrollForward,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
+                    }
+                    if (allowDynamic) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            DynamicColorOption(checked = dynamic, onCheckedChange = { dynamic = it })
+                            DynamicColorHint()
+                        }
+                    }
                 }
             }
         },
