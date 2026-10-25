@@ -181,6 +181,7 @@ private fun LibraryMetadataIconPanel(
     enhancedIcons: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val hasPortrait = app.portraitIconPath != null
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = stringResource(R.string.library_metadata_icon),
@@ -191,24 +192,40 @@ private fun LibraryMetadataIconPanel(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            LibraryMetadataIconVariant(
+            LibraryMetadataIconPreview(
                 app = app,
                 portrait = false,
-                hasOverride = app.hasCustomIcon,
                 iconShape = iconShape,
                 enhancedIcons = enhancedIcons,
-                onPickIcon = { onPickIcon(false) },
-                onResetIcon = { onResetIcon(false) },
                 modifier = Modifier.weight(1f),
             )
-            LibraryMetadataIconVariant(
+            LibraryMetadataIconPreview(
                 app = app,
                 portrait = true,
-                hasOverride = app.portraitIconPath != null,
                 iconShape = iconShape,
                 enhancedIcons = enhancedIcons,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        // Actions share one row so optional portrait status text never misaligns them.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            LibraryMetadataIconActions(
+                onPickIcon = { onPickIcon(false) },
+                onResetIcon = { onResetIcon(false) },
+                hasOverride = app.hasCustomIcon,
+                resetDescription = stringResource(R.string.library_metadata_reset_to_original),
+                portrait = false,
+                modifier = Modifier.weight(1f),
+            )
+            LibraryMetadataIconActions(
                 onPickIcon = { onPickIcon(true) },
                 onResetIcon = { onResetIcon(true) },
+                hasOverride = hasPortrait,
+                resetDescription = stringResource(R.string.library_metadata_remove_portrait),
+                portrait = true,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -216,20 +233,13 @@ private fun LibraryMetadataIconPanel(
 }
 
 @Composable
-private fun LibraryMetadataIconVariant(
+private fun LibraryMetadataIconPreview(
     app: LibraryAppUiItem,
     portrait: Boolean,
-    hasOverride: Boolean,
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean,
-    onPickIcon: () -> Unit,
-    onResetIcon: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
 ) {
-    val resetDescription = stringResource(
-        if (portrait) R.string.library_metadata_remove_portrait
-        else R.string.library_metadata_reset_to_original,
-    )
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -250,27 +260,42 @@ private fun LibraryMetadataIconVariant(
             ),
             style = MaterialTheme.typography.labelLarge,
         )
-        if (portrait && !hasOverride) {
+        if (portrait && app.portraitIconPath == null) {
             Text(
                 text = stringResource(R.string.library_metadata_follows_main),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onPickIcon) {
-                Text(stringResource(R.string.library_metadata_change))
-            }
-            if (hasOverride) {
-                IconButton(onClick = onResetIcon) {
-                    Icon(
-                        painter = painterResource(
-                            if (portrait) R.drawable.ic_remove else R.drawable.ic_refresh,
-                        ),
-                        contentDescription = resetDescription,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+    }
+}
+
+@Composable
+private fun LibraryMetadataIconActions(
+    onPickIcon: () -> Unit,
+    onResetIcon: () -> Unit,
+    hasOverride: Boolean,
+    resetDescription: String,
+    portrait: Boolean,
+    modifier: Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(onClick = onPickIcon) {
+            Text(stringResource(R.string.library_metadata_change))
+        }
+        if (hasOverride) {
+            IconButton(onClick = onResetIcon) {
+                Icon(
+                    painter = painterResource(
+                        if (portrait) R.drawable.ic_remove else R.drawable.ic_refresh,
+                    ),
+                    contentDescription = resetDescription,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

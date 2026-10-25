@@ -88,6 +88,7 @@ import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconOverride;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
@@ -1126,9 +1127,10 @@ public class AppsListFragment extends Fragment {
         // iconRevision invalidates both artwork sources; it does not establish presence.
         File primaryIcon = new File(appPath(row) + Config.MIDLET_ICON_FILE);
         String iconPath = primaryIcon.isFile() ? primaryIcon.getAbsolutePath() : null;
-        File configDir = new File(new File(activeWorkdir, "configs"), row.getStorageKey());
-        File portraitIcon = new File(configDir, "icon.custom.3x4.png");
-        File customIcon = new File(configDir, "icon.custom.png");
+        File portraitIcon = LibraryIconOverride.portraitOverrideFile(
+                activeWorkdir, row.getStorageKey());
+        File customIcon = LibraryIconOverride.persistedOverrideFile(
+                activeWorkdir, row.getStorageKey());
         LibraryAppUiItem item = new LibraryAppUiItem(
                 uiId,
                 row.getTitle(),
