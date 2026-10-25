@@ -167,4 +167,97 @@ public class ControlSkinStoreTest {
         assertNull(ControlSkinRuntime.load(configDir, null).get(4));
     }
 
+    @Test public void groupedSkinAssetsPersistDuplicateAndDecodeWithoutChangingKeySlots()
+            throws Exception {
+        File workdir = temp.newFolder("grouped-work");
+        File configDir = new File(new File(workdir, "configs"), "GroupedExample");
+        assertTrue(configDir.mkdirs());
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Movement");
+
+        android.graphics.Bitmap sample = android.graphics.Bitmap.createBitmap(
+                8, 8, android.graphics.Bitmap.Config.ARGB_8888);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        try {
+            sample.eraseColor(android.graphics.Color.CYAN);
+            assertTrue(sample.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out));
+        } finally {
+            sample.recycle();
+        }
+        byte[] data = out.toByteArray();
+
+        // Overlays without a D-pad base are stored but inactive at runtime.
+        ControlSkinStore.importAsset(workdir, set.id, "dpad_up",
+                new java.io.ByteArrayInputStream(data), ".png");
+        assertEquals(0, ControlSkinStore.countCustomizedButtons(set.folder));
+        assertNull(ControlSkinRuntime.load(configDir, set.id).dpad());
+
+        for (String stem : ControlSkinStore.GROUPED_ASSETS) {
+            ControlSkinStore.importAsset(workdir, set.id, stem,
+                    new java.io.ByteArrayInputStream(data), ".png");
+            assertNotNull(ControlSkinStore.asset(set.folder, stem));
+        }
+        assertEquals(2, ControlSkinStore.countCustomizedButtons(set.folder));
+
+        ControlSkinRuntime runtime = ControlSkinRuntime.load(configDir, set.id);
+        assertNotNull(runtime.dpad());
+        assertNotNull(runtime.dpad().base);
+        assertNotNull(runtime.dpad().up);
+        assertNotNull(runtime.dpad().down);
+        assertNotNull(runtime.dpad().left);
+        assertNotNull(runtime.dpad().right);
+        assertNotNull(runtime.analog());
+        assertNotNull(runtime.analog().base);
+        assertNotNull(runtime.analog().thumb);
+        assertNotNull(runtime.analog().thumbPressed);
+        assertNull(runtime.get(0));
+
+        ControlSkinStore.SetInfo copy = ControlSkinStore.duplicate(workdir, set.id, "Copy Movement");
+        assertNotEquals(set.id, copy.id);
+        for (String stem : ControlSkinStore.GROUPED_ASSETS) {
+            assertNotNull(ControlSkinStore.asset(copy.folder, stem));
+        }
+        ControlSkinStore.removeAsset(workdir, copy.id, "dpad_base");
+        assertEquals(1, ControlSkinStore.countCustomizedButtons(copy.folder));
+        assertNull(ControlSkinRuntime.load(configDir, copy.id).dpad());
+        assertNotNull(ControlSkinStore.asset(set.folder, "dpad_base"));
+    }
+
+    @Test public void groupedAssetSlotsRejectTraversalAndRespectIndependentAnalogFallback()
+            throws Exception {
+        File workdir = temp.newFolder("grouped-guarded");
+        File configDir = new File(new File(workdir, "configs"), "GuardedExample");
+        assertTrue(configDir.mkdirs());
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Independent Analog");
+
+        try {
+            ControlSkinStore.importAsset(workdir, set.id, "../key_5",
+                    new java.io.ByteArrayInputStream(new byte[]{1}), ".png");
+            fail("invalid image stem");
+        } catch (java.io.IOException expected) { }
+        try {
+            ControlSkinStore.removeAsset(workdir, set.id, "analog_../../thumb");
+            fail("invalid remove must not escape skin folder");
+        } catch (java.io.IOException expected) { }
+
+        android.graphics.Bitmap sample = android.graphics.Bitmap.createBitmap(
+                8, 8, android.graphics.Bitmap.Config.ARGB_8888);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        try {
+            assertTrue(sample.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out));
+        } finally { sample.recycle(); }
+        byte[] data = out.toByteArray();
+        ControlSkinStore.importAsset(workdir, set.id, "analog_thumb_pressed",
+                new java.io.ByteArrayInputStream(data), ".png");
+        assertNull(ControlSkinRuntime.load(configDir, set.id).analog());
+        assertEquals(0, ControlSkinStore.countCustomizedButtons(set.folder));
+        ControlSkinStore.importAsset(workdir, set.id, "analog_thumb",
+                new java.io.ByteArrayInputStream(data), ".png");
+        ControlSkinRuntime.Analog analog = ControlSkinRuntime.load(configDir, set.id).analog();
+        assertNotNull(analog);
+        assertNull(analog.base);
+        assertNotNull(analog.thumb);
+        assertNotNull(analog.thumbPressed);
+        assertEquals(1, ControlSkinStore.countCustomizedButtons(set.folder));
+    }
+
 }
