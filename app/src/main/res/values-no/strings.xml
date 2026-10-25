@@ -198,6 +198,14 @@
     <string name="library_metadata_icon">Ikon</string>
     <string name="library_metadata_name">Navn</string>
     <string name="library_metadata_reset_to_original">Tilbakestill til originalen</string>
+    <string name="library_metadata_main_icon">Hovedikon</string>
+    <string name="library_metadata_follows_main">Bruker hovedikonet</string>
+    <string name="library_metadata_change">Endre</string>
+    <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
+    <string name="library_metadata_icon_updated">Ikon oppdatert</string>
+    <string name="library_metadata_discard_title">Forkaste endringer?</string>
+    <string name="library_metadata_discard_message">Ulagrede tekstendringer går tapt. Ikonendringer er allerede lagret.</string>
+    <string name="library_metadata_discard">Forkast</string>
     <string name="library_metadata_save">Lagre</string>
     <string name="library_metadata_vendor">Leverandør</string>
     <string name="library_no_matches">Ingen treff for «%1$s»</string>

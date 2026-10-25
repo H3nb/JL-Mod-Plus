@@ -904,7 +904,7 @@
     <string name="library_metadata_description">Description</string>
     <string name="library_metadata_reset_to_original">Reset to original</string>
     <string name="library_metadata_main_icon">Main</string>
-    <string name="library_metadata_portrait_icon">3:4</string>
+    <string name="library_metadata_portrait_icon" translatable="false">3:4</string>
     <string name="library_metadata_follows_main">Uses main icon</string>
     <string name="library_metadata_change">Change</string>
     <string name="library_metadata_remove_portrait">Remove 3:4 icon</string>

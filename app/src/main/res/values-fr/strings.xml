@@ -855,6 +855,14 @@
     <string name="library_metadata_vendor">Éditeur</string>
     <string name="library_metadata_description">Description</string>
     <string name="library_metadata_reset_to_original">Rétablir l’original</string>
+    <string name="library_metadata_main_icon">Principale</string>
+    <string name="library_metadata_follows_main">Utilise l\'icône principale</string>
+    <string name="library_metadata_change">Modifier</string>
+    <string name="library_metadata_remove_portrait">Supprimer l\'icône 3:4</string>
+    <string name="library_metadata_icon_updated">Icône mise à jour</string>
+    <string name="library_metadata_discard_title">Ignorer les modifications ?</string>
+    <string name="library_metadata_discard_message">Les modifications de texte non enregistrées seront perdues. Les modifications d\'icône sont déjà enregistrées.</string>
+    <string name="library_metadata_discard">Ignorer</string>
     <string name="library_metadata_save">Enregistrer</string>
     <string name="library_hide_grid_titles_summary">Afficher uniquement les icônes des MIDlets dans la vue en grille.</string>
     <string name="library_show_list_description_summary">Afficher la description de chaque MIDlet sous son titre et sa version.</string>

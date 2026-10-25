@@ -827,6 +827,14 @@
     <string name="library_metadata_vendor">Anbieter</string>
     <string name="library_metadata_description">Beschreibung</string>
     <string name="library_metadata_reset_to_original">Auf Original zurücksetzen</string>
+    <string name="library_metadata_main_icon">Hauptsymbol</string>
+    <string name="library_metadata_follows_main">Verwendet das Hauptsymbol</string>
+    <string name="library_metadata_change">Ändern</string>
+    <string name="library_metadata_remove_portrait">3:4-Symbol entfernen</string>
+    <string name="library_metadata_icon_updated">Symbol aktualisiert</string>
+    <string name="library_metadata_discard_title">Änderungen verwerfen?</string>
+    <string name="library_metadata_discard_message">Nicht gespeicherte Textänderungen gehen verloren. Symboländerungen wurden bereits gespeichert.</string>
+    <string name="library_metadata_discard">Verwerfen</string>
     <string name="library_metadata_save">Speichern</string>
     <string name="library_hide_grid_titles_summary">In der Rasteransicht nur MIDlet-Symbole anzeigen.</string>
     <string name="library_show_list_description_summary">Beschreibung jedes MIDlets unter Titel und Version anzeigen.</string>

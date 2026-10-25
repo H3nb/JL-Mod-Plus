@@ -248,6 +248,14 @@
     <string name="library_metadata_icon">圖示</string>
     <string name="library_metadata_name">名稱</string>
     <string name="library_metadata_reset_to_original">重設為原始內容</string>
+    <string name="library_metadata_main_icon">主要圖示</string>
+    <string name="library_metadata_follows_main">使用主要圖示</string>
+    <string name="library_metadata_change">更換</string>
+    <string name="library_metadata_remove_portrait">移除 3:4 圖示</string>
+    <string name="library_metadata_icon_updated">圖示已更新</string>
+    <string name="library_metadata_discard_title">要捨棄變更嗎？</string>
+    <string name="library_metadata_discard_message">未儲存的文字變更將會遺失。圖示變更已儲存。</string>
+    <string name="library_metadata_discard">捨棄</string>
     <string name="library_metadata_save">儲存</string>
     <string name="library_metadata_vendor">發行商</string>
     <string name="library_no_matches">沒有符合「%1$s」的結果</string>

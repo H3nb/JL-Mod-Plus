@@ -198,6 +198,14 @@
     <string name="library_metadata_icon">Icona</string>
     <string name="library_metadata_name">Nom</string>
     <string name="library_metadata_reset_to_original">Restableix l’original</string>
+    <string name="library_metadata_main_icon">Principal</string>
+    <string name="library_metadata_follows_main">Fa servir la icona principal</string>
+    <string name="library_metadata_change">Canvia</string>
+    <string name="library_metadata_remove_portrait">Elimina la icona 3:4</string>
+    <string name="library_metadata_icon_updated">Icona actualitzada</string>
+    <string name="library_metadata_discard_title">Voleu descartar els canvis?</string>
+    <string name="library_metadata_discard_message">Es perdran els canvis de text no desats. Els canvis de les icones ja s\'han desat.</string>
+    <string name="library_metadata_discard">Descarta</string>
     <string name="library_metadata_save">Desa</string>
     <string name="library_metadata_vendor">Proveïdor</string>
     <string name="library_no_matches">Cap coincidència per a «%1$s»</string>

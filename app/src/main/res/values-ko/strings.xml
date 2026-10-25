@@ -276,6 +276,14 @@
     <string name="library_metadata_icon">아이콘</string>
     <string name="library_metadata_name">이름</string>
     <string name="library_metadata_reset_to_original">원본으로 초기화</string>
+    <string name="library_metadata_main_icon">기본</string>
+    <string name="library_metadata_follows_main">기본 아이콘 사용</string>
+    <string name="library_metadata_change">변경</string>
+    <string name="library_metadata_remove_portrait">3:4 아이콘 삭제</string>
+    <string name="library_metadata_icon_updated">아이콘 업데이트됨</string>
+    <string name="library_metadata_discard_title">변경사항을 취소하시겠습니까?</string>
+    <string name="library_metadata_discard_message">저장하지 않은 텍스트 변경사항은 사라집니다. 아이콘 변경사항은 이미 저장되었습니다.</string>
+    <string name="library_metadata_discard">취소</string>
     <string name="library_metadata_save">저장</string>
     <string name="library_metadata_vendor">공급자</string>
     <string name="library_no_matches">“%1$s”와 일치하는 항목이 없습니다</string>

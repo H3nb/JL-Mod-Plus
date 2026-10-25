@@ -306,6 +306,14 @@
     <string name="library_metadata_icon">الأيقونة</string>
     <string name="library_metadata_name">الاسم</string>
     <string name="library_metadata_reset_to_original">إعادة إلى الأصل</string>
+    <string name="library_metadata_main_icon">الرئيسية</string>
+    <string name="library_metadata_follows_main">يستخدم الأيقونة الرئيسية</string>
+    <string name="library_metadata_change">تغيير</string>
+    <string name="library_metadata_remove_portrait">إزالة أيقونة 3:4</string>
+    <string name="library_metadata_icon_updated">تم تحديث الأيقونة</string>
+    <string name="library_metadata_discard_title">هل تريد تجاهل التغييرات؟</string>
+    <string name="library_metadata_discard_message">ستُفقد تغييرات النص غير المحفوظة. تم حفظ تغييرات الأيقونة بالفعل.</string>
+    <string name="library_metadata_discard">تجاهل</string>
     <string name="library_metadata_save">حفظ</string>
     <string name="library_metadata_vendor">المورّد</string>
     <string name="library_no_matches">لا توجد نتائج مطابقة لـ \"%1$s\"</string>

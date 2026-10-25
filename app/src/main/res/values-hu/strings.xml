@@ -267,6 +267,14 @@
     <string name="library_metadata_icon">Ikon</string>
     <string name="library_metadata_name">Név</string>
     <string name="library_metadata_reset_to_original">Visszaállítás az eredetire</string>
+    <string name="library_metadata_main_icon">Elsődleges</string>
+    <string name="library_metadata_follows_main">Az elsődleges ikont használja</string>
+    <string name="library_metadata_change">Csere</string>
+    <string name="library_metadata_remove_portrait">3:4-es ikon eltávolítása</string>
+    <string name="library_metadata_icon_updated">Ikon frissítve</string>
+    <string name="library_metadata_discard_title">Elveti a módosításokat?</string>
+    <string name="library_metadata_discard_message">A nem mentett szövegmódosítások elvesznek. Az ikon módosításai már mentve vannak.</string>
+    <string name="library_metadata_discard">Elvetés</string>
     <string name="library_metadata_save">Mentés</string>
     <string name="library_metadata_vendor">Kiadó</string>
     <string name="library_no_matches">Nincs találat erre: „%1$s”</string>

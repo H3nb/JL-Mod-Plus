@@ -259,6 +259,14 @@
     <string name="library_metadata_icon">آیکون</string>
     <string name="library_metadata_name">نام</string>
     <string name="library_metadata_reset_to_original">بازنشانی به حالت اصلی</string>
+    <string name="library_metadata_main_icon">اصلی</string>
+    <string name="library_metadata_follows_main">از نماد اصلی استفاده می‌کند</string>
+    <string name="library_metadata_change">تغییر</string>
+    <string name="library_metadata_remove_portrait">حذف نماد 3:4</string>
+    <string name="library_metadata_icon_updated">نماد به‌روزرسانی شد</string>
+    <string name="library_metadata_discard_title">تغییرات کنار گذاشته شوند؟</string>
+    <string name="library_metadata_discard_message">تغییرات ذخیره‌نشدهٔ متن از دست می‌روند. تغییرات نماد قبلاً ذخیره شده‌اند.</string>
+    <string name="library_metadata_discard">کنار گذاشتن</string>
     <string name="library_metadata_save">ذخیره</string>
     <string name="library_metadata_vendor">عرضه‌کننده</string>
     <string name="library_no_matches">موردی مطابق با «%1$s» یافت نشد</string>

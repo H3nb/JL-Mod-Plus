@@ -820,6 +820,14 @@
     <string name="library_metadata_vendor">Leverandør</string>
     <string name="library_metadata_description">Beskrivelse</string>
     <string name="library_metadata_reset_to_original">Nulstil til original</string>
+    <string name="library_metadata_main_icon">Primært</string>
+    <string name="library_metadata_follows_main">Bruger primært ikon</string>
+    <string name="library_metadata_change">Skift</string>
+    <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
+    <string name="library_metadata_icon_updated">Ikon opdateret</string>
+    <string name="library_metadata_discard_title">Kassér ændringer?</string>
+    <string name="library_metadata_discard_message">Ikke-gemte tekstændringer går tabt. Ændringer af ikoner er allerede gemt.</string>
+    <string name="library_metadata_discard">Kassér</string>
     <string name="library_metadata_save">Gem</string>
     <string name="library_hide_grid_titles_summary">Vis kun MIDlet-ikoner i gittervisning.</string>
     <string name="library_show_list_description_summary">Vis beskrivelsen for hver MIDlet under titel og version.</string>

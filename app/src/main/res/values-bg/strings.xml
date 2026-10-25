@@ -286,6 +286,14 @@
     <string name="library_metadata_icon">Икона</string>
     <string name="library_metadata_name">Име</string>
     <string name="library_metadata_reset_to_original">Връщане към оригинала</string>
+    <string name="library_metadata_main_icon">Основна</string>
+    <string name="library_metadata_follows_main">Използва основната икона</string>
+    <string name="library_metadata_change">Промяна</string>
+    <string name="library_metadata_remove_portrait">Премахване на икона 3:4</string>
+    <string name="library_metadata_icon_updated">Иконата е обновена</string>
+    <string name="library_metadata_discard_title">Отхвърляне на промените?</string>
+    <string name="library_metadata_discard_message">Незапазените промени в текста ще бъдат загубени. Промените в иконата вече са запазени.</string>
+    <string name="library_metadata_discard">Отхвърляне</string>
     <string name="library_metadata_save">Запазване</string>
     <string name="library_metadata_vendor">Доставчик</string>
     <string name="library_no_matches">Няма съвпадения за „%1$s“</string>

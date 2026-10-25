@@ -306,6 +306,14 @@
     <string name="library_metadata_icon">Ikona</string>
     <string name="library_metadata_name">Název</string>
     <string name="library_metadata_reset_to_original">Obnovit původní</string>
+    <string name="library_metadata_main_icon">Hlavní</string>
+    <string name="library_metadata_follows_main">Používá hlavní ikonu</string>
+    <string name="library_metadata_change">Změnit</string>
+    <string name="library_metadata_remove_portrait">Odebrat ikonu 3:4</string>
+    <string name="library_metadata_icon_updated">Ikona aktualizována</string>
+    <string name="library_metadata_discard_title">Zahodit změny?</string>
+    <string name="library_metadata_discard_message">Neuložené změny textu budou ztraceny. Změny ikon jsou již uloženy.</string>
+    <string name="library_metadata_discard">Zahodit</string>
     <string name="library_metadata_save">Uložit</string>
     <string name="library_metadata_vendor">Dodavatel</string>
     <string name="library_no_matches">Žádné výsledky pro „%1$s“</string>

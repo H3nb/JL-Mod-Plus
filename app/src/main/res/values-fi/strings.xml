@@ -820,6 +820,14 @@
     <string name="library_metadata_vendor">Toimittaja</string>
     <string name="library_metadata_description">Kuvaus</string>
     <string name="library_metadata_reset_to_original">Palauta alkuperäinen</string>
+    <string name="library_metadata_main_icon">Pääkuvake</string>
+    <string name="library_metadata_follows_main">Käyttää pääkuvaketta</string>
+    <string name="library_metadata_change">Vaihda</string>
+    <string name="library_metadata_remove_portrait">Poista 3:4-kuvake</string>
+    <string name="library_metadata_icon_updated">Kuvake päivitetty</string>
+    <string name="library_metadata_discard_title">Hylätäänkö muutokset?</string>
+    <string name="library_metadata_discard_message">Tallentamattomat tekstimuutokset menetetään. Kuvakemuutokset on jo tallennettu.</string>
+    <string name="library_metadata_discard">Hylkää</string>
     <string name="library_metadata_save">Tallenna</string>
     <string name="library_hide_grid_titles_summary">Näytä ruudukkonäkymässä vain MIDlet-kuvakkeet.</string>
     <string name="library_show_list_description_summary">Näytä kunkin MIDlet-sovelluksen kuvaus otsikon ja version alapuolella.</string>

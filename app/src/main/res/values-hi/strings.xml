@@ -306,6 +306,14 @@
     <string name="library_metadata_icon">आइकॉन</string>
     <string name="library_metadata_name">नाम</string>
     <string name="library_metadata_reset_to_original">मूल पर रीसेट करें</string>
+    <string name="library_metadata_main_icon">मुख्य</string>
+    <string name="library_metadata_follows_main">मुख्य आइकन का उपयोग करता है</string>
+    <string name="library_metadata_change">बदलें</string>
+    <string name="library_metadata_remove_portrait">3:4 आइकन हटाएँ</string>
+    <string name="library_metadata_icon_updated">आइकन अपडेट किया गया</string>
+    <string name="library_metadata_discard_title">बदलाव छोड़ दें?</string>
+    <string name="library_metadata_discard_message">बिना सहेजे गए टेक्स्ट बदलाव खो जाएँगे। आइकन में किए गए बदलाव पहले ही सहेजे जा चुके हैं।</string>
+    <string name="library_metadata_discard">छोड़ दें</string>
     <string name="library_metadata_save">सहेजें</string>
     <string name="library_metadata_vendor">प्रदाता</string>
     <string name="library_no_matches">“%1$s” से कोई मेल नहीं मिला</string>

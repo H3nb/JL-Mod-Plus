@@ -199,6 +199,14 @@
     <string name="library_metadata_icon">Ikoon</string>
     <string name="library_metadata_name">Naam</string>
     <string name="library_metadata_reset_to_original">Herstel oorspronklike</string>
+    <string name="library_metadata_main_icon">Hoof</string>
+    <string name="library_metadata_follows_main">Gebruik hoofikoon</string>
+    <string name="library_metadata_change">Verander</string>
+    <string name="library_metadata_remove_portrait">Verwyder 3:4-ikoon</string>
+    <string name="library_metadata_icon_updated">Ikoon opgedateer</string>
+    <string name="library_metadata_discard_title">Wysigings weggooi?</string>
+    <string name="library_metadata_discard_message">Ongestoorde tekswysigings sal verlore gaan. Ikoonwysigings is reeds gestoor.</string>
+    <string name="library_metadata_discard">Weggooi</string>
     <string name="library_metadata_save">Stoor</string>
     <string name="library_metadata_vendor">Verskaffer</string>
     <string name="library_no_matches">Geen resultate vir “%1$s” nie</string>

@@ -261,6 +261,14 @@
     <string name="library_metadata_icon">アイコン</string>
     <string name="library_metadata_name">名前</string>
     <string name="library_metadata_reset_to_original">元の状態に戻す</string>
+    <string name="library_metadata_main_icon">メイン</string>
+    <string name="library_metadata_follows_main">メインアイコンを使用</string>
+    <string name="library_metadata_change">変更</string>
+    <string name="library_metadata_remove_portrait">3:4 アイコンを削除</string>
+    <string name="library_metadata_icon_updated">アイコンを更新しました</string>
+    <string name="library_metadata_discard_title">変更を破棄しますか？</string>
+    <string name="library_metadata_discard_message">保存していないテキストの変更は失われます。アイコンの変更はすでに保存されています。</string>
+    <string name="library_metadata_discard">破棄</string>
     <string name="library_metadata_save">保存</string>
     <string name="library_metadata_vendor">提供元</string>
     <string name="library_no_matches">「%1$s」に一致する項目がありません</string>

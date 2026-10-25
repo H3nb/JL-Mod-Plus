@@ -248,6 +248,14 @@
     <string name="library_metadata_icon">আইকন</string>
     <string name="library_metadata_name">নাম</string>
     <string name="library_metadata_reset_to_original">মূল অবস্থায় ফিরিয়ে নিন</string>
+    <string name="library_metadata_main_icon">প্রধান</string>
+    <string name="library_metadata_follows_main">প্রধান আইকন ব্যবহার করছে</string>
+    <string name="library_metadata_change">পরিবর্তন</string>
+    <string name="library_metadata_remove_portrait">3:4 আইকন সরান</string>
+    <string name="library_metadata_icon_updated">আইকন আপডেট হয়েছে</string>
+    <string name="library_metadata_discard_title">পরিবর্তন বাতিল করবেন?</string>
+    <string name="library_metadata_discard_message">সংরক্ষণ না করা লেখার পরিবর্তন হারিয়ে যাবে। আইকনের পরিবর্তন ইতিমধ্যে সংরক্ষিত হয়েছে।</string>
+    <string name="library_metadata_discard">বাতিল করুন</string>
     <string name="library_metadata_save">সংরক্ষণ করুন</string>
     <string name="library_metadata_vendor">সরবরাহকারী</string>
     <string name="library_no_matches">“%1$s”-এর সঙ্গে কোনো মিল নেই</string>

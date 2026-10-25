@@ -938,6 +938,14 @@
     <string name="library_metadata_vendor">Издатель</string>
     <string name="library_metadata_description">Описание</string>
     <string name="library_metadata_reset_to_original">Восстановить исходное</string>
+    <string name="library_metadata_main_icon">Основная</string>
+    <string name="library_metadata_follows_main">Используется основная иконка</string>
+    <string name="library_metadata_change">Изменить</string>
+    <string name="library_metadata_remove_portrait">Удалить иконку 3:4</string>
+    <string name="library_metadata_icon_updated">Иконка обновлена</string>
+    <string name="library_metadata_discard_title">Отменить изменения?</string>
+    <string name="library_metadata_discard_message">Несохранённые изменения текста будут потеряны. Изменения иконки уже сохранены.</string>
+    <string name="library_metadata_discard">Отменить</string>
     <string name="library_metadata_save">Сохранить</string>
     <string name="library_indexing_progress">Индексирование Библиотеки… %1$d/%2$d</string>
     <string name="library_indexing_current">Сканирование %1$s</string>

@@ -249,6 +249,14 @@
     <string name="library_metadata_icon">Pictogramă</string>
     <string name="library_metadata_name">Nume</string>
     <string name="library_metadata_reset_to_original">Resetează la original</string>
+    <string name="library_metadata_main_icon">Principală</string>
+    <string name="library_metadata_follows_main">Folosește pictograma principală</string>
+    <string name="library_metadata_change">Schimbă</string>
+    <string name="library_metadata_remove_portrait">Elimină pictograma 3:4</string>
+    <string name="library_metadata_icon_updated">Pictogramă actualizată</string>
+    <string name="library_metadata_discard_title">Renunțați la modificări?</string>
+    <string name="library_metadata_discard_message">Modificările textului nesalvate se vor pierde. Modificările pictogramei au fost deja salvate.</string>
+    <string name="library_metadata_discard">Renunță</string>
     <string name="library_metadata_save">Salvează</string>
     <string name="library_metadata_vendor">Furnizor</string>
     <string name="library_no_matches">Niciun rezultat pentru „%1$s”</string>

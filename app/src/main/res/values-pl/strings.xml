@@ -249,6 +249,14 @@
     <string name="library_metadata_icon">Ikona</string>
     <string name="library_metadata_name">Nazwa</string>
     <string name="library_metadata_reset_to_original">Przywróć oryginał</string>
+    <string name="library_metadata_main_icon">Główna</string>
+    <string name="library_metadata_follows_main">Używa głównej ikony</string>
+    <string name="library_metadata_change">Zmień</string>
+    <string name="library_metadata_remove_portrait">Usuń ikonę 3:4</string>
+    <string name="library_metadata_icon_updated">Ikona zaktualizowana</string>
+    <string name="library_metadata_discard_title">Odrzucić zmiany?</string>
+    <string name="library_metadata_discard_message">Niezapisane zmiany tekstu zostaną utracone. Zmiany ikony zostały już zapisane.</string>
+    <string name="library_metadata_discard">Odrzuć</string>
     <string name="library_metadata_save">Zapisz</string>
     <string name="library_metadata_vendor">Dostawca</string>
     <string name="library_no_matches">Brak wyników dla „%1$s”</string>

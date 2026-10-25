@@ -199,6 +199,14 @@
     <string name="library_metadata_icon">අයිකනය</string>
     <string name="library_metadata_name">නම</string>
     <string name="library_metadata_reset_to_original">මුල් තත්ත්වයට යළි සකසන්න</string>
+    <string name="library_metadata_main_icon">ප්‍රධාන</string>
+    <string name="library_metadata_follows_main">ප්‍රධාන නිරූපකය භාවිත කරයි</string>
+    <string name="library_metadata_change">වෙනස් කරන්න</string>
+    <string name="library_metadata_remove_portrait">3:4 නිරූපකය ඉවත් කරන්න</string>
+    <string name="library_metadata_icon_updated">නිරූපකය යාවත්කාලීන විය</string>
+    <string name="library_metadata_discard_title">වෙනස්කම් ඉවත දමන්නද?</string>
+    <string name="library_metadata_discard_message">සුරැකී නැති පෙළ වෙනස්කම් නැති වේ. නිරූපකයේ වෙනස්කම් දැනටමත් සුරැකී ඇත.</string>
+    <string name="library_metadata_discard">ඉවත දමන්න</string>
     <string name="library_metadata_save">සුරකින්න</string>
     <string name="library_metadata_vendor">සැපයුම්කරු</string>
     <string name="library_no_matches">“%1$s” සඳහා ගැළපීම් නැත</string>

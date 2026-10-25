@@ -199,6 +199,14 @@
     <string name="library_metadata_icon">סמל</string>
     <string name="library_metadata_name">שם</string>
     <string name="library_metadata_reset_to_original">איפוס למקור</string>
+    <string name="library_metadata_main_icon">ראשי</string>
+    <string name="library_metadata_follows_main">משתמש בסמל הראשי</string>
+    <string name="library_metadata_change">שינוי</string>
+    <string name="library_metadata_remove_portrait">הסרת סמל 3:4</string>
+    <string name="library_metadata_icon_updated">הסמל עודכן</string>
+    <string name="library_metadata_discard_title">לבטל את השינויים?</string>
+    <string name="library_metadata_discard_message">שינויי טקסט שלא נשמרו יאבדו. השינויים בסמל כבר נשמרו.</string>
+    <string name="library_metadata_discard">ביטול</string>
     <string name="library_metadata_save">שמירה</string>
     <string name="library_metadata_vendor">ספק</string>
     <string name="library_no_matches">אין תוצאות תואמות ל־„%1$s”</string>

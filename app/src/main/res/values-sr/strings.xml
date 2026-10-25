@@ -198,6 +198,14 @@
     <string name="library_metadata_icon">Икона</string>
     <string name="library_metadata_name">Назив</string>
     <string name="library_metadata_reset_to_original">Врати на оригинал</string>
+    <string name="library_metadata_main_icon">Главна</string>
+    <string name="library_metadata_follows_main">Користи главну икону</string>
+    <string name="library_metadata_change">Промени</string>
+    <string name="library_metadata_remove_portrait">Уклони икону 3:4</string>
+    <string name="library_metadata_icon_updated">Икона је ажурирана</string>
+    <string name="library_metadata_discard_title">Одбацити измене?</string>
+    <string name="library_metadata_discard_message">Несачуване измене текста ће бити изгубљене. Измене иконе су већ сачуване.</string>
+    <string name="library_metadata_discard">Одбаци</string>
     <string name="library_metadata_save">Сачувај</string>
     <string name="library_metadata_vendor">Добављач</string>
     <string name="library_no_matches">Нема подударања за „%1$s“</string>

@@ -836,7 +836,6 @@
     <string name="library_metadata_description">Deskripsi</string>
     <string name="library_metadata_reset_to_original">Kembalikan ke aslinya</string>
     <string name="library_metadata_main_icon">Utama</string>
-    <string name="library_metadata_portrait_icon">3:4</string>
     <string name="library_metadata_follows_main">Mengikuti ikon utama</string>
     <string name="library_metadata_change">Ganti</string>
     <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>

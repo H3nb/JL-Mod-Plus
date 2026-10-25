@@ -855,6 +855,14 @@
     <string name="library_metadata_vendor">Proveedor</string>
     <string name="library_metadata_description">Descripción</string>
     <string name="library_metadata_reset_to_original">Restablecer original</string>
+    <string name="library_metadata_main_icon">Principal</string>
+    <string name="library_metadata_follows_main">Usa el icono principal</string>
+    <string name="library_metadata_change">Cambiar</string>
+    <string name="library_metadata_remove_portrait">Quitar icono 3:4</string>
+    <string name="library_metadata_icon_updated">Icono actualizado</string>
+    <string name="library_metadata_discard_title">¿Descartar cambios?</string>
+    <string name="library_metadata_discard_message">Se perderán los cambios de texto sin guardar. Los cambios del icono ya están guardados.</string>
+    <string name="library_metadata_discard">Descartar</string>
     <string name="library_metadata_save">Guardar</string>
     <string name="library_hide_grid_titles_summary">Mostrar solo los iconos de MIDlet en la vista de cuadrícula.</string>
     <string name="library_show_list_description_summary">Mostrar la descripción de cada MIDlet debajo de su título y versión.</string>

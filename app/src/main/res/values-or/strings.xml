@@ -245,6 +245,14 @@
     <string name="library_metadata_icon">ଆଇକନ୍</string>
     <string name="library_metadata_name">ନାମ</string>
     <string name="library_metadata_reset_to_original">ମୂଳ ଅବସ୍ଥାକୁ ଫେରାନ୍ତୁ</string>
+    <string name="library_metadata_main_icon">ମୁଖ୍ୟ</string>
+    <string name="library_metadata_follows_main">ମୁଖ୍ୟ ଆଇକନ୍ ବ୍ୟବହାର କରୁଛି</string>
+    <string name="library_metadata_change">ବଦଳାନ୍ତୁ</string>
+    <string name="library_metadata_remove_portrait">3:4 ଆଇକନ୍ ହଟାନ୍ତୁ</string>
+    <string name="library_metadata_icon_updated">ଆଇକନ୍ ଅପଡେଟ୍ ହୋଇଛି</string>
+    <string name="library_metadata_discard_title">ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ବାତିଲ୍ କରିବେ କି?</string>
+    <string name="library_metadata_discard_message">ସଞ୍ଚୟ ହୋଇନଥିବା ଲେଖା ପରିବର୍ତ୍ତନ ହଜିଯିବ। ଆଇକନ୍ ପରିବର୍ତ୍ତନ ପୂର୍ବରୁ ସଞ୍ଚୟ ହୋଇଛି।</string>
+    <string name="library_metadata_discard">ବାତିଲ୍ କରନ୍ତୁ</string>
     <string name="library_metadata_save">ସଞ୍ଚୟ କରନ୍ତୁ</string>
     <string name="library_metadata_vendor">ସଫ୍ଟୱେର୍ ପ୍ରଦାନକାରୀ</string>
     <string name="library_no_matches">“%1$s” ସହ କୌଣସି ମେଳ ନାହିଁ</string>

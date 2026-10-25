@@ -198,6 +198,14 @@
     <string name="library_metadata_icon">Εικονίδιο</string>
     <string name="library_metadata_name">Όνομα</string>
     <string name="library_metadata_reset_to_original">Επαναφορά στο αρχικό</string>
+    <string name="library_metadata_main_icon">Κύριο</string>
+    <string name="library_metadata_follows_main">Χρησιμοποιεί το κύριο εικονίδιο</string>
+    <string name="library_metadata_change">Αλλαγή</string>
+    <string name="library_metadata_remove_portrait">Αφαίρεση εικονιδίου 3:4</string>
+    <string name="library_metadata_icon_updated">Το εικονίδιο ενημερώθηκε</string>
+    <string name="library_metadata_discard_title">Απόρριψη αλλαγών;</string>
+    <string name="library_metadata_discard_message">Οι μη αποθηκευμένες αλλαγές κειμένου θα χαθούν. Οι αλλαγές εικονιδίου έχουν ήδη αποθηκευτεί.</string>
+    <string name="library_metadata_discard">Απόρριψη</string>
     <string name="library_metadata_save">Αποθήκευση</string>
     <string name="library_metadata_vendor">Προμηθευτής</string>
     <string name="library_no_matches">Δεν υπάρχουν αποτελέσματα για «%1$s»</string>

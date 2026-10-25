@@ -246,6 +246,14 @@
     <string name="library_metadata_icon">Белгіше</string>
     <string name="library_metadata_name">Атауы</string>
     <string name="library_metadata_reset_to_original">Бастапқы күйге қайтару</string>
+    <string name="library_metadata_main_icon">Негізгі</string>
+    <string name="library_metadata_follows_main">Негізгі белгішені қолданады</string>
+    <string name="library_metadata_change">Өзгерту</string>
+    <string name="library_metadata_remove_portrait">3:4 белгішесін жою</string>
+    <string name="library_metadata_icon_updated">Белгіше жаңартылды</string>
+    <string name="library_metadata_discard_title">Өзгерістерді болдырмау керек пе?</string>
+    <string name="library_metadata_discard_message">Сақталмаған мәтін өзгерістері жоғалады. Белгіше өзгерістері сақталған.</string>
+    <string name="library_metadata_discard">Болдырмау</string>
     <string name="library_metadata_save">Сақтау</string>
     <string name="library_metadata_vendor">Жеткізуші</string>
     <string name="library_no_matches">«%1$s» үшін сәйкестік жоқ</string>

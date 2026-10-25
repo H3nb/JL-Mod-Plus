@@ -306,6 +306,14 @@
     <string name="library_metadata_icon">图标</string>
     <string name="library_metadata_name">名称</string>
     <string name="library_metadata_reset_to_original">恢复原始内容</string>
+    <string name="library_metadata_main_icon">主图标</string>
+    <string name="library_metadata_follows_main">使用主图标</string>
+    <string name="library_metadata_change">更换</string>
+    <string name="library_metadata_remove_portrait">移除 3:4 图标</string>
+    <string name="library_metadata_icon_updated">图标已更新</string>
+    <string name="library_metadata_discard_title">放弃更改？</string>
+    <string name="library_metadata_discard_message">未保存的文字更改将丢失。图标更改已保存。</string>
+    <string name="library_metadata_discard">放弃</string>
     <string name="library_metadata_save">保存</string>
     <string name="library_metadata_vendor">发布商</string>
     <string name="library_no_matches">没有与“%1$s”匹配的结果</string>
