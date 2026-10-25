@@ -108,6 +108,9 @@ abstract class LibraryDao {
     )
     abstract fun observeCollections(): Flow<List<LibraryCollectionRow>>
 
+    @Query("SELECT * FROM library_description_overrides WHERE app_id = :appId")
+    abstract suspend fun getDescriptionOverrides(appId: Long): List<LibraryDescriptionOverrideEntity>
+
     @Query("SELECT * FROM library_description_overrides")
     abstract fun observeDescriptionOverrides(): Flow<List<LibraryDescriptionOverrideEntity>>
 

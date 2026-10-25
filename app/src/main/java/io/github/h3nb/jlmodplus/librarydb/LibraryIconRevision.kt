@@ -15,4 +15,9 @@ object LibraryIconRevision {
         if (!iconFile.isFile) return 0L
         return (iconFile.lastModified() * 31L) xor iconFile.length()
     }
+
+    /** A durable edit token must not alternate between two previously cached values. */
+    @JvmStatic
+    fun nextAfterEdit(previous: Long): Long =
+        if (previous == Long.MAX_VALUE) Long.MIN_VALUE else previous + 1L
 }

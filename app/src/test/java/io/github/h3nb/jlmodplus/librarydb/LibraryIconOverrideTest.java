@@ -18,6 +18,17 @@ import java.io.File;
 import java.nio.file.Files;
 
 public class LibraryIconOverrideTest {
+    @Test
+    public void revisionAdvancesWithoutReusingPreviousCacheKeys() {
+        long revision = LibraryIconRevision.fromFile(new File("missing.png"));
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        assertTrue(seen.add(revision));
+        for (int i = 0; i < 256; i++) {
+            revision = LibraryIconRevision.nextAfterEdit(revision);
+            assertTrue("Artwork edit reused an old revision", seen.add(revision));
+        }
+    }
+
 	@Test
 	public void installPublishesDurableAndEffectiveCopies() throws Exception {
 		File root = Files.createTempDirectory("jlmod-icon-override").toFile();

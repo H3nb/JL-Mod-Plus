@@ -50,6 +50,7 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -155,6 +156,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean profileDraftDirty;
 	private boolean profileEditorResumeObserved;
 	private ConfigFormState currentForm;
+	@Nullable private String cachedControlSkinId;
+	@Nullable private String cachedControlSkinName;
 	private ConfigComposeController composeController;
 	private ProfileModel builtInDefaultParams;
 	/** True when this app config is the built-in template and should track host theme changes. */
@@ -186,6 +189,21 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean skipNextAssetPickerReload;
 	/** A retained asset result applied after the last onPause must survive onResume's disk reload. */
 	private boolean assetResultAppliedAfterPause;
+	private final ActivityResultLauncher<Intent> controlSkinEditorLauncher = registerForActivityResult(
+			new ActivityResultContracts.StartActivityForResult(), result -> {
+				cachedControlSkinId = null;
+				cachedControlSkinName = null;
+				if (result.getResultCode() == RESULT_OK && result.getData() != null
+						&& currentForm != null) {
+					String id = result.getData().getStringExtra(ControlSkinManagerActivity.EXTRA_SELECTED);
+					updateForm(currentForm.toBuilder().controlSkinSetId(id).build());
+				} else if (currentForm != null && composeController != null) {
+					// A shared set can be renamed without changing this MIDlet's selection.
+					composeController.update(createUiState());
+				}
+				skipNextAssetPickerReload = true;
+			});
+
 	private final ActivityResultLauncher<Intent> assetPickerLauncher = registerForActivityResult(
 			new FilePickerResultContract(), this::onAssetPicked);
 	@Nullable private String profileOrigin;
@@ -264,6 +282,32 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onEncodingSelected(@NonNull String charset) {
 			applyCharset(charset);
+		}
+
+		@Override
+		public void onManageControlSkins() {
+			if (workDir == null) return;
+			cachedControlSkinId = null;
+			cachedControlSkinName = null;
+			skipNextAssetPickerReload = true;
+			Intent intent = new Intent(ConfigActivity.this, ControlSkinManagerActivity.class);
+			intent.putExtra(ControlSkinManagerActivity.EXTRA_WORKDIR, workDir);
+			intent.putExtra(ControlSkinManagerActivity.EXTRA_SELECTED,
+					currentForm == null ? null : currentForm.controlSkinSetId);
+			if (currentForm != null) {
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_SHAPE, currentForm.vkButtonShape);
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_BG,
+						previewColor(currentForm.vkBackground, params.vkBgColor));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_BG_PRESSED,
+						previewColor(currentForm.vkSelectedBackground, params.vkBgColorSelected));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_FG,
+						previewColor(currentForm.vkForeground, params.vkFgColor));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_FG_PRESSED,
+						previewColor(currentForm.vkSelectedForeground, params.vkFgColorSelected));
+				intent.putExtra(ControlSkinManagerActivity.EXTRA_KEY_OUTLINE,
+						previewColor(currentForm.vkOutline, params.vkOutlineColor));
+			}
+			controlSkinEditorLauncher.launch(intent);
 		}
 
 		@Override
@@ -1797,6 +1841,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
+	private static int previewColor(String value, int fallback) {
+		try { return Integer.parseInt(value, 16) & 0xFFFFFF; }
+		catch (NumberFormatException error) { return fallback & 0xFFFFFF; }
+	}
+
 	private void refreshFileAccess() {
 		if (isProfile || appDir == null || expectedAppId <= 0 || fileAccessBusy) return;
 		fileAccessBusy = true;
@@ -2567,10 +2616,22 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					hasSettings ? info.config.screenHeight : 0,
 					hasSettings ? info.config.orientation : 0));
 		}
-		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
+		ConfigUiState result = new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				profileNames, hasControllerDevice(), updatePresetName, fileAccessBusy ? null : fileAccess);
+		if (state.controlSkinSetId == null) {
+			result.controlSkinName = getString(R.string.control_skin_default);
+		} else {
+			if (!state.controlSkinSetId.equals(cachedControlSkinId) || cachedControlSkinName == null) {
+				ControlSkinStore.SetInfo skin = workDir == null ? null
+						: ControlSkinStore.findReadonly(new File(workDir), state.controlSkinSetId);
+				cachedControlSkinName = skin == null ? getString(R.string.control_skin_missing) : skin.name;
+				cachedControlSkinId = state.controlSkinSetId;
+			}
+			result.controlSkinName = cachedControlSkinName;
+		}
+		return result;
 	}
 
 	private boolean hasCompatibleTimingTransform() {

@@ -19,6 +19,7 @@ package javax.microedition.lcdui.graphics;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.LightingColorFilter;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
@@ -44,6 +45,7 @@ public class CanvasWrapper {
 	private final Paint fillPaint = new Paint();
 	private final Paint textPaint = new Paint();
 	private final Paint imgPaint = new Paint();
+	private static final LightingColorFilter PRESSED_SKIN_FILTER = new LightingColorFilter(0xB0B0B0, 0);
 	private final Paint diagnosticPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Paint controlFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final Paint controlGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -294,6 +296,20 @@ public class CanvasWrapper {
 	/** Measures scaled text height from immutable base metrics without mutating Paint state. */
 	public float getTextHeight(float scale) {
 		return baseTextHeight * Math.max(0.001f, scale);
+	}
+
+	/** Cached control bitmap; restores shared Paint state after each draw. */
+	public void drawControlBitmap(Bitmap bitmap, RectF dst, int alpha, boolean pressedFallback) {
+		if (bitmap == null) return;
+		imgPaint.setAlpha(Math.max(0, Math.min(255, alpha)));
+		imgPaint.setFilterBitmap(true);
+		imgPaint.setColorFilter(pressedFallback ? PRESSED_SKIN_FILTER : null);
+		try { canvas.drawBitmap(bitmap, null, dst, imgPaint); }
+		finally {
+			imgPaint.setAlpha(255);
+			imgPaint.setFilterBitmap(filterBitmap);
+			imgPaint.setColorFilter(null);
+		}
 	}
 
 	public void drawImage(Image image, RectF dst) {

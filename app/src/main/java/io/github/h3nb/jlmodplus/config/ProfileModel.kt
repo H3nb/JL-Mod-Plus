@@ -80,6 +80,7 @@ data class ProfileModel(
     @SerialName("VirtualKeyboardForceOpacity") @JvmField var vkForceOpacity: Boolean = false,
     @SerialName("VirtualKeyboardFeedback") @JvmField var vkFeedback: Boolean = false,
     @SerialName("VirtualKeyboardDelay") @JvmField var vkHideDelay: Int = 0,
+    @SerialName("ControlSkinSetId") @JvmField var controlSkinSetId: String? = null,
     @SerialName("VirtualKeyboardColorBackground") @JvmField var vkBgColor: Int = 0,
     @SerialName("VirtualKeyboardColorBackgroundSelected") @JvmField var vkBgColorSelected: Int = 0,
     @SerialName("VirtualKeyboardColorForeground") @JvmField var vkFgColor: Int = 0,

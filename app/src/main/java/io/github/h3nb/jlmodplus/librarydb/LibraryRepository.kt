@@ -27,6 +27,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+/** Source descriptor texts and user-owned Library translations for one MIDlet. */
+data class LibraryLocalizedDescriptionEditorData(
+    val source: Map<String, String>,
+    val overrides: Map<String, String>,
+)
+
 /** Owns one active workdir Library at a time and serializes targeted mutations with DB close. */
 class LibraryRepository(
     private val scope: CoroutineScope,
@@ -196,6 +202,19 @@ class LibraryRepository(
                 ) { "Unable to update Library metadata for app $appId" }
             }
         }
+    }
+
+    /** Read one editor snapshot from the authoritative Room rows and source descriptor. */
+    suspend fun loadLocalizedDescriptions(
+        expected: LibraryGenerationToken,
+        appId: Long,
+    ): LibraryLocalizedDescriptionEditorData = withActiveDatabase(expected) { dao ->
+        val app = dao.getApp(appId) ?: error("Library app disappeared: $appId")
+        val source = withContext(Dispatchers.IO) {
+            LibraryDescriptionCatalog.readSourceDescriptions(expected.emulatorDir, app.storageKey)
+        }
+        val overrides = dao.getDescriptionOverrides(appId).associate { it.locale to it.description }
+        LibraryLocalizedDescriptionEditorData(source, overrides)
     }
 
     suspend fun resetMetadataOverrides(expected: LibraryGenerationToken, appId: Long) {

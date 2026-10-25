@@ -119,6 +119,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -352,17 +353,10 @@ interface LibraryActions {
     fun onSearch(query: String)
     fun onQuickView(quickView: LibraryQuickView) = Unit
     fun onFavorite(appId: Int, favorite: Boolean) = Unit
-    fun onUpdateMetadata(
-        appId: Int,
-        title: String,
-        vendor: String,
-        version: String,
-        description: String,
-    ) = Unit
     fun onLoadLocalizedDescriptions(
         appId: Int,
         callback: LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>,
-    ) = callback.complete(LibraryLocalizedDescriptionEditorData(emptyMap(), emptyMap()), null)
+    ) = callback.complete(null, IllegalStateException("Localized descriptions are unavailable"))
 
     fun onUpdateMetadata(
         appId: Int,
@@ -372,10 +366,7 @@ interface LibraryActions {
         description: String,
         localizedOverrides: Map<String, String>,
         callback: LibraryViewModel.MutationCallback<Unit>,
-    ) {
-        onUpdateMetadata(appId, title, vendor, version, description)
-        callback.complete(Unit, null)
-    }
+    ) = callback.complete(null, IllegalStateException("Metadata saving is unavailable"))
 
     fun onPickIcon(appId: Int) = Unit
     fun onPickIconByDatabaseId(databaseId: Long) = Unit
@@ -877,6 +868,7 @@ fun LibraryScreen(
         }
     }
 
+    val currentEditorIdentity by rememberUpdatedState(state.libraryScope to metadataTarget?.databaseId)
     val metadataApp = metadataTarget?.let { target ->
         state.apps.firstOrNull { it.databaseId == target.databaseId } ?: target
     }
@@ -1488,7 +1480,8 @@ fun LibraryScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .zIndex(3f),
             ) {
-                LibraryMetadataEditorScreen(
+                key(state.libraryScope, app.databaseId) {
+                    LibraryMetadataEditorScreen(
                     app = app,
                     onBack = ::closeMetadataEditor,
                     onLoadDescriptions = { callback ->
@@ -1514,7 +1507,10 @@ fun LibraryScreen(
                             translations,
                         ) { _, error ->
                             onResult(error == null)
-                            if (error == null) closeMetadataEditor(restoreRequest)
+                            if (error == null &&
+                                currentEditorIdentity == (state.libraryScope to app.databaseId)) {
+                                closeMetadataEditor(restoreRequest)
+                            }
                         }
                     },
                     iconShape = state.iconShape,
@@ -1523,7 +1519,8 @@ fun LibraryScreen(
                         actions.onPickIconByDatabaseId(app.databaseId, portrait)
                     },
                     onResetIcon = { portrait -> actions.onResetIcon(app.id, portrait) },
-                )
+                    )
+                }
             }
         }
     }

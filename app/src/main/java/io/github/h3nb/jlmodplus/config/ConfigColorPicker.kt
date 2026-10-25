@@ -65,8 +65,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import java.util.Locale
 import io.github.h3nb.jlmodplus.R
-import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
-import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 
 /** A dependency-free HSV picker used only by the host configuration presentation. */
 @Composable
@@ -83,7 +81,6 @@ internal fun ConfigColorPickerDialog(
     val color = Color.hsv(hsv[0], hsv[1], hsv[2])
     val hexIsValid = hexText.length == 6
     val scrollState = rememberScrollState()
-    val canScrollForward = rememberScrollCanScrollForward(scrollState)
 
     fun updateHsv(hue: Float = hsv[0], saturation: Float = hsv[1], value: Float = hsv[2]) {
         hsv = floatArrayOf(
@@ -105,10 +102,10 @@ internal fun ConfigColorPickerDialog(
                 val useTwoPane = maxWidth >= 480.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) &&
                     maxWidth > maxHeight && maxHeight != Dp.Infinity
                 val pickerHeight = if (maxHeight == Dp.Infinity) {
-                    180.dp
+                    if (allowDynamic && !useTwoPane) 160.dp else 180.dp
                 } else {
                     (maxHeight * if (useTwoPane) 0.68f else 0.38f)
-                        .coerceIn(96.dp, 180.dp)
+                        .coerceIn(96.dp, if (allowDynamic && !useTwoPane) 160.dp else 180.dp)
                 }
                 Box(modifier = Modifier.fillMaxWidth()) {
                     if (useTwoPane) {
@@ -208,10 +205,6 @@ internal fun ConfigColorPickerDialog(
                             }
                         }
                     }
-                    ScrollableContentHint(
-                        visible = canScrollForward,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
                 }
             }
         },

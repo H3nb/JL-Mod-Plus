@@ -357,18 +357,6 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
-            public void onUpdateMetadata(int appId, @NonNull String title,
-                                         @NonNull String vendor, @NonNull String version,
-                                         @NonNull String description) {
-                LibraryAppRow row = findRow(appId);
-                if (row == null) return;
-                libraryViewModel.updateMetadata(
-                        row.getId(), title, vendor, version, description,
-                        (ignored, error) -> {
-                            if (error != null) showError(error);
-                        });
-            }
-
             @Override
             public void onLoadLocalizedDescriptions(
                     int appId,

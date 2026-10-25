@@ -59,12 +59,6 @@ import javax.microedition.shell.MidletLocaleResolver
 import io.github.h3nb.jlmodplus.util.Constants.PREF_APP_SORT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR
 
-/** Source descriptor texts and user-owned Library translations for one MIDlet. */
-data class LibraryLocalizedDescriptionEditorData(
-    val source: Map<String, String>,
-    val overrides: Map<String, String>,
-)
-
 /** Activity-scoped Room 3 Library facade with Java-friendly observation/mutation boundaries. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LibraryViewModel(application: Application) : AndroidViewModel(application),
@@ -378,23 +372,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             callback.complete(null, IllegalStateException("Library app is not available"))
             return
         }
-        scope.launch {
-            try {
-                val source = withContext(Dispatchers.IO) {
-                    LibraryDescriptionCatalog.readSourceDescriptions(generation.emulatorDir, app.storageKey)
-                }
-                val ready = repository.state.value as? LibraryRepository.State.Ready
-                check(ready != null && repository.isReadyGeneration(generation)) {
-                    "Library work directory changed while loading descriptions"
-                }
-                callback.complete(
-                    LibraryLocalizedDescriptionEditorData(
-                        source, ready.descriptionOverrides[app.id].orEmpty(),
-                    ), null,
-                )
-            } catch (error: Exception) {
-                callback.complete(null, error)
-            }
+        launchMutation(callback) {
+            repository.loadLocalizedDescriptions(generation, app.id)
         }
     }
 
@@ -433,7 +412,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 LibraryIconOverride.prepare(getApplication(), source)
             }
             try {
-                val fileRevision = withContext(Dispatchers.IO) {
+                withContext(Dispatchers.IO) {
                     acquireGenerationLease(generation.generation, generation.emulatorDir).use {
                         val current = repository.currentApp(generation, app.id)
                         check(current?.storageKey == app.storageKey) {
@@ -453,8 +432,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 repository.setIconRevision(
                     generation,
                     app.id,
-                    if (portrait) invalidateIconRevision(app.iconRevision)
-                    else distinctIconRevision(fileRevision, app.iconRevision),
+                    LibraryIconRevision.nextAfterEdit(app.iconRevision),
                 )
             } finally {
                 withContext(Dispatchers.IO) { prepared.delete() }
@@ -494,8 +472,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             repository.setIconRevision(
                 generation,
                 app.id,
-                if (portrait) invalidateIconRevision(app.iconRevision)
-                else distinctIconRevision(fileRevision, app.iconRevision),
+                LibraryIconRevision.nextAfterEdit(app.iconRevision),
             )
         }
     }
@@ -583,10 +560,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 ImportRestoreOutcome(result.iconRevision, sourceMetadata)
             }
         }
-        val resolvedIconRevision = outcome.iconRevision?.let { revision ->
-            // Restoring configs/ may replace portrait art even when the canonical icon is absent.
-            if (revision == 0L) invalidateIconRevision(app.iconRevision)
-            else distinctIconRevision(revision, app.iconRevision)
+        // Restoring configs/ can change either artwork source, even without a main icon.
+        val resolvedIconRevision = outcome.iconRevision?.let {
+            LibraryIconRevision.nextAfterEdit(app.iconRevision)
         } ?: app.iconRevision
         val sourceMetadata = outcome.sourceMetadata
         if (sourceMetadata != null) {
@@ -1017,15 +993,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         file.absoluteFile
     } catch (_: SecurityException) {
         file.absoluteFile
-    }
-
-    /** A database-backed invalidation token for either Library artwork source. */
-    private fun invalidateIconRevision(previousRevision: Long): Long =
-        previousRevision xor Long.MIN_VALUE
-
-    private fun distinctIconRevision(fileRevision: Long, previousRevision: Long): Long {
-        if (fileRevision == 0L || fileRevision != previousRevision) return fileRevision
-        return fileRevision xor Long.MIN_VALUE
     }
 
     private fun <T> launchMutation(callback: MutationCallback<T>, block: suspend () -> T) {

@@ -1210,4 +1210,56 @@
     <string name="library_metadata_language_search">Search language or enter locale</string>
     <string name="library_metadata_remove_language">Remove description</string>
     <string name="library_metadata_language_load_failed">Could not load language descriptions. Reopen Edit metadata to try again.</string>
+    <string name="control_skin_title" tools:ignore="MissingTranslation">Control skin</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Create set</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Default buttons</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Edit</string>
+    <string name="control_skin_use" tools:ignore="MissingTranslation">Use this set</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Rename</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplicate</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="control_skin_buttons" tools:ignore="MissingTranslation">Buttons</string>
+    <string name="control_skin_global_note" tools:ignore="MissingTranslation">Edits to this set affect every MIDlet using it. Changes are saved immediately.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Set name</string>
+    <string name="control_skin_mode" tools:ignore="MissingTranslation">Image mode</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Icon only</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Full button</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normal image</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Pressed image</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Delete this global skin set and all its images? MIDlets using it will fall back to default controls.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Choose a PNG or WebP image.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Could not modify control skin set.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Unavailable set (default controls)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Remove</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Manage set</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Manage %1$s</string>
+    <string name="control_skin_count" tools:ignore="MissingTranslation">%1$d customized controls</string>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Create a set to customize control images.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Keypad</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigation</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Other buttons</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Add a normal image first.</string>
+    <string name="control_skin_pressed_auto" tools:ignore="MissingTranslation">Automatic press effect</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Button %1$s</string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Change</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Choose image</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Soft L</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Soft R</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Fire</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Menu</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Movement controls</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Analog stick</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">D-pad image</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Up overlay</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Down overlay</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Left overlay</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Right overlay</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Base image</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Thumb image</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Active thumb image</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Preview directions</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Preview %1$s</string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Default</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Customized</string>
 </resources>

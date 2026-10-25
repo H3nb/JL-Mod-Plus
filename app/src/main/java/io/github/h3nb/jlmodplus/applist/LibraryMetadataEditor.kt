@@ -33,6 +33,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.Saver
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.currentCoroutineContext
@@ -64,17 +66,13 @@ private val localizedOverridesSaver = Saver<Map<String, String>, ArrayList<Strin
 internal fun LibraryMetadataEditorScreen(
     app: LibraryAppUiItem,
     onBack: () -> Unit,
-    onSave: (title: String, vendor: String, description: String) -> Unit = { _, _, _ -> },
     onLoadDescriptions: (LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>) -> Unit = {
         it.complete(LibraryLocalizedDescriptionEditorData(emptyMap(), emptyMap()), null)
     },
     onSaveLocalized: (
         title: String, vendor: String, description: String,
         translations: Map<String, String>, onResult: (Boolean) -> Unit,
-    ) -> Unit = { title, vendor, description, _, done ->
-        onSave(title, vendor, description)
-        done(true)
-    },
+    ) -> Unit = { _, _, _, _, done -> done(false) },
     onPickIcon: (portrait: Boolean) -> Unit = {},
     onResetIcon: (portrait: Boolean) -> Unit = {},
     iconShape: LibraryIconShape = LibraryIconShape.Round,
@@ -93,7 +91,8 @@ internal fun LibraryMetadataEditorScreen(
     var descriptionsLoaded by remember(app.databaseId) { mutableStateOf(false) }
     var loadFailed by remember(app.databaseId) { mutableStateOf(false) }
     var saving by remember(app.databaseId) { mutableStateOf(false) }
-    LaunchedEffect(app.databaseId) {
+    var loadAttempt by remember(app.databaseId) { mutableIntStateOf(0) }
+    LaunchedEffect(app.databaseId, loadAttempt) {
         val context = currentCoroutineContext()
         onLoadDescriptions(LibraryViewModel.MutationCallback { data, error ->
             if (context.isActive) {
@@ -117,7 +116,9 @@ internal fun LibraryMetadataEditorScreen(
         (descriptionsLoaded && draftTranslations != originalOverrides)
     val valid = title.trim().isNotEmpty()
     val requestBack = {
-        if (changed) confirmDiscard = true else onBack()
+        if (!saving) {
+            if (changed) confirmDiscard = true else onBack()
+        }
     }
 
     BackHandler(onBack = requestBack)
@@ -189,6 +190,10 @@ internal fun LibraryMetadataEditorScreen(
                             translations = draftTranslations,
                             descriptionsLoaded = descriptionsLoaded,
                             loadFailed = loadFailed,
+                            onRetryLoad = {
+                                loadFailed = false
+                                loadAttempt++
+                            },
                             onTranslationsChange = { draftTranslations = it },
                             modifier = Modifier.weight(1f).widthIn(max = 760.dp),
                         )
@@ -214,6 +219,10 @@ internal fun LibraryMetadataEditorScreen(
                         translations = draftTranslations,
                         descriptionsLoaded = descriptionsLoaded,
                         loadFailed = loadFailed,
+                        onRetryLoad = {
+                            loadFailed = false
+                            loadAttempt++
+                        },
                         onTranslationsChange = { draftTranslations = it },
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                     )
@@ -383,6 +392,7 @@ private fun LibraryMetadataFields(
     translations: Map<String, String>,
     descriptionsLoaded: Boolean,
     loadFailed: Boolean,
+    onRetryLoad: () -> Unit,
     onTranslationsChange: (Map<String, String>) -> Unit,
     modifier: Modifier,
 ) {
@@ -424,6 +434,9 @@ private fun LibraryMetadataFields(
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
             )
+            TextButton(onClick = onRetryLoad) {
+                Text(stringResource(R.string.library_retry))
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.ControlSkinRuntime;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.input.GuestViewport;
 import io.github.h3nb.jlmodplus.input.PointerSourceKind;
@@ -1353,6 +1354,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		Set<VirtualDpadDirection> pressed = dpadToken == null
 				? java.util.Collections.emptySet()
 				: dpadController.state(dpadToken);
+		ControlSkinRuntime.Dpad dpadSkin = getControlSkin().dpad();
+		if (dpadSkin != null) {
+			paintSkinnedDpad(graphics, cx, cy, r, alpha, pressed, dpadSkin, editingLayout);
+			return;
+		}
 		int base = VirtualControlAppearance.background(settings, false);
 		int selected = VirtualControlAppearance.background(settings, true);
 		int outline = VirtualControlAppearance.outline(settings);
@@ -1409,6 +1415,36 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		} finally {
 			endControlLayer(graphics, layer);
 		}
+	}
+
+	private void paintSkinnedDpad(CanvasWrapper graphics, float cx, float cy, float radius,
+			int alpha, Set<VirtualDpadDirection> pressed, ControlSkinRuntime.Dpad skin,
+			boolean editingLayout) {
+		int outer = beginControlLayer(graphics, cx, cy, radius * 1.06f, alpha);
+		try {
+			int surface = beginControlLayer(graphics, cx, cy, radius * 1.06f,
+					VirtualControlAppearance.surfaceAlpha(editingLayout));
+			try {
+				paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
+				graphics.drawControlBitmap(skin.base, paintRect, 255, false);
+				if (pressed.contains(VirtualDpadDirection.UP)) drawDpadLayer(graphics, skin.up, cx, cy, radius);
+				if (pressed.contains(VirtualDpadDirection.DOWN)) drawDpadLayer(graphics, skin.down, cx, cy, radius);
+				if (pressed.contains(VirtualDpadDirection.LEFT)) drawDpadLayer(graphics, skin.left, cx, cy, radius);
+				if (pressed.contains(VirtualDpadDirection.RIGHT)) drawDpadLayer(graphics, skin.right, cx, cy, radius);
+			} finally { endControlLayer(graphics, surface); }
+			if (editingLayout && editControl == EditControl.DPAD) {
+				graphics.strokeControlCircle(cx, cy, radius * 1.02f,
+						opaqueColor(VirtualControlAppearance.background(settings, true)),
+						graphics.getControlOutlineWidth());
+			}
+		} finally { endControlLayer(graphics, outer); }
+	}
+
+	private void drawDpadLayer(CanvasWrapper graphics, android.graphics.Bitmap bitmap,
+			float cx, float cy, float radius) {
+		if (bitmap == null) return;
+		paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
+		graphics.drawControlBitmap(bitmap, paintRect, 255, false);
 	}
 
 	private void paintDpadPressed(CanvasWrapper graphics, float cx, float cy,
@@ -1535,6 +1571,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int base = VirtualControlAppearance.background(settings, false);
 		int outline = VirtualControlAppearance.outline(settings);
 		int thumbColor = VirtualControlAppearance.analogThumb(settings, active);
+		ControlSkinRuntime.Analog analogSkin = getControlSkin().analog();
 
 		int layer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f, alpha);
 		try {
@@ -1545,6 +1582,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			float shellRadius = radius * 0.94f;
 			float thumbRadius = radius * 0.45f;
 			try {
+				if (analogSkin != null && analogSkin.base != null) {
+					paintRect.set(centerX - shellRadius, centerY - shellRadius,
+							centerX + shellRadius, centerY + shellRadius);
+					graphics.drawControlBitmap(analogSkin.base, paintRect, 255, false);
+				} else {
 				int shell = VirtualControlAppearance.analogShell(base);
 				graphics.fillControlLinearCircle(analogShellGradient,
 						centerX, centerY, shellRadius,
@@ -1561,6 +1603,14 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 						radius * 0.70f,
 						opaqueColor(VirtualControlAppearance.analogBowlCenter(base)),
 						opaqueColor(VirtualControlAppearance.analogBowlEdge(base)));
+				}
+				if (analogSkin != null && analogSkin.thumb != null) {
+					android.graphics.Bitmap image = active && analogSkin.thumbPressed != null
+							? analogSkin.thumbPressed : analogSkin.thumb;
+					paintRect.set(thumbX - thumbRadius, thumbY - thumbRadius,
+							thumbX + thumbRadius, thumbY + thumbRadius);
+					graphics.drawControlBitmap(image, paintRect, 255, false);
+				} else {
 				graphics.fillControlCircle(thumbX, thumbY + thumbRadius * 0.045f,
 						thumbRadius * 1.055f,
 						(0x5A << 24) | VirtualControlAppearance.analogThumbShadow(base));
@@ -1575,6 +1625,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 					graphics.strokeControlCircle(thumbX, thumbY, thumbRadius * 0.96f,
 							(0x55 << 24) | VirtualControlAppearance.analogThumbRim(thumbColor), stroke);
 				}
+				}
 			} finally {
 				endControlLayer(graphics, surfaceLayer);
 			}
@@ -1583,8 +1634,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 						opaqueColor(outline), stroke);
 				graphics.strokeControlCircle(centerX, centerY, radius * 0.915f,
 						(0x33 << 24) | VirtualControlAppearance.analogShellRim(base), stroke);
-				graphics.strokeControlCircle(thumbX, thumbY, thumbRadius * 0.96f,
-						(0x55 << 24) | VirtualControlAppearance.analogThumbRim(thumbColor), stroke);
+				if (analogSkin == null || analogSkin.thumb == null) {
+					graphics.strokeControlCircle(thumbX, thumbY, thumbRadius * 0.96f,
+							(0x55 << 24) | VirtualControlAppearance.analogThumbRim(thumbColor), stroke);
+				}
 			}
 			if (editingAnalog) {
 				graphics.strokeControlCircle(centerX, centerY, radius * 1.02f,
