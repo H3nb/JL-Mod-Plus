@@ -77,11 +77,16 @@ the language alone; otherwise use the unqualified source description. Editing th
 default description does not replace a matching localized value.
 
 The translated text is presentation-only. The workdir's retained
-`converted.dex.conf` is the reconstructible source of localization metadata;
+`converted.dex.conf` remains the reconstructible source of localization metadata;
 the Library resolves it on a background worker and caches file-derived attributes.
-This lets existing installations gain translations without JAR conversion, a new Room
-schema, or rewriting any installed game. Existing custom metadata continues to own
-only the unqualified fallback, even when the Library displays a translation.
+The Library database separately owns optional user-edited translations, keyed by
+installed application and MIDP locale. A user override replaces only the matching
+source translation; the existing exact-region/variant, then language, then unqualified
+fallback ordering is unchanged. An empty or reset user translation reveals the
+source descriptor value, if any. Edits never rewrite the MIDlet descriptor or JAR.
+Localized overrides belong to the workdir-scoped Room catalog and are preserved
+through in-place schema migration and normal reinstall/reconciliation, not inferred
+from or restored by an app-payload bundle.
 
 ## Nokia polygon rendering
 

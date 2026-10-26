@@ -87,7 +87,10 @@ import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
+import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconOverride;
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
@@ -105,6 +108,10 @@ public class AppsListFragment extends Fragment {
     private static final long NO_GENERATION = Long.MIN_VALUE;
     private static final String STATE_PENDING_ICON_DATABASE_ID =
             "apps_list.pending_icon_database_id";
+    private static final String STATE_PENDING_ICON_WORKDIR =
+            "apps_list.pending_icon_workdir";
+    private static final String STATE_PENDING_ICON_GENERATION =
+            "apps_list.pending_icon_generation";
 
     private final ActivityResultLauncher<Intent> openFileLauncher = registerForActivityResult(
             new FilePickerResultContract(),
@@ -119,6 +126,9 @@ public class AppsListFragment extends Fragment {
             uris -> onImportBundlePicked(uris.isEmpty() ? null : uris.get(0)));
 
     private long pendingIconDatabaseId = NO_GENERATION;
+    @Nullable private LibraryViewModel.MutationCallback<String> pendingIconDraftCallback;
+    private String pendingIconWorkdir;
+    private long pendingIconGeneration = NO_GENERATION;
     private final ActivityResultLauncher<Intent> iconPickerLauncher = registerForActivityResult(
             new FilePickerResultContract(),
             uris -> onIconPicked(uris.isEmpty() ? null : uris.get(0)));
@@ -158,6 +168,9 @@ public class AppsListFragment extends Fragment {
         if (savedInstanceState != null) {
             pendingIconDatabaseId = savedInstanceState.getLong(
                     STATE_PENDING_ICON_DATABASE_ID, NO_GENERATION);
+            pendingIconWorkdir = savedInstanceState.getString(STATE_PENDING_ICON_WORKDIR);
+            pendingIconGeneration = savedInstanceState.getLong(
+                    STATE_PENDING_ICON_GENERATION, NO_GENERATION);
         }
         FragmentActivity activity = requireActivity();
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
@@ -167,6 +180,8 @@ public class AppsListFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putLong(STATE_PENDING_ICON_DATABASE_ID, pendingIconDatabaseId);
+        outState.putString(STATE_PENDING_ICON_WORKDIR, pendingIconWorkdir);
+        outState.putLong(STATE_PENDING_ICON_GENERATION, pendingIconGeneration);
         super.onSaveInstanceState(outState);
     }
 
@@ -339,39 +354,65 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onLoadLocalizedDescriptions(
+                    int appId,
+                    @NonNull LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData> callback) {
+                LibraryAppRow row = findRow(appId);
+                if (row == null) {
+                    callback.complete(null, new IllegalStateException("Library app is not available"));
+                    return;
+                }
+                libraryViewModel.loadLocalizedDescriptions(row.getId(), callback);
+            }
+
+            @Override
             public void onUpdateMetadata(int appId, @NonNull String title,
                                          @NonNull String vendor, @NonNull String version,
-                                         @NonNull String description) {
+                                         @NonNull String description,
+                                         @NonNull Map<String, String> translations,
+                                         @Nullable LibraryIconDraft mainIcon,
+                                         @Nullable LibraryIconDraft portraitIcon,
+                                         @NonNull LibraryViewModel.MutationCallback<kotlin.Unit> callback) {
                 LibraryAppRow row = findRow(appId);
-                if (row == null) return;
-                libraryViewModel.updateMetadata(
-                        row.getId(), title, vendor, version, description,
+                if (row == null) {
+                    callback.complete(null, new IllegalStateException("Library app is not available"));
+                    return;
+                }
+                libraryViewModel.saveEditedMetadata(
+                        row.getId(), title, vendor, version, description, translations,
+                        mainIcon, portraitIcon,
                         (ignored, error) -> {
                             if (error != null) showError(error);
+                            callback.complete(ignored, error);
                         });
             }
 
             @Override
-            public void onPickIconByDatabaseId(long databaseId) {
+            public void onPickIconByDatabaseId(
+                    long databaseId, boolean portrait,
+                    @NonNull LibraryViewModel.MutationCallback<String> callback) {
+                if (pendingIconDraftCallback != null) {
+                    pendingIconDraftCallback.complete(null,
+                            new IllegalStateException("Icon selection was replaced"));
+                }
+                pendingIconDraftCallback = callback;
                 pendingIconDatabaseId = databaseId;
+                pendingIconWorkdir = activeWorkdir == null ? null : activeWorkdir.getAbsolutePath();
+                pendingIconGeneration = activeGeneration;
                 iconPickerLauncher.launch(createFilePickerIntent(
                         false,
                         true,
                         getString(R.string.file_picker_select_icon),
-                        ".png",
-                        ".jpg",
-                        ".jpeg",
-                        ".webp",
-                        ".gif",
-                        ".bmp"));
+                        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"));
             }
 
             @Override
-            public void onResetIcon(int appId) {
-                LibraryAppRow row = findRow(appId);
-                if (row == null) return;
-                libraryViewModel.resetIcon(row.getId(), (ignored, error) -> {
+            public void onPrepareOriginalIcon(
+                    long databaseId,
+                    @NonNull LibraryViewModel.MutationCallback<String> callback) {
+                libraryViewModel.prepareOriginalIconDraft(databaseId, (path, error) -> {
                     if (error != null) showError(error);
+                    callback.complete(path, error);
                 });
             }
 
@@ -1091,9 +1132,13 @@ public class AppsListFragment extends Fragment {
 
         int uiId = uiIdFor(row.getId());
         rowsByUiId.put(uiId, row);
-        String iconPath = row.getIconRevision() == 0L
-                ? null
-                : new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
+        // iconRevision invalidates both artwork sources; it does not establish presence.
+        File primaryIcon = new File(appPath(row) + Config.MIDLET_ICON_FILE);
+        String iconPath = primaryIcon.isFile() ? primaryIcon.getAbsolutePath() : null;
+        File portraitIcon = LibraryIconOverride.portraitOverrideFile(
+                activeWorkdir, row.getStorageKey());
+        File customIcon = LibraryIconOverride.persistedOverrideFile(
+                activeWorkdir, row.getStorageKey());
         LibraryAppUiItem item = new LibraryAppUiItem(
                 uiId,
                 row.getTitle(),
@@ -1111,7 +1156,9 @@ public class AppsListFragment extends Fragment {
                 row.getPlayCount(),
                 row.getTotalPlayTimeMs(),
                 row.getId(),
-                row.getDescription());
+                row.getDescription(),
+                portraitIcon.isFile() ? portraitIcon.getAbsolutePath() : null,
+                customIcon.isFile());
         cachedRowsByDatabaseId.put(row.getId(), row);
         cachedUiItemsByDatabaseId.put(row.getId(), item);
         return item;
@@ -1262,10 +1309,28 @@ public class AppsListFragment extends Fragment {
 
     private void onIconPicked(Uri uri) {
         long databaseId = pendingIconDatabaseId;
+        LibraryViewModel.MutationCallback<String> callback = pendingIconDraftCallback;
+        String workdir = pendingIconWorkdir;
+        long generation = pendingIconGeneration;
         pendingIconDatabaseId = NO_GENERATION;
-        if (uri == null || databaseId == NO_GENERATION || !isAdded()) return;
-        libraryViewModel.updateIcon(databaseId, uri, (ignored, error) -> {
-            if (error != null) showError(error);
-        });
+        pendingIconDraftCallback = null;
+        pendingIconWorkdir = null;
+        pendingIconGeneration = NO_GENERATION;
+
+        // After Fragment recreation the callback no longer owns an editor draft. Do not
+        // publish the picked file, and do not convert it to an immediate-save operation.
+        if (callback == null) return;
+        if (uri == null) {
+            callback.complete(null, null);
+        } else if (databaseId == NO_GENERATION || !isAdded() ||
+                activeWorkdir == null || !activeWorkdir.getAbsolutePath().equals(workdir) ||
+                activeGeneration != generation) {
+            callback.complete(null, new IllegalStateException("Library changed during icon selection"));
+        } else {
+            libraryViewModel.prepareIconDraft(uri, (path, error) -> {
+                if (error != null) showError(error);
+                callback.complete(path, error);
+            });
+        }
     }
 }

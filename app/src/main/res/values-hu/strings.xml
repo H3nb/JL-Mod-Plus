@@ -1123,4 +1123,18 @@
     <string name="config_asset_busy">Előbb fejezd be a folyamatban lévő fájlműveletet.</string>
     <string name="config_background_dynamic">Dinamikus szín</string>
     <string name="config_background_dynamic_help">Egyetlen egyszínű hátteret használ, amely finoman igazodik a MIDlet képernyőjéhez.</string>
+    <string name="library_metadata_main_icon">Elsődleges</string>
+    <string name="library_metadata_follows_main">Az elsődleges ikont használja</string>
+    <string name="library_metadata_change">Csere</string>
+    <string name="library_metadata_remove_portrait">3:4-es ikon eltávolítása</string>
+    <string name="library_metadata_icon_updated">Ikon frissítve</string>
+    <string name="library_metadata_discard_title">Elveti a módosításokat?</string>
+    <string name="library_metadata_discard_message">A nem mentett szövegmódosítások elvesznek. Az ikon módosításai már mentve vannak.</string>
+    <string name="library_metadata_discard">Elvetés</string>
+    <string name="library_metadata_default_description">Alapértelmezett leírás</string>
+    <string name="library_metadata_other_languages">Más nyelvek</string>
+    <string name="library_metadata_add_language">+ Nyelv hozzáadása</string>
+    <string name="library_metadata_language_search">Nyelv keresése vagy területi kód megadása</string>
+    <string name="library_metadata_remove_language">Leírás eltávolítása</string>
+    <string name="library_metadata_language_load_failed">A leírások nem tölthetők be. Nyissa meg újra a metaadat-szerkesztőt.</string>
 </resources>

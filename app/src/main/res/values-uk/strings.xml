@@ -1189,4 +1189,18 @@
     <string name="config_asset_busy">Спершу завершіть поточну операцію з файлом.</string>
     <string name="config_background_dynamic">Динамічний колір</string>
     <string name="config_background_dynamic_help">Використовує один суцільний колір, який плавно підлаштовується під екран MIDlet.</string>
+    <string name="library_metadata_main_icon">Основна</string>
+    <string name="library_metadata_follows_main">Використовується основна піктограма</string>
+    <string name="library_metadata_change">Змінити</string>
+    <string name="library_metadata_remove_portrait">Видалити піктограму 3:4</string>
+    <string name="library_metadata_icon_updated">Піктограму оновлено</string>
+    <string name="library_metadata_discard_title">Скасувати зміни?</string>
+    <string name="library_metadata_discard_message">Незбережені зміни тексту буде втрачено. Зміни піктограми вже збережено.</string>
+    <string name="library_metadata_discard">Скасувати</string>
+    <string name="library_metadata_default_description">Типовий опис</string>
+    <string name="library_metadata_other_languages">Інші мови</string>
+    <string name="library_metadata_add_language">+ Додати мову</string>
+    <string name="library_metadata_language_search">Знайти мову або ввести код локалі</string>
+    <string name="library_metadata_remove_language">Видалити опис</string>
+    <string name="library_metadata_language_load_failed">Не вдалося завантажити описи. Відкрийте редагування метаданих ще раз.</string>
 </resources>

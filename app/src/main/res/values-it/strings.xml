@@ -1156,4 +1156,18 @@
     <string name="config_asset_busy">Completa prima l’operazione sul file in corso.</string>
     <string name="config_background_dynamic">Colore dinamico</string>
     <string name="config_background_dynamic_help">Usa un colore uniforme che si adatta gradualmente allo schermo del MIDlet.</string>
+    <string name="library_metadata_main_icon">Principale</string>
+    <string name="library_metadata_follows_main">Usa l\'icona principale</string>
+    <string name="library_metadata_change">Cambia</string>
+    <string name="library_metadata_remove_portrait">Rimuovi icona 3:4</string>
+    <string name="library_metadata_icon_updated">Icona aggiornata</string>
+    <string name="library_metadata_discard_title">Eliminare le modifiche?</string>
+    <string name="library_metadata_discard_message">Le modifiche al testo non salvate andranno perse. Le modifiche all\'icona sono già state salvate.</string>
+    <string name="library_metadata_discard">Elimina</string>
+    <string name="library_metadata_default_description">Descrizione predefinita</string>
+    <string name="library_metadata_other_languages">Altre lingue</string>
+    <string name="library_metadata_add_language">+ Aggiungi lingua</string>
+    <string name="library_metadata_language_search">Cerca una lingua o inserisci un codice</string>
+    <string name="library_metadata_remove_language">Rimuovi descrizione</string>
+    <string name="library_metadata_language_load_failed">Impossibile caricare le descrizioni. Riapri la modifica dei metadati.</string>
 </resources>

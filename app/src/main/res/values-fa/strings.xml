@@ -1123,4 +1123,18 @@
     <string name="config_asset_busy">ابتدا عملیات در حال انجام فایل را تمام کنید.</string>
     <string name="config_background_dynamic">رنگ پویا</string>
     <string name="config_background_dynamic_help">از یک رنگ یکدست استفاده می‌کند که به‌آرامی با صفحهٔ MIDlet هماهنگ می‌شود.</string>
+    <string name="library_metadata_main_icon">اصلی</string>
+    <string name="library_metadata_follows_main">از نماد اصلی استفاده می‌کند</string>
+    <string name="library_metadata_change">تغییر</string>
+    <string name="library_metadata_remove_portrait">حذف نماد 3:4</string>
+    <string name="library_metadata_icon_updated">نماد به‌روزرسانی شد</string>
+    <string name="library_metadata_discard_title">تغییرات کنار گذاشته شوند؟</string>
+    <string name="library_metadata_discard_message">تغییرات ذخیره‌نشدهٔ متن از دست می‌روند. تغییرات نماد قبلاً ذخیره شده‌اند.</string>
+    <string name="library_metadata_discard">کنار گذاشتن</string>
+    <string name="library_metadata_default_description">توضیح پیش‌فرض</string>
+    <string name="library_metadata_other_languages">زبان‌های دیگر</string>
+    <string name="library_metadata_add_language">+ افزودن زبان</string>
+    <string name="library_metadata_language_search">جستجوی زبان یا وارد کردن کد محلی</string>
+    <string name="library_metadata_remove_language">حذف توضیح</string>
+    <string name="library_metadata_language_load_failed">توضیحات بارگیری نشدند. ویرایش فراداده را دوباره باز کنید.</string>
 </resources>

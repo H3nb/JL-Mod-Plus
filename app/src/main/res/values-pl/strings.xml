@@ -1189,4 +1189,18 @@
     <string name="config_asset_busy">Najpierw zakończ bieżącą operację na pliku.</string>
     <string name="config_background_dynamic">Dynamiczny kolor</string>
     <string name="config_background_dynamic_help">Używa jednolitego koloru, który płynnie dopasowuje się do ekranu MIDletu.</string>
+    <string name="library_metadata_main_icon">Główna</string>
+    <string name="library_metadata_follows_main">Używa głównej ikony</string>
+    <string name="library_metadata_change">Zmień</string>
+    <string name="library_metadata_remove_portrait">Usuń ikonę 3:4</string>
+    <string name="library_metadata_icon_updated">Ikona zaktualizowana</string>
+    <string name="library_metadata_discard_title">Odrzucić zmiany?</string>
+    <string name="library_metadata_discard_message">Niezapisane zmiany tekstu zostaną utracone. Zmiany ikony zostały już zapisane.</string>
+    <string name="library_metadata_discard">Odrzuć</string>
+    <string name="library_metadata_default_description">Opis domyślny</string>
+    <string name="library_metadata_other_languages">Inne języki</string>
+    <string name="library_metadata_add_language">+ Dodaj język</string>
+    <string name="library_metadata_language_search">Wyszukaj język lub wpisz kod regionu</string>
+    <string name="library_metadata_remove_language">Usuń opis</string>
+    <string name="library_metadata_language_load_failed">Nie udało się wczytać opisów. Otwórz ponownie edycję metadanych.</string>
 </resources>

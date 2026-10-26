@@ -174,6 +174,7 @@ class LibraryMigrationTest {
             assertEquals(12L, app.iconRevision)
             assertEquals(listOf(11L), dao.getCollectionAppIds(9))
             assertEquals("READY", dao.getLibraryState()?.bootstrapState)
+            assertTrue(dao.getDescriptionOverrides(11).isEmpty())
             assertEquals(-1L, dao.insertPlayStatReceipt(PlayStatReceiptEntity("legacy-v2-session")))
         } finally {
             database.close()

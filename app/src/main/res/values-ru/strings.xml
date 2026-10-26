@@ -1189,4 +1189,18 @@
     <string name="config_asset_busy">Сначала завершите текущую операцию с файлом.</string>
     <string name="config_background_dynamic">Динамический цвет</string>
     <string name="config_background_dynamic_help">Использует один сплошной цвет, плавно подстраивающийся под экран MIDlet.</string>
+    <string name="library_metadata_main_icon">Основная</string>
+    <string name="library_metadata_follows_main">Используется основная иконка</string>
+    <string name="library_metadata_change">Изменить</string>
+    <string name="library_metadata_remove_portrait">Удалить иконку 3:4</string>
+    <string name="library_metadata_icon_updated">Иконка обновлена</string>
+    <string name="library_metadata_discard_title">Отменить изменения?</string>
+    <string name="library_metadata_discard_message">Несохранённые изменения текста будут потеряны. Изменения иконки уже сохранены.</string>
+    <string name="library_metadata_discard">Отменить</string>
+    <string name="library_metadata_default_description">Описание по умолчанию</string>
+    <string name="library_metadata_other_languages">Другие языки</string>
+    <string name="library_metadata_add_language">+ Добавить язык</string>
+    <string name="library_metadata_language_search">Найти язык или ввести код локали</string>
+    <string name="library_metadata_remove_language">Удалить описание</string>
+    <string name="library_metadata_language_load_failed">Не удалось загрузить описания. Откройте редактор метаданных снова.</string>
 </resources>

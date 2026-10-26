@@ -1155,4 +1155,18 @@
     <string name="config_asset_busy">Acaba primer l’operació amb el fitxer en curs.</string>
     <string name="config_background_dynamic">Color dinàmic</string>
     <string name="config_background_dynamic_help">Utilitza un únic color uniforme que s’adapta suaument a la pantalla del MIDlet.</string>
+    <string name="library_metadata_main_icon">Principal</string>
+    <string name="library_metadata_follows_main">Fa servir la icona principal</string>
+    <string name="library_metadata_change">Canvia</string>
+    <string name="library_metadata_remove_portrait">Elimina la icona 3:4</string>
+    <string name="library_metadata_icon_updated">Icona actualitzada</string>
+    <string name="library_metadata_discard_title">Voleu descartar els canvis?</string>
+    <string name="library_metadata_discard_message">Es perdran els canvis de text no desats. Els canvis de les icones ja s\'han desat.</string>
+    <string name="library_metadata_discard">Descarta</string>
+    <string name="library_metadata_default_description">Descripció predeterminada</string>
+    <string name="library_metadata_other_languages">Altres idiomes</string>
+    <string name="library_metadata_add_language">+ Afegeix un idioma</string>
+    <string name="library_metadata_language_search">Cerca un idioma o introdueix un codi</string>
+    <string name="library_metadata_remove_language">Elimina la descripció</string>
+    <string name="library_metadata_language_load_failed">No es poden carregar les descripcions. Torna a obrir les metadades.</string>
 </resources>

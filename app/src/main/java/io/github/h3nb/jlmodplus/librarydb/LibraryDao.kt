@@ -108,6 +108,18 @@ abstract class LibraryDao {
     )
     abstract fun observeCollections(): Flow<List<LibraryCollectionRow>>
 
+    @Query("SELECT * FROM library_description_overrides WHERE app_id = :appId")
+    abstract suspend fun getDescriptionOverrides(appId: Long): List<LibraryDescriptionOverrideEntity>
+
+    @Query("SELECT * FROM library_description_overrides")
+    abstract fun observeDescriptionOverrides(): Flow<List<LibraryDescriptionOverrideEntity>>
+
+    @Query("DELETE FROM library_description_overrides WHERE app_id = :appId")
+    abstract suspend fun deleteDescriptionOverrides(appId: Long)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertDescriptionOverrides(values: List<LibraryDescriptionOverrideEntity>)
+
     @Query("SELECT * FROM apps WHERE id = :id LIMIT 1")
     abstract suspend fun getApp(id: Long): LibraryAppEntity?
 
@@ -208,6 +220,39 @@ abstract class LibraryDao {
         """,
     )
     abstract suspend fun resetCustomMetadata(appId: Long): Int
+
+    @Transaction
+    open suspend fun replaceMetadataAndDescriptions(
+        appId: Long,
+        customTitle: String?,
+        customVendor: String?,
+        customVersion: String?,
+        customDescription: String?,
+        descriptions: Map<String, String>,
+        iconChanged: Boolean = false,
+    ) {
+        if (iconChanged) {
+            val current = getApp(appId) ?: error("Library app disappeared: $appId")
+            check(updateIconRevision(appId, LibraryIconRevision.nextAfterEdit(current.iconRevision)) == 1) {
+                "Unable to update Library icon revision for app $appId"
+            }
+        }
+        check(updateCustomMetadata(appId, customTitle, customVendor, customVersion, customDescription) == 1) {
+            "Unable to update Library metadata for app $appId"
+        }
+        deleteDescriptionOverrides(appId)
+        if (descriptions.isNotEmpty()) {
+            insertDescriptionOverrides(descriptions.map { (locale, text) ->
+                LibraryDescriptionOverrideEntity(appId, locale, text)
+            })
+        }
+    }
+
+    @Transaction
+    open suspend fun resetAllMetadata(appId: Long) {
+        check(resetCustomMetadata(appId) == 1) { "Unable to reset metadata for app $appId" }
+        deleteDescriptionOverrides(appId)
+    }
 
     @Query("UPDATE apps SET favorite = :favorite WHERE id = :appId")
     abstract suspend fun updateFavorite(appId: Long, favorite: Boolean): Int

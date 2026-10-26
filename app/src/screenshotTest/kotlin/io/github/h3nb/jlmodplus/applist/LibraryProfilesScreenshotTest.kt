@@ -388,7 +388,7 @@ fun LibraryMetadataEditorScreenshot() {
                 defaultDescription = "Custom presentation description that differs from the source MIDlet descriptor.",
             ),
             onBack = {},
-            onSave = { _, _, _ -> },
+            onSaveLocalized = { _, _, _, _, _, _, onResult -> onResult(true) },
         )
     }
 }

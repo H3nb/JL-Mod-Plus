@@ -1260,4 +1260,19 @@
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Preview %1$s</string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Default</string>
     <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Customized</string>
+    <string name="library_metadata_main_icon">Main</string>
+    <string name="library_metadata_portrait_icon" translatable="false">3:4</string>
+    <string name="library_metadata_follows_main">Uses main icon</string>
+    <string name="library_metadata_change">Change</string>
+    <string name="library_metadata_remove_portrait">Remove 3:4 icon</string>
+    <string name="library_metadata_icon_updated">Icon updated</string>
+    <string name="library_metadata_discard_title">Discard changes?</string>
+    <string name="library_metadata_discard_message">Unsaved text changes will be lost. Icon changes are already saved.</string>
+    <string name="library_metadata_discard">Discard</string>
+    <string name="library_metadata_default_description">Default description</string>
+    <string name="library_metadata_other_languages">Other languages</string>
+    <string name="library_metadata_add_language">+ Add language</string>
+    <string name="library_metadata_language_search">Search language or locale code</string>
+    <string name="library_metadata_remove_language">Remove description</string>
+    <string name="library_metadata_language_load_failed">Could not load language descriptions. Reopen Edit metadata to try again.</string>
 </resources>

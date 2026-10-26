@@ -1189,4 +1189,18 @@
     <string name="config_asset_busy">Nejprve dokončete probíhající operaci se souborem.</string>
     <string name="config_background_dynamic">Dynamická barva</string>
     <string name="config_background_dynamic_help">Používá jednu jednolitou barvu, která se plynule přizpůsobuje obrazovce MIDletu.</string>
+    <string name="library_metadata_main_icon">Hlavní</string>
+    <string name="library_metadata_follows_main">Používá hlavní ikonu</string>
+    <string name="library_metadata_change">Změnit</string>
+    <string name="library_metadata_remove_portrait">Odebrat ikonu 3:4</string>
+    <string name="library_metadata_icon_updated">Ikona aktualizována</string>
+    <string name="library_metadata_discard_title">Zahodit změny?</string>
+    <string name="library_metadata_discard_message">Neuložené změny textu budou ztraceny. Změny ikon jsou již uloženy.</string>
+    <string name="library_metadata_discard">Zahodit</string>
+    <string name="library_metadata_default_description">Výchozí popis</string>
+    <string name="library_metadata_other_languages">Další jazyky</string>
+    <string name="library_metadata_add_language">+ Přidat jazyk</string>
+    <string name="library_metadata_language_search">Hledat jazyk nebo zadat kód</string>
+    <string name="library_metadata_remove_language">Odebrat popis</string>
+    <string name="library_metadata_language_load_failed">Popisy nelze načíst. Znovu otevřete úpravu metadat.</string>
 </resources>

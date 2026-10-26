@@ -14,6 +14,9 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
+import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
+import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
@@ -117,6 +120,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -297,6 +301,8 @@ data class LibraryAppUiItem(
     /** Stable Room identity; [id] remains a transient Compose/host bridge id. */
     val databaseId: Long = id.toLong(),
     val defaultDescription: String = description,
+    val portraitIconPath: String? = null,
+    val hasCustomIcon: Boolean = false,
 )
 
 private data class MetadataRestoreRequest(
@@ -348,16 +354,29 @@ interface LibraryActions {
     fun onSearch(query: String)
     fun onQuickView(quickView: LibraryQuickView) = Unit
     fun onFavorite(appId: Int, favorite: Boolean) = Unit
+    fun onLoadLocalizedDescriptions(
+        appId: Int,
+        callback: LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>,
+    ) = callback.complete(null, IllegalStateException("Localized descriptions are unavailable"))
+
     fun onUpdateMetadata(
         appId: Int,
         title: String,
         vendor: String,
         version: String,
         description: String,
-    ) = Unit
-    fun onPickIcon(appId: Int) = Unit
-    fun onPickIconByDatabaseId(databaseId: Long) = Unit
-    fun onResetIcon(appId: Int) = Unit
+        localizedOverrides: Map<String, String>,
+        mainIcon: LibraryIconDraft?,
+        portraitIcon: LibraryIconDraft?,
+        callback: LibraryViewModel.MutationCallback<Unit>,
+    ) = callback.complete(null, IllegalStateException("Metadata saving is unavailable"))
+
+    fun onPickIconByDatabaseId(
+        databaseId: Long, portrait: Boolean, callback: LibraryViewModel.MutationCallback<String>,
+    ) = callback.complete(null, IllegalStateException("Icon picker is unavailable"))
+    fun onPrepareOriginalIcon(
+        databaseId: Long, callback: LibraryViewModel.MutationCallback<String>,
+    ) = callback.complete(null, IllegalStateException("Original icon is unavailable"))
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onIconShapeChange(iconShape: LibraryIconShape) = Unit
@@ -632,6 +651,7 @@ fun LibraryScreen(
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
+    var metadataBackRequest by remember { mutableIntStateOf(0) }
     var metadataCapturedAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
     var metadataCapturedViewport by remember { mutableStateOf<LibraryViewportSnapshot?>(null) }
     var metadataRestoreRequest by remember { mutableStateOf<MetadataRestoreRequest?>(null) }
@@ -852,6 +872,7 @@ fun LibraryScreen(
         }
     }
 
+    val currentEditorIdentity by rememberUpdatedState(state.libraryScope to metadataTarget?.databaseId)
     val metadataApp = metadataTarget?.let { target ->
         state.apps.firstOrNull { it.databaseId == target.databaseId } ?: target
     }
@@ -936,6 +957,7 @@ fun LibraryScreen(
         metadataCapturedAnchor = null
         metadataCapturedViewport = null
         metadataTarget = null
+        metadataBackRequest = 0
     }
 
     LaunchedEffect(controllerEvents, appsViewport) {
@@ -988,7 +1010,7 @@ fun LibraryScreen(
                     }
                     LibraryControllerCommand.Back -> when {
                         currentControllerRenameTarget != null -> renameTarget = null
-                        currentControllerMetadataTarget != null -> closeMetadataEditor()
+                        currentControllerMetadataTarget != null -> metadataBackRequest++
                         currentControllerDeleteTarget != null -> deleteTarget = null
                         currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
                         currentControllerInfoDialog != null -> infoDialog = null
@@ -1463,10 +1485,15 @@ fun LibraryScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .zIndex(3f),
             ) {
-                LibraryMetadataEditorScreen(
+                key(state.libraryScope, app.databaseId) {
+                    LibraryMetadataEditorScreen(
                     app = app,
                     onBack = ::closeMetadataEditor,
-                    onSave = { title, vendor, description ->
+                    backRequest = metadataBackRequest,
+                    onLoadDescriptions = { callback ->
+                        actions.onLoadLocalizedDescriptions(app.id, callback)
+                    },
+                    onSaveLocalized = { title, vendor, description, translations, mainIcon, portraitIcon, onResult ->
                         val restoreRequest = metadataCapturedAnchor?.let { anchor ->
                             MetadataRestoreRequest(
                                 anchor = anchor,
@@ -1477,18 +1504,33 @@ fun LibraryScreen(
                                 viewport = metadataCapturedViewport,
                             )
                         }
-                        closeMetadataEditor(restoreRequest)
                         actions.onUpdateMetadata(
                             app.id,
                             title,
                             vendor,
                             app.version,
                             description,
-                        )
+                            translations,
+                            mainIcon,
+                            portraitIcon,
+                        ) { _, error ->
+                            onResult(error == null)
+                            if (error == null &&
+                                currentEditorIdentity == (state.libraryScope to app.databaseId)) {
+                                closeMetadataEditor(restoreRequest)
+                            }
+                        }
                     },
-                    onPickIcon = { actions.onPickIconByDatabaseId(app.databaseId) },
-                    onResetIcon = { actions.onResetIcon(app.id) },
-                )
+                    iconShape = state.iconShape,
+                    enhancedIcons = state.enhancedIcons,
+                    onPickIcon = { portrait, callback ->
+                        actions.onPickIconByDatabaseId(app.databaseId, portrait, callback)
+                    },
+                    onPrepareOriginalIcon = { callback ->
+                        actions.onPrepareOriginalIcon(app.databaseId, callback)
+                    },
+                    )
+                }
             }
         }
     }
@@ -1558,6 +1600,7 @@ fun LibraryScreen(
                     } else {
                         null
                     }
+                    metadataBackRequest = 0
                     metadataTarget = app
                 }
             } else {
@@ -3286,7 +3329,23 @@ private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(
 private fun normalizeLibraryIcon(
     fileSource: Bitmap,
     enhanceIcon: Boolean,
+    preserveArtwork: Boolean = false,
 ): LibraryNormalizedIcon? {
+    if (preserveArtwork) {
+        // A supplied 3:4 composition is intentional. Keep its pixels/scale intact while
+        // retaining optional background-color adaptation from the existing analysis.
+        val analysis = if (enhanceIcon) fileSource.analyzeLibraryIcon() else null
+        return LibraryNormalizedIcon(
+            bitmap = fileSource.asImageBitmap(),
+            filterQuality = fileSource.libraryFilterQuality(),
+            representativeColor = null,
+            presentationMode = LibraryIconPresentationMode.SafeFit,
+            visualScale = 1f,
+            foregroundLuminance = analysis?.foregroundLuminance ?: 0.5f,
+            tileColor = analysis?.edgeFillColor?.toComposeLibraryColor()
+                ?: analysis?.backingColor?.toComposeLibraryColor(),
+        )
+    }
     if (!enhanceIcon) {
         return LibraryNormalizedIcon(
             bitmap = fileSource.asImageBitmap(),
@@ -3998,14 +4057,16 @@ private fun rememberLibraryIcon(
     app: LibraryAppUiItem,
     contentSize: Dp,
     enhancedIcons: Boolean,
+    preserveArtwork: Boolean = false,
 ): LibraryNormalizedIcon? {
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
-    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, enhancedIcons) {
+    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, enhancedIcons, preserveArtwork) {
         libraryIconCacheKey(
             app.iconPath,
             app.iconRevision,
             contentSizePx,
             enhancedIcons,
+            preserveArtwork,
         )
     }
     // produceState restarts its producer for new keys but retains the previous value. Give each
@@ -4032,6 +4093,7 @@ private fun rememberLibraryIcon(
                         normalizeLibraryIcon(
                             fileSource = bitmap,
                             enhanceIcon = enhancedIcons,
+                            preserveArtwork = preserveArtwork,
                         )
                     } finally {
                         android.os.Trace.endSection()
@@ -4050,8 +4112,9 @@ private fun libraryIconCacheKey(
     iconRevision: Long,
     targetSizePx: Int,
     enhancedIcons: Boolean,
+    preserveArtwork: Boolean,
 ): String {
-    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:$enhancedIcons"
+    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:$enhancedIcons:$preserveArtwork"
 }
 
 @Composable
@@ -4087,10 +4150,13 @@ private fun LibraryIconSlotContent(
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean,
 ) {
-    val icon = if (app.iconPath.isNullOrBlank()) {
+    val portraitArtwork = iconRatio == LibraryIconRatio.Portrait &&
+        !app.portraitIconPath.isNullOrBlank()
+    val displayApp = if (portraitArtwork) app.copy(iconPath = app.portraitIconPath) else app
+    val icon = if (displayApp.iconPath.isNullOrBlank()) {
         null
     } else {
-        rememberLibraryIcon(app, artworkSize, enhancedIcons)
+        rememberLibraryIcon(displayApp, artworkSize, enhancedIcons, preserveArtwork = portraitArtwork)
     }
     val isFallback = icon == null ||
         icon.presentationMode == LibraryIconPresentationMode.Fallback

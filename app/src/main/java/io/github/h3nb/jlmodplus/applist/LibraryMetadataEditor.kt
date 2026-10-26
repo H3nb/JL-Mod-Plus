@@ -6,24 +6,22 @@
  */
 package io.github.h3nb.jlmodplus.applist
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -34,51 +32,193 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.Saver
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
+import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
+import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog
+import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
-/** Full-page presentation-metadata editor. Source descriptor values remain immutable. */
+private val localizedOverridesSaver = Saver<Map<String, String>, ArrayList<String>>(
+    save = { translations ->
+        ArrayList(translations.flatMap { (locale, text) -> listOf(locale, text) })
+    },
+    restore = { values -> values.chunked(2).associate { it[0] to it[1] } },
+)
+
+/** Edits presentation metadata; original MIDlet descriptor values remain immutable. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LibraryMetadataEditorScreen(
     app: LibraryAppUiItem,
     onBack: () -> Unit,
-    onSave: (title: String, vendor: String, description: String) -> Unit,
-    onPickIcon: () -> Unit = {},
-    onResetIcon: () -> Unit = {},
+    backRequest: Int = 0,
+    onLoadDescriptions: (LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>) -> Unit = {
+        it.complete(LibraryLocalizedDescriptionEditorData(emptyMap(), emptyMap()), null)
+    },
+    onSaveLocalized: (
+        title: String, vendor: String, description: String,
+        translations: Map<String, String>,
+        mainIcon: LibraryIconDraft?, portraitIcon: LibraryIconDraft?,
+        onResult: (Boolean) -> Unit,
+    ) -> Unit = { _, _, _, _, _, _, done -> done(false) },
+    onPickIcon: (portrait: Boolean, callback: LibraryViewModel.MutationCallback<String>) -> Unit =
+        { _, callback -> callback.complete(null, null) },
+    onPrepareOriginalIcon: (callback: LibraryViewModel.MutationCallback<String>) -> Unit =
+        { callback -> callback.complete(null, null) },
+    iconShape: LibraryIconShape = LibraryIconShape.Round,
+    enhancedIcons: Boolean = true,
 ) {
-    var title by rememberSaveable(app.id) { mutableStateOf(app.title) }
-    var vendor by rememberSaveable(app.id) { mutableStateOf(app.author) }
-    var description by rememberSaveable(app.id) { mutableStateOf(app.defaultDescription) }
-    val valid = title.trim().isNotEmpty()
+    var title by rememberSaveable(app.databaseId) { mutableStateOf(app.title) }
+    var vendor by rememberSaveable(app.databaseId) { mutableStateOf(app.author) }
+    var description by rememberSaveable(app.databaseId) { mutableStateOf(app.defaultDescription) }
+    var confirmDiscard by rememberSaveable(app.databaseId) { mutableStateOf(false) }
+    val mainDraftState = remember(app.databaseId) { mutableStateOf<LibraryIconDraft?>(null) }
+    val portraitDraftState = remember(app.databaseId) { mutableStateOf<LibraryIconDraft?>(null) }
+    var mainDraft by mainDraftState
+    var portraitDraft by portraitDraftState
+    val editAlive = remember(app.databaseId) { AtomicBoolean(true) }
 
-    BackHandler(onBack = onBack)
+    // Draft images live in the app cache only while this editor owns them.
+    DisposableEffect(app.databaseId) {
+        editAlive.set(true)
+        onDispose {
+            editAlive.set(false)
+            listOfNotNull(mainDraftState.value?.previewPath, portraitDraftState.value?.previewPath)
+                .filter(String::isNotEmpty).forEach { File(it).delete() }
+        }
+    }
+    var preparingIcon by remember(app.databaseId) { mutableStateOf(false) }
+    val setIconDraft: (Boolean, LibraryIconDraft?) -> Unit = { portrait, next ->
+        val prior = if (portrait) portraitDraft else mainDraft
+        if (portrait) portraitDraft = next else mainDraft = next
+        if (prior?.previewPath != null && prior.previewPath != next?.previewPath) {
+            File(prior.previewPath).delete()
+        }
+    }
+    val chooseIcon: (Boolean) -> Unit = { portrait ->
+        if (!preparingIcon) {
+            preparingIcon = true
+            onPickIcon(portrait, LibraryViewModel.MutationCallback { path, error ->
+                preparingIcon = false
+                if (!editAlive.get()) {
+                    if (path != null) File(path).delete()
+                } else if (error == null && !path.isNullOrBlank()) {
+                    setIconDraft(portrait, LibraryIconDraft(reset = false, previewPath = path))
+                }
+            })
+        }
+    }
+    val resetIcon: (Boolean) -> Unit = { portrait ->
+        if (!preparingIcon) {
+            if (portrait) {
+                setIconDraft(true, if (app.portraitIconPath.isNullOrBlank()) null
+                    else LibraryIconDraft(reset = true))
+            } else if (!app.hasCustomIcon) {
+                setIconDraft(false, null)
+            } else {
+                preparingIcon = true
+                onPrepareOriginalIcon(LibraryViewModel.MutationCallback { path, error ->
+                    preparingIcon = false
+                    if (!editAlive.get()) {
+                        if (!path.isNullOrBlank()) File(path).delete()
+                    } else if (error == null && path != null) {
+                        setIconDraft(false, LibraryIconDraft(reset = true, previewPath = path))
+                    }
+                })
+            }
+        }
+    }
+    val previewApp = app.copy(
+        iconPath = when {
+            mainDraft?.reset == true -> mainDraft?.previewPath?.takeIf(String::isNotEmpty)
+            mainDraft != null -> mainDraft?.previewPath
+            else -> app.iconPath
+        },
+        portraitIconPath = when {
+            portraitDraft?.reset == true -> null
+            portraitDraft != null -> portraitDraft?.previewPath
+            else -> app.portraitIconPath
+        },
+        hasCustomIcon = if (mainDraft != null) !mainDraft!!.reset else app.hasCustomIcon,
+        iconRevision = if (mainDraft != null || portraitDraft != null) app.iconRevision + 1L
+            else app.iconRevision,
+    )
+    var draftTranslations by rememberSaveable(app.databaseId, stateSaver = localizedOverridesSaver) {
+        mutableStateOf<Map<String, String>>(emptyMap())
+    }
+    var draftInitialized by rememberSaveable(app.databaseId) { mutableStateOf(false) }
+    var sourceTranslations by remember(app.databaseId) { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var originalOverrides by remember(app.databaseId) { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var descriptionsLoaded by remember(app.databaseId) { mutableStateOf(false) }
+    var loadFailed by remember(app.databaseId) { mutableStateOf(false) }
+    var saving by remember(app.databaseId) { mutableStateOf(false) }
+    var loadAttempt by remember(app.databaseId) { mutableIntStateOf(0) }
+    LaunchedEffect(app.databaseId, loadAttempt) {
+        val context = currentCoroutineContext()
+        onLoadDescriptions(LibraryViewModel.MutationCallback { data, error ->
+            if (context.isActive) {
+                if (error == null && data != null) {
+                    sourceTranslations = data.source
+                    originalOverrides = data.overrides
+                    if (!draftInitialized) {
+                        draftTranslations = data.overrides
+                        draftInitialized = true
+                    }
+                    descriptionsLoaded = true
+                } else {
+                    loadFailed = true
+                }
+            }
+        })
+        awaitCancellation()
+    }
+    val changed = title.trim() != app.title ||
+        vendor.trim() != app.author || description.trim() != app.defaultDescription ||
+        (descriptionsLoaded && draftTranslations != originalOverrides) ||
+        mainDraft != null || portraitDraft != null || preparingIcon
+    val valid = title.trim().isNotEmpty()
+    val requestBack = {
+        if (!saving) {
+            if (changed) confirmDiscard = true else onBack()
+        }
+    }
+
+    BackHandler(onBack = requestBack)
+    LaunchedEffect(backRequest) {
+        if (backRequest > 0) requestBack()
+    }
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.library_metadata_edit_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = requestBack) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
                             contentDescription = stringResource(android.R.string.cancel),
@@ -87,13 +227,13 @@ internal fun LibraryMetadataEditorScreen(
                 },
                 actions = {
                     TextButton(
-                        enabled = valid,
+                        enabled = valid && changed && descriptionsLoaded && !saving && !preparingIcon,
                         onClick = {
-                            onSave(
-                                title.trim(),
-                                vendor.trim(),
-                                description.trim(),
-                            )
+                            saving = true
+                            onSaveLocalized(
+                                title.trim(), vendor.trim(), description.trim(),
+                                draftTranslations, mainDraft, portraitDraft,
+                            ) { success -> if (!success) saving = false }
                         },
                     ) {
                         Text(stringResource(R.string.library_metadata_save))
@@ -103,52 +243,60 @@ internal fun LibraryMetadataEditorScreen(
         },
     ) { padding ->
         BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
                 .padding(padding)
-                .consumeWindowInsets(padding),
+                .consumeWindowInsets(padding)
+                .imePadding(),
         ) {
-            val wide = maxWidth >= 700.dp && maxHeight >= 480.dp
-            if (wide) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 32.dp, vertical = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(32.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
+            val wide = maxWidth >= 600.dp
+            Column(
+                modifier = Modifier.fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = if (wide) 24.dp else 16.dp, vertical = 12.dp),
+            ) {
+                if (wide) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        LibraryMetadataIconPanel(
+                            app = previewApp,
+                            onPickIcon = chooseIcon,
+                            onResetIcon = resetIcon,
+                            iconShape = iconShape,
+                            enhancedIcons = enhancedIcons,
+                            enabled = !preparingIcon,
+                            modifier = Modifier.width(260.dp),
+                        )
+                        LibraryMetadataFields(
+                            title = title,
+                            vendor = vendor,
+                            description = description,
+                            app = app,
+                            onTitleChange = { title = it },
+                            onVendorChange = { vendor = it },
+                            onDescriptionChange = { description = it },
+                            sourceTranslations = sourceTranslations,
+                            translations = draftTranslations,
+                            descriptionsLoaded = descriptionsLoaded,
+                            loadFailed = loadFailed,
+                            onRetryLoad = {
+                                loadFailed = false
+                                loadAttempt++
+                            },
+                            onTranslationsChange = { draftTranslations = it },
+                            modifier = Modifier.weight(1f).widthIn(max = 760.dp),
+                        )
+                    }
+                } else {
                     LibraryMetadataIconPanel(
-                        app = app,
-                        onPickIcon = onPickIcon,
-                        onResetIcon = onResetIcon,
-                        modifier = Modifier.width(220.dp),
-                    )
-                    LibraryMetadataFields(
-                        title = title,
-                        vendor = vendor,
-                        description = description,
-                        app = app,
-                        onTitleChange = { title = it },
-                        onVendorChange = { vendor = it },
-                        onDescriptionChange = { description = it },
-                        modifier = Modifier
-                            .weight(1f)
-                            .widthIn(max = 760.dp)
-                            .verticalScroll(rememberScrollState()),
-                    )
-                }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                ) {
-                    LibraryMetadataIconPanel(
-                        app = app,
-                        onPickIcon = onPickIcon,
-                        onResetIcon = onResetIcon,
+                        app = previewApp,
+                        onPickIcon = chooseIcon,
+                        onResetIcon = resetIcon,
+                        iconShape = iconShape,
+                        enhancedIcons = enhancedIcons,
+                        enabled = !preparingIcon,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     LibraryMetadataFields(
@@ -159,73 +307,165 @@ internal fun LibraryMetadataEditorScreen(
                         onTitleChange = { title = it },
                         onVendorChange = { vendor = it },
                         onDescriptionChange = { description = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        sourceTranslations = sourceTranslations,
+                        translations = draftTranslations,
+                        descriptionsLoaded = descriptionsLoaded,
+                        loadFailed = loadFailed,
+                        onRetryLoad = {
+                            loadFailed = false
+                            loadAttempt++
+                        },
+                        onTranslationsChange = { draftTranslations = it },
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                     )
-                    Spacer(Modifier.height(20.dp))
                 }
             }
         }
+    }
+
+    if (confirmDiscard) {
+        AdaptiveAlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text(stringResource(R.string.library_metadata_discard_title)) },
+            confirmButton = {
+                TextButton(
+                    enabled = valid && descriptionsLoaded && !saving && !preparingIcon,
+                    onClick = {
+                        confirmDiscard = false
+                        saving = true
+                        onSaveLocalized(
+                            title.trim(), vendor.trim(), description.trim(),
+                            draftTranslations, mainDraft, portraitDraft,
+                        ) { success -> if (!success) saving = false }
+                    },
+                ) {
+                    Text(stringResource(R.string.library_metadata_save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDiscard = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+                TextButton(onClick = { confirmDiscard = false; onBack() }) {
+                    Text(stringResource(R.string.library_metadata_discard))
+                }
+            },
+        )
     }
 }
 
 @Composable
 private fun LibraryMetadataIconPanel(
     app: LibraryAppUiItem,
-    onPickIcon: () -> Unit,
-    onResetIcon: () -> Unit,
-    modifier: Modifier,
+    onPickIcon: (Boolean) -> Unit,
+    onResetIcon: (Boolean) -> Unit,
+    iconShape: LibraryIconShape,
+    enhancedIcons: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
 ) {
-    val iconBitmap by produceState<ImageBitmap?>(
-        initialValue = null,
-        app.iconPath,
-        app.iconRevision,
-    ) {
-        val path = app.iconPath?.takeIf(String::isNotBlank)
-        value = if (path == null) {
-            null
-        } else {
-            withContext(Dispatchers.IO) { decodeMetadataIcon(path)?.asImageBitmap() }
-        }
-    }
-
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Surface(
-            modifier = Modifier.size(132.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                if (iconBitmap != null) {
-                    Image(
-                        bitmap = iconBitmap!!,
-                        contentDescription = null,
-                        modifier = Modifier.size(112.dp),
-                        contentScale = ContentScale.Fit,
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_default_midlet),
-                        contentDescription = null,
-                        modifier = Modifier.size(84.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = stringResource(R.string.library_metadata_icon),
             style = MaterialTheme.typography.titleMedium,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            TextButton(onClick = onPickIcon) {
-                Text(stringResource(R.string.library_metadata_change_icon))
+        LibraryMetadataIconRow(
+            app = app,
+            portrait = false,
+            onPickIcon = { onPickIcon(false) },
+            onResetIcon = { onResetIcon(false) },
+            iconShape = iconShape,
+            enhancedIcons = enhancedIcons,
+            enabled = enabled,
+        )
+        LibraryMetadataIconRow(
+            app = app,
+            portrait = true,
+            onPickIcon = { onPickIcon(true) },
+            onResetIcon = { onResetIcon(true) },
+            iconShape = iconShape,
+            enhancedIcons = enhancedIcons,
+            enabled = enabled,
+        )
+    }
+}
+
+@Composable
+private fun LibraryMetadataIconRow(
+    app: LibraryAppUiItem,
+    portrait: Boolean,
+    onPickIcon: () -> Unit,
+    onResetIcon: () -> Unit,
+    iconShape: LibraryIconShape,
+    enhancedIcons: Boolean,
+    enabled: Boolean,
+) {
+    val hasPortrait = !app.portraitIconPath.isNullOrBlank()
+    val hasOverride = if (portrait) hasPortrait else app.hasCustomIcon
+    val label = if (portrait) {
+        stringResource(R.string.library_metadata_portrait_icon)
+    } else {
+        stringResource(R.string.library_metadata_main_icon) + " (1:1)"
+    }
+    val change = stringResource(R.string.library_metadata_change)
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 92.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier.width(76.dp).height(96.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            LibraryIconSlot(
+                app = app,
+                modifier = Modifier.width(72.dp),
+                contentSize = null,
+                iconRatio = if (portrait) LibraryIconRatio.Portrait else LibraryIconRatio.Square,
+                iconShape = iconShape,
+                enhancedIcons = enhancedIcons,
+            )
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(label, style = MaterialTheme.typography.titleSmall)
+            if (portrait && !hasPortrait) {
+                Text(
+                    text = stringResource(R.string.library_metadata_follows_main),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            TextButton(onClick = onResetIcon) {
-                Text(stringResource(R.string.library_metadata_reset_to_original))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                TextButton(
+                    onClick = onPickIcon,
+                    enabled = enabled,
+                    modifier = Modifier.semantics {
+                        contentDescription = "$change $label"
+                    },
+                    contentPadding = PaddingValues(horizontal = 0.dp),
+                ) {
+                    Text(change)
+                }
+                if (hasOverride) {
+                    IconButton(onClick = onResetIcon, enabled = enabled) {
+                        Icon(
+                            painter = painterResource(
+                                R.drawable.ic_refresh,
+                            ),
+                            contentDescription = stringResource(
+                                if (portrait) R.string.library_metadata_remove_portrait
+                                else R.string.library_metadata_reset_to_original,
+                            ),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
     }
@@ -240,6 +480,12 @@ private fun LibraryMetadataFields(
     onTitleChange: (String) -> Unit,
     onVendorChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    sourceTranslations: Map<String, String>,
+    translations: Map<String, String>,
+    descriptionsLoaded: Boolean,
+    loadFailed: Boolean,
+    onRetryLoad: () -> Unit,
+    onTranslationsChange: (Map<String, String>) -> Unit,
     modifier: Modifier,
 ) {
     Column(
@@ -262,35 +508,29 @@ private fun LibraryMetadataFields(
             singleLine = true,
         )
         LibraryMetadataField(
-            label = R.string.library_metadata_description,
+            label = R.string.library_metadata_default_description,
             value = description,
             source = app.sourceDescription,
             onValueChange = onDescriptionChange,
             singleLine = false,
         )
+        if (descriptionsLoaded) {
+            LibraryMetadataLocalizedDescriptions(
+                source = sourceTranslations,
+                overrides = translations,
+                onChange = onTranslationsChange,
+            )
+        } else if (loadFailed) {
+            Text(
+                text = stringResource(R.string.library_metadata_language_load_failed),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            TextButton(onClick = onRetryLoad) {
+                Text(stringResource(R.string.library_retry))
+            }
+        }
     }
-}
-
-private fun decodeMetadataIcon(path: String): Bitmap? = try {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeFile(path, bounds)
-    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
-        null
-    } else {
-        var sample = 1
-        while (bounds.outWidth / sample > 256 || bounds.outHeight / sample > 256) sample *= 2
-        BitmapFactory.decodeFile(
-            path,
-            BitmapFactory.Options().apply {
-                inSampleSize = sample.coerceAtLeast(1)
-                inPreferredConfig = Bitmap.Config.ARGB_8888
-            },
-        )
-    }
-} catch (_: OutOfMemoryError) {
-    null
-} catch (_: RuntimeException) {
-    null
 }
 
 @Composable
@@ -310,16 +550,28 @@ private fun LibraryMetadataField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(label)) },
             singleLine = singleLine,
-            minLines = if (singleLine) 1 else 5,
-            maxLines = if (singleLine) 1 else 12,
+            minLines = if (singleLine) 1 else 3,
+            maxLines = if (singleLine) 1 else 8,
             isError = required && value.trim().isEmpty(),
+            trailingIcon = if (singleLine && changed) {
+                {
+                    IconButton(onClick = { onValueChange(source) }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_refresh),
+                            contentDescription = stringResource(R.string.library_metadata_reset_to_original),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            } else null,
         )
-        TextButton(
-            enabled = changed,
-            onClick = { onValueChange(source) },
-            modifier = Modifier.align(Alignment.End),
-        ) {
-            Text(stringResource(R.string.library_metadata_reset_to_original))
+        if (!singleLine && changed) {
+            TextButton(
+                onClick = { onValueChange(source) },
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(stringResource(R.string.library_metadata_reset_to_original))
+            }
         }
     }
 }

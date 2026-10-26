@@ -1123,4 +1123,18 @@
     <string name="config_asset_busy">Viimeistele ensin käynnissä oleva tiedostotoiminto.</string>
     <string name="config_background_dynamic">Dynaaminen väri</string>
     <string name="config_background_dynamic_help">Käyttää yhtä tasaista väriä, joka mukautuu pehmeästi MIDletin näyttöön.</string>
+    <string name="library_metadata_main_icon">Pääkuvake</string>
+    <string name="library_metadata_follows_main">Käyttää pääkuvaketta</string>
+    <string name="library_metadata_change">Vaihda</string>
+    <string name="library_metadata_remove_portrait">Poista 3:4-kuvake</string>
+    <string name="library_metadata_icon_updated">Kuvake päivitetty</string>
+    <string name="library_metadata_discard_title">Hylätäänkö muutokset?</string>
+    <string name="library_metadata_discard_message">Tallentamattomat tekstimuutokset menetetään. Kuvakemuutokset on jo tallennettu.</string>
+    <string name="library_metadata_discard">Hylkää</string>
+    <string name="library_metadata_default_description">Oletuskuvaus</string>
+    <string name="library_metadata_other_languages">Muut kielet</string>
+    <string name="library_metadata_add_language">+ Lisää kieli</string>
+    <string name="library_metadata_language_search">Hae kieltä tai anna kielialueen koodi</string>
+    <string name="library_metadata_remove_language">Poista kuvaus</string>
+    <string name="library_metadata_language_load_failed">Kuvauksia ei voitu ladata. Avaa metatietojen muokkaus uudelleen.</string>
 </resources>

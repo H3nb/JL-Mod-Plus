@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
@@ -327,6 +328,16 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         version: String,
         description: String,
         callback: MutationCallback<Unit>,
+    ) = updateMetadata(appId, title, vendor, version, description, null, callback)
+
+    fun updateMetadata(
+        appId: Long,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+        localizedOverrides: Map<String, String>?,
+        callback: MutationCallback<Unit>,
     ) {
         val generation = readyGeneration()
         val app = try {
@@ -346,7 +357,103 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 vendor = vendor,
                 version = version,
                 description = description,
+                localizedOverrides = localizedOverrides,
             )
+        }
+    }
+
+    /** Prepare a preview without touching the installed or durable icon files. */
+    fun prepareIconDraft(source: Uri, callback: MutationCallback<String>) {
+        launchMutation(callback) {
+            withContext(Dispatchers.IO) {
+                LibraryIconOverride.prepare(getApplication(), source).absolutePath
+            }
+        }
+    }
+
+    fun prepareOriginalIconDraft(appId: Long, callback: MutationCallback<String>) {
+        val generation = readyGeneration()
+        val app = try { generation?.let { repository.currentApp(it, appId) } }
+        catch (_: IllegalStateException) { null }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            withContext(Dispatchers.IO) {
+                LibraryIconOverride.prepareOriginalPreview(
+                    getApplication(), generation.emulatorDir, app.storageKey,
+                )
+            }
+        }
+    }
+
+    /** Apply both icon drafts and metadata as one editor save with filesystem rollback on error. */
+    fun saveEditedMetadata(
+        appId: Long,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+        localizedOverrides: Map<String, String>,
+        mainIcon: LibraryIconDraft?,
+        portraitIcon: LibraryIconDraft?,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val app = try { generation?.let { repository.currentApp(it, appId) } }
+        catch (_: IllegalStateException) { null }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            commitLibraryMetadataEdit(
+                publish = {
+                    if (mainIcon == null && portraitIcon == null) null
+                    else acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                        val current = repository.currentApp(generation, app.id)
+                        check(current?.storageKey == app.storageKey) {
+                            "Library icon target changed before save"
+                        }
+                        LibraryIconOverride.publishDrafts(
+                            generation.emulatorDir,
+                            app.storageKey,
+                            getApplication<Application>().cacheDir,
+                            mainIcon,
+                            portraitIcon,
+                        )
+                    }
+                },
+                persist = {
+                    repository.setMetadataOverrides(
+                        expected = generation,
+                        appId = app.id,
+                        title = title,
+                        vendor = vendor,
+                        version = version,
+                        description = description,
+                        localizedOverrides = localizedOverrides,
+                        iconChanged = mainIcon != null || portraitIcon != null,
+                    )
+                },
+            )
+        }
+    }
+
+    fun loadLocalizedDescriptions(
+        appId: Long,
+        callback: MutationCallback<LibraryLocalizedDescriptionEditorData>,
+    ) {
+        val generation = readyGeneration()
+        val app = try { generation?.let { repository.currentApp(it, appId) } }
+        catch (_: IllegalStateException) { null }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.loadLocalizedDescriptions(generation, app.id)
         }
     }
 
@@ -366,7 +473,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun updateIcon(appId: Long, source: Uri, callback: MutationCallback<Unit>) {
+    fun updateIcon(appId: Long, source: Uri, callback: MutationCallback<Unit>) =
+        updateIcon(appId, source, false, callback)
+
+    fun updateIcon(appId: Long, source: Uri, portrait: Boolean, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         val app = try {
             generation?.let { repository.currentApp(it, appId) }
@@ -382,23 +492,27 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 LibraryIconOverride.prepare(getApplication(), source)
             }
             try {
-                val fileRevision = withContext(Dispatchers.IO) {
+                withContext(Dispatchers.IO) {
                     acquireGenerationLease(generation.generation, generation.emulatorDir).use {
                         val current = repository.currentApp(generation, app.id)
                         check(current?.storageKey == app.storageKey) {
                             "Library icon target changed before filesystem publish"
                         }
-                        LibraryIconOverride.installPrepared(
-                            generation.emulatorDir,
-                            app.storageKey,
-                            prepared,
-                        )
+                        if (portrait) {
+                            LibraryIconOverride.installPortraitPrepared(
+                                generation.emulatorDir, app.storageKey, prepared,
+                            )
+                        } else {
+                            LibraryIconOverride.installPrepared(
+                                generation.emulatorDir, app.storageKey, prepared,
+                            )
+                        }
                     }
                 }
                 repository.setIconRevision(
                     generation,
                     app.id,
-                    distinctIconRevision(fileRevision, app.iconRevision),
+                    LibraryIconRevision.nextAfterEdit(app.iconRevision),
                 )
             } finally {
                 withContext(Dispatchers.IO) { prepared.delete() }
@@ -406,7 +520,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun resetIcon(appId: Long, callback: MutationCallback<Unit>) {
+    fun resetIcon(appId: Long, callback: MutationCallback<Unit>) =
+        resetIcon(appId, false, callback)
+
+    fun resetIcon(appId: Long, portrait: Boolean, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         val app = try {
             generation?.let { repository.currentApp(it, appId) }
@@ -424,13 +541,18 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     check(current?.storageKey == app.storageKey) {
                         "Library icon target changed before reset"
                     }
-                    LibraryIconOverride.resetToOriginal(generation.emulatorDir, app.storageKey)
+                    if (portrait) {
+                        LibraryIconOverride.resetPortrait(generation.emulatorDir, app.storageKey)
+                        0L
+                    } else {
+                        LibraryIconOverride.resetToOriginal(generation.emulatorDir, app.storageKey)
+                    }
                 }
             }
             repository.setIconRevision(
                 generation,
                 app.id,
-                distinctIconRevision(fileRevision, app.iconRevision),
+                LibraryIconRevision.nextAfterEdit(app.iconRevision),
             )
         }
     }
@@ -518,8 +640,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 ImportRestoreOutcome(result.iconRevision, sourceMetadata)
             }
         }
-        val resolvedIconRevision = outcome.iconRevision?.let { revision ->
-            distinctIconRevision(revision, app.iconRevision)
+        // Restoring configs/ can change either artwork source, even without a main icon.
+        val resolvedIconRevision = outcome.iconRevision?.let {
+            LibraryIconRevision.nextAfterEdit(app.iconRevision)
         } ?: app.iconRevision
         val sourceMetadata = outcome.sourceMetadata
         if (sourceMetadata != null) {
@@ -952,11 +1075,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         file.absoluteFile
     }
 
-    private fun distinctIconRevision(fileRevision: Long, previousRevision: Long): Long {
-        if (fileRevision == 0L || fileRevision != previousRevision) return fileRevision
-        return fileRevision xor Long.MIN_VALUE
-    }
-
     private fun <T> launchMutation(callback: MutationCallback<T>, block: suspend () -> T) {
         scope.launch {
             try {
@@ -1063,6 +1181,7 @@ internal fun libraryDisplayStates(
                     descriptionCatalogMutex.withLock {
                         descriptionCatalog.resolve(
                             state.emulatorDir, state.apps, input.descriptionLocale.value,
+                            state.descriptionOverrides,
                         ) { context.ensureActive() }
                     }
                 }
@@ -1095,4 +1214,31 @@ internal fun libraryDisplayStates(
             }
         }
     })
+}
+
+/**
+ * Once publication starts, finish the filesystem + Room commit (or restore the files) even if
+ * the editor's scope is cancelled. Cancellation before this boundary does not start a save.
+ */
+internal suspend fun commitLibraryMetadataEdit(
+    publish: () -> LibraryIconOverride.PublishedDrafts?,
+    persist: suspend () -> Unit,
+) {
+    currentCoroutineContext().ensureActive()
+    withContext(NonCancellable + Dispatchers.IO) {
+        var published: LibraryIconOverride.PublishedDrafts? = null
+        try {
+            published = publish()
+            persist()
+        } catch (error: Throwable) {
+            try {
+                published?.restore()
+            } catch (restore: Throwable) {
+                error.addSuppressed(restore)
+            }
+            throw error
+        } finally {
+            published?.close()
+        }
+    }
 }

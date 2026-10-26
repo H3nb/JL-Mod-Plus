@@ -1090,4 +1090,18 @@
     <string name="config_asset_busy">请先完成当前的文件操作。</string>
     <string name="config_background_dynamic">动态颜色</string>
     <string name="config_background_dynamic_help">使用随 MIDlet 画面平滑变化的纯色背景。</string>
+    <string name="library_metadata_main_icon">主图标</string>
+    <string name="library_metadata_follows_main">使用主图标</string>
+    <string name="library_metadata_change">更换</string>
+    <string name="library_metadata_remove_portrait">移除 3:4 图标</string>
+    <string name="library_metadata_icon_updated">图标已更新</string>
+    <string name="library_metadata_discard_title">放弃更改？</string>
+    <string name="library_metadata_discard_message">未保存的文字更改将丢失。图标更改已保存。</string>
+    <string name="library_metadata_discard">放弃</string>
+    <string name="library_metadata_default_description">默认描述</string>
+    <string name="library_metadata_other_languages">其他语言</string>
+    <string name="library_metadata_add_language">+ 添加语言</string>
+    <string name="library_metadata_language_search">搜索语言或输入区域代码</string>
+    <string name="library_metadata_remove_language">删除描述</string>
+    <string name="library_metadata_language_load_failed">无法加载语言描述。请重新打开元数据编辑页面。</string>
 </resources>

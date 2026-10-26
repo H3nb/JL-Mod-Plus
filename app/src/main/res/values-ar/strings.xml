@@ -1255,4 +1255,18 @@
     <string name="config_asset_busy">أكمل عملية الملف الحالية أولاً.</string>
     <string name="config_background_dynamic">لون ديناميكي</string>
     <string name="config_background_dynamic_help">يستخدم لونًا موحدًا يتكيف بسلاسة مع شاشة MIDlet.</string>
+    <string name="library_metadata_main_icon">الرئيسية</string>
+    <string name="library_metadata_follows_main">يستخدم الأيقونة الرئيسية</string>
+    <string name="library_metadata_change">تغيير</string>
+    <string name="library_metadata_remove_portrait">إزالة أيقونة 3:4</string>
+    <string name="library_metadata_icon_updated">تم تحديث الأيقونة</string>
+    <string name="library_metadata_discard_title">هل تريد تجاهل التغييرات؟</string>
+    <string name="library_metadata_discard_message">ستُفقد تغييرات النص غير المحفوظة. تم حفظ تغييرات الأيقونة بالفعل.</string>
+    <string name="library_metadata_discard">تجاهل</string>
+    <string name="library_metadata_default_description">الوصف الافتراضي</string>
+    <string name="library_metadata_other_languages">لغات أخرى</string>
+    <string name="library_metadata_add_language">+ إضافة لغة</string>
+    <string name="library_metadata_language_search">ابحث عن لغة أو أدخل رمز اللغة</string>
+    <string name="library_metadata_remove_language">إزالة الوصف</string>
+    <string name="library_metadata_language_load_failed">تعذر تحميل الأوصاف. افتح تحرير البيانات الوصفية مجددًا.</string>
 </resources>

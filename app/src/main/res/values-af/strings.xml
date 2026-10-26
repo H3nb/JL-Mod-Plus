@@ -1123,4 +1123,18 @@
     <string name="config_asset_busy">Voltooi eers die huidige lêerhandeling.</string>
     <string name="config_background_dynamic">Dinamiese kleur</string>
     <string name="config_background_dynamic_help">Gebruik een enkele soliede kleur wat geleidelik by die MIDlet-skerm aanpas.</string>
+    <string name="library_metadata_main_icon">Hoof</string>
+    <string name="library_metadata_follows_main">Gebruik hoofikoon</string>
+    <string name="library_metadata_change">Verander</string>
+    <string name="library_metadata_remove_portrait">Verwyder 3:4-ikoon</string>
+    <string name="library_metadata_icon_updated">Ikoon opgedateer</string>
+    <string name="library_metadata_discard_title">Wysigings weggooi?</string>
+    <string name="library_metadata_discard_message">Ongestoorde tekswysigings sal verlore gaan. Ikoonwysigings is reeds gestoor.</string>
+    <string name="library_metadata_discard">Weggooi</string>
+    <string name="library_metadata_default_description">Standaardbeskrywing</string>
+    <string name="library_metadata_other_languages">Ander tale</string>
+    <string name="library_metadata_add_language">+ Voeg taal by</string>
+    <string name="library_metadata_language_search">Soek taal of voer landkode in</string>
+    <string name="library_metadata_remove_language">Verwyder beskrywing</string>
+    <string name="library_metadata_language_load_failed">Kon nie taalbeskrywings laai nie. Maak metadata weer oop.</string>
 </resources>

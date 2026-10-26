@@ -1090,4 +1090,18 @@
     <string name="config_asset_busy">현재 파일 작업을 먼저 완료하세요.</string>
     <string name="config_background_dynamic">동적 색상</string>
     <string name="config_background_dynamic_help">MIDlet 화면에 맞춰 부드럽게 변하는 단색을 사용합니다.</string>
+    <string name="library_metadata_main_icon">기본</string>
+    <string name="library_metadata_follows_main">기본 아이콘 사용</string>
+    <string name="library_metadata_change">변경</string>
+    <string name="library_metadata_remove_portrait">3:4 아이콘 삭제</string>
+    <string name="library_metadata_icon_updated">아이콘 업데이트됨</string>
+    <string name="library_metadata_discard_title">변경사항을 취소하시겠습니까?</string>
+    <string name="library_metadata_discard_message">저장하지 않은 텍스트 변경사항은 사라집니다. 아이콘 변경사항은 이미 저장되었습니다.</string>
+    <string name="library_metadata_discard">취소</string>
+    <string name="library_metadata_default_description">기본 설명</string>
+    <string name="library_metadata_other_languages">다른 언어</string>
+    <string name="library_metadata_add_language">+ 언어 추가</string>
+    <string name="library_metadata_language_search">언어 검색 또는 로캘 코드 입력</string>
+    <string name="library_metadata_remove_language">설명 삭제</string>
+    <string name="library_metadata_language_load_failed">설명을 불러올 수 없습니다. 메타데이터 편집을 다시 여세요.</string>
 </resources>

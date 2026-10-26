@@ -1122,4 +1122,18 @@
     <string name="config_asset_busy">Ολοκληρώστε πρώτα την τρέχουσα λειτουργία αρχείου.</string>
     <string name="config_background_dynamic">Δυναμικό χρώμα</string>
     <string name="config_background_dynamic_help">Χρησιμοποιεί ένα ενιαίο χρώμα που προσαρμόζεται ομαλά στην οθόνη του MIDlet.</string>
+    <string name="library_metadata_main_icon">Κύριο</string>
+    <string name="library_metadata_follows_main">Χρησιμοποιεί το κύριο εικονίδιο</string>
+    <string name="library_metadata_change">Αλλαγή</string>
+    <string name="library_metadata_remove_portrait">Αφαίρεση εικονιδίου 3:4</string>
+    <string name="library_metadata_icon_updated">Το εικονίδιο ενημερώθηκε</string>
+    <string name="library_metadata_discard_title">Απόρριψη αλλαγών;</string>
+    <string name="library_metadata_discard_message">Οι μη αποθηκευμένες αλλαγές κειμένου θα χαθούν. Οι αλλαγές εικονιδίου έχουν ήδη αποθηκευτεί.</string>
+    <string name="library_metadata_discard">Απόρριψη</string>
+    <string name="library_metadata_default_description">Προεπιλεγμένη περιγραφή</string>
+    <string name="library_metadata_other_languages">Άλλες γλώσσες</string>
+    <string name="library_metadata_add_language">+ Προσθήκη γλώσσας</string>
+    <string name="library_metadata_language_search">Αναζήτηση γλώσσας ή εισαγωγή κωδικού</string>
+    <string name="library_metadata_remove_language">Κατάργηση περιγραφής</string>
+    <string name="library_metadata_language_load_failed">Αδύνατη η φόρτωση περιγραφών. Ανοίξτε ξανά την επεξεργασία μεταδεδομένων.</string>
 </resources>

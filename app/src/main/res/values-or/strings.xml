@@ -1123,4 +1123,18 @@
     <string name="config_asset_busy">ପ୍ରଥମେ ଚାଲୁଥିବା ଫାଇଲ କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ।</string>
     <string name="config_background_dynamic">ଗତିଶୀଳ ରଙ୍ଗ</string>
     <string name="config_background_dynamic_help">MIDlet ପରଦା ସହ ସୁଗମ ଭାବରେ ବଦଳୁଥିବା ଗୋଟିଏ ଏକରଙ୍ଗିଆ ପୃଷ୍ଠଭୂମି ବ୍ୟବହାର କରେ।</string>
+    <string name="library_metadata_main_icon">ମୁଖ୍ୟ</string>
+    <string name="library_metadata_follows_main">ମୁଖ୍ୟ ଆଇକନ୍ ବ୍ୟବହାର କରୁଛି</string>
+    <string name="library_metadata_change">ବଦଳାନ୍ତୁ</string>
+    <string name="library_metadata_remove_portrait">3:4 ଆଇକନ୍ ହଟାନ୍ତୁ</string>
+    <string name="library_metadata_icon_updated">ଆଇକନ୍ ଅପଡେଟ୍ ହୋଇଛି</string>
+    <string name="library_metadata_discard_title">ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ବାତିଲ୍ କରିବେ କି?</string>
+    <string name="library_metadata_discard_message">ସଞ୍ଚୟ ହୋଇନଥିବା ଲେଖା ପରିବର୍ତ୍ତନ ହଜିଯିବ। ଆଇକନ୍ ପରିବର୍ତ୍ତନ ପୂର୍ବରୁ ସଞ୍ଚୟ ହୋଇଛି।</string>
+    <string name="library_metadata_discard">ବାତିଲ୍ କରନ୍ତୁ</string>
+    <string name="library_metadata_default_description">ଡିଫଲ୍ଟ ବିବରଣୀ</string>
+    <string name="library_metadata_other_languages">ଅନ୍ୟ ଭାଷା</string>
+    <string name="library_metadata_add_language">+ ଭାଷା ଯୋଡ଼ନ୍ତୁ</string>
+    <string name="library_metadata_language_search">ଭାଷା ଖୋଜନ୍ତୁ କିମ୍ବା ଲୋକେଲ କୋଡ୍ ଦିଅନ୍ତୁ</string>
+    <string name="library_metadata_remove_language">ବିବରଣୀ ହଟାନ୍ତୁ</string>
+    <string name="library_metadata_language_load_failed">ବିବରଣୀ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ। ମେଟାଡାଟା ପୁଣି ଖୋଲନ୍ତୁ।</string>
 </resources>

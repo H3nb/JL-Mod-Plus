@@ -79,6 +79,48 @@ class LibraryDescriptionCatalogTest {
         assertEquals("Sesudah pembaruan", catalog.resolve(workdir, listOf(app), "id-ID")[app.id])
     }
 
+    @Test fun userTranslationsOverrideDescriptorsAndUseTheSameFallbackChain() {
+        val root = temporaryFolder.newFolder("localized-overrides")
+        File(root, "converted/game").apply { mkdirs() }
+        File(root, "converted/game/converted.dex.conf").writeText(
+            "MIDlet-Name: Adventure\nMIDlet-Vendor: Example\nMIDlet-Version: 1.0\n" +
+                "MIDlet-Description-en: Source English\n" +
+                "MIDlet-Description-en-US: Source American\n",
+        )
+        val catalog = LibraryDescriptionCatalog()
+        val game = app("Edited default")
+        val overrides = mapOf(game.id to mapOf(
+            "en" to "User English", "id" to "Bahasa Indonesia",
+        ))
+        // A regional source is more specific than an overridden base language.
+        assertEquals("Source American",
+            catalog.resolve(root, listOf(game), "en-US", overrides)[game.id])
+        assertEquals("User English",
+            catalog.resolve(root, listOf(game), "en-GB", overrides)[game.id])
+        assertEquals("Bahasa Indonesia",
+            catalog.resolve(root, listOf(game), "id-ID", overrides)[game.id])
+        assertTrue(catalog.resolve(root, listOf(game), "fr-FR", overrides).isEmpty())
+        // Removing a user override reveals the retained descriptor.
+        assertEquals("Source English",
+            catalog.resolve(root, listOf(game), "en-GB")[game.id])
+    }
+
+    @Test fun userTranslationWithoutDescriptorUsesConfiguredGuestLocale() {
+        val root = temporaryFolder.newFolder("user-only")
+        File(root, "converted/game").apply { mkdirs() }
+        File(root, "converted/game/converted.dex.conf").writeText(
+            "MIDlet-Name: Adventure\nMIDlet-Vendor: Example\nMIDlet-Version: 1.0\n",
+        )
+        val config = File(root, "configs/game").apply { mkdirs() }
+        File(config, "config.json").writeText(
+            """{"Version":7,"SystemProperties":"microedition.locale: en-US"}""",
+        )
+        val game = app("Default")
+        val overrides = mapOf(game.id to mapOf("en" to "User English"))
+        assertEquals("User English",
+            LibraryDescriptionCatalog().resolve(root, listOf(game), "id-ID", overrides)[game.id])
+    }
+
     private fun app(description: String) = LibraryAppRow(
         id = 7,
         storageKey = "game",

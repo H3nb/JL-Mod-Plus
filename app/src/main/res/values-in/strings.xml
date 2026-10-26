@@ -1174,4 +1174,18 @@
     <string name="control_skin_preview_direction">Pratinjau %1$s</string>
     <string name="control_skin_builtin_preview">Bawaan</string>
     <string name="control_skin_custom_preview">Kustom</string>
+    <string name="library_metadata_main_icon">Utama</string>
+    <string name="library_metadata_follows_main">Mengikuti ikon utama</string>
+    <string name="library_metadata_change">Ganti</string>
+    <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>
+    <string name="library_metadata_icon_updated">Ikon diperbarui</string>
+    <string name="library_metadata_discard_title">Buang perubahan?</string>
+    <string name="library_metadata_discard_message">Perubahan teks yang belum disimpan akan hilang. Perubahan ikon sudah tersimpan.</string>
+    <string name="library_metadata_discard">Buang</string>
+    <string name="library_metadata_default_description">Deskripsi default</string>
+    <string name="library_metadata_other_languages">Bahasa lain</string>
+    <string name="library_metadata_add_language">+ Tambah bahasa</string>
+    <string name="library_metadata_language_search">Cari bahasa atau kode</string>
+    <string name="library_metadata_remove_language">Hapus deskripsi</string>
+    <string name="library_metadata_language_load_failed">Gagal memuat deskripsi bahasa. Buka kembali Edit metadata untuk mencoba lagi.</string>
 </resources>

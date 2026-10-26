@@ -1123,4 +1123,18 @@
     <string name="config_asset_busy">Afslut først den igangværende filhandling.</string>
     <string name="config_background_dynamic">Dynamisk farve</string>
     <string name="config_background_dynamic_help">Bruger én ensartet farve, der tilpasser sig MIDlet-skærmen gradvist.</string>
+    <string name="library_metadata_main_icon">Primært</string>
+    <string name="library_metadata_follows_main">Bruger primært ikon</string>
+    <string name="library_metadata_change">Skift</string>
+    <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
+    <string name="library_metadata_icon_updated">Ikon opdateret</string>
+    <string name="library_metadata_discard_title">Kassér ændringer?</string>
+    <string name="library_metadata_discard_message">Ikke-gemte tekstændringer går tabt. Ændringer af ikoner er allerede gemt.</string>
+    <string name="library_metadata_discard">Kassér</string>
+    <string name="library_metadata_default_description">Standardbeskrivelse</string>
+    <string name="library_metadata_other_languages">Andre sprog</string>
+    <string name="library_metadata_add_language">+ Tilføj sprog</string>
+    <string name="library_metadata_language_search">Søg efter sprog eller indtast kode</string>
+    <string name="library_metadata_remove_language">Fjern beskrivelse</string>
+    <string name="library_metadata_language_load_failed">Beskrivelserne kunne ikke indlæses. Åbn metadataredigering igen.</string>
 </resources>
