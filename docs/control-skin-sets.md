@@ -13,15 +13,15 @@ skins/controls/Fantasy/
   key_5.png
   key_5_pressed.png
   key_fire.webp
-  dpad_base.png
+  dpad_base.svg
   dpad_up.png
   analog_base.webp
   analog_thumb.png
   analog_thumb_pressed.png
 ```
 
-Grouped image layers use the literal stems above, each with .png or .webp or .svg
-extension. All eight slots are optional. D-pad overlays use the same full-size
+Grouped image layers use the literal stems above, each with a .png, .webp,
+or .svg extension. All eight slots are optional. D-pad overlays use the same full-size
 canvas as the D-pad base to allow exact composition for diagonal presses.
 
 One folder is one set. The folder name is the display name and can be renamed.
@@ -42,8 +42,8 @@ editor assigns metadata on its next scan. Duplicate UUIDs in copied folders
 are assigned new IDs by the editor. A runtime with an ambiguous ID instead
 uses built-in buttons rather than modifying global files.
 
-Image slots are named `key_<slot>.png` or `key_<slot>.webp`, or `key_<slot>.svg`, with an optional
-`_pressed` suffix. Supported slots: numbers `0`–`9`, `star`, `pound`,
+Image slots are named `key_<slot>.png`, `key_<slot>.webp`, or `key_<slot>.svg`,
+with an optional `_pressed` suffix before the extension. Supported slots: numbers `0`–`9`, `star`, `pound`,
 `soft_left`, `soft_right`, `fire`, `a`–`d`, `menu`, `up`, `down`,
 `left`, `right`, and the four diagonal names `up_left`, `up_right`,
 `down_left`, and `down_right`. PNG, WebP and SVG cannot coexist for the same
@@ -127,7 +127,9 @@ Renaming keeps the ID; duplicating creates a new one. Deleting the selected
 set clears the MIDlet selection on return. Other MIDlets holding references
 to a deleted set harmlessly fall back to built-in buttons.
 
-The editor accepts PNG/WebP up to 8 MiB and 2048 pixels on either axis. SVG sources are capped at 8 MiB; their vector coordinates are not treated as bitmap pixel dimensions. Files
-replaced through the editor are staged before publication. External filesystem
+The editor accepts PNG/WebP up to 8 MiB and 2048 pixels on either axis.
+SVG sources are capped at 8 MiB; their vector coordinates are not raster pixel
+dimensions. Files replaced through the editor are staged before publication. External filesystem
 changes are picked up on the next library scan or MIDlet launch; there is no
-runtime hot-reload. SVG is rasterized at launch and is never drawn as vectors per frame.
+runtime hot-reload. SVG is rasterized at launch and never drawn as vectors per
+frame; see [Static SVG artwork](svg-artwork.md) for the format contract.
