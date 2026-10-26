@@ -80,8 +80,6 @@
     <string name="file_picker_file">File</string>
     <string name="file_picker_preview_named">Preview %1$s</string>
     <string name="file_picker_preview_unavailable">Preview unavailable</string>
-    <string name="file_picker_preview_loading">Loading preview…</string>
-    <string name="file_picker_image_type">%1$s image</string>
     <string name="file_picker_storage_volume">Storage volume</string>
     <string name="file_picker_empty">No matching files</string>
     <string name="file_picker_empty_folder">No folders found</string>

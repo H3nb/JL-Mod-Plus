@@ -86,6 +86,8 @@
     <string name="file_picker_empty">No hi ha fitxers coincidents</string>
     <string name="file_picker_empty_folder">No s’ha trobat cap carpeta</string>
     <string name="file_picker_file">Fitxer</string>
+    <string name="file_picker_preview_named">Previsualització: %1$s</string>
+    <string name="file_picker_preview_unavailable">No disponible</string>
     <string name="file_picker_folder_exists">Ja existeix un element amb aquest nom.</string>
     <string name="file_picker_folder_name">Nom de la carpeta</string>
     <string name="file_picker_grant_access">Concedeix accés</string>

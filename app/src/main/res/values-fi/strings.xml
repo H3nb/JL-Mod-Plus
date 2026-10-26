@@ -103,6 +103,8 @@
     <string name="file_picker_current_folder">Nykyinen kansio</string>
     <string name="file_picker_parent_folder">Yläkansio</string>
     <string name="file_picker_file">Tiedosto</string>
+    <string name="file_picker_preview_named">Esikatselu: %1$s</string>
+    <string name="file_picker_preview_unavailable">Ei käytettävissä</string>
     <string name="file_picker_storage_volume">Tallennustila</string>
     <string name="file_picker_empty">Ei vastaavia tiedostoja</string>
     <string name="file_picker_empty_folder">Kansioita ei löytynyt</string>

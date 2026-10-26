@@ -493,7 +493,7 @@ private fun PickerEntryRow(
         headlineContent = {
             Text(
                 text = entry.name,
-                maxLines = 1,
+                maxLines = if (onPreview != null) 2 else 1,
                 overflow = TextOverflow.Ellipsis,
             )
         },
@@ -501,10 +501,7 @@ private fun PickerEntryRow(
             {
                 Text(
                     if (isPickerImage(entry.name)) {
-                        stringResource(
-                            R.string.file_picker_image_type,
-                            entry.name.substringAfterLast('.').uppercase(java.util.Locale.ROOT),
-                        )
+                        entry.name.substringAfterLast('.').uppercase(java.util.Locale.ROOT)
                     } else stringResource(R.string.file_picker_file),
                 )
             }

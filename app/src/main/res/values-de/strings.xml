@@ -171,6 +171,8 @@
     <string name="file_picker_current_folder">Aktueller Ordner</string>
     <string name="file_picker_parent_folder">Übergeordneter Ordner</string>
     <string name="file_picker_file">Datei</string>
+    <string name="file_picker_preview_named">Vorschau: %1$s</string>
+    <string name="file_picker_preview_unavailable">Nicht verfügbar</string>
     <string name="file_picker_storage_volume">Speichervolume</string>
     <string name="file_picker_empty">Keine passenden Dateien</string>
     <string name="file_picker_empty_folder">Keine Ordner gefunden</string>

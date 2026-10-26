@@ -87,6 +87,8 @@
     <string name="file_picker_empty">Geen ooreenstemmende lêers nie</string>
     <string name="file_picker_empty_folder">Geen vouers gevind nie</string>
     <string name="file_picker_file">Lêer</string>
+    <string name="file_picker_preview_named">Voorskou: %1$s</string>
+    <string name="file_picker_preview_unavailable">Nie beskikbaar nie</string>
     <string name="file_picker_folder_exists">’n Item met hierdie naam bestaan reeds.</string>
     <string name="file_picker_folder_name">Vouernaam</string>
     <string name="file_picker_grant_access">Verleen toegang</string>

@@ -194,6 +194,8 @@
     <string name="file_picker_empty">Žádné odpovídající soubory</string>
     <string name="file_picker_empty_folder">Nenalezeny žádné složky</string>
     <string name="file_picker_file">Soubor</string>
+    <string name="file_picker_preview_named">Náhled: %1$s</string>
+    <string name="file_picker_preview_unavailable">Nedostupné</string>
     <string name="file_picker_folder_exists">Položka s tímto názvem již existuje.</string>
     <string name="file_picker_folder_name">Název složky</string>
     <string name="file_picker_grant_access">Povolit přístup</string>

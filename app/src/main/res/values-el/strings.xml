@@ -86,6 +86,8 @@
     <string name="file_picker_empty">Δεν υπάρχουν αρχεία που να ταιριάζουν</string>
     <string name="file_picker_empty_folder">Δεν βρέθηκαν φάκελοι</string>
     <string name="file_picker_file">Αρχείο</string>
+    <string name="file_picker_preview_named">Προεπισκόπηση: %1$s</string>
+    <string name="file_picker_preview_unavailable">Μη διαθέσιμο</string>
     <string name="file_picker_folder_exists">Υπάρχει ήδη στοιχείο με αυτό το όνομα.</string>
     <string name="file_picker_folder_name">Όνομα φακέλου</string>
     <string name="file_picker_grant_access">Παραχώρηση πρόσβασης</string>

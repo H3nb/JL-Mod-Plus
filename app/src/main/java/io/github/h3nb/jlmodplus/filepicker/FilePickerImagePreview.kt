@@ -127,13 +127,7 @@ internal fun FilePickerImagePreviewDialog(
                 when {
                     bitmap != null -> Image(bitmap!!.asImageBitmap(), contentDescription = null,
                         contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
-                    !loaded -> {
-                        val loadingLabel = stringResource(R.string.file_picker_preview_loading)
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(36.dp)
-                                .semantics { contentDescription = loadingLabel },
-                        )
-                    }
+                    !loaded -> CircularProgressIndicator(modifier = Modifier.size(36.dp))
                     else -> Text(stringResource(R.string.file_picker_preview_unavailable))
                 }
             }

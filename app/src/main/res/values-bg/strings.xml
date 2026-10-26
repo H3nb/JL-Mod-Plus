@@ -174,6 +174,8 @@
     <string name="file_picker_empty">Няма съответстващи файлове</string>
     <string name="file_picker_empty_folder">Няма намерени папки</string>
     <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">Преглед: %1$s</string>
+    <string name="file_picker_preview_unavailable">Недостъпни</string>
     <string name="file_picker_folder_exists">Вече съществува елемент с това име.</string>
     <string name="file_picker_folder_name">Име на папката</string>
     <string name="file_picker_grant_access">Предоставяне на достъп</string>
