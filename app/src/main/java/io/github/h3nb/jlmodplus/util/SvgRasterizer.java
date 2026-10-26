@@ -37,6 +37,7 @@ public final class SvgRasterizer {
     }
 
     public static Document read(InputStream input) throws IOException {
+        try {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int count;
@@ -57,23 +58,29 @@ public final class SvgRasterizer {
 
         try {
             SVG.setInternalEntitiesEnabled(false);
+            SVG.registerExternalFileResolver(null);
             SVG svg = SVG.getFromInputStream(new ByteArrayInputStream(content));
             RectF viewBox = svg.getDocumentViewBox();
             float width = svg.getDocumentWidth();
             float height = svg.getDocumentHeight();
             if (!(width > 0f) && viewBox != null) width = viewBox.width();
             if (!(height > 0f) && viewBox != null) height = viewBox.height();
-            if (!Float.isFinite(width) || !Float.isFinite(height)
+            if (Float.isNaN(width) || Float.isInfinite(width)
+                    || Float.isNaN(height) || Float.isInfinite(height)
                     || width <= 0f || height <= 0f) {
                 throw new IOException("SVG needs finite positive dimensions or viewBox");
             }
             double ratio = (double) width / height;
-            if (!Double.isFinite(ratio) || ratio <= 0d) {
+            if (Double.isNaN(ratio) || Double.isInfinite(ratio)
+                    || ratio <= 0d || ratio < 0.0001d || ratio > 10000d) {
                 throw new IOException("Invalid SVG aspect ratio");
             }
             return new Document(svg, (float) ratio, width, height, viewBox != null);
         } catch (SVGParseException | IllegalArgumentException failure) {
             throw new IOException("Invalid SVG image", failure);
+        }
+        } catch (OutOfMemoryError failure) {
+            throw new IOException("SVG is too complex to load safely", failure);
         }
     }
 
