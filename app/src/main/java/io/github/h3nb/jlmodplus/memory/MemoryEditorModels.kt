@@ -347,6 +347,8 @@ internal object MemoryWatchPageParser {
     }
 }
 
+internal enum class MemoryEditorTab { RESULTS, WATCH, INSPECTOR }
+
 internal data class MemoryEditorUiState(
     val visible: Boolean = false,
     val connecting: Boolean = false,
@@ -376,7 +378,14 @@ internal data class MemoryEditorUiState(
     val canUndo: Boolean = false,
     val inspectorLoading: Boolean = false,
     val inspector: MemoryInspectorSnapshot? = null,
-)
+) {
+    val activeTab: MemoryEditorTab
+        get() = when {
+            inspectorLoading || inspector != null -> MemoryEditorTab.INSPECTOR
+            watchTab -> MemoryEditorTab.WATCH
+            else -> MemoryEditorTab.RESULTS
+        }
+}
 
 internal interface MemoryEditorActions {
     fun close()

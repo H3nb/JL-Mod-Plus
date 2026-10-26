@@ -106,7 +106,7 @@ fun MemoryEditorPortraitScreenshot() {
                 supported = true,
                 writeSupported = true,
                 runtimeToken = 1,
-                resultCount = 2,
+                resultCount = 3,
                 results = previewRows,
                 sessionStage = MemorySessionStage.CANDIDATES,
             ),
@@ -147,7 +147,7 @@ fun MemoryEditorLandscapeResultsScreenshot() {
                 supported = true,
                 writeSupported = true,
                 runtimeToken = 1,
-                resultCount = 2,
+                resultCount = 3,
                 results = previewRows,
                 sessionStage = MemorySessionStage.CANDIDATES,
             ),
@@ -168,7 +168,7 @@ fun MemoryEditorUnknownBaselineScreenshot() {
                 supported = true,
                 writeSupported = true,
                 runtimeToken = 1,
-                resultCount = 2,
+                resultCount = 3,
                 results = previewRows,
                 selected = setOf(1),
                 sessionStage = MemorySessionStage.UNKNOWN_BASELINE,
@@ -209,7 +209,7 @@ fun MemoryEditorLandscapeKnownSearchDialogScreenshot() {
                 supported = true,
                 writeSupported = true,
                 runtimeToken = 1,
-                resultCount = 2,
+                resultCount = 3,
                 results = previewRows,
                 sessionStage = MemorySessionStage.CANDIDATES,
             ),
@@ -310,6 +310,36 @@ fun MemoryEditorLandscapeMessageToolbarScreenshot() {
                 messageIsError = false,
             ),
             actions = NoOpMemoryEditorActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Memory Editor compact large text", widthDp = 360, heightDp = 640, fontScale = 2f)
+@Preview(name = "Memory Editor landscape large text", widthDp = 640, heightDp = 320, fontScale = 2f)
+@Composable
+fun MemoryEditorLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        MemoryEditorRuntimeRoot(
+            state = MemoryEditorUiState(
+                visible = true, connected = true, supported = true, writeSupported = true,
+                runtimeToken = 1, resultCount = 3, results = previewRows,
+                selected = setOf(1), sessionStage = MemorySessionStage.CANDIDATES,
+            ),
+            actions = NoOpMemoryEditorActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Memory search large text", widthDp = 640, heightDp = 320, fontScale = 2f)
+@Composable
+fun MemorySearchLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        RuntimeKnownSearchDialog(
+            state = MemoryEditorUiState(sessionStage = MemorySessionStage.CANDIDATES),
+            actions = NoOpMemoryEditorActions,
+            onPeekUnderlayChanged = {}, onDismiss = {},
         )
     }
 }

@@ -680,6 +680,7 @@ internal class MemoryEditorComposeController(
     }
 
     override fun setWatchTab(watch: Boolean) {
+        closeInspector()
         if (state.watchTab == watch) return
         invalidateVisiblePageRequest()
         state = state.copy(watchTab = watch, selected = emptySet())
@@ -1167,7 +1168,7 @@ internal class MemoryEditorComposeController(
 
     private fun runLiveRefreshTick() {
         if (destroyed || !state.visible) return
-        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending && state.inspector == null) {
+        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending && state.activeTab != MemoryEditorTab.INSPECTOR) {
             if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
         }
         if (!destroyed && state.visible) {
