@@ -108,10 +108,6 @@ public class AppsListFragment extends Fragment {
     private static final long NO_GENERATION = Long.MIN_VALUE;
     private static final String STATE_PENDING_ICON_DATABASE_ID =
             "apps_list.pending_icon_database_id";
-    private static final String STATE_PENDING_ICON_PORTRAIT =
-            "apps_list.pending_icon_portrait";
-    private static final String STATE_PENDING_ICON_DRAFT =
-            "apps_list.pending_icon_draft";
     private static final String STATE_PENDING_ICON_WORKDIR =
             "apps_list.pending_icon_workdir";
     private static final String STATE_PENDING_ICON_GENERATION =
@@ -130,8 +126,6 @@ public class AppsListFragment extends Fragment {
             uris -> onImportBundlePicked(uris.isEmpty() ? null : uris.get(0)));
 
     private long pendingIconDatabaseId = NO_GENERATION;
-    private boolean pendingIconPortrait;
-    private boolean pendingIconWasDraft;
     @Nullable private LibraryViewModel.MutationCallback<String> pendingIconDraftCallback;
     private String pendingIconWorkdir;
     private long pendingIconGeneration = NO_GENERATION;
@@ -174,8 +168,6 @@ public class AppsListFragment extends Fragment {
         if (savedInstanceState != null) {
             pendingIconDatabaseId = savedInstanceState.getLong(
                     STATE_PENDING_ICON_DATABASE_ID, NO_GENERATION);
-            pendingIconPortrait = savedInstanceState.getBoolean(STATE_PENDING_ICON_PORTRAIT);
-            pendingIconWasDraft = savedInstanceState.getBoolean(STATE_PENDING_ICON_DRAFT);
             pendingIconWorkdir = savedInstanceState.getString(STATE_PENDING_ICON_WORKDIR);
             pendingIconGeneration = savedInstanceState.getLong(
                     STATE_PENDING_ICON_GENERATION, NO_GENERATION);
@@ -188,8 +180,6 @@ public class AppsListFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putLong(STATE_PENDING_ICON_DATABASE_ID, pendingIconDatabaseId);
-        outState.putBoolean(STATE_PENDING_ICON_PORTRAIT, pendingIconPortrait);
-        outState.putBoolean(STATE_PENDING_ICON_DRAFT, pendingIconWasDraft);
         outState.putString(STATE_PENDING_ICON_WORKDIR, pendingIconWorkdir);
         outState.putLong(STATE_PENDING_ICON_GENERATION, pendingIconGeneration);
         super.onSaveInstanceState(outState);
@@ -398,30 +388,6 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
-            public void onPickIconByDatabaseId(long databaseId) {
-                onPickIconByDatabaseId(databaseId, false);
-            }
-
-            @Override
-            public void onPickIconByDatabaseId(long databaseId, boolean portrait) {
-                pendingIconDatabaseId = databaseId;
-                pendingIconPortrait = portrait;
-                pendingIconWasDraft = false;
-                pendingIconWorkdir = activeWorkdir == null ? null : activeWorkdir.getAbsolutePath();
-                pendingIconGeneration = activeGeneration;
-                iconPickerLauncher.launch(createFilePickerIntent(
-                        false,
-                        true,
-                        getString(R.string.file_picker_select_icon),
-                        ".png",
-                        ".jpg",
-                        ".jpeg",
-                        ".webp",
-                        ".gif",
-                        ".bmp"));
-            }
-
-            @Override
             public void onPickIconByDatabaseId(
                     long databaseId, boolean portrait,
                     @NonNull LibraryViewModel.MutationCallback<String> callback) {
@@ -430,8 +396,14 @@ public class AppsListFragment extends Fragment {
                             new IllegalStateException("Icon selection was replaced"));
                 }
                 pendingIconDraftCallback = callback;
-                onPickIconByDatabaseId(databaseId, portrait);
-                pendingIconWasDraft = true;
+                pendingIconDatabaseId = databaseId;
+                pendingIconWorkdir = activeWorkdir == null ? null : activeWorkdir.getAbsolutePath();
+                pendingIconGeneration = activeGeneration;
+                iconPickerLauncher.launch(createFilePickerIntent(
+                        false,
+                        true,
+                        getString(R.string.file_picker_select_icon),
+                        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"));
             }
 
             @Override
@@ -441,23 +413,6 @@ public class AppsListFragment extends Fragment {
                 libraryViewModel.prepareOriginalIconDraft(databaseId, (path, error) -> {
                     if (error != null) showError(error);
                     callback.complete(path, error);
-                });
-            }
-
-            @Override
-            public void onResetIcon(int appId) {
-                onResetIcon(appId, false);
-            }
-
-            @Override
-            public void onResetIcon(int appId, boolean portrait) {
-                LibraryAppRow row = findRow(appId);
-                if (row == null) return;
-                libraryViewModel.resetIcon(row.getId(), portrait, (ignored, error) -> {
-                    if (error != null) showError(error);
-                    else if (isAdded() && composeController != null) {
-                        composeController.showNotice(getString(R.string.library_metadata_icon_updated));
-                    }
                 });
             }
 
@@ -1354,44 +1309,28 @@ public class AppsListFragment extends Fragment {
 
     private void onIconPicked(Uri uri) {
         long databaseId = pendingIconDatabaseId;
-        boolean portrait = pendingIconPortrait;
-        LibraryViewModel.MutationCallback<String> draftCallback = pendingIconDraftCallback;
-        boolean wasDraft = pendingIconWasDraft;
-        pendingIconDraftCallback = null;
-        pendingIconWasDraft = false;
+        LibraryViewModel.MutationCallback<String> callback = pendingIconDraftCallback;
         String workdir = pendingIconWorkdir;
         long generation = pendingIconGeneration;
         pendingIconDatabaseId = NO_GENERATION;
-        pendingIconPortrait = false;
+        pendingIconDraftCallback = null;
         pendingIconWorkdir = null;
         pendingIconGeneration = NO_GENERATION;
+
+        // After Fragment recreation the callback no longer owns an editor draft. Do not
+        // publish the picked file, and do not convert it to an immediate-save operation.
+        if (callback == null) return;
         if (uri == null) {
-            if (draftCallback != null) draftCallback.complete(null, null);
-            return;
-        }
-        if (databaseId == NO_GENERATION || !isAdded() ||
+            callback.complete(null, null);
+        } else if (databaseId == NO_GENERATION || !isAdded() ||
                 activeWorkdir == null || !activeWorkdir.getAbsolutePath().equals(workdir) ||
                 activeGeneration != generation) {
-            if (draftCallback != null) {
-                draftCallback.complete(null, new IllegalStateException("Library changed during icon selection"));
-            }
-            return;
-        }
-        // A draft picker restored after process recreation has no live editor callback.
-        // Never reinterpret its result as a legacy immediate-save action.
-        if (wasDraft && draftCallback == null) return;
-        if (draftCallback != null) {
+            callback.complete(null, new IllegalStateException("Library changed during icon selection"));
+        } else {
             libraryViewModel.prepareIconDraft(uri, (path, error) -> {
                 if (error != null) showError(error);
-                draftCallback.complete(path, error);
+                callback.complete(path, error);
             });
-            return;
         }
-        libraryViewModel.updateIcon(databaseId, uri, portrait, (ignored, error) -> {
-            if (error != null) showError(error);
-            else if (isAdded() && composeController != null) {
-                composeController.showNotice(getString(R.string.library_metadata_icon_updated));
-            }
-        });
     }
 }

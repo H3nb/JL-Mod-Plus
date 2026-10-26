@@ -371,18 +371,12 @@ interface LibraryActions {
         callback: LibraryViewModel.MutationCallback<Unit>,
     ) = callback.complete(null, IllegalStateException("Metadata saving is unavailable"))
 
-    fun onPickIcon(appId: Int) = Unit
-    fun onPickIconByDatabaseId(databaseId: Long) = Unit
-    fun onPickIconByDatabaseId(databaseId: Long, portrait: Boolean) =
-        onPickIconByDatabaseId(databaseId)
     fun onPickIconByDatabaseId(
         databaseId: Long, portrait: Boolean, callback: LibraryViewModel.MutationCallback<String>,
     ) = callback.complete(null, IllegalStateException("Icon picker is unavailable"))
     fun onPrepareOriginalIcon(
         databaseId: Long, callback: LibraryViewModel.MutationCallback<String>,
     ) = callback.complete(null, IllegalStateException("Original icon is unavailable"))
-    fun onResetIcon(appId: Int) = Unit
-    fun onResetIcon(appId: Int, portrait: Boolean) = onResetIcon(appId)
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onIconShapeChange(iconShape: LibraryIconShape) = Unit
