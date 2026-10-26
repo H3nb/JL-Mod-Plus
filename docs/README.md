@@ -2,9 +2,14 @@
 
 This is a navigation index, not an additional source of behavior or architecture rules. Start with [AGENTS.md](../AGENTS.md) for repository-wide agent guidance; read only documents relevant to the task. When a dated investigation and current implementation disagree, check the owning contract, source, and tests rather than applying a historical proposal.
 
+## User documentation
+
+- [User guide](guide/README.md) — feature explanations, setup, and troubleshooting. These pages describe user-facing behavior; the contracts below govern engineering details.
+- [Creating screen skins](guide/creating-screen-skins.md) and [virtual-control skins](guide/creating-control-skins.md) — artwork preparation, formats, and practical testing.
+
 ## Maintained development guidance
 
-- [Build, tests, and validation](development.md); [agent workflow](agent-workflow.md); [Android skill routing](android-skills.md).
+- [Testing strategy and quality standards](testing.md); [build, tests, and validation](development.md); [agent workflow](agent-workflow.md); [Android skill routing](android-skills.md).
 - [App-owned UI development](app-ui-development.md); [UI ownership boundaries](ui-ownership-map.md); [UI copy and presentation](ui-copy-style.md).
 - [Localization contract](localization.md) and [translation workflow](localization-workflow.md).
 

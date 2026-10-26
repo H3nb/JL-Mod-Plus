@@ -85,26 +85,11 @@ selection, plural preservation, and applying reviewed translations.
 
 ## Testing strategy
 
-The goal is useful regression confidence, not test count or coverage percentage.
-
-- Add or strengthen a test when it protects behavior or an invariant that is important, easy to regress, difficult to verify manually, or costly to get wrong. A code change does not require a new test merely because code changed.
-- Test at the lowest effective layer. Add a higher-layer test only when Android, process/lifecycle, filesystem, database/SQLite, OS locking, rendering/input, or another integration boundary introduces a failure mode the lower layer cannot exercise.
-- Avoid repeating the same invariant at the same boundary. Prefer a smaller set of tests with distinct failure modes over large scenario matrices that provide equivalent coverage.
-- Test observable contracts rather than private implementation structure. Reflection, fault injection, or implementation-specific hooks are appropriate when they are the practical way to reproduce otherwise unreachable crash-recovery, persistence, concurrency, lifecycle, or compatibility failures; keep such tests focused on the invariant being protected.
-- Treat broad test rewrites during a behavior-preserving refactor as a coupling signal. If externally relevant contracts did not change, first check whether the tests are tied to replaceable internal structure.
-- When simplification removes an implementation mechanism or failure mode, consolidate or remove tests that only encode that obsolete structure while retaining coverage of the behavior and invariants that still matter.
-- Use coverage as diagnostic evidence for unexercised code, not as a target. Do not add trivial assertions, one-test-per-class symmetry, or redundant cases solely to increase a metric.
-- When a flow changes, review its affected tests even if they still pass: check that fixtures, assertions, and exercised production paths remain relevant. Retain stable contract tests, adapt changed contracts, and consolidate or remove redundant or obsolete tests. This does not require a repository-wide test audit for each edit.
-- Testability changes must justify their production cost. Prefer existing boundaries and focused fixtures; do not add DI frameworks, interface/Default pairs, or production hooks merely to follow a testing recipe.
+[Testing strategy and quality standards](testing.md) is the owning policy for test selection, quality, retention, efficiency, and Android/Java ME-specific verification. This document owns the concrete commands and CI/reporting workflow below.
 
 ## Visual verification and screenshot references
 
-- Use rendered previews to review appearance. Keep golden comparisons for selected, stable visual contracts where an unnoticed regression matters; a distinct screen or state alone does not require a permanent baseline. Choose cases with different failure modes rather than every size/theme/font combination.
-- A screenshot mismatch requires diagnosis: distinguish an intended design change, a regression, and rendering-environment drift. Keep the renderer, dependencies, and environment consistent when generating and comparing references.
-- Generate candidates with the screenshot task, inspect reference/actual/diff, then accept only changes justified by the authorized design. Existing authorization covers the corresponding baseline update after inspection; ask only about unresolved product decisions. A mismatch alone does not justify replacing the expected image.
-- References must be actual renderer output. Scripts may transfer or package images unchanged; do not synthesize or edit expected pixels to make a comparison pass.
-- For Back, scrolling, dismissal, and action reachability, use existing behavioral coverage or a targeted interaction/manual check. A static render is not proof of interaction correctness. Add automated coverage when an important failure mode is not already protected.
-- Removing or reclassifying existing golden tests requires an explicit assessment of their remaining regression value; this guidance does not disable current CI checks.
+For deciding which previews deserve golden references and evaluating visual mismatches, follow the [visual verification policy](testing.md#visual-verification-and-screenshot-references). For renderer-produced screenshot candidates and update commands, use the operational instructions on this page. Do not interpret a screenshot match as proof of interaction or device rendering.
 
 ## Existing test structure
 

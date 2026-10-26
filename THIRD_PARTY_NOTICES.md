@@ -1,6 +1,6 @@
 # Third-party provenance and license inventory
 
-This file is the provenance ledger for third-party software bundled by JL-Mod Plus. Its last full runtime-classpath audit used `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` on 2026-08-14; that historical audit is not verification of subsequent dependency changes.
+This file is the provenance ledger for third-party software bundled by JL-Mod Plus. The previous full resolved runtime-classpath audit used `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` on 2026-08-14. A **targeted manifest and documentation reconciliation** on 2026-10-26 checked current source declarations against `alpha` at `3f30ce47e3d335e954ef233409f529d9a7d42fca` (including the Gradle version catalog, module dependency declarations, native source manifest, and in-app notice); it did **not** resolve a fresh runtime dependency graph or inspect the built APK. Neither a historical nor this targeted check certifies ongoing license compliance.
 
 The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **About -> Licenses**. Source-file copyright headers, published artifact metadata, and upstream license files remain authoritative when they are more specific than this summary.
 
@@ -103,7 +103,13 @@ The table below covers direct runtime dependencies and license-significant trans
 | `io.reactivex.rxjava2:rxjava`, `io.reactivex.rxjava2:rxandroid` | ReactiveX | Apache-2.0 |
 | `org.reactivestreams:reactive-streams` | Reactive Streams JVM API | MIT-0 |
 | `net.lingala.zip4j:zip4j:2.11.6` | `https://github.com/srikanth-lingala/zip4j` | Apache-2.0 |
-| `org.ow2.asm:asm:9.6` | OW2 ASM | BSD-3-Clause |
+| `org.ow2.asm:asm:9.10.1` (declared in version catalog) | OW2 ASM | BSD-3-Clause |
+
+## Audit status and release checks
+
+The 2026-10-26 targeted reconciliation confirmed the declared `com.caverock:androidsvg:1.4`, `org.ow2.asm:asm:9.10.1`, PNGJ 2.2.3, Zip4j 2.11.6, and the pinned FFmpeg 8.1.3 / OpenCORE-AMR 0.1.6 source archives; the ASM 9.6 labels in this ledger and the in-app notice were corrected. The root Apache-2.0 `LICENSE` remains unchanged, and the root project copyright spelling in `NOTICE` was corrected without altering upstream attributions.
+
+**Still required before claiming a complete current-release license audit:** resolve actual release/runtime classpaths and license-significant transitives (including the PNGJ JUnit/Hamcrest claim), inspect the actual native and APK artifact contents, verify provenance/notice inclusion for newly added or modified assets, and check the FFmpeg LGPL distribution/linking obligations against the shipped binaries and sources. Consult [FFmpeg's legal/compliance guidance](https://ffmpeg.org/legal.html) and applicable original license texts; the presence of source URLs and in-app notices alone is not proof of full compliance. The current ledger is a traceability aid, not legal advice or a substitute for a release audit.
 
 ## Source availability for reciprocal-license components
 
