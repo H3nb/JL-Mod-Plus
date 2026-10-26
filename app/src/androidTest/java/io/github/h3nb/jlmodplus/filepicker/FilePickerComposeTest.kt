@@ -15,12 +15,15 @@
 package io.github.h3nb.jlmodplus.filepicker
 
 import io.github.h3nb.jlmodplus.R
+import android.graphics.Bitmap
+import java.io.File
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.runtime.getValue
@@ -240,6 +243,40 @@ class FilePickerComposeTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals("exit", events.get())
+    }
+
+    @Test
+    fun imagePreviewDoesNotSelectUntilChooseIsPressed() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.cacheDir, "picker-preview-test.png")
+        val image = Bitmap.createBitmap(32, 16, Bitmap.Config.ARGB_8888)
+        try {
+            file.outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            val events = AtomicReference("")
+            composeRule.setContent {
+                JLModPlusTheme {
+                    FilePickerScreen(
+                        state = sampleState().copy(
+                            entries = listOf(
+                                FilePickerEntry(file.absolutePath, file.name, FilePickerEntryKind.FILE),
+                            ),
+                        ),
+                        actions = RecordingActions(events),
+                    )
+                }
+            }
+
+            composeRule.onNodeWithContentDescription(
+                uiString(R.string.file_picker_preview_named, file.name),
+            ).performClick()
+            composeRule.onNodeWithTag("file_picker_preview_dialog").assertExists()
+            assertEquals("", events.get())
+            composeRule.onNodeWithTag("file_picker_preview_choose").performClick()
+            assertEquals("open:${file.name}", events.get())
+        } finally {
+            image.recycle()
+            file.delete()
+        }
     }
 
     private fun sampleState() = FilePickerState(
