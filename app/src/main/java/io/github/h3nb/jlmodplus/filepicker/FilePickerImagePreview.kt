@@ -77,8 +77,8 @@ internal fun FilePickerThumbnail(
     onPreview: () -> Unit,
 ) {
     val pixels = with(LocalDensity.current) { 56.dp.roundToPx() }
-    var bitmap by remember(entry.path, pixels, loader) { mutableStateOf<Bitmap?>(null) }
-    LaunchedEffect(entry.path, pixels, loader) {
+    var bitmap by remember(entry.path, entry.modifiedAt, pixels, loader) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(entry.path, entry.modifiedAt, pixels, loader) {
         bitmap = loader.load(entry.path, pixels)
     }
     val description = stringResource(R.string.file_picker_preview_named, entry.name)
@@ -107,9 +107,9 @@ internal fun FilePickerImagePreviewDialog(
     onChoose: () -> Unit,
 ) {
     val pixels = with(LocalDensity.current) { 420.dp.roundToPx().coerceAtMost(1024) }
-    var bitmap by remember(entry.path, pixels, loader) { mutableStateOf<Bitmap?>(null) }
-    var loaded by remember(entry.path, pixels, loader) { mutableStateOf(false) }
-    LaunchedEffect(entry.path, pixels, loader) {
+    var bitmap by remember(entry.path, entry.modifiedAt, pixels, loader) { mutableStateOf<Bitmap?>(null) }
+    var loaded by remember(entry.path, entry.modifiedAt, pixels, loader) { mutableStateOf(false) }
+    LaunchedEffect(entry.path, entry.modifiedAt, pixels, loader) {
         bitmap = loader.load(entry.path, pixels)
         loaded = true
     }
