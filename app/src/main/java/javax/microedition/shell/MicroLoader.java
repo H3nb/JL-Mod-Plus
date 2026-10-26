@@ -563,9 +563,7 @@ public class MicroLoader {
 					soundBank = sb.getPath();
 				}
 			}
-			if (params.screenBackgroundImage != null) {
-				SkinLayer.init(params, new File(workDir));
-			}
+			SkinLayer.init(params, new File(workDir));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
