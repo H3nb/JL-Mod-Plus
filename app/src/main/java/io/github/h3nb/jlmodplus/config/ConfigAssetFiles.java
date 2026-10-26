@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.config;
 
 import androidx.annotation.NonNull;
+import io.github.h3nb.jlmodplus.util.SvgRasterizer;
 import android.os.Build;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -29,7 +30,7 @@ import java.util.Locale;
 /** Workdir-scoped, non-overwriting file operations for shared skin and MIDI banks. */
 public final class ConfigAssetFiles {
     public enum Kind {
-        SKIN(Config.SKINS_DIR, new String[]{".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}),
+        SKIN(Config.SKINS_DIR, new String[]{".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".svg"}),
         SOUNDBANK(Config.SOUNDBANKS_DIR, new String[]{".sf2", ".dls"});
 
         final String folder;
@@ -127,6 +128,10 @@ public final class ConfigAssetFiles {
 
     /** Lightweight signature gate; the native synth or Android bitmap decoder remains authoritative. */
     private static void checkHeader(Kind kind, File file) throws IOException {
+        if (kind == Kind.SKIN && SvgRasterizer.isSvg(file)) {
+            SvgRasterizer.read(file);
+            return;
+        }
         byte[] bytes = new byte[12];
         try (FileInputStream input = new FileInputStream(file)) {
             if (input.read(bytes) != bytes.length) throw new IOException("Invalid asset file");
