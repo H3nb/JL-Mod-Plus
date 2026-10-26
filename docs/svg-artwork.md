@@ -24,8 +24,18 @@ Files with invalid geometry, parse failures or unacceptable memory requirements
 may be rejected or use existing built-in skin fallbacks.
 
 The complete transparent SVG canvas is preserved: do not trim transparent padding.
-Screen skin transparency determines the MIDlet content frame; control D-pad
-overlays must share the full base canvas. Normal/pressed images, opacity, input
+For screen skins, a substantial enclosed transparent opening defines the rectangular
+guest viewport bounds. Non-rectangular openings (such as rounded screens) are
+shown by drawing the original skin artwork over that viewport; the artwork's
+alpha determines the visible edge without changing guest framebuffer dimensions.
+Rectangular openings and skins without a valid enclosed opening retain the
+legacy rectangle-exclusion rendering rules. The skin frame should be opaque
+where it must completely hide game pixels; semi-transparent artwork blends
+with the guest. Guest pointer coordinates and virtual-control hitboxes remain
+rectangular and unchanged. This is host screen presentation, not Java ME
+vector or mask support.
+
+Control D-pad overlays must share the full base canvas. Normal/pressed images, opacity, input
 hitboxes, resize behavior and editing semantics are format-independent.
 
 The SVG source is parsed only during preparation, never on the per-frame

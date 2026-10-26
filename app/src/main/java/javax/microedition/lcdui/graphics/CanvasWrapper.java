@@ -386,10 +386,12 @@ public class CanvasWrapper {
 
 	public void drawBackground(Bitmap bitmap, RectF dst, RectF exclude) {
 		int save = canvas.save();
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			canvas.clipOutRect(exclude);
-		} else {
-			canvas.clipRect(exclude, Region.Op.DIFFERENCE);
+		if (exclude != null) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				canvas.clipOutRect(exclude);
+			} else {
+				canvas.clipRect(exclude, Region.Op.DIFFERENCE);
+			}
 		}
 		imgPaint.setFilterBitmap(true);
 		canvas.drawBitmap(bitmap, null, dst, imgPaint);
