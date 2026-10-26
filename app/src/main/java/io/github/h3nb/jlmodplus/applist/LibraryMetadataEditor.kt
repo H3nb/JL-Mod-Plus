@@ -112,6 +112,7 @@ internal fun LibraryMetadataEditorScreen(
                 .filter(String::isNotEmpty).forEach { File(it).delete() }
         }
     }
+    var preparingIcon by remember(app.databaseId) { mutableStateOf(false) }
     val setIconDraft: (Boolean, LibraryIconDraft?) -> Unit = { portrait, next ->
         val prior = if (portrait) portraitDraft else mainDraft
         if (portrait) portraitDraft = next else mainDraft = next
@@ -120,28 +121,36 @@ internal fun LibraryMetadataEditorScreen(
         }
     }
     val chooseIcon: (Boolean) -> Unit = { portrait ->
-        onPickIcon(portrait, LibraryViewModel.MutationCallback { path, error ->
-            if (!editAlive.get()) {
-                if (path != null) File(path).delete()
-            } else if (error == null && !path.isNullOrBlank()) {
-                setIconDraft(portrait, LibraryIconDraft(reset = false, previewPath = path))
-            }
-        })
-    }
-    val resetIcon: (Boolean) -> Unit = { portrait ->
-        if (portrait) {
-            setIconDraft(true, if (app.portraitIconPath.isNullOrBlank()) null
-                else LibraryIconDraft(reset = true))
-        } else if (!app.hasCustomIcon) {
-            setIconDraft(false, null)
-        } else {
-            onPrepareOriginalIcon(LibraryViewModel.MutationCallback { path, error ->
+        if (!preparingIcon) {
+            preparingIcon = true
+            onPickIcon(portrait, LibraryViewModel.MutationCallback { path, error ->
+                preparingIcon = false
                 if (!editAlive.get()) {
-                    if (!path.isNullOrBlank()) File(path).delete()
-                } else if (error == null && path != null) {
-                    setIconDraft(false, LibraryIconDraft(reset = true, previewPath = path))
+                    if (path != null) File(path).delete()
+                } else if (error == null && !path.isNullOrBlank()) {
+                    setIconDraft(portrait, LibraryIconDraft(reset = false, previewPath = path))
                 }
             })
+        }
+    }
+    val resetIcon: (Boolean) -> Unit = { portrait ->
+        if (!preparingIcon) {
+            if (portrait) {
+                setIconDraft(true, if (app.portraitIconPath.isNullOrBlank()) null
+                    else LibraryIconDraft(reset = true))
+            } else if (!app.hasCustomIcon) {
+                setIconDraft(false, null)
+            } else {
+                preparingIcon = true
+                onPrepareOriginalIcon(LibraryViewModel.MutationCallback { path, error ->
+                    preparingIcon = false
+                    if (!editAlive.get()) {
+                        if (!path.isNullOrBlank()) File(path).delete()
+                    } else if (error == null && path != null) {
+                        setIconDraft(false, LibraryIconDraft(reset = true, previewPath = path))
+                    }
+                })
+            }
         }
     }
     val previewApp = app.copy(
@@ -191,7 +200,7 @@ internal fun LibraryMetadataEditorScreen(
     val changed = title.trim() != app.title ||
         vendor.trim() != app.author || description.trim() != app.defaultDescription ||
         (descriptionsLoaded && draftTranslations != originalOverrides) ||
-        mainDraft != null || portraitDraft != null
+        mainDraft != null || portraitDraft != null || preparingIcon
     val valid = title.trim().isNotEmpty()
     val requestBack = {
         if (!saving) {
@@ -218,7 +227,7 @@ internal fun LibraryMetadataEditorScreen(
                 },
                 actions = {
                     TextButton(
-                        enabled = valid && changed && descriptionsLoaded && !saving,
+                        enabled = valid && changed && descriptionsLoaded && !saving && !preparingIcon,
                         onClick = {
                             saving = true
                             onSaveLocalized(
@@ -257,6 +266,7 @@ internal fun LibraryMetadataEditorScreen(
                             onResetIcon = resetIcon,
                             iconShape = iconShape,
                             enhancedIcons = enhancedIcons,
+                            enabled = !preparingIcon,
                             modifier = Modifier.width(260.dp),
                         )
                         LibraryMetadataFields(
@@ -286,6 +296,7 @@ internal fun LibraryMetadataEditorScreen(
                         onResetIcon = resetIcon,
                         iconShape = iconShape,
                         enhancedIcons = enhancedIcons,
+                        enabled = !preparingIcon,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     LibraryMetadataFields(
@@ -318,7 +329,7 @@ internal fun LibraryMetadataEditorScreen(
             title = { Text(stringResource(R.string.library_metadata_discard_title)) },
             confirmButton = {
                 TextButton(
-                    enabled = valid && descriptionsLoaded && !saving,
+                    enabled = valid && descriptionsLoaded && !saving && !preparingIcon,
                     onClick = {
                         confirmDiscard = false
                         saving = true
@@ -350,6 +361,7 @@ private fun LibraryMetadataIconPanel(
     onResetIcon: (Boolean) -> Unit,
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean,
+    enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -364,6 +376,7 @@ private fun LibraryMetadataIconPanel(
             onResetIcon = { onResetIcon(false) },
             iconShape = iconShape,
             enhancedIcons = enhancedIcons,
+            enabled = enabled,
         )
         LibraryMetadataIconRow(
             app = app,
@@ -372,6 +385,7 @@ private fun LibraryMetadataIconPanel(
             onResetIcon = { onResetIcon(true) },
             iconShape = iconShape,
             enhancedIcons = enhancedIcons,
+            enabled = enabled,
         )
     }
 }
@@ -384,6 +398,7 @@ private fun LibraryMetadataIconRow(
     onResetIcon: () -> Unit,
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean,
+    enabled: Boolean,
 ) {
     val hasPortrait = !app.portraitIconPath.isNullOrBlank()
     val hasOverride = if (portrait) hasPortrait else app.hasCustomIcon
@@ -429,6 +444,7 @@ private fun LibraryMetadataIconRow(
             ) {
                 TextButton(
                     onClick = onPickIcon,
+                    enabled = enabled,
                     modifier = Modifier.semantics {
                         contentDescription = "$change $label"
                     },
@@ -437,7 +453,7 @@ private fun LibraryMetadataIconRow(
                     Text(change)
                 }
                 if (hasOverride) {
-                    IconButton(onClick = onResetIcon) {
+                    IconButton(onClick = onResetIcon, enabled = enabled) {
                         Icon(
                             painter = painterResource(
                                 R.drawable.ic_refresh,
