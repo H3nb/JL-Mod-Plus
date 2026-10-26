@@ -88,10 +88,10 @@ public class SkinLayer implements Overlay {
 			try {
 				Point size = new Point();
 				ContextCompat.getDisplayOrDefault(ContextHolder.getAppContext()).getSize(size);
-				int side = Math.min(4096, Math.max(1, Math.max(size.x, size.y)));
+				int side = Math.min(3072, Math.max(1, Math.max(size.x, size.y)));
 				Bitmap image = SvgRasterizer.read(skin).renderWithin(side, side);
 				instance = new SkinLayer(image, settings);
-			} catch (IOException | IllegalArgumentException failure) {
+			} catch (IOException | IllegalArgumentException | OutOfMemoryError failure) {
 				android.util.Log.w("SkinLayer", "Could not load SVG screen skin", failure);
 			}
 			return;
