@@ -20,7 +20,7 @@ skins/controls/Fantasy/
   analog_thumb_pressed.png
 ```
 
-Grouped image layers use the literal stems above, each with .png or .webp
+Grouped image layers use the literal stems above, each with .png or .webp or .svg
 extension. All eight slots are optional. D-pad overlays use the same full-size
 canvas as the D-pad base to allow exact composition for diagonal presses.
 
@@ -42,11 +42,11 @@ editor assigns metadata on its next scan. Duplicate UUIDs in copied folders
 are assigned new IDs by the editor. A runtime with an ambiguous ID instead
 uses built-in buttons rather than modifying global files.
 
-Image slots are named `key_<slot>.png` or `key_<slot>.webp`, with an optional
+Image slots are named `key_<slot>.png` or `key_<slot>.webp`, or `key_<slot>.svg`, with an optional
 `_pressed` suffix. Supported slots: numbers `0`–`9`, `star`, `pound`,
 `soft_left`, `soft_right`, `fire`, `a`–`d`, `menu`, `up`, `down`,
 `left`, `right`, and the four diagonal names `up_left`, `up_right`,
-`down_left`, and `down_right`. PNG and WebP cannot coexist for the same
+`down_left`, and `down_right`. PNG, WebP and SVG cannot coexist for the same
 slot and state when imported through the editor.
 
 ## Rendering rules
@@ -82,14 +82,14 @@ slot and state when imported through the editor.
 
 ### Bitmap preparation and memory
 
-The original PNG/WebP files are never modified. On MIDlet launch, the runtime
+The original PNG/WebP/SVG files are never modified. On MIDlet launch, the runtime
 inventories source dimensions and plans all rasterized images as a single set.
 Display-sized keypad, movement, and thumb targets share one proportional quality
 factor when the combined allocation would exceed 24 MiB. A sparse set retains
 higher quality; a full set stays within budget without giving earlier slots
 priority over later keys.
 
-All planned images are decoded off the drawing path into a temporary snapshot.
+All planned images are decoded or rasterized off the drawing path into a temporary snapshot.
 Actual bitmap allocations are checked before publication. When a complete
 attempt exceeds the budget, its bitmaps are recycled and the whole set is retried
 at lower quality. Absent or undecodable individual images still use built-in
@@ -127,7 +127,7 @@ Renaming keeps the ID; duplicating creates a new one. Deleting the selected
 set clears the MIDlet selection on return. Other MIDlets holding references
 to a deleted set harmlessly fall back to built-in buttons.
 
-The editor accepts PNG/WebP up to 8 MiB and 2048 pixels on either axis. Files
+The editor accepts PNG/WebP up to 8 MiB and 2048 pixels on either axis. SVG sources are capped at 8 MiB; their vector coordinates are not treated as bitmap pixel dimensions. Files
 replaced through the editor are staged before publication. External filesystem
 changes are picked up on the next library scan or MIDlet launch; there is no
-runtime hot-reload or SVG conversion in this release.
+runtime hot-reload. SVG is rasterized at launch and is never drawn as vectors per frame.
