@@ -46,16 +46,16 @@ public final class ControlSkinRuntime {
 
     private static final class Asset {
         final File file;
-        @Nullable final SvgRasterizer.Document vector;
+        final boolean vector;
         final int sourceWidth, sourceHeight;
         final int targetWidth, targetHeight;
 
         Asset(File file, int width, int height, int maxSide) {
-            this(file, width, height, maxSide, null);
+            this(file, width, height, maxSide, false);
         }
-        Asset(File file, int width, int height, int maxSide, @Nullable SvgRasterizer.Document svg) {
+        Asset(File file, int width, int height, int maxSide, boolean isVector) {
             this.file = file;
-            vector = svg;
+            vector = isVector;
             sourceWidth = width;
             sourceHeight = height;
             float scale = Math.min(1f, maxSide / (float) Math.max(width, height));
@@ -168,7 +168,7 @@ public final class ControlSkinRuntime {
                 float ratio = vector.aspectRatio();
                 int width = ratio >= 1f ? 1024 : Math.max(1, Math.round(1024f * ratio));
                 int height = ratio < 1f ? 1024 : Math.max(1, Math.round(1024f / ratio));
-                return new Asset(file, width, height, maxSide, vector);
+                return new Asset(file, width, height, maxSide, true);
             }
             BitmapFactory.Options bounds = new BitmapFactory.Options();
             bounds.inJustDecodeBounds = true;
@@ -205,10 +205,10 @@ public final class ControlSkinRuntime {
     }
 
     @Nullable private static Bitmap decode(Asset asset, float quality) {
-        if (asset.vector != null) {
+        if (asset.vector) {
             try {
-                return asset.vector.renderWithin(asset.width(quality), asset.height(quality));
-            } catch (RuntimeException failure) {
+                return SvgRasterizer.read(asset.file).renderWithin(asset.width(quality), asset.height(quality));
+            } catch (IOException | RuntimeException failure) {
                 Log.w(TAG, "Undecodable SVG control skin: " + asset.file.getName(), failure);
                 return null;
             }
