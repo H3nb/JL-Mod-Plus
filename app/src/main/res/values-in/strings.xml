@@ -326,6 +326,8 @@
     <string name="file_picker_file">Berkas</string>
     <string name="file_picker_preview_named">Pratinjau %1$s</string>
     <string name="file_picker_preview_unavailable">Pratinjau tidak tersedia</string>
+    <string name="file_picker_preview_loading">Memuat pratinjau…</string>
+    <string name="file_picker_image_type">Gambar %1$s</string>
     <string name="file_picker_storage_volume">Volume penyimpanan</string>
     <string name="file_picker_empty">Tidak ada berkas yang cocok</string>
     <string name="file_picker_empty_folder">Tidak ada folder yang ditemukan</string>
