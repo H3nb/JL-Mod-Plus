@@ -2,6 +2,7 @@
  * You may obtain a copy at http://www.apache.org/licenses/LICENSE-2.0. */
 package io.github.h3nb.jlmodplus.memory
 
+import android.view.KeyEvent
 import android.view.Window
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,7 +27,6 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.window.DialogWindowProvider
-import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
@@ -114,7 +114,7 @@ class MemoryEditorOverlayComposeTest {
         rule.onNodeWithContentDescription("Search known values").performClick()
         rule.onNode(hasSetTextAction()).performTextReplacement("42")
         // Semantic activation toggles Peek for users who cannot hold a touch gesture.
-        rule.onNodeWithTag("memory-editor-peek").performClick()
+        rule.onNodeWithTag("memory-editor-peek").performSemanticsAction(SemanticsActions.OnClick) { it() }
         rule.runOnIdle { assertTrue(overlay.peeking) }
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
         pressBack()
@@ -170,4 +170,10 @@ class MemoryEditorOverlayComposeTest {
             }.commit()
         }
     }
+    private fun pressBack() {
+        // Inject system Back into the focused dialog, not Espresso's Activity root.
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        rule.waitForIdle()
+    }
+
 }

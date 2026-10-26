@@ -243,7 +243,7 @@ internal fun MemoryEditorDialog(
 
 @Composable
 internal fun MemoryEditorOpacityDialog(overlay: MemoryEditorOverlayState, onDismiss: () -> Unit) {
-    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
+    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.ROOT
     val percentFormat = remember(locale) { NumberFormat.getPercentInstance(locale) }
     val opacityLabel = stringResource(R.string.memory_editor_panel_opacity)
     val close = { overlay.saveOpacity(); onDismiss() }
