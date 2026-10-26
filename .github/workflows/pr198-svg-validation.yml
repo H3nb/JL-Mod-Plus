@@ -144,18 +144,39 @@ jobs:
             set -euo pipefail
             mkdir -p ci-artifacts/pr198-svg
             trap 'adb logcat -d -v threadtime > ci-artifacts/pr198-svg/logcat.txt 2>&1 || true' EXIT
-            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
-            adb shell appops set io.github.h3nb.jlmodplus.debug MANAGE_EXTERNAL_STORAGE allow
-            find app/build/outputs -type f -name '*.apk' -print
-            apk="$(find app/build/outputs -type f -iname '*androidtest*.apk' -print -quit)"
-            test -n "$apk"
-            adb install -r -t "$apk"
-            runner="$(adb shell pm list instrumentation | tr -d '\r' | sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p')"
-            test -n "$runner"
-            selectors='io.github.h3nb.jlmodplus.util.SvgRasterizerTest,io.github.h3nb.jlmodplus.util.SvgArtworkIntegrationTest,io.github.h3nb.jlmodplus.config.ControlSkinStoreTest,io.github.h3nb.jlmodplus.config.Pr198MixedSvgBudgetTest'
-            adb shell am instrument -w -r -e class "$selectors" "$runner" > ci-artifacts/pr198-svg/instrumentation.txt 2>&1 || { cat ci-artifacts/pr198-svg/instrumentation.txt; exit 1; }
-            cat ci-artifacts/pr198-svg/instrumentation.txt
-            python3 scripts/runtime-smoke-results.py --log ci-artifacts/pr198-svg/instrumentation.txt --output ci-artifacts/pr198-svg/selectors.txt io.github.h3nb.jlmodplus.util.SvgRasterizerTest io.github.h3nb.jlmodplus.util.SvgArtworkIntegrationTest io.github.h3nb.jlmodplus.config.ControlSkinStoreTest io.github.h3nb.jlmodplus.config.Pr198MixedSvgBudgetTest
+            classes='io.github.h3nb.jlmodplus.util.SvgRasterizerTest,io.github.h3nb.jlmodplus.util.SvgArtworkIntegrationTest,io.github.h3nb.jlmodplus.config.ControlSkinStoreTest,io.github.h3nb.jlmodplus.config.Pr198MixedSvgBudgetTest'
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 "-Pandroid.testInstrumentationRunnerArguments.class=$classes" :app:connectedEmulatorDebugAndroidTest
+            python3 - <<'PY'
+            from pathlib import Path
+            from xml.etree import ElementTree as ET
+            import sys
+            root = Path("app/build/outputs/androidTest-results")
+            reports = sorted(root.rglob("TEST-*.xml"))
+            if not reports:
+                sys.exit("ERROR: connected AndroidTest generated no XML reports")
+            required = {
+                "io.github.h3nb.jlmodplus.util.SvgRasterizerTest",
+                "io.github.h3nb.jlmodplus.util.SvgArtworkIntegrationTest",
+                "io.github.h3nb.jlmodplus.config.ControlSkinStoreTest",
+                "io.github.h3nb.jlmodplus.config.Pr198MixedSvgBudgetTest",
+            }
+            found = set()
+            count = 0
+            for report in reports:
+                doc = ET.parse(report)
+                for test in doc.iter("testcase"):
+                    count += 1
+                    found.add(test.attrib.get("classname", ""))
+                    if any(test.find(tag) is not None for tag in ("failure", "error", "skipped")):
+                        sys.exit(f"ERROR: failed/skipped Android test in {report}: {test.attrib}")
+            missing = required - found
+            if missing or count < 4:
+                sys.exit(f"ERROR: unexecuted SVG test classes: {sorted(missing)}; tests={count}")
+            output = Path("ci-artifacts/pr198-svg/verification.txt")
+            output.write_text(f"Verified connected Android test methods: {count}\n"
+                              + "".join(f"PASS {name}\n" for name in sorted(required)))
+            print(output.read_text())
+            PY
             adb shell dumpsys meminfo io.github.h3nb.jlmodplus.debug > ci-artifacts/pr198-svg/meminfo-after.txt
             adb logcat -d -s PR198_SVG_BUDGET:I '*:S' > ci-artifacts/pr198-svg/benchmark.txt
             cat ci-artifacts/pr198-svg/benchmark.txt
