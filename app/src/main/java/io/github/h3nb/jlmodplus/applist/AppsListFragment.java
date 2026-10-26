@@ -403,7 +403,7 @@ public class AppsListFragment extends Fragment {
                         false,
                         true,
                         getString(R.string.file_picker_select_icon),
-                        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"));
+                        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"));
             }
 
             @Override

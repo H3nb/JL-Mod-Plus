@@ -80,7 +80,7 @@ Whether you write code manually or use AI, please review your changes, follow th
 
 AI-assisted contributions are held to the same quality standards as any other contribution.
 
-For development setup and testing instructions, see [Build and validation](docs/development.md).
+For development setup and testing instructions, see [Build and validation](docs/development.md). For topic-specific guidance and historical records, see the [Documentation map](docs/README.md).
 
 **Using an AI coding agent?** Have it follow [AGENTS.md](AGENTS.md), which contains project-specific instructions for coding agents.
 

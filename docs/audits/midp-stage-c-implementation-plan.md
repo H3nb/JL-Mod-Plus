@@ -1,6 +1,6 @@
 # MIDP Stage C — implementation and validation plan
 
-Status: implementation in progress. Scope: TextField/TextBox, PushRegistry, MIDlet.platformRequest. Base: alpha. **No RMS changes.**
+**Status (2026-10-26): historical Stage C implementation and validation plan, not an active task list.** The `alpha` branch contains TextField/TextBox, PushRegistry, and platform-request implementations with focused JVM tests. This does not establish that every Android-device qualification listed below was executed or remains current. Consult [Java ME compatibility](../java-me-compatibility.md), the current source, tests, and PR evidence before identifying outstanding work. The original scope excluded RMS changes.
 
 ## Contract-first constraints
 

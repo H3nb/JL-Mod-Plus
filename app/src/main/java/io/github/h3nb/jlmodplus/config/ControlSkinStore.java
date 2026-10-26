@@ -1,6 +1,7 @@
 package io.github.h3nb.jlmodplus.config;
 
 import android.graphics.BitmapFactory;
+import io.github.h3nb.jlmodplus.util.SvgRasterizer;
 import android.system.ErrnoException;
 import android.system.Os;
 import androidx.annotation.Nullable;
@@ -61,7 +62,8 @@ public final class ControlSkinStore {
 
     private static String fileStem(String filename) {
         String suffix = filename.endsWith(".png") ? ".png" :
-                filename.endsWith(".webp") ? ".webp" : "";
+                filename.endsWith(".webp") ? ".webp" :
+                filename.endsWith(".svg") ? ".svg" : "";
         return suffix.isEmpty() ? "" : filename.substring(0, filename.length() - suffix.length());
     }
 
@@ -318,7 +320,9 @@ public final class ControlSkinStore {
         File png = new File(folder, stem + ".png");
         if (png.isFile()) return png;
         File webp = new File(folder, stem + ".webp");
-        return webp.isFile() ? webp : null;
+        if (webp.isFile()) return webp;
+        File svg = new File(folder, stem + ".svg");
+        return svg.isFile() ? svg : null;
     }
 
     /** Count customized controls, not individual overlay files. */
@@ -338,7 +342,8 @@ public final class ControlSkinStore {
 
     public static synchronized void importAsset(File workdir, String setId, String stem,
             InputStream source, String suffix) throws IOException {
-        if (!validAsset(stem) || (!".png".equals(suffix) && !".webp".equals(suffix))) {
+        if (!validAsset(stem) || (!".png".equals(suffix) && !".webp".equals(suffix)
+                && !".svg".equals(suffix))) {
             throw new IOException("Unsupported image");
         }
         File folder = required(workdir, setId).folder;
@@ -354,19 +359,30 @@ public final class ControlSkinStore {
                 }
                 out.getFD().sync();
             }
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(temp.getAbsolutePath(), options);
-            if (options.outWidth < 1 || options.outHeight < 1
-                    || options.outWidth > MAX_DIMENSION || options.outHeight > MAX_DIMENSION
-                    || !("image/png".equals(options.outMimeType) && ".png".equals(suffix)
-                        || "image/webp".equals(options.outMimeType) && ".webp".equals(suffix))) {
-                throw new IOException("Invalid or oversized PNG/WebP");
+            if (".svg".equals(suffix)) {
+                SvgRasterizer.read(temp);
+            } else {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(temp.getAbsolutePath(), options);
+                if (options.outWidth < 1 || options.outHeight < 1
+                        || options.outWidth > MAX_DIMENSION || options.outHeight > MAX_DIMENSION
+                        || !("image/png".equals(options.outMimeType) && ".png".equals(suffix)
+                            || "image/webp".equals(options.outMimeType) && ".webp".equals(suffix))) {
+                    throw new IOException("Invalid or oversized PNG/WebP");
+                }
             }
+            // Publish the complete new asset before removing alternate formats.
+            // A crash must not move the previously usable source out of its slot.
             File target = new File(folder, stem + suffix);
             atomicRename(temp, target);
-            File alternate = new File(folder, stem + (".png".equals(suffix) ? ".webp" : ".png"));
-            if (alternate.exists() && !alternate.delete()) throw new IOException("Cannot remove old image format");
+            for (String extension : new String[]{".png", ".webp", ".svg"}) {
+                if (extension.equals(suffix)) continue;
+                File alternate = new File(folder, stem + extension);
+                if (alternate.exists() && !alternate.delete()) {
+                    throw new IOException("Cannot remove old image format");
+                }
+            }
         } finally { temp.delete(); }
     }
 
@@ -380,7 +396,7 @@ public final class ControlSkinStore {
             throws IOException {
         if (!validAsset(stem)) throw new IOException("Invalid control skin slot");
         File folder = required(workdir, setId).folder;
-        for (String suffix : new String[]{".png", ".webp"}) {
+        for (String suffix : new String[]{".png", ".webp", ".svg"}) {
             File file = new File(folder, stem + suffix);
             if (file.exists() && !file.delete()) throw new IOException("Cannot delete control image");
         }

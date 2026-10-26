@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import io.github.h3nb.jlmodplus.util.SvgRasterizer
 import android.os.Bundle
 import android.os.Environment
 import android.widget.Toast
@@ -158,6 +159,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         val suffix = when (source.extension.lowercase(Locale.ROOT)) {
             "png" -> ".png"
             "webp" -> ".webp"
+            "svg" -> ".svg"
             else -> null
         }
         if (suffix == null) {
@@ -343,7 +345,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false)
             putExtra(FilePickerContract.EXTRA_TITLE, getString(R.string.control_skin_pick_image))
             putStringArrayListExtra(
-                FilePickerContract.EXTRA_ALLOWED_EXTENSIONS, arrayListOf(".png", ".webp"))
+                FilePickerContract.EXTRA_ALLOWED_EXTENSIONS, arrayListOf(".png", ".webp", ".svg"))
             putExtra(FilePickerContract.EXTRA_START_PATH,
                 lastPickerPath ?: Environment.getExternalStorageDirectory().absolutePath)
         })
@@ -1062,6 +1064,9 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private fun thumbnail(file: File?): Bitmap? {
         if (file == null || !file.isFile() || file.length() > 8L * 1024 * 1024) return null
         return try {
+            if (SvgRasterizer.isSvg(file)) {
+                return SvgRasterizer.read(file).renderWithin(128, 128)
+            }
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeFile(file.absolutePath, bounds)
             if (bounds.outWidth !in 1..2048 || bounds.outHeight !in 1..2048) return null
@@ -1072,5 +1077,6 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             })
         } catch (_: Exception) { null }
+          catch (_: OutOfMemoryError) { null }
     }
 }

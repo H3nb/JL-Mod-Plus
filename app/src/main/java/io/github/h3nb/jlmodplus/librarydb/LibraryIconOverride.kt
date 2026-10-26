@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.librarydb
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import io.github.h3nb.jlmodplus.util.SvgRasterizer
 import android.net.Uri
 import androidx.core.graphics.scale
 import java.io.File
@@ -163,40 +164,54 @@ object LibraryIconOverride {
     @JvmStatic
     @Throws(IOException::class)
     fun prepare(context: Context, source: Uri): File {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        try {
-            openInputStream(context, source).use { input ->
-                BitmapFactory.decodeStream(input, null, bounds)
+        val decoded = if (source.path?.endsWith(".svg", ignoreCase = true) == true) {
+            try {
+                openInputStream(context, source).use { input ->
+                    SvgRasterizer.read(input).renderWithin(MAX_STORED_DIMENSION, MAX_STORED_DIMENSION)
+                }
+            } catch (error: OutOfMemoryError) {
+                throw IOException("SVG icon is too large to render safely", error)
+            } catch (error: SecurityException) {
+                throw IOException("Selected SVG icon is no longer readable", error)
             }
-        } catch (error: SecurityException) {
-            throw IOException("Selected icon is no longer readable", error)
-        }
-        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
-            throw IOException("Selected file is not a decodable image")
-        }
-
-        var sampleSize = 1
-        while (
-            bounds.outWidth / sampleSize > MAX_DECODE_DIMENSION ||
-            bounds.outHeight / sampleSize > MAX_DECODE_DIMENSION
-        ) {
-            if (sampleSize >= 1 shl 20) break
-            sampleSize *= 2
-        }
-
-        val decoded = try {
-            val options = BitmapFactory.Options().apply {
-                inSampleSize = sampleSize.coerceAtLeast(1)
-                inPreferredConfig = Bitmap.Config.ARGB_8888
+        } else {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            try {
+                openInputStream(context, source).use { input ->
+                    BitmapFactory.decodeStream(input, null, bounds)
+                }
+            } catch (error: SecurityException) {
+                throw IOException("Selected icon is no longer readable", error)
             }
-            openInputStream(context, source).use { input ->
-                BitmapFactory.decodeStream(input, null, options)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                throw IOException("Selected file is not a decodable image")
             }
-        } catch (error: SecurityException) {
-            throw IOException("Selected icon is no longer readable", error)
-        } catch (error: OutOfMemoryError) {
-            throw IOException("Selected icon is too large to decode safely", error)
-        } ?: throw IOException("Selected file is not a decodable image")
+    
+            var sampleSize = 1
+            while (
+                bounds.outWidth / sampleSize > MAX_DECODE_DIMENSION ||
+                bounds.outHeight / sampleSize > MAX_DECODE_DIMENSION
+            ) {
+                if (sampleSize >= 1 shl 20) break
+                sampleSize *= 2
+            }
+    
+            val decoded = try {
+                val options = BitmapFactory.Options().apply {
+                    inSampleSize = sampleSize.coerceAtLeast(1)
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                }
+                openInputStream(context, source).use { input ->
+                    BitmapFactory.decodeStream(input, null, options)
+                }
+            } catch (error: SecurityException) {
+                throw IOException("Selected icon is no longer readable", error)
+            } catch (error: OutOfMemoryError) {
+                throw IOException("Selected icon is too large to decode safely", error)
+            } ?: throw IOException("Selected file is not a decodable image")
+    
+            decoded
+        }
 
         var normalized: Bitmap = decoded
         try {

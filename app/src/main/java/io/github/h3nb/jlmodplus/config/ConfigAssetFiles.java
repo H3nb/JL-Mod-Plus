@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.config;
 
 import androidx.annotation.NonNull;
+import io.github.h3nb.jlmodplus.util.SvgRasterizer;
 import android.os.Build;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -29,7 +30,7 @@ import java.util.Locale;
 /** Workdir-scoped, non-overwriting file operations for shared skin and MIDI banks. */
 public final class ConfigAssetFiles {
     public enum Kind {
-        SKIN(Config.SKINS_DIR, new String[]{".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}),
+        SKIN(Config.SKINS_DIR, new String[]{".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".svg"}),
         SOUNDBANK(Config.SOUNDBANKS_DIR, new String[]{".sf2", ".dls"});
 
         final String folder;
@@ -126,7 +127,15 @@ public final class ConfigAssetFiles {
     }
 
     /** Lightweight signature gate; the native synth or Android bitmap decoder remains authoritative. */
-    private static void checkHeader(Kind kind, File file) throws IOException {
+    private static void checkHeader(Kind kind, File file, String sourceName) throws IOException {
+        if (kind == Kind.SKIN && sourceName.toLowerCase(Locale.ROOT).endsWith(".svg")) {
+            try {
+                SvgRasterizer.read(file);
+            } catch (IOException failure) {
+                throw new IOException("Invalid asset format", failure);
+            }
+            return;
+        }
         byte[] bytes = new byte[12];
         try (FileInputStream input = new FileInputStream(file)) {
             if (input.read(bytes) != bytes.length) throw new IOException("Invalid asset file");
@@ -156,7 +165,7 @@ public final class ConfigAssetFiles {
         String original = source.getName();
         checkName(original);
         if (!allowed(kind, original) || !source.isFile()) throw new IOException("Unsupported asset");
-        checkHeader(kind, source);
+        checkHeader(kind, source, original);
         File duplicate = existingName(dir, original);
         if (duplicate != null && duplicate.isFile()) {
             if (source.getCanonicalFile().equals(duplicate.getCanonicalFile())
@@ -184,7 +193,7 @@ public final class ConfigAssetFiles {
                 }
                 output.getFD().sync();
             }
-            checkHeader(kind, staged);
+            checkHeader(kind, staged, original);
             File target = new File(dir, candidate);
             publishWithoutReplacing(staged, target);
             return new Imported(candidate, true);

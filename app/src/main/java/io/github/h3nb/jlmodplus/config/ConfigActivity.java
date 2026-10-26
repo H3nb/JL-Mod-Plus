@@ -33,6 +33,7 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
 
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import io.github.h3nb.jlmodplus.util.SvgRasterizer;
 import android.os.Environment;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -1280,7 +1281,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
         File source = new File(uri.getPath());
         hostPreferences.edit().putString(PREF_LAST_PATH, source.getParent()).apply();
         runAssetAction(kind, null, (root, assetKind) -> {
-            if (assetKind == ConfigAssetFiles.Kind.SKIN) {
+            if (assetKind == ConfigAssetFiles.Kind.SKIN && !SvgRasterizer.isSvg(source)) {
                 BitmapFactory.Options bounds = new BitmapFactory.Options();
                 bounds.inJustDecodeBounds = true;
                 BitmapFactory.decodeFile(source.getPath(), bounds);

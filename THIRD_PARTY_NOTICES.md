@@ -17,6 +17,10 @@ This ledger is a provenance/notice inventory for the current project state, not 
 | SoniVox EAS | Vendored `app/src/main/cpp/sonivox/**`; local patches in `UPSTREAM.md`, upstream `NOTICE` and license retained | `https://github.com/EmbeddedSynth/sonivox`, v4.0.2 at `bb8668b91118318b0e6017aca59ce34e7bc93bf8`; Sonic Network Inc. / Android lineage | Apache-2.0 |
 | Mascot Capsule Micro3D implementation | `app/src/main/java/com/mascotcapsule/micro3d/**` and `app/src/main/cpp/micro3d/**`; current files identify JL-Mod/Yury Kharchenko/woesss authorship | JL-Mod implementation currently in this tree | Apache-2.0 where stated by the source files |
 
+## AndroidSVG
+
+AndroidSVG 1.4 (`com.caverock:androidsvg`) by Paul LeBeau renders imported static SVG artwork into Android bitmaps. Source: https://github.com/BigBadaboom/androidsvg. License: Apache-2.0.
+
 ## Material Symbols assets
 
 The table below records the Material Symbols Android VectorDrawable assets bundled by JL-Mod Plus. They
