@@ -129,7 +129,11 @@ public final class ConfigAssetFiles {
     /** Lightweight signature gate; the native synth or Android bitmap decoder remains authoritative. */
     private static void checkHeader(Kind kind, File file, String sourceName) throws IOException {
         if (kind == Kind.SKIN && sourceName.toLowerCase(Locale.ROOT).endsWith(".svg")) {
-            SvgRasterizer.read(file);
+            try {
+                SvgRasterizer.read(file);
+            } catch (IOException failure) {
+                throw new IOException("Invalid asset format", failure);
+            }
             return;
         }
         byte[] bytes = new byte[12];
