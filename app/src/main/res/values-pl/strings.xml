@@ -1203,4 +1203,6 @@
     <string name="library_metadata_language_search">Wyszukaj język lub wpisz kod regionu</string>
     <string name="library_metadata_remove_language">Usuń opis</string>
     <string name="library_metadata_language_load_failed">Nie udało się wczytać opisów. Otwórz ponownie edycję metadanych.</string>
+    <string name="memory_editor_panel_opacity">Krycie panelu</string>
+    <string name="memory_editor_panel_opacity_help">Dostosowuje tło panelu bez przygaszania tekstu ani ikon.</string>
 </resources>

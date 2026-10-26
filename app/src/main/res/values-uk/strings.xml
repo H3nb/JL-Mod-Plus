@@ -1203,4 +1203,6 @@
     <string name="library_metadata_language_search">Знайти мову або ввести код локалі</string>
     <string name="library_metadata_remove_language">Видалити опис</string>
     <string name="library_metadata_language_load_failed">Не вдалося завантажити описи. Відкрийте редагування метаданих ще раз.</string>
+    <string name="memory_editor_panel_opacity">Непрозорість панелі</string>
+    <string name="memory_editor_panel_opacity_help">Налаштовує фон панелі, не роблячи текст та значки напівпрозорими.</string>
 </resources>

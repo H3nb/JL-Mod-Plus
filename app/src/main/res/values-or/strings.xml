@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">ଭାଷା ଖୋଜନ୍ତୁ କିମ୍ବା ଲୋକେଲ କୋଡ୍ ଦିଅନ୍ତୁ</string>
     <string name="library_metadata_remove_language">ବିବରଣୀ ହଟାନ୍ତୁ</string>
     <string name="library_metadata_language_load_failed">ବିବରଣୀ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ। ମେଟାଡାଟା ପୁଣି ଖୋଲନ୍ତୁ।</string>
+    <string name="memory_editor_panel_opacity">ପ୍ୟାନେଲର ଅସ୍ୱଚ୍ଛତା</string>
+    <string name="memory_editor_panel_opacity_help">ଲେଖା କିମ୍ବା ଆଇକନକୁ ଫିକା ନକରି ପ୍ୟାନେଲର ପୃଷ୍ଠଭୂମି ବଦଳାଏ।</string>
 </resources>

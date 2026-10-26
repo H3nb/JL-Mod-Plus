@@ -4,7 +4,6 @@ package io.github.h3nb.jlmodplus.memory
 
 import android.view.WindowManager
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -55,6 +54,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -66,7 +67,10 @@ import io.github.h3nb.jlmodplus.ui.AdaptiveDialogContent
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
-import kotlin.math.roundToInt
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.os.ConfigurationCompat
+import java.text.NumberFormat
+import java.util.Locale
 
 /** One visibility owner for the workspace and every editor-owned dialog/menu window. */
 @Stable
@@ -143,6 +147,7 @@ internal fun MemoryEditorPeekDock(
                 .testTag("memory-editor-peek")
                 .semantics {
                     contentDescription = description
+                    role = Role.Button
                     onClick {
                         overlay.peeking = !overlay.peeking
                         true
@@ -204,8 +209,9 @@ internal fun MemoryEditorDialog(
                     Column(Modifier.fillMaxSize()) {
                         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                             val layout = adaptiveDialogLayout(maxWidth, maxHeight).copy(maxHeight = maxHeight)
-                            Box(Modifier.matchParentSize()
-                                .clickable(enabled = !overlay.peeking, onClick = onDismissRequest))
+                            Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
+                                detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
+                            })
                             Surface(
                                 modifier = layout.modifier.then(modifier)
                                     .testTag("adaptive-dialog-surface")
@@ -237,6 +243,8 @@ internal fun MemoryEditorDialog(
 
 @Composable
 internal fun MemoryEditorOpacityDialog(overlay: MemoryEditorOverlayState, onDismiss: () -> Unit) {
+    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
+    val percentFormat = remember(locale) { NumberFormat.getPercentInstance(locale) }
     val opacityLabel = stringResource(R.string.memory_editor_panel_opacity)
     val close = { overlay.saveOpacity(); onDismiss() }
     MemoryEditorDialog(
@@ -245,7 +253,7 @@ internal fun MemoryEditorOpacityDialog(overlay: MemoryEditorOverlayState, onDism
         text = {
             Column {
                 Text(stringResource(R.string.memory_editor_panel_opacity_help))
-                Text(stringResource(R.string.memory_editor_opacity_percent, (overlay.opacity * 100).roundToInt()))
+                Text(percentFormat.format(overlay.opacity))
                 Slider(
                     value = overlay.opacity,
                     onValueChange = { overlay.opacity = it },

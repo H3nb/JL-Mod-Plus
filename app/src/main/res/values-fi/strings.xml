@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">Hae kieltä tai anna kielialueen koodi</string>
     <string name="library_metadata_remove_language">Poista kuvaus</string>
     <string name="library_metadata_language_load_failed">Kuvauksia ei voitu ladata. Avaa metatietojen muokkaus uudelleen.</string>
+    <string name="memory_editor_panel_opacity">Paneelin peittävyys</string>
+    <string name="memory_editor_panel_opacity_help">Säätää paneelin taustaa himmentämättä tekstiä tai kuvakkeita.</string>
 </resources>

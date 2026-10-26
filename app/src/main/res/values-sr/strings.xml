@@ -1169,4 +1169,6 @@
     <string name="library_metadata_language_search">Претражи језик или унеси код</string>
     <string name="library_metadata_remove_language">Уклони опис</string>
     <string name="library_metadata_language_load_failed">Описи нису учитани. Поново отвори уређивање метаподатака.</string>
+    <string name="memory_editor_panel_opacity">Непрозирност панела</string>
+    <string name="memory_editor_panel_opacity_help">Подешава позадину панела без изблеђивања текста или икона.</string>
 </resources>

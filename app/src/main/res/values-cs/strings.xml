@@ -1203,4 +1203,6 @@
     <string name="library_metadata_language_search">Hledat jazyk nebo zadat kód</string>
     <string name="library_metadata_remove_language">Odebrat popis</string>
     <string name="library_metadata_language_load_failed">Popisy nelze načíst. Znovu otevřete úpravu metadat.</string>
+    <string name="memory_editor_panel_opacity">Krytí panelu</string>
+    <string name="memory_editor_panel_opacity_help">Upravuje pozadí panelu, aniž by zeslabovalo text nebo ikony.</string>
 </resources>

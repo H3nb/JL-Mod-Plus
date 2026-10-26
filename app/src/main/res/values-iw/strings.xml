@@ -1170,4 +1170,6 @@
     <string name="library_metadata_language_search">חיפוש שפה או הזנת קוד אזור</string>
     <string name="library_metadata_remove_language">הסרת התיאור</string>
     <string name="library_metadata_language_load_failed">לא ניתן לטעון תיאורים. יש לפתוח שוב את עריכת המטא־נתונים.</string>
+    <string name="memory_editor_panel_opacity">אטימות הלוח</string>
+    <string name="memory_editor_panel_opacity_help">משנה את רקע הלוח בלי לעמעם את הטקסט או הסמלים.</string>
 </resources>

@@ -1104,4 +1104,6 @@
     <string name="library_metadata_language_search">搜尋語言或輸入地區代碼</string>
     <string name="library_metadata_remove_language">移除描述</string>
     <string name="library_metadata_language_load_failed">無法載入語言描述。請重新開啟中繼資料編輯頁面。</string>
+    <string name="memory_editor_panel_opacity">面板不透明度</string>
+    <string name="memory_editor_panel_opacity_help">調整面板背景，不會淡化文字或圖示。</string>
 </resources>

@@ -1170,4 +1170,6 @@
     <string name="library_metadata_language_search">Buscar idioma o introducir código regional</string>
     <string name="library_metadata_remove_language">Eliminar descripción</string>
     <string name="library_metadata_language_load_failed">No se pudieron cargar las descripciones. Vuelve a editar los metadatos.</string>
+    <string name="memory_editor_panel_opacity">Opacidad del panel</string>
+    <string name="memory_editor_panel_opacity_help">Ajusta el fondo del panel sin atenuar el texto ni los iconos.</string>
 </resources>

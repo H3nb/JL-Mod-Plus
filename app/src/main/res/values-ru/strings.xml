@@ -1203,4 +1203,6 @@
     <string name="library_metadata_language_search">Найти язык или ввести код локали</string>
     <string name="library_metadata_remove_language">Удалить описание</string>
     <string name="library_metadata_language_load_failed">Не удалось загрузить описания. Откройте редактор метаданных снова.</string>
+    <string name="memory_editor_panel_opacity">Непрозрачность панели</string>
+    <string name="memory_editor_panel_opacity_help">Настраивает фон панели, не делая текст и значки полупрозрачными.</string>
 </resources>

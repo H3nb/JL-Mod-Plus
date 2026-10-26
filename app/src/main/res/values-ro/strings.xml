@@ -1170,4 +1170,6 @@
     <string name="library_metadata_language_search">Caută o limbă sau introdu un cod</string>
     <string name="library_metadata_remove_language">Elimină descrierea</string>
     <string name="library_metadata_language_load_failed">Descrierile nu au putut fi încărcate. Redeschide editarea metadatelor.</string>
+    <string name="memory_editor_panel_opacity">Opacitatea panoului</string>
+    <string name="memory_editor_panel_opacity_help">Ajustează fundalul panoului fără a estompa textul sau pictogramele.</string>
 </resources>

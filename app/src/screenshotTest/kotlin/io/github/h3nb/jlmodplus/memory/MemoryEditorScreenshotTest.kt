@@ -387,6 +387,7 @@ private fun MemoryOverlayUnderlay(dark: Boolean) {
 
 @PreviewTest
 @Preview(name = "Memory opacity compact", widthDp = 320, heightDp = 480, fontScale = 1.5f)
+@Preview(name = "Memory opacity RTL", widthDp = 320, heightDp = 480, fontScale = 1.5f, locale = "ar")
 @Composable
 fun MemoryOpacityScreenshot() {
     JLModPlusTheme(darkTheme = false) {

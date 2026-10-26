@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">Търсене на език или въвеждане на код</string>
     <string name="library_metadata_remove_language">Премахване на описанието</string>
     <string name="library_metadata_language_load_failed">Описанията не могат да се заредят. Отворете редактора отново.</string>
+    <string name="memory_editor_panel_opacity">Непрозрачност на панела</string>
+    <string name="memory_editor_panel_opacity_help">Настройва фона на панела, без да избледняват текстът и иконите.</string>
 </resources>

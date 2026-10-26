@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">Zoek taal of voer landcode in</string>
     <string name="library_metadata_remove_language">Beschrijving verwijderen</string>
     <string name="library_metadata_language_load_failed">Beschrijvingen konden niet worden geladen. Open metadata bewerken opnieuw.</string>
+    <string name="memory_editor_panel_opacity">Dekking van paneel</string>
+    <string name="memory_editor_panel_opacity_help">Past de paneelachtergrond aan zonder tekst of pictogrammen te vervagen.</string>
 </resources>

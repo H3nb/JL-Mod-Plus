@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">Soek taal of voer landkode in</string>
     <string name="library_metadata_remove_language">Verwyder beskrywing</string>
     <string name="library_metadata_language_load_failed">Kon nie taalbeskrywings laai nie. Maak metadata weer oop.</string>
+    <string name="memory_editor_panel_opacity">Paneeldekking</string>
+    <string name="memory_editor_panel_opacity_help">Pas die paneelagtergrond aan sonder om teks of ikone te verdof.</string>
 </resources>

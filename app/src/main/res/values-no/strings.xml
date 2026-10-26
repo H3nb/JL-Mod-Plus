@@ -1136,4 +1136,6 @@
     <string name="library_metadata_language_search">Søk etter språk eller skriv inn kode</string>
     <string name="library_metadata_remove_language">Fjern beskrivelse</string>
     <string name="library_metadata_language_load_failed">Kunne ikke laste beskrivelser. Åpne metadataredigering på nytt.</string>
+    <string name="memory_editor_panel_opacity">Panelets ugjennomsiktighet</string>
+    <string name="memory_editor_panel_opacity_help">Justerer panelbakgrunnen uten å tone ned tekst eller ikoner.</string>
 </resources>

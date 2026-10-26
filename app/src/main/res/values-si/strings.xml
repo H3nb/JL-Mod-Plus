@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">භාෂාව සොයන්න හෝ කේතය ඇතුළත් කරන්න</string>
     <string name="library_metadata_remove_language">විස්තරය ඉවත් කරන්න</string>
     <string name="library_metadata_language_load_failed">විස්තර පූරණය කළ නොහැක. පාරදත්ත සංස්කරණය නැවත විවෘත කරන්න.</string>
+    <string name="memory_editor_panel_opacity">පැනලයේ පාරාන්ධතාව</string>
+    <string name="memory_editor_panel_opacity_help">පෙළ හෝ අයිකනවල පැහැය අඩු නොකර පැනලයේ පසුබිම සකසයි.</string>
 </resources>

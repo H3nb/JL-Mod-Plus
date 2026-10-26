@@ -1104,4 +1104,6 @@
     <string name="library_metadata_language_search">Tìm ngôn ngữ hoặc nhập mã vùng</string>
     <string name="library_metadata_remove_language">Xóa mô tả</string>
     <string name="library_metadata_language_load_failed">Không thể tải mô tả. Hãy mở lại phần chỉnh sửa siêu dữ liệu.</string>
+    <string name="memory_editor_panel_opacity">Độ mờ đục của bảng</string>
+    <string name="memory_editor_panel_opacity_help">Điều chỉnh nền bảng mà không làm mờ chữ hoặc biểu tượng.</string>
 </resources>

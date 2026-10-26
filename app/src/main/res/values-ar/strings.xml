@@ -1269,4 +1269,6 @@
     <string name="library_metadata_language_search">ابحث عن لغة أو أدخل رمز اللغة</string>
     <string name="library_metadata_remove_language">إزالة الوصف</string>
     <string name="library_metadata_language_load_failed">تعذر تحميل الأوصاف. افتح تحرير البيانات الوصفية مجددًا.</string>
+    <string name="memory_editor_panel_opacity">عتامة اللوحة</string>
+    <string name="memory_editor_panel_opacity_help">يضبط خلفية اللوحة دون تخفيف وضوح النص أو الأيقونات.</string>
 </resources>

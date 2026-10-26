@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">भाषा खोजें या लोकेल कोड दर्ज करें</string>
     <string name="library_metadata_remove_language">विवरण हटाएँ</string>
     <string name="library_metadata_language_load_failed">भाषा विवरण लोड नहीं हो सके। मेटाडेटा संपादन फिर से खोलें।</string>
+    <string name="memory_editor_panel_opacity">पैनल की अपारदर्शिता</string>
+    <string name="memory_editor_panel_opacity_help">टेक्स्ट या आइकन को फीका किए बिना पैनल की पृष्ठभूमि बदलता है।</string>
 </resources>

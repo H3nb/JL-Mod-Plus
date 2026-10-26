@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">Søg efter sprog eller indtast kode</string>
     <string name="library_metadata_remove_language">Fjern beskrivelse</string>
     <string name="library_metadata_language_load_failed">Beskrivelserne kunne ikke indlæses. Åbn metadataredigering igen.</string>
+    <string name="memory_editor_panel_opacity">Panelets opacitet</string>
+    <string name="memory_editor_panel_opacity_help">Justerer panelets baggrund uden at nedtone tekst eller ikoner.</string>
 </resources>

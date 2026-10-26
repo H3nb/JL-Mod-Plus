@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">Тілді іздеу немесе жергілікті кодты енгізу</string>
     <string name="library_metadata_remove_language">Сипаттаманы жою</string>
     <string name="library_metadata_language_load_failed">Сипаттамалар жүктелмеді. Метадеректерді өңдеуді қайта ашыңыз.</string>
+    <string name="memory_editor_panel_opacity">Панельдің мөлдір еместігі</string>
+    <string name="memory_editor_panel_opacity_help">Мәтін мен белгішелерді көмескілемей, панельдің фонын реттейді.</string>
 </resources>

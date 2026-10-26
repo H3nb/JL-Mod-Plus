@@ -1104,4 +1104,6 @@
     <string name="library_metadata_language_search">言語を検索またはロケールを入力</string>
     <string name="library_metadata_remove_language">説明を削除</string>
     <string name="library_metadata_language_load_failed">説明を読み込めませんでした。メタデータ編集を開き直してください。</string>
+    <string name="memory_editor_panel_opacity">パネルの不透明度</string>
+    <string name="memory_editor_panel_opacity_help">文字やアイコンを薄くせずに、パネルの背景を調整します。</string>
 </resources>

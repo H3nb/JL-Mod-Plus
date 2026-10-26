@@ -1104,4 +1104,6 @@
     <string name="library_metadata_language_search">ค้นหาภาษาหรือป้อนรหัสภาษา</string>
     <string name="library_metadata_remove_language">ลบคำอธิบาย</string>
     <string name="library_metadata_language_load_failed">โหลดคำอธิบายไม่ได้ โปรดเปิดแก้ไขข้อมูลเมตาอีกครั้ง</string>
+    <string name="memory_editor_panel_opacity">ความทึบของแผง</string>
+    <string name="memory_editor_panel_opacity_help">ปรับพื้นหลังของแผงโดยไม่ทำให้ข้อความหรือไอคอนจางลง</string>
 </resources>

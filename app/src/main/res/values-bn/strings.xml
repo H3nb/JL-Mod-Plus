@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">ভাষা খুঁজুন বা লোকেল কোড লিখুন</string>
     <string name="library_metadata_remove_language">বিবরণ সরান</string>
     <string name="library_metadata_language_load_failed">ভাষার বিবরণ লোড করা যায়নি। মেটাডেটা আবার খুলুন।</string>
+    <string name="memory_editor_panel_opacity">প্যানেলের অস্বচ্ছতা</string>
+    <string name="memory_editor_panel_opacity_help">লেখা বা আইকন ফিকে না করে প্যানেলের পটভূমি সামঞ্জস্য করে।</string>
 </resources>

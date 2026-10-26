@@ -1170,4 +1170,6 @@
     <string name="library_metadata_language_search">Rechercher une langue ou saisir un code régional</string>
     <string name="library_metadata_remove_language">Supprimer la description</string>
     <string name="library_metadata_language_load_failed">Impossible de charger les descriptions. Rouvrez la modification des métadonnées.</string>
+    <string name="memory_editor_panel_opacity">Opacité du panneau</string>
+    <string name="memory_editor_panel_opacity_help">Règle le fond du panneau sans estomper le texte ni les icônes.</string>
 </resources>

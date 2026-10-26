@@ -1138,4 +1138,6 @@
     <string name="library_metadata_language_search">Dil ara veya yerel ayar kodu gir</string>
     <string name="library_metadata_remove_language">Açıklamayı kaldır</string>
     <string name="library_metadata_language_load_failed">Açıklamalar yüklenemedi. Meta veri düzenlemeyi yeniden açın.</string>
+    <string name="memory_editor_panel_opacity">Panel opaklığı</string>
+    <string name="memory_editor_panel_opacity_help">Metin veya simgeleri soldurmadan panel arka planını ayarlar.</string>
 </resources>

@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">جستجوی زبان یا وارد کردن کد محلی</string>
     <string name="library_metadata_remove_language">حذف توضیح</string>
     <string name="library_metadata_language_load_failed">توضیحات بارگیری نشدند. ویرایش فراداده را دوباره باز کنید.</string>
+    <string name="memory_editor_panel_opacity">میزان کدری پنل</string>
+    <string name="memory_editor_panel_opacity_help">پس‌زمینهٔ پنل را بدون کم‌رنگ کردن متن یا نمادها تنظیم می‌کند.</string>
 </resources>

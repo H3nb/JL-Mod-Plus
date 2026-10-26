@@ -1170,4 +1170,6 @@
     <string name="library_metadata_language_search">Cerca una lingua o inserisci un codice</string>
     <string name="library_metadata_remove_language">Rimuovi descrizione</string>
     <string name="library_metadata_language_load_failed">Impossibile caricare le descrizioni. Riapri la modifica dei metadati.</string>
+    <string name="memory_editor_panel_opacity">Opacità del pannello</string>
+    <string name="memory_editor_panel_opacity_help">Regola lo sfondo del pannello senza attenuare il testo o le icone.</string>
 </resources>

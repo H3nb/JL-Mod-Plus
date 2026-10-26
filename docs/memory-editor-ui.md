@@ -69,7 +69,8 @@ Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibi
 
 Panel opacity affects the workspace background only. The default is 85%, adjustable
 from 0% to 100% in its footer setting. The memory-engine process owns the small
-`memory_editor_ui` preference file; save on slider release or dialog dismissal, not
+`memory_editor_ui` preference file; format percentages for the active locale and
+save on slider release or dialog dismissal, not
 on every movement. This does not modify game rendering or the runtime configuration.
 
 ## Regression coverage
@@ -87,7 +88,7 @@ window-alpha test is replaced by the nested production-dialog coverage.
 Preview references cover portrait, short/wide landscape, light/dark surfaces,
 selection, empty results, unknown-search baseline, status feedback, Inspector and
 200% text. Colored underlays make panel/foreground transparency regressions visible;
-a compact large-text opacity dialog checks its bounded controls. Review actual renders before accepting reference
+compact large-text opacity dialogs check bounded controls and RTL layout. Review actual renders before accepting reference
 changes; screenshot comparison alone cannot prove gestures, IME suppression or asynchronous navigation.
 
 ## Separate follow-up work

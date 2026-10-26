@@ -1137,4 +1137,6 @@
     <string name="library_metadata_language_search">Sök språk eller ange språkkod</string>
     <string name="library_metadata_remove_language">Ta bort beskrivning</string>
     <string name="library_metadata_language_load_failed">Beskrivningarna kunde inte läsas in. Öppna metadataredigeringen igen.</string>
+    <string name="memory_editor_panel_opacity">Panelens opacitet</string>
+    <string name="memory_editor_panel_opacity_help">Justerar panelens bakgrund utan att tona ned text eller ikoner.</string>
 </resources>

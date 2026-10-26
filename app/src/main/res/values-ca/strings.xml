@@ -1169,4 +1169,6 @@
     <string name="library_metadata_language_search">Cerca un idioma o introdueix un codi</string>
     <string name="library_metadata_remove_language">Elimina la descripció</string>
     <string name="library_metadata_language_load_failed">No es poden carregar les descripcions. Torna a obrir les metadades.</string>
+    <string name="memory_editor_panel_opacity">Opacitat del panell</string>
+    <string name="memory_editor_panel_opacity_help">Ajusta el fons del panell sense atenuar el text ni les icones.</string>
 </resources>

@@ -1104,4 +1104,6 @@
     <string name="library_metadata_language_search">搜索语言或输入区域代码</string>
     <string name="library_metadata_remove_language">删除描述</string>
     <string name="library_metadata_language_load_failed">无法加载语言描述。请重新打开元数据编辑页面。</string>
+    <string name="memory_editor_panel_opacity">面板不透明度</string>
+    <string name="memory_editor_panel_opacity_help">调整面板背景，不会淡化文字或图标。</string>
 </resources>

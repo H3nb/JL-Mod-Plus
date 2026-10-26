@@ -1138,4 +1138,6 @@
     <string name="library_metadata_language_search">Sprache suchen oder Gebietsschema eingeben</string>
     <string name="library_metadata_remove_language">Beschreibung entfernen</string>
     <string name="library_metadata_language_load_failed">Sprachbeschreibungen konnten nicht geladen werden. Metadaten erneut öffnen.</string>
+    <string name="memory_editor_panel_opacity">Deckkraft des Panels</string>
+    <string name="memory_editor_panel_opacity_help">Ändert die Deckkraft des Panelhintergrunds. Text und Symbole bleiben deckend.</string>
 </resources>

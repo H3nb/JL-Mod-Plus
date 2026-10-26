@@ -1136,4 +1136,6 @@
     <string name="library_metadata_language_search">Αναζήτηση γλώσσας ή εισαγωγή κωδικού</string>
     <string name="library_metadata_remove_language">Κατάργηση περιγραφής</string>
     <string name="library_metadata_language_load_failed">Αδύνατη η φόρτωση περιγραφών. Ανοίξτε ξανά την επεξεργασία μεταδεδομένων.</string>
+    <string name="memory_editor_panel_opacity">Αδιαφάνεια πλαισίου</string>
+    <string name="memory_editor_panel_opacity_help">Ρυθμίζει το φόντο του πλαισίου χωρίς να ξεθωριάζει το κείμενο ή τα εικονίδια.</string>
 </resources>
