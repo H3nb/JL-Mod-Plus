@@ -87,6 +87,8 @@
     <string name="file_picker_empty">אין קבצים תואמים</string>
     <string name="file_picker_empty_folder">לא נמצאו תיקיות</string>
     <string name="file_picker_file">קובץ</string>
+    <string name="file_picker_preview_named">תצוגה מקדימה: %1$s</string>
+    <string name="file_picker_preview_unavailable">לא זמין</string>
     <string name="file_picker_folder_exists">כבר קיים פריט בשם הזה.</string>
     <string name="file_picker_folder_name">שם התיקייה</string>
     <string name="file_picker_grant_access">מתן גישה</string>

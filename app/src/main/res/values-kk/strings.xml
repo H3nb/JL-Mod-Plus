@@ -134,6 +134,8 @@
     <string name="file_picker_empty">Сәйкес файлдар жоқ</string>
     <string name="file_picker_empty_folder">Бумалар табылмады</string>
     <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">Алдын ала қарау: %1$s</string>
+    <string name="file_picker_preview_unavailable">Қолжетімсіз</string>
     <string name="file_picker_folder_exists">Бұл атауы бар элемент бұрыннан бар.</string>
     <string name="file_picker_folder_name">Бума атауы</string>
     <string name="file_picker_grant_access">Рұқсат беру</string>

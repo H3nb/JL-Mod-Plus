@@ -194,6 +194,8 @@
     <string name="file_picker_empty">कोई मेल खाती फ़ाइल नहीं</string>
     <string name="file_picker_empty_folder">कोई फ़ोल्डर नहीं मिला</string>
     <string name="file_picker_file">फ़ाइल</string>
+    <string name="file_picker_preview_named">पूर्वावलोकन: %1$s</string>
+    <string name="file_picker_preview_unavailable">उपलब्ध नहीं है</string>
     <string name="file_picker_folder_exists">इस नाम का कोई आइटम पहले से मौजूद है।</string>
     <string name="file_picker_folder_name">फ़ोल्डर का नाम</string>
     <string name="file_picker_grant_access">ऐक्सेस दें</string>

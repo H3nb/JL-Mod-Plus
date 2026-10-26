@@ -86,6 +86,8 @@
     <string name="file_picker_empty">Ingen samsvarende filer</string>
     <string name="file_picker_empty_folder">Fant ingen mapper</string>
     <string name="file_picker_file">Fil</string>
+    <string name="file_picker_preview_named">Forhåndsvisning: %1$s</string>
+    <string name="file_picker_preview_unavailable">Utilgjengelig</string>
     <string name="file_picker_folder_exists">Et element med dette navnet finnes allerede.</string>
     <string name="file_picker_folder_name">Mappenavn</string>
     <string name="file_picker_grant_access">Gi tilgang</string>

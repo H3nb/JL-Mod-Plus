@@ -155,6 +155,8 @@
     <string name="file_picker_empty">Nincs megfelelő fájl</string>
     <string name="file_picker_empty_folder">Nem találhatók mappák</string>
     <string name="file_picker_file">Fájl</string>
+    <string name="file_picker_preview_named">Előnézet: %1$s</string>
+    <string name="file_picker_preview_unavailable">Nem elérhető</string>
     <string name="file_picker_folder_exists">Már létezik ilyen nevű elem.</string>
     <string name="file_picker_folder_name">Mappa neve</string>
     <string name="file_picker_grant_access">Hozzáférés engedélyezése</string>
