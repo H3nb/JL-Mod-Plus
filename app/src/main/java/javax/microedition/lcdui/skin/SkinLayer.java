@@ -33,6 +33,8 @@ import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
+import io.github.h3nb.jlmodplus.util.SvgRasterizer;
+import java.io.IOException;
 
 public class SkinLayer implements Overlay {
 	private static SkinLayer instance;
@@ -79,7 +81,21 @@ public class SkinLayer implements Overlay {
 	}
 
 	public static void init(ProfileModel settings, File workDir) {
+		instance = null;
+		if (settings.screenBackgroundImage == null) return;
 		File skin = new File(workDir + Config.SKINS_DIR + settings.screenBackgroundImage);
+		if (SvgRasterizer.isSvg(skin)) {
+			try {
+				Point size = new Point();
+				ContextCompat.getDisplayOrDefault(ContextHolder.getAppContext()).getSize(size);
+				int side = Math.min(4096, Math.max(1, Math.max(size.x, size.y)));
+				Bitmap image = SvgRasterizer.read(skin).renderWithin(side, side);
+				instance = new SkinLayer(image, settings);
+			} catch (IOException | IllegalArgumentException failure) {
+				android.util.Log.w("SkinLayer", "Could not load SVG screen skin", failure);
+			}
+			return;
+		}
 		BitmapFactory.Options opts = new BitmapFactory.Options();
 		opts.inJustDecodeBounds = true;
 		BitmapFactory.decodeFile(skin.getPath(), opts);
