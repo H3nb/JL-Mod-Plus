@@ -372,34 +372,15 @@ public final class ControlSkinStore {
                     throw new IOException("Invalid or oversized PNG/WebP");
                 }
             }
-            // One source per slot. Move the old source out of the lookup path before
-            // publishing the verified replacement; restore it if publication fails.
-            List<File[]> originals = new ArrayList<>();
-            boolean published = false;
-            try {
-                for (String extension : new String[]{".png", ".webp", ".svg"}) {
-                    File old = new File(folder, stem + extension);
-                    if (!old.exists()) continue;
-                    if (!old.isFile()) throw new IOException("Cannot replace non-file skin asset");
-                    File backup = File.createTempFile(".skin-replace-", ".old", folder);
-                    if (!backup.delete()) throw new IOException("Cannot prepare skin replacement");
-                    atomicRename(old, backup);
-                    originals.add(new File[]{old, backup});
-                }
-                atomicRename(temp, new File(folder, stem + suffix));
-                published = true;
-            } finally {
-                if (published) {
-                    for (File[] original : originals) {
-                        if (!original[1].delete()) {
-                            android.util.Log.w("ControlSkinStore", "Could not remove replaced skin backup");
-                        }
-                    }
-                } else {
-                    for (int i = originals.size() - 1; i >= 0; i--) {
-                        File[] original = originals.get(i);
-                        atomicRename(original[1], original[0]);
-                    }
+            // Publish the complete new asset before removing alternate formats.
+            // A crash must not move the previously usable source out of its slot.
+            File target = new File(folder, stem + suffix);
+            atomicRename(temp, target);
+            for (String extension : new String[]{".png", ".webp", ".svg"}) {
+                if (extension.equals(suffix)) continue;
+                File alternate = new File(folder, stem + extension);
+                if (alternate.exists() && !alternate.delete()) {
+                    throw new IOException("Cannot remove old image format");
                 }
             }
         } finally { temp.delete(); }
