@@ -2,6 +2,11 @@
  * You may obtain a copy at http://www.apache.org/licenses/LICENSE-2.0. */
 package io.github.h3nb.jlmodplus.memory
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import android.view.KeyEvent
 import android.view.Window
 import androidx.compose.material3.Text
@@ -51,6 +56,7 @@ class MemoryEditorOverlayComposeTest {
         rule.setContent {
             JLModPlusTheme {
                 MemoryEditorOverlayScope(overlay) {
+                    Box(Modifier.fillMaxSize().background(Color.Magenta))
                     MemoryEditorDialog(onDismissRequest = {}, text = {
                         val view = LocalView.current
                         SideEffect { windows["form"] = (view.parent as DialogWindowProvider).window }
@@ -74,9 +80,17 @@ class MemoryEditorOverlayComposeTest {
             assertTrue(overlay.peeking)
             assertEquals(2, windows.size)
             windows.values.forEach {
-                assertEquals(0f, it.attributes.alpha, 0f)
+                assertEquals("The input window must remain visible to Android", 1f, it.attributes.alpha, 0f)
                 assertEquals(0f, it.attributes.dimAmount, 0f)
             }
+        }
+        // Check the rendered composite, not just a window attribute: every modal and its dim
+        // must disappear so the original underlay is visible through their former centers.
+        val screenshot = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        try {
+            assertEquals(android.graphics.Color.MAGENTA, screenshot.getPixel(screenshot.width / 2, screenshot.height / 2))
+        } finally {
+            screenshot.recycle()
         }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput {
             moveTo(Offset(center.x - 64f, center.y - 64f))

@@ -167,7 +167,6 @@ internal fun MemoryEditorRuntimeRoot(
             modifier = Modifier.fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 8.dp, vertical = 6.dp)
-                .alpha(if (overlay.peeking) 0f else 1f)
                 .memoryEditorPeekKeys(overlay),
             contentAlignment = Alignment.Center,
         ) {
@@ -184,7 +183,8 @@ internal fun MemoryEditorRuntimeRoot(
             } else maxHeight
             Surface(
                 modifier = Modifier.widthIn(max = 960.dp).fillMaxWidth().height(panelHeight)
-                    .align(Alignment.TopCenter),
+                    .align(Alignment.TopCenter)
+                    .alpha(if (overlay.peeking) 0f else 1f),
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
                 contentColor = MaterialTheme.colorScheme.onSurface,
@@ -214,7 +214,7 @@ internal fun MemoryEditorRuntimeRoot(
             }
             if (overlay.layers.isEmpty()) {
                 MemoryEditorPeekDock(overlay, Modifier.widthIn(max = 960.dp).align(Alignment.BottomCenter)) {
-                    RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity, enabled = !overlay.peeking) {
+                    RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
                         opacityDialog = true
                     }
                 }

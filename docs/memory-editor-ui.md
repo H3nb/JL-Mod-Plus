@@ -73,8 +73,11 @@ background. Begin Peek on pointer down and retain the hold if that pointer drift
 outside the target; release or cancellation restores visibility. The footer stays
 at safe-window coordinates even when the empty panel is shorter.
 
-Holding the eye hides the workspace and all editor dialog windows, including native
-dimming, without disposing the forms. Releasing restores them. Semantic activation
+Holding the eye hides the workspace and every editor dialog surface, including native
+dimming, without disposing the forms. Keep the native input windows visible to Android:
+setting their window alpha to zero caused injected Back events to be dropped before
+reaching the app. Hide Compose surfaces instead, leaving the eye visible and reachable.
+Releasing restores the panels. Semantic activation
 toggles Peek for accessibility, and Back restores the open form before dismissing it.
 Hidden bodies have no actionable semantics; a pointer shield and key handling prevent
 editing invisible content. Peek is a view-only action, not touch-through game control.

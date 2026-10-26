@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -150,7 +151,7 @@ internal fun MemoryEditorPeekDock(
     leadingContent: (@Composable () -> Unit)? = null,
 ) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (leadingContent != null) {
+        if (leadingContent != null && !overlay.peeking) {
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
                 leadingContent()
             }
@@ -177,7 +178,7 @@ internal fun MemoryEditorPeekDock(
                         down.consume()
                         overlay.peeking = true
                         try {
-                            // Keep the hold while the finger drifts: the hidden icon cannot guide it back.
+                            // Keep the hold while the finger drifts instead of flashing the panels back.
                             do {
                                 val pointer = awaitPointerEvent(PointerEventPass.Initial)
                                     .changes.firstOrNull { it.id == down.id }
@@ -228,7 +229,7 @@ internal fun MemoryEditorDialog(
             onDismissRequest = { if (overlay.peeking) overlay.peeking = false else onDismissRequest() },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
         ) {
-            MemoryEditorWindowEffect(overlay.peeking)
+            MemoryEditorWindowDimming(overlay.peeking)
             Box(
                 Modifier.size(windowWidth, windowHeight).windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(horizontal = 8.dp, vertical = 6.dp)
@@ -243,6 +244,7 @@ internal fun MemoryEditorDialog(
                             })
                             Surface(
                                 modifier = layout.modifier.then(modifier)
+                                    .alpha(if (overlay.peeking) 0f else 1f)
                                     .testTag("adaptive-dialog-surface")
                                     .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
                                     .pointerInput(Unit) { detectTapGestures {} },
@@ -302,12 +304,11 @@ internal fun MemoryEditorOpacityDialog(overlay: MemoryEditorOverlayState, onDism
 private data class MemoryEditorWindowBaseline(
     val flags: Int,
     val dimAmount: Float,
-    val alpha: Float,
 )
 
-/** Keep the platform dialog hidden for the whole Peek hold without resetting it per recomposition. */
+/** Remove native dimming during Peek without making the input window invisible to Android. */
 @Composable
-internal fun MemoryEditorWindowEffect(
+private fun MemoryEditorWindowDimming(
     peeking: Boolean,
 ) {
     val view = LocalView.current
@@ -317,7 +318,6 @@ internal fun MemoryEditorWindowEffect(
             MemoryEditorWindowBaseline(
                 flags = attributes.flags,
                 dimAmount = attributes.dimAmount,
-                alpha = attributes.alpha,
             )
         }
     }
@@ -341,7 +341,6 @@ private fun applyMemoryEditorWindowState(
     baseline: MemoryEditorWindowBaseline,
     peeking: Boolean,
 ) {
-    val targetAlpha = if (peeking) 0f else baseline.alpha
     val targetDimAmount = if (peeking) 0f else baseline.dimAmount
     val targetDimEnabled = !peeking &&
         baseline.flags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
@@ -355,9 +354,8 @@ private fun applyMemoryEditorWindowState(
         }
     }
     val attributes = window.attributes
-    if (attributes.alpha != targetAlpha || attributes.dimAmount != targetDimAmount) {
+    if (attributes.dimAmount != targetDimAmount) {
         window.attributes = attributes.apply {
-            alpha = targetAlpha
             dimAmount = targetDimAmount
         }
     }
