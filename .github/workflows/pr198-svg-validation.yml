@@ -1,0 +1,171 @@
+# Temporary PR-scoped validation. Delete after reviewing actual Android test evidence.
+name: PR 198 SVG connected validation
+
+on:
+  pull_request:
+    branches: [alpha]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr198-svg-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  svg-runtime:
+    if: github.event.pull_request.number == 198 && github.event.pull_request.head.repo.full_name == github.repository
+    name: SVG runtime contracts (API 35)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Add disposable mixed-SVG/PNG budget contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          mkdir -p app/src/androidTest/java/io/github/h3nb/jlmodplus/config
+          cat > app/src/androidTest/java/io/github/h3nb/jlmodplus/config/Pr198MixedSvgBudgetTest.java <<'JAVA'
+          package io.github.h3nb.jlmodplus.config;
+
+          import static org.junit.Assert.*;
+          import android.graphics.Bitmap;
+          import android.graphics.Color;
+          import android.os.SystemClock;
+          import android.util.Log;
+          import androidx.test.ext.junit.runners.AndroidJUnit4;
+          import java.io.ByteArrayInputStream;
+          import java.io.ByteArrayOutputStream;
+          import java.io.File;
+          import java.nio.charset.StandardCharsets;
+          import org.junit.Rule;
+          import org.junit.Test;
+          import org.junit.rules.TemporaryFolder;
+          import org.junit.runner.RunWith;
+
+          @RunWith(AndroidJUnit4.class)
+          public class Pr198MixedSvgBudgetTest {
+              @Rule public TemporaryFolder tmp = new TemporaryFolder();
+
+              @Test public void mixedFullSetPreservesEverySlotWithin24MiB() throws Exception {
+                  File root = tmp.newFolder("svg-memory");
+                  File config = new File(new File(root, "configs"), "Test");
+                  assertTrue(config.mkdirs());
+                  ControlSkinStore.SetInfo set = ControlSkinStore.create(root, "Mixed");
+                  String svg = "<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 256 256'>"
+                          + "<rect width='256' height='256' fill='#172545'/>"
+                          + "<rect x='128' y='128' width='128' height='128' fill='#5ef7ff'/></svg>";
+                  byte[] vector = svg.getBytes(StandardCharsets.UTF_8);
+                  Bitmap png = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888);
+                  ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+                  try {
+                      png.eraseColor(Color.MAGENTA);
+                      assertTrue(png.compress(Bitmap.CompressFormat.PNG, 100, compressed));
+                  } finally { png.recycle(); }
+                  byte[] raster = compressed.toByteArray();
+                  int index = 0;
+                  for (String key : ControlSkinStore.KEYS) {
+                      for (boolean pressed : new boolean[]{false, true}) {
+                          boolean useSvg = (index++ % 2) == 0;
+                          ControlSkinStore.importImage(root, set.id, key, pressed,
+                                  new ByteArrayInputStream(useSvg ? vector : raster),
+                                  useSvg ? ".svg" : ".png");
+                      }
+                  }
+                  for (String stem : ControlSkinStore.GROUPED_ASSETS) {
+                      ControlSkinStore.importAsset(root, set.id, stem,
+                              new ByteArrayInputStream(vector), ".svg");
+                  }
+                  long beforeHeap = Runtime.getRuntime().totalMemory()
+                          - Runtime.getRuntime().freeMemory();
+                  long started = SystemClock.elapsedRealtime();
+                  ControlSkinRuntime result = ControlSkinRuntime.load(config, set.id, 512, 512);
+                  long elapsed = SystemClock.elapsedRealtime() - started;
+                  long afterHeap = Runtime.getRuntime().totalMemory()
+                          - Runtime.getRuntime().freeMemory();
+                  long allocated = 0L;
+                  for (int i = 0; i < ControlSkinStore.KEYS.length; i++) {
+                      ControlSkinRuntime.Button button = result.get(i);
+                      assertNotNull("Missing key " + i, button);
+                      assertNotNull("Missing pressed key " + i, button.pressed);
+                      allocated += button.normal.getAllocationByteCount()
+                              + button.pressed.getAllocationByteCount();
+                  }
+                  assertNotNull(result.dpad());
+                  assertNotNull(result.analog());
+                  for (Bitmap layer : new Bitmap[]{
+                          result.dpad().base, result.dpad().up, result.dpad().down,
+                          result.dpad().left, result.dpad().right,
+                          result.analog().base, result.analog().thumb,
+                          result.analog().thumbPressed}) {
+                      assertNotNull(layer);
+                      allocated += layer.getAllocationByteCount();
+                  }
+                  assertTrue("Bitmap budget exceeded: " + allocated,
+                          allocated <= 24L * 1024 * 1024);
+                  Log.i("PR198_SVG_BUDGET", "mixed SVG/PNG bitmap bytes=" + allocated
+                          + " load_ms=" + elapsed + " java_heap_before=" + beforeHeap
+                          + " java_heap_after=" + afterHeap);
+              }
+          }
+          JAVA
+      - name: Run connected Android SVG tests
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            mkdir -p ci-artifacts/pr198-svg
+            trap 'adb logcat -d -v threadtime > ci-artifacts/pr198-svg/logcat.txt 2>&1 || true' EXIT
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+            adb shell appops set io.github.h3nb.jlmodplus.debug MANAGE_EXTERNAL_STORAGE allow
+            apk="$(find app/build/outputs/apk/androidTest -type f -name '*.apk' -print -quit)"
+            test -n "$apk"
+            adb install -r -t "$apk"
+            runner="$(adb shell pm list instrumentation | tr -d '\r' | sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p')"
+            test -n "$runner"
+            selectors='io.github.h3nb.jlmodplus.util.SvgRasterizerTest,io.github.h3nb.jlmodplus.util.SvgArtworkIntegrationTest,io.github.h3nb.jlmodplus.config.ControlSkinStoreTest,io.github.h3nb.jlmodplus.config.Pr198MixedSvgBudgetTest'
+            adb shell am instrument -w -r -e class "$selectors" "$runner" > ci-artifacts/pr198-svg/instrumentation.txt 2>&1 || { cat ci-artifacts/pr198-svg/instrumentation.txt; exit 1; }
+            cat ci-artifacts/pr198-svg/instrumentation.txt
+            python3 scripts/runtime-smoke-results.py --log ci-artifacts/pr198-svg/instrumentation.txt --output ci-artifacts/pr198-svg/selectors.txt io.github.h3nb.jlmodplus.util.SvgRasterizerTest io.github.h3nb.jlmodplus.util.SvgArtworkIntegrationTest io.github.h3nb.jlmodplus.config.ControlSkinStoreTest io.github.h3nb.jlmodplus.config.Pr198MixedSvgBudgetTest
+            adb shell dumpsys meminfo io.github.h3nb.jlmodplus.debug > ci-artifacts/pr198-svg/meminfo-after.txt
+            adb logcat -d -s PR198_SVG_BUDGET:I '*:S' > ci-artifacts/pr198-svg/benchmark.txt
+            cat ci-artifacts/pr198-svg/benchmark.txt
+      - name: Upload disposable evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr198-svg-runtime-evidence
+          path: |
+            ci-artifacts/pr198-svg/
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+          if-no-files-found: warn
+          retention-days: 14
