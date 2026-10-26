@@ -1077,5 +1077,6 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             })
         } catch (_: Exception) { null }
+          catch (_: OutOfMemoryError) { null }
     }
 }
