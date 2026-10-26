@@ -192,6 +192,8 @@
     <string name="file_picker_empty">Немає відповідних файлів</string>
     <string name="file_picker_empty_folder">Папок не знайдено</string>
     <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">Попередній перегляд: %1$s</string>
+    <string name="file_picker_preview_unavailable">Недоступні</string>
     <string name="file_picker_folder_exists">Елемент із такою назвою вже існує.</string>
     <string name="file_picker_folder_name">Назва папки</string>
     <string name="file_picker_grant_access">Надати доступ</string>

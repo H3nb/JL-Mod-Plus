@@ -86,6 +86,8 @@
     <string name="file_picker_empty">Нема одговарајућих датотека</string>
     <string name="file_picker_empty_folder">Нису пронађене фасцикле</string>
     <string name="file_picker_file">Датотека</string>
+    <string name="file_picker_preview_named">Преглед: %1$s</string>
+    <string name="file_picker_preview_unavailable">Није доступно</string>
     <string name="file_picker_folder_exists">Ставка са овим називом већ постоји.</string>
     <string name="file_picker_folder_name">Назив фасцикле</string>
     <string name="file_picker_grant_access">Одобри приступ</string>

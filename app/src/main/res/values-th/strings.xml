@@ -124,6 +124,8 @@
     <string name="file_picker_empty">ไม่มีไฟล์ที่ตรงกัน</string>
     <string name="file_picker_empty_folder">ไม่พบโฟลเดอร์</string>
     <string name="file_picker_file">ไฟล์</string>
+    <string name="file_picker_preview_named">ตัวอย่าง: %1$s</string>
+    <string name="file_picker_preview_unavailable">ใช้ไม่ได้</string>
     <string name="file_picker_folder_exists">มีรายการชื่อนี้อยู่แล้ว</string>
     <string name="file_picker_folder_name">ชื่อโฟลเดอร์</string>
     <string name="file_picker_grant_access">อนุญาตให้เข้าถึง</string>

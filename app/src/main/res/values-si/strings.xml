@@ -87,6 +87,8 @@
     <string name="file_picker_empty">ගැළපෙන ගොනු නැත</string>
     <string name="file_picker_empty_folder">ෆෝල්ඩර හමු නොවීය</string>
     <string name="file_picker_file">ගොනුව</string>
+    <string name="file_picker_preview_named">පෙරදසුන: %1$s</string>
+    <string name="file_picker_preview_unavailable">ලබා ගත නොහැක</string>
     <string name="file_picker_folder_exists">මෙම නමින් අයිතමයක් දැනටමත් ඇත.</string>
     <string name="file_picker_folder_name">ෆෝල්ඩරයේ නම</string>
     <string name="file_picker_grant_access">ප්‍රවේශය ලබා දෙන්න</string>

@@ -194,6 +194,8 @@
     <string name="file_picker_empty">没有匹配的文件</string>
     <string name="file_picker_empty_folder">未找到文件夹</string>
     <string name="file_picker_file">文件</string>
+    <string name="file_picker_preview_named">预览：%1$s</string>
+    <string name="file_picker_preview_unavailable">不可用</string>
     <string name="file_picker_folder_exists">已存在同名项目。</string>
     <string name="file_picker_folder_name">文件夹名称</string>
     <string name="file_picker_grant_access">允许访问</string>

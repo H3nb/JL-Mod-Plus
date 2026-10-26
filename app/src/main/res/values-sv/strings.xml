@@ -76,6 +76,8 @@
     <string name="file_picker_current_folder">Aktuell mapp</string>
     <string name="file_picker_parent_folder">Överordnad mapp</string>
     <string name="file_picker_file">Fil</string>
+    <string name="file_picker_preview_named">Förhandsvisning: %1$s</string>
+    <string name="file_picker_preview_unavailable">Ej tillgänglig</string>
     <string name="file_picker_storage_volume">Lagringsvolym</string>
     <string name="file_picker_empty">Inga matchande filer</string>
     <string name="file_picker_empty_folder">Inga mappar hittades</string>

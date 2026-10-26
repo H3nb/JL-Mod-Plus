@@ -137,6 +137,8 @@
     <string name="file_picker_empty">Niciun fișier corespunzător</string>
     <string name="file_picker_empty_folder">Nu s-au găsit dosare</string>
     <string name="file_picker_file">Fișier</string>
+    <string name="file_picker_preview_named">Previzualizare: %1$s</string>
+    <string name="file_picker_preview_unavailable">Indisponibile</string>
     <string name="file_picker_folder_exists">Există deja un element cu acest nume.</string>
     <string name="file_picker_folder_name">Numele dosarului</string>
     <string name="file_picker_grant_access">Permite accesul</string>

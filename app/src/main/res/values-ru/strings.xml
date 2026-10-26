@@ -366,6 +366,8 @@
     <string name="file_picker_current_folder">Текущая папка</string>
     <string name="file_picker_parent_folder">Родительская папка</string>
     <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">Предпросмотр: %1$s</string>
+    <string name="file_picker_preview_unavailable">Недоступно</string>
     <string name="file_picker_storage_volume">Хранилище</string>
     <string name="file_picker_empty">Подходящие файлы не найдены</string>
     <string name="file_picker_no_matches">Совпадений нет</string>
