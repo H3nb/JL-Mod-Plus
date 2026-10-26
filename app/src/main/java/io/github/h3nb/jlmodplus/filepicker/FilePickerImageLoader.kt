@@ -66,8 +66,6 @@ internal class FilePickerImageLoader {
             null
         } catch (_: OutOfMemoryError) {
             null
-        } catch (_: SecurityException) {
-            null
         }
     }
 
