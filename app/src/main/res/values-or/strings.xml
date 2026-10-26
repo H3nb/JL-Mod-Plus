@@ -241,8 +241,6 @@
     <string name="library_indexing_progress">ଲାଇବ୍ରେରିର ସୂଚୀ ତିଆରି ହେଉଛି… %1$d/%2$d</string>
     <string name="library_load_error_title">ଲାଇବ୍ରେରି ଉପଲବ୍ଧ ନାହିଁ</string>
     <string name="library_load_failed_message">ଲାଇବ୍ରେରି ଲୋଡ୍ କରାଯାଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
-    <string name="library_metadata_change_icon">ଆଇକନ୍ ବଦଳାନ୍ତୁ</string>
-    <string name="library_metadata_description">ବିବରଣୀ</string>
     <string name="library_metadata_edit_title">ମେଟାଡାଟା ସମ୍ପାଦନ କରନ୍ତୁ</string>
     <string name="library_metadata_icon">ଆଇକନ୍</string>
     <string name="library_metadata_name">ନାମ</string>
@@ -622,8 +620,6 @@
     <string name="PREF_ORIENTATION">ପରଦାର ଦିଗ</string>
     <string name="PREF_SYS_PROPS">ସିଷ୍ଟମ୍ ଗୁଣଧର୍ମ</string>
     <string name="PREF_TOUCH_INPUT">ସ୍ପର୍ଶ ଇନପୁଟ୍</string>
-    <string name="PREF_VK_BACK">ବଟନ୍ ରଙ୍ଗ</string>
-    <string name="PREF_VK_FORE">ଲେବଲ୍ ଓ ପ୍ରତୀକର ରଙ୍ଗ</string>
     <string name="PREF_VK_OUTLINE">ଧାରର ରଙ୍ଗ</string>
     <string name="PREF_VK_SEL_BACK">ଦବାଯାଇଥିବା ବଟନ୍‌ର ରଙ୍ଗ</string>
     <string name="PREF_VK_SEL_FORE">ଦବାଯାଇଥିବା ବଟନ୍‌ର ଲେବଲ୍ ଓ ପ୍ରତୀକର ରଙ୍ଗ</string>
@@ -750,7 +746,6 @@
     <string name="PREF_FONT_ANTI_ALIASING">ଆଣ୍ଟି-ଏଲିଆସିଂ</string>
     <string name="PREF_VK_ALPHA">ଅସ୍ୱଚ୍ଛତା</string>
     <string name="PREF_VK_FEEDBACK">ସ୍ପର୍ଶରେ କମ୍ପନ</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet ସ୍କ୍ରିନ୍ ବାହାରେ ନିୟନ୍ତ୍ରଣଗୁଡ଼ିକୁ ଅସ୍ୱଚ୍ଛ ରଖନ୍ତୁ</string>
     <string name="SIZE_PRESETS">ଫଣ୍ଟ୍ ଆକାର ପ୍ରିସେଟ୍</string>
     <string name="SWAP_SIZES">ଆକାର ଅଦଳବଦଳ କରନ୍ତୁ</string>
     <string name="config_analog_stick_summary">ମୁଖ୍ୟ ଆନାଲଗ୍ ଷ୍ଟିକ୍ ପାଇଁ ବନ୍ଦ, ୪ ଦିଗ, ୮ ଦିଗ କିମ୍ବା ସଂଖ୍ୟା କୀପ୍ୟାଡ୍ ବାଛନ୍ତୁ। କଣ୍ଟ୍ରୋଲର୍ ବଟନ୍‌ଗୁଡ଼ିକ କୀ ମ୍ୟାପିଂ ବ୍ୟବହାର କରନ୍ତି।</string>
@@ -822,22 +817,14 @@
     <string name="config_help_timing_unavailable">ଏହି MIDlet ସଂସ୍ଥାପନ ପାଇଁ ସମୟ ସେଟିଂସ୍ ଉପଲବ୍ଧ ନାହିଁ। ସେଗୁଡ଼ିକ ସକ୍ରିୟ କରିବା ପାଇଁ MIDlet କୁ ପୁଣି ସଂସ୍ଥାପନ କିମ୍ବା ରୂପାନ୍ତର କରନ୍ତୁ।</string>
     <string name="config_help_touch_input">MIDlet କୁ ଟଚ୍‌ସ୍କ୍ରିନ୍‌ରୁ ପଏଣ୍ଟର୍ ଇନପୁଟ୍ ପାଇବାକୁ ଦିଏ।</string>
     <string name="config_help_virtual_keyboard">ଏହି MIDlet ପାଇଁ ସ୍କ୍ରିନ୍‌ରେ ନିୟନ୍ତ୍ରଣ ଦେଖାଏ।</string>
-    <string name="config_help_vk_alpha">ନିୟନ୍ତ୍ରଣର ଅସ୍ୱଚ୍ଛତା ନିର୍ଦ୍ଧାରଣ କରେ: ୦ = ସମ୍ପୂର୍ଣ୍ଣ ସ୍ୱଚ୍ଛ; ୨୫୫ = ସମ୍ପୂର୍ଣ୍ଣ ଅସ୍ୱଚ୍ଛ।</string>
-    <string name="config_help_vk_background">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବଟନ୍‌ର ମୂଳ ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
     <string name="config_help_vk_button_shape">କୀପ୍ୟାଡ୍ ବଟନ୍‌ର ଡିଫଲ୍ଟ ଆକୃତି ନିର୍ଦ୍ଧାରଣ କରେ। D-pad ଓ ଆନାଲଗ୍ ଷ୍ଟିକ୍‌ର ନିଜସ୍ୱ ଆକୃତି ରହିଛି।</string>
     <string name="config_help_vk_feedback">ସେଟିଂସ୍‌ରେ କମ୍ପନ ସକ୍ରିୟ ଥିଲେ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ଦବାଇବା ସମୟରେ କମ୍ପନ କରେ।</string>
-    <string name="config_help_vk_force_opacity">MIDlet ସ୍କ୍ରିନ୍ ବାହାରେ ଥିବା ନିୟନ୍ତ୍ରଣକୁ ଅସ୍ୱଚ୍ଛ କରେ। ସ୍କ୍ରିନ୍ ଉପରେ ଥିବା ନିୟନ୍ତ୍ରଣ ନିର୍ଦ୍ଧାରିତ ଅସ୍ୱଚ୍ଛତା ବ୍ୟବହାର କରେ।</string>
-    <string name="config_help_vk_foreground">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବଟନ୍‌ର ଲେବଲ୍ ଓ ପ୍ରତୀକର ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
     <string name="config_help_vk_hide_delay">ନିୟନ୍ତ୍ରଣଗୁଡ଼ିକ MIDlet ସ୍କ୍ରିନ୍‌କୁ ଢାଙ୍କିଥିଲେ ଏହି ବିଳମ୍ବ ପରେ ସେଗୁଡ଼ିକୁ ଲୁଚାଏ। ସ୍ୱୟଂଚାଳିତ ଭାବେ ଲୁଚାଇବା ବନ୍ଦ କରିବା ପାଇଁ ୦ ନିର୍ଦ୍ଧାରଣ କରନ୍ତୁ।</string>
-    <string name="config_help_vk_outline">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବଟନ୍‌ର ଧାରର ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
-    <string name="config_help_vk_selected_background">ବଟନ୍ ଦବାଯାଇଥିବା ସମୟରେ ତାହାର ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
-    <string name="config_help_vk_selected_foreground">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ବଟନ୍ ଦବାଯାଇଥିବା ସମୟରେ ଲେବଲ୍ ଓ ପ୍ରତୀକର ରଙ୍ଗ ନିର୍ଦ୍ଧାରଣ କରେ।</string>
     <string name="config_lock_custom_resolution_ratio">ଆସ୍ପେକ୍ଟ୍ ରେସିଓ ଲକ୍ କରନ୍ତୁ</string>
     <string name="config_message_delete_app_data">ଏହି MIDlet ସୃଷ୍ଟି କରିଥିବା ସମସ୍ତ ସଞ୍ଚିତ ଡାଟା ଓ ଅନ୍ୟ ଡାଟା ସ୍ଥାୟୀ ଭାବେ ବିଲୋପ କରିବେ? MIDlet ସେଟିଂସ୍ ବିଲୋପ ହେବ ନାହିଁ।</string>
     <string name="config_message_reset_profile_settings">ଏହି ପ୍ରୋଫାଇଲ୍‌ର ସେଟିଂସ୍ ଓ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣକୁ ସେଗୁଡ଼ିକର ଡିଫଲ୍ଟ ସ୍ଥିତିକୁ ଫେରାଇବେ? ସଞ୍ଚୟ ପୂର୍ବରୁ ଆପଣ ତଥାପି ସମ୍ପାଦନା କିମ୍ବା ବାତିଲ୍ କରିପାରିବେ।</string>
     <string name="config_message_reset_settings">ଏହି MIDlet ର ସେଟିଂସ୍ ଓ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣକୁ ସେଗୁଡ଼ିକର ଡିଫଲ୍ଟ ସ୍ଥିତିକୁ ଫେରାଇବେ? MIDlet ଡାଟା ବିଲୋପ ହେବ ନାହିଁ।</string>
     <string name="config_reset_all_settings_summary">ଏହି MIDlet ର ଡାଟା ବିଲୋପ ନ କରି ଏହାର ସେଟିଂସ୍ ଓ ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣକୁ ଡିଫଲ୍ଟ ସ୍ଥିତିକୁ ଫେରାନ୍ତୁ।</string>
-    <string name="config_virtual_controls_preview_hint">ଦବାଯାଇଥିବା ସମୟର ରଙ୍ଗ ଦେଖିବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ। ନମୁନା ଚୟନିତ ଅସ୍ୱଚ୍ଛତା ବ୍ୟବହାର କରେ।</string>
     <string name="config_warning_filter_shader">ସ୍କ୍ରିନ୍ ଶେଡର୍ ପ୍ରକ୍ରିୟାକରଣ ପୂର୍ବରୁ ଲିନିୟର୍ ଫିଲ୍ଟରିଂ ଇନପୁଟ୍‌କୁ ମସୃଣ କରେ ଏବଂ ଆଉଟପୁଟ୍‌ର ତୀକ୍ଷ୍ଣତା କମାଇପାରେ।</string>
     <string name="bulk_install_cancel_requested">ବର୍ତ୍ତମାନର ଆପ୍ ପରେ ବନ୍ଦ ହେବ…</string>
     <string name="bulk_install_cancelled">ଏକାଧିକ ଆପ୍‌ର ସଂସ୍ଥାପନ ବନ୍ଦ ହୋଇଛି</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">ମୁଖ୍ୟ ଆଇକନ୍ ବ୍ୟବହାର କରୁଛି</string>
     <string name="library_metadata_change">ବଦଳାନ୍ତୁ</string>
     <string name="library_metadata_remove_portrait">3:4 ଆଇକନ୍ ହଟାନ୍ତୁ</string>
-    <string name="library_metadata_icon_updated">ଆଇକନ୍ ଅପଡେଟ୍ ହୋଇଛି</string>
     <string name="library_metadata_discard_title">ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ବାତିଲ୍ କରିବେ କି?</string>
-    <string name="library_metadata_discard_message">ସଞ୍ଚୟ ହୋଇନଥିବା ଲେଖା ପରିବର୍ତ୍ତନ ହଜିଯିବ। ଆଇକନ୍ ପରିବର୍ତ୍ତନ ପୂର୍ବରୁ ସଞ୍ଚୟ ହୋଇଛି।</string>
     <string name="library_metadata_discard">ବାତିଲ୍ କରନ୍ତୁ</string>
     <string name="library_metadata_default_description">ଡିଫଲ୍ଟ ବିବରଣୀ</string>
     <string name="library_metadata_other_languages">ଅନ୍ୟ ଭାଷା</string>

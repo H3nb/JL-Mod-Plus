@@ -44,9 +44,7 @@
     <string name="pref_theme_night">มืด</string>
     <string name="pref_theme_title">ธีม</string>
     <string name="PREF_VK_ALPHA">ความทึบ: </string>
-    <string name="PREF_VK_BACK">สีปุ่ม</string>
     <string name="PREF_VK_FEEDBACK">สั่นเมื่อแตะ</string>
-    <string name="PREF_VK_FORE">สีป้ายชื่อและสัญลักษณ์</string>
     <string name="PREF_VK_OUTLINE">สีเส้นขอบ</string>
     <string name="PREF_VK_SEL_BACK">สีปุ่มขณะกด</string>
     <string name="PREF_VK_SEL_FORE">สีป้ายชื่อและสัญลักษณ์ขณะกด</string>
@@ -232,8 +230,6 @@
     <string name="library_indexing_progress">กำลังสร้างดัชนีคลังแอป… %1$d/%2$d</string>
     <string name="library_load_error_title">คลังแอปไม่พร้อมใช้งาน</string>
     <string name="library_load_failed_message">ไม่สามารถโหลดคลังแอปได้ ลองอีกครั้ง</string>
-    <string name="library_metadata_change_icon">เปลี่ยนไอคอน</string>
-    <string name="library_metadata_description">คำอธิบาย</string>
     <string name="library_metadata_edit_title">แก้ไขเมทาดาทา</string>
     <string name="library_metadata_icon">ไอคอน</string>
     <string name="library_metadata_name">ชื่อ</string>
@@ -462,16 +458,9 @@
     <string name="config_help_timing_unavailable">การตั้งค่าเวลาใช้ไม่ได้กับการติดตั้ง MIDlet นี้ ให้ติดตั้งหรือแปลง MIDlet ใหม่เพื่อเปิดใช้</string>
     <string name="config_help_touch_input">ให้ MIDlet รับอินพุตตัวชี้จากหน้าจอสัมผัส</string>
     <string name="config_help_virtual_keyboard">แสดงตัวควบคุมบนหน้าจอสำหรับ MIDlet นี้</string>
-    <string name="config_help_vk_alpha">ตั้งความทึบของตัวควบคุม: 0 = โปร่งใสทั้งหมด; 255 = ทึบทั้งหมด</string>
-    <string name="config_help_vk_background">ตั้งสีพื้นฐานของปุ่มตัวควบคุมเสมือน</string>
     <string name="config_help_vk_button_shape">กำหนดรูปร่างเริ่มต้นของปุ่มแป้นกด ส่วนแป้นทิศทางและก้านอนาล็อกมีรูปร่างของตนเอง</string>
     <string name="config_help_vk_feedback">สั่นเมื่อกดตัวควบคุมเสมือนหากเปิดใช้การสั่นในการตั้งค่า</string>
-    <string name="config_help_vk_force_opacity">ทำให้ตัวควบคุมนอกหน้าจอ MIDlet ทึบ ตัวควบคุมบนหน้าจอใช้ความทึบที่ตั้งไว้</string>
-    <string name="config_help_vk_foreground">ตั้งสีข้อความและสัญลักษณ์บนปุ่มตัวควบคุมเสมือน</string>
     <string name="config_help_vk_hide_delay">ซ่อนตัวควบคุมหลังเวลาหน่วงนี้เมื่อบังหน้าจอ MIDlet ตั้งเป็น 0 เพื่อปิดการซ่อนอัตโนมัติ</string>
-    <string name="config_help_vk_outline">ตั้งสีเส้นขอบของปุ่มตัวควบคุมเสมือน</string>
-    <string name="config_help_vk_selected_background">ตั้งสีปุ่มขณะกด</string>
-    <string name="config_help_vk_selected_foreground">ตั้งสีข้อความและสัญลักษณ์ขณะกดปุ่มตัวควบคุมเสมือน</string>
     <string name="config_increase_value">เพิ่มค่า</string>
     <string name="config_lock_custom_resolution_ratio">ล็อกอัตราส่วนภาพ</string>
     <string name="config_maintenance">รีเซ็ตและข้อมูล</string>
@@ -488,7 +477,6 @@
     <string name="config_timing_mode_full_guest">เวลาจำลอง</string>
     <string name="config_timing_mode_real_wall">เวลาระบบ</string>
     <string name="config_virtual_controls_color_preview">ตัวอย่างสี</string>
-    <string name="config_virtual_controls_preview_hint">แตะเพื่อดูตัวอย่างสีขณะกด ตัวอย่างใช้ความทึบที่เลือกไว้</string>
     <string name="config_virtual_controls_preview_normal">ปล่อย</string>
     <string name="config_virtual_controls_preview_pressed">ขณะกด</string>
     <string name="config_warning_filter_shader">การกรองเชิงเส้นทำให้อินพุตเรียบขึ้นก่อนที่เชดเดอร์หน้าจอจะประมวลผล และอาจลดความคมชัดของผลลัพธ์</string>
@@ -867,7 +855,6 @@
     <string name="PREF_TOUCH_INPUT">การป้อนข้อมูลด้วยการสัมผัส</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">แสดงตัวควบคุมเสมือน</string>
-    <string name="PREF_VK_FORCE_OPACITY">ให้ตัวควบคุมนอกหน้าจอ MIDlet ทึบแสงเสมอ</string>
     <string name="PREF_VK_HIDE_DELAY">เวลาหน่วงก่อนซ่อนอัตโนมัติ</string>
     <string name="fps_limit_maximum">สูงสุด</string>
     <string name="identity_filter">ไม่มี (เร็วที่สุด)</string>
@@ -1096,9 +1083,7 @@
     <string name="library_metadata_follows_main">ใช้ไอคอนหลัก</string>
     <string name="library_metadata_change">เปลี่ยน</string>
     <string name="library_metadata_remove_portrait">ลบไอคอน 3:4</string>
-    <string name="library_metadata_icon_updated">อัปเดตไอคอนแล้ว</string>
     <string name="library_metadata_discard_title">ยกเลิกการเปลี่ยนแปลงหรือไม่?</string>
-    <string name="library_metadata_discard_message">การเปลี่ยนแปลงข้อความที่ยังไม่ได้บันทึกจะหายไป การเปลี่ยนแปลงไอคอนได้รับการบันทึกแล้ว</string>
     <string name="library_metadata_discard">ยกเลิก</string>
     <string name="library_metadata_default_description">คำอธิบายเริ่มต้น</string>
     <string name="library_metadata_other_languages">ภาษาอื่น</string>

@@ -119,10 +119,7 @@
     <string name="pref_vibration_title">Activer la vibration</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Afficher les commandes virtuelles</string>
     <string name="PREF_VK_ALPHA">Opacité: </string>
-    <string name="PREF_VK_BACK">Couleur des boutons</string>
     <string name="PREF_VK_FEEDBACK">Retour haptique</string>
-    <string name="PREF_VK_FORCE_OPACITY">Garder opaques les commandes hors de l’écran du MIDlet</string>
-    <string name="PREF_VK_FORE">Couleur des libellés et symboles</string>
     <string name="PREF_VK_HIDE_DELAY">Délai de masquage automatique</string>
     <string name="pref_vk_hide_hint">désactivée</string>
     <string name="PREF_VK_OUTLINE">Couleur du contour</string>
@@ -795,14 +792,7 @@
     <string name="config_help_key_mapping">Associe les touches et boutons Android aux actions du pavé J2ME.</string>
     <string name="config_help_vk_button_shape">Définit la forme par défaut des boutons du pavé. La croix directionnelle et le stick analogique ont leurs propres formes.</string>
     <string name="config_help_vk_feedback">Fait vibrer l’appareil lors d’un appui sur les commandes virtuelles si la vibration est activée dans les Paramètres.</string>
-    <string name="config_help_vk_alpha">Définit l’opacité des commandes : 0 = entièrement transparentes ; 255 = entièrement opaques.</string>
-    <string name="config_help_vk_force_opacity">Rend opaques les commandes hors de l’écran du MIDlet. Les commandes superposées à l’écran utilisent l’opacité configurée.</string>
     <string name="config_help_vk_hide_delay">Masque les commandes après ce délai lorsqu’elles couvrent l’écran du MIDlet. Réglez sur 0 pour désactiver le masquage automatique.</string>
-    <string name="config_help_vk_foreground">Définit la couleur des libellés et symboles sur les boutons des commandes virtuelles.</string>
-    <string name="config_help_vk_background">Définit la couleur de base des boutons des commandes virtuelles.</string>
-    <string name="config_help_vk_selected_foreground">Définit la couleur des libellés et symboles lorsqu’un bouton de commande virtuelle est pressé.</string>
-    <string name="config_help_vk_selected_background">Définit la couleur du bouton lorsqu’il est pressé.</string>
-    <string name="config_help_vk_outline">Définit la couleur du contour des boutons des commandes virtuelles.</string>
     <string name="config_help_reset_layout">Restaure la disposition des commandes virtuelles sans modifier les autres paramètres du MIDlet.</string>
     <string name="config_help_skip_resume">Après le premier appel réussi à startApp(), ignore les appels suivants lors de la reprise du MIDlet. À utiliser uniquement pour les MIDlets qui échouent à la reprise.</string>
     <string name="config_help_soundbank">Choisit la banque de sons utilisée pour la lecture MIDI.</string>
@@ -866,10 +856,8 @@
     <string name="config_controller_help_body_compact">Les boutons de la manette utilisent les mêmes Attributions de touches que les claviers et les touches du téléphone. L’option Stick analogique contrôle uniquement la sortie directionnelle du stick pour le MIDlet. Retour Android conserve son comportement hôte normal et tout bouton physique attribué à M ouvre le menu MIDlet d’exécution.</string>
     <string name="library_metadata_edit_title">Modifier les métadonnées</string>
     <string name="library_metadata_icon">Icône</string>
-    <string name="library_metadata_change_icon">Changer l’icône</string>
     <string name="library_metadata_name">Nom</string>
     <string name="library_metadata_vendor">Éditeur</string>
-    <string name="library_metadata_description">Description</string>
     <string name="library_metadata_reset_to_original">Rétablir l’original</string>
     <string name="library_metadata_save">Enregistrer</string>
     <string name="library_hide_grid_titles_summary">Afficher uniquement les icônes des MIDlets dans la vue en grille.</string>
@@ -1026,7 +1014,6 @@
     <string name="bulk_install_skipped_entries">Entrées d’archive ignorées : %1$d</string>
     <string name="bulk_install_unreadable_archives">Archives illisibles : %1$d</string>
     <string name="config_virtual_controls_color_preview">Aperçu des couleurs</string>
-    <string name="config_virtual_controls_preview_hint">Appuyez pour voir les couleurs à l’état appuyé. L’exemple utilise l’opacité sélectionnée.</string>
     <string name="config_virtual_controls_preview_normal">Relâché</string>
     <string name="config_virtual_controls_preview_pressed">Appuyé</string>
     <string name="config_warning_filter_shader">Le filtrage linéaire lisse l’image avant son traitement par le shader d’écran et peut réduire la netteté du résultat.</string>
@@ -1162,9 +1149,7 @@
     <string name="library_metadata_follows_main">Utilise l\'icône principale</string>
     <string name="library_metadata_change">Modifier</string>
     <string name="library_metadata_remove_portrait">Supprimer l\'icône 3:4</string>
-    <string name="library_metadata_icon_updated">Icône mise à jour</string>
     <string name="library_metadata_discard_title">Ignorer les modifications ?</string>
-    <string name="library_metadata_discard_message">Les modifications de texte non enregistrées seront perdues. Les modifications d\'icône sont déjà enregistrées.</string>
     <string name="library_metadata_discard">Ignorer</string>
     <string name="library_metadata_default_description">Description par défaut</string>
     <string name="library_metadata_other_languages">Autres langues</string>

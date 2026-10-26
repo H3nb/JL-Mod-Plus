@@ -110,10 +110,7 @@
     <string name="pref_vibration_title">कंपन को सक्षम करें</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">वर्चुअल नियंत्रण दिखाएँ</string>
     <string name="PREF_VK_ALPHA">अपारदर्शिता</string>
-    <string name="PREF_VK_BACK">बटन का रंग</string>
     <string name="PREF_VK_FEEDBACK">कम्पन प्रतिक्रिया</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet स्क्रीन के बाहर नियंत्रण अपारदर्शी रखें</string>
-    <string name="PREF_VK_FORE">लेबल और प्रतीक का रंग</string>
     <string name="PREF_VK_HIDE_DELAY">अपने आप छिपने में देरी</string>
     <string name="pref_vk_hide_hint">बंद</string>
     <string name="PREF_VK_OUTLINE">रूपरेखा का रंग</string>
@@ -302,8 +299,6 @@
     <string name="library_indexing_progress">लाइब्रेरी की अनुक्रमणिका बन रही है… %1$d/%2$d</string>
     <string name="library_load_error_title">लाइब्रेरी उपलब्ध नहीं</string>
     <string name="library_load_failed_message">लाइब्रेरी लोड नहीं हो सकी। फिर कोशिश करें।</string>
-    <string name="library_metadata_change_icon">आइकॉन बदलें</string>
-    <string name="library_metadata_description">विवरण</string>
     <string name="library_metadata_edit_title">मेटाडेटा बदलें</string>
     <string name="library_metadata_icon">आइकॉन</string>
     <string name="library_metadata_name">नाम</string>
@@ -537,16 +532,9 @@
     <string name="config_help_timing_unavailable">इस MIDlet इंस्टॉलेशन के लिए समय की सेटिंग उपलब्ध नहीं हैं। इन्हें सक्षम करने के लिए MIDlet फिर से इंस्टॉल या कन्वर्ट करें।</string>
     <string name="config_help_touch_input">MIDlet को टचस्क्रीन से पॉइंटर इनपुट लेने देता है।</string>
     <string name="config_help_virtual_keyboard">इस MIDlet के लिए स्क्रीन पर कंट्रोल दिखाता है।</string>
-    <string name="config_help_vk_alpha">कंट्रोल की अपारदर्शिता सेट करता है: 0 = पूरी तरह पारदर्शी; 255 = पूरी तरह अपारदर्शी।</string>
-    <string name="config_help_vk_background">वर्चुअल कंट्रोल के बटनों का मूल रंग सेट करता है।</string>
     <string name="config_help_vk_button_shape">कीपैड बटन का डिफ़ॉल्ट आकार सेट करता है। D-pad और एनालॉग स्टिक के अपने आकार होते हैं।</string>
     <string name="config_help_vk_feedback">सेटिंग में कंपन सक्षम होने पर वर्चुअल कंट्रोल दबाने से कंपन होता है।</string>
-    <string name="config_help_vk_force_opacity">MIDlet स्क्रीन से बाहर के कंट्रोल अपारदर्शी बनाता है। स्क्रीन के ऊपर के कंट्रोल तय की गई अपारदर्शिता का उपयोग करते हैं।</string>
-    <string name="config_help_vk_foreground">वर्चुअल कंट्रोल के बटनों पर लेबल और चिह्नों का रंग सेट करता है।</string>
     <string name="config_help_vk_hide_delay">MIDlet स्क्रीन को ढकने वाले कंट्रोल इस विलंब के बाद छिप जाते हैं। अपने-आप छिपाना बंद करने के लिए 0 सेट करें।</string>
-    <string name="config_help_vk_outline">वर्चुअल कंट्रोल के बटनों की बाहरी रेखा का रंग सेट करता है।</string>
-    <string name="config_help_vk_selected_background">दबाए जाने के दौरान बटन का रंग सेट करता है।</string>
-    <string name="config_help_vk_selected_foreground">वर्चुअल कंट्रोल का बटन दबाए जाने के दौरान लेबल और चिह्नों का रंग सेट करता है।</string>
     <string name="config_increase_value">मान बढ़ाएँ</string>
     <string name="config_lock_custom_resolution_ratio">आस्पेक्ट अनुपात लॉक करें</string>
     <string name="config_maintenance">रीसेट और डेटा</string>
@@ -563,7 +551,6 @@
     <string name="config_timing_mode_full_guest">इम्यूलेशन समय</string>
     <string name="config_timing_mode_real_wall">सिस्टम समय</string>
     <string name="config_virtual_controls_color_preview">रंग का पूर्वावलोकन</string>
-    <string name="config_virtual_controls_preview_hint">दबाए जाने के रंगों का पूर्वावलोकन देखने के लिए टैप करें। नमूना चुनी गई अपारदर्शिता का उपयोग करता है।</string>
     <string name="config_virtual_controls_preview_normal">छोड़ा गया</string>
     <string name="config_virtual_controls_preview_pressed">दबाया गया</string>
     <string name="config_warning_filter_shader">स्क्रीन शेडर द्वारा प्रोसेस किए जाने से पहले लीनियर फ़िल्टरिंग इनपुट को चिकना करती है और आउटपुट की तीक्ष्णता घट सकती है।</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">मुख्य आइकन का उपयोग करता है</string>
     <string name="library_metadata_change">बदलें</string>
     <string name="library_metadata_remove_portrait">3:4 आइकन हटाएँ</string>
-    <string name="library_metadata_icon_updated">आइकन अपडेट किया गया</string>
     <string name="library_metadata_discard_title">बदलाव छोड़ दें?</string>
-    <string name="library_metadata_discard_message">बिना सहेजे गए टेक्स्ट बदलाव खो जाएँगे। आइकन में किए गए बदलाव पहले ही सहेजे जा चुके हैं।</string>
     <string name="library_metadata_discard">छोड़ दें</string>
     <string name="library_metadata_default_description">डिफ़ॉल्ट विवरण</string>
     <string name="library_metadata_other_languages">अन्य भाषाएँ</string>

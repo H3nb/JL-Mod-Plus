@@ -316,10 +316,7 @@
     <string name="pref_vibration_title">Aktivera vibration</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuella kontroller</string>
     <string name="PREF_VK_ALPHA">Opacitet</string>
-    <string name="PREF_VK_BACK">Knappfärg</string>
     <string name="PREF_VK_FEEDBACK">Haptisk återkoppling</string>
-    <string name="PREF_VK_FORCE_OPACITY">Håll kontroller utanför MIDlet-skärmen ogenomskinliga</string>
-    <string name="PREF_VK_FORE">Etikett- och symbolfärg</string>
     <string name="PREF_VK_HIDE_DELAY">Fördröjning för automatisk döljning</string>
     <string name="pref_vk_hide_hint">Inaktiverad</string>
     <string name="PREF_VK_OUTLINE">Konturfärg</string>
@@ -760,14 +757,7 @@
     <string name="config_help_key_mapping">Tilldelar Android-tangenter och -knappar till J2ME-knappsatsåtgärder.</string>
     <string name="config_help_vk_button_shape">Ställer in standardformen på knappsatsens knappar. D-paden och den analoga spaken har egna former.</string>
     <string name="config_help_vk_feedback">Vibrerar vid tryck på virtuella kontroller när vibration är aktiverad i Inställningar.</string>
-    <string name="config_help_vk_alpha">Ställer in kontrollernas opacitet: 0 = helt transparenta; 255 = helt ogenomskinliga.</string>
-    <string name="config_help_vk_force_opacity">Gör kontroller utanför MIDlet-skärmen ogenomskinliga. Kontroller ovanpå skärmen använder den inställda opaciteten.</string>
     <string name="config_help_vk_hide_delay">Döljer kontroller efter denna fördröjning när de täcker MIDlet-skärmen. Ange 0 för att inaktivera automatisk döljning.</string>
-    <string name="config_help_vk_foreground">Ställer in färgen på etiketter och symboler på knappar för virtuella kontroller.</string>
-    <string name="config_help_vk_background">Ställer in grundfärgen på knappar för virtuella kontroller.</string>
-    <string name="config_help_vk_selected_foreground">Ställer in färgen på etiketter och symboler medan en knapp för virtuella kontroller är nedtryckt.</string>
-    <string name="config_help_vk_selected_background">Ställer in knappens färg medan den är nedtryckt.</string>
-    <string name="config_help_vk_outline">Ställer in konturfärgen på knappar för virtuella kontroller.</string>
     <string name="config_help_reset_layout">Återställer layouten för virtuella kontroller utan att ändra andra MIDlet-inställningar.</string>
     <string name="config_help_skip_resume">Efter det första lyckade anropet till startApp() hoppas senare anrop över när MIDlet-appen återupptas. Använd endast för MIDlet-appar som slutar fungera vid återupptagning.</string>
     <string name="config_help_soundbank">Väljer den soundbank som används för MIDI-uppspelning.</string>
@@ -831,10 +821,8 @@
     <string name="config_controller_help_body_compact">Gamepadknappar använder samma Tangenttilldelning som tangentbord och telefonknappar. Alternativet Analog spak styr endast spakens riktningsutmatning för MIDlet-appen. Android Tillbaka behåller sitt normala värdbeteende och varje fysisk knapp som tilldelats M öppnar runtime-MIDlet-menyn.</string>
     <string name="library_metadata_edit_title">Redigera metadata</string>
     <string name="library_metadata_icon">Ikon</string>
-    <string name="library_metadata_change_icon">Ändra ikon</string>
     <string name="library_metadata_name">Namn</string>
     <string name="library_metadata_vendor">Leverantör</string>
-    <string name="library_metadata_description">Beskrivning</string>
     <string name="library_metadata_reset_to_original">Återställ till original</string>
     <string name="library_metadata_save">Spara</string>
     <string name="library_hide_grid_titles_summary">Visa endast MIDlet-ikoner i rutnätsvy.</string>
@@ -995,7 +983,6 @@
     <string name="bulk_install_skipped_entries">Överhoppade arkivposter: %1$d</string>
     <string name="bulk_install_unreadable_archives">Oläsbara arkiv: %1$d</string>
     <string name="config_virtual_controls_color_preview">Färgförhandsvisning</string>
-    <string name="config_virtual_controls_preview_hint">Tryck för att förhandsvisa färgerna i nedtryckt läge. Exemplet använder vald opacitet.</string>
     <string name="config_virtual_controls_preview_normal">Släppt</string>
     <string name="config_virtual_controls_preview_pressed">Nedtryckt</string>
     <string name="config_warning_filter_shader">Linjär filtrering jämnar ut bilden innan skärmshadern bearbetar den och kan minska skärpan i resultatet.</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">Använder huvudikonen</string>
     <string name="library_metadata_change">Ändra</string>
     <string name="library_metadata_remove_portrait">Ta bort 3:4-ikon</string>
-    <string name="library_metadata_icon_updated">Ikonen har uppdaterats</string>
     <string name="library_metadata_discard_title">Kasta ändringarna?</string>
-    <string name="library_metadata_discard_message">Osparade textändringar går förlorade. Ikonändringar har redan sparats.</string>
     <string name="library_metadata_discard">Kasta</string>
     <string name="library_metadata_default_description">Standardbeskrivning</string>
     <string name="library_metadata_other_languages">Andra språk</string>

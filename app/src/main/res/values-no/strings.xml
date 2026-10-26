@@ -194,8 +194,6 @@
     <string name="library_indexing_progress">Indekserer Bibliotek… %1$d/%2$d</string>
     <string name="library_load_error_title">Bibliotek utilgjengelig</string>
     <string name="library_load_failed_message">Kunne ikke laste inn Bibliotek. Prøv igjen.</string>
-    <string name="library_metadata_change_icon">Endre ikon</string>
-    <string name="library_metadata_description">Beskrivelse</string>
     <string name="library_metadata_edit_title">Rediger metadata</string>
     <string name="library_metadata_icon">Ikon</string>
     <string name="library_metadata_name">Navn</string>
@@ -429,16 +427,9 @@
     <string name="config_help_timing_unavailable">Tidsinnstillinger er utilgjengelige for denne MIDlet-installasjonen. Installer eller konverter MIDlet-en på nytt for å aktivere dem.</string>
     <string name="config_help_touch_input">Lar MIDlet-en motta pekerinndata fra berøringsskjermen.</string>
     <string name="config_help_virtual_keyboard">Viser skjermkontroller for denne MIDlet-en.</string>
-    <string name="config_help_vk_alpha">Angir kontrollenes ugjennomsiktighet: 0 = helt gjennomsiktig; 255 = helt ugjennomsiktig.</string>
-    <string name="config_help_vk_background">Angir grunnfargen på knappene for virtuelle kontroller.</string>
     <string name="config_help_vk_button_shape">Angir standardformen på tastaturknappene. D-pad og analogspaken har sine egne former.</string>
     <string name="config_help_vk_feedback">Vibrerer ved trykk på virtuelle kontroller når vibrasjon er aktivert i Innstillinger.</string>
-    <string name="config_help_vk_force_opacity">Gjør kontroller utenfor MIDlet-skjermen ugjennomsiktige. Kontroller over skjermen bruker den angitte ugjennomsiktigheten.</string>
-    <string name="config_help_vk_foreground">Angir fargen på etiketter og symboler på knappene for virtuelle kontroller.</string>
     <string name="config_help_vk_hide_delay">Skjuler kontroller etter denne forsinkelsen når de dekker MIDlet-skjermen. Sett til 0 for å deaktivere automatisk skjuling.</string>
-    <string name="config_help_vk_outline">Angir konturfargen på knappene for virtuelle kontroller.</string>
-    <string name="config_help_vk_selected_background">Angir knappefargen mens knappen er trykket inn.</string>
-    <string name="config_help_vk_selected_foreground">Angir fargen på etiketter og symboler mens en knapp for virtuelle kontroller er trykket inn.</string>
     <string name="config_increase_value">Øk verdi</string>
     <string name="config_lock_custom_resolution_ratio">Lås sideforhold</string>
     <string name="config_maintenance">Tilbakestilling og data</string>
@@ -455,7 +446,6 @@
     <string name="config_timing_mode_full_guest">Emuleringstid</string>
     <string name="config_timing_mode_real_wall">Systemtid</string>
     <string name="config_virtual_controls_color_preview">Fargeforhåndsvisning</string>
-    <string name="config_virtual_controls_preview_hint">Trykk for å forhåndsvise fargene ved knappetrykk. Eksemplet bruker valgt ugjennomsiktighet.</string>
     <string name="config_virtual_controls_preview_normal">Sluppet</string>
     <string name="config_virtual_controls_preview_pressed">Trykket inn</string>
     <string name="config_warning_filter_shader">Lineær filtrering jevner ut inndata før skjermshaderen behandler dem og kan redusere skarpheten på resultatet.</string>
@@ -875,10 +865,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Vis virtuelle kontroller</string>
     <string name="PREF_VK_ALPHA">Ugjennomsiktighet</string>
-    <string name="PREF_VK_BACK">Knappefarge</string>
     <string name="PREF_VK_FEEDBACK">Haptisk tilbakemelding</string>
-    <string name="PREF_VK_FORCE_OPACITY">Hold kontrollene ugjennomsiktige utenfor MIDlet-skjermen</string>
-    <string name="PREF_VK_FORE">Farge på etiketter og symboler</string>
     <string name="PREF_VK_HIDE_DELAY">Forsinkelse før automatisk skjuling</string>
     <string name="PREF_VK_OUTLINE">Konturfarge</string>
     <string name="PREF_VK_SEL_BACK">Farge på inntrykte knapper</string>
@@ -1128,9 +1115,7 @@
     <string name="library_metadata_follows_main">Bruker hovedikonet</string>
     <string name="library_metadata_change">Endre</string>
     <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
-    <string name="library_metadata_icon_updated">Ikon oppdatert</string>
     <string name="library_metadata_discard_title">Forkaste endringer?</string>
-    <string name="library_metadata_discard_message">Ulagrede tekstendringer går tapt. Ikonendringer er allerede lagret.</string>
     <string name="library_metadata_discard">Forkast</string>
     <string name="library_metadata_default_description">Standardbeskrivelse</string>
     <string name="library_metadata_other_languages">Andre språk</string>

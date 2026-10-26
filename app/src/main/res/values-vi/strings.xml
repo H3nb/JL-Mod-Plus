@@ -100,10 +100,7 @@
     <string name="pref_vibration_title">Bật rung động</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Hiện điều khiển ảo</string>
     <string name="PREF_VK_ALPHA">Độ đục</string>
-    <string name="PREF_VK_BACK">Màu nút</string>
     <string name="PREF_VK_FEEDBACK">Phản hồi xúc giác</string>
-    <string name="PREF_VK_FORCE_OPACITY">Giữ điều khiển ngoài màn hình MIDlet không trong suốt</string>
-    <string name="PREF_VK_FORE">Màu nhãn và ký hiệu</string>
     <string name="PREF_VK_HIDE_DELAY">Độ trễ tự ẩn</string>
     <string name="pref_vk_hide_hint">Tắt</string>
     <string name="PREF_VK_OUTLINE">Màu đường viền</string>
@@ -295,8 +292,6 @@
     <string name="library_indexing_progress">Đang lập chỉ mục thư viện… %1$d/%2$d</string>
     <string name="library_load_error_title">Thư viện không khả dụng</string>
     <string name="library_load_failed_message">Không thể tải thư viện. Hãy thử lại.</string>
-    <string name="library_metadata_change_icon">Đổi biểu tượng</string>
-    <string name="library_metadata_description">Mô tả</string>
     <string name="library_metadata_edit_title">Chỉnh sửa siêu dữ liệu</string>
     <string name="library_metadata_icon">Biểu tượng</string>
     <string name="library_metadata_name">Tên</string>
@@ -525,16 +520,9 @@
     <string name="config_help_timing_unavailable">Không có cài đặt thời gian cho bản cài đặt MIDlet này. Cài đặt lại hoặc chuyển đổi lại MIDlet để bật chúng.</string>
     <string name="config_help_touch_input">Cho phép MIDlet nhận đầu vào con trỏ từ màn hình cảm ứng.</string>
     <string name="config_help_virtual_keyboard">Hiển thị điều khiển trên màn hình cho MIDlet này.</string>
-    <string name="config_help_vk_alpha">Đặt độ mờ đục của điều khiển: 0 = hoàn toàn trong suốt; 255 = hoàn toàn đục.</string>
-    <string name="config_help_vk_background">Đặt màu nền cơ bản của các nút điều khiển ảo.</string>
     <string name="config_help_vk_button_shape">Thiết lập hình dạng mặc định của các nút bàn phím. Phím điều hướng và cần analog có hình dạng riêng.</string>
     <string name="config_help_vk_feedback">Rung khi nhấn điều khiển ảo nếu đã bật rung trong Cài đặt.</string>
-    <string name="config_help_vk_force_opacity">Làm điều khiển bên ngoài màn hình MIDlet hoàn toàn đục. Điều khiển trên màn hình dùng độ mờ đục đã đặt.</string>
-    <string name="config_help_vk_foreground">Đặt màu nhãn và ký hiệu trên các nút điều khiển ảo.</string>
     <string name="config_help_vk_hide_delay">Ẩn điều khiển sau độ trễ này khi chúng che màn hình MIDlet. Đặt thành 0 để tắt tự động ẩn.</string>
-    <string name="config_help_vk_outline">Đặt màu đường viền của các nút điều khiển ảo.</string>
-    <string name="config_help_vk_selected_background">Đặt màu nút khi đang nhấn.</string>
-    <string name="config_help_vk_selected_foreground">Đặt màu nhãn và ký hiệu khi đang nhấn nút điều khiển ảo.</string>
     <string name="config_increase_value">Tăng giá trị</string>
     <string name="config_lock_custom_resolution_ratio">Khóa tỷ lệ khung hình</string>
     <string name="config_maintenance">Đặt lại và dữ liệu</string>
@@ -551,7 +539,6 @@
     <string name="config_timing_mode_full_guest">Thời gian giả lập</string>
     <string name="config_timing_mode_real_wall">Thời gian hệ thống</string>
     <string name="config_virtual_controls_color_preview">Xem trước màu</string>
-    <string name="config_virtual_controls_preview_hint">Chạm để xem trước màu khi nhấn. Mẫu dùng độ mờ đục đã chọn.</string>
     <string name="config_virtual_controls_preview_normal">Đã thả</string>
     <string name="config_virtual_controls_preview_pressed">Đang nhấn</string>
     <string name="config_warning_filter_shader">Lọc tuyến tính làm mượt đầu vào trước khi bộ đổ bóng màn hình xử lý và có thể làm giảm độ sắc nét của đầu ra.</string>
@@ -1096,9 +1083,7 @@
     <string name="library_metadata_follows_main">Dùng biểu tượng chính</string>
     <string name="library_metadata_change">Thay đổi</string>
     <string name="library_metadata_remove_portrait">Xóa biểu tượng 3:4</string>
-    <string name="library_metadata_icon_updated">Đã cập nhật biểu tượng</string>
     <string name="library_metadata_discard_title">Hủy thay đổi?</string>
-    <string name="library_metadata_discard_message">Các thay đổi văn bản chưa lưu sẽ bị mất. Thay đổi biểu tượng đã được lưu.</string>
     <string name="library_metadata_discard">Hủy</string>
     <string name="library_metadata_default_description">Mô tả mặc định</string>
     <string name="library_metadata_other_languages">Ngôn ngữ khác</string>

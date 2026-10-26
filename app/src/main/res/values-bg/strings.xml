@@ -93,10 +93,7 @@
     <string name="pref_vibration_title">Вибрация</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Показване на виртуалните контроли</string>
     <string name="PREF_VK_ALPHA">Непрозрачност</string>
-    <string name="PREF_VK_BACK">Цвят на бутоните</string>
     <string name="PREF_VK_FEEDBACK">Вибрация при докосване</string>
-    <string name="PREF_VK_FORCE_OPACITY">Запазване на непрозрачността на контролите извън екрана на MIDlet</string>
-    <string name="PREF_VK_FORE">Цвят на надписите и символите</string>
     <string name="PREF_VK_HIDE_DELAY">Забавяне на автоматичното скриване</string>
     <string name="pref_vk_hide_hint">Изключено</string>
     <string name="PREF_VK_OUTLINE">Цвят на контура</string>
@@ -282,8 +279,6 @@
     <string name="library_indexing_progress">Индексиране на Библиотеката… %1$d/%2$d</string>
     <string name="library_load_error_title">Библиотеката не е налична</string>
     <string name="library_load_failed_message">Библиотеката не може да бъде заредена. Опитайте отново.</string>
-    <string name="library_metadata_change_icon">Промяна на иконата</string>
-    <string name="library_metadata_description">Описание</string>
     <string name="library_metadata_edit_title">Редактиране на метаданни</string>
     <string name="library_metadata_icon">Икона</string>
     <string name="library_metadata_name">Име</string>
@@ -517,16 +512,9 @@
     <string name="config_help_timing_unavailable">Настройките за време са недостъпни за тази инсталация на MIDlet. Преинсталирайте или преобразувайте отново MIDlet, за да ги активирате.</string>
     <string name="config_help_touch_input">Позволява на MIDlet да получава вход за показалеца от сензорния екран.</string>
     <string name="config_help_virtual_keyboard">Показва екранни контроли за този MIDlet.</string>
-    <string name="config_help_vk_alpha">Задава непрозрачността на контролите: 0 = напълно прозрачни; 255 = напълно непрозрачни.</string>
-    <string name="config_help_vk_background">Задава основния цвят на бутоните на виртуалните контроли.</string>
     <string name="config_help_vk_button_shape">Задава стандартната форма на бутоните на клавиатурата. Кръстачката и аналоговият стик имат собствени форми.</string>
     <string name="config_help_vk_feedback">Вибрира при натискане на виртуалните контроли, когато вибрацията е включена в „Настройки“.</string>
-    <string name="config_help_vk_force_opacity">Прави непрозрачни контролите извън екрана на MIDlet. Контролите върху екрана използват зададената непрозрачност.</string>
-    <string name="config_help_vk_foreground">Задава цвета на надписите и символите върху бутоните на виртуалните контроли.</string>
     <string name="config_help_vk_hide_delay">Скрива контролите след това забавяне, когато покриват екрана на MIDlet. Задайте 0, за да изключите автоматичното скриване.</string>
-    <string name="config_help_vk_outline">Задава цвета на контурите на бутоните на виртуалните контроли.</string>
-    <string name="config_help_vk_selected_background">Задава цвета на бутона, докато е натиснат.</string>
-    <string name="config_help_vk_selected_foreground">Задава цвета на надписите и символите, докато е натиснат бутон на виртуалните контроли.</string>
     <string name="config_increase_value">Увеличаване на стойността</string>
     <string name="config_lock_custom_resolution_ratio">Заключване на съотношението на страните</string>
     <string name="config_maintenance">Нулиране и данни</string>
@@ -543,7 +531,6 @@
     <string name="config_timing_mode_full_guest">Време на емулация</string>
     <string name="config_timing_mode_real_wall">Системно време</string>
     <string name="config_virtual_controls_color_preview">Преглед на цветовете</string>
-    <string name="config_virtual_controls_preview_hint">Докоснете, за да видите цветовете при натискане. Примерът използва избраната непрозрачност.</string>
     <string name="config_virtual_controls_preview_normal">Отпуснато</string>
     <string name="config_virtual_controls_preview_pressed">Натиснато</string>
     <string name="config_warning_filter_shader">Линейното филтриране изглажда входа, преди екранният шейдър да го обработи, и може да намали резкостта на изхода.</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">Използва основната икона</string>
     <string name="library_metadata_change">Промяна</string>
     <string name="library_metadata_remove_portrait">Премахване на икона 3:4</string>
-    <string name="library_metadata_icon_updated">Иконата е обновена</string>
     <string name="library_metadata_discard_title">Отхвърляне на промените?</string>
-    <string name="library_metadata_discard_message">Незапазените промени в текста ще бъдат загубени. Промените в иконата вече са запазени.</string>
     <string name="library_metadata_discard">Отхвърляне</string>
     <string name="library_metadata_default_description">Описание по подразбиране</string>
     <string name="library_metadata_other_languages">Други езици</string>

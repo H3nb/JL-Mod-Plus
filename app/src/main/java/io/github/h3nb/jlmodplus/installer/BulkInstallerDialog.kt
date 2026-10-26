@@ -771,8 +771,8 @@ private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
 private fun RunningContent(
     state: BulkInstallViewModel.State.Running,
     onCancel: () -> Unit,
-    single: Boolean = false,
     modifier: Modifier = Modifier,
+    single: Boolean = false,
 ) {
     val progress = if (state.total == 0) 0f else state.completed.toFloat() / state.total.toFloat()
     val completedCount = state.completed.coerceAtMost(state.total)
@@ -827,8 +827,8 @@ private fun FinishedContent(
     onClose: () -> Unit,
     onRetry: () -> Unit,
     compactHeight: Boolean,
-    single: Boolean = false,
     modifier: Modifier = Modifier,
+    single: Boolean = false,
 ) {
     val listState = rememberLazyListState()
     val canScrollForward = rememberLazyListCanScrollForward(listState)

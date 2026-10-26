@@ -195,8 +195,6 @@
     <string name="library_indexing_progress">පුස්තකාලය සුචිගත කරමින්… %1$d/%2$d</string>
     <string name="library_load_error_title">පුස්තකාලය ලබා ගත නොහැක</string>
     <string name="library_load_failed_message">පුස්තකාලය පූරණය කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
-    <string name="library_metadata_change_icon">අයිකනය වෙනස් කරන්න</string>
-    <string name="library_metadata_description">විස්තරය</string>
     <string name="library_metadata_edit_title">පාරදත්ත සංස්කරණය කරන්න</string>
     <string name="library_metadata_icon">අයිකනය</string>
     <string name="library_metadata_name">නම</string>
@@ -593,8 +591,6 @@
     <string name="PREF_WIDTH">පළල</string>
     <string name="PREF_ORIENTATION">තිරයේ දිශානතිය</string>
     <string name="PREF_TOUCH_INPUT">ස්පර්ශ ආදානය</string>
-    <string name="PREF_VK_BACK">බොත්තමේ වර්ණය</string>
-    <string name="PREF_VK_FORE">ලේබලයේ සහ සංකේතයේ වර්ණය</string>
     <string name="PREF_VK_OUTLINE">බොත්තමේ මායිම් රේඛාවේ වර්ණය</string>
     <string name="PREF_VK_SEL_BACK">එබූ බොත්තමේ වර්ණය</string>
     <string name="PREF_VK_SEL_FORE">එබූ බොත්තමේ ලේබලයේ සහ සංකේතයේ වර්ණය</string>
@@ -814,7 +810,6 @@
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">අතථ්‍ය පාලක පෙන්වන්න</string>
     <string name="PREF_VK_ALPHA">පාරාන්ධතාව</string>
     <string name="PREF_VK_FEEDBACK">කම්පන ප්‍රතිචාරය</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet තිරයෙන් පිටත පාලක පාරාන්ධව තබන්න</string>
     <string name="PREF_VK_HIDE_DELAY">ස්වයංක්‍රීයව සැඟවීමට පෙර ප්‍රමාදය</string>
     <string name="pref_vk_save_alert">පවතින අභිරුචි අතථ්‍ය පාලක පිරිසැලසුම වත්මන් පිරිසැලසුමෙන් ප්‍රතිස්ථාපනය කරන්නද?</string>
     <string name="reinstall_newest">මෙම යෙදුම %1$s අනුවාදයට යාවත්කාලීන කරන්නද?\n\nදැනට ස්ථාපනය කර ඇති අනුවාදය: %2$s</string>
@@ -932,7 +927,6 @@
         <item quantity="other">කණ්ඩායම් සෙවීම · අගයන් %1$d · එකම Java වස්තුව තුළ</item>
     </plurals>
     <string name="config_display_performance">කාර්යසාධනය සහ දෝෂ විනිශ්චය</string>
-    <string name="config_virtual_controls_preview_hint">එබූ විට දිස්වන වර්ණ බැලීමට තට්ටු කරන්න. නියැදිය තෝරාගත් පාරාන්ධතාව භාවිත කරයි.</string>
     <string name="config_lock_custom_resolution_ratio">දර්ශන අනුපාතය නොවෙනස්ව තබන්න</string>
     <string name="config_help_screen_size">MIDlet භාවිත කරන අතථ්‍ය Java ME තිරයේ විභේදනය සකසයි.</string>
     <string name="config_help_scale_type">ක්‍රීඩාව සංදර්ශකයට ගැළපෙන ආකාරය තෝරන්න. අභිරුචි පරිමාණයක් සැකසීමට අතින් තෝරන්න.</string>
@@ -967,14 +961,7 @@
     <string name="config_help_key_mapping">භෞතික Android යතුරු සහ බොත්තම් Java ME යතුරු පුවරු ක්‍රියාවලට පවරයි.</string>
     <string name="config_help_vk_button_shape">යතුරු පුවරු බොත්තම්වල පෙරනිමි හැඩය සකසයි. D-pad සහ ඇනලොග් ස්ටික් සඳහා වෙනම හැඩයන් ඇත.</string>
     <string name="config_help_vk_feedback">සැකසුම් තුළ කම්පනය සබල කර ඇති විට අතථ්‍ය පාලක එබීමේදී කම්පනය කරයි.</string>
-    <string name="config_help_vk_alpha">පාලකවල පාරාන්ධතාව සකසයි: 0 = සම්පූර්ණයෙන් පාරදෘශ්‍ය; 255 = සම්පූර්ණයෙන් පාරාන්ධ.</string>
-    <string name="config_help_vk_force_opacity">MIDlet තිරයෙන් පිටත පාලක පාරාන්ධ කරයි. තිරය මත ඇති පාලක වින්‍යාසගත පාරාන්ධතාව භාවිත කරයි.</string>
     <string name="config_help_vk_hide_delay">පාලක MIDlet තිරය ආවරණය කරන විට මෙම ප්‍රමාදයෙන් පසු ඒවා සඟවයි. ස්වයංක්‍රීයව සැඟවීම අක්‍රීය කිරීමට 0 ලෙස සකසන්න.</string>
-    <string name="config_help_vk_foreground">අතථ්‍ය පාලක බොත්තම්වල ලේබල් සහ සංකේතවල වර්ණය සකසයි.</string>
-    <string name="config_help_vk_background">අතථ්‍ය පාලක බොත්තම්වල මූලික වර්ණය සකසයි.</string>
-    <string name="config_help_vk_selected_foreground">අතථ්‍ය පාලක බොත්තමක් ඔබා ඇති විට එහි ලේබලයේ සහ සංකේතයේ වර්ණය සකසයි.</string>
-    <string name="config_help_vk_selected_background">බොත්තම ඔබා ඇති විට එහි වර්ණය සකසයි.</string>
-    <string name="config_help_vk_outline">අතථ්‍ය පාලක බොත්තම්වල දාර වර්ණය සකසයි.</string>
     <string name="config_help_reset_layout">අනෙකුත් MIDlet සැකසුම් වෙනස් නොකර අතථ්‍ය පාලක පිරිසැලසුම යළි පිහිටුවයි.</string>
     <string name="config_help_skip_resume">පළමු සාර්ථක startApp() කැඳවීමෙන් පසු MIDlet නැවත ධාවනය වන විට ඊළඟ කැඳවීම් මඟ හරියි. නැවත ධාවනය කිරීමේදී අසාර්ථක වන MIDlet සඳහා පමණක් භාවිත කරන්න.</string>
     <string name="config_help_soundbank">MIDI ශබ්ද සංස්ලේෂණය සඳහා භාවිත කරන ශබ්ද බැංකුව තෝරයි.</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">ප්‍රධාන නිරූපකය භාවිත කරයි</string>
     <string name="library_metadata_change">වෙනස් කරන්න</string>
     <string name="library_metadata_remove_portrait">3:4 නිරූපකය ඉවත් කරන්න</string>
-    <string name="library_metadata_icon_updated">නිරූපකය යාවත්කාලීන විය</string>
     <string name="library_metadata_discard_title">වෙනස්කම් ඉවත දමන්නද?</string>
-    <string name="library_metadata_discard_message">සුරැකී නැති පෙළ වෙනස්කම් නැති වේ. නිරූපකයේ වෙනස්කම් දැනටමත් සුරැකී ඇත.</string>
     <string name="library_metadata_discard">ඉවත දමන්න</string>
     <string name="library_metadata_default_description">පෙරනිමි විස්තරය</string>
     <string name="library_metadata_other_languages">වෙනත් භාෂා</string>

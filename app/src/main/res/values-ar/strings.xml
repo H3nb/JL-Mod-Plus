@@ -110,10 +110,7 @@
     <string name="pref_vibration_title">الاهتزاز</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">إظهار عناصر التحكم الافتراضية</string>
     <string name="PREF_VK_ALPHA">العتامة: </string>
-    <string name="PREF_VK_BACK">لون الزر</string>
     <string name="PREF_VK_FEEDBACK">اهتزاز عند النقر</string>
-    <string name="PREF_VK_FORCE_OPACITY">إبقاء عناصر التحكم معتمة خارج شاشة MIDlet</string>
-    <string name="PREF_VK_FORE">لون التسميات والرموز</string>
     <string name="PREF_VK_HIDE_DELAY">مهلة الإخفاء التلقائي</string>
     <string name="pref_vk_hide_hint">موقوف</string>
     <string name="PREF_VK_OUTLINE">لون الحدود</string>
@@ -302,8 +299,6 @@
     <string name="library_indexing_progress">جارٍ فهرسة المكتبة… %1$d/%2$d</string>
     <string name="library_load_error_title">المكتبة غير متاحة</string>
     <string name="library_load_failed_message">تعذر تحميل المكتبة. حاول مجددًا.</string>
-    <string name="library_metadata_change_icon">تغيير الأيقونة</string>
-    <string name="library_metadata_description">الوصف</string>
     <string name="library_metadata_edit_title">تعديل البيانات الوصفية</string>
     <string name="library_metadata_icon">الأيقونة</string>
     <string name="library_metadata_name">الاسم</string>
@@ -557,16 +552,9 @@
     <string name="config_help_timing_unavailable">إعدادات الوقت غير متاحة لتثبيت MIDlet هذا. أعد تثبيت MIDlet أو تحويله لتفعيلها.</string>
     <string name="config_help_touch_input">يسمح لـ MIDlet بتلقي إدخال المؤشر من شاشة اللمس.</string>
     <string name="config_help_virtual_keyboard">يعرض أدوات تحكم على الشاشة لـ MIDlet هذا.</string>
-    <string name="config_help_vk_alpha">يضبط عتامة أدوات التحكم: 0 = شفاف بالكامل؛ 255 = معتم بالكامل.</string>
-    <string name="config_help_vk_background">يضبط اللون الأساسي لأزرار أدوات التحكم الافتراضية.</string>
     <string name="config_help_vk_button_shape">يضبط الشكل الافتراضي لأزرار لوحة المفاتيح. تحتفظ لوحة الاتجاهات والعصا التناظرية بشكليهما.</string>
     <string name="config_help_vk_feedback">يهتز عند الضغط على أدوات التحكم الافتراضية إذا كان الاهتزاز مفعّلًا في الإعدادات.</string>
-    <string name="config_help_vk_force_opacity">يجعل أدوات التحكم خارج شاشة MIDlet معتمة. تستخدم أدوات التحكم فوق الشاشة العتامة المحددة.</string>
-    <string name="config_help_vk_foreground">يضبط لون التسميات والرموز على أزرار أدوات التحكم الافتراضية.</string>
     <string name="config_help_vk_hide_delay">يخفي أدوات التحكم بعد هذا التأخير عندما تغطي شاشة MIDlet. اضبطه على 0 لتعطيل الإخفاء التلقائي.</string>
-    <string name="config_help_vk_outline">يضبط لون حدود أزرار أدوات التحكم الافتراضية.</string>
-    <string name="config_help_vk_selected_background">يضبط لون الزر أثناء الضغط عليه.</string>
-    <string name="config_help_vk_selected_foreground">يضبط لون التسميات والرموز أثناء الضغط على زر تحكم افتراضي.</string>
     <string name="config_increase_value">زيادة القيمة</string>
     <string name="config_lock_custom_resolution_ratio">قفل نسبة العرض إلى الارتفاع</string>
     <string name="config_maintenance">إعادة الضبط والبيانات</string>
@@ -583,7 +571,6 @@
     <string name="config_timing_mode_full_guest">وقت المحاكاة</string>
     <string name="config_timing_mode_real_wall">وقت النظام</string>
     <string name="config_virtual_controls_color_preview">معاينة الألوان</string>
-    <string name="config_virtual_controls_preview_hint">انقر لمعاينة ألوان الضغط. تستخدم العينة العتامة المحددة.</string>
     <string name="config_virtual_controls_preview_normal">غير مضغوط</string>
     <string name="config_virtual_controls_preview_pressed">مضغوط</string>
     <string name="config_warning_filter_shader">ينعّم الترشيح الخطي الإدخال قبل معالجة مظلّل الشاشة له، وقد يقلل حدة الناتج.</string>
@@ -1261,9 +1248,7 @@
     <string name="library_metadata_follows_main">يستخدم الأيقونة الرئيسية</string>
     <string name="library_metadata_change">تغيير</string>
     <string name="library_metadata_remove_portrait">إزالة أيقونة 3:4</string>
-    <string name="library_metadata_icon_updated">تم تحديث الأيقونة</string>
     <string name="library_metadata_discard_title">هل تريد تجاهل التغييرات؟</string>
-    <string name="library_metadata_discard_message">ستُفقد تغييرات النص غير المحفوظة. تم حفظ تغييرات الأيقونة بالفعل.</string>
     <string name="library_metadata_discard">تجاهل</string>
     <string name="library_metadata_default_description">الوصف الافتراضي</string>
     <string name="library_metadata_other_languages">لغات أخرى</string>

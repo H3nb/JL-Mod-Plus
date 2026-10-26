@@ -194,8 +194,6 @@
     <string name="library_indexing_progress">S’està indexant la Biblioteca… %1$d/%2$d</string>
     <string name="library_load_error_title">Biblioteca no disponible</string>
     <string name="library_load_failed_message">No s’ha pogut carregar la Biblioteca. Torna-ho a provar.</string>
-    <string name="library_metadata_change_icon">Canvia la icona</string>
-    <string name="library_metadata_description">Descripció</string>
     <string name="library_metadata_edit_title">Edita les metadades</string>
     <string name="library_metadata_icon">Icona</string>
     <string name="library_metadata_name">Nom</string>
@@ -434,16 +432,9 @@
     <string name="config_help_timing_unavailable">La configuració de temps no està disponible per a aquesta instal·lació del MIDlet. Torneu a instal·lar o convertir el MIDlet per activar-la.</string>
     <string name="config_help_touch_input">Permet que el MIDlet rebi entrades de punter de la pantalla tàctil.</string>
     <string name="config_help_virtual_keyboard">Mostra controls en pantalla per a aquest MIDlet.</string>
-    <string name="config_help_vk_alpha">Defineix l\'opacitat dels controls: 0 = completament transparents; 255 = completament opacs.</string>
-    <string name="config_help_vk_background">Defineix el color de base dels botons dels controls virtuals.</string>
     <string name="config_help_vk_button_shape">Defineix la forma predeterminada dels botons del teclat. La creueta i la palanca analògica tenen formes pròpies.</string>
     <string name="config_help_vk_feedback">Vibra en prémer els controls virtuals quan la vibració està activada a Configuració.</string>
-    <string name="config_help_vk_force_opacity">Fa opacs els controls que són fora de la pantalla del MIDlet. Els controls sobre la pantalla fan servir l\'opacitat configurada.</string>
-    <string name="config_help_vk_foreground">Defineix el color de les etiquetes i els símbols dels botons dels controls virtuals.</string>
     <string name="config_help_vk_hide_delay">Amaga els controls després d\'aquest retard quan cobreixen la pantalla del MIDlet. Establiu-lo a 0 per desactivar l\'ocultació automàtica.</string>
-    <string name="config_help_vk_outline">Defineix el color del contorn dels botons dels controls virtuals.</string>
-    <string name="config_help_vk_selected_background">Defineix el color del botó mentre està premut.</string>
-    <string name="config_help_vk_selected_foreground">Defineix el color de les etiquetes i els símbols mentre un botó dels controls virtuals està premut.</string>
     <string name="config_increase_value">Augmenta el valor</string>
     <string name="config_lock_custom_resolution_ratio">Bloqueja la relació d\'aspecte</string>
     <string name="config_maintenance">Restabliment i dades</string>
@@ -460,7 +451,6 @@
     <string name="config_timing_mode_full_guest">Temps d\'emulació</string>
     <string name="config_timing_mode_real_wall">Temps del sistema</string>
     <string name="config_virtual_controls_color_preview">Previsualització del color</string>
-    <string name="config_virtual_controls_preview_hint">Toqueu per previsualitzar els colors en prémer. La mostra fa servir l\'opacitat seleccionada.</string>
     <string name="config_virtual_controls_preview_normal">Alliberat</string>
     <string name="config_virtual_controls_preview_pressed">Premut</string>
     <string name="config_warning_filter_shader">El filtratge lineal suavitza l\'entrada abans que el shader de pantalla la processi i pot reduir la nitidesa del resultat.</string>
@@ -905,10 +895,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Mostra els controls virtuals</string>
     <string name="PREF_VK_ALPHA">Opacitat</string>
-    <string name="PREF_VK_BACK">Color dels botons</string>
     <string name="PREF_VK_FEEDBACK">Resposta hàptica</string>
-    <string name="PREF_VK_FORCE_OPACITY">Mantén opacs els controls fora de la pantalla del MIDlet</string>
-    <string name="PREF_VK_FORE">Color de les etiquetes i els símbols</string>
     <string name="PREF_VK_HIDE_DELAY">Retard d’ocultació automàtica</string>
     <string name="PREF_VK_OUTLINE">Color del contorn</string>
     <string name="PREF_VK_SEL_BACK">Color dels botons premuts</string>
@@ -1161,9 +1148,7 @@
     <string name="library_metadata_follows_main">Fa servir la icona principal</string>
     <string name="library_metadata_change">Canvia</string>
     <string name="library_metadata_remove_portrait">Elimina la icona 3:4</string>
-    <string name="library_metadata_icon_updated">Icona actualitzada</string>
     <string name="library_metadata_discard_title">Voleu descartar els canvis?</string>
-    <string name="library_metadata_discard_message">Es perdran els canvis de text no desats. Els canvis de les icones ja s\'han desat.</string>
     <string name="library_metadata_discard">Descarta</string>
     <string name="library_metadata_default_description">Descripció predeterminada</string>
     <string name="library_metadata_other_languages">Altres idiomes</string>

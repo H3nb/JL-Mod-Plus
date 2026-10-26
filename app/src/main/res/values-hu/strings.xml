@@ -73,10 +73,7 @@
     <string name="PREF_TOUCH_INPUT">Érintéses bevitel</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuális vezérlők megjelenítése</string>
     <string name="PREF_VK_ALPHA">Átlátszatlanság</string>
-    <string name="PREF_VK_BACK">Gombok színe</string>
     <string name="PREF_VK_FEEDBACK">Rezgő visszajelzés</string>
-    <string name="PREF_VK_FORCE_OPACITY">A MIDlet képernyőjén kívüli vezérlők maradjanak átlátszatlanok</string>
-    <string name="PREF_VK_FORE">Feliratok és szimbólumok színe</string>
     <string name="PREF_VK_HIDE_DELAY">Automatikus elrejtés késleltetése</string>
     <string name="pref_vk_hide_hint">letiltva</string>
     <string name="PREF_VK_OUTLINE">Körvonal színe</string>
@@ -263,8 +260,6 @@
     <string name="library_indexing_progress">Az alkalmazástár indexelése… %1$d/%2$d</string>
     <string name="library_load_error_title">Az alkalmazástár nem érhető el</string>
     <string name="library_load_failed_message">Nem sikerült betölteni az alkalmazástárat. Próbálja újra.</string>
-    <string name="library_metadata_change_icon">Ikon módosítása</string>
-    <string name="library_metadata_description">Leírás</string>
     <string name="library_metadata_edit_title">Metaadatok szerkesztése</string>
     <string name="library_metadata_icon">Ikon</string>
     <string name="library_metadata_name">Név</string>
@@ -498,16 +493,9 @@
     <string name="config_help_timing_unavailable">Az időbeállítások nem érhetők el ennél a MIDlet-telepítésnél. Az engedélyezésükhöz telepítse újra vagy konvertálja újra a MIDletet.</string>
     <string name="config_help_touch_input">Lehetővé teszi, hogy a MIDlet mutatóbevitelt fogadjon az érintőképernyőről.</string>
     <string name="config_help_virtual_keyboard">Képernyőn megjelenő vezérlőket mutat ehhez a MIDlethez.</string>
-    <string name="config_help_vk_alpha">Beállítja a vezérlők átlátszatlanságát: 0 = teljesen átlátszó; 255 = teljesen átlátszatlan.</string>
-    <string name="config_help_vk_background">Beállítja a virtuális vezérlők gombjainak alapszínét.</string>
     <string name="config_help_vk_button_shape">Beállítja a billentyűzetgombok alapértelmezett alakját. Az iránygombnak és az analóg karnak saját alakja van.</string>
     <string name="config_help_vk_feedback">Rezeg a virtuális vezérlők megnyomásakor, ha a rezgés engedélyezett a Beállításokban.</string>
-    <string name="config_help_vk_force_opacity">Átlátszatlanná teszi a MIDlet képernyőjén kívüli vezérlőket. A képernyőt fedő vezérlők a beállított átlátszatlanságot használják.</string>
-    <string name="config_help_vk_foreground">Beállítja a virtuális vezérlők gombjain látható feliratok és szimbólumok színét.</string>
     <string name="config_help_vk_hide_delay">Ennyi késleltetés után elrejti a vezérlőket, ha azok fedik a MIDlet képernyőjét. Az automatikus elrejtés kikapcsolásához állítsa 0-ra.</string>
-    <string name="config_help_vk_outline">Beállítja a virtuális vezérlők gombjainak körvonalszínét.</string>
-    <string name="config_help_vk_selected_background">Beállítja a gomb színét megnyomás közben.</string>
-    <string name="config_help_vk_selected_foreground">Beállítja a feliratok és szimbólumok színét a virtuális vezérlő gombjának megnyomásakor.</string>
     <string name="config_increase_value">Érték növelése</string>
     <string name="config_lock_custom_resolution_ratio">Képarány rögzítése</string>
     <string name="config_maintenance">Visszaállítás és adatok</string>
@@ -524,7 +512,6 @@
     <string name="config_timing_mode_full_guest">Emulációs idő</string>
     <string name="config_timing_mode_real_wall">Rendszeridő</string>
     <string name="config_virtual_controls_color_preview">Színelőnézet</string>
-    <string name="config_virtual_controls_preview_hint">Koppintson a megnyomott állapot színeinek előnézetéhez. A minta a kiválasztott átlátszatlanságot használja.</string>
     <string name="config_virtual_controls_preview_normal">Felengedve</string>
     <string name="config_virtual_controls_preview_pressed">Megnyomva</string>
     <string name="config_warning_filter_shader">A lineáris szűrés kisimítja a bemenetet, mielőtt a képernyő shaderje feldolgozza, és csökkentheti a kimenet élességét.</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">Az elsődleges ikont használja</string>
     <string name="library_metadata_change">Csere</string>
     <string name="library_metadata_remove_portrait">3:4-es ikon eltávolítása</string>
-    <string name="library_metadata_icon_updated">Ikon frissítve</string>
     <string name="library_metadata_discard_title">Elveti a módosításokat?</string>
-    <string name="library_metadata_discard_message">A nem mentett szövegmódosítások elvesznek. Az ikon módosításai már mentve vannak.</string>
     <string name="library_metadata_discard">Elvetés</string>
     <string name="library_metadata_default_description">Alapértelmezett leírás</string>
     <string name="library_metadata_other_languages">Más nyelvek</string>

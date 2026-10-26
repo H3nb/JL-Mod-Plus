@@ -112,10 +112,7 @@
     <string name="pref_vibration_title">Habilitar vibración</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Mostrar controles virtuales</string>
     <string name="PREF_VK_ALPHA">Opacidad: </string>
-    <string name="PREF_VK_BACK">Color de los botones</string>
     <string name="PREF_VK_FEEDBACK">Retroalimentación háptica</string>
-    <string name="PREF_VK_FORCE_OPACITY">Mantener opacos los controles fuera de la pantalla del MIDlet</string>
-    <string name="PREF_VK_FORE">Color de etiquetas y símbolos</string>
     <string name="PREF_VK_HIDE_DELAY">Retardo de ocultación automática</string>
     <string name="pref_vk_hide_hint">desactivado</string>
     <string name="PREF_VK_OUTLINE">Color del contorno</string>
@@ -795,14 +792,7 @@
     <string name="config_help_key_mapping">Asigna teclas y botones de Android a acciones del teclado J2ME.</string>
     <string name="config_help_vk_button_shape">Define la forma predeterminada de los botones del teclado. La cruceta y el stick analógico tienen sus propias formas.</string>
     <string name="config_help_vk_feedback">Vibra al pulsar los controles virtuales cuando la vibración está activada en Ajustes.</string>
-    <string name="config_help_vk_alpha">Establece la opacidad de los controles: 0 = totalmente transparentes; 255 = totalmente opacos.</string>
-    <string name="config_help_vk_force_opacity">Hace opacos los controles fuera de la pantalla del MIDlet. Los controles sobre la pantalla usan la opacidad configurada.</string>
     <string name="config_help_vk_hide_delay">Oculta los controles tras este retraso cuando cubren la pantalla del MIDlet. Establece 0 para desactivar el ocultado automático.</string>
-    <string name="config_help_vk_foreground">Establece el color de etiquetas y símbolos de los botones de controles virtuales.</string>
-    <string name="config_help_vk_background">Establece el color base de los botones de los controles virtuales.</string>
-    <string name="config_help_vk_selected_foreground">Establece el color de etiquetas y símbolos mientras se pulsa un botón de los controles virtuales.</string>
-    <string name="config_help_vk_selected_background">Establece el color del botón mientras está pulsado.</string>
-    <string name="config_help_vk_outline">Establece el color del contorno de los botones de los controles virtuales.</string>
     <string name="config_help_reset_layout">Restaura el diseño de los controles virtuales sin cambiar otros ajustes del MIDlet.</string>
     <string name="config_help_skip_resume">Tras la primera llamada correcta a startApp(), omite las llamadas posteriores al reanudar el MIDlet. Úsalo solo para MIDlets que fallan al reanudarse.</string>
     <string name="config_help_soundbank">Elige el banco de sonidos usado para reproducir MIDI.</string>
@@ -866,10 +856,8 @@
     <string name="config_controller_help_body_compact">Los botones del gamepad usan las mismas Asignaciones de teclas que los teclados y las teclas del teléfono. La opción Stick analógico controla solo la salida direccional del stick para el MIDlet. Atrás de Android conserva su comportamiento normal del host y cualquier botón físico asignado a M abre el menú del MIDlet en ejecución.</string>
     <string name="library_metadata_edit_title">Editar metadatos</string>
     <string name="library_metadata_icon">Icono</string>
-    <string name="library_metadata_change_icon">Cambiar icono</string>
     <string name="library_metadata_name">Nombre</string>
     <string name="library_metadata_vendor">Proveedor</string>
-    <string name="library_metadata_description">Descripción</string>
     <string name="library_metadata_reset_to_original">Restablecer original</string>
     <string name="library_metadata_save">Guardar</string>
     <string name="library_hide_grid_titles_summary">Mostrar solo los iconos de MIDlet en la vista de cuadrícula.</string>
@@ -1026,7 +1014,6 @@
     <string name="bulk_install_skipped_entries">Entradas de archivo comprimido omitidas: %1$d</string>
     <string name="bulk_install_unreadable_archives">Archivos comprimidos ilegibles: %1$d</string>
     <string name="config_virtual_controls_color_preview">Vista previa del color</string>
-    <string name="config_virtual_controls_preview_hint">Toca para ver los colores al pulsar. La muestra usa la opacidad seleccionada.</string>
     <string name="config_virtual_controls_preview_normal">Sin pulsar</string>
     <string name="config_virtual_controls_preview_pressed">Pulsado</string>
     <string name="config_warning_filter_shader">El filtrado lineal suaviza la imagen antes de que la procese el shader de pantalla y puede reducir la nitidez del resultado.</string>
@@ -1162,9 +1149,7 @@
     <string name="library_metadata_follows_main">Usa el icono principal</string>
     <string name="library_metadata_change">Cambiar</string>
     <string name="library_metadata_remove_portrait">Quitar icono 3:4</string>
-    <string name="library_metadata_icon_updated">Icono actualizado</string>
     <string name="library_metadata_discard_title">¿Descartar cambios?</string>
-    <string name="library_metadata_discard_message">Se perderán los cambios de texto sin guardar. Los cambios del icono ya están guardados.</string>
     <string name="library_metadata_discard">Descartar</string>
     <string name="library_metadata_default_description">Descripción predeterminada</string>
     <string name="library_metadata_other_languages">Otros idiomas</string>

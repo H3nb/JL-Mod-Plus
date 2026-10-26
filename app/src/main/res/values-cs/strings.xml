@@ -110,10 +110,7 @@
     <string name="pref_vibration_title">Vibrace</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Zobrazit virtuální ovládací prvky</string>
     <string name="PREF_VK_ALPHA">Neprůhlednost</string>
-    <string name="PREF_VK_BACK">Barva tlačítek</string>
     <string name="PREF_VK_FEEDBACK">Hmatová odezva</string>
-    <string name="PREF_VK_FORCE_OPACITY">Zachovat neprůhlednost ovládacích prvků mimo obrazovku MIDletu</string>
-    <string name="PREF_VK_FORE">Barva popisků a symbolů</string>
     <string name="PREF_VK_HIDE_DELAY">Prodleva automatického skrytí</string>
     <string name="pref_vk_hide_hint">zakázáno</string>
     <string name="PREF_VK_OUTLINE">Barva obrysu</string>
@@ -302,8 +299,6 @@
     <string name="library_indexing_progress">Indexování Knihovny… %1$d/%2$d</string>
     <string name="library_load_error_title">Knihovna není dostupná</string>
     <string name="library_load_failed_message">Knihovnu se nepodařilo načíst. Zkuste to znovu.</string>
-    <string name="library_metadata_change_icon">Změnit ikonu</string>
-    <string name="library_metadata_description">Popis</string>
     <string name="library_metadata_edit_title">Upravit metadata</string>
     <string name="library_metadata_icon">Ikona</string>
     <string name="library_metadata_name">Název</string>
@@ -547,16 +542,9 @@
     <string name="config_help_timing_unavailable">Nastavení času nejsou pro tuto instalaci MIDletu dostupná. Povolíte je přeinstalováním nebo opětovným převodem MIDletu.</string>
     <string name="config_help_touch_input">Umožní MIDletu přijímat vstup ukazatele z dotykové obrazovky.</string>
     <string name="config_help_virtual_keyboard">Zobrazí ovládací prvky na obrazovce pro tento MIDlet.</string>
-    <string name="config_help_vk_alpha">Nastaví neprůhlednost ovládacích prvků: 0 = zcela průhledné; 255 = zcela neprůhledné.</string>
-    <string name="config_help_vk_background">Nastaví základní barvu tlačítek virtuálních ovládacích prvků.</string>
     <string name="config_help_vk_button_shape">Nastavuje výchozí tvar tlačítek klávesnice. Směrový kříž a analogová páčka mají vlastní tvary.</string>
     <string name="config_help_vk_feedback">Při stisknutí virtuálních ovládacích prvků zavibruje, pokud jsou v Nastavení povoleny vibrace.</string>
-    <string name="config_help_vk_force_opacity">Ovládací prvky mimo obrazovku MIDletu budou neprůhledné. Prvky nad obrazovkou použijí nastavenou neprůhlednost.</string>
-    <string name="config_help_vk_foreground">Nastaví barvu popisků a symbolů na tlačítkách virtuálních ovládacích prvků.</string>
     <string name="config_help_vk_hide_delay">Po této prodlevě skryje ovládací prvky překrývající obrazovku MIDletu. Hodnota 0 vypne automatické skrývání.</string>
-    <string name="config_help_vk_outline">Nastaví barvu obrysu tlačítek virtuálních ovládacích prvků.</string>
-    <string name="config_help_vk_selected_background">Nastaví barvu tlačítka při stisknutí.</string>
-    <string name="config_help_vk_selected_foreground">Nastaví barvu popisků a symbolů při stisknutí tlačítka virtuálních ovládacích prvků.</string>
     <string name="config_increase_value">Zvýšit hodnotu</string>
     <string name="config_lock_custom_resolution_ratio">Zamknout poměr stran</string>
     <string name="config_maintenance">Obnovení a data</string>
@@ -573,7 +561,6 @@
     <string name="config_timing_mode_full_guest">Čas emulace</string>
     <string name="config_timing_mode_real_wall">Systémový čas</string>
     <string name="config_virtual_controls_color_preview">Náhled barev</string>
-    <string name="config_virtual_controls_preview_hint">Klepnutím zobrazíte náhled barev při stisknutí. Ukázka používá vybranou neprůhlednost.</string>
     <string name="config_virtual_controls_preview_normal">Uvolněné</string>
     <string name="config_virtual_controls_preview_pressed">Stisknuté</string>
     <string name="config_warning_filter_shader">Lineární filtrování vyhladí vstup před zpracováním shaderem obrazovky a může snížit ostrost výstupu.</string>
@@ -1195,9 +1182,7 @@
     <string name="library_metadata_follows_main">Používá hlavní ikonu</string>
     <string name="library_metadata_change">Změnit</string>
     <string name="library_metadata_remove_portrait">Odebrat ikonu 3:4</string>
-    <string name="library_metadata_icon_updated">Ikona aktualizována</string>
     <string name="library_metadata_discard_title">Zahodit změny?</string>
-    <string name="library_metadata_discard_message">Neuložené změny textu budou ztraceny. Změny ikon jsou již uloženy.</string>
     <string name="library_metadata_discard">Zahodit</string>
     <string name="library_metadata_default_description">Výchozí popis</string>
     <string name="library_metadata_other_languages">Další jazyky</string>

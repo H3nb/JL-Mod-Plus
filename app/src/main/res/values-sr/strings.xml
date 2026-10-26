@@ -194,8 +194,6 @@
     <string name="library_indexing_progress">Индексирање Библиотеке… %1$d/%2$d</string>
     <string name="library_load_error_title">Библиотека није доступна</string>
     <string name="library_load_failed_message">Библиотека није могла да се учита. Покушајте поново.</string>
-    <string name="library_metadata_change_icon">Промени икону</string>
-    <string name="library_metadata_description">Опис</string>
     <string name="library_metadata_edit_title">Уреди метаподатке</string>
     <string name="library_metadata_icon">Икона</string>
     <string name="library_metadata_name">Назив</string>
@@ -434,16 +432,9 @@
     <string name="config_help_timing_unavailable">Подешавања времена нису доступна за ову инсталацију MIDlet-а. Поново инсталирајте или конвертујте MIDlet да их омогућите.</string>
     <string name="config_help_touch_input">Омогућава MIDlet-у да прима унос показивача са екрана осетљивог на додир.</string>
     <string name="config_help_virtual_keyboard">Приказује контроле на екрану за овај MIDlet.</string>
-    <string name="config_help_vk_alpha">Поставља непрозирност контрола: 0 = потпуно прозирне; 255 = потпуно непрозирне.</string>
-    <string name="config_help_vk_background">Поставља основну боју дугмади виртуалних контрола.</string>
     <string name="config_help_vk_button_shape">Поставља подразумевани облик дугмади тастатуре. D-pad и аналогна палица имају сопствене облике.</string>
     <string name="config_help_vk_feedback">Вибрира при притиску виртуалних контрола када је вибрација омогућена у Подешавањима.</string>
-    <string name="config_help_vk_force_opacity">Чини контроле изван екрана MIDlet-а непрозирним. Контроле преко екрана користе подешену непрозирност.</string>
-    <string name="config_help_vk_foreground">Поставља боју ознака и симбола на дугмадима виртуалних контрола.</string>
     <string name="config_help_vk_hide_delay">Скрива контроле после овог одлагања када прекривају екран MIDlet-а. Поставите 0 да онемогућите аутоматско скривање.</string>
-    <string name="config_help_vk_outline">Поставља боју обриса дугмади виртуалних контрола.</string>
-    <string name="config_help_vk_selected_background">Поставља боју дугмета док је притиснуто.</string>
-    <string name="config_help_vk_selected_foreground">Поставља боју ознака и симбола док је дугме виртуалне контроле притиснуто.</string>
     <string name="config_increase_value">Повећај вредност</string>
     <string name="config_lock_custom_resolution_ratio">Закључај однос страница</string>
     <string name="config_maintenance">Ресетовање и подаци</string>
@@ -460,7 +451,6 @@
     <string name="config_timing_mode_full_guest">Време емулације</string>
     <string name="config_timing_mode_real_wall">Системско време</string>
     <string name="config_virtual_controls_color_preview">Преглед боје</string>
-    <string name="config_virtual_controls_preview_hint">Додирните за преглед боја при притиску. Узорак користи изабрану непрозирност.</string>
     <string name="config_virtual_controls_preview_normal">Отпуштено</string>
     <string name="config_virtual_controls_preview_pressed">Притиснуто</string>
     <string name="config_warning_filter_shader">Линеарно филтрирање ублажава улаз пре обраде шејдером екрана и може да смањи оштрину резултата.</string>
@@ -905,10 +895,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Прикажи виртуалне контроле</string>
     <string name="PREF_VK_ALPHA">Непрозирност</string>
-    <string name="PREF_VK_BACK">Боја дугмади</string>
     <string name="PREF_VK_FEEDBACK">Хаптичка повратна информација</string>
-    <string name="PREF_VK_FORCE_OPACITY">Задржи непрозирне контроле изван MIDlet екрана</string>
-    <string name="PREF_VK_FORE">Боја ознака и симбола</string>
     <string name="PREF_VK_HIDE_DELAY">Одлагање аутоматског скривања</string>
     <string name="PREF_VK_OUTLINE">Боја контуре</string>
     <string name="PREF_VK_SEL_BACK">Боја притиснутог дугмета</string>
@@ -1161,9 +1148,7 @@
     <string name="library_metadata_follows_main">Користи главну икону</string>
     <string name="library_metadata_change">Промени</string>
     <string name="library_metadata_remove_portrait">Уклони икону 3:4</string>
-    <string name="library_metadata_icon_updated">Икона је ажурирана</string>
     <string name="library_metadata_discard_title">Одбацити измене?</string>
-    <string name="library_metadata_discard_message">Несачуване измене текста ће бити изгубљене. Измене иконе су већ сачуване.</string>
     <string name="library_metadata_discard">Одбаци</string>
     <string name="library_metadata_default_description">Подразумевани опис</string>
     <string name="library_metadata_other_languages">Други језици</string>

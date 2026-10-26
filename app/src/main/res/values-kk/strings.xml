@@ -242,8 +242,6 @@
     <string name="library_indexing_progress">Кітапхана индекстелуде… %1$d/%2$d</string>
     <string name="library_load_error_title">Кітапхана қолжетімді емес</string>
     <string name="library_load_failed_message">Кітапхананы жүктеу мүмкін болмады. Қайталап көріңіз.</string>
-    <string name="library_metadata_change_icon">Белгішені өзгерту</string>
-    <string name="library_metadata_description">Сипаттама</string>
     <string name="library_metadata_edit_title">Метадеректерді өңдеу</string>
     <string name="library_metadata_icon">Белгіше</string>
     <string name="library_metadata_name">Атауы</string>
@@ -669,10 +667,7 @@
     <string name="PREF_TIMING_MODE">Уақыт көзі</string>
     <string name="PREF_TOUCH_INPUT">Сенсорлық енгізу</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Виртуалды басқару элементтерін көрсету</string>
-    <string name="PREF_VK_BACK">Батырма түсі</string>
     <string name="PREF_VK_FEEDBACK">Діріл арқылы кері байланыс</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet экранынан тыс басқару элементтерін мөлдір емес күйде ұстау</string>
-    <string name="PREF_VK_FORE">Жазулар мен таңбалардың түсі</string>
     <string name="PREF_VK_HIDE_DELAY">Автоматты жасыру кідірісі</string>
     <string name="PREF_VK_OUTLINE">Жиек түсі</string>
     <string name="fps_limit_maximum">Ең жоғары</string>
@@ -796,14 +791,9 @@
     <string name="config_help_timing_mode">MIDlet үшін эмуляция уақыты мен жүйе уақытының бірін таңдайды. Салыстырмалы кідірістер эмуляция жылдамдығына сай масштабтала береді.</string>
     <string name="config_help_timing_unavailable">Осы орнатылған MIDlet үшін уақыт баптаулары қолжетімсіз. Оларды іске қосу үшін MIDlet бағдарламасын қайта орнатыңыз немесе қайта түрлендіріңіз.</string>
     <string name="config_help_touch_input">MIDlet бағдарламасына сенсорлық экраннан меңзер енгізуін қабылдауға мүмкіндік береді.</string>
-    <string name="config_help_vk_background">Виртуалды басқару батырмаларының негізгі түсін орнатады.</string>
     <string name="config_help_vk_button_shape">Пернетақта батырмаларының әдепкі пішінін орнатады. D-pad пен аналогтық таяқшаның өз пішіндері бар.</string>
     <string name="config_help_vk_feedback">Баптауларда діріл іске қосылғанда виртуалды басқару элементтерін басу кезінде дірілдетеді.</string>
-    <string name="config_help_vk_foreground">Виртуалды басқару батырмаларындағы жазулар мен таңбалардың түсін орнатады.</string>
     <string name="config_help_vk_hide_delay">Басқару элементтері MIDlet экранын жауып тұрғанда оларды осы кідірістен кейін жасырады. Автоматты жасыруды сөндіру үшін 0 мәнін орнатыңыз.</string>
-    <string name="config_help_vk_outline">Виртуалды басқару батырмаларының жиек түсін орнатады.</string>
-    <string name="config_help_vk_selected_background">Батырма басылып тұрғанда оның түсін орнатады.</string>
-    <string name="config_help_vk_selected_foreground">Виртуалды басқару батырмасы басылып тұрғанда жазулар мен таңбалардың түсін орнатады.</string>
     <string name="config_message_delete_app_data">Осы MIDlet жасаған барлық сақталған деректер мен басқа деректерді біржола жою керек пе? MIDlet баптаулары жойылмайды.</string>
     <string name="config_message_reset_profile_settings">Осы профильдің баптаулары мен виртуалды басқару элементтерін әдепкі мәндеріне қайтару керек пе? Сақтағанға дейін оларды әлі де өңдеуге немесе бас тартуға болады.</string>
     <string name="config_message_reset_settings">Осы MIDlet баптаулары мен виртуалды басқару элементтерін әдепкі мәндеріне қайтару керек пе? MIDlet деректері жойылмайды.</string>
@@ -1069,9 +1059,6 @@
     <string name="config_gamepad_diagnosis_source_explicit">тікелей көрсетілген</string>
     <string name="config_gamepad_pointer_cursor">Пропорционалды меңзер</string>
     <string name="config_gamepad_stick_directions">Дискретті бағыттар</string>
-    <string name="config_help_vk_alpha">Басқару элементтерінің мөлдірсіздігін орнатады: 0 = толығымен мөлдір; 255 = толығымен мөлдір емес.</string>
-    <string name="config_help_vk_force_opacity">MIDlet экранынан тыс басқару элементтерін мөлдір емес етеді. Экран үстіндегі басқару элементтері бапталған мөлдірсіздікті пайдаланады.</string>
-    <string name="config_virtual_controls_preview_hint">Басылған күйдегі түстерді алдын ала көру үшін түртіңіз. Үлгі таңдалған мөлдірсіздікті пайдаланады.</string>
     <string name="runtime_virtual_controls_edit_guide_message">Басқару элементтерін жылжыту үшін сүйреңіз. Түймелердің енін немесе биіктігін өзгерту үшін екі саусақты көлденең немесе тігінен, ал екеуін де өзгерту үшін қиғаш жылжытыңыз. D-pad немесе аналогтік стик өлшемін пропорционалды өзгерту үшін екі саусақты жақындатыңыз немесе алыстатыңыз. Аяқтаған соң «Дайын» түймесін түртіңіз.</string>
     <string name="msg_immediate_mode_disabled">Оқиғалардың кері шақырулары тым терең кірістірілгендіктен, дереу өңдеу өшірілді.</string>
     <string name="config_gamepad_calibration_issue_non_finite">ақырлы емес мәні бар үлгі</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">Негізгі белгішені қолданады</string>
     <string name="library_metadata_change">Өзгерту</string>
     <string name="library_metadata_remove_portrait">3:4 белгішесін жою</string>
-    <string name="library_metadata_icon_updated">Белгіше жаңартылды</string>
     <string name="library_metadata_discard_title">Өзгерістерді болдырмау керек пе?</string>
-    <string name="library_metadata_discard_message">Сақталмаған мәтін өзгерістері жоғалады. Белгіше өзгерістері сақталған.</string>
     <string name="library_metadata_discard">Болдырмау</string>
     <string name="library_metadata_default_description">Әдепкі сипаттама</string>
     <string name="library_metadata_other_languages">Басқа тілдер</string>
