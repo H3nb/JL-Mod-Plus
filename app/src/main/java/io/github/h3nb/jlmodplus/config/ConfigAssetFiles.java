@@ -127,8 +127,8 @@ public final class ConfigAssetFiles {
     }
 
     /** Lightweight signature gate; the native synth or Android bitmap decoder remains authoritative. */
-    private static void checkHeader(Kind kind, File file) throws IOException {
-        if (kind == Kind.SKIN && SvgRasterizer.isSvg(file)) {
+    private static void checkHeader(Kind kind, File file, String sourceName) throws IOException {
+        if (kind == Kind.SKIN && sourceName.toLowerCase(Locale.ROOT).endsWith(".svg")) {
             SvgRasterizer.read(file);
             return;
         }
@@ -161,7 +161,7 @@ public final class ConfigAssetFiles {
         String original = source.getName();
         checkName(original);
         if (!allowed(kind, original) || !source.isFile()) throw new IOException("Unsupported asset");
-        checkHeader(kind, source);
+        checkHeader(kind, source, original);
         File duplicate = existingName(dir, original);
         if (duplicate != null && duplicate.isFile()) {
             if (source.getCanonicalFile().equals(duplicate.getCanonicalFile())
@@ -189,7 +189,7 @@ public final class ConfigAssetFiles {
                 }
                 output.getFD().sync();
             }
-            checkHeader(kind, staged);
+            checkHeader(kind, staged, original);
             File target = new File(dir, candidate);
             publishWithoutReplacing(staged, target);
             return new Imported(candidate, true);
