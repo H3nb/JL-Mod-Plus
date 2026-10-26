@@ -146,7 +146,8 @@ jobs:
             trap 'adb logcat -d -v threadtime > ci-artifacts/pr198-svg/logcat.txt 2>&1 || true' EXIT
             ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
             adb shell appops set io.github.h3nb.jlmodplus.debug MANAGE_EXTERNAL_STORAGE allow
-            apk="$(find app/build/outputs/apk/androidTest -type f -name '*.apk' -print -quit)"
+            find app/build/outputs -type f -name '*.apk' -print
+            apk="$(find app/build/outputs -type f -iname '*androidtest*.apk' -print -quit)"
             test -n "$apk"
             adb install -r -t "$apk"
             runner="$(adb shell pm list instrumentation | tr -d '\r' | sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p')"
