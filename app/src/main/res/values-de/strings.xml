@@ -107,9 +107,7 @@
     <string name="pref_vibration_title">Vibration einschalten</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuelle Steuerelemente anzeigen</string>
     <string name="PREF_VK_ALPHA">Deckkraft: </string>
-    <string name="PREF_VK_BACK">Tastenfarbe</string>
     <string name="PREF_VK_FEEDBACK">Haptisches Feedback</string>
-    <string name="PREF_VK_FORE">Farbe von Beschriftungen und Symbolen</string>
     <string name="PREF_VK_HIDE_DELAY">Verzögerung beim Verstecken: </string>
     <string name="pref_vk_hide_hint">deaktiviert</string>
     <string name="PREF_VK_OUTLINE">Umrandungsfarbe</string>
@@ -349,7 +347,6 @@
     <string name="config_gamepad_diagnosis_no_controller">(kein verbundener Controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Eingabemesswerte werden absichtlich nicht an das MIDlet gesendet.</string>
     <string name="pref_title_emulation">MIDlet-Lebenszyklus</string>
-    <string name="PREF_VK_FORCE_OPACITY">Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig halten</string>
     <string name="pref_vk_save_alert">Vorhandenes benutzerdefiniertes Layout der virtuellen Steuerelemente durch das aktuelle ersetzen?</string>
     <string name="fps_limit_maximum">Maximum</string>
     <string name="remove_screen_preset">Auflösungsvoreinstellung entfernen</string>
@@ -767,14 +764,7 @@
     <string name="config_help_key_mapping">Ordnet Android-Tasten und -Schaltflächen J2ME-Tastenfeldaktionen zu.</string>
     <string name="config_help_vk_button_shape">Legt die Standardform der Tastenfeldtasten fest. Das Steuerkreuz und der Analogstick haben eigene Formen.</string>
     <string name="config_help_vk_feedback">Vibriert bei Betätigung virtueller Steuerelemente, wenn Vibration in den Einstellungen aktiviert ist.</string>
-    <string name="config_help_vk_alpha">Legt die Deckkraft der Steuerelemente fest: 0 = vollständig transparent; 255 = vollständig deckend.</string>
-    <string name="config_help_vk_force_opacity">Macht Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig. Steuerelemente über dem Bildschirm verwenden die konfigurierte Deckkraft.</string>
     <string name="config_help_vk_hide_delay">Blendet Steuerelemente nach dieser Verzögerung aus, wenn sie den MIDlet-Bildschirm überdecken. Auf 0 setzen, um automatisches Ausblenden zu deaktivieren.</string>
-    <string name="config_help_vk_foreground">Legt die Farbe von Beschriftungen und Symbolen auf Tasten der virtuellen Steuerelemente fest.</string>
-    <string name="config_help_vk_background">Legt die Grundfarbe der Tasten der virtuellen Steuerelemente fest.</string>
-    <string name="config_help_vk_selected_foreground">Legt die Farbe von Beschriftungen und Symbolen fest, während eine Taste der virtuellen Steuerelemente gedrückt wird.</string>
-    <string name="config_help_vk_selected_background">Legt die Farbe der Taste fest, während sie gedrückt wird.</string>
-    <string name="config_help_vk_outline">Legt die Umrissfarbe der Tasten der virtuellen Steuerelemente fest.</string>
     <string name="config_help_reset_layout">Stellt das Layout der virtuellen Steuerelemente wieder her, ohne andere MIDlet-Einstellungen zu ändern.</string>
     <string name="config_help_skip_resume">Nach dem ersten erfolgreichen startApp() werden spätere Aufrufe beim Fortsetzen des MIDlets übersprungen. Nur für MIDlets verwenden, die beim Fortsetzen fehlschlagen.</string>
     <string name="config_help_soundbank">Wählt die für die MIDI-Wiedergabe verwendete Soundbank.</string>
@@ -838,10 +828,8 @@
     <string name="config_controller_help_body_compact">Gamepad-Tasten verwenden dieselben Tastenzuordnungen wie Tastaturen und Telefontasten. Die Option Analogstick steuert nur die Richtungsausgabe des Sticks für das MIDlet. Android Zurück behält sein normales Host-Verhalten, und jede physische Taste, die M zugeordnet ist, öffnet das Runtime-MIDlet-Menü.</string>
     <string name="library_metadata_edit_title">Metadaten bearbeiten</string>
     <string name="library_metadata_icon">Symbol</string>
-    <string name="library_metadata_change_icon">Symbol ändern</string>
     <string name="library_metadata_name">Name</string>
     <string name="library_metadata_vendor">Anbieter</string>
-    <string name="library_metadata_description">Beschreibung</string>
     <string name="library_metadata_reset_to_original">Auf Original zurücksetzen</string>
     <string name="library_metadata_save">Speichern</string>
     <string name="library_hide_grid_titles_summary">In der Rasteransicht nur MIDlet-Symbole anzeigen.</string>
@@ -995,7 +983,6 @@
     <string name="bulk_install_skipped_entries">Übersprungene Archiveinträge: %1$d</string>
     <string name="bulk_install_unreadable_archives">Nicht lesbare Archive: %1$d</string>
     <string name="config_virtual_controls_color_preview">Farbvorschau</string>
-    <string name="config_virtual_controls_preview_hint">Tippe, um die Farben im gedrückten Zustand zu sehen. Das Beispiel verwendet die gewählte Deckkraft.</string>
     <string name="config_virtual_controls_preview_normal">Losgelassen</string>
     <string name="config_virtual_controls_preview_pressed">Gedrückt</string>
     <string name="config_warning_filter_shader">Lineare Filterung glättet das Eingangsbild vor der Verarbeitung durch den Bildschirm-Shader und kann die Schärfe des Ergebnisses verringern.</string>
@@ -1130,9 +1117,7 @@
     <string name="library_metadata_follows_main">Verwendet das Hauptsymbol</string>
     <string name="library_metadata_change">Ändern</string>
     <string name="library_metadata_remove_portrait">3:4-Symbol entfernen</string>
-    <string name="library_metadata_icon_updated">Symbol aktualisiert</string>
     <string name="library_metadata_discard_title">Änderungen verwerfen?</string>
-    <string name="library_metadata_discard_message">Nicht gespeicherte Textänderungen gehen verloren. Symboländerungen wurden bereits gespeichert.</string>
     <string name="library_metadata_discard">Verwerfen</string>
     <string name="library_metadata_default_description">Standardbeschreibung</string>
     <string name="library_metadata_other_languages">Weitere Sprachen</string>

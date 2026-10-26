@@ -85,10 +85,7 @@
     <string name="pref_vibration_title">Trillen inschakelen</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuele bediening</string>
     <string name="PREF_VK_ALPHA">Dekking</string>
-    <string name="PREF_VK_BACK">Knopkleur</string>
     <string name="PREF_VK_FEEDBACK">Haptische feedback</string>
-    <string name="PREF_VK_FORCE_OPACITY">Bediening buiten het MIDlet-scherm ondoorzichtig houden</string>
-    <string name="PREF_VK_FORE">Kleur van label en symbool</string>
     <string name="PREF_VK_HIDE_DELAY">Vertraging automatisch verbergen</string>
     <string name="pref_vk_hide_hint">Uitgeschakeld</string>
     <string name="PREF_VK_SEL_BACK">Kleur ingedrukte knop</string>
@@ -760,14 +757,7 @@
     <string name="config_help_key_mapping">Wijst Android-toetsen en -knoppen toe aan J2ME-toetsenblokacties.</string>
     <string name="config_help_vk_button_shape">Stelt de standaardvorm van de toetsenblokknoppen in. De D-pad en analoge stick hebben hun eigen vormen.</string>
     <string name="config_help_vk_feedback">Trilt bij het indrukken van virtuele bedieningselementen wanneer trillen is ingeschakeld in Instellingen.</string>
-    <string name="config_help_vk_alpha">Stelt de dekking van de bedieningselementen in: 0 = volledig transparant; 255 = volledig ondoorzichtig.</string>
-    <string name="config_help_vk_force_opacity">Maakt bediening buiten het MIDlet-scherm ondoorzichtig. Bediening boven het scherm gebruikt de ingestelde dekking.</string>
     <string name="config_help_vk_hide_delay">Verbergt bediening na deze vertraging wanneer deze het MIDlet-scherm bedekt. Stel in op 0 om automatisch verbergen uit te schakelen.</string>
-    <string name="config_help_vk_foreground">Stelt de kleur van labels en symbolen op knoppen van virtuele bediening in.</string>
-    <string name="config_help_vk_background">Stelt de basiskleur van knoppen voor virtuele bediening in.</string>
-    <string name="config_help_vk_selected_foreground">Stelt de kleur van labels en symbolen in terwijl een knop van virtuele bediening is ingedrukt.</string>
-    <string name="config_help_vk_selected_background">Stelt de knopkleur in terwijl deze is ingedrukt.</string>
-    <string name="config_help_vk_outline">Stelt de omlijningskleur van knoppen voor virtuele bediening in.</string>
     <string name="config_help_reset_layout">Herstelt de indeling van virtuele bediening zonder andere MIDlet-instellingen te wijzigen.</string>
     <string name="config_help_skip_resume">Slaat na de eerste geslaagde startApp() latere aanroepen bij het hervatten van de MIDlet over. Gebruik dit alleen voor MIDlet-apps die bij hervatten niet goed werken.</string>
     <string name="config_help_soundbank">Kiest de soundbank die voor MIDI-weergave wordt gebruikt.</string>
@@ -831,10 +821,8 @@
     <string name="config_controller_help_body_compact">Gamepadknoppen gebruiken dezelfde Toetstoewijzing als toetsenborden en telefoontoetsen. De optie Analoge stick bepaalt alleen de richtingsuitvoer van de stick voor de MIDlet. Android Terug behoudt normaal hostgedrag en elke fysieke knop die aan M is toegewezen opent het runtime-MIDlet-menu.</string>
     <string name="library_metadata_edit_title">Metadata bewerken</string>
     <string name="library_metadata_icon">Pictogram</string>
-    <string name="library_metadata_change_icon">Pictogram wijzigen</string>
     <string name="library_metadata_name">Naam</string>
     <string name="library_metadata_vendor">Leverancier</string>
-    <string name="library_metadata_description">Beschrijving</string>
     <string name="library_metadata_reset_to_original">Origineel herstellen</string>
     <string name="library_metadata_save">Opslaan</string>
     <string name="library_hide_grid_titles_summary">Toon alleen MIDlet-pictogrammen in rasterweergave.</string>
@@ -995,7 +983,6 @@
     <string name="bulk_install_skipped_entries">Overgeslagen archiefitems: %1$d</string>
     <string name="bulk_install_unreadable_archives">Onleesbare archieven: %1$d</string>
     <string name="config_virtual_controls_color_preview">Kleurvoorbeeld</string>
-    <string name="config_virtual_controls_preview_hint">Tik om de kleuren in ingedrukte toestand te bekijken. Het voorbeeld gebruikt de geselecteerde dekking.</string>
     <string name="config_virtual_controls_preview_normal">Losgelaten</string>
     <string name="config_virtual_controls_preview_pressed">Ingedrukt</string>
     <string name="config_warning_filter_shader">Lineaire filtering maakt het invoerbeeld glad voordat de schermshader het verwerkt en kan de scherpte van het resultaat verminderen.</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">Gebruikt hoofdpictogram</string>
     <string name="library_metadata_change">Wijzigen</string>
     <string name="library_metadata_remove_portrait">3:4-pictogram verwijderen</string>
-    <string name="library_metadata_icon_updated">Pictogram bijgewerkt</string>
     <string name="library_metadata_discard_title">Wijzigingen negeren?</string>
-    <string name="library_metadata_discard_message">Niet-opgeslagen tekstwijzigingen gaan verloren. Pictogramwijzigingen zijn al opgeslagen.</string>
     <string name="library_metadata_discard">Negeren</string>
     <string name="library_metadata_default_description">Standaardbeschrijving</string>
     <string name="library_metadata_other_languages">Andere talen</string>

@@ -71,6 +71,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -464,9 +465,10 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 )
             }
             items(sets, key = { it.id }) { set ->
+                val count = counts[set.id] ?: 0
                 SetRow(
                     name = set.name,
-                    description = stringResource(R.string.control_skin_count, counts[set.id] ?: 0),
+                    description = pluralStringResource(R.plurals.control_skin_count, count, count),
                     selected = selectedId == set.id,
                     onSelect = { choose(set.id) },
                     onMenu = { menuId = set.id },

@@ -108,10 +108,7 @@
     <string name="pref_vibration_title">Titreşimi etkinleştir</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Sanal kontrolleri göster</string>
     <string name="PREF_VK_ALPHA">Opaklık: </string>
-    <string name="PREF_VK_BACK">Tuş rengi</string>
     <string name="PREF_VK_FEEDBACK">Haptik geri bildirim</string>
-    <string name="PREF_VK_FORCE_OPACITY">Kontrolleri MIDlet ekranı dışında opak tut</string>
-    <string name="PREF_VK_FORE">Etiket ve simge rengi</string>
     <string name="PREF_VK_HIDE_DELAY">Otomatik gizleme gecikmesi</string>
     <string name="pref_vk_hide_hint">Devre dışı</string>
     <string name="PREF_VK_OUTLINE">Kenarlık rengi</string>
@@ -300,8 +297,6 @@
     <string name="library_indexing_progress">Kitaplık dizine ekleniyor… %1$d/%2$d</string>
     <string name="library_load_error_title">Kitaplık kullanılamıyor</string>
     <string name="library_load_failed_message">Kitaplık yüklenemedi. Yeniden deneyin.</string>
-    <string name="library_metadata_change_icon">Simgeyi değiştir</string>
-    <string name="library_metadata_description">Açıklama</string>
     <string name="library_metadata_edit_title">Üst verileri düzenle</string>
     <string name="library_metadata_icon">Simge</string>
     <string name="library_metadata_name">Ad</string>
@@ -535,16 +530,9 @@
     <string name="config_help_timing_unavailable">Bu MIDlet kurulumu için zaman ayarları kullanılamıyor. Etkinleştirmek için MIDlet\'i yeniden kurun veya yeniden dönüştürün.</string>
     <string name="config_help_touch_input">MIDlet\'in dokunmatik ekrandan işaretçi girdisi almasını sağlar.</string>
     <string name="config_help_virtual_keyboard">Bu MIDlet için ekran kontrollerini gösterir.</string>
-    <string name="config_help_vk_alpha">Kontrol opaklığını ayarlar: 0 = tamamen saydam; 255 = tamamen opak.</string>
-    <string name="config_help_vk_background">Sanal kontrol düğmelerinin temel rengini ayarlar.</string>
     <string name="config_help_vk_button_shape">Tuş takımı düğmelerinin varsayılan şeklini ayarlar. Yön tuşları ve analog çubuğun kendi şekilleri vardır.</string>
     <string name="config_help_vk_feedback">Ayarlarda titreşim etkinse sanal kontrollere basıldığında titreşir.</string>
-    <string name="config_help_vk_force_opacity">MIDlet ekranının dışındaki kontrolleri opak yapar. Ekranın üzerindeki kontroller ayarlanan opaklığı kullanır.</string>
-    <string name="config_help_vk_foreground">Sanal kontrol düğmelerindeki etiket ve simgelerin rengini ayarlar.</string>
     <string name="config_help_vk_hide_delay">MIDlet ekranını kaplayan kontrolleri bu gecikmeden sonra gizler. Otomatik gizlemeyi kapatmak için 0 olarak ayarlayın.</string>
-    <string name="config_help_vk_outline">Sanal kontrol düğmelerinin kenarlık rengini ayarlar.</string>
-    <string name="config_help_vk_selected_background">Düğmenin basılıyken rengini ayarlar.</string>
-    <string name="config_help_vk_selected_foreground">Bir sanal kontrol düğmesi basılıyken etiket ve simge rengini ayarlar.</string>
     <string name="config_increase_value">Değeri artır</string>
     <string name="config_lock_custom_resolution_ratio">En boy oranını kilitle</string>
     <string name="config_maintenance">Sıfırlama ve veriler</string>
@@ -561,7 +549,6 @@
     <string name="config_timing_mode_full_guest">Emülasyon zamanı</string>
     <string name="config_timing_mode_real_wall">Sistem zamanı</string>
     <string name="config_virtual_controls_color_preview">Renk önizlemesi</string>
-    <string name="config_virtual_controls_preview_hint">Basılı durum renklerini önizlemek için dokunun. Örnek seçilen opaklığı kullanır.</string>
     <string name="config_virtual_controls_preview_normal">Bırakıldı</string>
     <string name="config_virtual_controls_preview_pressed">Basılı</string>
     <string name="config_warning_filter_shader">Doğrusal filtreleme, ekran gölgelendiricisi işlemeden önce girdiyi yumuşatır ve çıktı keskinliğini azaltabilir.</string>
@@ -1130,9 +1117,7 @@
     <string name="library_metadata_follows_main">Ana simgeyi kullanır</string>
     <string name="library_metadata_change">Değiştir</string>
     <string name="library_metadata_remove_portrait">3:4 simgesini kaldır</string>
-    <string name="library_metadata_icon_updated">Simge güncellendi</string>
     <string name="library_metadata_discard_title">Değişiklikler silinsin mi?</string>
-    <string name="library_metadata_discard_message">Kaydedilmemiş metin değişiklikleri kaybolacak. Simge değişiklikleri zaten kaydedildi.</string>
     <string name="library_metadata_discard">Vazgeç</string>
     <string name="library_metadata_default_description">Varsayılan açıklama</string>
     <string name="library_metadata_other_languages">Diğer diller</string>

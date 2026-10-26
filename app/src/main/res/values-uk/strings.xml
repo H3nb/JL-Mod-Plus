@@ -108,10 +108,7 @@
     <string name="pref_vibration_title">Вібрація</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Показувати віртуальні елементи керування</string>
     <string name="PREF_VK_ALPHA">Непрозорість</string>
-    <string name="PREF_VK_BACK">Колір кнопок</string>
     <string name="PREF_VK_FEEDBACK">Вібрація при натисканні</string>
-    <string name="PREF_VK_FORCE_OPACITY">Зберігати непрозорість елементів керування поза екраном MIDlet</string>
-    <string name="PREF_VK_FORE">Колір написів і символів</string>
     <string name="PREF_VK_HIDE_DELAY">Затримка автоматичного приховування</string>
     <string name="pref_vk_hide_hint">вимкнено</string>
     <string name="PREF_VK_OUTLINE">Колір контуру</string>
@@ -300,8 +297,6 @@
     <string name="library_indexing_progress">Індексування бібліотеки… %1$d/%2$d</string>
     <string name="library_load_error_title">Бібліотека недоступна</string>
     <string name="library_load_failed_message">Не вдалося завантажити бібліотеку. Повторіть спробу.</string>
-    <string name="library_metadata_change_icon">Змінити значок</string>
-    <string name="library_metadata_description">Опис</string>
     <string name="library_metadata_edit_title">Редагувати метадані</string>
     <string name="library_metadata_icon">Значок</string>
     <string name="library_metadata_name">Назва</string>
@@ -545,16 +540,9 @@
     <string name="config_help_timing_unavailable">Налаштування часу недоступні для цієї інсталяції MIDlet. Перевстановіть або повторно конвертуйте MIDlet, щоб увімкнути їх.</string>
     <string name="config_help_touch_input">Дозволяє MIDlet отримувати введення вказівника із сенсорного екрана.</string>
     <string name="config_help_virtual_keyboard">Показує екранні елементи керування для цього MIDlet.</string>
-    <string name="config_help_vk_alpha">Задає непрозорість елементів керування: 0 = повністю прозорі; 255 = повністю непрозорі.</string>
-    <string name="config_help_vk_background">Задає основний колір кнопок віртуальних елементів керування.</string>
     <string name="config_help_vk_button_shape">Задає стандартну форму кнопок клавіатури. Хрестовина й аналоговий стік мають власні форми.</string>
     <string name="config_help_vk_feedback">Вібрує під час натискання віртуальних елементів керування, якщо вібрацію ввімкнено в Налаштуваннях.</string>
-    <string name="config_help_vk_force_opacity">Робить елементи керування поза екраном MIDlet непрозорими. Елементи поверх екрана використовують задану непрозорість.</string>
-    <string name="config_help_vk_foreground">Задає колір написів і символів на кнопках віртуальних елементів керування.</string>
     <string name="config_help_vk_hide_delay">Ховає елементи керування після цієї затримки, якщо вони перекривають екран MIDlet. Задайте 0, щоб вимкнути автоматичне приховування.</string>
-    <string name="config_help_vk_outline">Задає колір контурів кнопок віртуальних елементів керування.</string>
-    <string name="config_help_vk_selected_background">Задає колір кнопки під час натискання.</string>
-    <string name="config_help_vk_selected_foreground">Задає колір написів і символів під час натискання кнопки віртуальних елементів керування.</string>
     <string name="config_increase_value">Збільшити значення</string>
     <string name="config_lock_custom_resolution_ratio">Зафіксувати співвідношення сторін</string>
     <string name="config_maintenance">Скидання й дані</string>
@@ -571,7 +559,6 @@
     <string name="config_timing_mode_full_guest">Час емуляції</string>
     <string name="config_timing_mode_real_wall">Системний час</string>
     <string name="config_virtual_controls_color_preview">Попередній перегляд кольорів</string>
-    <string name="config_virtual_controls_preview_hint">Торкніться, щоб переглянути кольори під час натискання. Зразок використовує вибрану непрозорість.</string>
     <string name="config_virtual_controls_preview_normal">Відпущено</string>
     <string name="config_virtual_controls_preview_pressed">Натиснутий</string>
     <string name="config_warning_filter_shader">Лінійна фільтрація згладжує вхідне зображення перед обробкою шейдером екрана й може знизити чіткість результату.</string>
@@ -1195,9 +1182,7 @@
     <string name="library_metadata_follows_main">Використовується основна піктограма</string>
     <string name="library_metadata_change">Змінити</string>
     <string name="library_metadata_remove_portrait">Видалити піктограму 3:4</string>
-    <string name="library_metadata_icon_updated">Піктограму оновлено</string>
     <string name="library_metadata_discard_title">Скасувати зміни?</string>
-    <string name="library_metadata_discard_message">Незбережені зміни тексту буде втрачено. Зміни піктограми вже збережено.</string>
     <string name="library_metadata_discard">Скасувати</string>
     <string name="library_metadata_default_description">Типовий опис</string>
     <string name="library_metadata_other_languages">Інші мови</string>

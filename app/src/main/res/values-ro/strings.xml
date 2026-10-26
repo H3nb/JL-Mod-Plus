@@ -52,9 +52,7 @@
     <string name="PREF_TOUCH_INPUT">Introducere prin atingere</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Afișează comenzile virtuale</string>
     <string name="PREF_VK_ALPHA">Opacitate</string>
-    <string name="PREF_VK_BACK">Culoarea butoanelor</string>
     <string name="PREF_VK_FEEDBACK">Feedback haptic</string>
-    <string name="PREF_VK_FORE">Culoarea etichetelor și simbolurilor</string>
     <string name="PREF_VK_HIDE_DELAY">Întârziere la ascunderea automată</string>
     <string name="PREF_VK_OUTLINE">Culoarea conturului</string>
     <string name="PREF_VK_SEL_BACK">Culoarea butoanelor apăsate</string>
@@ -245,8 +243,6 @@
     <string name="library_indexing_progress">Se indexează biblioteca… %1$d/%2$d</string>
     <string name="library_load_error_title">Bibliotecă indisponibilă</string>
     <string name="library_load_failed_message">Biblioteca nu a putut fi încărcată. Încearcă din nou.</string>
-    <string name="library_metadata_change_icon">Schimbă pictograma</string>
-    <string name="library_metadata_description">Descriere</string>
     <string name="library_metadata_edit_title">Editează metadatele</string>
     <string name="library_metadata_icon">Pictogramă</string>
     <string name="library_metadata_name">Nume</string>
@@ -485,16 +481,9 @@
     <string name="config_help_timing_unavailable">Setările de timp nu sunt disponibile pentru această instalare a MIDletului. Reinstalați sau reconvertiți MIDletul pentru a le activa.</string>
     <string name="config_help_touch_input">Permite MIDletului să primească intrări de indicator de pe ecranul tactil.</string>
     <string name="config_help_virtual_keyboard">Afișează comenzi pe ecran pentru acest MIDlet.</string>
-    <string name="config_help_vk_alpha">Setează opacitatea comenzilor: 0 = complet transparente; 255 = complet opace.</string>
-    <string name="config_help_vk_background">Setează culoarea de bază a butoanelor comenzilor virtuale.</string>
     <string name="config_help_vk_button_shape">Setează forma implicită a butoanelor tastaturii. Padul direcțional și stickul analogic au forme proprii.</string>
     <string name="config_help_vk_feedback">Vibrează la apăsarea comenzilor virtuale când vibrațiile sunt activate în Setări.</string>
-    <string name="config_help_vk_force_opacity">Face opace comenzile din afara ecranului MIDletului. Comenzile de deasupra ecranului folosesc opacitatea configurată.</string>
-    <string name="config_help_vk_foreground">Setează culoarea etichetelor și simbolurilor de pe butoanele comenzilor virtuale.</string>
     <string name="config_help_vk_hide_delay">Ascunde comenzile după această întârziere când acoperă ecranul MIDletului. Setați 0 pentru a dezactiva ascunderea automată.</string>
-    <string name="config_help_vk_outline">Setează culoarea conturului butoanelor comenzilor virtuale.</string>
-    <string name="config_help_vk_selected_background">Setează culoarea butonului în timpul apăsării.</string>
-    <string name="config_help_vk_selected_foreground">Setează culoarea etichetelor și simbolurilor în timpul apăsării unui buton al comenzilor virtuale.</string>
     <string name="config_increase_value">Măriți valoarea</string>
     <string name="config_lock_custom_resolution_ratio">Blocați raportul de aspect</string>
     <string name="config_maintenance">Resetare și date</string>
@@ -511,7 +500,6 @@
     <string name="config_timing_mode_full_guest">Timp de emulare</string>
     <string name="config_timing_mode_real_wall">Timp de sistem</string>
     <string name="config_virtual_controls_color_preview">Previzualizarea culorilor</string>
-    <string name="config_virtual_controls_preview_hint">Atingeți pentru a previzualiza culorile la apăsare. Exemplul folosește opacitatea selectată.</string>
     <string name="config_virtual_controls_preview_normal">Eliberat</string>
     <string name="config_virtual_controls_preview_pressed">Apăsat</string>
     <string name="config_warning_filter_shader">Filtrarea liniară netezește imaginea de intrare înainte de procesarea cu shaderul ecranului și poate reduce claritatea rezultatului.</string>
@@ -935,7 +923,6 @@
     <string name="PREF_SHADER_FILTER">Shader pentru ecran</string>
     <string name="PREF_TIMING_MODE">Sursa timpului</string>
     <string name="PREF_UNIT_MS">ms</string>
-    <string name="PREF_VK_FORCE_OPACITY">Menține opace comenzile din afara ecranului MIDletului</string>
     <string name="fps_limit_maximum">Maxim</string>
     <string name="identity_filter">Niciunul (cel mai rapid)</string>
     <string name="invalid_resolution_not_saved">Rezoluție nevalidă. Modificările nu au fost salvate.</string>
@@ -1162,9 +1149,7 @@
     <string name="library_metadata_follows_main">Folosește pictograma principală</string>
     <string name="library_metadata_change">Schimbă</string>
     <string name="library_metadata_remove_portrait">Elimină pictograma 3:4</string>
-    <string name="library_metadata_icon_updated">Pictogramă actualizată</string>
     <string name="library_metadata_discard_title">Renunțați la modificări?</string>
-    <string name="library_metadata_discard_message">Modificările textului nesalvate se vor pierde. Modificările pictogramei au fost deja salvate.</string>
     <string name="library_metadata_discard">Renunță</string>
     <string name="library_metadata_default_description">Descriere implicită</string>
     <string name="library_metadata_other_languages">Alte limbi</string>

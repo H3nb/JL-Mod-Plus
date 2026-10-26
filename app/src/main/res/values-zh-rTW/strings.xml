@@ -51,9 +51,7 @@
     <string name="PREF_TOUCH_INPUT">觸控輸入</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">顯示虛擬控制項</string>
     <string name="PREF_VK_ALPHA">不透明度</string>
-    <string name="PREF_VK_BACK">按鍵顏色</string>
     <string name="PREF_VK_FEEDBACK">觸覺反饋</string>
-    <string name="PREF_VK_FORE">標籤與符號顏色</string>
     <string name="PREF_VK_HIDE_DELAY">自動隱藏延遲</string>
     <string name="PREF_VK_OUTLINE">外框顏色</string>
     <string name="PREF_VK_SEL_BACK">按下時的按鍵顏色</string>
@@ -244,8 +242,6 @@
     <string name="library_indexing_progress">正在為應用程式庫建立索引… %1$d/%2$d</string>
     <string name="library_load_error_title">無法使用應用程式庫</string>
     <string name="library_load_failed_message">無法載入應用程式庫。請重試。</string>
-    <string name="library_metadata_change_icon">變更圖示</string>
-    <string name="library_metadata_description">說明</string>
     <string name="library_metadata_edit_title">編輯中繼資料</string>
     <string name="library_metadata_icon">圖示</string>
     <string name="library_metadata_name">名稱</string>
@@ -474,16 +470,9 @@
     <string name="config_help_timing_unavailable">此 MIDlet 安裝的時間設定無法使用。重新安裝或重新轉換 MIDlet 可啟用這些設定。</string>
     <string name="config_help_touch_input">允許 MIDlet 接收觸控螢幕的指標輸入。</string>
     <string name="config_help_virtual_keyboard">為此 MIDlet 顯示螢幕上的控制項。</string>
-    <string name="config_help_vk_alpha">設定控制項不透明度：0 = 完全透明；255 = 完全不透明。</string>
-    <string name="config_help_vk_background">設定虛擬控制項按鈕的基礎顏色。</string>
     <string name="config_help_vk_button_shape">設定鍵盤按鈕的預設形狀。方向鍵與類比搖桿使用各自的形狀。</string>
     <string name="config_help_vk_feedback">在「設定」中啟用震動時，按下虛擬控制項會震動。</string>
-    <string name="config_help_vk_force_opacity">使 MIDlet 畫面外的控制項不透明。畫面上的控制項使用設定的不透明度。</string>
-    <string name="config_help_vk_foreground">設定虛擬控制項按鈕上文字與符號的顏色。</string>
     <string name="config_help_vk_hide_delay">控制項覆蓋 MIDlet 畫面時，在此延遲後隱藏。設為 0 可停用自動隱藏。</string>
-    <string name="config_help_vk_outline">設定虛擬控制項按鈕的外框顏色。</string>
-    <string name="config_help_vk_selected_background">設定按鈕按下時的顏色。</string>
-    <string name="config_help_vk_selected_foreground">設定虛擬控制項按鈕按下時文字與符號的顏色。</string>
     <string name="config_increase_value">增加數值</string>
     <string name="config_lock_custom_resolution_ratio">鎖定長寬比</string>
     <string name="config_maintenance">重設與資料</string>
@@ -500,7 +489,6 @@
     <string name="config_timing_mode_full_guest">模擬時間</string>
     <string name="config_timing_mode_real_wall">系統時間</string>
     <string name="config_virtual_controls_color_preview">顏色預覽</string>
-    <string name="config_virtual_controls_preview_hint">點選以預覽按下時的顏色。範例使用選取的不透明度。</string>
     <string name="config_virtual_controls_preview_normal">放開</string>
     <string name="config_virtual_controls_preview_pressed">按下</string>
     <string name="config_warning_filter_shader">線性濾波會在螢幕著色器處理輸入前使其平滑，可能降低輸出的清晰度。</string>
@@ -876,7 +864,6 @@
     <string name="PREF_SHADER_FILTER">螢幕著色器</string>
     <string name="PREF_TIMING_MODE">時間來源</string>
     <string name="PREF_UNIT_MS">ms</string>
-    <string name="PREF_VK_FORCE_OPACITY">讓 MIDlet 螢幕外的控制項保持不透明</string>
     <string name="fps_limit_maximum">最大</string>
     <string name="identity_filter">無（最快）</string>
     <string name="invalid_resolution_not_saved">解析度無效。變更未儲存。</string>
@@ -1096,9 +1083,7 @@
     <string name="library_metadata_follows_main">使用主要圖示</string>
     <string name="library_metadata_change">更換</string>
     <string name="library_metadata_remove_portrait">移除 3:4 圖示</string>
-    <string name="library_metadata_icon_updated">圖示已更新</string>
     <string name="library_metadata_discard_title">要捨棄變更嗎？</string>
-    <string name="library_metadata_discard_message">未儲存的文字變更將會遺失。圖示變更已儲存。</string>
     <string name="library_metadata_discard">捨棄</string>
     <string name="library_metadata_default_description">預設描述</string>
     <string name="library_metadata_other_languages">其他語言</string>

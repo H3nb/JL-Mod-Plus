@@ -195,8 +195,6 @@
     <string name="library_indexing_progress">מתבצע אינדוקס של הספרייה… %1$d/%2$d</string>
     <string name="library_load_error_title">הספרייה אינה זמינה</string>
     <string name="library_load_failed_message">לא ניתן לטעון את הספרייה. יש לנסות שוב.</string>
-    <string name="library_metadata_change_icon">שינוי הסמל</string>
-    <string name="library_metadata_description">תיאור</string>
     <string name="library_metadata_edit_title">עריכת מטא־נתונים</string>
     <string name="library_metadata_icon">סמל</string>
     <string name="library_metadata_name">שם</string>
@@ -435,16 +433,9 @@
     <string name="config_help_timing_unavailable">הגדרות הזמן אינן זמינות עבור התקנת ה־MIDlet הזאת. התקינו או המירו מחדש את ה־MIDlet כדי להפעיל אותן.</string>
     <string name="config_help_touch_input">מאפשר ל־MIDlet לקבל קלט מצביע ממסך המגע.</string>
     <string name="config_help_virtual_keyboard">מציג פקדים על המסך עבור ה־MIDlet הזה.</string>
-    <string name="config_help_vk_alpha">מגדיר את אטימות הפקדים: 0 = שקוף לחלוטין; 255 = אטום לחלוטין.</string>
-    <string name="config_help_vk_background">מגדיר את צבע הבסיס של כפתורי הפקדים הווירטואליים.</string>
     <string name="config_help_vk_button_shape">מגדיר את צורת ברירת המחדל של לחצני לוח המקשים. ללוח הכיוונים ולמוט האנלוגי יש צורות משלהם.</string>
     <string name="config_help_vk_feedback">רוטט בלחיצה על פקדים וירטואליים כאשר הרטט מופעל בהגדרות.</string>
-    <string name="config_help_vk_force_opacity">הופך פקדים מחוץ למסך ה־MIDlet לאטומים. פקדים מעל המסך משתמשים באטימות שהוגדרה.</string>
-    <string name="config_help_vk_foreground">מגדיר את צבע התוויות והסמלים בכפתורי הפקדים הווירטואליים.</string>
     <string name="config_help_vk_hide_delay">מסתיר את הפקדים לאחר ההשהיה הזאת כשהם מכסים את מסך ה־MIDlet. הגדירו 0 כדי לבטל הסתרה אוטומטית.</string>
-    <string name="config_help_vk_outline">מגדיר את צבע קווי המתאר של כפתורי הפקדים הווירטואליים.</string>
-    <string name="config_help_vk_selected_background">מגדיר את צבע הכפתור בזמן לחיצה עליו.</string>
-    <string name="config_help_vk_selected_foreground">מגדיר את צבע התוויות והסמלים בזמן לחיצה על כפתור של פקד וירטואלי.</string>
     <string name="config_increase_value">הגדלת ערך</string>
     <string name="config_lock_custom_resolution_ratio">נעילת יחס ממדים</string>
     <string name="config_maintenance">איפוס ונתונים</string>
@@ -461,7 +452,6 @@
     <string name="config_timing_mode_full_guest">זמן אמולציה</string>
     <string name="config_timing_mode_real_wall">זמן מערכת</string>
     <string name="config_virtual_controls_color_preview">תצוגה מקדימה של צבע</string>
-    <string name="config_virtual_controls_preview_hint">הקישו לתצוגה מקדימה של הצבעים במצב לחוץ. הדוגמה משתמשת באטימות שנבחרה.</string>
     <string name="config_virtual_controls_preview_normal">משוחרר</string>
     <string name="config_virtual_controls_preview_pressed">לחוץ</string>
     <string name="config_warning_filter_shader">סינון ליניארי מחליק את הקלט לפני ששיידר המסך מעבד אותו, ועשוי להפחית את חדות הפלט.</string>
@@ -906,10 +896,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">הצגת פקדים וירטואליים</string>
     <string name="PREF_VK_ALPHA">אטימות</string>
-    <string name="PREF_VK_BACK">צבע כפתור</string>
     <string name="PREF_VK_FEEDBACK">משוב רטט</string>
-    <string name="PREF_VK_FORCE_OPACITY">שמירת אטימות הפקדים מחוץ למסך MIDlet</string>
-    <string name="PREF_VK_FORE">צבע תוויות וסמלים</string>
     <string name="PREF_VK_HIDE_DELAY">השהיית הסתרה אוטומטית</string>
     <string name="PREF_VK_OUTLINE">צבע קו מתאר</string>
     <string name="PREF_VK_SEL_BACK">צבע כפתור לחוץ</string>
@@ -1162,9 +1149,7 @@
     <string name="library_metadata_follows_main">משתמש בסמל הראשי</string>
     <string name="library_metadata_change">שינוי</string>
     <string name="library_metadata_remove_portrait">הסרת סמל 3:4</string>
-    <string name="library_metadata_icon_updated">הסמל עודכן</string>
     <string name="library_metadata_discard_title">לבטל את השינויים?</string>
-    <string name="library_metadata_discard_message">שינויי טקסט שלא נשמרו יאבדו. השינויים בסמל כבר נשמרו.</string>
     <string name="library_metadata_discard">ביטול</string>
     <string name="library_metadata_default_description">תיאור ברירת מחדל</string>
     <string name="library_metadata_other_languages">שפות אחרות</string>

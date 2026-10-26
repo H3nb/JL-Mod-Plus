@@ -51,9 +51,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">ভার্চুয়াল কন্ট্রোল দেখান</string>
     <string name="PREF_VK_ALPHA">অস্বচ্ছতা</string>
-    <string name="PREF_VK_BACK">বাটনের রং</string>
     <string name="PREF_VK_FEEDBACK">হ্যাপটিক প্রতিক্রিয়া</string>
-    <string name="PREF_VK_FORE">লেবেল ও চিহ্নের রং</string>
     <string name="PREF_VK_HIDE_DELAY">স্বয়ংক্রিয়ভাবে লুকানোর বিলম্ব</string>
     <string name="PREF_VK_OUTLINE">রূপরেখার রং</string>
     <string name="PREF_VK_SEL_BACK">চাপ দেওয়া বাটনের রং</string>
@@ -244,8 +242,6 @@
     <string name="library_indexing_progress">লাইব্রেরির সূচি তৈরি হচ্ছে… %1$d/%2$d</string>
     <string name="library_load_error_title">লাইব্রেরি উপলব্ধ নেই</string>
     <string name="library_load_failed_message">লাইব্রেরি লোড করা যায়নি। আবার চেষ্টা করুন।</string>
-    <string name="library_metadata_change_icon">আইকন বদলান</string>
-    <string name="library_metadata_description">বিবরণ</string>
     <string name="library_metadata_edit_title">মেটাডেটা সম্পাদনা করুন</string>
     <string name="library_metadata_icon">আইকন</string>
     <string name="library_metadata_name">নাম</string>
@@ -479,16 +475,9 @@
     <string name="config_help_timing_unavailable">এই MIDlet ইনস্টলেশনের জন্য সময়ের সেটিংস পাওয়া যাচ্ছে না। সক্রিয় করতে MIDlet আবার ইনস্টল বা রূপান্তর করুন।</string>
     <string name="config_help_touch_input">MIDlet-কে টাচস্ক্রিন থেকে পয়েন্টার ইনপুট নিতে দেয়।</string>
     <string name="config_help_virtual_keyboard">এই MIDlet-এর জন্য স্ক্রিনে কন্ট্রোল দেখায়।</string>
-    <string name="config_help_vk_alpha">কন্ট্রোলের অস্বচ্ছতা নির্ধারণ করে: 0 = পুরোপুরি স্বচ্ছ; 255 = পুরোপুরি অস্বচ্ছ।</string>
-    <string name="config_help_vk_background">ভার্চুয়াল কন্ট্রোলের বোতামগুলির মূল রং নির্ধারণ করে।</string>
     <string name="config_help_vk_button_shape">কীপ্যাড বাটনের ডিফল্ট আকৃতি নির্ধারণ করে। D-pad ও অ্যানালগ স্টিকের নিজস্ব আকৃতি রয়েছে।</string>
     <string name="config_help_vk_feedback">সেটিংসে কম্পন সক্রিয় থাকলে ভার্চুয়াল কন্ট্রোল চাপলে কম্পন হয়।</string>
-    <string name="config_help_vk_force_opacity">MIDlet স্ক্রিনের বাইরের কন্ট্রোল অস্বচ্ছ করে। স্ক্রিনের ওপরের কন্ট্রোল নির্ধারিত অস্বচ্ছতা ব্যবহার করে।</string>
-    <string name="config_help_vk_foreground">ভার্চুয়াল কন্ট্রোলের বোতামে লেবেল ও চিহ্নের রং নির্ধারণ করে।</string>
     <string name="config_help_vk_hide_delay">MIDlet স্ক্রিন ঢেকে থাকা কন্ট্রোল এই বিলম্বের পরে লুকিয়ে যায়। স্বয়ংক্রিয়ভাবে লুকানো বন্ধ করতে 0 দিন।</string>
-    <string name="config_help_vk_outline">ভার্চুয়াল কন্ট্রোলের বোতামের বহিরেখার রং নির্ধারণ করে।</string>
-    <string name="config_help_vk_selected_background">বোতাম চেপে রাখার সময় তার রং নির্ধারণ করে।</string>
-    <string name="config_help_vk_selected_foreground">ভার্চুয়াল কন্ট্রোলের বোতাম চেপে রাখার সময় লেবেল ও চিহ্নের রং নির্ধারণ করে।</string>
     <string name="config_increase_value">মান বাড়ান</string>
     <string name="config_lock_custom_resolution_ratio">প্রস্থ ও উচ্চতার অনুপাত লক করুন</string>
     <string name="config_maintenance">রিসেট ও ডেটা</string>
@@ -505,7 +494,6 @@
     <string name="config_timing_mode_full_guest">এমুলেশন সময়</string>
     <string name="config_timing_mode_real_wall">সিস্টেম সময়</string>
     <string name="config_virtual_controls_color_preview">রঙের পূর্বরূপ</string>
-    <string name="config_virtual_controls_preview_hint">চাপলে যে রং দেখা যায় তার পূর্বরূপ দেখতে ট্যাপ করুন। নমুনায় বেছে নেওয়া অস্বচ্ছতা ব্যবহার করা হয়।</string>
     <string name="config_virtual_controls_preview_normal">ছাড়া অবস্থায়</string>
     <string name="config_virtual_controls_preview_pressed">চাপা অবস্থায়</string>
     <string name="config_warning_filter_shader">স্ক্রিন শেডার প্রক্রিয়া করার আগে লিনিয়ার ফিল্টারিং ইনপুট মসৃণ করে এবং আউটপুটের তীক্ষ্ণতা কমতে পারে।</string>
@@ -905,7 +893,6 @@
     <string name="PREF_LAYOUT">কী কোডের লেআউট</string>
     <string name="PREF_SHADER_FILTER">স্ক্রিন শেডার</string>
     <string name="PREF_TIMING_MODE">সময়ের উৎস</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet স্ক্রিনের বাইরে কন্ট্রোল অস্বচ্ছ রাখুন</string>
     <string name="fps_limit_maximum">সর্বোচ্চ</string>
     <string name="identity_filter">কোনোটি নয় (সবচেয়ে দ্রুত)</string>
     <string name="invalid_resolution_not_saved">রেজোলিউশন অবৈধ। পরিবর্তন সংরক্ষণ করা হয়নি।</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">প্রধান আইকন ব্যবহার করছে</string>
     <string name="library_metadata_change">পরিবর্তন</string>
     <string name="library_metadata_remove_portrait">3:4 আইকন সরান</string>
-    <string name="library_metadata_icon_updated">আইকন আপডেট হয়েছে</string>
     <string name="library_metadata_discard_title">পরিবর্তন বাতিল করবেন?</string>
-    <string name="library_metadata_discard_message">সংরক্ষণ না করা লেখার পরিবর্তন হারিয়ে যাবে। আইকনের পরিবর্তন ইতিমধ্যে সংরক্ষিত হয়েছে।</string>
     <string name="library_metadata_discard">বাতিল করুন</string>
     <string name="library_metadata_default_description">ডিফল্ট বিবরণ</string>
     <string name="library_metadata_other_languages">অন্যান্য ভাষা</string>

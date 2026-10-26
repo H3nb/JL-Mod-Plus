@@ -195,8 +195,6 @@
     <string name="library_indexing_progress">Besig om die Biblioteek te indekseer… %1$d/%2$d</string>
     <string name="library_load_error_title">Biblioteek nie beskikbaar nie</string>
     <string name="library_load_failed_message">Die Biblioteek kon nie gelaai word nie. Probeer weer.</string>
-    <string name="library_metadata_change_icon">Verander ikoon</string>
-    <string name="library_metadata_description">Beskrywing</string>
     <string name="library_metadata_edit_title">Wysig metadata</string>
     <string name="library_metadata_icon">Ikoon</string>
     <string name="library_metadata_name">Naam</string>
@@ -430,16 +428,9 @@
     <string name="config_help_timing_unavailable">Tydinstellings is nie vir hierdie MIDlet-installasie beskikbaar nie. Herinstalleer of heromskep die MIDlet om hulle te aktiveer.</string>
     <string name="config_help_touch_input">Laat die MIDlet wyserinvoer vanaf die raakskerm ontvang.</string>
     <string name="config_help_virtual_keyboard">Wys beheerknoppies op die skerm vir hierdie MIDlet.</string>
-    <string name="config_help_vk_alpha">Stel beheerknoppies se ondeursigtigheid: 0 = heeltemal deursigtig; 255 = heeltemal ondeursigtig.</string>
-    <string name="config_help_vk_background">Stel die basiskleur van virtuele beheerknoppies.</string>
     <string name="config_help_vk_button_shape">Stel die standaardvorm van sleutelbordknoppies in. Die D-pad en analoogstokkie het hul eie vorms.</string>
     <string name="config_help_vk_feedback">Vibreer wanneer virtuele beheerknoppies gedruk word, mits vibrasie in Instellings geaktiveer is.</string>
-    <string name="config_help_vk_force_opacity">Maak beheerknoppies buite die MIDlet-skerm ondeursigtig. Beheerknoppies oor die skerm gebruik die ingestelde ondeursigtigheid.</string>
-    <string name="config_help_vk_foreground">Stel die etiket- en simboolkleur op virtuele beheerknoppies.</string>
     <string name="config_help_vk_hide_delay">Versteek beheerknoppies ná hierdie vertraging wanneer hulle die MIDlet-skerm bedek. Stel dit op 0 om outomatiese versteek te deaktiveer.</string>
-    <string name="config_help_vk_outline">Stel die buitelynkleur van virtuele beheerknoppies.</string>
-    <string name="config_help_vk_selected_background">Stel die knoppiekleur terwyl dit gedruk word.</string>
-    <string name="config_help_vk_selected_foreground">Stel die etiket- en simboolkleur terwyl \'n virtuele beheerknoppie gedruk word.</string>
     <string name="config_increase_value">Verhoog waarde</string>
     <string name="config_lock_custom_resolution_ratio">Sluit aspekverhouding</string>
     <string name="config_maintenance">Herstel en data</string>
@@ -456,7 +447,6 @@
     <string name="config_timing_mode_full_guest">Emulasietyd</string>
     <string name="config_timing_mode_real_wall">Stelseltyd</string>
     <string name="config_virtual_controls_color_preview">Kleurvoorskou</string>
-    <string name="config_virtual_controls_preview_hint">Tik om gedrukte kleure te voorskou. Die voorbeeld gebruik die gekose ondeursigtigheid.</string>
     <string name="config_virtual_controls_preview_normal">Losgelaat</string>
     <string name="config_virtual_controls_preview_pressed">Gedruk</string>
     <string name="config_warning_filter_shader">Lineêre filtering maak die invoer gladder voordat die skermshader dit verwerk en kan die skerpte van die uitvoer verminder.</string>
@@ -876,10 +866,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Wys virtuele beheerknoppies</string>
     <string name="PREF_VK_ALPHA">Ondeursigtigheid</string>
-    <string name="PREF_VK_BACK">Knoppiekleur</string>
     <string name="PREF_VK_FEEDBACK">Haptiese terugvoer</string>
-    <string name="PREF_VK_FORCE_OPACITY">Hou beheerknoppies buite die MIDlet-skerm ondeursigtig</string>
-    <string name="PREF_VK_FORE">Etiket- en simboolkleur</string>
     <string name="PREF_VK_HIDE_DELAY">Vertraging voor outomatiese verberging</string>
     <string name="PREF_VK_OUTLINE">Omtrekkleur</string>
     <string name="PREF_VK_SEL_BACK">Kleur van gedrukte knoppie</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">Gebruik hoofikoon</string>
     <string name="library_metadata_change">Verander</string>
     <string name="library_metadata_remove_portrait">Verwyder 3:4-ikoon</string>
-    <string name="library_metadata_icon_updated">Ikoon opgedateer</string>
     <string name="library_metadata_discard_title">Wysigings weggooi?</string>
-    <string name="library_metadata_discard_message">Ongestoorde tekswysigings sal verlore gaan. Ikoonwysigings is reeds gestoor.</string>
     <string name="library_metadata_discard">Weggooi</string>
     <string name="library_metadata_default_description">Standaardbeskrywing</string>
     <string name="library_metadata_other_languages">Ander tale</string>

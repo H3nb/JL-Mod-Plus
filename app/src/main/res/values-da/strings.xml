@@ -49,9 +49,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuelle kontroller</string>
     <string name="PREF_VK_ALPHA">Opacitet</string>
-    <string name="PREF_VK_BACK">Knapfarve</string>
     <string name="PREF_VK_FEEDBACK">Haptisk feedback</string>
-    <string name="PREF_VK_FORE">Etiket- og symbolfarve</string>
     <string name="PREF_VK_HIDE_DELAY">Forsinkelse før automatisk skjul</string>
     <string name="PREF_VK_OUTLINE">Konturfarve</string>
     <string name="PREF_VK_SEL_BACK">Farve på trykket knap</string>
@@ -329,7 +327,6 @@
     <string name="pref_theme_title">Tema</string>
     <string name="pref_title_emulation">MIDlet-livscyklus</string>
     <string name="pref_vibration_title">Aktivér vibration</string>
-    <string name="PREF_VK_FORCE_OPACITY">Hold kontroller uden for MIDlet-skærmen ugennemsigtige</string>
     <string name="pref_vk_hide_hint">Deaktiveret</string>
     <string name="pref_vk_save_alert">Erstat det eksisterende brugerdefinerede layout for virtuelle kontroller med det aktuelle?</string>
     <string name="pref_vk_type_arrows">Pile</string>
@@ -760,14 +757,7 @@
     <string name="config_help_key_mapping">Tildeler Android-taster og -knapper til J2ME-tastaturhandlinger.</string>
     <string name="config_help_vk_button_shape">Indstiller standardformen på tastaturknapperne. D-pad og analog stick har deres egne former.</string>
     <string name="config_help_vk_feedback">Vibrerer ved tryk på virtuelle kontroller, når vibration er aktiveret i Indstillinger.</string>
-    <string name="config_help_vk_alpha">Indstiller de virtuelle kontrollers opacitet: 0 = helt gennemsigtige; 255 = helt uigennemsigtige.</string>
-    <string name="config_help_vk_force_opacity">Gør kontroller uden for MIDlet-skærmen ugennemsigtige. Kontroller over skærmen bruger den indstillede gennemsigtighed.</string>
     <string name="config_help_vk_hide_delay">Skjuler kontroller efter denne forsinkelse, når de dækker MIDlet-skærmen. Sæt til 0 for at deaktivere automatisk skjul.</string>
-    <string name="config_help_vk_foreground">Indstiller farven på etiketter og symboler på knapper til virtuelle kontroller.</string>
-    <string name="config_help_vk_background">Indstiller grundfarven på knapper til virtuelle kontroller.</string>
-    <string name="config_help_vk_selected_foreground">Indstiller farven på etiketter og symboler, mens en knap i de virtuelle kontroller er trykket.</string>
-    <string name="config_help_vk_selected_background">Indstiller knappens farve, mens den er trykket.</string>
-    <string name="config_help_vk_outline">Indstiller konturfarven på knapper til virtuelle kontroller.</string>
     <string name="config_help_reset_layout">Gendanner layoutet for virtuelle kontroller uden at ændre andre MIDlet-indstillinger.</string>
     <string name="config_help_skip_resume">Efter det første vellykkede startApp() springes senere kald over, når MIDlet genoptages. Brug kun dette til MIDlet-programmer, der fejler ved genoptagelse.</string>
     <string name="config_help_soundbank">Vælger den soundbank, der bruges til MIDI-afspilning.</string>
@@ -831,10 +821,8 @@
     <string name="config_controller_help_body_compact">Gamepad-knapper bruger samme Tastetildeling som tastaturer og telefontaster. Indstillingen Analog stick styrer kun retningsoutput fra sticken til MIDlet. Android Tilbage beholder sin normale værtsadfærd, og enhver fysisk knap tildelt M åbner runtime-MIDlet-menuen.</string>
     <string name="library_metadata_edit_title">Rediger metadata</string>
     <string name="library_metadata_icon">Ikon</string>
-    <string name="library_metadata_change_icon">Skift ikon</string>
     <string name="library_metadata_name">Navn</string>
     <string name="library_metadata_vendor">Leverandør</string>
-    <string name="library_metadata_description">Beskrivelse</string>
     <string name="library_metadata_reset_to_original">Nulstil til original</string>
     <string name="library_metadata_save">Gem</string>
     <string name="library_hide_grid_titles_summary">Vis kun MIDlet-ikoner i gittervisning.</string>
@@ -995,7 +983,6 @@
     <string name="bulk_install_skipped_entries">Oversprungne arkivposter: %1$d</string>
     <string name="bulk_install_unreadable_archives">Ulæselige arkiver: %1$d</string>
     <string name="config_virtual_controls_color_preview">Farvevisning</string>
-    <string name="config_virtual_controls_preview_hint">Tryk for at se farverne ved tryk. Eksemplet bruger den valgte opacitet.</string>
     <string name="config_virtual_controls_preview_normal">Sluppet</string>
     <string name="config_virtual_controls_preview_pressed">Trykket</string>
     <string name="config_warning_filter_shader">Lineær filtrering udglatter billedet, før skærmshaderen behandler det, og kan reducere skarpheden i resultatet.</string>
@@ -1129,9 +1116,7 @@
     <string name="library_metadata_follows_main">Bruger primært ikon</string>
     <string name="library_metadata_change">Skift</string>
     <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
-    <string name="library_metadata_icon_updated">Ikon opdateret</string>
     <string name="library_metadata_discard_title">Kassér ændringer?</string>
-    <string name="library_metadata_discard_message">Ikke-gemte tekstændringer går tabt. Ændringer af ikoner er allerede gemt.</string>
     <string name="library_metadata_discard">Kassér</string>
     <string name="library_metadata_default_description">Standardbeskrivelse</string>
     <string name="library_metadata_other_languages">Andre sprog</string>

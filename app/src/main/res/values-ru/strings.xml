@@ -153,10 +153,7 @@
     <string name="pref_vibration_title">Включить вибрацию</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Виртуальные элементы управления</string>
     <string name="PREF_VK_ALPHA">Непрозрачность</string>
-    <string name="PREF_VK_BACK">Цвет кнопок</string>
     <string name="PREF_VK_FEEDBACK">Тактильный отклик</string>
-    <string name="PREF_VK_FORCE_OPACITY">Сохранять непрозрачность элементов управления за пределами экрана MIDlet</string>
-    <string name="PREF_VK_FORE">Цвет подписей и символов</string>
     <string name="PREF_VK_HIDE_DELAY">Задержка автоскрытия</string>
     <string name="pref_vk_hide_hint">Отключено</string>
     <string name="PREF_VK_OUTLINE">Цвет контура</string>
@@ -261,7 +258,6 @@
     <string name="config_help_virtual_keyboard">Показывает сенсорные элементы управления для этого MIDlet.</string>
     <string name="config_help_force_fullscreen">Запускает экраны Canvas Java ME без панели команд софт-клавиш. Игры могут изменить этот режим.</string>
     <string name="config_help_font_sizes_long">Задаёт размеры шрифтов Java ME в пикселях или в масштабируемых единицах, если включён параметр «Использовать масштаб шрифта Android». Изменяйте их вместе, чтобы сохранить сбалансированный размер текста.</string>
-    <string name="config_help_vk_force_opacity">Делает непрозрачными элементы управления вне экрана MIDlet. Элементы поверх экрана используют настроенную непрозрачность.</string>
     <string name="preset_save_as">Сохранить как профиль</string>
     <string name="profile_more_actions">Другие действия для %1$s</string>
     <string name="preset_manager_default_section">По умолчанию для новых MIDlet</string>
@@ -886,13 +882,7 @@
     <string name="config_help_key_mapping">Сопоставляет клавиши и кнопки Android с действиями клавиатуры J2ME.</string>
     <string name="config_help_vk_button_shape">Задаёт стандартную форму кнопок клавиатуры. Крестовина и аналоговый стик имеют собственную форму.</string>
     <string name="config_help_vk_feedback">Вибрирует при нажатии виртуальных элементов управления, если вибрация включена в настройках.</string>
-    <string name="config_help_vk_alpha">Задаёт непрозрачность элементов управления: 0 = полностью прозрачные; 255 = полностью непрозрачные.</string>
     <string name="config_help_vk_hide_delay">Скрывает элементы управления после этой задержки, когда они перекрывают экран MIDlet. Установите 0, чтобы отключить автоскрытие.</string>
-    <string name="config_help_vk_foreground">Задаёт цвет подписей и символов на кнопках виртуального управления.</string>
-    <string name="config_help_vk_background">Задаёт основной цвет кнопок виртуального управления.</string>
-    <string name="config_help_vk_selected_foreground">Задаёт цвет подписей и символов при нажатии кнопки виртуального управления.</string>
-    <string name="config_help_vk_selected_background">Задаёт цвет кнопки при нажатии.</string>
-    <string name="config_help_vk_outline">Задаёт цвет контура кнопок виртуального управления.</string>
     <string name="config_help_reset_layout">Восстанавливает раскладку виртуальных элементов управления, не меняя другие настройки MIDlet.</string>
     <string name="config_help_skip_resume">После первого успешного вызова startApp() пропускает последующие вызовы при возобновлении MIDlet. Используйте только для MIDlet, которые дают сбой при возобновлении.</string>
     <string name="config_help_soundbank">Выбирает банк звуков для воспроизведения MIDI.</string>
@@ -949,10 +939,8 @@
     <string name="config_controller_help_body_compact">Кнопки геймпада используют те же «Назначения клавиш», что клавиатура и телефонные клавиши. Параметр «Аналоговый стик» управляет только передачей направлений стика в MIDlet. Кнопка Android «Назад» сохраняет обычное поведение хоста, а любая физическая кнопка, назначенная на M, открывает меню MIDlet среды выполнения.</string>
     <string name="library_metadata_edit_title">Изменить метаданные</string>
     <string name="library_metadata_icon">Значок</string>
-    <string name="library_metadata_change_icon">Изменить значок</string>
     <string name="library_metadata_name">Название</string>
     <string name="library_metadata_vendor">Издатель</string>
-    <string name="library_metadata_description">Описание</string>
     <string name="library_metadata_reset_to_original">Восстановить исходное</string>
     <string name="library_metadata_save">Сохранить</string>
     <string name="library_indexing_progress">Индексирование Библиотеки… %1$d/%2$d</string>
@@ -1057,7 +1045,6 @@
     <string name="bulk_install_skipped_entries">Пропущенные записи архивов: %1$d</string>
     <string name="bulk_install_unreadable_archives">Нечитаемые архивы: %1$d</string>
     <string name="config_virtual_controls_color_preview">Предпросмотр цветов</string>
-    <string name="config_virtual_controls_preview_hint">Нажмите для просмотра цветов в нажатом состоянии. В примере используется выбранная непрозрачность.</string>
     <string name="config_virtual_controls_preview_normal">Отпущено</string>
     <string name="config_virtual_controls_preview_pressed">Нажатое</string>
     <string name="config_warning_filter_shader">Линейная фильтрация сглаживает изображение перед обработкой шейдером экрана и может снизить чёткость результата.</string>
@@ -1195,9 +1182,7 @@
     <string name="library_metadata_follows_main">Используется основная иконка</string>
     <string name="library_metadata_change">Изменить</string>
     <string name="library_metadata_remove_portrait">Удалить иконку 3:4</string>
-    <string name="library_metadata_icon_updated">Иконка обновлена</string>
     <string name="library_metadata_discard_title">Отменить изменения?</string>
-    <string name="library_metadata_discard_message">Несохранённые изменения текста будут потеряны. Изменения иконки уже сохранены.</string>
     <string name="library_metadata_discard">Отменить</string>
     <string name="library_metadata_default_description">Описание по умолчанию</string>
     <string name="library_metadata_other_languages">Другие языки</string>

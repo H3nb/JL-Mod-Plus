@@ -194,8 +194,6 @@
     <string name="library_indexing_progress">Δημιουργία ευρετηρίου Βιβλιοθήκης… %1$d/%2$d</string>
     <string name="library_load_error_title">Η Βιβλιοθήκη δεν είναι διαθέσιμη</string>
     <string name="library_load_failed_message">Δεν ήταν δυνατή η φόρτωση της Βιβλιοθήκης. Δοκιμάστε ξανά.</string>
-    <string name="library_metadata_change_icon">Αλλαγή εικονιδίου</string>
-    <string name="library_metadata_description">Περιγραφή</string>
     <string name="library_metadata_edit_title">Επεξεργασία μεταδεδομένων</string>
     <string name="library_metadata_icon">Εικονίδιο</string>
     <string name="library_metadata_name">Όνομα</string>
@@ -429,16 +427,9 @@
     <string name="config_help_timing_unavailable">Οι ρυθμίσεις χρόνου δεν είναι διαθέσιμες για αυτή την εγκατάσταση MIDlet. Εγκαταστήστε ξανά ή μετατρέψτε ξανά το MIDlet για να τις ενεργοποιήσετε.</string>
     <string name="config_help_touch_input">Επιτρέπει στο MIDlet να λαμβάνει είσοδο δείκτη από την οθόνη αφής.</string>
     <string name="config_help_virtual_keyboard">Εμφανίζει χειριστήρια στην οθόνη για αυτό το MIDlet.</string>
-    <string name="config_help_vk_alpha">Ορίζει την αδιαφάνεια των χειριστηρίων: 0 = πλήρως διαφανή· 255 = πλήρως αδιαφανή.</string>
-    <string name="config_help_vk_background">Ορίζει το βασικό χρώμα των κουμπιών των εικονικών χειριστηρίων.</string>
     <string name="config_help_vk_button_shape">Ορίζει το προεπιλεγμένο σχήμα των κουμπιών του πληκτρολογίου. Το D-pad και ο αναλογικός μοχλός έχουν δικά τους σχήματα.</string>
     <string name="config_help_vk_feedback">Δονείται όταν πατάτε εικονικά χειριστήρια, εφόσον η δόνηση είναι ενεργοποιημένη στις Ρυθμίσεις.</string>
-    <string name="config_help_vk_force_opacity">Κάνει αδιαφανή τα χειριστήρια έξω από την οθόνη του MIDlet. Τα χειριστήρια πάνω στην οθόνη χρησιμοποιούν τη ρυθμισμένη αδιαφάνεια.</string>
-    <string name="config_help_vk_foreground">Ορίζει το χρώμα ετικετών και συμβόλων στα κουμπιά των εικονικών χειριστηρίων.</string>
     <string name="config_help_vk_hide_delay">Κρύβει τα χειριστήρια μετά από αυτή την καθυστέρηση όταν καλύπτουν την οθόνη του MIDlet. Ορίστε 0 για απενεργοποίηση της αυτόματης απόκρυψης.</string>
-    <string name="config_help_vk_outline">Ορίζει το χρώμα περιγράμματος των κουμπιών των εικονικών χειριστηρίων.</string>
-    <string name="config_help_vk_selected_background">Ορίζει το χρώμα του κουμπιού όσο είναι πατημένο.</string>
-    <string name="config_help_vk_selected_foreground">Ορίζει το χρώμα ετικετών και συμβόλων όσο ένα κουμπί εικονικού χειριστηρίου είναι πατημένο.</string>
     <string name="config_increase_value">Αύξηση τιμής</string>
     <string name="config_lock_custom_resolution_ratio">Κλείδωμα αναλογιών</string>
     <string name="config_maintenance">Επαναφορά και δεδομένα</string>
@@ -455,7 +446,6 @@
     <string name="config_timing_mode_full_guest">Χρόνος εξομοίωσης</string>
     <string name="config_timing_mode_real_wall">Χρόνος συστήματος</string>
     <string name="config_virtual_controls_color_preview">Προεπισκόπηση χρώματος</string>
-    <string name="config_virtual_controls_preview_hint">Πατήστε για προεπισκόπηση των χρωμάτων κατά το πάτημα. Το δείγμα χρησιμοποιεί την επιλεγμένη αδιαφάνεια.</string>
     <string name="config_virtual_controls_preview_normal">Αφημένο</string>
     <string name="config_virtual_controls_preview_pressed">Πατημένο</string>
     <string name="config_warning_filter_shader">Το γραμμικό φιλτράρισμα εξομαλύνει την είσοδο πριν από την επεξεργασία της από το shader οθόνης και μπορεί να μειώσει την ευκρίνεια του αποτελέσματος.</string>
@@ -875,10 +865,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Εμφάνιση εικονικών χειριστηρίων</string>
     <string name="PREF_VK_ALPHA">Αδιαφάνεια</string>
-    <string name="PREF_VK_BACK">Χρώμα κουμπιών</string>
     <string name="PREF_VK_FEEDBACK">Απτική ανάδραση</string>
-    <string name="PREF_VK_FORCE_OPACITY">Διατήρηση αδιαφανών χειριστηρίων εκτός της οθόνης του MIDlet</string>
-    <string name="PREF_VK_FORE">Χρώμα ετικετών και συμβόλων</string>
     <string name="PREF_VK_HIDE_DELAY">Καθυστέρηση αυτόματης απόκρυψης</string>
     <string name="PREF_VK_OUTLINE">Χρώμα περιγράμματος</string>
     <string name="PREF_VK_SEL_BACK">Χρώμα πατημένων κουμπιών</string>
@@ -1128,9 +1115,7 @@
     <string name="library_metadata_follows_main">Χρησιμοποιεί το κύριο εικονίδιο</string>
     <string name="library_metadata_change">Αλλαγή</string>
     <string name="library_metadata_remove_portrait">Αφαίρεση εικονιδίου 3:4</string>
-    <string name="library_metadata_icon_updated">Το εικονίδιο ενημερώθηκε</string>
     <string name="library_metadata_discard_title">Απόρριψη αλλαγών;</string>
-    <string name="library_metadata_discard_message">Οι μη αποθηκευμένες αλλαγές κειμένου θα χαθούν. Οι αλλαγές εικονιδίου έχουν ήδη αποθηκευτεί.</string>
     <string name="library_metadata_discard">Απόρριψη</string>
     <string name="library_metadata_default_description">Προεπιλεγμένη περιγραφή</string>
     <string name="library_metadata_other_languages">Άλλες γλώσσες</string>

@@ -63,7 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.layout.Layout
@@ -765,7 +765,7 @@ internal fun RuntimeMenuHost(
             toolbarWidthDp = maxWidth.value,
             toolbarDensity = density.density,
             toolbarFontScale = density.fontScale,
-            toolbarSpeedWidthDp = measureRuntimeSpeedWidth(LocalContext.current.resources, state.emulationSpeedPercent),
+            toolbarSpeedWidthDp = measureRuntimeSpeedWidth(LocalResources.current, state.emulationSpeedPercent),
             toolbarRtl = LocalLayoutDirection.current == LayoutDirection.Rtl,
         ) else state
         val toolbarLayout = runtimeToolbarLayout(layoutState, layoutState.toolbarWidthDp ?: 0f)

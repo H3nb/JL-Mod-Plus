@@ -53,10 +53,10 @@ import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog
 
 /** Show transparency without cropping or trimming the source canvas. */
 @Composable
-private fun artworkBackground(): Modifier {
+private fun Modifier.artworkBackground(): Modifier {
     val light = MaterialTheme.colorScheme.surfaceContainerLowest
     val dark = MaterialTheme.colorScheme.surfaceContainerHigh
-    return Modifier.drawBehind {
+    return drawBehind {
         drawRect(light)
         val tile = 10.dp.toPx()
         for (y in 0..(size.height / tile).toInt()) {
@@ -91,7 +91,7 @@ internal fun FilePickerThumbnail(
         if (bitmap != null) {
             Image(bitmap!!.asImageBitmap(), contentDescription = null,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize().then(artworkBackground()))
+                modifier = Modifier.fillMaxSize().artworkBackground())
         } else {
             Icon(painterResource(R.drawable.ic_file_picker_file), contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
@@ -121,7 +121,7 @@ internal fun FilePickerImagePreviewDialog(
         text = {
             Box(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp, max = 420.dp)
-                    .aspectRatio(1.2f).then(artworkBackground()),
+                    .aspectRatio(1.2f).artworkBackground(),
                 contentAlignment = Alignment.Center,
             ) {
                 when {

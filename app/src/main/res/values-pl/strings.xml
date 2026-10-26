@@ -51,10 +51,7 @@
     <string name="PREF_TOUCH_INPUT">Wprowadzanie dotykowe</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Pokaż wirtualne elementy sterujące</string>
     <string name="PREF_VK_ALPHA">Nieprzezroczystość</string>
-    <string name="PREF_VK_BACK">Kolor przycisków</string>
     <string name="PREF_VK_FEEDBACK">Wibracja przy naciśnięciu</string>
-    <string name="PREF_VK_FORCE_OPACITY">Zachowuj nieprzezroczystość elementów sterujących poza ekranem MIDletu</string>
-    <string name="PREF_VK_FORE">Kolor etykiet i symboli</string>
     <string name="PREF_VK_HIDE_DELAY">Opóźnienie automatycznego ukrywania</string>
     <string name="PREF_VK_OUTLINE">Kolor obramowania</string>
     <string name="PREF_VK_SEL_BACK">Kolor wciśniętych przycisków</string>
@@ -245,8 +242,6 @@
     <string name="library_indexing_progress">Indeksowanie biblioteki… %1$d/%2$d</string>
     <string name="library_load_error_title">Biblioteka niedostępna</string>
     <string name="library_load_failed_message">Nie udało się wczytać biblioteki. Spróbuj ponownie.</string>
-    <string name="library_metadata_change_icon">Zmień ikonę</string>
-    <string name="library_metadata_description">Opis</string>
     <string name="library_metadata_edit_title">Edytuj metadane</string>
     <string name="library_metadata_icon">Ikona</string>
     <string name="library_metadata_name">Nazwa</string>
@@ -490,16 +485,9 @@
     <string name="config_help_timing_unavailable">Ustawienia czasu są niedostępne dla tej instalacji MIDletu. Zainstaluj ponownie lub ponownie skonwertuj MIDlet, aby je włączyć.</string>
     <string name="config_help_touch_input">Pozwala MIDletowi odbierać dane wskaźnika z ekranu dotykowego.</string>
     <string name="config_help_virtual_keyboard">Wyświetla ekranowe elementy sterujące dla tego MIDletu.</string>
-    <string name="config_help_vk_alpha">Ustawia nieprzezroczystość sterowania: 0 = całkowicie przezroczyste; 255 = całkowicie nieprzezroczyste.</string>
-    <string name="config_help_vk_background">Ustawia podstawowy kolor przycisków sterowania wirtualnego.</string>
     <string name="config_help_vk_button_shape">Ustawia domyślny kształt przycisków klawiatury. Krzyżak i drążek analogowy mają własne kształty.</string>
     <string name="config_help_vk_feedback">Wibruje przy naciskaniu sterowania wirtualnego, gdy wibracje są włączone w Ustawieniach.</string>
-    <string name="config_help_vk_force_opacity">Sprawia, że sterowanie poza ekranem MIDletu jest nieprzezroczyste. Elementy nad ekranem używają ustawionej nieprzezroczystości.</string>
-    <string name="config_help_vk_foreground">Ustawia kolor etykiet i symboli na przyciskach sterowania wirtualnego.</string>
     <string name="config_help_vk_hide_delay">Ukrywa sterowanie po tym opóźnieniu, jeśli zasłania ekran MIDletu. Ustaw 0, aby wyłączyć automatyczne ukrywanie.</string>
-    <string name="config_help_vk_outline">Ustawia kolor obrysu przycisków sterowania wirtualnego.</string>
-    <string name="config_help_vk_selected_background">Ustawia kolor przycisku podczas naciskania.</string>
-    <string name="config_help_vk_selected_foreground">Ustawia kolor etykiet i symboli podczas naciskania przycisku sterowania wirtualnego.</string>
     <string name="config_increase_value">Zwiększ wartość</string>
     <string name="config_lock_custom_resolution_ratio">Zablokuj proporcje</string>
     <string name="config_maintenance">Resetowanie i dane</string>
@@ -516,7 +504,6 @@
     <string name="config_timing_mode_full_guest">Czas emulacji</string>
     <string name="config_timing_mode_real_wall">Czas systemowy</string>
     <string name="config_virtual_controls_color_preview">Podgląd kolorów</string>
-    <string name="config_virtual_controls_preview_hint">Dotknij, aby zobaczyć kolory przy naciśnięciu. Przykład używa wybranej nieprzezroczystości.</string>
     <string name="config_virtual_controls_preview_normal">Zwolnione</string>
     <string name="config_virtual_controls_preview_pressed">Naciśnięte</string>
     <string name="config_warning_filter_shader">Filtrowanie liniowe wygładza obraz wejściowy przed przetworzeniem przez shader ekranu i może zmniejszyć ostrość obrazu wyjściowego.</string>
@@ -1195,9 +1182,7 @@
     <string name="library_metadata_follows_main">Używa głównej ikony</string>
     <string name="library_metadata_change">Zmień</string>
     <string name="library_metadata_remove_portrait">Usuń ikonę 3:4</string>
-    <string name="library_metadata_icon_updated">Ikona zaktualizowana</string>
     <string name="library_metadata_discard_title">Odrzucić zmiany?</string>
-    <string name="library_metadata_discard_message">Niezapisane zmiany tekstu zostaną utracone. Zmiany ikony zostały już zapisane.</string>
     <string name="library_metadata_discard">Odrzuć</string>
     <string name="library_metadata_default_description">Opis domyślny</string>
     <string name="library_metadata_other_languages">Inne języki</string>

@@ -1,6 +1,7 @@
 package io.github.h3nb.jlmodplus.config
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -18,8 +19,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import io.github.h3nb.jlmodplus.R
 import java.io.File
+import java.util.Locale
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -28,6 +31,18 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ControlSkinManagerComposeTest {
     @get:Rule val rule = createEmptyComposeRule()
+
+    @Test fun customizedControlCountUsesCorrectEnglishPlural() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val english = Configuration(context.resources.configuration).apply {
+            setLocale(Locale.ENGLISH)
+        }
+        val resources = context.createConfigurationContext(english).resources
+        assertEquals("1 customized control",
+            resources.getQuantityString(R.plurals.control_skin_count, 1, 1))
+        assertEquals("2 customized controls",
+            resources.getQuantityString(R.plurals.control_skin_count, 2, 2))
+    }
 
     @Test fun portraitGalleryAndLandscapeDetailStayUsable() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
