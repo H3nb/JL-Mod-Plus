@@ -109,6 +109,8 @@
     <string name="file_picker_current_folder">Aktuel mappe</string>
     <string name="file_picker_parent_folder">Overordnet mappe</string>
     <string name="file_picker_file">Fil</string>
+    <string name="file_picker_preview_named">Forhåndsvisning: %1$s</string>
+    <string name="file_picker_preview_unavailable">Ikke tilgængelig</string>
     <string name="file_picker_storage_volume">Lagerenhed</string>
     <string name="file_picker_empty">Ingen matchende filer</string>
     <string name="file_picker_empty_folder">Ingen mapper fundet</string>

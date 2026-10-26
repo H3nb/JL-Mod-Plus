@@ -146,6 +146,8 @@
     <string name="file_picker_current_folder">Huidige map</string>
     <string name="file_picker_parent_folder">Bovenliggende map</string>
     <string name="file_picker_file">Bestand</string>
+    <string name="file_picker_preview_named">Voorbeeld: %1$s</string>
+    <string name="file_picker_preview_unavailable">Niet beschikbaar</string>
     <string name="file_picker_storage_volume">Opslagvolume</string>
     <string name="file_picker_empty">Geen overeenkomende bestanden</string>
     <string name="file_picker_empty_folder">Geen mappen gevonden</string>

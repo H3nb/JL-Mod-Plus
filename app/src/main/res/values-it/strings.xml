@@ -143,6 +143,8 @@
     <string name="file_picker_current_folder">Cartella corrente</string>
     <string name="file_picker_parent_folder">Cartella superiore</string>
     <string name="file_picker_file">File</string>
+    <string name="file_picker_preview_named">Anteprima: %1$s</string>
+    <string name="file_picker_preview_unavailable">Non disponibile</string>
     <string name="file_picker_storage_volume">Volume di archiviazione</string>
     <string name="file_picker_empty">Nessun file corrispondente</string>
     <string name="file_picker_empty_folder">Nessuna cartella trovata</string>

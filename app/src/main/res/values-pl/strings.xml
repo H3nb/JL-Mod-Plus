@@ -137,6 +137,8 @@
     <string name="file_picker_empty">Brak pasujących plików</string>
     <string name="file_picker_empty_folder">Nie znaleziono folderów</string>
     <string name="file_picker_file">Plik</string>
+    <string name="file_picker_preview_named">Podgląd: %1$s</string>
+    <string name="file_picker_preview_unavailable">Niedostępne</string>
     <string name="file_picker_folder_exists">Element o tej nazwie już istnieje.</string>
     <string name="file_picker_folder_name">Nazwa folderu</string>
     <string name="file_picker_grant_access">Przyznaj dostęp</string>

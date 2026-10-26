@@ -176,6 +176,8 @@
     <string name="file_picker_current_folder">Carpeta actual</string>
     <string name="file_picker_parent_folder">Carpeta superior</string>
     <string name="file_picker_file">Archivo</string>
+    <string name="file_picker_preview_named">Vista previa: %1$s</string>
+    <string name="file_picker_preview_unavailable">No disponible</string>
     <string name="file_picker_storage_volume">Volumen de almacenamiento</string>
     <string name="file_picker_empty">No hay archivos coincidentes</string>
     <string name="file_picker_empty_folder">No se encontraron carpetas</string>

@@ -194,6 +194,8 @@
     <string name="file_picker_empty">لا توجد ملفات مطابقة</string>
     <string name="file_picker_empty_folder">لم يُعثر على مجلدات</string>
     <string name="file_picker_file">ملف</string>
+    <string name="file_picker_preview_named">معاينة: %1$s</string>
+    <string name="file_picker_preview_unavailable">غير متاح</string>
     <string name="file_picker_folder_exists">يوجد عنصر بهذا الاسم بالفعل.</string>
     <string name="file_picker_folder_name">اسم المجلد</string>
     <string name="file_picker_grant_access">منح الوصول</string>

@@ -52,9 +52,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -115,6 +117,9 @@ fun FilePickerScreen(
     modifier: Modifier = Modifier,
 ) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    var previewPath by rememberSaveable(state.currentPath) { mutableStateOf<String?>(null) }
+    val imageLoader = remember { FilePickerImageLoader() }
+    DisposableEffect(imageLoader) { onDispose { imageLoader.close() } }
     val selectablePaths = remember(state.entries) {
         FilePickerRules.selectablePaths(state.entries)
     }
@@ -249,6 +254,8 @@ fun FilePickerScreen(
         PickerContent(
             state = state,
             actions = actions,
+            imageLoader = imageLoader,
+            onPreviewEntry = { entry -> previewPath = entry.path },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
@@ -258,12 +265,28 @@ fun FilePickerScreen(
     if (state.showCreateFolder) {
         CreateFolderDialog(state = state, actions = actions)
     }
+    state.entries.firstOrNull { entry ->
+        entry.path == previewPath && entry.kind == FilePickerEntryKind.FILE &&
+            isPickerImage(entry.name)
+    }?.let { entry ->
+        FilePickerImagePreviewDialog(
+            entry = entry,
+            loader = imageLoader,
+            onDismiss = { previewPath = null },
+            onChoose = {
+                previewPath = null
+                actions.onOpen(entry)
+            },
+        )
+    }
 }
 
 @Composable
 private fun PickerContent(
     state: FilePickerState,
     actions: FilePickerActions,
+    imageLoader: FilePickerImageLoader,
+    onPreviewEntry: (FilePickerEntry) -> Unit,
     modifier: Modifier,
 ) {
     val visibleEntries = remember(state.entries, state.searchQuery, state.sortOrder) {
@@ -338,6 +361,11 @@ private fun PickerContent(
                                         allowSelection = state.request.allowMultiple &&
                                             state.request.allowsFiles &&
                                             entry.kind == FilePickerEntryKind.FILE,
+                                        imageLoader = imageLoader,
+                                        onPreview = if (entry.kind == FilePickerEntryKind.FILE &&
+                                            isPickerImage(entry.name)) {
+                                            { onPreviewEntry(entry) }
+                                        } else null,
                                         onClick = { actions.onOpen(entry) },
                                     )
                                 }
@@ -361,6 +389,11 @@ private fun PickerContent(
                                         allowSelection = state.request.allowMultiple &&
                                             state.request.allowsFiles &&
                                             entry.kind == FilePickerEntryKind.FILE,
+                                        imageLoader = imageLoader,
+                                        onPreview = if (entry.kind == FilePickerEntryKind.FILE &&
+                                            isPickerImage(entry.name)) {
+                                            { onPreviewEntry(entry) }
+                                        } else null,
                                         onClick = { actions.onOpen(entry) },
                                     )
                                 }
@@ -437,6 +470,8 @@ private fun PickerEntryRow(
     entry: FilePickerEntry,
     selected: Boolean,
     allowSelection: Boolean,
+    imageLoader: FilePickerImageLoader,
+    onPreview: (() -> Unit)?,
     onClick: () -> Unit,
 ) {
     ListItem(
@@ -458,18 +493,30 @@ private fun PickerEntryRow(
         headlineContent = {
             Text(
                 text = entry.name,
-                maxLines = 1,
+                maxLines = if (onPreview != null) 2 else 1,
                 overflow = TextOverflow.Ellipsis,
             )
         },
         supportingContent = if (entry.kind == FilePickerEntryKind.FILE) {
-            { Text(stringResource(R.string.file_picker_file)) }
+            {
+                Text(
+                    if (isPickerImage(entry.name)) {
+                        entry.name.substringAfterLast('.').uppercase(java.util.Locale.ROOT)
+                    } else stringResource(R.string.file_picker_file),
+                )
+            }
         } else if (entry.kind == FilePickerEntryKind.VOLUME) {
             { Text(stringResource(R.string.file_picker_storage_volume)) }
         } else {
             null
         },
-        leadingContent = { PickerEntryIcon(entry.kind) },
+        leadingContent = {
+            if (onPreview != null) {
+                FilePickerThumbnail(entry, imageLoader, onPreview)
+            } else {
+                PickerEntryIcon(entry.kind)
+            }
+        },
         trailingContent = if (allowSelection) {
             {
                 androidx.compose.material3.Checkbox(

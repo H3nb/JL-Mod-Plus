@@ -149,6 +149,8 @@
     <string name="file_picker_empty">一致するファイルがありません</string>
     <string name="file_picker_empty_folder">フォルダが見つかりません</string>
     <string name="file_picker_file">ファイル</string>
+    <string name="file_picker_preview_named">プレビュー: %1$s</string>
+    <string name="file_picker_preview_unavailable">使用不可</string>
     <string name="file_picker_folder_exists">同じ名前の項目がすでに存在します。</string>
     <string name="file_picker_folder_name">フォルダ名</string>
     <string name="file_picker_grant_access">アクセスを許可</string>

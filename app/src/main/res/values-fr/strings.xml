@@ -182,6 +182,8 @@
     <string name="file_picker_current_folder">Dossier actuel</string>
     <string name="file_picker_parent_folder">Dossier parent</string>
     <string name="file_picker_file">Fichier</string>
+    <string name="file_picker_preview_named">Aperçu : %1$s</string>
+    <string name="file_picker_preview_unavailable">Indisponible</string>
     <string name="file_picker_storage_volume">Volume de stockage</string>
     <string name="file_picker_empty">Aucun fichier correspondant</string>
     <string name="file_picker_empty_folder">Aucun dossier trouvé</string>

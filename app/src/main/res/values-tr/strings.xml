@@ -192,6 +192,8 @@
     <string name="file_picker_empty">Eşleşen dosya yok</string>
     <string name="file_picker_empty_folder">Klasör bulunamadı</string>
     <string name="file_picker_file">Dosya</string>
+    <string name="file_picker_preview_named">Önizleme: %1$s</string>
+    <string name="file_picker_preview_unavailable">Kullanılamıyor</string>
     <string name="file_picker_folder_exists">Bu adda bir öğe zaten var.</string>
     <string name="file_picker_folder_name">Klasör adı</string>
     <string name="file_picker_grant_access">Erişim izni ver</string>

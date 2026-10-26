@@ -147,6 +147,8 @@
     <string name="file_picker_empty">فایل مطابقی یافت نشد</string>
     <string name="file_picker_empty_folder">پوشه‌ای یافت نشد</string>
     <string name="file_picker_file">فایل</string>
+    <string name="file_picker_preview_named">پیش‌نمایش: %1$s</string>
+    <string name="file_picker_preview_unavailable">در دسترس نیست</string>
     <string name="file_picker_folder_exists">موردی با این نام از قبل وجود دارد.</string>
     <string name="file_picker_folder_name">نام پوشه</string>
     <string name="file_picker_grant_access">اجازهٔ دسترسی</string>

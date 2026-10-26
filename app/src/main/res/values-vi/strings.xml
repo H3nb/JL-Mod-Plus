@@ -187,6 +187,8 @@
     <string name="file_picker_empty">Không có tệp phù hợp</string>
     <string name="file_picker_empty_folder">Không tìm thấy thư mục</string>
     <string name="file_picker_file">Tệp</string>
+    <string name="file_picker_preview_named">Xem trước: %1$s</string>
+    <string name="file_picker_preview_unavailable">Không khả dụng</string>
     <string name="file_picker_folder_exists">Đã có mục có tên này.</string>
     <string name="file_picker_folder_name">Tên thư mục</string>
     <string name="file_picker_grant_access">Cấp quyền truy cập</string>

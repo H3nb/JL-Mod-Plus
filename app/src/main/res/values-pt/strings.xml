@@ -152,6 +152,8 @@
     <string name="file_picker_current_folder">Pasta atual</string>
     <string name="file_picker_parent_folder">Pasta superior</string>
     <string name="file_picker_file">Ficheiro</string>
+    <string name="file_picker_preview_named">Pré-visualização: %1$s</string>
+    <string name="file_picker_preview_unavailable">Indisponível</string>
     <string name="file_picker_storage_volume">Volume de armazenamento</string>
     <string name="file_picker_empty">Nenhum ficheiro correspondente</string>
     <string name="file_picker_empty_folder">Nenhuma pasta encontrada</string>

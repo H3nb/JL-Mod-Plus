@@ -136,6 +136,8 @@
     <string name="file_picker_empty">মিল আছে এমন কোনো ফাইল নেই</string>
     <string name="file_picker_empty_folder">কোনো ফোল্ডার পাওয়া যায়নি</string>
     <string name="file_picker_file">ফাইল</string>
+    <string name="file_picker_preview_named">পূর্বরূপ: %1$s</string>
+    <string name="file_picker_preview_unavailable">অনুপলব্ধ</string>
     <string name="file_picker_folder_exists">এই নামের একটি আইটেম আগে থেকেই আছে।</string>
     <string name="file_picker_folder_name">ফোল্ডারের নাম</string>
     <string name="file_picker_grant_access">অ্যাক্সেস দিন</string>

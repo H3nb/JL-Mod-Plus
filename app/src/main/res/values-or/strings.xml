@@ -133,6 +133,8 @@
     <string name="file_picker_empty">କୌଣସି ମେଳ ଖାଉଥିବା ଫାଇଲ୍ ନାହିଁ</string>
     <string name="file_picker_empty_folder">କୌଣସି ଫୋଲ୍ଡର ମିଳିଲା ନାହିଁ</string>
     <string name="file_picker_file">ଫାଇଲ୍</string>
+    <string name="file_picker_preview_named">ପ୍ରାକଦର୍ଶନ: %1$s</string>
+    <string name="file_picker_preview_unavailable">ଅନୁପଲବ୍ଧ</string>
     <string name="file_picker_folder_exists">ଏହି ନାମରେ ଏକ ଆଇଟମ୍ ପୂର୍ବରୁ ଅଛି।</string>
     <string name="file_picker_folder_name">ଫୋଲ୍ଡରର ନାମ</string>
     <string name="file_picker_grant_access">ଆକ୍ସେସ୍ ଦିଅନ୍ତୁ</string>
