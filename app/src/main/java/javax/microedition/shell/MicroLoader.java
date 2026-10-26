@@ -635,13 +635,13 @@ public class MicroLoader {
 						ContextHolder.getActivity().getString(R.string.runtime_installation_changed));
 				return;
 			}
-            ownsVirtualStorage = true;
-            storageMode = MidletPermissionManager.install(ContextHolder.getAppContext(), appDir.getPath(),
-                    expectedAppId, jarSha256);
-            VirtualFileSystem.install(new File(workDir), appDirName,
-                    Environment.getExternalStorageDirectory(), storageMode,
-                    storageMode == StorageMode.ANDROID ? androidStorageRoots() : new File[0]);
-            setStorageProperties();
+			ownsVirtualStorage = true;
+			storageMode = MidletPermissionManager.install(ContextHolder.getAppContext(), appDir.getPath(),
+					expectedAppId, jarSha256);
+			VirtualFileSystem.install(new File(workDir), appDirName,
+					Environment.getExternalStorageDirectory(), storageMode,
+					storageMode == StorageMode.ANDROID ? androidStorageRoots() : new File[0]);
+			setStorageProperties();
 			startTimingSession();
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),

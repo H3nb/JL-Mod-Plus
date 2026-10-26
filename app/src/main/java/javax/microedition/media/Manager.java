@@ -78,7 +78,7 @@ public class Manager {
 			// permission acquisition belong to the Player's prefetch/start lifecycle.
 			return new CameraCapturePlayer(locator);
 		} else if ((CAPTURE_AUDIO_LOCATOR.equals(locator) || locator.startsWith(CAPTURE_AUDIO_LOCATOR + "?"))) {
-            validateAudioCaptureLocator(locator);
+			validateAudioCaptureLocator(locator);
 			return new RecordPlayer();
 		} else {
 			throw new MediaException("Unsupported media locator: " + locator);

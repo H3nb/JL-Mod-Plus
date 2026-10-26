@@ -95,11 +95,11 @@ internal fun ConfigSection(
 @Composable
 internal fun ConfigCompactValuePreference(
     title: String,
-    value: String? = null,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    value: String? = null,
     enabled: Boolean = true,
     destructive: Boolean = false,
-    modifier: Modifier = Modifier,
     description: String? = null,
 ) {
     Column(
@@ -153,7 +153,14 @@ internal fun ConfigValuePreference(
     compact: Boolean = false,
 ) {
     if (compact && message == null) {
-        ConfigCompactValuePreference(title, value, onClick, enabled, modifier = modifier, description = description)
+        ConfigCompactValuePreference(
+            title = title,
+            onClick = onClick,
+            modifier = modifier,
+            value = value,
+            enabled = enabled,
+            description = description,
+        )
         return
     }
     Column(
