@@ -75,6 +75,13 @@ public final class SvgRasterizer {
                         || ratio <= 0d || ratio < 0.0001d || ratio > 10000d) {
                     throw new IOException("Invalid SVG aspect ratio");
                 }
+                if (viewBox != null) {
+                    // AndroidSVG uses explicit root width/height as a fixed viewport.
+                    // Keep the original intrinsic ratio above, but bind the root viewport
+                    // to the actual destination bitmap so small previews do not crop.
+                    svg.setDocumentWidth("100%");
+                    svg.setDocumentHeight("100%");
+                }
                 return new Document(svg, (float) ratio, width, height, viewBox != null);
             } catch (SVGParseException | IllegalArgumentException failure) {
                 throw new IOException("Invalid SVG image", failure);
