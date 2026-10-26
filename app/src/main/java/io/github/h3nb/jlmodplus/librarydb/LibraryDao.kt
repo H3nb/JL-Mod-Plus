@@ -229,7 +229,14 @@ abstract class LibraryDao {
         customVersion: String?,
         customDescription: String?,
         descriptions: Map<String, String>,
+        iconChanged: Boolean = false,
     ) {
+        if (iconChanged) {
+            val current = getApp(appId) ?: error("Library app disappeared: $appId")
+            check(updateIconRevision(appId, LibraryIconRevision.nextAfterEdit(current.iconRevision)) == 1) {
+                "Unable to update Library icon revision for app $appId"
+            }
+        }
         check(updateCustomMetadata(appId, customTitle, customVendor, customVersion, customDescription) == 1) {
             "Unable to update Library metadata for app $appId"
         }

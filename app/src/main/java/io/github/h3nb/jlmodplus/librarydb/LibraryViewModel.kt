@@ -408,53 +408,36 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         launchMutation(callback) {
-            var published: LibraryIconOverride.PublishedDrafts? = null
-            try {
-                if (mainIcon != null || portraitIcon != null) {
-                    published = withContext(Dispatchers.IO) {
-                        acquireGenerationLease(generation.generation, generation.emulatorDir).use {
-                            val current = repository.currentApp(generation, app.id)
-                            check(current?.storageKey == app.storageKey) {
-                                "Library icon target changed before save"
-                            }
-                            LibraryIconOverride.publishDrafts(
-                                generation.emulatorDir,
-                                app.storageKey,
-                                getApplication<Application>().cacheDir,
-                                mainIcon,
-                                portraitIcon,
-                            )
+            commitLibraryMetadataEdit(
+                publish = {
+                    if (mainIcon == null && portraitIcon == null) null
+                    else acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                        val current = repository.currentApp(generation, app.id)
+                        check(current?.storageKey == app.storageKey) {
+                            "Library icon target changed before save"
                         }
+                        LibraryIconOverride.publishDrafts(
+                            generation.emulatorDir,
+                            app.storageKey,
+                            getApplication<Application>().cacheDir,
+                            mainIcon,
+                            portraitIcon,
+                        )
                     }
-                    repository.setIconRevision(
-                        generation, app.id,
-                        LibraryIconRevision.nextAfterEdit(app.iconRevision),
+                },
+                persist = {
+                    repository.setMetadataOverrides(
+                        expected = generation,
+                        appId = app.id,
+                        title = title,
+                        vendor = vendor,
+                        version = version,
+                        description = description,
+                        localizedOverrides = localizedOverrides,
+                        iconChanged = mainIcon != null || portraitIcon != null,
                     )
-                }
-                // Last fallible persistent step: Room owns a transaction for text and locales.
-                repository.setMetadataOverrides(
-                    expected = generation,
-                    appId = app.id,
-                    title = title,
-                    vendor = vendor,
-                    version = version,
-                    description = description,
-                    localizedOverrides = localizedOverrides,
-                )
-            } catch (error: Throwable) {
-                try {
-                    withContext(NonCancellable + Dispatchers.IO) {
-                        published?.restore()
-                    }
-                } catch (restore: Throwable) {
-                    error.addSuppressed(restore)
-                }
-                throw error
-            } finally {
-                withContext(NonCancellable + Dispatchers.IO) {
-                    published?.close()
-                }
-            }
+                },
+            )
         }
     }
 
@@ -1231,4 +1214,31 @@ internal fun libraryDisplayStates(
             }
         }
     })
+}
+
+/**
+ * Once publication starts, finish the filesystem + Room commit (or restore the files) even if
+ * the editor's scope is cancelled. Cancellation before this boundary does not start a save.
+ */
+internal suspend fun commitLibraryMetadataEdit(
+    publish: () -> LibraryIconOverride.PublishedDrafts?,
+    persist: suspend () -> Unit,
+) {
+    currentCoroutineContext().ensureActive()
+    withContext(NonCancellable + Dispatchers.IO) {
+        var published: LibraryIconOverride.PublishedDrafts? = null
+        try {
+            published = publish()
+            persist()
+        } catch (error: Throwable) {
+            try {
+                published?.restore()
+            } catch (restore: Throwable) {
+                error.addSuppressed(restore)
+            }
+            throw error
+        } finally {
+            published?.close()
+        }
+    }
 }

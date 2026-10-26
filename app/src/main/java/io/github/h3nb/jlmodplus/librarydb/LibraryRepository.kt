@@ -172,7 +172,11 @@ class LibraryRepository(
         version: String,
         description: String,
         localizedOverrides: Map<String, String>? = null,
+        iconChanged: Boolean = false,
     ) {
+        require(!iconChanged || localizedOverrides != null) {
+            "Icon revision requires a complete metadata editor snapshot"
+        }
         val original = if (localizedOverrides != null) {
             val row = currentApp(expected, appId) ?: error("Library app disappeared: $appId")
             withContext(Dispatchers.IO) {
@@ -192,7 +196,8 @@ class LibraryRepository(
             val customDescription = normalizeOverride(description, app.sourceDescription.orEmpty())
             if (translations != null) {
                 dao.replaceMetadataAndDescriptions(
-                    appId, customTitle, customVendor, customVersion, customDescription, translations,
+                    appId, customTitle, customVendor, customVersion, customDescription,
+                    translations, iconChanged,
                 )
             } else {
                 check(

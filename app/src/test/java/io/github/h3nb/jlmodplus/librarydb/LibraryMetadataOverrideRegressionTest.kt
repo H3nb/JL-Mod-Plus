@@ -8,6 +8,7 @@ package io.github.h3nb.jlmodplus.librarydb
 
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -137,6 +138,64 @@ class LibraryMetadataOverrideRegressionTest {
                 state.apps.single().description == "Source description"
         }
         assertTrue(reset.descriptionOverrides[appId].isNullOrEmpty())
+    }
+
+    @Test
+    fun metadataFailureRollsBackIconRevisionAndTextTogether() = runBlocking {
+        val file = File(temporaryFolder.root, "atomic-metadata.db")
+        val openDatabase = {
+            Room.databaseBuilder<LibraryDatabase>(file.absolutePath)
+                .setDriver(BundledSQLiteDriver()).build()
+        }
+        val first = openDatabase()
+        val appId = try {
+            first.libraryDao().insertApp(
+                LibraryAppEntity(
+                    storageKey = "game",
+                    sourceTitle = "Game",
+                    sourceVendor = "Vendor",
+                    sourceVersion = "1.0",
+                    iconRevision = 19L,
+                ),
+            )
+        } finally {
+            first.close()
+        }
+
+        // Force the last statement of the Room transaction to fail, after the revision and
+        // custom text have already been updated. Neither earlier write may be committed.
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        try {
+            connection.execSQL(
+                """CREATE TRIGGER reject_descriptions BEFORE INSERT ON library_description_overrides
+                    BEGIN SELECT RAISE(ABORT, 'injected metadata failure'); END""",
+            )
+        } finally {
+            connection.close()
+        }
+
+        val second = openDatabase()
+        try {
+            val dao = second.libraryDao()
+            var failed = false
+            try {
+                dao.replaceMetadataAndDescriptions(
+                    appId, "Edited", "Edited vendor", null, "Edited description",
+                    mapOf("en" to "Custom English"), iconChanged = true,
+                )
+            } catch (_: Exception) {
+                failed = true
+            }
+            assertTrue("The injected metadata failure must reach the caller", failed)
+            val restored = requireNotNull(dao.getApp(appId))
+            assertEquals(19L, restored.iconRevision)
+            assertEquals(null, restored.customTitle)
+            assertEquals(null, restored.customVendor)
+            assertEquals(null, restored.customDescription)
+            assertTrue(dao.getDescriptionOverrides(appId).isEmpty())
+        } finally {
+            second.close()
+        }
     }
 
     private suspend fun awaitReady(
