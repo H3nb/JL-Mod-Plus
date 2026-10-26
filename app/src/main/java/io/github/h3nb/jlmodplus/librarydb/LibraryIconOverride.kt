@@ -92,6 +92,7 @@ object LibraryIconOverride {
      * the previous durable and effective images. The caller owns cleanup and rollback.
      */
     @JvmStatic
+    @Throws(IOException::class)
     fun publishDrafts(
         emulatorDir: File,
         storageKey: String,
