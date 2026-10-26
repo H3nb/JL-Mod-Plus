@@ -494,7 +494,16 @@ private fun PickerEntryRow(
             )
         },
         supportingContent = if (entry.kind == FilePickerEntryKind.FILE) {
-            { Text(stringResource(R.string.file_picker_file)) }
+            {
+                Text(
+                    if (isPickerImage(entry.name)) {
+                        stringResource(
+                            R.string.file_picker_image_type,
+                            entry.name.substringAfterLast('.').uppercase(java.util.Locale.ROOT),
+                        )
+                    } else stringResource(R.string.file_picker_file),
+                )
+            }
         } else if (entry.kind == FilePickerEntryKind.VOLUME) {
             { Text(stringResource(R.string.file_picker_storage_volume)) }
         } else {
