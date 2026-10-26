@@ -10,6 +10,8 @@ This file contains guidance every agent needs. Keep task-specific instructions a
 - Do not treat the current architecture as a product requirement. If a materially better architecture lies beyond the implementation strategy reasonably implied by the request, first prepare a concrete, reviewable proposal with the problem evidence and material compatibility or migration impact, then obtain user approval before adopting it. Routine restructuring needed to complete the authorized task does not require renewed approval, and an explicit redesign or replacement request already supplies that authorization.
 - User requirements and explicit project contracts define intended behavior. Applicable specifications define the default compatibility contract except where JL-Mod Plus deliberately preserves verified compatibility behavior. Current source, configuration, workflows, and tests describe the current implementation and provide evidence; they are not requirements merely because they exist. Treat history as context unless the task specifically requires it.
 - Keep changes focused on the problem. Do not mix unrelated cleanup, dependency or toolchain churn, or speculative architecture into a scoped change.
+- Maintain documentation as technical guidance: update the owning contract when behavior changes; distinguish active decisions from plans, superseded proposals, and dated evidence. Preserve useful provenance without turning contracts into chronological agent activity logs.
+- When scoped work reveals a separate code, test, architecture, or documentation quality concern, report its location, evidence, and plausible impact. Fix it proportionally if it is in scope; otherwise report it without expanding the task. Label hypotheses as such; no findings or refactoring are required when the evidence does not justify them.
 - Work CLI-first; Android Studio is not required unless the user asks for it.
 
 ## Engineering approach
@@ -48,6 +50,7 @@ Ground the solution in current evidence before committing to a production fix. T
 | Task | Guidance |
 | --- | --- |
 | Repository history or provenance investigation; source-language choice; performance-sensitive code; licensing; Git, PR, CI, or versioning | Read only the matching section of [Agent development workflow](docs/agent-workflow.md) |
+| Documentation status, historical investigations, or finding the owning contract | [Documentation map](docs/README.md); follow only task-relevant links |
 | Build and test commands | [Build and validation](docs/development.md) |
 | Android tooling skills, upstream skill lookup or skill conflicts | [Android skills](docs/android-skills.md) |
 | App-owned UI architecture, adaptation, or navigation | [App-owned UI development](docs/app-ui-development.md) |

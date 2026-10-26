@@ -1,6 +1,6 @@
 # Virtual filesystem and MIDlet permissions — implementation plan
 
-Status: Draft implementation. Not merged; on-device smoke testing was reported successful; automated connected-device qualification remains optional.
+**Status (2026-10-26): historical implementation plan and review record, not an open merge checklist.** `VirtualFileSystem`, `StorageMode`, `MidletPermissionStore`, and focused tests are present in `alpha`. The initial sections below preserve the original scope and acceptance gates; [review corrections](#review-corrections--18-october-2026), [storage-mode revisions](#storage-mode-and-copy-revisions-18-october-2026), and [platform-request cache decisions](#platform-request-cache-lifecycle-18-october-2026) document later outcomes. In particular, the implemented explicit Android storage mode extends the original Shared-only design. Read later decisions before interpreting earlier proposals; verify present behavior against source and tests, and do not treat past validation claims as current qualification. Durable installed-identity and Java ME compatibility boundaries are in [preset contracts](preset-config-contract.md) and [Java ME compatibility](java-me-compatibility.md).
 
 ## Scope and constraints
 
