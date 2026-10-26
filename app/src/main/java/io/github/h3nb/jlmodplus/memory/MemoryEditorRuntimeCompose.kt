@@ -50,7 +50,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -176,16 +176,26 @@ internal fun MemoryEditorRuntimeRoot(
         ) {
             val showLabels = maxWidth.coerceAtMost(960.dp) >=
                 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+            val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
+            val emptyWorkspace = !state.busy && when (tab) {
+                MemoryEditorTab.RESULTS -> state.resultCount == 0L && state.results.isEmpty()
+                MemoryEditorTab.WATCH -> state.watches.isEmpty()
+                MemoryEditorTab.INSPECTOR -> false
+            }
+            val panelHeight = if (emptyWorkspace) {
+                (320.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)).coerceAtMost((maxHeight - 48.dp).coerceAtLeast(0.dp))
+            } else maxHeight
             Surface(
-                modifier = Modifier.widthIn(max = 960.dp).fillMaxSize(),
-                shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier.widthIn(max = 960.dp).fillMaxWidth().height(panelHeight)
+                    .align(Alignment.TopCenter),
+                shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
                 Box(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().padding(bottom = 48.dp)
+                    Column(Modifier.fillMaxSize().padding(bottom = if (emptyWorkspace) 0.dp else 48.dp)
                         .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)) {
-                        RuntimeMemoryHeader(state, showLabels, selectTab, actions::close)
+                        RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close, showTitle)
                         if (state.busy) RuntimeOperationStrip(state, actions)
                         state.message?.takeIf(String::isNotBlank)?.let {
                             RuntimeMessage(it, state.messageIsError)
@@ -203,12 +213,12 @@ internal fun MemoryEditorRuntimeRoot(
                         }
                     }
                     MemoryEditorPeekShield(overlay)
-                    if (overlay.layers.isEmpty()) {
-                        MemoryEditorPeekDock(overlay, Modifier.align(Alignment.BottomCenter)) {
-                            RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity, enabled = !overlay.peeking) {
-                                opacityDialog = true
-                            }
-                        }
+                }
+            }
+            if (overlay.layers.isEmpty()) {
+                MemoryEditorPeekDock(overlay, Modifier.widthIn(max = 960.dp).align(Alignment.BottomCenter)) {
+                    RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity, enabled = !overlay.peeking) {
+                        opacityDialog = true
                     }
                 }
             }
@@ -220,47 +230,65 @@ internal fun MemoryEditorRuntimeRoot(
 @Composable
 private fun RuntimeMemoryHeader(
     state: MemoryEditorUiState,
-    showLabels: Boolean,
+    inlineNavigation: Boolean,
     onTab: (MemoryEditorTab) -> Unit,
     onClose: () -> Unit,
+    showTitle: Boolean = true,
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        SecondaryTabRow(
-            selectedTabIndex = state.activeTab.ordinal,
-            modifier = Modifier.weight(1f),
-            containerColor = Color.Transparent,
-        ) {
-            MemoryEditorTab.entries.forEach { tab ->
-                val label = stringResource(when (tab) {
-                    MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
-                    MemoryEditorTab.WATCH -> R.string.memory_editor_watch
-                    MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
-                })
-                Tab(
-                    selected = state.activeTab == tab,
-                    onClick = { onTab(tab) },
-                    enabled = tab != MemoryEditorTab.INSPECTOR ||
-                        state.activeTab == tab || state.selected.size == 1 && !state.busy,
-                    modifier = Modifier.semantics { contentDescription = label },
-                ) {
-                    RuntimeIconTooltip(label) {
-                        Row(
-                            Modifier.heightIn(min = 48.dp).padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Icon(painterResource(when (tab) {
-                                MemoryEditorTab.RESULTS -> R.drawable.ic_search
-                                MemoryEditorTab.WATCH -> R.drawable.ic_memory_editor_watch
-                                MemoryEditorTab.INSPECTOR -> R.drawable.ic_memory_editor_inspector
-                            }), contentDescription = null)
-                            if (showLabels) Text(label, style = MaterialTheme.typography.labelLarge)
-                        }
-                    }
-                }
-            }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (showTitle) Text(
+            stringResource(R.string.memory_editor),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = if (inlineNavigation) Modifier.padding(end = 16.dp) else Modifier.weight(1f),
+        )
+        if (inlineNavigation) {
+            RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
         }
-        RuntimeActionIcon(R.drawable.ic_close, R.string.memory_editor_close, onClick = onClose)
+        IconButton(onClick = onClose) {
+            Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
+        }
+    }
+    if (!inlineNavigation) RuntimeMemoryTabs(state, onTab)
+}
+
+@Composable
+private fun RuntimeMemoryTabs(
+    state: MemoryEditorUiState,
+    onTab: (MemoryEditorTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val searchLabel = stringResource(R.string.memory_editor_search_tab)
+    val watchLabel = stringResource(R.string.memory_editor_watch)
+    val inspectorLabel = stringResource(R.string.memory_editor_inspector)
+    SecondaryScrollableTabRow(
+        selectedTabIndex = state.activeTab.ordinal,
+        modifier = modifier.fillMaxWidth(),
+        edgePadding = 0.dp,
+        containerColor = Color.Transparent,
+    ) {
+        MemoryEditorTab.entries.forEach { tab ->
+            Tab(
+                selected = state.activeTab == tab,
+                onClick = { onTab(tab) },
+                enabled = tab != MemoryEditorTab.INSPECTOR ||
+                    state.activeTab == tab || state.selected.size == 1 && !state.busy,
+                modifier = Modifier.semantics { contentDescription = when (tab) {
+                    MemoryEditorTab.RESULTS -> searchLabel
+                    MemoryEditorTab.WATCH -> watchLabel
+                    MemoryEditorTab.INSPECTOR -> inspectorLabel
+                } },
+                text = {
+                    Text(stringResource(when (tab) {
+                        MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
+                        MemoryEditorTab.WATCH -> R.string.memory_editor_watch
+                        MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
+                    }))
+                },
+            )
+        }
     }
 }
 
@@ -389,7 +417,7 @@ private fun RuntimeSearchResultsTab(
             RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
                 state.results.isNotEmpty() && !state.busy, actions::refresh),
         )
-        Row(
+        if (state.results.isNotEmpty() || state.busy || state.canUndo || state.sessionStage != MemorySessionStage.EMPTY) Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
@@ -411,6 +439,7 @@ private fun RuntimeSearchResultsTab(
             )
             AlertDialog(
                 onDismissRequest = { moreMenu = false },
+                maxDialogWidth = 400.dp,
                 title = { Text(stringResource(R.string.memory_editor_search_tab)) },
                 text = {
                     Column {
@@ -429,7 +458,7 @@ private fun RuntimeSearchResultsTab(
         HorizontalDivider()
 
         LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
-            item(key = "summary") {
+            if (state.results.isNotEmpty() || state.resultCount > 0) item(key = "summary") {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -462,17 +491,35 @@ private fun RuntimeSearchResultsTab(
             }
             if (state.results.isEmpty()) {
                 item(key = "empty") {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().fillParentMaxHeight(0.5f).padding(16.dp),
-                        contentAlignment = Alignment.Center,
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(
                             stringResource(
-                                if (unknownBaseline) R.string.memory_editor_no_candidates
+                                if (state.sessionStage == MemorySessionStage.EMPTY) R.string.memory_editor_new_search
+                                else if (unknownBaseline) R.string.memory_editor_no_candidates
                                 else R.string.memory_editor_no_results,
                             ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.titleMedium,
                         )
+                        quickActions.take(2).forEachIndexed { index, action ->
+                            val label = stringResource(action.label)
+                            val buttonModifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                                .semantics { contentDescription = label }
+                            val content: @Composable () -> Unit = {
+                                Icon(painterResource(action.icon), contentDescription = null)
+                                Spacer(Modifier.width(12.dp))
+                                Text(label, modifier = Modifier.weight(1f))
+                            }
+                            if (index == 0) {
+                                Button(onClick = action.onClick, enabled = action.enabled,
+                                    modifier = buttonModifier, shape = MaterialTheme.shapes.medium) { content() }
+                            } else {
+                                OutlinedButton(onClick = action.onClick, enabled = action.enabled,
+                                    modifier = buttonModifier, shape = MaterialTheme.shapes.medium) { content() }
+                            }
+                        }
                     }
                 }
             } else {
@@ -1951,7 +1998,7 @@ private fun RuntimeChoiceMenu(
             onClick = { expanded = true },
             enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-            shape = MaterialTheme.shapes.extraLarge,
+            shape = MaterialTheme.shapes.medium,
             border = BorderStroke(1.dp, accent.copy(alpha = 0.28f)),
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor = containerColor,
@@ -1979,6 +2026,7 @@ private fun RuntimeChoiceMenu(
         if (expanded) {
             AlertDialog(
                 onDismissRequest = { expanded = false },
+                maxDialogWidth = 400.dp,
                 text = {
                     Column {
                         values.forEach { item ->

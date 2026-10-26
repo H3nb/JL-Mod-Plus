@@ -377,7 +377,7 @@ private fun MemoryOverlayUnderlay(dark: Boolean) {
             MemoryEditorRuntimeRoot(
                 state = MemoryEditorUiState(
                     visible = true, supported = true, writeSupported = true,
-                    resultCount = 3, results = previewRows,
+                    resultCount = if (dark) 3 else 0, results = if (dark) previewRows else emptyList(),
                 ),
                 actions = NoOpMemoryEditorActions,
             )

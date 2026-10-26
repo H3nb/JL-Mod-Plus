@@ -3,7 +3,7 @@
 package io.github.h3nb.jlmodplus.memory
 
 import android.view.WindowManager
-import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -21,8 +21,8 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -58,6 +59,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -85,7 +87,7 @@ internal class MemoryEditorOverlayState(
     fun saveOpacity() = persistOpacity(opacity)
 
     companion object {
-        const val DEFAULT_OPACITY = 0.85f
+        const val DEFAULT_OPACITY = 0.97f
         const val MIN_OPACITY = 0f
     }
 }
@@ -136,7 +138,11 @@ internal fun MemoryEditorPeekDock(
     leadingContent: (@Composable () -> Unit)? = null,
 ) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        leadingContent?.invoke()
+        if (leadingContent != null) {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                leadingContent()
+            }
+        }
         Spacer(Modifier.weight(1f))
         val description = stringResource(
             if (overlay.peeking) R.string.memory_editor_peek_underlay_active
@@ -154,10 +160,21 @@ internal fun MemoryEditorPeekDock(
                     }
                 }
                 .pointerInput(overlay) {
-                    detectTapGestures(onPress = {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        down.consume()
                         overlay.peeking = true
-                        try { tryAwaitRelease() } finally { overlay.peeking = false }
-                    })
+                        try {
+                            // Keep the hold while the finger drifts: the hidden icon cannot guide it back.
+                            do {
+                                val pointer = awaitPointerEvent(PointerEventPass.Initial)
+                                    .changes.firstOrNull { it.id == down.id }
+                                pointer?.consume()
+                            } while (pointer?.pressed == true)
+                        } finally {
+                            overlay.peeking = false
+                        }
+                    }
                 },
             contentAlignment = Alignment.Center,
         ) {
@@ -165,8 +182,7 @@ internal fun MemoryEditorPeekDock(
                 painterResource(if (overlay.peeking) R.drawable.ic_visibility_off else R.drawable.ic_visibility),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
-                    .padding(8.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
     }
@@ -177,6 +193,7 @@ internal fun MemoryEditorPeekDock(
 internal fun MemoryEditorDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    maxDialogWidth: Dp = 720.dp,
     title: (@Composable () -> Unit)? = null,
     text: (@Composable () -> Unit)? = null,
     textScrollable: Boolean = true,
@@ -208,7 +225,7 @@ internal fun MemoryEditorDialog(
                 Box(Modifier.widthIn(max = 960.dp).fillMaxSize().align(Alignment.Center)) {
                     Column(Modifier.fillMaxSize()) {
                         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            val layout = adaptiveDialogLayout(maxWidth, maxHeight).copy(maxHeight = maxHeight)
+                            val layout = adaptiveDialogLayout(maxWidth, maxHeight, maxDialogWidth = maxDialogWidth).copy(maxHeight = maxHeight)
                             Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
                                 detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
                             })
@@ -217,7 +234,7 @@ internal fun MemoryEditorDialog(
                                     .testTag("adaptive-dialog-surface")
                                     .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
                                     .pointerInput(Unit) { detectTapGestures {} },
-                                shape = MaterialTheme.shapes.extraLarge,
+                                shape = MaterialTheme.shapes.large,
                                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 contentColor = MaterialTheme.colorScheme.onSurface,
                             ) {
@@ -249,6 +266,7 @@ internal fun MemoryEditorOpacityDialog(overlay: MemoryEditorOverlayState, onDism
     val close = { overlay.saveOpacity(); onDismiss() }
     MemoryEditorDialog(
         onDismissRequest = close,
+        maxDialogWidth = 400.dp,
         title = { Text(opacityLabel) },
         text = {
             Column {

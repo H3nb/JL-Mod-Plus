@@ -8,7 +8,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -72,6 +78,12 @@ class MemoryEditorOverlayComposeTest {
                 assertEquals(0f, it.attributes.dimAmount, 0f)
             }
         }
+        rule.onNodeWithTag("memory-editor-peek").performTouchInput {
+            moveTo(Offset(center.x - 64f, center.y - 64f))
+        }
+        rule.runOnIdle {
+            assertTrue("A small drift must not reveal the windows before release", overlay.peeking)
+        }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput { up() }
         rule.runOnIdle {
             assertFalse(overlay.peeking)
@@ -124,7 +136,8 @@ class MemoryEditorOverlayComposeTest {
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
     }
 
-    @Test fun quickActionsKeepTheirPositionsWhenSelectionChanges() {
+    @OptIn(ExperimentalTestApi::class)
+    @Test fun quickActionsStayStableAndUndoRemainsAvailableAfterAnEmptyScan() {
         val state = mutableStateOf(MemoryEditorUiState(
             visible = true, supported = true, writeSupported = true,
             resultCount = 1, results = listOf(MemoryResultRow(
@@ -133,7 +146,11 @@ class MemoryEditorOverlayComposeTest {
                 relocations = 0,
             )),
         ))
-        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) } }
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(720.dp, 360.dp))) {
+                JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
+            }
+        }
         val labels = listOf("Search known values", "Search unknown values", "Edit", "Add selected values to Watch", "Refresh")
         val bounds = labels.map { rule.onNodeWithContentDescription(it).getUnclippedBoundsInRoot() }
         rule.onNodeWithContentDescription("Edit").assertIsNotEnabled()
@@ -142,6 +159,13 @@ class MemoryEditorOverlayComposeTest {
         labels.forEachIndexed { index, label ->
             assertEquals(bounds[index], rule.onNodeWithContentDescription(label).getUnclippedBoundsInRoot())
         }
+        rule.runOnIdle {
+            state.value = state.value.copy(results = emptyList(), resultCount = 0, selected = emptySet(), canUndo = true)
+        }
+        rule.onNodeWithContentDescription("More").performClick()
+        val menuBounds = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
+        assertTrue(menuBounds.right - menuBounds.left <= 400.dp)
+        rule.onNodeWithText("Undo").performScrollTo().assertIsEnabled()
     }
 
     @Test fun opacitySurvivesClosingAndReopeningTheWorkspace() {

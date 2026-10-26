@@ -18,7 +18,7 @@ The October 2026 UI reassessment prioritizes these findings:
 | Landscape and portrait used different content composition branches | Width/orientation changes could recreate local forms; the landscape rail occupied 176 dp | Keep the workspace content at one composition location and adapt only its header |
 | Toolbar and metadata consumed scarce space | Eight actions could wrap; status text competed with location text | Keep a fixed row of frequent actions, duplicate them in a labeled menu, and let metadata/status flow onto separate lines |
 | Peek could disappear behind a nested menu | Native dialogs and dropdowns have separate input windows; an eye inside a scrolling form is not globally reachable | Give every editor modal the same fixed footer and one shared visibility owner |
-| An opaque workspace obscured the value being searched in the game | The editor overlays a live runtime; the user must compare its values with results | Default the panel background to 85% opacity, preserve foreground contrast, and persist an adjustable opacity |
+| An opaque workspace obscured the value being searched in the game | The editor overlays a live runtime; the user must compare its values with results | Default the panel background to 97% opacity, preserve foreground contrast, and persist an adjustable opacity |
 
 The default opacity, typography and icon density are presentation choices, not
 measured performance improvements. This work does not
@@ -29,9 +29,15 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 
 - Use available safe window bounds, not physical display orientation. The workspace
   has an 8 dp horizontal margin, a 6 dp vertical margin and a maximum width of 960 dp.
-- Keep the three navigation icons and close action in one row. Add tab labels
-  when the available width and font scale allow them. Icon actions retain localized
-  accessibility descriptions and long-press tooltips; do not shrink text to fit.
+- Keep the editor title and labeled navigation visible. Place them in one row when
+  width permits; stack them otherwise. In short windows with large text, retain the
+  labeled tabs and omit the redundant app title to protect the data viewport.
+- Bound empty workspaces to 320 dp at normal text scale, growing with larger text
+  within the safe viewport. Present two labeled search actions before the first scan;
+  do not fill the screen with an empty translucent surface. Populated lists use the
+  available height. Keep undo/menu access after a scan returns no results.
+- Frequent icon actions retain localized accessibility descriptions and long-press
+  tooltips; do not shrink text to fit.
 - Keep Search and Watch list states in the workspace. Returning from Inspector or
   changing window width should not reset their positions. Back from Inspector
   returns to its origin tab; the close action still closes the editor.
@@ -58,7 +64,14 @@ The workspace owns one `MemoryEditorOverlayState`. Editor dialogs inherit it thr
 the active eye. Every modal uses a full safe-window shell with the same 48 dp footer
 and maximum width as the workspace. The form itself remains centered and bounded.
 Choices use this shell too: a native dropdown would intercept the footer behind it.
+Choice/action/settings dialogs have a 400 dp width cap; input forms can use 720 dp
+for controls beside the keypad. Use the theme's large corners for dialog surfaces.
 Other application menus retain their existing presentation.
+
+The eye is a plain 24 dp icon inside a 48 dp touch target, without a circular
+background. Begin Peek on pointer down and retain the hold if that pointer drifts
+outside the target; release or cancellation restores visibility. The footer stays
+at safe-window coordinates even when the empty panel is shorter.
 
 Holding the eye hides the workspace and all editor dialog windows, including native
 dimming, without disposing the forms. Releasing restores them. Semantic activation
@@ -67,7 +80,7 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
-Panel opacity affects the workspace background only. The default is 85%, adjustable
+Panel opacity affects the workspace background only. The default is 97%, adjustable
 from 0% to 100% in its footer setting. The memory-engine process owns the small
 `memory_editor_ui` preference file; format percentages for the active locale and
 save on slider release or dialog dismissal, not
@@ -81,7 +94,7 @@ loaded and pending Inspector through the real controller. It also checks Back an
 retaining an open form across window-width changes. The old arithmetic-only
 centering test was removed with the heuristic it asserted. Existing input-model
 and engine tests remain relevant. `MemoryEditorOverlayComposeTest` exercises nested
-production dialogs, hold/release visibility, fixed eye/action positions, cursor
+production dialogs, hold/release visibility, fixed eye/action positions, pointer drift during a hold, undo after empty results, cursor
 retention, accessible Peek/Back recovery and opacity persistence. The old isolated
 window-alpha test is replaced by the nested production-dialog coverage.
 
