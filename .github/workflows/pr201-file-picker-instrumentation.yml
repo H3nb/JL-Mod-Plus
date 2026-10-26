@@ -1,0 +1,85 @@
+name: PR 201 File Picker Instrumentation
+
+on:
+  pull_request:
+    branches: [alpha]
+
+permissions:
+  contents: read
+
+jobs:
+  file-picker-instrumentation:
+    if: github.event.pull_request.number == 201 && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-26.04
+    timeout-minutes: 50
+    steps:
+      - name: Check out PR merge candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run File Picker instrumented tests
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            chmod +x gradlew
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.package=io.github.h3nb.jlmodplus.filepicker :app:connectedEmulatorDebugAndroidTest
+
+      - name: Verify executed instrumentation results
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+          report_dir = Path("app/build/outputs/androidTest-results/connected")
+          reports = list(report_dir.rglob("TEST*.xml"))
+          totals = dict(tests=0, failures=0, errors=0, skipped=0)
+          for report in reports:
+              root = ElementTree.parse(report).getroot()
+              suites = [root] if root.tag == "testsuite" else root.findall(".//testsuite")
+              for suite in suites:
+                  for key in totals:
+                      totals[key] += int(suite.get(key, "0"))
+          print(f"Instrumentation reports: {len(reports)}; results: {totals}")
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(f"File Picker instrumentation: {totals}; reports: {len(reports)}\n")
+          if totals["tests"] < 2 or totals["failures"] or totals["errors"] or totals["skipped"]:
+              raise SystemExit("Expected executed, non-skipped File Picker tests with no failures")
+          PY
+
+      - name: Upload instrumentation diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr201-file-picker-instrumentation
+          path: |
+            app/build/outputs/androidTest-results/connected/**
+            app/build/reports/androidTests/connected/**
+            app/build/reports/problems/**
+          if-no-files-found: warn
+          retention-days: 7
