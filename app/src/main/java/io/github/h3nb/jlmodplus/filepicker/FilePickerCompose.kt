@@ -254,6 +254,8 @@ fun FilePickerScreen(
         PickerContent(
             state = state,
             actions = actions,
+            imageLoader = imageLoader,
+            onPreviewEntry = { entry -> previewPath = entry.path },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
@@ -283,6 +285,8 @@ fun FilePickerScreen(
 private fun PickerContent(
     state: FilePickerState,
     actions: FilePickerActions,
+    imageLoader: FilePickerImageLoader,
+    onPreviewEntry: (FilePickerEntry) -> Unit,
     modifier: Modifier,
 ) {
     val visibleEntries = remember(state.entries, state.searchQuery, state.sortOrder) {
@@ -360,7 +364,7 @@ private fun PickerContent(
                                         imageLoader = imageLoader,
                                         onPreview = if (entry.kind == FilePickerEntryKind.FILE &&
                                             isPickerImage(entry.name)) {
-                                            { previewPath = entry.path }
+                                            { onPreviewEntry(entry) }
                                         } else null,
                                         onClick = { actions.onOpen(entry) },
                                     )
@@ -388,7 +392,7 @@ private fun PickerContent(
                                         imageLoader = imageLoader,
                                         onPreview = if (entry.kind == FilePickerEntryKind.FILE &&
                                             isPickerImage(entry.name)) {
-                                            { previewPath = entry.path }
+                                            { onPreviewEntry(entry) }
                                         } else null,
                                         onClick = { actions.onOpen(entry) },
                                     )
