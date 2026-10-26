@@ -43,6 +43,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -114,6 +116,16 @@ internal fun MemoryEditorOverlayScope(
     }
     CompositionLocalProvider(LocalMemoryEditorOverlay provides overlay) { content(overlay) }
 }
+
+/** Consume Back before a hidden text field can use it to change its selection. */
+internal fun Modifier.memoryEditorPeekKeys(overlay: MemoryEditorOverlayState): Modifier =
+    onPreviewKeyEvent { event ->
+        if (!overlay.peeking) false else {
+            // Consume both halves; restoring on down would let up dismiss the restored form.
+            if (event.key == Key.Back && event.type == KeyEventType.KeyUp) overlay.peeking = false
+            true
+        }
+    }
 
 /** Block hidden actions while retaining the mounted form, focus, selection and scroll. */
 @Composable
@@ -220,7 +232,7 @@ internal fun MemoryEditorDialog(
             Box(
                 Modifier.size(windowWidth, windowHeight).windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(horizontal = 8.dp, vertical = 6.dp)
-                    .onPreviewKeyEvent { overlay.peeking && it.key != Key.Back },
+                    .memoryEditorPeekKeys(overlay),
             ) {
                 Box(Modifier.widthIn(max = 960.dp).fillMaxSize().align(Alignment.Center)) {
                     Column(Modifier.fillMaxSize()) {

@@ -74,9 +74,6 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.InterceptPlatformTextInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -171,7 +168,7 @@ internal fun MemoryEditorRuntimeRoot(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 8.dp, vertical = 6.dp)
                 .alpha(if (overlay.peeking) 0f else 1f)
-                .onPreviewKeyEvent { overlay.peeking && it.key != Key.Back },
+                .memoryEditorPeekKeys(overlay),
             contentAlignment = Alignment.Center,
         ) {
             val showLabels = maxWidth.coerceAtMost(960.dp) >=

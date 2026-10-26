@@ -132,7 +132,7 @@ class MemoryEditorOverlayComposeTest {
         pressBack()
         rule.runOnIdle { assertFalse(overlay.peeking) }
         rule.onNode(hasSetTextAction()).assertTextContains("42")
-        rule.onNodeWithText("Cancel").performClick()
+        pressBack()
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
     }
 
