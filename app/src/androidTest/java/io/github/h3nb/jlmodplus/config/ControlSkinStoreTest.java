@@ -352,4 +352,42 @@ public class ControlSkinStoreTest {
                 width >= 195 && width <= 201);
     }
 
+
+    @Test public void svgButtonAndMovementLayersLoadAndReplacePriorFormats() throws Exception {
+        File workdir = temp.newFolder("svg-work");
+        File configDir = new File(new File(workdir, "configs"), "Vector");
+        assertTrue(configDir.mkdirs());
+        ControlSkinStore.SetInfo set = ControlSkinStore.create(workdir, "Vectors");
+        byte[] svg = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 10'>"
+                + "<rect width='20' height='10' fill='red'/></svg>")
+                .getBytes(StandardCharsets.UTF_8);
+        ControlSkinStore.importImage(workdir, set.id, "5", false,
+                new java.io.ByteArrayInputStream(svg), ".svg");
+        ControlSkinStore.importAsset(workdir, set.id, "dpad_base",
+                new java.io.ByteArrayInputStream(svg), ".svg");
+        ControlSkinStore.importAsset(workdir, set.id, "dpad_up",
+                new java.io.ByteArrayInputStream(svg), ".svg");
+        ControlSkinRuntime runtime = ControlSkinRuntime.load(configDir, set.id, 200, 320);
+        assertEquals(200, runtime.get(4).normal.getWidth());
+        assertEquals(100, runtime.get(4).normal.getHeight());
+        assertNotNull(runtime.dpad().up);
+
+        android.graphics.Bitmap png = android.graphics.Bitmap.createBitmap(
+                12, 12, android.graphics.Bitmap.Config.ARGB_8888);
+        java.io.ByteArrayOutputStream data = new java.io.ByteArrayOutputStream();
+        try {
+            assertTrue(png.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, data));
+        } finally { png.recycle(); }
+        ControlSkinStore.importImage(workdir, set.id, "5", false,
+                new java.io.ByteArrayInputStream(data.toByteArray()), ".png");
+        assertEquals("key_5.png", ControlSkinStore.image(set.folder, "5", false).getName());
+        assertFalse(new File(set.folder, "key_5.svg").exists());
+        assertEquals(12, ControlSkinRuntime.load(configDir, set.id).get(4).normal.getWidth());
+
+        ControlSkinStore.SetInfo copy = ControlSkinStore.duplicate(workdir, set.id, "Copied vectors");
+        assertTrue(new File(copy.folder, "dpad_base.svg").isFile());
+        ControlSkinStore.removeAsset(workdir, copy.id, "dpad_base");
+        assertNull(ControlSkinStore.asset(copy.folder, "dpad_base"));
+    }
+
 }
