@@ -39,6 +39,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#bulkFooterActionsRemainReachableInShortWindowWithLargeText'
   'io.github.h3nb.jlmodplus.memory.MemoryEditorAdaptiveComposeTest'
   'io.github.h3nb.jlmodplus.memory.MemoryEditorPeekComposeTest'
+  'io.github.h3nb.jlmodplus.memory.MemoryEditorOverlayComposeTest'
   'io.github.h3nb.jlmodplus.ui.AdaptiveDialogComposeTest#shortLargeTextDialogKeepsActionsVisibleAndBodyScrollable'
   'io.github.h3nb.jlmodplus.ui.AdaptiveDialogComposeTest#largeTextFontFormCanReachItsLastFieldAndConfirm'
   'io.github.h3nb.jlmodplus.settings.SettingsComposeTest#compactHeightLanguageDialogUsesAdaptiveScrollableBounds'

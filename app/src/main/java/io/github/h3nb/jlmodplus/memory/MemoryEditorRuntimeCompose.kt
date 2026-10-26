@@ -7,12 +7,10 @@
 
 package io.github.h3nb.jlmodplus.memory
 
-import android.view.WindowManager
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,27 +19,26 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -51,23 +48,24 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SecondaryScrollableTabRow
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.foundation.gestures.scrollBy
-import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -76,11 +74,12 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.InterceptPlatformTextInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.InterceptPlatformTextInput
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -97,10 +96,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogWindowProvider
 import io.github.h3nb.jlmodplus.R
-import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
+import io.github.h3nb.jlmodplus.memory.MemoryEditorDialog as AlertDialog
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.first
 
 private enum class RuntimeInputField { FIRST, SECOND }
 
@@ -145,135 +144,132 @@ private fun runtimeMemoryKeypadTextStyle() = MaterialTheme.typography.labelLarge
 internal fun MemoryEditorRuntimeRoot(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
+    overlayState: MemoryEditorOverlayState? = null,
 ) {
     if (!state.visible) return
-
-    val tab = state.activeTab
-    var peekingUnderlay by remember(state.runtimeToken) { mutableStateOf(false) }
-    val resultsListState = rememberLazyListState()
-    val watchListState = rememberLazyListState()
-    val inspectSelected = {
-        state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.watchTab) }
-        Unit
-    }
-    val selectTab: (MemoryEditorTab) -> Unit = {
-        when (it) {
-            MemoryEditorTab.RESULTS -> actions.setWatchTab(false)
-            MemoryEditorTab.WATCH -> actions.setWatchTab(true)
-            MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
+    MemoryEditorOverlayScope(overlayState) { overlay ->
+        val tab = state.activeTab
+        var opacityDialog by remember { mutableStateOf(false) }
+        val resultsListState = rememberLazyListState()
+        val watchListState = rememberLazyListState()
+        val inspectSelected = {
+            state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.watchTab) }
+            Unit
         }
-    }
-    BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR) { actions.closeInspector() }
-
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.22f))
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 8.dp, vertical = 6.dp)
-            .alpha(if (peekingUnderlay) 0f else 1f),
-        contentAlignment = Alignment.Center,
-    ) {
-        // A shared header row leaves more height for data when its labels fit comfortably.
-        val inlineNavigation = maxWidth.coerceAtMost(960.dp) >=
-            600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-        Surface(
-            modifier = Modifier.widthIn(max = 960.dp).fillMaxSize(),
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shadowElevation = 8.dp,
+        val selectTab: (MemoryEditorTab) -> Unit = {
+            when (it) {
+                MemoryEditorTab.RESULTS -> actions.setWatchTab(false)
+                MemoryEditorTab.WATCH -> actions.setWatchTab(true)
+                MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
+            }
+        }
+        BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking) {
+            if (overlay.peeking) overlay.peeking = false else actions.closeInspector()
+        }
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = 8.dp, vertical = 6.dp)
+                .alpha(if (overlay.peeking) 0f else 1f)
+                .onPreviewKeyEvent { overlay.peeking && it.key != Key.Back },
+            contentAlignment = Alignment.Center,
         ) {
-            Column(Modifier.fillMaxSize()) {
-                RuntimeMemoryHeader(state, inlineNavigation, selectTab, actions::close)
-                if (state.busy) RuntimeOperationStrip(state, actions)
-                state.message?.takeIf(String::isNotBlank)?.let {
-                    RuntimeMessage(it, state.messageIsError)
-                }
-                // Keep content at one composition location when the window changes size.
-                when (tab) {
-                    MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
-                        state = state,
-                        actions = actions,
-                        listState = resultsListState,
-                        onPeekUnderlayChanged = { peekingUnderlay = it },
-                        onInspectSelected = inspectSelected,
-                        modifier = Modifier.weight(1f),
-                    )
-                    MemoryEditorTab.WATCH -> RuntimeWatchTab(
-                        state = state,
-                        actions = actions,
-                        listState = watchListState,
-                        onPeekUnderlayChanged = { peekingUnderlay = it },
-                        modifier = Modifier.weight(1f),
-                    )
-                    MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
-                        state = state,
-                        actions = actions,
-                        onPeekUnderlayChanged = { peekingUnderlay = it },
-                        modifier = Modifier.weight(1f),
-                    )
+            val showLabels = maxWidth.coerceAtMost(960.dp) >=
+                600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+            Surface(
+                modifier = Modifier.widthIn(max = 960.dp).fillMaxSize(),
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxSize().padding(bottom = 48.dp)
+                        .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)) {
+                        RuntimeMemoryHeader(state, showLabels, selectTab, actions::close)
+                        if (state.busy) RuntimeOperationStrip(state, actions)
+                        state.message?.takeIf(String::isNotBlank)?.let {
+                            RuntimeMessage(it, state.messageIsError)
+                        }
+                        when (tab) {
+                            MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
+                                state, actions, inspectSelected, resultsListState, Modifier.weight(1f),
+                            )
+                            MemoryEditorTab.WATCH -> RuntimeWatchTab(
+                                state, actions, watchListState, Modifier.weight(1f),
+                            )
+                            MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
+                                state, actions, Modifier.weight(1f),
+                            )
+                        }
+                    }
+                    MemoryEditorPeekShield(overlay)
+                    if (overlay.layers.isEmpty()) {
+                        MemoryEditorPeekDock(overlay, Modifier.align(Alignment.BottomCenter)) {
+                            RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity, enabled = !overlay.peeking) {
+                                opacityDialog = true
+                            }
+                        }
+                    }
                 }
             }
         }
+        if (opacityDialog) MemoryEditorOpacityDialog(overlay) { opacityDialog = false }
     }
 }
 
 @Composable
 private fun RuntimeMemoryHeader(
     state: MemoryEditorUiState,
-    inlineNavigation: Boolean,
+    showLabels: Boolean,
     onTab: (MemoryEditorTab) -> Unit,
     onClose: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(R.string.memory_editor),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = if (inlineNavigation) Modifier.padding(end = 16.dp) else Modifier.weight(1f),
-        )
-        if (inlineNavigation) {
-            RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        SecondaryTabRow(
+            selectedTabIndex = state.activeTab.ordinal,
+            modifier = Modifier.weight(1f),
+            containerColor = Color.Transparent,
+        ) {
+            MemoryEditorTab.entries.forEach { tab ->
+                val label = stringResource(when (tab) {
+                    MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
+                    MemoryEditorTab.WATCH -> R.string.memory_editor_watch
+                    MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
+                })
+                Tab(
+                    selected = state.activeTab == tab,
+                    onClick = { onTab(tab) },
+                    enabled = tab != MemoryEditorTab.INSPECTOR ||
+                        state.activeTab == tab || state.selected.size == 1 && !state.busy,
+                    modifier = Modifier.semantics { contentDescription = label },
+                ) {
+                    RuntimeIconTooltip(label) {
+                        Row(
+                            Modifier.heightIn(min = 48.dp).padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(painterResource(when (tab) {
+                                MemoryEditorTab.RESULTS -> R.drawable.ic_search
+                                MemoryEditorTab.WATCH -> R.drawable.ic_memory_editor_watch
+                                MemoryEditorTab.INSPECTOR -> R.drawable.ic_memory_editor_inspector
+                            }), contentDescription = null)
+                            if (showLabels) Text(label, style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
+            }
         }
-        IconButton(onClick = onClose) {
-            Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
-        }
+        RuntimeActionIcon(R.drawable.ic_close, R.string.memory_editor_close, onClick = onClose)
     }
-    if (!inlineNavigation) RuntimeMemoryTabs(state, onTab)
 }
 
-@Composable
-private fun RuntimeMemoryTabs(
-    state: MemoryEditorUiState,
-    onTab: (MemoryEditorTab) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SecondaryScrollableTabRow(
-        selectedTabIndex = state.activeTab.ordinal,
-        modifier = modifier.fillMaxWidth(),
-        edgePadding = 0.dp,
-        containerColor = Color.Transparent,
-    ) {
-        MemoryEditorTab.entries.forEach { tab ->
-            Tab(
-                selected = state.activeTab == tab,
-                onClick = { onTab(tab) },
-                enabled = tab != MemoryEditorTab.INSPECTOR ||
-                    state.activeTab == tab || state.selected.size == 1 && !state.busy,
-                text = {
-                    Text(stringResource(when (tab) {
-                        MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
-                        MemoryEditorTab.WATCH -> R.string.memory_editor_watch
-                        MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
-                    }))
-                },
-            )
-        }
-    }
-}
+private data class RuntimeToolbarAction(
+    val icon: Int,
+    val label: Int,
+    val enabled: Boolean,
+    val onClick: () -> Unit,
+)
 
 @Composable
 private fun RuntimeOperationStrip(state: MemoryEditorUiState, actions: MemoryEditorActions) {
@@ -356,7 +352,6 @@ private fun RuntimeMessage(message: String, isError: Boolean) {
 private fun RuntimeSearchResultsTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onInspectSelected: () -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
@@ -376,97 +371,60 @@ private fun RuntimeSearchResultsTab(
         if (allVisibleSelected) R.string.memory_editor_clear_selection else R.string.memory_editor_select_visible,
     )
     Column(modifier = modifier.fillMaxWidth()) {
-        var searchMenu by remember { mutableStateOf(false) }
         var moreMenu by remember { mutableStateOf(false) }
+        val quickActions = listOf(
+            RuntimeToolbarAction(R.drawable.ic_search, R.string.memory_editor_search_known_values, !state.busy) {
+                knownDialog = true
+            },
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_search_unknown,
+                R.string.memory_editor_search_unknown_values, state.supported && !state.busy) {
+                unknownDialog = true
+            },
+            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
+                editTargets = selectedRows.map { MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes) }
+                editRevision = state.revision
+            },
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add, R.string.memory_editor_add_to_watch,
+                selectedRows.isNotEmpty() && !state.busy) { actions.watchSelected(true) },
+            RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
+                state.results.isNotEmpty() && !state.busy, actions::refresh),
+        )
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (selectedRows.isEmpty()) {
-                Box(Modifier.weight(1f)) {
-                    TextButton(onClick = { searchMenu = true }, enabled = !state.busy) {
-                        Icon(painterResource(R.drawable.ic_search), contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.memory_editor_search_tab))
-                    }
-                    DropdownMenu(expanded = searchMenu, onDismissRequest = { searchMenu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.memory_editor_search_known_values)) },
-                            onClick = { searchMenu = false; knownDialog = true },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.memory_editor_search_unknown_values)) },
-                            enabled = state.supported,
-                            onClick = { searchMenu = false; unknownDialog = true },
-                        )
-                    }
-                }
-                RuntimeActionIcon(
-                    R.drawable.ic_refresh, R.string.memory_editor_refresh,
-                    enabled = state.results.isNotEmpty() && !state.busy,
-                    onClick = actions::refresh,
-                )
-            } else {
-                Box(Modifier.weight(1f)) {
-                    TextButton(
-                        enabled = selectedWriteSupported && !state.busy,
-                        onClick = {
-                            editTargets = selectedRows.map { row ->
-                                MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes)
-                            }
-                            editRevision = state.revision
-                        },
-                    ) {
-                        Icon(painterResource(R.drawable.ic_edit), contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.memory_editor_edit))
-                    }
-                }
-                RuntimeActionIcon(
-                    R.drawable.ic_memory_editor_watch_add, R.string.memory_editor_add_to_watch,
-                    enabled = !state.busy,
-                    onClick = { actions.watchSelected(true) },
-                )
-                RuntimeActionIcon(
-                    R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
-                    enabled = selectedRows.size == 1 && !state.busy,
-                    onClick = onInspectSelected,
-                )
+            quickActions.forEach { action ->
+                RuntimeActionIcon(action.icon, action.label, action.enabled, action.onClick)
             }
-            Box {
-                RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, enabled = !state.busy) {
-                    moreMenu = true
-                }
-                DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_search_known_values)) },
-                        onClick = { moreMenu = false; knownDialog = true },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_search_unknown_values)) },
-                        enabled = state.supported,
-                        onClick = { moreMenu = false; unknownDialog = true },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_refresh)) },
-                        enabled = state.results.isNotEmpty(),
-                        onClick = { moreMenu = false; actions.refresh() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_undo)) },
-                        enabled = state.canUndo,
-                        onClick = { moreMenu = false; actions.undo() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_remove)) },
-                        enabled = selectedRows.isNotEmpty() && !unknownBaseline,
-                        onClick = {
-                            moreMenu = false
-                            deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
-                        },
-                    )
-                }
-            }
+            RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, enabled = !state.busy) { moreMenu = true }
+        }
+        if (moreMenu) {
+            val menuActions = quickActions + listOf(
+                RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
+                    selectedRows.size == 1 && !state.busy, onInspectSelected),
+                RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo, state.canUndo && !state.busy, actions::undo),
+                RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
+                    selectedRows.isNotEmpty() && !unknownBaseline && !state.busy) {
+                    deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
+                },
+            )
+            AlertDialog(
+                onDismissRequest = { moreMenu = false },
+                title = { Text(stringResource(R.string.memory_editor_search_tab)) },
+                text = {
+                    Column {
+                        menuActions.forEach { action ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(action.label)) },
+                                leadingIcon = { Icon(painterResource(action.icon), contentDescription = null) },
+                                enabled = action.enabled,
+                                onClick = { moreMenu = false; action.onClick() },
+                            )
+                        }
+                    }
+                },
+            )
         }
         HorizontalDivider()
 
@@ -542,9 +500,7 @@ private fun RuntimeSearchResultsTab(
         RuntimeKnownSearchDialog(
             state = state,
             actions = actions,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 knownDialog = false
             },
         )
@@ -553,9 +509,7 @@ private fun RuntimeSearchResultsTab(
         RuntimeUnknownSearchDialog(
             state = state,
             actions = actions,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 unknownDialog = false
             },
         )
@@ -565,9 +519,7 @@ private fun RuntimeSearchResultsTab(
         RuntimeEditDialog(
             targets = currentEditTargets,
             writeSupported = state.writeSupported,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
             onApply = { value, type, freeze, incremental, step ->
@@ -580,7 +532,6 @@ private fun RuntimeSearchResultsTab(
                         currentEditTargets, editRevision, value, type, false, freeze,
                     )
                 }
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
         )
@@ -699,7 +650,6 @@ private fun RuntimeResultRow(
 private fun RuntimeWatchTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
@@ -793,16 +743,13 @@ private fun RuntimeWatchTab(
         RuntimeEditDialog(
             targets = currentEditTargets,
             writeSupported = state.writeSupported,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
             onApply = { value, type, freeze, _, _ ->
                 actions.editTargetsWithOptions(
                     currentEditTargets, 0L, value, type, false, freeze,
                 )
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
         )
@@ -921,7 +868,6 @@ private fun RuntimeSearchDialogBody(
 internal fun RuntimeKnownSearchDialog(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var query by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
@@ -933,7 +879,6 @@ internal fun RuntimeKnownSearchDialog(
             state.requestedType.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO,
         )
     }
-    var peekingUnderlay by remember { mutableStateOf(false) }
 
     val expression = remember(query.text) { parseMemorySearchExpression(query.text) }
     val groupExpression = expression is MemorySearchExpression.Group
@@ -967,17 +912,11 @@ internal fun RuntimeKnownSearchDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         text = {
             RuntimeSearchDialogBody(
                 title = {
                     RuntimeInputDialogTitle(
                         title = stringResource(R.string.memory_editor_search_known_values),
-                        peeking = peekingUnderlay,
-                        onPeekingChanged = {
-                            peekingUnderlay = it
-                            onPeekUnderlayChanged(it)
-                        },
                     )
                 },
                 showKeypad = true,
@@ -1116,7 +1055,6 @@ internal fun RuntimeKnownSearchDialog(
 private fun RuntimeUnknownSearchDialog(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val activeSession = state.sessionStage != MemorySessionStage.EMPTY
@@ -1131,7 +1069,6 @@ private fun RuntimeUnknownSearchDialog(
     var first by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var second by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var activeField by remember { mutableStateOf(RuntimeInputField.FIRST) }
-    var peekingUnderlay by remember { mutableStateOf(false) }
     val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
     val needsValue = if (relative) memoryRelativePredicateNeedsValue(predicate) else true
     val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN ||
@@ -1147,17 +1084,11 @@ private fun RuntimeUnknownSearchDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         text = {
             RuntimeSearchDialogBody(
                 title = {
                     RuntimeInputDialogTitle(
                         title = stringResource(R.string.memory_editor_search_unknown_values),
-                        peeking = peekingUnderlay,
-                        onPeekingChanged = {
-                            peekingUnderlay = it
-                            onPeekUnderlayChanged(it)
-                        },
                     )
                 },
                 showKeypad = needsValue,
@@ -1334,7 +1265,6 @@ private fun RuntimeUnknownSearchDialog(
 private fun RuntimeEditDialog(
     targets: List<MemoryEditTarget>,
     writeSupported: Boolean,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     onApply: (String, Int, Boolean, Boolean, String) -> Unit,
 ) {
@@ -1364,7 +1294,6 @@ private fun RuntimeEditDialog(
     var incremental by remember(targets) { mutableStateOf(false) }
     var editingStep by remember(targets) { mutableStateOf(false) }
     var step by remember(targets) { mutableStateOf(TextFieldValue("1", TextRange(1))) }
-    var peekingUnderlay by remember { mutableStateOf(false) }
     val spec = remember(type) { MemoryInputSpec.forType(type) }
     val preview = remember(targets, type, replacement.text, step.text, incremental) {
         if (incremental) memoryIncrementalPreview(targets, type, replacement.text, step.text)
@@ -1390,7 +1319,6 @@ private fun RuntimeEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         text = {
             RuntimeSearchDialogBody(
                 title = {
@@ -1402,11 +1330,6 @@ private fun RuntimeEditDialog(
                                 targets.size,
                             )
                         } else stringResource(R.string.memory_editor_edit),
-                        peeking = peekingUnderlay,
-                        onPeekingChanged = {
-                            peekingUnderlay = it
-                            onPeekUnderlayChanged(it)
-                        },
                     )
                 },
                 showKeypad = true,
@@ -1562,7 +1485,6 @@ private fun RuntimeEditDialog(
 internal fun RuntimeInspectorTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
@@ -1719,9 +1641,7 @@ internal fun RuntimeInspectorTab(
                     snapshot = snapshot,
                     row = row,
                     actions = actions,
-                    onPeekUnderlayChanged = onPeekUnderlayChanged,
                     onDismiss = {
-                        onPeekUnderlayChanged(false)
                         editLogicalRow = null
                     },
                 )
@@ -1735,27 +1655,19 @@ private fun RuntimeInspectorLogicalEditDialog(
     snapshot: MemoryInspectorSnapshot,
     row: MemoryInspectorLogicalRow,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val spec = remember(row.type) { MemoryInputSpec.forType(row.type) }
     var value by remember(row) {
         mutableStateOf(TextFieldValue(row.valueText, TextRange(row.valueText.length)))
     }
-    var peekingUnderlay by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         text = {
             RuntimeSearchDialogBody(
                 title = {
                     RuntimeInputDialogTitle(
                         title = row.label.ifBlank { runtimeTypeShort(row.type) },
-                        peeking = peekingUnderlay,
-                        onPeekingChanged = {
-                            peekingUnderlay = it
-                            onPeekUnderlayChanged(it)
-                        },
                     )
                 },
                 showKeypad = true,
@@ -1928,138 +1840,8 @@ private fun RuntimeKeypadButton(cell: RuntimeKeypadCell, modifier: Modifier = Mo
 }
 
 @Composable
-private fun RuntimeInputDialogTitle(
-    title: String,
-    peeking: Boolean,
-    onPeekingChanged: (Boolean) -> Unit,
-) {
-    RuntimeInputDialogWindowEffect(peeking)
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        RuntimePeekUnderlayButton(
-            peeking = peeking,
-            onPeekingChanged = onPeekingChanged,
-        )
-    }
-}
-
-private data class RuntimeInputDialogWindowBaseline(
-    val flags: Int,
-    val dimAmount: Float,
-    val alpha: Float,
-)
-
-/** Keep the platform dialog hidden for the whole Peek hold without resetting it per recomposition. */
-@Composable
-internal fun RuntimeInputDialogWindowEffect(
-    peeking: Boolean,
-) {
-    val view = LocalView.current
-    val window = (view.parent as? DialogWindowProvider)?.window
-    val baseline = remember(view, window) {
-        window?.attributes?.let { attributes ->
-            RuntimeInputDialogWindowBaseline(
-                flags = attributes.flags,
-                dimAmount = attributes.dimAmount,
-                alpha = attributes.alpha,
-            )
-        }
-    }
-
-    DisposableEffect(view, window, baseline) {
-        onDispose {
-            if (window != null && baseline != null) {
-                applyRuntimeInputDialogWindowState(window, baseline, peeking = false)
-            }
-        }
-    }
-    SideEffect {
-        if (window != null && baseline != null) {
-            applyRuntimeInputDialogWindowState(window, baseline, peeking)
-        }
-    }
-}
-
-private fun applyRuntimeInputDialogWindowState(
-    window: android.view.Window,
-    baseline: RuntimeInputDialogWindowBaseline,
-    peeking: Boolean,
-) {
-    val targetAlpha = if (peeking) 0f else baseline.alpha
-    val targetDimAmount = if (peeking) 0f else baseline.dimAmount
-    val targetDimEnabled = !peeking &&
-        baseline.flags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
-    val currentFlags = window.attributes.flags
-    val currentDimEnabled = currentFlags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
-    if (currentDimEnabled != targetDimEnabled) {
-        if (targetDimEnabled) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        }
-    }
-    val attributes = window.attributes
-    if (attributes.alpha != targetAlpha || attributes.dimAmount != targetDimAmount) {
-        window.attributes = attributes.apply {
-            alpha = targetAlpha
-            dimAmount = targetDimAmount
-        }
-    }
-}
-
-/** Temporarily hides the editor while held so the MIDlet remains visible underneath. */
-@Composable
-private fun RuntimePeekUnderlayButton(
-    peeking: Boolean,
-    onPeekingChanged: (Boolean) -> Unit,
-) {
-    val description = stringResource(
-        if (peeking) R.string.memory_editor_peek_underlay_active
-        else R.string.memory_editor_peek_underlay,
-    )
-    DisposableEffect(Unit) {
-        onDispose { onPeekingChanged(false) }
-    }
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .semantics {
-                contentDescription = description
-                onClick {
-                    onPeekingChanged(!peeking)
-                    true
-                }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        onPeekingChanged(true)
-                        try {
-                            tryAwaitRelease()
-                        } finally {
-                            onPeekingChanged(false)
-                        }
-                    },
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painterResource(
-                if (peeking) R.drawable.ic_visibility_off
-                else R.drawable.ic_visibility,
-            ),
-            contentDescription = null,
-        )
-    }
+private fun RuntimeInputDialogTitle(title: String) {
+    Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
 }
 
 @Composable
@@ -2194,16 +1976,23 @@ private fun RuntimeChoiceMenu(
                 Icon(painterResource(R.drawable.ic_keyboard_arrow_down), contentDescription = null)
             }
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            values.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(label(item), style = runtimeMemoryControlTextStyle()) },
-                    onClick = {
-                        expanded = false
-                        onChange(item)
-                    },
-                )
-            }
+        if (expanded) {
+            AlertDialog(
+                onDismissRequest = { expanded = false },
+                text = {
+                    Column {
+                        values.forEach { item ->
+                            DropdownMenuItem(
+                                text = { Text(label(item), style = runtimeMemoryControlTextStyle()) },
+                                leadingIcon = {
+                                    RadioButton(selected = item == value, onClick = null)
+                                },
+                                onClick = { expanded = false; onChange(item) },
+                            )
+                        }
+                    }
+                },
+            )
         }
     }
 }
@@ -2270,9 +2059,30 @@ private fun RuntimeActionIcon(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick, enabled = enabled) {
-        Icon(painterResource(icon), contentDescription = stringResource(description))
+    val label = stringResource(description)
+    RuntimeIconTooltip(label) {
+        IconButton(onClick = onClick, enabled = enabled) {
+            Icon(painterResource(icon), contentDescription = label)
+        }
     }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun RuntimeIconTooltip(label: String, content: @Composable () -> Unit) {
+    val state = rememberTooltipState()
+    val peeking = LocalMemoryEditorOverlay.current?.peeking == true
+    LaunchedEffect(peeking) { if (peeking) state.dismiss() }
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            androidx.compose.material3.TooltipAnchorPosition.Above,
+        ),
+        tooltip = { PlainTooltip { Text(label) } },
+        state = state,
+        focusable = false,
+        enableUserInput = !peeking,
+        content = content,
+    )
 }
 
 @Composable

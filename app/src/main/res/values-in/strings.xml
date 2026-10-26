@@ -1188,4 +1188,7 @@
     <string name="library_metadata_language_search">Cari bahasa atau kode</string>
     <string name="library_metadata_remove_language">Hapus deskripsi</string>
     <string name="library_metadata_language_load_failed">Gagal memuat deskripsi bahasa. Buka kembali Edit metadata untuk mencoba lagi.</string>
+    <string name="memory_editor_panel_opacity">Opasitas panel</string>
+    <string name="memory_editor_panel_opacity_help">Mengatur latar panel. Teks dan ikon tetap terlihat jelas.</string>
+    <string name="memory_editor_opacity_percent">%1$d%%</string>
 </resources>

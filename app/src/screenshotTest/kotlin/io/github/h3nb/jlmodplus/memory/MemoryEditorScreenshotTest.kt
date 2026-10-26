@@ -14,6 +14,18 @@
 
 package io.github.h3nb.jlmodplus.memory
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
@@ -214,7 +226,6 @@ fun MemoryEditorLandscapeKnownSearchDialogScreenshot() {
                 sessionStage = MemorySessionStage.CANDIDATES,
             ),
             actions = NoOpMemoryEditorActions,
-            onPeekUnderlayChanged = {},
             onDismiss = {},
         )
     }
@@ -339,7 +350,47 @@ fun MemorySearchLargeTextScreenshot() {
         RuntimeKnownSearchDialog(
             state = MemoryEditorUiState(sessionStage = MemorySessionStage.CANDIDATES),
             actions = NoOpMemoryEditorActions,
-            onPeekUnderlayChanged = {}, onDismiss = {},
+            onDismiss = {},
         )
+    }
+}
+
+// A varied underlay makes accidental opacity of the entire UI visible in references.
+@PreviewTest
+@Preview(name = "Memory overlay light underlay", widthDp = 360, heightDp = 640)
+@Composable
+fun MemoryOverlayLightUnderlayScreenshot() = MemoryOverlayUnderlay(dark = false)
+
+@PreviewTest
+@Preview(name = "Memory overlay dark underlay", widthDp = 720, heightDp = 360)
+@Composable
+fun MemoryOverlayDarkUnderlayScreenshot() = MemoryOverlayUnderlay(dark = true)
+
+@Composable
+private fun MemoryOverlayUnderlay(dark: Boolean) {
+    JLModPlusTheme(darkTheme = dark) {
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
+            listOf(Color(0xFF123F82), Color(0xFFF3C741), Color(0xFF206E32)),
+        ))) {
+            Text("SCORE 500", color = Color.White, fontSize = 40.sp,
+                modifier = Modifier.align(Alignment.Center).padding(16.dp))
+            MemoryEditorRuntimeRoot(
+                state = MemoryEditorUiState(
+                    visible = true, supported = true, writeSupported = true,
+                    resultCount = 3, results = previewRows,
+                ),
+                actions = NoOpMemoryEditorActions,
+            )
+        }
+    }
+}
+
+@PreviewTest
+@Preview(name = "Memory opacity compact", widthDp = 320, heightDp = 480, fontScale = 1.5f)
+@Composable
+fun MemoryOpacityScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        val overlay = remember { MemoryEditorOverlayState() }
+        MemoryEditorOverlayScope(overlay) { MemoryEditorOpacityDialog(overlay, onDismiss = {}) }
     }
 }

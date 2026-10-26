@@ -191,7 +191,6 @@ internal fun AdaptiveAlertDialog(
         maxDialogWidth = maxWidth,
     )
     val compact = layout.maxHeight < 320.dp
-    var actionsWrapped by remember { mutableStateOf(false) }
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = layout.modifier.then(modifier),
@@ -326,57 +325,88 @@ internal fun AdaptiveAlertDialog(
             contentColor = textContentColor,
             tonalElevation = tonalElevation,
         ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = if (compact) 12.dp else 16.dp),
-                verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
-            ) {
-                if (icon != null) {
-                    Box(Modifier.align(Alignment.CenterHorizontally)) {
-                        CompositionLocalProvider(LocalContentColor provides iconContentColor) { icon() }
+            AdaptiveDialogContent(
+                compact = compact,
+                icon = icon,
+                title = title,
+                text = text,
+                textScrollable = textScrollable,
+                confirmButton = confirmButton,
+                dismissButton = dismissButton,
+                dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
+                iconContentColor = iconContentColor,
+                titleContentColor = titleContentColor,
+            )
+        }
+    }
+}
+
+/** Shared form layout for platform dialogs and app-owned modal shells. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun AdaptiveDialogContent(
+    compact: Boolean,
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = null,
+    title: (@Composable () -> Unit)? = null,
+    text: (@Composable () -> Unit)? = null,
+    textScrollable: Boolean = true,
+    confirmButton: (@Composable () -> Unit)? = null,
+    dismissButton: (@Composable () -> Unit)? = null,
+    dismissButtonBelowWrappedActions: Boolean = false,
+    iconContentColor: Color = AlertDialogDefaults.iconContentColor,
+    titleContentColor: Color = AlertDialogDefaults.titleContentColor,
+) {
+    var actionsWrapped by remember { mutableStateOf(false) }
+    Column(
+        modifier = modifier.padding(horizontal = 20.dp, vertical = if (compact) 12.dp else 16.dp),
+        verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
+    ) {
+        if (icon != null) {
+            Box(Modifier.align(Alignment.CenterHorizontally)) {
+                CompositionLocalProvider(LocalContentColor provides iconContentColor) { icon() }
+            }
+        }
+        if (title != null) {
+            CompositionLocalProvider(LocalContentColor provides titleContentColor) {
+                ProvideTextStyle(MaterialTheme.typography.headlineSmall) { title() }
+            }
+        }
+        if (text != null) {
+            // Measure the title/footer first; no guessed fixed-height reservations.
+            Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
+                ProvideTextStyle(MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Start)) {
+                    if (textScrollable ||
+                        (dismissButtonBelowWrappedActions && actionsWrapped)
+                    ) {
+                        val scrollState = rememberScrollState()
+                        val canScrollForward = rememberScrollCanScrollForward(scrollState)
+                        Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) { text() }
+                        ScrollableContentHint(canScrollForward, Modifier.align(Alignment.BottomCenter))
+                    } else {
+                        // Lists and forms can own their scrolling, within this measured viewport.
+                        text()
                     }
                 }
-                if (title != null) {
-                    CompositionLocalProvider(LocalContentColor provides titleContentColor) {
-                        ProvideTextStyle(MaterialTheme.typography.headlineSmall) { title() }
-                    }
-                }
-                if (text != null) {
-                    // Measure the title/footer first; no guessed fixed-height reservations.
-                    Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
-                        ProvideTextStyle(MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Start)) {
-                            if (textScrollable ||
-                                (dismissButtonBelowWrappedActions && actionsWrapped)
-                            ) {
-                                val scrollState = rememberScrollState()
-                                val canScrollForward = rememberScrollCanScrollForward(scrollState)
-                                Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) { text() }
-                                ScrollableContentHint(canScrollForward, Modifier.align(Alignment.BottomCenter))
-                            } else {
-                                // Lists and forms can own their scrolling, within this measured viewport.
-                                text()
-                            }
-                        }
-                    }
-                }
-                if (dismissButton != null || confirmButton != null) {
-                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
-                        ProvideTextStyle(MaterialTheme.typography.labelLarge) {
-                            if (dismissButtonBelowWrappedActions) {
-                                AdaptiveDialogActionLayout(
-                                    confirmButton = confirmButton,
-                                    dismissButton = dismissButton,
-                                    onWrappedChanged = { actionsWrapped = it },
-                                )
-                            } else {
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    dismissButton?.invoke()
-                                    confirmButton?.invoke()
-                                }
-                            }
+            }
+        }
+        if (dismissButton != null || confirmButton != null) {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
+                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                    if (dismissButtonBelowWrappedActions) {
+                        AdaptiveDialogActionLayout(
+                            confirmButton = confirmButton,
+                            dismissButton = dismissButton,
+                            onWrappedChanged = { actionsWrapped = it },
+                        )
+                    } else {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            dismissButton?.invoke()
+                            confirmButton?.invoke()
                         }
                     }
                 }

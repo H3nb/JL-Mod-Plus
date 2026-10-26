@@ -13,14 +13,11 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -53,7 +50,7 @@ class MemoryEditorAdaptiveComposeTest {
                     JLModPlusTheme {
                         RuntimeInspectorTab(
                             MemoryEditorUiState(inspector = snapshot, writeSupported = true),
-                            TestMemoryEditorActions(), onPeekUnderlayChanged = {},
+                            TestMemoryEditorActions(),
                         )
                     }
                 }
@@ -82,7 +79,7 @@ class MemoryEditorAdaptiveComposeTest {
                     JLModPlusTheme(darkTheme = true) {
                         RuntimeKnownSearchDialog(
                             MemoryEditorUiState(sessionStage = MemorySessionStage.CANDIDATES),
-                            actions, onPeekUnderlayChanged = {}, onDismiss = {},
+                            actions, onDismiss = {},
                         )
                         dialogView = LocalView.current
                     }
@@ -146,7 +143,7 @@ class MemoryEditorAdaptiveComposeTest {
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) } }
         pressBack()
-        rule.onNode(hasText("Search") and SemanticsMatcher.expectValue(SemanticsProperties.Selected, true))
+        rule.onNodeWithContentDescription("Search")
             .assertIsSelected()
         rule.runOnIdle { assertFalse(closed) }
     }
@@ -160,9 +157,7 @@ class MemoryEditorAdaptiveComposeTest {
                 }
             }
         }
-        rule.onNode(hasText("Search") and hasClickAction() and
-            SemanticsMatcher.keyNotDefined(SemanticsProperties.Selected)).performClick()
-        rule.onNodeWithText("Search known values").performClick()
+        rule.onNodeWithContentDescription("Search known values").performClick()
         rule.onNode(hasSetTextAction()).performTextReplacement("31415")
         rule.runOnIdle { size.value = DpSize(360.dp, 640.dp) }
         rule.onNode(hasSetTextAction()).assertTextContains("31415")

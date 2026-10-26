@@ -1275,4 +1275,7 @@
     <string name="library_metadata_language_search">Search language or locale code</string>
     <string name="library_metadata_remove_language">Remove description</string>
     <string name="library_metadata_language_load_failed">Could not load language descriptions. Reopen Edit metadata to try again.</string>
+    <string name="memory_editor_panel_opacity">Panel opacity</string>
+    <string name="memory_editor_panel_opacity_help">Adjusts the panel background. Text and icons stay fully visible.</string>
+    <string name="memory_editor_opacity_percent">%1$d%%</string>
 </resources>
