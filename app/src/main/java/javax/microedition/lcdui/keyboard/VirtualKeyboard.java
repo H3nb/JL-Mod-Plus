@@ -1546,6 +1546,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
 			keypad[i].visible = !states[i];
 		}
+		// Newly revealed keys may have been offscreen while hidden.
+		if (isUsableScreen(screen)) snapKeys();
 		if (overlayView != null) overlayView.postInvalidate();
 		if (layoutEditMode != LAYOUT_EOF) notifyLayoutEditStateChanged();
 	}
