@@ -93,7 +93,11 @@ internal fun LibrarySearchField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
-            onDone = { focusManager.clearFocus(force = true) },
+            onDone = {
+                // Keep Compose's Done/IME dismissal before releasing editing focus.
+                defaultKeyboardAction(ImeAction.Done)
+                focusManager.clearFocus(force = true)
+            },
         ),
         shape = MaterialTheme.shapes.large,
         colors = TextFieldDefaults.colors(
