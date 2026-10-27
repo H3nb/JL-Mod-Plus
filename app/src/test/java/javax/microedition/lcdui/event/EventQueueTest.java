@@ -21,6 +21,28 @@ import org.junit.Test;
 
 public class EventQueueTest {
 	@Test
+	public void immediateModeKeepsGuestCallbacksOnEventThread() throws Exception {
+		EventQueue queue = new EventQueue();
+		java.util.concurrent.CountDownLatch delivered = new java.util.concurrent.CountDownLatch(1);
+		java.util.concurrent.atomic.AtomicReference<Thread> executingThread =
+				new java.util.concurrent.atomic.AtomicReference<>();
+		Thread postingThread = Thread.currentThread();
+		queue.startProcessing();
+		EventQueue.setImmediate(true);
+		try {
+			queue.postEvent(RunnableEvent.getInstance(() -> {
+				executingThread.set(Thread.currentThread());
+				delivered.countDown();
+			}).asGuestCallback());
+			assertTrue(delivered.await(1, java.util.concurrent.TimeUnit.SECONDS));
+			org.junit.Assert.assertNotSame(postingThread, executingThread.get());
+		} finally {
+			EventQueue.setImmediate(false);
+			queue.stopProcessing();
+		}
+	}
+
+	@Test
 	public void immediateEventExposesCallbackContextOnlyDuringProcessing() {
 		boolean[] observed = {false};
 		EventQueue.setImmediate(true);

@@ -67,6 +67,20 @@ keys retain valid screen/key anchors even when snapping is disabled, preserving
 the existing layout format and orientation-specific drafts. The host places and
 hides the entire panel together during control manipulation.
 
+## LCDUI presentation authority
+
+`Display` owns the current-screen identity and MIDlet foreground grant. The Android host
+confirms mounted screens and shown Alerts; a stale or unmounted `Displayable` cannot
+report `isShown() == true`. Canvas also requires a usable presentation surface.
+
+The Canvas host state requests presentation without calling guest code. Its immediate
+hide edge stops rendering and input; its show edge becomes guest-visible after
+`showNotify()` returns. Both notifications run serially on the existing LCDUI queue,
+never inline under host locks. A superseded show is skipped; a delivered show retains
+its hide notification. Rendering and input do not run before show notification.
+`callSerially()` remains independent of visibility, and MIDlet lifecycle stays on
+MidletMain so applications may wait for presentation during `startApp()`.
+
 ## Geometry and lifecycle safeguards
 
 - Host presentation must not silently alter guest LCD/Canvas geometry or

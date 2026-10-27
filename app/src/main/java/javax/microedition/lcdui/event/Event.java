@@ -54,6 +54,11 @@ public abstract class Event implements Runnable {
 		return this;
 	}
 
+	/** Guest callbacks are always queued, even when immediate processing is enabled. */
+	final boolean isGuestCallback() {
+		return guestCallback;
+	}
+
 	/**
 	 * Handle the event and recycle it.
 	 */

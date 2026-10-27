@@ -31,6 +31,35 @@ public class DisplaySeriallyTest {
 	}
 
 	@Test
+	public void nonCanvasVisibilityRequiresMountedCurrentScreenAndForeground() {
+		Display.initDisplay();
+		Display display = Display.getDisplay(new TestMidlet());
+		Displayable first = new Displayable() {};
+		Displayable second = new Displayable() {};
+		long generation = Display.requestForeground();
+		try {
+			display.setHostVisible(true);
+			assertTrue(Display.grantForeground(generation));
+			display.setCurrent(first);
+			assertFalse(first.isShown());
+			display.onHostPresented(first);
+			assertTrue(first.isShown());
+			display.setCurrent(second);
+			assertFalse(first.isShown());
+			assertFalse(second.isShown());
+			display.onHostPresented(first); // stale UI completion
+			assertFalse(first.isShown());
+			display.onHostPresented(second);
+			assertTrue(second.isShown());
+			Display.revokeForeground();
+			assertFalse(second.isShown());
+		} finally {
+			Display.revokeForeground();
+			Display.initDisplay();
+		}
+	}
+
+	@Test
 	public void callSeriallyIsSerializedWhileHostBarrierContinuesOutsideCallback() throws Exception {
 		Display.initDisplay();
 		Display display = Display.getDisplay(new TestMidlet());

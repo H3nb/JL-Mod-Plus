@@ -74,6 +74,7 @@ import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventFilter;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.PointerEvent;
+import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.lcdui.graphics.CanvasView;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.lcdui.graphics.GlesView;
@@ -184,6 +185,11 @@ public abstract class Canvas extends Displayable {
 	private boolean hostVisible;
 	private boolean displayForeground;
 	private boolean surfaceUsable;
+	/** Host readiness does not make the guest visible until showNotify has returned. */
+	private boolean presentationEligible;
+	private long presentationGeneration;
+	/** LCDUI event-thread state; pairs delivered show/hide callbacks. */
+	private boolean notifiedShown;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
 	private static Image offscreen;
@@ -727,9 +733,6 @@ public abstract class Canvas extends Displayable {
 
 	public void doShowNotify() {
 		showNotify();
-		if (visible) {
-			scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
-		}
 	}
 
 	public void doHideNotify() {
@@ -742,47 +745,47 @@ public abstract class Canvas extends Displayable {
 	}
 
 	/**
-	 * Reconciles guest visibility from Display ownership and Android host visibility. Surface
-	 * usability is owned by the View callback below; only an effective edge emits a MIDP callback.
+	 * Host ownership and surface readiness request a transition but never invoke guest code.
+	 * A hide revokes effective visibility immediately; a show is published only after its
+	 * serialized showNotify callback finishes.
 	 */
 	void updatePresentationState(boolean currentDisplayable, boolean hostVisible,
 			boolean displayForeground) {
-		boolean nextVisible;
 		boolean changed;
 		synchronized (visibilityLock) {
 			this.currentDisplayable = currentDisplayable;
 			this.hostVisible = hostVisible;
 			this.displayForeground = displayForeground;
-			nextVisible = isPresentationVisible(
-					this.currentDisplayable, this.hostVisible, this.displayForeground, surfaceUsable);
-			changed = visible != nextVisible;
-			if (changed) {
-				setEffectiveVisibilityLocked(nextVisible);
-			}
+			changed = reconcilePresentationLocked();
 		}
-		if (changed) {
-			onEffectiveVisibilityChanged(nextVisible);
-		}
+		if (changed) ViewHandler.postEvent(this::updateVideoDisplays);
 	}
 
 	private void updateSurfaceUsable(boolean usable) {
-		boolean nextVisible;
 		boolean changed;
 		synchronized (visibilityLock) {
 			surfaceUsable = usable;
-			nextVisible = isPresentationVisible(
-					currentDisplayable, hostVisible, displayForeground, surfaceUsable);
-			changed = visible != nextVisible;
-			if (changed) {
-				setEffectiveVisibilityLocked(nextVisible);
-			}
+			changed = reconcilePresentationLocked();
 		}
-		if (changed) {
-			onEffectiveVisibilityChanged(nextVisible);
-		}
+		if (changed) ViewHandler.postEvent(this::updateVideoDisplays);
 	}
 
-	/** Called with visibilityLock held; frame producers never acquire that lock under bufferLock. */
+	/** Called under visibilityLock, possibly while Display owns its state lock. */
+	private boolean reconcilePresentationLocked() {
+		boolean eligible = isPresentationVisible(
+				currentDisplayable, hostVisible, displayForeground, surfaceUsable);
+		if (presentationEligible == eligible) return false;
+		presentationEligible = eligible;
+		long generation = ++presentationGeneration;
+		if (!eligible) setEffectiveVisibilityLocked(false);
+		// Enqueue under the lock to preserve the order of opposite host edges.
+		// The serialized path must never run guest callbacks inline.
+		Display.postSerializedEvent(RunnableEvent.getInstance(
+				() -> deliverPresentationTransition(eligible, generation)).asGuestCallback());
+		return true;
+	}
+
+	/** Called with visibilityLock held; frame producers never acquire it under bufferLock. */
 	private void setEffectiveVisibilityLocked(boolean shown) {
 		synchronized (bufferLock) {
 			FrameMetrics metrics = rendererFrameMetrics;
@@ -794,19 +797,56 @@ public abstract class Canvas extends Displayable {
 		}
 	}
 
-	private void onEffectiveVisibilityChanged(boolean shown) {
-		ViewHandler.postEvent(this::updateVideoDisplays);
-		if (shown) {
+	/** Executed on MIDletEventQueue, without holding any host or presentation lock. */
+	private void deliverPresentationTransition(boolean show, long generation) {
+		if (show) {
+			synchronized (visibilityLock) {
+				// A superseded show never reached the guest; no hide is owed for it.
+				if (!presentationEligible || generation != presentationGeneration || notifiedShown) {
+					return;
+				}
+				notifiedShown = true;
+			}
 			guestKeyLedger.resetForShow();
-			Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.SHOW_NOTIFY));
-			repaintInternal();
+			int widthBeforeShow = width;
+			int heightBeforeShow = height;
+			try {
+				doShowNotify();
+			} catch (Exception e) {
+				Log.e(TAG, "showNotify: ", e);
+			}
+			boolean publish;
+			synchronized (visibilityLock) {
+				publish = presentationEligible && generation == presentationGeneration;
+				if (publish) {
+					// A game may call setFullScreenMode() from showNotify(). It changes
+					// geometry while still hidden; deliver the size event after show.
+					if (width != widthBeforeShow || height != heightBeforeShow) {
+						Display.postEvent(CanvasEvent.getInstance(
+								this, CanvasEvent.SIZE_CHANGED, width, height));
+					}
+					setEffectiveVisibilityLocked(true);
+				}
+			}
+			if (publish) {
+				scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
+				repaintInternal();
+				ViewHandler.postEvent(this::updateVideoDisplays);
+			}
 			return;
 		}
+		// A host hide must be delivered even if a newer show is already pending.
+		if (!notifiedShown) return;
+		notifiedShown = false;
 		PointerEvent.cancel(this);
 		guestKeyLedger.endVisibility();
 		resetControllerBoundaryState();
 		cancelAmbientHostTick();
-		Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.HIDE_NOTIFY));
+		try {
+			doHideNotify();
+		} catch (Exception e) {
+			Log.e(TAG, "hideNotify: ", e);
+		}
 	}
 
 	public void onDraw(android.graphics.Canvas canvas) {
@@ -1200,7 +1240,7 @@ public abstract class Canvas extends Displayable {
 			}
 		}
 		if (post) {
-			Display.postEvent(paintEvent);
+			Display.postSerializedEvent(paintEvent);
 		}
 	}
 
@@ -1208,7 +1248,7 @@ public abstract class Canvas extends Displayable {
 		synchronized (paintEvent.clip) {
 			paintEvent.invalidateClip(this, 0, 0, width, height);
 		}
-		Display.postEvent(paintEvent);
+		Display.postSerializedEvent(paintEvent);
 	}
 
 	// GameCanvas

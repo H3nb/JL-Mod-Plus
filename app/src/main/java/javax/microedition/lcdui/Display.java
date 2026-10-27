@@ -68,6 +68,8 @@ public class Display {
 	}
 
 	private volatile Displayable current;
+	/** UI-confirmed presentation for non-Canvas Displayables. */
+	private Displayable presented;
 	/** Invalidates queued show requests when the displayable changes, including reusing an Alert. */
 	private final AtomicLong currentRequestGeneration = new AtomicLong();
 	/** Serializes current-screen and host-presentation facts. */
@@ -202,6 +204,7 @@ public class Display {
 		Displayable target;
 		long requestGeneration;
 		synchronized (stateLock) {
+			presented = null;
 			hostVisible = false;
 			target = current;
 			requestGeneration = currentRequestGeneration.incrementAndGet();
@@ -220,6 +223,7 @@ public class Display {
 	public void detachHost() {
 		Displayable target;
 		synchronized (stateLock) {
+			presented = null;
 			hostVisible = false;
 			target = current;
 			currentRequestGeneration.incrementAndGet();
@@ -245,6 +249,11 @@ public class Display {
 
 	public static void postEvent(Event event) {
 		queue.postEvent(event);
+	}
+
+	/** Enqueues a presentation callback without executing it under host ownership locks. */
+	public static void postSerializedEvent(Event event) {
+		queue.postQueuedEvent(event);
 	}
 
 	/**
@@ -362,6 +371,7 @@ public class Display {
 				return;
 			}
 			alertDialog.show();
+			presented = expectedAlert;
 			styleAlertDialog(alertDialog);
 			expectedAlert.onDialogShown(alertDialog);
 			if (current != expectedAlert || currentRequestGeneration.get() != requestGeneration) {
@@ -394,6 +404,7 @@ public class Display {
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = null;
+			presented = null;
 			activity = ContextHolder.getActivity();
 		}
 		if (activity != null) {
@@ -411,6 +422,27 @@ public class Display {
 		}
 		if (alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null) {
 			alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(accent);
+		}
+	}
+
+	/** Reports the mounted Displayable; a stale host completion cannot publish an old screen. */
+	public void onHostPresented(Displayable displayable) {
+		synchronized (stateLock) {
+			if (current == displayable) presented = displayable;
+		}
+	}
+
+	/** Clears a dismissed Alert which may remain current while command handling proceeds. */
+	void onHostPresentationEnded(Displayable displayable) {
+		synchronized (stateLock) {
+			if (presented == displayable) presented = null;
+		}
+	}
+
+	boolean isDisplayableShown(Displayable displayable) {
+		synchronized (stateLock) {
+			return current == displayable && presented == displayable
+					&& hostVisible && displayForeground;
 		}
 	}
 

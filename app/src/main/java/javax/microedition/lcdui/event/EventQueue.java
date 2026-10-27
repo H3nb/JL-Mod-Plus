@@ -130,7 +130,7 @@ public class EventQueue implements Runnable {
 	 */
 	public void postEvent(Event event) {
 
-		if (immediate) { // the immediate processing mode is enabled
+		if (immediate && !event.isGuestCallback()) { // guest callbacks always stay serialized
 			Integer integer = loopCounter.get();
 			int loop = (integer != null) ? integer : 0;
 			if (loop > 10) {
@@ -156,6 +156,11 @@ public class EventQueue implements Runnable {
 			}
 		}
 
+		postQueuedEvent(event);
+	}
+
+	/** Posts to MIDletEventQueue without running callbacks on the posting thread. */
+	public void postQueuedEvent(Event event) {
 		boolean empty;
 
 		synchronized (queue) {   // all operations with the queue must be synchronized (on itself)
@@ -205,7 +210,7 @@ public class EventQueue implements Runnable {
 		if (continuation == null) {
 			throw new NullPointerException("continuation");
 		}
-		postEvent(new BarrierEvent(continuation));
+		postQueuedEvent(new BarrierEvent(continuation));
 	}
 
 	private static Runnable continuationAfterCallback(Event event) {

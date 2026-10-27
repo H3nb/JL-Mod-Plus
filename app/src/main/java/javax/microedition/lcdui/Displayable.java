@@ -109,8 +109,8 @@ public abstract class Displayable {
 	}
 
 	public boolean isShown() {
-		MicroActivity activity = ContextHolder.getActivity();
-		return activity != null && activity.isVisible() && activity.getCurrent() == this;
+		Display display = Display.getDisplay(null);
+		return display != null && display.isDisplayableShown(this);
 	}
 
 	public View getDisplayableView() {
