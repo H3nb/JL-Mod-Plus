@@ -67,7 +67,10 @@ internal fun LibrarySearchField(
         onValueChange = onQueryChange,
         modifier = modifier
             .height(librarySearchControlHeight())
-            .onFocusChanged { onFocusChanged(it.hasFocus) }
+            .onFocusChanged {
+                android.util.Log.i("JLIME_DIAG", "Search focus changed: ${it.hasFocus}")
+                onFocusChanged(it.hasFocus)
+            }
             .onPreInterceptKeyBeforeSoftKeyboard { event ->
                 // Back can cancel the IME's first show before any visible inset is reported.
                 // Handle that key while the field still owns focus; gesture Back continues
@@ -94,9 +97,10 @@ internal fun LibrarySearchField(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
             onDone = {
-                // Keep Compose's Done/IME dismissal before releasing editing focus.
+                android.util.Log.i("JLIME_DIAG", "Done callback received")
                 defaultKeyboardAction(ImeAction.Done)
                 focusManager.clearFocus(force = true)
+                android.util.Log.i("JLIME_DIAG", "Done focus-clear returned")
             },
         ),
         shape = MaterialTheme.shapes.large,
