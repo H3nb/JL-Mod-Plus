@@ -192,7 +192,13 @@
     <string name="file_picker_folder_exists">Ya existe un elemento con este nombre.</string>
     <string name="file_picker_create_folder_failed">No se pudo crear la carpeta.</string>
     <string name="file_picker_selection_unavailable">El elemento seleccionado ya no está disponible.</string>
-    <string name="layout_edit_done">✓ Listo</string>
+    <string name="layout_edit_done">Listo</string>
+    <string name="layout_editor_grid_size">Tamaño de cuadrícula</string>
+    <string name="layout_editor_grid_coarse">Gruesa (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fina (32)</string>
+    <string name="layout_editor_snap_on">Ajuste activado</string>
+    <string name="layout_editor_snap_off">Ajuste desactivado</string>
     <string name="layout_edit_save_changes">¿Guardar los cambios de los controles virtuales?</string>
     <string name="layout_edit_discard">Descartar</string>
     <string name="layout_edit_continue">Continuar editando</string>

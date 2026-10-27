@@ -452,7 +452,13 @@
     <string name="config_warning_filter_shader">Lineêre filtering maak die invoer gladder voordat die skermshader dit verwerk en kan die skerpte van die uitvoer verminder.</string>
     <string name="layout_edit_continue">Gaan voort met wysiging</string>
     <string name="layout_edit_discard">Verwerp</string>
-    <string name="layout_edit_done">✓ Klaar</string>
+    <string name="layout_edit_done">Klaar</string>
+    <string name="layout_editor_grid_size">Roostergrootte</string>
+    <string name="layout_editor_grid_coarse">Grof (16)</string>
+    <string name="layout_editor_grid_normal">Normaal (24)</string>
+    <string name="layout_editor_grid_fine">Fyn (32)</string>
+    <string name="layout_editor_snap_on">Snap aan</string>
+    <string name="layout_editor_snap_off">Snap af</string>
     <string name="layout_edit_finish">Voltooi wysiging</string>
     <string name="layout_edit_finished">Wysiging van virtuele beheerknoppies is voltooi.</string>
     <string name="layout_edit_save_changes">Stoor veranderinge aan virtuele beheerknoppies?</string>

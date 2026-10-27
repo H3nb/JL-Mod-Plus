@@ -188,7 +188,13 @@
     <string name="file_picker_folder_exists">Ein Element mit diesem Namen existiert bereits.</string>
     <string name="file_picker_create_folder_failed">Der Ordner konnte nicht erstellt werden.</string>
     <string name="file_picker_selection_unavailable">Das ausgewählte Element ist nicht mehr verfügbar.</string>
-    <string name="layout_edit_done">✓ Fertig</string>
+    <string name="layout_edit_done">Fertig</string>
+    <string name="layout_editor_grid_size">Rastergröße</string>
+    <string name="layout_editor_grid_coarse">Grob (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fein (32)</string>
+    <string name="layout_editor_snap_on">Einrasten an</string>
+    <string name="layout_editor_snap_off">Einrasten aus</string>
     <string name="layout_edit_save_changes">Änderungen an den virtuellen Steuerelementen speichern?</string>
     <string name="layout_edit_discard">Verwerfen</string>
     <string name="layout_edit_continue">Weiter bearbeiten</string>

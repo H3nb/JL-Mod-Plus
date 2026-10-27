@@ -1,0 +1,20 @@
+<!-- MDI magnet with an off strike (Apache-2.0), scaled like the active state. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:scaleX="0.8"
+        android:scaleY="0.8">
+        <path android:fillColor="@android:color/white"
+            android:pathData="M3,7V13A9,9 0,0 0,12 22A9,9 0,0 0,21 13V7H17V13A5,5 0,0 1,12 18A5,5 0,0 1,7 13V7M17,5H21V2H17M3,5H7V2H3"/>
+        <path android:fillColor="@android:color/transparent"
+            android:strokeColor="@android:color/white"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round"
+            android:pathData="M3,21L21,3"/>
+    </group>
+</vector>

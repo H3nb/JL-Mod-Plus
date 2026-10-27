@@ -206,7 +206,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private View overlayView;
 	private boolean obscuresVirtualScreen;
 	private boolean visible = true;
+	public static final int EDITOR_GRID_COARSE = 16;
+	public static final int EDITOR_GRID_NORMAL = 24;
+	public static final int EDITOR_GRID_FINE = 32;
+
 	private int layoutEditMode = LAYOUT_EOF;
+	private boolean editorSnapEnabled = true;
+	private int editorGridDivisions = EDITOR_GRID_NORMAL;
 	private int editedIndex;
 	private float offsetX;
 	private float offsetY;
@@ -1750,6 +1756,37 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return layoutEditMode;
 	}
 
+	/** Session-only editor tools; never part of a saved layout or its dirty baseline. */
+	public void resetLayoutEditorTools() {
+		editorSnapEnabled = true;
+		editorGridDivisions = EDITOR_GRID_NORMAL;
+	}
+
+	public boolean isEditorSnapEnabled() { return editorSnapEnabled; }
+
+	public void setEditorSnapEnabled(boolean enabled) {
+		editorSnapEnabled = enabled;
+	}
+
+	public int getEditorGridDivisions() { return editorGridDivisions; }
+
+	public void setEditorGridDivisions(int divisions) {
+		if (divisions != EDITOR_GRID_COARSE && divisions != EDITOR_GRID_NORMAL &&
+				divisions != EDITOR_GRID_FINE) {
+			throw new IllegalArgumentException("Unsupported editor grid size: " + divisions);
+		}
+		editorGridDivisions = divisions;
+		if (overlayView != null) overlayView.postInvalidate();
+	}
+
+	protected final float editorGridStep(RectF bounds) {
+		return Math.max(4.0f, Math.min(bounds.width(), bounds.height()) / editorGridDivisions);
+	}
+
+	protected final float snapToEditorGrid(float coordinate, float origin, float step) {
+		return origin + Math.round((coordinate - origin) / step) * step;
+	}
+
 	public void setLayoutEditMode(int mode) {
 		layoutEditMode = mode;
 		editedIndex = -1;
@@ -2030,19 +2067,23 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					RectF rect = key.rect;
 					rect.offsetTo(x - offsetX, y - offsetY);
 					key.snapMode = RectSnap.NO_SNAP;
-					for (int i = 0; i < keypad.length; i++) {
-						if (i != editedIndex && findSnap(editedIndex, i)) {
-							break;
+					if (editorSnapEnabled) {
+						for (int i = 0; i < keypad.length; i++) {
+							if (i != editedIndex && findSnap(editedIndex, i)) break;
 						}
 					}
 					if (key.snapMode == RectSnap.NO_SNAP) {
+						if (editorSnapEnabled) {
+							float step = editorGridStep(screen);
+							rect.offsetTo(snapToEditorGrid(rect.left, screen.left, step),
+									snapToEditorGrid(rect.top, screen.top, step));
+						}
+						// A screen anchor reconstructs freely placed keys without persisting NO_SNAP.
 						key.snapMode = RectSnap.getSnap(rect, screen, key.snapOffset);
 						key.snapOrigin = SCREEN;
-						if (Math.abs(key.snapOffset.x) <= snapRadius) {
-							key.snapOffset.x = 0;
-						}
-						if (Math.abs(key.snapOffset.y) <= snapRadius) {
-							key.snapOffset.y = 0;
+						if (editorSnapEnabled) {
+							if (Math.abs(key.snapOffset.x) <= snapRadius) key.snapOffset.x = 0;
+							if (Math.abs(key.snapOffset.y) <= snapRadius) key.snapOffset.y = 0;
 						}
 					}
 					snapKey(editedIndex, 0);
@@ -2119,19 +2160,17 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				VirtualKey vKey = keypad[key];
 				if (vKey.snapOrigin == editedIndex) {
 					vKey.snapMode = RectSnap.NO_SNAP;
-					for (int i = 0; i < KEYBOARD_SIZE; i++) {
-						if (i != key && findSnap(key, i)) {
-							break;
+					if (editorSnapEnabled) {
+						for (int i = 0; i < KEYBOARD_SIZE; i++) {
+							if (i != key && findSnap(key, i)) break;
 						}
 					}
 					if (vKey.snapMode == RectSnap.NO_SNAP) {
 						vKey.snapMode = RectSnap.getSnap(vKey.rect, screen, vKey.snapOffset);
 						vKey.snapOrigin = SCREEN;
-						if (Math.abs(vKey.snapOffset.x) <= snapRadius) {
-							vKey.snapOffset.x = 0;
-						}
-						if (Math.abs(vKey.snapOffset.y) <= snapRadius) {
-							vKey.snapOffset.y = 0;
+						if (editorSnapEnabled) {
+							if (Math.abs(vKey.snapOffset.x) <= snapRadius) vKey.snapOffset.x = 0;
+							if (Math.abs(vKey.snapOffset.y) <= snapRadius) vKey.snapOffset.y = 0;
 						}
 					}
 					snapKey(key, 0);

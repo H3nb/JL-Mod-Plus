@@ -456,7 +456,13 @@
     <string name="config_warning_filter_shader">El filtratge lineal suavitza l\'entrada abans que el shader de pantalla la processi i pot reduir la nitidesa del resultat.</string>
     <string name="layout_edit_continue">Continua editant</string>
     <string name="layout_edit_discard">Descarta</string>
-    <string name="layout_edit_done">✓ Fet</string>
+    <string name="layout_edit_done">Fet</string>
+    <string name="layout_editor_grid_size">Mida de la quadrícula</string>
+    <string name="layout_editor_grid_coarse">Gruixuda (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fina (32)</string>
+    <string name="layout_editor_snap_on">Ajust activat</string>
+    <string name="layout_editor_snap_off">Ajust desactivat</string>
     <string name="layout_edit_finish">Finalitza l\'edició</string>
     <string name="layout_edit_finished">S\'ha acabat l\'edició dels controls virtuals.</string>
     <string name="layout_edit_save_changes">Voleu desar els canvis als controls virtuals?</string>

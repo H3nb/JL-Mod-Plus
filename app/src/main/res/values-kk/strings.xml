@@ -434,7 +434,13 @@
     <string name="config_virtual_controls_preview_pressed">Басылған</string>
     <string name="layout_edit_continue">Өңдеуді жалғастыру</string>
     <string name="layout_edit_discard">Өзгерістерден бас тарту</string>
-    <string name="layout_edit_done">✓ Дайын</string>
+    <string name="layout_edit_done">Дайын</string>
+    <string name="layout_editor_grid_size">Тор өлшемі</string>
+    <string name="layout_editor_grid_coarse">Ірі (16)</string>
+    <string name="layout_editor_grid_normal">Қалыпты (24)</string>
+    <string name="layout_editor_grid_fine">Ұсақ (32)</string>
+    <string name="layout_editor_snap_on">Бекіту қосулы</string>
+    <string name="layout_editor_snap_off">Бекіту өшірулі</string>
     <string name="layout_edit_finish">Өңдеуді аяқтау</string>
     <string name="layout_edit_finished">Виртуалды басқару элементтерін өңдеу аяқталды.</string>
     <string name="layout_edit_save_changes">Виртуалды басқару элементтерінің өзгерістерін сақтау керек пе?</string>

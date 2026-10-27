@@ -457,7 +457,13 @@
     <string name="config_warning_filter_shader">סינון ליניארי מחליק את הקלט לפני ששיידר המסך מעבד אותו, ועשוי להפחית את חדות הפלט.</string>
     <string name="layout_edit_continue">המשך עריכה</string>
     <string name="layout_edit_discard">ביטול שינויים</string>
-    <string name="layout_edit_done">✓ סיום</string>
+    <string name="layout_edit_done">סיום</string>
+    <string name="layout_editor_grid_size">גודל רשת</string>
+    <string name="layout_editor_grid_coarse">גסה (16)</string>
+    <string name="layout_editor_grid_normal">רגילה (24)</string>
+    <string name="layout_editor_grid_fine">עדינה (32)</string>
+    <string name="layout_editor_snap_on">הצמדה פעילה</string>
+    <string name="layout_editor_snap_off">הצמדה כבויה</string>
     <string name="layout_edit_finish">סיום עריכה</string>
     <string name="layout_edit_finished">עריכת הפקדים הווירטואליים הושלמה.</string>
     <string name="layout_edit_save_changes">לשמור שינויים בפקדים הווירטואליים?</string>

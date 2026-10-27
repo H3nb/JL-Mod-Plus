@@ -361,7 +361,13 @@
     <string name="config_virtual_controls_preview_pressed">ඔබා ඇත</string>
     <string name="layout_edit_continue">සංස්කරණය කරගෙන යන්න</string>
     <string name="layout_edit_discard">වෙනස්කම් ඉවත දමන්න</string>
-    <string name="layout_edit_done">✓ නිමයි</string>
+    <string name="layout_edit_done">නිමයි</string>
+    <string name="layout_editor_grid_size">ජාලයේ ප්‍රමාණය</string>
+    <string name="layout_editor_grid_coarse">විශාල (16)</string>
+    <string name="layout_editor_grid_normal">සාමාන්‍ය (24)</string>
+    <string name="layout_editor_grid_fine">සිහින් (32)</string>
+    <string name="layout_editor_snap_on">ස්නැප් සක්‍රියයි</string>
+    <string name="layout_editor_snap_off">ස්නැප් අක්‍රියයි</string>
     <string name="layout_edit_finish">සංස්කරණය අවසන් කරන්න</string>
     <string name="layout_switch">පාලක පිරිසැලසුම තෝරන්න</string>
     <string name="mapping_dialog_assigned_inputs">පැවරූ ආදාන</string>

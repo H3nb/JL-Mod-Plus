@@ -556,7 +556,13 @@
     <string name="config_warning_filter_shader">स्क्रीन शेडर द्वारा प्रोसेस किए जाने से पहले लीनियर फ़िल्टरिंग इनपुट को चिकना करती है और आउटपुट की तीक्ष्णता घट सकती है।</string>
     <string name="layout_edit_continue">संपादन जारी रखें</string>
     <string name="layout_edit_discard">त्यागें</string>
-    <string name="layout_edit_done">✓ हो गया</string>
+    <string name="layout_edit_done">हो गया</string>
+    <string name="layout_editor_grid_size">ग्रिड का आकार</string>
+    <string name="layout_editor_grid_coarse">मोटा (16)</string>
+    <string name="layout_editor_grid_normal">सामान्य (24)</string>
+    <string name="layout_editor_grid_fine">महीन (32)</string>
+    <string name="layout_editor_snap_on">स्नैप चालू</string>
+    <string name="layout_editor_snap_off">स्नैप बंद</string>
     <string name="layout_edit_save_changes">वर्चुअल कंट्रोल के बदलाव सहेजें?</string>
     <string name="mapping_dialog_add_input">आप एक से अधिक भौतिक इनपुट असाइन कर सकते हैं।</string>
     <string name="mapping_dialog_assigned_inputs">असाइन किए गए इनपुट</string>

@@ -564,7 +564,13 @@
     <string name="config_warning_filter_shader">Лінійна фільтрація згладжує вхідне зображення перед обробкою шейдером екрана й може знизити чіткість результату.</string>
     <string name="layout_edit_continue">Продовжити редагування</string>
     <string name="layout_edit_discard">Відкинути</string>
-    <string name="layout_edit_done">✓ Готово</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Розмір сітки</string>
+    <string name="layout_editor_grid_coarse">Велика (16)</string>
+    <string name="layout_editor_grid_normal">Звичайна (24)</string>
+    <string name="layout_editor_grid_fine">Дрібна (32)</string>
+    <string name="layout_editor_snap_on">Прив’язка ввімкнена</string>
+    <string name="layout_editor_snap_off">Прив’язка вимкнена</string>
     <string name="layout_edit_save_changes">Зберегти зміни віртуальних елементів керування?</string>
     <string name="mapping_dialog_add_input">Можна призначити кілька фізичних входів.</string>
     <string name="mapping_dialog_assigned_inputs">Призначені входи</string>

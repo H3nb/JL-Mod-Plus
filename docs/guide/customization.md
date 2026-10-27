@@ -59,6 +59,21 @@ Want different artwork for one game only? Duplicate the set, edit that copy, and
 
 Want buttons in a different position, with different sizes or key mappings? Change the **virtual-control layout or mapping**, not the skin artwork. Skins do not move hitboxes or change keys sent to the MIDlet.
 
+## Editing the virtual-control layout
+
+During a game, open **Virtual controls → Edit layout** in the runtime menu.
+Drag a control to move it; use two fingers to resize ordinary buttons or pinch
+the D-pad or analog stick. The floating panel contains **Show controls** (choose
+which buttons are visible), **Grid size** (coarse, normal, or fine), and **Snap**
+(on or off). The grid remains visible while editing; disabling Snap lets you
+position controls freely. The grid size changes how subsequent movements snap,
+not the controls you have already placed.
+
+Tap **Done** when finished. If you changed the layout, choose whether to save,
+discard, or keep editing. Grid size and Snap are editing aids only: each new
+editing session starts with the normal grid and Snap enabled. They are not saved
+as part of the MIDlet's custom layout.
+
 ## SVG artwork: what is actually supported?
 
 JL-Mod Plus accepts **static, self-contained SVG** for screen skins, virtual-control skins, and Library icon imports. This does not add Java ME **JSR-226** support inside games.

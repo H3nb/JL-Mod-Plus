@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Pure geometry policy for the editor-only Done button. */
+/** Pure geometry policy for the editor's floating action panel. */
 public final class EditorDonePlacement {
 	private static final float EPS = 0.01f;
 

@@ -60,6 +60,13 @@ for identifying the external donation provider. Sociabuzz branding is not
 licensed under JL-Mod Plus's Apache-2.0 license; all branding rights remain
 with their respective owner. This graphic does not imply Sociabuzz endorsement.
 
+### Virtual-control editor icon assets
+
+| Asset | Source | Variant / provenance | License |
+| --- | --- | --- | --- |
+| `ic_editor_grid.xml` | `google/material-design-icons`, symbol `grid_3x3` | Material Symbols outlined, fill 0, weight 400, grade 0, optical size 24; pinned revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_editor_snap.xml`, `ic_editor_snap_off.xml` | `Templarian/MaterialDesign`, `svg/magnet.svg` | Pictogrammers Material Design Icons magnet; pinned revision `2424e748e0cc63ab7b9c095a099b9fe239b737c0`. The off variant adds a diagonal strike to the same shape. | Apache-2.0 |
+
 ### GitHub Octicons asset
 
 `app/src/main/res/drawable/ic_github_mark.xml` is adapted from GitHub's

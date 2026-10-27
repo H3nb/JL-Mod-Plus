@@ -576,7 +576,13 @@
     <string name="config_warning_filter_shader">ينعّم الترشيح الخطي الإدخال قبل معالجة مظلّل الشاشة له، وقد يقلل حدة الناتج.</string>
     <string name="layout_edit_continue">متابعة التحرير</string>
     <string name="layout_edit_discard">تجاهل</string>
-    <string name="layout_edit_done">✓ تم</string>
+    <string name="layout_edit_done">تم</string>
+    <string name="layout_editor_grid_size">حجم الشبكة</string>
+    <string name="layout_editor_grid_coarse">خشنة (16)</string>
+    <string name="layout_editor_grid_normal">عادية (24)</string>
+    <string name="layout_editor_grid_fine">دقيقة (32)</string>
+    <string name="layout_editor_snap_on">الالتقاط مفعّل</string>
+    <string name="layout_editor_snap_off">الالتقاط معطّل</string>
     <string name="layout_edit_save_changes">هل تريد حفظ تغييرات أدوات التحكم الافتراضية؟</string>
     <string name="mapping_dialog_add_input">يمكنك تعيين أكثر من إدخال فعلي واحد.</string>
     <string name="mapping_dialog_assigned_inputs">الإدخالات المعيّنة</string>

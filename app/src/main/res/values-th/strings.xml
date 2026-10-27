@@ -482,7 +482,13 @@
     <string name="config_warning_filter_shader">การกรองเชิงเส้นทำให้อินพุตเรียบขึ้นก่อนที่เชดเดอร์หน้าจอจะประมวลผล และอาจลดความคมชัดของผลลัพธ์</string>
     <string name="layout_edit_continue">แก้ไขต่อ</string>
     <string name="layout_edit_discard">ละทิ้ง</string>
-    <string name="layout_edit_done">✓ เสร็จสิ้น</string>
+    <string name="layout_edit_done">เสร็จสิ้น</string>
+    <string name="layout_editor_grid_size">ขนาดกริด</string>
+    <string name="layout_editor_grid_coarse">หยาบ (16)</string>
+    <string name="layout_editor_grid_normal">ปกติ (24)</string>
+    <string name="layout_editor_grid_fine">ละเอียด (32)</string>
+    <string name="layout_editor_snap_on">เปิดการดูดติด</string>
+    <string name="layout_editor_snap_off">ปิดการดูดติด</string>
     <string name="layout_edit_save_changes">บันทึกการเปลี่ยนแปลงตัวควบคุมเสมือนหรือไม่?</string>
     <string name="mapping_dialog_add_input">กำหนดอินพุตจากอุปกรณ์จริงได้มากกว่าหนึ่งรายการ</string>
     <string name="mapping_dialog_assigned_inputs">อินพุตที่กำหนดแล้ว</string>

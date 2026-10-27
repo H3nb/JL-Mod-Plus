@@ -163,7 +163,13 @@
     <string name="file_picker_create_folder_failed">Kan de map niet maken.</string>
     <string name="file_picker_selection_unavailable">Het geselecteerde item is niet meer beschikbaar.</string>
     <string name="invalid_resolution_not_saved">Ongeldige resolutie. Wijzigingen zijn niet opgeslagen.</string>
-    <string name="layout_edit_done">✓ Gereed</string>
+    <string name="layout_edit_done">Gereed</string>
+    <string name="layout_editor_grid_size">Rastergrootte</string>
+    <string name="layout_editor_grid_coarse">Grof (16)</string>
+    <string name="layout_editor_grid_normal">Normaal (24)</string>
+    <string name="layout_editor_grid_fine">Fijn (32)</string>
+    <string name="layout_editor_snap_on">Uitlijnen aan</string>
+    <string name="layout_editor_snap_off">Uitlijnen uit</string>
     <string name="layout_edit_save_changes">Wijzigingen aan virtuele bediening opslaan?</string>
     <string name="layout_edit_discard">Verwerpen</string>
     <string name="layout_edit_continue">Doorgaan met bewerken</string>

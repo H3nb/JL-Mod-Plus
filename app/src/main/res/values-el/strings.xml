@@ -451,7 +451,13 @@
     <string name="config_warning_filter_shader">Το γραμμικό φιλτράρισμα εξομαλύνει την είσοδο πριν από την επεξεργασία της από το shader οθόνης και μπορεί να μειώσει την ευκρίνεια του αποτελέσματος.</string>
     <string name="layout_edit_continue">Συνέχιση επεξεργασίας</string>
     <string name="layout_edit_discard">Απόρριψη</string>
-    <string name="layout_edit_done">✓ Τέλος</string>
+    <string name="layout_edit_done">Τέλος</string>
+    <string name="layout_editor_grid_size">Μέγεθος πλέγματος</string>
+    <string name="layout_editor_grid_coarse">Αραιό (16)</string>
+    <string name="layout_editor_grid_normal">Κανονικό (24)</string>
+    <string name="layout_editor_grid_fine">Πυκνό (32)</string>
+    <string name="layout_editor_snap_on">Προσκόλληση ενεργή</string>
+    <string name="layout_editor_snap_off">Προσκόλληση ανενεργή</string>
     <string name="layout_edit_finish">Ολοκλήρωση επεξεργασίας</string>
     <string name="layout_edit_finished">Η επεξεργασία των εικονικών χειριστηρίων ολοκληρώθηκε.</string>
     <string name="layout_edit_save_changes">Να αποθηκευτούν οι αλλαγές στα εικονικά χειριστήρια;</string>

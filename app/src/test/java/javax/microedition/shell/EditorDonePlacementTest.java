@@ -98,6 +98,19 @@ public class EditorDonePlacementTest {
 	}
 
 	@Test
+	public void stackedEditorPanelStaysClearOfControlsAndInsideViewport() {
+		EditorDonePlacement.Box usable = box(0, 0, 360, 640);
+		EditorDonePlacement.Box centerControl = box(90, 210, 270, 430);
+		EditorDonePlacement.Box panel = EditorDonePlacement.place(
+				usable, 152, 105, 10, List.of(centerControl), null);
+		assertZeroOverlap(panel, centerControl);
+		assertTrue(panel.left >= usable.left - EPS);
+		assertTrue(panel.top >= usable.top - EPS);
+		assertTrue(panel.right <= usable.right + EPS);
+		assertTrue(panel.bottom <= usable.bottom + EPS);
+	}
+
+	@Test
 	public void tinyViewportClampsButtonInsideBounds() {
 		EditorDonePlacement.Box usable = box(10, 20, 60, 50);
 		EditorDonePlacement.Box p = EditorDonePlacement.place(

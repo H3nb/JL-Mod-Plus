@@ -544,7 +544,13 @@
     <string name="config_warning_filter_shader">Lọc tuyến tính làm mượt đầu vào trước khi bộ đổ bóng màn hình xử lý và có thể làm giảm độ sắc nét của đầu ra.</string>
     <string name="layout_edit_continue">Tiếp tục chỉnh sửa</string>
     <string name="layout_edit_discard">Bỏ thay đổi</string>
-    <string name="layout_edit_done">✓ Xong</string>
+    <string name="layout_edit_done">Xong</string>
+    <string name="layout_editor_grid_size">Kích thước lưới</string>
+    <string name="layout_editor_grid_coarse">Thưa (16)</string>
+    <string name="layout_editor_grid_normal">Bình thường (24)</string>
+    <string name="layout_editor_grid_fine">Dày (32)</string>
+    <string name="layout_editor_snap_on">Bật hút lưới</string>
+    <string name="layout_editor_snap_off">Tắt hút lưới</string>
     <string name="layout_edit_save_changes">Lưu thay đổi điều khiển ảo?</string>
     <string name="mapping_dialog_add_input">Bạn có thể gán nhiều đầu vào vật lý.</string>
     <string name="mapping_dialog_assigned_inputs">Đầu vào đã gán</string>

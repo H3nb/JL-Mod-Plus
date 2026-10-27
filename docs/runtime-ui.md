@@ -55,6 +55,18 @@ The finish-layout item is visible only while the virtual keyboard is in an
 edit mode. The Canvas-only group remains absent on `Form` and other
 non-Canvas Displayables.
 
+The Canvas layout editor groups **Show controls**, **Grid size**, and **Snap**
+above **Done** in one automatically placed host panel. Done keeps the existing
+transactional Save/Discard/Continue behavior; showing controls reuses the runtime
+dialog. The visual grid stays visible during editing, with coarse (16), normal
+(24, default), and fine (32) divisions of the shorter editor dimension. Snap is
+on by default and can be disabled for free placement. The grid setting affects
+subsequent movements, not positions already edited. These tool settings reset
+for each editing session and are not serialized with the custom layout. Legacy
+keys retain valid screen/key anchors even when snapping is disabled, preserving
+the existing layout format and orientation-specific drafts. The host places and
+hides the entire panel together during control manipulation.
+
 ## Geometry and lifecycle safeguards
 
 - Host presentation must not silently alter guest LCD/Canvas geometry or

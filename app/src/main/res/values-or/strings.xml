@@ -407,7 +407,13 @@
     <string name="config_virtual_controls_preview_pressed">ଦବାଯାଇଛି</string>
     <string name="layout_edit_continue">ସମ୍ପାଦନା ଜାରି ରଖନ୍ତୁ</string>
     <string name="layout_edit_discard">ପରିବର୍ତ୍ତନ ତ୍ୟାଗ କରନ୍ତୁ</string>
-    <string name="layout_edit_done">✓ ସମାପ୍ତ</string>
+    <string name="layout_edit_done">ସମାପ୍ତ</string>
+    <string name="layout_editor_grid_size">ଗ୍ରିଡ୍ ଆକାର</string>
+    <string name="layout_editor_grid_coarse">ମୋଟା (16)</string>
+    <string name="layout_editor_grid_normal">ସାଧାରଣ (24)</string>
+    <string name="layout_editor_grid_fine">ସୂକ୍ଷ୍ମ (32)</string>
+    <string name="layout_editor_snap_on">ସ୍ନାପ୍ ଚାଲୁ</string>
+    <string name="layout_editor_snap_off">ସ୍ନାପ୍ ବନ୍ଦ</string>
     <string name="layout_edit_finish">ସମ୍ପାଦନା ଶେଷ କରନ୍ତୁ</string>
     <string name="layout_switch">ନିୟନ୍ତ୍ରଣର ବିନ୍ୟାସ ବାଛନ୍ତୁ</string>
     <string name="mapping_dialog_assigned_inputs">ନିର୍ଦ୍ଧାରିତ ଇନପୁଟ୍</string>

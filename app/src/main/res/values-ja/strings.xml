@@ -507,7 +507,13 @@
     <string name="config_warning_filter_shader">線形フィルタリングは画面シェーダーの処理前に入力を滑らかにするため、出力の鮮明さが低下する場合があります。</string>
     <string name="layout_edit_continue">編集を続ける</string>
     <string name="layout_edit_discard">破棄</string>
-    <string name="layout_edit_done">✓ 完了</string>
+    <string name="layout_edit_done">完了</string>
+    <string name="layout_editor_grid_size">グリッドサイズ</string>
+    <string name="layout_editor_grid_coarse">粗い (16)</string>
+    <string name="layout_editor_grid_normal">標準 (24)</string>
+    <string name="layout_editor_grid_fine">細かい (32)</string>
+    <string name="layout_editor_snap_on">スナップ オン</string>
+    <string name="layout_editor_snap_off">スナップ オフ</string>
     <string name="layout_edit_save_changes">仮想コントロールの変更を保存しますか？</string>
     <string name="mapping_dialog_add_input">複数の物理入力を割り当てられます。</string>
     <string name="mapping_dialog_assigned_inputs">割り当て済みの入力</string>

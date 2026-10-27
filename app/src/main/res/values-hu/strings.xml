@@ -517,7 +517,13 @@
     <string name="config_warning_filter_shader">A lineáris szűrés kisimítja a bemenetet, mielőtt a képernyő shaderje feldolgozza, és csökkentheti a kimenet élességét.</string>
     <string name="layout_edit_continue">Szerkesztés folytatása</string>
     <string name="layout_edit_discard">Elvetés</string>
-    <string name="layout_edit_done">✓ Kész</string>
+    <string name="layout_edit_done">Kész</string>
+    <string name="layout_editor_grid_size">Rácsméret</string>
+    <string name="layout_editor_grid_coarse">Ritka (16)</string>
+    <string name="layout_editor_grid_normal">Normál (24)</string>
+    <string name="layout_editor_grid_fine">Sűrű (32)</string>
+    <string name="layout_editor_snap_on">Illesztés be</string>
+    <string name="layout_editor_snap_off">Illesztés ki</string>
     <string name="layout_edit_save_changes">Menti a virtuális vezérlők módosításait?</string>
     <string name="mapping_dialog_add_input">Egynél több fizikai bemenetet is hozzárendelhet.</string>
     <string name="mapping_dialog_assigned_inputs">Hozzárendelt bemenetek</string>
