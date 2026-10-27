@@ -378,14 +378,21 @@ public class Display {
 
 	/** Updates host foreground access without changing the guest's current Displayable. */
 	public void setHostVisible(boolean visible) {
+		Canvas hiddenCanvas = null;
 		synchronized (stateLock) {
 			if (hostVisible == visible) {
 				return;
 			}
 			hostVisible = visible;
-			if (!visible) cancelScreenChangeLocked();
+			if (!visible) {
+				cancelScreenChangeLocked();
+				if (current instanceof Canvas canvas) hiddenCanvas = canvas;
+			}
 			reconcileCanvasLocked(current, true);
 		}
+		// MicroActivity calls this on Android main. Finish UI-owned cancellation now,
+		// rather than allowing a rapid Home/return to bypass its queued cleanup.
+		if (hiddenCanvas != null) hiddenCanvas.endHostPresentation();
 	}
 
 	public static void postEvent(Event event) {

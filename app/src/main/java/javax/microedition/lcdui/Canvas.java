@@ -191,6 +191,8 @@ public abstract class Canvas extends Displayable {
 	private Display.ScreenChange screenChange;
 	/** LCDUI event-thread state; pairs delivered show/hide callbacks. */
 	private boolean notifiedShown;
+	/** Generation of the show actually delivered to the guest, not merely requested. */
+	private long notifiedShowGeneration;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
 	private static Image offscreen;
@@ -788,6 +790,9 @@ public abstract class Canvas extends Displayable {
 			changed = reconcilePresentationLocked();
 		}
 		if (changed) ViewHandler.postEvent(this::updateVideoDisplays);
+		// Surface callbacks run on Android main. Complete host input cleanup before a
+		// subsequent surfaceCreated can make this Canvas eligible for another show.
+		if (changed && !usable) endHostPresentation();
 	}
 
 	/** Called under visibilityLock, possibly while Display owns its state lock. */
@@ -800,7 +805,12 @@ public abstract class Canvas extends Displayable {
 		if (!eligible) {
 			setEffectiveVisibilityLocked(false);
 			if (screenChange != null) screenChange.surfaceUnavailable();
-			// The host owns input cancellation; it must not wait behind a guest callback.
+			// Release guest input ownership at the actual hide edge, before another show
+			// can commit. These operations only enqueue guest callbacks; they never run
+			// guest code under the presentation lock.
+			PointerEvent.cancel(this);
+			guestKeyLedger.endVisibility();
+			// Android-owned controller/overlay state must be cleared on the main looper.
 			ViewHandler.postEvent(this::endHostPresentation);
 		}
 		if (eligible && screenChange != null) {
@@ -826,14 +836,12 @@ public abstract class Canvas extends Displayable {
 		}
 	}
 
-	/** Runs on Android main, independently of the serialized guest hideNotify. */
-	private void endHostPresentation() {
+	/** Android-main cleanup; called directly at host edges or by a deferred guest hide. */
+	void endHostPresentation() {
 		synchronized (visibilityLock) {
-			// A queued hide cleanup may arrive after a later show has committed. Do not
-			// release keys, pointers or host work belonging to that new visible interval.
+			// A delayed cleanup must not discard controller input from the next interval.
+			// Guest pointer/key ownership was already cancelled at the hide edge.
 			if (visible) return;
-			PointerEvent.cancel(this);
-			guestKeyLedger.endVisibility();
 			resetControllerBoundaryState();
 			cancelAmbientHostTick();
 		}
@@ -848,6 +856,7 @@ public abstract class Canvas extends Displayable {
 					return;
 				}
 				notifiedShown = true;
+				notifiedShowGeneration = generation;
 			}
 			guestKeyLedger.resetForShow();
 			int widthBeforeShow = width;
@@ -877,8 +886,9 @@ public abstract class Canvas extends Displayable {
 			}
 			return;
 		}
-		// A host hide must be delivered even if a newer show is already pending.
-		if (!notifiedShown) return;
+		// A hide may be queued after ScreenChange while that transaction is not yet
+		// ready. If it later shows a newer generation, this old hide is not its pair.
+		if (!notifiedShown || generation < notifiedShowGeneration) return;
 		notifiedShown = false;
 		try {
 			doHideNotify();
