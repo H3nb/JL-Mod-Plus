@@ -508,7 +508,7 @@ public class M3GRuntimeTest {
 	 * guest class initializes. Production code continues to use
 	 * {@code System.loadLibrary("javam3g")} from the guest API.
 	 */
-	private static synchronized void loadTargetNativeLibraries() {
+	static synchronized void loadTargetNativeLibraries() {
 		Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		try {
 			File nativeDirectory = targetNativeDirectory(target);
