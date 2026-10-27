@@ -99,7 +99,13 @@ public class Display {
 		private long showGeneration;
 		private final Runnable readinessDeadline = () -> {
 			synchronized (stateLock) {
-				if (screenChange != this || isReady()) return;
+				if (screenChange != this) return;
+				if (isReady()) {
+					// An earlier guest callback can still occupy the event queue. Keep watching
+					// until this ready transaction is consumed or its surface becomes unavailable.
+					ViewHandler.postDelayed(readinessDeadline, SCREEN_CHANGE_MAX_WAIT_MS);
+					return;
+				}
 				Log.w("Display", "Canvas presentation did not become ready; releasing LCDUI queue");
 				cancelScreenChangeLocked();
 			}
