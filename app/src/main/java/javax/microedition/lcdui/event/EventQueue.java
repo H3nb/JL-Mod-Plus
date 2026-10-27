@@ -130,7 +130,7 @@ public class EventQueue implements Runnable {
 	 */
 	public void postEvent(Event event) {
 
-		if (immediate) { // the immediate processing mode is enabled
+		if (immediate && !event.isGuestCallback() && event.isReady()) { // guest callbacks always stay serialized
 			Integer integer = loopCounter.get();
 			int loop = (integer != null) ? integer : 0;
 			if (loop > 10) {
@@ -156,6 +156,11 @@ public class EventQueue implements Runnable {
 			}
 		}
 
+		postQueuedEvent(event);
+	}
+
+	/** Posts to MIDletEventQueue without running callbacks on the posting thread. */
+	public void postQueuedEvent(Event event) {
 		boolean empty;
 
 		synchronized (queue) {   // all operations with the queue must be synchronized (on itself)
@@ -201,11 +206,22 @@ public class EventQueue implements Runnable {
 	 * Runs {@code continuation} after every event already ahead of this barrier has completed, and
 	 * after the callback serialization lock for the barrier itself has been released.
 	 */
+	/** Wakes an event queue parked on an unfinished host transition. */
+	public void signalEventReady() {
+		synchronized (waiter) {
+			if (running) {
+				continuerun = true;
+			} else {
+				waiter.notifyAll();
+			}
+		}
+	}
+
 	public void postBarrier(Runnable continuation) {
 		if (continuation == null) {
 			throw new NullPointerException("continuation");
 		}
-		postEvent(new BarrierEvent(continuation));
+		postQueuedEvent(new BarrierEvent(continuation));
 	}
 
 	private static Runnable continuationAfterCallback(Event event) {
@@ -271,7 +287,12 @@ public class EventQueue implements Runnable {
 
 				Event event;
 				synchronized (queue) {
-					event = queue.removeFirst();
+					event = queue.getFirst();
+					if (event != null && event.isReady()) {
+						queue.removeFirst();
+					} else {
+						event = null;
+					}
 				}
 
 				if (event != null) {

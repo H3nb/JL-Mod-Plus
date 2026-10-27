@@ -69,6 +69,34 @@ keys retain valid screen/key anchors even when snapping is disabled, preserving
 the existing layout format and orientation-specific drafts. The host places and
 hides the entire panel together during control manipulation.
 
+## LCDUI presentation authority
+
+`Display` owns the current-screen identity and MIDlet foreground grant. The Android host
+confirms mounted screens and shown Alerts; a stale or unmounted `Displayable` cannot
+report `isShown() == true`. Canvas also requires a usable presentation surface.
+
+The Canvas host state requests presentation without calling guest code. Its hide edge
+immediately revokes rendering and cancels guest pointer/key ownership. Android-owned
+controller state is cleaned on the main looper, before a resumed host/surface can
+accept new input; delayed cleanup must not erase input from the new visible interval.
+Its show edge
+becomes guest-visible after `showNotify()` returns. Both notifications run serially on the existing LCDUI queue,
+never inline under host locks. A superseded show is skipped; a delivered show retains
+its hide notification. An older queued hide cannot close a later delivered show. Rendering and input do not run before show notification.
+For a foreground `setCurrent(Canvas)` request, the host mount and usable-surface
+facts complete the earlier LCDUI screen-change transaction before later callbacks
+run. The existing Canvas dispatcher finishes `showNotify()` and commits visibility
+on that event position; initial repaint still uses the normal rendering path.
+The transaction does not await a GPU-presented frame. Superseded, backgrounded,
+detached, or failed host requests release their position without fabricating show.
+If Android never supplies a usable surface, a bounded host-side readiness deadline
+releases the queued callbacks without reporting the Canvas as shown. This preserves
+LCDUI callback progress on a failed presentation; it cannot make a game that requires
+a visible Canvas start successfully when no surface exists.
+Outside such a transaction, `callSerially()` remains independent of visibility;
+MIDlet lifecycle stays on MidletMain so applications may wait for presentation
+during `startApp()`.
+
 ## Geometry and lifecycle safeguards
 
 - Host presentation must not silently alter guest LCD/Canvas geometry or

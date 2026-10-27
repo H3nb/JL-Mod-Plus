@@ -49,6 +49,7 @@ public class CanvasEvent extends Event {
 	private int width, height;
 	private long queuedAtNanos;
 	private long queuedGeneration;
+	private long dispatchGeneration;
 
 	private CanvasEvent() {}
 
@@ -86,6 +87,7 @@ public class CanvasEvent extends Event {
 		instance.eventType = eventType;
 		instance.queuedAtNanos = 0L;
 		instance.queuedGeneration = 0L;
+		instance.dispatchGeneration = 0L;
 		instance.asGuestCallback();
 		return instance;
 	}
@@ -100,6 +102,11 @@ public class CanvasEvent extends Event {
 			}
 		}
 		queuedAtNanos = 0L;
+		// Input from a previous visibility interval must not leak after hide/return.
+		if (eventType >= KEY_PRESSED && eventType <= POINTER_RELEASED
+				&& (!canvas.isShown() || dispatchGeneration != canvas.getPerformanceGeneration())) {
+			return;
+		}
 		switch (eventType) {
 			case KEY_PRESSED -> {
 				try {
@@ -172,12 +179,14 @@ public class CanvasEvent extends Event {
 		canvas = null;
 		queuedAtNanos = 0L;
 		queuedGeneration = 0L;
+		dispatchGeneration = 0L;
 		recycled.push(this);
 	}
 
 	@Override
 	public void enterQueue() {
 		if (eventType >= KEY_PRESSED && eventType <= POINTER_RELEASED) {
+			dispatchGeneration = canvas.getPerformanceGeneration();
 			PerformanceDiagnostics diagnostics = canvas.getPerformanceDiagnostics();
 			if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.INPUT_QUEUE)) {
 				queuedGeneration = canvas.getPerformanceGeneration();

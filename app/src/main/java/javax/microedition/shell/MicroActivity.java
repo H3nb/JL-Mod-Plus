@@ -2078,31 +2078,45 @@ public class MicroActivity extends AppCompatActivity {
 			if (!ownsDisplayRequest(requestGeneration)) {
 				return;
 			}
-			closeOptionsMenu();
-			if (controllerInputRouter != null) {
-				controllerInputRouter.onTargetChanged();
-			}
-			Displayable previous = presentedDisplayable;
-			boolean replaceMountedView = previous != next;
-			if (replaceMountedView) {
-				if (previous != null) {
-					previous.clearDisplayableView();
+			boolean mounted = false;
+			try {
+				closeOptionsMenu();
+				if (controllerInputRouter != null) {
+					controllerInputRouter.onTargetChanged();
 				}
-				binding.displayableContainer.removeAllViews();
+				Displayable previous = presentedDisplayable;
+				boolean replaceMountedView = previous != next;
+				if (replaceMountedView) {
+					if (previous != null) {
+						previous.clearDisplayableView();
+					}
+					binding.displayableContainer.removeAllViews();
+				}
+				GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
+				applySystemUi(chrome, next);
+				configureDisplayCutoutWindow();
+				updateRuntimeMenuState(next);
+				applyGuestInsets(next);
+				if (replaceMountedView && next != null) {
+					binding.displayableContainer.addView(next.getDisplayableView());
+				}
+				presentedDisplayable = next;
+				Display display = Display.getDisplay(null);
+				if (display != null) display.onHostPresented(next, requestGeneration);
+				refreshRuntimeBackground();
+				// onResume may precede the first mounted guest; resolve its insets when attached.
+				ViewCompat.requestApplyInsets(binding.getRoot());
+				binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
+				mounted = true;
+				if (display != null) display.onHostMounted(next, requestGeneration, MicroActivity.this);
+			} finally {
+				if (!mounted) {
+					Display display = Display.getDisplay(null);
+					if (display != null) {
+						display.onHostMountFailed(next, requestGeneration, MicroActivity.this);
+					}
+				}
 			}
-			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
-			applySystemUi(chrome, next);
-			configureDisplayCutoutWindow();
-			updateRuntimeMenuState(next);
-			applyGuestInsets(next);
-			if (replaceMountedView && next != null) {
-				binding.displayableContainer.addView(next.getDisplayableView());
-			}
-			presentedDisplayable = next;
-			refreshRuntimeBackground();
-			// onResume may precede the first mounted guest; resolve its insets when attached.
-			ViewCompat.requestApplyInsets(binding.getRoot());
-			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}
 	}
 }
