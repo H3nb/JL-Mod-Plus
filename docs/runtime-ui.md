@@ -84,6 +84,10 @@ run. The existing Canvas dispatcher finishes `showNotify()` and commits visibili
 on that event position; initial repaint still uses the normal rendering path.
 The transaction does not await a GPU-presented frame. Superseded, backgrounded,
 detached, or failed host requests release their position without fabricating show.
+If Android never supplies a usable surface, a bounded host-side readiness deadline
+releases the queued callbacks without reporting the Canvas as shown. This preserves
+LCDUI callback progress on a failed presentation; it cannot make a game that requires
+a visible Canvas start successfully when no surface exists.
 Outside such a transaction, `callSerially()` remains independent of visibility;
 MIDlet lifecycle stays on MidletMain so applications may wait for presentation
 during `startApp()`.

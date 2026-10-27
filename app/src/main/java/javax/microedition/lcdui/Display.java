@@ -19,6 +19,8 @@
 
 package javax.microedition.lcdui;
 
+import android.util.Log;
+
 import androidx.appcompat.app.AlertDialog;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -80,6 +82,11 @@ public class Display {
 	/** Rejects presentation updates from superseded Android foreground edges. */
 	private long appliedForegroundGeneration;
 	private ScreenChange screenChange;
+	/**
+	 * A missing Android surface must not indefinitely block all subsequent LCDUI callbacks.
+	 * Normal screen changes complete on the host's readiness signal, not on this deadline.
+	 */
+	private static final long SCREEN_CHANGE_MAX_WAIT_MS = 3000L;
 
 	/** A queue position that becomes runnable only after this Canvas is mount/surface-ready. */
 	final class ScreenChange extends SimpleEvent {
@@ -90,6 +97,13 @@ public class Display {
 		private boolean cancelled;
 		private boolean mounted;
 		private long showGeneration;
+		private final Runnable readinessDeadline = () -> {
+			synchronized (stateLock) {
+				if (screenChange != this || isReady()) return;
+				Log.w("Display", "Canvas presentation did not become ready; releasing LCDUI queue");
+				cancelScreenChangeLocked();
+			}
+		};
 
 		ScreenChange(Canvas canvas, long requestGeneration, MicroActivity host) {
 			this.canvas = canvas;
@@ -137,6 +151,7 @@ public class Display {
 			synchronized (stateLock) {
 				if (screenChange != this) return;
 				screenChange = null;
+				ViewHandler.removeCallbacks(readinessDeadline);
 				canvas.clearScreenChange(this);
 				synchronized (this) {
 					if (cancelled || current != canvas
@@ -153,6 +168,7 @@ public class Display {
 		if (screenChange == null) return;
 		ScreenChange old = screenChange;
 		screenChange = null;
+		ViewHandler.removeCallbacks(old.readinessDeadline);
 		old.cancel();
 		old.canvas.clearScreenChange(old);
 	}
@@ -165,6 +181,9 @@ public class Display {
 		screenChange = change;
 		canvas.beginScreenChange(change);
 		queue.postQueuedEvent(change);
+		// A mounted SurfaceView is not guaranteed to produce a surfaceCreated callback.
+		// Preserve normal startup ordering but bound the queue's head-of-line wait.
+		ViewHandler.postDelayed(change.readinessDeadline, SCREEN_CHANGE_MAX_WAIT_MS);
 	}
 
 	/** Accept only a mount result from the host which owns the pending request. */
