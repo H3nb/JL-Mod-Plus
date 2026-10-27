@@ -797,7 +797,10 @@ public abstract class Canvas extends Displayable {
 		if (presentationEligible == eligible) return false;
 		presentationEligible = eligible;
 		long generation = ++presentationGeneration;
-		if (!eligible) setEffectiveVisibilityLocked(false);
+		if (!eligible) {
+			setEffectiveVisibilityLocked(false);
+			if (screenChange != null) screenChange.surfaceUnavailable();
+		}
 		if (eligible && screenChange != null) {
 			// The host signals the queued transaction directly, not via an event behind it.
 			screenChange.surfaceReady(generation);
