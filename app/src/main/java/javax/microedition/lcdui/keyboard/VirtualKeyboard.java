@@ -196,6 +196,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	/** Source identity is per contact, not just the reusable Android pointer id. */
 	private final String[] associatedSources = new String[10];
 	private final int[] snapStack = new int[KEYBOARD_SIZE];
+	private final RectF snapCandidate = new RectF();
 
 	private final Handler handler;
 	private final File saveFile;
@@ -1545,6 +1546,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
 			keypad[i].visible = !states[i];
 		}
+		// Newly revealed keys may have been offscreen while hidden.
+		if (isUsableScreen(screen)) snapKeys();
 		if (overlayView != null) overlayView.postInvalidate();
 		if (layoutEditMode != LAYOUT_EOF) notifyLayoutEditStateChanged();
 	}
@@ -1673,20 +1676,48 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private boolean findSnap(int target, int origin) {
-		VirtualKey tk = keypad[target];
-		VirtualKey ok = keypad[origin];
-		tk.snapMode = RectSnap.getSnap(tk.rect, ok.rect, snapRadius, RectSnap.COARSE_MASK, true);
-		if (tk.snapMode != RectSnap.NO_SNAP) {
-			tk.snapOrigin = origin;
-			tk.snapOffset.set(0, 0);
-			for (int i = 0; i < keypad.length; i++) {
-				origin = keypad[origin].snapOrigin;
-				if (origin == SCREEN) {
-					return true;
-				}
+		VirtualKey key = keypad[target];
+		VirtualKey anchor = keypad[origin];
+		int mode = RectSnap.getSnap(key.rect, anchor.rect, snapRadius, RectSnap.COARSE_MASK, true);
+		if (mode == RectSnap.NO_SNAP) return false;
+		// An offscreen candidate or cyclic anchor is not a usable snap.
+		snapCandidate.set(key.rect);
+		RectSnap.snap(snapCandidate, anchor.rect, mode, null);
+		if (key.visible && !insideViewport(snapCandidate)) return false;
+		int ancestor = origin;
+		for (int i = 0; i < keypad.length; i++) {
+			if (ancestor == target || ancestor < 0 || ancestor >= keypad.length) return false;
+			ancestor = keypad[ancestor].snapOrigin;
+			if (ancestor == SCREEN) {
+				key.snapMode = mode;
+				key.snapOrigin = origin;
+				key.snapOffset.set(0, 0);
+				return true;
 			}
 		}
 		return false;
+	}
+
+	private boolean insideViewport(RectF rect) {
+		return isUsableScreen(screen) &&
+				rect.left >= screen.left && rect.top >= screen.top &&
+				rect.right <= screen.right && rect.bottom <= screen.bottom;
+	}
+
+	/** Clamp an axis without altering the stored anchor or scale. */
+	static float constrainPosition(float position, float size, float start, float end) {
+		return Math.max(start, Math.min(position, end - Math.min(size, end - start)));
+	}
+
+	/** Keep painting, input and editor bounds on the same effective rectangle. */
+	private void constrainVisibleKey(VirtualKey key) {
+		if (!key.visible || !isUsableScreen(screen)) return;
+		RectF rect = key.rect;
+		float width = Math.min(rect.width(), screen.width());
+		float height = Math.min(rect.height(), screen.height());
+		float left = constrainPosition(rect.left, width, screen.left, screen.right);
+		float top = constrainPosition(rect.top, height, screen.top, screen.bottom);
+		rect.set(left, top, left + width, top + height);
 	}
 
 	private void snapKey(int key, int level) {
@@ -1716,10 +1747,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			RectSnap.snap(vKey.rect, keypad[vKey.snapOrigin].rect,
 					vKey.snapMode, vKey.snapOffset);
 		}
+		constrainVisibleKey(vKey);
 		vKey.snapValid = true;
 	}
 
 	private void snapKeys() {
+		// A dependent key may be visited before its anchor in keypad order.
+		for (VirtualKey key : keypad) key.snapValid = false;
 		obscuresVirtualScreen = false;
 		for (int i = 0; i < keypad.length; i++) {
 			snapKey(i, 0);
@@ -2065,7 +2099,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					consumed = true;
 					VirtualKey key = keypad[editedIndex];
 					RectF rect = key.rect;
-					rect.offsetTo(x - offsetX, y - offsetY);
+					float requestedLeft = x - offsetX;
+					float requestedTop = y - offsetY;
+					rect.offsetTo(requestedLeft, requestedTop);
+					constrainVisibleKey(key);
+					// Consume overshoot so reversing the finger moves the key immediately.
+					if (rect.left != requestedLeft) offsetX = x - rect.left;
+					if (rect.top != requestedTop) offsetY = y - rect.top;
 					key.snapMode = RectSnap.NO_SNAP;
 					if (editorSnapEnabled) {
 						for (int i = 0; i < keypad.length; i++) {
@@ -2077,6 +2117,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 							float step = editorGridStep(screen);
 							rect.offsetTo(snapToEditorGrid(rect.left, screen.left, step),
 									snapToEditorGrid(rect.top, screen.top, step));
+							constrainVisibleKey(key);
 						}
 						// A screen anchor reconstructs freely placed keys without persisting NO_SNAP.
 						key.snapMode = RectSnap.getSnap(rect, screen, key.snapOffset);
@@ -2086,7 +2127,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 							if (Math.abs(key.snapOffset.y) <= snapRadius) key.snapOffset.y = 0;
 						}
 					}
-					snapKey(editedIndex, 0);
+					snapKeys();
 					overlayView.postInvalidate();
 				}
 			}
@@ -2112,7 +2153,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						}
 					}
 				}
-				keyScales[index++] = scale;
+				keyScales[index++] = Math.min(scale, screen.width() / keySize);
 				scale = prevScaleY + dy / Math.min(screen.centerX(), screen.centerY());
 				if (scale <= 0.0f) {
 					scale = Float.MIN_VALUE;
@@ -2127,7 +2168,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						}
 					}
 				}
-				keyScales[index] = scale;
+				keyScales[index] = Math.min(scale, screen.height() / keySize);
 				resizeKeyGroup(editedIndex);
 				snapKeys();
 				overlayView.postInvalidate();

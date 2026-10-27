@@ -61,7 +61,9 @@ transactional Save/Discard/Continue behavior; showing controls reuses the runtim
 dialog. The visual grid stays visible during editing, with coarse (16), normal
 (24, default), and fine (32) divisions of the shorter editor dimension. Snap is
 on by default and can be disabled for free placement. The grid setting affects
-subsequent movements, not positions already edited. These tool settings reset
+subsequent movements, not positions already edited. Visible virtual controls stay within the host
+control viewport when moved, resized, or resolved from older layouts; passive
+viewport changes do not rewrite stored layout anchors or scales. These tool settings reset
 for each editing session and are not serialized with the custom layout. Legacy
 keys retain valid screen/key anchors even when snapping is disabled, preserving
 the existing layout format and orientation-specific drafts. The host places and
