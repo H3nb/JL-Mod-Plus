@@ -188,6 +188,7 @@ public abstract class Canvas extends Displayable {
 	/** Host readiness does not make the guest visible until showNotify has returned. */
 	private boolean presentationEligible;
 	private long presentationGeneration;
+	private Display.ScreenChange screenChange;
 	/** LCDUI event-thread state; pairs delivered show/hide callbacks. */
 	private boolean notifiedShown;
 	private volatile boolean visible;
@@ -761,6 +762,25 @@ public abstract class Canvas extends Displayable {
 		if (changed) ViewHandler.postEvent(this::updateVideoDisplays);
 	}
 
+	/** Installed before the next eligible show so it cannot land behind callSerially(). */
+	void beginScreenChange(Display.ScreenChange change) {
+		synchronized (visibilityLock) {
+			screenChange = change;
+			if (presentationEligible) change.surfaceReady(presentationGeneration);
+		}
+	}
+
+	void clearScreenChange(Display.ScreenChange change) {
+		synchronized (visibilityLock) {
+			if (screenChange == change) screenChange = null;
+		}
+	}
+
+	/** The existing callback dispatcher owns notification and visibility commit. */
+	void finishScreenChange(long generation) {
+		if (generation != 0L) deliverPresentationTransition(true, generation);
+	}
+
 	private void updateSurfaceUsable(boolean usable) {
 		boolean changed;
 		synchronized (visibilityLock) {
@@ -778,10 +798,14 @@ public abstract class Canvas extends Displayable {
 		presentationEligible = eligible;
 		long generation = ++presentationGeneration;
 		if (!eligible) setEffectiveVisibilityLocked(false);
-		// Enqueue under the lock to preserve the order of opposite host edges.
-		// The serialized path must never run guest callbacks inline.
-		Display.postSerializedEvent(RunnableEvent.getInstance(
-				() -> deliverPresentationTransition(eligible, generation)).asGuestCallback());
+		if (eligible && screenChange != null) {
+			// The host signals the queued transaction directly, not via an event behind it.
+			screenChange.surfaceReady(generation);
+		} else {
+			// Preserve show/hide ordering without invoking guest code under this lock.
+			Display.postSerializedEvent(RunnableEvent.getInstance(
+					() -> deliverPresentationTransition(eligible, generation)).asGuestCallback());
+		}
 		return true;
 	}
 
