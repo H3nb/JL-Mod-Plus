@@ -124,6 +124,7 @@ public final class LifecycleMidlet extends MIDlet {
 			AtomicBoolean shown = new AtomicBoolean();
 			AtomicBoolean painted = new AtomicBoolean();
 			AtomicBoolean invalidOrder = new AtomicBoolean();
+			AtomicBoolean seriallyDelivered = new AtomicBoolean();
 			Canvas canvas = new Canvas() {
 				@Override
 				protected void showNotify() {
@@ -138,13 +139,21 @@ public final class LifecycleMidlet extends MIDlet {
 					painted.set(true);
 				}
 			};
-			Display.getDisplay(this).setCurrent(canvas);
+			Display display = Display.getDisplay(this);
+			display.setCurrent(canvas);
+			if (verifyOrder) {
+				// Same sequence as Crazy Taxi: the first runnable observes presentation.
+				display.callSerially(() -> {
+					if (!shown.get() || !canvas.isShown()) invalidOrder.set(true);
+					seriallyDelivered.set(true);
+				});
+			}
 			for (int attempt = 0; attempt < 100; attempt++) {
 				if (verifyOrder && invalidOrder.get()) {
-					throw new IllegalStateException("paint preceded showNotify or visible state");
+					throw new IllegalStateException("LCDUI callback preceded Canvas show or visible state");
 				}
 				if (canvas.isShown() && (!awaitPaint || painted.get())
-						&& (!verifyOrder || shown.get())) {
+						&& (!verifyOrder || (shown.get() && seriallyDelivered.get()))) {
 					writeMarker(getAppProperty(MARKER_PROPERTY));
 					return;
 				}
