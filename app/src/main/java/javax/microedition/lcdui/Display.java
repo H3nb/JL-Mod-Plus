@@ -120,6 +120,12 @@ public class Display {
 			updateReady();
 		}
 
+		synchronized void surfaceUnavailable() {
+			if (cancelled) return;
+			showGeneration = 0L;
+			updateReady();
+		}
+
 		synchronized void cancel() {
 			cancelled = true;
 			updateReady();
