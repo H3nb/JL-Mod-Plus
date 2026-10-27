@@ -510,7 +510,13 @@
     <string name="config_warning_filter_shader">فیلتر خطی ورودی را پیش از پردازش سایه‌زن صفحه هموار می‌کند و ممکن است وضوح خروجی را کاهش دهد.</string>
     <string name="layout_edit_continue">ادامهٔ ویرایش</string>
     <string name="layout_edit_discard">کنار گذاشتن</string>
-    <string name="layout_edit_done">✓ انجام شد</string>
+    <string name="layout_edit_done">انجام شد</string>
+    <string name="layout_editor_grid_size">اندازه شبکه</string>
+    <string name="layout_editor_grid_coarse">درشت (16)</string>
+    <string name="layout_editor_grid_normal">معمولی (24)</string>
+    <string name="layout_editor_grid_fine">ریز (32)</string>
+    <string name="layout_editor_snap_on">چسبش روشن</string>
+    <string name="layout_editor_snap_off">چسبش خاموش</string>
     <string name="layout_edit_save_changes">تغییرات کنترل‌های مجازی ذخیره شوند؟</string>
     <string name="mapping_dialog_add_input">می‌توانید بیش از یک ورودی فیزیکی تخصیص دهید.</string>
     <string name="mapping_dialog_assigned_inputs">ورودی‌های تخصیص‌یافته</string>

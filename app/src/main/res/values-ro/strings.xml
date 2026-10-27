@@ -505,7 +505,13 @@
     <string name="config_warning_filter_shader">Filtrarea liniară netezește imaginea de intrare înainte de procesarea cu shaderul ecranului și poate reduce claritatea rezultatului.</string>
     <string name="layout_edit_continue">Continuați editarea</string>
     <string name="layout_edit_discard">Renunțați</string>
-    <string name="layout_edit_done">✓ Gata</string>
+    <string name="layout_edit_done">Gata</string>
+    <string name="layout_editor_grid_size">Dimensiunea grilei</string>
+    <string name="layout_editor_grid_coarse">Mare (16)</string>
+    <string name="layout_editor_grid_normal">Normală (24)</string>
+    <string name="layout_editor_grid_fine">Fină (32)</string>
+    <string name="layout_editor_snap_on">Aliniere activată</string>
+    <string name="layout_editor_snap_off">Aliniere dezactivată</string>
     <string name="layout_edit_save_changes">Salvați modificările comenzilor virtuale?</string>
     <string name="mapping_dialog_add_input">Puteți atribui mai multe intrări fizice.</string>
     <string name="mapping_dialog_assigned_inputs">Intrări atribuite</string>

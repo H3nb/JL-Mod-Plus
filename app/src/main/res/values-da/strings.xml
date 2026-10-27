@@ -127,7 +127,13 @@
     <string name="file_picker_create_folder_failed">Kunne ikke oprette mappen.</string>
     <string name="file_picker_selection_unavailable">Det valgte element er ikke længere tilgængeligt.</string>
     <string name="invalid_resolution_not_saved">Ugyldig opløsning. Ændringer blev ikke gemt.</string>
-    <string name="layout_edit_done">✓ Færdig</string>
+    <string name="layout_edit_done">Færdig</string>
+    <string name="layout_editor_grid_size">Gitterstørrelse</string>
+    <string name="layout_editor_grid_coarse">Groft (16)</string>
+    <string name="layout_editor_grid_normal">Normalt (24)</string>
+    <string name="layout_editor_grid_fine">Fint (32)</string>
+    <string name="layout_editor_snap_on">Fastgørelse til</string>
+    <string name="layout_editor_snap_off">Fastgørelse fra</string>
     <string name="layout_edit_save_changes">Gem ændringer i virtuelle kontroller?</string>
     <string name="layout_edit_discard">Kassér</string>
     <string name="layout_edit_continue">Fortsæt redigering</string>

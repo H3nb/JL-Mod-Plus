@@ -494,7 +494,13 @@
     <string name="config_warning_filter_shader">線性濾波會在螢幕著色器處理輸入前使其平滑，可能降低輸出的清晰度。</string>
     <string name="layout_edit_continue">繼續編輯</string>
     <string name="layout_edit_discard">捨棄</string>
-    <string name="layout_edit_done">✓ 完成</string>
+    <string name="layout_edit_done">完成</string>
+    <string name="layout_editor_grid_size">格線大小</string>
+    <string name="layout_editor_grid_coarse">粗 (16)</string>
+    <string name="layout_editor_grid_normal">標準 (24)</string>
+    <string name="layout_editor_grid_fine">細 (32)</string>
+    <string name="layout_editor_snap_on">吸附開啟</string>
+    <string name="layout_editor_snap_off">吸附關閉</string>
     <string name="layout_edit_save_changes">儲存虛擬控制項的變更？</string>
     <string name="mapping_dialog_add_input">可指派多個實體輸入。</string>
     <string name="mapping_dialog_assigned_inputs">已指派的輸入</string>

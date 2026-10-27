@@ -451,7 +451,13 @@
     <string name="config_warning_filter_shader">Lineær filtrering jevner ut inndata før skjermshaderen behandler dem og kan redusere skarpheten på resultatet.</string>
     <string name="layout_edit_continue">Fortsett redigering</string>
     <string name="layout_edit_discard">Forkast</string>
-    <string name="layout_edit_done">✓ Ferdig</string>
+    <string name="layout_edit_done">Ferdig</string>
+    <string name="layout_editor_grid_size">Rutenettstørrelse</string>
+    <string name="layout_editor_grid_coarse">Grovt (16)</string>
+    <string name="layout_editor_grid_normal">Normalt (24)</string>
+    <string name="layout_editor_grid_fine">Fint (32)</string>
+    <string name="layout_editor_snap_on">Festing på</string>
+    <string name="layout_editor_snap_off">Festing av</string>
     <string name="layout_edit_finish">Fullfør redigering</string>
     <string name="layout_edit_finished">Redigeringen av virtuelle kontroller er fullført.</string>
     <string name="layout_edit_save_changes">Lagre endringer i virtuelle kontroller?</string>

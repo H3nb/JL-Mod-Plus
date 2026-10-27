@@ -55,6 +55,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import androidx.appcompat.widget.PopupMenu;
+
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -183,8 +185,8 @@ public class MicroActivity extends AppCompatActivity {
 	private SharedPreferences defaultPreferences;
 	private SharedPreferences runtimePreferences;
 	private VirtualKeyboardEditTransaction virtualKeyboardEditTransaction;
-	private EditorDonePlacement.Box layoutEditDonePlacement;
-	private EditorDonePlacement.Box layoutEditDoneEditorBounds;
+	private EditorDonePlacement.Box layoutEditorPanelPlacement;
+	private EditorDonePlacement.Box layoutEditorPanelBounds;
 	private final Runnable virtualKeyboardEditorChromeUpdate =
 			this::refreshVirtualKeyboardEditorChrome;
 	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
@@ -205,6 +207,14 @@ public class MicroActivity extends AppCompatActivity {
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
+		binding.layoutEditShowControls.setOnClickListener(ignored -> showControlsDialog());
+		binding.layoutEditGridSize.setOnClickListener(ignored -> showEditorGridSizeMenu());
+		binding.layoutEditSnap.setOnClickListener(ignored -> {
+			VirtualKeyboard keyboard = ContextHolder.getVk();
+			if (keyboard == null || !isVirtualKeyboardLayoutEditing()) return;
+			keyboard.setEditorSnapEnabled(!keyboard.isEditorSnapEnabled());
+			binding.setLayoutEditSnapEnabled(keyboard.isEditorSnapEnabled());
+		});
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
 		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (view, insets) -> {
 			lastWindowInsets = insets;
@@ -1568,8 +1578,10 @@ public class MicroActivity extends AppCompatActivity {
 		if (virtualKeyboardEditTransaction == null) {
 			virtualKeyboardEditTransaction =
 					new VirtualKeyboardEditTransaction(vk.captureLayoutEditState());
-			layoutEditDonePlacement = null;
-			layoutEditDoneEditorBounds = null;
+			layoutEditorPanelPlacement = null;
+			layoutEditorPanelBounds = null;
+			vk.resetLayoutEditorTools();
+			binding.setLayoutEditSnapEnabled(vk.isEditorSnapEnabled());
 		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
 		updateRuntimeMenuState(current);
@@ -1599,7 +1611,7 @@ public class MicroActivity extends AppCompatActivity {
 			transaction.continueEditing();
 			return;
 		}
-		hideVirtualKeyboardEditorDone();
+		hideVirtualKeyboardEditorPanel();
 		runtimeMenuController.showFinishVirtualKeyboardEdit(
 				resolveRuntimePresetUpdateTarget());
 	}
@@ -1656,9 +1668,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void clearVirtualKeyboardEditTransaction() {
 		virtualKeyboardEditTransaction = null;
-		layoutEditDonePlacement = null;
-		layoutEditDoneEditorBounds = null;
-		hideVirtualKeyboardEditorDone();
+		layoutEditorPanelPlacement = null;
+		layoutEditorPanelBounds = null;
+		hideVirtualKeyboardEditorPanel();
 	}
 
 	private void scheduleVirtualKeyboardEditorChromeUpdate() {
@@ -1673,7 +1685,7 @@ public class MicroActivity extends AppCompatActivity {
 						virtualKeyboardEditTransaction.isFinishPending()) ||
 				isRuntimeMenuVisible() ||
 				!(current instanceof Canvas)) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 		VirtualKeyboard vk = ContextHolder.getVk();
@@ -1681,14 +1693,14 @@ public class MicroActivity extends AppCompatActivity {
 		View root = binding.getRoot();
 		if (vk == null || anchor == null || !anchor.isLaidOut() || !root.isLaidOut() ||
 				vk.isLayoutManipulationActive()) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
 		RectF localEditorBounds = vk.getLayoutEditBounds();
 		if (localEditorBounds == null || localEditorBounds.width() <= 0.0f ||
 				localEditorBounds.height() <= 0.0f) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
@@ -1703,18 +1715,18 @@ public class MicroActivity extends AppCompatActivity {
 		editorBounds.offset(offsetX, offsetY);
 		if (!editorBounds.intersect(0.0f, 0.0f, root.getWidth(), root.getHeight()) ||
 				editorBounds.width() <= 0.0f || editorBounds.height() <= 0.0f) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
 		EditorDonePlacement.Box usable = toPlacementBox(editorBounds);
-		if (layoutEditDoneEditorBounds != null &&
-				(Math.abs(layoutEditDoneEditorBounds.width() - usable.width()) > 0.5f ||
-						Math.abs(layoutEditDoneEditorBounds.height() - usable.height()) > 0.5f)) {
+		if (layoutEditorPanelBounds != null &&
+				(Math.abs(layoutEditorPanelBounds.width() - usable.width()) > 0.5f ||
+						Math.abs(layoutEditorPanelBounds.height() - usable.height()) > 0.5f)) {
 			// Orientation/viewport-size changes get a fresh spatial choice; semantic baseline stays.
-			layoutEditDonePlacement = null;
+			layoutEditorPanelPlacement = null;
 		}
-		layoutEditDoneEditorBounds = usable;
+		layoutEditorPanelBounds = usable;
 
 		List<EditorDonePlacement.Box> obstacles = new ArrayList<>();
 		for (RectF localControl : vk.getVisibleLayoutControlBounds()) {
@@ -1723,39 +1735,39 @@ public class MicroActivity extends AppCompatActivity {
 			obstacles.add(toPlacementBox(control));
 		}
 
-		View done = binding.layoutEditDone;
-		done.measure(
+		View panel = binding.layoutEditPanel;
+		panel.measure(
 				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
 				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-		float desiredWidth = Math.max(done.getMeasuredWidth(), dpToPx(80));
-		float desiredHeight = Math.max(done.getMeasuredHeight(), dpToPx(48));
+		float desiredWidth = Math.max(panel.getMeasuredWidth(), dpToPx(152));
+		float desiredHeight = Math.max(panel.getMeasuredHeight(), dpToPx(105));
 		EditorDonePlacement.Box placement = EditorDonePlacement.place(
 				usable,
 				desiredWidth,
 				desiredHeight,
 				dpToPx(10),
 				obstacles,
-				layoutEditDonePlacement);
+				layoutEditorPanelPlacement);
 		if (placement == null) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
-		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) done.getLayoutParams();
+		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) panel.getLayoutParams();
 		params.width = Math.max(1, Math.round(placement.width()));
 		params.height = Math.max(1, Math.round(placement.height()));
-		done.setLayoutParams(params);
-		done.setX(placement.left);
-		done.setY(placement.top);
-		done.setEnabled(true);
-		done.setVisibility(View.VISIBLE);
-		layoutEditDonePlacement = placement;
+		panel.setLayoutParams(params);
+		panel.setX(placement.left);
+		panel.setY(placement.top);
+		panel.setEnabled(true);
+		panel.setVisibility(View.VISIBLE);
+		layoutEditorPanelPlacement = placement;
 	}
 
-	private void hideVirtualKeyboardEditorDone() {
+	private void hideVirtualKeyboardEditorPanel() {
 		if (binding == null) return;
-		binding.layoutEditDone.setEnabled(false);
-		binding.layoutEditDone.setVisibility(View.GONE);
+		binding.layoutEditPanel.setEnabled(false);
+		binding.layoutEditPanel.setVisibility(View.GONE);
 	}
 
 	private EditorDonePlacement.Box toPlacementBox(RectF rect) {
@@ -1811,6 +1823,31 @@ public class MicroActivity extends AppCompatActivity {
 				}
 			});
 		}, "JLP-save-runtime-log").start();
+	}
+
+	private void showEditorGridSizeMenu() {
+		VirtualKeyboard keyboard = ContextHolder.getVk();
+		if (keyboard == null || !isVirtualKeyboardLayoutEditing()) return;
+		PopupMenu menu = new PopupMenu(this, binding.layoutEditGridSize);
+		int[] sizes = {
+				VirtualKeyboard.EDITOR_GRID_COARSE,
+				VirtualKeyboard.EDITOR_GRID_NORMAL,
+				VirtualKeyboard.EDITOR_GRID_FINE
+		};
+		int[] labels = {
+				R.string.layout_editor_grid_coarse,
+				R.string.layout_editor_grid_normal,
+				R.string.layout_editor_grid_fine
+		};
+		for (int i = 0; i < sizes.length; i++) {
+			menu.getMenu().add(0, sizes[i], i, labels[i])
+					.setCheckable(true).setChecked(keyboard.getEditorGridDivisions() == sizes[i]);
+		}
+		menu.setOnMenuItemClickListener(item -> {
+			keyboard.setEditorGridDivisions(item.getItemId());
+			return true;
+		});
+		menu.show();
 	}
 
 	private void showControlsDialog() {

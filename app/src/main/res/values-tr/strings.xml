@@ -554,7 +554,13 @@
     <string name="config_warning_filter_shader">Doğrusal filtreleme, ekran gölgelendiricisi işlemeden önce girdiyi yumuşatır ve çıktı keskinliğini azaltabilir.</string>
     <string name="layout_edit_continue">Düzenlemeye devam et</string>
     <string name="layout_edit_discard">Vazgeç</string>
-    <string name="layout_edit_done">✓ Bitti</string>
+    <string name="layout_edit_done">Bitti</string>
+    <string name="layout_editor_grid_size">Izgara boyutu</string>
+    <string name="layout_editor_grid_coarse">Seyrek (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Sık (32)</string>
+    <string name="layout_editor_snap_on">Yaslama açık</string>
+    <string name="layout_editor_snap_off">Yaslama kapalı</string>
     <string name="layout_edit_save_changes">Sanal kontrol değişiklikleri kaydedilsin mi?</string>
     <string name="mapping_dialog_add_input">Birden fazla fiziksel giriş atayabilirsiniz.</string>
     <string name="mapping_dialog_assigned_inputs">Atanan girişler</string>

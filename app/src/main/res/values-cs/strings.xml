@@ -566,7 +566,13 @@
     <string name="config_warning_filter_shader">Lineární filtrování vyhladí vstup před zpracováním shaderem obrazovky a může snížit ostrost výstupu.</string>
     <string name="layout_edit_continue">Pokračovat v úpravách</string>
     <string name="layout_edit_discard">Zahodit</string>
-    <string name="layout_edit_done">✓ Hotovo</string>
+    <string name="layout_edit_done">Hotovo</string>
+    <string name="layout_editor_grid_size">Velikost mřížky</string>
+    <string name="layout_editor_grid_coarse">Hrubá (16)</string>
+    <string name="layout_editor_grid_normal">Normální (24)</string>
+    <string name="layout_editor_grid_fine">Jemná (32)</string>
+    <string name="layout_editor_snap_on">Přichytávání zapnuto</string>
+    <string name="layout_editor_snap_off">Přichytávání vypnuto</string>
     <string name="layout_edit_save_changes">Uložit změny virtuálních ovládacích prvků?</string>
     <string name="mapping_dialog_add_input">Můžete přiřadit více než jeden fyzický vstup.</string>
     <string name="mapping_dialog_assigned_inputs">Přiřazené vstupy</string>

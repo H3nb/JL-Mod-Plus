@@ -68,7 +68,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	public static final float MIN_RADIUS_FRACTION = 0.07f;
 	public static final float MAX_RADIUS_FRACTION = 0.34f;
-	private static final int GRID_DIVISIONS = 24;
 	private static final int FEEDBACK_DURATION_MS = 50;
 
 	private enum EditControl { NONE, DPAD, ANALOG }
@@ -1193,8 +1192,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	private void updateGroupedMove(float x, float y) {
 		if (screenBounds == null || editControl == EditControl.NONE) return;
-		float cx = snapPixels(x - editOffsetX, gridStep());
-		float cy = snapPixels(y - editOffsetY, gridStep());
+		float cx = x - editOffsetX;
+		float cy = y - editOffsetY;
+		if (isEditorSnapEnabled()) {
+			float step = gridStep();
+			cx = snapToEditorGrid(cx, screenBounds.left, step);
+			cy = snapToEditorGrid(cy, screenBounds.top, step);
+		}
 		float radius = controlRadiusPixels(editControl);
 		cx = clamp(cx, screenBounds.left + radius, screenBounds.right - radius);
 		cy = clamp(cy, screenBounds.top + radius, screenBounds.bottom - radius);
@@ -1731,13 +1735,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private float gridStep() {
-		if (screenBounds == null) return 0.0f;
-		return Math.max(4.0f, Math.min(screenBounds.width(), screenBounds.height()) / GRID_DIVISIONS);
-	}
-
-	private static float snapPixels(float value, float step) {
-		if (step <= 0.0f) return value;
-		return Math.round(value / step) * step;
+		return screenBounds == null ? 0.0f : editorGridStep(screenBounds);
 	}
 
 	private int controlAlpha(float cx, float cy, float radius) {

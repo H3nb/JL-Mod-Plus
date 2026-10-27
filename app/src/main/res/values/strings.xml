@@ -99,7 +99,13 @@
     <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
     <string name="invalid_resolution_not_saved">Invalid resolution. Changes were not saved.</string>
     <string name="layout_edit_finish">Finish editing</string>
-    <string name="layout_edit_done">✓ Done</string>
+    <string name="layout_edit_done">Done</string>
+    <string name="layout_editor_grid_size">Grid size</string>
+    <string name="layout_editor_grid_coarse">Coarse (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fine (32)</string>
+    <string name="layout_editor_snap_on">Snap on</string>
+    <string name="layout_editor_snap_off">Snap off</string>
     <string name="layout_edit_save_changes">Save changes to virtual controls?</string>
     <string name="layout_edit_discard">Discard</string>
     <string name="layout_edit_continue">Continue editing</string>

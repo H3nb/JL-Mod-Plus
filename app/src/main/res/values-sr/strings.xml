@@ -456,7 +456,13 @@
     <string name="config_warning_filter_shader">Линеарно филтрирање ублажава улаз пре обраде шејдером екрана и може да смањи оштрину резултата.</string>
     <string name="layout_edit_continue">Настави уређивање</string>
     <string name="layout_edit_discard">Одбаци</string>
-    <string name="layout_edit_done">✓ Готово</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Величина мреже</string>
+    <string name="layout_editor_grid_coarse">Крупна (16)</string>
+    <string name="layout_editor_grid_normal">Нормална (24)</string>
+    <string name="layout_editor_grid_fine">Ситна (32)</string>
+    <string name="layout_editor_snap_on">Приањање укључено</string>
+    <string name="layout_editor_snap_off">Приањање искључено</string>
     <string name="layout_edit_finish">Заврши уређивање</string>
     <string name="layout_edit_finished">Уређивање виртуалних контрола је завршено.</string>
     <string name="layout_edit_save_changes">Сачувати измене виртуалних контрола?</string>

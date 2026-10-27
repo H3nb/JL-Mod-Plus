@@ -536,7 +536,13 @@
     <string name="config_warning_filter_shader">Линейното филтриране изглажда входа, преди екранният шейдър да го обработи, и може да намали резкостта на изхода.</string>
     <string name="layout_edit_continue">Продължаване на редактирането</string>
     <string name="layout_edit_discard">Отхвърляне</string>
-    <string name="layout_edit_done">✓ Готово</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Размер на мрежата</string>
+    <string name="layout_editor_grid_coarse">Едра (16)</string>
+    <string name="layout_editor_grid_normal">Нормална (24)</string>
+    <string name="layout_editor_grid_fine">Фина (32)</string>
+    <string name="layout_editor_snap_on">Прилепване включено</string>
+    <string name="layout_editor_snap_off">Прилепване изключено</string>
     <string name="layout_edit_save_changes">Да се запазят ли промените във виртуалните контроли?</string>
     <string name="mapping_dialog_add_input">Можете да съпоставите повече от един физически вход.</string>
     <string name="mapping_dialog_assigned_inputs">Съпоставени входове</string>

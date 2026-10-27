@@ -54,7 +54,13 @@
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD dan lanjutkan instalasi?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid. Perubahan tidak disimpan.</string>
     <string name="layout_edit_finish">Selesai mengedit</string>
-    <string name="layout_edit_done">✓ Selesai</string>
+    <string name="layout_edit_done">Selesai</string>
+    <string name="layout_editor_grid_size">Ukuran grid</string>
+    <string name="layout_editor_grid_coarse">Jarang (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Rapat (32)</string>
+    <string name="layout_editor_snap_on">Snap aktif</string>
+    <string name="layout_editor_snap_off">Snap nonaktif</string>
     <string name="layout_edit_save_changes">Simpan perubahan kontrol virtual?</string>
     <string name="layout_edit_discard">Buang</string>
     <string name="layout_edit_continue">Lanjut mengedit</string>

@@ -509,7 +509,13 @@
     <string name="config_warning_filter_shader">Filtrowanie liniowe wygładza obraz wejściowy przed przetworzeniem przez shader ekranu i może zmniejszyć ostrość obrazu wyjściowego.</string>
     <string name="layout_edit_continue">Kontynuuj edycję</string>
     <string name="layout_edit_discard">Odrzuć</string>
-    <string name="layout_edit_done">✓ Gotowe</string>
+    <string name="layout_edit_done">Gotowe</string>
+    <string name="layout_editor_grid_size">Rozmiar siatki</string>
+    <string name="layout_editor_grid_coarse">Rzadka (16)</string>
+    <string name="layout_editor_grid_normal">Normalna (24)</string>
+    <string name="layout_editor_grid_fine">Gęsta (32)</string>
+    <string name="layout_editor_snap_on">Przyciąganie wł.</string>
+    <string name="layout_editor_snap_off">Przyciąganie wył.</string>
     <string name="layout_edit_save_changes">Zapisać zmiany sterowania wirtualnego?</string>
     <string name="mapping_dialog_add_input">Możesz przypisać więcej niż jedno wejście fizyczne.</string>
     <string name="mapping_dialog_assigned_inputs">Przypisane wejścia</string>

@@ -197,7 +197,13 @@
     <string name="file_picker_folder_exists">Já existe um item com este nome.</string>
     <string name="file_picker_create_folder_failed">Não foi possível criar a pasta.</string>
     <string name="file_picker_selection_unavailable">O item selecionado não está mais disponível.</string>
-    <string name="layout_edit_done">✓ Concluído</string>
+    <string name="layout_edit_done">Concluído</string>
+    <string name="layout_editor_grid_size">Tamanho da grade</string>
+    <string name="layout_editor_grid_coarse">Grossa (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fina (32)</string>
+    <string name="layout_editor_snap_on">Ajuste ativado</string>
+    <string name="layout_editor_snap_off">Ajuste desativado</string>
     <string name="layout_edit_save_changes">Salvar as alterações dos controles virtuais?</string>
     <string name="layout_edit_discard">Descartar</string>
     <string name="layout_edit_continue">Continuar editando</string>

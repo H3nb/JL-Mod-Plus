@@ -136,6 +136,65 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void editorToolsAreSessionOnlyAndDoNotDirtyTheLayout() {
+        VirtualKeyboardLayoutEditState before = keyboard.captureLayoutEditState();
+
+        assertTrue(keyboard.isEditorSnapEnabled());
+        assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
+        keyboard.setEditorSnapEnabled(false);
+        keyboard.setEditorGridDivisions(VirtualKeyboard.EDITOR_GRID_FINE);
+
+        assertEquals(before, keyboard.captureLayoutEditState());
+        keyboard.resetLayoutEditorTools();
+        assertTrue(keyboard.isEditorSnapEnabled());
+        assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
+    }
+
+    @Test
+    public void snapOffAllowsFreeLegacyMovementWithoutInvalidSavedAnchors() throws Exception {
+        RectF before = rectField(keyByLabel("F"));
+        keyboard.setEditorSnapEnabled(false);
+
+        dragLegacy("F", 13f, 7f);
+
+        Object moved = keyByLabel("F");
+        RectF after = rectField(moved);
+        assertEquals(before.left + 13f, after.left, EPS);
+        assertEquals(before.top + 7f, after.top, EPS);
+        assertEquals(-1, intField(moved, "snapOrigin"));
+        assertNotEquals(RectSnap.NO_SNAP, intField(moved, "snapMode"));
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        assertTrue(keyboard.encodeCurrentLayoutForPersistence().length > 0);
+    }
+
+    @Test
+    public void groupedSnapUsesSelectedGridAndViewportOrigin() throws Exception {
+        RectF screen = new RectF(100f, 50f, 1100f, 650f);
+        keyboard.resize(screen, screen.left, screen.top, screen.right, screen.bottom);
+        settings.virtualDpadEnabled = true;
+        keyboard.setEditorGridDivisions(VirtualKeyboard.EDITOR_GRID_COARSE);
+        keyboard.setEditorSnapEnabled(false);
+        VirtualDpadGeometry before = geometry("dpadGeometry");
+
+        dragGrouped("dpadGeometry", 13f, 7f);
+
+        VirtualDpadGeometry free = geometry("dpadGeometry");
+        assertEquals(before.getCenterX() + 13f, free.getCenterX(), EPS);
+        assertEquals(before.getCenterY() + 7f, free.getCenterY(), EPS);
+
+        keyboard.setEditorSnapEnabled(true);
+        dragGrouped("dpadGeometry", 13f, 7f);
+
+        VirtualDpadGeometry snapped = geometry("dpadGeometry");
+        float step = Math.min(screen.width(), screen.height()) /
+                VirtualKeyboard.EDITOR_GRID_COARSE;
+        assertEquals(screen.left + Math.round((free.getCenterX() + 13f - screen.left) / step)
+                * step, snapped.getCenterX(), EPS);
+        assertEquals(screen.top + Math.round((free.getCenterY() + 7f - screen.top) / step)
+                * step, snapped.getCenterY(), EPS);
+    }
+
+    @Test
     public void malformedShortVisibilityArrayIsSafeNoOp() {
         boolean[] before = keyboard.getKeysVisibility();
 

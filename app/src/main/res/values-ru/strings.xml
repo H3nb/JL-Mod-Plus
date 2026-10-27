@@ -379,7 +379,13 @@
     <string name="file_picker_invalid_folder_name">Введите допустимое название папки.</string>
     <string name="file_picker_create_folder_failed">Не удалось создать папку.</string>
     <string name="file_picker_selection_unavailable">Выбранный объект больше недоступен.</string>
-    <string name="layout_edit_done">✓ Готово</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Размер сетки</string>
+    <string name="layout_editor_grid_coarse">Крупная (16)</string>
+    <string name="layout_editor_grid_normal">Обычная (24)</string>
+    <string name="layout_editor_grid_fine">Мелкая (32)</string>
+    <string name="layout_editor_snap_on">Привязка включена</string>
+    <string name="layout_editor_snap_off">Привязка выключена</string>
     <string name="layout_edit_save_changes">Сохранить изменения виртуальных элементов управления?</string>
     <string name="layout_edit_discard">Отменить изменения</string>
     <string name="layout_edit_continue">Продолжить редактирование</string>

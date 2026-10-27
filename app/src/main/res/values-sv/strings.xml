@@ -97,7 +97,13 @@
     <string name="file_picker_selection_unavailable">Det valda objektet är inte längre tillgängligt.</string>
     <string name="invalid_resolution_not_saved">Ogiltig upplösning. Ändringarna sparades inte.</string>
     <string name="layout_edit_finish">Slutför redigering</string>
-    <string name="layout_edit_done">✓ Klar</string>
+    <string name="layout_edit_done">Klar</string>
+    <string name="layout_editor_grid_size">Rutnätsstorlek</string>
+    <string name="layout_editor_grid_coarse">Grovt (16)</string>
+    <string name="layout_editor_grid_normal">Normalt (24)</string>
+    <string name="layout_editor_grid_fine">Fint (32)</string>
+    <string name="layout_editor_snap_on">Fästning på</string>
+    <string name="layout_editor_snap_off">Fästning av</string>
     <string name="layout_edit_save_changes">Spara ändringar i virtuella kontroller?</string>
     <string name="layout_edit_discard">Kassera</string>
     <string name="layout_edit_continue">Fortsätt redigera</string>

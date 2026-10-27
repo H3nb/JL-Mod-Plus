@@ -551,7 +551,13 @@
     <string name="config_warning_filter_shader">线性过滤会在屏幕着色器处理输入前将其平滑化，可能降低输出的清晰度。</string>
     <string name="layout_edit_continue">继续编辑</string>
     <string name="layout_edit_discard">放弃</string>
-    <string name="layout_edit_done">✓ 完成</string>
+    <string name="layout_edit_done">完成</string>
+    <string name="layout_editor_grid_size">网格大小</string>
+    <string name="layout_editor_grid_coarse">粗 (16)</string>
+    <string name="layout_editor_grid_normal">标准 (24)</string>
+    <string name="layout_editor_grid_fine">细 (32)</string>
+    <string name="layout_editor_snap_on">吸附开启</string>
+    <string name="layout_editor_snap_off">吸附关闭</string>
     <string name="layout_edit_save_changes">保存虚拟控件的更改？</string>
     <string name="mapping_dialog_add_input">可分配多个实体输入。</string>
     <string name="mapping_dialog_assigned_inputs">已分配的输入</string>

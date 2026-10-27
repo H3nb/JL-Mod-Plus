@@ -198,7 +198,13 @@
     <string name="file_picker_folder_exists">Un élément portant ce nom existe déjà.</string>
     <string name="file_picker_create_folder_failed">Impossible de créer le dossier.</string>
     <string name="file_picker_selection_unavailable">L’élément sélectionné n’est plus disponible.</string>
-    <string name="layout_edit_done">✓ Terminé</string>
+    <string name="layout_edit_done">Terminé</string>
+    <string name="layout_editor_grid_size">Taille de la grille</string>
+    <string name="layout_editor_grid_coarse">Large (16)</string>
+    <string name="layout_editor_grid_normal">Normale (24)</string>
+    <string name="layout_editor_grid_fine">Fine (32)</string>
+    <string name="layout_editor_snap_on">Magnétisme activé</string>
+    <string name="layout_editor_snap_off">Magnétisme désactivé</string>
     <string name="layout_edit_save_changes">Enregistrer les modifications des commandes virtuelles ?</string>
     <string name="layout_edit_discard">Abandonner</string>
     <string name="layout_edit_continue">Continuer la modification</string>

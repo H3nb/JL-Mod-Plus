@@ -160,7 +160,13 @@
     <string name="file_picker_create_folder_failed">Impossibile creare la cartella.</string>
     <string name="file_picker_selection_unavailable">L’elemento selezionato non è più disponibile.</string>
     <string name="invalid_resolution_not_saved">Risoluzione non valida. Le modifiche non sono state salvate.</string>
-    <string name="layout_edit_done">✓ Fatto</string>
+    <string name="layout_edit_done">Fatto</string>
+    <string name="layout_editor_grid_size">Dimensione griglia</string>
+    <string name="layout_editor_grid_coarse">Grossolana (16)</string>
+    <string name="layout_editor_grid_normal">Normale (24)</string>
+    <string name="layout_editor_grid_fine">Fine (32)</string>
+    <string name="layout_editor_snap_on">Aggancio attivo</string>
+    <string name="layout_editor_snap_off">Aggancio disattivo</string>
     <string name="layout_edit_save_changes">Salvare le modifiche ai controlli virtuali?</string>
     <string name="layout_edit_discard">Scarta</string>
     <string name="layout_edit_continue">Continua modifica</string>

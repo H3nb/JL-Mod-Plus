@@ -521,7 +521,13 @@
     <string name="config_warning_filter_shader">선형 필터링은 화면 셰이더 처리 전에 입력을 부드럽게 하므로 출력의 선명도가 낮아질 수 있습니다.</string>
     <string name="layout_edit_continue">계속 편집</string>
     <string name="layout_edit_discard">버리기</string>
-    <string name="layout_edit_done">✓ 완료</string>
+    <string name="layout_edit_done">완료</string>
+    <string name="layout_editor_grid_size">격자 크기</string>
+    <string name="layout_editor_grid_coarse">넓게 (16)</string>
+    <string name="layout_editor_grid_normal">보통 (24)</string>
+    <string name="layout_editor_grid_fine">촘촘하게 (32)</string>
+    <string name="layout_editor_snap_on">스냅 켜짐</string>
+    <string name="layout_editor_snap_off">스냅 꺼짐</string>
     <string name="layout_edit_save_changes">가상 컨트롤 변경 사항을 저장할까요?</string>
     <string name="mapping_dialog_add_input">물리 입력을 여러 개 할당할 수 있습니다.</string>
     <string name="mapping_dialog_assigned_inputs">할당된 입력</string>

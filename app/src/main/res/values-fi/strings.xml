@@ -121,7 +121,13 @@
     <string name="file_picker_create_folder_failed">Kansiota ei voitu luoda.</string>
     <string name="file_picker_selection_unavailable">Valittu kohde ei ole enää käytettävissä.</string>
     <string name="invalid_resolution_not_saved">Virheellinen tarkkuus. Muutoksia ei tallennettu.</string>
-    <string name="layout_edit_done">✓ Valmis</string>
+    <string name="layout_edit_done">Valmis</string>
+    <string name="layout_editor_grid_size">Ruudukon koko</string>
+    <string name="layout_editor_grid_coarse">Harva (16)</string>
+    <string name="layout_editor_grid_normal">Normaali (24)</string>
+    <string name="layout_editor_grid_fine">Tiheä (32)</string>
+    <string name="layout_editor_snap_on">Kohdistus päällä</string>
+    <string name="layout_editor_snap_off">Kohdistus pois</string>
     <string name="layout_edit_save_changes">Tallennetaanko virtuaaliohjainten muutokset?</string>
     <string name="layout_edit_discard">Hylkää</string>
     <string name="layout_edit_continue">Jatka muokkausta</string>
