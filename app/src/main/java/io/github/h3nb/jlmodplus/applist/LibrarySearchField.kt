@@ -37,7 +37,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreInterceptKeyBeforeSoftKeyboard
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -59,18 +58,15 @@ internal fun LibrarySearchField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onFocusChanged: (Boolean) -> Unit = {},
+    onDismissInput: () -> Unit,
 ) {
-    val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     TextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
             .height(librarySearchControlHeight())
-            .onFocusChanged {
-                android.util.Log.i("JLIME_DIAG", "Search focus changed: ${it.hasFocus}")
-                onFocusChanged(it.hasFocus)
-            }
+            .onFocusChanged { onFocusChanged(it.hasFocus) }
             .onPreInterceptKeyBeforeSoftKeyboard { event ->
                 // Back can cancel the IME's first show before any visible inset is reported.
                 // Handle that key while the field still owns focus; gesture Back continues
@@ -83,7 +79,7 @@ internal fun LibrarySearchField(
                         KeyEventType.KeyUp -> {
                             if (!event.nativeKeyEvent.isCanceled) {
                                 keyboard?.hide()
-                                focusManager.clearFocus(force = true)
+                                onDismissInput()
                             }
                             true
                         }
@@ -97,10 +93,8 @@ internal fun LibrarySearchField(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
             onDone = {
-                android.util.Log.i("JLIME_DIAG", "Done callback received")
                 defaultKeyboardAction(ImeAction.Done)
-                focusManager.clearFocus(force = true)
-                android.util.Log.i("JLIME_DIAG", "Done focus-clear returned")
+                onDismissInput()
             },
         ),
         shape = MaterialTheme.shapes.large,
