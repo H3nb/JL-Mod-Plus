@@ -828,10 +828,15 @@ public abstract class Canvas extends Displayable {
 
 	/** Runs on Android main, independently of the serialized guest hideNotify. */
 	private void endHostPresentation() {
-		PointerEvent.cancel(this);
-		guestKeyLedger.endVisibility();
-		resetControllerBoundaryState();
-		cancelAmbientHostTick();
+		synchronized (visibilityLock) {
+			// A queued hide cleanup may arrive after a later show has committed. Do not
+			// release keys, pointers or host work belonging to that new visible interval.
+			if (visible) return;
+			PointerEvent.cancel(this);
+			guestKeyLedger.endVisibility();
+			resetControllerBoundaryState();
+			cancelAmbientHostTick();
+		}
 	}
 
 	/** Executed on MIDletEventQueue, without holding any host or presentation lock. */
