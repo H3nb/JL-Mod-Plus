@@ -78,8 +78,15 @@ hide edge stops rendering and input; its show edge becomes guest-visible after
 `showNotify()` returns. Both notifications run serially on the existing LCDUI queue,
 never inline under host locks. A superseded show is skipped; a delivered show retains
 its hide notification. Rendering and input do not run before show notification.
-`callSerially()` remains independent of visibility, and MIDlet lifecycle stays on
-MidletMain so applications may wait for presentation during `startApp()`.
+For a foreground `setCurrent(Canvas)` request, the host mount and usable-surface
+facts complete the earlier LCDUI screen-change transaction before later callbacks
+run. The existing Canvas dispatcher finishes `showNotify()` and commits visibility
+on that event position; initial repaint still uses the normal rendering path.
+The transaction does not await a GPU-presented frame. Superseded, backgrounded,
+detached, or failed host requests release their position without fabricating show.
+Outside such a transaction, `callSerially()` remains independent of visibility;
+MIDlet lifecycle stays on MidletMain so applications may wait for presentation
+during `startApp()`.
 
 ## Geometry and lifecycle safeguards
 
