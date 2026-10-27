@@ -64,7 +64,7 @@ public class DisplaySeriallyTest {
 			display.onHostPresented(first, thirdRequest);
 			assertTrue(first.isShown());
 			Display.revokeForeground();
-			assertFalse(second.isShown());
+			assertFalse(first.isShown());
 		} finally {
 			Display.revokeForeground();
 			Display.initDisplay();
