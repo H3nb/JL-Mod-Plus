@@ -1932,7 +1932,7 @@ internal fun LibraryAppsDestination(
 ) {
     var query by viewportState.queryState
     var searchFocused by remember { mutableStateOf(false) }
-    val searchFocusManager = LocalFocusManager.current
+    val searchDismissFocus = remember { FocusRequester() }
     val searchKeyboard = LocalSoftwareKeyboardController.current
     val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var searchImeWasVisible by remember { mutableStateOf(false) }
@@ -1944,7 +1944,7 @@ internal fun LibraryAppsDestination(
             !searchFocused -> searchImeWasVisible = false
             searchImeVisible -> searchImeWasVisible = true
             searchImeWasVisible -> {
-                searchFocusManager.clearFocus(force = true)
+                searchDismissFocus.requestFocus()
                 searchFocused = false
                 searchImeWasVisible = false
             }
@@ -1952,7 +1952,7 @@ internal fun LibraryAppsDestination(
     }
     BackHandler(enabled = active && searchFocused) {
         searchKeyboard?.hide()
-        searchFocusManager.clearFocus(force = true)
+        searchDismissFocus.requestFocus()
         searchFocused = false
     }
     val listState = viewportState.listState
@@ -2091,6 +2091,7 @@ internal fun LibraryAppsDestination(
                 }
             },
             onSearchFocusChanged = { searchFocused = currentActive && it },
+            dismissFocusRequester = searchDismissFocus,
             state = state,
             sortVisible = active && sortVisible,
             onSortVisibilityChanged = { sortVisible = currentActive && it },
@@ -2437,6 +2438,7 @@ private fun LibraryAppsHeader(
     headerOffsetPx: MutableFloatState,
     onQueryChange: (String) -> Unit,
     onSearchFocusChanged: (Boolean) -> Unit = {},
+    dismissFocusRequester: FocusRequester,
     state: LibraryUiState,
     sortVisible: Boolean,
     onSortVisibilityChanged: (Boolean) -> Unit,
@@ -2581,10 +2583,12 @@ private fun LibraryAppsHeader(
                 modifier = Modifier.weight(1f),
                 enabled = searchActionsEnabled,
                 onFocusChanged = onSearchFocusChanged,
+                onDismissInput = { dismissFocusRequester.requestFocus() },
             )
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
+                    modifier = if (interactive) Modifier.focusRequester(dismissFocusRequester) else Modifier,
                     enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(
