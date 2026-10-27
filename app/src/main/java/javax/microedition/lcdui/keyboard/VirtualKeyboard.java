@@ -2117,6 +2117,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 							float step = editorGridStep(screen);
 							rect.offsetTo(snapToEditorGrid(rect.left, screen.left, step),
 									snapToEditorGrid(rect.top, screen.top, step));
+							constrainVisibleKey(key);
 						}
 						// A screen anchor reconstructs freely placed keys without persisting NO_SNAP.
 						key.snapMode = RectSnap.getSnap(rect, screen, key.snapOffset);
