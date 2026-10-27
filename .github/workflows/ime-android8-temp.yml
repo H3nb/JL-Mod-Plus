@@ -43,7 +43,7 @@ jobs:
         with:
           api-level: 27
           target: google_apis
-          arch: x86_64
+          arch: x86
           disable-animations: true
           emulator-boot-timeout: 900
           script: |
@@ -52,7 +52,6 @@ jobs:
             chmod +x gradlew
             ./gradlew --daemon --stacktrace \
               -PjlmodNativeBuild=false \
-              -PjlmodRuntimeTestAbi=x86_64 \
               '-Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest#doneDismissesVisibleImeAndRetainsLibrarySearch,io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest#backDismissesLibrarySearchAfterImeBecomesVisible,io.github.h3nb.jlmodplus.applist.LibraryComposeTest#searchDoneReleasesFocusButRetainsTheQuery' \
               :app:connectedEmulatorDebugAndroidTest
       - name: Upload Android test reports
