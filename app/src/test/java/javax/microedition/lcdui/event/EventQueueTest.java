@@ -43,6 +43,41 @@ public class EventQueueTest {
 	}
 
 	@Test
+	public void pendingHostEventIsReleasedByCancellationWithoutRunningAheadOfItsPosition()
+			throws Exception {
+		EventQueue queue = new EventQueue();
+		java.util.concurrent.atomic.AtomicBoolean ready = new java.util.concurrent.atomic.AtomicBoolean();
+		java.util.concurrent.atomic.AtomicBoolean processedBeforeReady = new java.util.concurrent.atomic.AtomicBoolean();
+		java.util.concurrent.atomic.AtomicInteger order = new java.util.concurrent.atomic.AtomicInteger();
+		java.util.concurrent.CountDownLatch completed = new java.util.concurrent.CountDownLatch(1);
+		queue.startProcessing();
+		try {
+			queue.postQueuedEvent(new SimpleEvent() {
+				@Override
+				public boolean isReady() { return ready.get(); }
+
+				@Override
+				public void process() {
+					if (!ready.get()) processedBeforeReady.set(true);
+					order.compareAndSet(0, 1);
+				}
+			});
+			queue.postQueuedEvent(RunnableEvent.getInstance(() -> {
+				if (order.get() == 1) order.set(2);
+				completed.countDown();
+			}).asGuestCallback());
+			// The host cancels the mount: no visibility callback is required to release the queue.
+			ready.set(true);
+			queue.signalEventReady();
+			assertTrue(completed.await(1, java.util.concurrent.TimeUnit.SECONDS));
+			assertFalse(processedBeforeReady.get());
+			org.junit.Assert.assertEquals(2, order.get());
+		} finally {
+			queue.stopProcessing();
+		}
+	}
+
+	@Test
 	public void immediateEventExposesCallbackContextOnlyDuringProcessing() {
 		boolean[] observed = {false};
 		EventQueue.setImmediate(true);
