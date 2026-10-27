@@ -2078,7 +2078,9 @@ public class MicroActivity extends AppCompatActivity {
 			if (!ownsDisplayRequest(requestGeneration)) {
 				return;
 			}
-			closeOptionsMenu();
+			boolean mounted = false;
+			try {
+				closeOptionsMenu();
 			if (controllerInputRouter != null) {
 				controllerInputRouter.onTargetChanged();
 			}
@@ -2104,7 +2106,17 @@ public class MicroActivity extends AppCompatActivity {
 			refreshRuntimeBackground();
 			// onResume may precede the first mounted guest; resolve its insets when attached.
 			ViewCompat.requestApplyInsets(binding.getRoot());
-			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
+				binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
+				mounted = true;
+				if (display != null) display.onHostMounted(next, requestGeneration, MicroActivity.this);
+			} finally {
+				if (!mounted) {
+					Display display = Display.getDisplay(null);
+					if (display != null) {
+						display.onHostMountFailed(next, requestGeneration, MicroActivity.this);
+					}
+				}
+			}
 		}
 	}
 }
