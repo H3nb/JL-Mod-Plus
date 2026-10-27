@@ -2583,9 +2583,7 @@ private fun LibraryAppsHeader(
                 modifier = Modifier.weight(1f),
                 enabled = searchActionsEnabled,
                 onFocusChanged = onSearchFocusChanged,
-                onDismissInput = {
-                    android.util.Log.i("JLIME_DIAG", "Sort request: ${dismissFocusRequester.requestFocus()}")
-                },
+                onDismissInput = { dismissFocusRequester.requestFocus() },
             )
             Box {
                 LibrarySortButton(

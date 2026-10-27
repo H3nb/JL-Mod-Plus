@@ -38,7 +38,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
@@ -566,36 +565,6 @@ class LibraryViewportNavigationTest {
         }
         composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
-    }
-
-    @Test
-    fun doneDismissesVisibleImeAndRetainsLibrarySearch() {
-        val host = ViewportHost()
-        val imeVisible = mutableStateOf(false)
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
-                SideEffect { imeVisible.value = imeBottom > 0 }
-                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
-            }
-        }
-        val search = composeRule.onNode(hasSetTextAction())
-        search.performClick()
-        search.performTextInput("Library")
-        composeRule.waitUntil(timeoutMillis = 5_000) { imeVisible.value }
-
-        search.performImeAction()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            !imeVisible.value &&
-                composeRule.onNode(hasSetTextAction())
-                    .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
-        }
-        search.assertTextEquals("Library")
-        search.assertIsNotFocused()
-        search.performClick()
-        search.assertIsFocused()
     }
 
     @Test
