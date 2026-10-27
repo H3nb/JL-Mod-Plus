@@ -192,10 +192,10 @@ static EGLConfig m3gQueryEGLConfig(M3Genum format,
  * \internal
  * \brief Initializes EGL
  */
-static void m3gInitializeEGL(void)
+static M3Gbool m3gInitializeEGL(void)
 {
     M3G_LOG(M3G_LOG_INTERFACE, "Initializing EGL\n");
-    eglInitialize(eglGetDisplay(EGL_DEFAULT_DISPLAY), NULL, NULL);
+    return (M3Gbool) eglInitialize(eglGetDisplay(EGL_DEFAULT_DISPLAY), NULL, NULL);
 }
 
 /*!
@@ -817,17 +817,15 @@ static M3Gbool m3gValidateBackBuffer(RenderContext *ctx)
             (M3Gbitmask)(M3G_COLOR_BUFFER_BIT|M3G_DEPTH_BUFFER_BIT),
             w, h);
         
+        if (!bbuf->glSurface) {
+            EGLint error = eglGetError();
+            bbuf->width = bbuf->height = 0;
+            m3gRaiseError(M3G_INTERFACE(ctx),
+                          error == EGL_BAD_ALLOC ? M3G_OUT_OF_MEMORY : M3G_INVALID_OPERATION);
+            return M3G_FALSE;
+        }
         bbuf->width = w;
         bbuf->height = h;
-        
-        if (!bbuf->glSurface) {
-            if (eglGetError() == EGL_BAD_ALLOC) {
-                return M3G_FALSE; /* ouf of memory */
-            }
-            else {
-                M3G_ASSERT(M3G_FALSE);
-            }
-        }
     }
     return M3G_TRUE;
 }

@@ -221,7 +221,7 @@ static M3Gbool m3gBindRenderTarget(RenderContext *ctx,
 static void m3gResetRectangles(RenderContext *ctx);
 static void m3gSetGLDefaults(void);
 static void m3gUpdateScissor(RenderContext *ctx);
-static void m3gValidateBuffers(RenderContext *ctx);
+static M3Gbool m3gValidateBuffers(RenderContext *ctx);
 static M3Gbool m3gValidTargetFormat(M3GPixelFormat format);
 
 #include "m3g_rendercontext.inl"
@@ -263,6 +263,9 @@ static void m3gDestroyContext(/*@only@*/ Object *obj)
             if (ctx->glSurface[i].handle != 0) {
                 m3gDeleteGLSurface(ctx->glSurface[i].handle);
             }
+        }
+        if (ctx->backBuffer.glSurface != EGL_NO_SURFACE) {
+            m3gDeleteGLSurface(ctx->backBuffer.glSurface);
         }
     }
 
@@ -516,8 +519,11 @@ static M3Gbool m3gBindRenderTarget(RenderContext *ctx,
     ctx->target.handle = handle;
     m3gResetRectangles(ctx);
     m3gUpdateScissor(ctx);
-    m3gValidateBuffers(ctx);
-    
+    if (!m3gValidateBuffers(ctx)) {
+        ctx->target.type = SURFACE_NONE;
+        return M3G_FALSE;
+    }
+
     /* Invalidate lights in case we're using a different OpenGL
      * rendering context this time around */
     
@@ -546,14 +552,17 @@ static void m3gSetGLDefaults(void)
  * Allocates or reallocates buffers as necessary, according to the
  * currently set flags of the context.
  */
-static void m3gValidateBuffers(RenderContext *ctx)
+static M3Gbool m3gValidateBuffers(RenderContext *ctx)
 {
     M3G_VALIDATE_OBJECT(ctx);
 
     /* Initialize OpenGL if not already done */
     
     if (!ctx->glInitialized) {
-        m3gInitializeGL(M3G_INTERFACE(ctx));
+        if (!m3gInitializeGL(M3G_INTERFACE(ctx))) {
+            m3gRaiseError(M3G_INTERFACE(ctx), M3G_INVALID_OPERATION);
+            return M3G_FALSE;
+        }
         ctx->glInitialized = M3G_TRUE;
     }
 
@@ -570,7 +579,7 @@ static void m3gValidateBuffers(RenderContext *ctx)
     
     if (ctx->target.buffered) {
         if (!m3gValidateBackBuffer(ctx)) {
-            return; /* out of memory */
+            return M3G_FALSE;
         }
     }
 
@@ -578,7 +587,8 @@ static void m3gValidateBuffers(RenderContext *ctx)
     
 #   if defined(M3G_NGL_CONTEXT_API)
     if (!m3gValidateDepthBuffer(ctx)) {
-        return; /* out of memory */
+        m3gRaiseError(M3G_INTERFACE(ctx), M3G_OUT_OF_MEMORY);
+        return M3G_FALSE;
     }
 #   endif
 
@@ -593,6 +603,7 @@ static void m3gValidateBuffers(RenderContext *ctx)
             ctx->backBuffer.contentsValid = M3G_FALSE;
         }
     }
+    return M3G_TRUE;
 }
 
 /*!

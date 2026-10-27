@@ -123,13 +123,19 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
         if (ret < 0) {
             LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
             M3G_RAISE_EXCEPTION(aEnv, "java/lang/IllegalStateException")
+            M3G_DO_UNLOCK(aEnv)
             return isImageTarget;
         }
-	    m3gBindMemoryTarget((M3GRenderContext)aCtx, pixels_ptr, aWidth, aHeight, M3G_RGB8_32, (M3Guint)(aWidth * 4), 0);
-	    //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
-        m3gSetClipRect((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
-        m3gSetViewport((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
+        m3gBindMemoryTarget((M3GRenderContext)aCtx, pixels_ptr, aWidth, aHeight,
+                            M3G_RGB8_32, (M3Guint)(aWidth * 4), 0);
+        if (CSynchronization::InstanceL()->GetErrorCode() == 0) {
+            m3gSetClipRect((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
+            m3gSetViewport((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
+        }
+        else {
+            AndroidBitmap_unlockPixels(aEnv, bitmap);
+            pixels_ptr = NULL;
+        }
     }
 
     M3G_DO_UNLOCK(aEnv)
