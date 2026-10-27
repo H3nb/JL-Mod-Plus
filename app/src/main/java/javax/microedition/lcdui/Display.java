@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.RunnableEvent;
+import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.shell.MemoryDiscoveryBridge;
 import javax.microedition.shell.MicroActivity;
@@ -78,6 +79,109 @@ public class Display {
 	private boolean displayForeground;
 	/** Rejects presentation updates from superseded Android foreground edges. */
 	private long appliedForegroundGeneration;
+	private ScreenChange screenChange;
+
+	/** A queue position that becomes runnable only after this Canvas is mount/surface-ready. */
+	final class ScreenChange extends SimpleEvent {
+		private final Canvas canvas;
+		private final long requestGeneration;
+		private final MicroActivity host;
+		private volatile boolean ready;
+		private boolean cancelled;
+		private boolean mounted;
+		private long showGeneration;
+
+		ScreenChange(Canvas canvas, long requestGeneration, MicroActivity host) {
+			this.canvas = canvas;
+			this.requestGeneration = requestGeneration;
+			this.host = host;
+			asGuestCallback();
+		}
+
+		@Override
+		public boolean isReady() {
+			return ready;
+		}
+
+		private void updateReady() {
+			ready = cancelled || (mounted && showGeneration != 0L);
+			if (ready) queue.signalEventReady();
+		}
+
+		synchronized void mounted() {
+			if (cancelled) return;
+			mounted = true;
+			updateReady();
+		}
+
+		synchronized void surfaceReady(long generation) {
+			if (cancelled) return;
+			showGeneration = generation;
+			updateReady();
+		}
+
+		synchronized void cancel() {
+			cancelled = true;
+			updateReady();
+		}
+
+		@Override
+		public void process() {
+			long generation;
+			synchronized (stateLock) {
+				if (screenChange != this) return;
+				screenChange = null;
+				canvas.clearScreenChange(this);
+				synchronized (this) {
+					if (cancelled || current != canvas
+							|| currentRequestGeneration.get() != requestGeneration
+							|| ContextHolder.getActivity() != host) return;
+					generation = showGeneration;
+				}
+			}
+			canvas.finishScreenChange(generation);
+		}
+	}
+
+	private void cancelScreenChangeLocked() {
+		if (screenChange == null) return;
+		ScreenChange old = screenChange;
+		screenChange = null;
+		old.cancel();
+		old.canvas.clearScreenChange(old);
+	}
+
+	private void beginScreenChangeLocked(Displayable target, long generation) {
+		if (!(target instanceof Canvas canvas) || !hostVisible || !displayForeground) return;
+		MicroActivity host = ContextHolder.getActivity();
+		if (host == null) return;
+		ScreenChange change = new ScreenChange(canvas, generation, host);
+		screenChange = change;
+		canvas.beginScreenChange(change);
+		queue.postQueuedEvent(change);
+	}
+
+	/** Accept only a mount result from the host which owns the pending request. */
+	public void onHostMounted(Displayable target, long generation, MicroActivity host) {
+		synchronized (stateLock) {
+			ScreenChange change = screenChange;
+			if (change != null && change.canvas == target
+					&& change.requestGeneration == generation && change.host == host) {
+				change.mounted();
+			}
+		}
+	}
+
+	public void onHostMountFailed(Displayable target, long generation, MicroActivity host) {
+		synchronized (stateLock) {
+			ScreenChange change = screenChange;
+			if (change != null && change.canvas == target
+					&& change.requestGeneration == generation && change.host == host) {
+				cancelScreenChangeLocked();
+			}
+		}
+	}
+
 
 	/**
 	 * Applies the Display-owned presentation facts while their transaction lock is still held.
@@ -192,6 +296,7 @@ public class Display {
 				return;
 			}
 			displayForeground = granted;
+			if (!granted) cancelScreenChangeLocked();
 			reconcileCanvasLocked(current, true);
 		}
 	}
@@ -206,6 +311,7 @@ public class Display {
 		synchronized (stateLock) {
 			presented = null;
 			hostVisible = false;
+			cancelScreenChangeLocked();
 			target = current;
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			reconcileCanvasLocked(target, true);
@@ -225,6 +331,7 @@ public class Display {
 		synchronized (stateLock) {
 			presented = null;
 			hostVisible = false;
+			cancelScreenChangeLocked();
 			target = current;
 			currentRequestGeneration.incrementAndGet();
 			reconcileCanvasLocked(target, true);
@@ -243,6 +350,7 @@ public class Display {
 				return;
 			}
 			hostVisible = visible;
+			if (!visible) cancelScreenChangeLocked();
 			reconcileCanvasLocked(current, true);
 		}
 	}
@@ -289,6 +397,7 @@ public class Display {
 				return;
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
+			cancelScreenChangeLocked();
 			this.current = displayable;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			if (displayable instanceof Alert nextAlert) {
@@ -298,6 +407,7 @@ public class Display {
 			showCanvasAfterClosingAlert =
 					previous instanceof Alert && displayable instanceof Canvas;
 			reconcileCanvasLocked(previous, false);
+			beginScreenChangeLocked(displayable, requestGeneration);
 			if (!showCanvasAfterClosingAlert) {
 				reconcileCanvasLocked(displayable, true);
 			}
@@ -348,6 +458,7 @@ public class Display {
 			previous = current;
 			alert.setNextDisplayable(displayable);
 			requestGeneration = currentRequestGeneration.incrementAndGet();
+			cancelScreenChangeLocked();
 			current = alert;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			reconcileCanvasLocked(previous, false);
