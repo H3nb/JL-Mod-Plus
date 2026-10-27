@@ -2102,7 +2102,7 @@ public class MicroActivity extends AppCompatActivity {
 				}
 				presentedDisplayable = next;
 				Display display = Display.getDisplay(null);
-				if (display != null) display.onHostPresented(next);
+				if (display != null) display.onHostPresented(next, requestGeneration);
 				refreshRuntimeBackground();
 				// onResume may precede the first mounted guest; resolve its insets when attached.
 				ViewCompat.requestApplyInsets(binding.getRoot());

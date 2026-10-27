@@ -800,6 +800,8 @@ public abstract class Canvas extends Displayable {
 		if (!eligible) {
 			setEffectiveVisibilityLocked(false);
 			if (screenChange != null) screenChange.surfaceUnavailable();
+			// The host owns input cancellation; it must not wait behind a guest callback.
+			ViewHandler.postEvent(this::endHostPresentation);
 		}
 		if (eligible && screenChange != null) {
 			// The host signals the queued transaction directly, not via an event behind it.
@@ -822,6 +824,14 @@ public abstract class Canvas extends Displayable {
 			performanceGeneration++;
 			visible = shown;
 		}
+	}
+
+	/** Runs on Android main, independently of the serialized guest hideNotify. */
+	private void endHostPresentation() {
+		PointerEvent.cancel(this);
+		guestKeyLedger.endVisibility();
+		resetControllerBoundaryState();
+		cancelAmbientHostTick();
 	}
 
 	/** Executed on MIDletEventQueue, without holding any host or presentation lock. */
@@ -865,10 +875,6 @@ public abstract class Canvas extends Displayable {
 		// A host hide must be delivered even if a newer show is already pending.
 		if (!notifiedShown) return;
 		notifiedShown = false;
-		PointerEvent.cancel(this);
-		guestKeyLedger.endVisibility();
-		resetControllerBoundaryState();
-		cancelAmbientHostTick();
 		try {
 			doHideNotify();
 		} catch (Exception e) {

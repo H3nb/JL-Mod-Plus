@@ -430,6 +430,8 @@ public class Display {
 				return;
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
+			// The former host mount no longer certifies presentation for a new request.
+			presented = null;
 			cancelScreenChangeLocked();
 			this.current = displayable;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
@@ -491,6 +493,8 @@ public class Display {
 			previous = current;
 			alert.setNextDisplayable(displayable);
 			requestGeneration = currentRequestGeneration.incrementAndGet();
+			// The former host mount no longer certifies presentation for a new request.
+			presented = null;
 			cancelScreenChangeLocked();
 			current = alert;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
@@ -570,9 +574,11 @@ public class Display {
 	}
 
 	/** Reports the mounted Displayable; a stale host completion cannot publish an old screen. */
-	public void onHostPresented(Displayable displayable) {
+	public void onHostPresented(Displayable displayable, long requestGeneration) {
 		synchronized (stateLock) {
-			if (current == displayable) presented = displayable;
+			if (current == displayable && currentRequestGeneration.get() == requestGeneration) {
+				presented = displayable;
+			}
 		}
 	}
 

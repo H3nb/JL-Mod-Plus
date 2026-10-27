@@ -74,7 +74,9 @@ confirms mounted screens and shown Alerts; a stale or unmounted `Displayable` ca
 report `isShown() == true`. Canvas also requires a usable presentation surface.
 
 The Canvas host state requests presentation without calling guest code. Its immediate
-hide edge stops rendering and input; its show edge becomes guest-visible after
+hide edge revokes rendering; input producers and host resources are cleaned up on the
+Android main looper without waiting for the guest `hideNotify()` callback. Its show edge
+becomes guest-visible after
 `showNotify()` returns. Both notifications run serially on the existing LCDUI queue,
 never inline under host locks. A superseded show is skipped; a delivered show retains
 its hide notification. Rendering and input do not run before show notification.

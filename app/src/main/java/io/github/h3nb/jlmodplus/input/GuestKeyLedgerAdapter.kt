@@ -53,8 +53,10 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
     private var generation = 1L
     private val targetId = "canvas@${System.identityHashCode(canvas).toUInt().toString(16)}"
 
+    @Synchronized
     fun target(): OutputTarget = OutputTarget(targetId, generation)
 
+    @Synchronized
     fun press(
         deviceId: String,
         sessionId: Long,
@@ -73,6 +75,7 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
         }
     }
 
+    @Synchronized
     fun update(
         deviceId: String,
         sessionId: Long,
@@ -98,6 +101,7 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
         }
     }
 
+    @Synchronized
     fun release(deviceId: String, sessionId: Long, kind: String, channel: String) {
         val source = SourceToken(deviceId, sessionId, kind, channel)
         stopLegacyKeypadRepeat(source)
@@ -105,10 +109,12 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
     }
 
     /** True only while this exact producer currently owns a delivered/requested output set. */
+    @Synchronized
     fun isActive(deviceId: String, sessionId: Long, kind: String, channel: String): Boolean =
         ledger.isActive(SourceToken(deviceId, sessionId, kind, channel))
 
     /** Releases every captured physical key from one Android input device. */
+    @Synchronized
     fun releaseDevice(deviceId: String) {
         val legacySources = legacyKeypadRepeats.keys.filter { it.deviceId == deviceId }
         legacySources.forEach(::stopLegacyKeypadRepeat)
@@ -116,12 +122,14 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
     }
 
     /** Ends the current visibility generation and releases all outputs before the next one. */
+    @Synchronized
     fun endVisibility() {
         cancelLegacyKeypadRepeats()
         ledger.clear()
         generation = safeIncrement(generation)
     }
 
+    @Synchronized
     fun resetForShow() {
         cancelLegacyKeypadRepeats()
         ledger.clear()
@@ -130,6 +138,7 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
 
     fun clear() = endVisibility()
 
+    @Synchronized
     fun currentGeneration(): Long = generation
 
     private fun startLegacyKeypadRepeat(source: SourceToken, keyCodes: IntArray) {
@@ -137,15 +146,17 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
         val registration = LegacyRepeatRegistration(keyCodes.copyOf())
         val task = object : Runnable {
             override fun run() {
-                val current = legacyKeypadRepeats[source] ?: return
-                if (!ledger.isActive(source)) {
-                    legacyKeypadRepeats.remove(source)
-                    return
+                synchronized(this@GuestKeyLedgerAdapter) {
+                    val current = legacyKeypadRepeats[source] ?: return
+                    if (!ledger.isActive(source)) {
+                        legacyKeypadRepeats.remove(source)
+                        return
+                    }
+                    current.keyCodes.forEach(canvas::postKeyRepeated)
+                    val delay = LegacyVirtualKeypadRepeat.delayAfterRepeat(current.repeatIndex)
+                    current.repeatIndex += 1
+                    handler.postDelayed(this, delay)
                 }
-                current.keyCodes.forEach(canvas::postKeyRepeated)
-                val delay = LegacyVirtualKeypadRepeat.delayAfterRepeat(current.repeatIndex)
-                current.repeatIndex += 1
-                handler.postDelayed(this, delay)
             }
         }
         registration.runnable = task
