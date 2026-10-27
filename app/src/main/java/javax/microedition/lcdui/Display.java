@@ -97,7 +97,9 @@ public class Display {
 		private boolean cancelled;
 		private boolean mounted;
 		private long showGeneration;
-		private final Runnable readinessDeadline = () -> {
+		private final Runnable readinessDeadline = this::onReadinessDeadline;
+
+		private void onReadinessDeadline() {
 			synchronized (stateLock) {
 				if (screenChange != this) return;
 				if (isReady()) {
@@ -109,7 +111,7 @@ public class Display {
 				Log.w("Display", "Canvas presentation did not become ready; releasing LCDUI queue");
 				cancelScreenChangeLocked();
 			}
-		};
+		}
 
 		ScreenChange(Canvas canvas, long requestGeneration, MicroActivity host) {
 			this.canvas = canvas;
