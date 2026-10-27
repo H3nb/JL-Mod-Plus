@@ -66,6 +66,8 @@ public class EventQueueTest {
 				if (order.get() == 1) order.set(2);
 				completed.countDown();
 			}).asGuestCallback());
+			assertFalse("callback escaped an unfinished screen change",
+					completed.await(100, java.util.concurrent.TimeUnit.MILLISECONDS));
 			// The host cancels the mount: no visibility callback is required to release the queue.
 			ready.set(true);
 			queue.signalEventReady();
