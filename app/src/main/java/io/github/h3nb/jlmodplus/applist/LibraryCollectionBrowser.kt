@@ -60,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
@@ -210,7 +211,6 @@ internal fun LibraryCollectionBrowser(
             searchImeVisible -> searchImeWasVisible = true
             searchImeWasVisible -> {
                 searchDismissFocus.requestFocus()
-                searchFocused = false
                 searchImeWasVisible = false
             }
         }
@@ -218,13 +218,11 @@ internal fun LibraryCollectionBrowser(
     BackHandler(enabled = interactionActive && searchFocused) {
         searchKeyboard?.hide()
         searchDismissFocus.requestFocus()
-        searchFocused = false
     }
     var sortVisible by remember { mutableStateOf(false) }
     LaunchedEffect(interactionActive) {
         if (!interactionActive) {
             sortVisible = false
-            searchFocused = false
         }
     }
     val openApp: (Int) -> Unit = { if (currentInteractionActive) onOpenApp(it) }
@@ -301,7 +299,7 @@ internal fun LibraryCollectionBrowser(
                     revealSearchResults()
                 }
             },
-            onSearchFocusChanged = { searchFocused = currentInteractionActive && it },
+            onSearchFocusChanged = { searchFocused = it },
             dismissFocusRequester = searchDismissFocus,
             onSortVisibilityChanged = { sortVisible = currentInteractionActive && it },
             onSort = { if (currentInteractionActive) onSort(it) },
@@ -590,7 +588,9 @@ private fun LibraryCollectionHeader(
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
-                    modifier = if (interactive) Modifier.focusRequester(dismissFocusRequester) else Modifier,
+                    modifier = if (searchActionsEnabled) {
+                        Modifier.focusRequester(dismissFocusRequester).focusProperties { canFocus = true }
+                    } else Modifier,
                     enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(
@@ -827,7 +827,10 @@ internal fun LibraryCollectionAppPicker(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack, modifier = Modifier.focusRequester(searchDismissFocus)) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.focusRequester(searchDismissFocus).focusProperties { canFocus = true },
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_back),
                     contentDescription = stringResource(R.string.library_back),
