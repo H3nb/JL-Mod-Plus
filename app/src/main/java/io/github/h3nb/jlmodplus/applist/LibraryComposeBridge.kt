@@ -154,7 +154,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -643,7 +642,6 @@ fun LibraryScreen(
     val selectDestination: (LibraryDestination) -> Unit = { section ->
         coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
     }
-    val focusManager = LocalFocusManager.current
     val initialNavigationFocus = remember { FocusRequester() }
     // Indicators may follow the gesture; state-changing navigation commits only after settling.
     val destination = LibraryDestination.entries[pagerState.settledPage]
@@ -1943,9 +1941,9 @@ internal fun LibraryAppsDestination(
     // On Android the IME consumes the first system Back before the app's BackHandler runs.
     // Dismiss focus when that same Back finishes hiding the keyboard, rather than leaving
     // an invisible-but-focused field that lets the next Back exit the Library.
-    LaunchedEffect(searchFocused, searchImeVisible) {
+    LaunchedEffect(active, searchFocused, searchImeVisible) {
         when {
-            !searchFocused -> searchImeWasVisible = false
+            !active || !searchFocused -> searchImeWasVisible = false
             searchImeVisible -> searchImeWasVisible = true
             searchImeWasVisible -> {
                 searchDismissFocus.requestFocus()
@@ -2091,7 +2089,7 @@ internal fun LibraryAppsDestination(
                     revealSearchResults()
                 }
             },
-            onSearchFocusChanged = { searchFocused = it },
+            onSearchFocusChanged = { if (interactive) searchFocused = it },
             dismissFocusRequester = searchDismissFocus,
             state = state,
             sortVisible = active && sortVisible,
