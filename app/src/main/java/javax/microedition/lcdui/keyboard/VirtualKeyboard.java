@@ -72,7 +72,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final String KEYPAD_LEGEND_REFERENCE = "WXYZ";
 
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
-	private static final int LAYOUT_VERSION = 4;
+	private static final int LAYOUT_VERSION = 5;
 	private static final String LAYOUT_TEMP_SUFFIX = ".new";
 	private static final String LAYOUT_BACKUP_SUFFIX = ".bak";
 	private static final int MAX_LAYOUT_BLOCKS = 1024;
@@ -143,18 +143,40 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			KEY_SOFT_LEFT, KEY_SOFT_RIGHT,
 	};
 
-	private static final float SCALE_SNAP_RADIUS = 0.05f;
-
 	private static final int FEEDBACK_DURATION = 50;
 
+	/** Width/height scale for each of the 28 legacy keys. Groups define resize scope. */
 	private final float[] keyScales = {
-			1, 1,
-			1, 1,
-			1, 1,
-			1, 1,
-			1, 1,
-			1, 1,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
+			1f, 1f,
 	};
+	private final float[] resizeStartScales = new float[KEYBOARD_SIZE * 2];
 	private final int[][] keyScaleGroups = {{
 			KEY_UP_LEFT,
 			KEY_UP,
@@ -212,7 +234,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public static final int EDITOR_GRID_FINE = 32;
 
 	private int layoutEditMode = LAYOUT_EOF;
-	private boolean editorSnapEnabled = true;
+	private boolean editorSnapGridEnabled = true;
+	private boolean editorSnapControlsEnabled = true;
+	private boolean editorGroupResizeEnabled = true;
 	private int editorGridDivisions = EDITOR_GRID_NORMAL;
 	private int editedIndex;
 	private float offsetX;
@@ -1792,15 +1816,18 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	/** Session-only editor tools; never part of a saved layout or its dirty baseline. */
 	public void resetLayoutEditorTools() {
-		editorSnapEnabled = true;
+		editorSnapGridEnabled = true;
+		editorSnapControlsEnabled = true;
+		editorGroupResizeEnabled = true;
 		editorGridDivisions = EDITOR_GRID_NORMAL;
 	}
 
-	public boolean isEditorSnapEnabled() { return editorSnapEnabled; }
-
-	public void setEditorSnapEnabled(boolean enabled) {
-		editorSnapEnabled = enabled;
-	}
+	public boolean isEditorSnapGridEnabled() { return editorSnapGridEnabled; }
+	public void setEditorSnapGridEnabled(boolean value) { editorSnapGridEnabled = value; }
+	public boolean isEditorSnapControlsEnabled() { return editorSnapControlsEnabled; }
+	public void setEditorSnapControlsEnabled(boolean value) { editorSnapControlsEnabled = value; }
+	public boolean isEditorGroupResizeEnabled() { return editorGroupResizeEnabled; }
+	public void setEditorGroupResizeEnabled(boolean value) { editorGroupResizeEnabled = value; }
 
 	public int getEditorGridDivisions() { return editorGridDivisions; }
 
@@ -1839,11 +1866,23 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private void resizeKeyGroup(int group) {
-		float sizeX = keySize * keyScales[group * 2];
-		float sizeY = keySize * keyScales[group * 2 + 1];
-		for (int key = 0; key < keyScaleGroups[group].length; key++) {
-			resizeKey(keyScaleGroups[group][key], sizeX, sizeY);
+		for (int key : keyScaleGroups[group]) {
+			resizeKey(key, keySize * keyScales[key * 2], keySize * keyScales[key * 2 + 1]);
 		}
+	}
+
+	private int resizeGroupForKey(int index) {
+		for (int group = 0; group < keyScaleGroups.length; group++) {
+			for (int key : keyScaleGroups[group]) if (key == index) return group;
+		}
+		throw new IllegalArgumentException("Unknown key: " + index);
+	}
+
+	private void highlightResizeTargets(int index) {
+		highlightGroup(-1);
+		if (index < 0) return;
+		if (editorGroupResizeEnabled) highlightGroup(resizeGroupForKey(index));
+		else keypad[index].selected = true;
 	}
 
 	/**
@@ -1863,8 +1902,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (int group = 0; group < keyScaleGroups.length; group++) {
 			for (int key : keyScaleGroups[group]) {
 				if (key == keyIndex) {
-					keyScales[group * 2] = scaleX;
-					keyScales[group * 2 + 1] = scaleY;
+					for (int member : keyScaleGroups[group]) {
+						keyScales[member * 2] = scaleX;
+						keyScales[member * 2 + 1] = scaleY;
+					}
 					resizeKeyGroup(group);
 					return true;
 				}
