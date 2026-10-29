@@ -912,7 +912,7 @@ public class VirtualControlsKeyboardResizeTest {
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
         createAndSaveTwoOrientationDpadCustom(portrait, landscape);
         keyboard.setLayout(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
-        truncateInsideV4LandscapeOverride();
+        truncateInsideV5LandscapeOverride();
 
         settings.vkType = 6;
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -1275,7 +1275,7 @@ public class VirtualControlsKeyboardResizeTest {
         dragGrouped("dpadGeometry", -24f, 18f);
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
 
-        truncateInsideV4LandscapeOverride();
+        truncateInsideV5LandscapeOverride();
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         VirtualControlsKeyboard candidate = null;
@@ -1756,15 +1756,10 @@ public class VirtualControlsKeyboardResizeTest {
             }
             out.writeInt(VirtualKeyboard.LAYOUT_SCALES);
             // v3 stores six width/height scale pairs, not the 28-key v5 representation.
-            int[][] groups = {
-                    { 13, 14, 15, 16, 17, 18, 19, 20 },
-                    { 10, 11 }, { 24, 25, 26, 27 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 23 },
-                    { 22 }, { 21 }
-            };
-            out.writeInt(4 + groups.length * 2 * 4);
-            out.writeInt(groups.length * 2);
-            for (int[] group : groups) {
-                int first = group[0];
+            int[] firstOfGroup = { 16, 12, 25, 0, 24, 27 };
+            out.writeInt(4 + firstOfGroup.length * 2 * 4);
+            out.writeInt(firstOfGroup.length * 2);
+            for (int first : firstOfGroup) {
                 out.writeFloat(snapshot.keyScales[first * 2]);
                 out.writeFloat(snapshot.keyScales[first * 2 + 1]);
             }
@@ -1824,7 +1819,7 @@ public class VirtualControlsKeyboardResizeTest {
         throw new AssertionError("Target key was not found in layout");
     }
 
-    private void truncateInsideV4LandscapeOverride() throws Exception {
+    private void truncateInsideV5LandscapeOverride() throws Exception {
         try (RandomAccessFile raf = new RandomAccessFile(layoutFile(), "rw")) {
             assertEquals(0x564B4C00, raf.readInt());
             assertEquals(5, raf.readInt());
