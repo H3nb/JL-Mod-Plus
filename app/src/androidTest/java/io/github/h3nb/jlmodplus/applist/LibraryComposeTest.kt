@@ -231,6 +231,8 @@ class LibraryComposeTest {
         }
 
         val search = composeRule.onNode(hasSetTextAction())
+        search.performClick()
+        search.performTextInput("Demo")
         val center = search.fetchSemanticsNode().boundsInRoot.center
         val screenLocation = IntArray(2)
         composeRule.runOnIdle { composeView.getLocationOnScreen(screenLocation) }
@@ -258,7 +260,6 @@ class LibraryComposeTest {
         composeRule.runOnIdle {
             assertEquals(InputMode.Touch, inputModeManager.inputMode)
         }
-        search.performTextInput("Demo")
         search.performImeAction()
         composeRule.waitForIdle()
 
