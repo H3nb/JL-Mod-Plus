@@ -67,6 +67,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeUp
