@@ -993,8 +993,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
-			if (version == 4) {
-				return readV4Layout(dis);
+			if (version >= 4) {
+				return readV4Layout(dis, version);
 			}
 
 			int legacyCustomBlocks = 0;
@@ -1060,8 +1060,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
-			if (version == 4) {
-				readV4Layout(dis);
+			if (version >= 4) {
+				readV4Layout(dis, version);
 				return;
 			}
 
@@ -1113,7 +1113,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
-	private int readV4Layout(DataInputStream dis) throws IOException {
+	private int readV4Layout(DataInputStream dis, int version) throws IOException {
 		boolean typeSeen = false;
 		boolean baseSeen = false;
 		boolean legacySeen = false;
@@ -1168,17 +1168,17 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				}
 				case LAYOUT_LEGACY_SHARED -> {
 					if (legacySeen) throw new IOException("duplicate legacy fallback block");
-					legacyFallback = readV4SnapshotBlock(dis, length);
+					legacyFallback = readV4SnapshotBlock(dis, length, version);
 					legacySeen = true;
 				}
 				case LAYOUT_PORTRAIT_OVERRIDE -> {
 					if (portraitSeen) throw new IOException("duplicate portrait override block");
-					portraitOverride = readV4SnapshotBlock(dis, length);
+					portraitOverride = readV4SnapshotBlock(dis, length, version);
 					portraitSeen = true;
 				}
 				case LAYOUT_LANDSCAPE_OVERRIDE -> {
 					if (landscapeSeen) throw new IOException("duplicate landscape override block");
-					landscapeOverride = readV4SnapshotBlock(dis, length);
+					landscapeOverride = readV4SnapshotBlock(dis, length, version);
 					landscapeSeen = true;
 				}
 				case LAYOUT_KEYS, LAYOUT_SCALES ->
@@ -1190,10 +1190,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private VirtualKeyboardLayoutSnapshot readV4SnapshotBlock(
-			DataInputStream dis, int length) throws IOException {
+			DataInputStream dis, int length, int version) throws IOException {
+		int encodedScaleCount = version == 4 ? keyScaleGroups.length * 2 : keyScales.length;
 		int expectedLength =
 				4 + keypad.length * KEY_RECORD_SIZE_V2 +
-				4 + keyScales.length * 4 +
+				4 + encodedScaleCount * 4 +
 				2 + 6 * 4;
 		if (length != expectedLength) throw new IOException("invalid v4 snapshot payload length");
 
@@ -1237,15 +1238,14 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 
 		int scaleCount = dis.readInt();
-		if (scaleCount != keyScales.length) throw new IOException("invalid v4 scale count");
-		float[] scales = new float[keyScales.length];
+		if (scaleCount != encodedScaleCount) throw new IOException("invalid layout scale count");
+		float[] encodedScales = new float[scaleCount];
 		for (int i = 0; i < scaleCount; i++) {
 			float scale = dis.readFloat();
-			if (!Float.isFinite(scale) || scale <= 0.0f) {
-				throw new IOException("invalid v4 key scale");
-			}
-			scales[i] = scale;
+			if (!Float.isFinite(scale) || scale <= 0.0f) throw new IOException("invalid key scale");
+			encodedScales[i] = scale;
 		}
+		float[] scales = version == 4 ? expandLegacyGroupScales(encodedScales) : encodedScales;
 
 		int dpadEnabled = dis.readUnsignedByte();
 		int analogEnabled = dis.readUnsignedByte();
@@ -1332,31 +1332,36 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
+	private float[] expandLegacyGroupScales(float[] groups) {
+		float[] result = new float[keyScales.length];
+		for (int group = 0; group < keyScaleGroups.length; group++) {
+			for (int key : keyScaleGroups[group]) {
+				result[key * 2] = groups[group * 2];
+				result[key * 2 + 1] = groups[group * 2 + 1];
+			}
+		}
+		return result;
+	}
+
 	private void readScaleBlock(
 			DataInputStream dis, int version, int length, float[] scales) throws IOException {
 		int count = readCount(dis, length, 4);
-		int maxScales = version >= 3 ? scales.length : scales.length / 2;
-		if (count < 0 || count > maxScales) {
-			throw new IOException("invalid layout scale count");
+		int groupCount = keyScaleGroups.length;
+		int max = version >= 3 ? groupCount * 2 : groupCount;
+		if (count < 0 || count > max) throw new IOException("invalid layout scale count");
+		float[] groups = new float[groupCount * 2];
+		for (int group = 0; group < groupCount; group++) {
+			int first = keyScaleGroups[group][0];
+			groups[group * 2] = scales[first * 2];
+			groups[group * 2 + 1] = scales[first * 2 + 1];
 		}
-		if (version >= 3) {
-			for (int i = 0; i < count; i++) {
-				float value = dis.readFloat();
-				if (!Float.isFinite(value) || value <= 0.0f) {
-					throw new IOException("invalid key scale");
-				}
-				scales[i] = value;
-			}
-		} else {
-			for (int i = 0; i < count; i++) {
-				float value = dis.readFloat();
-				if (!Float.isFinite(value) || value <= 0.0f) {
-					throw new IOException("invalid legacy key scale");
-				}
-				scales[i * 2] = value;
-				scales[i * 2 + 1] = value;
-			}
+		for (int i = 0; i < count; i++) {
+			float value = dis.readFloat();
+			if (!Float.isFinite(value) || value <= 0f) throw new IOException("invalid key scale");
+			if (version >= 3) groups[i] = value;
+			else { groups[i * 2] = value; groups[i * 2 + 1] = value; }
 		}
+		System.arraycopy(expandLegacyGroupScales(groups), 0, scales, 0, scales.length);
 	}
 
 	public static int persistedKeyIndexForHash(int hash) {
