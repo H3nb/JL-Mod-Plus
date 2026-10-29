@@ -50,6 +50,7 @@ public final class RuntimeHostView {
 	public final LinearLayout layoutEditPanel;
 	public final AppCompatImageView layoutEditShowControls;
 	public final AppCompatImageView layoutEditGridSize;
+	public final AppCompatImageView layoutEditGroupResize;
 	public final AppCompatImageView layoutEditSnap;
 	public final AppCompatButton layoutEditDone;
 	private static final int EDITOR_PANEL_SURFACE = 0xFF232529;
@@ -148,10 +149,13 @@ public final class RuntimeHostView {
 				R.string.runtime_virtual_controls_show_controls);
 		AppCompatImageView gridSize = editorTool(context, R.drawable.ic_editor_grid,
 				R.string.layout_editor_grid_size);
+		AppCompatImageView groupResize = editorTool(context, R.drawable.ic_editor_group_resize,
+				R.string.layout_editor_group_on);
 		AppCompatImageView snap = editorTool(context, R.drawable.ic_editor_snap,
 				R.string.layout_editor_snap_on);
 		tools.addView(showControls, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
 		tools.addView(gridSize, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
+		tools.addView(groupResize, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
 		tools.addView(snap, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
 		panel.addView(tools);
 
@@ -180,9 +184,11 @@ public final class RuntimeHostView {
 		layoutEditPanel = panel;
 		layoutEditShowControls = showControls;
 		layoutEditGridSize = gridSize;
+		layoutEditGroupResize = groupResize;
 		layoutEditSnap = snap;
 		layoutEditDone = done;
 		setLayoutEditSnapEnabled(true);
+		setLayoutEditGroupEnabled(true);
 	}
 
 	private static AppCompatImageView editorTool(Context context, int icon, int label) {
@@ -208,6 +214,14 @@ public final class RuntimeHostView {
 				enabled ? layoutEditDone.getCurrentTextColor() : 0x99FFFFFF));
 		layoutEditSnap.setContentDescription(layoutEditSnap.getContext().getString(label));
 		TooltipCompat.setTooltipText(layoutEditSnap, layoutEditSnap.getContentDescription());
+	}
+
+	public void setLayoutEditGroupEnabled(boolean enabled) {
+		int label = enabled ? R.string.layout_editor_group_on : R.string.layout_editor_group_off;
+		layoutEditGroupResize.setImageTintList(ColorStateList.valueOf(
+				enabled ? layoutEditDone.getCurrentTextColor() : 0x99FFFFFF));
+		layoutEditGroupResize.setContentDescription(layoutEditGroupResize.getContext().getString(label));
+		TooltipCompat.setTooltipText(layoutEditGroupResize, layoutEditGroupResize.getContentDescription());
 	}
 
 	private static int editorAccent(Context context) {
