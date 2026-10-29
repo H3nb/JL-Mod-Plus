@@ -2173,15 +2173,16 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				float unit = Math.max(1f, Math.min(screen.width(), screen.height()) * 0.5f);
 				float newX = prevScaleX + (x - offsetX) / unit;
 				float newY = prevScaleY + (offsetY - y) / unit;
-				int[] targets = editorGroupResizeEnabled
-						? keyScaleGroups[resizeGroupForKey(editedIndex)] : new int[]{editedIndex};
+				int[] targets = keyScaleGroups[resizeGroupForKey(editedIndex)];
 				float factorX = Math.max(1f / keySize, newX) / prevScaleX;
 				float factorY = Math.max(1f / keySize, newY) / prevScaleY;
 				for (int key : targets) {
+					if (!editorGroupResizeEnabled && key != editedIndex) continue;
 					factorX = Math.min(factorX, screen.width() / (keySize * resizeStartScales[key * 2]));
 					factorY = Math.min(factorY, screen.height() / (keySize * resizeStartScales[key * 2 + 1]));
 				}
 				for (int key : targets) {
+					if (!editorGroupResizeEnabled && key != editedIndex) continue;
 					keyScales[key * 2] = Math.max(1f / keySize, resizeStartScales[key * 2] * factorX);
 					keyScales[key * 2 + 1] = Math.max(1f / keySize, resizeStartScales[key * 2 + 1] * factorY);
 					resizeKey(key, keySize * keyScales[key * 2], keySize * keyScales[key * 2 + 1]);
