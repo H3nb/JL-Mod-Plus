@@ -1040,7 +1040,6 @@ fun LibraryScreen(
     }
 
     LaunchedEffect(destination, state.libraryScope) {
-        focusManager.clearFocus()
         when (destination) {
             LibraryDestination.Apps -> appsViewport.chromeVisible = true
             LibraryDestination.Collections -> {
@@ -1088,9 +1087,10 @@ fun LibraryScreen(
     LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
     }
-    // Start on an actual navigation control, not the full-screen Android host or a text field.
-    // Request only when first composed; later tab changes and resumed editing own their focus.
-    LaunchedEffect(Unit) {
+    // Keep an eligible, non-text focus owner when the destination or workdir changes.
+    // Releasing focus alone can return it to the search editor on pre-API-28 Android.
+    // Do not re-request focus for ordinary Library data/projection updates.
+    LaunchedEffect(destination, state.libraryScope) {
         if (!libraryOverlayVisible && (useNavigationRail ||
                 (showNavigationBar && !imeHidesLibraryChrome && !selectionActiveHere &&
                     !collectionManageAppsActive))
@@ -1817,7 +1817,9 @@ private fun ColumnScope.LibraryNavigationRailItem(
     NavigationRailItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
-        modifier = if (destination == selected) Modifier.focusRequester(initialFocusRequester) else Modifier,
+        modifier = if (destination == selected) {
+            Modifier.focusRequester(initialFocusRequester).focusProperties { canFocus = true }
+        } else Modifier,
         colors = jlModPlusNavigationRailItemColors(),
         icon = {
             Icon(
@@ -1879,7 +1881,9 @@ private fun RowScope.LibraryNavigationItem(
     NavigationBarItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
-        modifier = if (destination == selected) Modifier.focusRequester(initialFocusRequester) else Modifier,
+        modifier = if (destination == selected) {
+            Modifier.focusRequester(initialFocusRequester).focusProperties { canFocus = true }
+        } else Modifier,
         colors = jlModPlusNavigationBarItemColors(),
         icon = {
             Icon(
@@ -1945,7 +1949,6 @@ internal fun LibraryAppsDestination(
             searchImeVisible -> searchImeWasVisible = true
             searchImeWasVisible -> {
                 searchDismissFocus.requestFocus()
-                searchFocused = false
                 searchImeWasVisible = false
             }
         }
@@ -1953,7 +1956,6 @@ internal fun LibraryAppsDestination(
     BackHandler(enabled = active && searchFocused) {
         searchKeyboard?.hide()
         searchDismissFocus.requestFocus()
-        searchFocused = false
     }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
@@ -1961,7 +1963,6 @@ internal fun LibraryAppsDestination(
     LaunchedEffect(active) {
         if (!active) {
             sortVisible = false
-            searchFocused = false
         }
     }
     val currentActive by rememberUpdatedState(active)
@@ -2090,7 +2091,7 @@ internal fun LibraryAppsDestination(
                     revealSearchResults()
                 }
             },
-            onSearchFocusChanged = { searchFocused = currentActive && it },
+            onSearchFocusChanged = { searchFocused = it },
             dismissFocusRequester = searchDismissFocus,
             state = state,
             sortVisible = active && sortVisible,
@@ -2588,7 +2589,9 @@ private fun LibraryAppsHeader(
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
-                    modifier = if (interactive) Modifier.focusRequester(dismissFocusRequester) else Modifier,
+                    modifier = if (searchActionsEnabled) {
+                        Modifier.focusRequester(dismissFocusRequester).focusProperties { canFocus = true }
+                    } else Modifier,
                     enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(
