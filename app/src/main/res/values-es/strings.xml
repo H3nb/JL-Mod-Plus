@@ -1163,4 +1163,18 @@
     <string name="library_metadata_language_search">Buscar idioma o introducir código regional</string>
     <string name="library_metadata_remove_language">Eliminar descripción</string>
     <string name="library_metadata_language_load_failed">No se pudieron cargar las descripciones. Vuelve a editar los metadatos.</string>
+    <string name="layout_editor_group_on">Redimensionar en grupo</string>
+    <string name="layout_editor_group_off">Redimensionar individualmente</string>
+    <string name="layout_editor_snap_grid">Ajustar a la cuadrícula</string>
+    <string name="layout_editor_snap_controls">Ajustar a los botones</string>
+    <string name="layout_editor_snap_grid_on">Ajuste a cuadrícula: Activado</string>
+    <string name="layout_editor_snap_grid_off">Ajuste a cuadrícula: Desactivado</string>
+    <string name="layout_editor_snap_controls_on">Ajuste a botones: Activado</string>
+    <string name="layout_editor_snap_controls_off">Ajuste a botones: Desactivado</string>
+    <string name="layout_editor_guide_gestures">Gestos</string>
+    <string name="layout_editor_guide_move">Arrastra un control para moverlo.</string>
+    <string name="layout_editor_guide_resize">Usa dos dedos para cambiar el tamaño. Muévelos horizontal o verticalmente para ajustar el ancho o el alto.</string>
+    <string name="layout_editor_guide_tools">Herramientas de edición</string>
+    <string name="layout_editor_guide_done">Toca Listo para guardar, descartar o continuar editando.</string>
+    <string name="layout_editor_guide_start">Empezar a editar</string>
 </resources>
