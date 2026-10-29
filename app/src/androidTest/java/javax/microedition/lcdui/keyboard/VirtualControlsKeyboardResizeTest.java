@@ -283,6 +283,30 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void legacyV4GroupSizesExpandWithoutChangingRenderedButtonDimensions() throws Exception {
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        float left = rectField(keyByLabel("L")).width();
+        float right = rectField(keyByLabel("R")).width();
+        VirtualKeyboardLayoutSnapshot snapshot = keyboard.captureLayoutSnapshot();
+        writeLegacyV4Layout(snapshot);
+
+        recreateKeyboardFromDisk(new RectF(0f, 0f, 1200f, 600f));
+        assertEquals(left, rectField(keyByLabel("L")).width(), EPS);
+        assertEquals(right, rectField(keyByLabel("R")).width(), EPS);
+
+        keyboard.setEditorGroupResizeEnabled(false);
+        RectF selected = rectField(keyByLabel("L"));
+        float x = selected.centerX(), y = selected.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 160f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 160f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+        assertEquals(right, rectField(keyByLabel("R")).width(), EPS);
+        assertTrue(rectField(keyByLabel("L")).width() > left);
+    }
+
+    @Test
     public void standardTemplateUsesRectangularShouldersAndCompactMovementControl() throws Exception {
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
 
@@ -1744,6 +1768,44 @@ public class VirtualControlsKeyboardResizeTest {
 
     private File layoutFile() {
         return new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
+    }
+
+    private void writeLegacyV4Layout(VirtualKeyboardLayoutSnapshot snapshot) throws Exception {
+        int[] firstOfGroup = { 16, 12, 25, 0, 24, 27 };
+        int length = 4 + keypad.length * 21 + 4 + firstOfGroup.length * 2 * 4 + 2 + 6 * 4;
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile()))) {
+            out.writeInt(0x564B4C00);
+            out.writeInt(4);
+            out.writeInt(VirtualKeyboard.LAYOUT_TYPE);
+            out.writeInt(1);
+            out.writeByte(VirtualKeyboard.TYPE_CUSTOM);
+            out.writeInt(5); // v4 legacy-shared snapshot block
+            out.writeInt(length);
+            out.writeInt(keypad.length);
+            for (int i = 0; i < keypad.length; i++) {
+                out.writeInt(keypad[i].hashCode());
+                out.writeBoolean(snapshot.visible[i]);
+                out.writeInt(snapshot.snapOrigins[i]);
+                out.writeInt(snapshot.snapModes[i]);
+                out.writeFloat(snapshot.snapOffsetX[i]);
+                out.writeFloat(snapshot.snapOffsetY[i]);
+            }
+            out.writeInt(firstOfGroup.length * 2);
+            for (int first : firstOfGroup) {
+                out.writeFloat(snapshot.keyScales[first * 2]);
+                out.writeFloat(snapshot.keyScales[first * 2 + 1]);
+            }
+            out.writeBoolean(snapshot.hasGroupedControls && snapshot.dpadEnabled);
+            out.writeBoolean(snapshot.hasGroupedControls && snapshot.analogEnabled);
+            out.writeFloat(snapshot.hasGroupedControls ? snapshot.dpadCenterX : 0.5f);
+            out.writeFloat(snapshot.hasGroupedControls ? snapshot.dpadCenterY : 0.5f);
+            out.writeFloat(snapshot.hasGroupedControls ? snapshot.dpadRadius : 0.16f);
+            out.writeFloat(snapshot.hasGroupedControls ? snapshot.analogCenterX : 0.5f);
+            out.writeFloat(snapshot.hasGroupedControls ? snapshot.analogCenterY : 0.5f);
+            out.writeFloat(snapshot.hasGroupedControls ? snapshot.analogRadius : 0.16f);
+            out.writeInt(VirtualKeyboard.LAYOUT_EOF);
+            out.writeInt(0);
+        }
     }
 
     private void writeLegacyV3Layout(VirtualKeyboardLayoutSnapshot snapshot) throws Exception {
