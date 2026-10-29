@@ -1097,4 +1097,18 @@
     <string name="library_metadata_language_search">言語を検索またはロケールを入力</string>
     <string name="library_metadata_remove_language">説明を削除</string>
     <string name="library_metadata_language_load_failed">説明を読み込めませんでした。メタデータ編集を開き直してください。</string>
+    <string name="layout_editor_group_on">グループでサイズ変更</string>
+    <string name="layout_editor_group_off">個別にサイズ変更</string>
+    <string name="layout_editor_snap_grid">グリッドにスナップ</string>
+    <string name="layout_editor_snap_controls">ボタンにスナップ</string>
+    <string name="layout_editor_snap_grid_on">グリッド吸着：オン</string>
+    <string name="layout_editor_snap_grid_off">グリッド吸着：オフ</string>
+    <string name="layout_editor_snap_controls_on">ボタン吸着：オン</string>
+    <string name="layout_editor_snap_controls_off">ボタン吸着：オフ</string>
+    <string name="layout_editor_guide_gestures">ジェスチャー</string>
+    <string name="layout_editor_guide_move">操作ボタンをドラッグして移動します。</string>
+    <string name="layout_editor_guide_resize">2本の指でサイズを変更します。横方向または縦方向に動かすと幅や高さを変更できます。</string>
+    <string name="layout_editor_guide_tools">編集ツール</string>
+    <string name="layout_editor_guide_done">完了をタップして保存、破棄、または編集を続行します。</string>
+    <string name="layout_editor_guide_start">編集を開始</string>
 </resources>
