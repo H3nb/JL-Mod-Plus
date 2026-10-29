@@ -1194,7 +1194,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (screenBounds == null || editControl == EditControl.NONE) return;
 		float cx = x - editOffsetX;
 		float cy = y - editOffsetY;
-		if (isEditorSnapEnabled()) {
+		if (isEditorSnapGridEnabled()) {
 			float step = gridStep();
 			cx = snapToEditorGrid(cx, screenBounds.left, step);
 			cy = snapToEditorGrid(cy, screenBounds.top, step);
@@ -1257,6 +1257,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private boolean beginLegacyPinch(int pointer, float x, float y) {
 		if (getLayoutEditMode() != LAYOUT_KEYS || legacyEditPointer < 0 ||
 				legacyPinchPointer >= 0 || pointer == legacyEditPointer) return false;
+
+		// A second contact far from the selected key should not initiate resizing.
+		float reach = Math.max(96f, getCurrentKeySize() * 2.5f);
+		if (Math.hypot(x - legacyEditX, y - legacyEditY) > reach) return false;
 
 		/* Finalize the current move before handing the selected key's scale group to the legacy
 		 * resize engine. The second finger itself is not forwarded to VirtualKeyboard. */
