@@ -229,6 +229,62 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void releasingResizeDoesNotRepositionButtonsOrExistingDependents() throws Exception {
+        // Snapping is enabled by default, but must only apply during actual movement.
+        assertTrue(keyboard.isEditorSnapGridEnabled());
+        assertTrue(keyboard.isEditorSnapControlsEnabled());
+        keyboard.setEditorGroupResizeEnabled(false);
+
+        RectF five = rectField(keyByLabel("5"));
+        RectF six = rectField(keyByLabel("6"));
+        float x = five.centerX(), y = five.centerY();
+
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 155f, y));
+
+        RectF resized = rectField(keyByLabel("5"));
+        assertTrue(resized.width() > five.width());
+        assertEquals(five.left, resized.left, EPS);
+        assertEquals(five.top, resized.top, EPS);
+        assertEquals(six.left, rectField(keyByLabel("6")).left, EPS);
+        assertEquals(six.top, rectField(keyByLabel("6")).top, EPS);
+
+        assertTrue(keyboard.pointerReleased(1, x + 155f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+        assertEquals(resized.left, rectField(keyByLabel("5")).left, EPS);
+        assertEquals(resized.top, rectField(keyByLabel("5")).top, EPS);
+        assertEquals(six.left, rectField(keyByLabel("6")).left, EPS);
+        assertEquals(six.top, rectField(keyByLabel("6")).top, EPS);
+
+        // The same geometry must survive anchor-based layout serialization.
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        try (FileOutputStream out = new FileOutputStream(layoutFile())) {
+            out.write(keyboard.encodeCurrentLayoutForPersistence());
+        }
+        recreateKeyboardFromDisk(new RectF(0f, 0f, 1200f, 600f));
+        assertEquals(resized.left, rectField(keyByLabel("5")).left, EPS);
+        assertEquals(six.left, rectField(keyByLabel("6")).left, EPS);
+    }
+
+    @Test
+    public void groupReshapeDoesNotRealignButtonsOnPinchRelease() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(true);
+        RectF left = rectField(keyByLabel("L"));
+        RectF right = rectField(keyByLabel("R"));
+        float x = left.centerX(), y = left.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 75f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 75f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+        assertTrue(rectField(keyByLabel("L")).width() < left.width());
+        assertTrue(rectField(keyByLabel("R")).width() < right.width());
+        assertEquals(left.left, rectField(keyByLabel("L")).left, EPS);
+        assertEquals(right.left, rectField(keyByLabel("R")).left, EPS);
+    }
+
+    @Test
     public void individualResizeLeavesOtherMemberUntouchedAndGroupPreservesDifference() throws Exception {
         RectF left = rectField(keyByLabel("L"));
         RectF right = rectField(keyByLabel("R"));

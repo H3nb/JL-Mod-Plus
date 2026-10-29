@@ -71,7 +71,8 @@ and **Snap**. Group resize is on by default and changes all legacy keys in
 the selected historic group; turn it off to resize just one key. Different
 sizes within a group remain different when group resizing is re-enabled.
 The Snap menu independently enables alignment to the visible grid and to
-nearby legacy buttons. The grid can remain visible with snapping off.
+nearby legacy buttons. Snapping only applies when moving controls, not
+when resizing or releasing a pinch. The grid can remain visible with snapping off.
 
 Tap **Done** when finished. If the layout changed, choose Save, Discard,
 or Continue editing. Group resize, Snap, and Grid size are session-only

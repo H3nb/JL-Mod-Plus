@@ -239,6 +239,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private boolean editorGroupResizeEnabled = true;
 	private int editorGridDivisions = EDITOR_GRID_NORMAL;
 	private int editedIndex;
+	private boolean movedInEditGesture;
 	private float offsetX;
 	private float offsetY;
 	private float prevScaleX;
@@ -1856,6 +1857,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public void setLayoutEditMode(int mode) {
 		layoutEditMode = mode;
 		editedIndex = -1;
+		movedInEditGesture = false;
 		highlightGroup(-1);
 		handler.removeCallbacks(this);
 		visible = true;
@@ -1873,6 +1875,22 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private void resizeKeyGroup(int group) {
 		for (int key : keyScaleGroups[group]) {
 			resizeKey(key, keySize * keyScales[key * 2], keySize * keyScales[key * 2 + 1]);
+		}
+	}
+
+	/**
+	 * Shape editing must not magnetically reposition controls. Express each current
+	 * rectangle through its existing anchor and updated offset before the normal
+	 * geometry reconstruction. This also keeps dependent controls in place.
+	 */
+	private void preservePositionsAfterResize() {
+		for (VirtualKey key : keypad) {
+			RectF origin = key.snapOrigin == SCREEN ? screen : keypad[key.snapOrigin].rect;
+			snapCandidate.set(key.rect);
+			RectSnap.snap(snapCandidate, origin, key.snapMode, null);
+			key.snapOffset.set(
+					key.rect.left - snapCandidate.left,
+					key.rect.top - snapCandidate.top);
 		}
 	}
 
@@ -2075,6 +2093,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 			case LAYOUT_KEYS -> {
 				editedIndex = -1;
+				movedInEditGesture = false;
 				for (int i = 0; i < keypad.length; i++) {
 					if (keypad[i].contains(x, y)) {
 						editedIndex = i;
@@ -2137,6 +2156,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					RectF rect = key.rect;
 					float requestedLeft = x - offsetX;
 					float requestedTop = y - offsetY;
+					if (Math.abs(requestedLeft - rect.left) > 0.5f ||
+							Math.abs(requestedTop - rect.top) > 0.5f) movedInEditGesture = true;
 					rect.offsetTo(requestedLeft, requestedTop);
 					constrainVisibleKey(key);
 					// Consume overshoot so reversing the finger moves the key immediately.
@@ -2186,7 +2207,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					keyScales[key * 2] = Math.max(1f / keySize, resizeStartScales[key * 2] * factorX);
 					keyScales[key * 2 + 1] = Math.max(1f / keySize, resizeStartScales[key * 2 + 1] * factorY);
 					resizeKey(key, keySize * keyScales[key * 2], keySize * keyScales[key * 2 + 1]);
+					constrainVisibleKey(keypad[key]);
 				}
+				preservePositionsAfterResize();
 				snapKeys();
 				overlayView.postInvalidate();
 			}
@@ -2214,7 +2237,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				}
 		} else if (layoutEditMode == LAYOUT_KEYS) {
 			consumed = editedIndex >= 0;
-			for (int key = 0; key < keypad.length; key++) {
+			if (consumed && movedInEditGesture) {
+				for (int key = 0; key < keypad.length; key++) {
 				VirtualKey vKey = keypad[key];
 				if (vKey.snapOrigin == editedIndex) {
 					vKey.snapMode = RectSnap.NO_SNAP;
@@ -2234,8 +2258,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					snapKey(key, 0);
 				}
 			}
-			snapKeys();
+				snapKeys();
+			}
 			editedIndex = -1;
+			movedInEditGesture = false;
 		} else if (layoutEditMode == LAYOUT_SCALES) {
 			consumed = editedIndex >= 0;
 			editedIndex = -1;

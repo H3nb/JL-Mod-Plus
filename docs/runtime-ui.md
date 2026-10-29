@@ -68,6 +68,8 @@ the existing transaction boundary. Visible controls remain inside the host
 control viewport; passive viewport changes do not rewrite saved positions
 or sizes. The v5 layout stores individual legacy button width/height scales
 per orientation; v1-v4 group scales expand to equal per-key sizes when loaded.
+During resize/reshape, the editor preserves control positions and existing anchor
+relationships through updated offsets; interactive snapping is reserved for drag.
 
 ## LCDUI presentation authority
 
