@@ -15,6 +15,10 @@
 package io.github.h3nb.jlmodplus.applist
 
 import io.github.h3nb.jlmodplus.R
+import android.os.SystemClock
+import android.view.InputDevice
+import android.view.MotionEvent
+import android.view.View
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
@@ -59,10 +63,10 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeUp
@@ -211,8 +215,10 @@ class LibraryComposeTest {
     fun searchDoneTransfersFocusAfterTouchAndCanBeReopened() {
         val actions = RecordingLibraryActions()
         lateinit var inputModeManager: InputModeManager
+        lateinit var composeView: View
         composeRule.setContent {
             inputModeManager = LocalInputModeManager.current
+            composeView = LocalView.current
             JLModPlusTheme {
                 LibraryScreen(
                     state = LibraryUiState(
@@ -225,15 +231,34 @@ class LibraryComposeTest {
         }
 
         val search = composeRule.onNode(hasSetTextAction())
-        search.performTouchInput { click() }
+        val center = search.fetchSemanticsNode().boundsInRoot.center
+        val screenLocation = IntArray(2)
+        composeRule.runOnIdle { composeView.getLocationOnScreen(screenLocation) }
+        val x = screenLocation[0] + center.x
+        val y = screenLocation[1] + center.y
+        val downTime = SystemClock.uptimeMillis()
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        for (action in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+            val event = MotionEvent.obtain(
+                downTime,
+                downTime + if (action == MotionEvent.ACTION_UP) 50 else 0,
+                action,
+                x,
+                y,
+                0,
+            ).apply { source = InputDevice.SOURCE_TOUCHSCREEN }
+            try {
+                assertTrue(automation.injectInputEvent(event, true))
+            } finally {
+                event.recycle()
+            }
+        }
+        composeRule.waitForIdle()
         search.assertIsFocused()
-        search.performTextInput("Demo")
-        // Compose test's synthetic touch injection need not switch Android's input mode.
-        // Explicitly exercise the mode where SystemDefined clickable focus is ineligible.
         composeRule.runOnIdle {
-            assertTrue(inputModeManager.requestInputMode(InputMode.Touch))
             assertEquals(InputMode.Touch, inputModeManager.inputMode)
         }
+        search.performTextInput("Demo")
         search.performImeAction()
         composeRule.waitForIdle()
 
