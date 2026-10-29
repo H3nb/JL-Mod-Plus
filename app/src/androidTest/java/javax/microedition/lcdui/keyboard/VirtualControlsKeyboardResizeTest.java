@@ -140,14 +140,20 @@ public class VirtualControlsKeyboardResizeTest {
         VirtualKeyboardLayoutEditState before = keyboard.captureLayoutEditState();
 
         assertTrue(keyboard.isEditorSnapGridEnabled());
+        assertTrue(keyboard.isEditorSnapControlsEnabled());
+        assertTrue(keyboard.isEditorGroupResizeEnabled());
         assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
+
         keyboard.setEditorSnapGridEnabled(false);
         keyboard.setEditorSnapControlsEnabled(false);
+        keyboard.setEditorGroupResizeEnabled(false);
         keyboard.setEditorGridDivisions(VirtualKeyboard.EDITOR_GRID_FINE);
-
         assertEquals(before, keyboard.captureLayoutEditState());
+
         keyboard.resetLayoutEditorTools();
         assertTrue(keyboard.isEditorSnapGridEnabled());
+        assertTrue(keyboard.isEditorSnapControlsEnabled());
+        assertTrue(keyboard.isEditorGroupResizeEnabled());
         assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
     }
 
@@ -753,7 +759,7 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
         float portraitFire = rectField(keyByLabel("F")).centerX();
 
-        // An unrelated profile save may capture only the current working geometry, but v4 remains
+        // An unrelated profile save may capture only the current working geometry, but v5 remains
         // authoritative for both orientation slots.
         ProfilesManager.saveConfig(profileDir, settings);
         recreateKeyboardFromDisk(landscape);
@@ -907,7 +913,7 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void malformedDormantCustomStateRejectsWholeV4Artifact() throws Exception {
+    public void malformedDormantCustomStateRejectsWholeV5Artifact() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
         createAndSaveTwoOrientationDpadCustom(portrait, landscape);
@@ -1264,7 +1270,7 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void malformedV4AfterValidPortraitBlockFallsBackWithoutPartialApply() throws Exception {
+    public void malformedV5AfterValidPortraitBlockFallsBackWithoutPartialApply() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
         keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
