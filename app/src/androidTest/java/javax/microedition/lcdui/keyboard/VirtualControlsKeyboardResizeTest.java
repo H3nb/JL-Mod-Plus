@@ -139,21 +139,23 @@ public class VirtualControlsKeyboardResizeTest {
     public void editorToolsAreSessionOnlyAndDoNotDirtyTheLayout() {
         VirtualKeyboardLayoutEditState before = keyboard.captureLayoutEditState();
 
-        assertTrue(keyboard.isEditorSnapEnabled());
+        assertTrue(keyboard.isEditorSnapGridEnabled());
         assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
-        keyboard.setEditorSnapEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
         keyboard.setEditorGridDivisions(VirtualKeyboard.EDITOR_GRID_FINE);
 
         assertEquals(before, keyboard.captureLayoutEditState());
         keyboard.resetLayoutEditorTools();
-        assertTrue(keyboard.isEditorSnapEnabled());
+        assertTrue(keyboard.isEditorSnapGridEnabled());
         assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
     }
 
     @Test
     public void snapOffAllowsFreeLegacyMovementWithoutInvalidSavedAnchors() throws Exception {
         RectF before = rectField(keyByLabel("F"));
-        keyboard.setEditorSnapEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
 
         dragLegacy("F", 13f, 7f);
 
@@ -173,7 +175,8 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(screen, screen.left, screen.top, screen.right, screen.bottom);
         settings.virtualDpadEnabled = true;
         keyboard.setEditorGridDivisions(VirtualKeyboard.EDITOR_GRID_COARSE);
-        keyboard.setEditorSnapEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
         VirtualDpadGeometry before = geometry("dpadGeometry");
 
         dragGrouped("dpadGeometry", 13f, 7f);
@@ -182,7 +185,8 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(before.getCenterX() + 13f, free.getCenterX(), EPS);
         assertEquals(before.getCenterY() + 7f, free.getCenterY(), EPS);
 
-        keyboard.setEditorSnapEnabled(true);
+        keyboard.setEditorSnapGridEnabled(true);
+        keyboard.setEditorSnapControlsEnabled(true);
         dragGrouped("dpadGeometry", 13f, 7f);
 
         VirtualDpadGeometry snapped = geometry("dpadGeometry");
@@ -216,6 +220,60 @@ public class VirtualControlsKeyboardResizeTest {
         RectF after = rectField(keyByLabel("L"));
         assertTrue(after.width() > before.width());
         assertEquals(before.height(), after.height(), EPS);
+    }
+
+    @Test
+    public void individualResizeLeavesOtherMemberUntouchedAndGroupPreservesDifference() throws Exception {
+        RectF left = rectField(keyByLabel("L"));
+        RectF right = rectField(keyByLabel("R"));
+        keyboard.setEditorGroupResizeEnabled(false);
+        float x = left.centerX(), y = left.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 160f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 160f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+        float individualWidth = rectField(keyByLabel("L")).width();
+        assertTrue(individualWidth > left.width());
+        assertEquals(right.width(), rectField(keyByLabel("R")).width(), EPS);
+
+        keyboard.setEditorGroupResizeEnabled(true);
+        RectF enlarged = rectField(keyByLabel("L"));
+        x = enlarged.centerX(); y = enlarged.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 140f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 140f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+
+        float factorLeft = rectField(keyByLabel("L")).width() / individualWidth;
+        float factorRight = rectField(keyByLabel("R")).width() / right.width();
+        assertTrue(factorRight > 1f);
+        assertEquals(factorLeft, factorRight, 0.02f);
+    }
+
+    @Test
+    public void individualResizeSurvivesV5DiskRoundTrip() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(false);
+        RectF before = rectField(keyByLabel("L"));
+        RectF other = rectField(keyByLabel("R"));
+        float x = before.centerX(), y = before.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 165f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 165f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+        float expectedWidth = rectField(keyByLabel("L")).width();
+        assertTrue(expectedWidth > before.width());
+        assertEquals(other.width(), rectField(keyByLabel("R")).width(), EPS);
+
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        try (FileOutputStream out = new FileOutputStream(layoutFile())) {
+            out.write(keyboard.encodeCurrentLayoutForPersistence());
+        }
+        recreateKeyboardFromDisk(new RectF(0f, 0f, 1200f, 600f));
+        assertEquals(expectedWidth, rectField(keyByLabel("L")).width(), EPS);
+        assertEquals(other.width(), rectField(keyByLabel("R")).width(), EPS);
     }
 
     @Test
@@ -1697,9 +1755,19 @@ public class VirtualControlsKeyboardResizeTest {
                 out.writeFloat(snapshot.snapOffsetY[i]);
             }
             out.writeInt(VirtualKeyboard.LAYOUT_SCALES);
-            out.writeInt(4 + snapshot.keyScales.length * 4);
-            out.writeInt(snapshot.keyScales.length);
-            for (float scale : snapshot.keyScales) out.writeFloat(scale);
+            // v3 stores six width/height scale pairs, not the 28-key v5 representation.
+            int[][] groups = {
+                    { 13, 14, 15, 16, 17, 18, 19, 20 },
+                    { 10, 11 }, { 24, 25, 26, 27 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 23 },
+                    { 22 }, { 21 }
+            };
+            out.writeInt(4 + groups.length * 2 * 4);
+            out.writeInt(groups.length * 2);
+            for (int[] group : groups) {
+                int first = group[0];
+                out.writeFloat(snapshot.keyScales[first * 2]);
+                out.writeFloat(snapshot.keyScales[first * 2 + 1]);
+            }
             out.writeInt(VirtualKeyboard.LAYOUT_EOF);
             out.writeInt(0);
         }
@@ -1759,7 +1827,7 @@ public class VirtualControlsKeyboardResizeTest {
     private void truncateInsideV4LandscapeOverride() throws Exception {
         try (RandomAccessFile raf = new RandomAccessFile(layoutFile(), "rw")) {
             assertEquals(0x564B4C00, raf.readInt());
-            assertEquals(4, raf.readInt());
+            assertEquals(5, raf.readInt());
             while (raf.getFilePointer() < raf.length()) {
                 int block = raf.readInt();
                 int length = raf.readInt();
