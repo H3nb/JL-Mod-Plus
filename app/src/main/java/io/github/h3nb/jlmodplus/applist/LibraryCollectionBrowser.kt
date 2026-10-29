@@ -205,9 +205,9 @@ internal fun LibraryCollectionBrowser(
     val searchKeyboard = LocalSoftwareKeyboardController.current
     val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var searchImeWasVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(searchFocused, searchImeVisible) {
+    LaunchedEffect(interactionActive, searchFocused, searchImeVisible) {
         when {
-            !searchFocused -> searchImeWasVisible = false
+            !interactionActive || !searchFocused -> searchImeWasVisible = false
             searchImeVisible -> searchImeWasVisible = true
             searchImeWasVisible -> {
                 searchDismissFocus.requestFocus()
@@ -299,7 +299,7 @@ internal fun LibraryCollectionBrowser(
                     revealSearchResults()
                 }
             },
-            onSearchFocusChanged = { searchFocused = it },
+            onSearchFocusChanged = { if (interactive) searchFocused = it },
             dismissFocusRequester = searchDismissFocus,
             onSortVisibilityChanged = { sortVisible = currentInteractionActive && it },
             onSort = { if (currentInteractionActive) onSort(it) },
