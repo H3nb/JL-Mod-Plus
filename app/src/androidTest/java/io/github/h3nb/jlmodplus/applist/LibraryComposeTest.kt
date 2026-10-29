@@ -227,10 +227,13 @@ class LibraryComposeTest {
         val search = composeRule.onNode(hasSetTextAction())
         search.performTouchInput { click() }
         search.assertIsFocused()
+        search.performTextInput("Demo")
+        // Compose test's synthetic touch injection need not switch Android's input mode.
+        // Explicitly exercise the mode where SystemDefined clickable focus is ineligible.
         composeRule.runOnIdle {
+            assertTrue(inputModeManager.requestInputMode(InputMode.Touch))
             assertEquals(InputMode.Touch, inputModeManager.inputMode)
         }
-        search.performTextInput("Demo")
         search.performImeAction()
         composeRule.waitForIdle()
 
