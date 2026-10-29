@@ -2239,25 +2239,25 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			consumed = editedIndex >= 0;
 			if (consumed && movedInEditGesture) {
 				for (int key = 0; key < keypad.length; key++) {
-				VirtualKey vKey = keypad[key];
-				if (vKey.snapOrigin == editedIndex) {
-					vKey.snapMode = RectSnap.NO_SNAP;
-					if (editorSnapControlsEnabled) {
-						for (int i = 0; i < KEYBOARD_SIZE; i++) {
-							if (i != key && findSnap(key, i)) break;
+					VirtualKey vKey = keypad[key];
+					if (vKey.snapOrigin == editedIndex) {
+						vKey.snapMode = RectSnap.NO_SNAP;
+						if (editorSnapControlsEnabled) {
+							for (int i = 0; i < KEYBOARD_SIZE; i++) {
+								if (i != key && findSnap(key, i)) break;
+							}
 						}
-					}
-					if (vKey.snapMode == RectSnap.NO_SNAP) {
-						vKey.snapMode = RectSnap.getSnap(vKey.rect, screen, vKey.snapOffset);
-						vKey.snapOrigin = SCREEN;
-						if (editorSnapGridEnabled) {
-							if (Math.abs(vKey.snapOffset.x) <= snapRadius) vKey.snapOffset.x = 0;
-							if (Math.abs(vKey.snapOffset.y) <= snapRadius) vKey.snapOffset.y = 0;
+						if (vKey.snapMode == RectSnap.NO_SNAP) {
+							vKey.snapMode = RectSnap.getSnap(vKey.rect, screen, vKey.snapOffset);
+							vKey.snapOrigin = SCREEN;
+							if (editorSnapGridEnabled) {
+								if (Math.abs(vKey.snapOffset.x) <= snapRadius) vKey.snapOffset.x = 0;
+								if (Math.abs(vKey.snapOffset.y) <= snapRadius) vKey.snapOffset.y = 0;
+							}
 						}
+						snapKey(key, 0);
 					}
-					snapKey(key, 0);
 				}
-			}
 				snapKeys();
 			}
 			editedIndex = -1;

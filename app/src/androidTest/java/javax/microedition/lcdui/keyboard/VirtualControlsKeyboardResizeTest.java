@@ -285,6 +285,27 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void movingAfterPinchStillUsesEnabledGridSnap() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
+        keyboard.setEditorSnapGridEnabled(true);
+        RectF five = rectField(keyByLabel("5"));
+        float x = five.centerX(), y = five.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 140f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 140f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+
+        RectF beforeMove = rectField(keyByLabel("5"));
+        dragLegacy("5", 43f, 17f);
+        RectF moved = rectField(keyByLabel("5"));
+        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
+        assertEquals(Math.round((beforeMove.left + 43f) / step) * step, moved.left, EPS);
+        assertEquals(Math.round((beforeMove.top + 17f) / step) * step, moved.top, EPS);
+    }
+
+    @Test
     public void individualResizeLeavesOtherMemberUntouchedAndGroupPreservesDifference() throws Exception {
         RectF left = rectField(keyByLabel("L"));
         RectF right = rectField(keyByLabel("R"));
