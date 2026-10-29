@@ -1,0 +1,67 @@
+name: Temporary Library API27 focus verification
+
+on:
+  pull_request:
+    branches: [alpha]
+    paths:
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryComposeBridge.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionBrowser.kt'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryComposeTest.kt'
+      - '.github/workflows/library-focus-api27.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  api27:
+    name: Library search focus on Android 8.1
+    runs-on: ubuntu-26.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run focused Compose instrumentation on API27
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 27
+          target: google_apis
+          arch: x86
+          disable-animations: true
+          script: |
+            chmod +x gradlew
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false '-Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.applist.LibraryComposeTest#searchDoneTransfersFocusAfterTouchAndCanBeReopened,io.github.h3nb.jlmodplus.applist.LibraryComposeTest#loadingLibraryScopeChangeKeepsSearchUnfocused' :app:connectedEmulatorDebugAndroidTest
+
+      - name: Upload instrumentation reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: temporary-library-api27-reports
+          path: |
+            app/build/reports/androidTests/**
+            app/build/outputs/androidTest-results/**
+          if-no-files-found: warn
+          retention-days: 2
