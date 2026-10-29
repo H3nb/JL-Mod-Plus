@@ -2088,27 +2088,17 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 			case LAYOUT_SCALES -> {
 				int index = -1;
-				for (int group = 0; group < keyScaleGroups.length && index < 0; group++) {
-					for (int key = 0; key < keyScaleGroups[group].length && index < 0; key++) {
-						if (keypad[keyScaleGroups[group][key]].contains(x, y)) {
-							index = group;
-						}
-					}
+				for (int i = 0; i < keypad.length; i++) {
+					if (keypad[i].contains(x, y)) { index = i; break; }
 				}
-				if (editedIndex == index) {
-					editedIndex = -1;
-					highlightGroup(-1);
-					overlayView.postInvalidate();
-				} else if (index >= 0) {
-					editedIndex = index;
-					highlightGroup(index);
-					overlayView.postInvalidate();
+				editedIndex = index;
+				highlightResizeTargets(index);
+				if (index >= 0) {
+					System.arraycopy(keyScales, 0, resizeStartScales, 0, keyScales.length);
+					prevScaleX = keyScales[index * 2];
+					prevScaleY = keyScales[index * 2 + 1];
 				}
-					if (editedIndex >= 0) {
-						prevScaleX = keyScales[editedIndex * 2];
-						prevScaleY = keyScales[editedIndex * 2 + 1];
-					}
-					consumed = index >= 0;
+				consumed = index >= 0;
 				offsetX = x;
 				offsetY = y;
 			}
@@ -2153,13 +2143,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					if (rect.left != requestedLeft) offsetX = x - rect.left;
 					if (rect.top != requestedTop) offsetY = y - rect.top;
 					key.snapMode = RectSnap.NO_SNAP;
-					if (editorSnapEnabled) {
+					if (editorSnapControlsEnabled) {
 						for (int i = 0; i < keypad.length; i++) {
 							if (i != editedIndex && findSnap(editedIndex, i)) break;
 						}
 					}
 					if (key.snapMode == RectSnap.NO_SNAP) {
-						if (editorSnapEnabled) {
+						if (editorSnapGridEnabled) {
 							float step = editorGridStep(screen);
 							rect.offsetTo(snapToEditorGrid(rect.left, screen.left, step),
 									snapToEditorGrid(rect.top, screen.top, step));
@@ -2168,7 +2158,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						// A screen anchor reconstructs freely placed keys without persisting NO_SNAP.
 						key.snapMode = RectSnap.getSnap(rect, screen, key.snapOffset);
 						key.snapOrigin = SCREEN;
-						if (editorSnapEnabled) {
+						if (editorSnapGridEnabled) {
 							if (Math.abs(key.snapOffset.x) <= snapRadius) key.snapOffset.x = 0;
 							if (Math.abs(key.snapOffset.y) <= snapRadius) key.snapOffset.y = 0;
 						}
@@ -2178,44 +2168,24 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				}
 			}
 			case LAYOUT_SCALES -> {
-				if (editedIndex == -1) {
-					break;
-				}
+				if (editedIndex == -1) break;
 				consumed = true;
-				float dx = x - offsetX;
-				float dy = offsetY - y;
-				int index = editedIndex * 2;
-				float scale = prevScaleX + dx / Math.min(screen.centerX(), screen.centerY());
-				if (scale <= 0.0f) {
-					scale = Float.MIN_VALUE;
+				float unit = Math.max(1f, Math.min(screen.width(), screen.height()) * 0.5f);
+				float newX = prevScaleX + (x - offsetX) / unit;
+				float newY = prevScaleY + (offsetY - y) / unit;
+				int[] targets = editorGroupResizeEnabled
+						? keyScaleGroups[resizeGroupForKey(editedIndex)] : new int[]{editedIndex};
+				float factorX = Math.max(1f / keySize, newX) / prevScaleX;
+				float factorY = Math.max(1f / keySize, newY) / prevScaleY;
+				for (int key : targets) {
+					factorX = Math.min(factorX, screen.width() / (keySize * resizeStartScales[key * 2]));
+					factorY = Math.min(factorY, screen.height() / (keySize * resizeStartScales[key * 2 + 1]));
 				}
-				if (Math.abs(1 - scale) <= SCALE_SNAP_RADIUS) {
-					scale = 1;
-				} else {
-					for (int i = 0; i < keyScales.length; i += 2) {
-						if (i != index && Math.abs(keyScales[i] - scale) <= SCALE_SNAP_RADIUS) {
-							scale = keyScales[i];
-							break;
-						}
-					}
+				for (int key : targets) {
+					keyScales[key * 2] = Math.max(1f / keySize, resizeStartScales[key * 2] * factorX);
+					keyScales[key * 2 + 1] = Math.max(1f / keySize, resizeStartScales[key * 2 + 1] * factorY);
+					resizeKey(key, keySize * keyScales[key * 2], keySize * keyScales[key * 2 + 1]);
 				}
-				keyScales[index++] = Math.min(scale, screen.width() / keySize);
-				scale = prevScaleY + dy / Math.min(screen.centerX(), screen.centerY());
-				if (scale <= 0.0f) {
-					scale = Float.MIN_VALUE;
-				}
-				if (Math.abs(1 - scale) <= SCALE_SNAP_RADIUS) {
-					scale = 1;
-				} else {
-					for (int i = 1; i < keyScales.length; i += 2) {
-						if (i != index && Math.abs(keyScales[i] - scale) <= SCALE_SNAP_RADIUS) {
-							scale = keyScales[i];
-							break;
-						}
-					}
-				}
-				keyScales[index] = Math.min(scale, screen.height() / keySize);
-				resizeKeyGroup(editedIndex);
 				snapKeys();
 				overlayView.postInvalidate();
 			}
@@ -2247,7 +2217,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				VirtualKey vKey = keypad[key];
 				if (vKey.snapOrigin == editedIndex) {
 					vKey.snapMode = RectSnap.NO_SNAP;
-					if (editorSnapEnabled) {
+					if (editorSnapControlsEnabled) {
 						for (int i = 0; i < KEYBOARD_SIZE; i++) {
 							if (i != key && findSnap(key, i)) break;
 						}
@@ -2255,7 +2225,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					if (vKey.snapMode == RectSnap.NO_SNAP) {
 						vKey.snapMode = RectSnap.getSnap(vKey.rect, screen, vKey.snapOffset);
 						vKey.snapOrigin = SCREEN;
-						if (editorSnapEnabled) {
+						if (editorSnapGridEnabled) {
 							if (Math.abs(vKey.snapOffset.x) <= snapRadius) vKey.snapOffset.x = 0;
 							if (Math.abs(vKey.snapOffset.y) <= snapRadius) vKey.snapOffset.y = 0;
 						}
