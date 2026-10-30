@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -65,6 +66,9 @@ internal fun LibrarySearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
+            // When a retained pager page becomes inactive, release only this editor's focus.
+            // The next page may already have a focused control; do not clear the host focus owner.
+            .focusProperties { canFocus = enabled }
             .height(librarySearchControlHeight())
             .onFocusChanged { onFocusChanged(it.hasFocus) }
             .onPreInterceptKeyBeforeSoftKeyboard { event ->
