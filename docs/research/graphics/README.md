@@ -69,11 +69,19 @@ established; remove probes/workflow before production integration. The final
 architecture decision should document accepted/rejected approaches and be
 implemented through focused PRs, not by blindly merging this entire branch.
 
-## Evidence log
+## Current evidence and decisions — 2026-10-30
 
-Initial commit: isolated two-pass FBO probe authored. Execution is pending
-until CI reports have been inspected. Production renderer unchanged.
+- [Five independent GLES/HD/texture probes passed](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41063931268) on Android API35 x86_64 SwiftShader. This includes 4x4-to-8x8 GLES2 multipass, the shipped legacy shader versus Libretro-style ABI, a genuine GLES1 fixed-function pbuffer, 1x/2x Android pixel characterization, and byte-identical `GLUtils.texImage2D` versus `texSubImage2D` output across same-size frame updates and an explicit resize.
+- Float color attachments are *format-dependent*. This emulator reports texture/color float extensions but `GL_RGBA` plus OES half-float or float made an **incomplete FBO (0x8CD6)**; the subsequent test checks sized GLES3 `RGBA16F`/`RGBA32F` separately. Do not conclude that all floating-point attachments are unsupported.
+- Native M3G [still fails on the emulator](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41063347467). The apparent `m3gLockFrameBuffer` stall is **not a proven lock deadlock**: the current non-debug build compiles that assertion macro out. Earlier testing without manual JNI preload still failed. Next decisive investigation requires a physical ARM64 Android GPU/driver and a production-like host, not more identical SwiftShader runs.
+- `Canvas.GLRenderer` currently uses `GLUtils.texImage2D` on each new published frame. An existing-storage `texSubImage2D` update is a promising simpler optimization; correct pixels are proven on the emulator but **FPS, CPU/GPU cost and battery improvements are unmeasured**.
+- No production backend was changed, no PR was merged, and `alpha` remains outside this branch.
 
-## CI separation (2026-10-30)
+## R&D deliverables
 
-The original combined `graphics-rd.yml` workflow was retired after two runs stalled in native M3G and its post-failure ADB diagnostics. The research continues with `graphics-rd-fast.yml` for host-independent GLES API/ABI checks, and `graphics-rd-native-isolated.yml` for one potentially crashing M3G test per fresh emulator. These are **temporary** branch-only CI fixtures, not release gates. The native matrix's results must be inspected before deciding whether its failure is a product defect or emulator-specific.
+- [Evidence register](../../../research/graphics/EXPERIMENTS.md) — actual run results, limits, normative sources and rejected hypotheses.
+- [Architecture candidates](../../../research/graphics/ARCHITECTURE-CANDIDATES.md) — unified GPU, whole-target and selective HD, software rasterizer, presenter-only GLSLP, and the smaller upload optimization.
+- [GLSLP prototype contract](../../../research/graphics/GLSLP-PROTOTYPE-CONTRACT.md) — pass sizing, framebuffer ownership, legacy format compatibility, user import behavior and failure recovery.
+- Research-only workflows: `graphics-rd-fast.yml` (bounded API probes) and `graphics-rd-native-isolated.yml` (single native M3G case per emulator). The old combined native workflow was removed after unreliable hangs.
+
+**Next gates:** finish sized-float FBO characterization; validate a real single-/two-pass GLSLP preset inside the existing presentation lifecycle; separately benchmark texture upload on physical hardware; verify M3G on an actual ARM64 GPU before deciding whether a backend replacement is justified. Remove temporary native trace instrumentation before any production integration.
