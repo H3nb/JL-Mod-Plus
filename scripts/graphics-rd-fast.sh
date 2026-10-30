@@ -26,7 +26,8 @@ for spec in \
   'io.github.h3nb.jlmodplus.research.GraphicsPipelineResearchTest|fbo' \
   'io.github.h3nb.jlmodplus.experiments.ShaderAbiResearchTest|shader-abi' \
   'io.github.h3nb.jlmodplus.research.LegacyEs1ContextResearchTest|es1-fixed-function' \
-  'io.github.h3nb.jlmodplus.research.SupersamplingSemanticsResearchTest|lcd-ui-hd-logic'; do
+  'io.github.h3nb.jlmodplus.research.SupersamplingSemanticsResearchTest|lcd-ui-hd-logic' \
+  'io.github.h3nb.jlmodplus.research.TextureUpdateResearchTest|texture-update'; do
   class=$(printf '%s' "$spec" | cut -d'|' -f1)
   label=$(printf '%s' "$spec" | cut -d'|' -f2)
   echo "Executing $class"
@@ -40,4 +41,4 @@ for spec in \
   grep -q 'INSTRUMENTATION_CODE: -1' "$log" || exit 1
   adb logcat -d -v threadtime > "ci-artifacts/graphics-rd-fast/$label-logcat.txt" 2>&1
 done
-echo "All selected GLES and LCDUI HD semantics probes executed successfully."
+echo "All selected GLES, pixel, and texture-update probes executed successfully."
