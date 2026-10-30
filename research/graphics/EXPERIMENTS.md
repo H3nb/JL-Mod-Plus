@@ -181,3 +181,47 @@ future claims about the ES2 baseline.
 - No production renderer, profile schema, or legacy shader file changed. This confirms the fast CI was restored after removing the invalid hostless Mascot test.
 - M3G follow-up remains a separate native-enabled CI, not covered by this green result.
 
+
+
+## Native isolation and source audit — 2026-10-30
+
+Source-verified: `m3g_gl.h` includes `<GLES/gl.h>` and M3G
+`m3g_rendercontext.c/.inl` uses GLES 1.x fixed-function
+(`glMatrixMode`, `glOrthox`, `glClientActiveTexture`, `glTexEnvx`).
+This is a fundamentally different graphics program from the GLES2 Mascot
+and GLES2 presentation contexts. It is not evidence that GLES1 is inherently
+broken or a reason to rewrite the engine by default.
+
+Run https://github.com/H3nb/JL-Mod-Plus/actions/runs/41053290226
+at `42d40a0451200c86bfd71449f8b28cd7661107d3` isolated the two
+M3G cases on *separate* API35 x86_64 emulators:
+
+- **Immediate triangle test**: instrumentation began and reached setup,
+  native library loading, triangle preparation, bindTarget, setCamera,
+  clear, render and the log immediately before `releaseTarget()`.
+  No test completion or step after release appeared. The ADB transport
+  disappeared / device list was empty by final diagnostics.
+  Source shows `m3gReleaseTarget` calls `m3gMakeCurrent`, `glFinish`,
+  optional `m3gUpdateTargetBuffer`, GL cleanup, and context release.
+  This narrows the last observable boundary to the release path but
+  **does not yet identify the precise native instruction**.
+  The streamed log is available in the run artifact.
+- **Image2D case**: instrumentation output was completely empty; this
+  execution never reached a recorded test method. The host-streamed
+  device log ended during emulator boot. `adb devices` showed the
+  emulator online at the end, but the instrumentation command exited
+  255. Classify **infrastructure / launch inconclusive**, NOT a
+  second reproduced Image2D failure.
+
+The prior combined run
+https://github.com/H3nb/JL-Mod-Plus/actions/runs/41042049268
+passed translated/clipped Graphics target output before becoming offline
+during the Image2D selector. Its log did not establish the exact failure
+location either. Do not conflate unrelated failures with one root cause.
+
+For deeper evidence, R&D commit `7fdbceec5ccb18276dc320ac6ce5c34a41c0c15c`
+temporarily adds JNI and core release-stage markers, then runs only
+the immediate test on a fresh emulator. Independently, the fast CI adds an
+explicit GLES1 context/GL fixed-function probe. Probe outcomes must be read
+before drawing a backend-modernization decision.
+
