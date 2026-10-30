@@ -66,9 +66,9 @@ internal fun LibrarySearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
-            // When a retained pager page becomes inactive, release only this editor's focus.
-            // The next page may already have a focused control; do not clear the host focus owner.
-            .focusProperties { canFocus = enabled }
+            // Exclude an inactive page's editor without overriding the active TextField's
+            // own Material focus properties (which must remain responsible for touch refocus).
+            .then(if (enabled) Modifier else Modifier.focusProperties { canFocus = false })
             .height(librarySearchControlHeight())
             .onFocusChanged { onFocusChanged(it.hasFocus) }
             .onPreInterceptKeyBeforeSoftKeyboard { event ->
