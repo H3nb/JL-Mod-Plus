@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.research;
 
+import android.graphics.Bitmap;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -63,7 +65,8 @@ public final class RealLibretroPresetResearchTest {
         assertNotEquals(EGL14.EGL_NO_SURFACE, s);
         assertTrue(EGL14.eglMakeCurrent(d, s, s, c));
 
-        int program = 0, source = 0, intermediate = 0, fbo = 0;
+        int program = 0, source = 0, packed = 0, intermediate = 0, fbo = 0;
+        Bitmap backing = null, cropped = null;
         try {
             Log.i("GraphicsRD", "REAL_GLSLP " + GLES20.glGetString(GLES20.GL_VERSION)
                     + " renderer=" + GLES20.glGetString(GLES20.GL_RENDERER));
@@ -75,16 +78,21 @@ public final class RealLibretroPresetResearchTest {
 
             // Backing bitmap is 4x4 but only its left 2 columns are guest content.
             // The green right half represents undefined/inactive backing pixels.
-            ByteBuffer data = ByteBuffer.allocateDirect(4 * 4 * 4);
-            for (int i = 0; i < 16; i++) {
+            int[] colors = new int[16];
+            for (int i = 0; i < colors.length; i++) {
                 boolean guest = (i % 4) < 2;
                 boolean upper = (i / 4) < 2;
-                data.put((byte)(guest && upper ? 255 : 0))
-                        .put((byte)(guest ? 0 : 255))
-                        .put((byte)(guest && !upper ? 255 : 0)).put((byte)255);
+                colors[i] = guest ? (upper ? 0xffff0000 : 0xff0000ff) : 0xff00ff00;
             }
-            data.rewind();
-            source = texture(4, 4, data);
+            backing = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
+            backing.setPixels(colors, 0, 4, 0, 0, 4, 4);
+            // Compare two genuine Android Bitmap -> GLUtils upload boundaries.
+            // Cropping a Bitmap changes allocation and CPU work, not guest dimensions.
+            cropped = Bitmap.createBitmap(backing, 0, 0, 2, 4);
+            source = texture(4, 4, null);
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, backing, 0);
+            packed = texture(2, 4, null);
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, cropped, 0);
             intermediate = texture(2, 4, null);
             int[] ids = new int[1];
             GLES20.glGenFramebuffers(1, ids, 0);
@@ -134,6 +142,21 @@ public final class RealLibretroPresetResearchTest {
             pixel(4, 9, 0, 0, 255);
             pixel(13, 9, 0, 0, 255);
             pixel(0, 0, 0, 0, 255);
+            // Whole-image oracle, using identical real stock.glsl and bilinear
+            // filtering, not a few hand-picked pixels. The FBO route and a
+            // tightly cropped Android Bitmap upload must agree on each channel.
+            byte[] normalized = readRegion(2, 2, 12, 8);
+            GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+            GLES20.glClearColor(0, 0, 1, 1);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+            GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+            GLES20.glScissor(1, 1, 14, 10);
+            draw(program, packed, 2, 2, 12, 8, 1.0f, GLES20.GL_LINEAR,
+                    2, 4, 2, 4);
+            assertArrayEquals("Tightly packed Bitmap and GPU-normalized inputs",
+                    normalized, readRegion(2, 2, 12, 8));
+            pixel(0, 0, 0, 0, 255);
+            Log.i("GraphicsRD", "REAL_GLSLP packed-bitmap vs FBO: 12x8 RGBA exact match");
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
             GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
@@ -141,7 +164,10 @@ public final class RealLibretroPresetResearchTest {
             if (program != 0) GLES20.glDeleteProgram(program);
             if (fbo != 0) GLES20.glDeleteFramebuffers(1, new int[]{fbo}, 0);
             if (source != 0) GLES20.glDeleteTextures(1, new int[]{source}, 0);
+            if (packed != 0) GLES20.glDeleteTextures(1, new int[]{packed}, 0);
             if (intermediate != 0) GLES20.glDeleteTextures(1, new int[]{intermediate}, 0);
+            if (cropped != null) cropped.recycle();
+            if (backing != null) backing.recycle();
             EGL14.eglMakeCurrent(d, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
                     EGL14.EGL_NO_CONTEXT);
             EGL14.eglDestroySurface(d, s);
@@ -236,6 +262,15 @@ public final class RealLibretroPresetResearchTest {
         GLES20.glDisableVertexAttribArray(pos);
         GLES20.glDisableVertexAttribArray(uv);
         GLES20.glFinish(); // Research readback only; do not add to production.
+    }
+
+    private static byte[] readRegion(int x, int y, int w, int h) {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(w * h * 4);
+        GLES20.glReadPixels(x, y, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer);
+        byte[] pixels = new byte[w * h * 4];
+        buffer.position(0);
+        buffer.get(pixels);
+        return pixels;
     }
 
     private static ByteBuffer readPixel(int x, int y) {
