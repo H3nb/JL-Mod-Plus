@@ -284,6 +284,57 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(right.left, rectField(keyByLabel("R")).left, EPS);
     }
 
+
+    @Test
+    public void distantSecondContactCannotStealOrEndFirstFingerDrag() throws Exception {
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
+        RectF before = rectField(keyByLabel("F"));
+        float x = before.centerX(), y = before.centerY();
+        float farX = x < 600f ? 1150f : 50f;
+        float farY = y < 300f ? 550f : 50f;
+        assertTrue(Math.hypot(farX - x, farY - y) > 250f);
+
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, farX, farY));
+        assertTrue(keyboard.pointerDragged(1, farX - 12f, farY + 8f));
+        assertTrue(keyboard.pointerReleased(1, farX - 12f, farY + 8f));
+        assertEquals(before.left, rectField(keyByLabel("F")).left, EPS);
+        assertEquals(before.top, rectField(keyByLabel("F")).top, EPS);
+
+        assertTrue(keyboard.pointerDragged(0, x + 17f, y + 11f));
+        assertTrue(keyboard.pointerReleased(0, x + 17f, y + 11f));
+        assertEquals(before.left + 17f, rectField(keyByLabel("F")).left, EPS);
+        assertEquals(before.top + 11f, rectField(keyByLabel("F")).top, EPS);
+    }
+
+    @Test
+    public void stationaryMoveAfterPinchDoesNotTriggerGridSnap() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
+        dragLegacy("F", 13f, 7f);
+        RectF offGrid = rectField(keyByLabel("F"));
+        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
+        assertTrue(Math.abs(offGrid.left - Math.round(offGrid.left / step) * step) > EPS ||
+                Math.abs(offGrid.top - Math.round(offGrid.top / step) * step) > EPS);
+        keyboard.setEditorSnapGridEnabled(true);
+
+        float x = offGrid.centerX(), y = offGrid.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 140f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 140f, y));
+        RectF resized = rectField(keyByLabel("F"));
+        assertTrue(resized.width() > offGrid.width());
+
+        // Android is allowed to deliver a redundant MOVE at the pinch handoff position.
+        assertTrue(keyboard.pointerDragged(0, x, y));
+        assertEquals(resized.left, rectField(keyByLabel("F")).left, EPS);
+        assertEquals(resized.top, rectField(keyByLabel("F")).top, EPS);
+        assertTrue(keyboard.pointerReleased(0, x, y));
+    }
+
     @Test
     public void movingAfterPinchStillUsesEnabledGridSnap() throws Exception {
         keyboard.setEditorGroupResizeEnabled(false);

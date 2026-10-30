@@ -240,6 +240,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private int editorGridDivisions = EDITOR_GRID_NORMAL;
 	private int editedIndex;
 	private boolean movedInEditGesture;
+	private float lastEditX;
+	private float lastEditY;
 	private float offsetX;
 	private float offsetY;
 	private float prevScaleX;
@@ -247,7 +249,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private RectF screen;
 	private float keySize =
 			Math.min(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 6.0f;
-	private float snapRadius;
 	private int layoutVariant;
 	private int loadedLayoutVersion = -1;
 	private boolean legacyCustomPayloadSeen;
@@ -1708,7 +1709,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private boolean findSnap(int target, int origin) {
 		VirtualKey key = keypad[target];
 		VirtualKey anchor = keypad[origin];
-		int mode = RectSnap.getSnap(key.rect, anchor.rect, snapRadius, RectSnap.COARSE_MASK, true);
+		int mode = RectSnap.getSnap(key.rect, anchor.rect,
+				editorSnapRadius(key), RectSnap.COARSE_MASK, true);
 		if (mode == RectSnap.NO_SNAP) return false;
 		// An offscreen candidate or cyclic anchor is not a usable snap.
 		snapCandidate.set(key.rect);
@@ -1726,6 +1728,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 		}
 		return false;
+	}
+
+	/** Snapping one key must not depend on the size of other, possibly hidden keys. */
+	private float editorSnapRadius(VirtualKey key) {
+		return Math.min(key.rect.width(), key.rect.height()) / 8f;
 	}
 
 	private boolean insideViewport(RectF rect) {
@@ -1971,16 +1978,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
 		this.screen = screen;
 		virtualScreen.set(left, top, right, bottom);
-		snapRadius = keyScales[0];
-		for (int i = 1; i < keyScales.length; i++) {
-			if (keyScales[i] < snapRadius) {
-				snapRadius = keyScales[i];
-			}
-		}
-
-		float keySize = getKeySize(screen.width(), screen.height());
-		snapRadius = keySize * snapRadius / 8;
-		this.keySize = keySize;
+		this.keySize = getKeySize(screen.width(), screen.height());
 		for (int group = 0; group < keyScaleGroups.length; group++) {
 			resizeKeyGroup(group);
 		}
@@ -2100,6 +2098,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 							RectF rect = keypad[i].rect;
 							offsetX = x - rect.left;
 							offsetY = y - rect.top;
+							lastEditX = x;
+							lastEditY = y;
 							consumed = true;
 							break;
 					}
@@ -2154,10 +2154,18 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					consumed = true;
 					VirtualKey key = keypad[editedIndex];
 					RectF rect = key.rect;
+					// Android may send a MOVE with unchanged coordinates after pinch handoff.
+					// Skip all snapping until this contact actually moves.
+					if (Math.abs(x - lastEditX) <= 0.5f &&
+							Math.abs(y - lastEditY) <= 0.5f) {
+						consumed = true;
+						break;
+					}
+					lastEditX = x;
+					lastEditY = y;
+					movedInEditGesture = true;
 					float requestedLeft = x - offsetX;
 					float requestedTop = y - offsetY;
-					if (Math.abs(requestedLeft - rect.left) > 0.5f ||
-							Math.abs(requestedTop - rect.top) > 0.5f) movedInEditGesture = true;
 					rect.offsetTo(requestedLeft, requestedTop);
 					constrainVisibleKey(key);
 					// Consume overshoot so reversing the finger moves the key immediately.
@@ -2180,8 +2188,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						key.snapMode = RectSnap.getSnap(rect, screen, key.snapOffset);
 						key.snapOrigin = SCREEN;
 						if (editorSnapGridEnabled) {
-							if (Math.abs(key.snapOffset.x) <= snapRadius) key.snapOffset.x = 0;
-							if (Math.abs(key.snapOffset.y) <= snapRadius) key.snapOffset.y = 0;
+							float radius = editorSnapRadius(key);
+							if (Math.abs(key.snapOffset.x) <= radius) key.snapOffset.x = 0;
+							if (Math.abs(key.snapOffset.y) <= radius) key.snapOffset.y = 0;
 						}
 					}
 					snapKeys();
@@ -2251,8 +2260,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 							vKey.snapMode = RectSnap.getSnap(vKey.rect, screen, vKey.snapOffset);
 							vKey.snapOrigin = SCREEN;
 							if (editorSnapGridEnabled) {
-								if (Math.abs(vKey.snapOffset.x) <= snapRadius) vKey.snapOffset.x = 0;
-								if (Math.abs(vKey.snapOffset.y) <= snapRadius) vKey.snapOffset.y = 0;
+								float radius = editorSnapRadius(vKey);
+								if (Math.abs(vKey.snapOffset.x) <= radius) vKey.snapOffset.x = 0;
+								if (Math.abs(vKey.snapOffset.y) <= radius) vKey.snapOffset.y = 0;
 							}
 						}
 						snapKey(key, 0);

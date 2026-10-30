@@ -882,7 +882,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public boolean pointerPressed(int pointer, float x, float y) {
 		int mode = getLayoutEditMode();
 		if (mode != LAYOUT_EOF) {
-			if (legacyEditPointer >= 0 && pointer != legacyEditPointer && beginLegacyPinch(pointer, x, y)) {
+			if (legacyEditPointer >= 0 && pointer != legacyEditPointer) {
+				// A non-pinch contact must not replace the active legacy drag owner.
+				// Consume it until release rather than forwarding it to the single-pointer editor.
+				if (beginLegacyPinch(pointer, x, y)) return true;
 				return true;
 			}
 			if (beginGroupedPinch(pointer, x, y)) return true;
@@ -945,6 +948,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				updateLegacyPinch();
 				return true;
 			}
+			// Ignore movement by a second contact rejected for pinch.
+			return true;
 		}
 		if (pointer == dpadPointer && dpadToken != null) {
 			Set<VirtualDpadDirection> directions = dpadController.move(dpadToken, dpadGeometry(), x, y);
@@ -1000,6 +1005,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				clearLegacyEditTracking();
 				return consumed;
 			}
+			// Its press never reached the editor, so its release must not finish a drag.
+			return true;
 		}
 		if (pointer == dpadPointer) {
 			endDpad();
