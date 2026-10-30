@@ -1,6 +1,6 @@
 // Original JL-Mod Plus graphics research fixture (no emulator sources copied).
 // Compile with the offline J2ME Dev Kit:
-// sh scripts/compile.sh midp20 /tmp/graphics-fixture-classes tests/GraphicsPixelProbeMidlet.java
+// sh scripts/compile.sh midp20 /tmp/graphics-fixture-classes research/graphics/fixtures/GraphicsPixelProbeMidlet.java
 // This compiles against MIDP 2.0 only. Runtime validation remains pending.
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
