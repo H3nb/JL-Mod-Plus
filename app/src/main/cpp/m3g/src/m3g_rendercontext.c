@@ -959,7 +959,9 @@ static void m3gPopSpace(RenderContext *ctx)
  */
 static void m3gClearInternal(RenderContext *ctx, Background *bg)
 {
+    M3G_RD_MARK("clear: entry before makeCurrent");
     m3gMakeCurrent(ctx);
+    M3G_RD_MARK("clear: after makeCurrent");
     
     /* If buffered rendering, copy data to the back buffer at this
      * point if we're not clearing the whole clip rectangle */
@@ -993,12 +995,17 @@ static void m3gClearInternal(RenderContext *ctx, Background *bg)
         }
     }
 
+    M3G_RD_MARK("clear: after viewport/scissor and bg validation");
     /* All clear for clearing... */
     
+    M3G_RD_MARK("clear: before lockFramebuffer");
     m3gLockFrameBuffer(ctx);
+    M3G_RD_MARK("clear: after lockFramebuffer");
     
     if (bg != NULL) {
+        M3G_RD_MARK("clear: before applyBackground");
         m3gApplyBackground(ctx, bg);
+        M3G_RD_MARK("clear: after applyBackground");
         if (ctx->target.buffered && bg->colorClearEnable) {
             ctx->backBuffer.contentsValid = M3G_TRUE;
         }
@@ -1012,7 +1019,9 @@ static void m3gClearInternal(RenderContext *ctx, Background *bg)
         }
     }
         
+    M3G_RD_MARK("clear: before releaseFramebuffer");
     m3gReleaseFrameBuffer(ctx);
+    M3G_RD_MARK("clear: after releaseFramebuffer");
 }
 
 /*!
@@ -1342,6 +1351,7 @@ M3G_API void m3gClear(M3GRenderContext context, M3GBackground hBackground)
     Background *bg = (Background *) hBackground;
     M3G_VALIDATE_OBJECT(ctx);
 
+    M3G_RD_MARK("clearPublic: entered");
     M3G_LOG(M3G_LOG_STAGES, "Clearing frame buffer\n");
     
     /* Check errors */
@@ -1351,8 +1361,11 @@ M3G_API void m3gClear(M3GRenderContext context, M3GBackground hBackground)
         return;
     }
 
+    M3G_RD_MARK("clearPublic: before validateBackground");
     if(m3gValidateBackground(ctx, bg)) {
+        M3G_RD_MARK("clearPublic: before clearInternal");
         m3gClearInternal(ctx, bg);
+        M3G_RD_MARK("clearPublic: after clearInternal");
     }
     else {
         m3gRaiseError(M3G_INTERFACE(bg), M3G_INVALID_VALUE);
