@@ -261,3 +261,49 @@ proven thermal/FPS benefit until measured on real hardware.
 current non-debug build compiles its assertion away. Distinguish the
 observable nonresponsive native thread from a verified cause. Stop repeating
 identical SwiftShader runs; request a real ARM64/GLES1 differential test.
+
+
+## Additional HD boundary: presentation and logical-image consumers
+
+Verified at the current R&D branch, separate from the original
+J2ME-Loader-HD comparison:
+
+- CanvasWrapper.drawImage(Image, RectF) uses Image.getBounds() as the
+  **physical Bitmap source Rect**. If an HD backing Bitmap grows while
+  guest Image bounds remain logical, this draws only a top-left subset.
+  Both non-GLES presentation and final screenshots use this helper.
+- Canvas screenshotRawMode creates a Bitmap from raw backing coordinates
+  using Image.getWidth()/getHeight(). An HD target requires an explicit
+  contract for raw (physical) versus logical screenshot dimensions.
+- Canvas.sampleAmbientIfDue captures offscreenCopy Bitmap samples using
+  the *logical* Image bounds. A physical 2x target changes which image
+  content this path samples unless the source rectangle is adjusted.
+- Canvas.GLRenderer computes texture-coordinate tw/th by dividing the
+  guest logical width/height by the Bitmap's backing allocation width/height.
+  A physical-scale target must instead use its *actual content extent*.
+  Preserve guest pointer conversion using logical Canvas width/height.
+- Image.createImage(source, x, y, w, h, transform) crops directly with
+  guest coordinates on Bitmap; Graphics.copyArea directly gets pixels
+  with guest coordinates and draws them back through the Android Canvas.
+  Any dual-resolution contract must correctly translate these reads
+  and writes. A global Canvas.scale alone does not.
+- M3G Graphics3D.bindTarget(Graphics) passes physical Bitmap dimensions
+  and logical target clip/viewport coordinates into native EGL/GLES1;
+  scalable logical dimensions cannot simply be replaced with physical
+  dimensions for guest-facing viewport limits. Graphics3D also has a
+  distinct mutable Image2D target requiring its own decision.
+- Mascot Render.bind(Graphics) sizes its GLES2 pbuffer from the target
+  Android Canvas dimensions and reads back into the Graphics Bitmap.
+  Its clip/center/projection operations need a consistent physical/logical
+  transform before 2x can be claimed compatible.
+
+These are *source-verified adaptation obligations*, NOT observed HD
+rendering regressions or proof that whole-target supersampling is
+unworkable. The least invasive correct design may use a shared logical
+content/physical backing contract, but first prove full guest calls and
+host presentation with a 2x fixture. Do not introduce a generalized
+multi-renderer scene-graph framework solely to resolve these dimensions.
+
+GLES presentation currently requests context version 2 via GlesView.
+The emulator's response happened to report ES3; the shipping baseline
+must not assume all GLES2 Android devices can use ES3-only internal formats.
