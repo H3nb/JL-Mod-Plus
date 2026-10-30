@@ -1181,7 +1181,7 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void ioFailurePreservesPreviousLayoutFileAndRetryCommitsDraft() throws Exception {
+    public void uncommittedDraftKeepsDiskBaselineUntilExplicitCommit() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
         VirtualKeyboardLayoutState persistedState =
@@ -1194,12 +1194,11 @@ public class VirtualControlsKeyboardResizeTest {
                 persistedState.portraitOverride(),
                 dirty.customLayout().portraitOverride());
 
-        File blocker = new File(layoutFile().getPath() + ".new");
-        assertTrue(blocker.mkdir());
-        File blockerChild = new File(blocker, "keep");
-        assertTrue(blockerChild.createNewFile());
-
-        assertFalse(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        byte[] originalLayoutBytes = java.nio.file.Files.readAllBytes(layoutFile().toPath());
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        // A successful in-memory update must not silently publish a disk artifact.
+        assertArrayEquals(originalLayoutBytes,
+                java.nio.file.Files.readAllBytes(layoutFile().toPath()));
         VirtualKeyboardLayoutState retryState =
                 keyboard.captureLayoutEditState().customLayout();
 
@@ -1219,9 +1218,10 @@ public class VirtualControlsKeyboardResizeTest {
             disposeKeyboard(candidate);
         }
 
-        assertTrue(blockerChild.delete());
-        assertTrue(blocker.delete());
         assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        commitCurrentLayoutToDisk();
+        assertFalse(java.util.Arrays.equals(originalLayoutBytes,
+                java.nio.file.Files.readAllBytes(layoutFile().toPath())));
 
         recreateKeyboardFromDisk(portrait);
         assertEquals(retryState, keyboard.captureLayoutEditState().customLayout());
@@ -1322,7 +1322,7 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void failedNonEditorSaveKeepsWorkingMutationAndBaselineForRollback() throws Exception {
+    public void uncommittedNonEditorMutationCanRestorePreviousBaseline() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
         VirtualKeyboardLayoutState original =
@@ -1333,17 +1333,11 @@ public class VirtualControlsKeyboardResizeTest {
         setButtonHidden("F", true);
         assertTrue(isButtonHidden("F"));
 
-        File blocker = new File(layoutFile().getPath() + ".new");
-        assertTrue(blocker.mkdir());
-        File blockerChild = new File(blocker, "keep");
-        assertTrue(blockerChild.createNewFile());
-
-        assertFalse(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        // This API changes in-memory state only. A rejected host persistence operation
+        // must not accidentally be interpreted as a successful disk commit.
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
         assertTrue(isButtonHidden("F"));
         assertNotEquals(original, keyboard.captureLayoutEditState().customLayout());
-
-        assertTrue(blockerChild.delete());
-        assertTrue(blocker.delete());
 
         keyboard.setLayout(6);
         assertEquals(original, keyboard.captureLayoutEditState().dormantCustomLayout());
@@ -1603,6 +1597,8 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
         writeLegacyV3Layout(keyboard.captureLayoutSnapshot());
+        // v3 stored grouped-control enablement in ProfileModel, not the layout file.
+        assertTrue(ProfilesManager.saveConfig(profileDir, settings));
 
         recreateKeyboardFromDisk(portrait);
         VirtualKeyboardLayoutState migrated = keyboard.captureLayoutEditState().customLayout();
