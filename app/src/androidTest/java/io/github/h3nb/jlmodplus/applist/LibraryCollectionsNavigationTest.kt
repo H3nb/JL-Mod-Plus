@@ -297,6 +297,42 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionPickerSearchReleasesFocusAcrossTabs() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
+        openCollection()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.onNode(hasSetTextAction()).performClick().performTextInput("Demo")
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
+
+        composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(uiString(R.string.settings))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(uiString(R.string.settings)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
+
+        composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps)).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Demo")
+    }
+
+    @Test
     fun collectionRouteDoesNotCrossLibraryWorkdirWithReusedDatabaseId() {
         val host = RecordingCollectionsHost()
         val libraryState = mutableStateOf(
