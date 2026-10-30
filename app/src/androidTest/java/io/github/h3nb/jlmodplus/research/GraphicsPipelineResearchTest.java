@@ -7,6 +7,7 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
@@ -172,11 +173,18 @@ public final class GraphicsPipelineResearchTest {
                 + (extensions != null && extensions.contains("GL_OES_texture_float"))
                 + " color_float_ext="
                 + (extensions != null && extensions.contains("GL_EXT_color_buffer_float")));
-        probeFormat("half_float_oes_rgba", 0x8D61);
-        probeFormat("float_rgba", GLES20.GL_FLOAT);
+        probeFormat("half_float_oes_rgba_unsized", GLES20.GL_RGBA, 0x8D61);
+        probeFormat("float_rgba_unsized", GLES20.GL_RGBA, GLES20.GL_FLOAT);
+        // GLES 3 permits sized floating-point internal formats with different
+        // renderability rules; GLES 2 cannot use these merely by casting enums.
+        if (version != null && (version.startsWith("OpenGL ES 3.")
+                || version.startsWith("OpenGL ES 4."))) {
+            probeFormat("rgba16f_sized_es3", GLES30.GL_RGBA16F, GLES30.GL_HALF_FLOAT);
+            probeFormat("rgba32f_sized_es3", GLES30.GL_RGBA32F, GLES20.GL_FLOAT);
+        }
     }
 
-    private static void probeFormat(String label, int type) {
+    private static void probeFormat(String label, int internalFormat, int type) {
         int[] tex = new int[1];
         int[] fbo = new int[1];
         GLES20.glGenTextures(1, tex, 0);
@@ -187,7 +195,7 @@ public final class GraphicsPipelineResearchTest {
                     GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
                     GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, internalFormat,
                     8, 8, 0, GLES20.GL_RGBA, type, null);
             int uploadError = GLES20.glGetError();
             int status = -1;
@@ -207,7 +215,9 @@ public final class GraphicsPipelineResearchTest {
             GLES20.glDeleteTextures(1, tex, 0);
             // Optional unsupported formats may set GL errors; clear the
             // exploratory probe's state, not the prior mandatory pixel checks.
-            while (GLES20.glGetError() != GLES20.GL_NO_ERROR) { }
+            for (int attempt = 0; attempt < 8; attempt++) {
+                if (GLES20.glGetError() == GLES20.GL_NO_ERROR) break;
+            }
         }
     }
 
