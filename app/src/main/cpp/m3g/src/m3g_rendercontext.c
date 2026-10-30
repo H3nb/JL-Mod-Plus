@@ -705,9 +705,7 @@ static void m3gInitRender(M3GRenderContext context, M3Genum renderMode)
     
     m3gIncrementRenderTimeStamp(ctx);
     m3gMakeCurrent(ctx);
-    M3G_RD_MARK("core: before collectGLObjects");
     m3gCollectGLObjects(M3G_INTERFACE(ctx));
-    M3G_RD_MARK("core: after collectGLObjects");
     
     /* If buffered rendering, blit the image to the back buffer at
      * this point */
@@ -1419,7 +1417,9 @@ M3G_API void m3gReleaseTarget(M3GRenderContext context)
         m3gSwapBuffers(ctx->target.surface);
     }
 #   endif
+    M3G_RD_MARK("core: release before collectGLObjects");
     m3gCollectGLObjects(M3G_INTERFACE(ctx));
+    M3G_RD_MARK("core: release after collectGLObjects");
 #   if !defined(M3G_NGL_CONTEXT_API)
     m3gMakeGLCurrent(NULL);
     ctx->target.surface = NULL;

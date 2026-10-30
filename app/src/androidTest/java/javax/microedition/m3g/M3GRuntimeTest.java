@@ -52,8 +52,13 @@ public class M3GRuntimeTest {
 	@Before
 	public void setUp() {
 		runtimeStep("R&D setup: before native libraries");
-		loadTargetNativeLibraries();
-		runtimeStep("R&D setup: after native libraries");
+		if (!"true".equals(androidx.test.platform.app.InstrumentationRegistry
+				.getArguments().getString("rdSkipManualM3gLoad"))) {
+			loadTargetNativeLibraries();
+			runtimeStep("R&D setup: after manually loading native libraries");
+		} else {
+			runtimeStep("R&D setup: skipping manual native preload; Platform must load target libs");
+		}
 		g3d = Graphics3D.getInstance();
 		runtimeStep("R&D setup: M3G instance acquired");
 		cleanupContext();

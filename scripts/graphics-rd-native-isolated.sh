@@ -32,7 +32,8 @@ trap cleanup EXIT
 echo "Start $M3G_CASE at $(date -u +%FT%TZ)"
 set +e
 timeout --signal=TERM --kill-after=5s 80s \
-  adb shell am instrument -w -r -e class "$M3G_SELECTOR" "$runner" > "$dest/instrumentation.txt" 2>&1
+  adb shell am instrument -w -r -e class "$M3G_SELECTOR" \
+    -e rdSkipManualM3gLoad true "$runner" > "$dest/instrumentation.txt" 2>&1
 code=$?
 set -e
 echo "Instrumentation exit $code at $(date -u +%FT%TZ)" | tee "$dest/exit.txt"
