@@ -225,3 +225,32 @@ the immediate test on a fresh emulator. Independently, the fast CI adds an
 explicit GLES1 context/GL fixed-function probe. Probe outcomes must be read
 before drawing a backend-modernization decision.
 
+
+
+## Differential root-cause hypothesis — native library loading in Android instrumentation
+
+Streamed log from run
+https://github.com/H3nb/JL-Mod-Plus/actions/runs/41053290226
+shows the same native library name loaded from two different locations:
+
+1. The instrumentation test `M3GRuntimeTest.loadTargetNativeLibraries()`
+   extracts and explicitly `System.load`s `libc++_shared.so` and
+   `libjavam3g.so` under `code_cache/m3g-runtime-test-native/x86_64/`.
+2. `Platform.uiThreadAvailable()` (production M3G Java entry point) calls
+   `System.loadLibrary` and the log also shows the corresponding libraries
+   loading from `base.apk!/lib/x86_64/` in the target class-loader namespace.
+
+These are distinct path/classloader load events; this does **not** by itself
+prove duplicate ELF instances, cross-DSO pointer corruption, or native-symbol
+binding to the wrong module. It does establish that the research harness does
+*not* simply execute the normal guest loading sequence.
+
+**Highest-value differential experiment:** run an otherwise identical bounded
+M3G test with ONLY the production library-loading path. If it fails with an
+`UnsatisfiedLinkError` due instrumentation restrictions, classify that as a
+harness problem and design an app-owned runtime fixture instead. If the release
+stall vanishes, investigate library ownership/duplication before touching the
+M3G renderer. If it persists, follow the JNI/core `M3G_RD` trace markers and
+verify on a physical Android GPU. Do not infer a production bug from an
+instrumentation-only loading path.
+
