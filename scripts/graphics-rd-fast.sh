@@ -25,7 +25,8 @@ fi
 for spec in \
   'io.github.h3nb.jlmodplus.research.GraphicsPipelineResearchTest|fbo' \
   'io.github.h3nb.jlmodplus.experiments.ShaderAbiResearchTest|shader-abi' \
-  'io.github.h3nb.jlmodplus.research.LegacyEs1ContextResearchTest|es1-fixed-function'; do
+  'io.github.h3nb.jlmodplus.research.LegacyEs1ContextResearchTest|es1-fixed-function' \
+  'io.github.h3nb.jlmodplus.research.SupersamplingSemanticsResearchTest|lcd-ui-hd-logic'; do
   class=$(printf '%s' "$spec" | cut -d'|' -f1)
   label=$(printf '%s' "$spec" | cut -d'|' -f2)
   echo "Executing $class"
@@ -39,4 +40,4 @@ for spec in \
   grep -q 'INSTRUMENTATION_CODE: -1' "$log" || exit 1
   adb logcat -d -v threadtime > "ci-artifacts/graphics-rd-fast/$label-logcat.txt" 2>&1
 done
-echo "Both GLES2 probes and the independent ES1 fixed-function probe executed successfully."
+echo "All selected GLES and LCDUI HD semantics probes executed successfully."
