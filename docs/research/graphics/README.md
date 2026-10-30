@@ -73,3 +73,7 @@ implemented through focused PRs, not by blindly merging this entire branch.
 
 Initial commit: isolated two-pass FBO probe authored. Execution is pending
 until CI reports have been inspected. Production renderer unchanged.
+
+## CI separation (2026-10-30)
+
+The original combined `graphics-rd.yml` workflow was retired after two runs stalled in native M3G and its post-failure ADB diagnostics. The research continues with `graphics-rd-fast.yml` for host-independent GLES API/ABI checks, and `graphics-rd-native-isolated.yml` for one potentially crashing M3G test per fresh emulator. These are **temporary** branch-only CI fixtures, not release gates. The native matrix's results must be inspected before deciding whether its failure is a product defect or emulator-specific.
