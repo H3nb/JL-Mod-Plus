@@ -446,3 +446,29 @@ shaders may sample outside interpolated input UVs. Prefer a source that
 physically excludes inactive pixels, if this is affordable. Profile CPU
 copy/upload, GPU pass time, memory, and temperature on physical ARM64.
 The production-like GLRenderer lifecycle/ambient/controls gate remains open.
+
+
+## Follow-up: preserve 2x4 logical extent in crop-normalization test
+
+The first green genuine Libretro test (run 41074602946) normalized the
+valid 2x4 content to a 2x2 FBO. Its vertically uniform source proved
+removal of inactive-color leakage in the small fixture, but could not
+prove preservation of vertical detail.
+
+Follow-up **run 41076325469**, commit db06f5bafac74078bc61994f400a4e9ec6f3985f
+(https://github.com/H3nb/JL-Mod-Plus/actions/runs/41076325469),
+passed all six selected instrumented tests on Android API 35 x86_64
+SwiftShader. The refined test uses an exactly matching 2x4 intermediate
+FBO, distinct red/blue source rows and green inactive backing columns.
+
+Its assertions checked: (1) direct bilinear UV-cropped sampling still
+contains inactive color at the edge (green=106/255 from logcat);
+(2) normalizing at the source's actual 2x4 logical dimensions retains
+different red/blue rows; (3) the final 12x8 host viewport retains both
+colors to its right edge while the host background remains unmodified.
+
+This corrects the old fixture's resolution-loss blind spot. It does NOT
+establish full-image equivalence, real Android Bitmap/GLUtils orientation
+and alpha behavior, arbitrary GLSLP support, integrated GLRenderer
+lifecycle or hardware performance. Compare a tightly packed source
+upload with an extra GPU normalization FBO before selecting either.
