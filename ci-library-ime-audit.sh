@@ -11,7 +11,7 @@ if [[ ! -f "$apk" ]]; then
 fi
 adb install -r "$apk"
 mkdir -p ci-artifacts/ime
-adb shell mkdir -p '/sdcard/JL-Mod Plus'
+adb shell "mkdir -p '/sdcard/JL-Mod Plus'"
 adb shell pm grant "$package" android.permission.WRITE_EXTERNAL_STORAGE 2>/dev/null || true
 adb shell appops set "$package" MANAGE_EXTERNAL_STORAGE allow 2>/dev/null || true
 adb shell settings put system screen_off_timeout 600000
