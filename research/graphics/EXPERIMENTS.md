@@ -113,3 +113,18 @@ If an approach provably violates guest-visible semantics or offers no material m
 - The original legacy source/persisted user format was unchanged. This proves the two *small identity shaders* can work on an ES2 context, not that arbitrary external GLSL, GLSLP multipass, `#reference`, GPU FP render targets, temporal feedback, or production Android UI work.
 - Next fast run `76cdfe56730f1ea6da990c71609d6c7dd776d24c` also includes a Mascot Capsule offscreen LCDUI `Image` bind/flush/release readback probe. It does **not** submit 3D geometry and must not be generalized to full Mascot compatibility.
 
+
+
+## As-is LCDUI HD feasibility constraint — Image is not resolution-agnostic
+
+Static source evidence from `javax/microedition/lcdui/Image.java` and `Graphics.java`:
+
+- `Image(Bitmap, boolean)` initializes its `bounds` using `bitmap.getWidth()/getHeight()`; `getWidth()/getHeight()` then expose those bounds directly.
+- `Image.getRGB()` delegates straight to `Bitmap.getPixels()` using *guest-provided coordinates*. `Image.createImage(image, x, y, w, h, transform)` directly calls `Bitmap.createBitmap(...)` using guest-provided crop dimensions.
+- `Graphics(Image)` creates an Android `Canvas` over the backing bitmap, clips to `Image.getBounds()`, and performs Android Canvas raster operations.
+- `Image.setSize()` can resize/replace the underlying bitmap and reset cached graphics; tests already protect bitmap-rebind behavior.
+
+**Implication:** replacing every `Image` bitmap with an N-times larger backing bitmap is *not* a local change to the presentation pipeline. At minimum it affects logical bounds, source rects, getRGB, drawRGB, copyArea, image cropping/Sprite operations, mutable offscreen graphics, and cached Canvas transforms. Whole-frame supersampling remains a legitimate experiment, not the default architecture choice.
+
+Do not confuse this observation with evidence that whole-frame supersampling is impossible; it only quantifies the compatibility surface that must be handled coherently. For a less invasive experiment, test a higher-resolution *presentation-only* or *supported-renderer* target separately, while explicitly acknowledging which actual rasterization detail cannot be recovered from the original logical bitmap.
+
