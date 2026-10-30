@@ -195,3 +195,21 @@ as-is; implement reviewed production PRs from accepted contracts.
 **Provisional outcome:** no justification yet to pivot to a unified GPU
 renderer. The preferred immediate architecture is a retained guest contract
 with a separately modernizable presentation path, subject to all gates.
+
+
+## Updated provisional decisions (executed evidence)
+
+- API35 x86_64 SwiftShader genuinely supports a GLES1 fixed-function
+  pbuffer (`EGL_CONTEXT_CLIENT_VERSION=1`, `GL_VERSION=OpenGL ES-CM 1.1`),
+  and GLES1 matrix/clear/readback passed. The M3G hang does **not**
+  prove GLES1 absence and does not alone motivate rewriting M3G.
+- 2x Android Canvas rasterization plus downsampling changed 71/1024
+  deliberately subpixel-sensitive pixels. Exact guest color reads are a
+  separate compatibility constraint; supersampling is not an innocuous
+  bitmap enlargement.
+- On independent native M3G runs, the last observed call differed
+  (`render` versus `releaseTarget`); multiple JNI library load
+  paths in the test harness are an unverified confounder. Prioritize
+  differential test of normal production library loading before
+  replacing an entire renderer or changing EGL ownership.
+

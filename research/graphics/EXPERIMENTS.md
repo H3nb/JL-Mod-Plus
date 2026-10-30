@@ -254,3 +254,49 @@ M3G renderer. If it persists, follow the JNI/core `M3G_RD` trace markers and
 verify on a physical Android GPU. Do not infer a production bug from an
 instrumentation-only loading path.
 
+
+
+## Four passing independent graphics probes — 2026-10-30
+
+Run: https://github.com/H3nb/JL-Mod-Plus/actions/runs/41054406134
+SHA `b1bf1badc6fe880a5d5c7ad99325224d2f6134cb`.
+All 4 *executed* API35 x86_64 instrumentation tests passed:
+`GraphicsPipelineResearchTest` 1/1; `ShaderAbiResearchTest` 1/1;
+`LegacyEs1ContextResearchTest` 1/1;
+`SupersamplingSemanticsResearchTest` 1/1.
+
+Emulator reports `OpenGL ES-CM 1.1` with EGL client version exactly **1**
+using the independent fixed-function test, and `OpenGL ES 3.0 SwiftShader`
+with the GLES2 API test. This establishes that the emulator implements
+**a working GLES1 pbuffer**. It does **not** validate JL-Mod Plus M3G's
+native EGL configuration/memory targets, target synchronization or driver
+behavior in all workloads.
+
+The 32x32 native vs 2x Android Canvas rasterization/downsample experiment
+recorded **71 changed logical pixels out of 1024**, including **71 partially
+covered pixels** after downsampling of a subpixel diagonal line. It
+characterizes the expected guest-visible color trade-off; it neither proves
+that a particular MIDlet violates its spec nor that HD 2x is undesirable.
+
+## Release-stage trace revision — 2026-10-30
+
+Run https://github.com/H3nb/JL-Mod-Plus/actions/runs/41054712353 at
+`7fdbceec5ccb18276dc320ac6ce5c34a41c0c15c`:
+the *immediate M3G* test went offline after the marker
+`immediate: render triangle`, **before** the
+`immediate: release target` marker. No `M3G_RD` JNI-release log was
+reached. Prior run `41053290226` reached
+`immediate: release target` but no later marker. This is not
+consistent enough to blame `glFinish` or target-release alone.
+
+Both logs show separate `libjavam3g.so` load events:
+extracted code-cache path from instrumentation, then APK native path from
+production M3G Platform loader. This is a *confounder hypothesis*, not a
+verified crash explanation.
+
+Research commit `5ac6ec6fa370d8e09d835b75432ad93b1f528168`
+adds an isolated immediate test that **skips test-only native preload**
+and relies on normal `Platform` loading. It also corrects the earlier
+misplaced optional `collectGLObjects` trace to the actual release path.
+Review that specific CI run before claiming the root cause.
+
