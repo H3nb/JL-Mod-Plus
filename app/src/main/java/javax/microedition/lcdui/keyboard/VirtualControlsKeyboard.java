@@ -882,7 +882,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public boolean pointerPressed(int pointer, float x, float y) {
 		int mode = getLayoutEditMode();
 		if (mode != LAYOUT_EOF) {
-			if (legacyEditPointer >= 0 && pointer != legacyEditPointer && beginLegacyPinch(pointer, x, y)) {
+			if (legacyEditPointer >= 0 && pointer != legacyEditPointer) {
+				// A non-pinch contact must not replace the active legacy drag owner.
+				// Consume it until release rather than forwarding it to the single-pointer editor.
+				beginLegacyPinch(pointer, x, y);
 				return true;
 			}
 			if (beginGroupedPinch(pointer, x, y)) return true;
@@ -945,6 +948,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				updateLegacyPinch();
 				return true;
 			}
+			// Ignore movement by a second contact rejected for pinch.
+			return true;
 		}
 		if (pointer == dpadPointer && dpadToken != null) {
 			Set<VirtualDpadDirection> directions = dpadController.move(dpadToken, dpadGeometry(), x, y);
@@ -1000,6 +1005,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				clearLegacyEditTracking();
 				return consumed;
 			}
+			// Its press never reached the editor, so its release must not finish a drag.
+			return true;
 		}
 		if (pointer == dpadPointer) {
 			endDpad();
@@ -1194,7 +1201,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (screenBounds == null || editControl == EditControl.NONE) return;
 		float cx = x - editOffsetX;
 		float cy = y - editOffsetY;
-		if (isEditorSnapEnabled()) {
+		if (isEditorSnapGridEnabled()) {
 			float step = gridStep();
 			cx = snapToEditorGrid(cx, screenBounds.left, step);
 			cy = snapToEditorGrid(cy, screenBounds.top, step);
@@ -1257,6 +1264,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private boolean beginLegacyPinch(int pointer, float x, float y) {
 		if (getLayoutEditMode() != LAYOUT_KEYS || legacyEditPointer < 0 ||
 				legacyPinchPointer >= 0 || pointer == legacyEditPointer) return false;
+
+		// A second contact far from the selected key should not initiate resizing.
+		float reach = Math.max(96f, getCurrentKeySize() * 2.5f);
+		if (Math.hypot(x - legacyEditX, y - legacyEditY) > reach) return false;
 
 		/* Finalize the current move before handing the selected key's scale group to the legacy
 		 * resize engine. The second finger itself is not forwarded to VirtualKeyboard. */

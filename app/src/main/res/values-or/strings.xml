@@ -1130,4 +1130,18 @@
     <string name="library_metadata_language_search">ଭାଷା ଖୋଜନ୍ତୁ କିମ୍ବା ଲୋକେଲ କୋଡ୍ ଦିଅନ୍ତୁ</string>
     <string name="library_metadata_remove_language">ବିବରଣୀ ହଟାନ୍ତୁ</string>
     <string name="library_metadata_language_load_failed">ବିବରଣୀ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ। ମେଟାଡାଟା ପୁଣି ଖୋଲନ୍ତୁ।</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
 </resources>

@@ -1097,4 +1097,18 @@
     <string name="library_metadata_language_search">搜索语言或输入区域代码</string>
     <string name="library_metadata_remove_language">删除描述</string>
     <string name="library_metadata_language_load_failed">无法加载语言描述。请重新打开元数据编辑页面。</string>
+    <string name="layout_editor_group_on">成组调整大小</string>
+    <string name="layout_editor_group_off">单独调整大小</string>
+    <string name="layout_editor_snap_grid">吸附到网格</string>
+    <string name="layout_editor_snap_controls">吸附到按钮</string>
+    <string name="layout_editor_snap_grid_on">网格吸附：开启</string>
+    <string name="layout_editor_snap_grid_off">网格吸附：关闭</string>
+    <string name="layout_editor_snap_controls_on">按钮吸附：开启</string>
+    <string name="layout_editor_snap_controls_off">按钮吸附：关闭</string>
+    <string name="layout_editor_guide_gestures">手势</string>
+    <string name="layout_editor_guide_move">拖动控件以移动位置。</string>
+    <string name="layout_editor_guide_resize">使用双指调整大小。水平或垂直移动可分别调整宽度或高度。</string>
+    <string name="layout_editor_guide_tools">编辑工具</string>
+    <string name="layout_editor_guide_done">点击完成以保存、放弃或继续编辑。</string>
+    <string name="layout_editor_guide_start">开始编辑</string>
 </resources>

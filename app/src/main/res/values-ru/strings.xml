@@ -1196,4 +1196,18 @@
     <string name="library_metadata_language_search">Найти язык или ввести код локали</string>
     <string name="library_metadata_remove_language">Удалить описание</string>
     <string name="library_metadata_language_load_failed">Не удалось загрузить описания. Откройте редактор метаданных снова.</string>
+    <string name="layout_editor_group_on">Изменять размер группы</string>
+    <string name="layout_editor_group_off">Изменять размер отдельно</string>
+    <string name="layout_editor_snap_grid">Привязка к сетке</string>
+    <string name="layout_editor_snap_controls">Привязка к кнопкам</string>
+    <string name="layout_editor_snap_grid_on">Сетка: включено</string>
+    <string name="layout_editor_snap_grid_off">Сетка: выключено</string>
+    <string name="layout_editor_snap_controls_on">Кнопки: включено</string>
+    <string name="layout_editor_snap_controls_off">Кнопки: выключено</string>
+    <string name="layout_editor_guide_gestures">Жесты</string>
+    <string name="layout_editor_guide_move">Перетащите элемент управления, чтобы переместить его.</string>
+    <string name="layout_editor_guide_resize">Изменяйте размер двумя пальцами. Двигайте по горизонтали или вертикали, чтобы изменить ширину или высоту.</string>
+    <string name="layout_editor_guide_tools">Инструменты редактора</string>
+    <string name="layout_editor_guide_done">Нажмите «Готово», чтобы сохранить, отменить или продолжить редактирование.</string>
+    <string name="layout_editor_guide_start">Начать редактирование</string>
 </resources>

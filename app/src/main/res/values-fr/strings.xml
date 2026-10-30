@@ -1163,4 +1163,18 @@
     <string name="library_metadata_language_search">Rechercher une langue ou saisir un code régional</string>
     <string name="library_metadata_remove_language">Supprimer la description</string>
     <string name="library_metadata_language_load_failed">Impossible de charger les descriptions. Rouvrez la modification des métadonnées.</string>
+    <string name="layout_editor_group_on">Redimensionner en groupe</string>
+    <string name="layout_editor_group_off">Redimensionner individuellement</string>
+    <string name="layout_editor_snap_grid">Aligner sur la grille</string>
+    <string name="layout_editor_snap_controls">Aligner sur les boutons</string>
+    <string name="layout_editor_snap_grid_on">Grille magnétique : activée</string>
+    <string name="layout_editor_snap_grid_off">Grille magnétique : désactivée</string>
+    <string name="layout_editor_snap_controls_on">Boutons magnétiques : activés</string>
+    <string name="layout_editor_snap_controls_off">Boutons magnétiques : désactivés</string>
+    <string name="layout_editor_guide_gestures">Gestes</string>
+    <string name="layout_editor_guide_move">Faites glisser une commande pour la déplacer.</string>
+    <string name="layout_editor_guide_resize">Utilisez deux doigts pour redimensionner. Déplacez-les horizontalement ou verticalement pour modifier la largeur ou la hauteur.</string>
+    <string name="layout_editor_guide_tools">Outils d’édition</string>
+    <string name="layout_editor_guide_done">Touchez Terminé pour enregistrer, annuler ou poursuivre la modification.</string>
+    <string name="layout_editor_guide_start">Commencer</string>
 </resources>

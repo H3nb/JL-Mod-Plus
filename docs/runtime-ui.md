@@ -55,19 +55,21 @@ The finish-layout item is visible only while the virtual keyboard is in an
 edit mode. The Canvas-only group remains absent on `Form` and other
 non-Canvas Displayables.
 
-The Canvas layout editor groups **Show controls**, **Grid size**, and **Snap**
-above **Done** in one automatically placed host panel. Done keeps the existing
-transactional Save/Discard/Continue behavior; showing controls reuses the runtime
-dialog. The visual grid stays visible during editing, with coarse (16), normal
-(24, default), and fine (32) divisions of the shorter editor dimension. Snap is
-on by default and can be disabled for free placement. The grid setting affects
-subsequent movements, not positions already edited. Visible virtual controls stay within the host
-control viewport when moved, resized, or resolved from older layouts; passive
-viewport changes do not rewrite stored layout anchors or scales. These tool settings reset
-for each editing session and are not serialized with the custom layout. Legacy
-keys retain valid screen/key anchors even when snapping is disabled, preserving
-the existing layout format and orientation-specific drafts. The host places and
-hides the entire panel together during control manipulation.
+The Canvas layout editor keeps **Show controls**, **Grid size**, **Group resize**, and
+**Snap** above **Done** in one automatically placed host panel. Group resize is
+on by default: a two-finger resize changes the historic key group proportionally,
+preserving previous per-key size differences. Turning it off limits each resize
+to the selected legacy button. D-pad and analog sizes remain independent.
+Snap now exposes independent grid and other-button alignment toggles; the
+visible grid uses coarse (16), normal (24, default), or fine (32) divisions.
+The panel hides during a control gesture. Editor-tool selections reset at the
+start of a session and never mark the layout dirty. Save/Discard/Continue keeps
+the existing transaction boundary. Visible controls remain inside the host
+control viewport; passive viewport changes do not rewrite saved positions
+or sizes. The v5 layout stores individual legacy button width/height scales
+per orientation; v1-v4 group scales expand to equal per-key sizes when loaded.
+During resize/reshape, the editor preserves control positions and existing anchor
+relationships through updated offsets; interactive snapping is reserved for drag.
 
 ## LCDUI presentation authority
 

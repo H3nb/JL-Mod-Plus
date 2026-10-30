@@ -1097,4 +1097,18 @@
     <string name="library_metadata_language_search">언어 검색 또는 로캘 코드 입력</string>
     <string name="library_metadata_remove_language">설명 삭제</string>
     <string name="library_metadata_language_load_failed">설명을 불러올 수 없습니다. 메타데이터 편집을 다시 여세요.</string>
+    <string name="layout_editor_group_on">그룹 크기 변경</string>
+    <string name="layout_editor_group_off">개별 크기 변경</string>
+    <string name="layout_editor_snap_grid">격자에 맞추기</string>
+    <string name="layout_editor_snap_controls">버튼에 맞추기</string>
+    <string name="layout_editor_snap_grid_on">격자 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_grid_off">격자 맞춤: 꺼짐</string>
+    <string name="layout_editor_snap_controls_on">버튼 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_controls_off">버튼 맞춤: 꺼짐</string>
+    <string name="layout_editor_guide_gestures">제스처</string>
+    <string name="layout_editor_guide_move">컨트롤을 드래그하여 이동합니다.</string>
+    <string name="layout_editor_guide_resize">두 손가락으로 크기를 변경합니다. 가로 또는 세로로 움직여 너비나 높이를 조절합니다.</string>
+    <string name="layout_editor_guide_tools">편집 도구</string>
+    <string name="layout_editor_guide_done">완료를 탭하여 저장하거나 취소하거나 편집을 계속합니다.</string>
+    <string name="layout_editor_guide_start">편집 시작</string>
 </resources>

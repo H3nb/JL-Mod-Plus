@@ -209,12 +209,15 @@ public class MicroActivity extends AppCompatActivity {
 		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
 		binding.layoutEditShowControls.setOnClickListener(ignored -> showControlsDialog());
 		binding.layoutEditGridSize.setOnClickListener(ignored -> showEditorGridSizeMenu());
-		binding.layoutEditSnap.setOnClickListener(ignored -> {
+		binding.layoutEditGroupResize.setOnClickListener(ignored -> {
 			VirtualKeyboard keyboard = ContextHolder.getVk();
 			if (keyboard == null || !isVirtualKeyboardLayoutEditing()) return;
-			keyboard.setEditorSnapEnabled(!keyboard.isEditorSnapEnabled());
-			binding.setLayoutEditSnapEnabled(keyboard.isEditorSnapEnabled());
+			boolean enabled = !keyboard.isEditorGroupResizeEnabled();
+			keyboard.setEditorGroupResizeEnabled(enabled);
+			binding.setLayoutEditGroupEnabled(enabled);
+			toast(enabled ? R.string.layout_editor_group_on : R.string.layout_editor_group_off);
 		});
+		binding.layoutEditSnap.setOnClickListener(ignored -> showEditorSnapMenu());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
 		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (view, insets) -> {
 			lastWindowInsets = insets;
@@ -1581,7 +1584,8 @@ public class MicroActivity extends AppCompatActivity {
 			layoutEditorPanelPlacement = null;
 			layoutEditorPanelBounds = null;
 			vk.resetLayoutEditorTools();
-			binding.setLayoutEditSnapEnabled(vk.isEditorSnapEnabled());
+			binding.setLayoutEditSnapEnabled(vk.isEditorSnapGridEnabled() || vk.isEditorSnapControlsEnabled());
+			binding.setLayoutEditGroupEnabled(vk.isEditorGroupResizeEnabled());
 		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
 		updateRuntimeMenuState(current);
@@ -1739,7 +1743,7 @@ public class MicroActivity extends AppCompatActivity {
 		panel.measure(
 				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
 				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-		float desiredWidth = Math.max(panel.getMeasuredWidth(), dpToPx(152));
+		float desiredWidth = Math.max(panel.getMeasuredWidth(), dpToPx(200));
 		float desiredHeight = Math.max(panel.getMeasuredHeight(), dpToPx(105));
 		EditorDonePlacement.Box placement = EditorDonePlacement.place(
 				usable,
@@ -1823,6 +1827,33 @@ public class MicroActivity extends AppCompatActivity {
 				}
 			});
 		}, "JLP-save-runtime-log").start();
+	}
+
+	private void showEditorSnapMenu() {
+		VirtualKeyboard keyboard = ContextHolder.getVk();
+		if (keyboard == null || !isVirtualKeyboardLayoutEditing()) return;
+		PopupMenu menu = new PopupMenu(this, binding.layoutEditSnap);
+		menu.getMenu().add(0, 1, 0, R.string.layout_editor_snap_grid)
+				.setCheckable(true).setChecked(keyboard.isEditorSnapGridEnabled());
+		menu.getMenu().add(0, 2, 1, R.string.layout_editor_snap_controls)
+				.setCheckable(true).setChecked(keyboard.isEditorSnapControlsEnabled());
+		menu.setOnMenuItemClickListener(item -> {
+			if (item.getItemId() == 1) {
+				boolean enabled = !keyboard.isEditorSnapGridEnabled();
+				keyboard.setEditorSnapGridEnabled(enabled);
+				toast(enabled ? R.string.layout_editor_snap_grid_on : R.string.layout_editor_snap_grid_off);
+			} else if (item.getItemId() == 2) {
+				boolean enabled = !keyboard.isEditorSnapControlsEnabled();
+				keyboard.setEditorSnapControlsEnabled(enabled);
+				toast(enabled ? R.string.layout_editor_snap_controls_on : R.string.layout_editor_snap_controls_off);
+			} else {
+				return false;
+			}
+			binding.setLayoutEditSnapEnabled(
+					keyboard.isEditorSnapGridEnabled() || keyboard.isEditorSnapControlsEnabled());
+			return true;
+		});
+		menu.show();
 	}
 
 	private void showEditorGridSizeMenu() {

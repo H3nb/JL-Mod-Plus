@@ -1163,4 +1163,18 @@
     <string name="library_metadata_language_search">Pesquisar idioma ou introduzir código regional</string>
     <string name="library_metadata_remove_language">Remover descrição</string>
     <string name="library_metadata_language_load_failed">Não foi possível carregar as descrições. Reabra a edição de metadados.</string>
+    <string name="layout_editor_group_on">Redimensionar em grupo</string>
+    <string name="layout_editor_group_off">Redimensionar individualmente</string>
+    <string name="layout_editor_snap_grid">Ajustar à grelha</string>
+    <string name="layout_editor_snap_controls">Ajustar aos botões</string>
+    <string name="layout_editor_snap_grid_on">Ajuste à grelha: Ativo</string>
+    <string name="layout_editor_snap_grid_off">Ajuste à grelha: Inativo</string>
+    <string name="layout_editor_snap_controls_on">Ajuste aos botões: Ativo</string>
+    <string name="layout_editor_snap_controls_off">Ajuste aos botões: Inativo</string>
+    <string name="layout_editor_guide_gestures">Gestos</string>
+    <string name="layout_editor_guide_move">Arraste um controlo para o mover.</string>
+    <string name="layout_editor_guide_resize">Use dois dedos para redimensionar. Mova-os na horizontal ou na vertical para alterar a largura ou altura.</string>
+    <string name="layout_editor_guide_tools">Ferramentas de edição</string>
+    <string name="layout_editor_guide_done">Toque em Concluído para guardar, descartar ou continuar a editar.</string>
+    <string name="layout_editor_guide_start">Começar a editar</string>
 </resources>

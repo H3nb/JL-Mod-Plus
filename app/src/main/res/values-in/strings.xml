@@ -1178,4 +1178,18 @@
     <string name="library_metadata_language_search">Cari bahasa atau kode</string>
     <string name="library_metadata_remove_language">Hapus deskripsi</string>
     <string name="library_metadata_language_load_failed">Gagal memuat deskripsi bahasa. Buka kembali Edit metadata untuk mencoba lagi.</string>
+    <string name="layout_editor_group_on">Ubah ukuran: Kelompok</string>
+    <string name="layout_editor_group_off">Ubah ukuran: Per tombol</string>
+    <string name="layout_editor_snap_grid">Snap ke grid</string>
+    <string name="layout_editor_snap_controls">Snap ke tombol</string>
+    <string name="layout_editor_snap_grid_on">Snap grid: Aktif</string>
+    <string name="layout_editor_snap_grid_off">Snap grid: Nonaktif</string>
+    <string name="layout_editor_snap_controls_on">Snap tombol: Aktif</string>
+    <string name="layout_editor_snap_controls_off">Snap tombol: Nonaktif</string>
+    <string name="layout_editor_guide_gestures">Gestur</string>
+    <string name="layout_editor_guide_move">Geser kontrol untuk memindahkannya.</string>
+    <string name="layout_editor_guide_resize">Gunakan dua jari untuk mengubah ukuran. Gerakkan secara horizontal atau vertikal untuk mengubah lebar atau tinggi.</string>
+    <string name="layout_editor_guide_tools">Alat editor</string>
+    <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan, membatalkan, atau melanjutkan pengeditan.</string>
+    <string name="layout_editor_guide_start">Mulai mengedit</string>
 </resources>

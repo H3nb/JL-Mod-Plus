@@ -1131,4 +1131,18 @@
     <string name="library_metadata_language_search">Sprache suchen oder Gebietsschema eingeben</string>
     <string name="library_metadata_remove_language">Beschreibung entfernen</string>
     <string name="library_metadata_language_load_failed">Sprachbeschreibungen konnten nicht geladen werden. Metadaten erneut öffnen.</string>
+    <string name="layout_editor_group_on">Gruppe gemeinsam skalieren</string>
+    <string name="layout_editor_group_off">Einzeln skalieren</string>
+    <string name="layout_editor_snap_grid">Am Raster ausrichten</string>
+    <string name="layout_editor_snap_controls">An Tasten ausrichten</string>
+    <string name="layout_editor_snap_grid_on">Rasterfang: Ein</string>
+    <string name="layout_editor_snap_grid_off">Rasterfang: Aus</string>
+    <string name="layout_editor_snap_controls_on">Tastenfang: Ein</string>
+    <string name="layout_editor_snap_controls_off">Tastenfang: Aus</string>
+    <string name="layout_editor_guide_gestures">Gesten</string>
+    <string name="layout_editor_guide_move">Ziehe ein Bedienelement, um es zu verschieben.</string>
+    <string name="layout_editor_guide_resize">Ändere die Größe mit zwei Fingern. Bewege sie horizontal oder vertikal, um Breite oder Höhe anzupassen.</string>
+    <string name="layout_editor_guide_tools">Editor-Werkzeuge</string>
+    <string name="layout_editor_guide_done">Tippe auf Fertig, um zu speichern, zu verwerfen oder weiterzubearbeiten.</string>
+    <string name="layout_editor_guide_start">Bearbeitung starten</string>
 </resources>
