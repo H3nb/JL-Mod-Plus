@@ -332,14 +332,20 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			layoutVariant = activeVariant;
 		}
 		resetLayout(layoutVariant);
-		if (layoutVariant == TYPE_CUSTOM) {
+		// v4/v5 may retain a dormant Custom definition while a built-in layout is active.
+		// Decode that state without applying its geometry to the built-in keyboard.
+		if (layoutVariant == TYPE_CUSTOM || loadedLayoutVersion >= 4) {
 			try {
 				readLayout();
 			} catch (IOException e) {
-				Log.w(TAG, "Could not load Custom virtual keyboard layout; using safe in-memory fallback", e);
 				storedCustomLayoutState = null;
-				resetLayout(TYPE_NUMBERS_ARROWS);
-				layoutVariant = TYPE_NUMBERS_ARROWS;
+				if (layoutVariant == TYPE_CUSTOM) {
+					Log.w(TAG, "Could not load Custom virtual keyboard layout; using safe in-memory fallback", e);
+					resetLayout(TYPE_NUMBERS_ARROWS);
+					layoutVariant = TYPE_NUMBERS_ARROWS;
+				} else {
+					Log.w(TAG, "Could not load dormant Custom virtual keyboard state", e);
+				}
 			}
 		}
 		HandlerThread thread = new HandlerThread("MidletVirtualKeyboard");
