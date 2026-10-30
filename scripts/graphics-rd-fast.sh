@@ -6,6 +6,18 @@ mkdir -p ci-artifacts/graphics-rd-fast
 trap 'adb logcat -d -v threadtime > ci-artifacts/graphics-rd-fast/logcat-final.txt 2>&1 || true' EXIT
 git rev-parse HEAD > ci-artifacts/graphics-rd-fast/source-commit.txt
 
+# Resolve real, unmodified Libretro inputs at a pinned upstream revision.
+# Download only into the disposable androidTest APK; do not vendor shaders.
+libretro_ref=cba01a48b0974a1232bea68d999a7c21bc4c233e
+asset_dir=app/src/androidTest/assets/graphics-rd
+mkdir -p "$asset_dir"
+for name in stock.glsl bilinear.glslp; do
+  curl --fail --show-error --silent --location --retry 2 \
+    "https://raw.githubusercontent.com/libretro/glsl-shaders/$libretro_ref/$name" \
+    -o "$asset_dir/$name"
+  test -s "$asset_dir/$name"
+done
+
 ./gradlew --daemon --stacktrace \
   -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 \
   :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
@@ -27,7 +39,8 @@ for spec in \
   'io.github.h3nb.jlmodplus.experiments.ShaderAbiResearchTest|shader-abi' \
   'io.github.h3nb.jlmodplus.research.LegacyEs1ContextResearchTest|es1-fixed-function' \
   'io.github.h3nb.jlmodplus.research.SupersamplingSemanticsResearchTest|lcd-ui-hd-logic' \
-  'io.github.h3nb.jlmodplus.research.TextureUpdateResearchTest|texture-update'; do
+  'io.github.h3nb.jlmodplus.research.TextureUpdateResearchTest|texture-update' \
+  'io.github.h3nb.jlmodplus.research.RealLibretroPresetResearchTest|real-glslp'; do
   class=$(printf '%s' "$spec" | cut -d'|' -f1)
   label=$(printf '%s' "$spec" | cut -d'|' -f2)
   echo "Executing $class"
