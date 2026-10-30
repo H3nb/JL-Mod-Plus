@@ -160,3 +160,14 @@ ES2-only GPU driver supports the same shader/performance behavior, nor do they
 establish real mobile GPU power efficiency. This distinction must accompany
 future claims about the ES2 baseline.
 
+
+
+## Rejected experimental test boundary — Mascot without a host
+
+- Run: https://github.com/H3nb/JL-Mod-Plus/actions/runs/41042414793, source `76cdfe56730f1ea6da990c71609d6c7dd776d24c`.
+- In this fast/no-native CI, GLES FBO and legacy/Libretro ABI tests **passed** before `MascotReadbackResearchTest` began.
+- The Mascot test failed **before validating any rendered pixel**. `Render.release()` first touched `micro3d.Utils`, whose static initializer calls `PreferenceManager.getDefaultSharedPreferences(ContextHolder.getActivity())`; a bare Android instrumentation test has no `MicroActivity`, producing `NullPointerException` inside class initialization.
+- The same initializer calls `System.loadLibrary("micro3d")`, but the fast test deliberately uses `jlmodNativeBuild=false`. A synthetic Activity or fake JNI dependency would make the test unrepresentative.
+- **Classification: invalid test setup / wrong boundary; not a verified Mascot render bug.** Restore the two passing GLES-only checks in fast CI. The next Mascot probe must use an attached `MicroActivity` or a supported runtime fixture and a native-enabled build, then verify offscreen pixel orientation and bind/release semantics.
+- Do not change the production `Utils` initializer solely for this artificial hostless scenario. Separately assess whether its Activity dependency is a real lifecycle weakness in supported runtime paths.
+

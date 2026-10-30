@@ -24,19 +24,13 @@ if [ "$(printf '%s\n' "$runner" | sed '/^$/d' | wc -l)" -ne 1 ]; then
 fi
 for spec in \
   'io.github.h3nb.jlmodplus.research.GraphicsPipelineResearchTest|fbo' \
-  'io.github.h3nb.jlmodplus.experiments.ShaderAbiResearchTest|shader-abi' \
-  'io.github.h3nb.jlmodplus.experiments.MascotReadbackResearchTest|mascot-readback'; do
+  'io.github.h3nb.jlmodplus.experiments.ShaderAbiResearchTest|shader-abi'; do
   class=$(printf '%s' "$spec" | cut -d'|' -f1)
   label=$(printf '%s' "$spec" | cut -d'|' -f2)
   echo "Executing $class"
-  adb logcat -c || true
   log="ci-artifacts/graphics-rd-fast/$label.txt"
-  if ! timeout --signal=TERM --kill-after=5s 75s adb shell am instrument -w -r -e class "$class" "$runner" > "$log" 2>&1; then
+  if ! adb shell am instrument -w -r -e class "$class" "$runner" > "$log" 2>&1; then
     cat "$log"
-    adb shell ps -A > "ci-artifacts/graphics-rd-fast/$label-processes.txt" 2>&1 || true
-    adb logcat -d -v threadtime > "ci-artifacts/graphics-rd-fast/$label-logcat.txt" 2>&1 || true
-    adb shell am force-stop io.github.h3nb.jlmodplus.debug || true
-    echo "Research case failed or timed out: $class" >&2
     exit 1
   fi
   cat "$log"
@@ -44,4 +38,4 @@ for spec in \
   grep -q 'INSTRUMENTATION_CODE: -1' "$log" || exit 1
   adb logcat -d -v threadtime > "ci-artifacts/graphics-rd-fast/$label-logcat.txt" 2>&1
 done
-echo "All selected GLES2 and Mascot offscreen research cases executed successfully."
+echo "Both GLES2 graphics research test classes executed successfully."
