@@ -85,3 +85,19 @@ These are theoretical *individual* color texture allocations (16 bytes/pixel), n
 ## Stop rule
 
 If an approach provably violates guest-visible semantics or offers no material measurable benefit, record the limitation and stop investing in it. The target is an actionable design decision, not maximizing experiment or test count. Production PRs must be scoped separately; temporary CI and diagnostics are disposable.
+
+
+## Executed evidence — 2026-10-30, first native run
+
+- Run: https://github.com/H3nb/JL-Mod-Plus/actions/runs/41034949573
+- Source: `cdd8b8de1e4069c7f6c445fefe947b9f194ac1dd`, API 35 x86_64 emulator.
+- Build and install: SUCCESS. GLES2 RGBA8 two-pass FBO test: **1 passed**.
+- LCDUI `GraphicsCanvasStateTest`: **2 passed**.
+- LCDUI `GraphicsBitmapRebindTest`: **1 passed**.
+- Native M3G flag-validation method: **1 passed**.
+- Native M3G `immediateRenderingExecutesOn64BitNativeBackend` began but gave no completion callback before the 55-minute job timeout; the remaining methods were not executed. **Full workflow conclusion: cancelled**, not success.
+- The log contained `glClear ... GL err 0x500` and `glMatrixMode ... GL err 0x500` near native tests, but these lines alone are **not** evidence of the hang's root cause. The wrapper uses a single M3G executor, and the API call boundary still needs isolation.
+- Collected run artifact: https://github.com/H3nb/JL-Mod-Plus/actions/runs/41034949573/artifacts/12970626280, including instrumented output, saved logcat, and exact source SHA.
+- Next CI revision `dcdd078d63ebe6b9b34fe672a16838e8b480a357` executes each M3G method in its own instrumentation invocation, applies a **75-second per-method timeout**, captures logcat and requests Java thread stacks on a hang, then force-stops the research app.
+- Distinguish a stopped test from a functional rendering regression. Do not change native production code until the method and blocked thread/native call are identified.
+
