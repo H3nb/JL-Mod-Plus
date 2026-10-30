@@ -74,4 +74,34 @@ sample_case() {
 sample_case cold-launch-1 cold
 sample_case cold-launch-2 cold
 sample_case home-resume resume
-./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 '-Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.applist.LibraryComposeTest#loadingLibraryScopeChangeKeepsSearchUnfocused,io.github.h3nb.jlmodplus.applist.LibraryComposeTest#searchDoneTransfersFocusAfterTouchAndCanBeReopened,io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest#searchRevealsCompleteHeaderAndStartsResultsAtTop,io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionPickerSearchReturnsToFirstResultAfterDeepScroll' :app:connectedEmulatorDebugAndroidTest
+# Drive the already-assembled instrumentation APK directly; AGP's API27 connected task
+# previously returned a successful exit with an XML report containing zero executed tests.
+mapfile -t test_apks < <(find app/build/outputs/apk/androidTest -type f -name '*.apk' -print | sort)
+if (( ${#test_apks[@]} != 1 )); then
+  echo "Expected one Android test APK, found ${#test_apks[@]}." >&2
+  exit 1
+fi
+adb install -r -t "${test_apks[0]}"
+mapfile -t runners < <(
+  adb shell pm list instrumentation | tr -d '\r' |
+    sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p'
+)
+if (( ${#runners[@]} != 1 )); then
+  echo "Expected one instrumentation runner, found ${#runners[@]}." >&2
+  exit 1
+fi
+selectors=(
+  'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#loadingLibraryScopeChangeKeepsSearchUnfocused'
+  'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#searchDoneTransfersFocusAfterTouchAndCanBeReopened'
+  'io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest#searchRevealsCompleteHeaderAndStartsResultsAtTop'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionPickerSearchReturnsToFirstResultAfterDeepScroll'
+)
+selector_arg="$(IFS=,; echo "${selectors[*]}")"
+report='ci-artifacts/ime/instrumentation.txt'
+if ! adb shell am instrument -w -r -e class "$selector_arg" "${runners[0]}" > "$report" 2>&1; then
+  cat "$report"
+  exit 1
+fi
+cat "$report"
+python3 scripts/runtime-smoke-results.py \
+  --log "$report" --output ci-artifacts/ime/instrumentation-pass.txt "${selectors[@]}"
