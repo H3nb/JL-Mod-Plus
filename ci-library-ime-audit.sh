@@ -11,7 +11,7 @@ if [[ ! -f "$apk" ]]; then
 fi
 adb install -r "$apk"
 mkdir -p ci-artifacts/ime
-adb shell "mkdir -p '/sdcard/JL-Mod Plus'"
+adb shell "mkdir -p '/sdcard/JL-Mod Plus Debug'"
 adb shell pm grant "$package" android.permission.WRITE_EXTERNAL_STORAGE 2>/dev/null || true
 adb shell appops set "$package" MANAGE_EXTERNAL_STORAGE allow 2>/dev/null || true
 adb shell settings put system screen_off_timeout 600000
@@ -31,15 +31,15 @@ sample_case() {
     adb shell am start -W -n "$package/$activity" > "ci-artifacts/ime/${name}-start.txt" 2>&1
   ) &
   local launching=$!
-  for i in $(seq 1 32); do
+  for i in $(seq 1 14); do
     local output shown requested focused uptime
     output="$(adb shell dumpsys input_method 2>&1 | tr -d '\r')"
     shown="$(printf '%s\n' "$output" | grep -Eo 'mInputShown=(true|false)' | head -1 | cut -d= -f2 || true)"
     requested="$(printf '%s\n' "$output" | grep -Eo 'mShowRequested=(true|false)' | head -1 | cut -d= -f2 || true)"
     focused="$(printf '%s\n' "$output" | grep -E 'mCurFocusedWindow|mCurFocusedWindowName' | head -1 | tr '\t' ' ' || true)"
-    uptime="$(adb shell cat /proc/uptime | cut -d' ' -f1)"
+    uptime="$(date +%s.%3N)"
     printf '%s\t%s\t%s\t%s\t%s\n' "$i" "$uptime" "${shown:-unknown}" "${requested:-unknown}" "$focused" >> "$report"
-    sleep 0.12
+    sleep 0.18
   done
   wait "$launching"
   adb shell dumpsys input_method > "ci-artifacts/ime/${name}-input-method.txt" || true
