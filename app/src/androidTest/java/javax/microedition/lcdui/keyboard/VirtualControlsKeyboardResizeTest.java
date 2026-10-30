@@ -970,9 +970,9 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.setLayout(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
         assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
+        commitCurrentLayoutToDisk();
 
         recreateKeyboardFromDisk(landscape);
-        commitCurrentLayoutToDisk();
         assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
 
