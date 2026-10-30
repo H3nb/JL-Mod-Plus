@@ -223,6 +223,7 @@ internal fun LibraryCollectionBrowser(
     LaunchedEffect(interactionActive) {
         if (!interactionActive) {
             sortVisible = false
+            searchFocused = false
         }
     }
     val openApp: (Int) -> Unit = { if (currentInteractionActive) onOpenApp(it) }
@@ -427,7 +428,7 @@ internal fun LibraryCollectionBrowser(
                 .then(if (headerHidden) Modifier.clearAndSetSemantics { } else Modifier)
                 .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
-            renderHeader(Modifier, true)
+            renderHeader(Modifier, interactionActive)
         }
         val scrimVisible by remember(headerOffsetPx) { derivedStateOf { headerOffsetPx.floatValue < -1f } }
         GlassSystemBarScrim(visible = scrimVisible)
