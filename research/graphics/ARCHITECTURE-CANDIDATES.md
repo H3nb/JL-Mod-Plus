@@ -233,3 +233,31 @@ with a separately modernizable presentation path, subject to all gates.
   differential test of normal production library loading before
   replacing an entire renderer or changing EGL ownership.
 
+
+## Refined gate: visual improvement versus guest API fidelity
+
+The MIDP 2.0 specification defines **integer logical pixel operations**,
+not arbitrary floating-point Android Canvas subpixel drawing. Native-versus-HD
+pixel differences from an Android Canvas fractional line are therefore a
+characterization, not a J2ME conformance failure. Retain behavioral oracle
+tests for logical dimensions, `fillRect` area, source-over compositing,
+copyArea, drawRGB, image cropping, clips, translations and opaque mutable
+image output. Do not require byte-for-byte equality of every platform-specific
+font/vector raster result unless the spec or a verified compatibility
+requirement mandates it.
+
+## Re-evaluated performance priority
+
+Before an expansive HD or unified-GPU rewrite, measure the existing
+`GLRenderer` upload path; repeated `GLUtils.texImage2D` with unchanged
+bitmap dimensions may be an avoidable GPU storage redefinition.
+`GLUtils.texSubImage2D` plus a correctly invalidated texture allocation
+is a small orthogonal candidate. It does **not** remove bitmap upload
+bandwidth, M3G/Mascot readbacks, or CPU-rasterization costs and is not a
+proven thermal/FPS benefit until measured on real hardware.
+
+**M3G diagnosis correction:** the last marker before
+`m3gLockFrameBuffer` cannot be taken as proof of a locking deadlock;
+current non-debug build compiles its assertion away. Distinguish the
+observable nonresponsive native thread from a verified cause. Stop repeating
+identical SwiftShader runs; request a real ARM64/GLES1 differential test.

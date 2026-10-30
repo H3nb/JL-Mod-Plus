@@ -300,3 +300,74 @@ and relies on normal `Platform` loading. It also corrects the earlier
 misplaced optional `collectGLObjects` trace to the actual release path.
 Review that specific CI run before claiming the root cause.
 
+
+## JNI-loading differential and native clear trace — 2026-10-30
+
+- Run [41055942209](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41055942209)
+  disabled manual preload of `libjavam3g.so`. Android loaded the
+  target APK native library normally and the test reached `g3d.clear()`,
+  then exited 255 after becoming nonresponsive. **Manual double-path preload
+  is not necessary to reproduce the failure.** It is not proved to be
+  irrelevant in other scenarios.
+- Run [41063347467](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41063347467)
+  traced the public `m3gClear()`, background validation,
+  `m3gClearInternal`, `m3gMakeCurrent`, and viewport/scissor state.
+  The last logged statement is `clear: before lockFramebuffer`; there
+  is no corresponding subsequent marker.
+- Crucial static audit: `m3gLockFrameBuffer(ctx)` in
+  `m3g_rendercontext.inl` expands to
+  `M3G_ASSERT_NO_LOCK(M3G_INTERFACE(ctx))`. This expands to
+  `M3G_ASSERT(!m3gMemoryLocked(interface))` in the selected non-NGL
+  branch. `m3g_defs.h` compiles `M3G_ASSERT` to a no-op unless
+  `M3G_DEBUG_ASSERTS` is defined; the current `m3g/Android.mk` uses
+  `-O3 -Werror -DM3G_TARGET_ANDROID`, not the debug assertions.
+  **Therefore no active framebuffer lock is evidenced at that log marker.**
+  It is incorrect to attribute the hang to that macro.
+- The in-method native thread (distinct from the Java instrumentation
+  thread) stops yielding logs near this point. Multiple runs stop at
+  different stages. Device-offline events also occurred during boot
+  in isolated CI. Classify **native/runtime/emulator instability with
+  undetermined root cause**, not an established M3G algorithm defect.
+- Research stop condition: do not issue more identical emulator replays.
+  Validate a minimal M3G fixture on a physical ARM64 Android device or
+  alternative GLES1 implementation, capture native crash/tombstone and
+  per-stage GPU timing, then re-open only a hypothesis supported by that
+  differential evidence. Debug-only logging must be deleted before
+  production integration.
+
+## Normative MIDP 2.0 raster constraints — J2ME Dev Kit
+
+Primary source: `J2ME_Docs.zip`,
+`docs/midp-2.0/javax/microedition/lcdui/Graphics.html` and
+`Image.html`. These say:
+
+- All coordinates are **integers** and denote pixel boundaries.
+  `fillRect(0,0,3,2)` affects exactly six logical pixels; `drawLine(0,0,0,0)`
+  touches the one corner pixel under SOLID stroke.
+- Source pixels are composed using **Source Over Destination**.
+  A fully opaque source replaces the destination, fully transparent leaves
+  it unchanged, and semitransparent source blends.
+- All mutable image pixels are **fully opaque**. `Image.getRGB()`
+  exposes ARGB data of the specified *logical image region*.
+- The 71/1024 changed-pixel 2x test draws a **fractional-coordinate
+  Android Canvas line**, which does not directly represent MIDP 2.0's
+  integer-coordinate drawing API. It is useful evidence that filtering
+  can alter observed pixels, **not a normative compatibility failure**.
+- Whole-target supersampling remains a candidate: its implementation
+  must demonstrate that integer logical coordinate bounds, area fills,
+  opaque mutable target behavior, image source regions, clipping,
+  translation, drawing order and defined pixel operations still work.
+  The reference implementation's bilinear downsampling is not by itself
+  sufficient proof of these contracts.
+
+## Presentation-side low-risk optimization research
+
+`Canvas.GLRenderer.onDrawFrame` currently calls
+`GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0)` whenever its
+published-frame sequence advances, even if dimensions are unchanged.
+Reusing the existing storage with `GLUtils.texSubImage2D` may reduce
+driver allocation churn, but not CPU→GPU transfer bytes.
+`TextureUpdateResearchTest` compares both outputs across changing
+RGBA/alpha data and explicit resize; the test's CI status must be
+checked before reporting correctness, and physical-device benchmarks
+remain necessary for a claimed speed/power improvement.
