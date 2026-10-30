@@ -37,6 +37,14 @@
 #include "m3g_vertexbuffer.h"
 #include "m3g_world.h"
 
+/* RESEARCH-ONLY trace: remove before any production integration. */
+#if defined(M3G_TARGET_ANDROID)
+# include <android/log.h>
+# define M3G_RD_MARK(msg) __android_log_print(ANDROID_LOG_INFO, "M3G_RD", "%s", msg)
+#else
+# define M3G_RD_MARK(msg) ((void)0)
+#endif
+
 /*----------------------------------------------------------------------
  * Private data types
  *--------------------------------------------------------------------*/
@@ -697,7 +705,9 @@ static void m3gInitRender(M3GRenderContext context, M3Genum renderMode)
     
     m3gIncrementRenderTimeStamp(ctx);
     m3gMakeCurrent(ctx);
+    M3G_RD_MARK("core: before collectGLObjects");
     m3gCollectGLObjects(M3G_INTERFACE(ctx));
+    M3G_RD_MARK("core: after collectGLObjects");
     
     /* If buffered rendering, blit the image to the back buffer at
      * this point */
@@ -1363,24 +1373,31 @@ M3G_API void m3gReleaseTarget(M3GRenderContext context)
     RenderContext *ctx = (RenderContext*) context;
     M3G_VALIDATE_OBJECT(ctx);
 
+    M3G_RD_MARK("core: releaseTarget entered");
     M3G_LOG(M3G_LOG_RENDERING, "Releasing target\n");
     
     if (ctx->target.type == SURFACE_NONE) {
         return;
     }
     
+    M3G_RD_MARK("core: before makeCurrent");
     m3gMakeCurrent(ctx);
+    M3G_RD_MARK("core: after makeCurrent");
 
     if (m3gGetColorMaskWorkaround(M3G_INTERFACE(ctx))) {
         m3gUpdateColorMaskStatus(ctx, M3G_TRUE, M3G_TRUE);
     }
 
+    M3G_RD_MARK("core: before glFinish");
     glFinish();
+    M3G_RD_MARK("core: after glFinish");
 
     /* Update the real target if we rendered into the back buffer */
     
     if (ctx->target.buffered && ctx->backBuffer.contentsValid) {
+        M3G_RD_MARK("core: before updateTargetBuffer");
         m3gUpdateTargetBuffer(ctx);
+        M3G_RD_MARK("core: after updateTargetBuffer");
     }
 
     /* Invalidate Image targets so that mipmap levels and/or OpenGL

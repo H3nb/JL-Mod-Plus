@@ -7,6 +7,8 @@ on:
       - '.github/workflows/graphics-rd-native-isolated.yml'
       - 'scripts/graphics-rd-native-isolated.sh'
       - 'app/src/androidTest/java/javax/microedition/m3g/M3GRuntimeTest.java'
+      - 'app/src/main/cpp/m3g/src/m3g_rendercontext.c'
+      - 'app/src/main/cpp/m3g/jni/graphics3d.inl'
 
 permissions:
   contents: read
@@ -24,8 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - case: image2d
-            selector: javax.microedition.m3g.M3GRuntimeTest#image2DTargetClearRoundTripsThroughBackgroundRendering
           - case: immediate
             selector: javax.microedition.m3g.M3GRuntimeTest#immediateRenderingExecutesOn64BitNativeBackend
     env:

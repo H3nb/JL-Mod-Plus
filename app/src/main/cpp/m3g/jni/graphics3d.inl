@@ -213,14 +213,19 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1releaseGraphics
 (JNIEnv* aEnv, jclass, jlong aHandle,
  jlong aSurfaceHandle, jboolean /*aIsImageTarget*/, jboolean /*aIsProperRenderer*/, jobject bitmap)
 {
+    __android_log_print(ANDROID_LOG_INFO, "M3G_RD", "jni: before lock");
     M3G_DO_LOCK
+    __android_log_print(ANDROID_LOG_INFO, "M3G_RD", "jni: after lock, before releaseTarget");
 
     releaseTarget((M3GRenderContext)aHandle);
+    __android_log_print(ANDROID_LOG_INFO, "M3G_RD", "jni: after releaseTarget");
 
     // Release used target surface
 
+    __android_log_print(ANDROID_LOG_INFO, "M3G_RD", "jni: before bitmap unlock");
     int ret = AndroidBitmap_unlockPixels(aEnv, bitmap);
     pixels_ptr = NULL;
+    __android_log_print(ANDROID_LOG_INFO, "M3G_RD", "jni: after bitmap unlock");
     if (ret < 0) {
         LOGE("AndroidBitmap_unlockPixels() failed ! error=%d", ret);
         M3G_RAISE_EXCEPTION(aEnv, "java/lang/IllegalStateException");
