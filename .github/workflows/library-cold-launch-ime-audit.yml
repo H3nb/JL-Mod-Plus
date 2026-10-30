@@ -5,6 +5,7 @@ on:
     branches: [alpha]
     paths:
       - '.github/workflows/library-cold-launch-ime-audit.yml'
+      - 'ci-library-ime-audit.sh'
 
 permissions:
   contents: read
