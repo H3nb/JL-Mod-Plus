@@ -154,6 +154,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -1936,6 +1937,7 @@ internal fun LibraryAppsDestination(
     var searchFocused by remember { mutableStateOf(false) }
     val searchDismissFocus = remember { FocusRequester() }
     val searchKeyboard = LocalSoftwareKeyboardController.current
+    val searchFocusManager = LocalFocusManager.current
     val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var searchImeWasVisible by remember { mutableStateOf(false) }
     // On Android the IME consumes the first system Back before the app's BackHandler runs.
@@ -1961,6 +1963,12 @@ internal fun LibraryAppsDestination(
     LaunchedEffect(active) {
         if (!active) {
             sortVisible = false
+            // The pager retains its previous page while IME chrome hides the bottom navigation.
+            // Releasing the leaving editor's focus lets the next destination restore navigation.
+            if (searchFocused) {
+                searchKeyboard?.hide()
+                searchFocusManager.clearFocus(force = true)
+            }
         }
     }
     val currentActive by rememberUpdatedState(active)
