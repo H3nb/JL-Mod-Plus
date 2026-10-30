@@ -2,12 +2,14 @@
 set -euo pipefail
 package=io.github.h3nb.jlmodplus.debug
 activity=io.github.h3nb.jlmodplus.MainActivity
-mapfile -t apks < <(find app/build/outputs/apk/emulator/debug -maxdepth 1 -type f -name '*.apk' | sort)
-if (( ${#apks[@]} != 1 )); then
-  echo "Expected exactly one emulator APK, found ${#apks[@]}." >&2
+emulator_abi="$(adb shell getprop ro.product.cpu.abi | tr -d '\r')"
+apk="app/build/outputs/apk/emulator/debug/app-emulator-${emulator_abi}-debug.apk"
+if [[ ! -f "$apk" ]]; then
+  echo "Expected emulator APK for ${emulator_abi}: ${apk}" >&2
+  find app/build/outputs/apk/emulator/debug -maxdepth 1 -type f -name '*.apk' -print >&2
   exit 1
 fi
-adb install -r "${apks[0]}"
+adb install -r "$apk"
 mkdir -p ci-artifacts/ime
 adb shell mkdir -p '/sdcard/JL-Mod Plus'
 adb shell pm grant "$package" android.permission.WRITE_EXTERNAL_STORAGE 2>/dev/null || true
