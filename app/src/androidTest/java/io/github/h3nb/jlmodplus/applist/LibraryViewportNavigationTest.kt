@@ -604,6 +604,10 @@ class LibraryViewportNavigationTest {
             composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).isDisplayed()
         }
         composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).assertIsDisplayed()
+        swipeToPreviousPage()
+        // The pager retains the Apps page; returning must not revive the editor's focus.
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Library")
     }
 
     @Test
