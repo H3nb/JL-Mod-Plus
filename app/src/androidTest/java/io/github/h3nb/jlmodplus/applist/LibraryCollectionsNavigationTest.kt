@@ -22,6 +22,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -45,6 +46,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.pressBack
@@ -683,6 +685,14 @@ class LibraryCollectionsNavigationTest {
         // InputText contains the query too; assert the unique result row, not matching text.
         composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
         composeRule.onNode(hasSetTextAction()).assertIsFocused()
+        // One Back must dismiss editing without navigating away from Add apps.
+        pressBack()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onNode(hasSetTextAction())
+                .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
+        }
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Picker app 00")
+        composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
     }
 
     @Test
