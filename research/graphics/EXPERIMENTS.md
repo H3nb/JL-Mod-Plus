@@ -171,3 +171,13 @@ future claims about the ES2 baseline.
 - **Classification: invalid test setup / wrong boundary; not a verified Mascot render bug.** Restore the two passing GLES-only checks in fast CI. The next Mascot probe must use an attached `MicroActivity` or a supported runtime fixture and a native-enabled build, then verify offscreen pixel orientation and bind/release semantics.
 - Do not change the production `Utils` initializer solely for this artificial hostless scenario. Separately assess whether its Activity dependency is a real lifecycle weakness in supported runtime paths.
 
+
+
+## Fast R&D revalidation after removal of invalid Mascot fixture
+
+- Run: https://github.com/H3nb/JL-Mod-Plus/actions/runs/41043552238
+- Source: `3c42499cd6671a0ead650a3ab2a758b2f58b9828` (before subsequent docs-only commits).
+- Result **SUCCESS**: real API 35 emulator instrumented executions: FBO probe **1/1 passed** and shipped-legacy-vs-Libretro-style shader ABI **1/1 passed**.
+- No production renderer, profile schema, or legacy shader file changed. This confirms the fast CI was restored after removing the invalid hostless Mascot test.
+- M3G follow-up remains a separate native-enabled CI, not covered by this green result.
+
