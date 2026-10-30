@@ -199,3 +199,10 @@ Do not inject nonstandard sampling behavior into arbitrary GLSL source,
 reinterpret TextureSize, or create another frame queue. Select based
 on actual integrated-frame correctness and measured physical-device cost.
 Legacy profile values and the old shader ABI remain unchanged.
+
+
+## Executed bounded GLSLP proof
+
+[Run 41080969873](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41080969873) established identical 12x8 RGBA output from tightly cropped Android Bitmap versus GPU-normalized logical source for the tested opaque fixture. [Run 41083533898](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41083533898) executed the two distinct gauss_4tap.glslp shader stages at source-relative 2x4 sizes, with a separate host viewport blit. The stronger fixture observes horizontal filtering and output that differs from unfiltered stock.
+
+These proofs are isolated from the production GLSurfaceView lifecycle. The small Properties reader recognizes only the selected unquoted preset keys, not GLSLP generally. No claims are made for imported files, dynamic parameters, #reference, LUT, history, driver-specific formats, alpha, performance or recovery. Choosing between a CPU-cropped input and a GPU normalization pass requires integrated frame-ownership and physical-GPU evidence. Do not introduce redundant FBOs when backing and active content dimensions coincide.

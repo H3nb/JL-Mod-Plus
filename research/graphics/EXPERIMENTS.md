@@ -403,9 +403,7 @@ succeeded with no GL upload error but produced
 `GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT (0x8CD6)` when attached to
 an FBO. **Do not call this GPU incapable of floating-point FBOs**:
 attachment renderability depends on the chosen internalformat, not
-merely texture upload success or an extension name. A follow-up probe
-on actual ES3 path uses sized `RGBA16F`/`RGBA32F` and is pending
-at run https://github.com/H3nb/JL-Mod-Plus/actions/runs/41065280377.
+merely texture upload success or an extension name. The executed follow-up run https://github.com/H3nb/JL-Mod-Plus/actions/runs/41065280377 showed complete sized GLES3 RGBA16F and RGBA32F framebuffer attachments. Float rendering/readback precision and real GPU performance remain unverified.
 
 
 
@@ -472,3 +470,16 @@ establish full-image equivalence, real Android Bitmap/GLUtils orientation
 and alpha behavior, arbitrary GLSLP support, integrated GLRenderer
 lifecycle or hardware performance. Compare a tightly packed source
 upload with an extra GPU normalization FBO before selecting either.
+
+
+## Actual Android Bitmap input and genuine Libretro multipass — 2026-10-30
+
+- **Source-isolation A/B:** [run 41080969873](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41080969873), commit 907a5f96c893b31f6bd1aa606ae9b357641d92ef, passed all six selected API35 x86_64 SwiftShader instrumented tests. Android ARGB_8888 Bitmap source 4x4 with active 2x4 content was uploaded via GLUtils, versus a tightly cropped Bitmap 2x4. Real stock.glsl and bilinear filtering yielded byte-identical RGBA over the **entire 12x8 host game viewport** for FBO-normalized and cropped sources. Outside-game host background remained unchanged. Fixture used opaque colors, one source size and one emulator; neither per-frame upload cost nor semi-alpha behavior was measured.
+- **True two-pass GLSLP:** [run 41082360028](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41082360028), commit fc2c0cfb9d6de7ece4c267338e0e37348cabf392, passed. Pinned Libretro blurs/gauss_4tap.glslp uses two distinct horizontal/vertical shaders. The probe kept both requested source-relative 1x FBO outputs at 2x4 and performed a separate host blit at 12x8. It did not silently reinterpret source relative as viewport relative.
+- **Stronger oracle:** [run 41083533898](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41083533898), commit 78623af4e801380cb948f08cbb15eb97e665b7dd, passed all six instrumented tests. Source columns have different intensities, so the horizontal pass must change its 2x4 output. The test verifies that change and that the final Gaussian output differs from unfiltered stock rendering, closing the earlier uniform-input false-positive gap.
+
+**Interpretation:** genuine Libretro source and a real two-pass preset work in a controlled GLES2-API pbuffer. These are not integrated GLSLP support, a general parser, valid #reference/LUT/temporal/parameter support, or EGL lifecycle evidence. No CPU, GPU, frame-time, thermal or power comparison was made.
+
+**Source-verified cost/ownership trade-off:** GLUtils accepts a full Bitmap without a source rectangle. CPU cropping or row packing may require an extra copy and could add time while the current Canvas.GLRenderer holds bufferLock across source upload. A GPU normalization pass could instead occur after the source upload and lock release, but adds a GPU draw and render target. The least-cost decision remains open; when physical backing equals active content, neither path should be necessary.
+
+**Stop gate:** isolated EGL pass feasibility is sufficiently characterized. The next meaningful trial is an R&D-only real Canvas.GLRenderer lifecycle integration (published-frame updates, logical content sizing, host layers, resizing, GL context loss and fallback). Benchmark source isolation on physical ARM64 before production selection. HD remains a separate target-compatibility problem; see ARCHITECTURE-CANDIDATES.md.
