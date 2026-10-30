@@ -180,6 +180,7 @@ internal fun LibraryCollectionBrowser(
             scaffoldPadding = scaffoldPadding,
             viewportState = pickerViewport,
             loading = !allAppsPrepared,
+            active = interactionActive,
             onBack = { setManageApps(false) },
             onSetMembership = { appId, included ->
                 if (currentInteractionActive && appId !in pendingMemberships) {
@@ -807,6 +808,7 @@ internal fun LibraryCollectionAppPicker(
     scaffoldPadding: PaddingValues,
     viewportState: LibraryViewportState = rememberLibraryViewportState(collectionId = collection.id),
     loading: Boolean = false,
+    active: Boolean = true,
     onBack: () -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
@@ -872,6 +874,7 @@ internal fun LibraryCollectionAppPicker(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             onDismissInput = { searchDismissFocus.requestFocus() },
+            enabled = active,
         )
         // Filtering may continue on Default; keep the search field and IME focus mounted
         // while only the results pane waits for its matching projection.
