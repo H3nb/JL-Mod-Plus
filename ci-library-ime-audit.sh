@@ -43,7 +43,7 @@ sample_case() {
   adb exec-out screencap -p > "ci-artifacts/ime/${name}.png" || true
   echo "=== ${name}: IME observations ==="
   awk -F '\t' 'NR>1 {a[$3]++} END {for (v in a) printf "%s = %d samples\n",v,a[v]}' "$report"
-  if ! grep -q 'mInputShown=' "$report"; then
+  if ! awk -F '\t' 'NR>1 && $3 != "unknown" {seen=1} END {exit !seen}' "$report"; then
     echo "No mInputShown evidence; input method sampler unsupported on this system." >&2
     return 1
   fi
@@ -51,7 +51,7 @@ sample_case() {
     echo "Could not verify the actual Library UI, rather than a permission/startup dialog." >&2
     return 1
   fi
-  if grep -E '\ttrue\t' "$report" >/dev/null; then
+  if awk -F '\t' 'NR>1 && $3 == "true" {seen=1} END {exit !seen}' "$report"; then
     echo "An IME-visible sample was observed in ${name}; inspect raw trace and focused window." >&2
     return 2
   fi
