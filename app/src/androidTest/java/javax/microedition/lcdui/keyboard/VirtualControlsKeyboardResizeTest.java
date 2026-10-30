@@ -917,6 +917,7 @@ public class VirtualControlsKeyboardResizeTest {
         dragGrouped("dpadGeometry", 30f, -30f);
         dragLegacy("F", 24f, 0f);
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        commitCurrentLayoutToDisk();
         float portraitFire = rectField(keyByLabel("F")).centerX();
 
         recreateKeyboardFromDisk(landscape);
@@ -945,6 +946,7 @@ public class VirtualControlsKeyboardResizeTest {
         dragLegacy("F", -18f, 0f);
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
         VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
+        commitCurrentLayoutToDisk();
 
         recreateKeyboardFromDisk(portrait);
         assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
@@ -970,6 +972,7 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
 
         recreateKeyboardFromDisk(landscape);
+        commitCurrentLayoutToDisk();
         assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
 
@@ -1009,11 +1012,13 @@ public class VirtualControlsKeyboardResizeTest {
         dragGrouped("dpadGeometry", 24f, -18f);
         dragLegacy("F", 18f, 0f);
         assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        commitCurrentLayoutToDisk();
         VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
         assertNotNull(saved.portraitOverride());
         assertEquals(null, saved.landscapeOverride());
 
         keyboard.setLayout(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
+        commitCurrentLayoutToDisk();
         recreateKeyboardFromDisk(landscape);
         assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
 
@@ -1047,6 +1052,7 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(dormant.legacySharedFallback().dpadEnabled);
 
         keyboard.setLayout(6);
+        commitCurrentLayoutToDisk();
         recreateKeyboardFromDisk(portrait);
         assertEquals(6, keyboard.getLayout());
         assertNotNull(keyboard.captureLayoutEditState().dormantCustomLayout());
@@ -1070,6 +1076,7 @@ public class VirtualControlsKeyboardResizeTest {
         assertNotNull(migrated.legacySharedFallback());
 
         keyboard.setLayout(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
+        commitCurrentLayoutToDisk();
         recreateKeyboardFromDisk(portrait);
         assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(migrated, keyboard.captureLayoutEditState().dormantCustomLayout());
@@ -1130,6 +1137,7 @@ public class VirtualControlsKeyboardResizeTest {
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
         keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        commitCurrentLayoutToDisk();
 
         dragGrouped("dpadGeometry", 24f, -18f);
         dragLegacy("F", 18f, 0f);
@@ -1163,6 +1171,7 @@ public class VirtualControlsKeyboardResizeTest {
         liveOffset.x = originalX;
         dragLegacy("F", 2f, 0f);
         assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        commitCurrentLayoutToDisk();
         VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
 
         recreateKeyboardFromDisk(portrait);
@@ -1255,6 +1264,7 @@ public class VirtualControlsKeyboardResizeTest {
         assertNotNull(keyboard.captureLayoutEditState().customLayout());
 
         keyboard.setLayout(6);
+        commitCurrentLayoutToDisk();
         recreateKeyboardFromDisk(portrait);
         assertEquals(6, keyboard.getLayout());
         assertEquals(null, keyboard.captureLayoutEditState().dormantCustomLayout());
@@ -1274,6 +1284,7 @@ public class VirtualControlsKeyboardResizeTest {
 
         setButtonHidden("F", true);
         assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        commitCurrentLayoutToDisk();
         VirtualKeyboardLayoutState committed =
                 keyboard.captureLayoutEditState().customLayout();
         assertNotNull(committed.portraitOverride());
@@ -1296,6 +1307,7 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
         setButtonHidden("F", true);
         assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        commitCurrentLayoutToDisk();
 
         VirtualKeyboardLayoutState committed =
                 keyboard.captureLayoutEditState().customLayout();
@@ -1424,6 +1436,7 @@ public class VirtualControlsKeyboardResizeTest {
         dragGrouped("dpadGeometry", -30f, 18f);
         dragLegacy("F", -18f, 0f);
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM); // one final Save
+        commitCurrentLayoutToDisk();
         VirtualKeyboardLayoutState saved =
                 keyboard.captureLayoutEditState().customLayout();
         assertNotNull(saved.portraitOverride());
@@ -1442,6 +1455,7 @@ public class VirtualControlsKeyboardResizeTest {
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
         keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        commitCurrentLayoutToDisk();
         VirtualKeyboardLayoutEditState baseline = keyboard.captureLayoutEditState();
 
         dragGrouped("dpadGeometry", 24f, -18f);
@@ -1472,6 +1486,7 @@ public class VirtualControlsKeyboardResizeTest {
         dragGrouped("dpadGeometry", -24f, 18f);
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
 
+        commitCurrentLayoutToDisk();
         truncateInsideV5LandscapeOverride();
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -1557,6 +1572,7 @@ public class VirtualControlsKeyboardResizeTest {
 
         keyboard.setLayoutForEditing(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        commitCurrentLayoutToDisk();
 
         recreateKeyboardFromDisk(portrait);
         VirtualKeyboardLayoutState portraitState =
@@ -1669,6 +1685,7 @@ public class VirtualControlsKeyboardResizeTest {
             assertNotEquals(RectSnap.NO_SNAP, mode);
         }
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        commitCurrentLayoutToDisk();
 
         recreateKeyboardFromDisk(portrait);
         assertNotNull(keyboard.captureLayoutEditState().customLayout().portraitOverride());
@@ -1731,11 +1748,7 @@ public class VirtualControlsKeyboardResizeTest {
         dragLegacy("F", -18f, 0f);
         assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
         // onLayoutChanged updates in-memory geometry; the host owns committing both artifacts.
-        assertTrue(ProfilesManager.saveConfig(profileDir, settings));
-        try (FileOutputStream out = new FileOutputStream(layoutFile())) {
-            out.write(keyboard.encodeCurrentLayoutForPersistence());
-        }
-        keyboard.onLayoutPersistenceCommitted();
+        commitCurrentLayoutToDisk();
 
         VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
         assertNotNull(saved.portraitOverride());
@@ -1868,6 +1881,16 @@ public class VirtualControlsKeyboardResizeTest {
             centers[i][1] = rect.centerY();
         }
         return centers;
+    }
+
+    /** Model the host's explicit profile + layout commit before a simulated process restart. */
+    private void commitCurrentLayoutToDisk() throws Exception {
+        settings.vkType = keyboard.getLayout();
+        assertTrue(ProfilesManager.saveConfig(profileDir, settings));
+        try (FileOutputStream out = new FileOutputStream(layoutFile())) {
+            out.write(keyboard.encodeCurrentLayoutForPersistence());
+        }
+        keyboard.onLayoutPersistenceCommitted();
     }
 
     private void recreateKeyboardFromDisk(RectF screen) throws Exception {
