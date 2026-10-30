@@ -128,3 +128,16 @@ Static source evidence from `javax/microedition/lcdui/Image.java` and `Graphics.
 
 Do not confuse this observation with evidence that whole-frame supersampling is impossible; it only quantifies the compatibility surface that must be handled coherently. For a less invasive experiment, test a higher-resolution *presentation-only* or *supported-renderer* target separately, while explicitly acknowledging which actual rasterization detail cannot be recovered from the original logical bitmap.
 
+
+
+## Comparative implementation evidence — J2ME-Loader-HD
+
+Reference code: https://github.com/fuyijian/J2ME-Loader-HD
+
+- `Image.java` adds a `pixelScale` independent of logical `bounds`; mutable image bitmaps can be N times larger. It catches `OutOfMemoryError` when allocating a scaled mutable image and falls back to 1x.
+- `Graphics.java` applies `Android Canvas.scale(pixelScale,pixelScale)` before drawing guest operations and explicitly adjusts 1-logical-pixel strokes. `Image.getRGB` and Graphics pixel getters downsample rectangular areas using `Bitmap.createScaledBitmap(...,true)` (bilinear), which needs compatibility scrutiny for exact pixel-readback games.
+- `Graphics3D.bindTarget(Graphics)` uses `finalG.getPixelScale()`, expands clip/viewport coordinates by that factor, and leaves the native bitmap target at physical dimensions. **Its `Image2D` branch explicitly resets `targetScale=1`**; this reference does not establish universal HD for all M3G rendering targets.
+- The fork's documentation also warns that Mascot Capsule HD was not validated.
+
+**Interpretation:** this is credible evidence that higher-resolution LCDUI/M3G rendering is technically implementable with dual logical/physical dimensions. It is *not* evidence that its guest-visible pixel colors, mutable-image crop, compositing ordering, offscreen Image2D, or device performance match the normative J2ME contracts. Treat it as a candidate design with known scope limits, not production code to copy wholesale.
+
