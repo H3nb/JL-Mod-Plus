@@ -71,6 +71,9 @@ public class VirtualControlsKeyboardResizeTest {
 		settings.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
         settings.vkFeedback = false;
         settings.vkAlpha = 255;
+        // The production runtime persists ProfileModel separately from the keyboard layout.
+        // Disk-recreation tests require a real baseline profile, not an absent fixture.
+        assertTrue(ProfilesManager.saveConfig(profileDir, settings));
 
         keyboard = new VirtualControlsKeyboard(settings, profileDir);
         keyboard.setView(new View(context));
@@ -1727,6 +1730,12 @@ public class VirtualControlsKeyboardResizeTest {
         dragGrouped("dpadGeometry", -30f, 18f);
         dragLegacy("F", -18f, 0f);
         assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        // onLayoutChanged updates in-memory geometry; the host owns committing both artifacts.
+        assertTrue(ProfilesManager.saveConfig(profileDir, settings));
+        try (FileOutputStream out = new FileOutputStream(layoutFile())) {
+            out.write(keyboard.encodeCurrentLayoutForPersistence());
+        }
+        keyboard.onLayoutPersistenceCommitted();
 
         VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
         assertNotNull(saved.portraitOverride());
