@@ -23,6 +23,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest#searchRevealsCompleteHeaderAndStartsResultsAtTop'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionPickerSearchReturnsToFirstResultAfterDeepScroll'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSearchReleasesFocusOnPagerExitWithoutLosingQuery'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionPickerSearchReleasesFocusAcrossTabs'
 )
 select="$(IFS=,; printf '%s' "${selectors[*]}")"
 log='ci-artifacts/ime-final/instrumentation.txt'
