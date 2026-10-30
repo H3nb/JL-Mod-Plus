@@ -11,7 +11,11 @@ git rev-parse HEAD > ci-artifacts/graphics-rd-fast/source-commit.txt
 libretro_ref=cba01a48b0974a1232bea68d999a7c21bc4c233e
 asset_dir=app/src/androidTest/assets/graphics-rd
 mkdir -p "$asset_dir"
-for name in stock.glsl bilinear.glslp; do
+for name in stock.glsl bilinear.glslp \
+  blurs/gauss_4tap.glslp \
+  blurs/shaders/gauss_4tap/gauss_2tap_h.glsl \
+  blurs/shaders/gauss_4tap/gauss_2tap_v.glsl; do
+  mkdir -p "$asset_dir/$(dirname "$name")"
   curl --fail --show-error --silent --location --retry 2 \
     "https://raw.githubusercontent.com/libretro/glsl-shaders/$libretro_ref/$name" \
     -o "$asset_dir/$name"

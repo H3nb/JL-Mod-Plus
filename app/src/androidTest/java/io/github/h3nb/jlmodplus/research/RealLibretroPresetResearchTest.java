@@ -66,6 +66,7 @@ public final class RealLibretroPresetResearchTest {
         assertTrue(EGL14.eglMakeCurrent(d, s, s, c));
 
         int program = 0, source = 0, packed = 0, intermediate = 0, fbo = 0;
+        int blurH = 0, blurV = 0, blurOutput = 0, blurFbo = 0;
         Bitmap backing = null, cropped = null;
         try {
             Log.i("GraphicsRD", "REAL_GLSLP " + GLES20.glGetString(GLES20.GL_VERSION)
@@ -157,12 +158,66 @@ public final class RealLibretroPresetResearchTest {
                     normalized, readRegion(2, 2, 12, 8));
             pixel(0, 0, 0, 0, 255);
             Log.i("GraphicsRD", "REAL_GLSLP packed-bitmap vs FBO: 12x8 RGBA exact match");
+
+            // A genuine, separate 2-pass Libretro preset with independent
+            // horizontal and vertical shaders. Both requested GLSLP outputs
+            // remain source-relative 1x (2x4); display scaling is a later
+            // host presentation operation, not a reinterpretation of pass 1.
+            Properties blur = new Properties();
+            try (InputStream stream = InstrumentationRegistry.getInstrumentation()
+                    .getContext().getAssets().open(ASSETS + "blurs/gauss_4tap.glslp")) {
+                blur.load(stream);
+            }
+            assertEquals("2", blur.getProperty("shaders"));
+            assertEquals("source", blur.getProperty("scale_type0"));
+            assertEquals("source", blur.getProperty("scale_type1"));
+            assertEquals("1.0", blur.getProperty("scale0"));
+            assertEquals("1.0", blur.getProperty("scale1"));
+            String first = readAsset(ASSETS + "blurs/" + blur.getProperty("shader0"));
+            String second = readAsset(ASSETS + "blurs/" + blur.getProperty("shader1"));
+            blurH = link("#define VERTEX\n" + first, "#define FRAGMENT\n" + first);
+            blurV = link("#define VERTEX\n" + second, "#define FRAGMENT\n" + second);
+            blurOutput = texture(2, 4, null);
+            int[] blurId = new int[1];
+            GLES20.glGenFramebuffers(1, blurId, 0);
+            blurFbo = blurId[0];
+
+            GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo);
+            draw(blurH, packed, 0, 0, 2, 4, 1.0f, GLES20.GL_LINEAR,
+                    2, 4, 2, 4);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, blurFbo);
+            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
+                    GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, blurOutput, 0);
+            assertEquals(GLES20.GL_FRAMEBUFFER_COMPLETE,
+                    GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER));
+            draw(blurV, intermediate, 0, 0, 2, 4, 1.0f, GLES20.GL_LINEAR,
+                    2, 4, 2, 4);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+            GLES20.glClearColor(0, 0, 1, 1);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+            GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+            GLES20.glScissor(1, 1, 14, 10);
+            draw(program, blurOutput, 2, 2, 12, 8, 1.0f, GLES20.GL_LINEAR,
+                    2, 4, 2, 4);
+            ByteBuffer mixed = readPixel(7, 6);
+            assertTrue("Vertical pass should mix red near source boundary",
+                    (mixed.get(0) & 255) > 0);
+            assertTrue("Vertical pass should mix blue near source boundary",
+                    (mixed.get(2) & 255) > 0);
+            assertEquals(0, mixed.get(1) & 255);
+            pixel(0, 0, 0, 0, 255);
+            Log.i("GraphicsRD", "REAL_GLSLP genuine gauss_4tap two passes and host blit completed");
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
             GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
             if (program != 0) GLES20.glDeleteProgram(program);
+            if (blurH != 0) GLES20.glDeleteProgram(blurH);
+            if (blurV != 0) GLES20.glDeleteProgram(blurV);
             if (fbo != 0) GLES20.glDeleteFramebuffers(1, new int[]{fbo}, 0);
+            if (blurFbo != 0) GLES20.glDeleteFramebuffers(1, new int[]{blurFbo}, 0);
+            if (blurOutput != 0) GLES20.glDeleteTextures(1, new int[]{blurOutput}, 0);
             if (source != 0) GLES20.glDeleteTextures(1, new int[]{source}, 0);
             if (packed != 0) GLES20.glDeleteTextures(1, new int[]{packed}, 0);
             if (intermediate != 0) GLES20.glDeleteTextures(1, new int[]{intermediate}, 0);
