@@ -371,3 +371,39 @@ driver allocation churn, but not CPU→GPU transfer bytes.
 RGBA/alpha data and explicit resize; the test's CI status must be
 checked before reporting correctness, and physical-device benchmarks
 remain necessary for a claimed speed/power improvement.
+
+
+## Successful GLS presentation experiment — 2026-10-30
+
+Run [41063931268](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41063931268),
+source `a5bb362ec8d30ee749dd7aed77e066bf7c15e941`:
+five Android API35 x86_64 instrumentation classes executed and passed:
+`GraphicsPipelineResearchTest`, `ShaderAbiResearchTest`,
+`LegacyEs1ContextResearchTest`,
+`SupersamplingSemanticsResearchTest`, and
+`TextureUpdateResearchTest` (one method each). No claim of performance
+improvement follows from pixel-equivalence execution alone.
+
+**Texture upload:** `GLUtils.texSubImage2D` for unchanged dimensions
+returned byte-identical framebuffer pixels compared with
+`GLUtils.texImage2D` redefining storage across five distinct 4x4
+Bitmap.ARGB_8888 frames with alpha. Both paths agreed after reallocation
+for an 8x8 bitmap. This is one supported test environment, not a complete
+pixel-format or chipset matrix. A production change would require proper
+surface/context-loss/size invalidation, source ownership, and real-device
+benchmarking.
+
+**Float FBO:** SwiftShader exposes
+`GL_OES_texture_half_float`,
+`GL_EXT_color_buffer_half_float`,
+`GL_OES_texture_float`, and
+`GL_EXT_color_buffer_float`. GLES2-style `glTexImage2D` with
+**unsized `GL_RGBA`** plus either `HALF_FLOAT_OES` or `GL_FLOAT`
+succeeded with no GL upload error but produced
+`GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT (0x8CD6)` when attached to
+an FBO. **Do not call this GPU incapable of floating-point FBOs**:
+attachment renderability depends on the chosen internalformat, not
+merely texture upload success or an extension name. A follow-up probe
+on actual ES3 path uses sized `RGBA16F`/`RGBA32F` and is pending
+at run https://github.com/H3nb/JL-Mod-Plus/actions/runs/41065280377.
+
