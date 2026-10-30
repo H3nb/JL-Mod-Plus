@@ -75,6 +75,7 @@ public final class GraphicsPipelineResearchTest {
             draw(program, intermediate, 8, 8);
             pixel(255, 0, 0, 255); // blue -> red at 8x8 presentation target
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
+            probeOptionalFloatFramebufferFormats();
         } finally {
             if (program != 0) GLES20.glDeleteProgram(program);
             if (fbo != 0) GLES20.glDeleteFramebuffers(1, new int[]{fbo}, 0);
@@ -153,4 +154,61 @@ public final class GraphicsPipelineResearchTest {
         assertEquals(b, pixels.get(2) & 0xff);
         assertEquals(a, pixels.get(3) & 0xff);
     }
+
+    /**
+     * Capability probe only. A failure to render GL_RGBA + OES HALF_FLOAT
+     * or GL_FLOAT on this GLES2-style path is NOT a claim about all ES3
+     * sized internal formats or physical devices.
+     */
+    private static void probeOptionalFloatFramebufferFormats() {
+        String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
+        String version = GLES20.glGetString(GLES20.GL_VERSION);
+        Log.i("GraphicsRD", "FP_FBO_PROBE GL_VERSION=" + version);
+        Log.i("GraphicsRD", "FP_FBO_PROBE half_float_ext="
+                + (extensions != null && extensions.contains("GL_OES_texture_half_float"))
+                + " color_half_float_ext="
+                + (extensions != null && extensions.contains("GL_EXT_color_buffer_half_float"))
+                + " float_ext="
+                + (extensions != null && extensions.contains("GL_OES_texture_float"))
+                + " color_float_ext="
+                + (extensions != null && extensions.contains("GL_EXT_color_buffer_float")));
+        probeFormat("half_float_oes_rgba", 0x8D61);
+        probeFormat("float_rgba", GLES20.GL_FLOAT);
+    }
+
+    private static void probeFormat(String label, int type) {
+        int[] tex = new int[1];
+        int[] fbo = new int[1];
+        GLES20.glGenTextures(1, tex, 0);
+        GLES20.glGenFramebuffers(1, fbo, 0);
+        try {
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex[0]);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
+                    GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
+                    GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+                    8, 8, 0, GLES20.GL_RGBA, type, null);
+            int uploadError = GLES20.glGetError();
+            int status = -1;
+            if (uploadError == GLES20.GL_NO_ERROR) {
+                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo[0]);
+                GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
+                        GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, tex[0], 0);
+                status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
+            }
+            Log.i("GraphicsRD", "FP_FBO_PROBE " + label
+                    + " uploadError=0x" + Integer.toHexString(uploadError)
+                    + " framebufferStatus=0x" + Integer.toHexString(status)
+                    + " renderable=" + (status == GLES20.GL_FRAMEBUFFER_COMPLETE));
+        } finally {
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+            GLES20.glDeleteFramebuffers(1, fbo, 0);
+            GLES20.glDeleteTextures(1, tex, 0);
+            // Optional unsupported formats may set GL errors; clear the
+            // exploratory probe's state, not the prior mandatory pixel checks.
+            while (GLES20.glGetError() != GLES20.GL_NO_ERROR) { }
+        }
+    }
+
 }

@@ -116,6 +116,26 @@ implementation may still be researched against public JSR-184 standards.
 native renderer nor ship a second full 3D backend unless measured
 compatibility/performance benefits outweigh duplication and resource costs.
 
+### Presentation upload reuse: smaller optimization before backend redesign
+
+**Source observation:** `Canvas.GLRenderer.onDrawFrame` currently calls
+`GLUtils.texImage2D(..., bitmap, ...)` each time the published frame sequence
+changes, even when bitmap dimensions match the previous upload. The call
+*redefines texture storage*. Android `GLUtils.texSubImage2D` can instead
+update an already allocated texture with same-sized bitmap content.
+
+**Candidate:** allocate/redefine only on first frame, context recreation,
+bitmap size/format changes; use subimage on same-size frame changes. Preserve
+published-frame mailbox ownership and failure recovery. The current
+`bufferLock` covers GPU upload; measure whether GL work blocks the guest
+producer under load before changing lock/queue ownership.
+
+**Required evidence:** byte-identical RGBA output across several source frames
+and dimensions; test transparent pixels and format/premultiplication
+behavior; benchmark CPU, GPU and thermals on real Android hardware. Emulator
+correctness is not an FPS or energy-speedup claim. This optimization is
+orthogonal to GLSLP and true HD.
+
 ### C4 — Preserve guest renderers; modernize the final presentation only
 
 **Potential benefit:** straightforward multipass GLSLP, per-pass scaling,
