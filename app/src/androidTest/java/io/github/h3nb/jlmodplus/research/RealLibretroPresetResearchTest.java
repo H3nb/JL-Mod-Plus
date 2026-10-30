@@ -78,12 +78,14 @@ public final class RealLibretroPresetResearchTest {
             ByteBuffer data = ByteBuffer.allocateDirect(4 * 4 * 4);
             for (int i = 0; i < 16; i++) {
                 boolean guest = (i % 4) < 2;
-                data.put((byte)(guest ? 255 : 0)).put((byte)(guest ? 0 : 255))
-                        .put((byte)0).put((byte)255);
+                boolean upper = (i / 4) < 2;
+                data.put((byte)(guest && upper ? 255 : 0))
+                        .put((byte)(guest ? 0 : 255))
+                        .put((byte)(guest && !upper ? 255 : 0)).put((byte)255);
             }
             data.rewind();
             source = texture(4, 4, data);
-            intermediate = texture(2, 2, null);
+            intermediate = texture(2, 4, null);
             int[] ids = new int[1];
             GLES20.glGenFramebuffers(1, ids, 0);
             fbo = ids[0];
@@ -98,13 +100,14 @@ public final class RealLibretroPresetResearchTest {
             draw(program, source, 2, 2, 12, 8, 0.5f, GLES20.GL_LINEAR,
                     2, 4, 4, 4);
             pixel(0, 0, 0, 0, 255);
-            pixel(4, 5, 255, 0, 0);
-            ByteBuffer edge = readPixel(13, 5);
+            pixel(4, 3, 255, 0, 0);
+            pixel(4, 9, 0, 0, 255);
+            ByteBuffer edge = readPixel(13, 3);
             int leakedGreen = edge.get(1) & 255;
             Log.i("GraphicsRD", "REAL_GLSLP edgeGreen=" + leakedGreen);
             assertTrue("Bilinear border samples inactive backing pixels", leakedGreen > 0);
 
-            // Independent 2-pass path: source-relative target (2x2), then
+            // Independent 2-pass path: source-relative target (2x4), then
             // game viewport (12x8). Host scissor must not clip an offscreen FBO.
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo);
             GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
@@ -114,10 +117,10 @@ public final class RealLibretroPresetResearchTest {
             GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
             GLES20.glClearColor(1, 0, 1, 1);
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-            draw(program, source, 0, 0, 2, 2, 0.5f, GLES20.GL_NEAREST,
+            draw(program, source, 0, 0, 2, 4, 0.5f, GLES20.GL_NEAREST,
                     2, 4, 4, 4);
             pixel(0, 0, 255, 0, 0);
-            pixel(1, 1, 255, 0, 0);
+            pixel(1, 3, 0, 0, 255);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
             GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
             GLES20.glClearColor(0, 0, 1, 1);
@@ -125,9 +128,11 @@ public final class RealLibretroPresetResearchTest {
             GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
             GLES20.glScissor(1, 1, 14, 10);
             draw(program, intermediate, 2, 2, 12, 8, 1.0f, GLES20.GL_LINEAR,
-                    2, 2, 2, 2);
-            pixel(4, 5, 255, 0, 0);
-            pixel(13, 5, 255, 0, 0);
+                    2, 4, 2, 4);
+            pixel(4, 3, 255, 0, 0);
+            pixel(13, 3, 255, 0, 0);
+            pixel(4, 9, 0, 0, 255);
+            pixel(13, 9, 0, 0, 255);
             pixel(0, 0, 0, 0, 255);
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
