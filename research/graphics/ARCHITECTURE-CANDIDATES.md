@@ -92,6 +92,30 @@ Additional layers and copies could erase performance gains.
 Do not build a generic scene-command queue or texture-sharing framework
 without evidence that it reduces actual total complexity.
 
+### C5 — Replace or supplement GPU M3G with a software rasterizer
+
+**Reference:** [TASEmulators/freej2me-plus](https://github.com/TASEmulators/freej2me-plus)
+uses a software JSR-184 rendering implementation: `Graphics3D.java`
+owns pixel/depth buffers and `Graphics3DPipelines.java` defines
+composition/texture sampling operations. Its docs explicitly offer a
+half-resolution 3D speed option because software M3G can be CPU-heavy.
+
+**Potential benefit:** no GLES1 driver dependency for M3G; a single
+guest-visible pixel target can be easier to reason about; independent of
+EGL context lifecycle. It offers a second backend with useful diagnostic
+value when GLES1/native GL breaks on particular devices.
+
+**Cost/risk:** substantial 3D scene and rasterization code, CPU memory
+bandwidth and power demand; HD 2x/4x multiplies per-pixel CPU work. The
+reference's M3G implementation is **GPLv3**, whereas JL-Mod Plus is
+**Apache-2.0**: copying it into this project is not an acceptable shortcut
+without an explicit licensing decision or separate permission. An original
+implementation may still be researched against public JSR-184 standards.
+
+**Decision:** research as a genuine alternative, but neither replace the
+native renderer nor ship a second full 3D backend unless measured
+compatibility/performance benefits outweigh duplication and resource costs.
+
 ### C4 — Preserve guest renderers; modernize the final presentation only
 
 **Potential benefit:** straightforward multipass GLSLP, per-pass scaling,
