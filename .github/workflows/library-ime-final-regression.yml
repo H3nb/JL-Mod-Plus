@@ -6,6 +6,10 @@ on:
     paths:
       - '.github/workflows/library-ime-final-regression.yml'
       - 'scripts/library-ime-final-regression.sh'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionsNavigationTest.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionBrowser.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryComposeBridge.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibrarySearchField.kt'
 
 permissions:
   contents: read
@@ -49,7 +53,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
-      - name: Run five focused UI contracts
+      - name: Run six focused UI contracts
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api }}
