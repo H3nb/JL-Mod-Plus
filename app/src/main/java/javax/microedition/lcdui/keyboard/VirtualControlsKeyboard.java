@@ -885,7 +885,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			if (legacyEditPointer >= 0 && pointer != legacyEditPointer) {
 				// A non-pinch contact must not replace the active legacy drag owner.
 				// Consume it until release rather than forwarding it to the single-pointer editor.
-				if (beginLegacyPinch(pointer, x, y)) return true;
+				beginLegacyPinch(pointer, x, y);
 				return true;
 			}
 			if (beginGroupedPinch(pointer, x, y)) return true;

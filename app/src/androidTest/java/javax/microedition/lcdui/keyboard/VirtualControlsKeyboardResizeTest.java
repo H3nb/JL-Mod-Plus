@@ -336,6 +336,42 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void resizingOneKeyDoesNotNarrowAnotherKeysMagneticSnapReach() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(false);
+        RectF zero = rectField(keyByLabel("0"));
+        float x = zero.centerX(), y = zero.centerY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 200f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 5f, y));
+        assertTrue(keyboard.pointerReleased(1, x + 5f, y));
+        keyboard.pointerReleased(0, x, y);
+        assertTrue(rectField(keyByLabel("0")).width() < zero.width() * 0.5f);
+
+        // Force an ordinary layout recomputation, where the old global-minimum snap
+        // radius would become too small for an otherwise normal-sized key.
+        RectF screen = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(screen, screen.left, screen.top, screen.right, screen.bottom);
+        Object target = keyByLabel("F"), anchor = keyByLabel("L");
+        Field rect = findField(target.getClass(), "rect");
+        rect.setAccessible(true);
+        ((RectF) rect.get(target)).set(320f, 260f, 400f, 340f);
+        rect = findField(anchor.getClass(), "rect");
+        rect.setAccessible(true);
+        ((RectF) rect.get(anchor)).set(407f, 267f, 487f, 347f);
+
+        int targetIndex = -1, anchorIndex = -1;
+        for (int i = 0; i < keypad.length; i++) {
+            if (keypad[i] == target) targetIndex = i;
+            if (keypad[i] == anchor) anchorIndex = i;
+        }
+        assertTrue(targetIndex >= 0 && anchorIndex >= 0);
+        Method findSnap = VirtualKeyboard.class.getDeclaredMethod("findSnap", int.class, int.class);
+        findSnap.setAccessible(true);
+        // Seven-pixel near alignment should still snap the normal-sized key.
+        assertTrue((boolean) findSnap.invoke(keyboard, targetIndex, anchorIndex));
+    }
+
+    @Test
     public void movingAfterPinchStillUsesEnabledGridSnap() throws Exception {
         keyboard.setEditorGroupResizeEnabled(false);
         keyboard.setEditorSnapControlsEnabled(false);

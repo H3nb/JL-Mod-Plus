@@ -2157,10 +2157,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					// Android may send a MOVE with unchanged coordinates after pinch handoff.
 					// Skip all snapping until this contact actually moves.
 					if (Math.abs(x - lastEditX) <= 0.5f &&
-							Math.abs(y - lastEditY) <= 0.5f) {
-						consumed = true;
-						break;
-					}
+							Math.abs(y - lastEditY) <= 0.5f) break;
 					lastEditX = x;
 					lastEditY = y;
 					movedInEditGesture = true;
