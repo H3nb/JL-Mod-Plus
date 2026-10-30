@@ -11,9 +11,13 @@ if [[ ! -f "$apk" ]]; then
 fi
 adb install -r "$apk"
 mkdir -p ci-artifacts/ime
-adb shell "mkdir -p '/sdcard/JL-Mod Plus Debug'"
-adb shell pm grant "$package" android.permission.WRITE_EXTERNAL_STORAGE 2>/dev/null || true
-adb shell appops set "$package" MANAGE_EXTERNAL_STORAGE allow 2>/dev/null || true
+# Prepare the established-workdir startup contract without conflating it with storage permission flows.
+# The debug-only private directory is accessible regardless of scoped-storage policy.
+adb shell "run-as $package mkdir -p files/library-ime-probe shared_prefs"
+printf '%s\n' "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" \
+  "<map><string name=\"emulator_dir\">/data/user/0/$package/files/library-ime-probe</string></map>" \
+  | adb shell "run-as $package sh -c 'cat > shared_prefs/${package}_preferences.xml'"
+adb shell "run-as $package cat shared_prefs/${package}_preferences.xml"
 adb shell settings put system screen_off_timeout 600000
 adb shell input keyevent KEYCODE_HOME
 sample_case() {
