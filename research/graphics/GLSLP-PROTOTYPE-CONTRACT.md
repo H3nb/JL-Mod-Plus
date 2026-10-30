@@ -175,3 +175,27 @@ CPU/GPU impact analysis before enabled support.
 
 Do not merge this research branch as a production feature; derive focused
 implementation PRs after evidence gates pass.
+
+
+## Guest content extent versus texture allocation — empirical gate
+
+Canvas.offscreenCopy can have a backing bitmap larger than its active
+logical content rectangle; the legacy GL quad crops with tw/th UVs.
+A pinned genuine Libretro bilinear.glslp / stock.glsl Android probe
+(run 41074602946) verified that linear filtering over a cropped
+4x4 texture can sample inactive backing pixels (green=106/255 in the
+red/green edge fixture). GL_CLAMP_TO_EDGE clamps to the entire allocated
+texture, not an interior content rectangle.
+
+For GLSLP, compare two genuinely viable input boundaries:
+1. A source texture allocated/uploaded at exactly the logical content
+   dimensions, via bounded CPU row copy or supported partial upload.
+2. A GPU content-normalization FBO updated only on new guest-frame
+   publication, feeding a tightly bounded input texture to GLSLP.
+
+The second path avoided crop contamination in the small experiment but
+adds a GPU pass and temporary texture; it is NOT a preselected solution.
+Do not inject nonstandard sampling behavior into arbitrary GLSL source,
+reinterpret TextureSize, or create another frame queue. Select based
+on actual integrated-frame correctness and measured physical-device cost.
+Legacy profile values and the old shader ABI remain unchanged.

@@ -407,3 +407,42 @@ merely texture upload success or an extension name. A follow-up probe
 on actual ES3 path uses sized `RGBA16F`/`RGBA32F` and is pending
 at run https://github.com/H3nb/JL-Mod-Plus/actions/runs/41065280377.
 
+
+
+## Executed genuine Libretro GLSLP input and presentation-crop boundary — 2026-10-30
+
+- **Run:** https://github.com/H3nb/JL-Mod-Plus/actions/runs/41074602946
+  on commit 2652e6d80d8a6f1093e6ede994d1cc9d421c49c9.
+  All six selected instrumented tests **passed** on Android API 35 x86_64
+  SwiftShader GLES3 (using GLES2 API calls). The new probe uses genuine
+  upstream libretro/glsl-shaders stock.glsl and bilinear.glslp pinned to
+  cba01a48b0974a1232bea68d999a7c21bc4c233e, downloaded only for
+  the disposable Android test APK. This does not prove arbitrary presets
+  or integration into the production Canvas.GLRenderer.
+- **Source crop:** a 4x4 backing texture with only a valid left 2x4 red
+  subrectangle and inactive green right 2x4 area was sampled using
+  cropped UVs (u=0..0.5). The real bilinear preset's linear filter gave
+  **green=106/255** at the host game viewport's right edge; the interior
+  remained pure red and pixels outside the game viewport remained blue.
+  UV cropping does not constrain texture filter footprints to a
+  subrectangle. This fixture is synthetic; no real-game artifact was shown.
+- **Offscreen route:** first drawing the logical source into a 2x2 GLES2
+  FBO with nearest sampling, then stretching to the 12x8 game viewport
+  with linear filtering, kept the probed right-edge pixels red. Host
+  scissor did not clip the offscreen pass after deliberate state changes.
+  This proves the small composition, **not** that an extra normalization
+  pass is optimal, supports arbitrary shaders, or is fast on real GPUs.
+- **Floating FBO correction:** in the same executed artifact logs, unsized
+  GL_RGBA + OES half-float or float generated incomplete FBOs (0x8CD6);
+  GLES3 sized RGBA16F and RGBA32F produced complete FBOs (0x8CD5).
+  These cases verify upload/FBO completeness only, NOT fragment draws,
+  readback precision, speed, or strictly ES2-only device compatibility.
+
+**Next discriminating research:** compare a tightly packed logical-content
+texture upload versus a GPU normalization FBO for backing>content,
+using the real renderer publication cadence and representative resizes.
+Avoid treating a shader-coordinate clamp as generic compatibility: external
+shaders may sample outside interpolated input UVs. Prefer a source that
+physically excludes inactive pixels, if this is affordable. Profile CPU
+copy/upload, GPU pass time, memory, and temperature on physical ARM64.
+The production-like GLRenderer lifecycle/ambient/controls gate remains open.
