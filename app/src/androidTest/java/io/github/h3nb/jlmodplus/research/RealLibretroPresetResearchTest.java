@@ -18,6 +18,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
@@ -83,7 +84,12 @@ public final class RealLibretroPresetResearchTest {
             for (int i = 0; i < colors.length; i++) {
                 boolean guest = (i % 4) < 2;
                 boolean upper = (i / 4) < 2;
-                colors[i] = guest ? (upper ? 0xffff0000 : 0xff0000ff) : 0xff00ff00;
+                // Two logical columns intentionally differ in intensity:
+                // horizontal blur must visibly change its own FBO output.
+                int intensity = (i % 4) == 0 ? 255 : 128;
+                colors[i] = guest ? (upper
+                        ? 0xff000000 | (intensity << 16)
+                        : 0xff000000 | intensity) : 0xff00ff00;
             }
             backing = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
             backing.setPixels(colors, 0, 4, 0, 0, 4, 4);
@@ -109,8 +115,8 @@ public final class RealLibretroPresetResearchTest {
             draw(program, source, 2, 2, 12, 8, 0.5f, GLES20.GL_LINEAR,
                     2, 4, 4, 4);
             pixel(0, 0, 0, 0, 255);
-            pixel(4, 3, 255, 0, 0);
-            pixel(4, 9, 0, 0, 255);
+            assertRedOrBlue(4, 3, true);
+            assertRedOrBlue(4, 9, false);
             ByteBuffer edge = readPixel(13, 3);
             int leakedGreen = edge.get(1) & 255;
             Log.i("GraphicsRD", "REAL_GLSLP edgeGreen=" + leakedGreen);
@@ -129,7 +135,7 @@ public final class RealLibretroPresetResearchTest {
             draw(program, source, 0, 0, 2, 4, 0.5f, GLES20.GL_NEAREST,
                     2, 4, 4, 4);
             pixel(0, 0, 255, 0, 0);
-            pixel(1, 3, 0, 0, 255);
+            pixel(1, 3, 0, 0, 128);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
             GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
             GLES20.glClearColor(0, 0, 1, 1);
@@ -138,10 +144,10 @@ public final class RealLibretroPresetResearchTest {
             GLES20.glScissor(1, 1, 14, 10);
             draw(program, intermediate, 2, 2, 12, 8, 1.0f, GLES20.GL_LINEAR,
                     2, 4, 2, 4);
-            pixel(4, 3, 255, 0, 0);
-            pixel(13, 3, 255, 0, 0);
-            pixel(4, 9, 0, 0, 255);
-            pixel(13, 9, 0, 0, 255);
+            assertRedOrBlue(4, 3, true);
+            assertRedOrBlue(13, 3, true);
+            assertRedOrBlue(4, 9, false);
+            assertRedOrBlue(13, 9, false);
             pixel(0, 0, 0, 0, 255);
             // Whole-image oracle, using identical real stock.glsl and bilinear
             // filtering, not a few hand-picked pixels. The FBO route and a
@@ -186,6 +192,10 @@ public final class RealLibretroPresetResearchTest {
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo);
             draw(blurH, packed, 0, 0, 2, 4, 1.0f, GLES20.GL_LINEAR,
                     2, 4, 2, 4);
+            ByteBuffer horizontal = readPixel(0, 0);
+            int afterH = horizontal.get(0) & 255;
+            assertTrue("Horizontal blur must mix unequal red columns",
+                    afterH > 128 && afterH < 255);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, blurFbo);
             GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
                     GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, blurOutput, 0);
@@ -200,6 +210,8 @@ public final class RealLibretroPresetResearchTest {
             GLES20.glScissor(1, 1, 14, 10);
             draw(program, blurOutput, 2, 2, 12, 8, 1.0f, GLES20.GL_LINEAR,
                     2, 4, 2, 4);
+            assertFalse("Real Gaussian passes must differ from unfiltered stock",
+                    Arrays.equals(normalized, readRegion(2, 2, 12, 8)));
             ByteBuffer mixed = readPixel(7, 6);
             assertTrue("Vertical pass should mix red near source boundary",
                     (mixed.get(0) & 255) > 0);
@@ -317,6 +329,19 @@ public final class RealLibretroPresetResearchTest {
         GLES20.glDisableVertexAttribArray(pos);
         GLES20.glDisableVertexAttribArray(uv);
         GLES20.glFinish(); // Research readback only; do not add to production.
+    }
+
+    private static void assertRedOrBlue(int x, int y, boolean red) {
+        ByteBuffer p = readPixel(x, y);
+        assertEquals("no green at " + x + "," + y, 0, p.get(1) & 255);
+        assertEquals(255, p.get(3) & 255);
+        if (red) {
+            assertTrue("red at " + x + "," + y, (p.get(0) & 255) > 0);
+            assertEquals(0, p.get(2) & 255);
+        } else {
+            assertEquals(0, p.get(0) & 255);
+            assertTrue("blue at " + x + "," + y, (p.get(2) & 255) > 0);
+        }
     }
 
     private static byte[] readRegion(int x, int y, int w, int h) {
