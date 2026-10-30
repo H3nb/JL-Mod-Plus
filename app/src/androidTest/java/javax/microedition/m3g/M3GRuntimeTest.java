@@ -51,9 +51,13 @@ public class M3GRuntimeTest {
 
 	@Before
 	public void setUp() {
+		runtimeStep("R&D setup: before native libraries");
 		loadTargetNativeLibraries();
+		runtimeStep("R&D setup: after native libraries");
 		g3d = Graphics3D.getInstance();
+		runtimeStep("R&D setup: M3G instance acquired");
 		cleanupContext();
+		runtimeStep("R&D setup: cleanup completed");
 	}
 
 	@After
@@ -171,6 +175,7 @@ public class M3GRuntimeTest {
 
 	@Test
 	public void immediateRenderingExecutesOn64BitNativeBackend() {
+		runtimeStep("R&D immediate: before triangle setup");
 		TriangleFixture triangle = createTriangleFixture();
 		Camera camera = new Camera();
 		camera.setPerspective(60.0f, 1.0f, 1.0f, 20.0f);
@@ -199,7 +204,9 @@ public class M3GRuntimeTest {
 
 	@Test
 	public void image2DTargetClearRoundTripsThroughBackgroundRendering() {
+		runtimeStep("R&D image2d: before Image2D allocation");
 		Image2D target = new Image2D(Image2D.RGB, SIZE, SIZE);
+		runtimeStep("R&D image2d: after Image2D allocation");
 		Background clearBackground = createBackground(BACKGROUND_ARGB);
 
 		runtimeStep("image2d probe: bind RGB target");

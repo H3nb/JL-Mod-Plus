@@ -1,0 +1,70 @@
+name: Graphics R&D Native Isolation
+
+on:
+  push:
+    branches: [research/graphics-architecture]
+    paths:
+      - '.github/workflows/graphics-rd-native-isolated.yml'
+      - 'scripts/graphics-rd-native-isolated.sh'
+      - 'app/src/androidTest/java/javax/microedition/m3g/M3GRuntimeTest.java'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: graphics-rd-native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolate-native-target:
+    name: Native ${{ matrix.case }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 19
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case: image2d
+            selector: javax.microedition.m3g.M3GRuntimeTest#image2DTargetClearRoundTripsThroughBackgroundRendering
+          - case: immediate
+            selector: javax.microedition.m3g.M3GRuntimeTest#immediateRenderingExecutesOn64BitNativeBackend
+    env:
+      M3G_SELECTOR: ${{ matrix.selector }}
+      M3G_CASE: ${{ matrix.case }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+      - name: Install native toolchain
+        run: sdkmanager 'ndk;30.0.16248370' >/dev/null
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run one native case per emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/graphics-rd-native-isolated.sh
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: graphics-native-${{ matrix.case }}
+          path: ci-artifacts/graphics-native-isolated/
+          if-no-files-found: warn
+          retention-days: 7
