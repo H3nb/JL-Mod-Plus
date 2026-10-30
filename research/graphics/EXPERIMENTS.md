@@ -141,3 +141,22 @@ Reference code: https://github.com/fuyijian/J2ME-Loader-HD
 
 **Interpretation:** this is credible evidence that higher-resolution LCDUI/M3G rendering is technically implementable with dual logical/physical dimensions. It is *not* evidence that its guest-visible pixel colors, mutable-image crop, compositing ordering, offscreen Image2D, or device performance match the normative J2ME contracts. Treat it as a candidate design with known scope limits, not production code to copy wholesale.
 
+
+
+## Capability evidence qualification: requested ES2 vs actual GL version
+
+From the *executed* first R&D logcat (run 41034949573), the test requested an
+`EGL_CONTEXT_CLIENT_VERSION=2` context and used GLES20 APIs, but the emulator
+actually reported:
+
+- `GL_VENDOR: Google (Google Inc.)`
+- `GL_RENDERER: Android Emulator OpenGL ES Translator (Google SwiftShader)`
+- `GL_VERSION: OpenGL ES 3.0 (OpenGL ES 3.0 SwiftShader 4.0.0.1)`
+- `GL_MAX_TEXTURE_SIZE: 8192`
+
+Therefore, the tests prove a **GLES2-API-compatible rendering path on this
+emulator's ES3/SwiftShader implementation**. They do *not* prove that a strictly
+ES2-only GPU driver supports the same shader/performance behavior, nor do they
+establish real mobile GPU power efficiency. This distinction must accompany
+future claims about the ES2 baseline.
+
