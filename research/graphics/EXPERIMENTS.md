@@ -101,3 +101,15 @@ If an approach provably violates guest-visible semantics or offers no material m
 - Next CI revision `dcdd078d63ebe6b9b34fe672a16838e8b480a357` executes each M3G method in its own instrumentation invocation, applies a **75-second per-method timeout**, captures logcat and requests Java thread stacks on a hang, then force-stops the research app.
 - Distinguish a stopped test from a functional rendering regression. Do not change native production code until the method and blocked thread/native call are identified.
 
+
+
+## Executed evidence — 2026-10-30, GLES-only fast run
+
+- Run: https://github.com/H3nb/JL-Mod-Plus/actions/runs/41041327515
+- Source: `d26c3f0b42d2952d88bd5f40a577a7420619d5ac`.
+- Result **SUCCESS**. Android API 35 x86_64 emulator, `jlmodNativeBuild=false`.
+- GLES2 `GraphicsPipelineResearchTest` executed one two-pass FBO/RGBA readback test: **1 passed**.
+- `ShaderAbiResearchTest` loaded the shipped legacy shader `shaders/simple.vsh`/`simple.fsh` and an independently authored Libretro-style conditional GLSL source. It checked the distinct old and Libretro attribute/sampler names and the output colors in all four quadrants: **1 passed**.
+- The original legacy source/persisted user format was unchanged. This proves the two *small identity shaders* can work on an ES2 context, not that arbitrary external GLSL, GLSLP multipass, `#reference`, GPU FP render targets, temporal feedback, or production Android UI work.
+- Next fast run `76cdfe56730f1ea6da990c71609d6c7dd776d24c` also includes a Mascot Capsule offscreen LCDUI `Image` bind/flush/release readback probe. It does **not** submit 3D geometry and must not be generalized to full Mascot compatibility.
+
