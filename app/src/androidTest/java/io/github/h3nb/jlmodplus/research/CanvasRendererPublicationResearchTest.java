@@ -301,17 +301,26 @@ public final class CanvasRendererPublicationResearchTest {
             ByteBuffer edgeDecisions = ByteBuffer.allocateDirect(8 * 8 * 4);
             GLES20.glReadPixels(0, 0, 8, 8, GLES20.GL_RGBA,
                     GLES20.GL_UNSIGNED_BYTE, edgeDecisions);
-            int decisions = 0;
+            int decisions = 0, cornerFlags = 0;
+            StringBuilder encoded = new StringBuilder();
             for (int p = 0; p < 8 * 8 * 4; p++) {
-                if ((edgeDecisions.get(p) & 255) != 0) decisions++;
+                int value = edgeDecisions.get(p) & 255;
+                if (value != 0) {
+                    decisions++;
+                    encoded.append(p).append(':').append(value).append(' ');
+                }
+                if ((value & 3) != 0) cornerFlags++;
             }
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
             Log.i(TAG, "xBRZ diagnostic: red=" + red + " blue=" + blue
-                    + " mixed=" + mixed + " nonzeroEdgeBytes=" + decisions);
+                    + " mixed=" + mixed + " nonzeroEdgeBytes=" + decisions
+                    + " cornerFlags=" + cornerFlags + " encoded=" + encoded);
             assertEquals("xBRZ probe must remain free from GL errors",
                     GLES20.GL_NO_ERROR, GLES20.glGetError());
             assertTrue("xBRZ edge-analysis FBO must encode nonzero decisions",
                     decisions > 0);
+            assertTrue("xBRZ source must encode actual corner blend flags",
+                    cornerFlags > 0);
             assertTrue("Unmodified red source must reach the xBRZ final pass", red > 100);
             assertTrue("Unmodified blue source must reach the xBRZ final pass", blue > 100);
             assertTrue("xBRZ must generate antialiased red/blue corner pixels", mixed > 0);
