@@ -2,7 +2,10 @@
  * You may obtain a copy at http://www.apache.org/licenses/LICENSE-2.0. */
 package io.github.h3nb.jlmodplus.memory
 
+import android.view.ViewTreeObserver
 import android.view.WindowManager
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -306,7 +309,7 @@ private data class MemoryEditorWindowBaseline(
     val dimAmount: Float,
 )
 
-/** Remove native dimming during Peek without making the input window invisible to Android. */
+/** Keep dialog-window presentation consistent with the editor host, including during Peek. */
 @Composable
 private fun MemoryEditorWindowDimming(
     peeking: Boolean,
@@ -323,9 +326,28 @@ private fun MemoryEditorWindowDimming(
     }
 
     DisposableEffect(view, window, baseline) {
-        onDispose {
-            if (window != null && baseline != null) {
-                applyMemoryEditorWindowState(window, baseline, peeking = false)
+        if (window == null) {
+            onDispose {}
+        } else {
+            // Compose Dialog has its own focused Android window. The host Activity's
+            // navigation-bar policy does not propagate when that window gains focus.
+            val decor = window.decorView
+            val observer = decor.viewTreeObserver
+            val hideNavigation = {
+                WindowInsetsControllerCompat(window, decor).apply {
+                    systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    hide(WindowInsetsCompat.Type.navigationBars())
+                }
+            }
+            val listener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+                if (hasFocus) hideNavigation()
+            }
+            observer.addOnWindowFocusChangeListener(listener)
+            hideNavigation()
+            onDispose {
+                if (observer.isAlive) observer.removeOnWindowFocusChangeListener(listener)
+                if (baseline != null) applyMemoryEditorWindowState(window, baseline, peeking = false)
             }
         }
     }
