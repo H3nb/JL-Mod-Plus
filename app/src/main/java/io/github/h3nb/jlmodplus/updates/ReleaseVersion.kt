@@ -60,6 +60,7 @@ internal data class UpdateCandidate(
     val versionName: String,
     val versionCode: Int,
     val releaseUrl: String,
+    val downloadUrl: String? = null,
 )
 
 internal fun eligibleUpdate(

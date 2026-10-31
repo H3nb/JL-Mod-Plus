@@ -24,6 +24,7 @@ import android.graphics.Rect
 import android.util.LruCache
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -188,6 +189,7 @@ import androidx.core.graphics.get
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -198,9 +200,13 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import io.github.h3nb.jlmodplus.BuildConfig
+import io.github.h3nb.jlmodplus.MainActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryPlayStatsFormatter
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
+import io.github.h3nb.jlmodplus.updates.UpdateCandidate
 import io.github.h3nb.jlmodplus.updates.UpdateRepository
 import io.github.h3nb.jlmodplus.updates.UpdateStatus
 import io.github.h3nb.jlmodplus.updates.UpdatesScreen
@@ -401,6 +407,7 @@ interface LibraryActions {
     fun onOpenDonation() = Unit
     fun onOpenProjectRepository() = Unit
     fun onOpenUpdateRelease(url: String) = Unit
+    fun onOpenUpdateDownload(url: String) = Unit
     fun onRetryLibrary()
 }
 
@@ -453,7 +460,6 @@ class LibraryComposeController(
                         controllerBackAvailable = available
                     },
                     noticeHost = { TransientNoticeHost(state = noticeState) },
-                    onUpdateNotice = noticeState::show,
                 )
             }
         }
@@ -620,7 +626,6 @@ fun LibraryScreen(
     onControllerBackAvailabilityChanged: (Boolean) -> Unit = {},
     initialSelectionState: LibrarySelectionState = LibrarySelectionState(),
     noticeHost: @Composable () -> Unit = {},
-    onUpdateNotice: (String) -> Unit = {},
 ) {
     var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
         mutableStateOf(LibraryNavigationState())
@@ -636,8 +641,24 @@ fun LibraryScreen(
     val updateRepository = if (isInspection) null else remember(context) {
         UpdateRepository.get(context)
     }
-    LaunchedEffect(updateRepository) {
-        if (!BuildConfig.DEBUG) updateRepository?.check(manual = false)
+    val hostActivity = LocalActivity.current as? MainActivity
+    val hostLifecycle = hostActivity?.lifecycle
+    val hostResumed by produceState(initialValue = false, hostLifecycle) {
+        if (hostLifecycle == null) return@produceState
+        value = hostLifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        val observer = LifecycleEventObserver { _, _ ->
+            value = hostLifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        }
+        hostLifecycle.addObserver(observer)
+        awaitDispose { hostLifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(hostResumed, updateRepository?.automaticChecks) {
+        val repository = updateRepository ?: return@LaunchedEffect
+        if (BuildConfig.DEBUG || !hostResumed || !repository.automaticChecks) return@LaunchedEffect
+        while (true) {
+            repository.check(manual = false)
+            delay(repository.nextAutomaticDelayMillis())
+        }
     }
     val selectDestination: (LibraryDestination) -> Unit = { section ->
         coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
@@ -665,6 +686,8 @@ fun LibraryScreen(
     var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
     var installSourceMenuVisible by remember { mutableStateOf(false) }
     var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
+    var updatePrompt by remember { mutableStateOf<UpdateCandidate?>(null) }
+    var sessionDismissedUpdate by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
@@ -728,11 +751,13 @@ fun LibraryScreen(
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
     val currentControllerAboutPageVisible by rememberUpdatedState(aboutPageVisible)
     val currentControllerUpdatesPageVisible by rememberUpdatedState(updatesPageVisible)
+    val currentControllerUpdatePrompt by rememberUpdatedState(updatePrompt)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
-            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible || updatesPageVisible,
+            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible ||
+            updatesPageVisible || updatePrompt != null,
     )
 
     LaunchedEffect(pagerState) {
@@ -860,15 +885,14 @@ fun LibraryScreen(
     BackHandler(enabled = updatesPageVisible) {
         updatesPageVisible = false
     }
-    val candidateVersion = (updateRepository?.status as? UpdateStatus.Available)?.candidate?.versionName
-    val updateNotice = stringResource(R.string.updates_notice, candidateVersion.orEmpty())
-    LaunchedEffect(candidateVersion, updatesPageVisible, updateRepository?.automaticChecks) {
-        if (!BuildConfig.DEBUG && updateRepository?.automaticChecks == true &&
-            !updatesPageVisible && candidateVersion != null &&
-            updateRepository.takeUnnotifiedVersion() != null) {
-            onUpdateNotice(updateNotice)
+    val availableUpdate = (updateRepository?.status as? UpdateStatus.Available)?.candidate
+    LaunchedEffect(hostResumed) {
+        if (!hostResumed) {
+            sessionDismissedUpdate = null
+            updatePrompt = null
         }
     }
+
 
     val currentEditorIdentity by rememberUpdatedState(state.libraryScope to metadataTarget?.databaseId)
     val metadataApp = metadataTarget?.let { target ->
@@ -1007,6 +1031,10 @@ fun LibraryScreen(
                         appActionsCollectionId = null
                     }
                     LibraryControllerCommand.Back -> when {
+                        currentControllerUpdatePrompt != null -> {
+                            sessionDismissedUpdate = updateRepository?.candidateKey(currentControllerUpdatePrompt!!)
+                            updatePrompt = null
+                        }
                         currentControllerRenameTarget != null -> renameTarget = null
                         currentControllerMetadataTarget != null -> metadataBackRequest++
                         currentControllerDeleteTarget != null -> deleteTarget = null
@@ -1082,21 +1110,40 @@ fun LibraryScreen(
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
         || aboutPageVisible || updatesPageVisible
-    LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
-        onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
+    val libraryModalVisible = libraryOverlayVisible || updatePrompt != null
+    LaunchedEffect(libraryModalVisible, selectionActiveHere) {
+        onControllerBackAvailabilityChanged(libraryModalVisible || selectionActiveHere)
     }
     // Keep an eligible, non-text focus owner when the destination or workdir changes.
     // Releasing focus alone can return it to the search editor on pre-API-28 Android.
     // Do not re-request focus for ordinary Library data/projection updates.
-    LaunchedEffect(destination, state.libraryScope) {
-        if (!libraryOverlayVisible && (useNavigationRail ||
+    LaunchedEffect(destination, state.libraryScope, libraryModalVisible) {
+        if (!libraryModalVisible && (useNavigationRail ||
                 (showNavigationBar && !imeHidesLibraryChrome && !selectionActiveHere &&
                     !collectionManageAppsActive))
         ) {
             initialNavigationFocus.requestFocus()
         }
     }
-    val libraryContentModifier = if (!libraryOverlayVisible) {
+    val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
+        pagerState.currentPage == pagerState.settledPage &&
+        state.databaseControlsReady && !isImeVisible &&
+        hostActivity?.isHostDialogVisible() == false && !libraryOverlayVisible &&
+        !selectionActiveHere
+    LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
+        sessionDismissedUpdate, updateRepository?.channel) {
+        val repository = updateRepository
+        val candidate = availableUpdate
+        if (BuildConfig.DEBUG || repository == null || !repository.automaticChecks ||
+            !updateDialogReady || candidate == null || repository.isHandled(candidate) ||
+            sessionDismissedUpdate == repository.candidateKey(candidate)) {
+            updatePrompt = null
+        } else {
+            updatePrompt = candidate
+        }
+    }
+
+    val libraryContentModifier = if (!libraryModalVisible) {
         Modifier
     } else {
         Modifier.clearAndSetSemantics { }
@@ -1458,6 +1505,7 @@ fun LibraryScreen(
                         repository = repository,
                         onBack = { updatesPageVisible = false },
                         onOpenRelease = actions::onOpenUpdateRelease,
+                        onOpenDownload = actions::onOpenUpdateDownload,
                     )
                 }
             }
@@ -1705,6 +1753,58 @@ fun LibraryScreen(
         )
     }
     collectionsHost?.let { LibraryCollectionsDialogHost(it) }
+    updatePrompt?.let { candidate ->
+        val repository = updateRepository
+        if (repository != null) {
+            val layout = libraryDialogLayout()
+            AlertDialog(
+                onControllerKeyEvent = controllerKeyEventHandler?.let { handler ->
+                    { event -> handler.onControllerKeyEvent(event) }
+                },
+                modifier = layout.modifier,
+                properties = layout.properties,
+                onDismissRequest = {
+                    sessionDismissedUpdate = repository.candidateKey(candidate)
+                    updatePrompt = null
+                },
+                title = { Text(stringResource(R.string.updates_available)) },
+                text = {
+                    Text(stringResource(
+                        R.string.updates_dialog_message,
+                        candidate.versionName,
+                        BuildConfig.VERSION_NAME,
+                    ))
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        updatePrompt = null
+                        candidate.downloadUrl?.let(actions::onOpenUpdateDownload)
+                            ?: actions.onOpenUpdateRelease(candidate.releaseUrl)
+                        repository.handle(candidate)
+                    }) {
+                        Text(stringResource(R.string.updates_download_apk))
+                    }
+                },
+                dismissButton = {
+                    Row {
+                        TextButton(onClick = {
+                            updatePrompt = null
+                            repository.handle(candidate)
+                        }) {
+                            Text(stringResource(R.string.updates_skip_version))
+                        }
+                        TextButton(onClick = {
+                            updatePrompt = null
+                            actions.onOpenUpdateRelease(candidate.releaseUrl)
+                            repository.handle(candidate)
+                        }) {
+                            Text(stringResource(R.string.updates_view_release))
+                        }
+                    }
+                },
+            )
+        }
+    }
 }
 
 // Require enough scroll progress to survive reclaiming the bottom navigation height. Without

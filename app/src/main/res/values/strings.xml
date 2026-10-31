@@ -1118,12 +1118,12 @@
     <string name="updates_channel">Update channel</string>
     <string name="updates_stable">Stable</string>
     <string name="updates_preview">Preview</string>
-    <string name="updates_automatic">Check automatically when opening the Library</string>
+    <string name="updates_automatic">Check automatically while Library is active</string>
     <string name="updates_not_checked">No update check has been completed yet.</string>
     <string name="updates_checking">Checking for updates…</string>
     <string name="updates_current">You’re up to date.</string>
     <string name="updates_no_release">No compatible published release is available on this channel.</string>
-    <string name="updates_not_installable">A newer release exists, but its build number cannot update this installation.</string>
+    <string name="updates_not_installable">A newer release exists but is not compatible with this device or installation.</string>
     <string name="updates_failed">Couldn’t check for updates. Check your connection and try again.</string>
     <string name="updates_available">Update available</string>
     <string name="updates_view_release">View release</string>
@@ -1283,4 +1283,7 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Download APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Skip this version</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus %1$s is available. You are using %2$s. Download the APK or view the release on GitHub.</string>
 </resources>

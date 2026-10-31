@@ -227,3 +227,12 @@ jobs:
             dist/SHA256SUMS.txt
           if-no-files-found: warn
           retention-days: 7
+
+  publish_updates:
+    name: Publish update index
+    needs: release
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/update-pages.yml
