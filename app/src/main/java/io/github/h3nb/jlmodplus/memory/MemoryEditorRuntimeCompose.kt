@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -19,19 +20,18 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -168,29 +168,33 @@ internal fun MemoryEditorRuntimeRoot(
         BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking) {
             if (overlay.peeking) overlay.peeking = false else actions.closeInspector()
         }
-        BoxWithConstraints(
-            modifier = Modifier.fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 8.dp, vertical = 6.dp)
-                .memoryEditorPeekKeys(overlay),
-            contentAlignment = Alignment.Center,
+        // The workspace is full-bleed; only interactive content is inset.
+        // Its bounds are the Activity window, never the (possibly letterboxed) MIDlet viewport.
+        Box(
+            modifier = Modifier.fillMaxSize().memoryEditorPeekKeys(overlay),
         ) {
-            val wideWorkspace = maxWidth >=
-                600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-            val compactResults = wideWorkspace
-            val showLabels = wideWorkspace
-            val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
-             Surface(
+            Surface(
                 modifier = Modifier.fillMaxSize()
-                    .align(Alignment.TopCenter)
+                    .testTag("memory-editor-workspace")
                     .alpha(if (overlay.peeking) 0f else 1f),
-                shape = MaterialTheme.shapes.large,
+                shape = RectangleShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
-                Box(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().padding(bottom = 48.dp)
-                        .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)) {
+                BoxWithConstraints(
+                    modifier = Modifier.fillMaxSize()
+                        .windowInsetsPadding(memoryEditorSafeWindowInsets())
+                        .padding(horizontal = 8.dp),
+                ) {
+                    val wideWorkspace = maxWidth >=
+                        600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+                    val compactResults = wideWorkspace
+                    val showLabels = wideWorkspace
+                    val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
+                    Column(
+                        Modifier.fillMaxSize().padding(bottom = 48.dp)
+                            .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
+                    ) {
                         RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close, showTitle)
                         if (state.busy) RuntimeOperationStrip(state, actions)
                         state.message?.takeIf(String::isNotBlank)?.let {
@@ -208,22 +212,30 @@ internal fun MemoryEditorRuntimeRoot(
                             )
                         }
                     }
-                    MemoryEditorPeekShield(overlay)
                 }
             }
-            if (overlay.layers.isEmpty()) {
-                MemoryEditorPeekDock(
-                    overlay = overlay,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    leadingContent = {
-                        RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
-                            opacityDialog = true
-                        }
-                    },
-                    centerContent = {
-                        if (tab == MemoryEditorTab.RESULTS) RuntimePager(state, actions)
-                    },
-                )
+            MemoryEditorPeekShield(overlay)
+            // Keep Peek above the hidden workspace, anchored inside the same safe
+            // bounds as its other controls even on waterfall/cutout displays.
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .windowInsetsPadding(memoryEditorSafeWindowInsets())
+                    .padding(horizontal = 8.dp),
+            ) {
+                if (overlay.layers.isEmpty()) {
+                    MemoryEditorPeekDock(
+                        overlay = overlay,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        leadingContent = {
+                            RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
+                                opacityDialog = true
+                            }
+                        },
+                        centerContent = {
+                            if (tab == MemoryEditorTab.RESULTS) RuntimePager(state, actions)
+                        },
+                    )
+                }
             }
         }
         if (opacityDialog) MemoryEditorOpacityDialog(overlay) { opacityDialog = false }

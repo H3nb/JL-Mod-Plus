@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.waterfall
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -79,6 +81,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.os.ConfigurationCompat
 import java.text.NumberFormat
 import java.util.Locale
+
+/** Protect touch targets from bars, camera cutouts, curved edges and system gestures. */
+@Composable
+internal fun memoryEditorSafeWindowInsets(): WindowInsets =
+    WindowInsets.safeContent.union(WindowInsets.waterfall)
 
 /** One visibility owner for the workspace and every editor-owned dialog/menu window. */
 @Stable
@@ -257,7 +264,7 @@ internal fun MemoryEditorDialog(
         ) {
             MemoryEditorWindowDimming(overlay.peeking)
             Box(
-                Modifier.size(windowWidth, windowHeight).windowInsetsPadding(WindowInsets.safeDrawing)
+                Modifier.size(windowWidth, windowHeight).windowInsetsPadding(memoryEditorSafeWindowInsets())
                     .padding(horizontal = 8.dp, vertical = 6.dp)
                     .memoryEditorPeekKeys(overlay),
             ) {

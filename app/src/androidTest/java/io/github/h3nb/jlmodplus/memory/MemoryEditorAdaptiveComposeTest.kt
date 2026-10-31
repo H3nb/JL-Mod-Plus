@@ -198,6 +198,30 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
+    @Test fun workspaceSurfaceFillsTheWindowInPortraitAndLandscape() {
+        val windowSize = mutableStateOf(DpSize(720.dp, 360.dp))
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(windowSize.value)) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(
+                        MemoryEditorUiState(visible = true, connected = true, supported = true),
+                        TestMemoryEditorActions(),
+                    )
+                }
+            }
+        }
+        for (size in listOf(DpSize(720.dp, 360.dp), DpSize(360.dp, 640.dp))) {
+            rule.runOnIdle { windowSize.value = size }
+            val viewport = rule.onRoot().getUnclippedBoundsInRoot()
+            val workspace = rule.onNodeWithTag("memory-editor-workspace").getUnclippedBoundsInRoot()
+            assertEquals("Workspace must not retain popup-style side margins", viewport.left.value, workspace.left.value, 1f)
+            assertEquals(viewport.right.value, workspace.right.value, 1f)
+            assertEquals(viewport.top.value, workspace.top.value, 1f)
+            assertEquals(viewport.bottom.value, workspace.bottom.value, 1f)
+            rule.onNodeWithTag("memory-editor-peek").assertIsDisplayed()
+        }
+    }
+
     @Test fun paginationSharesTheBottomDockWithPeekInBothWindowShapes() {
         val count = 18_687L
         val nextPageLabel = InstrumentationRegistry.getInstrumentation().targetContext

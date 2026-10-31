@@ -1,7 +1,7 @@
 # Memory Editor UI
 
-The editor is a sustained inspection workspace hosted in `MemoryEditorActivity`.
-Search, Watch and Inspector share one surface; short search/edit operations use
+The editor is a fullscreen inspection workspace hosted in `MemoryEditorActivity`.
+Search, Watch and Inspector share a full-bleed surface; short search/edit operations use
 `MemoryEditorDialog`, which reuses the shared adaptive dialog body and sizing.
 A bottom sheet would reduce the data viewport in short
 landscape windows without simplifying these workflows.
@@ -27,15 +27,21 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 
 ## Layout and interaction contracts
 
-- Use available safe window bounds, not physical display orientation. The workspace
-  has an 8 dp horizontal margin, a 6 dp vertical margin and a maximum width of 960 dp.
+- Draw the workspace surface edge-to-edge across the whole Activity window with
+  square corners, no external margins, no width cap and no popup/fullscreen switch.
+  Do not size it to the MIDlet viewport, which can be letterboxed.
+- Inset interactive content, including the header, lists, pagination and Peek,
+  with Compose `WindowInsets.safeContent` combined with `WindowInsets.waterfall`.
+  This protects controls from status/navigation bars, display cutouts, curved display
+  edges and system gesture regions without clipping the fullscreen background.
+  Keep only small internal horizontal spacing. Follow the existing shared status
+  bar preference rather than guessing bar dimensions.
 - Keep the editor title and labeled navigation visible. Place them in one row when
   width permits; stack them otherwise. In short windows with large text, retain the
   labeled tabs and omit the redundant app title to protect the data viewport.
-- Bound empty workspaces to 320 dp at normal text scale, growing with larger text
-  within the safe viewport. Present two labeled search actions before the first scan;
-  do not fill the screen with an empty translucent surface. Populated lists use the
-  available height. Keep undo/menu access after a scan returns no results.
+- The workspace remains fullscreen even before the first scan. Present two
+  labeled search actions for empty results, without adding an empty floating
+  dialog; keep undo/menu access after a scan returns no results.
 - Frequent icon actions retain localized accessibility descriptions and long-press
   tooltips; do not shrink text to fit.
 - Keep Search and Watch list states in the workspace. Returning from Inspector or
@@ -62,7 +68,7 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 The workspace owns one `MemoryEditorOverlayState`. Editor dialogs inherit it through
 `LocalMemoryEditorOverlay`; their layer registration determines which window renders
 the active eye. Every modal uses a full safe-window shell with the same 48 dp footer
-and maximum width as the workspace. The form is centered in the whole safe viewport, not the shorter region above the Peek dock. Its maximum height preserves clearance around the 48 dp dock, including in short landscape windows.
+and its own bounded width. The form is centered in the whole safe viewport, not the shorter region above the Peek dock. Its maximum height preserves clearance around the 48 dp dock, including in short landscape windows.
 Choices use this shell too: a native dropdown would intercept the footer behind it.
 Choice/action/settings dialogs have a 400 dp width cap; input forms can use 720 dp
 for controls beside the keypad. Use the theme's large corners for dialog surfaces.
@@ -71,7 +77,7 @@ Other application menus retain their existing presentation.
 The eye is a plain 24 dp icon inside a 48 dp touch target, without a circular
 background. Begin Peek on pointer down and retain the hold if that pointer drifts
 outside the target; release or cancellation restores visibility. The footer stays
-at safe-window coordinates even when the empty panel is shorter.
+within the safe window in both portrait and landscape.
 
 Holding the eye hides the workspace and every editor dialog surface, including native
 dimming, without disposing the forms. Keep the native input windows visible to Android:
