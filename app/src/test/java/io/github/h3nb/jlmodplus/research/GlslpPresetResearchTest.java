@@ -84,6 +84,11 @@ public class GlslpPresetResearchTest {
         assertTrue("Source-sized final stage requires a presentation blit",
                 gauss.finalBlitRequired);
         assertEquals(2L * 4 * GUEST * GUEST, gauss.conservativeIntermediateBytes);
+        GlslpPresetResearch gaussian = GlslpPresetResearch.load(
+                assets, "blurs/gauss_4tap.glslp");
+        assertTrue("A source-relative last pass remains a separate FBO even"
+                        + " when source and viewport dimensions coincide",
+                gaussian.plan(8, 8, 8, 8, 2048, 1024).finalBlitRequired);
 
         // Pinned 4xbrz-linear has a 4x first pass, then ../stock.glsl
         // without a scale_type1; the last pass therefore targets viewport.
