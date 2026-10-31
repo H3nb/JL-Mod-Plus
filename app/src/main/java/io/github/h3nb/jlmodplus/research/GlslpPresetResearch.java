@@ -9,12 +9,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Disposable, CPU-only GLSLP research: strict preset subset and deterministic pass sizes.
  * Does not compile GLSL, resolve #reference, or alter the production shader selection.
  */
 public final class GlslpPresetResearch {
+    private static final Pattern PRAGMA_PARAMETER = Pattern.compile(
+            "^#pragma\\s+parameter\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\\"[^\\\"]*\\\""
+                    + "\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
     private static final int MAX_PASSES = 16;
     private static final int MAX_PRESET_CHARS = 256 * 1024;
     private static final int MAX_SOURCE_CHARS = 512 * 1024;
@@ -202,6 +207,67 @@ public final class GlslpPresetResearch {
             throw new IOException("Unsupported GLSLP key: " + entries.keySet().iterator().next());
         }
         return new GlslpPresetResearch(passes, overrides);
+    }
+
+    /**
+     * Resolve upstream #pragma defaults and the preset's explicit overrides.
+     * All parameters need values when PARAMETER_UNIFORM is enabled: sending only
+     * the overridden names silently leaves the remaining uniforms at zero.
+     * This is research metadata, not evidence the shaders link on a given GLES.
+     */
+    public Map<String, Float> resolvedParameters() throws IOException {
+        Map<String, Float> defaults = new LinkedHashMap<>();
+        Map<String, Float> minima = new LinkedHashMap<>();
+        Map<String, Float> maxima = new LinkedHashMap<>();
+        for (Pass pass : passes) {
+            for (String line : pass.sourceText.split("\\n")) {
+                String declaration = line.trim();
+                if (!declaration.startsWith("#pragma parameter")) continue;
+                Matcher m = PRAGMA_PARAMETER.matcher(declaration);
+                if (!m.matches()) {
+                    throw new IOException("Malformed GLSL parameter declaration in " + pass.sourcePath);
+                }
+                String id = m.group(1);
+                float fallback = checkedFloat(number(m.group(2), id), id);
+                float minimum = checkedFloat(number(m.group(3), id), id);
+                float maximum = checkedFloat(number(m.group(4), id), id);
+                float step = checkedFloat(number(m.group(5), id), id);
+                if (minimum > maximum || step <= 0 || fallback < minimum || fallback > maximum) {
+                    throw new IOException("Invalid GLSL parameter range: " + id);
+                }
+                if (defaults.containsKey(id)) {
+                    if (!defaults.get(id).equals(fallback)
+                            || !minima.get(id).equals(minimum)
+                            || !maxima.get(id).equals(maximum)) {
+                        throw new IOException("Conflicting GLSL parameter: " + id);
+                    }
+                } else {
+                    defaults.put(id, fallback);
+                    minima.put(id, minimum);
+                    maxima.put(id, maximum);
+                }
+            }
+        }
+        for (Map.Entry<String, Double> entry : parameterOverrides.entrySet()) {
+            String id = entry.getKey();
+            if (!defaults.containsKey(id)) {
+                throw new IOException("Preset overrides undeclared GLSL parameter: " + id);
+            }
+            float value = checkedFloat(entry.getValue(), id);
+            if (value < minima.get(id) || value > maxima.get(id)) {
+                throw new IOException("Preset parameter outside GLSL range: " + id);
+            }
+            defaults.put(id, value);
+        }
+        return Collections.unmodifiableMap(defaults);
+    }
+
+    private static float checkedFloat(double value, String name) throws IOException {
+        float converted = (float) value;
+        if (Float.isInfinite(converted) || Float.isNaN(converted)) {
+            throw new IOException("GLSL parameter cannot be represented as float: " + name);
+        }
+        return converted;
     }
 
     public Plan plan(int sourceW, int sourceH, int viewportW, int viewportH,
