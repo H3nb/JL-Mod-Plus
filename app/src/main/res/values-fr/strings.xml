@@ -1109,6 +1109,9 @@
     <string name="config_avoid_camera_cutout_summary">Garde le jeu à l’écart de la caméra avant ou de l’encoche. Activez si les commandes sont masquées.</string>
     <string name="pref_runtime_fullscreen_title">Plein écran</string>
     <string name="pref_runtime_fullscreen_summary">Masque la barre d’outils pendant le jeu. S’applique à tous les MIDlets.</string>
+    <string name="pref_show_status_bar_title">Afficher la barre d’état</string>
+    <string name="pref_show_status_bar_summary">Gardez la barre d’état Android visible pendant le jeu pour voir l’heure et les icônes de notification.</string>
+    <string name="runtime_chrome_update_failed">Impossible de mettre à jour les paramètres d’affichage du jeu. Réessayez.</string>
     <string name="runtime_fullscreen_update_failed">Impossible d’accéder au réglage du plein écran. Réessayez.</string>
     <string name="midlet_file_permission_title">Accès au stockage</string>
     <string name="midlet_file_permission_read">Ce MIDlet souhaite lire des fichiers.</string>

@@ -1067,6 +1067,9 @@
     <string name="config_avoid_camera_cutout_summary">ක්‍රීඩාව ඉදිරිපස කැමරාව හෝ තිර කැපුමෙන් ඈත් කර පෙන්වයි. පාලන බොත්තම් වැසී ඇත්නම් සක්‍රිය කරන්න.</string>
     <string name="pref_runtime_fullscreen_title">පූර්ණ තිරය</string>
     <string name="pref_runtime_fullscreen_summary">ක්‍රීඩා කරන විට මෙවලම් තීරුව සඟවන්න. සියලුම MIDlet යෙදුම් සඳහා අදාළ වේ.</string>
+    <string name="pref_show_status_bar_title">තත්ව තීරුව පෙන්වන්න</string>
+    <string name="pref_show_status_bar_summary">ක්‍රීඩා කරන විට වේලාව සහ දැනුම්දීම් අයිකන බැලීමට Android තත්ව තීරුව දිස්වන සේ තබන්න.</string>
+    <string name="runtime_chrome_update_failed">ක්‍රීඩාවේ දර්ශන සැකසුම් යාවත්කාලීන කළ නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
     <string name="runtime_fullscreen_update_failed">පූර්ණ තිර සැකසුමට ප්‍රවේශ විය නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
     <string name="midlet_file_permission_title">ගබඩා ප්‍රවේශය</string>
     <string name="midlet_file_permission_read">මෙම MIDlet ගොනු කියවීමට අවසර ඉල්ලයි.</string>

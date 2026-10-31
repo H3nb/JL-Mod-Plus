@@ -1077,6 +1077,9 @@
     <string name="config_avoid_camera_cutout_summary">Hält das Spiel vom Bereich der Frontkamera oder des Displayausschnitts fern. Aktivieren, wenn Bedienelemente verdeckt werden.</string>
     <string name="pref_runtime_fullscreen_title">Vollbild</string>
     <string name="pref_runtime_fullscreen_summary">Die Symbolleiste beim Spielen ausblenden. Gilt für alle MIDlets.</string>
+    <string name="pref_show_status_bar_title">Statusleiste anzeigen</string>
+    <string name="pref_show_status_bar_summary">Die Android-Statusleiste beim Spielen anzeigen, um Uhrzeit und Benachrichtigungssymbole zu sehen.</string>
+    <string name="runtime_chrome_update_failed">Die Anzeigeeinstellungen für das Spiel konnten nicht aktualisiert werden. Versuche es erneut.</string>
     <string name="runtime_fullscreen_update_failed">Auf die Vollbildeinstellung konnte nicht zugegriffen werden. Versuche es erneut.</string>
     <string name="midlet_file_permission_title">Speicherzugriff</string>
     <string name="midlet_file_permission_read">Dieses MIDlet möchte Dateien lesen.</string>

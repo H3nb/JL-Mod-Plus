@@ -1075,6 +1075,9 @@
     <string name="config_avoid_camera_cutout_summary">Κρατήστε το παιχνίδι μακριά από την μπροστινή κάμερα ή την εγκοπή της οθόνης. Ενεργοποιήστε αν καλύπτονται τα χειριστήρια.</string>
     <string name="pref_runtime_fullscreen_title">Πλήρης οθόνη</string>
     <string name="pref_runtime_fullscreen_summary">Απόκρυψη της γραμμής εργαλείων κατά το παιχνίδι. Ισχύει για όλα τα MIDlet.</string>
+    <string name="pref_show_status_bar_title">Εμφάνιση γραμμής κατάστασης</string>
+    <string name="pref_show_status_bar_summary">Διατήρηση της γραμμής κατάστασης του Android ορατής κατά το παιχνίδι, για να βλέπετε την ώρα και τα εικονίδια ειδοποιήσεων.</string>
+    <string name="runtime_chrome_update_failed">Δεν ήταν δυνατή η ενημέρωση των ρυθμίσεων εμφάνισης του παιχνιδιού. Δοκιμάστε ξανά.</string>
     <string name="runtime_fullscreen_update_failed">Δεν ήταν δυνατή η πρόσβαση στη ρύθμιση πλήρους οθόνης. Δοκιμάστε ξανά.</string>
     <string name="midlet_file_permission_title">Πρόσβαση στον αποθηκευτικό χώρο</string>
     <string name="midlet_file_permission_read">Αυτό το MIDlet θέλει να διαβάσει αρχεία.</string>

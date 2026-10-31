@@ -1142,6 +1142,9 @@
     <string name="config_avoid_camera_cutout_summary">Гра не заходить в область фронтальної камери або вирізу екрана. Увімкніть, якщо елементи керування перекриті.</string>
     <string name="pref_runtime_fullscreen_title">Повний екран</string>
     <string name="pref_runtime_fullscreen_summary">Приховувати панель інструментів під час гри. Застосовується до всіх MIDlet.</string>
+    <string name="pref_show_status_bar_title">Показувати рядок стану</string>
+    <string name="pref_show_status_bar_summary">Залишати рядок стану Android видимим під час гри, щоб бачити час і значки сповіщень.</string>
+    <string name="runtime_chrome_update_failed">Не вдалося оновити налаштування відображення гри. Спробуйте ще раз.</string>
     <string name="runtime_fullscreen_update_failed">Не вдалося отримати доступ до налаштування повного екрана. Спробуйте ще раз.</string>
     <string name="midlet_file_permission_title">Доступ до сховища</string>
     <string name="midlet_file_permission_read">Цей MIDlet хоче читати файли.</string>

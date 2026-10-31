@@ -1142,6 +1142,9 @@
     <string name="config_avoid_camera_cutout_summary">Utrzymuje grę poza obszarem przedniego aparatu i wycięcia ekranu. Włącz, jeśli elementy sterowania są zasłonięte.</string>
     <string name="pref_runtime_fullscreen_title">Pełny ekran</string>
     <string name="pref_runtime_fullscreen_summary">Ukryj pasek narzędzi podczas gry. Dotyczy wszystkich MIDletów.</string>
+    <string name="pref_show_status_bar_title">Pokaż pasek stanu</string>
+    <string name="pref_show_status_bar_summary">Pozostaw pasek stanu Androida widoczny podczas gry, aby widzieć godzinę i ikony powiadomień.</string>
+    <string name="runtime_chrome_update_failed">Nie udało się zaktualizować ustawień wyświetlania podczas gry. Spróbuj ponownie.</string>
     <string name="runtime_fullscreen_update_failed">Nie udało się uzyskać dostępu do ustawienia pełnego ekranu. Spróbuj ponownie.</string>
     <string name="midlet_file_permission_title">Dostęp do pamięci</string>
     <string name="midlet_file_permission_read">Ten MIDlet chce odczytywać pliki.</string>

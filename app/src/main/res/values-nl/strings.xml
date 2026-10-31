@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Houdt het spel weg van de frontcamera of schermuitsparing. Schakel in als bedieningselementen worden bedekt.</string>
     <string name="pref_runtime_fullscreen_title">Volledig scherm</string>
     <string name="pref_runtime_fullscreen_summary">Verberg de werkbalk tijdens het spelen. Geldt voor alle MIDlets.</string>
+    <string name="pref_show_status_bar_title">Statusbalk tonen</string>
+    <string name="pref_show_status_bar_summary">Houd de Android-statusbalk zichtbaar tijdens het spelen om de tijd en meldingspictogrammen te zien.</string>
+    <string name="runtime_chrome_update_failed">De weergave-instellingen voor het spel konden niet worden bijgewerkt. Probeer het opnieuw.</string>
     <string name="runtime_fullscreen_update_failed">Geen toegang tot de instelling voor volledig scherm. Probeer het opnieuw.</string>
     <string name="midlet_file_permission_title">Opslagtoegang</string>
     <string name="midlet_file_permission_read">Deze MIDlet wil bestanden lezen.</string>

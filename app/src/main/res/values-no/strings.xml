@@ -1075,6 +1075,9 @@
     <string name="config_avoid_camera_cutout_summary">Holder spillet unna frontkameraet eller skjermutskjæringen. Slå på hvis kontrollene blir tildekket.</string>
     <string name="pref_runtime_fullscreen_title">Fullskjerm</string>
     <string name="pref_runtime_fullscreen_summary">Skjul verktøylinjen mens du spiller. Gjelder alle MIDlet-er.</string>
+    <string name="pref_show_status_bar_title">Vis statuslinjen</string>
+    <string name="pref_show_status_bar_summary">Hold Android-statuslinjen synlig mens du spiller, slik at du kan se klokken og varslingsikoner.</string>
+    <string name="runtime_chrome_update_failed">Kunne ikke oppdatere visningsinnstillingene for spillet. Prøv igjen.</string>
     <string name="runtime_fullscreen_update_failed">Kunne ikke få tilgang til fullskjerminnstillingen. Prøv igjen.</string>
     <string name="midlet_file_permission_title">Tilgang til lagring</string>
     <string name="midlet_file_permission_read">Denne MIDleten vil lese filer.</string>

@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">بازی را از دوربین جلو یا بریدگی نمایشگر دور نگه می‌دارد. اگر کنترل‌ها پوشانده می‌شوند، فعال کنید.</string>
     <string name="pref_runtime_fullscreen_title">تمام‌صفحه</string>
     <string name="pref_runtime_fullscreen_summary">پنهان کردن نوار ابزار هنگام بازی. برای همهٔ برنامه‌های MIDlet اعمال می‌شود.</string>
+    <string name="pref_show_status_bar_title">نمایش نوار وضعیت</string>
+    <string name="pref_show_status_bar_summary">هنگام بازی، نوار وضعیت Android را برای دیدن ساعت و نمادهای اعلان قابل مشاهده نگه دارید.</string>
+    <string name="runtime_chrome_update_failed">تنظیمات نمایش هنگام بازی به‌روزرسانی نشد. دوباره تلاش کنید.</string>
     <string name="runtime_fullscreen_update_failed">دسترسی به تنظیم تمام‌صفحه ممکن نشد. دوباره تلاش کنید.</string>
     <string name="midlet_file_permission_title">دسترسی به فضای ذخیره‌سازی</string>
     <string name="midlet_file_permission_read">این MIDlet می‌خواهد فایل‌ها را بخواند.</string>

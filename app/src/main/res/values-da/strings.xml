@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Hold spillet væk fra frontkameraet eller skærmudskæringen. Slå til, hvis betjeningsknapperne dækkes.</string>
     <string name="pref_runtime_fullscreen_title">Fuld skærm</string>
     <string name="pref_runtime_fullscreen_summary">Skjul værktøjslinjen, mens du spiller. Gælder alle MIDlet-apps.</string>
+    <string name="pref_show_status_bar_title">Vis statuslinjen</string>
+    <string name="pref_show_status_bar_summary">Hold Androids statuslinje synlig, mens du spiller, så du kan se klokkeslæt og notifikationsikoner.</string>
+    <string name="runtime_chrome_update_failed">Kunne ikke opdatere visningsindstillingerne under spil. Prøv igen.</string>
     <string name="runtime_fullscreen_update_failed">Kunne ikke få adgang til indstillingen for fuld skærm. Prøv igen.</string>
     <string name="midlet_file_permission_title">Adgang til lagerplads</string>
     <string name="midlet_file_permission_read">Denne MIDlet vil læse filer.</string>

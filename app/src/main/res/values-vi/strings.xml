@@ -1043,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">Giữ nội dung trò chơi tránh xa camera trước hoặc phần khuyết màn hình. Bật nếu các nút điều khiển bị che.</string>
     <string name="pref_runtime_fullscreen_title">Toàn màn hình</string>
     <string name="pref_runtime_fullscreen_summary">Ẩn thanh công cụ khi chơi. Áp dụng cho tất cả MIDlet.</string>
+    <string name="pref_show_status_bar_title">Hiện thanh trạng thái</string>
+    <string name="pref_show_status_bar_summary">Giữ thanh trạng thái Android hiển thị khi chơi để xem giờ và các biểu tượng thông báo.</string>
+    <string name="runtime_chrome_update_failed">Không thể cập nhật cài đặt hiển thị của trò chơi. Hãy thử lại.</string>
     <string name="runtime_fullscreen_update_failed">Không thể truy cập cài đặt toàn màn hình. Hãy thử lại.</string>
     <string name="midlet_file_permission_title">Truy cập bộ nhớ</string>
     <string name="midlet_file_permission_read">MIDlet này muốn đọc tệp.</string>

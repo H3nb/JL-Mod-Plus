@@ -1208,6 +1208,9 @@
     <string name="config_avoid_camera_cutout_summary">أبقِ اللعبة بعيدة عن الكاميرا الأمامية أو فتحة الشاشة. فعّل الخيار إذا كانت أدوات التحكم محجوبة.</string>
     <string name="pref_runtime_fullscreen_title">ملء الشاشة</string>
     <string name="pref_runtime_fullscreen_summary">إخفاء شريط الأدوات أثناء اللعب. يسري على جميع تطبيقات MIDlet.</string>
+    <string name="pref_show_status_bar_title">إظهار شريط الحالة</string>
+    <string name="pref_show_status_bar_summary">إبقاء شريط حالة Android ظاهرًا أثناء اللعب لرؤية الساعة وأيقونات الإشعارات.</string>
+    <string name="runtime_chrome_update_failed">تعذّر تحديث إعدادات عرض اللعبة. حاول مرة أخرى.</string>
     <string name="runtime_fullscreen_update_failed">تعذّر الوصول إلى إعداد ملء الشاشة. حاول مرة أخرى.</string>
     <string name="midlet_file_permission_title">الوصول إلى التخزين</string>
     <string name="midlet_file_permission_read">يريد MIDlet هذا قراءة الملفات.</string>

@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Pitää pelin poissa etukameran tai näyttöloven alueelta. Ota käyttöön, jos ohjaimet peittyvät.</string>
     <string name="pref_runtime_fullscreen_title">Koko näyttö</string>
     <string name="pref_runtime_fullscreen_summary">Piilota työkalupalkki pelatessa. Koskee kaikkia MIDlet-sovelluksia.</string>
+    <string name="pref_show_status_bar_title">Näytä tilapalkki</string>
+    <string name="pref_show_status_bar_summary">Pidä Androidin tilapalkki näkyvissä pelaamisen aikana nähdäksesi kellon ja ilmoituskuvakkeet.</string>
+    <string name="runtime_chrome_update_failed">Pelin näyttöasetuksia ei voitu päivittää. Yritä uudelleen.</string>
     <string name="runtime_fullscreen_update_failed">Koko näytön asetusta ei voitu käyttää. Yritä uudelleen.</string>
     <string name="midlet_file_permission_title">Tallennustilan käyttö</string>
     <string name="midlet_file_permission_read">Tämä MIDlet haluaa lukea tiedostoja.</string>

@@ -1108,6 +1108,9 @@
     <string name="config_avoid_camera_cutout_summary">Mantén el joc fora de la càmera frontal o del retall de pantalla. Activa-ho si els controls queden tapats.</string>
     <string name="pref_runtime_fullscreen_title">Pantalla completa</string>
     <string name="pref_runtime_fullscreen_summary">Amaga la barra d’eines mentre jugues. S’aplica a tots els MIDlets.</string>
+    <string name="pref_show_status_bar_title">Mostra la barra d’estat</string>
+    <string name="pref_show_status_bar_summary">Mantén visible la barra d’estat d’Android mentre jugues per veure l’hora i les icones de notificació.</string>
+    <string name="runtime_chrome_update_failed">No s’han pogut actualitzar els ajustos de visualització del joc. Torna-ho a provar.</string>
     <string name="runtime_fullscreen_update_failed">No s’ha pogut accedir a l’ajust de pantalla completa. Torna-ho a provar.</string>
     <string name="midlet_file_permission_title">Accés a l’emmagatzematge</string>
     <string name="midlet_file_permission_read">Aquest MIDlet vol llegir fitxers.</string>

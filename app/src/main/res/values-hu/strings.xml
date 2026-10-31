@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">A játék nem takarja el az előlapi kamera vagy a kijelzőkivágás területét. Kapcsolja be, ha a vezérlők takarásba kerülnek.</string>
     <string name="pref_runtime_fullscreen_title">Teljes képernyő</string>
     <string name="pref_runtime_fullscreen_summary">Az eszköztár elrejtése játék közben. Minden MIDletre érvényes.</string>
+    <string name="pref_show_status_bar_title">Állapotsáv megjelenítése</string>
+    <string name="pref_show_status_bar_summary">Játék közben maradjon látható az Android állapotsávja, hogy lásd az időt és az értesítési ikonokat.</string>
+    <string name="runtime_chrome_update_failed">Nem sikerült frissíteni a játék megjelenítési beállításait. Próbáld újra.</string>
     <string name="runtime_fullscreen_update_failed">A teljes képernyő beállítása nem érhető el. Próbáld újra.</string>
     <string name="midlet_file_permission_title">Hozzáférés a tárhelyhez</string>
     <string name="midlet_file_permission_read">Ez a MIDlet fájlokat szeretne olvasni.</string>

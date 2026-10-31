@@ -1043,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">ゲーム画面を前面カメラや画面の切り欠きから離して表示します。操作ボタンが隠れる場合に有効にしてください。</string>
     <string name="pref_runtime_fullscreen_title">全画面表示</string>
     <string name="pref_runtime_fullscreen_summary">プレイ中はツールバーを非表示にします。すべての MIDlet に適用されます。</string>
+    <string name="pref_show_status_bar_title">ステータスバーを表示</string>
+    <string name="pref_show_status_bar_summary">プレイ中も Android のステータスバーを表示し、時刻と通知アイコンを確認できます。</string>
+    <string name="runtime_chrome_update_failed">ゲーム画面の表示設定を更新できませんでした。もう一度お試しください。</string>
     <string name="runtime_fullscreen_update_failed">全画面表示の設定にアクセスできませんでした。もう一度お試しください。</string>
     <string name="midlet_file_permission_title">ストレージへのアクセス</string>
     <string name="midlet_file_permission_read">このMIDletはファイルの読み取りを求めています。</string>

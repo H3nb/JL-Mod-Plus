@@ -1142,6 +1142,9 @@
     <string name="config_avoid_camera_cutout_summary">Игра не будет заходить на область фронтальной камеры или выреза экрана. Включите, если элементы управления перекрываются.</string>
     <string name="pref_runtime_fullscreen_title">Полный экран</string>
     <string name="pref_runtime_fullscreen_summary">Скрывать панель инструментов во время игры. Применяется ко всем MIDlet.</string>
+    <string name="pref_show_status_bar_title">Показывать строку состояния</string>
+    <string name="pref_show_status_bar_summary">Оставлять строку состояния Android видимой во время игры, чтобы видеть часы и значки уведомлений.</string>
+    <string name="runtime_chrome_update_failed">Не удалось обновить настройки отображения игры. Повторите попытку.</string>
     <string name="runtime_fullscreen_update_failed">Не удалось получить доступ к настройке полного экрана. Повторите попытку.</string>
     <string name="midlet_file_permission_title">Доступ к хранилищу</string>
     <string name="midlet_file_permission_read">Этот MIDlet запрашивает доступ к чтению файлов.</string>

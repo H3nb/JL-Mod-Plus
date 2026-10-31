@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Ойынды алдыңғы камера немесе дисплей ойығы орналасқан аймақтан тыс көрсетеді. Басқару түймелері жабылса, қосыңыз.</string>
     <string name="pref_runtime_fullscreen_title">Толық экран</string>
     <string name="pref_runtime_fullscreen_summary">Ойын кезінде саймандар панелін жасыру. Барлық MIDlet қолданбаларына қолданылады.</string>
+    <string name="pref_show_status_bar_title">Күй жолағын көрсету</string>
+    <string name="pref_show_status_bar_summary">Ойын кезінде уақыт пен хабарландыру белгішелерін көру үшін Android күй жолағын көрсетіп тұру.</string>
+    <string name="runtime_chrome_update_failed">Ойынның көрсету параметрлерін жаңарту мүмкін болмады. Қайталап көріңіз.</string>
     <string name="runtime_fullscreen_update_failed">Толық экран параметріне қол жеткізу мүмкін болмады. Қайталап көріңіз.</string>
     <string name="midlet_file_permission_title">Жадқа қол жеткізу</string>
     <string name="midlet_file_permission_read">Бұл MIDlet файлдарды оқығысы келеді.</string>

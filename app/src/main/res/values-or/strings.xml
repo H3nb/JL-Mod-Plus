@@ -1067,6 +1067,9 @@
     <string name="config_avoid_camera_cutout_summary">ଖେଳକୁ ସାମ୍ନା କ୍ୟାମେରା କିମ୍ବା ସ୍କ୍ରିନ କଟ୍‌ଆଉଟ୍‌ରୁ ଦୂରେ ରଖନ୍ତୁ। କଣ୍ଟ୍ରୋଲ୍ ଢାଙ୍କି ହେଲେ ଚାଲୁ କରନ୍ତୁ।</string>
     <string name="pref_runtime_fullscreen_title">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍</string>
     <string name="pref_runtime_fullscreen_summary">ଖେଳିବା ସମୟରେ ଟୁଲ୍‌ବାର୍ ଲୁଚାନ୍ତୁ। ସମସ୍ତ MIDlet ପାଇଁ ପ୍ରଯୋଜ୍ୟ।</string>
+    <string name="pref_show_status_bar_title">ଷ୍ଟାଟସ୍ ବାର୍ ଦେଖାନ୍ତୁ</string>
+    <string name="pref_show_status_bar_summary">ଖେଳୁଥିବା ସମୟରେ ସମୟ ଏବଂ ବିଜ୍ଞପ୍ତି ଆଇକନ୍ ଦେଖିବା ପାଇଁ Android ଷ୍ଟାଟସ୍ ବାର୍ ଦୃଶ୍ୟମାନ ରଖନ୍ତୁ।</string>
+    <string name="runtime_chrome_update_failed">ଗେମ୍‌ର ପ୍ରଦର୍ଶନ ସେଟିଂ ଅପଡେଟ୍ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="runtime_fullscreen_update_failed">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍ ସେଟିଂକୁ ଆକ୍ସେସ୍ କରାଯାଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="midlet_file_permission_title">ଷ୍ଟୋରେଜ୍ ଆକ୍ସେସ୍</string>
     <string name="midlet_file_permission_read">ଏହି MIDlet ଫାଇଲ୍ ପଢ଼ିବାକୁ ଚାହୁଁଛି।</string>
