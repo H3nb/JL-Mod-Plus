@@ -110,10 +110,7 @@
     <string name="pref_vibration_title">开启振动</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">显示虚拟控件</string>
     <string name="PREF_VK_ALPHA">不透明度: </string>
-    <string name="PREF_VK_BACK">按键颜色</string>
     <string name="PREF_VK_FEEDBACK">按键振动</string>
-    <string name="PREF_VK_FORCE_OPACITY">使 MIDlet 屏幕外的控件保持不透明</string>
-    <string name="PREF_VK_FORE">标签和符号颜色</string>
     <string name="PREF_VK_HIDE_DELAY">自动隐藏延迟</string>
     <string name="pref_vk_hide_hint">已禁用</string>
     <string name="PREF_VK_OUTLINE">边框颜色</string>
@@ -194,6 +191,8 @@
     <string name="file_picker_empty">没有匹配的文件</string>
     <string name="file_picker_empty_folder">未找到文件夹</string>
     <string name="file_picker_file">文件</string>
+    <string name="file_picker_preview_named">预览：%1$s</string>
+    <string name="file_picker_preview_unavailable">不可用</string>
     <string name="file_picker_folder_exists">已存在同名项目。</string>
     <string name="file_picker_folder_name">文件夹名称</string>
     <string name="file_picker_grant_access">允许访问</string>
@@ -300,8 +299,6 @@
     <string name="library_indexing_progress">正在为应用库建立索引… %1$d/%2$d</string>
     <string name="library_load_error_title">应用库不可用</string>
     <string name="library_load_failed_message">无法加载应用库。请重试。</string>
-    <string name="library_metadata_change_icon">更改图标</string>
-    <string name="library_metadata_description">描述</string>
     <string name="library_metadata_edit_title">编辑元数据</string>
     <string name="library_metadata_icon">图标</string>
     <string name="library_metadata_name">名称</string>
@@ -530,16 +527,9 @@
     <string name="config_help_timing_unavailable">此 MIDlet 安装的时间设置不可用。重新安装或重新转换 MIDlet 可启用这些设置。</string>
     <string name="config_help_touch_input">允许 MIDlet 接收触摸屏的指针输入。</string>
     <string name="config_help_virtual_keyboard">为此 MIDlet 显示屏幕控件。</string>
-    <string name="config_help_vk_alpha">设置控件不透明度：0 = 完全透明；255 = 完全不透明。</string>
-    <string name="config_help_vk_background">设置虚拟控件按钮的基础颜色。</string>
     <string name="config_help_vk_button_shape">设置键盘按钮的默认形状。方向键和模拟摇杆使用各自的形状。</string>
     <string name="config_help_vk_feedback">在“设置”中启用振动时，按下虚拟控件会振动。</string>
-    <string name="config_help_vk_force_opacity">使 MIDlet 屏幕外的控件不透明。屏幕上的控件使用设定的不透明度。</string>
-    <string name="config_help_vk_foreground">设置虚拟控件按钮上文字和符号的颜色。</string>
     <string name="config_help_vk_hide_delay">控件覆盖 MIDlet 屏幕时，在此延迟后隐藏。设为 0 可禁用自动隐藏。</string>
-    <string name="config_help_vk_outline">设置虚拟控件按钮的轮廓颜色。</string>
-    <string name="config_help_vk_selected_background">设置按钮按下时的颜色。</string>
-    <string name="config_help_vk_selected_foreground">设置虚拟控件按钮按下时文字和符号的颜色。</string>
     <string name="config_increase_value">增大数值</string>
     <string name="config_lock_custom_resolution_ratio">锁定宽高比</string>
     <string name="config_maintenance">重置与数据</string>
@@ -556,13 +546,18 @@
     <string name="config_timing_mode_full_guest">模拟时间</string>
     <string name="config_timing_mode_real_wall">系统时间</string>
     <string name="config_virtual_controls_color_preview">颜色预览</string>
-    <string name="config_virtual_controls_preview_hint">点击预览按下时的颜色。示例使用所选不透明度。</string>
     <string name="config_virtual_controls_preview_normal">松开</string>
     <string name="config_virtual_controls_preview_pressed">按下</string>
     <string name="config_warning_filter_shader">线性过滤会在屏幕着色器处理输入前将其平滑化，可能降低输出的清晰度。</string>
     <string name="layout_edit_continue">继续编辑</string>
     <string name="layout_edit_discard">放弃</string>
-    <string name="layout_edit_done">✓ 完成</string>
+    <string name="layout_edit_done">完成</string>
+    <string name="layout_editor_grid_size">网格大小</string>
+    <string name="layout_editor_grid_coarse">粗 (16)</string>
+    <string name="layout_editor_grid_normal">标准 (24)</string>
+    <string name="layout_editor_grid_fine">细 (32)</string>
+    <string name="layout_editor_snap_on">吸附开启</string>
+    <string name="layout_editor_snap_off">吸附关闭</string>
     <string name="layout_edit_save_changes">保存虚拟控件的更改？</string>
     <string name="mapping_dialog_add_input">可分配多个实体输入。</string>
     <string name="mapping_dialog_assigned_inputs">已分配的输入</string>
@@ -1048,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">让游戏画面避开前置摄像头或屏幕开孔。若操作按钮被遮挡，请开启。</string>
     <string name="pref_runtime_fullscreen_title">全屏</string>
     <string name="pref_runtime_fullscreen_summary">游戏时隐藏工具栏。适用于所有 MIDlet。</string>
+    <string name="pref_show_status_bar_title">显示状态栏</string>
+    <string name="pref_show_status_bar_summary">游戏时保持显示 Android 状态栏，以便查看时间和通知图标。</string>
+    <string name="runtime_chrome_update_failed">无法更新游戏显示设置，请重试。</string>
     <string name="runtime_fullscreen_update_failed">无法访问全屏设置，请重试。</string>
     <string name="midlet_file_permission_title">存储访问</string>
     <string name="midlet_file_permission_read">此 MIDlet 想要读取文件。</string>
@@ -1094,9 +1092,7 @@
     <string name="library_metadata_follows_main">使用主图标</string>
     <string name="library_metadata_change">更换</string>
     <string name="library_metadata_remove_portrait">移除 3:4 图标</string>
-    <string name="library_metadata_icon_updated">图标已更新</string>
     <string name="library_metadata_discard_title">放弃更改？</string>
-    <string name="library_metadata_discard_message">未保存的文字更改将丢失。图标更改已保存。</string>
     <string name="library_metadata_discard">放弃</string>
     <string name="library_metadata_default_description">默认描述</string>
     <string name="library_metadata_other_languages">其他语言</string>
@@ -1104,6 +1100,20 @@
     <string name="library_metadata_language_search">搜索语言或输入区域代码</string>
     <string name="library_metadata_remove_language">删除描述</string>
     <string name="library_metadata_language_load_failed">无法加载语言描述。请重新打开元数据编辑页面。</string>
+    <string name="layout_editor_group_on">成组调整大小</string>
+    <string name="layout_editor_group_off">单独调整大小</string>
+    <string name="layout_editor_snap_grid">吸附到网格</string>
+    <string name="layout_editor_snap_controls">吸附到按钮</string>
+    <string name="layout_editor_snap_grid_on">网格吸附：开启</string>
+    <string name="layout_editor_snap_grid_off">网格吸附：关闭</string>
+    <string name="layout_editor_snap_controls_on">按钮吸附：开启</string>
+    <string name="layout_editor_snap_controls_off">按钮吸附：关闭</string>
+    <string name="layout_editor_guide_gestures">手势</string>
+    <string name="layout_editor_guide_move">拖动控件以移动位置。</string>
+    <string name="layout_editor_guide_resize">使用双指调整大小。水平或垂直移动可分别调整宽度或高度。</string>
+    <string name="layout_editor_guide_tools">编辑工具</string>
+    <string name="layout_editor_guide_done">点击完成以保存、放弃或继续编辑。</string>
+    <string name="layout_editor_guide_start">开始编辑</string>
     <string name="memory_editor_panel_opacity">面板不透明度</string>
     <string name="memory_editor_panel_opacity_help">调整面板背景，不会淡化文字或图标。</string>
 </resources>

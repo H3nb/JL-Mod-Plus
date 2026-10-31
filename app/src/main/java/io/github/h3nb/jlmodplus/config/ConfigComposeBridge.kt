@@ -2243,10 +2243,10 @@ private fun ConfigSystemPropertiesPreference(
 @Composable
 internal fun ConfigSystemPropertiesPage(
     value: String,
-    defaultValue: String = "",
     onBack: () -> Unit,
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier,
+    defaultValue: String = "",
 ) {
     var draft by rememberSaveable(value) { mutableStateOf(value) }
     var resetConfirmationVisible by rememberSaveable { mutableStateOf(false) }

@@ -699,29 +699,50 @@ private fun LayoutEditGuideDialog(
     var dontShowAgain by remember { mutableStateOf(false) }
     val layout = runtimeDialogLayout()
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
-        title = {
-            Text(stringResource(R.string.runtime_virtual_controls_edit_guide_title))
-        },
+        title = { Text(stringResource(R.string.runtime_virtual_controls_edit_guide_title)) },
         text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.runtime_virtual_controls_edit_guide_message))
-                ListItem(
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    headlineContent = {
-                        Text(stringResource(R.string.runtime_virtual_controls_edit_guide_dont_show_again))
-                    },
-                    leadingContent = {
-                        Checkbox(checked = dontShowAgain, onCheckedChange = null)
-                    },
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = runtimeDialogListHeight())
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    stringResource(R.string.layout_editor_guide_gestures),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(stringResource(R.string.layout_editor_guide_move))
+                Text(stringResource(R.string.layout_editor_guide_resize))
+                Text(
+                    stringResource(R.string.layout_editor_guide_tools),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                EditorGuideTool(R.drawable.ic_visibility, R.string.runtime_virtual_controls_show_controls)
+                EditorGuideTool(R.drawable.ic_editor_grid, R.string.layout_editor_grid_size)
+                EditorGuideTool(R.drawable.ic_editor_group_resize, R.string.layout_editor_group_on)
+                EditorGuideTool(R.drawable.ic_editor_snap, R.string.layout_editor_snap_grid)
+                Text(
+                    stringResource(R.string.layout_editor_guide_done),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .toggleable(value = dontShowAgain, role = Role.Checkbox) {
                             dontShowAgain = !dontShowAgain
                         },
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(checked = dontShowAgain, onCheckedChange = null)
+                    Text(stringResource(R.string.runtime_virtual_controls_edit_guide_dont_show_again))
+                }
             }
         },
         confirmButton = {
@@ -729,10 +750,26 @@ private fun LayoutEditGuideDialog(
                 onDismiss()
                 actions.onLayoutEditGuideConfirmed(dontShowAgain)
             }) {
-                Text(stringResource(android.R.string.ok))
+                Text(stringResource(R.string.layout_editor_guide_start))
             }
         },
     )
+}
+
+@Composable
+private fun EditorGuideTool(iconRes: Int, labelRes: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(stringResource(labelRes), style = MaterialTheme.typography.bodyMedium)
+    }
 }
 
 @Composable

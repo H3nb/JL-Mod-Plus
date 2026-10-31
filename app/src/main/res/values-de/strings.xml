@@ -107,9 +107,7 @@
     <string name="pref_vibration_title">Vibration einschalten</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuelle Steuerelemente anzeigen</string>
     <string name="PREF_VK_ALPHA">Deckkraft: </string>
-    <string name="PREF_VK_BACK">Tastenfarbe</string>
     <string name="PREF_VK_FEEDBACK">Haptisches Feedback</string>
-    <string name="PREF_VK_FORE">Farbe von Beschriftungen und Symbolen</string>
     <string name="PREF_VK_HIDE_DELAY">Verzögerung beim Verstecken: </string>
     <string name="pref_vk_hide_hint">deaktiviert</string>
     <string name="PREF_VK_OUTLINE">Umrandungsfarbe</string>
@@ -171,6 +169,8 @@
     <string name="file_picker_current_folder">Aktueller Ordner</string>
     <string name="file_picker_parent_folder">Übergeordneter Ordner</string>
     <string name="file_picker_file">Datei</string>
+    <string name="file_picker_preview_named">Vorschau: %1$s</string>
+    <string name="file_picker_preview_unavailable">Nicht verfügbar</string>
     <string name="file_picker_storage_volume">Speichervolume</string>
     <string name="file_picker_empty">Keine passenden Dateien</string>
     <string name="file_picker_empty_folder">Keine Ordner gefunden</string>
@@ -188,7 +188,13 @@
     <string name="file_picker_folder_exists">Ein Element mit diesem Namen existiert bereits.</string>
     <string name="file_picker_create_folder_failed">Der Ordner konnte nicht erstellt werden.</string>
     <string name="file_picker_selection_unavailable">Das ausgewählte Element ist nicht mehr verfügbar.</string>
-    <string name="layout_edit_done">✓ Fertig</string>
+    <string name="layout_edit_done">Fertig</string>
+    <string name="layout_editor_grid_size">Rastergröße</string>
+    <string name="layout_editor_grid_coarse">Grob (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fein (32)</string>
+    <string name="layout_editor_snap_on">Einrasten an</string>
+    <string name="layout_editor_snap_off">Einrasten aus</string>
     <string name="layout_edit_save_changes">Änderungen an den virtuellen Steuerelementen speichern?</string>
     <string name="layout_edit_discard">Verwerfen</string>
     <string name="layout_edit_continue">Weiter bearbeiten</string>
@@ -347,7 +353,6 @@
     <string name="config_gamepad_diagnosis_no_controller">(kein verbundener Controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Eingabemesswerte werden absichtlich nicht an das MIDlet gesendet.</string>
     <string name="pref_title_emulation">MIDlet-Lebenszyklus</string>
-    <string name="PREF_VK_FORCE_OPACITY">Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig halten</string>
     <string name="pref_vk_save_alert">Vorhandenes benutzerdefiniertes Layout der virtuellen Steuerelemente durch das aktuelle ersetzen?</string>
     <string name="fps_limit_maximum">Maximum</string>
     <string name="remove_screen_preset">Auflösungsvoreinstellung entfernen</string>
@@ -765,14 +770,7 @@
     <string name="config_help_key_mapping">Ordnet Android-Tasten und -Schaltflächen J2ME-Tastenfeldaktionen zu.</string>
     <string name="config_help_vk_button_shape">Legt die Standardform der Tastenfeldtasten fest. Das Steuerkreuz und der Analogstick haben eigene Formen.</string>
     <string name="config_help_vk_feedback">Vibriert bei Betätigung virtueller Steuerelemente, wenn Vibration in den Einstellungen aktiviert ist.</string>
-    <string name="config_help_vk_alpha">Legt die Deckkraft der Steuerelemente fest: 0 = vollständig transparent; 255 = vollständig deckend.</string>
-    <string name="config_help_vk_force_opacity">Macht Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig. Steuerelemente über dem Bildschirm verwenden die konfigurierte Deckkraft.</string>
     <string name="config_help_vk_hide_delay">Blendet Steuerelemente nach dieser Verzögerung aus, wenn sie den MIDlet-Bildschirm überdecken. Auf 0 setzen, um automatisches Ausblenden zu deaktivieren.</string>
-    <string name="config_help_vk_foreground">Legt die Farbe von Beschriftungen und Symbolen auf Tasten der virtuellen Steuerelemente fest.</string>
-    <string name="config_help_vk_background">Legt die Grundfarbe der Tasten der virtuellen Steuerelemente fest.</string>
-    <string name="config_help_vk_selected_foreground">Legt die Farbe von Beschriftungen und Symbolen fest, während eine Taste der virtuellen Steuerelemente gedrückt wird.</string>
-    <string name="config_help_vk_selected_background">Legt die Farbe der Taste fest, während sie gedrückt wird.</string>
-    <string name="config_help_vk_outline">Legt die Umrissfarbe der Tasten der virtuellen Steuerelemente fest.</string>
     <string name="config_help_reset_layout">Stellt das Layout der virtuellen Steuerelemente wieder her, ohne andere MIDlet-Einstellungen zu ändern.</string>
     <string name="config_help_skip_resume">Nach dem ersten erfolgreichen startApp() werden spätere Aufrufe beim Fortsetzen des MIDlets übersprungen. Nur für MIDlets verwenden, die beim Fortsetzen fehlschlagen.</string>
     <string name="config_help_soundbank">Wählt die für die MIDI-Wiedergabe verwendete Soundbank.</string>
@@ -836,10 +834,8 @@
     <string name="config_controller_help_body_compact">Gamepad-Tasten verwenden dieselben Tastenzuordnungen wie Tastaturen und Telefontasten. Die Option Analogstick steuert nur die Richtungsausgabe des Sticks für das MIDlet. Android Zurück behält sein normales Host-Verhalten, und jede physische Taste, die M zugeordnet ist, öffnet das Runtime-MIDlet-Menü.</string>
     <string name="library_metadata_edit_title">Metadaten bearbeiten</string>
     <string name="library_metadata_icon">Symbol</string>
-    <string name="library_metadata_change_icon">Symbol ändern</string>
     <string name="library_metadata_name">Name</string>
     <string name="library_metadata_vendor">Anbieter</string>
-    <string name="library_metadata_description">Beschreibung</string>
     <string name="library_metadata_reset_to_original">Auf Original zurücksetzen</string>
     <string name="library_metadata_save">Speichern</string>
     <string name="library_hide_grid_titles_summary">In der Rasteransicht nur MIDlet-Symbole anzeigen.</string>
@@ -993,7 +989,6 @@
     <string name="bulk_install_skipped_entries">Übersprungene Archiveinträge: %1$d</string>
     <string name="bulk_install_unreadable_archives">Nicht lesbare Archive: %1$d</string>
     <string name="config_virtual_controls_color_preview">Farbvorschau</string>
-    <string name="config_virtual_controls_preview_hint">Tippe, um die Farben im gedrückten Zustand zu sehen. Das Beispiel verwendet die gewählte Deckkraft.</string>
     <string name="config_virtual_controls_preview_normal">Losgelassen</string>
     <string name="config_virtual_controls_preview_pressed">Gedrückt</string>
     <string name="config_warning_filter_shader">Lineare Filterung glättet das Eingangsbild vor der Verarbeitung durch den Bildschirm-Shader und kann die Schärfe des Ergebnisses verringern.</string>
@@ -1082,6 +1077,9 @@
     <string name="config_avoid_camera_cutout_summary">Hält das Spiel vom Bereich der Frontkamera oder des Displayausschnitts fern. Aktivieren, wenn Bedienelemente verdeckt werden.</string>
     <string name="pref_runtime_fullscreen_title">Vollbild</string>
     <string name="pref_runtime_fullscreen_summary">Die Symbolleiste beim Spielen ausblenden. Gilt für alle MIDlets.</string>
+    <string name="pref_show_status_bar_title">Statusleiste anzeigen</string>
+    <string name="pref_show_status_bar_summary">Die Android-Statusleiste beim Spielen anzeigen, um Uhrzeit und Benachrichtigungssymbole zu sehen.</string>
+    <string name="runtime_chrome_update_failed">Die Anzeigeeinstellungen für das Spiel konnten nicht aktualisiert werden. Versuche es erneut.</string>
     <string name="runtime_fullscreen_update_failed">Auf die Vollbildeinstellung konnte nicht zugegriffen werden. Versuche es erneut.</string>
     <string name="midlet_file_permission_title">Speicherzugriff</string>
     <string name="midlet_file_permission_read">Dieses MIDlet möchte Dateien lesen.</string>
@@ -1128,9 +1126,7 @@
     <string name="library_metadata_follows_main">Verwendet das Hauptsymbol</string>
     <string name="library_metadata_change">Ändern</string>
     <string name="library_metadata_remove_portrait">3:4-Symbol entfernen</string>
-    <string name="library_metadata_icon_updated">Symbol aktualisiert</string>
     <string name="library_metadata_discard_title">Änderungen verwerfen?</string>
-    <string name="library_metadata_discard_message">Nicht gespeicherte Textänderungen gehen verloren. Symboländerungen wurden bereits gespeichert.</string>
     <string name="library_metadata_discard">Verwerfen</string>
     <string name="library_metadata_default_description">Standardbeschreibung</string>
     <string name="library_metadata_other_languages">Weitere Sprachen</string>
@@ -1138,6 +1134,20 @@
     <string name="library_metadata_language_search">Sprache suchen oder Gebietsschema eingeben</string>
     <string name="library_metadata_remove_language">Beschreibung entfernen</string>
     <string name="library_metadata_language_load_failed">Sprachbeschreibungen konnten nicht geladen werden. Metadaten erneut öffnen.</string>
+    <string name="layout_editor_group_on">Gruppe gemeinsam skalieren</string>
+    <string name="layout_editor_group_off">Einzeln skalieren</string>
+    <string name="layout_editor_snap_grid">Am Raster ausrichten</string>
+    <string name="layout_editor_snap_controls">An Tasten ausrichten</string>
+    <string name="layout_editor_snap_grid_on">Rasterfang: Ein</string>
+    <string name="layout_editor_snap_grid_off">Rasterfang: Aus</string>
+    <string name="layout_editor_snap_controls_on">Tastenfang: Ein</string>
+    <string name="layout_editor_snap_controls_off">Tastenfang: Aus</string>
+    <string name="layout_editor_guide_gestures">Gesten</string>
+    <string name="layout_editor_guide_move">Ziehe ein Bedienelement, um es zu verschieben.</string>
+    <string name="layout_editor_guide_resize">Ändere die Größe mit zwei Fingern. Bewege sie horizontal oder vertikal, um Breite oder Höhe anzupassen.</string>
+    <string name="layout_editor_guide_tools">Editor-Werkzeuge</string>
+    <string name="layout_editor_guide_done">Tippe auf Fertig, um zu speichern, zu verwerfen oder weiterzubearbeiten.</string>
+    <string name="layout_editor_guide_start">Bearbeitung starten</string>
     <string name="memory_editor_panel_opacity">Deckkraft des Panels</string>
     <string name="memory_editor_panel_opacity_help">Ändert die Deckkraft des Panelhintergrunds. Text und Symbole bleiben deckend.</string>
 </resources>

@@ -50,6 +50,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_START_HANG = "start-hang";
 	public static final String MODE_SHOWN_DURING_START = "shown-during-start";
 	public static final String MODE_PAINT_DURING_START = "paint-during-start";
+	public static final String MODE_LCDUI_CALLBACK_ORDER = "lcdui-callback-order";
 	public static final String MODE_BACKGROUND = "background";
 	public static final String MODE_END_KEY_BACKGROUND = "end-key-background";
 	public static final String MODE_CSI_STYLE_EXIT = "csi-style-exit";
@@ -114,20 +115,45 @@ public final class LifecycleMidlet extends MIDlet {
 				} catch (InterruptedException ignored) {}
 			}
 		}
-		if (MODE_SHOWN_DURING_START.equals(mode) || MODE_PAINT_DURING_START.equals(mode)) {
-			// These two MIDlets characterize the AoE isShown() and Tankzors paint-driven
-			// startup dependencies without embedding either game's implementation.
-			boolean awaitPaint = MODE_PAINT_DURING_START.equals(mode);
+		if (MODE_SHOWN_DURING_START.equals(mode) || MODE_PAINT_DURING_START.equals(mode)
+				|| MODE_LCDUI_CALLBACK_ORDER.equals(mode)) {
+			// Characterize the existing visibility/paint startup requirements and verify
+			// that a newly shown Canvas never receives paint before showNotify returns.
+			boolean verifyOrder = MODE_LCDUI_CALLBACK_ORDER.equals(mode);
+			boolean awaitPaint = MODE_PAINT_DURING_START.equals(mode) || verifyOrder;
+			AtomicBoolean shown = new AtomicBoolean();
 			AtomicBoolean painted = new AtomicBoolean();
+			AtomicBoolean invalidOrder = new AtomicBoolean();
+			AtomicBoolean seriallyDelivered = new AtomicBoolean();
 			Canvas canvas = new Canvas() {
 				@Override
+				protected void showNotify() {
+					shown.set(true);
+				}
+
+				@Override
 				protected void paint(Graphics graphics) {
+					if (verifyOrder && (!shown.get() || !isShown())) {
+						invalidOrder.set(true);
+					}
 					painted.set(true);
 				}
 			};
-			Display.getDisplay(this).setCurrent(canvas);
+			Display display = Display.getDisplay(this);
+			display.setCurrent(canvas);
+			if (verifyOrder) {
+				// Same sequence as Crazy Taxi: the first runnable observes presentation.
+				display.callSerially(() -> {
+					if (!shown.get() || !canvas.isShown()) invalidOrder.set(true);
+					seriallyDelivered.set(true);
+				});
+			}
 			for (int attempt = 0; attempt < 100; attempt++) {
-				if (canvas.isShown() && (!awaitPaint || painted.get())) {
+				if (verifyOrder && invalidOrder.get()) {
+					throw new IllegalStateException("LCDUI callback preceded Canvas show or visible state");
+				}
+				if (canvas.isShown() && (!awaitPaint || painted.get())
+						&& (!verifyOrder || (shown.get() && seriallyDelivered.get()))) {
 					writeMarker(getAppProperty(MARKER_PROPERTY));
 					return;
 				}

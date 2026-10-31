@@ -55,6 +55,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import androidx.appcompat.widget.PopupMenu;
+
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -105,7 +107,8 @@ import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime;
 import io.github.h3nb.jlmodplus.runtime.RuntimeReplacementActivity;
-import io.github.h3nb.jlmodplus.settings.RuntimeFullscreenClient;
+import io.github.h3nb.jlmodplus.settings.RuntimeChromeClient;
+import io.github.h3nb.jlmodplus.settings.RuntimeChromeState;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.crashes.ManualLogCapture;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
@@ -130,7 +133,8 @@ public class MicroActivity extends AppCompatActivity {
 	@Nullable
 	private Runnable pendingTerminalProcessCleanup;
 	private boolean runtimeToolbarEnabled;
-	private RuntimeFullscreenClient fullscreenClient;
+	private boolean showStatusBar;
+	private RuntimeChromeClient chromeClient;
 	private boolean orientationLocked;
 	private MicroLoader microLoader;
 	private boolean pendingMidletLaunch;
@@ -183,8 +187,8 @@ public class MicroActivity extends AppCompatActivity {
 	private SharedPreferences defaultPreferences;
 	private SharedPreferences runtimePreferences;
 	private VirtualKeyboardEditTransaction virtualKeyboardEditTransaction;
-	private EditorDonePlacement.Box layoutEditDonePlacement;
-	private EditorDonePlacement.Box layoutEditDoneEditorBounds;
+	private EditorDonePlacement.Box layoutEditorPanelPlacement;
+	private EditorDonePlacement.Box layoutEditorPanelBounds;
 	private final Runnable virtualKeyboardEditorChromeUpdate =
 			this::refreshVirtualKeyboardEditorChrome;
 	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
@@ -205,6 +209,17 @@ public class MicroActivity extends AppCompatActivity {
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
+		binding.layoutEditShowControls.setOnClickListener(ignored -> showControlsDialog());
+		binding.layoutEditGridSize.setOnClickListener(ignored -> showEditorGridSizeMenu());
+		binding.layoutEditGroupResize.setOnClickListener(ignored -> {
+			VirtualKeyboard keyboard = ContextHolder.getVk();
+			if (keyboard == null || !isVirtualKeyboardLayoutEditing()) return;
+			boolean enabled = !keyboard.isEditorGroupResizeEnabled();
+			keyboard.setEditorGroupResizeEnabled(enabled);
+			binding.setLayoutEditGroupEnabled(enabled);
+			toast(enabled ? R.string.layout_editor_group_on : R.string.layout_editor_group_off);
+		});
+		binding.layoutEditSnap.setOnClickListener(ignored -> showEditorSnapMenu());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
 		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (view, insets) -> {
 			lastWindowInsets = insets;
@@ -229,22 +244,25 @@ public class MicroActivity extends AppCompatActivity {
 		runtimePreferences = RuntimeUiPreferences.get(this);
 		sp.registerOnSharedPreferenceChangeListener(canvasThemeListener);
 		runtimeToolbarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
+		showStatusBar = sp.getBoolean(PREF_STATUSBAR, false);
 
-		fullscreenClient = new RuntimeFullscreenClient(this, new RuntimeFullscreenClient.Listener() {
+		chromeClient = new RuntimeChromeClient(this, new RuntimeChromeClient.Listener() {
 			@Override
-			public void onFullscreenChanged(boolean fullscreen) {
-				if (runtimeToolbarEnabled == !fullscreen) return;
-				runtimeToolbarEnabled = !fullscreen;
+			public void onChromeChanged(@NonNull RuntimeChromeState state) {
+				boolean toolbarEnabled = !state.getFullscreen();
+				if (runtimeToolbarEnabled == toolbarEnabled && showStatusBar == state.getShowStatusBar()) return;
+				runtimeToolbarEnabled = toolbarEnabled;
+				showStatusBar = state.getShowStatusBar();
 				refreshRuntimeChrome();
 			}
 
 			@Override
-			public void onFullscreenError(@NonNull Exception failure) {
-				Log.w("MicroActivity", "Could not update runtime fullscreen preference", failure);
-				toast(R.string.runtime_fullscreen_update_failed);
+			public void onChromeError(@NonNull Exception failure) {
+				Log.w("MicroActivity", "Could not update runtime chrome preferences", failure);
+				toast(R.string.runtime_chrome_update_failed);
 			}
 		});
-		fullscreenClient.start();
+		chromeClient.start();
 		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
@@ -494,7 +512,7 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onToggleFullscreen() {
-						if (fullscreenClient != null) fullscreenClient.setFullscreen(runtimeToolbarEnabled);
+						if (chromeClient != null) chromeClient.setFullscreen(runtimeToolbarEnabled);
 					}
 
 					@Override
@@ -711,7 +729,7 @@ public class MicroActivity extends AppCompatActivity {
 		// A failed load can leave a loader without a profile while its host error dialog is open.
 		ProfileModel profile = microLoader == null ? null : microLoader.getProfile();
 		return GuestWindowPolicy.resolve(displayable instanceof Canvas, !runtimeToolbarEnabled,
-				profile != null && profile.allowDisplayCutout);
+				showStatusBar, profile != null && profile.allowDisplayCutout);
 	}
 
 	private int getRuntimeToolbarHeight(GuestWindowPolicy.Chrome chrome) {
@@ -845,7 +863,6 @@ public class MicroActivity extends AppCompatActivity {
 		// Returning to the runtime must apply the current cutout policy even when
 		// fullscreen did not change and no system-bar callback is dispatched.
 		refreshRuntimeChrome();
-		ViewCompat.requestApplyInsets(binding.getRoot());
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostResumed();
 		}
@@ -915,9 +932,9 @@ public class MicroActivity extends AppCompatActivity {
 				defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 				defaultPreferences = null;
 			}
-			if (fullscreenClient != null) {
-				fullscreenClient.close();
-				fullscreenClient = null;
+			if (chromeClient != null) {
+				chromeClient.close();
+				chromeClient = null;
 			}
 			runtimePreferences = null;
 			if (memoryEditorController != null) {
@@ -1218,6 +1235,7 @@ public class MicroActivity extends AppCompatActivity {
 		GuestWindowPolicy.Chrome chrome = getRuntimeChrome(current);
 		applySystemUi(chrome, current);
 		updateRuntimeMenuState(current);
+		ViewCompat.requestApplyInsets(binding.getRoot());
 	}
 
 	private void configureDisplayCutoutWindow() {
@@ -1255,7 +1273,9 @@ public class MicroActivity extends AppCompatActivity {
 				: lastWindowInsets.getDisplayCutout().getWaterfallInsets();
 		Insets physical = Insets.max(cutout, waterfall);
 		Insets caption = lastWindowInsets.getInsets(WindowInsetsCompat.Type.captionBar());
-		Insets bars = chrome.canvas ? caption : Insets.max(caption,
+		Insets statusBar = chrome.statusBarVisible
+				? lastWindowInsets.getInsets(WindowInsetsCompat.Type.statusBars()) : Insets.NONE;
+		Insets bars = chrome.canvas ? Insets.max(caption, statusBar) : Insets.max(caption,
 				lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars()));
 		// The toolbar background occupies the cutout area. Only its contents avoid
 		// intersecting cutout rectangles; a notch must not become an extra top row.
@@ -1568,8 +1588,11 @@ public class MicroActivity extends AppCompatActivity {
 		if (virtualKeyboardEditTransaction == null) {
 			virtualKeyboardEditTransaction =
 					new VirtualKeyboardEditTransaction(vk.captureLayoutEditState());
-			layoutEditDonePlacement = null;
-			layoutEditDoneEditorBounds = null;
+			layoutEditorPanelPlacement = null;
+			layoutEditorPanelBounds = null;
+			vk.resetLayoutEditorTools();
+			binding.setLayoutEditSnapEnabled(vk.isEditorSnapGridEnabled() || vk.isEditorSnapControlsEnabled());
+			binding.setLayoutEditGroupEnabled(vk.isEditorGroupResizeEnabled());
 		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
 		updateRuntimeMenuState(current);
@@ -1599,7 +1622,7 @@ public class MicroActivity extends AppCompatActivity {
 			transaction.continueEditing();
 			return;
 		}
-		hideVirtualKeyboardEditorDone();
+		hideVirtualKeyboardEditorPanel();
 		runtimeMenuController.showFinishVirtualKeyboardEdit(
 				resolveRuntimePresetUpdateTarget());
 	}
@@ -1656,9 +1679,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void clearVirtualKeyboardEditTransaction() {
 		virtualKeyboardEditTransaction = null;
-		layoutEditDonePlacement = null;
-		layoutEditDoneEditorBounds = null;
-		hideVirtualKeyboardEditorDone();
+		layoutEditorPanelPlacement = null;
+		layoutEditorPanelBounds = null;
+		hideVirtualKeyboardEditorPanel();
 	}
 
 	private void scheduleVirtualKeyboardEditorChromeUpdate() {
@@ -1673,7 +1696,7 @@ public class MicroActivity extends AppCompatActivity {
 						virtualKeyboardEditTransaction.isFinishPending()) ||
 				isRuntimeMenuVisible() ||
 				!(current instanceof Canvas)) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 		VirtualKeyboard vk = ContextHolder.getVk();
@@ -1681,14 +1704,14 @@ public class MicroActivity extends AppCompatActivity {
 		View root = binding.getRoot();
 		if (vk == null || anchor == null || !anchor.isLaidOut() || !root.isLaidOut() ||
 				vk.isLayoutManipulationActive()) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
 		RectF localEditorBounds = vk.getLayoutEditBounds();
 		if (localEditorBounds == null || localEditorBounds.width() <= 0.0f ||
 				localEditorBounds.height() <= 0.0f) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
@@ -1703,18 +1726,18 @@ public class MicroActivity extends AppCompatActivity {
 		editorBounds.offset(offsetX, offsetY);
 		if (!editorBounds.intersect(0.0f, 0.0f, root.getWidth(), root.getHeight()) ||
 				editorBounds.width() <= 0.0f || editorBounds.height() <= 0.0f) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
 		EditorDonePlacement.Box usable = toPlacementBox(editorBounds);
-		if (layoutEditDoneEditorBounds != null &&
-				(Math.abs(layoutEditDoneEditorBounds.width() - usable.width()) > 0.5f ||
-						Math.abs(layoutEditDoneEditorBounds.height() - usable.height()) > 0.5f)) {
+		if (layoutEditorPanelBounds != null &&
+				(Math.abs(layoutEditorPanelBounds.width() - usable.width()) > 0.5f ||
+						Math.abs(layoutEditorPanelBounds.height() - usable.height()) > 0.5f)) {
 			// Orientation/viewport-size changes get a fresh spatial choice; semantic baseline stays.
-			layoutEditDonePlacement = null;
+			layoutEditorPanelPlacement = null;
 		}
-		layoutEditDoneEditorBounds = usable;
+		layoutEditorPanelBounds = usable;
 
 		List<EditorDonePlacement.Box> obstacles = new ArrayList<>();
 		for (RectF localControl : vk.getVisibleLayoutControlBounds()) {
@@ -1723,39 +1746,39 @@ public class MicroActivity extends AppCompatActivity {
 			obstacles.add(toPlacementBox(control));
 		}
 
-		View done = binding.layoutEditDone;
-		done.measure(
+		View panel = binding.layoutEditPanel;
+		panel.measure(
 				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
 				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-		float desiredWidth = Math.max(done.getMeasuredWidth(), dpToPx(80));
-		float desiredHeight = Math.max(done.getMeasuredHeight(), dpToPx(48));
+		float desiredWidth = Math.max(panel.getMeasuredWidth(), dpToPx(200));
+		float desiredHeight = Math.max(panel.getMeasuredHeight(), dpToPx(105));
 		EditorDonePlacement.Box placement = EditorDonePlacement.place(
 				usable,
 				desiredWidth,
 				desiredHeight,
 				dpToPx(10),
 				obstacles,
-				layoutEditDonePlacement);
+				layoutEditorPanelPlacement);
 		if (placement == null) {
-			hideVirtualKeyboardEditorDone();
+			hideVirtualKeyboardEditorPanel();
 			return;
 		}
 
-		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) done.getLayoutParams();
+		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) panel.getLayoutParams();
 		params.width = Math.max(1, Math.round(placement.width()));
 		params.height = Math.max(1, Math.round(placement.height()));
-		done.setLayoutParams(params);
-		done.setX(placement.left);
-		done.setY(placement.top);
-		done.setEnabled(true);
-		done.setVisibility(View.VISIBLE);
-		layoutEditDonePlacement = placement;
+		panel.setLayoutParams(params);
+		panel.setX(placement.left);
+		panel.setY(placement.top);
+		panel.setEnabled(true);
+		panel.setVisibility(View.VISIBLE);
+		layoutEditorPanelPlacement = placement;
 	}
 
-	private void hideVirtualKeyboardEditorDone() {
+	private void hideVirtualKeyboardEditorPanel() {
 		if (binding == null) return;
-		binding.layoutEditDone.setEnabled(false);
-		binding.layoutEditDone.setVisibility(View.GONE);
+		binding.layoutEditPanel.setEnabled(false);
+		binding.layoutEditPanel.setVisibility(View.GONE);
 	}
 
 	private EditorDonePlacement.Box toPlacementBox(RectF rect) {
@@ -1811,6 +1834,58 @@ public class MicroActivity extends AppCompatActivity {
 				}
 			});
 		}, "JLP-save-runtime-log").start();
+	}
+
+	private void showEditorSnapMenu() {
+		VirtualKeyboard keyboard = ContextHolder.getVk();
+		if (keyboard == null || !isVirtualKeyboardLayoutEditing()) return;
+		PopupMenu menu = new PopupMenu(this, binding.layoutEditSnap);
+		menu.getMenu().add(0, 1, 0, R.string.layout_editor_snap_grid)
+				.setCheckable(true).setChecked(keyboard.isEditorSnapGridEnabled());
+		menu.getMenu().add(0, 2, 1, R.string.layout_editor_snap_controls)
+				.setCheckable(true).setChecked(keyboard.isEditorSnapControlsEnabled());
+		menu.setOnMenuItemClickListener(item -> {
+			if (item.getItemId() == 1) {
+				boolean enabled = !keyboard.isEditorSnapGridEnabled();
+				keyboard.setEditorSnapGridEnabled(enabled);
+				toast(enabled ? R.string.layout_editor_snap_grid_on : R.string.layout_editor_snap_grid_off);
+			} else if (item.getItemId() == 2) {
+				boolean enabled = !keyboard.isEditorSnapControlsEnabled();
+				keyboard.setEditorSnapControlsEnabled(enabled);
+				toast(enabled ? R.string.layout_editor_snap_controls_on : R.string.layout_editor_snap_controls_off);
+			} else {
+				return false;
+			}
+			binding.setLayoutEditSnapEnabled(
+					keyboard.isEditorSnapGridEnabled() || keyboard.isEditorSnapControlsEnabled());
+			return true;
+		});
+		menu.show();
+	}
+
+	private void showEditorGridSizeMenu() {
+		VirtualKeyboard keyboard = ContextHolder.getVk();
+		if (keyboard == null || !isVirtualKeyboardLayoutEditing()) return;
+		PopupMenu menu = new PopupMenu(this, binding.layoutEditGridSize);
+		int[] sizes = {
+				VirtualKeyboard.EDITOR_GRID_COARSE,
+				VirtualKeyboard.EDITOR_GRID_NORMAL,
+				VirtualKeyboard.EDITOR_GRID_FINE
+		};
+		int[] labels = {
+				R.string.layout_editor_grid_coarse,
+				R.string.layout_editor_grid_normal,
+				R.string.layout_editor_grid_fine
+		};
+		for (int i = 0; i < sizes.length; i++) {
+			menu.getMenu().add(0, sizes[i], i, labels[i])
+					.setCheckable(true).setChecked(keyboard.getEditorGridDivisions() == sizes[i]);
+		}
+		menu.setOnMenuItemClickListener(item -> {
+			keyboard.setEditorGridDivisions(item.getItemId());
+			return true;
+		});
+		menu.show();
 	}
 
 	private void showControlsDialog() {
@@ -2041,31 +2116,45 @@ public class MicroActivity extends AppCompatActivity {
 			if (!ownsDisplayRequest(requestGeneration)) {
 				return;
 			}
-			closeOptionsMenu();
-			if (controllerInputRouter != null) {
-				controllerInputRouter.onTargetChanged();
-			}
-			Displayable previous = presentedDisplayable;
-			boolean replaceMountedView = previous != next;
-			if (replaceMountedView) {
-				if (previous != null) {
-					previous.clearDisplayableView();
+			boolean mounted = false;
+			try {
+				closeOptionsMenu();
+				if (controllerInputRouter != null) {
+					controllerInputRouter.onTargetChanged();
 				}
-				binding.displayableContainer.removeAllViews();
+				Displayable previous = presentedDisplayable;
+				boolean replaceMountedView = previous != next;
+				if (replaceMountedView) {
+					if (previous != null) {
+						previous.clearDisplayableView();
+					}
+					binding.displayableContainer.removeAllViews();
+				}
+				GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
+				applySystemUi(chrome, next);
+				configureDisplayCutoutWindow();
+				updateRuntimeMenuState(next);
+				applyGuestInsets(next);
+				if (replaceMountedView && next != null) {
+					binding.displayableContainer.addView(next.getDisplayableView());
+				}
+				presentedDisplayable = next;
+				Display display = Display.getDisplay(null);
+				if (display != null) display.onHostPresented(next, requestGeneration);
+				refreshRuntimeBackground();
+				// onResume may precede the first mounted guest; resolve its insets when attached.
+				ViewCompat.requestApplyInsets(binding.getRoot());
+				binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
+				mounted = true;
+				if (display != null) display.onHostMounted(next, requestGeneration, MicroActivity.this);
+			} finally {
+				if (!mounted) {
+					Display display = Display.getDisplay(null);
+					if (display != null) {
+						display.onHostMountFailed(next, requestGeneration, MicroActivity.this);
+					}
+				}
 			}
-			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
-			applySystemUi(chrome, next);
-			configureDisplayCutoutWindow();
-			updateRuntimeMenuState(next);
-			applyGuestInsets(next);
-			if (replaceMountedView && next != null) {
-				binding.displayableContainer.addView(next.getDisplayableView());
-			}
-			presentedDisplayable = next;
-			refreshRuntimeBackground();
-			// onResume may precede the first mounted guest; resolve its insets when attached.
-			ViewCompat.requestApplyInsets(binding.getRoot());
-			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}
 	}
 }

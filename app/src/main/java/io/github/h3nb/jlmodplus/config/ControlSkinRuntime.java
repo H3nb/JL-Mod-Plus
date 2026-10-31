@@ -3,6 +3,8 @@ package io.github.h3nb.jlmodplus.config;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
+import io.github.h3nb.jlmodplus.util.SvgRasterizer;
+import java.io.IOException;
 import androidx.annotation.Nullable;
 import java.io.File;
 import java.util.Map;
@@ -44,11 +46,16 @@ public final class ControlSkinRuntime {
 
     private static final class Asset {
         final File file;
+        final boolean vector;
         final int sourceWidth, sourceHeight;
         final int targetWidth, targetHeight;
 
         Asset(File file, int width, int height, int maxSide) {
+            this(file, width, height, maxSide, false);
+        }
+        Asset(File file, int width, int height, int maxSide, boolean isVector) {
             this.file = file;
+            vector = isVector;
             sourceWidth = width;
             sourceHeight = height;
             float scale = Math.min(1f, maxSide / (float) Math.max(width, height));
@@ -156,6 +163,13 @@ public final class ControlSkinRuntime {
         File file = ControlSkinStore.asset(folder, stem);
         if (file == null || file.length() > MAX_SOURCE_BYTES) return null;
         try {
+            if (SvgRasterizer.isSvg(file)) {
+                SvgRasterizer.Document vector = SvgRasterizer.read(file);
+                float ratio = vector.aspectRatio();
+                int width = ratio >= 1f ? 1024 : Math.max(1, Math.round(1024f * ratio));
+                int height = ratio < 1f ? 1024 : Math.max(1, Math.round(1024f / ratio));
+                return new Asset(file, width, height, maxSide, true);
+            }
             BitmapFactory.Options bounds = new BitmapFactory.Options();
             bounds.inJustDecodeBounds = true;
             BitmapFactory.decodeFile(file.getAbsolutePath(), bounds);
@@ -164,7 +178,7 @@ public final class ControlSkinRuntime {
                 return null;
             }
             return new Asset(file, bounds.outWidth, bounds.outHeight, maxSide);
-        } catch (RuntimeException failure) {
+        } catch (IOException | RuntimeException failure) {
             Log.w(TAG, "Invalid control skin image: " + file.getName(), failure);
             return null;
         }
@@ -191,6 +205,14 @@ public final class ControlSkinRuntime {
     }
 
     @Nullable private static Bitmap decode(Asset asset, float quality) {
+        if (asset.vector) {
+            try {
+                return SvgRasterizer.read(asset.file).renderWithin(asset.width(quality), asset.height(quality));
+            } catch (IOException | RuntimeException failure) {
+                Log.w(TAG, "Undecodable SVG control skin: " + asset.file.getName(), failure);
+                return null;
+            }
+        }
         int requestedSide = Math.max(asset.width(quality), asset.height(quality));
         int originalSide = Math.max(asset.sourceWidth, asset.sourceHeight);
         int sample = 1;

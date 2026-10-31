@@ -52,9 +52,7 @@
     <string name="PREF_TOUCH_INPUT">Introducere prin atingere</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Afișează comenzile virtuale</string>
     <string name="PREF_VK_ALPHA">Opacitate</string>
-    <string name="PREF_VK_BACK">Culoarea butoanelor</string>
     <string name="PREF_VK_FEEDBACK">Feedback haptic</string>
-    <string name="PREF_VK_FORE">Culoarea etichetelor și simbolurilor</string>
     <string name="PREF_VK_HIDE_DELAY">Întârziere la ascunderea automată</string>
     <string name="PREF_VK_OUTLINE">Culoarea conturului</string>
     <string name="PREF_VK_SEL_BACK">Culoarea butoanelor apăsate</string>
@@ -137,6 +135,8 @@
     <string name="file_picker_empty">Niciun fișier corespunzător</string>
     <string name="file_picker_empty_folder">Nu s-au găsit dosare</string>
     <string name="file_picker_file">Fișier</string>
+    <string name="file_picker_preview_named">Previzualizare: %1$s</string>
+    <string name="file_picker_preview_unavailable">Indisponibile</string>
     <string name="file_picker_folder_exists">Există deja un element cu acest nume.</string>
     <string name="file_picker_folder_name">Numele dosarului</string>
     <string name="file_picker_grant_access">Permite accesul</string>
@@ -243,8 +243,6 @@
     <string name="library_indexing_progress">Se indexează biblioteca… %1$d/%2$d</string>
     <string name="library_load_error_title">Bibliotecă indisponibilă</string>
     <string name="library_load_failed_message">Biblioteca nu a putut fi încărcată. Încearcă din nou.</string>
-    <string name="library_metadata_change_icon">Schimbă pictograma</string>
-    <string name="library_metadata_description">Descriere</string>
     <string name="library_metadata_edit_title">Editează metadatele</string>
     <string name="library_metadata_icon">Pictogramă</string>
     <string name="library_metadata_name">Nume</string>
@@ -483,16 +481,9 @@
     <string name="config_help_timing_unavailable">Setările de timp nu sunt disponibile pentru această instalare a MIDletului. Reinstalați sau reconvertiți MIDletul pentru a le activa.</string>
     <string name="config_help_touch_input">Permite MIDletului să primească intrări de indicator de pe ecranul tactil.</string>
     <string name="config_help_virtual_keyboard">Afișează comenzi pe ecran pentru acest MIDlet.</string>
-    <string name="config_help_vk_alpha">Setează opacitatea comenzilor: 0 = complet transparente; 255 = complet opace.</string>
-    <string name="config_help_vk_background">Setează culoarea de bază a butoanelor comenzilor virtuale.</string>
     <string name="config_help_vk_button_shape">Setează forma implicită a butoanelor tastaturii. Padul direcțional și stickul analogic au forme proprii.</string>
     <string name="config_help_vk_feedback">Vibrează la apăsarea comenzilor virtuale când vibrațiile sunt activate în Setări.</string>
-    <string name="config_help_vk_force_opacity">Face opace comenzile din afara ecranului MIDletului. Comenzile de deasupra ecranului folosesc opacitatea configurată.</string>
-    <string name="config_help_vk_foreground">Setează culoarea etichetelor și simbolurilor de pe butoanele comenzilor virtuale.</string>
     <string name="config_help_vk_hide_delay">Ascunde comenzile după această întârziere când acoperă ecranul MIDletului. Setați 0 pentru a dezactiva ascunderea automată.</string>
-    <string name="config_help_vk_outline">Setează culoarea conturului butoanelor comenzilor virtuale.</string>
-    <string name="config_help_vk_selected_background">Setează culoarea butonului în timpul apăsării.</string>
-    <string name="config_help_vk_selected_foreground">Setează culoarea etichetelor și simbolurilor în timpul apăsării unui buton al comenzilor virtuale.</string>
     <string name="config_increase_value">Măriți valoarea</string>
     <string name="config_lock_custom_resolution_ratio">Blocați raportul de aspect</string>
     <string name="config_maintenance">Resetare și date</string>
@@ -509,13 +500,18 @@
     <string name="config_timing_mode_full_guest">Timp de emulare</string>
     <string name="config_timing_mode_real_wall">Timp de sistem</string>
     <string name="config_virtual_controls_color_preview">Previzualizarea culorilor</string>
-    <string name="config_virtual_controls_preview_hint">Atingeți pentru a previzualiza culorile la apăsare. Exemplul folosește opacitatea selectată.</string>
     <string name="config_virtual_controls_preview_normal">Eliberat</string>
     <string name="config_virtual_controls_preview_pressed">Apăsat</string>
     <string name="config_warning_filter_shader">Filtrarea liniară netezește imaginea de intrare înainte de procesarea cu shaderul ecranului și poate reduce claritatea rezultatului.</string>
     <string name="layout_edit_continue">Continuați editarea</string>
     <string name="layout_edit_discard">Renunțați</string>
-    <string name="layout_edit_done">✓ Gata</string>
+    <string name="layout_edit_done">Gata</string>
+    <string name="layout_editor_grid_size">Dimensiunea grilei</string>
+    <string name="layout_editor_grid_coarse">Mare (16)</string>
+    <string name="layout_editor_grid_normal">Normală (24)</string>
+    <string name="layout_editor_grid_fine">Fină (32)</string>
+    <string name="layout_editor_snap_on">Aliniere activată</string>
+    <string name="layout_editor_snap_off">Aliniere dezactivată</string>
     <string name="layout_edit_save_changes">Salvați modificările comenzilor virtuale?</string>
     <string name="mapping_dialog_add_input">Puteți atribui mai multe intrări fizice.</string>
     <string name="mapping_dialog_assigned_inputs">Intrări atribuite</string>
@@ -933,7 +929,6 @@
     <string name="PREF_SHADER_FILTER">Shader pentru ecran</string>
     <string name="PREF_TIMING_MODE">Sursa timpului</string>
     <string name="PREF_UNIT_MS">ms</string>
-    <string name="PREF_VK_FORCE_OPACITY">Menține opace comenzile din afara ecranului MIDletului</string>
     <string name="fps_limit_maximum">Maxim</string>
     <string name="identity_filter">Niciunul (cel mai rapid)</string>
     <string name="invalid_resolution_not_saved">Rezoluție nevalidă. Modificările nu au fost salvate.</string>
@@ -1114,6 +1109,9 @@
     <string name="config_avoid_camera_cutout_summary">Ține jocul departe de camera frontală sau de decupajul ecranului. Activează dacă comenzile sunt acoperite.</string>
     <string name="pref_runtime_fullscreen_title">Ecran complet</string>
     <string name="pref_runtime_fullscreen_summary">Ascunde bara de instrumente în timpul jocului. Se aplică tuturor MIDlet-urilor.</string>
+    <string name="pref_show_status_bar_title">Afișează bara de stare</string>
+    <string name="pref_show_status_bar_summary">Menține bara de stare Android vizibilă în timpul jocului pentru a vedea ora și pictogramele notificărilor.</string>
+    <string name="runtime_chrome_update_failed">Setările de afișare ale jocului nu au putut fi actualizate. Încearcă din nou.</string>
     <string name="runtime_fullscreen_update_failed">Nu s-a putut accesa setarea pentru ecran complet. Încearcă din nou.</string>
     <string name="midlet_file_permission_title">Acces la stocare</string>
     <string name="midlet_file_permission_read">Acest MIDlet dorește să citească fișiere.</string>
@@ -1160,9 +1158,7 @@
     <string name="library_metadata_follows_main">Folosește pictograma principală</string>
     <string name="library_metadata_change">Schimbă</string>
     <string name="library_metadata_remove_portrait">Elimină pictograma 3:4</string>
-    <string name="library_metadata_icon_updated">Pictogramă actualizată</string>
     <string name="library_metadata_discard_title">Renunțați la modificări?</string>
-    <string name="library_metadata_discard_message">Modificările textului nesalvate se vor pierde. Modificările pictogramei au fost deja salvate.</string>
     <string name="library_metadata_discard">Renunță</string>
     <string name="library_metadata_default_description">Descriere implicită</string>
     <string name="library_metadata_other_languages">Alte limbi</string>
@@ -1170,6 +1166,20 @@
     <string name="library_metadata_language_search">Caută o limbă sau introdu un cod</string>
     <string name="library_metadata_remove_language">Elimină descrierea</string>
     <string name="library_metadata_language_load_failed">Descrierile nu au putut fi încărcate. Redeschide editarea metadatelor.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Opacitatea panoului</string>
     <string name="memory_editor_panel_opacity_help">Ajustează fundalul panoului fără a estompa textul sau pictogramele.</string>
 </resources>

@@ -100,10 +100,7 @@
     <string name="pref_vibration_title">Bật rung động</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Hiện điều khiển ảo</string>
     <string name="PREF_VK_ALPHA">Độ đục</string>
-    <string name="PREF_VK_BACK">Màu nút</string>
     <string name="PREF_VK_FEEDBACK">Phản hồi xúc giác</string>
-    <string name="PREF_VK_FORCE_OPACITY">Giữ điều khiển ngoài màn hình MIDlet không trong suốt</string>
-    <string name="PREF_VK_FORE">Màu nhãn và ký hiệu</string>
     <string name="PREF_VK_HIDE_DELAY">Độ trễ tự ẩn</string>
     <string name="pref_vk_hide_hint">Tắt</string>
     <string name="PREF_VK_OUTLINE">Màu đường viền</string>
@@ -187,6 +184,8 @@
     <string name="file_picker_empty">Không có tệp phù hợp</string>
     <string name="file_picker_empty_folder">Không tìm thấy thư mục</string>
     <string name="file_picker_file">Tệp</string>
+    <string name="file_picker_preview_named">Xem trước: %1$s</string>
+    <string name="file_picker_preview_unavailable">Không khả dụng</string>
     <string name="file_picker_folder_exists">Đã có mục có tên này.</string>
     <string name="file_picker_folder_name">Tên thư mục</string>
     <string name="file_picker_grant_access">Cấp quyền truy cập</string>
@@ -293,8 +292,6 @@
     <string name="library_indexing_progress">Đang lập chỉ mục thư viện… %1$d/%2$d</string>
     <string name="library_load_error_title">Thư viện không khả dụng</string>
     <string name="library_load_failed_message">Không thể tải thư viện. Hãy thử lại.</string>
-    <string name="library_metadata_change_icon">Đổi biểu tượng</string>
-    <string name="library_metadata_description">Mô tả</string>
     <string name="library_metadata_edit_title">Chỉnh sửa siêu dữ liệu</string>
     <string name="library_metadata_icon">Biểu tượng</string>
     <string name="library_metadata_name">Tên</string>
@@ -523,16 +520,9 @@
     <string name="config_help_timing_unavailable">Không có cài đặt thời gian cho bản cài đặt MIDlet này. Cài đặt lại hoặc chuyển đổi lại MIDlet để bật chúng.</string>
     <string name="config_help_touch_input">Cho phép MIDlet nhận đầu vào con trỏ từ màn hình cảm ứng.</string>
     <string name="config_help_virtual_keyboard">Hiển thị điều khiển trên màn hình cho MIDlet này.</string>
-    <string name="config_help_vk_alpha">Đặt độ mờ đục của điều khiển: 0 = hoàn toàn trong suốt; 255 = hoàn toàn đục.</string>
-    <string name="config_help_vk_background">Đặt màu nền cơ bản của các nút điều khiển ảo.</string>
     <string name="config_help_vk_button_shape">Thiết lập hình dạng mặc định của các nút bàn phím. Phím điều hướng và cần analog có hình dạng riêng.</string>
     <string name="config_help_vk_feedback">Rung khi nhấn điều khiển ảo nếu đã bật rung trong Cài đặt.</string>
-    <string name="config_help_vk_force_opacity">Làm điều khiển bên ngoài màn hình MIDlet hoàn toàn đục. Điều khiển trên màn hình dùng độ mờ đục đã đặt.</string>
-    <string name="config_help_vk_foreground">Đặt màu nhãn và ký hiệu trên các nút điều khiển ảo.</string>
     <string name="config_help_vk_hide_delay">Ẩn điều khiển sau độ trễ này khi chúng che màn hình MIDlet. Đặt thành 0 để tắt tự động ẩn.</string>
-    <string name="config_help_vk_outline">Đặt màu đường viền của các nút điều khiển ảo.</string>
-    <string name="config_help_vk_selected_background">Đặt màu nút khi đang nhấn.</string>
-    <string name="config_help_vk_selected_foreground">Đặt màu nhãn và ký hiệu khi đang nhấn nút điều khiển ảo.</string>
     <string name="config_increase_value">Tăng giá trị</string>
     <string name="config_lock_custom_resolution_ratio">Khóa tỷ lệ khung hình</string>
     <string name="config_maintenance">Đặt lại và dữ liệu</string>
@@ -549,13 +539,18 @@
     <string name="config_timing_mode_full_guest">Thời gian giả lập</string>
     <string name="config_timing_mode_real_wall">Thời gian hệ thống</string>
     <string name="config_virtual_controls_color_preview">Xem trước màu</string>
-    <string name="config_virtual_controls_preview_hint">Chạm để xem trước màu khi nhấn. Mẫu dùng độ mờ đục đã chọn.</string>
     <string name="config_virtual_controls_preview_normal">Đã thả</string>
     <string name="config_virtual_controls_preview_pressed">Đang nhấn</string>
     <string name="config_warning_filter_shader">Lọc tuyến tính làm mượt đầu vào trước khi bộ đổ bóng màn hình xử lý và có thể làm giảm độ sắc nét của đầu ra.</string>
     <string name="layout_edit_continue">Tiếp tục chỉnh sửa</string>
     <string name="layout_edit_discard">Bỏ thay đổi</string>
-    <string name="layout_edit_done">✓ Xong</string>
+    <string name="layout_edit_done">Xong</string>
+    <string name="layout_editor_grid_size">Kích thước lưới</string>
+    <string name="layout_editor_grid_coarse">Thưa (16)</string>
+    <string name="layout_editor_grid_normal">Bình thường (24)</string>
+    <string name="layout_editor_grid_fine">Dày (32)</string>
+    <string name="layout_editor_snap_on">Bật hút lưới</string>
+    <string name="layout_editor_snap_off">Tắt hút lưới</string>
     <string name="layout_edit_save_changes">Lưu thay đổi điều khiển ảo?</string>
     <string name="mapping_dialog_add_input">Bạn có thể gán nhiều đầu vào vật lý.</string>
     <string name="mapping_dialog_assigned_inputs">Đầu vào đã gán</string>
@@ -1048,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">Giữ nội dung trò chơi tránh xa camera trước hoặc phần khuyết màn hình. Bật nếu các nút điều khiển bị che.</string>
     <string name="pref_runtime_fullscreen_title">Toàn màn hình</string>
     <string name="pref_runtime_fullscreen_summary">Ẩn thanh công cụ khi chơi. Áp dụng cho tất cả MIDlet.</string>
+    <string name="pref_show_status_bar_title">Hiện thanh trạng thái</string>
+    <string name="pref_show_status_bar_summary">Giữ thanh trạng thái Android hiển thị khi chơi để xem giờ và các biểu tượng thông báo.</string>
+    <string name="runtime_chrome_update_failed">Không thể cập nhật cài đặt hiển thị của trò chơi. Hãy thử lại.</string>
     <string name="runtime_fullscreen_update_failed">Không thể truy cập cài đặt toàn màn hình. Hãy thử lại.</string>
     <string name="midlet_file_permission_title">Truy cập bộ nhớ</string>
     <string name="midlet_file_permission_read">MIDlet này muốn đọc tệp.</string>
@@ -1094,9 +1092,7 @@
     <string name="library_metadata_follows_main">Dùng biểu tượng chính</string>
     <string name="library_metadata_change">Thay đổi</string>
     <string name="library_metadata_remove_portrait">Xóa biểu tượng 3:4</string>
-    <string name="library_metadata_icon_updated">Đã cập nhật biểu tượng</string>
     <string name="library_metadata_discard_title">Hủy thay đổi?</string>
-    <string name="library_metadata_discard_message">Các thay đổi văn bản chưa lưu sẽ bị mất. Thay đổi biểu tượng đã được lưu.</string>
     <string name="library_metadata_discard">Hủy</string>
     <string name="library_metadata_default_description">Mô tả mặc định</string>
     <string name="library_metadata_other_languages">Ngôn ngữ khác</string>
@@ -1104,6 +1100,20 @@
     <string name="library_metadata_language_search">Tìm ngôn ngữ hoặc nhập mã vùng</string>
     <string name="library_metadata_remove_language">Xóa mô tả</string>
     <string name="library_metadata_language_load_failed">Không thể tải mô tả. Hãy mở lại phần chỉnh sửa siêu dữ liệu.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Độ mờ đục của bảng</string>
     <string name="memory_editor_panel_opacity_help">Điều chỉnh nền bảng mà không làm mờ chữ hoặc biểu tượng.</string>
 </resources>

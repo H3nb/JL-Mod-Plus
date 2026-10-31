@@ -40,16 +40,32 @@ It opens the release page for manual APK installation; it does not install APKs 
 
 ## Features
 
-JL-Mod Plus includes the features of JL-Mod, with additional features and improvements such as:
+JL-Mod Plus adds game management, flexible controls, and runtime tools to the original JL-Mod.
 
-- Modern Material 3 interface
-- App library with favorites, collections (folders), search, sorting, MIDlet metadata editing, and more
-- Emulation speed control (speedhack)
-- Memory editor
-- Analog input support converted to digital directional input
-- Batch JAR/JAD installation
-- Improved compatibility with modern Android versions
+**Install and organize**
+- [Single and batch installation](docs/guide/installing-midlets.md) from JAR, JAD, KJX, ZIP, or folders, with review before replacing apps
+- [Import and export app bundles](docs/guide/installing-midlets.md#jl-mod-plus-app-bundles-are-different-from-game-collections) for transferring supported settings and saved data
 
+**Library and organization**
+- [Grid and list layouts](docs/guide/library.md#list-or-grid), including 1:1 and 3:4 icon presentations
+- [Collections and metadata editing](docs/guide/library.md), with custom icons and localized descriptions
+- [Reusable profiles](docs/guide/profiles.md) for MIDlet settings and virtual-control layouts
+
+**Controls and appearance**
+- [Screen and virtual-control skins](docs/guide/customization.md), including supported SVG artwork
+- [Create screen skins](docs/guide/creating-screen-skins.md) or [virtual-control skin sets](docs/guide/creating-control-skins.md) with your own artwork
+- Customizable on-screen controls and external gamepad support
+
+**Gameplay and media**
+- [Emulation Speed](docs/guide/emulation-speed.md) from 0.25× to 16× for compatible MIDlets
+- [Memory Editor](docs/guide/memory-editor.md) for finding and changing supported values
+- Performance overlay for selected runtime metrics
+- [MIDI soundbanks, camera, and recording](docs/guide/media.md)
+- Batch MIDlet installation and compatibility improvements for modern Android
+
+## User guide
+
+The [User guide](docs/guide/README.md) explains how features work, what they support, and how to troubleshoot common problems. Guides describe the source branch being viewed; the feature set in a published APK may differ.
 
 ## Getting Started
 
@@ -57,7 +73,7 @@ JL-Mod Plus includes the features of JL-Mod, with additional features and improv
 2. Open the app and import a Java ME application or game (`.jar`, `.jad`, or `.kjx`).
 3. Select the installed application from your library to launch it.
 
-You can customize controls, display settings, and other options for individual games.
+You can customize controls, display settings, and other options for individual games. For installation details, see [Installing MIDlets](docs/guide/installing-midlets.md); for a first-time setup, see [Getting started](docs/guide/getting-started.md).
 
 JL-Mod Plus does not include Java ME games. You will need to provide your own application files.
 
@@ -80,7 +96,7 @@ Whether you write code manually or use AI, please review your changes, follow th
 
 AI-assisted contributions are held to the same quality standards as any other contribution.
 
-For development setup and testing instructions, see [Build and validation](docs/development.md).
+For test design and quality principles, see [Testing strategy](docs/testing.md); for development setup and test commands, see [Build and validation](docs/development.md). For topic-specific guidance and historical records, see the [Documentation map](docs/README.md).
 
 **Using an AI coding agent?** Have it follow [AGENTS.md](AGENTS.md), which contains project-specific instructions for coding agents.
 

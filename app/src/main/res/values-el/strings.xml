@@ -86,6 +86,8 @@
     <string name="file_picker_empty">Δεν υπάρχουν αρχεία που να ταιριάζουν</string>
     <string name="file_picker_empty_folder">Δεν βρέθηκαν φάκελοι</string>
     <string name="file_picker_file">Αρχείο</string>
+    <string name="file_picker_preview_named">Προεπισκόπηση: %1$s</string>
+    <string name="file_picker_preview_unavailable">Μη διαθέσιμο</string>
     <string name="file_picker_folder_exists">Υπάρχει ήδη στοιχείο με αυτό το όνομα.</string>
     <string name="file_picker_folder_name">Όνομα φακέλου</string>
     <string name="file_picker_grant_access">Παραχώρηση πρόσβασης</string>
@@ -192,8 +194,6 @@
     <string name="library_indexing_progress">Δημιουργία ευρετηρίου Βιβλιοθήκης… %1$d/%2$d</string>
     <string name="library_load_error_title">Η Βιβλιοθήκη δεν είναι διαθέσιμη</string>
     <string name="library_load_failed_message">Δεν ήταν δυνατή η φόρτωση της Βιβλιοθήκης. Δοκιμάστε ξανά.</string>
-    <string name="library_metadata_change_icon">Αλλαγή εικονιδίου</string>
-    <string name="library_metadata_description">Περιγραφή</string>
     <string name="library_metadata_edit_title">Επεξεργασία μεταδεδομένων</string>
     <string name="library_metadata_icon">Εικονίδιο</string>
     <string name="library_metadata_name">Όνομα</string>
@@ -427,16 +427,9 @@
     <string name="config_help_timing_unavailable">Οι ρυθμίσεις χρόνου δεν είναι διαθέσιμες για αυτή την εγκατάσταση MIDlet. Εγκαταστήστε ξανά ή μετατρέψτε ξανά το MIDlet για να τις ενεργοποιήσετε.</string>
     <string name="config_help_touch_input">Επιτρέπει στο MIDlet να λαμβάνει είσοδο δείκτη από την οθόνη αφής.</string>
     <string name="config_help_virtual_keyboard">Εμφανίζει χειριστήρια στην οθόνη για αυτό το MIDlet.</string>
-    <string name="config_help_vk_alpha">Ορίζει την αδιαφάνεια των χειριστηρίων: 0 = πλήρως διαφανή· 255 = πλήρως αδιαφανή.</string>
-    <string name="config_help_vk_background">Ορίζει το βασικό χρώμα των κουμπιών των εικονικών χειριστηρίων.</string>
     <string name="config_help_vk_button_shape">Ορίζει το προεπιλεγμένο σχήμα των κουμπιών του πληκτρολογίου. Το D-pad και ο αναλογικός μοχλός έχουν δικά τους σχήματα.</string>
     <string name="config_help_vk_feedback">Δονείται όταν πατάτε εικονικά χειριστήρια, εφόσον η δόνηση είναι ενεργοποιημένη στις Ρυθμίσεις.</string>
-    <string name="config_help_vk_force_opacity">Κάνει αδιαφανή τα χειριστήρια έξω από την οθόνη του MIDlet. Τα χειριστήρια πάνω στην οθόνη χρησιμοποιούν τη ρυθμισμένη αδιαφάνεια.</string>
-    <string name="config_help_vk_foreground">Ορίζει το χρώμα ετικετών και συμβόλων στα κουμπιά των εικονικών χειριστηρίων.</string>
     <string name="config_help_vk_hide_delay">Κρύβει τα χειριστήρια μετά από αυτή την καθυστέρηση όταν καλύπτουν την οθόνη του MIDlet. Ορίστε 0 για απενεργοποίηση της αυτόματης απόκρυψης.</string>
-    <string name="config_help_vk_outline">Ορίζει το χρώμα περιγράμματος των κουμπιών των εικονικών χειριστηρίων.</string>
-    <string name="config_help_vk_selected_background">Ορίζει το χρώμα του κουμπιού όσο είναι πατημένο.</string>
-    <string name="config_help_vk_selected_foreground">Ορίζει το χρώμα ετικετών και συμβόλων όσο ένα κουμπί εικονικού χειριστηρίου είναι πατημένο.</string>
     <string name="config_increase_value">Αύξηση τιμής</string>
     <string name="config_lock_custom_resolution_ratio">Κλείδωμα αναλογιών</string>
     <string name="config_maintenance">Επαναφορά και δεδομένα</string>
@@ -453,13 +446,18 @@
     <string name="config_timing_mode_full_guest">Χρόνος εξομοίωσης</string>
     <string name="config_timing_mode_real_wall">Χρόνος συστήματος</string>
     <string name="config_virtual_controls_color_preview">Προεπισκόπηση χρώματος</string>
-    <string name="config_virtual_controls_preview_hint">Πατήστε για προεπισκόπηση των χρωμάτων κατά το πάτημα. Το δείγμα χρησιμοποιεί την επιλεγμένη αδιαφάνεια.</string>
     <string name="config_virtual_controls_preview_normal">Αφημένο</string>
     <string name="config_virtual_controls_preview_pressed">Πατημένο</string>
     <string name="config_warning_filter_shader">Το γραμμικό φιλτράρισμα εξομαλύνει την είσοδο πριν από την επεξεργασία της από το shader οθόνης και μπορεί να μειώσει την ευκρίνεια του αποτελέσματος.</string>
     <string name="layout_edit_continue">Συνέχιση επεξεργασίας</string>
     <string name="layout_edit_discard">Απόρριψη</string>
-    <string name="layout_edit_done">✓ Τέλος</string>
+    <string name="layout_edit_done">Τέλος</string>
+    <string name="layout_editor_grid_size">Μέγεθος πλέγματος</string>
+    <string name="layout_editor_grid_coarse">Αραιό (16)</string>
+    <string name="layout_editor_grid_normal">Κανονικό (24)</string>
+    <string name="layout_editor_grid_fine">Πυκνό (32)</string>
+    <string name="layout_editor_snap_on">Προσκόλληση ενεργή</string>
+    <string name="layout_editor_snap_off">Προσκόλληση ανενεργή</string>
     <string name="layout_edit_finish">Ολοκλήρωση επεξεργασίας</string>
     <string name="layout_edit_finished">Η επεξεργασία των εικονικών χειριστηρίων ολοκληρώθηκε.</string>
     <string name="layout_edit_save_changes">Να αποθηκευτούν οι αλλαγές στα εικονικά χειριστήρια;</string>
@@ -873,10 +871,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Εμφάνιση εικονικών χειριστηρίων</string>
     <string name="PREF_VK_ALPHA">Αδιαφάνεια</string>
-    <string name="PREF_VK_BACK">Χρώμα κουμπιών</string>
     <string name="PREF_VK_FEEDBACK">Απτική ανάδραση</string>
-    <string name="PREF_VK_FORCE_OPACITY">Διατήρηση αδιαφανών χειριστηρίων εκτός της οθόνης του MIDlet</string>
-    <string name="PREF_VK_FORE">Χρώμα ετικετών και συμβόλων</string>
     <string name="PREF_VK_HIDE_DELAY">Καθυστέρηση αυτόματης απόκρυψης</string>
     <string name="PREF_VK_OUTLINE">Χρώμα περιγράμματος</string>
     <string name="PREF_VK_SEL_BACK">Χρώμα πατημένων κουμπιών</string>
@@ -1080,6 +1075,9 @@
     <string name="config_avoid_camera_cutout_summary">Κρατήστε το παιχνίδι μακριά από την μπροστινή κάμερα ή την εγκοπή της οθόνης. Ενεργοποιήστε αν καλύπτονται τα χειριστήρια.</string>
     <string name="pref_runtime_fullscreen_title">Πλήρης οθόνη</string>
     <string name="pref_runtime_fullscreen_summary">Απόκρυψη της γραμμής εργαλείων κατά το παιχνίδι. Ισχύει για όλα τα MIDlet.</string>
+    <string name="pref_show_status_bar_title">Εμφάνιση γραμμής κατάστασης</string>
+    <string name="pref_show_status_bar_summary">Διατήρηση της γραμμής κατάστασης του Android ορατής κατά το παιχνίδι, για να βλέπετε την ώρα και τα εικονίδια ειδοποιήσεων.</string>
+    <string name="runtime_chrome_update_failed">Δεν ήταν δυνατή η ενημέρωση των ρυθμίσεων εμφάνισης του παιχνιδιού. Δοκιμάστε ξανά.</string>
     <string name="runtime_fullscreen_update_failed">Δεν ήταν δυνατή η πρόσβαση στη ρύθμιση πλήρους οθόνης. Δοκιμάστε ξανά.</string>
     <string name="midlet_file_permission_title">Πρόσβαση στον αποθηκευτικό χώρο</string>
     <string name="midlet_file_permission_read">Αυτό το MIDlet θέλει να διαβάσει αρχεία.</string>
@@ -1126,9 +1124,7 @@
     <string name="library_metadata_follows_main">Χρησιμοποιεί το κύριο εικονίδιο</string>
     <string name="library_metadata_change">Αλλαγή</string>
     <string name="library_metadata_remove_portrait">Αφαίρεση εικονιδίου 3:4</string>
-    <string name="library_metadata_icon_updated">Το εικονίδιο ενημερώθηκε</string>
     <string name="library_metadata_discard_title">Απόρριψη αλλαγών;</string>
-    <string name="library_metadata_discard_message">Οι μη αποθηκευμένες αλλαγές κειμένου θα χαθούν. Οι αλλαγές εικονιδίου έχουν ήδη αποθηκευτεί.</string>
     <string name="library_metadata_discard">Απόρριψη</string>
     <string name="library_metadata_default_description">Προεπιλεγμένη περιγραφή</string>
     <string name="library_metadata_other_languages">Άλλες γλώσσες</string>
@@ -1136,6 +1132,20 @@
     <string name="library_metadata_language_search">Αναζήτηση γλώσσας ή εισαγωγή κωδικού</string>
     <string name="library_metadata_remove_language">Κατάργηση περιγραφής</string>
     <string name="library_metadata_language_load_failed">Αδύνατη η φόρτωση περιγραφών. Ανοίξτε ξανά την επεξεργασία μεταδεδομένων.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Αδιαφάνεια πλαισίου</string>
     <string name="memory_editor_panel_opacity_help">Ρυθμίζει το φόντο του πλαισίου χωρίς να ξεθωριάζει το κείμενο ή τα εικονίδια.</string>
 </resources>

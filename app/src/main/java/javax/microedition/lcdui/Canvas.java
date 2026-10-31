@@ -74,6 +74,7 @@ import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventFilter;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.PointerEvent;
+import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.lcdui.graphics.CanvasView;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.lcdui.graphics.GlesView;
@@ -184,6 +185,14 @@ public abstract class Canvas extends Displayable {
 	private boolean hostVisible;
 	private boolean displayForeground;
 	private boolean surfaceUsable;
+	/** Host readiness does not make the guest visible until showNotify has returned. */
+	private boolean presentationEligible;
+	private long presentationGeneration;
+	private Display.ScreenChange screenChange;
+	/** LCDUI event-thread state; pairs delivered show/hide callbacks. */
+	private boolean notifiedShown;
+	/** Generation of the show actually delivered to the guest, not merely requested. */
+	private long notifiedShowGeneration;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
 	private static Image offscreen;
@@ -727,9 +736,6 @@ public abstract class Canvas extends Displayable {
 
 	public void doShowNotify() {
 		showNotify();
-		if (visible) {
-			scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
-		}
 	}
 
 	public void doHideNotify() {
@@ -742,47 +748,83 @@ public abstract class Canvas extends Displayable {
 	}
 
 	/**
-	 * Reconciles guest visibility from Display ownership and Android host visibility. Surface
-	 * usability is owned by the View callback below; only an effective edge emits a MIDP callback.
+	 * Host ownership and surface readiness request a transition but never invoke guest code.
+	 * A hide revokes effective visibility immediately; a show is published only after its
+	 * serialized showNotify callback finishes.
 	 */
 	void updatePresentationState(boolean currentDisplayable, boolean hostVisible,
 			boolean displayForeground) {
-		boolean nextVisible;
 		boolean changed;
 		synchronized (visibilityLock) {
 			this.currentDisplayable = currentDisplayable;
 			this.hostVisible = hostVisible;
 			this.displayForeground = displayForeground;
-			nextVisible = isPresentationVisible(
-					this.currentDisplayable, this.hostVisible, this.displayForeground, surfaceUsable);
-			changed = visible != nextVisible;
-			if (changed) {
-				setEffectiveVisibilityLocked(nextVisible);
-			}
+			changed = reconcilePresentationLocked();
 		}
-		if (changed) {
-			onEffectiveVisibilityChanged(nextVisible);
+		if (changed) ViewHandler.postEvent(this::updateVideoDisplays);
+	}
+
+	/** Installed before the next eligible show so it cannot land behind callSerially(). */
+	void beginScreenChange(Display.ScreenChange change) {
+		synchronized (visibilityLock) {
+			screenChange = change;
+			if (presentationEligible) change.surfaceReady(presentationGeneration);
 		}
+	}
+
+	void clearScreenChange(Display.ScreenChange change) {
+		synchronized (visibilityLock) {
+			if (screenChange == change) screenChange = null;
+		}
+	}
+
+	/** The existing callback dispatcher owns notification and visibility commit. */
+	void finishScreenChange(long generation) {
+		if (generation != 0L) deliverPresentationTransition(true, generation);
 	}
 
 	private void updateSurfaceUsable(boolean usable) {
-		boolean nextVisible;
 		boolean changed;
 		synchronized (visibilityLock) {
 			surfaceUsable = usable;
-			nextVisible = isPresentationVisible(
-					currentDisplayable, hostVisible, displayForeground, surfaceUsable);
-			changed = visible != nextVisible;
-			if (changed) {
-				setEffectiveVisibilityLocked(nextVisible);
-			}
+			changed = reconcilePresentationLocked();
 		}
-		if (changed) {
-			onEffectiveVisibilityChanged(nextVisible);
-		}
+		if (changed) ViewHandler.postEvent(this::updateVideoDisplays);
+		// Surface callbacks run on Android main. Complete host input cleanup before a
+		// subsequent surfaceCreated can make this Canvas eligible for another show.
+		if (changed && !usable) endHostPresentation();
 	}
 
-	/** Called with visibilityLock held; frame producers never acquire that lock under bufferLock. */
+	/** Called under visibilityLock, possibly while Display owns its state lock. */
+	private boolean reconcilePresentationLocked() {
+		boolean eligible = isPresentationVisible(
+				currentDisplayable, hostVisible, displayForeground, surfaceUsable);
+		if (presentationEligible == eligible) return false;
+		presentationEligible = eligible;
+		long generation = ++presentationGeneration;
+		if (!eligible) {
+			setEffectiveVisibilityLocked(false);
+			if (screenChange != null) screenChange.surfaceUnavailable();
+			// Release guest input ownership at the actual hide edge, before another show
+			// can commit. These operations only enqueue guest callbacks; they never run
+			// guest code under the presentation lock.
+			PointerEvent.cancel(this);
+			guestKeyLedger.endVisibility();
+			// Android-owned controller/overlay state must be cleared on the main looper.
+			ViewHandler.postEvent(this::endHostPresentation);
+		}
+		if (eligible && screenChange != null) {
+			// The host signals the queued transaction directly, not via an event behind it.
+			screenChange.surfaceReady(generation);
+		} else {
+			// Preserve show/hide ordering without invoking guest code under this lock.
+			Display.postSerializedEvent(RunnableEvent.getInstance(
+					() -> deliverPresentationTransition(eligible, generation)).asGuestCallback());
+		}
+		return true;
+	}
+
+	/** Called with visibilityLock held; frame producers never acquire it under bufferLock. */
 	private void setEffectiveVisibilityLocked(boolean shown) {
 		synchronized (bufferLock) {
 			FrameMetrics metrics = rendererFrameMetrics;
@@ -794,19 +836,65 @@ public abstract class Canvas extends Displayable {
 		}
 	}
 
-	private void onEffectiveVisibilityChanged(boolean shown) {
-		ViewHandler.postEvent(this::updateVideoDisplays);
-		if (shown) {
+	/** Android-main cleanup; called directly at host edges or by a deferred guest hide. */
+	void endHostPresentation() {
+		synchronized (visibilityLock) {
+			// A delayed cleanup must not discard controller input from the next interval.
+			// Guest pointer/key ownership was already cancelled at the hide edge.
+			if (visible) return;
+			resetControllerBoundaryState();
+			cancelAmbientHostTick();
+		}
+	}
+
+	/** Executed on MIDletEventQueue, without holding any host or presentation lock. */
+	private void deliverPresentationTransition(boolean show, long generation) {
+		if (show) {
+			synchronized (visibilityLock) {
+				// A superseded show never reached the guest; no hide is owed for it.
+				if (!presentationEligible || generation != presentationGeneration || notifiedShown) {
+					return;
+				}
+				notifiedShown = true;
+				notifiedShowGeneration = generation;
+			}
 			guestKeyLedger.resetForShow();
-			Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.SHOW_NOTIFY));
-			repaintInternal();
+			int widthBeforeShow = width;
+			int heightBeforeShow = height;
+			try {
+				doShowNotify();
+			} catch (Exception e) {
+				Log.e(TAG, "showNotify: ", e);
+			}
+			boolean publish;
+			synchronized (visibilityLock) {
+				publish = presentationEligible && generation == presentationGeneration;
+				if (publish) {
+					// A game may call setFullScreenMode() from showNotify(). It changes
+					// geometry while still hidden; deliver the size event after show.
+					if (width != widthBeforeShow || height != heightBeforeShow) {
+						Display.postEvent(CanvasEvent.getInstance(
+								this, CanvasEvent.SIZE_CHANGED, width, height));
+					}
+					setEffectiveVisibilityLocked(true);
+				}
+			}
+			if (publish) {
+				scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
+				repaintInternal();
+				ViewHandler.postEvent(this::updateVideoDisplays);
+			}
 			return;
 		}
-		PointerEvent.cancel(this);
-		guestKeyLedger.endVisibility();
-		resetControllerBoundaryState();
-		cancelAmbientHostTick();
-		Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.HIDE_NOTIFY));
+		// A hide may be queued after ScreenChange while that transaction is not yet
+		// ready. If it later shows a newer generation, this old hide is not its pair.
+		if (!notifiedShown || generation < notifiedShowGeneration) return;
+		notifiedShown = false;
+		try {
+			doHideNotify();
+		} catch (Exception e) {
+			Log.e(TAG, "hideNotify: ", e);
+		}
 	}
 
 	public void onDraw(android.graphics.Canvas canvas) {
@@ -1200,7 +1288,7 @@ public abstract class Canvas extends Displayable {
 			}
 		}
 		if (post) {
-			Display.postEvent(paintEvent);
+			Display.postSerializedEvent(paintEvent);
 		}
 	}
 
@@ -1208,7 +1296,7 @@ public abstract class Canvas extends Displayable {
 		synchronized (paintEvent.clip) {
 			paintEvent.invalidateClip(this, 0, 0, width, height);
 		}
-		Display.postEvent(paintEvent);
+		Display.postSerializedEvent(paintEvent);
 	}
 
 	// GameCanvas

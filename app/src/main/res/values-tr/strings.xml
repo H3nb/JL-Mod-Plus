@@ -108,10 +108,7 @@
     <string name="pref_vibration_title">Titreşimi etkinleştir</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Sanal kontrolleri göster</string>
     <string name="PREF_VK_ALPHA">Opaklık: </string>
-    <string name="PREF_VK_BACK">Tuş rengi</string>
     <string name="PREF_VK_FEEDBACK">Haptik geri bildirim</string>
-    <string name="PREF_VK_FORCE_OPACITY">Kontrolleri MIDlet ekranı dışında opak tut</string>
-    <string name="PREF_VK_FORE">Etiket ve simge rengi</string>
     <string name="PREF_VK_HIDE_DELAY">Otomatik gizleme gecikmesi</string>
     <string name="pref_vk_hide_hint">Devre dışı</string>
     <string name="PREF_VK_OUTLINE">Kenarlık rengi</string>
@@ -192,6 +189,8 @@
     <string name="file_picker_empty">Eşleşen dosya yok</string>
     <string name="file_picker_empty_folder">Klasör bulunamadı</string>
     <string name="file_picker_file">Dosya</string>
+    <string name="file_picker_preview_named">Önizleme: %1$s</string>
+    <string name="file_picker_preview_unavailable">Kullanılamıyor</string>
     <string name="file_picker_folder_exists">Bu adda bir öğe zaten var.</string>
     <string name="file_picker_folder_name">Klasör adı</string>
     <string name="file_picker_grant_access">Erişim izni ver</string>
@@ -298,8 +297,6 @@
     <string name="library_indexing_progress">Kitaplık dizine ekleniyor… %1$d/%2$d</string>
     <string name="library_load_error_title">Kitaplık kullanılamıyor</string>
     <string name="library_load_failed_message">Kitaplık yüklenemedi. Yeniden deneyin.</string>
-    <string name="library_metadata_change_icon">Simgeyi değiştir</string>
-    <string name="library_metadata_description">Açıklama</string>
     <string name="library_metadata_edit_title">Üst verileri düzenle</string>
     <string name="library_metadata_icon">Simge</string>
     <string name="library_metadata_name">Ad</string>
@@ -533,16 +530,9 @@
     <string name="config_help_timing_unavailable">Bu MIDlet kurulumu için zaman ayarları kullanılamıyor. Etkinleştirmek için MIDlet\'i yeniden kurun veya yeniden dönüştürün.</string>
     <string name="config_help_touch_input">MIDlet\'in dokunmatik ekrandan işaretçi girdisi almasını sağlar.</string>
     <string name="config_help_virtual_keyboard">Bu MIDlet için ekran kontrollerini gösterir.</string>
-    <string name="config_help_vk_alpha">Kontrol opaklığını ayarlar: 0 = tamamen saydam; 255 = tamamen opak.</string>
-    <string name="config_help_vk_background">Sanal kontrol düğmelerinin temel rengini ayarlar.</string>
     <string name="config_help_vk_button_shape">Tuş takımı düğmelerinin varsayılan şeklini ayarlar. Yön tuşları ve analog çubuğun kendi şekilleri vardır.</string>
     <string name="config_help_vk_feedback">Ayarlarda titreşim etkinse sanal kontrollere basıldığında titreşir.</string>
-    <string name="config_help_vk_force_opacity">MIDlet ekranının dışındaki kontrolleri opak yapar. Ekranın üzerindeki kontroller ayarlanan opaklığı kullanır.</string>
-    <string name="config_help_vk_foreground">Sanal kontrol düğmelerindeki etiket ve simgelerin rengini ayarlar.</string>
     <string name="config_help_vk_hide_delay">MIDlet ekranını kaplayan kontrolleri bu gecikmeden sonra gizler. Otomatik gizlemeyi kapatmak için 0 olarak ayarlayın.</string>
-    <string name="config_help_vk_outline">Sanal kontrol düğmelerinin kenarlık rengini ayarlar.</string>
-    <string name="config_help_vk_selected_background">Düğmenin basılıyken rengini ayarlar.</string>
-    <string name="config_help_vk_selected_foreground">Bir sanal kontrol düğmesi basılıyken etiket ve simge rengini ayarlar.</string>
     <string name="config_increase_value">Değeri artır</string>
     <string name="config_lock_custom_resolution_ratio">En boy oranını kilitle</string>
     <string name="config_maintenance">Sıfırlama ve veriler</string>
@@ -559,13 +549,18 @@
     <string name="config_timing_mode_full_guest">Emülasyon zamanı</string>
     <string name="config_timing_mode_real_wall">Sistem zamanı</string>
     <string name="config_virtual_controls_color_preview">Renk önizlemesi</string>
-    <string name="config_virtual_controls_preview_hint">Basılı durum renklerini önizlemek için dokunun. Örnek seçilen opaklığı kullanır.</string>
     <string name="config_virtual_controls_preview_normal">Bırakıldı</string>
     <string name="config_virtual_controls_preview_pressed">Basılı</string>
     <string name="config_warning_filter_shader">Doğrusal filtreleme, ekran gölgelendiricisi işlemeden önce girdiyi yumuşatır ve çıktı keskinliğini azaltabilir.</string>
     <string name="layout_edit_continue">Düzenlemeye devam et</string>
     <string name="layout_edit_discard">Vazgeç</string>
-    <string name="layout_edit_done">✓ Bitti</string>
+    <string name="layout_edit_done">Bitti</string>
+    <string name="layout_editor_grid_size">Izgara boyutu</string>
+    <string name="layout_editor_grid_coarse">Seyrek (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Sık (32)</string>
+    <string name="layout_editor_snap_on">Yaslama açık</string>
+    <string name="layout_editor_snap_off">Yaslama kapalı</string>
     <string name="layout_edit_save_changes">Sanal kontrol değişiklikleri kaydedilsin mi?</string>
     <string name="mapping_dialog_add_input">Birden fazla fiziksel giriş atayabilirsiniz.</string>
     <string name="mapping_dialog_assigned_inputs">Atanan girişler</string>
@@ -1082,6 +1077,9 @@
     <string name="config_avoid_camera_cutout_summary">Oyunu ön kamera veya ekran çentiğinden uzak tutar. Kontroller örtülüyorsa etkinleştirin.</string>
     <string name="pref_runtime_fullscreen_title">Tam ekran</string>
     <string name="pref_runtime_fullscreen_summary">Oyun sırasında araç çubuğunu gizle. Tüm MIDlet’ler için geçerlidir.</string>
+    <string name="pref_show_status_bar_title">Durum çubuğunu göster</string>
+    <string name="pref_show_status_bar_summary">Saat ve bildirim simgelerini görmek için oyun sırasında Android durum çubuğunu görünür tut.</string>
+    <string name="runtime_chrome_update_failed">Oyun görüntüleme ayarları güncellenemedi. Yeniden deneyin.</string>
     <string name="runtime_fullscreen_update_failed">Tam ekran ayarına erişilemedi. Yeniden deneyin.</string>
     <string name="midlet_file_permission_title">Depolama erişimi</string>
     <string name="midlet_file_permission_read">Bu MIDlet dosyaları okumak istiyor.</string>
@@ -1128,9 +1126,7 @@
     <string name="library_metadata_follows_main">Ana simgeyi kullanır</string>
     <string name="library_metadata_change">Değiştir</string>
     <string name="library_metadata_remove_portrait">3:4 simgesini kaldır</string>
-    <string name="library_metadata_icon_updated">Simge güncellendi</string>
     <string name="library_metadata_discard_title">Değişiklikler silinsin mi?</string>
-    <string name="library_metadata_discard_message">Kaydedilmemiş metin değişiklikleri kaybolacak. Simge değişiklikleri zaten kaydedildi.</string>
     <string name="library_metadata_discard">Vazgeç</string>
     <string name="library_metadata_default_description">Varsayılan açıklama</string>
     <string name="library_metadata_other_languages">Diğer diller</string>
@@ -1138,6 +1134,20 @@
     <string name="library_metadata_language_search">Dil ara veya yerel ayar kodu gir</string>
     <string name="library_metadata_remove_language">Açıklamayı kaldır</string>
     <string name="library_metadata_language_load_failed">Açıklamalar yüklenemedi. Meta veri düzenlemeyi yeniden açın.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Panel opaklığı</string>
     <string name="memory_editor_panel_opacity_help">Metin veya simgeleri soldurmadan panel arka planını ayarlar.</string>
 </resources>

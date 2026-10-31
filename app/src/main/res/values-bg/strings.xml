@@ -93,10 +93,7 @@
     <string name="pref_vibration_title">Вибрация</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Показване на виртуалните контроли</string>
     <string name="PREF_VK_ALPHA">Непрозрачност</string>
-    <string name="PREF_VK_BACK">Цвят на бутоните</string>
     <string name="PREF_VK_FEEDBACK">Вибрация при докосване</string>
-    <string name="PREF_VK_FORCE_OPACITY">Запазване на непрозрачността на контролите извън екрана на MIDlet</string>
-    <string name="PREF_VK_FORE">Цвят на надписите и символите</string>
     <string name="PREF_VK_HIDE_DELAY">Забавяне на автоматичното скриване</string>
     <string name="pref_vk_hide_hint">Изключено</string>
     <string name="PREF_VK_OUTLINE">Цвят на контура</string>
@@ -174,6 +171,8 @@
     <string name="file_picker_empty">Няма съответстващи файлове</string>
     <string name="file_picker_empty_folder">Няма намерени папки</string>
     <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">Преглед: %1$s</string>
+    <string name="file_picker_preview_unavailable">Недостъпни</string>
     <string name="file_picker_folder_exists">Вече съществува елемент с това име.</string>
     <string name="file_picker_folder_name">Име на папката</string>
     <string name="file_picker_grant_access">Предоставяне на достъп</string>
@@ -280,8 +279,6 @@
     <string name="library_indexing_progress">Индексиране на Библиотеката… %1$d/%2$d</string>
     <string name="library_load_error_title">Библиотеката не е налична</string>
     <string name="library_load_failed_message">Библиотеката не може да бъде заредена. Опитайте отново.</string>
-    <string name="library_metadata_change_icon">Промяна на иконата</string>
-    <string name="library_metadata_description">Описание</string>
     <string name="library_metadata_edit_title">Редактиране на метаданни</string>
     <string name="library_metadata_icon">Икона</string>
     <string name="library_metadata_name">Име</string>
@@ -515,16 +512,9 @@
     <string name="config_help_timing_unavailable">Настройките за време са недостъпни за тази инсталация на MIDlet. Преинсталирайте или преобразувайте отново MIDlet, за да ги активирате.</string>
     <string name="config_help_touch_input">Позволява на MIDlet да получава вход за показалеца от сензорния екран.</string>
     <string name="config_help_virtual_keyboard">Показва екранни контроли за този MIDlet.</string>
-    <string name="config_help_vk_alpha">Задава непрозрачността на контролите: 0 = напълно прозрачни; 255 = напълно непрозрачни.</string>
-    <string name="config_help_vk_background">Задава основния цвят на бутоните на виртуалните контроли.</string>
     <string name="config_help_vk_button_shape">Задава стандартната форма на бутоните на клавиатурата. Кръстачката и аналоговият стик имат собствени форми.</string>
     <string name="config_help_vk_feedback">Вибрира при натискане на виртуалните контроли, когато вибрацията е включена в „Настройки“.</string>
-    <string name="config_help_vk_force_opacity">Прави непрозрачни контролите извън екрана на MIDlet. Контролите върху екрана използват зададената непрозрачност.</string>
-    <string name="config_help_vk_foreground">Задава цвета на надписите и символите върху бутоните на виртуалните контроли.</string>
     <string name="config_help_vk_hide_delay">Скрива контролите след това забавяне, когато покриват екрана на MIDlet. Задайте 0, за да изключите автоматичното скриване.</string>
-    <string name="config_help_vk_outline">Задава цвета на контурите на бутоните на виртуалните контроли.</string>
-    <string name="config_help_vk_selected_background">Задава цвета на бутона, докато е натиснат.</string>
-    <string name="config_help_vk_selected_foreground">Задава цвета на надписите и символите, докато е натиснат бутон на виртуалните контроли.</string>
     <string name="config_increase_value">Увеличаване на стойността</string>
     <string name="config_lock_custom_resolution_ratio">Заключване на съотношението на страните</string>
     <string name="config_maintenance">Нулиране и данни</string>
@@ -541,13 +531,18 @@
     <string name="config_timing_mode_full_guest">Време на емулация</string>
     <string name="config_timing_mode_real_wall">Системно време</string>
     <string name="config_virtual_controls_color_preview">Преглед на цветовете</string>
-    <string name="config_virtual_controls_preview_hint">Докоснете, за да видите цветовете при натискане. Примерът използва избраната непрозрачност.</string>
     <string name="config_virtual_controls_preview_normal">Отпуснато</string>
     <string name="config_virtual_controls_preview_pressed">Натиснато</string>
     <string name="config_warning_filter_shader">Линейното филтриране изглажда входа, преди екранният шейдър да го обработи, и може да намали резкостта на изхода.</string>
     <string name="layout_edit_continue">Продължаване на редактирането</string>
     <string name="layout_edit_discard">Отхвърляне</string>
-    <string name="layout_edit_done">✓ Готово</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Размер на мрежата</string>
+    <string name="layout_editor_grid_coarse">Едра (16)</string>
+    <string name="layout_editor_grid_normal">Нормална (24)</string>
+    <string name="layout_editor_grid_fine">Фина (32)</string>
+    <string name="layout_editor_snap_on">Прилепване включено</string>
+    <string name="layout_editor_snap_off">Прилепване изключено</string>
     <string name="layout_edit_save_changes">Да се запазят ли промените във виртуалните контроли?</string>
     <string name="mapping_dialog_add_input">Можете да съпоставите повече от един физически вход.</string>
     <string name="mapping_dialog_assigned_inputs">Съпоставени входове</string>
@@ -1081,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Дръжте играта далеч от предната камера или изреза на екрана. Включете, ако контролите са закрити.</string>
     <string name="pref_runtime_fullscreen_title">Цял екран</string>
     <string name="pref_runtime_fullscreen_summary">Скриване на лентата с инструменти по време на игра. Важи за всички MIDlet приложения.</string>
+    <string name="pref_show_status_bar_title">Показване на лентата на състоянието</string>
+    <string name="pref_show_status_bar_summary">Показва лентата на състоянието на Android по време на игра, за да виждате часа и иконите за известия.</string>
+    <string name="runtime_chrome_update_failed">Настройките на дисплея по време на игра не можаха да се актуализират. Опитайте отново.</string>
     <string name="runtime_fullscreen_update_failed">Няма достъп до настройката за цял екран. Опитайте отново.</string>
     <string name="midlet_file_permission_title">Достъп до хранилището</string>
     <string name="midlet_file_permission_read">Този MIDlet иска да чете файлове.</string>
@@ -1127,9 +1125,7 @@
     <string name="library_metadata_follows_main">Използва основната икона</string>
     <string name="library_metadata_change">Промяна</string>
     <string name="library_metadata_remove_portrait">Премахване на икона 3:4</string>
-    <string name="library_metadata_icon_updated">Иконата е обновена</string>
     <string name="library_metadata_discard_title">Отхвърляне на промените?</string>
-    <string name="library_metadata_discard_message">Незапазените промени в текста ще бъдат загубени. Промените в иконата вече са запазени.</string>
     <string name="library_metadata_discard">Отхвърляне</string>
     <string name="library_metadata_default_description">Описание по подразбиране</string>
     <string name="library_metadata_other_languages">Други езици</string>
@@ -1137,6 +1133,20 @@
     <string name="library_metadata_language_search">Търсене на език или въвеждане на код</string>
     <string name="library_metadata_remove_language">Премахване на описанието</string>
     <string name="library_metadata_language_load_failed">Описанията не могат да се заредят. Отворете редактора отново.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Непрозрачност на панела</string>
     <string name="memory_editor_panel_opacity_help">Настройва фона на панела, без да избледняват текстът и иконите.</string>
 </resources>

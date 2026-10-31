@@ -110,10 +110,7 @@
     <string name="pref_vibration_title">الاهتزاز</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">إظهار عناصر التحكم الافتراضية</string>
     <string name="PREF_VK_ALPHA">العتامة: </string>
-    <string name="PREF_VK_BACK">لون الزر</string>
     <string name="PREF_VK_FEEDBACK">اهتزاز عند النقر</string>
-    <string name="PREF_VK_FORCE_OPACITY">إبقاء عناصر التحكم معتمة خارج شاشة MIDlet</string>
-    <string name="PREF_VK_FORE">لون التسميات والرموز</string>
     <string name="PREF_VK_HIDE_DELAY">مهلة الإخفاء التلقائي</string>
     <string name="pref_vk_hide_hint">موقوف</string>
     <string name="PREF_VK_OUTLINE">لون الحدود</string>
@@ -194,6 +191,8 @@
     <string name="file_picker_empty">لا توجد ملفات مطابقة</string>
     <string name="file_picker_empty_folder">لم يُعثر على مجلدات</string>
     <string name="file_picker_file">ملف</string>
+    <string name="file_picker_preview_named">معاينة: %1$s</string>
+    <string name="file_picker_preview_unavailable">غير متاح</string>
     <string name="file_picker_folder_exists">يوجد عنصر بهذا الاسم بالفعل.</string>
     <string name="file_picker_folder_name">اسم المجلد</string>
     <string name="file_picker_grant_access">منح الوصول</string>
@@ -300,8 +299,6 @@
     <string name="library_indexing_progress">جارٍ فهرسة المكتبة… %1$d/%2$d</string>
     <string name="library_load_error_title">المكتبة غير متاحة</string>
     <string name="library_load_failed_message">تعذر تحميل المكتبة. حاول مجددًا.</string>
-    <string name="library_metadata_change_icon">تغيير الأيقونة</string>
-    <string name="library_metadata_description">الوصف</string>
     <string name="library_metadata_edit_title">تعديل البيانات الوصفية</string>
     <string name="library_metadata_icon">الأيقونة</string>
     <string name="library_metadata_name">الاسم</string>
@@ -555,16 +552,9 @@
     <string name="config_help_timing_unavailable">إعدادات الوقت غير متاحة لتثبيت MIDlet هذا. أعد تثبيت MIDlet أو تحويله لتفعيلها.</string>
     <string name="config_help_touch_input">يسمح لـ MIDlet بتلقي إدخال المؤشر من شاشة اللمس.</string>
     <string name="config_help_virtual_keyboard">يعرض أدوات تحكم على الشاشة لـ MIDlet هذا.</string>
-    <string name="config_help_vk_alpha">يضبط عتامة أدوات التحكم: 0 = شفاف بالكامل؛ 255 = معتم بالكامل.</string>
-    <string name="config_help_vk_background">يضبط اللون الأساسي لأزرار أدوات التحكم الافتراضية.</string>
     <string name="config_help_vk_button_shape">يضبط الشكل الافتراضي لأزرار لوحة المفاتيح. تحتفظ لوحة الاتجاهات والعصا التناظرية بشكليهما.</string>
     <string name="config_help_vk_feedback">يهتز عند الضغط على أدوات التحكم الافتراضية إذا كان الاهتزاز مفعّلًا في الإعدادات.</string>
-    <string name="config_help_vk_force_opacity">يجعل أدوات التحكم خارج شاشة MIDlet معتمة. تستخدم أدوات التحكم فوق الشاشة العتامة المحددة.</string>
-    <string name="config_help_vk_foreground">يضبط لون التسميات والرموز على أزرار أدوات التحكم الافتراضية.</string>
     <string name="config_help_vk_hide_delay">يخفي أدوات التحكم بعد هذا التأخير عندما تغطي شاشة MIDlet. اضبطه على 0 لتعطيل الإخفاء التلقائي.</string>
-    <string name="config_help_vk_outline">يضبط لون حدود أزرار أدوات التحكم الافتراضية.</string>
-    <string name="config_help_vk_selected_background">يضبط لون الزر أثناء الضغط عليه.</string>
-    <string name="config_help_vk_selected_foreground">يضبط لون التسميات والرموز أثناء الضغط على زر تحكم افتراضي.</string>
     <string name="config_increase_value">زيادة القيمة</string>
     <string name="config_lock_custom_resolution_ratio">قفل نسبة العرض إلى الارتفاع</string>
     <string name="config_maintenance">إعادة الضبط والبيانات</string>
@@ -581,13 +571,18 @@
     <string name="config_timing_mode_full_guest">وقت المحاكاة</string>
     <string name="config_timing_mode_real_wall">وقت النظام</string>
     <string name="config_virtual_controls_color_preview">معاينة الألوان</string>
-    <string name="config_virtual_controls_preview_hint">انقر لمعاينة ألوان الضغط. تستخدم العينة العتامة المحددة.</string>
     <string name="config_virtual_controls_preview_normal">غير مضغوط</string>
     <string name="config_virtual_controls_preview_pressed">مضغوط</string>
     <string name="config_warning_filter_shader">ينعّم الترشيح الخطي الإدخال قبل معالجة مظلّل الشاشة له، وقد يقلل حدة الناتج.</string>
     <string name="layout_edit_continue">متابعة التحرير</string>
     <string name="layout_edit_discard">تجاهل</string>
-    <string name="layout_edit_done">✓ تم</string>
+    <string name="layout_edit_done">تم</string>
+    <string name="layout_editor_grid_size">حجم الشبكة</string>
+    <string name="layout_editor_grid_coarse">خشنة (16)</string>
+    <string name="layout_editor_grid_normal">عادية (24)</string>
+    <string name="layout_editor_grid_fine">دقيقة (32)</string>
+    <string name="layout_editor_snap_on">الالتقاط مفعّل</string>
+    <string name="layout_editor_snap_off">الالتقاط معطّل</string>
     <string name="layout_edit_save_changes">هل تريد حفظ تغييرات أدوات التحكم الافتراضية؟</string>
     <string name="mapping_dialog_add_input">يمكنك تعيين أكثر من إدخال فعلي واحد.</string>
     <string name="mapping_dialog_assigned_inputs">الإدخالات المعيّنة</string>
@@ -1213,6 +1208,9 @@
     <string name="config_avoid_camera_cutout_summary">أبقِ اللعبة بعيدة عن الكاميرا الأمامية أو فتحة الشاشة. فعّل الخيار إذا كانت أدوات التحكم محجوبة.</string>
     <string name="pref_runtime_fullscreen_title">ملء الشاشة</string>
     <string name="pref_runtime_fullscreen_summary">إخفاء شريط الأدوات أثناء اللعب. يسري على جميع تطبيقات MIDlet.</string>
+    <string name="pref_show_status_bar_title">إظهار شريط الحالة</string>
+    <string name="pref_show_status_bar_summary">إبقاء شريط حالة Android ظاهرًا أثناء اللعب لرؤية الساعة وأيقونات الإشعارات.</string>
+    <string name="runtime_chrome_update_failed">تعذّر تحديث إعدادات عرض اللعبة. حاول مرة أخرى.</string>
     <string name="runtime_fullscreen_update_failed">تعذّر الوصول إلى إعداد ملء الشاشة. حاول مرة أخرى.</string>
     <string name="midlet_file_permission_title">الوصول إلى التخزين</string>
     <string name="midlet_file_permission_read">يريد MIDlet هذا قراءة الملفات.</string>
@@ -1259,9 +1257,7 @@
     <string name="library_metadata_follows_main">يستخدم الأيقونة الرئيسية</string>
     <string name="library_metadata_change">تغيير</string>
     <string name="library_metadata_remove_portrait">إزالة أيقونة 3:4</string>
-    <string name="library_metadata_icon_updated">تم تحديث الأيقونة</string>
     <string name="library_metadata_discard_title">هل تريد تجاهل التغييرات؟</string>
-    <string name="library_metadata_discard_message">ستُفقد تغييرات النص غير المحفوظة. تم حفظ تغييرات الأيقونة بالفعل.</string>
     <string name="library_metadata_discard">تجاهل</string>
     <string name="library_metadata_default_description">الوصف الافتراضي</string>
     <string name="library_metadata_other_languages">لغات أخرى</string>
@@ -1269,6 +1265,20 @@
     <string name="library_metadata_language_search">ابحث عن لغة أو أدخل رمز اللغة</string>
     <string name="library_metadata_remove_language">إزالة الوصف</string>
     <string name="library_metadata_language_load_failed">تعذر تحميل الأوصاف. افتح تحرير البيانات الوصفية مجددًا.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">عتامة اللوحة</string>
     <string name="memory_editor_panel_opacity_help">يضبط خلفية اللوحة دون تخفيف وضوح النص أو الأيقونات.</string>
 </resources>

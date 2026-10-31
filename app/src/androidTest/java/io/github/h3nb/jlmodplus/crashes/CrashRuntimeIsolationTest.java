@@ -495,7 +495,8 @@ public class CrashRuntimeIsolationTest {
 					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
 			for (String mode : new String[]{
 					LifecycleMidlet.MODE_SHOWN_DURING_START,
-					LifecycleMidlet.MODE_PAINT_DURING_START}) {
+					LifecycleMidlet.MODE_PAINT_DURING_START,
+					LifecycleMidlet.MODE_LCDUI_CALLBACK_ORDER}) {
 				clearMarker(marker);
 				writeLifecycleManifest(appDir, mode, marker);
 				launchLifecycleMidlet(context, appDir);

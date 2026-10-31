@@ -22,6 +22,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -45,6 +46,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.pressBack
@@ -252,6 +257,79 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+    }
+
+    @Test
+    fun collectionSearchReleasesFocusOnPagerExitWithoutLosingQuery() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
+        openCollection()
+        composeRule.onNode(hasSetTextAction()).performClick().performTextInput("Demo")
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
+
+        // The previous page stays composed. A settled swipe must retire its editing focus,
+        // allowing the bottom navigation and the More destination to become interactive.
+        composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(uiString(R.string.action_settings))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
+
+        composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Demo")
+    }
+
+    @Test
+    fun collectionPickerSearchReleasesFocusAcrossTabs() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
+        openCollection()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.onNode(hasSetTextAction()).performClick().performTextInput("Demo")
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
+
+        composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(uiString(R.string.action_settings))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
+
+        composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps)).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Demo")
     }
 
     @Test
@@ -683,6 +761,14 @@ class LibraryCollectionsNavigationTest {
         // InputText contains the query too; assert the unique result row, not matching text.
         composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
         composeRule.onNode(hasSetTextAction()).assertIsFocused()
+        // One Back must dismiss editing without navigating away from Add apps.
+        pressBack()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onNode(hasSetTextAction())
+                .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
+        }
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Picker app 00")
+        composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
     }
 
     @Test

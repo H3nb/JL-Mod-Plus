@@ -86,6 +86,8 @@
     <string name="file_picker_empty">No hi ha fitxers coincidents</string>
     <string name="file_picker_empty_folder">No s’ha trobat cap carpeta</string>
     <string name="file_picker_file">Fitxer</string>
+    <string name="file_picker_preview_named">Previsualització: %1$s</string>
+    <string name="file_picker_preview_unavailable">No disponible</string>
     <string name="file_picker_folder_exists">Ja existeix un element amb aquest nom.</string>
     <string name="file_picker_folder_name">Nom de la carpeta</string>
     <string name="file_picker_grant_access">Concedeix accés</string>
@@ -192,8 +194,6 @@
     <string name="library_indexing_progress">S’està indexant la Biblioteca… %1$d/%2$d</string>
     <string name="library_load_error_title">Biblioteca no disponible</string>
     <string name="library_load_failed_message">No s’ha pogut carregar la Biblioteca. Torna-ho a provar.</string>
-    <string name="library_metadata_change_icon">Canvia la icona</string>
-    <string name="library_metadata_description">Descripció</string>
     <string name="library_metadata_edit_title">Edita les metadades</string>
     <string name="library_metadata_icon">Icona</string>
     <string name="library_metadata_name">Nom</string>
@@ -432,16 +432,9 @@
     <string name="config_help_timing_unavailable">La configuració de temps no està disponible per a aquesta instal·lació del MIDlet. Torneu a instal·lar o convertir el MIDlet per activar-la.</string>
     <string name="config_help_touch_input">Permet que el MIDlet rebi entrades de punter de la pantalla tàctil.</string>
     <string name="config_help_virtual_keyboard">Mostra controls en pantalla per a aquest MIDlet.</string>
-    <string name="config_help_vk_alpha">Defineix l\'opacitat dels controls: 0 = completament transparents; 255 = completament opacs.</string>
-    <string name="config_help_vk_background">Defineix el color de base dels botons dels controls virtuals.</string>
     <string name="config_help_vk_button_shape">Defineix la forma predeterminada dels botons del teclat. La creueta i la palanca analògica tenen formes pròpies.</string>
     <string name="config_help_vk_feedback">Vibra en prémer els controls virtuals quan la vibració està activada a Configuració.</string>
-    <string name="config_help_vk_force_opacity">Fa opacs els controls que són fora de la pantalla del MIDlet. Els controls sobre la pantalla fan servir l\'opacitat configurada.</string>
-    <string name="config_help_vk_foreground">Defineix el color de les etiquetes i els símbols dels botons dels controls virtuals.</string>
     <string name="config_help_vk_hide_delay">Amaga els controls després d\'aquest retard quan cobreixen la pantalla del MIDlet. Establiu-lo a 0 per desactivar l\'ocultació automàtica.</string>
-    <string name="config_help_vk_outline">Defineix el color del contorn dels botons dels controls virtuals.</string>
-    <string name="config_help_vk_selected_background">Defineix el color del botó mentre està premut.</string>
-    <string name="config_help_vk_selected_foreground">Defineix el color de les etiquetes i els símbols mentre un botó dels controls virtuals està premut.</string>
     <string name="config_increase_value">Augmenta el valor</string>
     <string name="config_lock_custom_resolution_ratio">Bloqueja la relació d\'aspecte</string>
     <string name="config_maintenance">Restabliment i dades</string>
@@ -458,13 +451,18 @@
     <string name="config_timing_mode_full_guest">Temps d\'emulació</string>
     <string name="config_timing_mode_real_wall">Temps del sistema</string>
     <string name="config_virtual_controls_color_preview">Previsualització del color</string>
-    <string name="config_virtual_controls_preview_hint">Toqueu per previsualitzar els colors en prémer. La mostra fa servir l\'opacitat seleccionada.</string>
     <string name="config_virtual_controls_preview_normal">Alliberat</string>
     <string name="config_virtual_controls_preview_pressed">Premut</string>
     <string name="config_warning_filter_shader">El filtratge lineal suavitza l\'entrada abans que el shader de pantalla la processi i pot reduir la nitidesa del resultat.</string>
     <string name="layout_edit_continue">Continua editant</string>
     <string name="layout_edit_discard">Descarta</string>
-    <string name="layout_edit_done">✓ Fet</string>
+    <string name="layout_edit_done">Fet</string>
+    <string name="layout_editor_grid_size">Mida de la quadrícula</string>
+    <string name="layout_editor_grid_coarse">Gruixuda (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fina (32)</string>
+    <string name="layout_editor_snap_on">Ajust activat</string>
+    <string name="layout_editor_snap_off">Ajust desactivat</string>
     <string name="layout_edit_finish">Finalitza l\'edició</string>
     <string name="layout_edit_finished">S\'ha acabat l\'edició dels controls virtuals.</string>
     <string name="layout_edit_save_changes">Voleu desar els canvis als controls virtuals?</string>
@@ -903,10 +901,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Mostra els controls virtuals</string>
     <string name="PREF_VK_ALPHA">Opacitat</string>
-    <string name="PREF_VK_BACK">Color dels botons</string>
     <string name="PREF_VK_FEEDBACK">Resposta hàptica</string>
-    <string name="PREF_VK_FORCE_OPACITY">Mantén opacs els controls fora de la pantalla del MIDlet</string>
-    <string name="PREF_VK_FORE">Color de les etiquetes i els símbols</string>
     <string name="PREF_VK_HIDE_DELAY">Retard d’ocultació automàtica</string>
     <string name="PREF_VK_OUTLINE">Color del contorn</string>
     <string name="PREF_VK_SEL_BACK">Color dels botons premuts</string>
@@ -1113,6 +1108,9 @@
     <string name="config_avoid_camera_cutout_summary">Mantén el joc fora de la càmera frontal o del retall de pantalla. Activa-ho si els controls queden tapats.</string>
     <string name="pref_runtime_fullscreen_title">Pantalla completa</string>
     <string name="pref_runtime_fullscreen_summary">Amaga la barra d’eines mentre jugues. S’aplica a tots els MIDlets.</string>
+    <string name="pref_show_status_bar_title">Mostra la barra d’estat</string>
+    <string name="pref_show_status_bar_summary">Mantén visible la barra d’estat d’Android mentre jugues per veure l’hora i les icones de notificació.</string>
+    <string name="runtime_chrome_update_failed">No s’han pogut actualitzar els ajustos de visualització del joc. Torna-ho a provar.</string>
     <string name="runtime_fullscreen_update_failed">No s’ha pogut accedir a l’ajust de pantalla completa. Torna-ho a provar.</string>
     <string name="midlet_file_permission_title">Accés a l’emmagatzematge</string>
     <string name="midlet_file_permission_read">Aquest MIDlet vol llegir fitxers.</string>
@@ -1159,9 +1157,7 @@
     <string name="library_metadata_follows_main">Fa servir la icona principal</string>
     <string name="library_metadata_change">Canvia</string>
     <string name="library_metadata_remove_portrait">Elimina la icona 3:4</string>
-    <string name="library_metadata_icon_updated">Icona actualitzada</string>
     <string name="library_metadata_discard_title">Voleu descartar els canvis?</string>
-    <string name="library_metadata_discard_message">Es perdran els canvis de text no desats. Els canvis de les icones ja s\'han desat.</string>
     <string name="library_metadata_discard">Descarta</string>
     <string name="library_metadata_default_description">Descripció predeterminada</string>
     <string name="library_metadata_other_languages">Altres idiomes</string>
@@ -1169,6 +1165,20 @@
     <string name="library_metadata_language_search">Cerca un idioma o introdueix un codi</string>
     <string name="library_metadata_remove_language">Elimina la descripció</string>
     <string name="library_metadata_language_load_failed">No es poden carregar les descripcions. Torna a obrir les metadades.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Opacitat del panell</string>
     <string name="memory_editor_panel_opacity_help">Ajusta el fons del panell sense atenuar el text ni les icones.</string>
 </resources>

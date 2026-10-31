@@ -54,7 +54,13 @@
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD dan lanjutkan instalasi?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid. Perubahan tidak disimpan.</string>
     <string name="layout_edit_finish">Selesai mengedit</string>
-    <string name="layout_edit_done">✓ Selesai</string>
+    <string name="layout_edit_done">Selesai</string>
+    <string name="layout_editor_grid_size">Ukuran grid</string>
+    <string name="layout_editor_grid_coarse">Jarang (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Rapat (32)</string>
+    <string name="layout_editor_snap_on">Snap aktif</string>
+    <string name="layout_editor_snap_off">Snap nonaktif</string>
     <string name="layout_edit_save_changes">Simpan perubahan kontrol virtual?</string>
     <string name="layout_edit_discard">Buang</string>
     <string name="layout_edit_continue">Lanjut mengedit</string>
@@ -262,10 +268,7 @@
     <string name="pref_vibration_title">Getaran</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Tampilkan kontrol virtual</string>
     <string name="PREF_VK_ALPHA">Opasitas</string>
-    <string name="PREF_VK_BACK">Warna tombol</string>
     <string name="PREF_VK_FEEDBACK">Umpan balik haptik</string>
-    <string name="PREF_VK_FORCE_OPACITY">Tanpa transparansi di luar layar MIDlet</string>
-    <string name="PREF_VK_FORE">Warna label dan simbol</string>
     <string name="PREF_VK_HIDE_DELAY">Jeda sembunyi otomatis</string>
     <string name="pref_vk_hide_hint">Dinonaktifkan</string>
     <string name="PREF_VK_OUTLINE">Warna garis tepi</string>
@@ -324,6 +327,8 @@
     <string name="file_picker_current_folder">Folder saat ini</string>
     <string name="file_picker_parent_folder">Folder induk</string>
     <string name="file_picker_file">Berkas</string>
+    <string name="file_picker_preview_named">Pratinjau %1$s</string>
+    <string name="file_picker_preview_unavailable">Pratinjau tidak tersedia</string>
     <string name="file_picker_storage_volume">Volume penyimpanan</string>
     <string name="file_picker_empty">Tidak ada berkas yang cocok</string>
     <string name="file_picker_empty_folder">Tidak ada folder yang ditemukan</string>
@@ -678,7 +683,6 @@
     <string name="config_virtual_controls_color_preview">Pratinjau warna</string>
     <string name="config_virtual_controls_preview_normal">Dilepas</string>
     <string name="config_virtual_controls_preview_pressed">Ditekan</string>
-    <string name="config_virtual_controls_preview_hint">Ketuk untuk melihat warna saat ditekan. Pratinjau menggunakan opasitas yang dipilih.</string>
     <string name="config_controls_maintenance">Tata letak</string>
     <string name="config_controls_customization">Kustomisasi</string>
     <string name="config_controls_skin_help">Mengubah tampilan tombol keypad, D-pad, dan stik analog menggunakan gambar kustom.</string>
@@ -769,14 +773,7 @@
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke aksi keypad Java ME.</string>
     <string name="config_help_vk_button_shape">Mengubah bentuk tombol keypad bawaan. D-pad dan stik analog memiliki bentuk tersendiri.</string>
     <string name="config_help_vk_feedback">Menggetarkan kontrol virtual saat ditekan jika getaran diaktifkan di Pengaturan.</string>
-    <string name="config_help_vk_alpha">Mengatur opasitas kontrol virtual: 0 = transparan sepenuhnya; 255 = buram sepenuhnya.</string>
-    <string name="config_help_vk_force_opacity">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
     <string name="config_help_vk_hide_delay">Menyembunyikan kontrol yang menutupi layar MIDlet setelah jeda tertentu. Nilai 0 menonaktifkannya.</string>
-    <string name="config_help_vk_foreground">Mengatur warna label dan simbol kontrol virtual.</string>
-    <string name="config_help_vk_background">Mengatur warna dasar tombol kontrol virtual.</string>
-    <string name="config_help_vk_selected_foreground">Mengatur warna label dan simbol saat tombol ditekan.</string>
-    <string name="config_help_vk_selected_background">Mengatur warna tombol saat ditekan.</string>
-    <string name="config_help_vk_outline">Mengatur warna garis tepi tombol kontrol virtual.</string>
     <string name="config_help_reset_layout">Mengembalikan tata letak kontrol virtual ke bawaan tanpa mengubah pengaturan MIDlet lainnya.</string>
     <string name="config_help_skip_resume">Setelah startApp() pertama berhasil, lewati pemanggilan berikutnya saat MIDlet dilanjutkan. Gunakan hanya untuk MIDlet yang bermasalah saat dilanjutkan.</string>
     <string name="config_help_soundbank">Memilih soundbank untuk sintesis MIDI.</string>
@@ -843,10 +840,8 @@
 
     <string name="library_metadata_edit_title">Edit metadata</string>
     <string name="library_metadata_icon">Ikon</string>
-    <string name="library_metadata_change_icon">Ganti ikon</string>
     <string name="library_metadata_name">Nama</string>
     <string name="library_metadata_vendor">Vendor</string>
-    <string name="library_metadata_description">Deskripsi</string>
     <string name="library_metadata_reset_to_original">Kembalikan ke aslinya</string>
     <string name="library_metadata_save">Simpan</string>
 
@@ -1086,6 +1081,9 @@
     <string name="config_avoid_camera_cutout_summary">Jauhkan tampilan game dari kamera depan atau potongan layar. Aktifkan jika kontrol game tertutup.</string>
     <string name="pref_runtime_fullscreen_title">Layar penuh</string>
     <string name="pref_runtime_fullscreen_summary">Sembunyikan bilah alat saat bermain. Berlaku untuk semua MIDlet.</string>
+    <string name="pref_show_status_bar_title">Tampilkan bilah status</string>
+    <string name="pref_show_status_bar_summary">Tampilkan bilah status Android saat bermain untuk melihat jam dan ikon notifikasi.</string>
+    <string name="runtime_chrome_update_failed">Tidak dapat memperbarui pengaturan tampilan runtime. Coba lagi.</string>
     <string name="runtime_fullscreen_update_failed">Pengaturan layar penuh tidak dapat diakses. Coba lagi.</string>
     <string name="midlet_permissions_write_summary">Termasuk membuat dan menghapus berkas.</string>
     <string name="midlet_legacy_import_title">Simpanan Siemens lama</string>
@@ -1126,14 +1124,10 @@
     <string name="control_skin_create">Buat set</string>
     <string name="control_skin_default">Tombol bawaan</string>
     <string name="control_skin_edit">Edit</string>
-    <string name="control_skin_use">Gunakan set</string>
     <string name="control_skin_rename">Ganti nama</string>
     <string name="control_skin_duplicate">Duplikat</string>
     <string name="control_skin_delete">Hapus</string>
-    <string name="control_skin_buttons">Tombol</string>
-    <string name="control_skin_global_note">Perubahan set ini berlaku untuk semua MIDlet yang menggunakannya. Perubahan langsung disimpan.</string>
     <string name="control_skin_name">Nama set</string>
-    <string name="control_skin_mode">Mode gambar</string>
     <string name="control_skin_icon">Hanya ikon</string>
     <string name="control_skin_full">Seluruh tombol</string>
     <string name="control_skin_normal_image">Gambar normal</string>
@@ -1145,13 +1139,14 @@
     <string name="control_skin_remove_image">Hapus</string>
     <string name="control_skin_manage">Kelola set</string>
     <string name="control_skin_manage_named">Kelola %1$s</string>
-    <string name="control_skin_count">%1$d kontrol dikustomisasi</string>
+    <plurals name="control_skin_count">
+        <item quantity="other">%1$d kontrol dikustomisasi</item>
+    </plurals>
     <string name="control_skin_empty">Buat set untuk mengubah gambar kontrol.</string>
     <string name="control_skin_numeric">Keypad</string>
     <string name="control_skin_navigation">Navigasi</string>
     <string name="control_skin_other">Tombol lainnya</string>
     <string name="control_skin_pressed_requires_normal">Tambahkan gambar normal terlebih dahulu.</string>
-    <string name="control_skin_pressed_auto">Efek tekan otomatis</string>
     <string name="control_skin_edit_named">Tombol %1$s</string>
     <string name="control_skin_change_image">Ganti</string>
     <string name="control_skin_pick_image">Pilih gambar</string>
@@ -1178,9 +1173,7 @@
     <string name="library_metadata_follows_main">Mengikuti ikon utama</string>
     <string name="library_metadata_change">Ganti</string>
     <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>
-    <string name="library_metadata_icon_updated">Ikon diperbarui</string>
     <string name="library_metadata_discard_title">Buang perubahan?</string>
-    <string name="library_metadata_discard_message">Perubahan teks yang belum disimpan akan hilang. Perubahan ikon sudah tersimpan.</string>
     <string name="library_metadata_discard">Buang</string>
     <string name="library_metadata_default_description">Deskripsi default</string>
     <string name="library_metadata_other_languages">Bahasa lain</string>
@@ -1188,6 +1181,20 @@
     <string name="library_metadata_language_search">Cari bahasa atau kode</string>
     <string name="library_metadata_remove_language">Hapus deskripsi</string>
     <string name="library_metadata_language_load_failed">Gagal memuat deskripsi bahasa. Buka kembali Edit metadata untuk mencoba lagi.</string>
+    <string name="layout_editor_group_on">Ubah ukuran: Kelompok</string>
+    <string name="layout_editor_group_off">Ubah ukuran: Per tombol</string>
+    <string name="layout_editor_snap_grid">Snap ke grid</string>
+    <string name="layout_editor_snap_controls">Snap ke tombol</string>
+    <string name="layout_editor_snap_grid_on">Snap grid: Aktif</string>
+    <string name="layout_editor_snap_grid_off">Snap grid: Nonaktif</string>
+    <string name="layout_editor_snap_controls_on">Snap tombol: Aktif</string>
+    <string name="layout_editor_snap_controls_off">Snap tombol: Nonaktif</string>
+    <string name="layout_editor_guide_gestures">Gestur</string>
+    <string name="layout_editor_guide_move">Geser kontrol untuk memindahkannya.</string>
+    <string name="layout_editor_guide_resize">Gunakan dua jari untuk mengubah ukuran. Gerakkan secara horizontal atau vertikal untuk mengubah lebar atau tinggi.</string>
+    <string name="layout_editor_guide_tools">Alat editor</string>
+    <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan, membatalkan, atau melanjutkan pengeditan.</string>
+    <string name="layout_editor_guide_start">Mulai mengedit</string>
     <string name="memory_editor_panel_opacity">Opasitas panel</string>
     <string name="memory_editor_panel_opacity_help">Mengatur latar panel tanpa memudarkan teks atau ikon.</string>
 </resources>

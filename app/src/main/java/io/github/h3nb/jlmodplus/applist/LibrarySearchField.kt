@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -37,7 +38,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreInterceptKeyBeforeSoftKeyboard
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -59,13 +59,16 @@ internal fun LibrarySearchField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onFocusChanged: (Boolean) -> Unit = {},
+    onDismissInput: () -> Unit,
 ) {
-    val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     TextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
+            // Exclude an inactive page's editor without overriding the active TextField's
+            // own Material focus properties (which must remain responsible for touch refocus).
+            .then(if (enabled) Modifier else Modifier.focusProperties { canFocus = false })
             .height(librarySearchControlHeight())
             .onFocusChanged { onFocusChanged(it.hasFocus) }
             .onPreInterceptKeyBeforeSoftKeyboard { event ->
@@ -80,7 +83,7 @@ internal fun LibrarySearchField(
                         KeyEventType.KeyUp -> {
                             if (!event.nativeKeyEvent.isCanceled) {
                                 keyboard?.hide()
-                                focusManager.clearFocus(force = true)
+                                onDismissInput()
                             }
                             true
                         }
@@ -93,7 +96,10 @@ internal fun LibrarySearchField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
-            onDone = { focusManager.clearFocus(force = true) },
+            onDone = {
+                defaultKeyboardAction(ImeAction.Done)
+                onDismissInput()
+            },
         ),
         shape = MaterialTheme.shapes.large,
         colors = TextFieldDefaults.colors(

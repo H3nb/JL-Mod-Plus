@@ -86,6 +86,8 @@
     <string name="file_picker_empty">Нема одговарајућих датотека</string>
     <string name="file_picker_empty_folder">Нису пронађене фасцикле</string>
     <string name="file_picker_file">Датотека</string>
+    <string name="file_picker_preview_named">Преглед: %1$s</string>
+    <string name="file_picker_preview_unavailable">Није доступно</string>
     <string name="file_picker_folder_exists">Ставка са овим називом већ постоји.</string>
     <string name="file_picker_folder_name">Назив фасцикле</string>
     <string name="file_picker_grant_access">Одобри приступ</string>
@@ -192,8 +194,6 @@
     <string name="library_indexing_progress">Индексирање Библиотеке… %1$d/%2$d</string>
     <string name="library_load_error_title">Библиотека није доступна</string>
     <string name="library_load_failed_message">Библиотека није могла да се учита. Покушајте поново.</string>
-    <string name="library_metadata_change_icon">Промени икону</string>
-    <string name="library_metadata_description">Опис</string>
     <string name="library_metadata_edit_title">Уреди метаподатке</string>
     <string name="library_metadata_icon">Икона</string>
     <string name="library_metadata_name">Назив</string>
@@ -432,16 +432,9 @@
     <string name="config_help_timing_unavailable">Подешавања времена нису доступна за ову инсталацију MIDlet-а. Поново инсталирајте или конвертујте MIDlet да их омогућите.</string>
     <string name="config_help_touch_input">Омогућава MIDlet-у да прима унос показивача са екрана осетљивог на додир.</string>
     <string name="config_help_virtual_keyboard">Приказује контроле на екрану за овај MIDlet.</string>
-    <string name="config_help_vk_alpha">Поставља непрозирност контрола: 0 = потпуно прозирне; 255 = потпуно непрозирне.</string>
-    <string name="config_help_vk_background">Поставља основну боју дугмади виртуалних контрола.</string>
     <string name="config_help_vk_button_shape">Поставља подразумевани облик дугмади тастатуре. D-pad и аналогна палица имају сопствене облике.</string>
     <string name="config_help_vk_feedback">Вибрира при притиску виртуалних контрола када је вибрација омогућена у Подешавањима.</string>
-    <string name="config_help_vk_force_opacity">Чини контроле изван екрана MIDlet-а непрозирним. Контроле преко екрана користе подешену непрозирност.</string>
-    <string name="config_help_vk_foreground">Поставља боју ознака и симбола на дугмадима виртуалних контрола.</string>
     <string name="config_help_vk_hide_delay">Скрива контроле после овог одлагања када прекривају екран MIDlet-а. Поставите 0 да онемогућите аутоматско скривање.</string>
-    <string name="config_help_vk_outline">Поставља боју обриса дугмади виртуалних контрола.</string>
-    <string name="config_help_vk_selected_background">Поставља боју дугмета док је притиснуто.</string>
-    <string name="config_help_vk_selected_foreground">Поставља боју ознака и симбола док је дугме виртуалне контроле притиснуто.</string>
     <string name="config_increase_value">Повећај вредност</string>
     <string name="config_lock_custom_resolution_ratio">Закључај однос страница</string>
     <string name="config_maintenance">Ресетовање и подаци</string>
@@ -458,13 +451,18 @@
     <string name="config_timing_mode_full_guest">Време емулације</string>
     <string name="config_timing_mode_real_wall">Системско време</string>
     <string name="config_virtual_controls_color_preview">Преглед боје</string>
-    <string name="config_virtual_controls_preview_hint">Додирните за преглед боја при притиску. Узорак користи изабрану непрозирност.</string>
     <string name="config_virtual_controls_preview_normal">Отпуштено</string>
     <string name="config_virtual_controls_preview_pressed">Притиснуто</string>
     <string name="config_warning_filter_shader">Линеарно филтрирање ублажава улаз пре обраде шејдером екрана и може да смањи оштрину резултата.</string>
     <string name="layout_edit_continue">Настави уређивање</string>
     <string name="layout_edit_discard">Одбаци</string>
-    <string name="layout_edit_done">✓ Готово</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Величина мреже</string>
+    <string name="layout_editor_grid_coarse">Крупна (16)</string>
+    <string name="layout_editor_grid_normal">Нормална (24)</string>
+    <string name="layout_editor_grid_fine">Ситна (32)</string>
+    <string name="layout_editor_snap_on">Приањање укључено</string>
+    <string name="layout_editor_snap_off">Приањање искључено</string>
     <string name="layout_edit_finish">Заврши уређивање</string>
     <string name="layout_edit_finished">Уређивање виртуалних контрола је завршено.</string>
     <string name="layout_edit_save_changes">Сачувати измене виртуалних контрола?</string>
@@ -903,10 +901,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Прикажи виртуалне контроле</string>
     <string name="PREF_VK_ALPHA">Непрозирност</string>
-    <string name="PREF_VK_BACK">Боја дугмади</string>
     <string name="PREF_VK_FEEDBACK">Хаптичка повратна информација</string>
-    <string name="PREF_VK_FORCE_OPACITY">Задржи непрозирне контроле изван MIDlet екрана</string>
-    <string name="PREF_VK_FORE">Боја ознака и симбола</string>
     <string name="PREF_VK_HIDE_DELAY">Одлагање аутоматског скривања</string>
     <string name="PREF_VK_OUTLINE">Боја контуре</string>
     <string name="PREF_VK_SEL_BACK">Боја притиснутог дугмета</string>
@@ -1113,6 +1108,9 @@
     <string name="config_avoid_camera_cutout_summary">Држи игру даље од предње камере или изреза екрана. Укључи ако су контроле заклоњене.</string>
     <string name="pref_runtime_fullscreen_title">Цео екран</string>
     <string name="pref_runtime_fullscreen_summary">Сакриј траку алатки током игре. Важи за све MIDlet апликације.</string>
+    <string name="pref_show_status_bar_title">Прикажи статусну траку</string>
+    <string name="pref_show_status_bar_summary">Прикажи Android статусну траку током игре да би видео време и иконе обавештења.</string>
+    <string name="runtime_chrome_update_failed">Није могуће ажурирати подешавања приказа игре. Покушај поново.</string>
     <string name="runtime_fullscreen_update_failed">Није могуће приступити подешавању целог екрана. Покушај поново.</string>
     <string name="midlet_file_permission_title">Приступ складишту</string>
     <string name="midlet_file_permission_read">Овај MIDlet жели да чита датотеке.</string>
@@ -1159,9 +1157,7 @@
     <string name="library_metadata_follows_main">Користи главну икону</string>
     <string name="library_metadata_change">Промени</string>
     <string name="library_metadata_remove_portrait">Уклони икону 3:4</string>
-    <string name="library_metadata_icon_updated">Икона је ажурирана</string>
     <string name="library_metadata_discard_title">Одбацити измене?</string>
-    <string name="library_metadata_discard_message">Несачуване измене текста ће бити изгубљене. Измене иконе су већ сачуване.</string>
     <string name="library_metadata_discard">Одбаци</string>
     <string name="library_metadata_default_description">Подразумевани опис</string>
     <string name="library_metadata_other_languages">Други језици</string>
@@ -1169,6 +1165,20 @@
     <string name="library_metadata_language_search">Претражи језик или унеси код</string>
     <string name="library_metadata_remove_language">Уклони опис</string>
     <string name="library_metadata_language_load_failed">Описи нису учитани. Поново отвори уређивање метаподатака.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Непрозирност панела</string>
     <string name="memory_editor_panel_opacity_help">Подешава позадину панела без изблеђивања текста или икона.</string>
 </resources>

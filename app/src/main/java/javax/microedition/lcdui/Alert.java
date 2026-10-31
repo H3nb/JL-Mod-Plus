@@ -665,6 +665,8 @@ public class Alert extends Screen {
 		if (dialog != dialogInterface) {
 			return;
 		}
+		Display ownerDisplay = Display.getDisplay(null);
+		if (ownerDisplay != null) ownerDisplay.onHostPresentationEnded(this);
 		cancelTimeout();
 		Gauge dismissedIndicator = dialogIndicator;
 		dialogIndicator = null;

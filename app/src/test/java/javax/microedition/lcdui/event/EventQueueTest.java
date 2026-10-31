@@ -21,6 +21,65 @@ import org.junit.Test;
 
 public class EventQueueTest {
 	@Test
+	public void immediateModeKeepsGuestCallbacksOnEventThread() throws Exception {
+		EventQueue queue = new EventQueue();
+		java.util.concurrent.CountDownLatch delivered = new java.util.concurrent.CountDownLatch(1);
+		java.util.concurrent.atomic.AtomicReference<Thread> executingThread =
+				new java.util.concurrent.atomic.AtomicReference<>();
+		Thread postingThread = Thread.currentThread();
+		queue.startProcessing();
+		EventQueue.setImmediate(true);
+		try {
+			queue.postEvent(RunnableEvent.getInstance(() -> {
+				executingThread.set(Thread.currentThread());
+				delivered.countDown();
+			}).asGuestCallback());
+			assertTrue(delivered.await(1, java.util.concurrent.TimeUnit.SECONDS));
+			org.junit.Assert.assertNotSame(postingThread, executingThread.get());
+		} finally {
+			EventQueue.setImmediate(false);
+			queue.stopProcessing();
+		}
+	}
+
+	@Test
+	public void pendingHostEventIsReleasedByCancellationWithoutRunningAheadOfItsPosition()
+			throws Exception {
+		EventQueue queue = new EventQueue();
+		java.util.concurrent.atomic.AtomicBoolean ready = new java.util.concurrent.atomic.AtomicBoolean();
+		java.util.concurrent.atomic.AtomicBoolean processedBeforeReady = new java.util.concurrent.atomic.AtomicBoolean();
+		java.util.concurrent.atomic.AtomicInteger order = new java.util.concurrent.atomic.AtomicInteger();
+		java.util.concurrent.CountDownLatch completed = new java.util.concurrent.CountDownLatch(1);
+		queue.startProcessing();
+		try {
+			queue.postQueuedEvent(new SimpleEvent() {
+				@Override
+				public boolean isReady() { return ready.get(); }
+
+				@Override
+				public void process() {
+					if (!ready.get()) processedBeforeReady.set(true);
+					order.compareAndSet(0, 1);
+				}
+			});
+			queue.postQueuedEvent(RunnableEvent.getInstance(() -> {
+				if (order.get() == 1) order.set(2);
+				completed.countDown();
+			}).asGuestCallback());
+			assertFalse("callback escaped an unfinished screen change",
+					completed.await(100, java.util.concurrent.TimeUnit.MILLISECONDS));
+			// The host cancels the mount: no visibility callback is required to release the queue.
+			ready.set(true);
+			queue.signalEventReady();
+			assertTrue(completed.await(1, java.util.concurrent.TimeUnit.SECONDS));
+			assertFalse(processedBeforeReady.get());
+			org.junit.Assert.assertEquals(2, order.get());
+		} finally {
+			queue.stopProcessing();
+		}
+	}
+
+	@Test
 	public void immediateEventExposesCallbackContextOnlyDuringProcessing() {
 		boolean[] observed = {false};
 		EventQueue.setImmediate(true);

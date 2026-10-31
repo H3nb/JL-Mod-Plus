@@ -1236,39 +1236,42 @@ static m3gErrorHandler *m3gSetErrorHandler(Interface *m3g, m3gErrorHandler *erro
 
 #include <stdio.h>
 
-static void m3gConfigureGL(Interface *m3g)
+static M3Gbool m3gConfigureGL(Interface *m3g)
 {
 #   if defined(M3G_NGL_CONTEXT_API)
     m3g->maxTextureDimension = M3G_MAX_TEXTURE_DIMENSION;
     m3g->maxViewportWidth = M3G_MAX_VIEWPORT_WIDTH;
     m3g->maxViewportHeight = M3G_MAX_VIEWPORT_HEIGHT;
     m3g->maxViewportDim = M3G_MAX_VIEWPORT_DIMENSION;
+    return M3G_TRUE;
 #   else /* !M3G_NGL_CONTEXT_API */
-	 const GLubyte *info;
+    const GLubyte *info;
     int params[2];
-    int numConfigs;
-    EGLContext ctx;
+    EGLint numConfigs = 0;
+    EGLDisplay dpy;
+    EGLContext ctx = EGL_NO_CONTEXT;
     EGLConfig config;
-    EGLSurface surf;
+    EGLSurface surf = EGL_NO_SURFACE;
     EGLint attrib[5];
+    M3Gbool configured = M3G_FALSE;
 
-    m3gInitializeGL(m3g);
+    if (!m3gInitializeGL(m3g)) {
+        return M3G_FALSE;
+    }
 
+    dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     attrib[0] = EGL_SURFACE_TYPE;
     attrib[1] = EGL_PBUFFER_BIT;
     attrib[2] = EGL_NONE;
-    
-    eglChooseConfig(eglGetDisplay(0),
-                    attrib,
-                    &config, 1,
-                    &numConfigs);
 
-    M3G_ASSERT(numConfigs > 0);
-    
-    ctx = eglCreateContext(eglGetDisplay(0),
-                           config,
-                           NULL,
-                           NULL);
+    if (!eglChooseConfig(dpy, attrib, &config, 1, &numConfigs) || numConfigs == 0) {
+        goto Cleanup;
+    }
+
+    ctx = eglCreateContext(dpy, config, EGL_NO_CONTEXT, NULL);
+    if (ctx == EGL_NO_CONTEXT) {
+        goto Cleanup;
+    }
 
     attrib[0] = EGL_WIDTH;
     attrib[1] = 2;
@@ -1276,21 +1279,15 @@ static void m3gConfigureGL(Interface *m3g)
     attrib[3] = 2;
     attrib[4] = EGL_NONE;
 
-    surf = eglCreatePbufferSurface(eglGetDisplay(0),
-                                   config,
-                                   attrib);
+    surf = eglCreatePbufferSurface(dpy, config, attrib);
+    if (surf == EGL_NO_SURFACE || !eglMakeCurrent(dpy, surf, surf, ctx)) {
+        goto Cleanup;
+    }
 
-    eglMakeCurrent(eglGetDisplay(0), 
-                   surf, surf, ctx);
-
-
-    /* Check antialiasing support and workarounds
-       from the renderer string.
-       HW platforms like MBX has AA, Gerbera and NGL does not.
-       MBX needs workarounds for color mask and two sided lighting.
-    */
-
-	info = glGetString(GL_RENDERER);
+    info = glGetString(GL_RENDERER);
+    if (info == NULL) {
+        goto Cleanup;
+    }
 
     // on Android this string does not contain "HW", but renderer always(???) hardware
 #ifdef M3G_TARGET_ANDROID
@@ -1320,22 +1317,27 @@ static void m3gConfigureGL(Interface *m3g)
 #   endif
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, params);
-
     m3g->maxTextureDimension = params[0];
 
     glGetIntegerv(GL_MAX_VIEWPORT_DIMS, params);
-
     m3g->maxViewportWidth = params[0];
     m3g->maxViewportHeight = params[1];
     m3g->maxViewportDim = M3G_MIN(params[0], params[1]);
+    configured = M3G_TRUE;
 
-    eglMakeCurrent(eglGetDisplay(0), NULL, NULL, NULL);
-    eglDestroySurface(eglGetDisplay(0), surf);
-    eglDestroyContext(eglGetDisplay(0), ctx);
-
+Cleanup:
+    if (eglGetCurrentContext() == ctx && ctx != EGL_NO_CONTEXT) {
+        eglMakeCurrent(dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    }
+    if (surf != EGL_NO_SURFACE) {
+        eglDestroySurface(dpy, surf);
+    }
+    if (ctx != EGL_NO_CONTEXT) {
+        eglDestroyContext(dpy, ctx);
+    }
     m3gShutdownGL(m3g);
-    
-#endif /* M3G_NGL_CONTEXT_API */
+    return configured;
+#   endif /* M3G_NGL_CONTEXT_API */
 }
 
 
@@ -1343,7 +1345,7 @@ static void m3gConfigureGL(Interface *m3g)
  * \internal
  * \brief Initializes the GL subsystem
  */
-static void m3gInitializeGL(Interface *m3g)
+static M3Gbool m3gInitializeGL(Interface *m3g)
 {
 #   if defined(M3G_NGL_CONTEXT_API)
 #       define glRefCount m3gs_glRefCount
@@ -1354,7 +1356,7 @@ static void m3gInitializeGL(Interface *m3g)
     M3G_VALIDATE_INTERFACE(m3g);
     M3G_UNREF(m3g);
 
-    if (++glRefCount == 1) {
+    if (glRefCount == 0) {
         M3G_LOG(M3G_LOG_INTERFACE, "Initializing GL\n");
         
 #       if defined(M3G_NGL_CONTEXT_API)
@@ -1370,7 +1372,9 @@ static void m3gInitializeGL(Interface *m3g)
     
 #       else /* !M3G_NGL_CONTEXT_API */
     
-        m3gInitializeEGL();
+        if (!m3gInitializeEGL()) {
+            return M3G_FALSE;
+        }
 
 #       endif
         
@@ -1391,9 +1395,11 @@ static void m3gInitializeGL(Interface *m3g)
 #       endif
     }
     
+    ++glRefCount;
     M3G_ASSERT(glRefCount > 0);
 
 #   undef glRefCount
+    return M3G_TRUE;
 }
 
 /*!
@@ -1674,17 +1680,17 @@ M3G_API M3GInterface m3gCreateInterface(
 #       endif
 
 #       if !defined(M3G_NGL_CONTEXT_API)
-        /* Before messing with EGL state, check if EGL is already
-         * initialized by the calling application. */
-    
-        if (eglQueryString(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_VERSION)) {
-            ++m3g->glRefCount;
-        }
+        /* EGL initialization is owned by m3gInitializeGL(), independently
+         * of any other renderer using this display. */
 #       endif /*!M3G_NGL_CONTEXT_API*/
-        
-        /* Dig some constants from the GL implementation */
-        
-        m3gConfigureGL(m3g);
+
+        /* Dig some constants from the GL implementation. */
+        if (!m3gConfigureGL(m3g)) {
+            m3gRaiseError(m3g, M3G_INVALID_OPERATION);
+            destroyBlock(m3g);
+            (*params->freeFunc)(PHYSICAL_BLOCK(m3g));
+            return NULL;
+        }
 
         /* All done! Now we can allocate the more trival stuff */
 

@@ -45,9 +45,7 @@
     <string name="PREF_SCALE_RATIO">Skaala (%)</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuaaliohjaimet</string>
     <string name="PREF_VK_ALPHA">Peittävyys</string>
-    <string name="PREF_VK_BACK">Painikkeen väri</string>
     <string name="PREF_VK_FEEDBACK">Haptinen palaute</string>
-    <string name="PREF_VK_FORE">Tunnisteen ja symbolin väri</string>
     <string name="PREF_VK_HIDE_DELAY">Automaattisen piilotuksen viive</string>
     <string name="PREF_VK_OUTLINE">Ääriviivan väri</string>
     <string name="PREF_VK_SEL_BACK">Painetun painikkeen väri</string>
@@ -103,6 +101,8 @@
     <string name="file_picker_current_folder">Nykyinen kansio</string>
     <string name="file_picker_parent_folder">Yläkansio</string>
     <string name="file_picker_file">Tiedosto</string>
+    <string name="file_picker_preview_named">Esikatselu: %1$s</string>
+    <string name="file_picker_preview_unavailable">Ei käytettävissä</string>
     <string name="file_picker_storage_volume">Tallennustila</string>
     <string name="file_picker_empty">Ei vastaavia tiedostoja</string>
     <string name="file_picker_empty_folder">Kansioita ei löytynyt</string>
@@ -121,7 +121,13 @@
     <string name="file_picker_create_folder_failed">Kansiota ei voitu luoda.</string>
     <string name="file_picker_selection_unavailable">Valittu kohde ei ole enää käytettävissä.</string>
     <string name="invalid_resolution_not_saved">Virheellinen tarkkuus. Muutoksia ei tallennettu.</string>
-    <string name="layout_edit_done">✓ Valmis</string>
+    <string name="layout_edit_done">Valmis</string>
+    <string name="layout_editor_grid_size">Ruudukon koko</string>
+    <string name="layout_editor_grid_coarse">Harva (16)</string>
+    <string name="layout_editor_grid_normal">Normaali (24)</string>
+    <string name="layout_editor_grid_fine">Tiheä (32)</string>
+    <string name="layout_editor_snap_on">Kohdistus päällä</string>
+    <string name="layout_editor_snap_off">Kohdistus pois</string>
     <string name="layout_edit_save_changes">Tallennetaanko virtuaaliohjainten muutokset?</string>
     <string name="layout_edit_discard">Hylkää</string>
     <string name="layout_edit_continue">Jatka muokkausta</string>
@@ -327,7 +333,6 @@
     <string name="PREF_TOUCH_INPUT">Kosketussyöttö</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Ota värinä käyttöön</string>
-    <string name="PREF_VK_FORCE_OPACITY">Pidä MIDlet-näytön ulkopuoliset ohjaimet peittävinä</string>
     <string name="pref_vk_hide_hint">Poissa käytöstä</string>
     <string name="pref_vk_save_alert">Korvataanko nykyinen mukautettu virtuaaliohjainasettelu tällä asettelulla?</string>
     <string name="pref_vk_type_arrows">Nuolet</string>
@@ -758,14 +763,7 @@
     <string name="config_help_key_mapping">Määrittää Android-näppäimet ja -painikkeet J2ME-näppäimistötoiminnoille.</string>
     <string name="config_help_vk_button_shape">Määrittää näppäimistöpainikkeiden oletusmuodon. Suuntaohjaimella ja analogisella sauvalla on omat muotonsa.</string>
     <string name="config_help_vk_feedback">Värisee virtuaaliohjainten painalluksista, kun värinä on käytössä asetuksissa.</string>
-    <string name="config_help_vk_alpha">Asettaa ohjainten peittävyyden: 0 = täysin läpinäkyvä; 255 = täysin peittävä.</string>
-    <string name="config_help_vk_force_opacity">Tekee MIDlet-näytön ulkopuolisista ohjaimista peittäviä. Näytön päällä olevat ohjaimet käyttävät määritettyä peittävyyttä.</string>
     <string name="config_help_vk_hide_delay">Piilottaa ohjaimet tämän viiveen jälkeen, kun ne peittävät MIDlet-näytön. Aseta arvoksi 0 poistaaksesi automaattisen piilotuksen käytöstä.</string>
-    <string name="config_help_vk_foreground">Asettaa virtuaaliohjainten painikkeiden tunnisteiden ja symbolien värin.</string>
-    <string name="config_help_vk_background">Asettaa virtuaaliohjainten painikkeiden perusvärin.</string>
-    <string name="config_help_vk_selected_foreground">Asettaa tunnisteiden ja symbolien värin virtuaaliohjaimen painiketta painettaessa.</string>
-    <string name="config_help_vk_selected_background">Asettaa painikkeen värin painettaessa.</string>
-    <string name="config_help_vk_outline">Asettaa virtuaaliohjainten painikkeiden ääriviivan värin.</string>
     <string name="config_help_reset_layout">Palauttaa virtuaaliohjainten asettelun muuttamatta muita MIDlet-asetuksia.</string>
     <string name="config_help_skip_resume">Ensimmäisen onnistuneen startApp()-kutsun jälkeen ohittaa myöhemmät kutsut MIDlet-sovelluksen jatkuessa. Käytä vain sovelluksille, jotka epäonnistuvat jatkamisen yhteydessä.</string>
     <string name="config_help_soundbank">Valitsee MIDI-toistossa käytettävän soundbankin.</string>
@@ -829,10 +827,8 @@
     <string name="config_controller_help_body_compact">Gamepad-painikkeet käyttävät samaa Näppäinmääritystä kuin näppäimistöt ja puhelinnäppäimet. Analoginen sauva -asetus ohjaa vain sauvan suuntatulostetta MIDlet-sovellukselle. Android-järjestelmän Takaisin säilyttää normaalin isäntätoimintansa, ja mikä tahansa M:ään määritetty fyysinen painike avaa runtime-MIDlet-valikon.</string>
     <string name="library_metadata_edit_title">Muokkaa metatietoja</string>
     <string name="library_metadata_icon">Kuvake</string>
-    <string name="library_metadata_change_icon">Vaihda kuvake</string>
     <string name="library_metadata_name">Nimi</string>
     <string name="library_metadata_vendor">Toimittaja</string>
-    <string name="library_metadata_description">Kuvaus</string>
     <string name="library_metadata_reset_to_original">Palauta alkuperäinen</string>
     <string name="library_metadata_save">Tallenna</string>
     <string name="library_hide_grid_titles_summary">Näytä ruudukkonäkymässä vain MIDlet-kuvakkeet.</string>
@@ -993,7 +989,6 @@
     <string name="bulk_install_skipped_entries">Ohitetut arkistomerkinnät: %1$d</string>
     <string name="bulk_install_unreadable_archives">Arkistot, joita ei voi lukea: %1$d</string>
     <string name="config_virtual_controls_color_preview">Värien esikatselu</string>
-    <string name="config_virtual_controls_preview_hint">Napauta nähdäksesi painetun tilan värit. Esimerkki käyttää valittua peittävyyttä.</string>
     <string name="config_virtual_controls_preview_normal">Vapautettu</string>
     <string name="config_virtual_controls_preview_pressed">Painettu</string>
     <string name="config_warning_filter_shader">Lineaarinen suodatus tasoittaa syötekuvaa ennen näyttövarjostimen käsittelyä ja voi vähentää lopputuloksen terävyyttä.</string>
@@ -1081,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Pitää pelin poissa etukameran tai näyttöloven alueelta. Ota käyttöön, jos ohjaimet peittyvät.</string>
     <string name="pref_runtime_fullscreen_title">Koko näyttö</string>
     <string name="pref_runtime_fullscreen_summary">Piilota työkalupalkki pelatessa. Koskee kaikkia MIDlet-sovelluksia.</string>
+    <string name="pref_show_status_bar_title">Näytä tilapalkki</string>
+    <string name="pref_show_status_bar_summary">Pidä Androidin tilapalkki näkyvissä pelaamisen aikana nähdäksesi kellon ja ilmoituskuvakkeet.</string>
+    <string name="runtime_chrome_update_failed">Pelin näyttöasetuksia ei voitu päivittää. Yritä uudelleen.</string>
     <string name="runtime_fullscreen_update_failed">Koko näytön asetusta ei voitu käyttää. Yritä uudelleen.</string>
     <string name="midlet_file_permission_title">Tallennustilan käyttö</string>
     <string name="midlet_file_permission_read">Tämä MIDlet haluaa lukea tiedostoja.</string>
@@ -1127,9 +1125,7 @@
     <string name="library_metadata_follows_main">Käyttää pääkuvaketta</string>
     <string name="library_metadata_change">Vaihda</string>
     <string name="library_metadata_remove_portrait">Poista 3:4-kuvake</string>
-    <string name="library_metadata_icon_updated">Kuvake päivitetty</string>
     <string name="library_metadata_discard_title">Hylätäänkö muutokset?</string>
-    <string name="library_metadata_discard_message">Tallentamattomat tekstimuutokset menetetään. Kuvakemuutokset on jo tallennettu.</string>
     <string name="library_metadata_discard">Hylkää</string>
     <string name="library_metadata_default_description">Oletuskuvaus</string>
     <string name="library_metadata_other_languages">Muut kielet</string>
@@ -1137,6 +1133,20 @@
     <string name="library_metadata_language_search">Hae kieltä tai anna kielialueen koodi</string>
     <string name="library_metadata_remove_language">Poista kuvaus</string>
     <string name="library_metadata_language_load_failed">Kuvauksia ei voitu ladata. Avaa metatietojen muokkaus uudelleen.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Paneelin peittävyys</string>
     <string name="memory_editor_panel_opacity_help">Säätää paneelin taustaa himmentämättä tekstiä tai kuvakkeita.</string>
 </resources>

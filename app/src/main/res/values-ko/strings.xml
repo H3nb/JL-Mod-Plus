@@ -80,10 +80,7 @@
     <string name="pref_vibration_title">진동 활성화</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">가상 컨트롤 표시</string>
     <string name="PREF_VK_ALPHA">불투명도</string>
-    <string name="PREF_VK_BACK">버튼 색상</string>
     <string name="PREF_VK_FEEDBACK">진동 피드백</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet 화면 밖의 컨트롤을 불투명하게 유지</string>
-    <string name="PREF_VK_FORE">레이블 및 기호 색상</string>
     <string name="PREF_VK_HIDE_DELAY">자동 숨김 지연</string>
     <string name="pref_vk_hide_hint">비활성화</string>
     <string name="PREF_VK_OUTLINE">테두리 색상</string>
@@ -164,6 +161,8 @@
     <string name="file_picker_empty">일치하는 파일이 없습니다</string>
     <string name="file_picker_empty_folder">폴더를 찾을 수 없습니다</string>
     <string name="file_picker_file">파일</string>
+    <string name="file_picker_preview_named">미리보기: %1$s</string>
+    <string name="file_picker_preview_unavailable">사용 불가</string>
     <string name="file_picker_folder_exists">같은 이름의 항목이 이미 있습니다.</string>
     <string name="file_picker_folder_name">폴더 이름</string>
     <string name="file_picker_grant_access">접근 허용</string>
@@ -270,8 +269,6 @@
     <string name="library_indexing_progress">라이브러리 인덱스를 만드는 중… %1$d/%2$d</string>
     <string name="library_load_error_title">라이브러리를 사용할 수 없습니다</string>
     <string name="library_load_failed_message">라이브러리를 불러오지 못했습니다. 다시 시도하세요.</string>
-    <string name="library_metadata_change_icon">아이콘 변경</string>
-    <string name="library_metadata_description">설명</string>
     <string name="library_metadata_edit_title">메타데이터 편집</string>
     <string name="library_metadata_icon">아이콘</string>
     <string name="library_metadata_name">이름</string>
@@ -500,16 +497,9 @@
     <string name="config_help_timing_unavailable">이 MIDlet 설치에서는 시간 설정을 사용할 수 없습니다. 설정을 활성화하려면 MIDlet을 다시 설치하거나 다시 변환하세요.</string>
     <string name="config_help_touch_input">MIDlet이 터치스크린의 포인터 입력을 받도록 합니다.</string>
     <string name="config_help_virtual_keyboard">이 MIDlet의 화면에 컨트롤을 표시합니다.</string>
-    <string name="config_help_vk_alpha">컨트롤 불투명도를 설정합니다. 0 = 완전히 투명, 255 = 완전히 불투명.</string>
-    <string name="config_help_vk_background">가상 컨트롤 버튼의 기본 색을 설정합니다.</string>
     <string name="config_help_vk_button_shape">키패드 버튼의 기본 모양을 설정합니다. 방향 패드와 아날로그 스틱은 각자의 모양을 사용합니다.</string>
     <string name="config_help_vk_feedback">설정에서 진동이 활성화된 경우 가상 컨트롤을 누르면 진동합니다.</string>
-    <string name="config_help_vk_force_opacity">MIDlet 화면 밖의 컨트롤을 불투명하게 합니다. 화면 위의 컨트롤은 설정된 불투명도를 사용합니다.</string>
-    <string name="config_help_vk_foreground">가상 컨트롤 버튼의 레이블과 기호 색을 설정합니다.</string>
     <string name="config_help_vk_hide_delay">컨트롤이 MIDlet 화면을 덮는 경우 이 지연 시간 후에 숨깁니다. 0으로 설정하면 자동 숨김을 비활성화합니다.</string>
-    <string name="config_help_vk_outline">가상 컨트롤 버튼의 윤곽선 색을 설정합니다.</string>
-    <string name="config_help_vk_selected_background">누르고 있는 동안의 버튼 색을 설정합니다.</string>
-    <string name="config_help_vk_selected_foreground">가상 컨트롤 버튼을 누르고 있는 동안의 레이블과 기호 색을 설정합니다.</string>
     <string name="config_increase_value">값 늘리기</string>
     <string name="config_lock_custom_resolution_ratio">가로세로 비율 잠금</string>
     <string name="config_maintenance">초기화 및 데이터</string>
@@ -526,13 +516,18 @@
     <string name="config_timing_mode_full_guest">에뮬레이션 시간</string>
     <string name="config_timing_mode_real_wall">시스템 시간</string>
     <string name="config_virtual_controls_color_preview">색상 미리보기</string>
-    <string name="config_virtual_controls_preview_hint">눌렀을 때의 색을 미리 보려면 탭하세요. 샘플에는 선택한 불투명도가 적용됩니다.</string>
     <string name="config_virtual_controls_preview_normal">뗀 상태</string>
     <string name="config_virtual_controls_preview_pressed">눌림</string>
     <string name="config_warning_filter_shader">선형 필터링은 화면 셰이더 처리 전에 입력을 부드럽게 하므로 출력의 선명도가 낮아질 수 있습니다.</string>
     <string name="layout_edit_continue">계속 편집</string>
     <string name="layout_edit_discard">버리기</string>
-    <string name="layout_edit_done">✓ 완료</string>
+    <string name="layout_edit_done">완료</string>
+    <string name="layout_editor_grid_size">격자 크기</string>
+    <string name="layout_editor_grid_coarse">넓게 (16)</string>
+    <string name="layout_editor_grid_normal">보통 (24)</string>
+    <string name="layout_editor_grid_fine">촘촘하게 (32)</string>
+    <string name="layout_editor_snap_on">스냅 켜짐</string>
+    <string name="layout_editor_snap_off">스냅 꺼짐</string>
     <string name="layout_edit_save_changes">가상 컨트롤 변경 사항을 저장할까요?</string>
     <string name="mapping_dialog_add_input">물리 입력을 여러 개 할당할 수 있습니다.</string>
     <string name="mapping_dialog_assigned_inputs">할당된 입력</string>
@@ -1048,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">게임 화면이 전면 카메라나 화면 컷아웃과 겹치지 않게 합니다. 조작 버튼이 가려지면 켜세요.</string>
     <string name="pref_runtime_fullscreen_title">전체 화면</string>
     <string name="pref_runtime_fullscreen_summary">플레이 중 도구 모음을 숨깁니다. 모든 MIDlet에 적용됩니다.</string>
+    <string name="pref_show_status_bar_title">상태 표시줄 표시</string>
+    <string name="pref_show_status_bar_summary">게임 중에도 Android 상태 표시줄을 표시해 시간과 알림 아이콘을 확인합니다.</string>
+    <string name="runtime_chrome_update_failed">게임 화면 설정을 업데이트할 수 없습니다. 다시 시도하세요.</string>
     <string name="runtime_fullscreen_update_failed">전체 화면 설정에 접근할 수 없습니다. 다시 시도하세요.</string>
     <string name="midlet_file_permission_title">저장소 접근</string>
     <string name="midlet_file_permission_read">이 MIDlet이 파일을 읽으려고 합니다.</string>
@@ -1094,9 +1092,7 @@
     <string name="library_metadata_follows_main">기본 아이콘 사용</string>
     <string name="library_metadata_change">변경</string>
     <string name="library_metadata_remove_portrait">3:4 아이콘 삭제</string>
-    <string name="library_metadata_icon_updated">아이콘 업데이트됨</string>
     <string name="library_metadata_discard_title">변경사항을 취소하시겠습니까?</string>
-    <string name="library_metadata_discard_message">저장하지 않은 텍스트 변경사항은 사라집니다. 아이콘 변경사항은 이미 저장되었습니다.</string>
     <string name="library_metadata_discard">취소</string>
     <string name="library_metadata_default_description">기본 설명</string>
     <string name="library_metadata_other_languages">다른 언어</string>
@@ -1104,6 +1100,20 @@
     <string name="library_metadata_language_search">언어 검색 또는 로캘 코드 입력</string>
     <string name="library_metadata_remove_language">설명 삭제</string>
     <string name="library_metadata_language_load_failed">설명을 불러올 수 없습니다. 메타데이터 편집을 다시 여세요.</string>
+    <string name="layout_editor_group_on">그룹 크기 변경</string>
+    <string name="layout_editor_group_off">개별 크기 변경</string>
+    <string name="layout_editor_snap_grid">격자에 맞추기</string>
+    <string name="layout_editor_snap_controls">버튼에 맞추기</string>
+    <string name="layout_editor_snap_grid_on">격자 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_grid_off">격자 맞춤: 꺼짐</string>
+    <string name="layout_editor_snap_controls_on">버튼 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_controls_off">버튼 맞춤: 꺼짐</string>
+    <string name="layout_editor_guide_gestures">제스처</string>
+    <string name="layout_editor_guide_move">컨트롤을 드래그하여 이동합니다.</string>
+    <string name="layout_editor_guide_resize">두 손가락으로 크기를 변경합니다. 가로 또는 세로로 움직여 너비나 높이를 조절합니다.</string>
+    <string name="layout_editor_guide_tools">편집 도구</string>
+    <string name="layout_editor_guide_done">완료를 탭하여 저장하거나 취소하거나 편집을 계속합니다.</string>
+    <string name="layout_editor_guide_start">편집 시작</string>
     <string name="memory_editor_panel_opacity">패널 불투명도</string>
     <string name="memory_editor_panel_opacity_help">텍스트와 아이콘을 흐리게 하지 않고 패널 배경을 조절합니다.</string>
 </resources>

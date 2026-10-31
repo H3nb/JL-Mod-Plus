@@ -65,9 +65,7 @@
     <string name="PREF_UNIT_MS">میلی ثانیه</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">نمایش کنترل‌های مجازی</string>
     <string name="PREF_VK_ALPHA">کدری</string>
-    <string name="PREF_VK_BACK">رنگ دکمه</string>
     <string name="PREF_VK_FEEDBACK">بازخورد لمسی</string>
-    <string name="PREF_VK_FORE">رنگ برچسب‌ها و نمادها</string>
     <string name="PREF_VK_HIDE_DELAY">تأخیر پنهان‌سازی خودکار</string>
     <string name="PREF_VK_OUTLINE">رنگ حاشیه</string>
     <string name="PREF_VK_SEL_BACK">رنگ دکمه هنگام فشردن</string>
@@ -147,6 +145,8 @@
     <string name="file_picker_empty">فایل مطابقی یافت نشد</string>
     <string name="file_picker_empty_folder">پوشه‌ای یافت نشد</string>
     <string name="file_picker_file">فایل</string>
+    <string name="file_picker_preview_named">پیش‌نمایش: %1$s</string>
+    <string name="file_picker_preview_unavailable">در دسترس نیست</string>
     <string name="file_picker_folder_exists">موردی با این نام از قبل وجود دارد.</string>
     <string name="file_picker_folder_name">نام پوشه</string>
     <string name="file_picker_grant_access">اجازهٔ دسترسی</string>
@@ -253,8 +253,6 @@
     <string name="library_indexing_progress">در حال نمایه‌سازی کتابخانه… %1$d/%2$d</string>
     <string name="library_load_error_title">کتابخانه در دسترس نیست</string>
     <string name="library_load_failed_message">بارگیری کتابخانه ممکن نشد. دوباره تلاش کنید.</string>
-    <string name="library_metadata_change_icon">تغییر آیکون</string>
-    <string name="library_metadata_description">توضیحات</string>
     <string name="library_metadata_edit_title">ویرایش فراداده</string>
     <string name="library_metadata_icon">آیکون</string>
     <string name="library_metadata_name">نام</string>
@@ -488,16 +486,9 @@
     <string name="config_help_timing_unavailable">تنظیمات زمان برای این نصب MIDlet در دسترس نیست. برای فعال کردن آن‌ها، MIDlet را دوباره نصب یا تبدیل کنید.</string>
     <string name="config_help_touch_input">به MIDlet اجازه می‌دهد ورودی اشاره‌گر را از صفحهٔ لمسی دریافت کند.</string>
     <string name="config_help_virtual_keyboard">کنترل‌های روی صفحه را برای این MIDlet نمایش می‌دهد.</string>
-    <string name="config_help_vk_alpha">میزان کدری کنترل‌ها را تنظیم می‌کند: ۰ = کاملاً شفاف؛ ۲۵۵ = کاملاً کدر.</string>
-    <string name="config_help_vk_background">رنگ پایهٔ دکمه‌های کنترل‌های مجازی را تنظیم می‌کند.</string>
     <string name="config_help_vk_button_shape">شکل پیش‌فرض دکمه‌های صفحه‌کلید را تنظیم می‌کند. کلید جهت و دستهٔ آنالوگ شکل مخصوص خود را دارند.</string>
     <string name="config_help_vk_feedback">اگر لرزش در تنظیمات فعال باشد، با فشردن کنترل‌های مجازی می‌لرزد.</string>
-    <string name="config_help_vk_force_opacity">کنترل‌های بیرون از صفحهٔ MIDlet را کدر می‌کند. کنترل‌های روی صفحه از میزان کدری تنظیم‌شده استفاده می‌کنند.</string>
-    <string name="config_help_vk_foreground">رنگ برچسب‌ها و نمادهای دکمه‌های کنترل‌های مجازی را تنظیم می‌کند.</string>
     <string name="config_help_vk_hide_delay">وقتی کنترل‌ها صفحهٔ MIDlet را می‌پوشانند، پس از این تأخیر آن‌ها را پنهان می‌کند. برای غیرفعال کردن پنهان‌سازی خودکار، مقدار را ۰ قرار دهید.</string>
-    <string name="config_help_vk_outline">رنگ حاشیهٔ دکمه‌های کنترل‌های مجازی را تنظیم می‌کند.</string>
-    <string name="config_help_vk_selected_background">رنگ دکمه را هنگام فشرده شدن تنظیم می‌کند.</string>
-    <string name="config_help_vk_selected_foreground">رنگ برچسب‌ها و نمادها را هنگام فشرده شدن دکمهٔ کنترل مجازی تنظیم می‌کند.</string>
     <string name="config_increase_value">افزایش مقدار</string>
     <string name="config_lock_custom_resolution_ratio">قفل نسبت تصویر</string>
     <string name="config_maintenance">بازنشانی و داده‌ها</string>
@@ -514,13 +505,18 @@
     <string name="config_timing_mode_full_guest">زمان شبیه‌سازی</string>
     <string name="config_timing_mode_real_wall">زمان سیستم</string>
     <string name="config_virtual_controls_color_preview">پیش‌نمایش رنگ</string>
-    <string name="config_virtual_controls_preview_hint">برای پیش‌نمایش رنگ‌های حالت فشرده ضربه بزنید. نمونه از میزان کدری انتخاب‌شده استفاده می‌کند.</string>
     <string name="config_virtual_controls_preview_normal">رهاشده</string>
     <string name="config_virtual_controls_preview_pressed">فشرده</string>
     <string name="config_warning_filter_shader">فیلتر خطی ورودی را پیش از پردازش سایه‌زن صفحه هموار می‌کند و ممکن است وضوح خروجی را کاهش دهد.</string>
     <string name="layout_edit_continue">ادامهٔ ویرایش</string>
     <string name="layout_edit_discard">کنار گذاشتن</string>
-    <string name="layout_edit_done">✓ انجام شد</string>
+    <string name="layout_edit_done">انجام شد</string>
+    <string name="layout_editor_grid_size">اندازه شبکه</string>
+    <string name="layout_editor_grid_coarse">درشت (16)</string>
+    <string name="layout_editor_grid_normal">معمولی (24)</string>
+    <string name="layout_editor_grid_fine">ریز (32)</string>
+    <string name="layout_editor_snap_on">چسبش روشن</string>
+    <string name="layout_editor_snap_off">چسبش خاموش</string>
     <string name="layout_edit_save_changes">تغییرات کنترل‌های مجازی ذخیره شوند؟</string>
     <string name="mapping_dialog_add_input">می‌توانید بیش از یک ورودی فیزیکی تخصیص دهید.</string>
     <string name="mapping_dialog_assigned_inputs">ورودی‌های تخصیص‌یافته</string>
@@ -910,7 +906,6 @@
     <string name="PREF_FONT_ANTI_ALIASING">هموارسازی لبه‌ها</string>
     <string name="PREF_SHADER_FILTER">سایه‌زن صفحه</string>
     <string name="PREF_TIMING_MODE">منبع زمان</string>
-    <string name="PREF_VK_FORCE_OPACITY">کنترل‌ها بیرون از صفحهٔ MIDlet کاملاً غیرشفاف بمانند</string>
     <string name="fps_limit_maximum">بیشینه</string>
     <string name="invalid_resolution_not_saved">وضوح نامعتبر است. تغییرات ذخیره نشدند.</string>
     <string name="msg_error_loading_shader">سایه‌زن پشتیبانی نمی‌شود. از سایه‌زن پیش‌فرض استفاده می‌شود.</string>
@@ -1081,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">بازی را از دوربین جلو یا بریدگی نمایشگر دور نگه می‌دارد. اگر کنترل‌ها پوشانده می‌شوند، فعال کنید.</string>
     <string name="pref_runtime_fullscreen_title">تمام‌صفحه</string>
     <string name="pref_runtime_fullscreen_summary">پنهان کردن نوار ابزار هنگام بازی. برای همهٔ برنامه‌های MIDlet اعمال می‌شود.</string>
+    <string name="pref_show_status_bar_title">نمایش نوار وضعیت</string>
+    <string name="pref_show_status_bar_summary">هنگام بازی، نوار وضعیت Android را برای دیدن ساعت و نمادهای اعلان قابل مشاهده نگه دارید.</string>
+    <string name="runtime_chrome_update_failed">تنظیمات نمایش هنگام بازی به‌روزرسانی نشد. دوباره تلاش کنید.</string>
     <string name="runtime_fullscreen_update_failed">دسترسی به تنظیم تمام‌صفحه ممکن نشد. دوباره تلاش کنید.</string>
     <string name="midlet_file_permission_title">دسترسی به فضای ذخیره‌سازی</string>
     <string name="midlet_file_permission_read">این MIDlet می‌خواهد فایل‌ها را بخواند.</string>
@@ -1127,9 +1125,7 @@
     <string name="library_metadata_follows_main">از نماد اصلی استفاده می‌کند</string>
     <string name="library_metadata_change">تغییر</string>
     <string name="library_metadata_remove_portrait">حذف نماد 3:4</string>
-    <string name="library_metadata_icon_updated">نماد به‌روزرسانی شد</string>
     <string name="library_metadata_discard_title">تغییرات کنار گذاشته شوند؟</string>
-    <string name="library_metadata_discard_message">تغییرات ذخیره‌نشدهٔ متن از دست می‌روند. تغییرات نماد قبلاً ذخیره شده‌اند.</string>
     <string name="library_metadata_discard">کنار گذاشتن</string>
     <string name="library_metadata_default_description">توضیح پیش‌فرض</string>
     <string name="library_metadata_other_languages">زبان‌های دیگر</string>
@@ -1137,6 +1133,20 @@
     <string name="library_metadata_language_search">جستجوی زبان یا وارد کردن کد محلی</string>
     <string name="library_metadata_remove_language">حذف توضیح</string>
     <string name="library_metadata_language_load_failed">توضیحات بارگیری نشدند. ویرایش فراداده را دوباره باز کنید.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">میزان کدری پنل</string>
     <string name="memory_editor_panel_opacity_help">پس‌زمینهٔ پنل را بدون کم‌رنگ کردن متن یا نمادها تنظیم می‌کند.</string>
 </resources>

@@ -108,10 +108,7 @@
     <string name="pref_vibration_title">Вібрація</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Показувати віртуальні елементи керування</string>
     <string name="PREF_VK_ALPHA">Непрозорість</string>
-    <string name="PREF_VK_BACK">Колір кнопок</string>
     <string name="PREF_VK_FEEDBACK">Вібрація при натисканні</string>
-    <string name="PREF_VK_FORCE_OPACITY">Зберігати непрозорість елементів керування поза екраном MIDlet</string>
-    <string name="PREF_VK_FORE">Колір написів і символів</string>
     <string name="PREF_VK_HIDE_DELAY">Затримка автоматичного приховування</string>
     <string name="pref_vk_hide_hint">вимкнено</string>
     <string name="PREF_VK_OUTLINE">Колір контуру</string>
@@ -192,6 +189,8 @@
     <string name="file_picker_empty">Немає відповідних файлів</string>
     <string name="file_picker_empty_folder">Папок не знайдено</string>
     <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">Попередній перегляд: %1$s</string>
+    <string name="file_picker_preview_unavailable">Недоступні</string>
     <string name="file_picker_folder_exists">Елемент із такою назвою вже існує.</string>
     <string name="file_picker_folder_name">Назва папки</string>
     <string name="file_picker_grant_access">Надати доступ</string>
@@ -298,8 +297,6 @@
     <string name="library_indexing_progress">Індексування бібліотеки… %1$d/%2$d</string>
     <string name="library_load_error_title">Бібліотека недоступна</string>
     <string name="library_load_failed_message">Не вдалося завантажити бібліотеку. Повторіть спробу.</string>
-    <string name="library_metadata_change_icon">Змінити значок</string>
-    <string name="library_metadata_description">Опис</string>
     <string name="library_metadata_edit_title">Редагувати метадані</string>
     <string name="library_metadata_icon">Значок</string>
     <string name="library_metadata_name">Назва</string>
@@ -543,16 +540,9 @@
     <string name="config_help_timing_unavailable">Налаштування часу недоступні для цієї інсталяції MIDlet. Перевстановіть або повторно конвертуйте MIDlet, щоб увімкнути їх.</string>
     <string name="config_help_touch_input">Дозволяє MIDlet отримувати введення вказівника із сенсорного екрана.</string>
     <string name="config_help_virtual_keyboard">Показує екранні елементи керування для цього MIDlet.</string>
-    <string name="config_help_vk_alpha">Задає непрозорість елементів керування: 0 = повністю прозорі; 255 = повністю непрозорі.</string>
-    <string name="config_help_vk_background">Задає основний колір кнопок віртуальних елементів керування.</string>
     <string name="config_help_vk_button_shape">Задає стандартну форму кнопок клавіатури. Хрестовина й аналоговий стік мають власні форми.</string>
     <string name="config_help_vk_feedback">Вібрує під час натискання віртуальних елементів керування, якщо вібрацію ввімкнено в Налаштуваннях.</string>
-    <string name="config_help_vk_force_opacity">Робить елементи керування поза екраном MIDlet непрозорими. Елементи поверх екрана використовують задану непрозорість.</string>
-    <string name="config_help_vk_foreground">Задає колір написів і символів на кнопках віртуальних елементів керування.</string>
     <string name="config_help_vk_hide_delay">Ховає елементи керування після цієї затримки, якщо вони перекривають екран MIDlet. Задайте 0, щоб вимкнути автоматичне приховування.</string>
-    <string name="config_help_vk_outline">Задає колір контурів кнопок віртуальних елементів керування.</string>
-    <string name="config_help_vk_selected_background">Задає колір кнопки під час натискання.</string>
-    <string name="config_help_vk_selected_foreground">Задає колір написів і символів під час натискання кнопки віртуальних елементів керування.</string>
     <string name="config_increase_value">Збільшити значення</string>
     <string name="config_lock_custom_resolution_ratio">Зафіксувати співвідношення сторін</string>
     <string name="config_maintenance">Скидання й дані</string>
@@ -569,13 +559,18 @@
     <string name="config_timing_mode_full_guest">Час емуляції</string>
     <string name="config_timing_mode_real_wall">Системний час</string>
     <string name="config_virtual_controls_color_preview">Попередній перегляд кольорів</string>
-    <string name="config_virtual_controls_preview_hint">Торкніться, щоб переглянути кольори під час натискання. Зразок використовує вибрану непрозорість.</string>
     <string name="config_virtual_controls_preview_normal">Відпущено</string>
     <string name="config_virtual_controls_preview_pressed">Натиснутий</string>
     <string name="config_warning_filter_shader">Лінійна фільтрація згладжує вхідне зображення перед обробкою шейдером екрана й може знизити чіткість результату.</string>
     <string name="layout_edit_continue">Продовжити редагування</string>
     <string name="layout_edit_discard">Відкинути</string>
-    <string name="layout_edit_done">✓ Готово</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Розмір сітки</string>
+    <string name="layout_editor_grid_coarse">Велика (16)</string>
+    <string name="layout_editor_grid_normal">Звичайна (24)</string>
+    <string name="layout_editor_grid_fine">Дрібна (32)</string>
+    <string name="layout_editor_snap_on">Прив’язка ввімкнена</string>
+    <string name="layout_editor_snap_off">Прив’язка вимкнена</string>
     <string name="layout_edit_save_changes">Зберегти зміни віртуальних елементів керування?</string>
     <string name="mapping_dialog_add_input">Можна призначити кілька фізичних входів.</string>
     <string name="mapping_dialog_assigned_inputs">Призначені входи</string>
@@ -1147,6 +1142,9 @@
     <string name="config_avoid_camera_cutout_summary">Гра не заходить в область фронтальної камери або вирізу екрана. Увімкніть, якщо елементи керування перекриті.</string>
     <string name="pref_runtime_fullscreen_title">Повний екран</string>
     <string name="pref_runtime_fullscreen_summary">Приховувати панель інструментів під час гри. Застосовується до всіх MIDlet.</string>
+    <string name="pref_show_status_bar_title">Показувати рядок стану</string>
+    <string name="pref_show_status_bar_summary">Залишати рядок стану Android видимим під час гри, щоб бачити час і значки сповіщень.</string>
+    <string name="runtime_chrome_update_failed">Не вдалося оновити налаштування відображення гри. Спробуйте ще раз.</string>
     <string name="runtime_fullscreen_update_failed">Не вдалося отримати доступ до налаштування повного екрана. Спробуйте ще раз.</string>
     <string name="midlet_file_permission_title">Доступ до сховища</string>
     <string name="midlet_file_permission_read">Цей MIDlet хоче читати файли.</string>
@@ -1193,9 +1191,7 @@
     <string name="library_metadata_follows_main">Використовується основна піктограма</string>
     <string name="library_metadata_change">Змінити</string>
     <string name="library_metadata_remove_portrait">Видалити піктограму 3:4</string>
-    <string name="library_metadata_icon_updated">Піктограму оновлено</string>
     <string name="library_metadata_discard_title">Скасувати зміни?</string>
-    <string name="library_metadata_discard_message">Незбережені зміни тексту буде втрачено. Зміни піктограми вже збережено.</string>
     <string name="library_metadata_discard">Скасувати</string>
     <string name="library_metadata_default_description">Типовий опис</string>
     <string name="library_metadata_other_languages">Інші мови</string>
@@ -1203,6 +1199,20 @@
     <string name="library_metadata_language_search">Знайти мову або ввести код локалі</string>
     <string name="library_metadata_remove_language">Видалити опис</string>
     <string name="library_metadata_language_load_failed">Не вдалося завантажити описи. Відкрийте редагування метаданих ще раз.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Непрозорість панелі</string>
     <string name="memory_editor_panel_opacity_help">Налаштовує фон панелі, не роблячи текст та значки напівпрозорими.</string>
 </resources>

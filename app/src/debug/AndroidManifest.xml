@@ -8,7 +8,7 @@
 
     <application tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon">
         <service
-            android:name="io.github.h3nb.jlmodplus.settings.FullscreenProbeService"
+            android:name="io.github.h3nb.jlmodplus.settings.RuntimeChromeProbeService"
             android:exported="false"
             android:process=":fullscreen_probe" />
         <activity

@@ -15,6 +15,10 @@
 package io.github.h3nb.jlmodplus.applist
 
 import io.github.h3nb.jlmodplus.R
+import android.os.SystemClock
+import android.view.InputDevice
+import android.view.MotionEvent
+import android.view.View
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
@@ -52,13 +56,18 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeUp
@@ -201,6 +210,89 @@ class LibraryComposeTest {
 
         search.performClick()
         search.assertIsFocused()
+    }
+
+    @Test
+    fun searchDoneTransfersFocusAfterTouchAndCanBeReopened() {
+        val actions = RecordingLibraryActions()
+        lateinit var inputModeManager: InputModeManager
+        lateinit var composeView: View
+        composeRule.setContent {
+            inputModeManager = LocalInputModeManager.current
+            composeView = LocalView.current
+            JLModPlusTheme {
+                LibraryScreen(
+                    state = LibraryUiState(
+                        loading = false,
+                        apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true)),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        val search = composeRule.onNode(hasSetTextAction())
+        search.performClick()
+        search.performTextInput("Demo")
+        val center = search.fetchSemanticsNode().boundsInRoot.center
+        val screenLocation = IntArray(2)
+        composeRule.runOnIdle { composeView.getLocationOnScreen(screenLocation) }
+        val x = screenLocation[0] + center.x
+        val y = screenLocation[1] + center.y
+        val downTime = SystemClock.uptimeMillis()
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        for (action in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+            val event = MotionEvent.obtain(
+                downTime,
+                downTime + if (action == MotionEvent.ACTION_UP) 50 else 0,
+                action,
+                x,
+                y,
+                0,
+            ).apply { source = InputDevice.SOURCE_TOUCHSCREEN }
+            try {
+                assertTrue(automation.injectInputEvent(event, true))
+            } finally {
+                event.recycle()
+            }
+        }
+        composeRule.waitForIdle()
+        search.assertIsFocused()
+        composeRule.runOnIdle {
+            assertEquals(InputMode.Touch, inputModeManager.inputMode)
+        }
+        search.performImeAction()
+        composeRule.waitForIdle()
+
+        search.assertIsNotFocused()
+        assertEquals("Demo", actions.searches.last())
+        search.performTouchInput { click() }
+        search.assertIsFocused()
+    }
+
+    @Test
+    fun loadingLibraryScopeChangeKeepsSearchUnfocused() {
+        val actions = RecordingLibraryActions()
+        val libraryState = mutableStateOf(LibraryUiState(loading = true))
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(state = libraryState.value, actions = actions)
+            }
+        }
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+
+        composeRule.runOnIdle {
+            libraryState.value = LibraryUiState(
+                loading = false,
+                libraryScope = "/test/loaded-library",
+                apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true)),
+            )
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        navigationItem(R.string.library_destination_apps).assertIsFocused()
     }
 
     @Test

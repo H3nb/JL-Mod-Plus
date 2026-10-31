@@ -78,6 +78,8 @@
     <string name="file_picker_parent_folder">Parent folder</string>
     <string name="file_picker_parent_marker" translatable="false">..</string>
     <string name="file_picker_file">File</string>
+    <string name="file_picker_preview_named">Preview %1$s</string>
+    <string name="file_picker_preview_unavailable">Preview unavailable</string>
     <string name="file_picker_storage_volume">Storage volume</string>
     <string name="file_picker_empty">No matching files</string>
     <string name="file_picker_empty_folder">No folders found</string>
@@ -97,7 +99,13 @@
     <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
     <string name="invalid_resolution_not_saved">Invalid resolution. Changes were not saved.</string>
     <string name="layout_edit_finish">Finish editing</string>
-    <string name="layout_edit_done">✓ Done</string>
+    <string name="layout_edit_done">Done</string>
+    <string name="layout_editor_grid_size">Grid size</string>
+    <string name="layout_editor_grid_coarse">Coarse (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fine (32)</string>
+    <string name="layout_editor_snap_on">Snap on</string>
+    <string name="layout_editor_snap_off">Snap off</string>
     <string name="layout_edit_save_changes">Save changes to virtual controls?</string>
     <string name="layout_edit_discard">Discard</string>
     <string name="layout_edit_continue">Continue editing</string>
@@ -327,10 +335,7 @@
     <string name="pref_vibration_title">Vibration</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Show virtual controls</string>
     <string name="PREF_VK_ALPHA">Opacity</string>
-    <string name="PREF_VK_BACK">Button color</string>
     <string name="PREF_VK_FEEDBACK">Haptic feedback</string>
-    <string name="PREF_VK_FORCE_OPACITY">Keep controls opaque outside the MIDlet screen</string>
-    <string name="PREF_VK_FORE">Label and symbol color</string>
     <string name="PREF_VK_HIDE_DELAY">Auto-hide delay</string>
     <string name="pref_vk_hide_hint">Disabled</string>
     <string name="PREF_VK_OUTLINE">Outline color</string>
@@ -748,7 +753,6 @@
     <string name="config_virtual_controls_color_preview">Color preview</string>
     <string name="config_virtual_controls_preview_normal">Released</string>
     <string name="config_virtual_controls_preview_pressed">Pressed</string>
-    <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
     <string name="config_controls_maintenance">Layout</string>
     <string name="config_controls_customization">Customization</string>
     <string name="config_controls_skin_help">Changes the appearance of keypad buttons, the D-pad, and the analog stick using custom images.</string>
@@ -837,14 +841,7 @@
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
     <string name="config_help_vk_button_shape">Sets the default keypad button shape. The D-pad and analog stick have their own shapes.</string>
     <string name="config_help_vk_feedback">Vibrates when a virtual control is pressed if vibration is enabled in Settings.</string>
-    <string name="config_help_vk_alpha">Sets control opacity: 0 = fully transparent; 255 = fully opaque.</string>
-    <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>
     <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. A value of 0 disables auto-hide.</string>
-    <string name="config_help_vk_foreground">Sets the label and symbol color on virtual-control buttons.</string>
-    <string name="config_help_vk_background">Sets the base color of virtual-control buttons.</string>
-    <string name="config_help_vk_selected_foreground">Sets the label and symbol color while a virtual-control button is pressed.</string>
-    <string name="config_help_vk_selected_background">Sets the button color while it is pressed.</string>
-    <string name="config_help_vk_outline">Sets the outline color of virtual-control buttons.</string>
     <string name="config_help_reset_layout">Restores the virtual controls layout without changing other MIDlet settings.</string>
     <string name="config_help_skip_resume">After the first successful startApp(), skip later calls when the MIDlet resumes. Use only for MIDlets that fail when resumed.</string>
     <string name="config_help_soundbank">Chooses the soundbank used for MIDI synthesis.</string>
@@ -911,10 +908,8 @@
 
     <string name="library_metadata_edit_title">Edit metadata</string>
     <string name="library_metadata_icon">Icon</string>
-    <string name="library_metadata_change_icon">Change icon</string>
     <string name="library_metadata_name">Name</string>
     <string name="library_metadata_vendor">Vendor</string>
-    <string name="library_metadata_description">Description</string>
     <string name="library_metadata_reset_to_original">Reset to original</string>
     <string name="library_metadata_save">Save</string>
 
@@ -1172,6 +1167,9 @@
     <string name="config_avoid_camera_cutout_summary">Keep the game away from the front camera or screen cutout. Enable this if game controls are covered.</string>
     <string name="pref_runtime_fullscreen_title">Fullscreen</string>
     <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
+    <string name="pref_show_status_bar_title">Show status bar</string>
+    <string name="pref_show_status_bar_summary">Keep the Android status bar visible while playing to see the clock and notification icons.</string>
+    <string name="runtime_chrome_update_failed">Could not update runtime display settings. Try again.</string>
     <string name="runtime_fullscreen_update_failed">Could not access the fullscreen setting. Try again.</string>
     <string name="midlet_permissions_write_summary">Includes creating and deleting files.</string>
     <string name="midlet_legacy_import_title">Legacy Siemens saves</string>
@@ -1212,14 +1210,10 @@
     <string name="control_skin_create" tools:ignore="MissingTranslation">Create set</string>
     <string name="control_skin_default" tools:ignore="MissingTranslation">Default buttons</string>
     <string name="control_skin_edit" tools:ignore="MissingTranslation">Edit</string>
-    <string name="control_skin_use" tools:ignore="MissingTranslation">Use this set</string>
     <string name="control_skin_rename" tools:ignore="MissingTranslation">Rename</string>
     <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplicate</string>
     <string name="control_skin_delete" tools:ignore="MissingTranslation">Delete</string>
-    <string name="control_skin_buttons" tools:ignore="MissingTranslation">Buttons</string>
-    <string name="control_skin_global_note" tools:ignore="MissingTranslation">Edits to this set affect every MIDlet using it. Changes are saved immediately.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Set name</string>
-    <string name="control_skin_mode" tools:ignore="MissingTranslation">Image mode</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Icon only</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Full button</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normal image</string>
@@ -1231,13 +1225,15 @@
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Remove</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Manage set</string>
     <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Manage %1$s</string>
-    <string name="control_skin_count" tools:ignore="MissingTranslation">%1$d customized controls</string>
+    <plurals name="control_skin_count" tools:ignore="MissingTranslation">
+        <item quantity="one">%1$d customized control</item>
+        <item quantity="other">%1$d customized controls</item>
+    </plurals>
     <string name="control_skin_empty" tools:ignore="MissingTranslation">Create a set to customize control images.</string>
     <string name="control_skin_numeric" tools:ignore="MissingTranslation">Keypad</string>
     <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigation</string>
     <string name="control_skin_other" tools:ignore="MissingTranslation">Other buttons</string>
     <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Add a normal image first.</string>
-    <string name="control_skin_pressed_auto" tools:ignore="MissingTranslation">Automatic press effect</string>
     <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Button %1$s</string>
     <string name="control_skin_change_image" tools:ignore="MissingTranslation">Change</string>
     <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Choose image</string>
@@ -1265,9 +1261,7 @@
     <string name="library_metadata_follows_main">Uses main icon</string>
     <string name="library_metadata_change">Change</string>
     <string name="library_metadata_remove_portrait">Remove 3:4 icon</string>
-    <string name="library_metadata_icon_updated">Icon updated</string>
     <string name="library_metadata_discard_title">Discard changes?</string>
-    <string name="library_metadata_discard_message">Unsaved text changes will be lost. Icon changes are already saved.</string>
     <string name="library_metadata_discard">Discard</string>
     <string name="library_metadata_default_description">Default description</string>
     <string name="library_metadata_other_languages">Other languages</string>
@@ -1275,6 +1269,20 @@
     <string name="library_metadata_language_search">Search language or locale code</string>
     <string name="library_metadata_remove_language">Remove description</string>
     <string name="library_metadata_language_load_failed">Could not load language descriptions. Reopen Edit metadata to try again.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Panel opacity</string>
     <string name="memory_editor_panel_opacity_help">Adjusts the panel background without fading text or icons.</string>
 </resources>

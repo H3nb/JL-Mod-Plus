@@ -18,8 +18,9 @@ package javax.microedition.shell;
 final class GuestWindowPolicy {
 	private GuestWindowPolicy() { }
 
-	static Chrome resolve(boolean canvas, boolean fullscreen, boolean userAllowsCutout) {
-		return new Chrome(canvas, !canvas || !fullscreen, !canvas, !canvas,
+	static Chrome resolve(boolean canvas, boolean fullscreen, boolean showStatusBar,
+			boolean userAllowsCutout) {
+		return new Chrome(canvas, !canvas || !fullscreen, !canvas || showStatusBar, !canvas,
 				canvas && userAllowsCutout);
 	}
 

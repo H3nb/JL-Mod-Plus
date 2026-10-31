@@ -19,6 +19,8 @@
 
 package javax.microedition.lcdui;
 
+import android.util.Log;
+
 import androidx.appcompat.app.AlertDialog;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.RunnableEvent;
+import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.shell.MemoryDiscoveryBridge;
 import javax.microedition.shell.MicroActivity;
@@ -68,6 +71,8 @@ public class Display {
 	}
 
 	private volatile Displayable current;
+	/** UI-confirmed presentation for non-Canvas Displayables. */
+	private Displayable presented;
 	/** Invalidates queued show requests when the displayable changes, including reusing an Alert. */
 	private final AtomicLong currentRequestGeneration = new AtomicLong();
 	/** Serializes current-screen and host-presentation facts. */
@@ -76,6 +81,140 @@ public class Display {
 	private boolean displayForeground;
 	/** Rejects presentation updates from superseded Android foreground edges. */
 	private long appliedForegroundGeneration;
+	private ScreenChange screenChange;
+	/**
+	 * A missing Android surface must not indefinitely block all subsequent LCDUI callbacks.
+	 * Normal screen changes complete on the host's readiness signal, not on this deadline.
+	 */
+	private static final long SCREEN_CHANGE_MAX_WAIT_MS = 3000L;
+
+	/** A queue position that becomes runnable only after this Canvas is mount/surface-ready. */
+	final class ScreenChange extends SimpleEvent {
+		private final Canvas canvas;
+		private final long requestGeneration;
+		private final MicroActivity host;
+		private volatile boolean ready;
+		private boolean cancelled;
+		private boolean mounted;
+		private long showGeneration;
+		private final Runnable readinessDeadline = this::onReadinessDeadline;
+
+		private void onReadinessDeadline() {
+			synchronized (stateLock) {
+				if (screenChange != this) return;
+				if (isReady()) {
+					// An earlier guest callback can still occupy the event queue. Keep watching
+					// until this ready transaction is consumed or its surface becomes unavailable.
+					ViewHandler.postDelayed(readinessDeadline, SCREEN_CHANGE_MAX_WAIT_MS);
+					return;
+				}
+				Log.w("Display", "Canvas presentation did not become ready; releasing LCDUI queue");
+				cancelScreenChangeLocked();
+			}
+		}
+
+		ScreenChange(Canvas canvas, long requestGeneration, MicroActivity host) {
+			this.canvas = canvas;
+			this.requestGeneration = requestGeneration;
+			this.host = host;
+			asGuestCallback();
+		}
+
+		@Override
+		public boolean isReady() {
+			return ready;
+		}
+
+		private void updateReady() {
+			ready = cancelled || (mounted && showGeneration != 0L);
+			if (ready) queue.signalEventReady();
+		}
+
+		synchronized void mounted() {
+			if (cancelled) return;
+			mounted = true;
+			updateReady();
+		}
+
+		synchronized void surfaceReady(long generation) {
+			if (cancelled) return;
+			showGeneration = generation;
+			updateReady();
+		}
+
+		synchronized void surfaceUnavailable() {
+			if (cancelled) return;
+			showGeneration = 0L;
+			updateReady();
+		}
+
+		synchronized void cancel() {
+			cancelled = true;
+			updateReady();
+		}
+
+		@Override
+		public void process() {
+			long generation;
+			synchronized (stateLock) {
+				if (screenChange != this) return;
+				screenChange = null;
+				ViewHandler.removeCallbacks(readinessDeadline);
+				canvas.clearScreenChange(this);
+				synchronized (this) {
+					if (cancelled || current != canvas
+							|| currentRequestGeneration.get() != requestGeneration
+							|| ContextHolder.getActivity() != host) return;
+					generation = showGeneration;
+				}
+			}
+			canvas.finishScreenChange(generation);
+		}
+	}
+
+	private void cancelScreenChangeLocked() {
+		if (screenChange == null) return;
+		ScreenChange old = screenChange;
+		screenChange = null;
+		ViewHandler.removeCallbacks(old.readinessDeadline);
+		old.cancel();
+		old.canvas.clearScreenChange(old);
+	}
+
+	private void beginScreenChangeLocked(Displayable target, long generation) {
+		if (!(target instanceof Canvas canvas) || !hostVisible || !displayForeground) return;
+		MicroActivity host = ContextHolder.getActivity();
+		if (host == null) return;
+		ScreenChange change = new ScreenChange(canvas, generation, host);
+		screenChange = change;
+		canvas.beginScreenChange(change);
+		queue.postQueuedEvent(change);
+		// A mounted SurfaceView is not guaranteed to produce a surfaceCreated callback.
+		// Preserve normal startup ordering but bound the queue's head-of-line wait.
+		ViewHandler.postDelayed(change.readinessDeadline, SCREEN_CHANGE_MAX_WAIT_MS);
+	}
+
+	/** Accept only a mount result from the host which owns the pending request. */
+	public void onHostMounted(Displayable target, long generation, MicroActivity host) {
+		synchronized (stateLock) {
+			ScreenChange change = screenChange;
+			if (change != null && change.canvas == target
+					&& change.requestGeneration == generation && change.host == host) {
+				change.mounted();
+			}
+		}
+	}
+
+	public void onHostMountFailed(Displayable target, long generation, MicroActivity host) {
+		synchronized (stateLock) {
+			ScreenChange change = screenChange;
+			if (change != null && change.canvas == target
+					&& change.requestGeneration == generation && change.host == host) {
+				cancelScreenChangeLocked();
+			}
+		}
+	}
+
 
 	/**
 	 * Applies the Display-owned presentation facts while their transaction lock is still held.
@@ -190,6 +329,7 @@ public class Display {
 				return;
 			}
 			displayForeground = granted;
+			if (!granted) cancelScreenChangeLocked();
 			reconcileCanvasLocked(current, true);
 		}
 	}
@@ -202,7 +342,9 @@ public class Display {
 		Displayable target;
 		long requestGeneration;
 		synchronized (stateLock) {
+			presented = null;
 			hostVisible = false;
+			cancelScreenChangeLocked();
 			target = current;
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			reconcileCanvasLocked(target, true);
@@ -220,7 +362,9 @@ public class Display {
 	public void detachHost() {
 		Displayable target;
 		synchronized (stateLock) {
+			presented = null;
 			hostVisible = false;
+			cancelScreenChangeLocked();
 			target = current;
 			currentRequestGeneration.incrementAndGet();
 			reconcileCanvasLocked(target, true);
@@ -234,17 +378,30 @@ public class Display {
 
 	/** Updates host foreground access without changing the guest's current Displayable. */
 	public void setHostVisible(boolean visible) {
+		Canvas hiddenCanvas = null;
 		synchronized (stateLock) {
 			if (hostVisible == visible) {
 				return;
 			}
 			hostVisible = visible;
+			if (!visible) {
+				cancelScreenChangeLocked();
+				if (current instanceof Canvas canvas) hiddenCanvas = canvas;
+			}
 			reconcileCanvasLocked(current, true);
 		}
+		// MicroActivity calls this on Android main. Finish UI-owned cancellation now,
+		// rather than allowing a rapid Home/return to bypass its queued cleanup.
+		if (hiddenCanvas != null) hiddenCanvas.endHostPresentation();
 	}
 
 	public static void postEvent(Event event) {
 		queue.postEvent(event);
+	}
+
+	/** Enqueues a presentation callback without executing it under host ownership locks. */
+	public static void postSerializedEvent(Event event) {
+		queue.postQueuedEvent(event);
 	}
 
 	/**
@@ -280,6 +437,9 @@ public class Display {
 				return;
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
+			// The former host mount no longer certifies presentation for a new request.
+			presented = null;
+			cancelScreenChangeLocked();
 			this.current = displayable;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			if (displayable instanceof Alert nextAlert) {
@@ -289,6 +449,7 @@ public class Display {
 			showCanvasAfterClosingAlert =
 					previous instanceof Alert && displayable instanceof Canvas;
 			reconcileCanvasLocked(previous, false);
+			beginScreenChangeLocked(displayable, requestGeneration);
 			if (!showCanvasAfterClosingAlert) {
 				reconcileCanvasLocked(displayable, true);
 			}
@@ -339,6 +500,9 @@ public class Display {
 			previous = current;
 			alert.setNextDisplayable(displayable);
 			requestGeneration = currentRequestGeneration.incrementAndGet();
+			// The former host mount no longer certifies presentation for a new request.
+			presented = null;
+			cancelScreenChangeLocked();
 			current = alert;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			reconcileCanvasLocked(previous, false);
@@ -362,6 +526,7 @@ public class Display {
 				return;
 			}
 			alertDialog.show();
+			presented = expectedAlert;
 			styleAlertDialog(alertDialog);
 			expectedAlert.onDialogShown(alertDialog);
 			if (current != expectedAlert || currentRequestGeneration.get() != requestGeneration) {
@@ -394,6 +559,7 @@ public class Display {
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = null;
+			presented = null;
 			activity = ContextHolder.getActivity();
 		}
 		if (activity != null) {
@@ -411,6 +577,29 @@ public class Display {
 		}
 		if (alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null) {
 			alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(accent);
+		}
+	}
+
+	/** Reports the mounted Displayable; a stale host completion cannot publish an old screen. */
+	public void onHostPresented(Displayable displayable, long requestGeneration) {
+		synchronized (stateLock) {
+			if (current == displayable && currentRequestGeneration.get() == requestGeneration) {
+				presented = displayable;
+			}
+		}
+	}
+
+	/** Clears a dismissed Alert which may remain current while command handling proceeds. */
+	void onHostPresentationEnded(Displayable displayable) {
+		synchronized (stateLock) {
+			if (presented == displayable) presented = null;
+		}
+	}
+
+	boolean isDisplayableShown(Displayable displayable) {
+		synchronized (stateLock) {
+			return current == displayable && presented == displayable
+					&& hostVisible && displayForeground;
 		}
 	}
 

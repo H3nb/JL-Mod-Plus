@@ -55,6 +55,50 @@ The finish-layout item is visible only while the virtual keyboard is in an
 edit mode. The Canvas-only group remains absent on `Form` and other
 non-Canvas Displayables.
 
+The Canvas layout editor keeps **Show controls**, **Grid size**, **Group resize**, and
+**Snap** above **Done** in one automatically placed host panel. Group resize is
+on by default: a two-finger resize changes the historic key group proportionally,
+preserving previous per-key size differences. Turning it off limits each resize
+to the selected legacy button. D-pad and analog sizes remain independent.
+Snap now exposes independent grid and other-button alignment toggles; the
+visible grid uses coarse (16), normal (24, default), or fine (32) divisions.
+The panel hides during a control gesture. Editor-tool selections reset at the
+start of a session and never mark the layout dirty. Save/Discard/Continue keeps
+the existing transaction boundary. Visible controls remain inside the host
+control viewport; passive viewport changes do not rewrite saved positions
+or sizes. The v5 layout stores individual legacy button width/height scales
+per orientation; v1-v4 group scales expand to equal per-key sizes when loaded.
+During resize/reshape, the editor preserves control positions and existing anchor
+relationships through updated offsets; interactive snapping is reserved for drag.
+
+## LCDUI presentation authority
+
+`Display` owns the current-screen identity and MIDlet foreground grant. The Android host
+confirms mounted screens and shown Alerts; a stale or unmounted `Displayable` cannot
+report `isShown() == true`. Canvas also requires a usable presentation surface.
+
+The Canvas host state requests presentation without calling guest code. Its hide edge
+immediately revokes rendering and cancels guest pointer/key ownership. Android-owned
+controller state is cleaned on the main looper, before a resumed host/surface can
+accept new input; delayed cleanup must not erase input from the new visible interval.
+Its show edge
+becomes guest-visible after `showNotify()` returns. Both notifications run serially on the existing LCDUI queue,
+never inline under host locks. A superseded show is skipped; a delivered show retains
+its hide notification. An older queued hide cannot close a later delivered show. Rendering and input do not run before show notification.
+For a foreground `setCurrent(Canvas)` request, the host mount and usable-surface
+facts complete the earlier LCDUI screen-change transaction before later callbacks
+run. The existing Canvas dispatcher finishes `showNotify()` and commits visibility
+on that event position; initial repaint still uses the normal rendering path.
+The transaction does not await a GPU-presented frame. Superseded, backgrounded,
+detached, or failed host requests release their position without fabricating show.
+If Android never supplies a usable surface, a bounded host-side readiness deadline
+releases the queued callbacks without reporting the Canvas as shown. This preserves
+LCDUI callback progress on a failed presentation; it cannot make a game that requires
+a visible Canvas start successfully when no surface exists.
+Outside such a transaction, `callSerially()` remains independent of visibility;
+MIDlet lifecycle stays on MidletMain so applications may wait for presentation
+during `startApp()`.
+
 ## Geometry and lifecycle safeguards
 
 - Host presentation must not silently alter guest LCD/Canvas geometry or
@@ -88,11 +132,16 @@ non-Canvas Displayables.
   is unchanged. Existing virtual-control layout, input, and persistence semantics
   remain unchanged.
   APIs without rounded-corner information retain the standard control margins.
-- Fullscreen uses the inverse existing global toolbar preference, written only
-  by the main-process fullscreen authority. Settings and the runtime use its
-  asynchronous client and change notifications; the runtime never writes the
-  main-process SharedPreferences cache. Host dialogs and transient system bars
-  do not change this preference. Non-Canvas screens retain host navigation.
+- Fullscreen controls only the host toolbar. Show status bar is an independent
+  global opt-in (default off, using the legacy `pref_statusbar_switch` key) that
+  keeps Android status indicators visible during Canvas play; navigation bars
+  remain hidden. Non-Canvas screens retain both system bars and host navigation.
+  Both preferences are owned by the main-process runtime chrome authority;
+  Settings and runtime receive coherent snapshots through its asynchronous client
+  and change notifications. The runtime never writes the main-process preference
+  cache. Host dialogs and transient system bars do not change either preference.
+  When the status bar is shown, the Canvas toolbar and guest content reserve the
+  reported visible status-bar inset without double-counting the safe area.
 - Toolbar shortcuts and menu/controller actions come from the same layout
   decision. Available speed, IME and screenshot actions receive space before
   the title, which elides or disappears when necessary. IME, screenshot and

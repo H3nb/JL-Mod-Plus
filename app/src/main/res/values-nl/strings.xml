@@ -85,10 +85,7 @@
     <string name="pref_vibration_title">Trillen inschakelen</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuele bediening</string>
     <string name="PREF_VK_ALPHA">Dekking</string>
-    <string name="PREF_VK_BACK">Knopkleur</string>
     <string name="PREF_VK_FEEDBACK">Haptische feedback</string>
-    <string name="PREF_VK_FORCE_OPACITY">Bediening buiten het MIDlet-scherm ondoorzichtig houden</string>
-    <string name="PREF_VK_FORE">Kleur van label en symbool</string>
     <string name="PREF_VK_HIDE_DELAY">Vertraging automatisch verbergen</string>
     <string name="pref_vk_hide_hint">Uitgeschakeld</string>
     <string name="PREF_VK_SEL_BACK">Kleur ingedrukte knop</string>
@@ -146,6 +143,8 @@
     <string name="file_picker_current_folder">Huidige map</string>
     <string name="file_picker_parent_folder">Bovenliggende map</string>
     <string name="file_picker_file">Bestand</string>
+    <string name="file_picker_preview_named">Voorbeeld: %1$s</string>
+    <string name="file_picker_preview_unavailable">Niet beschikbaar</string>
     <string name="file_picker_storage_volume">Opslagvolume</string>
     <string name="file_picker_empty">Geen overeenkomende bestanden</string>
     <string name="file_picker_empty_folder">Geen mappen gevonden</string>
@@ -164,7 +163,13 @@
     <string name="file_picker_create_folder_failed">Kan de map niet maken.</string>
     <string name="file_picker_selection_unavailable">Het geselecteerde item is niet meer beschikbaar.</string>
     <string name="invalid_resolution_not_saved">Ongeldige resolutie. Wijzigingen zijn niet opgeslagen.</string>
-    <string name="layout_edit_done">✓ Gereed</string>
+    <string name="layout_edit_done">Gereed</string>
+    <string name="layout_editor_grid_size">Rastergrootte</string>
+    <string name="layout_editor_grid_coarse">Grof (16)</string>
+    <string name="layout_editor_grid_normal">Normaal (24)</string>
+    <string name="layout_editor_grid_fine">Fijn (32)</string>
+    <string name="layout_editor_snap_on">Uitlijnen aan</string>
+    <string name="layout_editor_snap_off">Uitlijnen uit</string>
     <string name="layout_edit_save_changes">Wijzigingen aan virtuele bediening opslaan?</string>
     <string name="layout_edit_discard">Verwerpen</string>
     <string name="layout_edit_continue">Doorgaan met bewerken</string>
@@ -758,14 +763,7 @@
     <string name="config_help_key_mapping">Wijst Android-toetsen en -knoppen toe aan J2ME-toetsenblokacties.</string>
     <string name="config_help_vk_button_shape">Stelt de standaardvorm van de toetsenblokknoppen in. De D-pad en analoge stick hebben hun eigen vormen.</string>
     <string name="config_help_vk_feedback">Trilt bij het indrukken van virtuele bedieningselementen wanneer trillen is ingeschakeld in Instellingen.</string>
-    <string name="config_help_vk_alpha">Stelt de dekking van de bedieningselementen in: 0 = volledig transparant; 255 = volledig ondoorzichtig.</string>
-    <string name="config_help_vk_force_opacity">Maakt bediening buiten het MIDlet-scherm ondoorzichtig. Bediening boven het scherm gebruikt de ingestelde dekking.</string>
     <string name="config_help_vk_hide_delay">Verbergt bediening na deze vertraging wanneer deze het MIDlet-scherm bedekt. Stel in op 0 om automatisch verbergen uit te schakelen.</string>
-    <string name="config_help_vk_foreground">Stelt de kleur van labels en symbolen op knoppen van virtuele bediening in.</string>
-    <string name="config_help_vk_background">Stelt de basiskleur van knoppen voor virtuele bediening in.</string>
-    <string name="config_help_vk_selected_foreground">Stelt de kleur van labels en symbolen in terwijl een knop van virtuele bediening is ingedrukt.</string>
-    <string name="config_help_vk_selected_background">Stelt de knopkleur in terwijl deze is ingedrukt.</string>
-    <string name="config_help_vk_outline">Stelt de omlijningskleur van knoppen voor virtuele bediening in.</string>
     <string name="config_help_reset_layout">Herstelt de indeling van virtuele bediening zonder andere MIDlet-instellingen te wijzigen.</string>
     <string name="config_help_skip_resume">Slaat na de eerste geslaagde startApp() latere aanroepen bij het hervatten van de MIDlet over. Gebruik dit alleen voor MIDlet-apps die bij hervatten niet goed werken.</string>
     <string name="config_help_soundbank">Kiest de soundbank die voor MIDI-weergave wordt gebruikt.</string>
@@ -829,10 +827,8 @@
     <string name="config_controller_help_body_compact">Gamepadknoppen gebruiken dezelfde Toetstoewijzing als toetsenborden en telefoontoetsen. De optie Analoge stick bepaalt alleen de richtingsuitvoer van de stick voor de MIDlet. Android Terug behoudt normaal hostgedrag en elke fysieke knop die aan M is toegewezen opent het runtime-MIDlet-menu.</string>
     <string name="library_metadata_edit_title">Metadata bewerken</string>
     <string name="library_metadata_icon">Pictogram</string>
-    <string name="library_metadata_change_icon">Pictogram wijzigen</string>
     <string name="library_metadata_name">Naam</string>
     <string name="library_metadata_vendor">Leverancier</string>
-    <string name="library_metadata_description">Beschrijving</string>
     <string name="library_metadata_reset_to_original">Origineel herstellen</string>
     <string name="library_metadata_save">Opslaan</string>
     <string name="library_hide_grid_titles_summary">Toon alleen MIDlet-pictogrammen in rasterweergave.</string>
@@ -993,7 +989,6 @@
     <string name="bulk_install_skipped_entries">Overgeslagen archiefitems: %1$d</string>
     <string name="bulk_install_unreadable_archives">Onleesbare archieven: %1$d</string>
     <string name="config_virtual_controls_color_preview">Kleurvoorbeeld</string>
-    <string name="config_virtual_controls_preview_hint">Tik om de kleuren in ingedrukte toestand te bekijken. Het voorbeeld gebruikt de geselecteerde dekking.</string>
     <string name="config_virtual_controls_preview_normal">Losgelaten</string>
     <string name="config_virtual_controls_preview_pressed">Ingedrukt</string>
     <string name="config_warning_filter_shader">Lineaire filtering maakt het invoerbeeld glad voordat de schermshader het verwerkt en kan de scherpte van het resultaat verminderen.</string>
@@ -1081,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Houdt het spel weg van de frontcamera of schermuitsparing. Schakel in als bedieningselementen worden bedekt.</string>
     <string name="pref_runtime_fullscreen_title">Volledig scherm</string>
     <string name="pref_runtime_fullscreen_summary">Verberg de werkbalk tijdens het spelen. Geldt voor alle MIDlets.</string>
+    <string name="pref_show_status_bar_title">Statusbalk tonen</string>
+    <string name="pref_show_status_bar_summary">Houd de Android-statusbalk zichtbaar tijdens het spelen om de tijd en meldingspictogrammen te zien.</string>
+    <string name="runtime_chrome_update_failed">De weergave-instellingen voor het spel konden niet worden bijgewerkt. Probeer het opnieuw.</string>
     <string name="runtime_fullscreen_update_failed">Geen toegang tot de instelling voor volledig scherm. Probeer het opnieuw.</string>
     <string name="midlet_file_permission_title">Opslagtoegang</string>
     <string name="midlet_file_permission_read">Deze MIDlet wil bestanden lezen.</string>
@@ -1127,9 +1125,7 @@
     <string name="library_metadata_follows_main">Gebruikt hoofdpictogram</string>
     <string name="library_metadata_change">Wijzigen</string>
     <string name="library_metadata_remove_portrait">3:4-pictogram verwijderen</string>
-    <string name="library_metadata_icon_updated">Pictogram bijgewerkt</string>
     <string name="library_metadata_discard_title">Wijzigingen negeren?</string>
-    <string name="library_metadata_discard_message">Niet-opgeslagen tekstwijzigingen gaan verloren. Pictogramwijzigingen zijn al opgeslagen.</string>
     <string name="library_metadata_discard">Negeren</string>
     <string name="library_metadata_default_description">Standaardbeschrijving</string>
     <string name="library_metadata_other_languages">Andere talen</string>
@@ -1137,6 +1133,20 @@
     <string name="library_metadata_language_search">Zoek taal of voer landcode in</string>
     <string name="library_metadata_remove_language">Beschrijving verwijderen</string>
     <string name="library_metadata_language_load_failed">Beschrijvingen konden niet worden geladen. Open metadata bewerken opnieuw.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Dekking van paneel</string>
     <string name="memory_editor_panel_opacity_help">Past de paneelachtergrond aan zonder tekst of pictogrammen te vervagen.</string>
 </resources>

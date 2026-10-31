@@ -199,7 +199,7 @@ static M3Gbool m3gMemoryLocked  (Interface *interface);
 #   define M3G_ASSERT_NO_LOCK(interface) M3G_ASSERT(!m3gMemoryLocked(interface))
 #endif
 
-static void m3gInitializeGL(Interface *interface);
+static M3Gbool m3gInitializeGL(Interface *interface);
 static void m3gShutdownGL(Interface *interface);
 
 /* Self-validation */

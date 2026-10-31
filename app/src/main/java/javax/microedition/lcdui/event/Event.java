@@ -34,6 +34,11 @@ public abstract class Event implements Runnable {
 	 */
 	public abstract void process();
 
+	/** Host-dependent queue entries can become ready without blocking a callback thread. */
+	public boolean isReady() {
+		return true;
+	}
+
 	/**
 	 * Event recycling
 	 * <p>
@@ -52,6 +57,11 @@ public abstract class Event implements Runnable {
 	public final Event asGuestCallback() {
 		guestCallback = true;
 		return this;
+	}
+
+	/** Guest callbacks are always queued, even when immediate processing is enabled. */
+	final boolean isGuestCallback() {
+		return guestCallback;
 	}
 
 	/**

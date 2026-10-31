@@ -110,10 +110,7 @@
     <string name="pref_vibration_title">Vibrace</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Zobrazit virtuální ovládací prvky</string>
     <string name="PREF_VK_ALPHA">Neprůhlednost</string>
-    <string name="PREF_VK_BACK">Barva tlačítek</string>
     <string name="PREF_VK_FEEDBACK">Hmatová odezva</string>
-    <string name="PREF_VK_FORCE_OPACITY">Zachovat neprůhlednost ovládacích prvků mimo obrazovku MIDletu</string>
-    <string name="PREF_VK_FORE">Barva popisků a symbolů</string>
     <string name="PREF_VK_HIDE_DELAY">Prodleva automatického skrytí</string>
     <string name="pref_vk_hide_hint">zakázáno</string>
     <string name="PREF_VK_OUTLINE">Barva obrysu</string>
@@ -194,6 +191,8 @@
     <string name="file_picker_empty">Žádné odpovídající soubory</string>
     <string name="file_picker_empty_folder">Nenalezeny žádné složky</string>
     <string name="file_picker_file">Soubor</string>
+    <string name="file_picker_preview_named">Náhled: %1$s</string>
+    <string name="file_picker_preview_unavailable">Nedostupné</string>
     <string name="file_picker_folder_exists">Položka s tímto názvem již existuje.</string>
     <string name="file_picker_folder_name">Název složky</string>
     <string name="file_picker_grant_access">Povolit přístup</string>
@@ -300,8 +299,6 @@
     <string name="library_indexing_progress">Indexování Knihovny… %1$d/%2$d</string>
     <string name="library_load_error_title">Knihovna není dostupná</string>
     <string name="library_load_failed_message">Knihovnu se nepodařilo načíst. Zkuste to znovu.</string>
-    <string name="library_metadata_change_icon">Změnit ikonu</string>
-    <string name="library_metadata_description">Popis</string>
     <string name="library_metadata_edit_title">Upravit metadata</string>
     <string name="library_metadata_icon">Ikona</string>
     <string name="library_metadata_name">Název</string>
@@ -545,16 +542,9 @@
     <string name="config_help_timing_unavailable">Nastavení času nejsou pro tuto instalaci MIDletu dostupná. Povolíte je přeinstalováním nebo opětovným převodem MIDletu.</string>
     <string name="config_help_touch_input">Umožní MIDletu přijímat vstup ukazatele z dotykové obrazovky.</string>
     <string name="config_help_virtual_keyboard">Zobrazí ovládací prvky na obrazovce pro tento MIDlet.</string>
-    <string name="config_help_vk_alpha">Nastaví neprůhlednost ovládacích prvků: 0 = zcela průhledné; 255 = zcela neprůhledné.</string>
-    <string name="config_help_vk_background">Nastaví základní barvu tlačítek virtuálních ovládacích prvků.</string>
     <string name="config_help_vk_button_shape">Nastavuje výchozí tvar tlačítek klávesnice. Směrový kříž a analogová páčka mají vlastní tvary.</string>
     <string name="config_help_vk_feedback">Při stisknutí virtuálních ovládacích prvků zavibruje, pokud jsou v Nastavení povoleny vibrace.</string>
-    <string name="config_help_vk_force_opacity">Ovládací prvky mimo obrazovku MIDletu budou neprůhledné. Prvky nad obrazovkou použijí nastavenou neprůhlednost.</string>
-    <string name="config_help_vk_foreground">Nastaví barvu popisků a symbolů na tlačítkách virtuálních ovládacích prvků.</string>
     <string name="config_help_vk_hide_delay">Po této prodlevě skryje ovládací prvky překrývající obrazovku MIDletu. Hodnota 0 vypne automatické skrývání.</string>
-    <string name="config_help_vk_outline">Nastaví barvu obrysu tlačítek virtuálních ovládacích prvků.</string>
-    <string name="config_help_vk_selected_background">Nastaví barvu tlačítka při stisknutí.</string>
-    <string name="config_help_vk_selected_foreground">Nastaví barvu popisků a symbolů při stisknutí tlačítka virtuálních ovládacích prvků.</string>
     <string name="config_increase_value">Zvýšit hodnotu</string>
     <string name="config_lock_custom_resolution_ratio">Zamknout poměr stran</string>
     <string name="config_maintenance">Obnovení a data</string>
@@ -571,13 +561,18 @@
     <string name="config_timing_mode_full_guest">Čas emulace</string>
     <string name="config_timing_mode_real_wall">Systémový čas</string>
     <string name="config_virtual_controls_color_preview">Náhled barev</string>
-    <string name="config_virtual_controls_preview_hint">Klepnutím zobrazíte náhled barev při stisknutí. Ukázka používá vybranou neprůhlednost.</string>
     <string name="config_virtual_controls_preview_normal">Uvolněné</string>
     <string name="config_virtual_controls_preview_pressed">Stisknuté</string>
     <string name="config_warning_filter_shader">Lineární filtrování vyhladí vstup před zpracováním shaderem obrazovky a může snížit ostrost výstupu.</string>
     <string name="layout_edit_continue">Pokračovat v úpravách</string>
     <string name="layout_edit_discard">Zahodit</string>
-    <string name="layout_edit_done">✓ Hotovo</string>
+    <string name="layout_edit_done">Hotovo</string>
+    <string name="layout_editor_grid_size">Velikost mřížky</string>
+    <string name="layout_editor_grid_coarse">Hrubá (16)</string>
+    <string name="layout_editor_grid_normal">Normální (24)</string>
+    <string name="layout_editor_grid_fine">Jemná (32)</string>
+    <string name="layout_editor_snap_on">Přichytávání zapnuto</string>
+    <string name="layout_editor_snap_off">Přichytávání vypnuto</string>
     <string name="layout_edit_save_changes">Uložit změny virtuálních ovládacích prvků?</string>
     <string name="mapping_dialog_add_input">Můžete přiřadit více než jeden fyzický vstup.</string>
     <string name="mapping_dialog_assigned_inputs">Přiřazené vstupy</string>
@@ -1147,6 +1142,9 @@
     <string name="config_avoid_camera_cutout_summary">Udržuje hru mimo oblast předního fotoaparátu nebo výřezu displeje. Zapněte, pokud jsou ovládací prvky zakryté.</string>
     <string name="pref_runtime_fullscreen_title">Celá obrazovka</string>
     <string name="pref_runtime_fullscreen_summary">Skrýt panel nástrojů během hraní. Platí pro všechny MIDlety.</string>
+    <string name="pref_show_status_bar_title">Zobrazit stavový řádek</string>
+    <string name="pref_show_status_bar_summary">Ponechat během hraní viditelný stavový řádek Androidu s časem a ikonami oznámení.</string>
+    <string name="runtime_chrome_update_failed">Nastavení zobrazení během hry se nepodařilo aktualizovat. Zkuste to znovu.</string>
     <string name="runtime_fullscreen_update_failed">K nastavení celé obrazovky se nepodařilo získat přístup. Zkuste to znovu.</string>
     <string name="midlet_file_permission_title">Přístup k úložišti</string>
     <string name="midlet_file_permission_read">Tento MIDlet chce číst soubory.</string>
@@ -1193,9 +1191,7 @@
     <string name="library_metadata_follows_main">Používá hlavní ikonu</string>
     <string name="library_metadata_change">Změnit</string>
     <string name="library_metadata_remove_portrait">Odebrat ikonu 3:4</string>
-    <string name="library_metadata_icon_updated">Ikona aktualizována</string>
     <string name="library_metadata_discard_title">Zahodit změny?</string>
-    <string name="library_metadata_discard_message">Neuložené změny textu budou ztraceny. Změny ikon jsou již uloženy.</string>
     <string name="library_metadata_discard">Zahodit</string>
     <string name="library_metadata_default_description">Výchozí popis</string>
     <string name="library_metadata_other_languages">Další jazyky</string>
@@ -1203,6 +1199,20 @@
     <string name="library_metadata_language_search">Hledat jazyk nebo zadat kód</string>
     <string name="library_metadata_remove_language">Odebrat popis</string>
     <string name="library_metadata_language_load_failed">Popisy nelze načíst. Znovu otevřete úpravu metadat.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Krytí panelu</string>
     <string name="memory_editor_panel_opacity_help">Upravuje pozadí panelu, aniž by zeslabovalo text nebo ikony.</string>
 </resources>

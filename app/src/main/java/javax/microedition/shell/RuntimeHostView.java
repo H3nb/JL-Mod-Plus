@@ -28,8 +28,10 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewGroupCompat;
 
 import javax.microedition.lcdui.overlay.OverlayView;
@@ -45,7 +47,13 @@ public final class RuntimeHostView {
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
 	/** Editor-only Activity-owned chrome. It never participates in virtual-key input/persistence. */
+	public final LinearLayout layoutEditPanel;
+	public final AppCompatImageView layoutEditShowControls;
+	public final AppCompatImageView layoutEditGridSize;
+	public final AppCompatImageView layoutEditGroupResize;
+	public final AppCompatImageView layoutEditSnap;
 	public final AppCompatButton layoutEditDone;
+	private static final int EDITOR_PANEL_SURFACE = 0xFF232529;
 	/** Small Activity-owned bubble. It is a normal View in :midlet, not a system overlay. */
 	public final View memoryEditorBubble;
 	public final View memoryEditorBubbleIcon;
@@ -123,26 +131,111 @@ public final class RuntimeHostView {
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
 		root.addView(notices, noticeParams);
 
-		// Layout editing is the only state that needs this control, so keep it out of the permanent
-		// toolbar and out of the virtual-key model. A plain Android Button is enough for one action.
+		// Keep editor tools in a single activity-owned surface; the guest sees no extra keys.
+		LinearLayout panel = new LinearLayout(context);
+		panel.setOrientation(LinearLayout.VERTICAL);
+		panel.setPadding(dp(context, 4), dp(context, 4), dp(context, 4), dp(context, 4));
+		panel.setElevation(dp(context, 8));
+		panel.setClipToOutline(true);
+		panel.setVisibility(View.GONE);
+		GradientDrawable panelBackground = new GradientDrawable();
+		panelBackground.setCornerRadius(dp(context, 12));
+		panelBackground.setColor(0xF2232529);
+		panel.setBackground(panelBackground);
+
+		LinearLayout tools = new LinearLayout(context);
+		tools.setOrientation(LinearLayout.HORIZONTAL);
+		AppCompatImageView showControls = editorTool(context, R.drawable.ic_visibility,
+				R.string.runtime_virtual_controls_show_controls);
+		AppCompatImageView gridSize = editorTool(context, R.drawable.ic_editor_grid,
+				R.string.layout_editor_grid_size);
+		AppCompatImageView groupResize = editorTool(context, R.drawable.ic_editor_group_resize,
+				R.string.layout_editor_group_on);
+		AppCompatImageView snap = editorTool(context, R.drawable.ic_editor_snap,
+				R.string.layout_editor_snap_on);
+		tools.addView(showControls, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
+		tools.addView(gridSize, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
+		tools.addView(groupResize, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
+		tools.addView(snap, new LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)));
+		panel.addView(tools);
+
+		View divider = new View(context);
+		divider.setBackgroundColor(0x2EFFFFFF);
+		LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 1));
+		dividerParams.setMargins(dp(context, 8), 0, dp(context, 8), 0);
+		panel.addView(divider, dividerParams);
+
 		AppCompatButton done = new AppCompatButton(context);
 		done.setText(context.getString(R.string.layout_edit_done));
 		done.setAllCaps(false);
 		done.setGravity(Gravity.CENTER);
-		done.setTextColor(resolveThemeColor(
-				context, android.R.attr.textColorPrimaryInverse, Color.WHITE));
+		done.setTextColor(editorAccent(context));
 		done.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
 		done.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-		done.setMinWidth(dp(context, 80));
+		done.setMinWidth(dp(context, 144));
 		done.setMinHeight(dp(context, 48));
-		done.setPadding(dp(context, 16), dp(context, 8), dp(context, 16), dp(context, 8));
-		done.setElevation(dp(context, 8));
-		done.setVisibility(View.GONE);
-		done.setBackgroundTintList(
-				ColorStateList.valueOf(LegacyThemeColors.accent(context)));
-		root.addView(done, new FrameLayout.LayoutParams(
+		done.setPadding(dp(context, 12), 0, dp(context, 12), 0);
+		applyEditorPressFeedback(context, done, android.R.attr.selectableItemBackground);
+		panel.addView(done, new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 48)));
+		root.addView(panel, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+		layoutEditPanel = panel;
+		layoutEditShowControls = showControls;
+		layoutEditGridSize = gridSize;
+		layoutEditGroupResize = groupResize;
+		layoutEditSnap = snap;
 		layoutEditDone = done;
+		setLayoutEditSnapEnabled(true);
+		setLayoutEditGroupEnabled(true);
+	}
+
+	private static AppCompatImageView editorTool(Context context, int icon, int label) {
+		AppCompatImageView view = new AppCompatImageView(context);
+		view.setImageResource(icon);
+		view.setImageTintList(ColorStateList.valueOf(0xD9FFFFFF));
+		applyEditorPressFeedback(context, view, android.R.attr.selectableItemBackgroundBorderless);
+		view.setPadding(dp(context, 12), dp(context, 12), dp(context, 12), dp(context, 12));
+		view.setContentDescription(context.getString(label));
+		view.setClickable(true);
+		view.setFocusable(true);
+		TooltipCompat.setTooltipText(view, context.getString(label));
+		return view;
+	}
+
+
+	/** Render the session snap state, including a shape change for non-color cues. */
+	public void setLayoutEditSnapEnabled(boolean enabled) {
+		int label = enabled ? R.string.layout_editor_snap_on : R.string.layout_editor_snap_off;
+		layoutEditSnap.setImageResource(enabled
+				? R.drawable.ic_editor_snap : R.drawable.ic_editor_snap_off);
+		layoutEditSnap.setImageTintList(ColorStateList.valueOf(
+				enabled ? layoutEditDone.getCurrentTextColor() : 0x99FFFFFF));
+		layoutEditSnap.setContentDescription(layoutEditSnap.getContext().getString(label));
+		TooltipCompat.setTooltipText(layoutEditSnap, layoutEditSnap.getContentDescription());
+	}
+
+	public void setLayoutEditGroupEnabled(boolean enabled) {
+		int label = enabled ? R.string.layout_editor_group_on : R.string.layout_editor_group_off;
+		layoutEditGroupResize.setImageTintList(ColorStateList.valueOf(
+				enabled ? layoutEditDone.getCurrentTextColor() : 0x99FFFFFF));
+		layoutEditGroupResize.setContentDescription(layoutEditGroupResize.getContext().getString(label));
+		TooltipCompat.setTooltipText(layoutEditGroupResize, layoutEditGroupResize.getContentDescription());
+	}
+
+	private static int editorAccent(Context context) {
+		int accent = LegacyThemeColors.accent(context) | Color.BLACK;
+		return ColorUtils.calculateContrast(accent, EDITOR_PANEL_SURFACE) >= 4.5
+				? accent : Color.WHITE;
+	}
+
+	private static void applyEditorPressFeedback(Context context, View view, int attribute) {
+		TypedValue style = new TypedValue();
+		if (context.getTheme().resolveAttribute(attribute, style, true) &&
+				style.resourceId != 0) {
+			view.setBackgroundResource(style.resourceId);
+		}
 	}
 
 	private static int dp(Context context, int value) {

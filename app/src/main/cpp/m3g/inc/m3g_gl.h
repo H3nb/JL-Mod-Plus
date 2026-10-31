@@ -76,7 +76,7 @@ static GLenum m3gGetGLFormat(M3GPixelFormat format);    /* m3g_image.inl */
 static void m3gGLColor(M3Guint argb, GLfixed *dst);     /* m3g_image.c */
 
 #if !defined(M3G_NGL_CONTEXT_API)
-static void m3gInitializeEGL(void);     /* m3g_rendercontext.inl */
+static M3Gbool m3gInitializeEGL(void);     /* m3g_rendercontext.inl */
 static void m3gTerminateEGL(void);      /* m3g_rendercontext.inl */
 #endif
 

@@ -154,7 +154,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -643,7 +642,6 @@ fun LibraryScreen(
     val selectDestination: (LibraryDestination) -> Unit = { section ->
         coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
     }
-    val focusManager = LocalFocusManager.current
     val initialNavigationFocus = remember { FocusRequester() }
     // Indicators may follow the gesture; state-changing navigation commits only after settling.
     val destination = LibraryDestination.entries[pagerState.settledPage]
@@ -1040,7 +1038,6 @@ fun LibraryScreen(
     }
 
     LaunchedEffect(destination, state.libraryScope) {
-        focusManager.clearFocus()
         when (destination) {
             LibraryDestination.Apps -> appsViewport.chromeVisible = true
             LibraryDestination.Collections -> {
@@ -1088,9 +1085,10 @@ fun LibraryScreen(
     LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
     }
-    // Start on an actual navigation control, not the full-screen Android host or a text field.
-    // Request only when first composed; later tab changes and resumed editing own their focus.
-    LaunchedEffect(Unit) {
+    // Keep an eligible, non-text focus owner when the destination or workdir changes.
+    // Releasing focus alone can return it to the search editor on pre-API-28 Android.
+    // Do not re-request focus for ordinary Library data/projection updates.
+    LaunchedEffect(destination, state.libraryScope) {
         if (!libraryOverlayVisible && (useNavigationRail ||
                 (showNavigationBar && !imeHidesLibraryChrome && !selectionActiveHere &&
                     !collectionManageAppsActive))
@@ -1817,7 +1815,9 @@ private fun ColumnScope.LibraryNavigationRailItem(
     NavigationRailItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
-        modifier = if (destination == selected) Modifier.focusRequester(initialFocusRequester) else Modifier,
+        modifier = if (destination == selected) {
+            Modifier.focusRequester(initialFocusRequester).focusProperties { canFocus = true }
+        } else Modifier,
         colors = jlModPlusNavigationRailItemColors(),
         icon = {
             Icon(
@@ -1879,7 +1879,9 @@ private fun RowScope.LibraryNavigationItem(
     NavigationBarItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
-        modifier = if (destination == selected) Modifier.focusRequester(initialFocusRequester) else Modifier,
+        modifier = if (destination == selected) {
+            Modifier.focusRequester(initialFocusRequester).focusProperties { canFocus = true }
+        } else Modifier,
         colors = jlModPlusNavigationBarItemColors(),
         icon = {
             Icon(
@@ -1932,28 +1934,26 @@ internal fun LibraryAppsDestination(
 ) {
     var query by viewportState.queryState
     var searchFocused by remember { mutableStateOf(false) }
-    val searchFocusManager = LocalFocusManager.current
+    val searchDismissFocus = remember { FocusRequester() }
     val searchKeyboard = LocalSoftwareKeyboardController.current
     val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var searchImeWasVisible by remember { mutableStateOf(false) }
     // On Android the IME consumes the first system Back before the app's BackHandler runs.
     // Dismiss focus when that same Back finishes hiding the keyboard, rather than leaving
     // an invisible-but-focused field that lets the next Back exit the Library.
-    LaunchedEffect(searchFocused, searchImeVisible) {
+    LaunchedEffect(active, searchFocused, searchImeVisible) {
         when {
-            !searchFocused -> searchImeWasVisible = false
+            !active || !searchFocused -> searchImeWasVisible = false
             searchImeVisible -> searchImeWasVisible = true
             searchImeWasVisible -> {
-                searchFocusManager.clearFocus(force = true)
-                searchFocused = false
+                searchDismissFocus.requestFocus()
                 searchImeWasVisible = false
             }
         }
     }
     BackHandler(enabled = active && searchFocused) {
         searchKeyboard?.hide()
-        searchFocusManager.clearFocus(force = true)
-        searchFocused = false
+        searchDismissFocus.requestFocus()
     }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
@@ -2090,7 +2090,8 @@ internal fun LibraryAppsDestination(
                     revealSearchResults()
                 }
             },
-            onSearchFocusChanged = { searchFocused = currentActive && it },
+            onSearchFocusChanged = { if (interactive) searchFocused = it },
+            dismissFocusRequester = searchDismissFocus,
             state = state,
             sortVisible = active && sortVisible,
             onSortVisibilityChanged = { sortVisible = currentActive && it },
@@ -2243,7 +2244,7 @@ internal fun LibraryAppsDestination(
                 )
                 .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
-            renderHeader(Modifier, true)
+            renderHeader(Modifier, active)
         }
         val scrimVisible by remember(headerOffsetPx) { derivedStateOf { headerOffsetPx.floatValue < -1f } }
         GlassSystemBarScrim(visible = scrimVisible)
@@ -2437,6 +2438,7 @@ private fun LibraryAppsHeader(
     headerOffsetPx: MutableFloatState,
     onQueryChange: (String) -> Unit,
     onSearchFocusChanged: (Boolean) -> Unit = {},
+    dismissFocusRequester: FocusRequester,
     state: LibraryUiState,
     sortVisible: Boolean,
     onSortVisibilityChanged: (Boolean) -> Unit,
@@ -2581,10 +2583,14 @@ private fun LibraryAppsHeader(
                 modifier = Modifier.weight(1f),
                 enabled = searchActionsEnabled,
                 onFocusChanged = onSearchFocusChanged,
+                onDismissInput = { dismissFocusRequester.requestFocus() },
             )
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
+                    modifier = if (searchActionsEnabled) {
+                        Modifier.focusRequester(dismissFocusRequester).focusProperties { canFocus = true }
+                    } else Modifier,
                     enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(

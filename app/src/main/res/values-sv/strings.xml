@@ -76,6 +76,8 @@
     <string name="file_picker_current_folder">Aktuell mapp</string>
     <string name="file_picker_parent_folder">Överordnad mapp</string>
     <string name="file_picker_file">Fil</string>
+    <string name="file_picker_preview_named">Förhandsvisning: %1$s</string>
+    <string name="file_picker_preview_unavailable">Ej tillgänglig</string>
     <string name="file_picker_storage_volume">Lagringsvolym</string>
     <string name="file_picker_empty">Inga matchande filer</string>
     <string name="file_picker_empty_folder">Inga mappar hittades</string>
@@ -95,7 +97,13 @@
     <string name="file_picker_selection_unavailable">Det valda objektet är inte längre tillgängligt.</string>
     <string name="invalid_resolution_not_saved">Ogiltig upplösning. Ändringarna sparades inte.</string>
     <string name="layout_edit_finish">Slutför redigering</string>
-    <string name="layout_edit_done">✓ Klar</string>
+    <string name="layout_edit_done">Klar</string>
+    <string name="layout_editor_grid_size">Rutnätsstorlek</string>
+    <string name="layout_editor_grid_coarse">Grovt (16)</string>
+    <string name="layout_editor_grid_normal">Normalt (24)</string>
+    <string name="layout_editor_grid_fine">Fint (32)</string>
+    <string name="layout_editor_snap_on">Fästning på</string>
+    <string name="layout_editor_snap_off">Fästning av</string>
     <string name="layout_edit_save_changes">Spara ändringar i virtuella kontroller?</string>
     <string name="layout_edit_discard">Kassera</string>
     <string name="layout_edit_continue">Fortsätt redigera</string>
@@ -314,10 +322,7 @@
     <string name="pref_vibration_title">Aktivera vibration</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuella kontroller</string>
     <string name="PREF_VK_ALPHA">Opacitet</string>
-    <string name="PREF_VK_BACK">Knappfärg</string>
     <string name="PREF_VK_FEEDBACK">Haptisk återkoppling</string>
-    <string name="PREF_VK_FORCE_OPACITY">Håll kontroller utanför MIDlet-skärmen ogenomskinliga</string>
-    <string name="PREF_VK_FORE">Etikett- och symbolfärg</string>
     <string name="PREF_VK_HIDE_DELAY">Fördröjning för automatisk döljning</string>
     <string name="pref_vk_hide_hint">Inaktiverad</string>
     <string name="PREF_VK_OUTLINE">Konturfärg</string>
@@ -758,14 +763,7 @@
     <string name="config_help_key_mapping">Tilldelar Android-tangenter och -knappar till J2ME-knappsatsåtgärder.</string>
     <string name="config_help_vk_button_shape">Ställer in standardformen på knappsatsens knappar. D-paden och den analoga spaken har egna former.</string>
     <string name="config_help_vk_feedback">Vibrerar vid tryck på virtuella kontroller när vibration är aktiverad i Inställningar.</string>
-    <string name="config_help_vk_alpha">Ställer in kontrollernas opacitet: 0 = helt transparenta; 255 = helt ogenomskinliga.</string>
-    <string name="config_help_vk_force_opacity">Gör kontroller utanför MIDlet-skärmen ogenomskinliga. Kontroller ovanpå skärmen använder den inställda opaciteten.</string>
     <string name="config_help_vk_hide_delay">Döljer kontroller efter denna fördröjning när de täcker MIDlet-skärmen. Ange 0 för att inaktivera automatisk döljning.</string>
-    <string name="config_help_vk_foreground">Ställer in färgen på etiketter och symboler på knappar för virtuella kontroller.</string>
-    <string name="config_help_vk_background">Ställer in grundfärgen på knappar för virtuella kontroller.</string>
-    <string name="config_help_vk_selected_foreground">Ställer in färgen på etiketter och symboler medan en knapp för virtuella kontroller är nedtryckt.</string>
-    <string name="config_help_vk_selected_background">Ställer in knappens färg medan den är nedtryckt.</string>
-    <string name="config_help_vk_outline">Ställer in konturfärgen på knappar för virtuella kontroller.</string>
     <string name="config_help_reset_layout">Återställer layouten för virtuella kontroller utan att ändra andra MIDlet-inställningar.</string>
     <string name="config_help_skip_resume">Efter det första lyckade anropet till startApp() hoppas senare anrop över när MIDlet-appen återupptas. Använd endast för MIDlet-appar som slutar fungera vid återupptagning.</string>
     <string name="config_help_soundbank">Väljer den soundbank som används för MIDI-uppspelning.</string>
@@ -829,10 +827,8 @@
     <string name="config_controller_help_body_compact">Gamepadknappar använder samma Tangenttilldelning som tangentbord och telefonknappar. Alternativet Analog spak styr endast spakens riktningsutmatning för MIDlet-appen. Android Tillbaka behåller sitt normala värdbeteende och varje fysisk knapp som tilldelats M öppnar runtime-MIDlet-menyn.</string>
     <string name="library_metadata_edit_title">Redigera metadata</string>
     <string name="library_metadata_icon">Ikon</string>
-    <string name="library_metadata_change_icon">Ändra ikon</string>
     <string name="library_metadata_name">Namn</string>
     <string name="library_metadata_vendor">Leverantör</string>
-    <string name="library_metadata_description">Beskrivning</string>
     <string name="library_metadata_reset_to_original">Återställ till original</string>
     <string name="library_metadata_save">Spara</string>
     <string name="library_hide_grid_titles_summary">Visa endast MIDlet-ikoner i rutnätsvy.</string>
@@ -993,7 +989,6 @@
     <string name="bulk_install_skipped_entries">Överhoppade arkivposter: %1$d</string>
     <string name="bulk_install_unreadable_archives">Oläsbara arkiv: %1$d</string>
     <string name="config_virtual_controls_color_preview">Färgförhandsvisning</string>
-    <string name="config_virtual_controls_preview_hint">Tryck för att förhandsvisa färgerna i nedtryckt läge. Exemplet använder vald opacitet.</string>
     <string name="config_virtual_controls_preview_normal">Släppt</string>
     <string name="config_virtual_controls_preview_pressed">Nedtryckt</string>
     <string name="config_warning_filter_shader">Linjär filtrering jämnar ut bilden innan skärmshadern bearbetar den och kan minska skärpan i resultatet.</string>
@@ -1081,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Håller spelet borta från frontkameran eller skärmutskärningen. Aktivera om kontrollerna täcks.</string>
     <string name="pref_runtime_fullscreen_title">Helskärm</string>
     <string name="pref_runtime_fullscreen_summary">Dölj verktygsfältet medan du spelar. Gäller alla MIDlet-appar.</string>
+    <string name="pref_show_status_bar_title">Visa statusfältet</string>
+    <string name="pref_show_status_bar_summary">Låt Androids statusfält vara synligt medan du spelar för att se klockan och aviseringsikoner.</string>
+    <string name="runtime_chrome_update_failed">Kunde inte uppdatera visningsinställningarna för spelet. Försök igen.</string>
     <string name="runtime_fullscreen_update_failed">Kunde inte komma åt helskärmsinställningen. Försök igen.</string>
     <string name="midlet_file_permission_title">Åtkomst till lagring</string>
     <string name="midlet_file_permission_read">Den här MIDleten vill läsa filer.</string>
@@ -1127,9 +1125,7 @@
     <string name="library_metadata_follows_main">Använder huvudikonen</string>
     <string name="library_metadata_change">Ändra</string>
     <string name="library_metadata_remove_portrait">Ta bort 3:4-ikon</string>
-    <string name="library_metadata_icon_updated">Ikonen har uppdaterats</string>
     <string name="library_metadata_discard_title">Kasta ändringarna?</string>
-    <string name="library_metadata_discard_message">Osparade textändringar går förlorade. Ikonändringar har redan sparats.</string>
     <string name="library_metadata_discard">Kasta</string>
     <string name="library_metadata_default_description">Standardbeskrivning</string>
     <string name="library_metadata_other_languages">Andra språk</string>
@@ -1137,6 +1133,20 @@
     <string name="library_metadata_language_search">Sök språk eller ange språkkod</string>
     <string name="library_metadata_remove_language">Ta bort beskrivning</string>
     <string name="library_metadata_language_load_failed">Beskrivningarna kunde inte läsas in. Öppna metadataredigeringen igen.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Panelens opacitet</string>
     <string name="memory_editor_panel_opacity_help">Justerar panelens bakgrund utan att tona ned text eller ikoner.</string>
 </resources>

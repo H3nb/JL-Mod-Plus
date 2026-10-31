@@ -73,10 +73,7 @@
     <string name="PREF_TOUCH_INPUT">Érintéses bevitel</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtuális vezérlők megjelenítése</string>
     <string name="PREF_VK_ALPHA">Átlátszatlanság</string>
-    <string name="PREF_VK_BACK">Gombok színe</string>
     <string name="PREF_VK_FEEDBACK">Rezgő visszajelzés</string>
-    <string name="PREF_VK_FORCE_OPACITY">A MIDlet képernyőjén kívüli vezérlők maradjanak átlátszatlanok</string>
-    <string name="PREF_VK_FORE">Feliratok és szimbólumok színe</string>
     <string name="PREF_VK_HIDE_DELAY">Automatikus elrejtés késleltetése</string>
     <string name="pref_vk_hide_hint">letiltva</string>
     <string name="PREF_VK_OUTLINE">Körvonal színe</string>
@@ -155,6 +152,8 @@
     <string name="file_picker_empty">Nincs megfelelő fájl</string>
     <string name="file_picker_empty_folder">Nem találhatók mappák</string>
     <string name="file_picker_file">Fájl</string>
+    <string name="file_picker_preview_named">Előnézet: %1$s</string>
+    <string name="file_picker_preview_unavailable">Nem elérhető</string>
     <string name="file_picker_folder_exists">Már létezik ilyen nevű elem.</string>
     <string name="file_picker_folder_name">Mappa neve</string>
     <string name="file_picker_grant_access">Hozzáférés engedélyezése</string>
@@ -261,8 +260,6 @@
     <string name="library_indexing_progress">Az alkalmazástár indexelése… %1$d/%2$d</string>
     <string name="library_load_error_title">Az alkalmazástár nem érhető el</string>
     <string name="library_load_failed_message">Nem sikerült betölteni az alkalmazástárat. Próbálja újra.</string>
-    <string name="library_metadata_change_icon">Ikon módosítása</string>
-    <string name="library_metadata_description">Leírás</string>
     <string name="library_metadata_edit_title">Metaadatok szerkesztése</string>
     <string name="library_metadata_icon">Ikon</string>
     <string name="library_metadata_name">Név</string>
@@ -496,16 +493,9 @@
     <string name="config_help_timing_unavailable">Az időbeállítások nem érhetők el ennél a MIDlet-telepítésnél. Az engedélyezésükhöz telepítse újra vagy konvertálja újra a MIDletet.</string>
     <string name="config_help_touch_input">Lehetővé teszi, hogy a MIDlet mutatóbevitelt fogadjon az érintőképernyőről.</string>
     <string name="config_help_virtual_keyboard">Képernyőn megjelenő vezérlőket mutat ehhez a MIDlethez.</string>
-    <string name="config_help_vk_alpha">Beállítja a vezérlők átlátszatlanságát: 0 = teljesen átlátszó; 255 = teljesen átlátszatlan.</string>
-    <string name="config_help_vk_background">Beállítja a virtuális vezérlők gombjainak alapszínét.</string>
     <string name="config_help_vk_button_shape">Beállítja a billentyűzetgombok alapértelmezett alakját. Az iránygombnak és az analóg karnak saját alakja van.</string>
     <string name="config_help_vk_feedback">Rezeg a virtuális vezérlők megnyomásakor, ha a rezgés engedélyezett a Beállításokban.</string>
-    <string name="config_help_vk_force_opacity">Átlátszatlanná teszi a MIDlet képernyőjén kívüli vezérlőket. A képernyőt fedő vezérlők a beállított átlátszatlanságot használják.</string>
-    <string name="config_help_vk_foreground">Beállítja a virtuális vezérlők gombjain látható feliratok és szimbólumok színét.</string>
     <string name="config_help_vk_hide_delay">Ennyi késleltetés után elrejti a vezérlőket, ha azok fedik a MIDlet képernyőjét. Az automatikus elrejtés kikapcsolásához állítsa 0-ra.</string>
-    <string name="config_help_vk_outline">Beállítja a virtuális vezérlők gombjainak körvonalszínét.</string>
-    <string name="config_help_vk_selected_background">Beállítja a gomb színét megnyomás közben.</string>
-    <string name="config_help_vk_selected_foreground">Beállítja a feliratok és szimbólumok színét a virtuális vezérlő gombjának megnyomásakor.</string>
     <string name="config_increase_value">Érték növelése</string>
     <string name="config_lock_custom_resolution_ratio">Képarány rögzítése</string>
     <string name="config_maintenance">Visszaállítás és adatok</string>
@@ -522,13 +512,18 @@
     <string name="config_timing_mode_full_guest">Emulációs idő</string>
     <string name="config_timing_mode_real_wall">Rendszeridő</string>
     <string name="config_virtual_controls_color_preview">Színelőnézet</string>
-    <string name="config_virtual_controls_preview_hint">Koppintson a megnyomott állapot színeinek előnézetéhez. A minta a kiválasztott átlátszatlanságot használja.</string>
     <string name="config_virtual_controls_preview_normal">Felengedve</string>
     <string name="config_virtual_controls_preview_pressed">Megnyomva</string>
     <string name="config_warning_filter_shader">A lineáris szűrés kisimítja a bemenetet, mielőtt a képernyő shaderje feldolgozza, és csökkentheti a kimenet élességét.</string>
     <string name="layout_edit_continue">Szerkesztés folytatása</string>
     <string name="layout_edit_discard">Elvetés</string>
-    <string name="layout_edit_done">✓ Kész</string>
+    <string name="layout_edit_done">Kész</string>
+    <string name="layout_editor_grid_size">Rácsméret</string>
+    <string name="layout_editor_grid_coarse">Ritka (16)</string>
+    <string name="layout_editor_grid_normal">Normál (24)</string>
+    <string name="layout_editor_grid_fine">Sűrű (32)</string>
+    <string name="layout_editor_snap_on">Illesztés be</string>
+    <string name="layout_editor_snap_off">Illesztés ki</string>
     <string name="layout_edit_save_changes">Menti a virtuális vezérlők módosításait?</string>
     <string name="mapping_dialog_add_input">Egynél több fizikai bemenetet is hozzárendelhet.</string>
     <string name="mapping_dialog_assigned_inputs">Hozzárendelt bemenetek</string>
@@ -1081,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">A játék nem takarja el az előlapi kamera vagy a kijelzőkivágás területét. Kapcsolja be, ha a vezérlők takarásba kerülnek.</string>
     <string name="pref_runtime_fullscreen_title">Teljes képernyő</string>
     <string name="pref_runtime_fullscreen_summary">Az eszköztár elrejtése játék közben. Minden MIDletre érvényes.</string>
+    <string name="pref_show_status_bar_title">Állapotsáv megjelenítése</string>
+    <string name="pref_show_status_bar_summary">Játék közben maradjon látható az Android állapotsávja, hogy lásd az időt és az értesítési ikonokat.</string>
+    <string name="runtime_chrome_update_failed">Nem sikerült frissíteni a játék megjelenítési beállításait. Próbáld újra.</string>
     <string name="runtime_fullscreen_update_failed">A teljes képernyő beállítása nem érhető el. Próbáld újra.</string>
     <string name="midlet_file_permission_title">Hozzáférés a tárhelyhez</string>
     <string name="midlet_file_permission_read">Ez a MIDlet fájlokat szeretne olvasni.</string>
@@ -1127,9 +1125,7 @@
     <string name="library_metadata_follows_main">Az elsődleges ikont használja</string>
     <string name="library_metadata_change">Csere</string>
     <string name="library_metadata_remove_portrait">3:4-es ikon eltávolítása</string>
-    <string name="library_metadata_icon_updated">Ikon frissítve</string>
     <string name="library_metadata_discard_title">Elveti a módosításokat?</string>
-    <string name="library_metadata_discard_message">A nem mentett szövegmódosítások elvesznek. Az ikon módosításai már mentve vannak.</string>
     <string name="library_metadata_discard">Elvetés</string>
     <string name="library_metadata_default_description">Alapértelmezett leírás</string>
     <string name="library_metadata_other_languages">Más nyelvek</string>
@@ -1137,6 +1133,20 @@
     <string name="library_metadata_language_search">Nyelv keresése vagy területi kód megadása</string>
     <string name="library_metadata_remove_language">Leírás eltávolítása</string>
     <string name="library_metadata_language_load_failed">A leírások nem tölthetők be. Nyissa meg újra a metaadat-szerkesztőt.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Panel fedettsége</string>
     <string name="memory_editor_panel_opacity_help">A panel hátterét állítja be a szöveg és az ikonok halványítása nélkül.</string>
 </resources>

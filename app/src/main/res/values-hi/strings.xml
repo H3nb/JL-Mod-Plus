@@ -110,10 +110,7 @@
     <string name="pref_vibration_title">कंपन को सक्षम करें</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">वर्चुअल नियंत्रण दिखाएँ</string>
     <string name="PREF_VK_ALPHA">अपारदर्शिता</string>
-    <string name="PREF_VK_BACK">बटन का रंग</string>
     <string name="PREF_VK_FEEDBACK">कम्पन प्रतिक्रिया</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet स्क्रीन के बाहर नियंत्रण अपारदर्शी रखें</string>
-    <string name="PREF_VK_FORE">लेबल और प्रतीक का रंग</string>
     <string name="PREF_VK_HIDE_DELAY">अपने आप छिपने में देरी</string>
     <string name="pref_vk_hide_hint">बंद</string>
     <string name="PREF_VK_OUTLINE">रूपरेखा का रंग</string>
@@ -194,6 +191,8 @@
     <string name="file_picker_empty">कोई मेल खाती फ़ाइल नहीं</string>
     <string name="file_picker_empty_folder">कोई फ़ोल्डर नहीं मिला</string>
     <string name="file_picker_file">फ़ाइल</string>
+    <string name="file_picker_preview_named">पूर्वावलोकन: %1$s</string>
+    <string name="file_picker_preview_unavailable">उपलब्ध नहीं है</string>
     <string name="file_picker_folder_exists">इस नाम का कोई आइटम पहले से मौजूद है।</string>
     <string name="file_picker_folder_name">फ़ोल्डर का नाम</string>
     <string name="file_picker_grant_access">ऐक्सेस दें</string>
@@ -300,8 +299,6 @@
     <string name="library_indexing_progress">लाइब्रेरी की अनुक्रमणिका बन रही है… %1$d/%2$d</string>
     <string name="library_load_error_title">लाइब्रेरी उपलब्ध नहीं</string>
     <string name="library_load_failed_message">लाइब्रेरी लोड नहीं हो सकी। फिर कोशिश करें।</string>
-    <string name="library_metadata_change_icon">आइकॉन बदलें</string>
-    <string name="library_metadata_description">विवरण</string>
     <string name="library_metadata_edit_title">मेटाडेटा बदलें</string>
     <string name="library_metadata_icon">आइकॉन</string>
     <string name="library_metadata_name">नाम</string>
@@ -535,16 +532,9 @@
     <string name="config_help_timing_unavailable">इस MIDlet इंस्टॉलेशन के लिए समय की सेटिंग उपलब्ध नहीं हैं। इन्हें सक्षम करने के लिए MIDlet फिर से इंस्टॉल या कन्वर्ट करें।</string>
     <string name="config_help_touch_input">MIDlet को टचस्क्रीन से पॉइंटर इनपुट लेने देता है।</string>
     <string name="config_help_virtual_keyboard">इस MIDlet के लिए स्क्रीन पर कंट्रोल दिखाता है।</string>
-    <string name="config_help_vk_alpha">कंट्रोल की अपारदर्शिता सेट करता है: 0 = पूरी तरह पारदर्शी; 255 = पूरी तरह अपारदर्शी।</string>
-    <string name="config_help_vk_background">वर्चुअल कंट्रोल के बटनों का मूल रंग सेट करता है।</string>
     <string name="config_help_vk_button_shape">कीपैड बटन का डिफ़ॉल्ट आकार सेट करता है। D-pad और एनालॉग स्टिक के अपने आकार होते हैं।</string>
     <string name="config_help_vk_feedback">सेटिंग में कंपन सक्षम होने पर वर्चुअल कंट्रोल दबाने से कंपन होता है।</string>
-    <string name="config_help_vk_force_opacity">MIDlet स्क्रीन से बाहर के कंट्रोल अपारदर्शी बनाता है। स्क्रीन के ऊपर के कंट्रोल तय की गई अपारदर्शिता का उपयोग करते हैं।</string>
-    <string name="config_help_vk_foreground">वर्चुअल कंट्रोल के बटनों पर लेबल और चिह्नों का रंग सेट करता है।</string>
     <string name="config_help_vk_hide_delay">MIDlet स्क्रीन को ढकने वाले कंट्रोल इस विलंब के बाद छिप जाते हैं। अपने-आप छिपाना बंद करने के लिए 0 सेट करें।</string>
-    <string name="config_help_vk_outline">वर्चुअल कंट्रोल के बटनों की बाहरी रेखा का रंग सेट करता है।</string>
-    <string name="config_help_vk_selected_background">दबाए जाने के दौरान बटन का रंग सेट करता है।</string>
-    <string name="config_help_vk_selected_foreground">वर्चुअल कंट्रोल का बटन दबाए जाने के दौरान लेबल और चिह्नों का रंग सेट करता है।</string>
     <string name="config_increase_value">मान बढ़ाएँ</string>
     <string name="config_lock_custom_resolution_ratio">आस्पेक्ट अनुपात लॉक करें</string>
     <string name="config_maintenance">रीसेट और डेटा</string>
@@ -561,13 +551,18 @@
     <string name="config_timing_mode_full_guest">इम्यूलेशन समय</string>
     <string name="config_timing_mode_real_wall">सिस्टम समय</string>
     <string name="config_virtual_controls_color_preview">रंग का पूर्वावलोकन</string>
-    <string name="config_virtual_controls_preview_hint">दबाए जाने के रंगों का पूर्वावलोकन देखने के लिए टैप करें। नमूना चुनी गई अपारदर्शिता का उपयोग करता है।</string>
     <string name="config_virtual_controls_preview_normal">छोड़ा गया</string>
     <string name="config_virtual_controls_preview_pressed">दबाया गया</string>
     <string name="config_warning_filter_shader">स्क्रीन शेडर द्वारा प्रोसेस किए जाने से पहले लीनियर फ़िल्टरिंग इनपुट को चिकना करती है और आउटपुट की तीक्ष्णता घट सकती है।</string>
     <string name="layout_edit_continue">संपादन जारी रखें</string>
     <string name="layout_edit_discard">त्यागें</string>
-    <string name="layout_edit_done">✓ हो गया</string>
+    <string name="layout_edit_done">हो गया</string>
+    <string name="layout_editor_grid_size">ग्रिड का आकार</string>
+    <string name="layout_editor_grid_coarse">मोटा (16)</string>
+    <string name="layout_editor_grid_normal">सामान्य (24)</string>
+    <string name="layout_editor_grid_fine">महीन (32)</string>
+    <string name="layout_editor_snap_on">स्नैप चालू</string>
+    <string name="layout_editor_snap_off">स्नैप बंद</string>
     <string name="layout_edit_save_changes">वर्चुअल कंट्रोल के बदलाव सहेजें?</string>
     <string name="mapping_dialog_add_input">आप एक से अधिक भौतिक इनपुट असाइन कर सकते हैं।</string>
     <string name="mapping_dialog_assigned_inputs">असाइन किए गए इनपुट</string>
@@ -1081,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">गेम को फ्रंट कैमरा या स्क्रीन कटआउट से दूर रखें। कंट्रोल छिप रहे हों तो चालू करें।</string>
     <string name="pref_runtime_fullscreen_title">पूर्ण स्क्रीन</string>
     <string name="pref_runtime_fullscreen_summary">खेलते समय टूलबार छिपाएँ। सभी MIDlet पर लागू होता है।</string>
+    <string name="pref_show_status_bar_title">स्टेटस बार दिखाएँ</string>
+    <string name="pref_show_status_bar_summary">खेलते समय समय और सूचना आइकन देखने के लिए Android स्टेटस बार दिखाई देता रहने दें।</string>
+    <string name="runtime_chrome_update_failed">गेम के डिस्प्ले सेटिंग अपडेट नहीं हो सके। फिर कोशिश करें।</string>
     <string name="runtime_fullscreen_update_failed">पूर्ण स्क्रीन सेटिंग तक पहुँचा नहीं जा सका। फिर कोशिश करें।</string>
     <string name="midlet_file_permission_title">स्टोरेज एक्सेस</string>
     <string name="midlet_file_permission_read">यह MIDlet फ़ाइलें पढ़ना चाहता है।</string>
@@ -1127,9 +1125,7 @@
     <string name="library_metadata_follows_main">मुख्य आइकन का उपयोग करता है</string>
     <string name="library_metadata_change">बदलें</string>
     <string name="library_metadata_remove_portrait">3:4 आइकन हटाएँ</string>
-    <string name="library_metadata_icon_updated">आइकन अपडेट किया गया</string>
     <string name="library_metadata_discard_title">बदलाव छोड़ दें?</string>
-    <string name="library_metadata_discard_message">बिना सहेजे गए टेक्स्ट बदलाव खो जाएँगे। आइकन में किए गए बदलाव पहले ही सहेजे जा चुके हैं।</string>
     <string name="library_metadata_discard">छोड़ दें</string>
     <string name="library_metadata_default_description">डिफ़ॉल्ट विवरण</string>
     <string name="library_metadata_other_languages">अन्य भाषाएँ</string>
@@ -1137,6 +1133,20 @@
     <string name="library_metadata_language_search">भाषा खोजें या लोकेल कोड दर्ज करें</string>
     <string name="library_metadata_remove_language">विवरण हटाएँ</string>
     <string name="library_metadata_language_load_failed">भाषा विवरण लोड नहीं हो सके। मेटाडेटा संपादन फिर से खोलें।</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">पैनल की अपारदर्शिता</string>
     <string name="memory_editor_panel_opacity_help">टेक्स्ट या आइकन को फीका किए बिना पैनल की पृष्ठभूमि बदलता है।</string>
 </resources>

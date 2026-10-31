@@ -44,9 +44,7 @@
     <string name="pref_theme_night">มืด</string>
     <string name="pref_theme_title">ธีม</string>
     <string name="PREF_VK_ALPHA">ความทึบ: </string>
-    <string name="PREF_VK_BACK">สีปุ่ม</string>
     <string name="PREF_VK_FEEDBACK">สั่นเมื่อแตะ</string>
-    <string name="PREF_VK_FORE">สีป้ายชื่อและสัญลักษณ์</string>
     <string name="PREF_VK_OUTLINE">สีเส้นขอบ</string>
     <string name="PREF_VK_SEL_BACK">สีปุ่มขณะกด</string>
     <string name="PREF_VK_SEL_FORE">สีป้ายชื่อและสัญลักษณ์ขณะกด</string>
@@ -124,6 +122,8 @@
     <string name="file_picker_empty">ไม่มีไฟล์ที่ตรงกัน</string>
     <string name="file_picker_empty_folder">ไม่พบโฟลเดอร์</string>
     <string name="file_picker_file">ไฟล์</string>
+    <string name="file_picker_preview_named">ตัวอย่าง: %1$s</string>
+    <string name="file_picker_preview_unavailable">ใช้ไม่ได้</string>
     <string name="file_picker_folder_exists">มีรายการชื่อนี้อยู่แล้ว</string>
     <string name="file_picker_folder_name">ชื่อโฟลเดอร์</string>
     <string name="file_picker_grant_access">อนุญาตให้เข้าถึง</string>
@@ -230,8 +230,6 @@
     <string name="library_indexing_progress">กำลังสร้างดัชนีคลังแอป… %1$d/%2$d</string>
     <string name="library_load_error_title">คลังแอปไม่พร้อมใช้งาน</string>
     <string name="library_load_failed_message">ไม่สามารถโหลดคลังแอปได้ ลองอีกครั้ง</string>
-    <string name="library_metadata_change_icon">เปลี่ยนไอคอน</string>
-    <string name="library_metadata_description">คำอธิบาย</string>
     <string name="library_metadata_edit_title">แก้ไขเมทาดาทา</string>
     <string name="library_metadata_icon">ไอคอน</string>
     <string name="library_metadata_name">ชื่อ</string>
@@ -460,16 +458,9 @@
     <string name="config_help_timing_unavailable">การตั้งค่าเวลาใช้ไม่ได้กับการติดตั้ง MIDlet นี้ ให้ติดตั้งหรือแปลง MIDlet ใหม่เพื่อเปิดใช้</string>
     <string name="config_help_touch_input">ให้ MIDlet รับอินพุตตัวชี้จากหน้าจอสัมผัส</string>
     <string name="config_help_virtual_keyboard">แสดงตัวควบคุมบนหน้าจอสำหรับ MIDlet นี้</string>
-    <string name="config_help_vk_alpha">ตั้งความทึบของตัวควบคุม: 0 = โปร่งใสทั้งหมด; 255 = ทึบทั้งหมด</string>
-    <string name="config_help_vk_background">ตั้งสีพื้นฐานของปุ่มตัวควบคุมเสมือน</string>
     <string name="config_help_vk_button_shape">กำหนดรูปร่างเริ่มต้นของปุ่มแป้นกด ส่วนแป้นทิศทางและก้านอนาล็อกมีรูปร่างของตนเอง</string>
     <string name="config_help_vk_feedback">สั่นเมื่อกดตัวควบคุมเสมือนหากเปิดใช้การสั่นในการตั้งค่า</string>
-    <string name="config_help_vk_force_opacity">ทำให้ตัวควบคุมนอกหน้าจอ MIDlet ทึบ ตัวควบคุมบนหน้าจอใช้ความทึบที่ตั้งไว้</string>
-    <string name="config_help_vk_foreground">ตั้งสีข้อความและสัญลักษณ์บนปุ่มตัวควบคุมเสมือน</string>
     <string name="config_help_vk_hide_delay">ซ่อนตัวควบคุมหลังเวลาหน่วงนี้เมื่อบังหน้าจอ MIDlet ตั้งเป็น 0 เพื่อปิดการซ่อนอัตโนมัติ</string>
-    <string name="config_help_vk_outline">ตั้งสีเส้นขอบของปุ่มตัวควบคุมเสมือน</string>
-    <string name="config_help_vk_selected_background">ตั้งสีปุ่มขณะกด</string>
-    <string name="config_help_vk_selected_foreground">ตั้งสีข้อความและสัญลักษณ์ขณะกดปุ่มตัวควบคุมเสมือน</string>
     <string name="config_increase_value">เพิ่มค่า</string>
     <string name="config_lock_custom_resolution_ratio">ล็อกอัตราส่วนภาพ</string>
     <string name="config_maintenance">รีเซ็ตและข้อมูล</string>
@@ -486,13 +477,18 @@
     <string name="config_timing_mode_full_guest">เวลาจำลอง</string>
     <string name="config_timing_mode_real_wall">เวลาระบบ</string>
     <string name="config_virtual_controls_color_preview">ตัวอย่างสี</string>
-    <string name="config_virtual_controls_preview_hint">แตะเพื่อดูตัวอย่างสีขณะกด ตัวอย่างใช้ความทึบที่เลือกไว้</string>
     <string name="config_virtual_controls_preview_normal">ปล่อย</string>
     <string name="config_virtual_controls_preview_pressed">ขณะกด</string>
     <string name="config_warning_filter_shader">การกรองเชิงเส้นทำให้อินพุตเรียบขึ้นก่อนที่เชดเดอร์หน้าจอจะประมวลผล และอาจลดความคมชัดของผลลัพธ์</string>
     <string name="layout_edit_continue">แก้ไขต่อ</string>
     <string name="layout_edit_discard">ละทิ้ง</string>
-    <string name="layout_edit_done">✓ เสร็จสิ้น</string>
+    <string name="layout_edit_done">เสร็จสิ้น</string>
+    <string name="layout_editor_grid_size">ขนาดกริด</string>
+    <string name="layout_editor_grid_coarse">หยาบ (16)</string>
+    <string name="layout_editor_grid_normal">ปกติ (24)</string>
+    <string name="layout_editor_grid_fine">ละเอียด (32)</string>
+    <string name="layout_editor_snap_on">เปิดการดูดติด</string>
+    <string name="layout_editor_snap_off">ปิดการดูดติด</string>
     <string name="layout_edit_save_changes">บันทึกการเปลี่ยนแปลงตัวควบคุมเสมือนหรือไม่?</string>
     <string name="mapping_dialog_add_input">กำหนดอินพุตจากอุปกรณ์จริงได้มากกว่าหนึ่งรายการ</string>
     <string name="mapping_dialog_assigned_inputs">อินพุตที่กำหนดแล้ว</string>
@@ -865,7 +861,6 @@
     <string name="PREF_TOUCH_INPUT">การป้อนข้อมูลด้วยการสัมผัส</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">แสดงตัวควบคุมเสมือน</string>
-    <string name="PREF_VK_FORCE_OPACITY">ให้ตัวควบคุมนอกหน้าจอ MIDlet ทึบแสงเสมอ</string>
     <string name="PREF_VK_HIDE_DELAY">เวลาหน่วงก่อนซ่อนอัตโนมัติ</string>
     <string name="fps_limit_maximum">สูงสุด</string>
     <string name="identity_filter">ไม่มี (เร็วที่สุด)</string>
@@ -1048,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">แสดงเกมให้พ้นจากกล้องหน้าหรือรอยบากหน้าจอ เปิดใช้หากปุ่มควบคุมถูกบัง</string>
     <string name="pref_runtime_fullscreen_title">เต็มหน้าจอ</string>
     <string name="pref_runtime_fullscreen_summary">ซ่อนแถบเครื่องมือขณะเล่น มีผลกับ MIDlet ทั้งหมด</string>
+    <string name="pref_show_status_bar_title">แสดงแถบสถานะ</string>
+    <string name="pref_show_status_bar_summary">แสดงแถบสถานะของ Android ระหว่างเล่นเกมเพื่อดูเวลาและไอคอนการแจ้งเตือน</string>
+    <string name="runtime_chrome_update_failed">ไม่สามารถอัปเดตการตั้งค่าการแสดงผลของเกมได้ โปรดลองอีกครั้ง</string>
     <string name="runtime_fullscreen_update_failed">ไม่สามารถเข้าถึงการตั้งค่าเต็มหน้าจอได้ โปรดลองอีกครั้ง</string>
     <string name="midlet_file_permission_title">การเข้าถึงพื้นที่เก็บข้อมูล</string>
     <string name="midlet_file_permission_read">MIDlet นี้ต้องการอ่านไฟล์</string>
@@ -1094,9 +1092,7 @@
     <string name="library_metadata_follows_main">ใช้ไอคอนหลัก</string>
     <string name="library_metadata_change">เปลี่ยน</string>
     <string name="library_metadata_remove_portrait">ลบไอคอน 3:4</string>
-    <string name="library_metadata_icon_updated">อัปเดตไอคอนแล้ว</string>
     <string name="library_metadata_discard_title">ยกเลิกการเปลี่ยนแปลงหรือไม่?</string>
-    <string name="library_metadata_discard_message">การเปลี่ยนแปลงข้อความที่ยังไม่ได้บันทึกจะหายไป การเปลี่ยนแปลงไอคอนได้รับการบันทึกแล้ว</string>
     <string name="library_metadata_discard">ยกเลิก</string>
     <string name="library_metadata_default_description">คำอธิบายเริ่มต้น</string>
     <string name="library_metadata_other_languages">ภาษาอื่น</string>
@@ -1104,6 +1100,20 @@
     <string name="library_metadata_language_search">ค้นหาภาษาหรือป้อนรหัสภาษา</string>
     <string name="library_metadata_remove_language">ลบคำอธิบาย</string>
     <string name="library_metadata_language_load_failed">โหลดคำอธิบายไม่ได้ โปรดเปิดแก้ไขข้อมูลเมตาอีกครั้ง</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">ความทึบของแผง</string>
     <string name="memory_editor_panel_opacity_help">ปรับพื้นหลังของแผงโดยไม่ทำให้ข้อความหรือไอคอนจางลง</string>
 </resources>

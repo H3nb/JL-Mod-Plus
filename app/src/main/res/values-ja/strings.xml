@@ -71,9 +71,7 @@
     <string name="pref_vibration_title">バイブレーションを有効にする</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">仮想コントロールを表示</string>
     <string name="PREF_VK_ALPHA">不透明度: </string>
-    <string name="PREF_VK_BACK">ボタンの色</string>
     <string name="PREF_VK_FEEDBACK">入力時バイブ</string>
-    <string name="PREF_VK_FORE">ラベルと記号の色</string>
     <string name="PREF_VK_HIDE_DELAY">自動非表示までの時間</string>
     <string name="PREF_VK_OUTLINE">輪郭の色</string>
     <string name="PREF_VK_SEL_BACK">押されたボタンの色</string>
@@ -149,6 +147,8 @@
     <string name="file_picker_empty">一致するファイルがありません</string>
     <string name="file_picker_empty_folder">フォルダが見つかりません</string>
     <string name="file_picker_file">ファイル</string>
+    <string name="file_picker_preview_named">プレビュー: %1$s</string>
+    <string name="file_picker_preview_unavailable">使用不可</string>
     <string name="file_picker_folder_exists">同じ名前の項目がすでに存在します。</string>
     <string name="file_picker_folder_name">フォルダ名</string>
     <string name="file_picker_grant_access">アクセスを許可</string>
@@ -255,8 +255,6 @@
     <string name="library_indexing_progress">ライブラリのインデックスを作成中… %1$d/%2$d</string>
     <string name="library_load_error_title">ライブラリを利用できません</string>
     <string name="library_load_failed_message">ライブラリを読み込めませんでした。もう一度お試しください。</string>
-    <string name="library_metadata_change_icon">アイコンを変更</string>
-    <string name="library_metadata_description">説明</string>
     <string name="library_metadata_edit_title">メタデータを編集</string>
     <string name="library_metadata_icon">アイコン</string>
     <string name="library_metadata_name">名前</string>
@@ -485,16 +483,9 @@
     <string name="config_help_timing_unavailable">この MIDlet のインストールでは時間設定を使用できません。有効にするには、MIDlet を再インストールまたは再変換してください。</string>
     <string name="config_help_touch_input">MIDlet がタッチスクリーンからのポインター入力を受け取れるようにします。</string>
     <string name="config_help_virtual_keyboard">この MIDlet の画面上に操作用のコントロールを表示します。</string>
-    <string name="config_help_vk_alpha">コントロールの不透明度を設定します。0 = 完全に透明、255 = 完全に不透明。</string>
-    <string name="config_help_vk_background">仮想コントロールのボタンの基本色を設定します。</string>
     <string name="config_help_vk_button_shape">キーパッドボタンの標準の形状を設定します。方向パッドとアナログスティックにはそれぞれ固有の形状があります。</string>
     <string name="config_help_vk_feedback">設定で振動が有効な場合、仮想コントロールを押すと振動します。</string>
-    <string name="config_help_vk_force_opacity">MIDlet 画面の外のコントロールを不透明にします。画面に重なるコントロールには設定した不透明度を使用します。</string>
-    <string name="config_help_vk_foreground">仮想コントロールのボタンに表示する文字と記号の色を設定します。</string>
     <string name="config_help_vk_hide_delay">MIDlet 画面に重なるコントロールを、指定時間後に非表示にします。0に設定すると自動非表示を無効にします。</string>
-    <string name="config_help_vk_outline">仮想コントロールのボタンの輪郭色を設定します。</string>
-    <string name="config_help_vk_selected_background">押している間のボタンの色を設定します。</string>
-    <string name="config_help_vk_selected_foreground">仮想コントロールのボタンを押している間の文字と記号の色を設定します。</string>
     <string name="config_increase_value">値を増やす</string>
     <string name="config_lock_custom_resolution_ratio">縦横比を固定</string>
     <string name="config_maintenance">リセットとデータ</string>
@@ -511,13 +502,18 @@
     <string name="config_timing_mode_full_guest">エミュレーション時間</string>
     <string name="config_timing_mode_real_wall">システム時間</string>
     <string name="config_virtual_controls_color_preview">色のプレビュー</string>
-    <string name="config_virtual_controls_preview_hint">タップして押したときの色を確認します。サンプルには選択した不透明度を使用します。</string>
     <string name="config_virtual_controls_preview_normal">離した状態</string>
     <string name="config_virtual_controls_preview_pressed">押下中</string>
     <string name="config_warning_filter_shader">線形フィルタリングは画面シェーダーの処理前に入力を滑らかにするため、出力の鮮明さが低下する場合があります。</string>
     <string name="layout_edit_continue">編集を続ける</string>
     <string name="layout_edit_discard">破棄</string>
-    <string name="layout_edit_done">✓ 完了</string>
+    <string name="layout_edit_done">完了</string>
+    <string name="layout_editor_grid_size">グリッドサイズ</string>
+    <string name="layout_editor_grid_coarse">粗い (16)</string>
+    <string name="layout_editor_grid_normal">標準 (24)</string>
+    <string name="layout_editor_grid_fine">細かい (32)</string>
+    <string name="layout_editor_snap_on">スナップ オン</string>
+    <string name="layout_editor_snap_off">スナップ オフ</string>
     <string name="layout_edit_save_changes">仮想コントロールの変更を保存しますか？</string>
     <string name="mapping_dialog_add_input">複数の物理入力を割り当てられます。</string>
     <string name="mapping_dialog_assigned_inputs">割り当て済みの入力</string>
@@ -879,7 +875,6 @@
     <string name="PREF_LAYOUT">キーコードの配列</string>
     <string name="PREF_SHADER_FILTER">画面シェーダー</string>
     <string name="PREF_TIMING_MODE">時刻の取得元</string>
-    <string name="PREF_VK_FORCE_OPACITY">MIDlet 画面外のコントロールを不透明にする</string>
     <string name="fps_limit_maximum">最大</string>
     <string name="identity_filter">なし（最速）</string>
     <string name="msg_error_loading_shader">シェーダーがサポートされていません。既定のシェーダーを使用します。</string>
@@ -1048,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">ゲーム画面を前面カメラや画面の切り欠きから離して表示します。操作ボタンが隠れる場合に有効にしてください。</string>
     <string name="pref_runtime_fullscreen_title">全画面表示</string>
     <string name="pref_runtime_fullscreen_summary">プレイ中はツールバーを非表示にします。すべての MIDlet に適用されます。</string>
+    <string name="pref_show_status_bar_title">ステータスバーを表示</string>
+    <string name="pref_show_status_bar_summary">プレイ中も Android のステータスバーを表示し、時刻と通知アイコンを確認できます。</string>
+    <string name="runtime_chrome_update_failed">ゲーム画面の表示設定を更新できませんでした。もう一度お試しください。</string>
     <string name="runtime_fullscreen_update_failed">全画面表示の設定にアクセスできませんでした。もう一度お試しください。</string>
     <string name="midlet_file_permission_title">ストレージへのアクセス</string>
     <string name="midlet_file_permission_read">このMIDletはファイルの読み取りを求めています。</string>
@@ -1094,9 +1092,7 @@
     <string name="library_metadata_follows_main">メインアイコンを使用</string>
     <string name="library_metadata_change">変更</string>
     <string name="library_metadata_remove_portrait">3:4 アイコンを削除</string>
-    <string name="library_metadata_icon_updated">アイコンを更新しました</string>
     <string name="library_metadata_discard_title">変更を破棄しますか？</string>
-    <string name="library_metadata_discard_message">保存していないテキストの変更は失われます。アイコンの変更はすでに保存されています。</string>
     <string name="library_metadata_discard">破棄</string>
     <string name="library_metadata_default_description">既定の説明</string>
     <string name="library_metadata_other_languages">その他の言語</string>
@@ -1104,6 +1100,20 @@
     <string name="library_metadata_language_search">言語を検索またはロケールを入力</string>
     <string name="library_metadata_remove_language">説明を削除</string>
     <string name="library_metadata_language_load_failed">説明を読み込めませんでした。メタデータ編集を開き直してください。</string>
+    <string name="layout_editor_group_on">グループでサイズ変更</string>
+    <string name="layout_editor_group_off">個別にサイズ変更</string>
+    <string name="layout_editor_snap_grid">グリッドにスナップ</string>
+    <string name="layout_editor_snap_controls">ボタンにスナップ</string>
+    <string name="layout_editor_snap_grid_on">グリッド吸着：オン</string>
+    <string name="layout_editor_snap_grid_off">グリッド吸着：オフ</string>
+    <string name="layout_editor_snap_controls_on">ボタン吸着：オン</string>
+    <string name="layout_editor_snap_controls_off">ボタン吸着：オフ</string>
+    <string name="layout_editor_guide_gestures">ジェスチャー</string>
+    <string name="layout_editor_guide_move">操作ボタンをドラッグして移動します。</string>
+    <string name="layout_editor_guide_resize">2本の指でサイズを変更します。横方向または縦方向に動かすと幅や高さを変更できます。</string>
+    <string name="layout_editor_guide_tools">編集ツール</string>
+    <string name="layout_editor_guide_done">完了をタップして保存、破棄、または編集を続行します。</string>
+    <string name="layout_editor_guide_start">編集を開始</string>
     <string name="memory_editor_panel_opacity">パネルの不透明度</string>
     <string name="memory_editor_panel_opacity_help">文字やアイコンを薄くせずに、パネルの背景を調整します。</string>
 </resources>

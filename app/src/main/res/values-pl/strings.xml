@@ -51,10 +51,7 @@
     <string name="PREF_TOUCH_INPUT">Wprowadzanie dotykowe</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Pokaż wirtualne elementy sterujące</string>
     <string name="PREF_VK_ALPHA">Nieprzezroczystość</string>
-    <string name="PREF_VK_BACK">Kolor przycisków</string>
     <string name="PREF_VK_FEEDBACK">Wibracja przy naciśnięciu</string>
-    <string name="PREF_VK_FORCE_OPACITY">Zachowuj nieprzezroczystość elementów sterujących poza ekranem MIDletu</string>
-    <string name="PREF_VK_FORE">Kolor etykiet i symboli</string>
     <string name="PREF_VK_HIDE_DELAY">Opóźnienie automatycznego ukrywania</string>
     <string name="PREF_VK_OUTLINE">Kolor obramowania</string>
     <string name="PREF_VK_SEL_BACK">Kolor wciśniętych przycisków</string>
@@ -137,6 +134,8 @@
     <string name="file_picker_empty">Brak pasujących plików</string>
     <string name="file_picker_empty_folder">Nie znaleziono folderów</string>
     <string name="file_picker_file">Plik</string>
+    <string name="file_picker_preview_named">Podgląd: %1$s</string>
+    <string name="file_picker_preview_unavailable">Niedostępne</string>
     <string name="file_picker_folder_exists">Element o tej nazwie już istnieje.</string>
     <string name="file_picker_folder_name">Nazwa folderu</string>
     <string name="file_picker_grant_access">Przyznaj dostęp</string>
@@ -243,8 +242,6 @@
     <string name="library_indexing_progress">Indeksowanie biblioteki… %1$d/%2$d</string>
     <string name="library_load_error_title">Biblioteka niedostępna</string>
     <string name="library_load_failed_message">Nie udało się wczytać biblioteki. Spróbuj ponownie.</string>
-    <string name="library_metadata_change_icon">Zmień ikonę</string>
-    <string name="library_metadata_description">Opis</string>
     <string name="library_metadata_edit_title">Edytuj metadane</string>
     <string name="library_metadata_icon">Ikona</string>
     <string name="library_metadata_name">Nazwa</string>
@@ -488,16 +485,9 @@
     <string name="config_help_timing_unavailable">Ustawienia czasu są niedostępne dla tej instalacji MIDletu. Zainstaluj ponownie lub ponownie skonwertuj MIDlet, aby je włączyć.</string>
     <string name="config_help_touch_input">Pozwala MIDletowi odbierać dane wskaźnika z ekranu dotykowego.</string>
     <string name="config_help_virtual_keyboard">Wyświetla ekranowe elementy sterujące dla tego MIDletu.</string>
-    <string name="config_help_vk_alpha">Ustawia nieprzezroczystość sterowania: 0 = całkowicie przezroczyste; 255 = całkowicie nieprzezroczyste.</string>
-    <string name="config_help_vk_background">Ustawia podstawowy kolor przycisków sterowania wirtualnego.</string>
     <string name="config_help_vk_button_shape">Ustawia domyślny kształt przycisków klawiatury. Krzyżak i drążek analogowy mają własne kształty.</string>
     <string name="config_help_vk_feedback">Wibruje przy naciskaniu sterowania wirtualnego, gdy wibracje są włączone w Ustawieniach.</string>
-    <string name="config_help_vk_force_opacity">Sprawia, że sterowanie poza ekranem MIDletu jest nieprzezroczyste. Elementy nad ekranem używają ustawionej nieprzezroczystości.</string>
-    <string name="config_help_vk_foreground">Ustawia kolor etykiet i symboli na przyciskach sterowania wirtualnego.</string>
     <string name="config_help_vk_hide_delay">Ukrywa sterowanie po tym opóźnieniu, jeśli zasłania ekran MIDletu. Ustaw 0, aby wyłączyć automatyczne ukrywanie.</string>
-    <string name="config_help_vk_outline">Ustawia kolor obrysu przycisków sterowania wirtualnego.</string>
-    <string name="config_help_vk_selected_background">Ustawia kolor przycisku podczas naciskania.</string>
-    <string name="config_help_vk_selected_foreground">Ustawia kolor etykiet i symboli podczas naciskania przycisku sterowania wirtualnego.</string>
     <string name="config_increase_value">Zwiększ wartość</string>
     <string name="config_lock_custom_resolution_ratio">Zablokuj proporcje</string>
     <string name="config_maintenance">Resetowanie i dane</string>
@@ -514,13 +504,18 @@
     <string name="config_timing_mode_full_guest">Czas emulacji</string>
     <string name="config_timing_mode_real_wall">Czas systemowy</string>
     <string name="config_virtual_controls_color_preview">Podgląd kolorów</string>
-    <string name="config_virtual_controls_preview_hint">Dotknij, aby zobaczyć kolory przy naciśnięciu. Przykład używa wybranej nieprzezroczystości.</string>
     <string name="config_virtual_controls_preview_normal">Zwolnione</string>
     <string name="config_virtual_controls_preview_pressed">Naciśnięte</string>
     <string name="config_warning_filter_shader">Filtrowanie liniowe wygładza obraz wejściowy przed przetworzeniem przez shader ekranu i może zmniejszyć ostrość obrazu wyjściowego.</string>
     <string name="layout_edit_continue">Kontynuuj edycję</string>
     <string name="layout_edit_discard">Odrzuć</string>
-    <string name="layout_edit_done">✓ Gotowe</string>
+    <string name="layout_edit_done">Gotowe</string>
+    <string name="layout_editor_grid_size">Rozmiar siatki</string>
+    <string name="layout_editor_grid_coarse">Rzadka (16)</string>
+    <string name="layout_editor_grid_normal">Normalna (24)</string>
+    <string name="layout_editor_grid_fine">Gęsta (32)</string>
+    <string name="layout_editor_snap_on">Przyciąganie wł.</string>
+    <string name="layout_editor_snap_off">Przyciąganie wył.</string>
     <string name="layout_edit_save_changes">Zapisać zmiany sterowania wirtualnego?</string>
     <string name="mapping_dialog_add_input">Możesz przypisać więcej niż jedno wejście fizyczne.</string>
     <string name="mapping_dialog_assigned_inputs">Przypisane wejścia</string>
@@ -1147,6 +1142,9 @@
     <string name="config_avoid_camera_cutout_summary">Utrzymuje grę poza obszarem przedniego aparatu i wycięcia ekranu. Włącz, jeśli elementy sterowania są zasłonięte.</string>
     <string name="pref_runtime_fullscreen_title">Pełny ekran</string>
     <string name="pref_runtime_fullscreen_summary">Ukryj pasek narzędzi podczas gry. Dotyczy wszystkich MIDletów.</string>
+    <string name="pref_show_status_bar_title">Pokaż pasek stanu</string>
+    <string name="pref_show_status_bar_summary">Pozostaw pasek stanu Androida widoczny podczas gry, aby widzieć godzinę i ikony powiadomień.</string>
+    <string name="runtime_chrome_update_failed">Nie udało się zaktualizować ustawień wyświetlania podczas gry. Spróbuj ponownie.</string>
     <string name="runtime_fullscreen_update_failed">Nie udało się uzyskać dostępu do ustawienia pełnego ekranu. Spróbuj ponownie.</string>
     <string name="midlet_file_permission_title">Dostęp do pamięci</string>
     <string name="midlet_file_permission_read">Ten MIDlet chce odczytywać pliki.</string>
@@ -1193,9 +1191,7 @@
     <string name="library_metadata_follows_main">Używa głównej ikony</string>
     <string name="library_metadata_change">Zmień</string>
     <string name="library_metadata_remove_portrait">Usuń ikonę 3:4</string>
-    <string name="library_metadata_icon_updated">Ikona zaktualizowana</string>
     <string name="library_metadata_discard_title">Odrzucić zmiany?</string>
-    <string name="library_metadata_discard_message">Niezapisane zmiany tekstu zostaną utracone. Zmiany ikony zostały już zapisane.</string>
     <string name="library_metadata_discard">Odrzuć</string>
     <string name="library_metadata_default_description">Opis domyślny</string>
     <string name="library_metadata_other_languages">Inne języki</string>
@@ -1203,6 +1199,20 @@
     <string name="library_metadata_language_search">Wyszukaj język lub wpisz kod regionu</string>
     <string name="library_metadata_remove_language">Usuń opis</string>
     <string name="library_metadata_language_load_failed">Nie udało się wczytać opisów. Otwórz ponownie edycję metadanych.</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
     <string name="memory_editor_panel_opacity">Krycie panelu</string>
     <string name="memory_editor_panel_opacity_help">Dostosowuje tło panelu bez przygaszania tekstu ani ikon.</string>
 </resources>

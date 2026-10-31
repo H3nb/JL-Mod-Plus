@@ -1,6 +1,6 @@
 # Third-party provenance and license inventory
 
-This file is the provenance ledger for third-party software bundled by JL-Mod Plus. Its last full runtime-classpath audit used `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` on 2026-08-14; that historical audit is not verification of subsequent dependency changes.
+This file is the provenance ledger for third-party software bundled by JL-Mod Plus. The previous full resolved runtime-classpath audit used `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` on 2026-08-14. A **targeted manifest and documentation reconciliation** on 2026-10-26 checked current source declarations against `alpha` at `3f30ce47e3d335e954ef233409f529d9a7d42fca` (including the Gradle version catalog, module dependency declarations, native source manifest, and in-app notice); it did **not** resolve a fresh runtime dependency graph or inspect the built APK. Neither a historical nor this targeted check certifies ongoing license compliance.
 
 The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **About -> Licenses**. Source-file copyright headers, published artifact metadata, and upstream license files remain authoritative when they are more specific than this summary.
 
@@ -16,6 +16,10 @@ This ledger is a provenance/notice inventory for the current project state, not 
 | Nokia M3G / JSR-184 native reference code | `app/src/main/cpp/m3g/src/**`; source headers identify Nokia Corporation | Nokia M3G reference implementation lineage carried by JL-Mod | EPL-1.0; source is available in the public JL-Mod Plus repository at the local path shown |
 | SoniVox EAS | Vendored `app/src/main/cpp/sonivox/**`; local patches in `UPSTREAM.md`, upstream `NOTICE` and license retained | `https://github.com/EmbeddedSynth/sonivox`, v4.0.2 at `bb8668b91118318b0e6017aca59ce34e7bc93bf8`; Sonic Network Inc. / Android lineage | Apache-2.0 |
 | Mascot Capsule Micro3D implementation | `app/src/main/java/com/mascotcapsule/micro3d/**` and `app/src/main/cpp/micro3d/**`; current files identify JL-Mod/Yury Kharchenko/woesss authorship | JL-Mod implementation currently in this tree | Apache-2.0 where stated by the source files |
+
+## AndroidSVG
+
+AndroidSVG 1.4 (`com.caverock:androidsvg`) by Paul LeBeau renders imported static SVG artwork into Android bitmaps. Source: https://github.com/BigBadaboom/androidsvg. License: Apache-2.0.
 
 ## Material Symbols assets
 
@@ -55,6 +59,13 @@ resized copy of the Sociabuzz wordmark provided by the JL-Mod Plus maintainer
 for identifying the external donation provider. Sociabuzz branding is not
 licensed under JL-Mod Plus's Apache-2.0 license; all branding rights remain
 with their respective owner. This graphic does not imply Sociabuzz endorsement.
+
+### Virtual-control editor icon assets
+
+| Asset | Source | Variant / provenance | License |
+| --- | --- | --- | --- |
+| `ic_editor_grid.xml` | `google/material-design-icons`, symbol `grid_3x3` | Material Symbols outlined, fill 0, weight 400, grade 0, optical size 24; pinned revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_editor_snap.xml`, `ic_editor_snap_off.xml` | `Templarian/MaterialDesign`, `svg/magnet.svg` | Pictogrammers Material Design Icons magnet; pinned revision `2424e748e0cc63ab7b9c095a099b9fe239b737c0`. The off variant adds a diagonal strike to the same shape. | Apache-2.0 |
 
 ### GitHub Octicons asset
 
@@ -99,7 +110,13 @@ The table below covers direct runtime dependencies and license-significant trans
 | `io.reactivex.rxjava2:rxjava`, `io.reactivex.rxjava2:rxandroid` | ReactiveX | Apache-2.0 |
 | `org.reactivestreams:reactive-streams` | Reactive Streams JVM API | MIT-0 |
 | `net.lingala.zip4j:zip4j:2.11.6` | `https://github.com/srikanth-lingala/zip4j` | Apache-2.0 |
-| `org.ow2.asm:asm:9.6` | OW2 ASM | BSD-3-Clause |
+| `org.ow2.asm:asm:9.10.1` (declared in version catalog) | OW2 ASM | BSD-3-Clause |
+
+## Audit status and release checks
+
+The 2026-10-26 targeted reconciliation confirmed the declared `com.caverock:androidsvg:1.4`, `org.ow2.asm:asm:9.10.1`, PNGJ 2.2.3, Zip4j 2.11.6, and the pinned FFmpeg 8.1.3 / OpenCORE-AMR 0.1.6 source archives; the ASM 9.6 labels in this ledger and the in-app notice were corrected. The root Apache-2.0 `LICENSE` remains unchanged, and the root project copyright spelling in `NOTICE` was corrected without altering upstream attributions.
+
+**Still required before claiming a complete current-release license audit:** resolve actual release/runtime classpaths and license-significant transitives (including the PNGJ JUnit/Hamcrest claim), inspect the actual native and APK artifact contents, verify provenance/notice inclusion for newly added or modified assets, and check the FFmpeg LGPL distribution/linking obligations against the shipped binaries and sources. Consult [FFmpeg's legal/compliance guidance](https://ffmpeg.org/legal.html) and applicable original license texts; the presence of source URLs and in-app notices alone is not proof of full compliance. The current ledger is a traceability aid, not legal advice or a substitute for a release audit.
 
 ## Source availability for reciprocal-license components
 

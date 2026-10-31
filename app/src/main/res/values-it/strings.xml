@@ -79,10 +79,7 @@
     <string name="pref_vibration_title">Abilita vibrazione</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Mostra controlli virtuali</string>
     <string name="PREF_VK_ALPHA">Opacità: </string>
-    <string name="PREF_VK_BACK">Colore dei pulsanti</string>
     <string name="PREF_VK_FEEDBACK">Feedback tattile</string>
-    <string name="PREF_VK_FORCE_OPACITY">Mantieni opachi i controlli fuori dallo schermo del MIDlet</string>
-    <string name="PREF_VK_FORE">Colore etichette e simboli</string>
     <string name="PREF_VK_HIDE_DELAY">Ritardo scomparsa: </string>
     <string name="pref_vk_hide_hint">disabilitato</string>
     <string name="PREF_VK_OUTLINE">Colore del contorno</string>
@@ -143,6 +140,8 @@
     <string name="file_picker_current_folder">Cartella corrente</string>
     <string name="file_picker_parent_folder">Cartella superiore</string>
     <string name="file_picker_file">File</string>
+    <string name="file_picker_preview_named">Anteprima: %1$s</string>
+    <string name="file_picker_preview_unavailable">Non disponibile</string>
     <string name="file_picker_storage_volume">Volume di archiviazione</string>
     <string name="file_picker_empty">Nessun file corrispondente</string>
     <string name="file_picker_empty_folder">Nessuna cartella trovata</string>
@@ -161,7 +160,13 @@
     <string name="file_picker_create_folder_failed">Impossibile creare la cartella.</string>
     <string name="file_picker_selection_unavailable">L’elemento selezionato non è più disponibile.</string>
     <string name="invalid_resolution_not_saved">Risoluzione non valida. Le modifiche non sono state salvate.</string>
-    <string name="layout_edit_done">✓ Fatto</string>
+    <string name="layout_edit_done">Fatto</string>
+    <string name="layout_editor_grid_size">Dimensione griglia</string>
+    <string name="layout_editor_grid_coarse">Grossolana (16)</string>
+    <string name="layout_editor_grid_normal">Normale (24)</string>
+    <string name="layout_editor_grid_fine">Fine (32)</string>
+    <string name="layout_editor_snap_on">Aggancio attivo</string>
+    <string name="layout_editor_snap_off">Aggancio disattivo</string>
     <string name="layout_edit_save_changes">Salvare le modifiche ai controlli virtuali?</string>
     <string name="layout_edit_discard">Scarta</string>
     <string name="layout_edit_continue">Continua modifica</string>
@@ -793,14 +798,7 @@
     <string name="config_help_key_mapping">Mappa tasti e pulsanti Android alle azioni del tastierino J2ME.</string>
     <string name="config_help_vk_button_shape">Imposta la forma predefinita dei pulsanti del tastierino. Il D-pad e lo stick analogico hanno forme proprie.</string>
     <string name="config_help_vk_feedback">Vibra alla pressione dei controlli virtuali quando la vibrazione è attivata nelle Impostazioni.</string>
-    <string name="config_help_vk_alpha">Imposta l’opacità dei controlli: 0 = completamente trasparenti; 255 = completamente opachi.</string>
-    <string name="config_help_vk_force_opacity">Rende opachi i controlli fuori dallo schermo del MIDlet. I controlli sopra lo schermo usano l’opacità configurata.</string>
     <string name="config_help_vk_hide_delay">Nasconde i controlli dopo questo ritardo quando coprono lo schermo del MIDlet. Imposta 0 per disattivare il nascondimento automatico.</string>
-    <string name="config_help_vk_foreground">Imposta il colore di etichette e simboli sui pulsanti dei controlli virtuali.</string>
-    <string name="config_help_vk_background">Imposta il colore di base dei pulsanti dei controlli virtuali.</string>
-    <string name="config_help_vk_selected_foreground">Imposta il colore di etichette e simboli mentre viene premuto un pulsante dei controlli virtuali.</string>
-    <string name="config_help_vk_selected_background">Imposta il colore del pulsante mentre è premuto.</string>
-    <string name="config_help_vk_outline">Imposta il colore del contorno dei pulsanti dei controlli virtuali.</string>
     <string name="config_help_reset_layout">Ripristina il layout dei controlli virtuali senza modificare altre impostazioni del MIDlet.</string>
     <string name="config_help_skip_resume">Dopo la prima chiamata riuscita a startApp(), salta le chiamate successive alla ripresa del MIDlet. Usalo solo per i MIDlet che non funzionano alla ripresa.</string>
     <string name="config_help_soundbank">Sceglie la soundbank usata per la riproduzione MIDI.</string>
@@ -864,10 +862,8 @@
     <string name="config_controller_help_body_compact">I pulsanti del gamepad usano la stessa Mappatura tasti di tastiere e tasti del telefono. L’opzione Stick analogico controlla solo l’uscita direzionale dello stick per il MIDlet. Indietro di Android mantiene il normale comportamento host e qualsiasi pulsante fisico mappato su M apre il menu MIDlet runtime.</string>
     <string name="library_metadata_edit_title">Modifica metadati</string>
     <string name="library_metadata_icon">Icona</string>
-    <string name="library_metadata_change_icon">Cambia icona</string>
     <string name="library_metadata_name">Nome</string>
     <string name="library_metadata_vendor">Produttore</string>
-    <string name="library_metadata_description">Descrizione</string>
     <string name="library_metadata_reset_to_original">Ripristina originale</string>
     <string name="library_metadata_save">Salva</string>
     <string name="library_hide_grid_titles_summary">Mostra solo le icone MIDlet nella vista a griglia.</string>
@@ -1024,7 +1020,6 @@
     <string name="bulk_install_skipped_entries">Voci di archivio saltate: %1$d</string>
     <string name="bulk_install_unreadable_archives">Archivi illeggibili: %1$d</string>
     <string name="config_virtual_controls_color_preview">Anteprima colori</string>
-    <string name="config_virtual_controls_preview_hint">Tocca per vedere i colori durante la pressione. Il campione usa l’opacità selezionata.</string>
     <string name="config_virtual_controls_preview_normal">Rilasciato</string>
     <string name="config_virtual_controls_preview_pressed">Premuto</string>
     <string name="config_warning_filter_shader">Il filtro lineare smussa l’immagine prima che venga elaborata dallo shader dello schermo e può ridurre la nitidezza del risultato.</string>
@@ -1114,6 +1109,9 @@
     <string name="config_avoid_camera_cutout_summary">Mantiene il gioco lontano dalla fotocamera anteriore o dal ritaglio dello schermo. Attiva se i comandi risultano coperti.</string>
     <string name="pref_runtime_fullscreen_title">Schermo intero</string>
     <string name="pref_runtime_fullscreen_summary">Nasconde la barra degli strumenti durante il gioco. Si applica a tutti i MIDlet.</string>
+    <string name="pref_show_status_bar_title">Mostra barra di stato</string>
+    <string name="pref_show_status_bar_summary">Mantieni visibile la barra di stato di Android durante il gioco per vedere l’ora e le icone delle notifiche.</string>
+    <string name="runtime_chrome_update_failed">Impossibile aggiornare le impostazioni di visualizzazione del gioco. Riprova.</string>
     <string name="runtime_fullscreen_update_failed">Impossibile accedere all’impostazione dello schermo intero. Riprova.</string>
     <string name="midlet_file_permission_title">Accesso alla memoria</string>
     <string name="midlet_file_permission_read">Questo MIDlet vuole leggere i file.</string>
@@ -1160,9 +1158,7 @@
     <string name="library_metadata_follows_main">Usa l\'icona principale</string>
     <string name="library_metadata_change">Cambia</string>
     <string name="library_metadata_remove_portrait">Rimuovi icona 3:4</string>
-    <string name="library_metadata_icon_updated">Icona aggiornata</string>
     <string name="library_metadata_discard_title">Eliminare le modifiche?</string>
-    <string name="library_metadata_discard_message">Le modifiche al testo non salvate andranno perse. Le modifiche all\'icona sono già state salvate.</string>
     <string name="library_metadata_discard">Elimina</string>
     <string name="library_metadata_default_description">Descrizione predefinita</string>
     <string name="library_metadata_other_languages">Altre lingue</string>
@@ -1170,6 +1166,20 @@
     <string name="library_metadata_language_search">Cerca una lingua o inserisci un codice</string>
     <string name="library_metadata_remove_language">Rimuovi descrizione</string>
     <string name="library_metadata_language_load_failed">Impossibile caricare le descrizioni. Riapri la modifica dei metadati.</string>
+    <string name="layout_editor_group_on">Ridimensiona gruppo</string>
+    <string name="layout_editor_group_off">Ridimensiona singolarmente</string>
+    <string name="layout_editor_snap_grid">Aggancia alla griglia</string>
+    <string name="layout_editor_snap_controls">Aggancia ai pulsanti</string>
+    <string name="layout_editor_snap_grid_on">Aggancio griglia: Attivo</string>
+    <string name="layout_editor_snap_grid_off">Aggancio griglia: Disattivo</string>
+    <string name="layout_editor_snap_controls_on">Aggancio pulsanti: Attivo</string>
+    <string name="layout_editor_snap_controls_off">Aggancio pulsanti: Disattivo</string>
+    <string name="layout_editor_guide_gestures">Gesti</string>
+    <string name="layout_editor_guide_move">Trascina un controllo per spostarlo.</string>
+    <string name="layout_editor_guide_resize">Usa due dita per ridimensionare. Muovile in orizzontale o in verticale per cambiare larghezza o altezza.</string>
+    <string name="layout_editor_guide_tools">Strumenti di modifica</string>
+    <string name="layout_editor_guide_done">Tocca Fine per salvare, annullare o continuare a modificare.</string>
+    <string name="layout_editor_guide_start">Inizia a modificare</string>
     <string name="memory_editor_panel_opacity">Opacità del pannello</string>
     <string name="memory_editor_panel_opacity_help">Regola lo sfondo del pannello senza attenuare il testo o le icone.</string>
 </resources>
