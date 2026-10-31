@@ -49,7 +49,8 @@ for spec in \
   'io.github.h3nb.jlmodplus.research.SupersamplingSemanticsResearchTest|lcd-ui-hd-logic' \
   'io.github.h3nb.jlmodplus.research.TextureUpdateResearchTest|texture-update' \
   'io.github.h3nb.jlmodplus.research.RealLibretroPresetResearchTest|real-glslp' \
-  'io.github.h3nb.jlmodplus.research.GlesViewLifecycleResearchTest|gles-view-lifecycle'; do
+  'io.github.h3nb.jlmodplus.research.GlesViewLifecycleResearchTest|gles-view-lifecycle' \
+  'io.github.h3nb.jlmodplus.research.CanvasRendererPublicationResearchTest|canvas-renderer-publication'; do
   class=$(printf '%s' "$spec" | cut -d'|' -f1)
   label=$(printf '%s' "$spec" | cut -d'|' -f2)
   echo "Executing $class"
