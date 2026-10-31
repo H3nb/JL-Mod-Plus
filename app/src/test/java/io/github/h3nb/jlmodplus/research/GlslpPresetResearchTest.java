@@ -123,7 +123,9 @@ public class GlslpPresetResearchTest {
         assertEquals(96, fsr.passes.get(0).outputWidth);
         assertEquals(96, fsr.passes.get(1).inputWidth);
         assertEquals(96, fsr.passes.get(1).outputWidth);
-        assertFalse(fsr.finalBlitRequired);
+        assertTrue("Source-based final FSR stage still needs a stock blit,"
+                        + " even when its dimensions happen to equal viewport",
+                fsr.finalBlitRequired);
 
         assets.put("fsr/mixed.glslp", "shaders = 1\nshader0 = a.glsl\n"
                 + "scale_type_x0 = absolute\nscale_x0 = 128\n"
