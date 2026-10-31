@@ -201,6 +201,123 @@ public final class CanvasRendererPublicationResearchTest {
         }
     }
 
+    /**
+     * Genuine two-pass xBRZ has TWO distinct inputs at pass 1: the analyzed
+     * pass-0 texture and the unmodified original (PassPrev2Texture).
+     * A single previous-pass sampler may compile but cannot produce xBRZ.
+     */
+    @Test public void realXbrzFreescaleUsesOriginalTextureAndReusesFirstPass() throws Exception {
+        ProfileModel profile = ProfileModel.fresh("");
+        profile.graphicsMode = 1;
+        profile.screenWidth = 8;
+        profile.screenHeight = 8;
+        profile.screenScaleType = 1;
+        profile.screenPadding = 0;
+        profile.screenFilter = false;
+        profile.shader = null;
+        Canvas.setSettings(profile);
+        String shaderPath = "graphics-rd/xbrz/shaders/xbrz-freescale-multipass/";
+        String pass0 = readSource(shaderPath + "xbrz-freescale-pass0.glsl");
+        String pass1 = readSource(shaderPath + "xbrz-freescale-pass1.glsl");
+        assertTrue("This fixture must exercise the original-frame dependency",
+                pass1.contains("PassPrev2Texture"));
+        Canvas.setGraphicsResearchTwoPassSources(pass0, pass1);
+        Canvas.setGraphicsResearchHeadlessHost(true);
+        FixtureCanvas canvas;
+        try {
+            canvas = new FixtureCanvas();
+        } finally {
+            Canvas.setGraphicsResearchHeadlessHost(false);
+        }
+        Object rendererObject = getField(Canvas.class, "renderer").get(canvas);
+        android.opengl.GLSurfaceView.Renderer renderer =
+                (android.opengl.GLSurfaceView.Renderer) rendererObject;
+        Method setQuad = rendererObject.getClass().getDeclaredMethod("updateSize",
+                float.class, float.class, float.class, float.class,
+                float.class, float.class);
+        setQuad.setAccessible(true);
+        setQuad.invoke(rendererObject, -1f, 1f, 1f, -1f, 1f, 1f);
+        PresentationMailbox mailbox = (PresentationMailbox)
+                getField(Canvas.class, "presentationMailbox").get(canvas);
+
+        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
+        assertTrue(EGL14.eglInitialize(display, new int[1], 0, new int[1], 0));
+        EGLConfig[] configs = new EGLConfig[1];
+        int[] count = new int[1];
+        int[] attributes = {EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
+                EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_NONE};
+        assertTrue(EGL14.eglChooseConfig(display, attributes, 0, configs, 0, 1, count, 0));
+        assertTrue(count[0] > 0);
+        EGLContext context = EGL14.eglCreateContext(display, configs[0],
+                EGL14.EGL_NO_CONTEXT,
+                new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE}, 0);
+        EGLSurface surface = EGL14.eglCreatePbufferSurface(display, configs[0],
+                new int[]{EGL14.EGL_WIDTH, 96, EGL14.EGL_HEIGHT, 96, EGL14.EGL_NONE}, 0);
+        assertNotEquals(EGL14.EGL_NO_CONTEXT, context);
+        assertNotEquals(EGL14.EGL_NO_SURFACE, surface);
+        mailbox.begin();
+        try {
+            assertTrue(EGL14.eglMakeCurrent(display, surface, surface, context));
+            renderer.onSurfaceCreated(null, null);
+            renderer.onSurfaceChanged(null, 96, 96);
+            LibretroTwoPassResearchPipeline pipeline =
+                    (LibretroTwoPassResearchPipeline)
+                            getField(rendererObject.getClass(), "researchTwoPass")
+                                    .get(rendererObject);
+            assertNotNull("xBRZ source must compile/link without legacy fallback", pipeline);
+
+            Image sprite = Image.createImage(8, 8, Color.BLUE);
+            Graphics g = sprite.getGraphics();
+            g.setColor(0xff0000);
+            for (int row = 0; row < 5; row++) {
+                g.fillRect(0, row, 5 - row, 1);
+            }
+            canvas.flushBuffer(sprite, 0, 0);
+            assertTrue(mailbox.trySchedule(mailbox.generation()));
+            renderer.onDrawFrame(null);
+            assertEquals("xBRZ analysis must execute once per guest publication",
+                    1, pipeline.offscreenPassExecutions());
+            assertSame(pipeline,
+                    getField(rendererObject.getClass(), "researchTwoPass").get(rendererObject));
+
+            ByteBuffer pixels = ByteBuffer.allocateDirect(96 * 96 * 4);
+            GLES20.glReadPixels(0, 0, 96, 96, GLES20.GL_RGBA,
+                    GLES20.GL_UNSIGNED_BYTE, pixels);
+            int red = 0, blue = 0, mixed = 0;
+            for (int p = 0; p < 96 * 96; p++) {
+                int r = pixels.get(p * 4) & 255;
+                int b = pixels.get(p * 4 + 2) & 255;
+                if (r > 235 && b < 20) red++;
+                if (b > 235 && r < 20) blue++;
+                if (r > 15 && b > 15 && r < 245 && b < 245) mixed++;
+            }
+            assertTrue("Unmodified red source must reach the xBRZ final pass", red > 100);
+            assertTrue("Unmodified blue source must reach the xBRZ final pass", blue > 100);
+            assertTrue("xBRZ must generate antialiased red/blue corner pixels", mixed > 0);
+            assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
+
+            assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0);
+            assertTrue(mailbox.trySchedule(mailbox.generation()));
+            renderer.onDrawFrame(null);
+            assertEquals("Host redraw must reuse xBRZ edge-analysis output",
+                    1, pipeline.offscreenPassExecutions());
+            Log.i(TAG, "xBRZ freescale: red=" + red + " blue=" + blue
+                    + " blended=" + mixed + " firstPasses=1");
+        } finally {
+            mailbox.close();
+            Canvas.setGraphicsResearchTwoPassSources(null, null);
+            EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+            EGL14.eglDestroySurface(display, surface);
+            EGL14.eglDestroyContext(display, context);
+            EGL14.eglTerminate(display);
+        }
+    }
+
     private static String readSource(String path) throws Exception {
         try (InputStream in = InstrumentationRegistry.getInstrumentation()
                 .getContext().getAssets().open(path)) {
