@@ -272,8 +272,9 @@ class MemoryEditorAdaptiveComposeTest {
         val watches = listOf(1L, 2L).map { id ->
             MemoryWatchRow(
                 id = id, type = MemoryEngineContract.TYPE_INT,
-                valueText = "2", label = "watch",
-                locationText = "test", state = MemoryEngineContract.CANDIDATE_STABLE,
+                valueText = "2", initialValueText = "2", previousValueText = "2",
+                label = "watch", locationText = "test",
+                state = MemoryEngineContract.CANDIDATE_STABLE,
                 relocations = 0,
             )
         }
