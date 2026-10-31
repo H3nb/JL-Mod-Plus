@@ -142,6 +142,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean isProfile;
 	private boolean newConfig;
 	private File appDir;
+	/** Avoid re-reading the entire converted DEX on every Compose form refresh. */
+	private Boolean cachedTimingTransformCompatible;
 	private long expectedAppId;
 	@Nullable private InstalledAppWriteGuard installedWriteGuard;
 	private Display display;
@@ -490,6 +492,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		} else {
 			setTitle(intent.getStringExtra(KEY_MIDLET_NAME));
 			appDir = new File(path);
+		cachedTimingTransformCompatible = null;
 			File convertedDir = appDir.getParentFile();
 			if (!appDir.isDirectory() || convertedDir == null
 					|| (workDir = convertedDir.getParent()) == null) {
@@ -2636,9 +2639,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private boolean hasCompatibleTimingTransform() {
-		if (appDir == null) {
-			return false;
-		}
+		if (appDir == null) return false;
+		if (cachedTimingTransformCompatible != null) return cachedTimingTransformCompatible;
+		boolean compatible = false;
 		try {
 			Descriptor descriptor = new Descriptor(
 					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
@@ -2646,10 +2649,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (!Config.isUsableFile(dexPayload)) {
 				dexPayload = new File(appDir, Config.MIDLET_DEX_FILE);
 			}
-			return MidletTransformMetadata.isRuntimeCompatible(descriptor.getAttrs(), dexPayload);
-		} catch (IOException | RuntimeException e) {
-			return false;
+			compatible = MidletTransformMetadata.isRuntimeCompatible(descriptor.getAttrs(), dexPayload);
+		} catch (IOException | RuntimeException ignored) {
+			// Runtime launch independently rechecks the payload before enabling speed.
 		}
+		cachedTimingTransformCompatible = compatible;
+		return compatible;
 	}
 
 	static boolean isCompletePresetCandidate(
