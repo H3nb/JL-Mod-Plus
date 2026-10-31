@@ -137,11 +137,16 @@ public final class LibretroTwoPassResearchPipeline {
 
     private void setFullQuad() {
         quad.clear();
+        // FBO texture coordinate y=0 addresses its BOTTOM row. The Android
+        // source bitmap's row 0 was uploaded at texture y=0, so offscreen
+        // draws must write source y=0 to the FBO bottom row as well.
+        // The final host quad deliberately keeps its existing top-left UV
+        // orientation; this makes both Texture and PassPrev2Texture agree.
         quad.put(new float[] {
-                -1,  1, 0, 1, 0, 0, 0, 1,
-                -1, -1, 0, 1, 0, 1, 0, 1,
-                 1,  1, 0, 1, 1, 0, 0, 1,
-                 1, -1, 0, 1, 1, 1, 0, 1
+                -1,  1, 0, 1, 0, 1, 0, 1,
+                -1, -1, 0, 1, 0, 0, 0, 1,
+                 1,  1, 0, 1, 1, 1, 0, 1,
+                 1, -1, 0, 1, 1, 0, 0, 1
         });
         quad.rewind();
     }
