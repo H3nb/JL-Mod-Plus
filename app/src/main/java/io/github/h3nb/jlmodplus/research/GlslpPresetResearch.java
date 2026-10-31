@@ -213,8 +213,13 @@ public final class GlslpPresetResearch {
             Pass pass = passes.get(i);
             int w = pass.x.resolve(inW, viewportW, maxTextureSize);
             int h = pass.y.resolve(inH, viewportH, maxTextureSize);
-            boolean offscreen = i < passes.size() - 1
-                    || w != viewportW || h != viewportH;
+            // RetroArch's final-pass decision is semantic: any non-identity
+            // viewport scale needs a final FBO + stock presentation, even when
+            // its resolved pixel dimensions happen to equal the viewport.
+            boolean identityViewport = pass.x.basis == SizeBasis.VIEWPORT
+                    && pass.y.basis == SizeBasis.VIEWPORT
+                    && pass.x.scale == 1.0 && pass.y.scale == 1.0;
+            boolean offscreen = i < passes.size() - 1 || !identityViewport;
             if (offscreen) {
                 bytes += 4L * w * h;
                 if (bytes > maxIntermediateBytes) {
