@@ -909,19 +909,17 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
-            public void onOpenUpdateRelease(@NonNull String url) {
-                if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/tag/v")) {
-                    openExternalPage(url, "GitHub Releases",
-                            R.string.updates_link_copied, R.string.updates_browser_unavailable);
-                }
+            public boolean onOpenUpdateRelease(@NonNull String url) {
+                return url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/tag/v")
+                        && openExternalPage(url, "GitHub Releases",
+                                R.string.updates_link_copied, R.string.updates_browser_unavailable);
             }
             @Override
-            public void onOpenUpdateDownload(@NonNull String url) {
-                if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/download/v")
-                        && url.endsWith(".apk")) {
-                    openExternalPage(url, "GitHub Releases",
-                            R.string.updates_link_copied, R.string.updates_browser_unavailable);
-                }
+            public boolean onOpenUpdateDownload(@NonNull String url) {
+                return url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/download/v")
+                        && url.endsWith(".apk")
+                        && openExternalPage(url, "GitHub Releases",
+                                R.string.updates_link_copied, R.string.updates_browser_unavailable);
             }
             @Override
             public void onOpenProjectRepository() {
@@ -939,7 +937,8 @@ public class AppsListFragment extends Fragment {
         };
     }
 
-    private void openExternalPage(
+    /** Returns true only if Android accepted an activity launch, not a clipboard fallback. */
+    private boolean openExternalPage(
             @NonNull String url,
             @NonNull String label,
             int copiedMessage,
@@ -947,6 +946,7 @@ public class AppsListFragment extends Fragment {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
                     .addCategory(Intent.CATEGORY_BROWSABLE));
+            return true;
         } catch (ActivityNotFoundException | SecurityException e) {
             boolean copied = false;
             try {
@@ -964,6 +964,7 @@ public class AppsListFragment extends Fragment {
             Toast.makeText(requireContext(),
                     copied ? copiedMessage : unavailableMessage,
                     Toast.LENGTH_LONG).show();
+            return false;
         }
     }
 

@@ -121,6 +121,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -203,6 +205,9 @@ import io.github.h3nb.jlmodplus.BuildConfig
 import io.github.h3nb.jlmodplus.MainActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryPlayStatsFormatter
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
@@ -406,8 +411,8 @@ interface LibraryActions {
     fun onOpenCrashReports()
     fun onOpenDonation() = Unit
     fun onOpenProjectRepository() = Unit
-    fun onOpenUpdateRelease(url: String) = Unit
-    fun onOpenUpdateDownload(url: String) = Unit
+    fun onOpenUpdateRelease(url: String): Boolean = false
+    fun onOpenUpdateDownload(url: String): Boolean = false
     fun onRetryLibrary()
 }
 
@@ -643,6 +648,33 @@ fun LibraryScreen(
     }
     val hostActivity = LocalActivity.current as? MainActivity
     val hostLifecycle = hostActivity?.lifecycle
+    // DialogFragment lifecycle is not Compose state. This callback invalidates the
+    // modal eligibility check when an installer window opens or closes.
+    val fragmentManager = hostActivity?.supportFragmentManager
+    var fragmentDialogRevision by remember(fragmentManager) { mutableIntStateOf(0) }
+    DisposableEffect(fragmentManager) {
+        if (fragmentManager == null) {
+            onDispose { }
+        } else {
+            val observer = object : FragmentManager.FragmentLifecycleCallbacks() {
+                override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
+                    if (f is DialogFragment) fragmentDialogRevision++
+                }
+
+                override fun onFragmentStopped(fm: FragmentManager, f: Fragment) {
+                    if (f is DialogFragment) fragmentDialogRevision++
+                }
+            }
+            fragmentManager.registerFragmentLifecycleCallbacks(observer, false)
+            onDispose { fragmentManager.unregisterFragmentLifecycleCallbacks(observer) }
+        }
+    }
+    val fragmentDialogVisible = fragmentDialogRevision.let {
+        fragmentManager?.fragments?.any { fragment ->
+            fragment is DialogFragment &&
+                fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        } == true
+    }
     val hostResumed by produceState(initialValue = false, hostLifecycle) {
         if (hostLifecycle == null) return@produceState
         value = hostLifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
@@ -720,6 +752,9 @@ fun LibraryScreen(
     val layoutDirection = LocalLayoutDirection.current
     var navigationBarHeightPx by rememberSaveable { mutableIntStateOf(0) }
     val collectionsHost = actions as? LibraryCollectionsHost
+    val collectionDialogState = collectionsHost?.collectionsStore()?.state?.collectAsState()?.value
+    val collectionDialogVisible = collectionDialogState?.addTarget != null ||
+        collectionDialogState?.bulkAddTargetAppIds != null
     val bulkActions = actions as? LibraryBulkActions
     val selectedCollectionMatchesLibrary =
         navigationState.selectedCollectionId != null &&
@@ -1128,8 +1163,8 @@ fun LibraryScreen(
     val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
         pagerState.currentPage == pagerState.settledPage &&
         state.databaseControlsReady && !isImeVisible &&
-        hostActivity?.isHostDialogVisible() == false && !libraryOverlayVisible &&
-        !selectionActiveHere
+        hostActivity?.isHostDialogVisible() == false && !fragmentDialogVisible &&
+        !collectionDialogVisible && !libraryOverlayVisible && !selectionActiveHere
     LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
         sessionDismissedUpdate, updateRepository?.channel) {
         val repository = updateRepository
@@ -1504,8 +1539,8 @@ fun LibraryScreen(
                     UpdatesScreen(
                         repository = repository,
                         onBack = { updatesPageVisible = false },
-                        onOpenRelease = actions::onOpenUpdateRelease,
-                        onOpenDownload = actions::onOpenUpdateDownload,
+                        onOpenRelease = { actions.onOpenUpdateRelease(it) },
+                        onOpenDownload = { actions.onOpenUpdateDownload(it) },
                     )
                 }
             }
@@ -1778,9 +1813,13 @@ fun LibraryScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         updatePrompt = null
-                        candidate.downloadUrl?.let(actions::onOpenUpdateDownload)
+                        val opened = candidate.downloadUrl?.let(actions::onOpenUpdateDownload)
                             ?: actions.onOpenUpdateRelease(candidate.releaseUrl)
-                        repository.handle(candidate)
+                        if (opened) {
+                            repository.handle(candidate)
+                        } else {
+                            sessionDismissedUpdate = repository.candidateKey(candidate)
+                        }
                     }) {
                         Text(stringResource(R.string.updates_download_apk))
                     }
@@ -1795,8 +1834,11 @@ fun LibraryScreen(
                         }
                         TextButton(onClick = {
                             updatePrompt = null
-                            actions.onOpenUpdateRelease(candidate.releaseUrl)
-                            repository.handle(candidate)
+                            if (actions.onOpenUpdateRelease(candidate.releaseUrl)) {
+                                repository.handle(candidate)
+                            } else {
+                                sessionDismissedUpdate = repository.candidateKey(candidate)
+                            }
                         }) {
                             Text(stringResource(R.string.updates_view_release))
                         }
