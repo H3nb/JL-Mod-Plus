@@ -61,11 +61,29 @@ public class GlslpPresetResearchTest {
                 + "parameters = \"XBRZ_MINC;XBRZ_DIAG\"\n"
                 + "XBRZ_MINC = \"24.000000\"\n"
                 + "XBRZ_DIAG = \"100.000000\"\n");
+        // Five declarations from the genuine upstream pass-0 header.
+        // Overriding only two names MUST preserve defaults for the other three.
+        assets.put(first, "#pragma parameter XBRZ_TOL \"Tolerance\" 15 1 80 1\n"
+                + "#pragma parameter XBRZ_DOM \"Dominance\" 3.8 1 8 0.05\n"
+                + "#pragma parameter XBRZ_STEEP \"Steepness\" 3.2 1 6 0.1\n"
+                + "#pragma parameter XBRZ_MINC \"Minimum contrast\" 0 0 80 2\n"
+                + "#pragma parameter XBRZ_DIAG \"Maximum diagonal distance\" 0 0 160 4\n");
         GlslpPresetResearch crisp =
                 GlslpPresetResearch.load(assets, "xbrz/xbrz-crisp.glslp");
         assertEquals(Double.valueOf(24), crisp.parameterOverrides.get("XBRZ_MINC"));
         assertEquals(Double.valueOf(100), crisp.parameterOverrides.get("XBRZ_DIAG"));
         assertEquals(VIEWPORT, plan(crisp).passes.get(1).outputWidth);
+        Map<String, Float> values = crisp.resolvedParameters();
+        assertEquals(5, values.size());
+        assertEquals(15f, values.get("XBRZ_TOL"), 0f);
+        assertEquals(3.8f, values.get("XBRZ_DOM"), 0f);
+        assertEquals(3.2f, values.get("XBRZ_STEEP"), 0f);
+        assertEquals(24f, values.get("XBRZ_MINC"), 0f);
+        assertEquals(100f, values.get("XBRZ_DIAG"), 0f);
+        assets.put("xbrz/out-of-range.glslp", source
+                + "parameters = XBRZ_MINC\nXBRZ_MINC = 100\n");
+        expectFailure(() -> GlslpPresetResearch.load(assets, "xbrz/out-of-range.glslp")
+                .resolvedParameters(), "Preset parameter outside GLSL range");
     }
 
     @Test public void gaussAndFourXbrzHaveDifferentFinalPresentationSemantics()
