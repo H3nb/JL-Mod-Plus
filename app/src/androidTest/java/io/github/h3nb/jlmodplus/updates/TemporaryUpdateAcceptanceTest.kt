@@ -5,6 +5,9 @@ import android.app.Instrumentation
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.preference.PreferenceManager
+import androidx.lifecycle.ViewModelProvider
+import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
+import java.io.File
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -33,7 +36,10 @@ class TemporaryUpdateAcceptanceTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-        preferences.edit().remove("jlmod_updates_result")
+        val workdir = File(requireNotNull(context.getExternalFilesDir(null)), "update-acceptance-workdir")
+        check(workdir.isDirectory || workdir.mkdirs())
+        preferences.edit().putString("emulator_dir", workdir.absolutePath)
+            .remove("jlmod_updates_result")
             .remove("jlmod_updates_last_success")
             .remove("jlmod_updates_last_attempt")
             .remove("jlmod_updates_handled_version_Preview")
@@ -42,6 +48,11 @@ class TemporaryUpdateAcceptanceTest {
             .commit()
         val scenario = ActivityScenario.launch(MainActivity::class.java)
         try {
+            var library: LibraryViewModel? = null
+            scenario.onActivity { library = ViewModelProvider(it)[LibraryViewModel::class.java] }
+            rule.waitUntil(40_000) {
+                library?.displayState?.value is LibraryViewModel.DisplayState.Ready
+            }
             val install = context.getString(R.string.install)
             val menuItem = context.getString(R.string.bulk_install_choose_files)
             rule.waitUntil(50_000) {
@@ -59,8 +70,9 @@ class TemporaryUpdateAcceptanceTest {
             rule.onAllNodesWithText(context.getString(R.string.updates_skip_version))
                 .assertCountEquals(0)
             Espresso.pressBack()
-            android.util.Log.i("UpdateAcceptance", "Menu nodes after Back: " +
-                rule.onAllNodesWithText(menuItem).fetchSemanticsNodes().size)
+            rule.waitUntil(10_000) {
+                rule.onAllNodesWithText(menuItem).fetchSemanticsNodes().isEmpty()
+            }
             rule.waitUntil(20_000) {
                 rule.onAllNodesWithText(context.getString(R.string.updates_skip_version))
                     .fetchSemanticsNodes().isNotEmpty()
