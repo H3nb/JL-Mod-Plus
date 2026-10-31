@@ -62,3 +62,46 @@ For presets with shader effects that change over time, distinguish **guest-frame
 - Device testing must report actual GLES context/shading-language version and supported FBO formats; the emulator's SwiftShader outcome is not an ARM64 performance/battery result.
 
 **Current architectural recommendation:** modernize the **presentation shader pipeline**, do not rewrite guest renderers to support Libretro. Keep internal resolution a separate resolution-aware guest target project. The next meaningful uncertainty is *actual preset semantics + guest frame ownership* rather than whether a simple GLES2 FBO can draw.
+
+## xBR/xBRZ-focused compatibility gate
+
+**Input sources:** the pinned `libretro/glsl-shaders@cba01a48` corpus. This section specifies
+requirements, **not** an assertion that any xBR/xBRZ preset is supported by the application.
+Prioritize these families for R&D because users have specifically requested xBR/xBRZ image quality.
+
+| Preset | Shader requirements | Distinguishing integration gate |
+| --- | --- | --- |
+| `xbrz/xbrz-freescale.glslp` | One viewport-sized pass, nearest sampling | Direct-to-game-viewport compilation and quality/cost comparison |
+| `xbrz/xbrz-freescale-multipass.glslp` | Source-sized pass 0, viewport-sized pass 1, nearest sampling | Pass 1 reads BOTH its immediately preceding `Texture` and the **original source** via `PassPrev2Texture`, with the original `PassPrev2TextureSize` and `PassPrev2InputSize` |
+| `xbrz/xbrz-crisp.glslp` | Same two-pass chain with named parameter overrides | Respect `XBRZ_MINC=24` and `XBRZ_DIAG=100` instead of silently reverting to source `#pragma` defaults |
+| `xbrz/4xbrz-linear.glslp` | 4x source intermediate followed by a stock linear pass | Extra memory proportional to 16x source pixels; do not treat preset filename or the pass count as output scaling |
+| `xbr/super-xbr-2p.glslp` | Three GLSL programs, mixed source-scale pass sizes | Actual `shaders=3` regardless of `2p` naming; earlier pass sampling and desktop GLSL-130 adaptation |
+| `xbr/xbr-lv2.glslp` | One source with desktop `#version 130` and named parameters | A real GLES3 source-compatibility gate, not presumed GLES2 support |
+
+The xBRZ multipass first stage emits RGBA8-encoded edge decisions (`res / 255.0`),
+not a normal colorized picture. The second stage decodes those decisions with
+`floor(INFO(coord) * 255.0 + 0.5)` and consults the original guest pixels.
+The declared `filter_linear0 = false` and `filter_linear1 = false` are
+therefore part of the **correctness** contract: a forced linear filter can
+corrupt encoded decision bytes. A render path that forwards only the prior
+pass output will compile this shader but cannot implement its intended
+result. RetroArch's `shader_glsl.c` resolves `PassPrev2` to the original
+input in the second pass.
+
+This does **not** justify inventing a universal render graph now. The
+necessary generalizable model is a pass descriptor with explicit input
+dependencies (original, previous, earlier-pass alias, LUT, temporal history),
+independent source/viewport sizing, sampler policy, and a conservative
+resource budget. Only implement each dependency category when a supported
+preset and an observable test require it. Reuse the single presentation
+texture/publication owner already proven by the Canvas R&D.
+
+The first xBRZ experiments should compare nearest, single-pass Freescale,
+and two-pass Freescale on a repeatable pixel-art fixture. Confirm original
+source binding and output pixel changes, not merely successful linking.
+Then test the Crisp parameter overrides and a realistic mobile GPU.
+A two-pass source-sized analysis is **plausibly** less expensive than doing
+equivalent edge decisions per output pixel, while a fixed 4x intermediate
+has greater memory cost; neither is a measured phone performance verdict.
+Do not promote the experimental xBRZ hardcoding or source-derived sampling
+heuristics into a general GLSLP parser.
