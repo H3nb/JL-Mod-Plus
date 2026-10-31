@@ -59,6 +59,8 @@ class TemporaryUpdateAcceptanceTest {
             rule.onAllNodesWithText(context.getString(R.string.updates_skip_version))
                 .assertCountEquals(0)
             Espresso.pressBack()
+            android.util.Log.i("UpdateAcceptance", "Menu nodes after Back: " +
+                rule.onAllNodesWithText(menuItem).fetchSemanticsNodes().size)
             rule.waitUntil(20_000) {
                 rule.onAllNodesWithText(context.getString(R.string.updates_skip_version))
                     .fetchSemanticsNodes().isNotEmpty()

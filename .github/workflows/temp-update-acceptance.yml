@@ -79,6 +79,17 @@ jobs:
           previous = 'if (BuildConfig.DEBUG || repository == null || !repository.automaticChecks ||'
           assert source.count(previous) == 1
           source = source.replace(previous, 'if (false || repository == null || !repository.automaticChecks ||')
+          marker = '    LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,'
+          assert source.count(marker) == 1
+          source = source.replace(marker,
+              '    android.util.Log.i("UpdateAcceptance", "ready=$updateDialogReady " +' +
+              ' "resumed=$hostResumed db=${state.databaseControlsReady} " +' +
+              ' "menu=$installSourceMenuVisible host=${hostActivity?.isHostDialogVisible()} " +' +
+              ' "fragment=$fragmentDialogVisible collection=$collectionDialogVisible " +' +
+              ' "ime=$isImeVisible overlay=$libraryOverlayVisible selection=$selectionActiveHere " +' +
+              ' "destination=$destination current=${pagerState.currentPage} " +' +
+              ' "settled=${pagerState.settledPage} candidate=$availableUpdate " +' +
+              ' "dismissed=$sessionDismissedUpdate")' + '\n' + marker)
           path.write_text(source)
           repo = Path("app/src/main/java/io/github/h3nb/jlmodplus/updates/UpdateRepository.kt")
           source = repo.read_text()
