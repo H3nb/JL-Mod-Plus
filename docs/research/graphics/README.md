@@ -108,3 +108,6 @@ implemented through focused PRs, not by blindly merging this entire branch.
 
 
 **Real Libretro two-pass on Canvas:** [CI 41168266751](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41168266751) passed the first actual `Canvas.GLRenderer` trial of pinned Gauss horizontal+vertical sources with FBO, mixed-color pixel readback, no offscreen recompute on host redraw, compile-error legacy fallback, and EGL recreation. The R&D pipeline is intentionally hardcoded and requires tight source texture storage; `.glslp` parsing, padded content, real Midlet host, and ARM64 performance remain open. See [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md).
+
+
+**Softbar/padded GLSLP input gate:** [CI 41170967593](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41170967593) succeeded with actual `Canvas.GLRenderer`: non-fullscreen softbar yielded 32×45 active pixels inside 32×48 backing, which caused the research Gaussian pipeline to fall back to legacy; allocating exactly 32×45, either initially or by copying existing logical content once, allowed the two-pass renderer to work. This supports exact active-size presentation storage over default GPU normalization, but physical cost, real runtime resize and mixed 2D/3D remain open. See [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md).
