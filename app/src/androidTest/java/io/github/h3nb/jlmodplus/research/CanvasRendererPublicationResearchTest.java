@@ -323,6 +323,9 @@ public final class CanvasRendererPublicationResearchTest {
                     cornerFlags > 0);
             assertTrue("Unmodified red source must reach the xBRZ final pass", red > 100);
             assertTrue("Unmodified blue source must reach the xBRZ final pass", blue > 100);
+            // Source and analysis FBO must agree on y=0. A vertically
+            // inverted FBO still links and draws pure source colors, but
+            // edge decisions then apply to the wrong logical row.
             assertTrue("xBRZ must generate antialiased red/blue corner pixels", mixed > 0);
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
 
