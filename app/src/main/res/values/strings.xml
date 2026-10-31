@@ -1283,7 +1283,7 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
-    <string name="updates_download_apk">Download APK</string>
-    <string name="updates_skip_version">Skip this version</string>
-    <string name="updates_dialog_message">JL-Mod Plus %1$s is available. You are using %2$s. Download the APK or view the release on GitHub.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Download APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Skip this version</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus %1$s is available. You are using %2$s. Download the APK or view the release on GitHub.</string>
 </resources>

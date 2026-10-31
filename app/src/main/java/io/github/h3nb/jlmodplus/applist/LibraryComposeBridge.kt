@@ -24,6 +24,7 @@ import android.graphics.Rect
 import android.util.LruCache
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -640,13 +641,11 @@ fun LibraryScreen(
     val updateRepository = if (isInspection) null else remember(context) {
         UpdateRepository.get(context)
     }
-    val hostActivity = LocalContext.current as? MainActivity
+    val hostActivity = LocalActivity.current as? MainActivity
     val hostLifecycle = hostActivity?.lifecycle
-    val hostResumed by produceState(
-        initialValue = hostLifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) == true,
-        hostLifecycle,
-    ) {
+    val hostResumed by produceState(initialValue = false, hostLifecycle) {
         if (hostLifecycle == null) return@produceState
+        value = hostLifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
         val observer = LifecycleEventObserver { _, _ ->
             value = hostLifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
         }
