@@ -62,7 +62,7 @@ internal class UpdateRepository private constructor(context: Context) {
                 putString(KEY_INSTALLED, identity)
                 remove(KEY_SUCCESS).remove(KEY_ATTEMPT).remove(KEY_RESULT)
                 remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL)
-                remove(KEY_HANDLED)
+                remove(KEY_HANDLED + "_Stable").remove(KEY_HANDLED + "_Preview")
             }
             lastChecked = 0L
             status = UpdateStatus.NotChecked
@@ -90,11 +90,13 @@ internal class UpdateRepository private constructor(context: Context) {
     fun candidateKey(candidate: UpdateCandidate): String =
         channel.name + "|" + candidate.versionName + "|" + candidate.versionCode
 
+    private fun handledPreferenceKey(): String = KEY_HANDLED + "_" + channel.name
+
     fun isHandled(candidate: UpdateCandidate): Boolean =
-        preferences.getString(KEY_HANDLED, null) == candidateKey(candidate)
+        preferences.getString(handledPreferenceKey(), null) == candidateKey(candidate)
 
     fun handle(candidate: UpdateCandidate) {
-        preferences.edit { putString(KEY_HANDLED, candidateKey(candidate)) }
+        preferences.edit { putString(handledPreferenceKey(), candidateKey(candidate)) }
     }
 
     /** Polling is active only while the Library is resumed. No background worker is needed. */
@@ -148,7 +150,13 @@ internal class UpdateRepository private constructor(context: Context) {
             }
             editor.apply()
         } catch (cancelled: CancellationException) {
-            if (channel == requestedChannel) status = previous
+            if (channel == requestedChannel) {
+                status = previous
+                // Lifecycle cancellation is not a network failure; allow a prompt retry on resume.
+                if (preferences.getLong(KEY_ATTEMPT, 0L) == now) {
+                    preferences.edit { remove(KEY_ATTEMPT) }
+                }
+            }
             throw cancelled
         } catch (_: IOException) {
             if (channel == requestedChannel) {
