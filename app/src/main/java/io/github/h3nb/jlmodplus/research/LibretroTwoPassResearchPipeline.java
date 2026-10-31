@@ -7,6 +7,7 @@ import android.opengl.GLES20;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,9 +21,10 @@ public final class LibretroTwoPassResearchPipeline {
     private static final float[] IDENTITY = {
             1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
     };
-    private final int[] programs = new int[2];
-    private final int[] framebuffer = new int[1];
-    private final int[] intermediate = new int[1];
+    private final int[] programs = new int[3];
+    private final int[] framebuffer = new int[2];
+    private final int[] intermediate = new int[2];
+    private final GlslpPresetResearch preset;
     // R&D: xBRZ pass 1 reads the original source as PassPrev2Texture.
     private final boolean hasOriginalSourceInput;
     private final Map<String, Float> parameters;
@@ -30,8 +32,12 @@ public final class LibretroTwoPassResearchPipeline {
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private int intermediateWidth;
     private int intermediateHeight;
+    private int finalWidth;
+    private int finalHeight;
     private long processedSequence = Long.MIN_VALUE;
+    private long processedFinalSequence = Long.MIN_VALUE;
     private int offscreenPassExecutions;
+    private int finalPassExecutions;
 
     public LibretroTwoPassResearchPipeline(String horizontal, String vertical) {
         this(horizontal, vertical, Collections.<String, Float>emptyMap());
@@ -40,10 +46,36 @@ public final class LibretroTwoPassResearchPipeline {
     /** Parameter mode is enabled only for this bounded Crisp research trial. */
     public LibretroTwoPassResearchPipeline(String horizontal, String vertical,
                                            Map<String, Float> resolvedParameters) {
+        this(horizontal, vertical, resolvedParameters, null, null);
+    }
+
+    /** Executes exactly two already-resolved GLSLP passes; other features remain unsupported. */
+    public LibretroTwoPassResearchPipeline(GlslpPresetResearch resolved, String stockSource)
+            throws IOException {
+        this(twoPassSource(resolved, 0), twoPassSource(resolved, 1),
+                resolved.resolvedParameters(), resolved, stockSource);
+    }
+
+    private static String twoPassSource(GlslpPresetResearch value, int pass) {
+        if (value == null || value.passes.size() != 2) {
+            throw new IllegalArgumentException("R&D executor requires precisely two GLSL passes");
+        }
+        if (value.passes.get(pass).wrapMode != null
+                && !"clamp_to_edge".equals(value.passes.get(pass).wrapMode)) {
+            throw new IllegalArgumentException("R&D executor only supports clamp_to_edge");
+        }
+        return value.passes.get(pass).sourceText;
+    }
+
+    private LibretroTwoPassResearchPipeline(String horizontal, String vertical,
+            Map<String, Float> resolvedParameters, GlslpPresetResearch resolved,
+            String stockSource) {
+        preset = resolved;
         parameters = Collections.unmodifiableMap(new LinkedHashMap<>(resolvedParameters));
         try {
             programs[0] = link(horizontal, !parameters.isEmpty());
             programs[1] = link(vertical, !parameters.isEmpty());
+            if (preset != null) programs[2] = link(stockSource, false);
             hasOriginalSourceInput = glGetUniformLocation(programs[1], "PassPrev2Texture") >= 0;
         } catch (RuntimeException ex) {
             release();
@@ -55,6 +87,14 @@ public final class LibretroTwoPassResearchPipeline {
     public int offscreenPassExecutions() {
         return offscreenPassExecutions;
     }
+
+    /** Counts the final GLSLP shader pass when it targets an FBO before stock presentation. */
+    public int finalPassExecutions() {
+        return finalPassExecutions;
+    }
+
+    public int finalOutputWidth() { return finalWidth; }
+    public int finalOutputHeight() { return finalHeight; }
 
     /**
      * Real production quad uses (x,y,u,v) per vertex in the order LT LB RT RB.
@@ -73,31 +113,84 @@ public final class LibretroTwoPassResearchPipeline {
             throw new IllegalStateException("Missing GL viewport/guest dimensions");
         }
         try {
-            if (intermediateWidth != logicalWidth || intermediateHeight != logicalHeight) {
-                allocateIntermediate(logicalWidth, logicalHeight);
-            }
-            if (processedSequence != guestSequence) {
-                glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[0]);
-                glViewport(0, 0, logicalWidth, logicalHeight);
-                glDisable(GL_SCISSOR_TEST);
-                setFullQuad();
-                drawPass(programs[0], sourceTexture, 0,
-                        logicalWidth, logicalHeight, logicalWidth, logicalHeight,
-                        hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR);
-                processedSequence = guestSequence;
-                offscreenPassExecutions++;
-            }
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glViewport(0, 0, surfaceWidth, surfaceHeight);
-            glEnable(GL_SCISSOR_TEST);
             int outputWidth = Math.max(1, Math.round(
                     Math.abs(legacyQuad.get(8) - legacyQuad.get(0)) * surfaceWidth / 2));
             int outputHeight = Math.max(1, Math.round(
                     Math.abs(legacyQuad.get(1) - legacyQuad.get(5)) * surfaceHeight / 2));
-            setGameQuad(legacyQuad);
-            drawPass(programs[1], intermediate[0], sourceTexture,
-                    logicalWidth, logicalHeight, outputWidth, outputHeight,
-                    hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR);
+            GlslpPresetResearch.Plan plan = null;
+            if (preset != null) {
+                int[] maxTextureSize = new int[1];
+                glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize, 0);
+                plan = preset.plan(logicalWidth, logicalHeight, outputWidth, outputHeight,
+                        maxTextureSize[0], 64L * 1024L * 1024L);
+            }
+            int pass0W = plan == null ? logicalWidth : plan.passes.get(0).outputWidth;
+            int pass0H = plan == null ? logicalHeight : plan.passes.get(0).outputHeight;
+            int pass1W = plan == null ? outputWidth : plan.passes.get(1).outputWidth;
+            int pass1H = plan == null ? outputHeight : plan.passes.get(1).outputHeight;
+            boolean needsFinalBlit = plan != null && plan.finalBlitRequired;
+            int filter0 = plan == null ? (hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR)
+                    : passFilter(plan.passes.get(0).pass.linearFilter, legacyFilter);
+            int filter1 = plan == null ? (hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR)
+                    : passFilter(plan.passes.get(1).pass.linearFilter, legacyFilter);
+            if (intermediateWidth != pass0W || intermediateHeight != pass0H) {
+                allocateIntermediate(0, pass0W, pass0H);
+                intermediateWidth = pass0W;
+                intermediateHeight = pass0H;
+                processedSequence = Long.MIN_VALUE;
+                processedFinalSequence = Long.MIN_VALUE;
+            }
+            if (processedSequence != guestSequence) {
+                glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[0]);
+                glViewport(0, 0, pass0W, pass0H);
+                glDisable(GL_SCISSOR_TEST);
+                setFullQuad();
+                drawPass(programs[0], sourceTexture, 0,
+                        logicalWidth, logicalHeight, pass0W, pass0H, filter0,
+                        logicalWidth, logicalHeight);
+                processedSequence = guestSequence;
+                processedFinalSequence = Long.MIN_VALUE;
+                offscreenPassExecutions++;
+            }
+
+            if (needsFinalBlit) {
+                if (finalWidth != pass1W || finalHeight != pass1H) {
+                    allocateIntermediate(1, pass1W, pass1H);
+                    finalWidth = pass1W;
+                    finalHeight = pass1H;
+                    processedFinalSequence = Long.MIN_VALUE;
+                }
+                if (processedFinalSequence != guestSequence) {
+                    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[1]);
+                    glViewport(0, 0, pass1W, pass1H);
+                    glDisable(GL_SCISSOR_TEST);
+                    setFullQuad();
+                    drawPass(programs[1], intermediate[0],
+                            hasOriginalSourceInput ? sourceTexture : 0,
+                            pass0W, pass0H, pass1W, pass1H, filter1,
+                            logicalWidth, logicalHeight);
+                    processedFinalSequence = guestSequence;
+                    finalPassExecutions++;
+                }
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glViewport(0, 0, surfaceWidth, surfaceHeight);
+                glEnable(GL_SCISSOR_TEST);
+                setGameQuad(legacyQuad);
+                // This R&D stock presentation uses the host's existing filter.
+                // The pass-1 input filter is still applied independently above.
+                drawPass(programs[2], intermediate[1], 0,
+                        pass1W, pass1H, outputWidth, outputHeight, legacyFilter,
+                        logicalWidth, logicalHeight);
+            } else {
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glViewport(0, 0, surfaceWidth, surfaceHeight);
+                glEnable(GL_SCISSOR_TEST);
+                setGameQuad(legacyQuad);
+                drawPass(programs[1], intermediate[0],
+                        hasOriginalSourceInput ? sourceTexture : 0,
+                        pass0W, pass0H, pass1W, pass1H, filter1,
+                        logicalWidth, logicalHeight);
+            }
             int error = glGetError();
             if (error != GL_NO_ERROR) {
                 throw new IllegalStateException("Libretro research GL error: 0x"
@@ -118,32 +211,32 @@ public final class LibretroTwoPassResearchPipeline {
         }
     }
 
-    private void allocateIntermediate(int w, int h) {
-        if (intermediate[0] != 0) glDeleteTextures(1, intermediate, 0);
-        if (framebuffer[0] != 0) glDeleteFramebuffers(1, framebuffer, 0);
-        intermediate[0] = framebuffer[0] = 0;
-        intermediateWidth = intermediateHeight = 0;
-        processedSequence = Long.MIN_VALUE;
-        glGenTextures(1, intermediate, 0);
+    private static int passFilter(Boolean linear, int fallback) {
+        return linear == null ? fallback : (linear ? GL_LINEAR : GL_NEAREST);
+    }
+
+    private void allocateIntermediate(int stage, int w, int h) {
+        if (intermediate[stage] != 0) glDeleteTextures(1, intermediate, stage);
+        if (framebuffer[stage] != 0) glDeleteFramebuffers(1, framebuffer, stage);
+        intermediate[stage] = framebuffer[stage] = 0;
+        glGenTextures(1, intermediate, stage);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, intermediate[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, intermediate[stage]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
                 GL_RGBA, GL_UNSIGNED_BYTE, null);
-        glGenFramebuffers(1, framebuffer, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[0]);
+        glGenFramebuffers(1, framebuffer, stage);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[stage]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                intermediate[0], 0);
+                intermediate[stage], 0);
         int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
-            throw new IllegalStateException("Research FBO incomplete: 0x"
+            throw new IllegalStateException("Research FBO stage " + stage + " incomplete: 0x"
                     + Integer.toHexString(status));
         }
-        intermediateWidth = w;
-        intermediateHeight = h;
     }
 
     private void setFullQuad() {
@@ -172,7 +265,8 @@ public final class LibretroTwoPassResearchPipeline {
     }
 
     private void drawPass(int program, int texture, int originalTexture,
-                          int inputW, int inputH, int outputW, int outputH, int filter) {
+                          int inputW, int inputH, int outputW, int outputH, int filter,
+                          int originalW, int originalH) {
         glUseProgram(program);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -186,8 +280,8 @@ public final class LibretroTwoPassResearchPipeline {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             uniform1i(program, "PassPrev2Texture", 1);
-            uniform2f(program, "PassPrev2TextureSize", inputW, inputH);
-            uniform2f(program, "PassPrev2InputSize", inputW, inputH);
+            uniform2f(program, "PassPrev2TextureSize", originalW, originalH);
+            uniform2f(program, "PassPrev2InputSize", originalW, originalH);
             glActiveTexture(GL_TEXTURE0);
         }
         glDisable(GL_BLEND);
@@ -276,10 +370,10 @@ public final class LibretroTwoPassResearchPipeline {
     }
 
     public void release() {
-        if (intermediate[0] != 0) glDeleteTextures(1, intermediate, 0);
-        if (framebuffer[0] != 0) glDeleteFramebuffers(1, framebuffer, 0);
+        glDeleteTextures(intermediate.length, intermediate, 0);
+        glDeleteFramebuffers(framebuffer.length, framebuffer, 0);
         for (int program : programs) if (program != 0) glDeleteProgram(program);
-        intermediate[0] = framebuffer[0] = 0;
-        programs[0] = programs[1] = 0;
+        for (int i = 0; i < intermediate.length; i++) intermediate[i] = framebuffer[i] = 0;
+        for (int i = 0; i < programs.length; i++) programs[i] = 0;
     }
 }
