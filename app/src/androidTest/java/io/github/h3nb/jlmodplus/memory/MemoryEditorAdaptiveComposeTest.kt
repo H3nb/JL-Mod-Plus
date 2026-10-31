@@ -4,8 +4,11 @@ package io.github.h3nb.jlmodplus.memory
 
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -193,7 +196,8 @@ class MemoryEditorAdaptiveComposeTest {
             val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
             val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
             assertEquals("Dialog center should match the safe screen, not the space above Peek",
-                viewport.center.y.value, surface.center.y.value, 2f)
+                (viewport.top.value + viewport.bottom.value) / 2f,
+                (surface.top.value + surface.bottom.value) / 2f, 2f)
             assertTrue("Peek must remain unobscured by a centered dialog", surface.bottom <= peek.top)
         }
     }
@@ -203,16 +207,18 @@ class MemoryEditorAdaptiveComposeTest {
         rule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(windowSize.value)) {
                 JLModPlusTheme {
-                    MemoryEditorRuntimeRoot(
-                        MemoryEditorUiState(visible = true, connected = true, supported = true),
-                        TestMemoryEditorActions(),
-                    )
+                    Box(Modifier.fillMaxSize().testTag("memory-editor-host")) {
+                        MemoryEditorRuntimeRoot(
+                            MemoryEditorUiState(visible = true, connected = true, supported = true),
+                            TestMemoryEditorActions(),
+                        )
+                    }
                 }
             }
         }
         for (size in listOf(DpSize(720.dp, 360.dp), DpSize(360.dp, 640.dp))) {
             rule.runOnIdle { windowSize.value = size }
-            val viewport = rule.onRoot().getUnclippedBoundsInRoot()
+            val viewport = rule.onNodeWithTag("memory-editor-host").getUnclippedBoundsInRoot()
             val workspace = rule.onNodeWithTag("memory-editor-workspace").getUnclippedBoundsInRoot()
             assertEquals("Workspace must not retain popup-style side margins", viewport.left.value, workspace.left.value, 1f)
             assertEquals(viewport.right.value, workspace.right.value, 1f)
