@@ -196,11 +196,37 @@ class MemoryEditorAdaptiveComposeTest {
             val viewport = rule.onNodeWithTag("memory-editor-dialog-viewport").getUnclippedBoundsInRoot()
             val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
             val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
-            assertEquals("Dialog center should match the safe screen, not the space above Peek",
-                (viewport.top.value + viewport.bottom.value) / 2f,
+            assertEquals("Dialog centers in the viewport above the fixed Peek target",
+                (viewport.top.value + peek.top.value) / 2f,
                 (surface.top.value + surface.bottom.value) / 2f, 2f)
-            assertTrue("Peek must remain unobscured by a centered dialog", surface.bottom <= peek.top)
+            assertTrue("Peek must not cover a dialog action", surface.bottom <= peek.top)
         }
+    }
+
+    @Test fun longLandscapeDialogUsesMostAvailableHeightWithoutCoveringPeek() {
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(720.dp, 360.dp))) {
+                JLModPlusTheme {
+                    MemoryEditorDialog(
+                        onDismissRequest = {},
+                        title = { Text("Long dialog") },
+                        text = {
+                            Column {
+                                repeat(30) { Text("Option $it must remain scrollable") }
+                            }
+                        },
+                        confirmButton = { TextButton(onClick = {}) { Text("Apply") } },
+                    )
+                }
+            }
+        }
+        val viewport = rule.onNodeWithTag("memory-editor-dialog-viewport").getUnclippedBoundsInRoot()
+        val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
+        val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
+        assertTrue("Tall landscape dialog should use the space above Peek",
+            surface.bottom - surface.top > (viewport.bottom - viewport.top) * 0.65f)
+        assertTrue(surface.bottom <= peek.top)
+        rule.onNodeWithText("Apply").assertIsDisplayed()
     }
 
     @Test fun workspaceSurfaceFillsTheWindowInPortraitAndLandscape() {

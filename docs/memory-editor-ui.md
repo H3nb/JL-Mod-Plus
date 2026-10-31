@@ -30,12 +30,16 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 - Draw the workspace surface edge-to-edge across the whole Activity window with
   square corners, no external margins, no width cap and no popup/fullscreen switch.
   Do not size it to the MIDlet viewport, which can be letterboxed.
-- Apply `safeDrawing` plus `waterfall` to the data viewport, retaining bottom
-  `safeGestures` clearance. Keep header, toolbars, modal controls and Peek inside
-  gesture-safe horizontal bounds. Use `safeContent` for dialog forms and the
-  footer touch targets. The workspace and footer backgrounds draw edge-to-edge;
-  only content is inset, never the translucent Activity surface. Follow the
-  shared status-bar preference and avoid fixed notch or system-bar dimensions.
+- The workspace background covers the window. Inset the data viewport horizontally
+  by `safeDrawing` / `waterfall`, but do not let a centered top cutout push the
+  entire content down. The stacked title/close row uses the status bar inset;
+  on devices with a cutout in either edge control lane it instead respects the
+  cutout's safe top inset. The wide inline title/tabs row uses the full safe top
+  inset. Long stacked titles stop before the central camera lane.
+- Keep toolbar actions horizontally gesture-safe. Paint the footer to the bottom
+  edge and inset its controls only for visible navigation bars and physical
+  rounded bottom corners, moving the left/right icons inward rather than raising
+  the dock by the hidden gesture inset. Respect the shared status-bar setting.
 - Keep the editor title and labeled navigation visible. Place them in one row when
   width permits; stack them otherwise. In short windows with large text, retain the
   labeled tabs and omit the redundant app title to protect the data viewport.
@@ -72,8 +76,11 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 
 The workspace owns one `MemoryEditorOverlayState`. Editor dialogs inherit it through
 `LocalMemoryEditorOverlay`; their layer registration determines which window renders
-the active eye. Every modal uses a full safe-window shell with the same 48 dp footer
-and its own bounded width. The form is centered in the whole safe viewport, not the shorter region above the Peek dock. Its maximum height preserves clearance around the 48 dp dock, including in short landscape windows.
+the active eye. Every modal uses a full safe-window shell with the same 48 dp Peek footer
+and its own bounded width. The form is centered in the usable viewport above
+Peek, with only small vertical edge margins; no 96 dp pre-subtraction or second
+adaptive height margin. This retains direct access to Peek and avoids clipping
+forms/keypads unnecessarily in short landscape windows.
 Choices use this shell too: a native dropdown would intercept the footer behind it.
 Choice/action/settings dialogs have a 400 dp width cap; input forms can use 720 dp
 for controls beside the keypad. Use the theme's large corners for dialog surfaces.

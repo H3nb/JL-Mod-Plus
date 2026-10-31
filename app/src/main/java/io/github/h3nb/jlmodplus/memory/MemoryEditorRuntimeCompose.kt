@@ -24,6 +24,9 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -186,7 +189,11 @@ internal fun MemoryEditorRuntimeRoot(
             ) {
                 BoxWithConstraints(
                     modifier = Modifier.fillMaxSize()
-                        .windowInsetsPadding(memoryEditorWorkspaceInsets())
+                        .windowInsetsPadding(
+                            memoryEditorWorkspaceInsets().only(
+                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+                            ),
+                        )
                         .padding(horizontal = 8.dp),
                 ) {
                     val wideWorkspace = maxWidth >=
@@ -233,11 +240,10 @@ internal fun MemoryEditorRuntimeRoot(
                             else MaterialTheme.colorScheme.surfaceContainerHigh,
                         )
                         .windowInsetsPadding(
-                            memoryEditorSafeWindowInsets().only(
-                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
-                            ),
+                            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                                .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
                         )
-                        .padding(horizontal = 8.dp),
+                        .padding(memoryEditorBottomCornerPadding()),
                 ) {
                     MemoryEditorPeekDock(
                         overlay = overlay,
@@ -265,20 +271,34 @@ private fun RuntimeMemoryHeader(
     onClose: () -> Unit,
     showTitle: Boolean = true,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (showTitle) Text(
-            stringResource(R.string.memory_editor),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = if (inlineNavigation) Modifier.padding(end = 16.dp) else Modifier.weight(1f),
-        )
-        if (inlineNavigation) {
-            RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
-        }
-        IconButton(onClick = onClose) {
-            Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
+    val density = LocalDensity.current
+    val topPadding = if (inlineNavigation) {
+        with(density) { WindowInsets.safeDrawing.getTop(density).toDp() }
+    } else memoryEditorTitleTopPadding()
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // Stacked title/close are at opposite edges, leaving the top-center
+        // camera strip free. Long localized titles ellipsize before reaching it.
+        val stackedTitleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = topPadding),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (showTitle) Text(
+                stringResource(R.string.memory_editor),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = if (inlineNavigation) Modifier.padding(end = 16.dp)
+                    else Modifier.widthIn(max = stackedTitleMaxWidth),
+            )
+            if (inlineNavigation) {
+                RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            IconButton(onClick = onClose) {
+                Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
+            }
         }
     }
     if (!inlineNavigation) RuntimeMemoryTabs(state, onTab)

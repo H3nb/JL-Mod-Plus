@@ -2,10 +2,13 @@
  * You may obtain a copy at http://www.apache.org/licenses/LICENSE-2.0. */
 package io.github.h3nb.jlmodplus.memory
 
+import android.os.Build
+import android.view.RoundedCorner
 import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.ViewCompat
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -14,6 +17,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
@@ -62,6 +69,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -86,16 +94,56 @@ import androidx.core.os.ConfigurationCompat
 import java.text.NumberFormat
 import java.util.Locale
 
-/** Protect touch targets from bars, camera cutouts, curved edges and system gestures. */
+/** Dialog controls stay inside visible system bars, cutouts and waterfall edges. */
 @Composable
-internal fun memoryEditorSafeWindowInsets(): WindowInsets =
-    WindowInsets.safeContent
+internal fun memoryEditorSafeWindowInsets(): WindowInsets = WindowInsets.safeDrawing.union(WindowInsets.waterfall)
 
-/** Allow wide data rows while keeping cutouts, waterfall edges and bottom gestures safe. */
+/** Data/list content can use the header's cutout strip and the hidden navigation edge. */
 @Composable
-internal fun memoryEditorWorkspaceInsets(): WindowInsets =
-    WindowInsets.safeDrawing.union(WindowInsets.waterfall)
-        .union(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom))
+internal fun memoryEditorWorkspaceInsets(): WindowInsets = WindowInsets.safeDrawing.union(WindowInsets.waterfall)
+
+/**
+ * In a stacked header, the title and close affordance occupy the two edges.
+ * A centered punch-hole should not push both below the full-width cutout inset.
+ * If a cutout reaches either control lane, retain the safe top inset instead.
+ */
+@Composable
+internal fun memoryEditorTitleTopPadding(): Dp {
+    val density = LocalDensity.current
+    val statusTop = WindowInsets.statusBars.getTop(density)
+    val view = LocalView.current
+    val cutout = ViewCompat.getRootWindowInsets(view)?.displayCutout
+    val location = IntArray(2)
+    view.getLocationOnScreen(location)
+    val screenWidth = view.width.takeIf { it > 0 }
+        ?: (LocalConfiguration.current.screenWidthDp * density.density).toInt()
+    val conflictsWithEdgeControls = screenWidth <= 0 || cutout?.boundingRects.orEmpty().any { bounds ->
+        val left = bounds.left - location[0]
+        val right = bounds.right - location[0]
+        left < screenWidth * 0.45f || right > screenWidth * 0.80f
+    }
+    return with(density) {
+        (if (conflictsWithEdgeControls) WindowInsets.safeDrawing.getTop(density) else statusTop).toDp()
+    }
+}
+
+/** Round bottom corners require moving buttons inward, not raising the entire dock. */
+@Composable
+internal fun memoryEditorBottomCornerPadding(): PaddingValues {
+    val density = LocalDensity.current
+    val view = LocalView.current
+    val insets = if (Build.VERSION.SDK_INT >= 31) view.rootWindowInsets else null
+    val leftRadius = insets?.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT)?.radius ?: 0
+    val rightRadius = insets?.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_RIGHT)?.radius ?: 0
+    return with(density) {
+        PaddingValues.Absolute(
+            left = maxOf(8.dp, leftRadius.toDp()),
+            right = maxOf(8.dp, rightRadius.toDp()),
+            top = 0.dp,
+            bottom = 0.dp,
+        )
+    }
+}
 
 /** One visibility owner for the workspace and every editor-owned dialog/menu window. */
 @Stable
@@ -275,43 +323,51 @@ internal fun MemoryEditorDialog(
             MemoryEditorWindowDimming(overlay.peeking)
             Box(
                 Modifier.size(windowWidth, windowHeight).windowInsetsPadding(memoryEditorSafeWindowInsets())
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
                     .memoryEditorPeekKeys(overlay),
             ) {
                 Box(Modifier.widthIn(max = 960.dp).fillMaxSize().align(Alignment.Center)) {
                     BoxWithConstraints(
                         modifier = Modifier.fillMaxSize().testTag("memory-editor-dialog-viewport"),
-                        contentAlignment = Alignment.Center,
                     ) {
-                        // Center the form in the whole safe viewport. Leave room below for
-                        // the persistent 48 dp Peek dock, rather than shifting the center up.
-                        val formMaxHeight = (maxHeight - 96.dp).coerceAtLeast(0.dp)
-                        val layout = adaptiveDialogLayout(maxWidth, formMaxHeight, maxDialogWidth = maxDialogWidth)
-                            .copy(maxHeight = formMaxHeight)
                         Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
                             detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
                         })
-                        Surface(
-                            modifier = layout.modifier.then(modifier)
-                                .alpha(if (overlay.peeking) 0f else 1f)
-                                .testTag("adaptive-dialog-surface")
-                                .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
-                                .pointerInput(Unit) { detectTapGestures {} },
-                            shape = MaterialTheme.shapes.large,
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        // The persistent 48 dp Peek target uses the bottom strip. Measure
+                        // the form in the remaining real viewport, with no second guessed
+                        // 96 dp deduction and no duplicate adaptive vertical margin.
+                        BoxWithConstraints(
+                            modifier = Modifier.fillMaxSize().padding(bottom = 48.dp),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            AdaptiveDialogContent(
-                                compact = layout.maxHeight < 320.dp,
-                                title = title, text = text, textScrollable = textScrollable,
-                                confirmButton = confirmButton, dismissButton = dismissButton,
-                                dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
-                            )
+                            val layout = adaptiveDialogLayout(maxWidth, maxHeight, maxDialogWidth = maxDialogWidth)
+                                .copy(maxHeight = (maxHeight - 8.dp).coerceAtLeast(0.dp))
+                            Surface(
+                                modifier = layout.modifier.then(modifier)
+                                    .alpha(if (overlay.peeking) 0f else 1f)
+                                    .testTag("adaptive-dialog-surface")
+                                    .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
+                                    .pointerInput(Unit) { detectTapGestures {} },
+                                shape = MaterialTheme.shapes.large,
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ) {
+                                AdaptiveDialogContent(
+                                    compact = layout.maxHeight < 320.dp,
+                                    title = title, text = text, textScrollable = textScrollable,
+                                    confirmButton = confirmButton, dismissButton = dismissButton,
+                                    dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
+                                )
+                            }
                         }
                     }
                     MemoryEditorPeekShield(overlay)
                     if (overlay.layers.lastOrNull() == layer) {
-                        MemoryEditorPeekDock(overlay, Modifier.align(Alignment.BottomCenter))
+                        MemoryEditorPeekDock(
+                            overlay,
+                            Modifier.align(Alignment.BottomCenter)
+                                .padding(memoryEditorBottomCornerPadding()),
+                        )
                     }
                 }
             }
