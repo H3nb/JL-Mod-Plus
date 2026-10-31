@@ -99,6 +99,21 @@ public final class CanvasRendererPublicationResearchTest {
         assertTrue(count[0] > 0);
         String hSource = readSource(SHADER_DIR + "gauss_2tap_h.glsl");
         String vSource = readSource(SHADER_DIR + "gauss_2tap_v.glsl");
+        GlslpPresetResearch gaussPreset = GlslpPresetResearch.load(
+                path -> {
+                    try {
+                        return readSource("graphics-rd/" + path);
+                    } catch (Exception e) {
+                        throw new IOException("Missing pinned GLSLP asset: " + path, e);
+                    }
+                }, "blurs/gauss_4tap.glslp");
+        GlslpPresetResearch.Plan gaussPlan = gaussPreset.plan(8, 8, 6, 6, 2048,
+                1024 * 1024);
+        assertEquals(8, gaussPlan.passes.get(0).outputWidth);
+        assertEquals(8, gaussPlan.passes.get(1).outputWidth);
+        assertTrue("Gauss ends source-sized and requires stock blit",
+                gaussPlan.finalBlitRequired);
+        String stockSource = readSource("graphics-rd/stock.glsl");
         Field twoPassField = renderer.getClass().getDeclaredField("researchTwoPass");
         twoPassField.setAccessible(true);
         try {
@@ -129,6 +144,13 @@ public final class CanvasRendererPublicationResearchTest {
                             (LibretroTwoPassResearchPipeline) twoPassField.get(renderer);
                     assertEquals("GLSLP selected only for valid source",
                             generation == 1 || generation == 3, twoPass != null);
+                    if (twoPass != null) {
+                        LibretroTwoPassResearchPipeline planned =
+                                new LibretroTwoPassResearchPipeline(gaussPreset, stockSource);
+                        twoPass.release();
+                        twoPassField.set(renderer, planned);
+                        twoPass = planned;
+                    }
 
                     Image red = Image.createImage(8, 8, Color.RED);
                     canvas.flushBuffer(red, 0, 0);
@@ -138,7 +160,13 @@ public final class CanvasRendererPublicationResearchTest {
                     real.onDrawFrame(ignoredGl);
                     assertEquals(redSequence, lastUploadField.getLong(renderer));
                     assertColor(Color.RED, 6, 6);
-                    if (twoPass != null) assertEquals(1, twoPass.offscreenPassExecutions());
+                    if (twoPass != null) {
+                        assertEquals(1, twoPass.offscreenPassExecutions());
+                        assertEquals("Source-sized final GLSLP must render into a second FBO",
+                                1, twoPass.finalPassExecutions());
+                        assertEquals(8, twoPass.finalOutputWidth());
+                        assertEquals(8, twoPass.finalOutputHeight());
+                    }
                     byte[] hostBefore = readPixel(0, 0);
 
                     // Host redraw without a new guest publication must reuse the
@@ -151,6 +179,8 @@ public final class CanvasRendererPublicationResearchTest {
                     if (twoPass != null) {
                         assertEquals("Host-only redraw cannot rerun offscreen shader",
                                 1, twoPass.offscreenPassExecutions());
+                        assertEquals("Host-only redraw must reuse final source-sized FBO",
+                                1, twoPass.finalPassExecutions());
                     }
 
                     Image blue = Image.createImage(8, 8, Color.BLUE);
@@ -163,6 +193,7 @@ public final class CanvasRendererPublicationResearchTest {
                     assertColor(Color.BLUE, 6, 6);
                     if (twoPass != null) {
                         assertEquals(2, twoPass.offscreenPassExecutions());
+                        assertEquals(2, twoPass.finalPassExecutions());
 
                         Image stripes = Image.createImage(8, 8);
                         Graphics graphics = stripes.getGraphics();
@@ -176,6 +207,7 @@ public final class CanvasRendererPublicationResearchTest {
                         assertTrue(mailbox.trySchedule(mailbox.generation()));
                         real.onDrawFrame(ignoredGl);
                         assertEquals(3, twoPass.offscreenPassExecutions());
+                        assertEquals(3, twoPass.finalPassExecutions());
                         byte[] blurred = readPixel(5, 6);
                         assertTrue("Real Gaussian must mix a red/blue edge (R)",
                                 (blurred[0] & 255) > 0);
@@ -424,6 +456,21 @@ public final class CanvasRendererPublicationResearchTest {
                     1, crisp.offscreenPassExecutions());
             Log.i(TAG, "xBRZ Crisp parameter gate: changed pixels=" + different
                     + " of 9216; all five upstream uniforms verified");
+
+            LibretroTwoPassResearchPipeline planned =
+                    new LibretroTwoPassResearchPipeline(crispPreset,
+                            readSource("graphics-rd/stock.glsl"));
+            researchField.set(rendererObject, planned);
+            crisp.release();
+            assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0);
+            assertTrue(mailbox.trySchedule(mailbox.generation()));
+            renderer.onDrawFrame(null);
+            assertEquals(1, planned.offscreenPassExecutions());
+            assertEquals("Viewport-sized xBRZ must never allocate final-pass FBO",
+                    0, planned.finalPassExecutions());
+            assertArrayEquals("Metadata-driven xBRZ must match already verified Crisp GPU pixels",
+                    crispPixels, readRgba(96, 96));
+            assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
             mailbox.close();
             Canvas.setGraphicsResearchTwoPassSources(null, null);
