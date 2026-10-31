@@ -9,7 +9,6 @@ package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -177,7 +176,6 @@ internal fun MemoryEditorRuntimeRoot(
                 modifier = Modifier.fillMaxSize()
                     .testTag("memory-editor-workspace")
                     .alpha(if (overlay.peeking) 0f else 1f),
-                shape = RectangleShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
