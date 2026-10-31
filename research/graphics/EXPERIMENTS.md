@@ -575,3 +575,70 @@ The new sequence operates on the **same EGL context and actual GLRenderer**, not
 **Research debugging outcome:** [CI 41177581689](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41177581689) initially failed because a host resize was incorrectly assumed to leave softbar-adjusted guest dimensions constant. [CI 41178135991](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41178135991) then failed because the test consumed an older, queued GL callback with the same host dimensions and guest-frame sequence *before* observing the new logical size. These are **fixture expectation/selection defects** identified by source and log evidence; neither demonstrated a new shader rendering regression. The passing test waits for the expected actual guest extent instead of sleeping or loosening the pixel oracle.
 
 **Limits and decision:** This is a real attached Android `GlesView` and the production `GLRenderer`, but setup still uses a headless research `SoftBar` and reflection to bind the renderer/view. It **does not** instantiate `MicroActivity`, call the complete `Canvas.getDisplayableView` + `ViewCallbacks` lifecycle, execute a real JAR MIDlet, or measure ARM64/GPU performance. Combined with earlier pbuffer trials, it supports a single presentation GLES owner, exact-active-size `offscreenCopy`, mailbox-aligned guest-frame processing, and viewport-only reuse. No additional FBO normalization or frame queue is justified by current evidence. The next useful engineering work is the **safe GLSLP preset/resource resolver** with bounded support tiers and explicit rejection; a separate runtime MIDlet smoke gate remains necessary before release.
+
+## Real xBRZ Freescale source/dependency and FBO orientation gate — 2026-10-31
+
+**Source:** original Libretro `xbrz/xbrz-freescale-multipass.glslp` at pinned
+`cba01a48b0974a1232bea68d999a7c21bc4c233e`. Its source-sized pass 0
+produces per-pixel encoded RGBA edge decisions; viewport-sized pass 1 consumes
+both the immediately previous pass's `Texture` and the pre-pass original
+via `PassPrev2Texture`. Both inputs require nearest sampling; pass 1 also
+requires the correct original `PassPrev2TextureSize` and
+`PassPrev2InputSize`. The existing Gaussian-only previous-pass pipeline
+did not satisfy this contract.
+
+**Executed checkpoint:** [run 41220537772](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41220537772),
+executable SHA `b44d30b0429d12c24eb489bec605119b3e1cfac8`,
+**PASS**: nine selected instrumented classes, **13 tests**, on Android API35
+x86_64 / SwiftShader. The new `realXbrzFreescaleUsesOriginalTextureAndReusesFirstPass`
+fixture uses the real `Canvas.GLRenderer` with `Canvas.flushBuffer`,
+an 8x8 red triangle on blue guest bitmap and a 96x96 host game viewport.
+It verifies shader link/no legacy fallback, the original color inputs,
+nonzero encoded FBO metadata, actual corner flags, mixed red/blue output
+pixels, no GL error and exactly one analysis-pass execution across a
+host-only redraw. Other research classes, including the previously passing
+mounted-`GlesView` lifecycle class, remained green.
+
+**Discriminating failure and correction:**
+- [run 41218815077](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41218815077)
+  compiled and ran both original xBRZ programs, yet all 9,216 viewport
+  pixels remained pure nearest-like red/blue: **2,160 red**, **7,056 blue**,
+  **zero blended**. The earlier Gauss tests remained green.
+- [run 41219613185](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41219613185)
+  established **20 nonzero encoded FBO bytes** but still **zero blended**
+  pixels. A nonempty first-stage output alone therefore did not prove
+  the second stage was using its spatial data correctly.
+- Source review identified a real R&D quad mismatch: bitmap-upload texture
+  row 0 corresponds to UV y=0, while the first-pass draw placed that row
+  at the **top** of an FBO, whose UV y=0 subsequently reads the **bottom**
+  row. Consequently the second pass read corner metadata at a different
+  vertical position than `PassPrev2Texture`. Flipping the offscreen quad's
+  source V mapping (without changing the final host quad) aligns both
+  textures in their sampled domain.
+- With this one orientation correction the passing run recorded **20 nonzero
+  edge-decision bytes**, **9 actual corner-flag bytes**, **66 mixed**
+  red/blue output pixels, **2,073 red**, and **7,077 blue**. The counts sum
+  to 9,216 target pixels. They prove a real observable xBRZ transformation
+  for this fixture, not universal visual parity with RetroArch.
+
+**Scope and constraints:** the prototype intentionally injects exactly two
+pinned GLSL source strings; there is **no GLSLP parser, asset resolver,
+user-facing selection or dynamic parameter binding**. It uses upstream
+default `#pragma` parameter values rather than `PARAMETER_UNIFORM`, so
+`xbrz-crisp.glslp` overrides are not yet supported. Its extra source
+sampler, nearest-filter selection and one source-resolution FBO are
+**fixture-specific**, not a general graph implementation. In particular
+the current Gaussian prototype still renders its final pass directly to
+the host viewport although that preset specifies a source-sized final
+pass; a genuine planner must honor the preset's actual last-pass size
+and perform a separate host blit when needed.
+
+**Next discriminating gates:** implement an independent, safely bounded
+GLSLP resource resolver + pass descriptor (including stage sizes,
+referenced original/earlier-pass textures and named parameter defaults/
+overrides). Exercise real `xbrz-crisp` parameters and one ES3-dependent
+xBR preset instead of assuming source-level success. Keep host/GPU resource
+ownership on the existing presentation GL thread. Prove an actual MIDlet
+through `MicroActivity` and measure GPU latency, upload bandwidth and
+thermal/power cost on physical ARM64 before shipping. HD 2D/M3G/Mascot
+guest logical-pixel research remains a separate open track.
