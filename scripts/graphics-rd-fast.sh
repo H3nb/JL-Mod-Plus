@@ -16,6 +16,7 @@ for name in stock.glsl bilinear.glslp \
   blurs/shaders/gauss_4tap/gauss_2tap_h.glsl \
   blurs/shaders/gauss_4tap/gauss_2tap_v.glsl \
   xbrz/xbrz-freescale-multipass.glslp \
+  xbrz/xbrz-crisp.glslp \
   xbrz/shaders/xbrz-freescale-multipass/xbrz-freescale-pass0.glsl \
   xbrz/shaders/xbrz-freescale-multipass/xbrz-freescale-pass1.glsl \
   crt/shaders/crt-easymode.glsl handheld/shaders/lcd3x.glsl \
