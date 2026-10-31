@@ -221,9 +221,16 @@ public final class CanvasMountedGlesViewResearchTest {
             });
             Frame resizedHost = next(observed, 1, 160, 120, redSequence);
             exactColor(resizedHost, Color.RED);
-            assertEquals("Host viewport alone cannot recompute guest pass",
-                    first.firstPasses, resizedHost.firstPasses);
+            int inputSizeChanges = first.logicalW != resizedHost.logicalW
+                    || first.logicalH != resizedHost.logicalH ? 1 : 0;
+            assertEquals("A host resize recomputes the input pass only if the"
+                            + " softbar changes the active guest extent",
+                    first.firstPasses + inputSizeChanges, resizedHost.firstPasses);
             tight(resizedHost);
+            Log.i(TAG, "softbar host resize changed source="
+                    + (inputSizeChanges != 0) + " from "
+                    + first.logicalW + "x" + first.logicalH + " to "
+                    + resizedHost.logicalW + "x" + resizedHost.logicalH);
 
             instrumentation.runOnMainSync(() -> {
                 canvas.setFullScreenMode(true);
@@ -236,23 +243,44 @@ public final class CanvasMountedGlesViewResearchTest {
             tight(full);
             assertEquals(resizedHost.firstPasses + 1, full.firstPasses);
 
+            // Now resize only the mounted host view while guest logical dimensions
+            // are fixed by fullscreen. This is the true host-only resizing case.
+            instrumentation.runOnMainSync(() -> {
+                activity.resize(mounted[0], 176, 132);
+                try {
+                    field(Canvas.class, "displayWidth").setInt(canvas, 176);
+                    field(Canvas.class, "displayHeight").setInt(canvas, 132);
+                } catch (ReflectiveOperationException e) {
+                    throw new AssertionError(e);
+                }
+                canvas.updateSize();
+                mounted[0].requestRender();
+            });
+            Frame hostOnlyResize = next(observed, 1, 176, 132, redSequence);
+            exactColor(hostOnlyResize, Color.RED);
+            tight(hostOnlyResize);
+            assertEquals(full.logicalW, hostOnlyResize.logicalW);
+            assertEquals(full.logicalH, hostOnlyResize.logicalH);
+            assertEquals("True viewport-only resize reuses the input pass",
+                    full.firstPasses, hostOnlyResize.firstPasses);
+
             instrumentation.runOnMainSync(() -> {
                 profile.screenWidth = 40;
                 profile.screenHeight = 56;
                 canvas.updateSize();
                 mounted[0].requestRender();
             });
-            Frame grown = next(observed, 1, 160, 120, redSequence);
+            Frame grown = next(observed, 1, 176, 132, redSequence);
             exactColor(grown, Color.RED);
             assertEquals(40, grown.logicalW);
             assertEquals(56, grown.logicalH);
             tight(grown);
-            assertEquals(full.firstPasses + 1, grown.firstPasses);
+            assertEquals(hostOnlyResize.firstPasses + 1, grown.firstPasses);
 
             Image blue = Image.createImage(40, 56, Color.BLUE);
             canvas.flushBuffer(blue, 0, 0);
             long blueSequence = (long) field(Canvas.class, "publishedFrameSequence").get(canvas);
-            Frame blueFrame = next(observed, 1, 160, 120, blueSequence);
+            Frame blueFrame = next(observed, 1, 176, 132, blueSequence);
             exactColor(blueFrame, Color.BLUE);
             assertEquals(grown.firstPasses + 1, blueFrame.firstPasses);
 
@@ -262,7 +290,7 @@ public final class CanvasMountedGlesViewResearchTest {
                 mounted[0].onResume();
                 mounted[0].requestRender();
             });
-            Frame resumed = next(observed, beforeResumeGeneration + 1, 160, 120, blueSequence);
+            Frame resumed = next(observed, beforeResumeGeneration + 1, 176, 132, blueSequence);
             exactColor(resumed, Color.BLUE);
             assertEquals(1, resumed.firstPasses);
             tight(resumed);
