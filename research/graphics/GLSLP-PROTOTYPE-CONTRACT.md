@@ -210,3 +210,5 @@ These proofs are isolated from the production GLSurfaceView lifecycle. The small
 ## Corpus coverage audit
 
 The pinned libretro/glsl-shaders source/preset requirements, RetroArch version mapping, and feature tiers are tracked in [LIBRETRO-CORPUS-AUDIT.md](LIBRETRO-CORPUS-AUDIT.md). It supersedes any inference that `#version 130` proves fundamental Android incompatibility or that a valid `shaders=N` preset can be executed with previous-pass-only bindings. Device compiler compatibility and GLES capability are separate gates from parsing.
+
+**Executed compiler adapter proof:** [CI 41162334179](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41162334179) linked pinned CRT EasyMode, LCD3x and FSR pass0 as-is; raw desktop GLSL 130 LCD Grid v2/NTSC sources failed. [CI 41163071776](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41163071776) linked those two after a bounded `#version 300 es` + `PARAMETER_UNIFORM` adaptation on GLES3 SwiftShader. Use this as an ES3 source-compatibility evidence gate, not full preset or GLES2 proof; all uniform bindings, actual pixels, history and device requirements remain to be demonstrated.
