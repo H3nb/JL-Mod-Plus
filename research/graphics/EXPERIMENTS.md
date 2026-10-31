@@ -642,3 +642,47 @@ ownership on the existing presentation GL thread. Prove an actual MIDlet
 through `MicroActivity` and measure GPU latency, upload bandwidth and
 thermal/power cost on physical ARM64 before shipping. HD 2D/M3G/Mascot
 guest logical-pixel research remains a separate open track.
+
+## Bounded GLSLP preset planner on JVM — 2026-11-01
+
+**[CI 41251825986](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41251825986) PASS**, executable commit
+`6fcec69ec1458aa8b296e3a528e26d2ff6b28541`.
+The focused `:app:testEmulatorDebugUnitTest --tests
+io.github.h3nb.jlmodplus.research.GlslpPresetResearchTest` completed
+**4 tests / 0 failures / 0 errors / 0 skipped**. This was an Android
+Gradle JVM unit-test run on the GitHub Ubuntu runner, **not** Android
+instrumentation, shader compilation, an Android GLES runtime, or a physical
+GPU benchmark. The artifact `graphics-rd-preset-jvm-evidence` contains
+the JUnit result XML for that exact revision.
+
+**Experiment:** `GlslpPresetResearch` parses a bounded, explicit GLSLP
+metadata subset and computes a separate source/viewport/absolute output
+size for each pass. It records named preset overrides without applying
+them to GPU uniforms. Test cases use minimal synthetic source text shaped
+after *actual pinned* xBRZ Freescale/Crisp, 4xBRZ Linear, Gauss and FSR
+preset metadata. They verify a `../stock.glsl` relative dependency,
+FBO size and filter distinctions, source-to-viewport transitions,
+independent X/Y scales and fractional truncation. Invalid/malformed
+presets, unsupported keys (including LUT/feedback), `#reference`,
+traversal outside the logical bundle root and over-limit sizes fail
+closed. A separate read-only audit of the original pinned preset files
+confirmed representative key names, not complete Libretro compatibility.
+
+**Discriminating correction:** [CI 41251486190](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41251486190)
+built successfully and passed three of four tests, but the FSR test
+incorrectly expected no final blit when the numeric last-pass resolution
+matched the viewport. Original `fsr.glslp` specifies
+`scale_type1 = source`, and RetroArch `gl2.c` chooses final FBO usage
+from the **declared scale mode**, not only pixel-size equality. The
+planner already preserved that distinction; only the stale test
+expectation changed. The next focused CI run passed all four tests.
+
+**Qualification:** this is evidence of metadata parsing and sizing
+semantics only. The root-confining `AssetReader` implementation for
+real imported files, shader `#pragma parameter` extraction and GPU
+uniform binding, `PassPrev2` resource lifetimes, per-pass actual
+texture allocation, shader language translation, runtime EGL lifecycle,
+and complete `MicroActivity` operation remain unimplemented/untested.
+The existing real xBRZ SwiftShader experiment remains a separate
+proof of GPU rendering with hardcoded sources. Do not declare general
+GLSLP or xBRZ Crisp runtime support from these JVM results.
