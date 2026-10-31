@@ -686,3 +686,49 @@ and complete `MicroActivity` operation remain unimplemented/untested.
 The existing real xBRZ SwiftShader experiment remains a separate
 proof of GPU rendering with hardcoded sources. Do not declare general
 GLSLP or xBRZ Crisp runtime support from these JVM results.
+
+## xBRZ Crisp pragma/defaults-to-GPU gate — 2026-11-01
+
+**Executable SHA:** `92e23fde719cf6755e6beb912884f7658a2e7870`.
+**[JVM run 41252673920](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41252673920) PASS**
+(4 targeted tests, zero failures/errors/skips) and
+**[GLES run 41252709399](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41252709399) PASS**
+(API35 x86_64 emulator/SwiftShader, 9 selected research classes).
+The attached `canvas-renderer-publication.txt` reports 3/3 tests passing,
+including the extended real `Canvas.GLRenderer` xBRZ trial.
+The logcat fixture recorded **261 changed RGB pixels out of 9,216** on a
+static 8x8 low-contrast grayscale staircase presented at 96x96.
+
+**What this distinguishes:** the R&D test loads the genuine pinned
+`xbrz-freescale-multipass.glslp` and `xbrz-crisp.glslp`, including their
+two real shader source files, via the bounded `GlslpPresetResearch`
+reader. It resolves all five declared `#pragma parameter` defaults
+(`XBRZ_TOL=15`, `XBRZ_DOM=3.8`, `XBRZ_STEEP=3.2`,
+`XBRZ_MINC=0`, `XBRZ_DIAG=0`), validates range and applies the
+two Crisp preset overrides (`XBRZ_MINC=24`, `XBRZ_DIAG=100`).
+With `PARAMETER_UNIFORM` compiled into the **same upstream GLSL**, the
+test reads back **all five** `glGetUniformfv` values from the actual
+pass-0 GL program. It then compares framebuffer RGB of default and
+Crisp modes using an **identical published guest image**. A re-created
+research pipeline recomputes its first pass once; a subsequent host-only
+redraw does not recompute it. Both the earlier red/blue edge fixture
+and preexisting renderer research checks remain passing.
+
+**Architecture consequences:** supplying *only the overridden uniforms*
+would leave the three other xBRZ controls at zero in
+`PARAMETER_UNIFORM` mode; source defaults are therefore mandatory.
+Source declarations and preset overrides need one resolved parameter
+contract before GL program creation. This experiment tested static
+pipeline replacement, **not** efficient in-place parameter updates,
+which will require dependency-aware cache invalidation. Parameter
+uniforms are not proof of correct GLSLP execution for presets with
+more than two passes, alternate scale semantics, LUTs, temporal history
+or mixed format capabilities.
+
+**Limits:** 261 changed pixels prove an observable shader effect, **not**
+that Crisp is visually preferable to Freescale for real games. The
+original Libretro shaders were downloaded into the disposable androidTest
+APK, not vendored into the shipping application. The Android test used
+a headless research Canvas fixture and controlled pbuffer, not a real
+`MicroActivity` executing a MIDlet. There are no physical ARM64
+latency/battery measurements or J2ME HD compatibility results.
