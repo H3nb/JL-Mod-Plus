@@ -203,7 +203,6 @@ import kotlinx.coroutines.withContext
 import io.github.h3nb.jlmodplus.BuildConfig
 import io.github.h3nb.jlmodplus.MainActivity
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -670,15 +669,8 @@ fun LibraryScreen(
         updateVisibility()
         awaitDispose { fragmentManager.unregisterFragmentLifecycleCallbacks(observer) }
     }
-    val hostResumed by produceState(initialValue = false, hostLifecycle) {
-        if (hostLifecycle == null) return@produceState
-        value = hostLifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-        val observer = LifecycleEventObserver { _, _ ->
-            value = hostLifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-        }
-        hostLifecycle.addObserver(observer)
-        awaitDispose { hostLifecycle.removeObserver(observer) }
-    }
+    val hostResumed = hostLifecycle?.currentStateFlow?.collectAsState()?.value
+        ?.isAtLeast(Lifecycle.State.RESUMED) == true
     LaunchedEffect(hostResumed, updateRepository?.automaticChecks) {
         val repository = updateRepository ?: return@LaunchedEffect
         if (BuildConfig.DEBUG || !hostResumed || !repository.automaticChecks) return@LaunchedEffect

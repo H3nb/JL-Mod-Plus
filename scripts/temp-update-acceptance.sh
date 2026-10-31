@@ -36,7 +36,13 @@ python3 /tmp/update-metadata-service.py >/tmp/update-http.log 2>&1 &
 server_pid=$!
 trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/update-http.log' EXIT
 curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:8765/health
-adb shell appops set io.github.h3nb.jlmodplus.debug MANAGE_EXTERNAL_STORAGE allow || true
+./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 \
+  -Pjlmod.versionName=0.2.5-beta -Pjlmod.versionCode=25 \
+  :app:assembleEmulatorDebug
+apk="$(find app/build/outputs/apk/emulator/debug -name '*x86_64*.apk' | head -n 1)"
+test -n "$apk"
+adb install -r "$apk"
+adb shell appops set io.github.h3nb.jlmodplus.debug MANAGE_EXTERNAL_STORAGE allow
 ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 \
   -Pjlmod.versionName=0.2.5-beta -Pjlmod.versionCode=25 \
   -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.updates.TemporaryUpdateAcceptanceTest \
