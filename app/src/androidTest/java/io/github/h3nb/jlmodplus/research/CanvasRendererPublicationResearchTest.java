@@ -295,6 +295,23 @@ public final class CanvasRendererPublicationResearchTest {
                 if (b > 235 && r < 20) blue++;
                 if (r > 15 && b > 15 && r < 245 && b < 245) mixed++;
             }
+            int fbo = ((int[]) getField(LibretroTwoPassResearchPipeline.class,
+                    "framebuffer").get(pipeline))[0];
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo);
+            ByteBuffer edgeDecisions = ByteBuffer.allocateDirect(8 * 8 * 4);
+            GLES20.glReadPixels(0, 0, 8, 8, GLES20.GL_RGBA,
+                    GLES20.GL_UNSIGNED_BYTE, edgeDecisions);
+            int decisions = 0;
+            for (int p = 0; p < 8 * 8 * 4; p++) {
+                if ((edgeDecisions.get(p) & 255) != 0) decisions++;
+            }
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+            Log.i(TAG, "xBRZ diagnostic: red=" + red + " blue=" + blue
+                    + " mixed=" + mixed + " nonzeroEdgeBytes=" + decisions);
+            assertEquals("xBRZ probe must remain free from GL errors",
+                    GLES20.GL_NO_ERROR, GLES20.glGetError());
+            assertTrue("xBRZ edge-analysis FBO must encode nonzero decisions",
+                    decisions > 0);
             assertTrue("Unmodified red source must reach the xBRZ final pass", red > 100);
             assertTrue("Unmodified blue source must reach the xBRZ final pass", blue > 100);
             assertTrue("xBRZ must generate antialiased red/blue corner pixels", mixed > 0);
