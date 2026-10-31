@@ -9,6 +9,9 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.util.Log;
+import androidx.test.platform.app.InstrumentationRegistry;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import java.lang.reflect.Field;
@@ -33,6 +36,7 @@ import static org.junit.Assert.*;
 public final class CanvasRendererPublicationResearchTest {
     private static final int W = 12, H = 12;
     private static final String TAG = "GraphicsRD_RealCanvas";
+    private static final String SHADER_DIR = "graphics-rd/blurs/shaders/gauss_4tap/";
 
     private static final class FixtureCanvas extends Canvas {
         FixtureCanvas() { super(true); }
@@ -90,8 +94,21 @@ public final class CanvasRendererPublicationResearchTest {
                 EGL14.EGL_NONE};
         assertTrue(EGL14.eglChooseConfig(display, attrs, 0, configs, 0, 1, count, 0));
         assertTrue(count[0] > 0);
+        String hSource = readSource(SHADER_DIR + "gauss_2tap_h.glsl");
+        String vSource = readSource(SHADER_DIR + "gauss_2tap_v.glsl");
+        Field twoPassField = renderer.getClass().getDeclaredField("researchTwoPass");
+        twoPassField.setAccessible(true);
         try {
-            for (int generation = 0; generation < 2; generation++) {
+            for (int generation = 0; generation < 4; generation++) {
+                // 0: legacy; 1: real Libretro multipass; 2: invalid preset
+                // falls back to legacy; 3: valid preset in a new EGL context.
+                if (generation == 1 || generation == 3) {
+                    Canvas.setGraphicsResearchTwoPassSources(hSource, vSource);
+                } else if (generation == 2) {
+                    Canvas.setGraphicsResearchTwoPassSources("invalid source", vSource);
+                } else {
+                    Canvas.setGraphicsResearchTwoPassSources(null, null);
+                }
                 EGLContext context = EGL14.eglCreateContext(display, configs[0],
                         EGL14.EGL_NO_CONTEXT,
                         new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE}, 0);
@@ -105,6 +122,10 @@ public final class CanvasRendererPublicationResearchTest {
                             (android.opengl.GLSurfaceView.Renderer) renderer;
                     real.onSurfaceCreated(ignoredGl, ignoredConfig);
                     real.onSurfaceChanged(ignoredGl, W, H);
+                    LibretroTwoPassResearchPipeline twoPass =
+                            (LibretroTwoPassResearchPipeline) twoPassField.get(renderer);
+                    assertEquals("GLSLP selected only for valid source",
+                            generation == 1 || generation == 3, twoPass != null);
 
                     Image red = Image.createImage(8, 8, Color.RED);
                     canvas.flushBuffer(red, 0, 0);
@@ -114,6 +135,8 @@ public final class CanvasRendererPublicationResearchTest {
                     real.onDrawFrame(ignoredGl);
                     assertEquals(redSequence, lastUploadField.getLong(renderer));
                     assertColor(Color.RED, 6, 6);
+                    if (twoPass != null) assertEquals(1, twoPass.offscreenPassExecutions());
+                    byte[] hostBefore = readPixel(0, 0);
 
                     // Host redraw without a new guest publication must reuse the
                     // uploaded texture. Renderer still draws the full host frame.
@@ -122,6 +145,10 @@ public final class CanvasRendererPublicationResearchTest {
                     real.onDrawFrame(ignoredGl);
                     assertEquals(redSequence, lastUploadField.getLong(renderer));
                     assertColor(Color.RED, 6, 6);
+                    if (twoPass != null) {
+                        assertEquals("Host-only redraw cannot rerun offscreen shader",
+                                1, twoPass.offscreenPassExecutions());
+                    }
 
                     Image blue = Image.createImage(8, 8, Color.BLUE);
                     canvas.flushBuffer(blue, 0, 0);
@@ -131,6 +158,29 @@ public final class CanvasRendererPublicationResearchTest {
                     real.onDrawFrame(ignoredGl);
                     assertEquals(blueSequence, lastUploadField.getLong(renderer));
                     assertColor(Color.BLUE, 6, 6);
+                    if (twoPass != null) {
+                        assertEquals(2, twoPass.offscreenPassExecutions());
+
+                        Image stripes = Image.createImage(8, 8);
+                        Graphics graphics = stripes.getGraphics();
+                        graphics.setColor(0xff0000);
+                        graphics.fillRect(0, 0, 4, 8);
+                        graphics.setColor(0x0000ff);
+                        graphics.fillRect(4, 0, 4, 8);
+                        canvas.flushBuffer(stripes, 0, 0);
+                        long stripeSequence = mailboxPublishedSequence(canvas);
+                        assertTrue(stripeSequence > blueSequence);
+                        assertTrue(mailbox.trySchedule(mailbox.generation()));
+                        real.onDrawFrame(ignoredGl);
+                        assertEquals(3, twoPass.offscreenPassExecutions());
+                        byte[] blurred = readPixel(5, 6);
+                        assertTrue("Real Gaussian must mix a red/blue edge (R)",
+                                (blurred[0] & 255) > 0);
+                        assertTrue("Real Gaussian must mix a red/blue edge (B)",
+                                (blurred[2] & 255) > 0);
+                    }
+                    assertArrayEquals("Host area must be outside the shader input",
+                            hostBefore, readPixel(0, 0));
                     assertEquals("GL error after a new frame", GLES20.GL_NO_ERROR,
                             GLES20.glGetError());
                     Log.i(TAG, "generation=" + generation
@@ -144,12 +194,29 @@ public final class CanvasRendererPublicationResearchTest {
                 }
             }
         } finally {
+            Canvas.setGraphicsResearchTwoPassSources(null, null);
             mailbox.close();
             EGL14.eglTerminate(display);
         }
     }
 
-    private static long mailboxPublishedSequence(FixtureCanvas canvas) throws Exception {
+    private static String readSource(String path) throws Exception {
+        try (InputStream in = InstrumentationRegistry.getInstrumentation()
+                .getContext().getAssets().open(path)) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private static byte[] readPixel(int x, int y) {
+        ByteBuffer pixel = ByteBuffer.allocateDirect(4);
+        GLES20.glReadPixels(x, y, 1, 1, GLES20.GL_RGBA,
+                GLES20.GL_UNSIGNED_BYTE, pixel);
+        byte[] result = new byte[4];
+        pixel.get(result);
+        return result;
+    }
+
+        private static long mailboxPublishedSequence(FixtureCanvas canvas) throws Exception {
         Field sequenceField = Canvas.class.getDeclaredField("publishedFrameSequence");
         sequenceField.setAccessible(true);
         return sequenceField.getLong(canvas);
