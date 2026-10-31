@@ -290,6 +290,23 @@ public final class RealLibretroPresetResearchTest {
                     probeLibretroSource("handheld/shaders/lcd-cgwg/lcd-grid-v2.glsl"));
             assertFalse("NTSC desktop GLSL 130 requires an explicit compatibility decision",
                     probeLibretroSource("ntsc/shaders/ntsc-pass1-composite-3phase.glsl"));
+            // RetroArch remaps the dialect and enables PARAMETER_UNIFORM. This
+            // probe demonstrates exactly that bounded adaptation, not a
+            // general desktop GLSL -> GLES source translator. The context
+            // is requested as ES2, but this SwiftShader emulator advertises ES3.
+            String glslVersion = GLES20.glGetString(GLES20.GL_SHADING_LANGUAGE_VERSION);
+            if (glslVersion.startsWith("OpenGL ES GLSL ES 3.")) {
+                assertTrue("LCD Grid v2 must link after GLES3 version and uniform adaptation",
+                        probeLibretroSource("handheld/shaders/lcd-cgwg/lcd-grid-v2.glsl", true));
+                // Capture a second independent source before implying this
+                // strategy generalizes to all desktop-language shaders.
+                boolean ntscMapped = probeLibretroSource(
+                        "ntsc/shaders/ntsc-pass1-composite-3phase.glsl", true);
+                Log.i("GraphicsRD_Corpus", "NTSC_MAPPED_GLES3_LINKED=" + ntscMapped
+                        + " (visual and frame-count contracts untested)");
+            } else {
+                Log.i("GraphicsRD_Corpus", "GLES3 dialect probe skipped: " + glslVersion);
+            }
         } finally {
             EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
                     EGL14.EGL_NO_CONTEXT);
@@ -300,9 +317,13 @@ public final class RealLibretroPresetResearchTest {
     }
 
     private static boolean probeLibretroSource(String path) throws Exception {
+        return probeLibretroSource(path, false);
+    }
+
+    private static boolean probeLibretroSource(String path, boolean mapDesktop) throws Exception {
         String source = readAsset(ASSETS + path);
-        int vertex = compileProbeStage(GLES20.GL_VERTEX_SHADER, source, "VERTEX", path);
-        int fragment = compileProbeStage(GLES20.GL_FRAGMENT_SHADER, source, "FRAGMENT", path);
+        int vertex = compileProbeStage(GLES20.GL_VERTEX_SHADER, source, "VERTEX", path, mapDesktop);
+        int fragment = compileProbeStage(GLES20.GL_FRAGMENT_SHADER, source, "FRAGMENT", path, mapDesktop);
         int program = 0;
         boolean linked = false;
         try {
@@ -327,13 +348,21 @@ public final class RealLibretroPresetResearchTest {
         }
     }
 
-    private static int compileProbeStage(int kind, String source, String stage, String path) {
+    private static int compileProbeStage(int kind, String source, String stage,
+                                         String path, boolean mapDesktop) {
         String taggedSource;
         if (source.startsWith("#version ")) {
             int newline = source.indexOf('\n');
             assertTrue("Version directive must terminate on first line", newline > 0);
-            taggedSource = source.substring(0, newline + 1)
-                    + "#define " + stage + "\n" + source.substring(newline + 1);
+            String version = source.substring(0, newline);
+            if (mapDesktop) {
+                assertEquals("Only the pinned desktop GLSL 130 case is under test",
+                        "#version 130", version);
+                version = "#version 300 es";
+            }
+            taggedSource = version + "\n#define " + stage + "\n"
+                    + (mapDesktop ? "#define PARAMETER_UNIFORM\n" : "")
+                    + source.substring(newline + 1);
         } else {
             taggedSource = "#define " + stage + "\n" + source;
         }
