@@ -379,6 +379,9 @@ internal data class MemoryEditorUiState(
     val inspectorLoading: Boolean = false,
     val inspector: MemoryInspectorSnapshot? = null,
 ) {
+    val canSearch: Boolean
+        get() = connected && !connecting && supported && !busy
+
     val activeTab: MemoryEditorTab
         get() = when {
             inspectorLoading || inspector != null -> MemoryEditorTab.INSPECTOR

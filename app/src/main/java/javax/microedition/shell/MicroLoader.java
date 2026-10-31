@@ -398,6 +398,8 @@ public class MicroLoader {
 				// The bridge must exist before loading the main class: its static initializer may be the
 				// first converted class to publish a lifecycle tail.
 				MemoryDiscoveryBridge.install(memoryRuntimeToken, loader);
+			} else {
+				MemoryDiscoveryBridge.noteIncompatibleTransform(memoryRuntimeToken);
 			}
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
 			// Preserve the legacy one-argument reflection ABI for converted archives. New

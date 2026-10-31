@@ -78,7 +78,7 @@ class MemoryEditorAdaptiveComposeTest {
                 CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
                     JLModPlusTheme(darkTheme = true) {
                         RuntimeKnownSearchDialog(
-                            MemoryEditorUiState(sessionStage = MemorySessionStage.CANDIDATES),
+                            MemoryEditorUiState(connected = true, supported = true, sessionStage = MemorySessionStage.CANDIDATES),
                             actions, onDismiss = {},
                         )
                         dialogView = LocalView.current
@@ -153,7 +153,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(size.value)) {
                 JLModPlusTheme {
-                    MemoryEditorRuntimeRoot(MemoryEditorUiState(visible = true), TestMemoryEditorActions())
+                    MemoryEditorRuntimeRoot(MemoryEditorUiState(visible = true, connected = true, supported = true), TestMemoryEditorActions())
                 }
             }
         }

@@ -83,6 +83,30 @@ public class MemoryDiscoveryBridgeTest {
 		}
 	}
 
+	@Test
+	public void incompatiblePayloadIsReportedOnlyForItsRuntimeGeneration() {
+		long legacy = 404L;
+		long current = 405L;
+		MemoryDiscoveryBridge.noteIncompatibleTransform(legacy);
+		try {
+			assertTrue(MemoryDiscoveryBridge.requiresReconversion(legacy));
+			assertFalse(MemoryDiscoveryBridge.snapshot(legacy).isAvailable());
+			assertFalse(MemoryDiscoveryBridge.requiresReconversion(current));
+			// Closing an unrelated runtime must not erase the current diagnosis.
+			MemoryDiscoveryBridge.close(current);
+			assertTrue(MemoryDiscoveryBridge.requiresReconversion(legacy));
+		} finally {
+			MemoryDiscoveryBridge.close(legacy);
+		}
+		assertFalse(MemoryDiscoveryBridge.requiresReconversion(legacy));
+		MemoryDiscoveryBridge.install(current, getClass().getClassLoader());
+		try {
+			assertFalse(MemoryDiscoveryBridge.requiresReconversion(current));
+		} finally {
+			MemoryDiscoveryBridge.close(current);
+		}
+	}
+
 	private static final class Fixture {
 	}
 }

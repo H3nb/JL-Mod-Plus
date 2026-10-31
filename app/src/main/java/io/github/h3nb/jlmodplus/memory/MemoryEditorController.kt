@@ -332,6 +332,8 @@ internal class MemoryEditorComposeController(
             state = state.copy(
                 connecting = true,
                 connected = false,
+                supported = false,
+                writeSupported = false,
                 busy = false,
                 searching = false,
                 scanBytesScanned = 0L,
@@ -383,10 +385,16 @@ internal class MemoryEditorComposeController(
             MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, 0L,
         )
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
-        val capabilityMessage = operationMessage(
-            capabilities.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, MemoryEngineContract.RESULT_OK),
-            capabilities,
-        )
+        val capabilityMessage = if (capabilities.getBoolean(
+                MemoryEngineContract.KEY_MANAGED_RECONVERSION_REQUIRED, false,
+            )) {
+            context.getString(R.string.memory_editor_reconversion_required)
+        } else {
+            operationMessage(
+                capabilities.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, MemoryEngineContract.RESULT_OK),
+                capabilities,
+            )
+        }
 
         // The target bridge binds asynchronously. Token 0 is transient/unknown here; runtime
         // teardown has a dedicated lifecycle callback and is the authoritative close signal.
@@ -437,6 +445,7 @@ internal class MemoryEditorComposeController(
                     connected = true,
                     supported = false,
                     writeSupported = false,
+                    messageIsError = true,
                     revision = revision,
                     baselineCount = baselineCount,
                     runtimeToken = token,
@@ -517,6 +526,7 @@ internal class MemoryEditorComposeController(
                 unknownPredicate = MemoryEditorRuntimePreferences.unknownPredicate(token),
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
+                messageIsError = false,
             )
         }
     }

@@ -4,6 +4,10 @@ The Memory Editor lets you investigate values used by a **running** MIDlet. It c
 
 It works with values reachable through the managed Java ME runtime. It is not a general-purpose native memory scanner, and a value displayed on the screen is not guaranteed to exist as one editable number.
 
+## When Memory Editor is unavailable
+
+A MIDlet can run from a converted DEX without the JL-Mod Plus bytecode transforms required for managed-memory discovery. In that case, the editor explains why searches are unavailable; gameplay remains usable. Close the game, then reconvert or reinstall the MIDlet using JL-Mod Plus. The normal launch flow can automatically reconvert compatible retained JAR sources, when available. A temporary engine connection failure is a different condition and does not mean the MIDlet needs reconversion.
+
 ## Start with an observation
 
 Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The main areas are **Search**, **Watch**, and **Inspector**.

@@ -20,6 +20,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -113,7 +114,7 @@ class MemoryEditorOverlayComposeTest {
         val overlay = MemoryEditorOverlayState()
         rule.setContent {
             JLModPlusTheme {
-                MemoryEditorRuntimeRoot(MemoryEditorUiState(visible = true), TestMemoryEditorActions(), overlay)
+                MemoryEditorRuntimeRoot(MemoryEditorUiState(visible = true, connected = true, supported = true), TestMemoryEditorActions(), overlay)
             }
         }
         rule.onNodeWithContentDescription("Search known values").performClick()
@@ -134,7 +135,7 @@ class MemoryEditorOverlayComposeTest {
         val overlay = MemoryEditorOverlayState()
         rule.setContent {
             JLModPlusTheme {
-                MemoryEditorRuntimeRoot(MemoryEditorUiState(visible = true), TestMemoryEditorActions(), overlay)
+                MemoryEditorRuntimeRoot(MemoryEditorUiState(visible = true, connected = true, supported = true), TestMemoryEditorActions(), overlay)
             }
         }
         rule.onNodeWithContentDescription("Search known values").performClick()
@@ -153,7 +154,7 @@ class MemoryEditorOverlayComposeTest {
     @OptIn(ExperimentalTestApi::class)
     @Test fun quickActionsStayStableAndUndoRemainsAvailableAfterAnEmptyScan() {
         val state = mutableStateOf(MemoryEditorUiState(
-            visible = true, supported = true, writeSupported = true,
+            visible = true, connected = true, supported = true, writeSupported = true,
             resultCount = 1, results = listOf(MemoryResultRow(
                 id = 1, valueText = "42", locationText = "score", aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
                 primaryType = MemoryEngineContract.TYPE_INT, state = MemoryEngineContract.CANDIDATE_STABLE,
@@ -180,6 +181,22 @@ class MemoryEditorOverlayComposeTest {
         val menuBounds = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
         assertTrue(menuBounds.right - menuBounds.left <= 400.dp)
         rule.onNodeWithText("Undo").performScrollTo().assertIsEnabled()
+    }
+
+    @Test fun unsupportedRuntimeExplainsUnavailabilityAndDisablesBothSearches() {
+        val explanation = "Installed MIDlet conversion is incompatible; reconvert using JL-Mod Plus."
+        rule.setContent {
+            JLModPlusTheme {
+                MemoryEditorRuntimeRoot(
+                    MemoryEditorUiState(visible = true, connected = true,
+                        supported = false, message = explanation, messageIsError = true),
+                    TestMemoryEditorActions(),
+                )
+            }
+        }
+        rule.onNodeWithText(explanation).assertIsDisplayed()
+        rule.onNodeWithContentDescription("Search known values").assertIsNotEnabled()
+        rule.onNodeWithContentDescription("Search unknown values").assertIsNotEnabled()
     }
 
     @Test fun opacitySurvivesClosingAndReopeningTheWorkspace() {

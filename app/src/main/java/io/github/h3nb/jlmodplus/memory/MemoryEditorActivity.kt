@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.memory
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
@@ -18,11 +19,15 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat
+import io.github.h3nb.jlmodplus.settings.RuntimeChromeClient
+import io.github.h3nb.jlmodplus.settings.RuntimeChromeState
 
 /** Translucent app Activity containing the production Memory Editor UI in :memory_engine. */
 class MemoryEditorActivity : AppCompatActivity() {
     private var controller: MemoryEditorComposeController? = null
     private var listenerRegistered = false
+    private var chromeClient: RuntimeChromeClient? = null
+    private var showStatusBar = false
 
     private val runtimeListener = MemoryEngineService.LocalRuntimeListener {
         runOnUiThread {
@@ -41,7 +46,17 @@ class MemoryEditorActivity : AppCompatActivity() {
         window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
         window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         EdgeToEdgeCompat.enableForComposeSurface(this)
-        hideSystemBars()
+        updateSystemBars()
+        chromeClient = RuntimeChromeClient(this, object : RuntimeChromeClient.Listener {
+            override fun onChromeChanged(state: RuntimeChromeState) {
+                showStatusBar = state.showStatusBar
+                updateSystemBars()
+            }
+
+            override fun onChromeError(failure: Exception) {
+                Log.w("MemoryEditorActivity", "Could not read runtime chrome preferences", failure)
+            }
+        })
 
         MemoryEngineService.addLocalRuntimeListener(runtimeListener)
         listenerRegistered = true
@@ -54,7 +69,7 @@ class MemoryEditorActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
             ),
         )
-        hideSystemBars()
+        updateSystemBars()
         controller = MemoryEditorComposeController(
             composeView = composeView,
             ownedRuntimeToken = token,
@@ -68,27 +83,41 @@ class MemoryEditorActivity : AppCompatActivity() {
         })
     }
 
+    override fun onStart() {
+        super.onStart()
+        chromeClient?.start()
+    }
+
     override fun onResume() {
         super.onResume()
-        hideSystemBars()
+        updateSystemBars()
+    }
+
+    override fun onStop() {
+        chromeClient?.close()
+        super.onStop()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) hideSystemBars()
+        if (hasFocus) updateSystemBars()
     }
 
-    private fun hideSystemBars() {
+    private fun updateSystemBars() {
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
             systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.navigationBars())
+            if (showStatusBar) show(WindowInsetsCompat.Type.statusBars())
+            else hide(WindowInsetsCompat.Type.statusBars())
         }
     }
 
     override fun onDestroy() {
         controller?.destroy()
         controller = null
+        chromeClient?.close()
+        chromeClient = null
         if (listenerRegistered) {
             MemoryEngineService.removeLocalRuntimeListener(runtimeListener)
             listenerRegistered = false

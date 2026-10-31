@@ -398,11 +398,11 @@ private fun RuntimeSearchResultsTab(
     Column(modifier = modifier.fillMaxWidth()) {
         var moreMenu by remember { mutableStateOf(false) }
         val quickActions = listOf(
-            RuntimeToolbarAction(R.drawable.ic_search, R.string.memory_editor_search_known_values, !state.busy) {
+            RuntimeToolbarAction(R.drawable.ic_search, R.string.memory_editor_search_known_values, state.canSearch) {
                 knownDialog = true
             },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_search_unknown,
-                R.string.memory_editor_search_unknown_values, state.supported && !state.busy) {
+                R.string.memory_editor_search_unknown_values, state.canSearch) {
                 unknownDialog = true
             },
             RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
@@ -1047,7 +1047,7 @@ internal fun RuntimeKnownSearchDialog(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 TextButton(
-                    enabled = newSearchValid && !state.busy,
+                    enabled = newSearchValid && state.canSearch,
                     onClick = {
                         when (val parsed = expression) {
                             is MemorySearchExpression.Single -> actions.startSearch(
@@ -1070,7 +1070,7 @@ internal fun RuntimeKnownSearchDialog(
                 }
                 if (memorySessionHasActiveSearch(state.sessionStage)) {
                     Button(
-                        enabled = nextScanValid && !state.busy,
+                        enabled = nextScanValid && state.canSearch,
                         onClick = {
                             val nextValue = (expression as? MemorySearchExpression.Single)?.value
                                 ?: return@Button
@@ -1266,7 +1266,7 @@ private fun RuntimeUnknownSearchDialog(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 TextButton(
-                    enabled = !state.busy,
+                    enabled = state.canSearch,
                     onClick = {
                         actions.startSearch(
                             "",
@@ -1282,7 +1282,7 @@ private fun RuntimeUnknownSearchDialog(
                 }
                 if (activeSession) {
                     Button(
-                        enabled = refineValid && !state.busy,
+                        enabled = refineValid && state.canSearch,
                         onClick = {
                             actions.nextScan(
                                 first.text,

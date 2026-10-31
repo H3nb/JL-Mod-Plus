@@ -348,7 +348,7 @@ fun MemoryEditorLargeTextScreenshot() {
 fun MemorySearchLargeTextScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         RuntimeKnownSearchDialog(
-            state = MemoryEditorUiState(sessionStage = MemorySessionStage.CANDIDATES),
+            state = MemoryEditorUiState(connected = true, supported = true, sessionStage = MemorySessionStage.CANDIDATES),
             actions = NoOpMemoryEditorActions,
             onDismiss = {},
         )
@@ -376,7 +376,7 @@ private fun MemoryOverlayUnderlay(dark: Boolean) {
                 modifier = Modifier.align(Alignment.Center).padding(16.dp))
             MemoryEditorRuntimeRoot(
                 state = MemoryEditorUiState(
-                    visible = true, supported = true, writeSupported = true,
+                    visible = true, connected = true, supported = true, writeSupported = true,
                     resultCount = if (dark) 3 else 0, results = if (dark) previewRows else emptyList(),
                 ),
                 actions = NoOpMemoryEditorActions,
