@@ -101,6 +101,7 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.research.LibretroTwoPassResearchPipeline;
 import io.github.h3nb.jlmodplus.config.BackgroundMode;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
@@ -162,6 +163,14 @@ public abstract class Canvas extends Displayable {
 	private static boolean screenshotRawMode;
 	// R&D branch only: permit a GPU-only fixture without launching a MIDlet host.
 	// Never enable for normal runtime, and remove this seam before production PRs.
+	private static volatile String[] graphicsResearchTwoPassSources;
+
+	/** Disposable R&D shader injection, not a persistent profile or user feature. */
+	public static void setGraphicsResearchTwoPassSources(String horizontal, String vertical) {
+		graphicsResearchTwoPassSources = horizontal == null || vertical == null
+				? null : new String[]{horizontal, vertical};
+	}
+
 	private static boolean graphicsResearchHeadlessHost;
 
 	public static void setGraphicsResearchHeadlessHost(boolean enabled) {
@@ -1712,6 +1721,8 @@ public abstract class Canvas extends Displayable {
 		private GLSurfaceView mView;
 		private final int[] bgTextureId = new int[1];
 		private ShaderProgram program;
+		private LibretroTwoPassResearchPipeline researchTwoPass;
+		private int hostGlWidth, hostGlHeight;
 		private AmbientGlRenderer ambientRenderer;
 		private long lastUploadedSequence = Long.MIN_VALUE;
 		private int lastUploadedWidth;
@@ -1730,6 +1741,18 @@ public abstract class Canvas extends Displayable {
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(false);
 			initTex();
+			// Research branch only: compile the pinned real Libretro source in this GL context.
+			// Failure keeps the existing legacy program active.
+			researchTwoPass = null;
+			String[] sources = graphicsResearchTwoPassSources;
+			if (sources != null) {
+				try {
+					researchTwoPass = new LibretroTwoPassResearchPipeline(sources[0], sources[1]);
+				} catch (RuntimeException e) {
+					Log.w(TAG, "R&D Libretro unavailable; using legacy shader", e);
+				}
+				program.use();
+			}
 			Bitmap bitmap = offscreenCopy.getBitmap();
 			textureValid = false;
 			lastUploadedSequence = Long.MIN_VALUE;
@@ -1752,6 +1775,8 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onSurfaceChanged(GL10 gl, int width, int height) {
+			hostGlWidth = width;
+			hostGlHeight = height;
 			glViewport(0, 0, width, height);
 			SkinLayer skinLayer = SkinLayer.getInstance();
 			int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
@@ -1812,10 +1837,26 @@ public abstract class Canvas extends Displayable {
 						lastUploadedHeight = bitmap.getHeight();
 					}
 				}
+				boolean libretroDrawn = false;
 				synchronized (vbo) {
 					program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
+					if (researchTwoPass != null) {
+						try {
+							researchTwoPass.draw(bgTextureId[0], vbo, lastUploadedWidth,
+									lastUploadedHeight, Canvas.this.width, Canvas.this.height,
+									hostGlWidth, hostGlHeight, frameSequence,
+									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
+							libretroDrawn = true;
+						} catch (RuntimeException e) {
+							Log.w(TAG, "R&D Libretro draw failed; reverting to legacy shader", e);
+							researchTwoPass.release();
+							researchTwoPass = null;
+						}
+						program.use();
+						program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
+					}
 				}
-				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				if (!libretroDrawn) glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 				presented = true;
 				if (metrics != null) {
 					metrics.recordRender(frameSequence);
