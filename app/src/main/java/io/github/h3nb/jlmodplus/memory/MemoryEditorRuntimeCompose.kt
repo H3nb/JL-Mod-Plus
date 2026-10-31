@@ -19,6 +19,10 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -441,27 +445,31 @@ private fun RuntimeSearchResultsTab(
                 deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
             },
         )
-        val primaryActions = if (selectedRows.isEmpty()) {
-            listOf(quickActions[0], quickActions[1], quickActions[4])
-        } else {
-            listOf(quickActions[2], quickActions[3], quickActions[4])
-        }
-        val overflowActions = (quickActions.filterNot { action ->
-            primaryActions.any { it.label == action.label }
-        } + extraActions).filter { it.enabled }
-        if (state.results.isNotEmpty() || state.resultCount > 0L || state.busy ||
-            state.canUndo || state.sessionStage != MemorySessionStage.EMPTY
-        ) {
+        // Keep the frequent actions at fixed positions regardless of selection.
+        // Only genuinely narrow windows move secondary actions into More.
+        BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
+            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+        )) {
+            val narrowActions = maxWidth < (if (compactRows) 500.dp else 304.dp)
+            val primaryActions = if (narrowActions) {
+                listOf(quickActions[0], quickActions[2], quickActions[4])
+            } else quickActions
+            val overflowActions = quickActions.filterNot { it in primaryActions } +
+                extraActions.filter { it.enabled }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 horizontalArrangement = if (compactRows) Arrangement.End else Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (compactRows && state.resultCount > 0L) {
-                    Row(
-                        modifier = Modifier.weight(1f).padding(start = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                if (compactRows && (state.results.isNotEmpty() || state.resultCount > 0L)) {
+                    RuntimePageSelectionCheckbox(
+                        checked = allVisibleSelected,
+                        enabled = state.results.isNotEmpty() && !state.busy,
+                        description = visibleSelectionDescription,
+                        onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f).padding(start = 4.dp),
                     ) {
                         Text(
                             pluralStringResource(
@@ -499,26 +507,12 @@ private fun RuntimeSearchResultsTab(
                     }
                 }
             }
-        }
-        LaunchedEffect(overflowActions.isEmpty()) {
-            if (overflowActions.isEmpty()) moreMenu = false
-        }
-        if (moreMenu && overflowActions.isNotEmpty()) {
-            AlertDialog(
-                onDismissRequest = { moreMenu = false },
-                maxDialogWidth = 400.dp,
-                text = {
-                    Column {
-                        overflowActions.forEach { action ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(action.label)) },
-                                leadingIcon = { Icon(painterResource(action.icon), contentDescription = null) },
-                                onClick = { moreMenu = false; action.onClick() },
-                            )
-                        }
-                    }
-                },
-            )
+            LaunchedEffect(overflowActions.isEmpty()) {
+                if (overflowActions.isEmpty()) moreMenu = false
+            }
+            if (moreMenu && overflowActions.isNotEmpty()) {
+                RuntimeOverflowActionsDialog(overflowActions) { moreMenu = false }
+            }
         }
         HorizontalDivider()
 
@@ -528,13 +522,11 @@ private fun RuntimeSearchResultsTab(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Checkbox(
+                    RuntimePageSelectionCheckbox(
                         checked = allVisibleSelected,
                         enabled = state.results.isNotEmpty() && !state.busy,
-                        onCheckedChange = { if (it) actions.selectVisible() else actions.clearSelection() },
-                        modifier = Modifier.semantics {
-                            contentDescription = visibleSelectionDescription
-                        },
+                        description = visibleSelectionDescription,
+                        onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
                     )
                     Column(Modifier.weight(1f)) {
                         Text(
@@ -782,6 +774,61 @@ private fun RuntimeResultRow(
 }
 
 @Composable
+private fun RuntimePageSelectionCheckbox(
+    checked: Boolean,
+    enabled: Boolean,
+    description: String,
+    onToggle: (Boolean) -> Unit,
+) {
+    Checkbox(
+        checked = checked,
+        enabled = enabled,
+        onCheckedChange = onToggle,
+        modifier = Modifier.semantics { contentDescription = description },
+    )
+}
+
+@Composable
+private fun RuntimeOverflowActionsDialog(
+    actions: List<RuntimeToolbarAction>,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        maxDialogWidth = 720.dp,
+        text = {
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val twoColumns = maxWidth >= 520.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+                val gap = 8.dp
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(gap),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    actions.forEach { action ->
+                        DropdownMenuItem(
+                            modifier = if (twoColumns) Modifier.width((maxWidth - gap) / 2)
+                                else Modifier.fillMaxWidth(),
+                            text = {
+                                Text(
+                                    stringResource(action.label),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(painterResource(action.icon), contentDescription = null)
+                            },
+                            enabled = action.enabled,
+                            onClick = { onDismiss(); action.onClick() },
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
 private fun RuntimeWatchTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
@@ -792,12 +839,26 @@ private fun RuntimeWatchTab(
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     val selectedRows = state.watches.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
+    val allWatchesSelected = state.watches.isNotEmpty() &&
+        state.watches.all { it.id in state.selected }
+    val selectionDescription = stringResource(
+        if (allWatchesSelected) R.string.memory_editor_clear_selection
+        else R.string.memory_editor_select_visible,
+    )
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            RuntimePageSelectionCheckbox(
+                checked = allWatchesSelected,
+                enabled = state.watches.isNotEmpty() && !state.busy,
+                description = selectionDescription,
+                onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
+            )
             Text(
                 stringResource(R.string.memory_editor_watch),
                 style = MaterialTheme.typography.titleSmall,
