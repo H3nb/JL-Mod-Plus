@@ -160,6 +160,13 @@ public abstract class Canvas extends Displayable {
 	// Also read by the overlay sampler; guest/runtime code can change it while the surface is live.
 	private static volatile int fpsLimit;
 	private static boolean screenshotRawMode;
+	// R&D branch only: permit a GPU-only fixture without launching a MIDlet host.
+	// Never enable for normal runtime, and remove this seam before production PRs.
+	private static boolean graphicsResearchHeadlessHost;
+
+	public static void setGraphicsResearchHeadlessHost(boolean enabled) {
+		graphicsResearchHeadlessHost = enabled;
+	}
 	private static boolean timingOverlayEnabled;
 
 	private final Object bufferLock = new Object();
@@ -2492,11 +2499,21 @@ public abstract class Canvas extends Displayable {
 		private SoftBar() {
 			super(Canvas.this);
 			MicroActivity activity = ContextHolder.getActivity();
-			this.overlayView = activity.findViewById(R.id.overlay);
-			DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
-			padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
-			textColor = LegacyThemeColors.accent(activity);
-			bgColor = ContextCompat.getColor(activity, R.color.background);
+			if (graphicsResearchHeadlessHost && activity == null) {
+				// Research-only EGL pbuffer harness; keep the normal MIDlet path unchanged.
+				android.content.Context app = ContextHolder.getAppContext();
+				this.overlayView = new OverlayView(app, null);
+				DisplayMetrics metrics = app.getResources().getDisplayMetrics();
+				padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
+				textColor = LegacyThemeColors.accent(app);
+				bgColor = ContextCompat.getColor(app, R.color.background);
+			} else {
+				this.overlayView = activity.findViewById(R.id.overlay);
+				DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
+				padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
+				textColor = LegacyThemeColors.accent(activity);
+				bgColor = ContextCompat.getColor(activity, R.color.background);
+			}
 		}
 
 		private void showPopup() {

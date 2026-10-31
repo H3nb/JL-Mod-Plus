@@ -49,7 +49,15 @@ public final class CanvasRendererPublicationResearchTest {
         profile.screenFilter = false;
         profile.shader = null;
         Canvas.setSettings(profile);
-        FixtureCanvas canvas = new FixtureCanvas();
+        // This test exercises the real GLRenderer without a running MicroActivity.
+        // Normal Canvas construction continues to require MicroActivity.
+        Canvas.setGraphicsResearchHeadlessHost(true);
+        FixtureCanvas canvas;
+        try {
+            canvas = new FixtureCanvas();
+        } finally {
+            Canvas.setGraphicsResearchHeadlessHost(false);
+        }
         Field renderField = Canvas.class.getDeclaredField("renderer");
         renderField.setAccessible(true);
         Object renderer = renderField.get(canvas);
