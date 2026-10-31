@@ -40,6 +40,7 @@ public final class CanvasRendererPublicationResearchTest {
 
     private static final class FixtureCanvas extends Canvas {
         FixtureCanvas() { super(true); }
+        FixtureCanvas(boolean fullscreen) { super(fullscreen); }
         @Override protected void paint(Graphics g) { }
     }
 
@@ -230,4 +231,142 @@ public final class CanvasRendererPublicationResearchTest {
         assertEquals("green", Color.green(expected), pixel.get(1) & 255);
         assertEquals("blue", Color.blue(expected), pixel.get(2) & 255);
     }
+
+    @Test public void actualSoftbarBackingCanBeTightWithoutChangingGuestPixels() throws Exception {
+        ProfileModel profile = ProfileModel.fresh("");
+        profile.graphicsMode = 1;
+        profile.screenWidth = 32;
+        profile.screenHeight = 48;
+        profile.screenScaleType = 1;
+        profile.screenPadding = 0;
+        profile.screenFilter = false;
+        profile.shader = null;
+        Canvas.setSettings(profile);
+
+        String horizontal = readSource(SHADER_DIR + "gauss_2tap_h.glsl");
+        String vertical = readSource(SHADER_DIR + "gauss_2tap_v.glsl");
+        Canvas.setGraphicsResearchTwoPassSources(horizontal, vertical);
+
+        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
+        assertTrue(EGL14.eglInitialize(display, new int[1], 0, new int[1], 0));
+        EGLConfig[] configs = new EGLConfig[1];
+        int[] count = new int[1];
+        int[] attributes = {EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
+                EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8, EGL14.EGL_NONE};
+        assertTrue(EGL14.eglChooseConfig(display, attributes, 0, configs, 0, 1, count, 0));
+        assertTrue(count[0] > 0);
+        try {
+            for (int scenario = 0; scenario < 3; scenario++) {
+                // 0 = padded backing (must fail closed to legacy).
+                // 1 = exact backing from creation (no normalization pass).
+                // 2 = start padded; convert it in-place at a size update.
+                boolean initialTight = scenario == 1;
+                Canvas.setGraphicsResearchTightPresentationBitmap(initialTight);
+                Canvas.setGraphicsResearchHeadlessHost(true);
+                FixtureCanvas canvas;
+                try {
+                    canvas = new FixtureCanvas(false); // real softbar shrinks active height
+                } finally {
+                    Canvas.setGraphicsResearchHeadlessHost(false);
+                }
+                Field bufferField = Canvas.class.getDeclaredField("offscreenCopy");
+                bufferField.setAccessible(true);
+                Image backing = (Image) bufferField.get(canvas);
+                assertTrue("softbar should leave an active content area", canvas.getHeight() > 0);
+                assertTrue("test must actually exercise a softbar reduction",
+                        canvas.getHeight() < profile.screenHeight);
+                if (initialTight) {
+                    assertEquals(canvas.getHeight(), backing.getBitmap().getHeight());
+                } else {
+                    assertTrue(backing.getBitmap().getHeight() > canvas.getHeight());
+                }
+
+                Image red = Image.createImage(canvas.getWidth(), canvas.getHeight(), Color.RED);
+                PresentationMailbox mailbox = (PresentationMailbox)
+                        getField(Canvas.class, "presentationMailbox").get(canvas);
+                mailbox.begin();
+                canvas.flushBuffer(red, 0, 0);
+                if (scenario == 2) {
+                    Canvas.setGraphicsResearchTightPresentationBitmap(true);
+                    canvas.updateSize();
+                    backing = (Image) bufferField.get(canvas);
+                    assertEquals(canvas.getHeight(), backing.getBitmap().getHeight());
+                    assertEquals(Color.RED, backing.getBitmap().getPixel(0, 0));
+                    assertEquals(Color.RED, backing.getBitmap().getPixel(
+                            canvas.getWidth() - 1, canvas.getHeight() - 1));
+                }
+                if (scenario == 1) {
+                    assertEquals(canvas.getHeight(), backing.getBitmap().getHeight());
+                }
+
+                Object renderer = getField(Canvas.class, "renderer").get(canvas);
+                assertNotNull(renderer);
+                Field pipelineField = getField(renderer.getClass(), "researchTwoPass");
+                Method update = renderer.getClass().getDeclaredMethod("updateSize",
+                        float.class, float.class, float.class, float.class,
+                        float.class, float.class);
+                update.setAccessible(true);
+                float th = (float) canvas.getHeight() / backing.getBitmap().getHeight();
+                float tw = (float) canvas.getWidth() / backing.getBitmap().getWidth();
+                update.invoke(renderer, -0.5f, 0.5f, 0.5f, -0.5f, th, tw);
+                EGLContext context = EGL14.eglCreateContext(display, configs[0],
+                        EGL14.EGL_NO_CONTEXT,
+                        new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE}, 0);
+                EGLSurface surface = EGL14.eglCreatePbufferSurface(display, configs[0],
+                        new int[]{EGL14.EGL_WIDTH, W, EGL14.EGL_HEIGHT, H, EGL14.EGL_NONE}, 0);
+                assertNotEquals(EGL14.EGL_NO_CONTEXT, context);
+                assertNotEquals(EGL14.EGL_NO_SURFACE, surface);
+                try {
+                    assertTrue(EGL14.eglMakeCurrent(display, surface, surface, context));
+                    android.opengl.GLSurfaceView.Renderer real =
+                            (android.opengl.GLSurfaceView.Renderer) renderer;
+                    real.onSurfaceCreated(null, null);
+                    real.onSurfaceChanged(null, W, H);
+                    assertTrue(mailbox.trySchedule(mailbox.generation()));
+                    real.onDrawFrame(null);
+                    assertColor(Color.RED, 6, 6);
+                    LibretroTwoPassResearchPipeline pipeline =
+                            (LibretroTwoPassResearchPipeline) pipelineField.get(renderer);
+                    if (scenario == 0) {
+                        assertNull("padded input must fall back rather than bleed", pipeline);
+                    } else {
+                        assertNotNull("tight input should use the genuine Libretro FBO", pipeline);
+                        assertEquals(1, pipeline.offscreenPassExecutions());
+                        assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0);
+                        assertTrue(mailbox.trySchedule(mailbox.generation()));
+                        real.onDrawFrame(null);
+                        assertEquals(1, pipeline.offscreenPassExecutions());
+                    }
+                    assertEquals("OpenGL error during softbar path",
+                            GLES20.GL_NO_ERROR, GLES20.glGetError());
+                    Log.i(TAG, "softbar scenario=" + scenario + " logical="
+                            + canvas.getWidth() + "x" + canvas.getHeight()
+                            + " backing=" + backing.getBitmap().getWidth()
+                            + "x" + backing.getBitmap().getHeight()
+                            + " multipass=" + (pipeline != null));
+                } finally {
+                    mailbox.close();
+                    EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE,
+                            EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+                    EGL14.eglDestroySurface(display, surface);
+                    EGL14.eglDestroyContext(display, context);
+                }
+            }
+        } finally {
+            Canvas.setGraphicsResearchTwoPassSources(null, null);
+            Canvas.setGraphicsResearchTightPresentationBitmap(false);
+            Canvas.setGraphicsResearchHeadlessHost(false);
+            EGL14.eglTerminate(display);
+        }
+    }
+
+    private static Field getField(Class<?> type, String name) throws Exception {
+        Field field = type.getDeclaredField(name);
+        field.setAccessible(true);
+        return field;
+    }
+
 }
