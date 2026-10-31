@@ -916,6 +916,14 @@ public class AppsListFragment extends Fragment {
                 }
             }
             @Override
+            public void onOpenUpdateDownload(@NonNull String url) {
+                if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/download/v")
+                        && url.endsWith(".apk")) {
+                    openExternalPage(url, "GitHub Releases",
+                            R.string.updates_link_copied, R.string.updates_browser_unavailable);
+                }
+            }
+            @Override
             public void onOpenProjectRepository() {
                 openExternalPage(
                         "https://github.com/H3nb/JL-Mod-Plus",

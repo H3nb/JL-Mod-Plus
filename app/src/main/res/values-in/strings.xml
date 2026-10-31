@@ -1195,4 +1195,7 @@
     <string name="layout_editor_guide_tools">Alat editor</string>
     <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan, membatalkan, atau melanjutkan pengeditan.</string>
     <string name="layout_editor_guide_start">Mulai mengedit</string>
+    <string name="updates_download_apk">Unduh APK</string>
+    <string name="updates_skip_version">Lewati versi ini</string>
+    <string name="updates_dialog_message">JL-Mod Plus %1$s tersedia. Versi terpasang: %2$s. Unduh APK atau lihat rilisnya di GitHub.</string>
 </resources>

@@ -248,6 +248,11 @@ public class MainActivity extends AppCompatActivity {
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 	}
 
+	/** Compose observes the host overlay state before presenting an optional update dialog. */
+	public boolean isHostDialogVisible() {
+		return mainComposeController != null && mainComposeController.isDialogVisible();
+	}
+
 	@Override
 	protected void onResume() {
 		super.onResume();
