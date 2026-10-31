@@ -460,7 +460,6 @@ class LibraryComposeController(
                         controllerBackAvailable = available
                     },
                     noticeHost = { TransientNoticeHost(state = noticeState) },
-                    onUpdateNotice = noticeState::show,
                 )
             }
         }
@@ -627,7 +626,6 @@ fun LibraryScreen(
     onControllerBackAvailabilityChanged: (Boolean) -> Unit = {},
     initialSelectionState: LibrarySelectionState = LibrarySelectionState(),
     noticeHost: @Composable () -> Unit = {},
-    onUpdateNotice: (String) -> Unit = {},
 ) {
     var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
         mutableStateOf(LibraryNavigationState())
@@ -894,23 +892,7 @@ fun LibraryScreen(
             updatePrompt = null
         }
     }
-    val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
-        pagerState.currentPage == pagerState.settledPage &&
-        state.databaseControlsReady && !isImeVisible &&
-        hostActivity?.isHostDialogVisible() == false && !libraryOverlayVisible &&
-        !selectionActiveHere
-    LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
-        sessionDismissedUpdate, updateRepository?.channel) {
-        val repository = updateRepository
-        val candidate = availableUpdate
-        if (BuildConfig.DEBUG || repository == null || !repository.automaticChecks ||
-            !updateDialogReady || candidate == null || repository.isHandled(candidate) ||
-            sessionDismissedUpdate == repository.candidateKey(candidate)) {
-            updatePrompt = null
-        } else {
-            updatePrompt = candidate
-        }
-    }
+
 
     val currentEditorIdentity by rememberUpdatedState(state.libraryScope to metadataTarget?.databaseId)
     val metadataApp = metadataTarget?.let { target ->
@@ -1138,6 +1120,24 @@ fun LibraryScreen(
             initialNavigationFocus.requestFocus()
         }
     }
+    val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
+        pagerState.currentPage == pagerState.settledPage &&
+        state.databaseControlsReady && !isImeVisible &&
+        hostActivity?.isHostDialogVisible() == false && !libraryOverlayVisible &&
+        !selectionActiveHere
+    LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
+        sessionDismissedUpdate, updateRepository?.channel) {
+        val repository = updateRepository
+        val candidate = availableUpdate
+        if (BuildConfig.DEBUG || repository == null || !repository.automaticChecks ||
+            !updateDialogReady || candidate == null || repository.isHandled(candidate) ||
+            sessionDismissedUpdate == repository.candidateKey(candidate)) {
+            updatePrompt = null
+        } else {
+            updatePrompt = candidate
+        }
+    }
+
     val libraryContentModifier = if (!libraryOverlayVisible) {
         Modifier
     } else {
