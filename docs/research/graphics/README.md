@@ -98,3 +98,5 @@ implemented through focused PRs, not by blindly merging this entire branch.
 - The branch carries a temporary `GraphicsRdHostActivity` in the target app manifest solely to make instrumentation run in the correct process. Remove the Activity/manifest entry and disposable CI/test code before preparing production PRs.
 
 **Next discriminating gates:** an actual R&D-only `Canvas.GLRenderer` frame-integration trial, physical ARM64 cost comparison for cropped Bitmap versus FBO-normalized input, and a guest-facing HD pixel/clip/mixed-rendering oracle. Do not infer universal GLSLP or HD support from isolated green tests.
+
+**Libretro source coverage:** [Targeted corpus audit](../../../research/graphics/LIBRETRO-CORPUS-AUDIT.md) enumerates 623 GLSLP presets / 684 GLSL sources at the pinned upstream SHA, inspects representative CRT/LCD/FSR/history/LUT/reference use, and distinguishes unsupported language/FBO features from preset parsing. The actual RetroArch GLES shader driver conditionally maps desktop GLSL version declarations; do not categorically reject all version-130 sources or presume they will run on GLES2.
