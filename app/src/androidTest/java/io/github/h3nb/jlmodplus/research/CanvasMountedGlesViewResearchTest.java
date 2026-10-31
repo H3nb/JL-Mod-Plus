@@ -236,7 +236,8 @@ public final class CanvasMountedGlesViewResearchTest {
                 canvas.setFullScreenMode(true);
                 mounted[0].requestRender();
             });
-            Frame full = next(observed, 1, 160, 120, redSequence);
+            Frame full = next(observed, 1, 160, 120, redSequence,
+                    canvas.getWidth(), canvas.getHeight());
             exactColor(full, Color.RED);
             assertTrue("Fullscreen must grow active guest height",
                     full.logicalH > resizedHost.logicalH);
@@ -270,7 +271,7 @@ public final class CanvasMountedGlesViewResearchTest {
                 canvas.updateSize();
                 mounted[0].requestRender();
             });
-            Frame grown = next(observed, 1, 176, 132, redSequence);
+            Frame grown = next(observed, 1, 176, 132, redSequence, 40, 56);
             exactColor(grown, Color.RED);
             assertEquals(40, grown.logicalW);
             assertEquals(56, grown.logicalH);
@@ -310,12 +311,18 @@ public final class CanvasMountedGlesViewResearchTest {
 
     private static Frame next(Observer o, int minGeneration, int width, int height,
                               long sequence) throws Exception {
+        return next(o, minGeneration, width, height, sequence, -1, -1);
+    }
+
+    private static Frame next(Observer o, int minGeneration, int width, int height,
+                              long sequence, int guestW, int guestH) throws Exception {
         for (int attempts = 0; attempts < 12; attempts++) {
             Frame f = o.frames.poll(WAIT_SECONDS, TimeUnit.SECONDS);
             assertNotNull("No mounted Canvas.GLRenderer frame", f);
             if (f.failure != null) throw new AssertionError("Mounted Canvas GL failed", f.failure);
             if (f.generation >= minGeneration && f.surfaceW == width && f.surfaceH == height
-                    && (sequence < 0 || f.uploadedSequence == sequence)) {
+                    && (sequence < 0 || f.uploadedSequence == sequence)
+                    && (guestW < 0 || f.logicalW == guestW && f.logicalH == guestH)) {
                 assertEquals("Mounted GL error", GLES20.GL_NO_ERROR, f.glError);
                 return f;
             }
