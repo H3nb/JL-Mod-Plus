@@ -133,9 +133,12 @@ internal fun memoryEditorTitleTopPadding(): Dp {
 internal fun memoryEditorBottomCornerPadding(): PaddingValues {
     val density = LocalDensity.current
     val view = LocalView.current
-    val insets = if (Build.VERSION.SDK_INT >= 31) view.rootWindowInsets else null
-    val leftRadius = insets?.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT)?.radius ?: 0
-    val rightRadius = insets?.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_RIGHT)?.radius ?: 0
+    val (leftRadius, rightRadius) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val insets = view.rootWindowInsets
+        val left = insets?.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT)?.radius ?: 0
+        val right = insets?.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_RIGHT)?.radius ?: 0
+        left to right
+    } else 0 to 0
     return with(density) {
         PaddingValues.Absolute(
             left = maxOf(8.dp, leftRadius.toDp()),
