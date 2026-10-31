@@ -152,14 +152,28 @@ internal fun MemoryEditorPeekDock(
     overlay: MemoryEditorOverlayState,
     modifier: Modifier = Modifier,
     leadingContent: (@Composable () -> Unit)? = null,
+    centerContent: (@Composable () -> Unit)? = null,
 ) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (leadingContent != null && !overlay.peeking) {
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                leadingContent()
+        if (centerContent != null) {
+            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                if (leadingContent != null && !overlay.peeking) {
+                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                        leadingContent()
+                    }
+                }
             }
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                if (!overlay.peeking) centerContent()
+            }
+        } else {
+            if (leadingContent != null && !overlay.peeking) {
+                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                    leadingContent()
+                }
+            }
+            Spacer(Modifier.weight(1f))
         }
-        Spacer(Modifier.weight(1f))
         val description = stringResource(
             if (overlay.peeking) R.string.memory_editor_peek_underlay_active
             else R.string.memory_editor_peek_underlay,

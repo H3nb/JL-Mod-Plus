@@ -13,6 +13,8 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -163,6 +165,39 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNode(hasSetTextAction()).assertTextContains("31415")
         rule.onNodeWithText("Cancel").assertIsDisplayed().performClick()
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
+    }
+
+    @Test fun paginationSharesTheBottomDockWithPeekInBothWindowShapes() {
+        val count = 18_687L
+        val nextPageLabel = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.memory_editor_next_results_page_action)
+        val windowSize = mutableStateOf(DpSize(720.dp, 360.dp))
+        var nextCalls = 0
+        val actions = object : TestMemoryEditorActions() {
+            override fun nextPage() { nextCalls++ }
+        }
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(windowSize.value)) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(
+                        MemoryEditorUiState(visible = true, connected = true, supported = true,
+                            resultCount = count, sessionStage = MemorySessionStage.CANDIDATES),
+                        actions,
+                    )
+                }
+            }
+        }
+        for (size in listOf(DpSize(720.dp, 360.dp), DpSize(360.dp, 640.dp))) {
+            rule.runOnIdle { windowSize.value = size }
+            val next = rule.onNodeWithContentDescription(nextPageLabel).assertIsDisplayed()
+            val peek = rule.onNodeWithTag("memory-editor-peek").assertIsDisplayed()
+            val nextBounds = next.getUnclippedBoundsInRoot()
+            val peekBounds = peek.getUnclippedBoundsInRoot()
+            assertEquals("Pagination and Peek must share the same footer baseline",
+                peekBounds.top.value, nextBounds.top.value, 2f)
+            next.performClick()
+        }
+        rule.runOnIdle { assertEquals(2, nextCalls) }
     }
 
     private fun inspectorSnapshot() = MemoryInspectorSnapshot(
