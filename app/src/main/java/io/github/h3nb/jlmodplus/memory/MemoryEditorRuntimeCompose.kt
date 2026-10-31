@@ -815,14 +815,14 @@ private fun RuntimeOverflowActionsDialog(
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val twoColumns = maxWidth >= 520.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
                 val gap = 8.dp
+                val itemWidth = if (twoColumns) (maxWidth - gap) / 2 else maxWidth
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(gap),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     actions.forEach { action ->
                         DropdownMenuItem(
-                            modifier = if (twoColumns) Modifier.width((maxWidth - gap) / 2)
-                                else Modifier.fillMaxWidth(),
+                            modifier = Modifier.width(itemWidth),
                             text = {
                                 Text(
                                     stringResource(action.label),
