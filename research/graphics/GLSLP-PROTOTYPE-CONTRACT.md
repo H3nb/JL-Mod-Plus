@@ -244,3 +244,35 @@ This validates the **single GLES presentation owner** and **pass execution order
 [CI 41178625175](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41178625175) passed the first **real attached `GlesView` + actual `Canvas.GLRenderer`** trial: `Canvas.flushBuffer` publication, host-only redraw reuse, softbar-driven source size transition (32×38 → 32×40, one necessary horizontal recompute), true viewport-only resize with unchanged guest dimensions (no recompute), resizing the guest to 40×56, new blue frame publication, and forced EGL context recreation with correct retained frame readback. The small callback wrapper only observes output; production shader/GL rendering remains in `Canvas.GLRenderer`. Detailed evidence and earlier fixture corrections are in [EXPERIMENTS.md](EXPERIMENTS.md).
 
 This settles the **attached-view shader ownership and basic resize/context checkpoint** on one SwiftShader emulator, not full Midlet/Activity lifecycle or device performance. The headless research SoftBar and reflected view binding must not ship. Next implement a minimal **safe GLSLP asset resolver and pass descriptor** against representative pinned presets, preserving legacy shader formats. Require an end-to-end `MicroActivity`/guest smoke test and real-device GLES/performance checks before user-visible release.
+
+## xBRZ dependency and texture-orientation checkpoint
+
+[CI 41220537772](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41220537772)
+executed genuine pinned two-pass xBRZ Freescale in the real
+`Canvas.GLRenderer` controlled-pbuffer test. The second pass requires
+`Texture` (first pass edge metadata) **and** `PassPrev2Texture`
+(the frame before that pass; the original guest frame in a two-pass-only
+preset), plus the original texture/input sizes. The first pass's RGBA8
+metadata must use **nearest** filtering to preserve encoded bit decisions.
+Source-defined `#pragma` defaults were used; preset overrides remain open.
+See [EXPERIMENTS.md](EXPERIMENTS.md) for readback evidence.
+
+**New correctness invariant:** a GL framebuffer attachment's UV y=0 refers
+to its bottom row. The original Android Bitmap's uploaded texture and
+an offscreen pass texture must address the **same logical pixel row**
+at the same UV when simultaneously sampled by a later pass. A flipped
+intermediate FBO can remain complete and produce nonzero pixels yet yield
+no xBRZ smoothing. The R&D offscreen quad was corrected to preserve this
+alignment; final host viewport geometry and guest pointer coordinates
+remain unchanged. Check this explicitly for future source/previous-pass/
+alias texture combinations rather than solving it by transforming shaders.
+
+**Do not generalize the disposable two-pass executor:** it recognizes
+one extra source sampler and only source-sized pass 0 / viewport-sized
+pass 1. `gauss_4tap.glslp` actually specifies two source-sized
+passes; its current host-direct second stage is **not** a proof of exact
+preset-size semantics. The real planner must resolve each pass independently,
+including the final pass's declared size and optional host presentation
+blit. No generic pass engine or frame queue is justified solely by this
+experiment. Keep presets' requested filters and named parameter overrides
+independent from the legacy four-value shader ABI.
