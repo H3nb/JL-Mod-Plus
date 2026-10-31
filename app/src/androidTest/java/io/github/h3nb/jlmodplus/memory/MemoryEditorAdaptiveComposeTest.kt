@@ -33,6 +33,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
+import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
