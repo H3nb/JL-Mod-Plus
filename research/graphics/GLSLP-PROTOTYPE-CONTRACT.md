@@ -219,3 +219,10 @@ The pinned libretro/glsl-shaders source/preset requirements, RetroArch version m
 [CI 41166769301](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41166769301) exercised the real `Canvas.GLRenderer` with `Canvas.flushBuffer`, the existing publication mailbox, source uploads, host-only redraw, and fresh GLES context generation; exact red/blue readbacks and upload-generation checks passed. The **headless test-only SoftBar host** and controlled EGL pbuffer do not prove real `MicroActivity`/GLSurfaceView integration or GLSLP execution. The independent `GlesView` lifecycle proof remains complementary.
 
 This evidence favors a single presentation authority (mailbox + uploaded bitmap + viewport), with pluggable None/Legacy/GLSLP program execution; do not bolt a second frame queue onto the shader path. Temporal feedback and `FrameCount` must follow actual **consumed guest frames** rather than host invalidations. Do not hold `bufferLock` during multipass draws, assume padded bitmap input is a tight Libretro texture, or leave a failed shader active and repeatedly retry the same frame.
+
+
+## R&D stage gate: real two-pass execution on Canvas.GLRenderer
+
+[CI 41168266751](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41168266751) verified actual `Canvas.GLRenderer` execution of pinned Libretro Gauss horizontal+vertical GLSL through a source-resolution FBO, including guest publication, spatial blur readback, host-only redraw reuse, invalid shader fallback, host-background isolation and fresh EGL-context rebuilding. A default-off, R&D-only source injection is used; there is still **no GLSLP parser or product feature**. Source texture must currently be tight; padded content is rejected by this experiment. The full evidence and limits are in [EXPERIMENTS.md](EXPERIMENTS.md).
+
+This validates the **single GLES presentation owner** and **pass execution ordering**. It does not validate other Libretro preset dependencies. Next determine a correctness- and cost-aware tight source strategy, then introduce a separate resource-safe preset resolver without hardcoding a new all-purpose render graph.

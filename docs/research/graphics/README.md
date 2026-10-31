@@ -105,3 +105,6 @@ implemented through focused PRs, not by blindly merging this entire branch.
 
 
 **Real Canvas renderer boundary:** [run 41166769301](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41166769301) passed a research-only test of actual `Canvas.GLRenderer` / `Canvas.flushBuffer` / `PresentationMailbox`, including red/blue frame publication, host redraw without re-upload, and recreation of two EGL contexts. A temporarily enabled headless SoftBar fixture was necessary; real MicroActivity presentation, complex shaders and performance remain untested. See [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md).
+
+
+**Real Libretro two-pass on Canvas:** [CI 41168266751](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41168266751) passed the first actual `Canvas.GLRenderer` trial of pinned Gauss horizontal+vertical sources with FBO, mixed-color pixel readback, no offscreen recompute on host redraw, compile-error legacy fallback, and EGL recreation. The R&D pipeline is intentionally hardcoded and requires tight source texture storage; `.glslp` parsing, padded content, real Midlet host, and ARM64 performance remain open. See [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md).
