@@ -278,11 +278,13 @@ public final class GlslpPresetResearch {
     private static Map<String, String> parse(String source) throws IOException {
         Map<String, String> values = new LinkedHashMap<>();
         for (String original : source.split("\n", -1)) {
-            String line = uncomment(original).trim();
-            if (line.isEmpty()) continue;
-            if (line.startsWith("#reference")) {
+            // #reference is a directive, not an ordinary # comment. Refuse it
+            // until recursive import and declaring-file-relative paths are modeled.
+            if (original.trim().startsWith("#reference")) {
                 throw new IOException("Unsupported GLSLP #reference");
             }
+            String line = uncomment(original).trim();
+            if (line.isEmpty()) continue;
             if (line.startsWith("#")) continue;
             int equals = line.indexOf('=');
             if (equals < 1) throw new IOException("Malformed GLSLP assignment: " + line);
