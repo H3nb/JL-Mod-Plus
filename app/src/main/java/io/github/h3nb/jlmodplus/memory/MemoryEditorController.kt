@@ -385,9 +385,10 @@ internal class MemoryEditorComposeController(
             MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, 0L,
         )
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
-        val capabilityMessage = if (capabilities.getBoolean(
-                MemoryEngineContract.KEY_MANAGED_RECONVERSION_REQUIRED, false,
-            )) {
+        val reconversionRequired = capabilities.getBoolean(
+            MemoryEngineContract.KEY_MANAGED_RECONVERSION_REQUIRED, false,
+        )
+        val capabilityMessage = if (reconversionRequired) {
             context.getString(R.string.memory_editor_reconversion_required)
         } else {
             operationMessage(
@@ -440,12 +441,15 @@ internal class MemoryEditorComposeController(
                 if (!state.visible || service !== engine || connection != connectionGeneration ||
                     stateRequest != stateRequestGeneration.get()
                 ) return@post
+                // A loaded runtime token can precede the MIDlet constructor publishing its root.
+                // Retry that transient gap, but do not retry a known incompatible conversion.
+                val retrying = !reconversionRequired && retry < CAPABILITY_RETRY_DELAYS_MS.size
                 state = state.copy(
-                    connecting = false,
+                    connecting = retrying,
                     connected = true,
                     supported = false,
                     writeSupported = false,
-                    messageIsError = true,
+                    messageIsError = !retrying,
                     revision = revision,
                     baselineCount = baselineCount,
                     runtimeToken = token,
@@ -457,8 +461,14 @@ internal class MemoryEditorComposeController(
                     } else {
                         MemoryEditorRuntimePreferences.unknownPredicate(token)
                     },
-                    message = capabilityMessage ?: context.getString(R.string.memory_editor_unsupported),
+                    message = if (retrying) context.getString(R.string.memory_editor_engine_reconnecting)
+                        else capabilityMessage ?: context.getString(R.string.memory_editor_unsupported),
                 )
+                if (retrying) composeView.postDelayed({
+                    if (!destroyed && state.visible && service === engine &&
+                        connection == connectionGeneration && stateRequest == stateRequestGeneration.get()
+                    ) reloadState(retry + 1)
+                }, CAPABILITY_RETRY_DELAYS_MS[retry])
             }
             return@runIpc
         }
