@@ -113,3 +113,15 @@ implemented through focused PRs, not by blindly merging this entire branch.
 **Softbar/padded GLSLP input gate:** [CI 41170967593](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41170967593) succeeded with actual `Canvas.GLRenderer`: non-fullscreen softbar yielded 32×45 active pixels inside 32×48 backing, which caused the research Gaussian pipeline to fall back to legacy; allocating exactly 32×45, either initially or by copying existing logical content once, allowed the two-pass renderer to work. This supports exact active-size presentation storage over default GPU normalization, but physical cost, real runtime resize and mixed 2D/3D remain open. See [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md).
 
 **Attached real Canvas renderer R&D:** [CI 41178625175](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41178625175) passed 9 selected classes / 12 instrumentation tests. The `Canvas.GLRenderer` was installed on a real `GlesView` in the existing research Activity, validating guest publication, shader redraw behavior across source-size versus viewport-only resize, 40×56 guest growth, and EGL context re-creation with blue-frame readback. This is stronger than earlier pbuffer tests but still uses research-only SoftBar and reflected view wiring, not a real `MicroActivity` running a MIDlet. See [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md).
+
+**xBRZ multi-input checkpoint:** [CI 41220537772](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41220537772)
+passed 9 selected research classes / 13 tests, including real pinned
+`xbrz-freescale-multipass` execution on `Canvas.GLRenderer`. The first
+attempt produced only nearest-like pixels despite successful shader linking
+and nonzero FBO output. Correcting offscreen FBO row orientation aligned
+edge metadata with the separately sampled original bitmap, producing 66
+antialiased red/blue pixels from the 8x8-to-96x96 staircase fixture.
+This proves two-texture xBRZ behavior on SwiftShader, not a GLSLP parser,
+Crisp parameter overrides, arbitrary presets or real-device performance.
+Details: [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md)
+and [GLSLP prototype contract](../../../research/graphics/GLSLP-PROTOTYPE-CONTRACT.md).
