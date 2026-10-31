@@ -1,9 +1,5 @@
 package io.github.h3nb.jlmodplus.updates
 
-import android.app.Activity
-import android.app.Instrumentation
-import android.content.Intent
-import android.content.IntentFilter
 import androidx.preference.PreferenceManager
 import androidx.lifecycle.ViewModelProvider
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
@@ -21,7 +17,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.h3nb.jlmodplus.MainActivity
 import io.github.h3nb.jlmodplus.R
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -83,23 +78,23 @@ class TemporaryUpdateAcceptanceTest {
                 preferences.getString("jlmod_updates_handled_version_Preview", null) != null
             }
 
-            val filter = IntentFilter(Intent.ACTION_VIEW).apply {
-                addDataScheme("https")
-                addDataAuthority("github.com", null)
-            }
-            val monitor = Instrumentation.ActivityMonitor(
-                filter, Instrumentation.ActivityResult(Activity.RESULT_OK, Intent()), true
-            )
-            instrumentation.addMonitor(monitor)
-            try {
-                rule.onNodeWithText(context.getString(R.string.library_destination_more))
-                    .performClick()
-                rule.onNodeWithText(context.getString(R.string.updates_title)).performClick()
-                rule.onNodeWithText(context.getString(R.string.updates_view_release)).performClick()
-                rule.waitUntil(10_000) { monitor.hits > 0 }
-                assertTrue("Release ACTION_VIEW was not delivered", monitor.hits > 0)
-            } finally {
-                instrumentation.removeMonitor(monitor)
+            rule.onNodeWithText(context.getString(R.string.library_destination_more))
+                .performClick()
+            rule.onNodeWithText(context.getString(R.string.updates_title)).performClick()
+            rule.onNodeWithText(context.getString(R.string.updates_view_release)).performClick()
+            // Instrumentation ActivityMonitor does not observe all cross-process browser
+            // dispatches. Inspect the actual foreground Activity after ACTION_VIEW.
+            rule.waitUntil(15_000) {
+                val descriptor = instrumentation.uiAutomation.executeShellCommand(
+                    "dumpsys activity activities"
+                )
+                android.os.ParcelFileDescriptor.AutoCloseInputStream(descriptor)
+                    .bufferedReader().use { input ->
+                        input.lineSequence().any { line ->
+                            ("topResumedActivity" in line || "mResumedActivity" in line) &&
+                                "com.android.chrome" in line
+                        }
+                    }
             }
         } finally {
             scenario.close()
