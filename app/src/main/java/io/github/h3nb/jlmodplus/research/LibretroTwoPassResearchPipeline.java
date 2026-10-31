@@ -7,6 +7,9 @@ import android.opengl.GLES20;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Disposable R&D: genuine pinned Libretro Gauss horizontal/vertical GLSL
@@ -22,6 +25,7 @@ public final class LibretroTwoPassResearchPipeline {
     private final int[] intermediate = new int[1];
     // R&D: xBRZ pass 1 reads the original source as PassPrev2Texture.
     private final boolean hasOriginalSourceInput;
+    private final Map<String, Float> parameters;
     private final FloatBuffer quad = ByteBuffer.allocateDirect(4 * 8 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private int intermediateWidth;
@@ -30,9 +34,16 @@ public final class LibretroTwoPassResearchPipeline {
     private int offscreenPassExecutions;
 
     public LibretroTwoPassResearchPipeline(String horizontal, String vertical) {
+        this(horizontal, vertical, Collections.<String, Float>emptyMap());
+    }
+
+    /** Parameter mode is enabled only for this bounded Crisp research trial. */
+    public LibretroTwoPassResearchPipeline(String horizontal, String vertical,
+                                           Map<String, Float> resolvedParameters) {
+        parameters = Collections.unmodifiableMap(new LinkedHashMap<>(resolvedParameters));
         try {
-            programs[0] = link(horizontal);
-            programs[1] = link(vertical);
+            programs[0] = link(horizontal, !parameters.isEmpty());
+            programs[1] = link(vertical, !parameters.isEmpty());
             hasOriginalSourceInput = glGetUniformLocation(programs[1], "PassPrev2Texture") >= 0;
         } catch (RuntimeException ex) {
             release();
@@ -185,6 +196,9 @@ public final class LibretroTwoPassResearchPipeline {
         uniform2f(program, "TextureSize", inputW, inputH);
         uniform2f(program, "OutputSize", outputW, outputH);
         uniform1f(program, "SIGMA", 1f);
+        for (Map.Entry<String, Float> param : parameters.entrySet()) {
+            uniform1f(program, param.getKey(), param.getValue());
+        }
         int matrix = glGetUniformLocation(program, "MVPMatrix");
         if (matrix >= 0) glUniformMatrix4fv(matrix, 1, false, IDENTITY, 0);
         int position = glGetAttribLocation(program, "VertexCoord");
@@ -218,14 +232,15 @@ public final class LibretroTwoPassResearchPipeline {
         if (location >= 0) glUniform2f(location, x, y);
     }
 
-    private static int link(String source) {
-        // Use original upstream #pragma defaults for this bounded R&D check.
-        // A real resolver must expose named parameter values independently.
-        int vertex = compile(GL_VERTEX_SHADER, "#define VERTEX\n" + source);
+    private static int link(String source, boolean useParameterUniforms) {
+        // Enabling PARAMETER_UNIFORM requires binding ALL #pragma defaults,
+        // not only the preset's explicitly overridden values.
+        String prefix = useParameterUniforms ? "#define PARAMETER_UNIFORM\n" : "";
+        int vertex = compile(GL_VERTEX_SHADER, "#define VERTEX\n" + prefix + source);
         int fragment = 0, program = 0;
         try {
             fragment = compile(GL_FRAGMENT_SHADER,
-                    "#define FRAGMENT\n" + source);
+                    "#define FRAGMENT\n" + prefix + source);
             program = glCreateProgram();
             glAttachShader(program, vertex);
             glAttachShader(program, fragment);
