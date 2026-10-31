@@ -94,6 +94,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.os.ConfigurationCompat
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.sqrt
 
 /** Dialog controls stay inside visible system bars, cutouts and waterfall edges. */
 @Composable
@@ -128,7 +129,21 @@ internal fun memoryEditorTitleTopPadding(): Dp {
     }
 }
 
-/** Round bottom corners require moving buttons inward, not raising the entire dock. */
+/**
+ * The icon is 24 dp high inside a 48 dp touch target. Its bottom edge sits
+ * 12 dp above the physical screen edge. Use the actual rounded-corner curve at
+ * that height, not the whole corner radius as horizontal padding.
+ */
+internal fun memoryEditorCornerControlPadding(radius: Dp): Dp {
+    val r = radius.value
+    val glyphInset = 12f
+    val curveInset = if (r > glyphInset) {
+        r - sqrt(2f * r * glyphInset - glyphInset * glyphInset)
+    } else 0f
+    return maxOf(12.dp, (curveInset - glyphInset).dp)
+}
+
+/** Align bottom control glyphs with the title and close glyphs when corners permit. */
 @Composable
 internal fun memoryEditorBottomCornerPadding(): PaddingValues {
     val density = LocalDensity.current
@@ -141,10 +156,8 @@ internal fun memoryEditorBottomCornerPadding(): PaddingValues {
     } else 0 to 0
     return with(density) {
         PaddingValues.Absolute(
-            left = maxOf(8.dp, leftRadius.toDp()),
-            right = maxOf(8.dp, rightRadius.toDp()),
-            top = 0.dp,
-            bottom = 0.dp,
+            left = memoryEditorCornerControlPadding(leftRadius.toDp()),
+            right = memoryEditorCornerControlPadding(rightRadius.toDp()),
         )
     }
 }

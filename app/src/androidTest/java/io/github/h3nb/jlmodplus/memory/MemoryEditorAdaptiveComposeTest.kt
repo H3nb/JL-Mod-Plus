@@ -18,6 +18,7 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -372,7 +373,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.runOnIdle { assertEquals(setOf(1L, 2L), state.value.selected) }
     }
 
-    @Test fun moreUsesWideLayoutWhenLandscapeHasSpace() {
+    @Test fun spaciousLandscapeShowsExtraActionsDirectlyWithoutMore() {
         val result = MemoryResultRow(
             id = 1, valueText = "2", locationText = "test",
             aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
@@ -380,7 +381,35 @@ class MemoryEditorAdaptiveComposeTest {
             state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
         )
         rule.setContent {
-            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(720.dp, 360.dp))) {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(840.dp, 360.dp))) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(MemoryEditorUiState(
+                        visible = true, connected = true, supported = true,
+                        writeSupported = true, resultCount = 1,
+                        results = listOf(result), selected = setOf(1),
+                        sessionStage = MemorySessionStage.CANDIDATES,
+                    ), TestMemoryEditorActions())
+                }
+            }
+        }
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        rule.onNodeWithContentDescription(context.getString(R.string.memory_editor_inspect_memory))
+            .assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.memory_editor_remove))
+            .assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.more))
+            .assertDoesNotExist()
+    }
+
+    @Test fun constrainedWindowKeepsSecondaryActionsInMore() {
+        val result = MemoryResultRow(
+            id = 1, valueText = "2", locationText = "test",
+            aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+            primaryType = MemoryEngineContract.TYPE_INT,
+            state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+        )
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(280.dp, 520.dp))) {
                 JLModPlusTheme {
                     MemoryEditorRuntimeRoot(MemoryEditorUiState(
                         visible = true, connected = true, supported = true,
@@ -392,9 +421,20 @@ class MemoryEditorAdaptiveComposeTest {
             }
         }
         val more = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.more)
-        rule.onNodeWithContentDescription(more).performClick()
-        val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
-        assertTrue("Wide landscape More should use available width", surface.right - surface.left > 400.dp)
+        rule.onNodeWithContentDescription(more).assertIsDisplayed().performClick()
+        rule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation().targetContext
+                .getString(R.string.memory_editor_remove),
+        ).assertIsDisplayed()
+    }
+
+    @Test fun roundedCornerPaddingAvoidsShiftingControlsByTheFullRadius() {
+        // Normal rounded corners fit the glyph at the same x as the header icons.
+        assertEquals(12.dp, memoryEditorCornerControlPadding(0.dp))
+        assertEquals(12.dp, memoryEditorCornerControlPadding(60.dp))
+        // An unusually large radius moves controls inward, not upward.
+        assertTrue(memoryEditorCornerControlPadding(120.dp) > 12.dp)
+        assertTrue(memoryEditorCornerControlPadding(120.dp) < 120.dp)
     }
 
     @Test fun paginationSharesTheBottomDockWithPeekInBothWindowShapes() {

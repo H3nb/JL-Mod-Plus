@@ -38,8 +38,11 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   inset. Long stacked titles stop before the central camera lane.
 - Keep toolbar actions horizontally gesture-safe. Paint the footer to the bottom
   edge and inset its controls only for visible navigation bars and physical
-  rounded bottom corners, moving the left/right icons inward rather than raising
-  the dock by the hidden gesture inset. Respect the shared status-bar setting.
+  rounded bottom corners. Calculate corner clearance at the 24 dp icon's lower
+  edge rather than using the full corner radius. This aligns Settings/Peek with
+  the title/close glyph edges on symmetric screens, only moving them inward
+  when a larger physical corner requires it. Do not raise the dock by hidden
+  gesture insets. Respect the shared status-bar setting.
 - Keep the editor title and labeled navigation visible. Place them in one row when
   width permits; stack them otherwise. In short windows with large text, retain the
   labeled tabs and omit the redundant app title to protect the data viewport.
@@ -51,12 +54,14 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 - Keep Search and Watch list states in the workspace. Returning from Inspector or
   changing window width should not reset their positions. Back from Inspector
   returns to its origin tab; the close action still closes the editor.
-- Known search, unknown search, edit, add to Watch and refresh retain fixed direct
-  positions regardless of selection. Extremely narrow windows keep search/edit/
-  refresh direct and move the other actions into More; selection only changes
-  enablement. More uses two columns when its actual dialog width and font scale
-  permit, otherwise a scrolling single column. Inspector still requires exactly
-  one selected candidate.
+- Pack toolbar actions according to the available width in 48 dp touch slots,
+  reserving room for result counts in wide layouts. Show all five frequent
+  actions and enabled Inspector/Undo/Remove actions directly whenever they fit;
+  use More only for genuine overflow. On especially narrow windows prioritize
+  search/edit/refresh and keep the remaining actions in More. Selection changes
+  availability, not the relative order of the frequent actions. More uses two
+  columns when its actual dialog width and font scale permit, otherwise a
+  scrolling single column. Inspector still requires exactly one selected candidate.
 - The results' select-page checkbox is visible in portrait summary and landscape
   toolbar; Watch also provides select-page. Selection is limited to the currently
   loaded result page (up to 100 candidates), not every matching memory location.

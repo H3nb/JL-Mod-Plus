@@ -479,23 +479,34 @@ private fun RuntimeSearchResultsTab(
                 deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
             },
         )
-        // Keep the frequent actions at fixed positions regardless of selection.
-        // Only genuinely narrow windows move secondary actions into More.
+        // Pack actions from the real toolbar width. A 48 dp button is always
+        // preferred over More when it fits; selected actions may appear directly
+        // without moving the five frequent actions in a spacious window.
         BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
         )) {
-            val narrowActions = maxWidth < (if (compactRows) 500.dp else 304.dp)
-            val primaryActions = if (narrowActions) {
-                listOf(quickActions[0], quickActions[2], quickActions[4])
-            } else quickActions
-            val overflowActions = quickActions.filterNot { it in primaryActions } +
-                extraActions.filter { it.enabled }
+            val showSummary = compactRows && (state.results.isNotEmpty() || state.resultCount > 0L)
+            val summaryReserve = if (showSummary) {
+                160.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+            } else 0.dp
+            val slotCount = ((maxWidth - 16.dp - summaryReserve).value / 48f)
+                .toInt().coerceAtLeast(2)
+            val availableActions = quickActions + extraActions.filter { it.enabled }
+            val directLimit = if (availableActions.size > slotCount) slotCount - 1 else slotCount
+            val primaryActions = if (directLimit >= quickActions.size) {
+                availableActions.take(directLimit)
+            } else {
+                // Prioritize known search, edit and refresh when space is scarce.
+                val priority = listOf(0, 2, 4, 1, 3).take(directLimit)
+                quickActions.filterIndexed { index, _ -> index in priority }
+            }
+            val overflowActions = availableActions.filterNot { it in primaryActions }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 horizontalArrangement = if (compactRows) Arrangement.End else Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (compactRows && (state.results.isNotEmpty() || state.resultCount > 0L)) {
+                if (showSummary) {
                     RuntimePageSelectionCheckbox(
                         checked = allVisibleSelected,
                         enabled = state.results.isNotEmpty() && !state.busy,
