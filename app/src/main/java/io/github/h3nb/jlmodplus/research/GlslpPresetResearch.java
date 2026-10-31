@@ -41,8 +41,15 @@ public final class GlslpPresetResearch {
             if (!Double.isFinite(size) || size < 1.0 || size > maxTextureSize) {
                 throw new IllegalArgumentException("Unsupported pass dimension " + size);
             }
-            // RetroArch's FBO scale is resolved to integer pixels. Never truncate to zero.
-            return (int) Math.round(size);
+            // The upstream GL2 driver assigns source/viewport float products
+            // to an unsigned integer (truncate), while the preset parser
+            // rounds an explicitly absolute scale to its integer dimension.
+            int resolved = (int) (basis == SizeBasis.ABSOLUTE
+                    ? Math.round(size) : Math.floor(size));
+            if (resolved <= 0) {
+                throw new IllegalArgumentException("Pass dimension rounds to zero");
+            }
+            return resolved;
         }
     }
 
