@@ -173,16 +173,8 @@ internal fun MemoryEditorRuntimeRoot(
             val showLabels = maxWidth.coerceAtMost(960.dp) >=
                 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
             val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
-            val emptyWorkspace = !state.busy && when (tab) {
-                MemoryEditorTab.RESULTS -> state.resultCount == 0L && state.results.isEmpty()
-                MemoryEditorTab.WATCH -> state.watches.isEmpty()
-                MemoryEditorTab.INSPECTOR -> false
-            }
-            val panelHeight = if (emptyWorkspace) {
-                (320.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)).coerceAtMost((maxHeight - 48.dp).coerceAtLeast(0.dp))
-            } else maxHeight
-            Surface(
-                modifier = Modifier.widthIn(max = 960.dp).fillMaxWidth().height(panelHeight)
+             Surface(
+                modifier = Modifier.widthIn(max = 960.dp).fillMaxWidth().fillMaxHeight()
                     .align(Alignment.TopCenter)
                     .alpha(if (overlay.peeking) 0f else 1f),
                 shape = MaterialTheme.shapes.large,
@@ -190,7 +182,7 @@ internal fun MemoryEditorRuntimeRoot(
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
                 Box(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().padding(bottom = if (emptyWorkspace) 0.dp else 48.dp)
+                    Column(Modifier.fillMaxSize().padding(bottom = 48.dp)
                         .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)) {
                         RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close, showTitle)
                         if (state.busy) RuntimeOperationStrip(state, actions)

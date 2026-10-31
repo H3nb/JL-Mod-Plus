@@ -6,7 +6,7 @@ It works with values reachable through the managed Java ME runtime. It is not a 
 
 ## When Memory Editor is unavailable
 
-A MIDlet can run from a converted DEX without the JL-Mod Plus bytecode transforms required for managed-memory discovery. In that case, the editor explains why searches are unavailable; gameplay remains usable. Close the game, then reconvert or reinstall the MIDlet using JL-Mod Plus. The normal launch flow can automatically reconvert compatible retained JAR sources, when available. A temporary engine connection failure is a different condition and does not mean the MIDlet needs reconversion.
+A MIDlet can run from a converted DEX without the JL-Mod Plus bytecode transforms required for managed-memory discovery. In that case, the editor explains why searches are unavailable; gameplay remains usable. Close the game, then reconvert or reinstall the MIDlet using JL-Mod Plus. The normal launch flow can automatically reconvert compatible retained JAR sources, when available. A temporary engine connection failure is a different condition and does not mean the MIDlet needs reconversion. Newly converted MIDlets track the installed DEX fingerprint to detect replacement by another emulator. Older installations without that fingerprint are only flagged when the DEX contains clear evidence of missing transforms; an inconclusive result is not treated as proof of incompatibility.
 
 ## Start with an observation
 

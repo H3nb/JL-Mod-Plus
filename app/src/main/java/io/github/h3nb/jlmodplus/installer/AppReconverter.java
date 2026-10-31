@@ -147,6 +147,7 @@ public final class AppReconverter {
                 }
                 MidletConversionPolicy.requireRunnableEntryClasses(conversionResult, descriptor);
                 MidletTransformMetadata.mark(descriptor.getAttrs());
+                MidletTransformMetadata.recordPayload(descriptor.getAttrs(), generatedPayload);
                 FileUtils.copyFileUsingChannel(retainedJar, fileWithSuffix(staging, Config.MIDLET_RES_FILE));
                 File retainedJad = new File(appDir, RETAINED_JAD);
                 if (retainedJad.isFile()) FileUtils.copyFileUsingChannel(retainedJad, new File(staging, RETAINED_JAD));

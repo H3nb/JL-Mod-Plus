@@ -20,10 +20,30 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.nio.file.Files;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MidletTransformMetadataTest {
+	@Rule public final TemporaryFolder temporary = new TemporaryFolder();
+
+	@Test
+	public void overwrittenDexInvalidatesRuntimeFeaturesWithoutForcingReconversion() throws Exception {
+		File payload = temporary.newFile("converted.zip");
+		Files.write(payload.toPath(), new byte[]{1, 2, 3});
+		Map<String, String> attributes = new HashMap<>();
+		MidletTransformMetadata.mark(attributes);
+		MidletTransformMetadata.recordPayload(attributes, payload);
+		assertTrue(MidletTransformMetadata.isRuntimeCompatible(attributes, payload));
+
+		// A second emulator may overwrite only the DEX, leaving version 2 in the descriptor.
+		Files.write(payload.toPath(), new byte[]{4, 5, 6});
+		assertFalse(MidletTransformMetadata.isRuntimeCompatible(attributes, payload));
+		assertTrue(MidletTransformMetadata.isCompatible(attributes));
+	}
 	@Test
 	public void currentVersionIsCompatibleAfterMarking() {
 		Map<String, String> attributes = new HashMap<>();

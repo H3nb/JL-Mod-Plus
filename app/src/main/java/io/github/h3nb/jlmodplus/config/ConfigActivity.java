@@ -2642,7 +2642,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		try {
 			Descriptor descriptor = new Descriptor(
 					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
-			return MidletTransformMetadata.isCompatible(descriptor.getAttrs());
+			File dexPayload = new File(appDir, Config.MIDLET_DEX_ARCH);
+			if (!Config.isUsableFile(dexPayload)) {
+				dexPayload = new File(appDir, Config.MIDLET_DEX_FILE);
+			}
+			return MidletTransformMetadata.isRuntimeCompatible(descriptor.getAttrs(), dexPayload);
 		} catch (IOException | RuntimeException e) {
 			return false;
 		}
