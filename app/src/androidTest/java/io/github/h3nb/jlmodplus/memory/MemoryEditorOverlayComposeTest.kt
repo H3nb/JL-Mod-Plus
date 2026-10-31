@@ -39,6 +39,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
@@ -76,6 +78,14 @@ class MemoryEditorOverlayComposeTest {
         val originalBounds = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
         rule.onNodeWithText("Choices").performClick()
         assertEquals(originalBounds, rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot())
+        // Nested modal windows must not bring back Android navigation controls when
+        // they take focus (e.g. the Memory Editor overflow menu).
+        rule.waitUntil(5_000) {
+            windows["menu"]?.let { menu ->
+                ViewCompat.getRootWindowInsets(menu.decorView)
+                    ?.isVisible(WindowInsetsCompat.Type.navigationBars()) == false
+            } == true
+        }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput { down(center) }
         rule.runOnIdle {
             assertTrue(overlay.peeking)
