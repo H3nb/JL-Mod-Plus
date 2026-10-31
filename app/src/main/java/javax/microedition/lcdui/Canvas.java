@@ -1924,7 +1924,7 @@ public abstract class Canvas extends Displayable {
 				vertex_bg.put(gr).put(gt).put(tw).put(0.0f);// rt
 				vertex_bg.put(gr).put(gb).put(tw).put(th);// rb
 			}
-			if (isStarted) {
+			if (isStarted && mView != null) {
 				mView.queueEvent(() -> {
 					if (!isStarted || program == null) return;
 					program.use();

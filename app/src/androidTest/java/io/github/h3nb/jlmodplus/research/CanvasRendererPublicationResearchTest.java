@@ -340,6 +340,68 @@ public final class CanvasRendererPublicationResearchTest {
                         real.onDrawFrame(null);
                         assertEquals(1, pipeline.offscreenPassExecutions());
                     }
+                    if (scenario == 1) {
+                        // Keep the *same* active EGL context and renderer while geometry
+                        // genuinely changes. Source backing must be tight each time.
+                        int beforeFullscreen = canvas.getHeight();
+                        canvas.setFullScreenMode(true);
+                        Image full = (Image) bufferField.get(canvas);
+                        assertTrue("fullscreen should restore removed softbar rows",
+                                canvas.getHeight() > beforeFullscreen);
+                        assertEquals(canvas.getHeight(), full.getBitmap().getHeight());
+                        assertEquals(Color.RED, full.getBitmap().getPixel(0, 0));
+                        assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0L);
+                        assertTrue(mailbox.trySchedule(mailbox.generation()));
+                        real.onDrawFrame(null);
+                        assertColor(Color.RED, 6, 6);
+                        int fullscreenPasses = pipeline.offscreenPassExecutions();
+
+                        // Width + height growth on a live renderer, preserving old
+                        // pixels and reallocating only at the geometry boundary.
+                        profile.screenWidth = 40;
+                        profile.screenHeight = 56;
+                        canvas.updateSize();
+                        Image grown = (Image) bufferField.get(canvas);
+                        assertEquals(40, canvas.getWidth());
+                        assertEquals(56, canvas.getHeight());
+                        assertEquals(40, grown.getBitmap().getWidth());
+                        assertEquals(56, grown.getBitmap().getHeight());
+                        assertEquals(Color.RED, grown.getBitmap().getPixel(0, 0));
+                        assertEquals(Color.RED, grown.getBitmap().getPixel(31, 44));
+                        assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0L);
+                        assertTrue(mailbox.trySchedule(mailbox.generation()));
+                        real.onDrawFrame(null);
+                        assertColor(Color.RED, 6, 6);
+                        assertEquals("FBO rebuilt once after live size growth",
+                                fullscreenPasses + 1, pipeline.offscreenPassExecutions());
+
+                        // Publish at the new size (not merely an old cached Bitmap).
+                        Image blueFrame = Image.createImage(40, 56, Color.BLUE);
+                        canvas.flushBuffer(blueFrame, 0, 0);
+                        assertTrue(mailbox.trySchedule(mailbox.generation()));
+                        real.onDrawFrame(null);
+                        assertColor(Color.BLUE, 6, 6);
+
+                        // Shrink and re-enable the real SoftBar. Only old valid
+                        // content may survive; the discarded region must not leak.
+                        canvas.setFullScreenMode(false);
+                        Image shrunk = (Image) bufferField.get(canvas);
+                        assertEquals(40, canvas.getWidth());
+                        assertTrue(canvas.getHeight() < 56);
+                        assertEquals(canvas.getHeight(), shrunk.getBitmap().getHeight());
+                        assertEquals(Color.BLUE, shrunk.getBitmap().getPixel(0, 0));
+                        assertEquals(Color.BLUE, shrunk.getBitmap().getPixel(
+                                canvas.getWidth() - 1, canvas.getHeight() - 1));
+                        assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0L);
+                        assertTrue(mailbox.trySchedule(mailbox.generation()));
+                        real.onDrawFrame(null);
+                        assertColor(Color.BLUE, 6, 6);
+                        assertSame("Tight source must not silently disable GLSL on resize",
+                                pipeline, pipelineField.get(renderer));
+                        Log.i(TAG, "live softbar/fullscreen/width-height resize"
+                                + " final=" + canvas.getWidth() + "x" + canvas.getHeight()
+                                + " passCount=" + pipeline.offscreenPassExecutions());
+                    }
                     assertEquals("OpenGL error during softbar path",
                             GLES20.GL_NO_ERROR, GLES20.glGetError());
                     Log.i(TAG, "softbar scenario=" + scenario + " logical="
