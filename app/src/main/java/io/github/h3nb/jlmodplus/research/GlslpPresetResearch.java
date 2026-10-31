@@ -38,7 +38,7 @@ public final class GlslpPresetResearch {
         int resolve(int source, int viewport, int maxTextureSize) {
             double size = basis == SizeBasis.ABSOLUTE
                     ? scale : scale * (basis == SizeBasis.SOURCE ? source : viewport);
-            if (!Double.isFinite(size) || size < 1.0 || size > maxTextureSize) {
+            if (!finite(size) || size < 1.0 || size > maxTextureSize) {
                 throw new IllegalArgumentException("Unsupported pass dimension " + size);
             }
             // The upstream GL2 driver assigns source/viewport float products
@@ -271,11 +271,15 @@ public final class GlslpPresetResearch {
     private static double number(String value, String key) throws IOException {
         try {
             double number = Double.parseDouble(value);
-            if (Double.isFinite(number)) return number;
+            if (finite(number)) return number;
         } catch (NumberFormatException ignored) {
             // Report the original preset value below.
         }
         throw new IOException("Invalid numeric " + key + "=" + value);
+    }
+
+    private static boolean finite(double value) {
+        return !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
     private static String required(Map<String, String> entries, String key)
@@ -310,9 +314,10 @@ public final class GlslpPresetResearch {
             } else if (val.contains("\"")) {
                 throw new IOException("Invalid GLSLP quoting for " + key);
             }
-            if (values.putIfAbsent(key, val) != null) {
+            if (values.containsKey(key)) {
                 throw new IOException("Duplicate GLSLP key: " + key);
             }
+            values.put(key, val);
         }
         return values;
     }
@@ -344,6 +349,11 @@ public final class GlslpPresetResearch {
             }
         }
         if (parts.isEmpty()) throw new IOException("Invalid empty asset path");
-        return String.join("/", parts);
+        StringBuilder normalized = new StringBuilder();
+        for (String part : parts) {
+            if (normalized.length() > 0) normalized.append('/');
+            normalized.append(part);
+        }
+        return normalized.toString();
     }
 }
