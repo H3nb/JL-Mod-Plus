@@ -20,6 +20,8 @@ public final class LibretroTwoPassResearchPipeline {
     private final int[] programs = new int[2];
     private final int[] framebuffer = new int[1];
     private final int[] intermediate = new int[1];
+    // R&D: xBRZ pass 1 reads the original source as PassPrev2Texture.
+    private final boolean hasOriginalSourceInput;
     private final FloatBuffer quad = ByteBuffer.allocateDirect(4 * 8 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private int intermediateWidth;
@@ -31,6 +33,7 @@ public final class LibretroTwoPassResearchPipeline {
         try {
             programs[0] = link(horizontal);
             programs[1] = link(vertical);
+            hasOriginalSourceInput = glGetUniformLocation(programs[1], "PassPrev2Texture") >= 0;
         } catch (RuntimeException ex) {
             release();
             throw ex;
@@ -67,8 +70,9 @@ public final class LibretroTwoPassResearchPipeline {
                 glViewport(0, 0, logicalWidth, logicalHeight);
                 glDisable(GL_SCISSOR_TEST);
                 setFullQuad();
-                drawPass(programs[0], sourceTexture,
-                        logicalWidth, logicalHeight, logicalWidth, logicalHeight);
+                drawPass(programs[0], sourceTexture, 0,
+                        logicalWidth, logicalHeight, logicalWidth, logicalHeight,
+                        hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR);
                 processedSequence = guestSequence;
                 offscreenPassExecutions++;
             }
@@ -80,8 +84,9 @@ public final class LibretroTwoPassResearchPipeline {
             int outputHeight = Math.max(1, Math.round(
                     Math.abs(legacyQuad.get(1) - legacyQuad.get(5)) * surfaceHeight / 2));
             setGameQuad(legacyQuad);
-            drawPass(programs[1], intermediate[0],
-                    logicalWidth, logicalHeight, outputWidth, outputHeight);
+            drawPass(programs[1], intermediate[0], sourceTexture,
+                    logicalWidth, logicalHeight, outputWidth, outputHeight,
+                    hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR);
             int error = glGetError();
             if (error != GL_NO_ERROR) {
                 throw new IllegalStateException("Libretro research GL error: 0x"
@@ -93,6 +98,8 @@ public final class LibretroTwoPassResearchPipeline {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, surfaceWidth, surfaceHeight);
             glEnable(GL_SCISSOR_TEST);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, 0);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, sourceTexture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, legacyFilter);
@@ -148,12 +155,25 @@ public final class LibretroTwoPassResearchPipeline {
         quad.rewind();
     }
 
-    private void drawPass(int program, int texture, int inputW, int inputH, int outputW, int outputH) {
+    private void drawPass(int program, int texture, int originalTexture,
+                          int inputW, int inputH, int outputW, int outputH, int filter) {
         glUseProgram(program);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        // The original texture is an independent source for xBRZ pass 1.
+        // A zero sampler location is NOT evidence of unused binding; only -1 is.
+        if (originalTexture != 0) {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, originalTexture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            uniform1i(program, "PassPrev2Texture", 1);
+            uniform2f(program, "PassPrev2TextureSize", inputW, inputH);
+            uniform2f(program, "PassPrev2InputSize", inputW, inputH);
+            glActiveTexture(GL_TEXTURE0);
+        }
         glDisable(GL_BLEND);
         uniform1i(program, "Texture", 0);
         uniform2f(program, "InputSize", inputW, inputH);
@@ -194,11 +214,13 @@ public final class LibretroTwoPassResearchPipeline {
     }
 
     private static int link(String source) {
-        int vertex = compile(GL_VERTEX_SHADER, "#define VERTEX\n#define PARAMETER_UNIFORM\n" + source);
+        // Use original upstream #pragma defaults for this bounded R&D check.
+        // A real resolver must expose named parameter values independently.
+        int vertex = compile(GL_VERTEX_SHADER, "#define VERTEX\n" + source);
         int fragment = 0, program = 0;
         try {
             fragment = compile(GL_FRAGMENT_SHADER,
-                    "#define FRAGMENT\n#define PARAMETER_UNIFORM\n" + source);
+                    "#define FRAGMENT\n" + source);
             program = glCreateProgram();
             glAttachShader(program, vertex);
             glAttachShader(program, fragment);
