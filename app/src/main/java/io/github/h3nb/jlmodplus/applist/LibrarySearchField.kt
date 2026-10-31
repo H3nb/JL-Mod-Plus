@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -65,6 +66,9 @@ internal fun LibrarySearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
+            // Exclude an inactive page's editor without overriding the active TextField's
+            // own Material focus properties (which must remain responsible for touch refocus).
+            .then(if (enabled) Modifier else Modifier.focusProperties { canFocus = false })
             .height(librarySearchControlHeight())
             .onFocusChanged { onFocusChanged(it.hasFocus) }
             .onPreInterceptKeyBeforeSoftKeyboard { event ->

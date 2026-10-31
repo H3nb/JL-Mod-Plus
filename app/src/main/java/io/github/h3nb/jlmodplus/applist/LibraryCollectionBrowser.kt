@@ -60,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
@@ -179,6 +180,7 @@ internal fun LibraryCollectionBrowser(
             scaffoldPadding = scaffoldPadding,
             viewportState = pickerViewport,
             loading = !allAppsPrepared,
+            active = interactionActive,
             onBack = { setManageApps(false) },
             onSetMembership = { appId, included ->
                 if (currentInteractionActive && appId !in pendingMemberships) {
@@ -204,13 +206,12 @@ internal fun LibraryCollectionBrowser(
     val searchKeyboard = LocalSoftwareKeyboardController.current
     val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var searchImeWasVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(searchFocused, searchImeVisible) {
+    LaunchedEffect(interactionActive, searchFocused, searchImeVisible) {
         when {
-            !searchFocused -> searchImeWasVisible = false
+            !interactionActive || !searchFocused -> searchImeWasVisible = false
             searchImeVisible -> searchImeWasVisible = true
             searchImeWasVisible -> {
                 searchDismissFocus.requestFocus()
-                searchFocused = false
                 searchImeWasVisible = false
             }
         }
@@ -218,7 +219,6 @@ internal fun LibraryCollectionBrowser(
     BackHandler(enabled = interactionActive && searchFocused) {
         searchKeyboard?.hide()
         searchDismissFocus.requestFocus()
-        searchFocused = false
     }
     var sortVisible by remember { mutableStateOf(false) }
     LaunchedEffect(interactionActive) {
@@ -301,7 +301,7 @@ internal fun LibraryCollectionBrowser(
                     revealSearchResults()
                 }
             },
-            onSearchFocusChanged = { searchFocused = currentInteractionActive && it },
+            onSearchFocusChanged = { if (interactive) searchFocused = it },
             dismissFocusRequester = searchDismissFocus,
             onSortVisibilityChanged = { sortVisible = currentInteractionActive && it },
             onSort = { if (currentInteractionActive) onSort(it) },
@@ -429,7 +429,7 @@ internal fun LibraryCollectionBrowser(
                 .then(if (headerHidden) Modifier.clearAndSetSemantics { } else Modifier)
                 .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
-            renderHeader(Modifier, true)
+            renderHeader(Modifier, interactionActive)
         }
         val scrimVisible by remember(headerOffsetPx) { derivedStateOf { headerOffsetPx.floatValue < -1f } }
         GlassSystemBarScrim(visible = scrimVisible)
@@ -590,7 +590,9 @@ private fun LibraryCollectionHeader(
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
-                    modifier = if (interactive) Modifier.focusRequester(dismissFocusRequester) else Modifier,
+                    modifier = if (searchActionsEnabled) {
+                        Modifier.focusRequester(dismissFocusRequester).focusProperties { canFocus = true }
+                    } else Modifier,
                     enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(
@@ -806,6 +808,7 @@ internal fun LibraryCollectionAppPicker(
     scaffoldPadding: PaddingValues,
     viewportState: LibraryViewportState = rememberLibraryViewportState(collectionId = collection.id),
     loading: Boolean = false,
+    active: Boolean = true,
     onBack: () -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
@@ -827,7 +830,10 @@ internal fun LibraryCollectionAppPicker(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack, modifier = Modifier.focusRequester(searchDismissFocus)) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.focusRequester(searchDismissFocus).focusProperties { canFocus = true },
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_back),
                     contentDescription = stringResource(R.string.library_back),
@@ -868,6 +874,7 @@ internal fun LibraryCollectionAppPicker(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             onDismissInput = { searchDismissFocus.requestFocus() },
+            enabled = active,
         )
         // Filtering may continue on Default; keep the search field and IME focus mounted
         // while only the results pane waits for its matching projection.
