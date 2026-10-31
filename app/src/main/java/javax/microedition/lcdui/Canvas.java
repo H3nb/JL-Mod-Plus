@@ -163,6 +163,14 @@ public abstract class Canvas extends Displayable {
 	private static boolean screenshotRawMode;
 	// R&D branch only: permit a GPU-only fixture without launching a MIDlet host.
 	// Never enable for normal runtime, and remove this seam before production PRs.
+	// R&D-only: compare exact active presentation storage against the existing
+	// maxHeight-backed Bitmap; disabled by default and not a guest image policy.
+	private static volatile boolean graphicsResearchTightPresentationBitmap;
+
+	public static void setGraphicsResearchTightPresentationBitmap(boolean enabled) {
+		graphicsResearchTightPresentationBitmap = enabled;
+	}
+
 	private static volatile String[] graphicsResearchTwoPassSources;
 
 	/** Disposable R&D shader injection, not a persistent profile or user feature. */
@@ -1135,9 +1143,24 @@ public abstract class Canvas extends Displayable {
 
 		synchronized (bufferLock) {
 			if (offscreenCopy == null) {
-				offscreenCopy = Image.createImage(width, maxHeight);
+				offscreenCopy = Image.createImage(width,
+						graphicsResearchTightPresentationBitmap ? height : maxHeight);
 			}
-			if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
+			if (graphicsResearchTightPresentationBitmap
+					&& (offscreenCopy.getBitmap().getWidth() != width
+							|| offscreenCopy.getBitmap().getHeight() != height)) {
+				// Keep the overlapping *logical* content during a resize. This branch
+				// never alters the independently owned guest paint buffer.
+				Image next = Image.createImage(width, height);
+				int copyWidth = Math.min(width, offscreenCopy.getWidth());
+				int copyHeight = Math.min(height, offscreenCopy.getHeight());
+				if (copyWidth > 0 && copyHeight > 0) {
+					Rect content = new Rect(0, 0, copyWidth, copyHeight);
+					new android.graphics.Canvas(next.getBitmap()).drawBitmap(
+							offscreenCopy.getBitmap(), content, content, null);
+				}
+				offscreenCopy = next;
+			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
 				offscreenCopy.setSize(width, height);
 			}
 		}
