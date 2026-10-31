@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.research;
 
-import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,10 +8,7 @@ import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.GLSurfaceView;
-import android.os.Bundle;
 import android.util.Log;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -47,31 +43,11 @@ public final class GlesViewLifecycleResearchTest {
     private static final String ASSETS = "graphics-rd/";
     private static final long TIMEOUT_SECONDS = 25L;
 
-    /** Registered only in the androidTest manifest, never the installed app. */
-    public static final class HostActivity extends Activity {
-        private FrameLayout root;
-        @Override protected void onCreate(Bundle state) {
-            super.onCreate(state);
-            root = new FrameLayout(this);
-            setContentView(root);
-        }
-        void install(GlesView view, int w, int h) {
-            root.removeAllViews();
-            root.addView(view, new FrameLayout.LayoutParams(w, h));
-        }
-        void resize(GlesView view, int w, int h) {
-            ViewGroup.LayoutParams params = view.getLayoutParams();
-            params.width = w;
-            params.height = h;
-            view.setLayoutParams(params);
-        }
-    }
-
     @Test public void appGlesViewRebuildsRealMultipassOnResumeAndResize() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        Intent intent = new Intent(instrumentation.getContext(), HostActivity.class)
+        Intent intent = new Intent(instrumentation.getTargetContext(), GraphicsRdHostActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        HostActivity activity = (HostActivity) instrumentation.startActivitySync(intent);
+        GraphicsRdHostActivity activity = (GraphicsRdHostActivity) instrumentation.startActivitySync(intent);
         final GlesView[] holder = new GlesView[1];
         final ProbeRenderer renderer = new ProbeRenderer();
         try {
