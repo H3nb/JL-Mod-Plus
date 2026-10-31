@@ -133,6 +133,10 @@ public class GlslpPresetResearchTest {
         assertEquals(128, mixed.passes.get(0).outputWidth);
         assertEquals(48, mixed.passes.get(0).outputHeight);
         assertTrue(mixed.finalBlitRequired);
+        GlslpPresetResearch.Plan fractional = GlslpPresetResearch.load(
+                assets, "fsr/mixed.glslp").plan(8, 8, 95, 95, 2048, 1024 * 1024);
+        assertEquals("Relative viewport FBO sizes truncate toward zero",
+                47, fractional.passes.get(0).outputHeight);
     }
 
     @Test public void unsupportedFeaturesAndInvalidAllocationsFailClosed()
