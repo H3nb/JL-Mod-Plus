@@ -1109,6 +1109,9 @@
     <string name="config_avoid_camera_cutout_summary">Ține jocul departe de camera frontală sau de decupajul ecranului. Activează dacă comenzile sunt acoperite.</string>
     <string name="pref_runtime_fullscreen_title">Ecran complet</string>
     <string name="pref_runtime_fullscreen_summary">Ascunde bara de instrumente în timpul jocului. Se aplică tuturor MIDlet-urilor.</string>
+    <string name="pref_show_status_bar_title">Afișează bara de stare</string>
+    <string name="pref_show_status_bar_summary">Menține bara de stare Android vizibilă în timpul jocului pentru a vedea ora și pictogramele notificărilor.</string>
+    <string name="runtime_chrome_update_failed">Setările de afișare ale jocului nu au putut fi actualizate. Încearcă din nou.</string>
     <string name="runtime_fullscreen_update_failed">Nu s-a putut accesa setarea pentru ecran complet. Încearcă din nou.</string>
     <string name="midlet_file_permission_title">Acces la stocare</string>
     <string name="midlet_file_permission_read">Acest MIDlet dorește să citească fișiere.</string>

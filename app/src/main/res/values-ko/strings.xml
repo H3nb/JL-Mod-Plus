@@ -1043,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">게임 화면이 전면 카메라나 화면 컷아웃과 겹치지 않게 합니다. 조작 버튼이 가려지면 켜세요.</string>
     <string name="pref_runtime_fullscreen_title">전체 화면</string>
     <string name="pref_runtime_fullscreen_summary">플레이 중 도구 모음을 숨깁니다. 모든 MIDlet에 적용됩니다.</string>
+    <string name="pref_show_status_bar_title">상태 표시줄 표시</string>
+    <string name="pref_show_status_bar_summary">게임 중에도 Android 상태 표시줄을 표시해 시간과 알림 아이콘을 확인합니다.</string>
+    <string name="runtime_chrome_update_failed">게임 화면 설정을 업데이트할 수 없습니다. 다시 시도하세요.</string>
     <string name="runtime_fullscreen_update_failed">전체 화면 설정에 접근할 수 없습니다. 다시 시도하세요.</string>
     <string name="midlet_file_permission_title">저장소 접근</string>
     <string name="midlet_file_permission_read">이 MIDlet이 파일을 읽으려고 합니다.</string>

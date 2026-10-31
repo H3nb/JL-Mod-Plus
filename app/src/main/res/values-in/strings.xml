@@ -1081,6 +1081,9 @@
     <string name="config_avoid_camera_cutout_summary">Jauhkan tampilan game dari kamera depan atau potongan layar. Aktifkan jika kontrol game tertutup.</string>
     <string name="pref_runtime_fullscreen_title">Layar penuh</string>
     <string name="pref_runtime_fullscreen_summary">Sembunyikan bilah alat saat bermain. Berlaku untuk semua MIDlet.</string>
+    <string name="pref_show_status_bar_title">Tampilkan bilah status</string>
+    <string name="pref_show_status_bar_summary">Tampilkan bilah status Android saat bermain untuk melihat jam dan ikon notifikasi.</string>
+    <string name="runtime_chrome_update_failed">Tidak dapat memperbarui pengaturan tampilan runtime. Coba lagi.</string>
     <string name="runtime_fullscreen_update_failed">Pengaturan layar penuh tidak dapat diakses. Coba lagi.</string>
     <string name="midlet_permissions_write_summary">Termasuk membuat dan menghapus berkas.</string>
     <string name="midlet_legacy_import_title">Simpanan Siemens lama</string>

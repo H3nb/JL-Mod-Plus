@@ -30,6 +30,7 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_SCREENSHOT_SWITCH;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_VIBRATION;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
@@ -82,8 +83,9 @@ public class SettingsActivity extends AppCompatActivity {
 	private SharedPreferences preferences;
 	private SettingsComposeController composeController;
 	private String directoryError;
-	private RuntimeFullscreenClient fullscreenClient;
+	private RuntimeChromeClient chromeClient;
 	private boolean fullscreen;
+	private boolean showStatusBar;
 
 	private final ActivityResultLauncher<String> openDirLauncher = registerForActivityResult(
 			new PickDirResultContract(),
@@ -96,6 +98,7 @@ public class SettingsActivity extends AppCompatActivity {
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		fullscreen = !preferences.getBoolean(PREF_TOOLBAR, false);
+		showStatusBar = preferences.getBoolean(PREF_STATUSBAR, false);
 
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
@@ -103,17 +106,18 @@ public class SettingsActivity extends AppCompatActivity {
 				composeView,
 				buildState(),
 				createActions());
-		fullscreenClient = new RuntimeFullscreenClient(this, new RuntimeFullscreenClient.Listener() {
+		chromeClient = new RuntimeChromeClient(this, new RuntimeChromeClient.Listener() {
 			@Override
-			public void onFullscreenChanged(boolean value) {
-				fullscreen = value;
+			public void onChromeChanged(@NonNull RuntimeChromeState state) {
+				fullscreen = state.getFullscreen();
+				showStatusBar = state.getShowStatusBar();
 				refreshState();
 			}
 
 			@Override
-			public void onFullscreenError(@NonNull Exception failure) {
-				Log.e("SettingsActivity", "Could not access fullscreen preference", failure);
-				Toast.makeText(SettingsActivity.this, R.string.runtime_fullscreen_update_failed,
+			public void onChromeError(@NonNull Exception failure) {
+				Log.e("SettingsActivity", "Could not access runtime chrome preferences", failure);
+				Toast.makeText(SettingsActivity.this, R.string.runtime_chrome_update_failed,
 						Toast.LENGTH_SHORT).show();
 			}
 		});
@@ -122,13 +126,13 @@ public class SettingsActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (fullscreenClient != null) fullscreenClient.start();
+		if (chromeClient != null) chromeClient.start();
 		refreshState();
 	}
 
 	@Override
 	protected void onPause() {
-		if (fullscreenClient != null) fullscreenClient.close();
+		if (chromeClient != null) chromeClient.close();
 		super.onPause();
 	}
 
@@ -194,7 +198,11 @@ public class SettingsActivity extends AppCompatActivity {
 			@Override
 			public void onToggle(@NonNull String key, boolean checked) {
 				if (PREF_TOOLBAR.equals(key)) {
-					fullscreenClient.setFullscreen(checked);
+					chromeClient.setFullscreen(checked);
+					return;
+				}
+				if (PREF_STATUSBAR.equals(key)) {
+					chromeClient.setShowStatusBar(checked);
 					return;
 				}
 				preferences.edit().putBoolean(key, checked).apply();
@@ -257,6 +265,11 @@ public class SettingsActivity extends AppCompatActivity {
 				getString(R.string.pref_runtime_fullscreen_title),
 				getString(R.string.pref_runtime_fullscreen_summary),
 				fullscreen));
+		switches.add(new SettingsSwitch(
+				PREF_STATUSBAR,
+				getString(R.string.pref_show_status_bar_title),
+				getString(R.string.pref_show_status_bar_summary),
+				showStatusBar));
 		switches.add(new SettingsSwitch(
 				PREF_KEEP_SCREEN,
 				getString(R.string.pref_wakelock_title),

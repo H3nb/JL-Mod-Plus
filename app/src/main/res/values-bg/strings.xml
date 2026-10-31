@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Дръжте играта далеч от предната камера или изреза на екрана. Включете, ако контролите са закрити.</string>
     <string name="pref_runtime_fullscreen_title">Цял екран</string>
     <string name="pref_runtime_fullscreen_summary">Скриване на лентата с инструменти по време на игра. Важи за всички MIDlet приложения.</string>
+    <string name="pref_show_status_bar_title">Показване на лентата на състоянието</string>
+    <string name="pref_show_status_bar_summary">Показва лентата на състоянието на Android по време на игра, за да виждате часа и иконите за известия.</string>
+    <string name="runtime_chrome_update_failed">Настройките на дисплея по време на игра не можаха да се актуализират. Опитайте отново.</string>
     <string name="runtime_fullscreen_update_failed">Няма достъп до настройката за цял екран. Опитайте отново.</string>
     <string name="midlet_file_permission_title">Достъп до хранилището</string>
     <string name="midlet_file_permission_read">Този MIDlet иска да чете файлове.</string>

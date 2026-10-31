@@ -1167,6 +1167,9 @@
     <string name="config_avoid_camera_cutout_summary">Keep the game away from the front camera or screen cutout. Enable this if game controls are covered.</string>
     <string name="pref_runtime_fullscreen_title">Fullscreen</string>
     <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
+    <string name="pref_show_status_bar_title">Show status bar</string>
+    <string name="pref_show_status_bar_summary">Keep the Android status bar visible while playing to see the clock and notification icons.</string>
+    <string name="runtime_chrome_update_failed">Could not update runtime display settings. Try again.</string>
     <string name="runtime_fullscreen_update_failed">Could not access the fullscreen setting. Try again.</string>
     <string name="midlet_permissions_write_summary">Includes creating and deleting files.</string>
     <string name="midlet_legacy_import_title">Legacy Siemens saves</string>

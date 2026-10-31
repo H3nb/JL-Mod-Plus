@@ -1043,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">讓遊戲畫面避開前置相機或螢幕開孔。如果操作按鈕遭到遮擋，請開啟。</string>
     <string name="pref_runtime_fullscreen_title">全螢幕</string>
     <string name="pref_runtime_fullscreen_summary">遊玩時隱藏工具列。適用於所有 MIDlet。</string>
+    <string name="pref_show_status_bar_title">顯示狀態列</string>
+    <string name="pref_show_status_bar_summary">遊玩時保持顯示 Android 狀態列，以便查看時間和通知圖示。</string>
+    <string name="runtime_chrome_update_failed">無法更新遊戲顯示設定，請再試一次。</string>
     <string name="runtime_fullscreen_update_failed">無法存取全螢幕設定，請重試。</string>
     <string name="midlet_file_permission_title">儲存空間存取</string>
     <string name="midlet_file_permission_read">此 MIDlet 想要讀取檔案。</string>

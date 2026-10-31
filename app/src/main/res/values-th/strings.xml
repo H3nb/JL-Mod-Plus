@@ -1043,6 +1043,9 @@
     <string name="config_avoid_camera_cutout_summary">แสดงเกมให้พ้นจากกล้องหน้าหรือรอยบากหน้าจอ เปิดใช้หากปุ่มควบคุมถูกบัง</string>
     <string name="pref_runtime_fullscreen_title">เต็มหน้าจอ</string>
     <string name="pref_runtime_fullscreen_summary">ซ่อนแถบเครื่องมือขณะเล่น มีผลกับ MIDlet ทั้งหมด</string>
+    <string name="pref_show_status_bar_title">แสดงแถบสถานะ</string>
+    <string name="pref_show_status_bar_summary">แสดงแถบสถานะของ Android ระหว่างเล่นเกมเพื่อดูเวลาและไอคอนการแจ้งเตือน</string>
+    <string name="runtime_chrome_update_failed">ไม่สามารถอัปเดตการตั้งค่าการแสดงผลของเกมได้ โปรดลองอีกครั้ง</string>
     <string name="runtime_fullscreen_update_failed">ไม่สามารถเข้าถึงการตั้งค่าเต็มหน้าจอได้ โปรดลองอีกครั้ง</string>
     <string name="midlet_file_permission_title">การเข้าถึงพื้นที่เก็บข้อมูล</string>
     <string name="midlet_file_permission_read">MIDlet นี้ต้องการอ่านไฟล์</string>

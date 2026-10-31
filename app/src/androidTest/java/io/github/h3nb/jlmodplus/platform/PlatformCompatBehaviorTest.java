@@ -56,7 +56,7 @@ import jlmod.platformfixture.PlatformCompatMidlet;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.settings.RuntimeFullscreenProvider;
+import io.github.h3nb.jlmodplus.settings.RuntimeChromeProvider;
 import io.github.h3nb.jlmodplus.util.Constants;
 
 @RunWith(AndroidJUnit4.class)
@@ -74,6 +74,8 @@ public class PlatformCompatBehaviorTest {
 	private String previousEmulatorDirectory;
 	private boolean hadToolbar;
 	private boolean previousToolbar;
+	private boolean hadStatusBar;
+	private boolean previousStatusBar;
 	private File root;
 	private File appDir;
 	private File marker;
@@ -88,6 +90,8 @@ public class PlatformCompatBehaviorTest {
 		previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
 		hadToolbar = preferences.contains(Constants.PREF_TOOLBAR);
 		previousToolbar = preferences.getBoolean(Constants.PREF_TOOLBAR, false);
+		hadStatusBar = preferences.contains(Constants.PREF_STATUSBAR);
+		previousStatusBar = preferences.getBoolean(Constants.PREF_STATUSBAR, false);
 		root = new File(context.getFilesDir(), FIXTURE_ROOT);
 		appDir = new File(new File(root, "converted"), "fixture");
 		marker = new File(root, "platform.marker");
@@ -96,6 +100,7 @@ public class PlatformCompatBehaviorTest {
 		assertTrue("Unable to select platform compatibility fixture",
 				preferences.edit()
 						.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath())
+						.putBoolean(Constants.PREF_STATUSBAR, false)
 						.commit());
 	}
 
@@ -105,6 +110,7 @@ public class PlatformCompatBehaviorTest {
 		restorePreference(preferences, Constants.PREF_EMULATOR_DIR,
 				hadEmulatorDirectory, previousEmulatorDirectory);
 		restorePreference(preferences, Constants.PREF_TOOLBAR, hadToolbar, previousToolbar);
+		restorePreference(preferences, Constants.PREF_STATUSBAR, hadStatusBar, previousStatusBar);
 		deleteRecursivelyBestEffort(root);
 	}
 
@@ -175,13 +181,13 @@ public class PlatformCompatBehaviorTest {
 
 	private void setFullscreen(boolean fullscreen) {
 		Bundle request = new Bundle();
-		request.putBoolean(RuntimeFullscreenProvider.VALUE, fullscreen);
+		request.putBoolean(RuntimeChromeProvider.FULLSCREEN, fullscreen);
 		Bundle confirmed = context.getContentResolver().call(
-				Uri.parse("content://" + context.getPackageName() + ".runtime-fullscreen"),
-				RuntimeFullscreenProvider.WRITE, null, request);
+				Uri.parse("content://" + context.getPackageName() + ".runtime-chrome"),
+				RuntimeChromeProvider.WRITE_FULLSCREEN, null, request);
 		assertTrue("Fullscreen provider must confirm the persisted preference", confirmed != null);
 		assertEquals("Unable to configure fullscreen fixture state",
-				fullscreen, confirmed.getBoolean(RuntimeFullscreenProvider.VALUE));
+				fullscreen, confirmed.getBoolean(RuntimeChromeProvider.FULLSCREEN));
 	}
 
 	@Test

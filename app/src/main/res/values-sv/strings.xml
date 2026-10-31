@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Håller spelet borta från frontkameran eller skärmutskärningen. Aktivera om kontrollerna täcks.</string>
     <string name="pref_runtime_fullscreen_title">Helskärm</string>
     <string name="pref_runtime_fullscreen_summary">Dölj verktygsfältet medan du spelar. Gäller alla MIDlet-appar.</string>
+    <string name="pref_show_status_bar_title">Visa statusfältet</string>
+    <string name="pref_show_status_bar_summary">Låt Androids statusfält vara synligt medan du spelar för att se klockan och aviseringsikoner.</string>
+    <string name="runtime_chrome_update_failed">Kunde inte uppdatera visningsinställningarna för spelet. Försök igen.</string>
     <string name="runtime_fullscreen_update_failed">Kunde inte komma åt helskärmsinställningen. Försök igen.</string>
     <string name="midlet_file_permission_title">Åtkomst till lagring</string>
     <string name="midlet_file_permission_read">Den här MIDleten vill läsa filer.</string>

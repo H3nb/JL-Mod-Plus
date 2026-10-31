@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">গেমের দৃশ্য সামনের ক্যামেরা বা স্ক্রিন কাটআউট থেকে দূরে রাখুন। কন্ট্রোল ঢাকা পড়লে চালু করুন।</string>
     <string name="pref_runtime_fullscreen_title">পূর্ণ স্ক্রিন</string>
     <string name="pref_runtime_fullscreen_summary">খেলার সময় টুলবার লুকান। সব MIDlet-এর ক্ষেত্রে প্রযোজ্য।</string>
+    <string name="pref_show_status_bar_title">স্ট্যাটাস বার দেখান</string>
+    <string name="pref_show_status_bar_summary">খেলার সময় ঘড়ি ও বিজ্ঞপ্তির আইকন দেখতে Android স্ট্যাটাস বার দৃশ্যমান রাখুন।</string>
+    <string name="runtime_chrome_update_failed">গেমের প্রদর্শন সেটিংস আপডেট করা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="runtime_fullscreen_update_failed">পূর্ণ স্ক্রিন সেটিং অ্যাক্সেস করা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="midlet_file_permission_title">স্টোরেজ অ্যাক্সেস</string>
     <string name="midlet_file_permission_read">এই MIDlet ফাইল পড়তে চায়।</string>

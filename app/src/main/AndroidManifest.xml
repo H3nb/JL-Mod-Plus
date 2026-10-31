@@ -304,8 +304,8 @@
             android:process=":midlet" />
 
         <provider
-            android:name=".settings.RuntimeFullscreenProvider"
-            android:authorities="${applicationId}.runtime-fullscreen"
+            android:name=".settings.RuntimeChromeProvider"
+            android:authorities="${applicationId}.runtime-chrome"
             android:exported="false" />
         <provider
             android:name=".config.PresetAuthorityProvider"

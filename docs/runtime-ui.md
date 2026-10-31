@@ -132,11 +132,16 @@ during `startApp()`.
   is unchanged. Existing virtual-control layout, input, and persistence semantics
   remain unchanged.
   APIs without rounded-corner information retain the standard control margins.
-- Fullscreen uses the inverse existing global toolbar preference, written only
-  by the main-process fullscreen authority. Settings and the runtime use its
-  asynchronous client and change notifications; the runtime never writes the
-  main-process SharedPreferences cache. Host dialogs and transient system bars
-  do not change this preference. Non-Canvas screens retain host navigation.
+- Fullscreen controls only the host toolbar. Show status bar is an independent
+  global opt-in (default off, using the legacy `pref_statusbar_switch` key) that
+  keeps Android status indicators visible during Canvas play; navigation bars
+  remain hidden. Non-Canvas screens retain both system bars and host navigation.
+  Both preferences are owned by the main-process runtime chrome authority;
+  Settings and runtime receive coherent snapshots through its asynchronous client
+  and change notifications. The runtime never writes the main-process preference
+  cache. Host dialogs and transient system bars do not change either preference.
+  When the status bar is shown, the Canvas toolbar and guest content reserve the
+  reported visible status-bar inset without double-counting the safe area.
 - Toolbar shortcuts and menu/controller actions come from the same layout
   decision. Available speed, IME and screenshot actions receive space before
   the title, which elides or disappears when necessary. IME, screenshot and

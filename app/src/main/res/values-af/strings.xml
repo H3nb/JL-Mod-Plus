@@ -1076,6 +1076,9 @@
     <string name="config_avoid_camera_cutout_summary">Hou die speletjie weg van die voorkamera of skermuitsnyding. Skakel aan as kontroles bedek word.</string>
     <string name="pref_runtime_fullscreen_title">Volskerm</string>
     <string name="pref_runtime_fullscreen_summary">Versteek die nutsbalk terwyl jy speel. Geld vir alle MIDlets.</string>
+    <string name="pref_show_status_bar_title">Wys statusbalk</string>
+    <string name="pref_show_status_bar_summary">Hou Android se statusbalk sigbaar terwyl jy speel om die tyd en kennisgewingikone te sien.</string>
+    <string name="runtime_chrome_update_failed">Kon nie die skerminstellings vir die speletjie opdateer nie. Probeer weer.</string>
     <string name="runtime_fullscreen_update_failed">Kon nie toegang tot die volskerminstelling kry nie. Probeer weer.</string>
     <string name="midlet_file_permission_title">Bergingtoegang</string>
     <string name="midlet_file_permission_read">Hierdie MIDlet wil lêers lees.</string>
