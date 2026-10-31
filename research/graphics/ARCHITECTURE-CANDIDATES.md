@@ -307,3 +307,10 @@ multi-renderer scene-graph framework solely to resolve these dimensions.
 GLES presentation currently requests context version 2 via GlesView.
 The emulator's response happened to report ES3; the shipping baseline
 must not assume all GLES2 Android devices can use ES3-only internal formats.
+
+
+## New evidence: real Android surface lifecycle and discrete HD semantics
+
+- `GlesViewLifecycleResearchTest` passed on [run 41158291554](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41158291554): genuine pinned Libretro multipass survived first frame, explicit repeat, view resize, and forced GL context recreation on a real app `GlesView` in a target-process Activity. This **does not** exercise production `Canvas.GLRenderer`/mailbox, and should not be presented as full runtime shader support.
+- `SupersamplingSemanticsResearchTest` passed two methods on [run 41158942239](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41158942239): 120/120 pixels of a 12x10 opaque integer-coordinate control fixture matched after rendering to 2x pixels and reading back, **when copy source coordinates were explicitly doubled**. This supports, but does not settle, dual logical/physical target dimensions. Earlier fractional-line pixel differences remain a separate, non-normative characterization.
+- No timing/battery result and no M3G/Mascot runtime result was obtained. A full backend replacement is still unjustified. Concentrate next on the actual game/presentation ownership boundary (GLRenderer frame publication, host background, screenshot, context loss) and a guest-facing mixed 2D/M3G/2D HD oracle. Avoid synthetic fixtures that can pass despite a wrong production integration.
