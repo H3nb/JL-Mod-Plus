@@ -321,11 +321,15 @@ class MemoryEditorAdaptiveComposeTest {
             rule.runOnIdle { size.value = window }
             val title = rule.onNodeWithText(context.getString(R.string.memory_editor))
                 .getUnclippedBoundsInRoot()
+            // Unmerged nodes expose the 24 dp icon bounds, not the containing
+            // 48 dp clickable targets that extend farther toward the edge.
             val settings = rule.onNodeWithContentDescription(
                 context.getString(R.string.memory_editor_panel_opacity),
+                useUnmergedTree = true,
             ).getUnclippedBoundsInRoot()
             val close = rule.onNodeWithContentDescription(
                 context.getString(R.string.memory_editor_close),
+                useUnmergedTree = true,
             ).getUnclippedBoundsInRoot()
             val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
             assertEquals("Settings glyph aligns with title", title.left.value, settings.left.value, 2f)
