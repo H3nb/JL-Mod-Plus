@@ -276,3 +276,65 @@ including the final pass's declared size and optional host presentation
 blit. No generic pass engine or frame queue is justified solely by this
 experiment. Keep presets' requested filters and named parameter overrides
 independent from the legacy four-value shader ABI.
+
+## Bounded preset planning experiment
+
+The R&D-only `GlslpPresetResearch` is a **CPU-side preset parser and pass-size
+planner**, not an Android GLSLP engine or a safe user import implementation.
+It does not replace `ShaderSelection`, alter persisted profiles, compile
+shader source, own any EGL context or run a new frame loop.
+
+The bounded grammar recognizes `shaders`, shader source paths, tri-state
+`filter_linearN`, limited `wrap_modeN`, independent source/viewport/absolute
+scales for X/Y and explicit numeric preset parameter overrides. It preserves
+the distinction between an unspecified final scale (direct viewport by
+default) and a declared final source/absolute/multiplied viewport scale.
+The latter requires a final offscreen output and stock presentation blit,
+**even if the calculated pixel size happens to equal the viewport**.
+This rule was independently checked against RetroArch `gl2.c`
+(`gl2_renderchain_init` / `GFX_FBO_SCALE_IS_VIEWPORT`).
+
+The planner uses the previous pass's output as the next pass's source size,
+the game's **viewport** as the viewport basis, relative-size integer
+truncation as performed by the upstream GL2 driver, and integer absolute
+size rounding. It checks configured maximum texture dimensions and a
+conservative sum of RGBA8 intermediate allocations; **that sum is not a full
+GPU memory estimate**, since it excludes the original upload, host
+presentation buffers, driver overhead, temporal history and LUTs.
+All of those must be included before production GPU allocation.
+
+Research constraints are deliberately restrictive: at most 16 passes,
+bounded preset/source text lengths, normalized paths within a logical
+asset root, and explicit rejection of unrecognized keys and
+`#reference`. The future filesystem/import reader must independently
+enforce canonical root confinement, byte-count limits before decoding,
+archive traversal protection and appropriate total resource limits;
+accepting a test `AssetReader` must not be called secure ZIP import.
+Referenced presets require declaring-file-relative resource resolution,
+so simple flattened key overrides would be inadequate.
+
+The parser **does not** infer dependencies from GLSL sampler declarations:
+`PassPrev2Texture`, `OrigTexture`, prior-pass aliases, `Prev` history
+and LUTs are still separate execution-planning gates. It records named
+preset overrides (e.g. `xbrz-crisp`) but neither extracts/validates
+shader `#pragma parameter` defaults nor binds GPU uniforms. Desktop
+`#version 130` sources are likewise not thereby GLES-compatible.
+Never treat structural parsing success as an advertised supported preset.
+
+Focused JVM tests cover representative pinned-preset shapes for xBRZ
+Freescale/Crisp, 4xBRZ Linear, Gaussian, FSR, independent-axis sizing,
+relative-scaling fractional truncation, stage count, unsupported
+features, path traversal and invalid dimensions. Their tiny shader texts
+are **synthetic**: no original Libretro shader source is bundled in
+the app or tests by this experiment. A separate source inspection of
+the pinned Libretro preset files confirmed the targeted metadata keys.
+GPU correctness remains supported only by the earlier real xBRZ pipeline
+fixture, not by these CPU tests.
+
+**Next discriminating gate:** resolve actual pinned preset resources and
+shader `#pragma parameter` metadata, then execute both default xBRZ
+Freescale and xBRZ Crisp parameter values on the same visual fixture
+with verifiable pixel differences. Preserve full pass-size semantics
+(including source-sized final blit) and pass-specific texture dependencies.
+Do not build generalized LUT/history/feedback plumbing before a concrete
+supported preset requires it.
