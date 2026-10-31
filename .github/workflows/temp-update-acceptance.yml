@@ -87,6 +87,12 @@ jobs:
           repo.write_text(source.replace(old, '"http://10.0.2.2:8765/updates.json"'))
           print("Temporary test-only changes made in runner checkout, not committed.")
           PY
+      - name: Enable KVM for Android emulator
+        shell: bash
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+          ls -l /dev/kvm
       - name: Run focused test on Android 35 emulator
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
@@ -96,7 +102,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
-            set -euo pipefail
+            set -eu
             chmod +x gradlew
             cat > /tmp/update-metadata-service.py <<'PY'
             import json
