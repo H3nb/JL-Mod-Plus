@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -45,9 +45,13 @@ internal class UpdateRepository private constructor(context: Context) {
     var automaticChecks by mutableStateOf(preferences.getBoolean(KEY_ENABLED, true))
         private set
 
+    // The last valid result survives a failed refresh; refresh activity is independent.
     var status by mutableStateOf<UpdateStatus>(restoredStatus())
         private set
-
+    var checking by mutableStateOf(false)
+        private set
+    var refreshFailed by mutableStateOf(false)
+        private set
     var lastChecked by mutableStateOf(preferences.getLong(KEY_SUCCESS, 0L))
         private set
 
@@ -56,8 +60,9 @@ internal class UpdateRepository private constructor(context: Context) {
         if (preferences.getString(KEY_INSTALLED, null) != identity) {
             preferences.edit {
                 putString(KEY_INSTALLED, identity)
-                remove(KEY_SUCCESS).remove(KEY_RESULT).remove(KEY_VERSION)
-                remove(KEY_CODE).remove(KEY_URL)
+                remove(KEY_SUCCESS).remove(KEY_ATTEMPT).remove(KEY_RESULT)
+                remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL)
+                remove(KEY_HANDLED + "_Stable").remove(KEY_HANDLED + "_Preview")
             }
             lastChecked = 0L
             status = UpdateStatus.NotChecked
@@ -69,11 +74,12 @@ internal class UpdateRepository private constructor(context: Context) {
         channel = value
         preferences.edit {
             putString(KEY_CHANNEL, value.name)
-            remove(KEY_SUCCESS).remove(KEY_RESULT).remove(KEY_VERSION)
-            remove(KEY_CODE).remove(KEY_URL)
+            remove(KEY_SUCCESS).remove(KEY_ATTEMPT).remove(KEY_RESULT)
+            remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL)
         }
         lastChecked = 0L
         status = UpdateStatus.NotChecked
+        refreshFailed = false
     }
 
     fun configureAutomaticChecks(enabled: Boolean) {
@@ -81,11 +87,28 @@ internal class UpdateRepository private constructor(context: Context) {
         preferences.edit { putBoolean(KEY_ENABLED, enabled) }
     }
 
-    fun takeUnnotifiedVersion(): String? {
-        val candidate = (status as? UpdateStatus.Available)?.candidate ?: return null
-        if (preferences.getString(KEY_NOTIFIED, null) == candidate.versionName) return null
-        preferences.edit { putString(KEY_NOTIFIED, candidate.versionName) }
-        return candidate.versionName
+    fun candidateKey(candidate: UpdateCandidate): String =
+        channel.name + "|" + candidate.versionName + "|" + candidate.versionCode
+
+    private fun handledPreferenceKey(): String = KEY_HANDLED + "_" + channel.name
+
+    fun isHandled(candidate: UpdateCandidate): Boolean =
+        preferences.getString(handledPreferenceKey(), null) == candidateKey(candidate)
+
+    fun handle(candidate: UpdateCandidate) {
+        preferences.edit { putString(handledPreferenceKey(), candidateKey(candidate)) }
+    }
+
+    /** Polling is active only while the Library is resumed. No background worker is needed. */
+    fun nextAutomaticDelayMillis(): Long {
+        val now = System.currentTimeMillis()
+        fun remaining(last: Long, interval: Long): Long =
+            if (last <= 0L || now < last) 0L else (interval - (now - last)).coerceAtLeast(0L)
+        return maxOf(
+            remaining(lastChecked, CHECK_INTERVAL_MS),
+            remaining(preferences.getLong(KEY_ATTEMPT, 0L), RETRY_DELAY_MS),
+            MIN_POLL_DELAY_MS,
+        )
     }
 
     suspend fun check(manual: Boolean) = mutex.withLock {
@@ -97,7 +120,12 @@ internal class UpdateRepository private constructor(context: Context) {
 
         preferences.edit { putLong(KEY_ATTEMPT, now) }
         val requestedChannel = channel
-        status = UpdateStatus.Checking
+        val previous = status
+        checking = true
+        refreshFailed = false
+        if (previous == UpdateStatus.NotChecked || previous == UpdateStatus.Failed) {
+            status = UpdateStatus.Checking
+        }
         try {
             val result = withContext(Dispatchers.IO) { fetchLatest(requestedChannel) }
             if (channel != requestedChannel) return@withLock
@@ -115,17 +143,37 @@ internal class UpdateRepository private constructor(context: Context) {
                 editor.putString(KEY_VERSION, result.candidate.versionName)
                     .putInt(KEY_CODE, result.candidate.versionCode)
                     .putString(KEY_URL, result.candidate.releaseUrl)
+                    .putString(KEY_DOWNLOAD_URL, result.candidate.downloadUrl)
             } else {
                 editor.remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL)
+                    .remove(KEY_DOWNLOAD_URL)
             }
             editor.apply()
         } catch (cancelled: CancellationException) {
-            if (channel == requestedChannel) status = UpdateStatus.NotChecked
+            if (channel == requestedChannel) {
+                status = previous
+                // Lifecycle cancellation is not a network failure; allow a prompt retry on resume.
+                if (preferences.getLong(KEY_ATTEMPT, 0L) == now) {
+                    preferences.edit { remove(KEY_ATTEMPT) }
+                }
+            }
             throw cancelled
         } catch (_: IOException) {
-            if (channel == requestedChannel) status = UpdateStatus.Failed
-        } catch (_: org.json.JSONException) {
-            if (channel == requestedChannel) status = UpdateStatus.Failed
+            if (channel == requestedChannel) {
+                status = if (previous == UpdateStatus.NotChecked || previous == UpdateStatus.Failed) {
+                    UpdateStatus.Failed
+                } else previous
+                refreshFailed = true
+            }
+        } catch (_: JSONException) {
+            if (channel == requestedChannel) {
+                status = if (previous == UpdateStatus.NotChecked || previous == UpdateStatus.Failed) {
+                    UpdateStatus.Failed
+                } else previous
+                refreshFailed = true
+            }
+        } finally {
+            checking = false
         }
     }
 
@@ -134,9 +182,10 @@ internal class UpdateRepository private constructor(context: Context) {
             "available" -> {
                 val version = preferences.getString(KEY_VERSION, null)
                 val url = preferences.getString(KEY_URL, null)
+                val download = preferences.getString(KEY_DOWNLOAD_URL, null)
                 val code = preferences.getInt(KEY_CODE, 0)
                 val candidate = if (version != null && url != null && code > 0) {
-                    UpdateCandidate(version, code, url)
+                    UpdateCandidate(version, code, url, download)
                 } else null
                 if (candidate != null && eligibleUpdate(
                         BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, candidate)) {
@@ -150,101 +199,90 @@ internal class UpdateRepository private constructor(context: Context) {
         }
     }
 
-    private fun fetchLatest(channel: UpdateChannel): UpdateStatus {
-        val releases = mutableListOf<JSONObject>()
-        if (channel == UpdateChannel.Preview) {
-            val recent = loadJson(RELEASES_API) as? JSONArray
-                ?: throw IOException("Invalid releases response")
-            for (index in 0 until recent.length()) {
-                releases.add(recent.getJSONObject(index))
+    private fun fetchLatest(requestedChannel: UpdateChannel): UpdateStatus {
+        val connection = URL(MANIFEST_URL).openConnection() as HttpURLConnection
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        connection.setRequestProperty("Accept", "application/json")
+        connection.setRequestProperty("User-Agent", "JL-Mod-Plus-Updater")
+        val document = try {
+            if (connection.responseCode != 200) {
+                throw IOException("Update manifest HTTP " + connection.responseCode)
             }
+            JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+        } finally {
+            connection.disconnect()
         }
-        val stable = loadJson(LATEST_API, missingAllowed = true) as? JSONObject
-        if (stable != null && releases.none { it.optString("tag_name") == stable.optString("tag_name") }) {
-            releases.add(stable)
+        if (document.getInt("schema") != 1 ||
+            document.getString("applicationId") != "io.github.h3nb.jlmodplus") {
+            throw IOException("Unsupported update manifest")
         }
+
         val installed = ReleaseVersion.parse(BuildConfig.VERSION_NAME)
             ?: return UpdateStatus.NoRelease
-        val ranked = releases.mapNotNull { release ->
-            if (release.optBoolean("draft", false)) return@mapNotNull null
-            if (channel == UpdateChannel.Stable && release.optBoolean("prerelease", false)) {
-                return@mapNotNull null
-            }
-            val tag = release.optString("tag_name")
-            if (!tag.startsWith("v")) return@mapNotNull null
-            val version = tag.drop(1)
-            val parsed = ReleaseVersion.parse(version) ?: return@mapNotNull null
-            if (release.optBoolean("prerelease", false) != ('-' in version)) return@mapNotNull null
-            Triple(release, version, parsed)
-        }.sortedWith(compareByDescending { it.third })
-
-        var incompatible = false
-        val newer = ranked.filter { it.third > installed }.take(MAX_METADATA_CHECKS)
-        for ((release, version) in newer) {
-            val assets = release.optJSONArray("assets") ?: continue
-            var metadataUrl: String? = null
-            var hasApk = false
-            for (i in 0 until assets.length()) {
-                val asset = assets.getJSONObject(i)
-                val name = asset.optString("name")
-                if (name == "release-info.json") metadataUrl = asset.optString("browser_download_url")
-                if (name.endsWith(".apk") && (name.endsWith("-universal.apk") ||
-                            Build.SUPPORTED_ABIS.any { abi -> name.endsWith("-" + abi + ".apk") })) {
-                    hasApk = true
-                }
-            }
-            val expected = "https://github.com/H3nb/JL-Mod-Plus/releases/download/v" +
-                version + "/release-info.json"
-            if (!hasApk || metadataUrl != expected) continue
-            val meta = loadJson(expected) as? JSONObject ?: continue
-            val minimumSdk = meta.optInt("minSdk", 0)
-            if (meta.optInt("schema") != 1 || meta.optString("versionName") != version ||
-                meta.optString("applicationId") != "io.github.h3nb.jlmodplus" ||
-                minimumSdk < 23 || minimumSdk > Build.VERSION.SDK_INT) {
+        val entries = document.getJSONArray("releases")
+        var best: Pair<ReleaseVersion, UpdateCandidate>? = null
+        var hasNewerIncompatible = false
+        var hasPublished = false
+        for (i in 0 until entries.length()) {
+            val release = entries.getJSONObject(i)
+            val version = release.getString("versionName")
+            val parsed = ReleaseVersion.parse(version) ?: continue
+            val prerelease = release.getBoolean("prerelease")
+            if (prerelease != ('-' in version)) continue
+            if (requestedChannel == UpdateChannel.Stable && prerelease) continue
+            hasPublished = true
+            if (parsed <= installed) continue
+            val code = release.getInt("versionCode")
+            val minSdk = release.getInt("minSdk")
+            if (code <= 0 || minSdk < 23) throw IOException("Invalid release metadata")
+            if (code <= BuildConfig.VERSION_CODE || minSdk > Build.VERSION.SDK_INT) {
+                hasNewerIncompatible = true
                 continue
             }
-            val code = meta.optInt("versionCode", 0)
-            if (code < 1) continue
+
+            val assets = release.getJSONArray("assets")
+            val supportedUrls = mutableMapOf<String, String>()
+            for (assetIndex in 0 until assets.length()) {
+                val asset = assets.getJSONObject(assetIndex)
+                val abi = asset.getString("abi")
+                val url = asset.getString("url")
+                val expected = "https://github.com/H3nb/JL-Mod-Plus/releases/download/v" +
+                    version + "/JL-Mod-Plus-v" + version + "-" + abi + ".apk"
+                if (abi !in SUPPORTED_ASSET_ABIS || url != expected) {
+                    throw IOException("Invalid update asset URL")
+                }
+                supportedUrls[abi] = url
+            }
+            val download = Build.SUPPORTED_ABIS.firstNotNullOfOrNull { supportedUrls[it] }
+                ?: supportedUrls["universal"]
+            if (download == null) {
+                hasNewerIncompatible = true
+                continue
+            }
             val candidate = UpdateCandidate(
                 versionName = version,
                 versionCode = code,
                 releaseUrl = "https://github.com/H3nb/JL-Mod-Plus/releases/tag/v" + version,
+                downloadUrl = download,
             )
-            if (eligibleUpdate(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, candidate)) {
-                return UpdateStatus.Available(candidate)
+            if (eligibleUpdate(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, candidate) &&
+                (best == null || parsed > best.first)) {
+                best = parsed to candidate
             }
-            incompatible = true
         }
         return when {
-            incompatible -> UpdateStatus.NotInstallable
-            newer.isNotEmpty() -> UpdateStatus.NoRelease
-            ranked.isNotEmpty() -> UpdateStatus.Current
+            best != null -> UpdateStatus.Available(best.second)
+            hasNewerIncompatible -> UpdateStatus.NotInstallable
+            hasPublished -> UpdateStatus.Current
             else -> UpdateStatus.NoRelease
         }
     }
 
-    private fun loadJson(url: String, missingAllowed: Boolean = false): Any? {
-        val connection = URL(url).openConnection() as HttpURLConnection
-        connection.connectTimeout = 5000
-        connection.readTimeout = 5000
-        connection.setRequestProperty("Accept", "application/vnd.github+json")
-        connection.setRequestProperty("User-Agent", "JL-Mod-Plus-Updater")
-        try {
-            val response = connection.responseCode
-            if (missingAllowed && response == 404) return null
-            if (response != 200) throw IOException("GitHub returned HTTP " + response)
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            return if (body.trimStart().startsWith("[")) JSONArray(body) else JSONObject(body)
-        } finally {
-            connection.disconnect()
-        }
-    }
-
     companion object {
-        private const val RELEASES_API =
-            "https://api.github.com/repos/H3nb/JL-Mod-Plus/releases?per_page=30"
-        private const val LATEST_API =
-            "https://api.github.com/repos/H3nb/JL-Mod-Plus/releases/latest"
+        private const val MANIFEST_URL = "https://h3nb.github.io/JL-Mod-Plus/updates.json"
+        private val SUPPORTED_ASSET_ABIS =
+            setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64", "universal")
         private const val KEY_CHANNEL = "jlmod_updates_channel"
         private const val KEY_INSTALLED = "jlmod_updates_installed_identity"
         private const val KEY_ENABLED = "jlmod_updates_enabled"
@@ -254,10 +292,11 @@ internal class UpdateRepository private constructor(context: Context) {
         private const val KEY_VERSION = "jlmod_updates_version"
         private const val KEY_CODE = "jlmod_updates_code"
         private const val KEY_URL = "jlmod_updates_url"
-        private const val KEY_NOTIFIED = "jlmod_updates_notified"
-        private const val CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L
+        private const val KEY_DOWNLOAD_URL = "jlmod_updates_download_url"
+        private const val KEY_HANDLED = "jlmod_updates_handled_version"
+        private const val CHECK_INTERVAL_MS = 60 * 60 * 1000L
         private const val RETRY_DELAY_MS = 30 * 60 * 1000L
-        private const val MAX_METADATA_CHECKS = 8
+        private const val MIN_POLL_DELAY_MS = 60_000L
 
         @Volatile private var instance: UpdateRepository? = null
         fun get(context: Context): UpdateRepository =

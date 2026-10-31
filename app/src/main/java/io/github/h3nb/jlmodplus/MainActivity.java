@@ -248,6 +248,11 @@ public class MainActivity extends AppCompatActivity {
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 	}
 
+	/** Compose-owned host dialogs are snapshot-observable; Fragment dialogs are tracked by Library. */
+	public boolean isHostDialogVisible() {
+		return mainComposeController != null && mainComposeController.isDialogVisible();
+	}
+
 	@Override
 	protected void onResume() {
 		super.onResume();
