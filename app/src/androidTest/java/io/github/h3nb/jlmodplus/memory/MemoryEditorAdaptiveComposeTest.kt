@@ -229,6 +229,26 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
+    @Test fun portraitHeaderAndTabsDoNotOverlap() {
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp))) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(
+                        MemoryEditorUiState(visible = true, connected = true, supported = true),
+                        TestMemoryEditorActions(),
+                    )
+                }
+            }
+        }
+        val title = rule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.memory_editor),
+        ).getUnclippedBoundsInRoot()
+        val tab = rule.onNodeWithContentDescription(
+            InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.memory_editor_search_tab),
+        ).getUnclippedBoundsInRoot()
+        assertTrue("Title and tabs must occupy separate rows in portrait", title.bottom <= tab.top)
+    }
+
     @Test fun selectCurrentPageRemainsAvailableInLandscapeAndPortrait() {
         val size = mutableStateOf(DpSize(720.dp, 360.dp))
         val rows = listOf(1L, 2L).map { id ->

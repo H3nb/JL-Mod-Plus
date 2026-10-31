@@ -198,7 +198,7 @@ internal fun MemoryEditorRuntimeRoot(
                         Modifier.fillMaxSize().padding(bottom = 48.dp)
                             .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
                     ) {
-                        Box(Modifier.windowInsetsPadding(
+                        Column(Modifier.fillMaxWidth().windowInsetsPadding(
                             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
                         )) {
                             RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close, showTitle)
