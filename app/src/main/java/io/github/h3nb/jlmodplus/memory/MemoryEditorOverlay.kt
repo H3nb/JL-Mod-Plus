@@ -70,6 +70,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -333,14 +334,23 @@ internal fun MemoryEditorDialog(
                         Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
                             detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
                         })
-                        // The persistent 48 dp Peek target uses the bottom strip. Measure
-                        // the form in the remaining real viewport, with no second guessed
-                        // 96 dp deduction and no duplicate adaptive vertical margin.
+                        // On wide windows Peek fits entirely beside the form, so dialogs
+                        // can use the full height and remain centered on the screen.
+                        // Otherwise reserve only its actual 48 dp bottom touch target.
+                        val peekGutter = 48.dp + 8.dp +
+                            memoryEditorBottomCornerPadding()
+                                .calculateRightPadding(LocalLayoutDirection.current)
+                        val sidePeek = maxWidth - peekGutter * 2 >= minOf(maxDialogWidth, 600.dp)
+                        val dialogMaxWidth = if (sidePeek) {
+                            minOf(maxDialogWidth, maxWidth - peekGutter * 2)
+                        } else maxDialogWidth
                         BoxWithConstraints(
-                            modifier = Modifier.fillMaxSize().padding(bottom = 48.dp),
+                            modifier = Modifier.fillMaxSize().then(
+                                if (sidePeek) Modifier else Modifier.padding(bottom = 48.dp),
+                            ),
                             contentAlignment = Alignment.Center,
                         ) {
-                            val layout = adaptiveDialogLayout(maxWidth, maxHeight, maxDialogWidth = maxDialogWidth)
+                            val layout = adaptiveDialogLayout(maxWidth, maxHeight, maxDialogWidth = dialogMaxWidth)
                                 .copy(maxHeight = (maxHeight - 8.dp).coerceAtLeast(0.dp))
                             Surface(
                                 modifier = layout.modifier.then(modifier)

@@ -77,10 +77,13 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 The workspace owns one `MemoryEditorOverlayState`. Editor dialogs inherit it through
 `LocalMemoryEditorOverlay`; their layer registration determines which window renders
 the active eye. Every modal uses a full safe-window shell with the same 48 dp Peek footer
-and its own bounded width. The form is centered in the usable viewport above
-Peek, with only small vertical edge margins; no 96 dp pre-subtraction or second
-adaptive height margin. This retains direct access to Peek and avoids clipping
-forms/keypads unnecessarily in short landscape windows.
+and its own bounded width. On sufficiently wide windows the 48 dp Peek target
+fits outside the dialog's side edge, allowing the form to center on the entire
+safe viewport and use nearly all of its height. When that side lane would make
+the form too narrow, the form centers in the remaining area above Peek instead.
+Both cases retain only small vertical edge margins: no 96 dp pre-subtraction or
+second adaptive height margin. This preserves direct access to Peek without
+unnecessarily clipping forms/keypads in short landscape windows.
 Choices use this shell too: a native dropdown would intercept the footer behind it.
 Choice/action/settings dialogs have a 400 dp width cap; input forms can use 720 dp
 for controls beside the keypad. Use the theme's large corners for dialog surfaces.

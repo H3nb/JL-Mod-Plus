@@ -204,6 +204,33 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
+    @Test fun wideLandscapeCentersDialogAndKeepsPeekBesideIt() {
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(840.dp, 360.dp))) {
+                JLModPlusTheme {
+                    MemoryEditorDialog(
+                        onDismissRequest = {},
+                        title = { Text("Search") },
+                        text = { Column { repeat(24) { Text("Search option $it") } } },
+                        confirmButton = { TextButton(onClick = {}) { Text("Apply") } },
+                    )
+                }
+            }
+        }
+        val viewport = rule.onNodeWithTag("memory-editor-dialog-viewport").getUnclippedBoundsInRoot()
+        val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
+        val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
+        assertEquals(
+            "Wide dialog should remain centered on the whole safe viewport",
+            (viewport.top.value + viewport.bottom.value) / 2f,
+            (surface.top.value + surface.bottom.value) / 2f, 2f,
+        )
+        assertTrue("Peek must have a clear side lane", surface.right <= peek.left)
+        assertTrue("Wide landscape dialog should use available height",
+            surface.bottom - surface.top > (viewport.bottom - viewport.top) * 0.75f)
+        rule.onNodeWithText("Apply").assertIsDisplayed()
+    }
+
     @Test fun longLandscapeDialogUsesMostAvailableHeightWithoutCoveringPeek() {
         rule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(720.dp, 360.dp))) {
