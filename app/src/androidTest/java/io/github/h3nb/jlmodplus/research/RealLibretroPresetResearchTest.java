@@ -243,6 +243,112 @@ public final class RealLibretroPresetResearchTest {
         }
     }
 
+
+    /**
+     * Actual upstream shader-source compatibility, separate from GLSLP preset parsing.
+     * This checks both shader stages and GL linking in an Android-requested ES2 context.
+     * A successfully linked program is still NOT evidence of correct drawn pixels or
+     * that its parameter/previous-frame/LUT uniforms have been populated.
+     */
+    @Test public void representativeLibretroSourcesExposeGlesLanguageBoundary() throws Exception {
+        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
+        assertTrue(EGL14.eglInitialize(display, new int[1], 0, new int[1], 0));
+        EGLConfig[] config = new EGLConfig[1];
+        int[] count = new int[1];
+        int[] attrs = {
+                EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
+                EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_NONE
+        };
+        assertTrue(EGL14.eglChooseConfig(display, attrs, 0, config, 0, 1, count, 0));
+        assertTrue(count[0] > 0);
+        EGLContext context = EGL14.eglCreateContext(display, config[0], EGL14.EGL_NO_CONTEXT,
+                new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE}, 0);
+        assertNotEquals(EGL14.EGL_NO_CONTEXT, context);
+        EGLSurface surface = EGL14.eglCreatePbufferSurface(display, config[0],
+                new int[]{EGL14.EGL_WIDTH, 4, EGL14.EGL_HEIGHT, 4, EGL14.EGL_NONE}, 0);
+        assertNotEquals(EGL14.EGL_NO_SURFACE, surface);
+        try {
+            assertTrue(EGL14.eglMakeCurrent(display, surface, surface, context));
+            Log.i("GraphicsRD_Corpus", "GL_VERSION=" + GLES20.glGetString(GLES20.GL_VERSION)
+                    + " GLSL=" + GLES20.glGetString(GLES20.GL_SHADING_LANGUAGE_VERSION));
+            assertTrue("CRT EasyMode should be linkable with the pinned ES-compatible source",
+                    probeLibretroSource("crt/shaders/crt-easymode.glsl"));
+            assertTrue("LCD3x should be linkable with the pinned ES-compatible source",
+                    probeLibretroSource("handheld/shaders/lcd3x.glsl"));
+            // The FSR shader is deliberately diagnostic pending complete pass uniforms.
+            boolean fsrPass0 = probeLibretroSource("fsr/shaders/fsr-pass0.glsl");
+            Log.i("GraphicsRD_Corpus", "FSR_EASU_LINKED=" + fsrPass0
+                    + " (not a runtime correctness claim)");
+            // Desktop GLSL version 130 cannot be submitted unchanged to an ES context.
+            // Insert stage defines AFTER the #version directive (not before), so failure
+            // is caused by incompatibility instead of an invalid directive position.
+            assertFalse("GLSL 130 desktop source must not be silently accepted as ES",
+                    probeLibretroSource("handheld/shaders/lcd-cgwg/lcd-grid-v2.glsl"));
+            assertFalse("NTSC desktop GLSL 130 requires an explicit compatibility decision",
+                    probeLibretroSource("ntsc/shaders/ntsc-pass1-composite-3phase.glsl"));
+        } finally {
+            EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_CONTEXT);
+            EGL14.eglDestroySurface(display, surface);
+            EGL14.eglDestroyContext(display, context);
+            EGL14.eglTerminate(display);
+        }
+    }
+
+    private static boolean probeLibretroSource(String path) throws Exception {
+        String source = readAsset(ASSETS + path);
+        int vertex = compileProbeStage(GLES20.GL_VERTEX_SHADER, source, "VERTEX", path);
+        int fragment = compileProbeStage(GLES20.GL_FRAGMENT_SHADER, source, "FRAGMENT", path);
+        int program = 0;
+        boolean linked = false;
+        try {
+            if (vertex != 0 && fragment != 0) {
+                program = GLES20.glCreateProgram();
+                GLES20.glAttachShader(program, vertex);
+                GLES20.glAttachShader(program, fragment);
+                GLES20.glLinkProgram(program);
+                int[] status = new int[1];
+                GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, status, 0);
+                linked = status[0] == 1;
+                if (!linked) Log.i("GraphicsRD_Corpus", path + ": link: "
+                        + GLES20.glGetProgramInfoLog(program));
+            }
+            Log.i("GraphicsRD_Corpus", path + ": vertex=" + (vertex != 0)
+                    + " fragment=" + (fragment != 0) + " linked=" + linked);
+            return linked;
+        } finally {
+            if (program != 0) GLES20.glDeleteProgram(program);
+            if (vertex != 0) GLES20.glDeleteShader(vertex);
+            if (fragment != 0) GLES20.glDeleteShader(fragment);
+        }
+    }
+
+    private static int compileProbeStage(int kind, String source, String stage, String path) {
+        String taggedSource;
+        if (source.startsWith("#version ")) {
+            int newline = source.indexOf('\n');
+            assertTrue("Version directive must terminate on first line", newline > 0);
+            taggedSource = source.substring(0, newline + 1)
+                    + "#define " + stage + "\n" + source.substring(newline + 1);
+        } else {
+            taggedSource = "#define " + stage + "\n" + source;
+        }
+        int shader = GLES20.glCreateShader(kind);
+        GLES20.glShaderSource(shader, taggedSource);
+        GLES20.glCompileShader(shader);
+        int[] status = new int[1];
+        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, status, 0);
+        if (status[0] == 1) return shader;
+        Log.i("GraphicsRD_Corpus", path + ": " + stage + " compile: "
+                + GLES20.glGetShaderInfoLog(shader));
+        GLES20.glDeleteShader(shader);
+        return 0;
+    }
+
     private static String readAsset(String name) throws Exception {
         try (InputStream input = InstrumentationRegistry.getInstrumentation()
                 .getContext().getAssets().open(name)) {

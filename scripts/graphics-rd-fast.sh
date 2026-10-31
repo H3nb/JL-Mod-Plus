@@ -14,7 +14,11 @@ mkdir -p "$asset_dir"
 for name in stock.glsl bilinear.glslp \
   blurs/gauss_4tap.glslp \
   blurs/shaders/gauss_4tap/gauss_2tap_h.glsl \
-  blurs/shaders/gauss_4tap/gauss_2tap_v.glsl; do
+  blurs/shaders/gauss_4tap/gauss_2tap_v.glsl \
+  crt/shaders/crt-easymode.glsl handheld/shaders/lcd3x.glsl \
+  fsr/shaders/fsr-pass0.glsl \
+  handheld/shaders/lcd-cgwg/lcd-grid-v2.glsl \
+  ntsc/shaders/ntsc-pass1-composite-3phase.glsl; do
   mkdir -p "$asset_dir/$(dirname "$name")"
   curl --fail --show-error --silent --location --retry 2 \
     "https://raw.githubusercontent.com/libretro/glsl-shaders/$libretro_ref/$name" \
