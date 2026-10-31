@@ -121,7 +121,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
@@ -648,32 +647,28 @@ fun LibraryScreen(
     }
     val hostActivity = LocalActivity.current as? MainActivity
     val hostLifecycle = hostActivity?.lifecycle
-    // DialogFragment lifecycle is not Compose state. This callback invalidates the
-    // modal eligibility check when an installer window opens or closes.
+    // FragmentManager is not Compose state; mirror only the dialog visibility via its
+    // lifecycle callbacks, so dismissal immediately re-evaluates a deferred update.
     val fragmentManager = hostActivity?.supportFragmentManager
-    var fragmentDialogRevision by remember(fragmentManager) { mutableIntStateOf(0) }
-    DisposableEffect(fragmentManager) {
-        if (fragmentManager == null) {
-            onDispose { }
-        } else {
-            val observer = object : FragmentManager.FragmentLifecycleCallbacks() {
-                override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
-                    if (f is DialogFragment) fragmentDialogRevision++
-                }
-
-                override fun onFragmentStopped(fm: FragmentManager, f: Fragment) {
-                    if (f is DialogFragment) fragmentDialogRevision++
-                }
+    val fragmentDialogVisible by produceState(initialValue = false, fragmentManager) {
+        if (fragmentManager == null) return@produceState
+        fun updateVisibility() {
+            value = fragmentManager.fragments.any { fragment ->
+                fragment is DialogFragment &&
+                    fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
             }
-            fragmentManager.registerFragmentLifecycleCallbacks(observer, false)
-            onDispose { fragmentManager.unregisterFragmentLifecycleCallbacks(observer) }
         }
-    }
-    val fragmentDialogVisible = fragmentDialogRevision.let {
-        fragmentManager?.fragments?.any { fragment ->
-            fragment is DialogFragment &&
-                fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
-        } == true
+        val observer = object : FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
+                if (f is DialogFragment) updateVisibility()
+            }
+            override fun onFragmentStopped(fm: FragmentManager, f: Fragment) {
+                if (f is DialogFragment) updateVisibility()
+            }
+        }
+        fragmentManager.registerFragmentLifecycleCallbacks(observer, false)
+        updateVisibility()
+        awaitDispose { fragmentManager.unregisterFragmentLifecycleCallbacks(observer) }
     }
     val hostResumed by produceState(initialValue = false, hostLifecycle) {
         if (hostLifecycle == null) return@produceState
