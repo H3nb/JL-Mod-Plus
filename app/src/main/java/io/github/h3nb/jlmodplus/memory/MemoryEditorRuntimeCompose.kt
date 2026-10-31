@@ -2207,6 +2207,7 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
                 "${numberFormat.format(minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount))}" +
                 " / ${numberFormat.format(state.resultCount)}",
             style = runtimeMemoryMetaTextStyle(),
+            color = MaterialTheme.colorScheme.onSurface,
         )
         TextButton(
             onClick = actions::nextPage,

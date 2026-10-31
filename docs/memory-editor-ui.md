@@ -62,7 +62,7 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 The workspace owns one `MemoryEditorOverlayState`. Editor dialogs inherit it through
 `LocalMemoryEditorOverlay`; their layer registration determines which window renders
 the active eye. Every modal uses a full safe-window shell with the same 48 dp footer
-and maximum width as the workspace. The form itself remains centered and bounded.
+and maximum width as the workspace. The form is centered in the whole safe viewport, not the shorter region above the Peek dock. Its maximum height preserves clearance around the 48 dp dock, including in short landscape windows.
 Choices use this shell too: a native dropdown would intercept the footer behind it.
 Choice/action/settings dialogs have a 400 dp width cap; input forms can use 720 dp
 for controls beside the keypad. Use the theme's large corners for dialog surfaces.
@@ -82,6 +82,8 @@ toggles Peek for accessibility, and Back restores the open form before dismissin
 Hidden bodies have no actionable semantics; a pointer shield and key handling prevent
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
+
+The footer uses a solid Material surface with matching foreground colors to keep pagination and controls readable over changing game pixels, including when the workspace opacity is reduced. The dock backdrop becomes transparent during Peek so it does not cover the game.
 
 Panel opacity affects the workspace background only. The default is 97%, adjustable
 from 0% to 100% in its footer setting. The memory-engine process owns the small

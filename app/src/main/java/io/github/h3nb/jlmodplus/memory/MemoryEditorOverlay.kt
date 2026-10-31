@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -44,6 +43,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -154,7 +154,14 @@ internal fun MemoryEditorPeekDock(
     leadingContent: (@Composable () -> Unit)? = null,
     centerContent: (@Composable () -> Unit)? = null,
 ) {
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    // The content is drawn over a live game, so an opaque theme surface must own
+    // the dock's foreground colors independently of the adjustable panel opacity.
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = if (overlay.peeking) Color.Transparent else MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         if (centerContent != null) {
             Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                 if (leadingContent != null && !overlay.peeking) {
@@ -215,6 +222,7 @@ internal fun MemoryEditorPeekDock(
                 modifier = Modifier.size(24.dp),
             )
         }
+        }
     }
 }
 
@@ -253,9 +261,15 @@ internal fun MemoryEditorDialog(
                     .memoryEditorPeekKeys(overlay),
             ) {
                 Box(Modifier.widthIn(max = 960.dp).fillMaxSize().align(Alignment.Center)) {
-                    Column(Modifier.fillMaxSize()) {
-                        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            val layout = adaptiveDialogLayout(maxWidth, maxHeight, maxDialogWidth = maxDialogWidth).copy(maxHeight = maxHeight)
+                    BoxWithConstraints(
+                        modifier = Modifier.fillMaxSize().testTag("memory-editor-dialog-viewport"),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        // Center the form in the whole safe viewport. Leave room below for
+                        // the persistent 48 dp Peek dock, rather than shifting the center up.
+                        val formMaxHeight = (maxHeight - 96.dp).coerceAtLeast(0.dp)
+                        val layout = adaptiveDialogLayout(maxWidth, formMaxHeight, maxDialogWidth = maxDialogWidth)
+                            .copy(maxHeight = formMaxHeight)
                             Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
                                 detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
                             })
@@ -276,8 +290,6 @@ internal fun MemoryEditorDialog(
                                     dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
                                 )
                             }
-                        }
-                        Spacer(Modifier.height(48.dp))
                     }
                     MemoryEditorPeekShield(overlay)
                     if (overlay.layers.lastOrNull() == layer) {

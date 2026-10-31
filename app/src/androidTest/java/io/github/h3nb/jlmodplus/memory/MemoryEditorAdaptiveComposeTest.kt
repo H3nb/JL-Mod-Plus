@@ -2,6 +2,8 @@
  * You may obtain a copy at http://www.apache.org/licenses/LICENSE-2.0. */
 package io.github.h3nb.jlmodplus.memory
 
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ComposeView
@@ -38,6 +40,7 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -166,6 +169,33 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNode(hasSetTextAction()).assertTextContains("31415")
         rule.onNodeWithText("Cancel").assertIsDisplayed().performClick()
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
+    }
+
+    @Test fun modalSurfaceIsCenteredInSafeViewportAndDoesNotCoverPeek() {
+        val window = mutableStateOf(DpSize(720.dp, 360.dp))
+        val wideForm = mutableStateOf(true)
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(window.value)) {
+                JLModPlusTheme {
+                    MemoryEditorDialog(
+                        onDismissRequest = {},
+                        maxDialogWidth = if (wideForm.value) 720.dp else 400.dp,
+                        title = { Text("Dialog title") },
+                        text = { Text("Modal content") },
+                        confirmButton = { TextButton(onClick = {}) { Text("OK") } },
+                    )
+                }
+            }
+        }
+        for ((size, form) in listOf(DpSize(720.dp, 360.dp) to true, DpSize(360.dp, 640.dp) to false)) {
+            rule.runOnIdle { window.value = size; wideForm.value = form }
+            val viewport = rule.onNodeWithTag("memory-editor-dialog-viewport").getUnclippedBoundsInRoot()
+            val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
+            val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
+            assertEquals("Dialog center should match the safe screen, not the space above Peek",
+                viewport.center.y.value, surface.center.y.value, 2f)
+            assertTrue("Peek must remain unobscured by a centered dialog", surface.bottom <= peek.top)
+        }
     }
 
     @Test fun paginationSharesTheBottomDockWithPeekInBothWindowShapes() {
