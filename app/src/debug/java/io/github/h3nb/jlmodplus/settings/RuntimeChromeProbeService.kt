@@ -12,22 +12,26 @@ import android.os.Messenger
 import android.os.Process
 
 /** Exercises the production async client in a separate process without launching a guest. */
-class FullscreenProbeService : Service() {
-    private var client: RuntimeFullscreenClient? = null
+class RuntimeChromeProbeService : Service() {
+    private var client: RuntimeChromeClient? = null
     private var replies: Messenger? = null
     private val incoming = Messenger(Handler(Looper.getMainLooper()) { message ->
         when (message.what) {
             START -> {
                 replies = message.replyTo
                 client?.close()
-                client = RuntimeFullscreenClient(this, object : RuntimeFullscreenClient.Listener {
-                    override fun onFullscreenChanged(fullscreen: Boolean) = send(STATE,
-                        Bundle().apply { putBoolean(VALUE, fullscreen) })
-                    override fun onFullscreenError(failure: Exception) = send(FAILED,
+                client = RuntimeChromeClient(this, object : RuntimeChromeClient.Listener {
+                    override fun onChromeChanged(state: RuntimeChromeState) = send(STATE,
+                        Bundle().apply {
+                            putBoolean(FULLSCREEN, state.fullscreen)
+                            putBoolean(SHOW_STATUS_BAR, state.showStatusBar)
+                        })
+                    override fun onChromeError(failure: Exception) = send(FAILED,
                         Bundle().apply { putString("failure", failure.toString()) })
                 }).also { it.start() }
             }
-            WRITE -> client!!.setFullscreen(message.data.getBoolean(VALUE))
+            WRITE_FULLSCREEN -> client!!.setFullscreen(message.data.getBoolean(VALUE))
+            WRITE_STATUS_BAR -> client!!.setShowStatusBar(message.data.getBoolean(VALUE))
             STOP -> {
                 client?.close()
                 client = null
@@ -51,11 +55,14 @@ class FullscreenProbeService : Service() {
 
     companion object {
         const val START = 1
-        const val WRITE = 2
+        const val WRITE_FULLSCREEN = 2
+        const val WRITE_STATUS_BAR = 6
         const val STOP = 3
         const val STATE = 4
         const val FAILED = 5
         const val VALUE = "value"
+        const val FULLSCREEN = "fullscreen"
+        const val SHOW_STATUS_BAR = "showStatusBar"
         const val PID = "pid"
     }
 }

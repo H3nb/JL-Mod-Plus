@@ -107,7 +107,8 @@ import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime;
 import io.github.h3nb.jlmodplus.runtime.RuntimeReplacementActivity;
-import io.github.h3nb.jlmodplus.settings.RuntimeFullscreenClient;
+import io.github.h3nb.jlmodplus.settings.RuntimeChromeClient;
+import io.github.h3nb.jlmodplus.settings.RuntimeChromeState;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.crashes.ManualLogCapture;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
@@ -132,7 +133,8 @@ public class MicroActivity extends AppCompatActivity {
 	@Nullable
 	private Runnable pendingTerminalProcessCleanup;
 	private boolean runtimeToolbarEnabled;
-	private RuntimeFullscreenClient fullscreenClient;
+	private boolean showStatusBar;
+	private RuntimeChromeClient chromeClient;
 	private boolean orientationLocked;
 	private MicroLoader microLoader;
 	private boolean pendingMidletLaunch;
@@ -242,22 +244,25 @@ public class MicroActivity extends AppCompatActivity {
 		runtimePreferences = RuntimeUiPreferences.get(this);
 		sp.registerOnSharedPreferenceChangeListener(canvasThemeListener);
 		runtimeToolbarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
+		showStatusBar = sp.getBoolean(PREF_STATUSBAR, false);
 
-		fullscreenClient = new RuntimeFullscreenClient(this, new RuntimeFullscreenClient.Listener() {
+		chromeClient = new RuntimeChromeClient(this, new RuntimeChromeClient.Listener() {
 			@Override
-			public void onFullscreenChanged(boolean fullscreen) {
-				if (runtimeToolbarEnabled == !fullscreen) return;
-				runtimeToolbarEnabled = !fullscreen;
+			public void onChromeChanged(@NonNull RuntimeChromeState state) {
+				boolean toolbarEnabled = !state.getFullscreen();
+				if (runtimeToolbarEnabled == toolbarEnabled && showStatusBar == state.getShowStatusBar()) return;
+				runtimeToolbarEnabled = toolbarEnabled;
+				showStatusBar = state.getShowStatusBar();
 				refreshRuntimeChrome();
 			}
 
 			@Override
-			public void onFullscreenError(@NonNull Exception failure) {
-				Log.w("MicroActivity", "Could not update runtime fullscreen preference", failure);
-				toast(R.string.runtime_fullscreen_update_failed);
+			public void onChromeError(@NonNull Exception failure) {
+				Log.w("MicroActivity", "Could not update runtime chrome preferences", failure);
+				toast(R.string.runtime_chrome_update_failed);
 			}
 		});
-		fullscreenClient.start();
+		chromeClient.start();
 		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
@@ -507,7 +512,7 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onToggleFullscreen() {
-						if (fullscreenClient != null) fullscreenClient.setFullscreen(runtimeToolbarEnabled);
+						if (chromeClient != null) chromeClient.setFullscreen(runtimeToolbarEnabled);
 					}
 
 					@Override
@@ -724,7 +729,7 @@ public class MicroActivity extends AppCompatActivity {
 		// A failed load can leave a loader without a profile while its host error dialog is open.
 		ProfileModel profile = microLoader == null ? null : microLoader.getProfile();
 		return GuestWindowPolicy.resolve(displayable instanceof Canvas, !runtimeToolbarEnabled,
-				profile != null && profile.allowDisplayCutout);
+				showStatusBar, profile != null && profile.allowDisplayCutout);
 	}
 
 	private int getRuntimeToolbarHeight(GuestWindowPolicy.Chrome chrome) {
@@ -858,7 +863,6 @@ public class MicroActivity extends AppCompatActivity {
 		// Returning to the runtime must apply the current cutout policy even when
 		// fullscreen did not change and no system-bar callback is dispatched.
 		refreshRuntimeChrome();
-		ViewCompat.requestApplyInsets(binding.getRoot());
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostResumed();
 		}
@@ -928,9 +932,9 @@ public class MicroActivity extends AppCompatActivity {
 				defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 				defaultPreferences = null;
 			}
-			if (fullscreenClient != null) {
-				fullscreenClient.close();
-				fullscreenClient = null;
+			if (chromeClient != null) {
+				chromeClient.close();
+				chromeClient = null;
 			}
 			runtimePreferences = null;
 			if (memoryEditorController != null) {
@@ -1231,6 +1235,7 @@ public class MicroActivity extends AppCompatActivity {
 		GuestWindowPolicy.Chrome chrome = getRuntimeChrome(current);
 		applySystemUi(chrome, current);
 		updateRuntimeMenuState(current);
+		ViewCompat.requestApplyInsets(binding.getRoot());
 	}
 
 	private void configureDisplayCutoutWindow() {
@@ -1268,7 +1273,9 @@ public class MicroActivity extends AppCompatActivity {
 				: lastWindowInsets.getDisplayCutout().getWaterfallInsets();
 		Insets physical = Insets.max(cutout, waterfall);
 		Insets caption = lastWindowInsets.getInsets(WindowInsetsCompat.Type.captionBar());
-		Insets bars = chrome.canvas ? caption : Insets.max(caption,
+		Insets statusBar = chrome.statusBarVisible
+				? lastWindowInsets.getInsets(WindowInsetsCompat.Type.statusBars()) : Insets.NONE;
+		Insets bars = chrome.canvas ? Insets.max(caption, statusBar) : Insets.max(caption,
 				lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars()));
 		// The toolbar background occupies the cutout area. Only its contents avoid
 		// intersecting cutout rectangles; a notch must not become an extra top row.

@@ -31,24 +31,37 @@ public class GuestWindowPolicyTest {
 
 	@Test
 	public void fullscreenAndGuestCutoutAreIndependentCanvasChoices() {
-		GuestWindowPolicy.Chrome withToolbar = GuestWindowPolicy.resolve(true, false, true);
+		GuestWindowPolicy.Chrome withToolbar = GuestWindowPolicy.resolve(true, false, false, true);
 		assertTrue(withToolbar.toolbarVisible);
 		assertTrue(withToolbar.cutoutAllowed);
 		assertFalse(withToolbar.statusBarVisible);
 		assertFalse(withToolbar.navigationBarVisible);
-		GuestWindowPolicy.Chrome fullscreen = GuestWindowPolicy.resolve(true, true, false);
+		GuestWindowPolicy.Chrome fullscreen = GuestWindowPolicy.resolve(true, true, false, false);
 		assertFalse(fullscreen.toolbarVisible);
 		assertFalse(fullscreen.cutoutAllowed);
 	}
 
 	@Test
+	public void statusBarIsIndependentOfFullscreenToolbarAndNavigation() {
+		GuestWindowPolicy.Chrome withToolbar = GuestWindowPolicy.resolve(true, false, true, true);
+		assertTrue(withToolbar.toolbarVisible);
+		assertTrue(withToolbar.statusBarVisible);
+		assertFalse(withToolbar.navigationBarVisible);
+		GuestWindowPolicy.Chrome fullscreen = GuestWindowPolicy.resolve(true, true, true, false);
+		assertFalse(fullscreen.toolbarVisible);
+		assertTrue(fullscreen.statusBarVisible);
+		assertFalse(fullscreen.navigationBarVisible);
+		assertFalse(fullscreen.cutoutAllowed);
+	}
+
+	@Test
 	public void formRestoresHostBarsWithoutChangingStoredFullscreenChoice() {
-		GuestWindowPolicy.Chrome form = GuestWindowPolicy.resolve(false, true, true);
+		GuestWindowPolicy.Chrome form = GuestWindowPolicy.resolve(false, true, false, true);
 		assertTrue(form.toolbarVisible);
 		assertTrue(form.statusBarVisible);
 		assertTrue(form.navigationBarVisible);
 		assertFalse(form.cutoutAllowed);
-		assertFalse(GuestWindowPolicy.resolve(true, true, true).toolbarVisible);
+		assertFalse(GuestWindowPolicy.resolve(true, true, false, true).toolbarVisible);
 	}
 
 	@Test
