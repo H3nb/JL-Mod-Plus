@@ -283,10 +283,10 @@ class LibraryCollectionsNavigationTest {
         // allowing the bottom navigation and the More destination to become interactive.
         composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Settings")
+            composeRule.onAllNodesWithText(uiString(R.string.action_settings))
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
 
         composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
@@ -319,10 +319,10 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Settings")
+            composeRule.onAllNodesWithText(uiString(R.string.action_settings))
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
 
         composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
