@@ -68,7 +68,7 @@ public final class CanvasRendererPublicationResearchTest {
         PresentationMailbox mailbox = (PresentationMailbox) mailboxField.get(canvas);
         mailbox.begin();
         GL10 ignoredGl = null;
-        javax.microedition.khronos.opengles.egl.EGLConfig ignoredConfig = null;
+        javax.microedition.khronos.egl.EGLConfig ignoredConfig = null;
 
         EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
