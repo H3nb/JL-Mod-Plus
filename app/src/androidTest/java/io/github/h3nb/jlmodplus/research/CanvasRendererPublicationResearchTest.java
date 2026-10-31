@@ -11,6 +11,8 @@ import android.opengl.GLES20;
 import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 import java.io.InputStream;
+import java.io.IOException;
+import java.util.Map;
 import java.nio.charset.StandardCharsets;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
@@ -336,6 +338,92 @@ public final class CanvasRendererPublicationResearchTest {
                     1, pipeline.offscreenPassExecutions());
             Log.i(TAG, "xBRZ freescale: red=" + red + " blue=" + blue
                     + " blended=" + mixed + " firstPasses=1");
+
+            // Load both unmodified pinned presets and their actual .glsl files
+            // through the bounded resolver. A fake override map would not
+            // exercise the path and #pragma contracts under investigation.
+            GlslpPresetResearch.AssetReader assets = path -> {
+                try {
+                    return readSource("graphics-rd/" + path);
+                } catch (Exception e) {
+                    throw new IOException("Cannot read pinned Libretro resource: " + path, e);
+                }
+            };
+            GlslpPresetResearch basePreset = GlslpPresetResearch.load(
+                    assets, "xbrz/xbrz-freescale-multipass.glslp");
+            GlslpPresetResearch crispPreset = GlslpPresetResearch.load(
+                    assets, "xbrz/xbrz-crisp.glslp");
+            assertEquals(pass0, basePreset.passes.get(0).sourceText);
+            assertEquals(pass1, crispPreset.passes.get(1).sourceText);
+            assertFalse(basePreset.plan(8, 8, 96, 96, 2048, 1024 * 1024)
+                    .finalBlitRequired);
+            Map<String, Float> defaultParameters = basePreset.resolvedParameters();
+            Map<String, Float> crispParameters = crispPreset.resolvedParameters();
+            assertEquals(5, defaultParameters.size());
+            assertEquals(5, crispParameters.size());
+            assertEquals(0f, defaultParameters.get("XBRZ_MINC"), 0f);
+            assertEquals(0f, defaultParameters.get("XBRZ_DIAG"), 0f);
+            assertEquals(24f, crispParameters.get("XBRZ_MINC"), 0f);
+            assertEquals(100f, crispParameters.get("XBRZ_DIAG"), 0f);
+
+            // A low-contrast staircase (21/255 grayscale difference) should
+            // blend with default xBRZ but stay crisper with MINC=24.
+            Image subtle = Image.createImage(8, 8, Color.rgb(128, 128, 128));
+            Graphics lowContrast = subtle.getGraphics();
+            lowContrast.setColor(149, 149, 149);
+            for (int row = 1; row <= 6; row++) {
+                lowContrast.fillRect(1, row, 7 - row, 1);
+            }
+            Field researchField = getField(rendererObject.getClass(), "researchTwoPass");
+            LibretroTwoPassResearchPipeline uniformDefaults =
+                    new LibretroTwoPassResearchPipeline(pass0, pass1, defaultParameters);
+            researchField.set(rendererObject, uniformDefaults);
+            pipeline.release();
+            canvas.flushBuffer(subtle, 0, 0);
+            assertTrue(mailbox.trySchedule(mailbox.generation()));
+            renderer.onDrawFrame(null);
+            assertEquals(1, uniformDefaults.offscreenPassExecutions());
+            assertShaderParameter(uniformDefaults, "XBRZ_TOL", 15f);
+            assertShaderParameter(uniformDefaults, "XBRZ_DOM", 3.8f);
+            assertShaderParameter(uniformDefaults, "XBRZ_STEEP", 3.2f);
+            assertShaderParameter(uniformDefaults, "XBRZ_MINC", 0f);
+            assertShaderParameter(uniformDefaults, "XBRZ_DIAG", 0f);
+            byte[] normalPixels = readRgba(96, 96);
+
+            LibretroTwoPassResearchPipeline crisp =
+                    new LibretroTwoPassResearchPipeline(pass0, pass1, crispParameters);
+            researchField.set(rendererObject, crisp);
+            uniformDefaults.release();
+            // The guest image is unchanged; the replacement pipeline must
+            // recompute its own edge decisions once, then reuse on host redraw.
+            assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0);
+            assertTrue(mailbox.trySchedule(mailbox.generation()));
+            renderer.onDrawFrame(null);
+            assertEquals(1, crisp.offscreenPassExecutions());
+            assertShaderParameter(crisp, "XBRZ_TOL", 15f);
+            assertShaderParameter(crisp, "XBRZ_DOM", 3.8f);
+            assertShaderParameter(crisp, "XBRZ_STEEP", 3.2f);
+            assertShaderParameter(crisp, "XBRZ_MINC", 24f);
+            assertShaderParameter(crisp, "XBRZ_DIAG", 100f);
+            byte[] crispPixels = readRgba(96, 96);
+            int different = 0;
+            for (int i = 0; i < normalPixels.length; i += 4) {
+                if (normalPixels[i] != crispPixels[i]
+                        || normalPixels[i + 1] != crispPixels[i + 1]
+                        || normalPixels[i + 2] != crispPixels[i + 2]) {
+                    different++;
+                }
+            }
+            assertTrue("Real Crisp overrides must visibly change staircase pixels",
+                    different > 0);
+            assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
+            assertTrue(mailbox.invalidateHost(mailbox.generation()) > 0);
+            assertTrue(mailbox.trySchedule(mailbox.generation()));
+            renderer.onDrawFrame(null);
+            assertEquals("Crisp analysis must not repeat for host-only redraw",
+                    1, crisp.offscreenPassExecutions());
+            Log.i(TAG, "xBRZ Crisp parameter gate: changed pixels=" + different
+                    + " of 9216; all five upstream uniforms verified");
         } finally {
             mailbox.close();
             Canvas.setGraphicsResearchTwoPassSources(null, null);
@@ -345,6 +433,26 @@ public final class CanvasRendererPublicationResearchTest {
             EGL14.eglDestroyContext(display, context);
             EGL14.eglTerminate(display);
         }
+    }
+
+    private static byte[] readRgba(int width, int height) {
+        ByteBuffer pixels = ByteBuffer.allocateDirect(width * height * 4);
+        GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA,
+                GLES20.GL_UNSIGNED_BYTE, pixels);
+        byte[] result = new byte[width * height * 4];
+        pixels.get(result);
+        return result;
+    }
+
+    private static void assertShaderParameter(LibretroTwoPassResearchPipeline pipeline,
+                                              String name, float expected) throws Exception {
+        int[] programs = (int[]) getField(LibretroTwoPassResearchPipeline.class, "programs")
+                .get(pipeline);
+        int uniform = GLES20.glGetUniformLocation(programs[0], name);
+        assertTrue("Uniform must be active in upstream GLSL: " + name, uniform >= 0);
+        float[] actual = new float[1];
+        GLES20.glGetUniformfv(programs[0], uniform, actual, 0);
+        assertEquals("Bound upstream GLSL uniform: " + name, expected, actual[0], 0.0001f);
     }
 
     private static String readSource(String path) throws Exception {
