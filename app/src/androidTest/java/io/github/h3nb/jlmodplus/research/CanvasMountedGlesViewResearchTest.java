@@ -304,7 +304,7 @@ public final class CanvasMountedGlesViewResearchTest {
         assertEquals("blue pixel", Color.blue(color), f.b);
     }
 
-    private static Field field(Class<?> target, String name) throws Exception {
+    private static Field field(Class<?> target, String name) throws NoSuchFieldException {
         Field f = target.getDeclaredField(name);
         f.setAccessible(true);
         return f;
