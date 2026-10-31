@@ -304,6 +304,37 @@ class MemoryEditorAdaptiveComposeTest {
         assertTrue("Title and tabs must occupy separate rows in portrait", title.bottom <= tab.top)
     }
 
+    @Test fun footerGlyphsAlignWithHeaderInPortraitAndLandscape() {
+        val size = mutableStateOf(DpSize(360.dp, 640.dp))
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(size.value)) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(
+                        MemoryEditorUiState(visible = true, connected = true, supported = true),
+                        TestMemoryEditorActions(),
+                    )
+                }
+            }
+        }
+        for (window in listOf(DpSize(360.dp, 640.dp), DpSize(720.dp, 360.dp))) {
+            rule.runOnIdle { size.value = window }
+            val title = rule.onNodeWithText(context.getString(R.string.memory_editor))
+                .getUnclippedBoundsInRoot()
+            val settings = rule.onNodeWithContentDescription(
+                context.getString(R.string.memory_editor_panel_opacity),
+            ).getUnclippedBoundsInRoot()
+            val close = rule.onNodeWithContentDescription(
+                context.getString(R.string.memory_editor_close),
+            ).getUnclippedBoundsInRoot()
+            val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
+            assertEquals("Settings glyph aligns with title", title.left.value, settings.left.value, 2f)
+            assertEquals("Peek aligns with close",
+                (close.left.value + close.right.value) / 2f,
+                (peek.left.value + peek.right.value) / 2f, 2f)
+        }
+    }
+
     @Test fun selectCurrentPageRemainsAvailableInLandscapeAndPortrait() {
         val size = mutableStateOf(DpSize(720.dp, 360.dp))
         val rows = listOf(1L, 2L).map { id ->
