@@ -687,6 +687,8 @@ fun LibraryScreen(
     var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
     var installSourceMenuVisible by remember { mutableStateOf(false) }
     var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
+    var updatePrompt by remember { mutableStateOf<UpdateCandidate?>(null) }
+    var sessionDismissedUpdate by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
@@ -750,11 +752,13 @@ fun LibraryScreen(
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
     val currentControllerAboutPageVisible by rememberUpdatedState(aboutPageVisible)
     val currentControllerUpdatesPageVisible by rememberUpdatedState(updatesPageVisible)
+    val currentControllerUpdatePrompt by rememberUpdatedState(updatePrompt)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
-            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible || updatesPageVisible,
+            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible ||
+            updatesPageVisible || updatePrompt != null,
     )
 
     LaunchedEffect(pagerState) {
@@ -883,8 +887,6 @@ fun LibraryScreen(
         updatesPageVisible = false
     }
     val availableUpdate = (updateRepository?.status as? UpdateStatus.Available)?.candidate
-    var updatePrompt by remember { mutableStateOf<UpdateCandidate?>(null) }
-    var sessionDismissedUpdate by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(hostResumed) {
         if (!hostResumed) {
             sessionDismissedUpdate = null
@@ -1030,6 +1032,10 @@ fun LibraryScreen(
                         appActionsCollectionId = null
                     }
                     LibraryControllerCommand.Back -> when {
+                        currentControllerUpdatePrompt != null -> {
+                            sessionDismissedUpdate = updateRepository?.candidateKey(currentControllerUpdatePrompt!!)
+                            updatePrompt = null
+                        }
                         currentControllerRenameTarget != null -> renameTarget = null
                         currentControllerMetadataTarget != null -> metadataBackRequest++
                         currentControllerDeleteTarget != null -> deleteTarget = null
@@ -1105,14 +1111,15 @@ fun LibraryScreen(
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
         || aboutPageVisible || updatesPageVisible
-    LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
-        onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
+    val libraryModalVisible = libraryOverlayVisible || updatePrompt != null
+    LaunchedEffect(libraryModalVisible, selectionActiveHere) {
+        onControllerBackAvailabilityChanged(libraryModalVisible || selectionActiveHere)
     }
     // Keep an eligible, non-text focus owner when the destination or workdir changes.
     // Releasing focus alone can return it to the search editor on pre-API-28 Android.
     // Do not re-request focus for ordinary Library data/projection updates.
-    LaunchedEffect(destination, state.libraryScope) {
-        if (!libraryOverlayVisible && (useNavigationRail ||
+    LaunchedEffect(destination, state.libraryScope, libraryModalVisible) {
+        if (!libraryModalVisible && (useNavigationRail ||
                 (showNavigationBar && !imeHidesLibraryChrome && !selectionActiveHere &&
                     !collectionManageAppsActive))
         ) {
@@ -1137,7 +1144,7 @@ fun LibraryScreen(
         }
     }
 
-    val libraryContentModifier = if (!libraryOverlayVisible) {
+    val libraryContentModifier = if (!libraryModalVisible) {
         Modifier
     } else {
         Modifier.clearAndSetSemantics { }
@@ -1752,6 +1759,9 @@ fun LibraryScreen(
         if (repository != null) {
             val layout = libraryDialogLayout()
             AlertDialog(
+                onControllerKeyEvent = controllerKeyEventHandler?.let { handler ->
+                    { event -> handler.onControllerKeyEvent(event) }
+                },
                 modifier = layout.modifier,
                 properties = layout.properties,
                 onDismissRequest = {

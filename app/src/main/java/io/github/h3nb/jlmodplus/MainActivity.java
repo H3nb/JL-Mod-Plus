@@ -250,7 +250,8 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Compose observes the host overlay state before presenting an optional update dialog. */
 	public boolean isHostDialogVisible() {
-		return mainComposeController != null && mainComposeController.isDialogVisible();
+		return (mainComposeController != null && mainComposeController.isDialogVisible())
+				|| getSupportFragmentManager().findFragmentByTag(INSTALLER_TAG) != null;
 	}
 
 	@Override
