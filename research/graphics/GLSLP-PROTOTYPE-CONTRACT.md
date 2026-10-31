@@ -315,10 +315,11 @@ so simple flattened key overrides would be inadequate.
 
 The parser **does not** infer dependencies from GLSL sampler declarations:
 `PassPrev2Texture`, `OrigTexture`, prior-pass aliases, `Prev` history
-and LUTs are still separate execution-planning gates. It records named
-preset overrides (e.g. `xbrz-crisp`) but neither extracts/validates
-shader `#pragma parameter` defaults nor binds GPU uniforms. Desktop
-`#version 130` sources are likewise not thereby GLES-compatible.
+and LUTs remain separate execution-planning gates. The bounded R&D
+parser now extracts `#pragma parameter` defaults, validates the declared
+range and merges preset overrides; the disposable two-pass GPU trial binds
+these values. **Neither component is integrated as a general GLSLP runtime.**
+Desktop `#version 130` sources are not thereby GLES-compatible.
 Never treat structural parsing success as an advertised supported preset.
 
 Focused JVM tests cover representative pinned-preset shapes for xBRZ
@@ -331,10 +332,23 @@ the pinned Libretro preset files confirmed the targeted metadata keys.
 GPU correctness remains supported only by the earlier real xBRZ pipeline
 fixture, not by these CPU tests.
 
-**Next discriminating gate:** resolve actual pinned preset resources and
-shader `#pragma parameter` metadata, then execute both default xBRZ
-Freescale and xBRZ Crisp parameter values on the same visual fixture
-with verifiable pixel differences. Preserve full pass-size semantics
-(including source-sized final blit) and pass-specific texture dependencies.
-Do not build generalized LUT/history/feedback plumbing before a concrete
-supported preset requires it.
+**Verified parameter gate:** [JVM CI 41252673920](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41252673920)
+passed 4/4 tests with full xBRZ `#pragma` defaults, out-of-range rejection
+and Crisp overrides. [GLES CI 41252709399](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41252709399)
+passed the real `Canvas.GLRenderer` probe using unmodified pinned
+Freescale/Crisp GLSLP metadata and source files. `PARAMETER_UNIFORM`
+requires all five xBRZ values: 15, 3.8, 3.2, then Crisp 24 and 100 instead
+of the default zeros. The test queried the GPU program to verify all
+five bound uniforms and observed **261/9216** changed pixels on the same
+low-contrast 8x8 guest image at a 96x96 viewport. Replacing the disposable
+pipeline forced one edge-analysis pass; an unchanged host redraw reused
+that pass. No physical GPU timing or full MIDlet lifecycle was measured.
+
+**Next discriminating gate:** connect the actual pass descriptors (including
+source-sized final blit versus viewport-sized final draw) to a bounded
+on-device executor. Preserve `PassPrev2Texture`/source orientation and
+per-pass sampler policy. Parameter edits on a *retained* pipeline must
+invalidate the affected cached pass outputs; the current test only proved
+pipeline replacement, not in-place edits. Do not promote the test's field
+reflection or static research toggles, or add generic LUT/history/feedback
+machinery without a specific, validated preset requiring them.
