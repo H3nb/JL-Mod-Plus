@@ -1159,7 +1159,8 @@ fun LibraryScreen(
         pagerState.currentPage == pagerState.settledPage &&
         state.databaseControlsReady && !isImeVisible &&
         hostActivity?.isHostDialogVisible() == false && !fragmentDialogVisible &&
-        !collectionDialogVisible && !libraryOverlayVisible && !selectionActiveHere
+        !collectionDialogVisible && !installSourceMenuVisible &&
+        !libraryOverlayVisible && !selectionActiveHere
     LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
         sessionDismissedUpdate, updateRepository?.channel) {
         val repository = updateRepository

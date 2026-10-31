@@ -79,6 +79,12 @@ def main():
     manifest = build_manifest(pages, download_metadata)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(manifest, indent=2) + "\n")
+    # GitHub Pages requires an entry document at the root of the deployed artifact.
+    args.output.with_name("index.html").write_text(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<title>JL-Mod Plus updates</title></head>'
+        '<body><a href="updates.json">Update metadata (JSON)</a></body></html>\n'
+    )
 
 
 if __name__ == "__main__":

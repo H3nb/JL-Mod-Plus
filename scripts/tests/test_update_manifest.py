@@ -1,6 +1,9 @@
 import importlib.util
+import json
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "generate-update-manifest.py"
 spec = importlib.util.spec_from_file_location("update_manifest", SCRIPT)
@@ -46,6 +49,25 @@ class UpdateManifestTest(unittest.TestCase):
                           lambda tag: {"schema": 1, "applicationId": module.PACKAGE,
                                        "versionName": tag[1:], "versionCode": 24,
                                        "minSdk": 23})["releases"]), 1)
+
+    def test_published_site_has_entrypoint_and_valid_manifest(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            releases_file = root / "releases.json"
+            releases_file.write_text(json.dumps([[release("0.3.0-beta")]]))
+            output = root / "_site" / "updates.json"
+            metadata = {
+                "schema": 1, "applicationId": module.PACKAGE,
+                "versionName": "0.3.0-beta", "versionCode": 30, "minSdk": 23,
+            }
+            with patch.object(module, "download_metadata", return_value=metadata), patch(
+                "sys.argv", ["generate-update-manifest.py", "--releases", str(releases_file),
+                             "--output", str(output)],
+            ):
+                module.main()
+            self.assertEqual(json.loads(output.read_text())["releases"][0]["versionName"],
+                             "0.3.0-beta")
+            self.assertIn('href="updates.json"', output.with_name("index.html").read_text())
 
     def test_rejects_missing_or_inconsistent_published_assets(self):
         candidate = release("0.3.0-beta")
