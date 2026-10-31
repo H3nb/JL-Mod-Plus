@@ -263,6 +263,9 @@ public final class CanvasRendererPublicationResearchTest {
                 // 0 = padded backing (must fail closed to legacy).
                 // 1 = exact backing from creation (no normalization pass).
                 // 2 = start padded; convert it in-place at a size update.
+                // Each scenario starts with identical logical geometry.
+                profile.screenWidth = 32;
+                profile.screenHeight = 48;
                 boolean initialTight = scenario == 1;
                 Canvas.setGraphicsResearchTightPresentationBitmap(initialTight);
                 Canvas.setGraphicsResearchHeadlessHost(true);
@@ -404,10 +407,15 @@ public final class CanvasRendererPublicationResearchTest {
                     }
                     assertEquals("OpenGL error during softbar path",
                             GLES20.GL_NO_ERROR, GLES20.glGetError());
+                    Image currentBacking = (Image) bufferField.get(canvas);
+                    assertEquals(canvas.getWidth(), currentBacking.getBitmap().getWidth());
+                    if (scenario != 0) {
+                        assertEquals(canvas.getHeight(), currentBacking.getBitmap().getHeight());
+                    }
                     Log.i(TAG, "softbar scenario=" + scenario + " logical="
                             + canvas.getWidth() + "x" + canvas.getHeight()
-                            + " backing=" + backing.getBitmap().getWidth()
-                            + "x" + backing.getBitmap().getHeight()
+                            + " backing=" + currentBacking.getBitmap().getWidth()
+                            + "x" + currentBacking.getBitmap().getHeight()
                             + " multipass=" + (pipeline != null));
                 } finally {
                     mailbox.close();
