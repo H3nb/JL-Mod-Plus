@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -185,7 +186,7 @@ internal fun MemoryEditorRuntimeRoot(
             ) {
                 BoxWithConstraints(
                     modifier = Modifier.fillMaxSize()
-                        .windowInsetsPadding(memoryEditorSafeWindowInsets())
+                        .windowInsetsPadding(memoryEditorWorkspaceInsets())
                         .padding(horizontal = 8.dp),
                 ) {
                     val wideWorkspace = maxWidth >=
@@ -197,7 +198,11 @@ internal fun MemoryEditorRuntimeRoot(
                         Modifier.fillMaxSize().padding(bottom = 48.dp)
                             .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
                     ) {
-                        RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close, showTitle)
+                        Box(Modifier.windowInsetsPadding(
+                            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+                        )) {
+                            RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close, showTitle)
+                        }
                         if (state.busy) RuntimeOperationStrip(state, actions)
                         state.message?.takeIf(String::isNotBlank)?.let {
                             RuntimeMessage(it, state.messageIsError)
@@ -217,17 +222,25 @@ internal fun MemoryEditorRuntimeRoot(
                 }
             }
             MemoryEditorPeekShield(overlay)
-            // Keep Peek above the hidden workspace, anchored inside the same safe
-            // bounds as its other controls even on waterfall/cutout displays.
-            Box(
-                modifier = Modifier.fillMaxSize()
-                    .windowInsetsPadding(memoryEditorSafeWindowInsets())
-                    .padding(horizontal = 8.dp),
-            ) {
-                if (overlay.layers.isEmpty()) {
+            // The footer paints edge-to-edge, but its controls respect the safe
+            // horizontal and bottom gesture areas (including cutouts and waterfall).
+            if (overlay.layers.isEmpty()) {
+                Box(
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .background(
+                            if (overlay.peeking) Color.Transparent
+                            else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        )
+                        .windowInsetsPadding(
+                            memoryEditorSafeWindowInsets().only(
+                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+                            ),
+                        )
+                        .padding(horizontal = 8.dp),
+                ) {
                     MemoryEditorPeekDock(
                         overlay = overlay,
-                        modifier = Modifier.align(Alignment.BottomCenter),
                         leadingContent = {
                             RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
                                 opacityDialog = true
@@ -519,7 +532,9 @@ private fun RuntimeSearchResultsTab(
         LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
             if (!compactRows && (state.results.isNotEmpty() || state.resultCount > 0)) item(key = "summary") {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
+                        .padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RuntimePageSelectionCheckbox(
@@ -860,9 +875,14 @@ private fun RuntimeWatchTab(
                 onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
             )
             Text(
-                stringResource(R.string.memory_editor_watch),
+                if (state.selected.isEmpty()) stringResource(R.string.memory_editor_watch)
+                else pluralStringResource(
+                    R.plurals.memory_editor_selected, state.selected.size, state.selected.size,
+                ),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
             )
             RuntimeActionIcon(

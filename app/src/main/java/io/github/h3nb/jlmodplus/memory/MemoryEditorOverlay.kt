@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -85,7 +89,13 @@ import java.util.Locale
 /** Protect touch targets from bars, camera cutouts, curved edges and system gestures. */
 @Composable
 internal fun memoryEditorSafeWindowInsets(): WindowInsets =
-    WindowInsets.safeContent.union(WindowInsets.waterfall)
+    WindowInsets.safeContent
+
+/** Allow wide data rows while keeping cutouts, waterfall edges and bottom gestures safe. */
+@Composable
+internal fun memoryEditorWorkspaceInsets(): WindowInsets =
+    WindowInsets.safeDrawing.union(WindowInsets.waterfall)
+        .union(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom))
 
 /** One visibility owner for the workspace and every editor-owned dialog/menu window. */
 @Stable

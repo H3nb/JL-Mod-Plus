@@ -229,6 +229,99 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
+    @Test fun selectCurrentPageRemainsAvailableInLandscapeAndPortrait() {
+        val size = mutableStateOf(DpSize(720.dp, 360.dp))
+        val rows = listOf(1L, 2L).map { id ->
+            MemoryResultRow(
+                id = id, valueText = "2", locationText = "test",
+                aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+                primaryType = MemoryEngineContract.TYPE_INT,
+                state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+            )
+        }
+        val state = mutableStateOf(
+            MemoryEditorUiState(
+                visible = true, connected = true, supported = true, writeSupported = true,
+                resultCount = 340, results = rows, sessionStage = MemorySessionStage.CANDIDATES,
+            ),
+        )
+        val actions = object : TestMemoryEditorActions() {
+            override fun selectVisible() {
+                state.value = state.value.copy(selected = rows.map { it.id }.toSet())
+            }
+            override fun clearSelection() { state.value = state.value.copy(selected = emptySet()) }
+        }
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val select = context.getString(R.string.memory_editor_select_visible)
+        val clear = context.getString(R.string.memory_editor_clear_selection)
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(size.value)) {
+                JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) }
+            }
+        }
+        for (window in listOf(DpSize(720.dp, 360.dp), DpSize(360.dp, 640.dp))) {
+            rule.runOnIdle { size.value = window }
+            rule.onNodeWithContentDescription(select).assertIsDisplayed().performClick()
+            rule.runOnIdle { assertEquals(setOf(1L, 2L), state.value.selected) }
+            rule.onNodeWithContentDescription(clear).assertIsDisplayed().performClick()
+            rule.runOnIdle { assertTrue(state.value.selected.isEmpty()) }
+        }
+    }
+
+    @Test fun watchTabKeepsSelectPageAccessible() {
+        val watches = listOf(1L, 2L).map { id ->
+            MemoryWatchRow(
+                id = id, type = MemoryEngineContract.TYPE_INT,
+                valueText = "2", label = "watch",
+                locationText = "test", state = MemoryEngineContract.CANDIDATE_STABLE,
+                relocations = 0,
+            )
+        }
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true,
+            watchTab = true, watches = watches,
+        ))
+        val actions = object : TestMemoryEditorActions() {
+            override fun selectVisible() {
+                state.value = state.value.copy(selected = watches.map { it.id }.toSet())
+            }
+        }
+        val label = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.memory_editor_select_visible)
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp))) {
+                JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) }
+            }
+        }
+        rule.onNodeWithContentDescription(label).assertIsDisplayed().performClick()
+        rule.runOnIdle { assertEquals(setOf(1L, 2L), state.value.selected) }
+    }
+
+    @Test fun moreUsesWideLayoutWhenLandscapeHasSpace() {
+        val result = MemoryResultRow(
+            id = 1, valueText = "2", locationText = "test",
+            aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+            primaryType = MemoryEngineContract.TYPE_INT,
+            state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+        )
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(720.dp, 360.dp))) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(MemoryEditorUiState(
+                        visible = true, connected = true, supported = true,
+                        writeSupported = true, resultCount = 1,
+                        results = listOf(result), selected = setOf(1),
+                        sessionStage = MemorySessionStage.CANDIDATES,
+                    ), TestMemoryEditorActions())
+                }
+            }
+        }
+        val more = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.more)
+        rule.onNodeWithContentDescription(more).performClick()
+        val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
+        assertTrue("Wide landscape More should use available width", surface.right - surface.left > 400.dp)
+    }
+
     @Test fun paginationSharesTheBottomDockWithPeekInBothWindowShapes() {
         val count = 18_687L
         val nextPageLabel = InstrumentationRegistry.getInstrumentation().targetContext

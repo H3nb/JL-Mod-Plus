@@ -30,12 +30,12 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 - Draw the workspace surface edge-to-edge across the whole Activity window with
   square corners, no external margins, no width cap and no popup/fullscreen switch.
   Do not size it to the MIDlet viewport, which can be letterboxed.
-- Inset interactive content, including the header, lists, pagination and Peek,
-  with Compose `WindowInsets.safeContent` combined with `WindowInsets.waterfall`.
-  This protects controls from status/navigation bars, display cutouts, curved display
-  edges and system gesture regions without clipping the fullscreen background.
-  Keep only small internal horizontal spacing. Follow the existing shared status
-  bar preference rather than guessing bar dimensions.
+- Apply `safeDrawing` plus `waterfall` to the data viewport, retaining bottom
+  `safeGestures` clearance. Keep header, toolbars, modal controls and Peek inside
+  gesture-safe horizontal bounds. Use `safeContent` for dialog forms and the
+  footer touch targets. The workspace and footer backgrounds draw edge-to-edge;
+  only content is inset, never the translucent Activity surface. Follow the
+  shared status-bar preference and avoid fixed notch or system-bar dimensions.
 - Keep the editor title and labeled navigation visible. Place them in one row when
   width permits; stack them otherwise. In short windows with large text, retain the
   labeled tabs and omit the redundant app title to protect the data viewport.
@@ -47,10 +47,15 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 - Keep Search and Watch list states in the workspace. Returning from Inspector or
   changing window width should not reset their positions. Back from Inspector
   returns to its origin tab; the close action still closes the editor.
-- Known search, unknown search, edit, add to Watch and refresh have fixed positions
-  and direct actions. Selection changes availability, not position. More repeats
-  these actions with labels and adds Inspector, undo and removal. Inspector still
-  requires one selected candidate.
+- Known search, unknown search, edit, add to Watch and refresh retain fixed direct
+  positions regardless of selection. Extremely narrow windows keep search/edit/
+  refresh direct and move the other actions into More; selection only changes
+  enablement. More uses two columns when its actual dialog width and font scale
+  permit, otherwise a scrolling single column. Inspector still requires exactly
+  one selected candidate.
+- The results' select-page checkbox is visible in portrait summary and landscape
+  toolbar; Watch also provides select-page. Selection is limited to the currently
+  loaded result page (up to 100 candidates), not every matching memory location.
 - Put result counts/selection and Inspector provenance in the scrolling list, so
   growing text does not reserve the entire viewport. Keep full numeric values
   readable; source summaries may truncate, with provenance available in Inspector.
@@ -89,7 +94,7 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
-The workspace footer uses a solid Material surface with matching foreground colors to keep pagination and controls readable over changing game pixels, including at reduced panel opacity. Dialog footer space remains transparent; the workspace dock backdrop also becomes transparent during Peek.
+The workspace footer paints edge-to-edge with a solid Material surface and matching foreground colors to keep pagination and controls readable over changing game pixels, including at reduced panel opacity. Its touch targets stay within system-safe bounds. Dialog footer space remains transparent; the workspace dock backdrop also becomes transparent during Peek.
 
 Panel opacity affects the workspace background only. The default is 97%, adjustable
 from 0% to 100% in its footer setting. The memory-engine process owns the small
