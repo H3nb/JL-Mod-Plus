@@ -191,7 +191,8 @@ public final class CanvasMountedGlesViewResearchTest {
             long redSequence = (long) field(Canvas.class, "publishedFrameSequence").get(canvas);
             Frame first = next(observed, 1, 128, 96, redSequence);
             exactColor(first, Color.RED);
-            assertEquals(1, first.firstPasses);
+            assertEquals("One shader input update for the red publication",
+                    initial.firstPasses + 1, first.firstPasses);
             tight(first);
             // This is the host margin, not the game texture.
             assertFalse(first.hostR == 255 && first.hostG == 0 && first.hostB == 0);
@@ -201,7 +202,8 @@ public final class CanvasMountedGlesViewResearchTest {
             instrumentation.runOnMainSync(() -> mounted[0].requestRender());
             Frame host = next(observed, 1, 128, 96, redSequence);
             exactColor(host, Color.RED);
-            assertEquals("Only last pass should redraw host", 1, host.firstPasses);
+            assertEquals("Only last pass should redraw host", first.firstPasses,
+                    host.firstPasses);
             assertEquals(first.hostR, host.hostR);
             assertEquals(first.hostG, host.hostG);
             assertEquals(first.hostB, host.hostB);
@@ -220,7 +222,7 @@ public final class CanvasMountedGlesViewResearchTest {
             Frame resizedHost = next(observed, 1, 160, 120, redSequence);
             exactColor(resizedHost, Color.RED);
             assertEquals("Host viewport alone cannot recompute guest pass",
-                    1, resizedHost.firstPasses);
+                    first.firstPasses, resizedHost.firstPasses);
             tight(resizedHost);
 
             instrumentation.runOnMainSync(() -> {
@@ -232,7 +234,7 @@ public final class CanvasMountedGlesViewResearchTest {
             assertTrue("Fullscreen must grow active guest height",
                     full.logicalH > resizedHost.logicalH);
             tight(full);
-            assertEquals(2, full.firstPasses);
+            assertEquals(resizedHost.firstPasses + 1, full.firstPasses);
 
             instrumentation.runOnMainSync(() -> {
                 profile.screenWidth = 40;
@@ -245,14 +247,14 @@ public final class CanvasMountedGlesViewResearchTest {
             assertEquals(40, grown.logicalW);
             assertEquals(56, grown.logicalH);
             tight(grown);
-            assertEquals(3, grown.firstPasses);
+            assertEquals(full.firstPasses + 1, grown.firstPasses);
 
             Image blue = Image.createImage(40, 56, Color.BLUE);
             canvas.flushBuffer(blue, 0, 0);
             long blueSequence = (long) field(Canvas.class, "publishedFrameSequence").get(canvas);
             Frame blueFrame = next(observed, 1, 160, 120, blueSequence);
             exactColor(blueFrame, Color.BLUE);
-            assertEquals(4, blueFrame.firstPasses);
+            assertEquals(grown.firstPasses + 1, blueFrame.firstPasses);
 
             int beforeResumeGeneration = blueFrame.generation;
             instrumentation.runOnMainSync(() -> mounted[0].onPause());
