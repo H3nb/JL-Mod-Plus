@@ -1195,4 +1195,7 @@
     <string name="layout_editor_guide_tools">Alat editor</string>
     <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan, membatalkan, atau melanjutkan pengeditan.</string>
     <string name="layout_editor_guide_start">Mulai mengedit</string>
+    <string name="memory_editor_panel_opacity">Opasitas panel</string>
+    <string name="memory_editor_panel_opacity_help">Mengatur latar panel tanpa memudarkan teks atau ikon.</string>
+    <string name="memory_editor_reconversion_required">Hasil konversi MIDlet ini tidak kompatibel dengan Memory Editor. Tutup game, lalu konversi ulang atau instal kembali menggunakan JL-Mod Plus.</string>
 </resources>

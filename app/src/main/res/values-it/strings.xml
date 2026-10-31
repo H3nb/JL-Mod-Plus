@@ -1180,4 +1180,6 @@
     <string name="layout_editor_guide_tools">Strumenti di modifica</string>
     <string name="layout_editor_guide_done">Tocca Fine per salvare, annullare o continuare a modificare.</string>
     <string name="layout_editor_guide_start">Inizia a modificare</string>
+    <string name="memory_editor_panel_opacity">Opacità del pannello</string>
+    <string name="memory_editor_panel_opacity_help">Regola lo sfondo del pannello senza attenuare il testo o le icone.</string>
 </resources>

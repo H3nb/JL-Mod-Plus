@@ -277,7 +277,11 @@ public class MicroLoader {
 		try {
 			Descriptor descriptor = new Descriptor(
 					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
-			return MidletTransformMetadata.isCompatible(descriptor.getAttrs());
+			File dexPayload = new File(appDir, Config.MIDLET_DEX_ARCH);
+			if (!Config.isUsableFile(dexPayload)) {
+				dexPayload = new File(appDir, Config.MIDLET_DEX_FILE);
+			}
+			return MidletTransformMetadata.isRuntimeCompatible(descriptor.getAttrs(), dexPayload);
 		} catch (IOException | RuntimeException e) {
 			Log.w(TAG, "MIDlet transform metadata is unavailable", e);
 			return false;
@@ -398,6 +402,8 @@ public class MicroLoader {
 				// The bridge must exist before loading the main class: its static initializer may be the
 				// first converted class to publish a lifecycle tail.
 				MemoryDiscoveryBridge.install(memoryRuntimeToken, loader);
+			} else {
+				MemoryDiscoveryBridge.noteIncompatibleTransform(memoryRuntimeToken);
 			}
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
 			// Preserve the legacy one-argument reflection ABI for converted archives. New

@@ -3,7 +3,12 @@
 Emulation Speed is a manual, session-only control from 0.25x to 16x. A fresh
 MIDlet session starts at 1x; Reset returns the active session to 1x. Choosing a
 speed does not modify the persisted MIDlet profile. The control requires a
-compatible timing transform in the installed MIDlet.
+compatible timing transform in the installed MIDlet. Newly converted MIDlets record
+an SHA-256 fingerprint of the installed DEX; the runtime disables speed control
+when another emulator replaces that payload without updating the descriptor.
+Older installations without a fingerprint receive conservative structural DEX
+checks for untransformed clock calls. An inconclusive inspection does not prove
+incompatibility, and the normal launcher reconversion policy remains unchanged.
 
 ## Timing ownership
 

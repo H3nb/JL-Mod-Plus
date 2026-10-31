@@ -1283,4 +1283,7 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="memory_editor_panel_opacity">Panel opacity</string>
+    <string name="memory_editor_panel_opacity_help">Adjusts the panel background without fading text or icons.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">This MIDlet\'s installed conversion is incompatible with Memory Editor. Close the game, then reconvert or reinstall it using JL-Mod Plus.</string>
 </resources>

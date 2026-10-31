@@ -3,56 +3,43 @@
  * you may not use this file except in compliance with the License.
  */
 
-// Modifications: custom keypad-only value input and IME-safe dialogs.
+// Modified for JL-Mod Plus.
 
 package io.github.h3nb.jlmodplus.memory
 
-import android.view.WindowManager
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.isImeVisible
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -61,23 +48,25 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -86,16 +75,14 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.InterceptPlatformTextInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -105,21 +92,17 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogWindowProvider
-import io.github.h3nb.jlmodplus.R
-import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
-import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
-import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
+import androidx.core.os.ConfigurationCompat
+import java.text.NumberFormat
 import java.util.Locale
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.memory.MemoryEditorDialog as AlertDialog
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.first
 
-private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, INSPECTOR }
 private enum class RuntimeInputField { FIRST, SECOND }
 
 private data class RuntimeKeypadCell(
@@ -140,18 +123,6 @@ private val RuntimeMemoryValueTypes = intArrayOf(
     MemoryEngineContract.TYPE_DOUBLE,
 )
 
-private const val RuntimeKeypadTransitionDurationMillis = 240
-// Material3 text fields use a 56dp intrinsic height. Sharing it with the outlined menus keeps
-// their top/bottom strokes aligned without clipping the value baseline or blinking caret.
-private val RuntimeInputControlHeight = 56.dp
-// OutlinedTextField reserves an 8dp top inset for its floating label. The surrounding selector
-// controls do not have that inset, so compensate inside the fixed 56dp row slot. Extending by
-// the inset and shifting by half keeps both the outline and its text baseline centered together.
-private val RuntimeOutlinedFieldLabelInset = 8.dp
-private val RuntimeKeypadButtonHeight = 48.dp
-private val RuntimeKeypadPortraitHeight = 256.dp
-private val RuntimeKeypadLandscapeHeight = 198.dp
-
 @Composable
 private fun runtimeMemoryControlTextStyle() = MaterialTheme.typography.labelLarge
 
@@ -170,335 +141,166 @@ private fun runtimeMemoryKeypadTextStyle() = MaterialTheme.typography.labelLarge
     fontFamily = FontFamily.Monospace,
 )
 
-@Composable
-private fun runtimeMemoryInspectorValueTextStyle() = MaterialTheme.typography.titleSmall.copy(
-    fontFamily = FontFamily.Monospace,
-)
-
 /** Production Memory Editor shell hosted in the dedicated :memory_engine Activity. */
 @Composable
 internal fun MemoryEditorRuntimeRoot(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
+    overlayState: MemoryEditorOverlayState? = null,
 ) {
     if (!state.visible) return
-
-    val initialTab = when {
-        state.inspector != null -> RuntimeMemoryTab.INSPECTOR
-        state.watchTab -> RuntimeMemoryTab.WATCH
-        else -> RuntimeMemoryTab.SEARCH_RESULTS
-    }
-    var tab by remember(state.runtimeToken) { mutableStateOf(initialTab) }
-    var peekingUnderlay by remember(state.runtimeToken) { mutableStateOf(false) }
-    val selectedId = state.selected.singleOrNull()
-
-    LaunchedEffect(tab) {
-        when (tab) {
-            RuntimeMemoryTab.SEARCH_RESULTS -> actions.setWatchTab(false)
-            RuntimeMemoryTab.WATCH -> actions.setWatchTab(true)
-            RuntimeMemoryTab.INSPECTOR -> Unit
+    MemoryEditorOverlayScope(overlayState) { overlay ->
+        val tab = state.activeTab
+        var opacityDialog by remember { mutableStateOf(false) }
+        val resultsListState = rememberLazyListState()
+        val watchListState = rememberLazyListState()
+        val inspectSelected = {
+            state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.watchTab) }
+            Unit
         }
-    }
-    LaunchedEffect(tab, selectedId, state.inspector?.candidateId, state.inspectorLoading) {
-        if (tab != RuntimeMemoryTab.INSPECTOR || selectedId == null || state.inspectorLoading) {
-            return@LaunchedEffect
+        val selectTab: (MemoryEditorTab) -> Unit = {
+            when (it) {
+                MemoryEditorTab.RESULTS -> actions.setWatchTab(false)
+                MemoryEditorTab.WATCH -> actions.setWatchTab(true)
+                MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
+            }
         }
-        if (state.inspector?.candidateId != selectedId) {
-            actions.closeInspector()
-            actions.inspectCandidate(selectedId, watchAnchor = state.watchTab)
+        BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking) {
+            if (overlay.peeking) overlay.peeking = false else actions.closeInspector()
         }
-    }
-
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.22f))
-            .alpha(if (peekingUnderlay) 0f else 1f),
-        contentAlignment = Alignment.Center,
-    ) {
-        val landscape = maxWidth > maxHeight
-        val panelModifier = if (landscape) {
-            Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 6.dp)
-        } else {
-            Modifier
-                .fillMaxWidth(0.94f)
-                .fillMaxHeight(0.90f)
-                .widthIn(max = 720.dp)
-        }
-        Surface(
-            modifier = panelModifier,
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
-                alpha = if (peekingUnderlay) 0.42f else 0.84f,
-            ),
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 3.dp,
-            shadowElevation = 8.dp,
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = 8.dp, vertical = 6.dp)
+                .memoryEditorPeekKeys(overlay),
+            contentAlignment = Alignment.Center,
         ) {
-            if (landscape) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    RuntimeMemoryHeader(actions)
-                    Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        RuntimeMemoryTabRail(
-                            tab = tab,
-                            results = state.resultCount,
-                            watches = state.watches.size,
-                            inspectorEnabled = selectedId != null,
-                            onTab = { tab = it },
-                            modifier = Modifier.width(176.dp).fillMaxHeight(),
-                        )
-                        VerticalDivider()
-                        Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                            if (state.busy) RuntimeOperationStrip(state, actions)
-                            state.message?.takeIf(String::isNotBlank)?.let {
-                                RuntimeMessage(it, state.messageIsError)
-                            }
-                            RuntimeMemoryTabContent(
-                                tab = tab,
-                                state = state,
-                                actions = actions,
-                                onPeekUnderlayChanged = { peekingUnderlay = it },
-                                onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
-                                modifier = Modifier.weight(1f),
+            val wideWorkspace = maxWidth >=
+                600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+            val compactResults = wideWorkspace
+            val showLabels = wideWorkspace
+            val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
+             Surface(
+                modifier = Modifier.fillMaxSize()
+                    .align(Alignment.TopCenter)
+                    .alpha(if (overlay.peeking) 0f else 1f),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxSize().padding(bottom = 48.dp)
+                        .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)) {
+                        RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close, showTitle)
+                        if (state.busy) RuntimeOperationStrip(state, actions)
+                        state.message?.takeIf(String::isNotBlank)?.let {
+                            RuntimeMessage(it, state.messageIsError)
+                        }
+                        when (tab) {
+                            MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
+                                state, actions, inspectSelected, resultsListState, compactResults, Modifier.weight(1f),
+                            )
+                            MemoryEditorTab.WATCH -> RuntimeWatchTab(
+                                state, actions, watchListState, compactResults, Modifier.weight(1f),
+                            )
+                            MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
+                                state, actions, Modifier.weight(1f),
                             )
                         }
                     }
-                }
-            } else {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    RuntimeMemoryHeader(actions)
-                    RuntimeMemoryTabs(
-                        tab = tab,
-                        results = state.resultCount,
-                        watches = state.watches.size,
-                        inspectorEnabled = selectedId != null,
-                        onTab = { tab = it },
-                    )
-                    if (state.busy) RuntimeOperationStrip(state, actions)
-                    state.message?.takeIf(String::isNotBlank)?.let {
-                        RuntimeMessage(it, state.messageIsError)
-                    }
-                    RuntimeMemoryTabContent(
-                        tab = tab,
-                        state = state,
-                        actions = actions,
-                        onPeekUnderlayChanged = { peekingUnderlay = it },
-                        onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
-                        modifier = Modifier.weight(1f),
-                    )
+                    MemoryEditorPeekShield(overlay)
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun RuntimeMemoryTabContent(
-    tab: RuntimeMemoryTab,
-    state: MemoryEditorUiState,
-    actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
-    onInspectSelected: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    when (tab) {
-        RuntimeMemoryTab.SEARCH_RESULTS -> RuntimeSearchResultsTab(
-            state = state.copy(watchTab = false),
-            actions = actions,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
-            onInspectSelected = onInspectSelected,
-            modifier = modifier,
-        )
-        RuntimeMemoryTab.WATCH -> RuntimeWatchTab(
-            state = state.copy(watchTab = true),
-            actions = actions,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
-            modifier = modifier,
-        )
-        RuntimeMemoryTab.INSPECTOR -> RuntimeInspectorTab(
-            state = state,
-            actions = actions,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
-            modifier = modifier,
-        )
-    }
-}
-
-@Composable
-private fun RuntimeMemoryTabRail(
-    tab: RuntimeMemoryTab,
-    results: Long,
-    watches: Int,
-    inspectorEnabled: Boolean,
-    onTab: (RuntimeMemoryTab) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .padding(horizontal = 8.dp, vertical = 6.dp)
-            .selectableGroup(),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        RuntimeMemoryRailTab(
-            selected = tab == RuntimeMemoryTab.SEARCH_RESULTS,
-            onClick = { onTab(RuntimeMemoryTab.SEARCH_RESULTS) },
-            icon = R.drawable.ic_search,
-            label = if (results > 0L) {
-                "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
-            } else {
-                stringResource(R.string.memory_editor_search_tab)
-            },
-        )
-        RuntimeMemoryRailTab(
-            selected = tab == RuntimeMemoryTab.WATCH,
-            onClick = { onTab(RuntimeMemoryTab.WATCH) },
-            icon = R.drawable.ic_memory_editor_watch,
-            label = if (watches > 0) {
-                "${stringResource(R.string.memory_editor_watch)} · $watches"
-            } else {
-                stringResource(R.string.memory_editor_watch)
-            },
-        )
-        RuntimeMemoryRailTab(
-            selected = tab == RuntimeMemoryTab.INSPECTOR,
-            onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
-            icon = R.drawable.ic_memory_editor_inspector,
-            label = stringResource(R.string.memory_editor_inspector),
-            enabled = inspectorEnabled,
-        )
-    }
-}
-
-@Composable
-private fun RuntimeMemoryRailTab(
-    selected: Boolean,
-    onClick: () -> Unit,
-    icon: Int,
-    label: String,
-    enabled: Boolean = true,
-) {
-    val contentColor = when {
-        !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-        selected -> MaterialTheme.colorScheme.onPrimaryContainer
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-        contentColor = contentColor,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .selectable(
-                    selected = selected,
-                    enabled = enabled,
-                    role = Role.Tab,
-                    onClick = onClick,
+            if (overlay.layers.isEmpty()) {
+                MemoryEditorPeekDock(
+                    overlay = overlay,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    leadingContent = {
+                        RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
+                            opacityDialog = true
+                        }
+                    },
+                    centerContent = {
+                        if (tab == MemoryEditorTab.RESULTS) RuntimePager(state, actions)
+                    },
                 )
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-            )
-            Text(
-                text = label,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            }
         }
+        if (opacityDialog) MemoryEditorOpacityDialog(overlay) { opacityDialog = false }
     }
 }
 
 @Composable
 private fun RuntimeMemoryHeader(
-    actions: MemoryEditorActions,
+    state: MemoryEditorUiState,
+    inlineNavigation: Boolean,
+    onTab: (MemoryEditorTab) -> Unit,
+    onClose: () -> Unit,
+    showTitle: Boolean = true,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        if (showTitle) Text(
             stringResource(R.string.memory_editor),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f),
+            modifier = if (inlineNavigation) Modifier.padding(end = 16.dp) else Modifier.weight(1f),
         )
-        IconButton(onClick = actions::close) {
-            Icon(
-                painterResource(R.drawable.ic_close),
-                contentDescription = stringResource(R.string.memory_editor_close),
+        if (inlineNavigation) {
+            RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
+        }
+        IconButton(onClick = onClose) {
+            Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
+        }
+    }
+    if (!inlineNavigation) RuntimeMemoryTabs(state, onTab)
+}
+
+@Composable
+private fun RuntimeMemoryTabs(
+    state: MemoryEditorUiState,
+    onTab: (MemoryEditorTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val searchLabel = stringResource(R.string.memory_editor_search_tab)
+    val watchLabel = stringResource(R.string.memory_editor_watch)
+    val inspectorLabel = stringResource(R.string.memory_editor_inspector)
+    SecondaryScrollableTabRow(
+        selectedTabIndex = state.activeTab.ordinal,
+        modifier = modifier.fillMaxWidth(),
+        edgePadding = 0.dp,
+        containerColor = Color.Transparent,
+    ) {
+        MemoryEditorTab.entries.forEach { tab ->
+            Tab(
+                selected = state.activeTab == tab,
+                onClick = { onTab(tab) },
+                enabled = tab != MemoryEditorTab.INSPECTOR ||
+                    state.activeTab == tab || state.selected.size == 1 && !state.busy,
+                modifier = Modifier.semantics { contentDescription = when (tab) {
+                    MemoryEditorTab.RESULTS -> searchLabel
+                    MemoryEditorTab.WATCH -> watchLabel
+                    MemoryEditorTab.INSPECTOR -> inspectorLabel
+                } },
+                text = {
+                    Text(stringResource(when (tab) {
+                        MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
+                        MemoryEditorTab.WATCH -> R.string.memory_editor_watch
+                        MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
+                    }))
+                },
             )
         }
     }
 }
 
-@Composable
-private fun RuntimeMemoryTabs(
-    tab: RuntimeMemoryTab,
-    results: Long,
-    watches: Int,
-    inspectorEnabled: Boolean,
-    onTab: (RuntimeMemoryTab) -> Unit,
-) {
-    SecondaryTabRow(
-        selectedTabIndex = tab.ordinal,
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = Color.Transparent,
-    ) {
-        Tab(
-            selected = tab == RuntimeMemoryTab.SEARCH_RESULTS,
-            onClick = { onTab(RuntimeMemoryTab.SEARCH_RESULTS) },
-            text = {
-                Text(
-                    if (results > 0L) {
-                        "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
-                    } else {
-                        stringResource(R.string.memory_editor_search_tab)
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            icon = {
-                Icon(painterResource(R.drawable.ic_search), contentDescription = null)
-            },
-        )
-        Tab(
-            selected = tab == RuntimeMemoryTab.WATCH,
-            onClick = { onTab(RuntimeMemoryTab.WATCH) },
-            text = {
-                Text(
-                    if (watches > 0) "${stringResource(R.string.memory_editor_watch)} · $watches"
-                    else stringResource(R.string.memory_editor_watch),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            icon = {
-                Icon(painterResource(R.drawable.ic_memory_editor_watch), contentDescription = null)
-            },
-        )
-        Tab(
-            selected = tab == RuntimeMemoryTab.INSPECTOR,
-            onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
-            enabled = inspectorEnabled,
-            text = {
-                Text(
-                    stringResource(R.string.memory_editor_inspector),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            icon = {
-                Icon(painterResource(R.drawable.ic_memory_editor_inspector), contentDescription = null)
-            },
-        )
-    }
-}
+private data class RuntimeToolbarAction(
+    val icon: Int,
+    val label: Int,
+    val enabled: Boolean,
+    val onClick: () -> Unit,
+)
 
 @Composable
 private fun RuntimeOperationStrip(state: MemoryEditorUiState, actions: MemoryEditorActions) {
@@ -581,8 +383,9 @@ private fun RuntimeMessage(message: String, isError: Boolean) {
 private fun RuntimeSearchResultsTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onInspectSelected: () -> Unit,
+    listState: LazyListState,
+    compactRows: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var knownDialog by remember { mutableStateOf(false) }
@@ -596,132 +399,189 @@ private fun RuntimeSearchResultsTab(
     val allVisibleSelected = state.results.isNotEmpty() &&
         state.results.all { it.id in state.selected }
 
+    val visibleSelectionDescription = stringResource(
+        if (allVisibleSelected) R.string.memory_editor_clear_selection else R.string.memory_editor_select_visible,
+    )
     Column(modifier = modifier.fillMaxWidth()) {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+        var moreMenu by remember { mutableStateOf(false) }
+        val quickActions = listOf(
+            RuntimeToolbarAction(R.drawable.ic_search, R.string.memory_editor_search_known_values, state.canSearch) {
+                knownDialog = true
+            },
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_search_unknown,
+                R.string.memory_editor_search_unknown_values, state.canSearch) {
+                unknownDialog = true
+            },
+            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
+                editTargets = selectedRows.map { MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes) }
+                editRevision = state.revision
+            },
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add, R.string.memory_editor_add_to_watch,
+                selectedRows.isNotEmpty() && !state.busy) { actions.watchSelected(true) },
+            RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
+                state.results.isNotEmpty() && !state.busy, actions::refresh),
+        )
+        val extraActions = listOf(
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
+                selectedRows.size == 1 && !state.busy, onInspectSelected),
+            RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
+                state.canUndo && !state.busy, actions::undo),
+            RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
+                selectedRows.isNotEmpty() && !unknownBaseline && !state.busy) {
+                deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
+            },
+        )
+        val primaryActions = if (selectedRows.isEmpty()) {
+            listOf(quickActions[0], quickActions[1], quickActions[4])
+        } else {
+            listOf(quickActions[2], quickActions[3], quickActions[4])
+        }
+        val overflowActions = (quickActions.filterNot { action ->
+            primaryActions.any { it.label == action.label }
+        } + extraActions).filter { it.enabled }
+        if (state.results.isNotEmpty() || state.resultCount > 0L || state.busy ||
+            state.canUndo || state.sessionStage != MemorySessionStage.EMPTY
         ) {
-            RuntimeActionIcon(
-                icon = R.drawable.ic_search,
-                description = R.string.memory_editor_search_known_values,
-                enabled = !state.busy,
-                onClick = { knownDialog = true },
-            )
-            RuntimeActionIcon(
-                icon = R.drawable.ic_memory_editor_search_unknown,
-                description = R.string.memory_editor_search_unknown_values,
-                enabled = !state.busy && state.supported,
-                onClick = { unknownDialog = true },
-            )
-            RuntimeActionIcon(
-                icon = R.drawable.ic_memory_editor_watch_add,
-                description = R.string.memory_editor_add_to_watch,
-                enabled = state.selected.isNotEmpty() && !state.busy,
-                onClick = { actions.watchSelected(true) },
-            )
-            RuntimeActionIcon(
-                icon = R.drawable.ic_edit,
-                description = R.string.memory_editor_edit,
-                enabled = selectedWriteSupported && !state.busy,
-                onClick = {
-                    editTargets = selectedRows.map { row ->
-                        MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = if (compactRows) Arrangement.End else Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (compactRows && state.resultCount > 0L) {
+                    Row(
+                        modifier = Modifier.weight(1f).padding(start = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            pluralStringResource(
+                                if (unknownBaseline) R.plurals.memory_editor_candidates
+                                else R.plurals.memory_editor_results,
+                                state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                                state.resultCount,
+                            ),
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (state.selected.isNotEmpty()) {
+                            Text(
+                                pluralStringResource(
+                                    R.plurals.memory_editor_selected,
+                                    state.selected.size, state.selected.size,
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
-                    editRevision = state.revision
-                },
-            )
-            RuntimeActionIcon(
-                icon = R.drawable.ic_refresh,
-                description = R.string.memory_editor_refresh,
-                enabled = state.results.isNotEmpty() && !state.busy,
-                onClick = actions::refresh,
-            )
-            RuntimeActionIcon(
-                icon = R.drawable.ic_memory_editor_inspector,
-                description = R.string.memory_editor_inspect_memory,
-                enabled = selectedRows.size == 1 && !state.busy,
-                onClick = onInspectSelected,
-            )
-            RuntimeActionIcon(
-                icon = R.drawable.ic_delete,
-                description = R.string.memory_editor_remove,
-                enabled = state.selected.isNotEmpty() && !state.busy && !unknownBaseline,
-                onClick = {
-                    deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
-                },
-            )
-            val visibleSelectionDescription = stringResource(
-                if (allVisibleSelected) R.string.memory_editor_clear_selection
-                else R.string.memory_editor_select_visible,
-            )
-            Checkbox(
-                checked = allVisibleSelected,
-                enabled = state.results.isNotEmpty() && !state.busy,
-                onCheckedChange = { checked ->
-                    if (checked) actions.selectVisible() else actions.clearSelection()
-                },
-                modifier = Modifier.semantics {
-                    contentDescription = visibleSelectionDescription
-                },
-            )
-            if (state.canUndo) {
-                TextButton(onClick = actions::undo, enabled = !state.busy) {
-                    Text(stringResource(R.string.memory_editor_undo))
+                } else if (compactRows) {
+                    Spacer(Modifier.weight(1f))
+                }
+                primaryActions.forEach { action ->
+                    RuntimeActionIcon(action.icon, action.label, action.enabled, action.onClick)
+                }
+                if (overflowActions.isNotEmpty()) {
+                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, enabled = !state.busy) {
+                        moreMenu = true
+                    }
                 }
             }
+        }
+        LaunchedEffect(overflowActions.isEmpty()) {
+            if (overflowActions.isEmpty()) moreMenu = false
+        }
+        if (moreMenu && overflowActions.isNotEmpty()) {
+            AlertDialog(
+                onDismissRequest = { moreMenu = false },
+                maxDialogWidth = 400.dp,
+                text = {
+                    Column {
+                        overflowActions.forEach { action ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(action.label)) },
+                                leadingIcon = { Icon(painterResource(action.icon), contentDescription = null) },
+                                onClick = { moreMenu = false; action.onClick() },
+                            )
+                        }
+                    }
+                },
+            )
         }
         HorizontalDivider()
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                pluralStringResource(
-                    if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
-                        R.plurals.memory_editor_candidates
-                    } else {
-                        R.plurals.memory_editor_results
-                    },
-                    state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
-                    state.resultCount,
-                ),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.weight(1f),
-            )
-            if (state.selected.isNotEmpty()) {
-                Text(
-                    pluralStringResource(
-                        R.plurals.memory_editor_selected,
-                        state.selected.size,
-                        state.selected.size,
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-
-        if (state.results.isEmpty()) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
-                    Text(
-                        stringResource(R.string.memory_editor_no_candidates),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
+            if (!compactRows && (state.results.isNotEmpty() || state.resultCount > 0)) item(key = "summary") {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = allVisibleSelected,
+                        enabled = state.results.isNotEmpty() && !state.busy,
+                        onCheckedChange = { if (it) actions.selectVisible() else actions.clearSelection() },
+                        modifier = Modifier.semantics {
+                            contentDescription = visibleSelectionDescription
+                        },
                     )
-                } else {
-                    Text(
-                        stringResource(R.string.memory_editor_no_results),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            pluralStringResource(
+                                if (unknownBaseline) R.plurals.memory_editor_candidates else R.plurals.memory_editor_results,
+                                state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), state.resultCount,
+                            ),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        if (state.selected.isNotEmpty()) {
+                            Text(
+                                pluralStringResource(R.plurals.memory_editor_selected, state.selected.size, state.selected.size),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
                 }
             }
-        } else {
-            LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            if (state.results.isEmpty()) {
+                item(key = "empty") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            stringResource(
+                                if (state.sessionStage == MemorySessionStage.EMPTY) R.string.memory_editor_new_search
+                                else if (unknownBaseline) R.string.memory_editor_no_candidates
+                                else R.string.memory_editor_no_results,
+                            ),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        quickActions.take(2).forEachIndexed { index, action ->
+                            val label = stringResource(action.label)
+                            val buttonModifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                                .semantics { contentDescription = label }
+                            val content: @Composable () -> Unit = {
+                                Icon(painterResource(action.icon), contentDescription = null)
+                                Spacer(Modifier.width(12.dp))
+                                Text(label, modifier = Modifier.weight(1f))
+                            }
+                            if (index == 0) {
+                                Button(onClick = action.onClick, enabled = action.enabled,
+                                    modifier = buttonModifier, shape = MaterialTheme.shapes.medium) { content() }
+                            } else {
+                                OutlinedButton(onClick = action.onClick, enabled = action.enabled,
+                                    modifier = buttonModifier, shape = MaterialTheme.shapes.medium) { content() }
+                            }
+                        }
+                    }
+                }
+            } else {
                 items(state.results, key = { it.id }) { row ->
                     RuntimeResultRow(
                         row = row,
+                        compactRows = compactRows,
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
@@ -736,16 +596,13 @@ private fun RuntimeSearchResultsTab(
                 }
             }
         }
-        RuntimePager(state, actions)
     }
 
     if (knownDialog) {
         RuntimeKnownSearchDialog(
             state = state,
             actions = actions,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 knownDialog = false
             },
         )
@@ -754,9 +611,7 @@ private fun RuntimeSearchResultsTab(
         RuntimeUnknownSearchDialog(
             state = state,
             actions = actions,
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 unknownDialog = false
             },
         )
@@ -765,10 +620,8 @@ private fun RuntimeSearchResultsTab(
     if (currentEditTargets != null) {
         RuntimeEditDialog(
             targets = currentEditTargets,
-            writeSupported = currentEditTargets.all { it.supportsWrite(state) },
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
+            writeSupported = state.writeSupported,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
             onApply = { value, type, freeze, incremental, step ->
@@ -781,7 +634,6 @@ private fun RuntimeSearchResultsTab(
                         currentEditTargets, editRevision, value, type, false, freeze,
                     )
                 }
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
         )
@@ -846,10 +698,10 @@ private fun runtimeCandidateLocation(id: Long, source: MemoryCandidateSource, fa
     } else stringResource(R.string.memory_editor_candidate_static, name, kind)
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RuntimeResultRow(
     row: MemoryResultRow,
+    compactRows: Boolean,
     selected: Boolean,
     onToggle: () -> Unit,
     onClick: () -> Unit,
@@ -859,40 +711,59 @@ private fun RuntimeResultRow(
         else Color.Transparent,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+                .padding(horizontal = 12.dp, vertical = if (compactRows) 2.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(checked = selected, onCheckedChange = { onToggle() })
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            val aliasCount = row.aliasTypes.size
+            val typeLabel = if (aliasCount > 1) "${runtimeTypeShort(row.primaryType)} +${aliasCount - 1}"
+            else runtimeTypeShort(row.primaryType)
+            val location = runtimeCandidateLocation(row.id, row.source, row.locationText)
+            if (compactRows) {
+                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.weight(0.46f),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            row.valueText, style = runtimeMemoryDataTextStyle(),
+                            modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            typeLabel, style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
                     Text(
-                        row.valueText,
-                        style = runtimeMemoryDataTextStyle(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    val aliasCount = row.aliasTypes.size
-                    Text(
-                        if (aliasCount > 1) "${runtimeTypeShort(row.primaryType)} +${aliasCount - 1}"
-                        else runtimeTypeShort(row.primaryType),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        runtimeCandidateLocation(row.id, row.source, row.locationText),
-                        style = runtimeMemoryMetaTextStyle(),
+                        location, style = runtimeMemoryMetaTextStyle(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(0.54f).padding(start = 16.dp),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                     RuntimeCandidateStatus(row.state, row.relocations)
+                }
+            } else {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            row.valueText, style = runtimeMemoryDataTextStyle(),
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            typeLabel, style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            location, style = runtimeMemoryMetaTextStyle(),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
+                        RuntimeCandidateStatus(row.state, row.relocations)
+                    }
                 }
             }
         }
@@ -904,7 +775,8 @@ private fun RuntimeResultRow(
 private fun RuntimeWatchTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
+    listState: LazyListState,
+    compactRows: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
@@ -972,10 +844,11 @@ private fun RuntimeWatchTab(
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
                 items(state.watches, key = { it.id }) { row ->
                     RuntimeWatchRow(
                         row = row,
+                        compactRows = compactRows,
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
@@ -996,27 +869,24 @@ private fun RuntimeWatchTab(
     if (currentEditTargets != null) {
         RuntimeEditDialog(
             targets = currentEditTargets,
-            writeSupported = currentEditTargets.all { it.supportsWrite(state) },
-            onPeekUnderlayChanged = onPeekUnderlayChanged,
+            writeSupported = state.writeSupported,
             onDismiss = {
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
             onApply = { value, type, freeze, _, _ ->
                 actions.editTargetsWithOptions(
                     currentEditTargets, 0L, value, type, false, freeze,
                 )
-                onPeekUnderlayChanged(false)
                 editTargets = null
             },
         )
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RuntimeWatchRow(
     row: MemoryWatchRow,
+    compactRows: Boolean,
     selected: Boolean,
     onToggle: () -> Unit,
     onClick: () -> Unit,
@@ -1030,7 +900,7 @@ private fun RuntimeWatchRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = if (compactRows) 2.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(
@@ -1040,6 +910,40 @@ private fun RuntimeWatchRow(
                     contentDescription = selectDescription
                 },
             )
+            if (compactRows) {
+                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        row.label.ifBlank { runtimeTypeShort(row.type) },
+                        modifier = Modifier.weight(0.32f), style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        row.valueText, modifier = Modifier.weight(0.25f).padding(start = 12.dp),
+                        style = runtimeMemoryDataTextStyle(),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        "${runtimeCandidateLocation(row.id, row.source, row.locationText)} · " +
+                            runtimeTypeShort(row.type),
+                        modifier = Modifier.weight(0.43f).padding(start = 12.dp),
+                        style = runtimeMemoryMetaTextStyle(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    when {
+                        row.freezePaused -> Text(
+                            stringResource(R.string.memory_editor_freeze_paused),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                        row.freezeMode >= 0 -> Icon(
+                            painterResource(R.drawable.ic_lock),
+                            contentDescription = stringResource(R.string.memory_editor_freeze),
+                        )
+                        else -> RuntimeCandidateStatus(row.state, row.relocations)
+                    }
+                }
+            } else {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -1052,9 +956,11 @@ private fun RuntimeWatchRow(
                     Text(
                         row.valueText,
                         style = runtimeMemoryDataTextStyle(),
+                        modifier = Modifier.weight(1f).padding(start = 8.dp),
+                        textAlign = TextAlign.End,
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         "${runtimeCandidateLocation(row.id, row.source, row.locationText)} · " +
                             runtimeTypeShort(row.type),
@@ -1062,7 +968,6 @@ private fun RuntimeWatchRow(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
                     )
                     when {
                         row.freezePaused -> Text(
@@ -1078,121 +983,45 @@ private fun RuntimeWatchRow(
                     }
                 }
             }
+            }
         }
     }
     HorizontalDivider()
 }
 
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RuntimeSearchDialogBody(
+    title: @Composable () -> Unit,
     showKeypad: Boolean,
     controls: @Composable (sideDock: Boolean) -> Unit,
     keypad: @Composable (landscape: Boolean) -> Unit,
     supportingContent: (@Composable () -> Unit)? = null,
 ) {
-    val landscape = availableWindowWidthDp() > availableWindowHeightDp()
-    val imeVisible = WindowInsets.isImeVisible
-    // BasicAlertDialog's platform window already moves its frame above the IME. Applying
-    // imePadding here as well reserves that height a second time and creates a white band.
-    // Keep the native IME and custom keypad mutually exclusive. The keypad is given a fixed
-    // viewport and only its layer is animated, so the dialog window is not resized and recentered
-    // on every animation frame.
-    val targetKeypadVisible = showKeypad && !imeVisible
-    var keypadMounted by remember { mutableStateOf(targetKeypadVisible) }
-    // The default virtual keypad is part of the dialog's first frame. Only later mode changes
-    // animate; opening New Search/Edit must not briefly compose an empty, differently sized body.
-    val keypadProgress = remember { Animatable(if (targetKeypadVisible) 1f else 0f) }
-
-    LaunchedEffect(targetKeypadVisible, imeVisible) {
-        if (targetKeypadVisible) {
-            keypadMounted = true
-            keypadProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = RuntimeKeypadTransitionDurationMillis,
-                    easing = FastOutSlowInEasing,
-                ),
-            )
-        } else if (imeVisible) {
-            // Once the platform IME takes over, remove the custom keypad immediately. The
-            // system owns the window resize animation and there is no competing layout motion.
-            keypadProgress.snapTo(0f)
-            keypadMounted = false
-        } else {
-            keypadProgress.animateTo(
-                targetValue = 0f,
-                animationSpec = tween(
-                    durationMillis = RuntimeKeypadTransitionDurationMillis,
-                    easing = FastOutSlowInEasing,
-                ),
-            )
-            keypadMounted = false
-        }
-    }
-
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        // Keep the layout mode stable for the entire custom-keypad transition. A fixed viewport
-        // prevents the platform dialog from repeatedly measuring and moving while the layer
-        // fades/scales in or out.
-        val sideDock = landscape && maxWidth >= 480.dp &&
-            (targetKeypadVisible || (keypadMounted && !imeVisible))
+    // The dialog owns the only scroll container. Controls and keypad keep their intrinsic
+    // height, including at large font scales; a short window scrolls instead of shrinking keys.
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val sideDock = showKeypad &&
+            maxWidth >= 560.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         if (sideDock) {
-            val keypadWidth = (maxWidth * 0.42f).coerceIn(220.dp, 280.dp)
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        controls(true)
-                        supportingContent?.invoke()
-                    }
-                    if (keypadMounted && !imeVisible) {
-                        Box(
-                            modifier = Modifier
-                                .width(keypadWidth)
-                                .height(RuntimeKeypadLandscapeHeight)
-                                .graphicsLayer {
-                                    val progress = keypadProgress.value
-                                    alpha = progress
-                                    translationX = (1f - progress) * 20.dp.toPx()
-                                },
-                        ) {
-                            keypad(landscape)
-                        }
-                    }
+                Column(Modifier.weight(0.96f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    title()
+                    controls(true)
+                    supportingContent?.invoke()
                 }
+                Box(Modifier.weight(1.04f)) { keypad(true) }
             }
         } else {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                title()
                 controls(false)
                 supportingContent?.invoke()
-                if (keypadMounted && !imeVisible) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(RuntimeKeypadPortraitHeight)
-                            .graphicsLayer {
-                                val progress = keypadProgress.value
-                                alpha = progress
-                                translationY = (1f - progress) * 12.dp.toPx()
-                            },
-                    ) {
-                        keypad(landscape)
-                    }
-                }
+                if (showKeypad) keypad(false)
             }
         }
     }
@@ -1202,7 +1031,6 @@ private fun RuntimeSearchDialogBody(
 internal fun RuntimeKnownSearchDialog(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var query by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
@@ -1214,7 +1042,6 @@ internal fun RuntimeKnownSearchDialog(
             state.requestedType.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO,
         )
     }
-    var peekingUnderlay by remember { mutableStateOf(false) }
 
     val expression = remember(query.text) { parseMemorySearchExpression(query.text) }
     val groupExpression = expression is MemorySearchExpression.Group
@@ -1248,19 +1075,13 @@ internal fun RuntimeKnownSearchDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
-        title = {
-            RuntimeInputDialogTitle(
-                title = stringResource(R.string.memory_editor_search_known_values),
-                peeking = peekingUnderlay,
-                onPeekingChanged = {
-                    peekingUnderlay = it
-                    onPeekUnderlayChanged(it)
-                },
-            )
-        },
         text = {
             RuntimeSearchDialogBody(
+                title = {
+                    RuntimeInputDialogTitle(
+                        title = stringResource(R.string.memory_editor_search_known_values),
+                    )
+                },
                 showKeypad = true,
                 controls = { sideDock ->
                     RuntimeSearchControlRow {
@@ -1273,7 +1094,6 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimeSearchField(
                             label = stringResource(memorySearchFieldLabel(effectivePredicate, second = false)),
                             value = query,
-                            active = activeField == RuntimeInputField.FIRST,
                             onClick = { activeField = RuntimeInputField.FIRST },
                             onValueChange = { query = it },
                             valueSpec = spec,
@@ -1285,7 +1105,6 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimeSearchField(
                             label = stringResource(memorySearchFieldLabel(effectivePredicate, second = true)),
                             value = second,
-                            active = activeField == RuntimeInputField.SECOND,
                             onClick = { activeField = RuntimeInputField.SECOND },
                             onValueChange = { second = it },
                             valueSpec = spec,
@@ -1339,7 +1158,7 @@ internal fun RuntimeKnownSearchDialog(
                 },
             )
         },
-        textScrollable = false,
+        textScrollable = true,
         dismissButtonBelowWrappedActions = state.sessionStage != MemorySessionStage.EMPTY,
         confirmButton = {
             FlowRow(
@@ -1347,7 +1166,7 @@ internal fun RuntimeKnownSearchDialog(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 TextButton(
-                    enabled = newSearchValid && !state.busy,
+                    enabled = newSearchValid && state.canSearch,
                     onClick = {
                         when (val parsed = expression) {
                             is MemorySearchExpression.Single -> actions.startSearch(
@@ -1370,7 +1189,7 @@ internal fun RuntimeKnownSearchDialog(
                 }
                 if (memorySessionHasActiveSearch(state.sessionStage)) {
                     Button(
-                        enabled = nextScanValid && !state.busy,
+                        enabled = nextScanValid && state.canSearch,
                         onClick = {
                             val nextValue = (expression as? MemorySearchExpression.Single)?.value
                                 ?: return@Button
@@ -1399,7 +1218,6 @@ internal fun RuntimeKnownSearchDialog(
 private fun RuntimeUnknownSearchDialog(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val activeSession = state.sessionStage != MemorySessionStage.EMPTY
@@ -1414,7 +1232,6 @@ private fun RuntimeUnknownSearchDialog(
     var first by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var second by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var activeField by remember { mutableStateOf(RuntimeInputField.FIRST) }
-    var peekingUnderlay by remember { mutableStateOf(false) }
     val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
     val needsValue = if (relative) memoryRelativePredicateNeedsValue(predicate) else true
     val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN ||
@@ -1430,19 +1247,13 @@ private fun RuntimeUnknownSearchDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
-        title = {
-            RuntimeInputDialogTitle(
-                title = stringResource(R.string.memory_editor_search_unknown_values),
-                peeking = peekingUnderlay,
-                onPeekingChanged = {
-                    peekingUnderlay = it
-                    onPeekUnderlayChanged(it)
-                },
-            )
-        },
         text = {
             RuntimeSearchDialogBody(
+                title = {
+                    RuntimeInputDialogTitle(
+                        title = stringResource(R.string.memory_editor_search_unknown_values),
+                    )
+                },
                 showKeypad = needsValue,
                 controls = { sideDock ->
                     if (!activeSession) {
@@ -1499,7 +1310,6 @@ private fun RuntimeUnknownSearchDialog(
                                     RuntimeSearchField(
                                         label = stringResource(memorySearchFieldLabel(predicate, second = false)),
                                         value = first,
-                                        active = activeField == RuntimeInputField.FIRST,
                                         onClick = { activeField = RuntimeInputField.FIRST },
                                         onValueChange = { first = it },
                                         valueSpec = spec,
@@ -1509,7 +1319,6 @@ private fun RuntimeUnknownSearchDialog(
                                     RuntimeSearchField(
                                         label = stringResource(memorySearchFieldLabel(predicate, second = true)),
                                         value = second,
-                                        active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
                                         onValueChange = { second = it },
                                         valueSpec = spec,
@@ -1520,7 +1329,6 @@ private fun RuntimeUnknownSearchDialog(
                                 RuntimeSearchField(
                                     label = stringResource(memorySearchFieldLabel(predicate, second = false)),
                                     value = first,
-                                    active = activeField == RuntimeInputField.FIRST,
                                     onClick = { activeField = RuntimeInputField.FIRST },
                                     onValueChange = { first = it },
                                     valueSpec = spec,
@@ -1531,7 +1339,6 @@ private fun RuntimeUnknownSearchDialog(
                                     RuntimeSearchField(
                                         label = stringResource(memorySearchFieldLabel(predicate, second = true)),
                                         value = second,
-                                        active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
                                         onValueChange = { second = it },
                                         valueSpec = spec,
@@ -1570,7 +1377,7 @@ private fun RuntimeUnknownSearchDialog(
                 },
             )
         },
-        textScrollable = false,
+        textScrollable = true,
         dismissButtonBelowWrappedActions = activeSession,
         confirmButton = {
             FlowRow(
@@ -1578,7 +1385,7 @@ private fun RuntimeUnknownSearchDialog(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 TextButton(
-                    enabled = !state.busy,
+                    enabled = state.canSearch,
                     onClick = {
                         actions.startSearch(
                             "",
@@ -1594,7 +1401,7 @@ private fun RuntimeUnknownSearchDialog(
                 }
                 if (activeSession) {
                     Button(
-                        enabled = refineValid && !state.busy,
+                        enabled = refineValid && state.canSearch,
                         onClick = {
                             actions.nextScan(
                                 first.text,
@@ -1621,7 +1428,6 @@ private fun RuntimeUnknownSearchDialog(
 private fun RuntimeEditDialog(
     targets: List<MemoryEditTarget>,
     writeSupported: Boolean,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     onApply: (String, Int, Boolean, Boolean, String) -> Unit,
 ) {
@@ -1651,7 +1457,6 @@ private fun RuntimeEditDialog(
     var incremental by remember(targets) { mutableStateOf(false) }
     var editingStep by remember(targets) { mutableStateOf(false) }
     var step by remember(targets) { mutableStateOf(TextFieldValue("1", TextRange(1))) }
-    var peekingUnderlay by remember { mutableStateOf(false) }
     val spec = remember(type) { MemoryInputSpec.forType(type) }
     val preview = remember(targets, type, replacement.text, step.text, incremental) {
         if (incremental) memoryIncrementalPreview(targets, type, replacement.text, step.text)
@@ -1677,25 +1482,19 @@ private fun RuntimeEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
-        title = {
-            RuntimeInputDialogTitle(
-                title = if (batch) {
-                    pluralStringResource(
-                        R.plurals.memory_editor_edit_batch,
-                        targets.size,
-                        targets.size,
-                    )
-                } else stringResource(R.string.memory_editor_edit),
-                peeking = peekingUnderlay,
-                onPeekingChanged = {
-                    peekingUnderlay = it
-                    onPeekUnderlayChanged(it)
-                },
-            )
-        },
         text = {
             RuntimeSearchDialogBody(
+                title = {
+                    RuntimeInputDialogTitle(
+                        title = if (batch) {
+                            pluralStringResource(
+                                R.plurals.memory_editor_edit_batch,
+                                targets.size,
+                                targets.size,
+                            )
+                        } else stringResource(R.string.memory_editor_edit),
+                    )
+                },
                 showKeypad = true,
                 controls = { _ ->
                     if (incrementalAvailable) {
@@ -1731,7 +1530,6 @@ private fun RuntimeEditDialog(
                                 else R.string.memory_editor_replacement
                             ),
                             value = replacement,
-                            active = !incremental || !editingStep,
                             onClick = { editingStep = false },
                             onValueChange = { replacement = it },
                             valueSpec = spec,
@@ -1743,7 +1541,6 @@ private fun RuntimeEditDialog(
                         RuntimeSearchField(
                             label = stringResource(R.string.memory_editor_increment_step),
                             value = step,
-                            active = editingStep,
                             onClick = { editingStep = true },
                             onValueChange = { step = it },
                             valueSpec = stepSpec,
@@ -1831,7 +1628,7 @@ private fun RuntimeEditDialog(
                 },
             )
         },
-        textScrollable = batch,
+        textScrollable = true,
         confirmButton = {
             Button(
                 enabled = writeSupported && hasCompatibleType && replacementValid,
@@ -1847,14 +1644,10 @@ private fun RuntimeEditDialog(
     )
 }
 
-private fun MemoryEditTarget.supportsWrite(state: MemoryEditorUiState): Boolean =
-    state.writeSupported
-
 @Composable
-private fun RuntimeInspectorTab(
+internal fun RuntimeInspectorTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
@@ -1876,138 +1669,133 @@ private fun RuntimeInspectorTab(
         else -> {
             val snapshot = requireNotNull(state.inspector)
             val logicalRows = snapshot.logicalRows
-            Column(modifier = modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            runtimeCandidateLocation(
-                                snapshot.candidateId, snapshot.source,
-                                snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
-                            ),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            if (snapshot.source == MemoryCandidateSource.UNKNOWN) {
-                                stringResource(R.string.memory_editor_source_unknown)
-                            } else {
-                                "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
-                                    snapshot.source.fieldType
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        val pathSummary = when (snapshot.pathStatus) {
-                            MemoryEngineContract.PATH_VERIFIED ->
-                                snapshot.referencePath.takeIf { it.isNotEmpty() }
-                            MemoryEngineContract.PATH_CHANGED ->
-                                stringResource(R.string.memory_editor_path_changed)
-                            MemoryEngineContract.PATH_INCOMPLETE ->
-                                stringResource(R.string.memory_editor_path_incomplete)
-                            else -> null
+            val listState = rememberLazyListState()
+            LaunchedEffect(snapshot.candidateId) {
+                val anchorIndex = logicalRows.indexOfFirst { it.relativeOffset == 0 }
+                if (anchorIndex > 0) {
+                    // Measure the anchor after bringing it into view; never infer row height
+                    // from font size or disable scrolling because an estimate says it fits.
+                    listState.scrollToItem(anchorIndex + 1)
+                    val layout = snapshotFlow { listState.layoutInfo }
+                        .first { info -> info.visibleItemsInfo.any { it.key == logicalRows[anchorIndex].id } }
+                    val anchor = layout.visibleItemsInfo.first { it.key == logicalRows[anchorIndex].id }
+                    listState.scrollBy(
+                        (anchor.offset - (layout.viewportEndOffset - layout.viewportStartOffset - anchor.size) / 2).toFloat(),
+                    )
+                }
+            }
+            LazyColumn(state = listState, modifier = modifier.fillMaxWidth()) {
+                item(key = "source") {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    runtimeCandidateLocation(
+                                        snapshot.candidateId, snapshot.source,
+                                        snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                                    ),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    if (snapshot.source == MemoryCandidateSource.UNKNOWN) {
+                                        stringResource(R.string.memory_editor_source_unknown)
+                                    } else {
+                                        "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
+                                            snapshot.source.fieldType
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                val pathSummary = when (snapshot.pathStatus) {
+                                    MemoryEngineContract.PATH_VERIFIED ->
+                                        snapshot.referencePath.takeIf { it.isNotEmpty() }
+                                    MemoryEngineContract.PATH_CHANGED ->
+                                        stringResource(R.string.memory_editor_path_changed)
+                                    MemoryEngineContract.PATH_INCOMPLETE ->
+                                        stringResource(R.string.memory_editor_path_incomplete)
+                                    else -> null
+                                }
+                                if (pathSummary != null) {
+                                    Text(
+                                        pathSummary,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                            RuntimeActionIcon(
+                                R.drawable.ic_refresh,
+                                R.string.memory_editor_refresh_snapshot,
+                                enabled = !state.busy,
+                            ) {
+                                actions.inspectCandidate(
+                                    snapshot.candidateId,
+                                    watchAnchor = snapshot.watchAnchor,
+                                )
+                            }
                         }
-                        if (pathSummary != null) {
-                            Text(
-                                pathSummary,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                        HorizontalDivider()
                     }
-                    RuntimeActionIcon(
-                        R.drawable.ic_refresh,
-                        R.string.memory_editor_refresh_snapshot,
-                        enabled = !state.busy,
-                    ) {
-                        actions.inspectCandidate(
-                            snapshot.candidateId,
-                            watchAnchor = snapshot.watchAnchor,
+                }
+                if (logicalRows.isEmpty()) {
+                    item {
+                        Text(
+                            stringResource(R.string.memory_editor_inspector_no_rows),
+                            modifier = Modifier.padding(24.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
-                HorizontalDivider()
-                if (logicalRows.isEmpty()) {
-                    Box(
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
+                items(logicalRows, key = { it.id }) { row ->
+                    Surface(
+                        color = if (row.relativeOffset == 0) {
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
+                        } else Color.Transparent,
                     ) {
-                        Text(
-                            stringResource(R.string.memory_editor_inspector_no_rows),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                } else {
-                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        val anchorIndex = logicalRows.indexOfFirst { it.relativeOffset == 0 }
-                            .coerceAtLeast(0)
-                        val visibleRows = (maxHeight.value / 55f).toInt().coerceAtLeast(1)
-                        val firstIndex = inspectorCenteredFirstIndex(
-                            cellCount = logicalRows.size,
-                            anchorIndex = anchorIndex,
-                            visibleRows = visibleRows,
-                        )
-                        val listState = rememberLazyListState()
-                        LaunchedEffect(snapshot.candidateId, snapshot.expectedRevision, firstIndex) {
-                            listState.scrollToItem(firstIndex)
-                        }
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            userScrollEnabled = logicalRows.size > visibleRows,
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    enabled = row.editable &&
+                                        state.writeSupported && !state.busy,
+                                    onClick = { editLogicalRow = row },
+                                )
+                                .heightIn(min = 48.dp)
+                                .padding(horizontal = 12.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            items(logicalRows, key = { it.id }) { row ->
-                                Surface(
-                                    color = if (row.relativeOffset == 0) {
-                                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
-                                    } else Color.Transparent,
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .combinedClickable(
-                                                enabled = row.editable &&
-                                                    state.writeSupported && !state.busy,
-                                                onClick = { editLogicalRow = row },
-                                                onLongClick = { editLogicalRow = row },
-                                            )
-                                            .heightIn(min = 48.dp)
-                                            .padding(horizontal = 12.dp, vertical = 7.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Text(
-                                            if (row.relativeOffset >= 0) "+${row.relativeOffset}"
-                                            else row.relativeOffset.toString(),
-                                            modifier = Modifier.widthIn(min = 48.dp),
-                                            style = runtimeMemoryMetaTextStyle(),
-                                        )
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                row.label,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            Text(
-                                                runtimeTypeShort(row.type),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                        Text(
-                                            row.valueText,
-                                            style = runtimeMemoryInspectorValueTextStyle(),
-                                        )
-                                    }
-                                }
-                                HorizontalDivider()
+                            Text(
+                                if (row.relativeOffset >= 0) "+${row.relativeOffset}"
+                                else row.relativeOffset.toString(),
+                                modifier = Modifier.widthIn(min = 48.dp),
+                                style = runtimeMemoryMetaTextStyle(),
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    row.label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    runtimeTypeShort(row.type),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
+                            Text(
+                                row.valueText,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.End,
+                                style = runtimeMemoryDataTextStyle(),
+                            )
                         }
                     }
+                    HorizontalDivider()
                 }
             }
 
@@ -2016,9 +1804,7 @@ private fun RuntimeInspectorTab(
                     snapshot = snapshot,
                     row = row,
                     actions = actions,
-                    onPeekUnderlayChanged = onPeekUnderlayChanged,
                     onDismiss = {
-                        onPeekUnderlayChanged(false)
                         editLogicalRow = null
                     },
                 )
@@ -2027,52 +1813,31 @@ private fun RuntimeInspectorTab(
     }
 }
 
-internal fun inspectorCenteredFirstIndex(
-    cellCount: Int,
-    anchorIndex: Int,
-    visibleRows: Int,
-): Int {
-    if (cellCount <= 0) return 0
-    val rows = visibleRows.coerceAtLeast(1)
-    val safeAnchor = anchorIndex.coerceIn(0, cellCount - 1)
-    val maxFirst = (cellCount - rows).coerceAtLeast(0)
-    return (safeAnchor - rows / 2).coerceIn(0, maxFirst)
-}
-
 @Composable
 private fun RuntimeInspectorLogicalEditDialog(
     snapshot: MemoryInspectorSnapshot,
     row: MemoryInspectorLogicalRow,
     actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val spec = remember(row.type) { MemoryInputSpec.forType(row.type) }
     var value by remember(row) {
         mutableStateOf(TextFieldValue(row.valueText, TextRange(row.valueText.length)))
     }
-    var peekingUnderlay by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
-        title = {
-            RuntimeInputDialogTitle(
-                title = row.label.ifBlank { runtimeTypeShort(row.type) },
-                peeking = peekingUnderlay,
-                onPeekingChanged = {
-                    peekingUnderlay = it
-                    onPeekUnderlayChanged(it)
-                },
-            )
-        },
         text = {
             RuntimeSearchDialogBody(
+                title = {
+                    RuntimeInputDialogTitle(
+                        title = row.label.ifBlank { runtimeTypeShort(row.type) },
+                    )
+                },
                 showKeypad = true,
                 controls = { _ ->
                     RuntimeSearchField(
                         label = "${runtimeTypeShort(row.type)} · ${row.relativeOffset.formatRelativeOffset()}",
                         value = value,
-                        active = true,
                         onClick = {},
                         onValueChange = { value = it },
                         valueSpec = spec,
@@ -2093,7 +1858,7 @@ private fun RuntimeInspectorLogicalEditDialog(
                 },
             )
         },
-        textScrollable = false,
+        textScrollable = true,
         confirmButton = {
             Button(
                 enabled = row.editable && spec.isComplete(value.text),
@@ -2122,7 +1887,6 @@ private fun Int.formatRelativeOffset(): String = if (this >= 0) "+$this" else to
 private fun RuntimeSearchField(
     label: String,
     value: TextFieldValue,
-    active: Boolean,
     onClick: () -> Unit,
     onValueChange: (TextFieldValue) -> Unit,
     valueSpec: MemoryInputSpec,
@@ -2131,100 +1895,28 @@ private fun RuntimeSearchField(
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val density = LocalDensity.current
-    val textMeasurer = rememberTextMeasurer()
-    var focused by remember { mutableStateOf(false) }
-    var caretVisible by remember { mutableStateOf(true) }
-    val accent = MaterialTheme.colorScheme.primary
-    val textStyle = runtimeMemoryDataTextStyle().copy(
-        color = if (active) MaterialTheme.colorScheme.onSurface
-        else MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    val caretIndex = value.selection.start.coerceIn(0, value.text.length)
-    val caretPrefixWidth = with(density) {
-        textMeasurer.measure(
-            text = value.text.take(caretIndex),
-            style = textStyle,
-        ).size.width.toDp()
-    }
-    val textWidth = with(density) {
-        textMeasurer.measure(
-            text = value.text,
-            style = textStyle,
-        ).size.width.toDp()
-    }
     LaunchedEffect(initialFocus) {
-        if (initialFocus) {
-            // Keep focus for the custom caret and keypad routing without starting a platform IME.
-            focusRequester.requestFocus()
-        }
+        if (initialFocus) focusRequester.requestFocus()
     }
-    LaunchedEffect(focused, caretIndex) {
-        caretVisible = true
-        if (!focused) return@LaunchedEffect
-        while (isActive) {
-            delay(500L)
-            caretVisible = !caretVisible
-        }
-    }
-    BoxWithConstraints(
-        modifier = modifier.requiredHeight(RuntimeInputControlHeight),
-    ) {
-        val caretStart = 16.dp
-        val caretEnd = (maxWidth - 18.dp).coerceAtLeast(caretStart)
-        val visibleTextWidth = (caretEnd - caretStart).coerceAtLeast(1.dp)
-        val caretUnscrolledOffset = caretStart + caretPrefixWidth
-        val maxTextScroll = (textWidth - visibleTextWidth).coerceAtLeast(0.dp)
-        // Mirror the single-line field's horizontal scroll just enough to keep the custom
-        // caret attached to a long value instead of letting it run beyond the outline.
-        val textScroll = (caretUnscrolledOffset - caretEnd)
-            .coerceAtLeast(0.dp)
-            .coerceAtMost(maxTextScroll)
-        val visibleCaretOffset = (caretUnscrolledOffset - textScroll)
-            .coerceIn(caretStart, caretEnd)
+    // Keep Compose's editing, selection, cursor and horizontal scrolling. Only the platform
+    // IME session is suppressed: this editor supplies its own numeric keypad.
+    InterceptPlatformTextInput(interceptor = { _, _ -> awaitCancellation() }) {
         OutlinedTextField(
             value = value,
-            onValueChange = { updated ->
-                if (valueSpec.acceptsPartial(updated.text)) onValueChange(updated)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .requiredHeight(RuntimeInputControlHeight + RuntimeOutlinedFieldLabelInset)
-                .offset(y = -(RuntimeOutlinedFieldLabelInset / 2))
+            onValueChange = { if (valueSpec.acceptsPartial(it.text)) onValueChange(it) },
+            modifier = modifier
                 .focusRequester(focusRequester)
                 .onFocusChanged {
-                    focused = it.isFocused
-                    // Hide any already-visible IME when focus moves between the value field and
-                    // predicate/type controls. All value editing is intentionally keypad-only.
-                    keyboardController?.hide()
-                    if (it.isFocused) onClick()
+                    if (it.isFocused) {
+                        keyboardController?.hide()
+                        onClick()
+                    }
                 },
             label = { Text(label) },
             singleLine = true,
-            readOnly = true,
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = accent,
-                focusedLabelColor = accent,
-                unfocusedBorderColor = accent.copy(alpha = 0.62f),
-                unfocusedLabelColor = accent,
-                cursorColor = accent,
-            ),
-            textStyle = textStyle,
+            shape = MaterialTheme.shapes.small,
+            textStyle = runtimeMemoryDataTextStyle(),
         )
-        if (focused && caretVisible) {
-            // Read-only TextField intentionally owns focus so the custom keypad can edit it
-            // without starting the platform IME. Material3 does not draw a caret for every
-            // read-only configuration, therefore render the insertion marker in the same
-            // content inset and blink it independently of keyboard visibility.
-            Box(
-                modifier = Modifier
-                    .offset(x = visibleCaretOffset, y = 17.dp)
-                    .width(2.dp)
-                    .height(22.dp)
-                    .background(MaterialTheme.colorScheme.primary),
-            )
-        }
     }
 }
 
@@ -2278,25 +1970,18 @@ private fun RuntimeSearchKeypad(
         )
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val rows = if (landscape) 4 else 5
-        val verticalSpacing = if (landscape) 2.dp else 4.dp
-        // Short landscape dialogs can have less height than the preferred 48dp x 4 table.
-        // Scale every cell from the same available row height so the final row is never clipped.
-        val cellHeight = (
-            (maxHeight - (verticalSpacing * (rows - 1))) / rows
-        ).coerceAtMost(RuntimeKeypadButtonHeight).coerceAtLeast(32.dp)
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(columns),
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(verticalSpacing),
-            userScrollEnabled = false,
-        ) {
-            cells.forEach { cell ->
-                item(span = { GridItemSpan(cell.span) }) {
-                    RuntimeKeypadButton(cell, height = cellHeight)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val gap = 4.dp
+        val cellWidth = (maxWidth - gap * (columns - 1)) / columns
+        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+            cells.chunked(columns).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    row.forEach { cell ->
+                        RuntimeKeypadButton(
+                            cell,
+                            Modifier.width(cellWidth * cell.span + gap * (cell.span - 1)),
+                        )
+                    }
                 }
             }
         }
@@ -2304,170 +1989,22 @@ private fun RuntimeSearchKeypad(
 }
 
 @Composable
-private fun RuntimeKeypadButton(
-    cell: RuntimeKeypadCell,
-    height: Dp,
-) {
+private fun RuntimeKeypadButton(cell: RuntimeKeypadCell, modifier: Modifier = Modifier) {
     OutlinedButton(
         onClick = cell.onClick,
         enabled = cell.enabled,
-        shape = MaterialTheme.shapes.medium,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.36f),
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-        contentPadding = PaddingValues(0.dp),
-        // Keep the text field as the focus owner while the virtual keypad is tapped so the
-        // insertion caret remains visible without handing input to the platform IME.
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(height)
-            .focusProperties { canFocus = false },
+        shape = MaterialTheme.shapes.small,
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+        // Retain text-field focus while entering a number with the on-screen keypad.
+        modifier = modifier.heightIn(min = 48.dp).focusProperties { canFocus = false },
     ) {
-        Text(
-            cell.label,
-            modifier = Modifier.fillMaxWidth(),
-            style = runtimeMemoryKeypadTextStyle(),
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-        )
+        Text(cell.label, style = runtimeMemoryKeypadTextStyle(), textAlign = TextAlign.Center)
     }
 }
 
 @Composable
-private fun RuntimeInputDialogTitle(
-    title: String,
-    peeking: Boolean,
-    onPeekingChanged: (Boolean) -> Unit,
-) {
-    RuntimeInputDialogWindowEffect(peeking)
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            title,
-            modifier = Modifier.weight(1f),
-        )
-        RuntimePeekUnderlayButton(
-            peeking = peeking,
-            onPeekingChanged = onPeekingChanged,
-        )
-    }
-}
-
-private data class RuntimeInputDialogWindowBaseline(
-    val flags: Int,
-    val dimAmount: Float,
-    val alpha: Float,
-)
-
-/** Keep the platform dialog hidden for the whole Peek hold without resetting it per recomposition. */
-@Composable
-internal fun RuntimeInputDialogWindowEffect(
-    peeking: Boolean,
-) {
-    val view = LocalView.current
-    val window = (view.parent as? DialogWindowProvider)?.window
-    val baseline = remember(view, window) {
-        window?.attributes?.let { attributes ->
-            RuntimeInputDialogWindowBaseline(
-                flags = attributes.flags,
-                dimAmount = attributes.dimAmount,
-                alpha = attributes.alpha,
-            )
-        }
-    }
-
-    DisposableEffect(view, window, baseline) {
-        onDispose {
-            if (window != null && baseline != null) {
-                applyRuntimeInputDialogWindowState(window, baseline, peeking = false)
-            }
-        }
-    }
-    SideEffect {
-        if (window != null && baseline != null) {
-            applyRuntimeInputDialogWindowState(window, baseline, peeking)
-        }
-    }
-}
-
-private fun applyRuntimeInputDialogWindowState(
-    window: android.view.Window,
-    baseline: RuntimeInputDialogWindowBaseline,
-    peeking: Boolean,
-) {
-    val targetAlpha = if (peeking) 0f else baseline.alpha
-    val targetDimAmount = if (peeking) 0f else baseline.dimAmount
-    val targetDimEnabled = !peeking &&
-        baseline.flags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
-    val currentFlags = window.attributes.flags
-    val currentDimEnabled = currentFlags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
-    if (currentDimEnabled != targetDimEnabled) {
-        if (targetDimEnabled) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        }
-    }
-    val attributes = window.attributes
-    if (attributes.alpha != targetAlpha || attributes.dimAmount != targetDimAmount) {
-        window.attributes = attributes.apply {
-            alpha = targetAlpha
-            dimAmount = targetDimAmount
-        }
-    }
-}
-
-/** Temporarily hides the editor while held so the MIDlet remains visible underneath. */
-@Composable
-private fun RuntimePeekUnderlayButton(
-    peeking: Boolean,
-    onPeekingChanged: (Boolean) -> Unit,
-) {
-    val description = stringResource(
-        if (peeking) R.string.memory_editor_peek_underlay_active
-        else R.string.memory_editor_peek_underlay,
-    )
-    DisposableEffect(Unit) {
-        onDispose { onPeekingChanged(false) }
-    }
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .semantics {
-                contentDescription = description
-                onClick {
-                    onPeekingChanged(!peeking)
-                    true
-                }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        onPeekingChanged(true)
-                        try {
-                            tryAwaitRelease()
-                        } finally {
-                            onPeekingChanged(false)
-                        }
-                    },
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painterResource(
-                if (peeking) R.drawable.ic_visibility_off
-                else R.drawable.ic_visibility,
-            ),
-            contentDescription = null,
-        )
-    }
+private fun RuntimeInputDialogTitle(title: String) {
+    Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
 }
 
 @Composable
@@ -2576,8 +2113,8 @@ private fun RuntimeChoiceMenu(
         OutlinedButton(
             onClick = { expanded = true },
             enabled = enabled,
-            modifier = Modifier.fillMaxWidth().height(RuntimeInputControlHeight),
-            shape = MaterialTheme.shapes.extraLarge,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            shape = MaterialTheme.shapes.medium,
             border = BorderStroke(1.dp, accent.copy(alpha = 0.28f)),
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor = containerColor,
@@ -2587,80 +2124,39 @@ private fun RuntimeChoiceMenu(
             ),
             contentPadding = PaddingValues(horizontal = 16.dp),
         ) {
-            if (centerContent && showTrailingIcon) {
-                Box(Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.align(Alignment.Center),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        leadingIcon?.let { icon ->
-                            Icon(
-                                painter = painterResource(icon),
-                                contentDescription = null,
-                                tint = accent,
-                                modifier = Modifier.size(24.dp),
-                            )
-                            Spacer(Modifier.width(10.dp))
-                        }
-                        Text(
-                            label(value),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = runtimeMemoryControlTextStyle(),
-                        )
-                    }
-                    Icon(
-                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.CenterEnd).size(24.dp),
-                    )
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = if (centerContent) {
-                        Arrangement.Center
-                    } else Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    leadingIcon?.let { icon ->
-                        Icon(
-                            painter = painterResource(icon),
-                            contentDescription = null,
-                            tint = accent,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(Modifier.width(10.dp))
-                    }
-                    Text(
-                        label(value),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = runtimeMemoryControlTextStyle(),
-                    )
-                    if (showTrailingIcon) {
-                        Spacer(Modifier.weight(1f))
-                        Icon(
-                            painter = painterResource(R.drawable.ic_keyboard_arrow_down),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                }
+            leadingIcon?.let { icon ->
+                Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(
+                label(value),
+                modifier = Modifier.weight(1f),
+                style = runtimeMemoryControlTextStyle(),
+                textAlign = if (centerContent) TextAlign.Center else TextAlign.Start,
+            )
+            if (showTrailingIcon) {
+                Spacer(Modifier.width(4.dp))
+                Icon(painterResource(R.drawable.ic_keyboard_arrow_down), contentDescription = null)
             }
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            values.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(label(item), style = runtimeMemoryControlTextStyle()) },
-                    onClick = {
-                        expanded = false
-                        onChange(item)
-                    },
-                )
-            }
+        if (expanded) {
+            AlertDialog(
+                onDismissRequest = { expanded = false },
+                maxDialogWidth = 400.dp,
+                text = {
+                    Column {
+                        values.forEach { item ->
+                            DropdownMenuItem(
+                                text = { Text(label(item), style = runtimeMemoryControlTextStyle()) },
+                                leadingIcon = {
+                                    RadioButton(selected = item == value, onClick = null)
+                                },
+                                onClick = { expanded = false; onChange(item) },
+                            )
+                        }
+                    }
+                },
+            )
         }
     }
 }
@@ -2690,8 +2186,10 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
     if (state.resultCount <= MemoryEditorComposeController.PAGE_SIZE) return
     val previousPageDescription = stringResource(R.string.memory_editor_previous_results_page_action)
     val nextPageDescription = stringResource(R.string.memory_editor_next_results_page_action)
+    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.ROOT
+    val numberFormat = remember(locale) { NumberFormat.getIntegerInstance(locale) }
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -2705,7 +2203,9 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
             Text("‹", modifier = Modifier.clearAndSetSemantics {})
         }
         Text(
-            "${state.pageOffset + 1}–${minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount)}",
+            "${numberFormat.format(state.pageOffset + 1)}–" +
+                "${numberFormat.format(minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount))}" +
+                " / ${numberFormat.format(state.resultCount)}",
             style = runtimeMemoryMetaTextStyle(),
         )
         TextButton(
@@ -2727,9 +2227,30 @@ private fun RuntimeActionIcon(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick, enabled = enabled) {
-        Icon(painterResource(icon), contentDescription = stringResource(description))
+    val label = stringResource(description)
+    RuntimeIconTooltip(label) {
+        IconButton(onClick = onClick, enabled = enabled) {
+            Icon(painterResource(icon), contentDescription = label)
+        }
     }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun RuntimeIconTooltip(label: String, content: @Composable () -> Unit) {
+    val state = rememberTooltipState()
+    val peeking = LocalMemoryEditorOverlay.current?.peeking == true
+    LaunchedEffect(peeking) { if (peeking) state.dismiss() }
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            androidx.compose.material3.TooltipAnchorPosition.Above,
+        ),
+        tooltip = { PlainTooltip { Text(label) } },
+        state = state,
+        focusable = false,
+        enableUserInput = !peeking,
+        content = content,
+    )
 }
 
 @Composable
@@ -2838,10 +2359,4 @@ private fun runtimeCandidateState(state: Int, relocations: Int): String? = when 
     MemoryEngineContract.CANDIDATE_RELOCATING -> stringResource(R.string.memory_editor_candidate_relocating)
     MemoryEngineContract.CANDIDATE_AMBIGUOUS -> stringResource(R.string.memory_editor_candidate_ambiguous)
     else -> stringResource(R.string.memory_editor_candidate_lost)
-}
-
-private fun compactCount(value: Long): String = when {
-    value >= 1_000_000L -> String.format(Locale.US, "%.1fM", value / 1_000_000.0)
-    value >= 1_000L -> String.format(Locale.US, "%.1fK", value / 1_000.0)
-    else -> value.toString()
 }

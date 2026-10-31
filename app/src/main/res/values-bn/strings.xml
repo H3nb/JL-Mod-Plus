@@ -1147,4 +1147,6 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="memory_editor_panel_opacity">প্যানেলের অস্বচ্ছতা</string>
+    <string name="memory_editor_panel_opacity_help">লেখা বা আইকন ফিকে না করে প্যানেলের পটভূমি সামঞ্জস্য করে।</string>
 </resources>

@@ -1114,4 +1114,6 @@
     <string name="layout_editor_guide_tools">편집 도구</string>
     <string name="layout_editor_guide_done">완료를 탭하여 저장하거나 취소하거나 편집을 계속합니다.</string>
     <string name="layout_editor_guide_start">편집 시작</string>
+    <string name="memory_editor_panel_opacity">패널 불투명도</string>
+    <string name="memory_editor_panel_opacity_help">텍스트와 아이콘을 흐리게 하지 않고 패널 배경을 조절합니다.</string>
 </resources>

@@ -1147,4 +1147,6 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="memory_editor_panel_opacity">पैनल की अपारदर्शिता</string>
+    <string name="memory_editor_panel_opacity_help">टेक्स्ट या आइकन को फीका किए बिना पैनल की पृष्ठभूमि बदलता है।</string>
 </resources>

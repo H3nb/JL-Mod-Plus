@@ -1180,4 +1180,6 @@
     <string name="layout_editor_guide_tools">Outils d’édition</string>
     <string name="layout_editor_guide_done">Touchez Terminé pour enregistrer, annuler ou poursuivre la modification.</string>
     <string name="layout_editor_guide_start">Commencer</string>
+    <string name="memory_editor_panel_opacity">Opacité du panneau</string>
+    <string name="memory_editor_panel_opacity_help">Règle le fond du panneau sans estomper le texte ni les icônes.</string>
 </resources>

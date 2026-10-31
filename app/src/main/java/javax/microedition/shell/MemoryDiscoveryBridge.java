@@ -36,6 +36,7 @@ public final class MemoryDiscoveryBridge {
 	private static WeakReference<Object> currentDisplayableRoot;
 	private static int tailCount;
 	private static boolean available;
+	private static boolean incompatibleTransform;
 	private static String failure;
 
 	private MemoryDiscoveryBridge() {
@@ -51,6 +52,25 @@ public final class MemoryDiscoveryBridge {
 			activeToken = token;
 			activeLoader = loader;
 			available = true;
+		}
+	}
+
+	/** Records a legacy payload without presenting it as a usable managed runtime. */
+	public static void noteIncompatibleTransform(long token) {
+		if (token == 0L) return;
+		synchronized (LOCK) {
+			if (activeToken != 0L && activeToken != token) return;
+			clearLocked();
+			activeToken = token;
+			incompatibleTransform = true;
+			failure = "MIDlet was not converted with the required transform";
+		}
+	}
+
+	/** Current runtime's known transform incompatibility, not a generic discovery failure. */
+	public static boolean requiresReconversion(long token) {
+		synchronized (LOCK) {
+			return token != 0L && activeToken == token && incompatibleTransform;
 		}
 	}
 
@@ -183,6 +203,7 @@ public final class MemoryDiscoveryBridge {
 		midletRoot = null;
 		currentDisplayableRoot = null;
 		available = false;
+		incompatibleTransform = false;
 		failure = null;
 	}
 
