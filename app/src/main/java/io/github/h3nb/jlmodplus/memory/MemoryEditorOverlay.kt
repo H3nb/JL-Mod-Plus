@@ -154,74 +154,75 @@ internal fun MemoryEditorPeekDock(
     leadingContent: (@Composable () -> Unit)? = null,
     centerContent: (@Composable () -> Unit)? = null,
 ) {
-    // The content is drawn over a live game, so an opaque theme surface must own
-    // the dock's foreground colors independently of the adjustable panel opacity.
+    // Workspace controls need their own theme surface over the live game.
+    // Dialogs keep the footer transparent so Peek does not introduce a second panel.
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = if (overlay.peeking) Color.Transparent else MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = if (overlay.peeking || centerContent == null) Color.Transparent
+            else MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (centerContent != null) {
-            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            if (centerContent != null) {
+                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    if (leadingContent != null && !overlay.peeking) {
+                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                            leadingContent()
+                        }
+                    }
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    if (!overlay.peeking) centerContent()
+                }
+            } else {
                 if (leadingContent != null && !overlay.peeking) {
                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
                         leadingContent()
                     }
                 }
+                Spacer(Modifier.weight(1f))
             }
-            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                if (!overlay.peeking) centerContent()
-            }
-        } else {
-            if (leadingContent != null && !overlay.peeking) {
-                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                    leadingContent()
-                }
-            }
-            Spacer(Modifier.weight(1f))
-        }
-        val description = stringResource(
-            if (overlay.peeking) R.string.memory_editor_peek_underlay_active
-            else R.string.memory_editor_peek_underlay,
-        )
-        Box(
-            modifier = Modifier.size(48.dp)
-                .testTag("memory-editor-peek")
-                .semantics {
-                    contentDescription = description
-                    role = Role.Button
-                    onClick {
-                        overlay.peeking = !overlay.peeking
-                        true
-                    }
-                }
-                .pointerInput(overlay) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                        down.consume()
-                        overlay.peeking = true
-                        try {
-                            // Keep the hold while the finger drifts instead of flashing the panels back.
-                            do {
-                                val pointer = awaitPointerEvent(PointerEventPass.Initial)
-                                    .changes.firstOrNull { it.id == down.id }
-                                pointer?.consume()
-                            } while (pointer?.pressed == true)
-                        } finally {
-                            overlay.peeking = false
+            val description = stringResource(
+                if (overlay.peeking) R.string.memory_editor_peek_underlay_active
+                else R.string.memory_editor_peek_underlay,
+            )
+            Box(
+                modifier = Modifier.size(48.dp)
+                    .testTag("memory-editor-peek")
+                    .semantics {
+                        contentDescription = description
+                        role = Role.Button
+                        onClick {
+                            overlay.peeking = !overlay.peeking
+                            true
                         }
                     }
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painterResource(if (overlay.peeking) R.drawable.ic_visibility_off else R.drawable.ic_visibility),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(24.dp),
-            )
-        }
+                    .pointerInput(overlay) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                            down.consume()
+                            overlay.peeking = true
+                            try {
+                                // Keep the hold while the finger drifts instead of flashing the panels back.
+                                do {
+                                    val pointer = awaitPointerEvent(PointerEventPass.Initial)
+                                        .changes.firstOrNull { it.id == down.id }
+                                    pointer?.consume()
+                                } while (pointer?.pressed == true)
+                            } finally {
+                                overlay.peeking = false
+                            }
+                        }
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painterResource(if (overlay.peeking) R.drawable.ic_visibility_off else R.drawable.ic_visibility),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
         }
     }
 }
@@ -270,26 +271,26 @@ internal fun MemoryEditorDialog(
                         val formMaxHeight = (maxHeight - 96.dp).coerceAtLeast(0.dp)
                         val layout = adaptiveDialogLayout(maxWidth, formMaxHeight, maxDialogWidth = maxDialogWidth)
                             .copy(maxHeight = formMaxHeight)
-                            Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
-                                detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
-                            })
-                            Surface(
-                                modifier = layout.modifier.then(modifier)
-                                    .alpha(if (overlay.peeking) 0f else 1f)
-                                    .testTag("adaptive-dialog-surface")
-                                    .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
-                                    .pointerInput(Unit) { detectTapGestures {} },
-                                shape = MaterialTheme.shapes.large,
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                            ) {
-                                AdaptiveDialogContent(
-                                    compact = layout.maxHeight < 320.dp,
-                                    title = title, text = text, textScrollable = textScrollable,
-                                    confirmButton = confirmButton, dismissButton = dismissButton,
-                                    dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
-                                )
-                            }
+                        Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
+                            detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
+                        })
+                        Surface(
+                            modifier = layout.modifier.then(modifier)
+                                .alpha(if (overlay.peeking) 0f else 1f)
+                                .testTag("adaptive-dialog-surface")
+                                .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
+                                .pointerInput(Unit) { detectTapGestures {} },
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ) {
+                            AdaptiveDialogContent(
+                                compact = layout.maxHeight < 320.dp,
+                                title = title, text = text, textScrollable = textScrollable,
+                                confirmButton = confirmButton, dismissButton = dismissButton,
+                                dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
+                            )
+                        }
                     }
                     MemoryEditorPeekShield(overlay)
                     if (overlay.layers.lastOrNull() == layer) {

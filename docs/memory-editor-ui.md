@@ -83,7 +83,7 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
-The footer uses a solid Material surface with matching foreground colors to keep pagination and controls readable over changing game pixels, including when the workspace opacity is reduced. The dock backdrop becomes transparent during Peek so it does not cover the game.
+The workspace footer uses a solid Material surface with matching foreground colors to keep pagination and controls readable over changing game pixels, including at reduced panel opacity. Dialog footer space remains transparent; the workspace dock backdrop also becomes transparent during Peek.
 
 Panel opacity affects the workspace background only. The default is 97%, adjustable
 from 0% to 100% in its footer setting. The memory-engine process owns the small
