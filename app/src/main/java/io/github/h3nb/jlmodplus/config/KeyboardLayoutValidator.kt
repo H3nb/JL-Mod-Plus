@@ -16,7 +16,7 @@ import javax.microedition.lcdui.keyboard.VirtualKeyboard
 /** Validates the on-disk keyboard artifact using the format consumed by VirtualKeyboard. */
 internal object KeyboardLayoutValidator {
     private const val SIGNATURE = 0x564B4C00
-    private const val CURRENT_VERSION = 4
+    private const val CURRENT_VERSION = 5
     private const val EOF = -1
     private const val KEYS = 0
     private const val SCALES = 1
@@ -34,8 +34,11 @@ internal object KeyboardLayoutValidator {
     private const val MAX_LEGACY_SCALE_GROUPS = 6
     private const val MAX_BLOCKS = 1024
     private const val V4_SCALE_COUNT = 12
+    private const val V5_SCALE_COUNT = MAX_KEYS * 2
     private const val V4_SNAPSHOT_LENGTH =
         4 + MAX_KEYS * KEY_RECORD_SIZE_V2 + 4 + V4_SCALE_COUNT * 4 + 2 + 6 * 4
+    private const val V5_SNAPSHOT_LENGTH =
+        4 + MAX_KEYS * KEY_RECORD_SIZE_V2 + 4 + V5_SCALE_COUNT * 4 + 2 + 6 * 4
 
     /** Returns null for a layout accepted by the runtime, or a short diagnostic otherwise. */
     @JvmStatic
@@ -71,7 +74,8 @@ internal object KeyboardLayoutValidator {
         if (version < 1 || version > CURRENT_VERSION) {
             return "layout version is unsupported"
         }
-        return if (version == 4) validateV4(input) else validateLegacy(input, version)
+        return if (version >= 4) validateOrientationLayout(input, version)
+        else validateLegacy(input, version)
     }
 
     private fun validateLegacy(input: DataInputStream, version: Int): String? {
@@ -139,7 +143,7 @@ internal object KeyboardLayoutValidator {
         return "layout contains too many blocks"
     }
 
-    private fun validateV4(input: DataInputStream): String? {
+    private fun validateOrientationLayout(input: DataInputStream, version: Int): String? {
         var type: Int? = null
         var baseVariant: Int? = null
         var legacyShared = false
@@ -191,17 +195,17 @@ internal object KeyboardLayoutValidator {
                 }
                 LEGACY_SHARED -> {
                     if (legacyShared) return "layout legacy fallback is duplicated"
-                    validateV4Snapshot(input, length)?.let { return it }
+                    validateOrientationSnapshot(input, length, version)?.let { return it }
                     legacyShared = true
                 }
                 PORTRAIT_OVERRIDE -> {
                     if (portraitOverride) return "layout portrait override is duplicated"
-                    validateV4Snapshot(input, length)?.let { return it }
+                    validateOrientationSnapshot(input, length, version)?.let { return it }
                     portraitOverride = true
                 }
                 LANDSCAPE_OVERRIDE -> {
                     if (landscapeOverride) return "layout landscape override is duplicated"
-                    validateV4Snapshot(input, length)?.let { return it }
+                    validateOrientationSnapshot(input, length, version)?.let { return it }
                     landscapeOverride = true
                 }
                 KEYS, SCALES -> return "legacy layout blocks are invalid in v4"
@@ -211,8 +215,10 @@ internal object KeyboardLayoutValidator {
         return "layout contains too many blocks"
     }
 
-    private fun validateV4Snapshot(input: DataInputStream, length: Int): String? {
-        if (length != V4_SNAPSHOT_LENGTH) return "layout orientation payload length is invalid"
+    private fun validateOrientationSnapshot(input: DataInputStream, length: Int, version: Int): String? {
+        val expectedLength = if (version == 4) V4_SNAPSHOT_LENGTH else V5_SNAPSHOT_LENGTH
+        val expectedScales = if (version == 4) V4_SCALE_COUNT else V5_SCALE_COUNT
+        if (length != expectedLength) return "layout orientation payload length is invalid"
         val keyCount = input.readInt()
         if (keyCount != MAX_KEYS) return "layout orientation key count is invalid"
 
@@ -249,7 +255,7 @@ internal object KeyboardLayoutValidator {
         }
 
         val scaleCount = input.readInt()
-        if (scaleCount != V4_SCALE_COUNT) return "layout orientation scale count is invalid"
+        if (scaleCount != expectedScales) return "layout orientation scale count is invalid"
         repeat(scaleCount) {
             val scale = input.readFloat()
             if (!scale.isFinite() || scale <= 0.0f) {
