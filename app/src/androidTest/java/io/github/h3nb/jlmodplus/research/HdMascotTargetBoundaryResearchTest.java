@@ -70,7 +70,7 @@ public final class HdMascotTargetBoundaryResearchTest {
             Graphics baseGraphics = normal.getGraphics();
             render.bind(baseGraphics);
             float normalTx;
-            try {
+            {
                 Object env = field(render, "env");
                 assertEquals(16, integer(env, "width"));
                 assertEquals(12, integer(env, "height"));
@@ -87,7 +87,7 @@ public final class HdMascotTargetBoundaryResearchTest {
             assertEquals(32, doubled.getBitmap().getWidth());
 
             render.bind(hdGraphics);
-            try {
+            {
                 Object env = field(render, "env");
                 assertEquals("Actual Mascot pbuffer derives from physical Android Canvas",
                         32, integer(env, "width"));
