@@ -6,7 +6,11 @@ on:
     branches: [alpha]
     paths:
       - 'research/memory-saved-locators/**'
-      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/memory/SavedVariableLocatorResearchAndroidTest.java'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/memory/**'
+      - 'app/src/debug/java/jlmod/platformfixture/PlatformCompatMidlet.java'
+      - 'app/src/main/aidl/io/github/h3nb/jlmodplus/memory/IMemoryTargetBridge.aidl'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/memory/MemoryTargetBridgeService.java'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/memory/ManagedJavaMemoryEngine.java'
       - '.github/workflows/memory-locator-rnd.yml'
 
 permissions:
@@ -62,7 +66,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: ART instrumentation experiment (not production E2E)
+      - name: ART instrumentation and real target-process restart experiment
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api }}
@@ -71,4 +75,4 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             chmod +x ./gradlew
-            ./gradlew --no-daemon -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.memory.SavedVariableLocatorResearchAndroidTest :app:connectedEmulatorDebugAndroidTest --stacktrace
+            ./gradlew --no-daemon -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.memory.SavedVariableLocatorResearchAndroidTest,io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#researchDescriptorSurvivesProcessRestartAndBindsWatchWithoutNewSearch :app:connectedEmulatorDebugAndroidTest --stacktrace
