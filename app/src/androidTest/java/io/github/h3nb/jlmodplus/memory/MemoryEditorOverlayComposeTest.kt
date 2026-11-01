@@ -84,19 +84,19 @@ class MemoryEditorOverlayComposeTest {
             CompositionLocalProvider(LocalMemoryEditorSystemBars provides MemoryEditorSystemBars(false, false)) {
                 JLModPlusTheme {
                     MemoryEditorOverlayScope(overlay) {
-                    Box(Modifier.fillMaxSize().background(Color.Magenta))
-                    MemoryEditorDialog(onDismissRequest = {}, text = {
-                        val view = LocalView.current
-                        SideEffect { windows["form"] = (view.parent as DialogWindowProvider).window }
-                        TextButton(onClick = { nested.value = true }) { Text("Choices") }
-                        if (nested.value) {
-                            MemoryEditorDialog(onDismissRequest = { nested.value = false }, text = {
-                                val menuView = LocalView.current
-                                SideEffect { windows["menu"] = (menuView.parent as DialogWindowProvider).window }
-                                Text("Nested choice")
-                            })
-                        }
-                    })
+                        Box(Modifier.fillMaxSize().background(Color.Magenta))
+                        MemoryEditorDialog(onDismissRequest = {}, text = {
+                            val view = LocalView.current
+                            SideEffect { windows["form"] = (view.parent as DialogWindowProvider).window }
+                            TextButton(onClick = { nested.value = true }) { Text("Choices") }
+                            if (nested.value) {
+                                MemoryEditorDialog(onDismissRequest = { nested.value = false }, text = {
+                                    val menuView = LocalView.current
+                                    SideEffect { windows["menu"] = (menuView.parent as DialogWindowProvider).window }
+                                    Text("Nested choice")
+                                })
+                            }
+                        })
                     }
                 }
             }
