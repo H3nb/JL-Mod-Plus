@@ -8,7 +8,11 @@ import static org.junit.Assert.*;
 public class SavedLocatorEngineResearchTest {
     private static final long FIRST = 1000021L, NEXT = 1000022L;
     static final class GuestRoot { GuestPlayer player = new GuestPlayer(); }
-    static final class GuestPlayer { int coins = 585858; static int shared = 9001; }
+    static final class GuestPlayer { int coins = 585858; int flag = 272727; static int shared = 9001; }
+    static final class AliasRoot {
+        GuestPlayer pathOne = new GuestPlayer();
+        GuestPlayer pathTwo = pathOne;
+    }
 
     @Test public void rebindsDetachedFieldDescriptorIntoExistingWatchWithoutSearching() {
         ClassLoader loader = getClass().getClassLoader();
@@ -112,6 +116,48 @@ public class SavedLocatorEngineResearchTest {
                     MemoryEngineContract.TYPE_INT, "676767", true, 0L).code);
             assertEquals(676767, original.coins);
             assertEquals(585858, root.player.coins);
+        } finally {
+            engine.runtimeClosed(NEXT);
+            MemoryDiscoveryBridge.close(NEXT);
+        }
+    }
+
+    @Test public void anExistingAliasedOwnerCannotAuthorizeAnotherSavedReferenceRoute() {
+        AliasRoot root = new AliasRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(NEXT, getClass().getClassLoader());
+        MemoryDiscoveryBridge.tailSeen(AliasRoot.class);
+        MemoryDiscoveryBridge.setMidletRoot(NEXT, root);
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult found = engine.startExact(
+                NEXT, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+                272727L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, found.code);
+            assertEquals(1L, found.resultCount);
+            long candidate = engine.resultPage(NEXT, found.revision, 0, 20).ids[0];
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.addWatch(NEXT, found.revision, new long[]{candidate}, 0L).code);
+            ManagedJavaMemoryEngine.ManagedInspection inspected =
+                engine.inspect(NEXT, found.revision, candidate, 1, true);
+            assertEquals(MemoryEngineContract.PATH_VERIFIED, inspected.path.status);
+            String original = inspected.path.path;
+            assertTrue("Owner must have been discovered through one alias",
+                original.contains("pathOne") || original.contains("pathTwo"));
+            String other = original.contains("pathOne") ? "pathTwo" : "pathOne";
+            ManagedJavaMemoryEngine.ResearchFieldLocator locator =
+                new ManagedJavaMemoryEngine.ResearchFieldLocator(
+                    ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_MIDLET,
+                    AliasRoot.class.getName(), new ManagedJavaMemoryEngine.ResearchField[]{
+                        new ManagedJavaMemoryEngine.ResearchField(
+                            AliasRoot.class.getName(), other, GuestPlayer.class.getName()),
+                        new ManagedJavaMemoryEngine.ResearchField(
+                            GuestPlayer.class.getName(), "coins", "int")
+                    });
+            assertEquals("A same-valued owner is not proof of the requested path",
+                MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                engine.researchBindFieldLocator(NEXT, locator, "Wrong alias", 0L).code);
+            assertEquals("Existing ordinary Watch row must survive rejected import",
+                1, engine.watchPage(NEXT).ids.length);
         } finally {
             engine.runtimeClosed(NEXT);
             MemoryDiscoveryBridge.close(NEXT);
