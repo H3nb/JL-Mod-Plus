@@ -107,8 +107,9 @@ public final class GuestGraphicsDualPlaneResearchTest {
             recording.drawBitmap(source.getBitmap(), 3, 2, null);
             delayed.endRecording();
             // Guest mutation after recording, before playback.
-            source.getGraphics().setColor(0x00FF00);
-            source.getGraphics().fillRect(0, 0, 4, 4);
+            Graphics writer = source.getGraphics();
+            writer.setColor(0x00FF00);
+            writer.fillRect(0, 0, 4, 4);
             assertEquals(Color.GREEN, source.getBitmap().getPixel(1, 1));
             delayed.draw(new Canvas(deferred));
             int difference = 0;
@@ -126,9 +127,8 @@ public final class GuestGraphicsDualPlaneResearchTest {
                             snapshotted.getPixel(x, y));
             Log.i(TAG, "Mutable guest Image changed after Picture record: deferred mismatch="
                     + difference + " pixels; frozen source parity=true");
-            // The driver may choose to snapshot Picture bitmap data on
-            // record. Log the result instead of hard-coding this as a failure.
-            assertTrue("Picture either retains or snapshots the source", difference >= 0);
+            // The driver may snapshot Picture bitmap data at record time.
+            // Record the outcome; this observation is not a failure on its own.
         } finally {
             if (savedSource != null) savedSource.recycle();
             source.getBitmap().recycle(); immediate.getBitmap().recycle();
