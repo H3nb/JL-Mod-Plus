@@ -1,0 +1,68 @@
+# Temporary R&D-only CI, remove before production integration.
+name: Saved Locator R&D
+on:
+  push:
+    branches: [research/memory-saved-locators]
+    paths:
+      - 'research/memory-saved-locators/**'
+      - 'app/src/test/java/io/github/h3nb/jlmodplus/memory/SavedLocatorEngineResearchTest.java'
+      - '.github/workflows/research-saved-locators.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-experiments:
+    name: Host JVM - ${{ matrix.probe }}
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        probe: [direct-locator, alias-graph]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Direct locator across independent class loaders
+        if: matrix.probe == 'direct-locator'
+        run: bash research/memory-saved-locators/run.sh
+      - name: Aliased candidate paths and resource bound
+        if: matrix.probe == 'alias-graph'
+        run: |
+          set -euo pipefail
+          cd research/memory-saved-locators
+          mkdir -p out/alias/classes out/alias/probe
+          javac --release 8 -d out/alias/classes fixture/AliasGame.java
+          jar cf out/alias/game.jar -C out/alias/classes .
+          javac --release 8 -d out/alias/probe probe/AliasProbe.java
+          java -cp out/alias/probe AliasProbe out/alias/game.jar
+
+  existing-engine:
+    name: Actual managed engine - focused JVM test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+      - name: Run research binding test against real engine
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace -PjlmodNativeBuild=false \
+            :app:testEmulatorDebugUnitTest \
+            --tests io.github.h3nb.jlmodplus.memory.SavedLocatorEngineResearchTest
