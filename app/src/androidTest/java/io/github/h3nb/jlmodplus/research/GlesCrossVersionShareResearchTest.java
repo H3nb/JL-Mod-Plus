@@ -7,6 +7,7 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES10;
+import android.opengl.GLES11;
 import android.opengl.GLES20;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -87,7 +88,7 @@ public final class GlesCrossVersionShareResearchTest {
                 assertTrue(EGL14.eglMakeCurrent(d, s, s, es1Shared));
                 // Query BEFORE binding: BindTexture would create an unrelated
                 // object with the same integer name in an unshared context.
-                visible = GLES10.glIsTexture(texture);
+                visible = GLES11.glIsTexture(texture);
                 GLES10.glFlush();
             }
             Log.i(TAG, "ES2=" + es2Version + " ES1=" + es1Version
