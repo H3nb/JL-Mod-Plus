@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/graphics-rd-fast.yml'
       - 'scripts/graphics-rd-fast.sh'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/research/LibretroTwoPassResearchPipeline.java'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/research/GlslpPresetResearch.java'
+      - 'app/src/main/java/javax/microedition/lcdui/Canvas.java'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/experiments/**'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/research/**'
 
