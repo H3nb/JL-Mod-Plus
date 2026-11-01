@@ -54,13 +54,14 @@ final class MidletDexInspection {
 			int index = 0;
 			for (int i = 0; i < staticCount; i++) {
 				int delta = section.readUleb128();
-				int flags = section.readUleb128();
+				section.readUleb128(); // access flags; final references also need a class tail
 				if (delta < 0 || index > Integer.MAX_VALUE - delta) return false;
 				index += delta;
 				if (index >= fields.size()) return false;
 				String type = types.get(fields.get(index).getTypeIndex());
-				// Constant String fields are encoded as static-final and need no class tail.
-				if ((flags & 0x10) == 0 && (type.startsWith("L") || type.startsWith("["))) return false;
+				// The converter instruments every static reference field, even when final.
+				// A missing tail therefore contradicts the claimed transform version.
+				if (type.startsWith("L") || type.startsWith("[")) return false;
 			}
 		}
 		// No contradiction is not proof of a matching converter. Preserve legacy behavior.
