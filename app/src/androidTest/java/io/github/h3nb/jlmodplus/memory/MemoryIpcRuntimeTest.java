@@ -268,7 +268,7 @@ public final class MemoryIpcRuntimeTest {
 				try {
 					output.write(record.toString().getBytes(StandardCharsets.UTF_8));
 					file.finishWrite(output);
-				} catch (Throwable failure) {
+				} catch (Exception | Error failure) {
 					file.failWrite(output);
 					throw failure;
 				}
@@ -405,7 +405,7 @@ public final class MemoryIpcRuntimeTest {
 				assertNotNull(binder.get());
 				return new ResearchTargetConnection(context, connection,
 						IMemoryTargetBridge.Stub.asInterface(binder.get()));
-			} catch (Throwable failure) {
+			} catch (Exception | Error failure) {
 				context.unbindService(connection);
 				throw failure;
 			}
