@@ -23,7 +23,9 @@ published presentation uses the physical high-resolution target. It
 preserves the 1x raster for reproducible reads while still improving
 subpixel rasterization. Framebuffer-dependent commands require *immediate*
 materialization of earlier commands; recording one uninterrupted frame is
-not sound. `android.graphics.Picture` works on API 23 and is available
+not sound. Captured mutable source Bitmaps must also be frozen or
+materialized before the guest mutates them, because Android Picture
+replay-time source ownership differs across Android API levels. `android.graphics.Picture` works on API 23 and is available
 since much earlier releases; Android `RenderNode` cannot be the Android 6
 base because its public API requires Android 10.
 
@@ -139,6 +141,88 @@ controls against accidental test-source interference. It does **not**
 integrate Picture or GPU-owned staging into `Canvas.GLRenderer` and
 does not measure throughput or validate any physical ARM64 GPU.
 
+### Real Java ME guest Graphics and mutable-image lifetime
+
+[Six-job API23/API35 CI 41283761287](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41283761287)
+passed all alternatives: **guest 2/2, replay 2/2, GPU 1/1 per API**.
+This added two methods using the *real*
+`javax.microedition.lcdui.Graphics`, `Image` and
+`Graphics.drawRGB/drawImage` public entry points. The fixture
+manipulates one test Image's bounds to simulate logical WxH / physical
+2Wx2H, so **this is not a new production Image target implementation**.
+
+[Dedicated evidence run 41284394009](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41284394009)
+re-executed **guest 2/2 on API23** and **guest 2/2 on API35**
+to retain the new `GraphicsRD_GuestDual` logcat lines; the first
+architecture workflow's filtered logcat omitted this tag.
+
+- Actual `Graphics.drawImage` on 20x16 logical / 40x32 physical
+  target matched **all 320 logical sample points** after 2x
+  Android Canvas scaling on both APIs, for a 3x3 opaque green Image.
+- After switching to `Graphics.drawRGB(int[])` for that same
+  rectangle, measured logical-sample mismatches against the 1x
+  authoritative raster were **0/320 on API23** and **0/320 on API35**.
+  This is evidence that JL-Mod Plus's existing `drawRGB` transform
+  works *in this fixture*, not universal compliance for alpha,
+  scanlength, negative scanlength, fractional/rotated transforms,
+  or every Android GPU. Do not copy a workaround from another fork
+  without a reproduction: the presumed bug was **not observed** here.
+- A real Java ME mutable 4x4 `Image` was initially drawn in red
+  to a 1x target. The test also recorded a `Picture` draw of its
+  Bitmap, then changed the source to green via real `Graphics`
+  before replay. On **API23, 0 pixels differed** from the
+  immediate red draw. On **API35, 16 pixels differed** (the entire
+  4x4 source rectangle), reflecting the *mutated* live source.
+  Thus **Picture source-lifetime behavior is not portable** across
+  those tested Android versions. The difference is *not* a
+  Java ME renderer production regression: Picture capture is
+  research-only.
+- Copying source Bitmap pixels explicitly **before** guest mutation
+  restored exact output parity on *both* API levels. The snapshot
+  is a valid correctness mechanism but requires memory/lifetime
+  ownership and can be prohibitively expensive for large,
+  frequently mutated source Images.
+
+Source review strengthens the implication: `Graphics` has a
+private/final Android Canvas directly bound to its Image Bitmap;
+`GameCanvas` allocates a persistent, independently owned
+Image and `flushGraphics` can copy a partial region through a
+distinct path. `Picture` is not a drop-in substitute for that
+Canvas ownership. Recording, mutable source tracking, partial
+flush/readback, `copyArea`, `drawRGB` and native M3G
+surface operations would all need a coherent boundary. Avoid
+adding a universal draw-command graph just because the tiny
+record/replay fixture passes.
+
+**Interpretation:** dual-plane replay remains technically viable,
+but source snapshotting/copy-on-write and readback barriers add
+real costs. The minimum correct production experiment is a
+*bounded guest target*, not a new universal deferred compositor.
+Per-target supersampling with targeted logical readback may be
+the simpler production solution until actual gameplay profiling
+demonstrates a net benefit from dual-plane.
+
+**Regression control:** [CI 41283726999](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41283726999)
+passed all **9 selected shader/GLES research classes (13/13
+instrumentation tests)** with the new guest probe sources present.
+The complete 6-job architecture matrix was also green. Neither
+changes the production guest renderers or ships HD.
+
+### Alternative native fixed-function translation: gl4es
+
+`ptitSeb/gl4es` (MIT) supports a fixed-function-pipeline emulator
+on top of GLES2 for desktop OpenGL 1.x/2.x. This is a credible
+*technology reference* for native M3G fixed-function migration
+instead of assuming every GLES1 state wrapper must be developed
+from scratch. But it is **not a drop-in GLES1 JSR-184 renderer**:
+API signatures, 16.16 fixed-point calls (e.g., `glOrthox`,
+`glTexEnvx`), native context ownership, old color/depth semantics,
+texture state, and Android Bitmap memory target synchronization
+need a compatibility adapter and rigorous parity tests.
+An ES2 translation layer also does not remove the current
+`m3gBindMemoryTarget`/release readback path automatically.
+No gl4es code was added or built in this iteration.
+
 ## First-principles trade-offs
 
 - **Fidelity:** per-target HD and filtered Nx-to-1x readback can change
@@ -186,7 +270,10 @@ probe passes.** Before a production architecture pivot, prove:
 baseline *candidate* once real game integration gates pass. Picture-based
 replay and GPU-owned composition are both **feasible mechanisms**,
 not validated full emulator architectures. The potential integrated
-hybrid is promising but unproven. A native M3G GLES2 port would be a
+hybrid is promising but unproven. API35 Picture retaining live
+mutable Bitmap pixels exposes a real cross-version correctness
+hazard; do not treat deferred guest image draws as safe without
+explicit ownership or barriers. A native M3G GLES2 port would be a
 separate research program with its own compatibility baseline rather
 than a prerequisite for bounded GLSLP delivery. Keep GLSLP independent
 of any guest renderer target implementation.
