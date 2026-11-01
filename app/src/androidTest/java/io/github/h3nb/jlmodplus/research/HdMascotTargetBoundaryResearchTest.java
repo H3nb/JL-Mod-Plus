@@ -3,10 +3,15 @@ package io.github.h3nb.jlmodplus.research;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import io.github.h3nb.jlmodplus.micro3d.Render;
 import java.lang.reflect.Field;
+import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLContext;
+import javax.microedition.khronos.egl.EGLDisplay;
+import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 import org.junit.Test;
@@ -36,6 +41,25 @@ public final class HdMascotTargetBoundaryResearchTest {
         return ((float[]) field(env, "projMatrix"))[12];
     }
 
+    /**
+     * Isolated pbuffer fixture does not invoke Render.release(): the latter
+     * initializes Micro3D's JNI/readback helper, which requires a real
+     * MicroActivity. Exercise bind/projection only; independently destroy
+     * the EGL resources created by this probe.
+     */
+    private static void closeProbeEgl(Render render) throws Exception {
+        EGLDisplay display = (EGLDisplay) field(render, "eglDisplay");
+        EGLSurface surface = (EGLSurface) field(render, "eglWindowSurface");
+        EGLContext context = (EGLContext) field(render, "eglContext");
+        if (display == null) return;
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        egl.eglMakeCurrent(display, EGL10.EGL_NO_SURFACE,
+                EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+        if (surface != null) egl.eglDestroySurface(display, surface);
+        if (context != null) egl.eglDestroyContext(display, context);
+        egl.eglTerminate(display);
+    }
+
     @Test public void physicalPbufferNeedsLogicalCenterTranslation() throws Exception {
         Render render = Render.getRender();
         Image normal = Image.createImage(16, 12, Color.BLACK);
@@ -54,8 +78,6 @@ public final class HdMascotTargetBoundaryResearchTest {
                 render.setOrthographicWH(20, 12);
                 normalTx = tx(env);
                 assertEquals(-0.5f, normalTx, 0.00001f);
-            } finally {
-                render.release();
             }
 
             Graphics hdGraphics = doubled.getGraphics();
@@ -70,6 +92,12 @@ public final class HdMascotTargetBoundaryResearchTest {
                 assertEquals("Actual Mascot pbuffer derives from physical Android Canvas",
                         32, integer(env, "width"));
                 assertEquals(24, integer(env, "height"));
+                Rect clip = (Rect) field(render, "gClip");
+                assertEquals("Android Canvas clip is still logical after 2x transform",
+                        16, clip.width());
+                assertEquals(12, clip.height());
+                // Current glScissor uses this logical clip while the
+                // Pbuffer is physical: the native scissor must be adapted too.
                 render.setCenter(4, 3);
                 render.setOrthographicWH(20, 12);
                 float wrongTx = tx(env);
@@ -84,10 +112,9 @@ public final class HdMascotTargetBoundaryResearchTest {
                 Log.i(TAG, "Mascot real pbuffer 16x12->32x24; naive tx="
                         + wrongTx + ", mapped tx=" + tx(env)
                         + ", original tx=" + normalTx);
-            } finally {
-                render.release();
             }
         } finally {
+            closeProbeEgl(render);
             normal.getBitmap().recycle();
             doubled.getBitmap().recycle();
         }
