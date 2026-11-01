@@ -49,11 +49,21 @@ public class SavedLocatorEngineResearchTest {
             assertEquals(1, watch.ids.length);
             assertEquals("Saved coins", watch.labels[0]);
             assertEquals("585858", watch.values[0]);
+            assertEquals("Rebound Watch must retain Inspector's verified logical path",
+                MemoryEngineContract.PATH_VERIFIED,
+                restarted.inspect(NEXT, 0L, watch.ids[0], 1, true).path.status);
             ManagedJavaMemoryEngine.ManagedOperationResult edited = restarted.editTyped(
                 NEXT, 0L, new long[]{watch.ids[0]}, MemoryEngineContract.TYPE_INT, "424242", true, 0L);
             assertEquals(MemoryEngineContract.RESULT_OK, edited.code);
             assertEquals(424242, after.player.coins);
             assertEquals(585858, before.player.coins);
+            GuestPlayer previousOwner = after.player;
+            after.player = new GuestPlayer();
+            assertEquals("Old Watch identity must report changed ancestry, not retarget",
+                MemoryEngineContract.PATH_CHANGED,
+                restarted.inspect(NEXT, 0L, watch.ids[0], 1, true).path.status);
+            assertEquals(424242, previousOwner.coins);
+            assertEquals(585858, after.player.coins);
         } finally {
             restarted.runtimeClosed(NEXT);
             MemoryDiscoveryBridge.close(NEXT);
