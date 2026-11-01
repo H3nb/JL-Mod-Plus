@@ -837,3 +837,42 @@ physical content are explicit adapter responsibilities; shaders consume
 physical image pixels and independently calculated game viewport size.
 The detailed proposal and remaining correctness gates are in
 [HD-TARGET-BOUNDARY-EVALUATION.md](HD-TARGET-BOUNDARY-EVALUATION.md).
+
+## Alternative architecture experiments — 2026-11-01
+
+[Four-job CI 41263749052](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41263749052)
+passed on API23 and API35 emulators:
+`RecordedDualPlaneResearchTest` **2/2 per API** and
+`GpuResidentCompositionResearchTest` **1/1 per API**.
+
+- Android `Picture` replays a single Android Canvas draw stream to
+  independently rasterized 1x and 3x Bitmap targets with **exact parity**
+  against each resolution's direct rendering. Compared with nearest
+  upscaling, fresh 3x rasterization produced **360** (API23) and **364**
+  (API35) different physical pixels in the subpixel-line fixture.
+- Deferring a framebuffer source copy until before preceding commands
+  are played back caused **12 wrong logical pixels**. Splitting the
+  recorded stream at that data dependency and copying actual 1x/2x
+  source pixels restored exact parity with independent direct controls.
+- A GPU-owned RGBA8 output combined a CPU-uploaded blue background,
+  GPU scissored red geometry stand-in, and CPU-uploaded alpha HUD in
+  correct order. All **1,536/1,536 pixels** matched the CPU composite
+  oracle on each API. No intermediate GPU-to-CPU readback occurred;
+  the final read was test-only. Native M3G/Mascot interop was NOT tested.
+
+[Cross-GLES CI 41264320851](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41264320851)
+then passed **1/1 per API** with identical results on SwiftShader:
+ES2->ES2 shared texture **visible**; creating a GLES1 context with
+ES2 as share context **succeeded** (`EGL_SUCCESS`), but the GLES2
+texture was **not visible** to GLES1 before binding. This defeats
+the shortcut of treating EGL shared-context creation as proof of
+ES1/ES2 texture interoperability. It is a driver observation, not
+a universal statement about ARM64 or EGLImage extension viability.
+
+**Architecture impact:** hold both command replay and GPU-owned
+composition as tested *mechanisms*, not production-ready architectures.
+Replaying Java ME semantics requires real `Graphics` adapters and
+framebuffer barriers; GPU compositing would need a native M3G target
+and a readback/materialization contract. GLSLP remains independent
+of which guest target strategy wins. Full rationale, memory estimates,
+and forward gates: [ALTERNATIVE-RENDERING-EXPERIMENTS.md](ALTERNATIVE-RENDERING-EXPERIMENTS.md).
