@@ -54,14 +54,16 @@ final class MidletDexInspection {
 			int index = 0;
 			for (int i = 0; i < staticCount; i++) {
 				int delta = section.readUleb128();
-				section.readUleb128(); // access flags; final references also need a class tail
+				int flags = section.readUleb128(); // access flags
 				if (delta < 0 || index > Integer.MAX_VALUE - delta) return false;
 				index += delta;
 				if (index >= fields.size()) return false;
 				String type = types.get(fields.get(index).getTypeIndex());
-				// The converter instruments every static reference field, even when final.
-				// A missing tail therefore contradicts the claimed transform version.
-				if (type.startsWith("L") || type.startsWith("[")) return false;
+				// Every static reference needs a discovery tail, as does a non-final
+				// primitive (which has no compile-time ConstantValue). Final primitive
+				// constants can legitimately lack a tail; without source metadata,
+				// older final fields remain inconclusive.
+				if (type.startsWith("L") || type.startsWith("[") || (flags & 0x10) == 0) return false;
 			}
 		}
 		// No contradiction is not proof of a matching converter. Preserve legacy behavior.
