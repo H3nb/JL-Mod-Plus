@@ -732,3 +732,46 @@ APK, not vendored into the shipping application. The Android test used
 a headless research Canvas fixture and controlled pbuffer, not a real
 `MicroActivity` executing a MIDlet. There are no physical ARM64
 latency/battery measurements or J2ME HD compatibility results.
+
+## Actual GLSLP pass plan controls Canvas GPU output — 2026-11-01
+
+**[CI 41255596735](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41255596735) PASS**:
+executable SHA `348d0a5ac7b932a3c8f0bfbce4753d7c6561dbaf`.
+All **9 selected research classes / 13 executed instrumentation tests**
+passed on an Android 35 x86_64 SwiftShader emulator. Test APK assets were
+downloaded from pinned `libretro/glsl-shaders@cba01a48`; no third-party
+shader source was added to production.
+
+The real `Canvas.GLRenderer` now exercises a bounded two-pass executor
+driven by actual GLSLP descriptors rather than fixture-specific pass
+sizing. `gauss_4tap.glslp` has **two source-sized passes**; the second
+writes an RGBA8 FBO followed by pinned `stock.glsl` presentation to a
+smaller game viewport. The source-sized final-pass test confirms both
+offscreen stages execute once for each new guest frame and both cache
+their results across host-only redraw; red/blue edge blending and host
+background separation remain observable. `xbrz-crisp.glslp` has a
+source-sized analysis stage and viewport-sized final stage. The planner
+avoids the second FBO and its rendered RGB bytes equal the previously
+verified hardcoded Crisp pipeline on the same published guest frame.
+
+The **initial** [CI 41254724452](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41254724452)
+passed all three actual Canvas pbuffer tests but failed the separate
+attached-`GlesView` guest growth test: while Canvas logical geometry
+had become 40×56, the GL draw saw the previously published 32×48 bitmap
+and permanently discarded its R&D pipeline. This exposed a cross-thread
+source-snapshot race, not an unexpected Gaussian/xBRZ shader result.
+The final change takes `offscreenCopy` Bitmap **and its logical content
+extent** within the same `bufferLock`. The mounted test now accepts
+transient old-size presentations only while waiting for a genuinely
+recomputed, correctly sized shader frame; it does **not** weaken the
+requirement to retain the pipeline, keep content/pixels, resize correctly
+or survive EGL context recreation. Its previously failing scenario
+passed in the final CI run. A deliberately padded source bitmap still
+falls back to legacy as intended.
+
+**Evidence limit:** this proves the two distinct preset-stage topologies
+and an attached-view resize/context boundary on SwiftShader, not
+arbitrary GLSLP presets, GPU throughput, real MIDlet operation, power
+or true HD internal rendering. The two-pass executor still uses the
+existing research-only injection path and has no production preset
+selection/import. Default shader behavior remains unchanged.
