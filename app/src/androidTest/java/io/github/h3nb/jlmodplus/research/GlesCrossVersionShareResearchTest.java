@@ -69,8 +69,8 @@ public final class GlesCrossVersionShareResearchTest {
             es2Shared = create(d, configs[0], 2, es2);
             assertNotEquals("Same-version sharing is a positive control", EGL14.EGL_NO_CONTEXT, es2Shared);
             assertTrue(EGL14.eglMakeCurrent(d, s, s, es2Shared));
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
-            assertTrue("GLES2 context must observe GLES2 texture", GLES20.glIsTexture(texture));
+            assertTrue("GLES2 context must observe shared GLES2 texture before binding",
+                    GLES20.glIsTexture(texture));
 
             es1 = create(d, configs[0], 1, EGL14.EGL_NO_CONTEXT);
             assertNotEquals("Separate GLES1 context must exist", EGL14.EGL_NO_CONTEXT, es1);
@@ -85,7 +85,8 @@ public final class GlesCrossVersionShareResearchTest {
             boolean visible = false;
             if (created) {
                 assertTrue(EGL14.eglMakeCurrent(d, s, s, es1Shared));
-                GLES10.glBindTexture(GLES10.GL_TEXTURE_2D, texture);
+                // Query BEFORE binding: BindTexture would create an unrelated
+                // object with the same integer name in an unshared context.
                 visible = GLES10.glIsTexture(texture);
                 GLES10.glFlush();
             }
