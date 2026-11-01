@@ -334,16 +334,22 @@ public final class MemoryIpcRuntimeTest {
 	}
 
 	private static long researchAwaitToken(IMemoryTargetBridge target) throws Exception {
-		long deadline = SystemClock.uptimeMillis() + SERVICE_TIMEOUT_MILLIS;
+		long deadline = SystemClock.uptimeMillis() + 20_000L;
+		long lastToken = 0L;
+		boolean lastSupported = false;
+		String lastDiagnostic = "";
 		while (SystemClock.uptimeMillis() < deadline) {
-			long token = target.getRuntimeToken();
-			if (token != 0L && target.getManagedCapabilities(token)
-					.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED)) {
-				return token;
+			lastToken = target.getRuntimeToken();
+			if (lastToken != 0L) {
+				Bundle capabilities = target.getManagedCapabilities(lastToken);
+				lastSupported = capabilities.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED);
+				lastDiagnostic = capabilities.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "");
+				if (lastSupported) return lastToken;
 			}
 			SystemClock.sleep(100L);
 		}
-		throw new AssertionError("Managed target was not ready");
+		throw new AssertionError("Managed target not ready: token=" + lastToken
+				+ " supported=" + lastSupported + " diagnostic=" + lastDiagnostic);
 	}
 
 	private static org.json.JSONArray researchJsonArray(String[] values) {
