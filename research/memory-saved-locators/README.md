@@ -4,6 +4,43 @@ Status (2026-11-01): **CONDITIONAL GO** for a constrained persistent-variable re
 **NO-GO** for the claim that matching source JAR alone guarantees the same semantic variable.
 Base examined: `alpha` at `b51babf3ae1f903ddce64e25d9b91b128f28804b`.
 
+## Verified checkpoint: transformed-JAR restart on Android 6 and 15
+
+[Memory locator R&D run 41283720771](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41283720771)
+**passed all four jobs**: emulator API 23 and API 35 plus structural JVM tests
+on JDK 17 and JDK 21. [Android CI run 41283720802](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41283720802)
+also passed build/tests, lint and screenshot validation on the same source revision.
+
+The Android instrumented experiment:
+1. Converts the actual `Locator-Lab.jar` with AppInstaller's DX transform and
+   registers an installed Library identity.
+2. Searches the guest's `health = 89` once in the first `:midlet` process,
+   captures a typed field path via Binder and atomically saves a test-only
+   JSON record containing the source-JAR SHA-256.
+3. Terminates **only the old guest process** (not its Android task), relaunches,
+   confirms a new runtime token, and checks the persisted JAR fingerprint.
+4. Resolves the saved descriptor into one fresh Watch item **without Search**,
+   reads its value, edits it from `89` to `90` using the existing managed
+   Edit path, verifies the Watch readback, then rejects a wrong-type descriptor
+   without losing the valid Watch.
+
+Root cause of earlier intermittent `TARGET_LOST`: the test's restart helper
+called `finishAndRemoveTask()` before launching the next MIDlet. The app's
+`MidletKeepAliveService.onTaskRemoved()` intentionally invokes an asynchronous
+**user-stop/emulator-shutdown** path; this could close the newly launched runtime.
+The revised experiment separates process-death recovery from user-initiated
+task removal. This is a **test-fixture lifecycle correction**, not evidence
+that production runtime safety checks were wrong.
+
+**Scope of proof**: a small, controlled converted JAR and one field-only
+instance descriptor on two Android API levels. The prototype still lacks a
+user-facing Save/Load feature, app-owned persistence API and installed-app
+write fencing, portable import/export and real-game semantic qualification.
+The test-side fingerprint is checked before Binder binding, but the Binder
+spike is not a production trust boundary. Do not claim that matching JAR
+guarantees the same semantic game variable.
+
+
 ## Problem and evidence
 
 Current `ManagedJavaMemoryEngine` owns runtime-scoped candidate IDs; its
@@ -247,9 +284,8 @@ production code was changed as a consequence of these two manual tests.
 The converted-JAR test now exercises an authentic installation/conversion path
 and confirms that a versioned, source-JAR-fingerprinted field locator can be
 read after an actual `:midlet` process relaunch and rebound to a fresh Watch
-ID **without a second Search**. Android 15 reached the verified Watch value;
-the subsequent Write/runner-lifecycle stage remains unverified. Do not count
-a compile-only or synthetic-JVM pass as proof of the final Write.
+ID **without a second Search**. The later converted-JAR process-restart run
+on API 23/35 also verified Edit and readback; see the checkpoint above.
 
 A source inspection found a previously missing invariant: research rebinding
 inserted the owner into Watch without restoring `OwnerBucket.provenancePath`.
