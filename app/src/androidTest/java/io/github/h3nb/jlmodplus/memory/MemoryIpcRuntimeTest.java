@@ -74,6 +74,7 @@ public final class MemoryIpcRuntimeTest {
 	private String previousEmulatorDirectory;
 	private File root;
 	private File appDirectory;
+	private long fixtureAppId;
 	private ServiceConnection connection;
 	private IMemoryEngineService service;
 
@@ -93,6 +94,8 @@ public final class MemoryIpcRuntimeTest {
 		assertTrue(configDirectory.mkdirs() || configDirectory.isDirectory());
 		copyFile(new File(context.getApplicationInfo().sourceDir),
 				new File(appDirectory, "converted.zip"));
+		fixtureAppId = ResearchLibraryFixture.register(context, root);
+		assertTrue("Debug MIDlet must have an installed Library identity", fixtureAppId > 0L);
 		writeManifest(new File(appDirectory, "converted.dex.conf"));
 
 		ProfileModel profile = ProfileModel.fresh();
@@ -487,6 +490,7 @@ public final class MemoryIpcRuntimeTest {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDirectory.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, FIXTURE_NAME)
+				.putExtra(Constants.KEY_LIBRARY_APP_ID, fixtureAppId)
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
 	}
