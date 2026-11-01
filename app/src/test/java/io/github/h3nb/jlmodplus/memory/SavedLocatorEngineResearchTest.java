@@ -57,6 +57,8 @@ public class SavedLocatorEngineResearchTest {
             assertEquals(MemoryEngineContract.RESULT_OK, edited.code);
             assertEquals(424242, after.player.coins);
             assertEquals(585858, before.player.coins);
+            assertEquals(MemoryEngineContract.RESULT_OK, restarted.setFreezeLockTyped(
+                NEXT, 0L, watch.ids, "123456", true, 0L).code);
             GuestPlayer previousOwner = after.player;
             after.player = new GuestPlayer();
             assertEquals("Old Watch identity must report changed ancestry, not retarget",
@@ -64,18 +66,54 @@ public class SavedLocatorEngineResearchTest {
                 restarted.inspect(NEXT, 0L, watch.ids[0], 1, true).path.status);
             assertEquals(424242, previousOwner.coins);
             assertEquals(585858, after.player.coins);
-            // Diagnostic finding: existing Edit checks the live object identity,
-            // not its now-changed ancestry. It can still modify a detached owner.
-            // This is not a regression in ordinary Watch, but a Saved Variables
-            // policy risk: an imported target should not silently mutate stale state.
+            // Saved rows are different from normal Watch: no edits or freeze
+            // writes may target the detached old owner after ancestry changes.
             ManagedJavaMemoryEngine.ManagedOperationResult staleEdit = restarted.editTyped(
                 NEXT, 0L, new long[]{watch.ids[0]}, MemoryEngineContract.TYPE_INT,
                 "919191", true, 0L);
-            assertEquals(MemoryEngineContract.RESULT_OK, staleEdit.code);
-            assertEquals(919191, previousOwner.coins);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, staleEdit.code);
+            assertEquals(424242, previousOwner.coins);
             assertEquals(585858, after.player.coins);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                restarted.freezeTick(NEXT, 0L).code);
+            assertEquals(424242, previousOwner.coins);
+            assertEquals(585858, after.player.coins);
+            assertTrue("Saved-variable Freeze must pause after ancestry changes",
+                restarted.watchPage(NEXT).freezePaused[0]);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                restarted.setFreezeLockTyped(NEXT, 0L, watch.ids, "222222", true, 0L).code);
+            assertEquals(424242, previousOwner.coins);
         } finally {
             restarted.runtimeClosed(NEXT);
+            MemoryDiscoveryBridge.close(NEXT);
+        }
+    }
+
+    @Test public void ordinaryWatchStillEditsItsOriginalObjectAfterReferenceChange() {
+        GuestRoot root = new GuestRoot();
+        GuestPlayer original = root.player;
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(NEXT, getClass().getClassLoader());
+        MemoryDiscoveryBridge.tailSeen(GuestRoot.class);
+        MemoryDiscoveryBridge.setMidletRoot(NEXT, root);
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult found = engine.startExact(
+                NEXT, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+                585858L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, found.code);
+            long candidate = engine.resultPage(NEXT, found.revision, 0, 20).ids[0];
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.addWatch(NEXT, found.revision, new long[]{candidate}, 0L).code);
+            root.player = new GuestPlayer();
+            assertEquals(MemoryEngineContract.PATH_CHANGED,
+                engine.inspect(NEXT, found.revision, candidate, 1, true).path.status);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.editTyped(NEXT, 0L, new long[]{candidate},
+                    MemoryEngineContract.TYPE_INT, "676767", true, 0L).code);
+            assertEquals(676767, original.coins);
+            assertEquals(585858, root.player.coins);
+        } finally {
+            engine.runtimeClosed(NEXT);
             MemoryDiscoveryBridge.close(NEXT);
         }
     }
