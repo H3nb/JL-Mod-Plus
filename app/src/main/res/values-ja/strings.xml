@@ -1104,6 +1104,9 @@
     <string name="layout_editor_group_off">個別にサイズ変更</string>
     <string name="layout_editor_snap_grid">グリッドにスナップ</string>
     <string name="layout_editor_snap_controls">ボタンにスナップ</string>
+    <string name="layout_editor_snap_resize">サイズ変更中にスナップ</string>
+    <string name="layout_editor_snap_resize_on">サイズ変更の吸着：オン</string>
+    <string name="layout_editor_snap_resize_off">サイズ変更の吸着：オフ</string>
     <string name="layout_editor_snap_grid_on">グリッド吸着：オン</string>
     <string name="layout_editor_snap_grid_off">グリッド吸着：オフ</string>
     <string name="layout_editor_snap_controls_on">ボタン吸着：オン</string>

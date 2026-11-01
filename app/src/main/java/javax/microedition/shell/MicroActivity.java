@@ -1844,6 +1844,11 @@ public class MicroActivity extends AppCompatActivity {
 				.setCheckable(true).setChecked(keyboard.isEditorSnapGridEnabled());
 		menu.getMenu().add(0, 2, 1, R.string.layout_editor_snap_controls)
 				.setCheckable(true).setChecked(keyboard.isEditorSnapControlsEnabled());
+		boolean hasSnapSource = keyboard.isEditorSnapGridEnabled() ||
+				keyboard.isEditorSnapControlsEnabled();
+		menu.getMenu().add(0, 3, 2, R.string.layout_editor_snap_resize)
+				.setCheckable(true).setChecked(keyboard.isEditorSnapResizeEnabled())
+				.setEnabled(hasSnapSource);
 		menu.setOnMenuItemClickListener(item -> {
 			if (item.getItemId() == 1) {
 				boolean enabled = !keyboard.isEditorSnapGridEnabled();
@@ -1853,6 +1858,10 @@ public class MicroActivity extends AppCompatActivity {
 				boolean enabled = !keyboard.isEditorSnapControlsEnabled();
 				keyboard.setEditorSnapControlsEnabled(enabled);
 				toast(enabled ? R.string.layout_editor_snap_controls_on : R.string.layout_editor_snap_controls_off);
+			} else if (item.getItemId() == 3) {
+				boolean enabled = !keyboard.isEditorSnapResizeEnabled();
+				keyboard.setEditorSnapResizeEnabled(enabled);
+				toast(enabled ? R.string.layout_editor_snap_resize_on : R.string.layout_editor_snap_resize_off);
 			} else {
 				return false;
 			}

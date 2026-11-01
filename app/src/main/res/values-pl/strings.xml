@@ -1203,6 +1203,9 @@
     <string name="layout_editor_group_off">Resize individually</string>
     <string name="layout_editor_snap_grid">Snap to grid</string>
     <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_resize">Przyciągaj podczas zmiany rozmiaru</string>
+    <string name="layout_editor_snap_resize_on">Przyciąganie przy zmianie rozmiaru: Wł.</string>
+    <string name="layout_editor_snap_resize_off">Przyciąganie przy zmianie rozmiaru: Wył.</string>
     <string name="layout_editor_snap_grid_on">Grid snap: On</string>
     <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
     <string name="layout_editor_snap_controls_on">Button snap: On</string>

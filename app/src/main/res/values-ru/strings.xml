@@ -1203,6 +1203,9 @@
     <string name="layout_editor_group_off">Изменять размер отдельно</string>
     <string name="layout_editor_snap_grid">Привязка к сетке</string>
     <string name="layout_editor_snap_controls">Привязка к кнопкам</string>
+    <string name="layout_editor_snap_resize">Привязка при изменении размера</string>
+    <string name="layout_editor_snap_resize_on">Привязка при изменении размера: включена</string>
+    <string name="layout_editor_snap_resize_off">Привязка при изменении размера: выключена</string>
     <string name="layout_editor_snap_grid_on">Сетка: включено</string>
     <string name="layout_editor_snap_grid_off">Сетка: выключено</string>
     <string name="layout_editor_snap_controls_on">Кнопки: включено</string>

@@ -1104,6 +1104,9 @@
     <string name="layout_editor_group_off">개별 크기 변경</string>
     <string name="layout_editor_snap_grid">격자에 맞추기</string>
     <string name="layout_editor_snap_controls">버튼에 맞추기</string>
+    <string name="layout_editor_snap_resize">크기 조절 중 맞추기</string>
+    <string name="layout_editor_snap_resize_on">크기 조절 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_resize_off">크기 조절 맞춤: 꺼짐</string>
     <string name="layout_editor_snap_grid_on">격자 맞춤: 켜짐</string>
     <string name="layout_editor_snap_grid_off">격자 맞춤: 꺼짐</string>
     <string name="layout_editor_snap_controls_on">버튼 맞춤: 켜짐</string>
