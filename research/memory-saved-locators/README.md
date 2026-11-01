@@ -191,3 +191,52 @@ Next discriminating device experiments:
    and installed-JAR fingerprint gate, then relaunch without any new Search.
 
 Do not infer a general game compatibility rate from this one synthetic JAR.
+
+
+## Handset follow-up: replacement and equal-valued swap (2026-11-01)
+
+The maintainer provided seven additional Inspector/Watch screenshots from the
+actual converted `Locator-Lab.jar` running on their Android device.
+
+**Replace player**:
+- Before replacement: target #1 (`Player.coins`, `2468`) verifies the root
+  `MIDlet -> LocatorLabMIDlet.replaceable -> Player.coins`.
+- The fixture executes `replaceable = new Player(2468)`. After replacement,
+  the same target #1 still reads `2468`, but Inspector reports **reference
+  path changed since scan**; it does not claim that the new object is the
+  original candidate.
+- After leaving the app in the background and returning, the watched old
+  candidate is shown as **LOST** with a safety-pause indication. This is
+  consistent with collection of the detached weakly held owner, but no GC
+  timing or exact causal chain is established by screenshots alone.
+- Do not interpret this as proving that edit/freeze to a still-live but
+  detached owner is prevented: the current mutation gate validates the
+  selected owner identity, whereas provenance is diagnostic and separate.
+
+**Swap party**:
+- Before swap: target #3 is `party[0] -> Player.coins`, target #4 is
+  `party[1] -> Player.coins`, with `1357` for both.
+- The fixture swaps the two `Player` object references, not the coin values.
+- After swap: target numbers #3/#4 and values remain the same, but **both**
+  Inspector paths report that reference ancestry changed.
+- This is direct evidence that `Object[]` index plus an equal numeric
+  value **cannot** establish persistent semantic target identity, even when
+  the structural array path remains syntactically valid.
+
+**Architecture consequences**:
+1. Preserve runtime Watch owner identity: once bound, do not automatically
+   follow new field/array references in the same runtime. Only a deliberate
+   new-session resolve or explicit user-requested rebind may consider a
+   replacement owner.
+2. A detached object's value may remain readable until collection. Changed
+   reference ancestry and LOST are **different states**, not interchangeable.
+3. Keep automatic persistent binding for indexed `Object[]` chains disabled
+   until a semantic selector beyond position has real-game evidence. The
+   research field-only capture intentionally rejects these chains.
+4. Do not add value-based recovery heuristics or infer a compatibility rate
+   from one lab MIDlet. The next decisive proof is a real Save -> close ->
+   launch -> resolve through installed-identity/JAR fingerprint + IPC -> Watch
+   with no second Search, followed by an explicit user-controlled Edit.
+
+Screenshot contents are summarized, not checked into this repository. No
+production code was changed as a consequence of these two manual tests.
