@@ -333,9 +333,27 @@ public final class MemoryIpcRuntimeTest {
 				assertNotNull(watchIds);
 				assertEquals(1, watchIds.length);
 				assertEquals(expectedValue, watchValues[0]);
+				// Cross-process research diagnostic: keep it next to the observed boundary.
+				Bundle activeBeforeEdit = target.getManagedCapabilities(tokenSecond);
+				android.util.Log.i("SavedLocatorRND", "beforeEdit token=" + tokenSecond
+						+ " current=" + target.getRuntimeToken()
+						+ " supported=" + activeBeforeEdit.getBoolean(
+						MemoryEngineContract.KEY_MANAGED_SUPPORTED)
+						+ " watch=" + activeBeforeEdit.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT)
+						+ " epoch=" + activeBeforeEdit.getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH)
+						+ " state=" + java.util.Arrays.toString(
+						watch.getIntArray(MemoryEngineContract.KEY_WATCH_STATES)));
+				assertEquals("Runtime must not silently change after Watch binding",
+						tokenSecond, target.getRuntimeToken());
+
 
 				Bundle write = target.managedEditTyped(tokenSecond, 0L, watchIds,
 						MemoryEngineContract.TYPE_INT, "90", true, 0L);
+				android.util.Log.i("SavedLocatorRND", "afterEdit code="
+						+ write.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
+						+ " diagnostic=" + write.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+						+ " currentToken=" + target.getRuntimeToken());
+
 				assertEquals("Recovered Watch edit failed: " + write.getString(
 						MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "<no diagnostic>")
 						+ "; supported=" + target.getManagedCapabilities(tokenSecond)
