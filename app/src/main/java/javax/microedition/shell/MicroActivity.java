@@ -104,6 +104,7 @@ import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
 import io.github.h3nb.jlmodplus.input.HostCommand;
+import io.github.h3nb.jlmodplus.memory.MemoryEditorActivity;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.mmapi.camera.CameraRuntime;
 import io.github.h3nb.jlmodplus.runtime.RuntimeReplacementActivity;
@@ -720,7 +721,11 @@ public class MicroActivity extends AppCompatActivity {
 		if (memoryEditorController == null) {
 			memoryEditorController = new MemoryEditorBubbleController(
 					this, binding.memoryEditorBubble, binding.memoryEditorBubbleIcon,
-					binding.memoryEditorBubbleProgress);
+					binding.memoryEditorBubbleProgress, token -> {
+						GuestWindowPolicy.Chrome chrome = getRuntimeChrome(current);
+						return MemoryEditorActivity.createIntent(this, token,
+								chrome.statusBarVisible, chrome.navigationBarVisible);
+					});
 		}
 		return memoryEditorController;
 	}

@@ -39,6 +39,7 @@ class MemoryEditorBubbleController(
     private val bubbleView: View,
     private val iconView: View,
     private val progressView: TextView,
+    private val createEditorIntent: (Long) -> Intent,
 ) {
     private var enabled = false
     private var hostResumed = true
@@ -330,7 +331,7 @@ class MemoryEditorBubbleController(
         bubbleView.isVisible = false
         editorOnTop = true
         try {
-            activity.startActivity(MemoryEditorActivity.createIntent(activity, token))
+            activity.startActivity(createEditorIntent(token))
         } catch (_: RuntimeException) {
             editorOnTop = false
             syncVisibility()
