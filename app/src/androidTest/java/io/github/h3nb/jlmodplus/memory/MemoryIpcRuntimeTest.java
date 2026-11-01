@@ -211,6 +211,211 @@ public final class MemoryIpcRuntimeTest {
 		}
 	}
 
+	/**
+	 * R&D only. This runs the real debug guest fixture in :midlet, transports a
+	 * field descriptor over Binder, atomically saves it in the test process,
+	 * kills/relaunches the target, then binds Watch without a second Search.
+	 * The fixture archive hash is NOT yet the production original-JAR hash.
+	 */
+	@Test
+	public void researchDescriptorSurvivesProcessRestartAndBindsWatchWithoutNewSearch() throws Exception {
+		final String expectedValue = "881177";
+		android.util.AtomicFile file = new android.util.AtomicFile(
+				new File(context.getFilesDir(), "memory-rnd-field-locator.json"));
+		file.delete();
+		try {
+			launchFixture();
+			awaitProcess(FIXTURE_NAME);
+			long tokenFirst;
+			try (ResearchTargetConnection first = ResearchTargetConnection.connect(context)) {
+				IMemoryTargetBridge target = first.target;
+				tokenFirst = researchAwaitToken(target);
+				Bundle search = target.managedStartExact(tokenFirst, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, expectedValue, null, 0L);
+				assertEquals(MemoryEngineContract.RESULT_OK,
+						search.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				long revision = search.getLong(MemoryEngineContract.KEY_MANAGED_REVISION);
+				Bundle page = target.managedResultPage(tokenFirst, revision, 0, 100);
+				long[] ids = page.getLongArray(MemoryEngineContract.KEY_RESULT_IDS);
+				String[] fields = page.getStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS);
+				assertNotNull(ids);
+				assertNotNull(fields);
+				Bundle descriptor = null;
+				for (int i = 0; i < ids.length; i++) {
+					if ("savedLocatorProbe".equals(fields[i])) {
+						descriptor = target.researchCaptureFieldLocator(tokenFirst, revision, ids[i]);
+						break;
+					}
+				}
+				assertNotNull("Fixture field must have rooted, verified provenance", descriptor);
+				assertEquals(MemoryEngineContract.RESULT_OK,
+						descriptor.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals(1, descriptor.getInt("researchSchema"));
+				assertEquals(1, descriptor.getStringArray("researchNames").length);
+				assertEquals("savedLocatorProbe",
+						descriptor.getStringArray("researchNames")[0]);
+
+				org.json.JSONObject record = new org.json.JSONObject();
+				record.put("fileSchema", 1);
+				record.put("fixtureArchiveSha256",
+						researchSha256(new File(appDirectory, "converted.zip")));
+				record.put("rootKind", descriptor.getInt("researchRootKind"));
+				record.put("rootClass", descriptor.getString("researchRootClass"));
+				record.put("classes", researchJsonArray(descriptor.getStringArray("researchClasses")));
+				record.put("names", researchJsonArray(descriptor.getStringArray("researchNames")));
+				record.put("types", researchJsonArray(descriptor.getStringArray("researchTypes")));
+				java.io.FileOutputStream output = file.startWrite();
+				try {
+					output.write(record.toString().getBytes(StandardCharsets.UTF_8));
+					file.finishWrite(output);
+				} catch (Throwable failure) {
+					file.failWrite(output);
+					throw failure;
+				}
+			}
+
+			stopMidletAndTasks();
+			launchFixture();
+			awaitProcess(FIXTURE_NAME);
+			try (ResearchTargetConnection second = ResearchTargetConnection.connect(context)) {
+				IMemoryTargetBridge target = second.target;
+				long tokenSecond = researchAwaitToken(target);
+				assertTrue("Runtime generation must change across process restart",
+						tokenFirst != tokenSecond);
+				Bundle before = target.getManagedSessionInfo(tokenSecond);
+				assertEquals(0L, before.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+				assertEquals(0, before.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT));
+
+				org.json.JSONObject saved = new org.json.JSONObject(
+						new String(file.readFully(), StandardCharsets.UTF_8));
+				assertEquals(1, saved.getInt("fileSchema"));
+				assertEquals("Fixture identity must survive restart",
+						saved.getString("fixtureArchiveSha256"),
+						researchSha256(new File(appDirectory, "converted.zip")));
+				Bundle descriptor = new Bundle();
+				descriptor.putInt("researchSchema", 1);
+				descriptor.putInt("researchRootKind", saved.getInt("rootKind"));
+				descriptor.putString("researchRootClass", saved.getString("rootClass"));
+				descriptor.putStringArray("researchClasses", researchStrings(saved.getJSONArray("classes")));
+				descriptor.putStringArray("researchNames", researchStrings(saved.getJSONArray("names")));
+				descriptor.putStringArray("researchTypes", researchStrings(saved.getJSONArray("types")));
+
+				Bundle forged = new Bundle(descriptor);
+				forged.putStringArray("researchTypes", new String[]{"long"});
+				Bundle rejected = target.researchBindFieldLocator(tokenSecond, forged, "Invalid", 0L);
+				assertEquals("Changed type must fail closed, without Watch membership",
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						rejected.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals(0, target.managedWatchPage(tokenSecond)
+						.getLongArray(MemoryEngineContract.KEY_WATCH_IDS).length);
+
+				Bundle bound = target.researchBindFieldLocator(tokenSecond, descriptor,
+						"Saved probe", 0L);
+				assertEquals(MemoryEngineContract.RESULT_OK,
+						bound.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals(0L, target.getManagedSessionInfo(tokenSecond)
+						.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+				Bundle watch = target.managedWatchPage(tokenSecond);
+				long[] watchIds = watch.getLongArray(MemoryEngineContract.KEY_WATCH_IDS);
+				String[] watchValues = watch.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES);
+				assertNotNull(watchIds);
+				assertEquals(1, watchIds.length);
+				assertEquals(expectedValue, watchValues[0]);
+				Bundle write = target.managedEditTyped(tokenSecond, 0L, watchIds,
+						MemoryEngineContract.TYPE_INT, "881178", true, 0L);
+				assertEquals(MemoryEngineContract.RESULT_OK,
+						write.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals("881178", target.managedWatchPage(tokenSecond)
+						.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
+			}
+		} finally {
+			file.delete();
+		}
+	}
+
+	private static long researchAwaitToken(IMemoryTargetBridge target) throws Exception {
+		long deadline = SystemClock.uptimeMillis() + SERVICE_TIMEOUT_MILLIS;
+		while (SystemClock.uptimeMillis() < deadline) {
+			long token = target.getRuntimeToken();
+			if (token != 0L && target.getManagedCapabilities(token)
+					.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED)) {
+				return token;
+			}
+			SystemClock.sleep(100L);
+		}
+		throw new AssertionError("Managed target was not ready");
+	}
+
+	private static org.json.JSONArray researchJsonArray(String[] values) {
+		org.json.JSONArray result = new org.json.JSONArray();
+		for (String value : values) result.put(value);
+		return result;
+	}
+
+	private static String[] researchStrings(org.json.JSONArray values) throws org.json.JSONException {
+		String[] result = new String[values.length()];
+		for (int i = 0; i < result.length; i++) result[i] = values.getString(i);
+		return result;
+	}
+
+	private static String researchSha256(File file) throws Exception {
+		java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+		try (InputStream input = new FileInputStream(file)) {
+			byte[] buffer = new byte[8192];
+			for (int count; (count = input.read(buffer)) >= 0; ) {
+				if (count > 0) digest.update(buffer, 0, count);
+			}
+		}
+		StringBuilder output = new StringBuilder(64);
+		for (byte value : digest.digest()) {
+			int unsigned = value & 255;
+			output.append(Character.forDigit(unsigned >>> 4, 16));
+			output.append(Character.forDigit(unsigned & 15, 16));
+		}
+		return output.toString();
+	}
+
+	private static final class ResearchTargetConnection implements AutoCloseable {
+		final Context context;
+		final ServiceConnection connection;
+		final IMemoryTargetBridge target;
+
+		private ResearchTargetConnection(Context context, ServiceConnection connection,
+		                                IMemoryTargetBridge target) {
+			this.context = context;
+			this.connection = connection;
+			this.target = target;
+		}
+
+		static ResearchTargetConnection connect(Context context) throws Exception {
+			java.util.concurrent.atomic.AtomicReference<IBinder> binder =
+					new java.util.concurrent.atomic.AtomicReference<>();
+			CountDownLatch latch = new CountDownLatch(1);
+			ServiceConnection connection = new ServiceConnection() {
+				@Override public void onServiceConnected(ComponentName name, IBinder service) {
+					binder.set(service);
+					latch.countDown();
+				}
+				@Override public void onServiceDisconnected(ComponentName name) {}
+			};
+			assertTrue(context.bindService(new Intent(context, MemoryTargetBridgeService.class),
+					connection, Context.BIND_AUTO_CREATE));
+			try {
+				assertTrue(latch.await(SERVICE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
+				assertNotNull(binder.get());
+				return new ResearchTargetConnection(context, connection,
+						IMemoryTargetBridge.Stub.asInterface(binder.get()));
+			} catch (Throwable failure) {
+				context.unbindService(connection);
+				throw failure;
+			}
+		}
+
+		@Override public void close() {
+			context.unbindService(connection);
+		}
+	}
+
 	private Bundle awaitCapabilities() throws RemoteException {
 		long deadline = SystemClock.uptimeMillis() + SERVICE_TIMEOUT_MILLIS;
 		Bundle capabilities;
