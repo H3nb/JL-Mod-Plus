@@ -8,6 +8,7 @@ on:
       - 'scripts/graphics-rd-next.sh'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/research/RecordedDualPlaneResearchTest.java'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/research/GpuResidentCompositionResearchTest.java'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/research/GuestGraphicsDualPlaneResearchTest.java'
 
 permissions:
   contents: read
@@ -25,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         api: [23, 35]
-        case: [replay, gpu]
+        case: [replay, gpu, guest]
     env:
       GRAPHICS_ARCH_CASE: ${{ matrix.case }}
       GRAPHICS_ARCH_API: ${{ matrix.api }}
