@@ -1,33 +1,36 @@
 package io.github.h3nb.jlmodplus.memory;
 
 import org.junit.Test;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.IdentityHashMap;
 import javax.microedition.shell.MemoryDiscoveryBridge;
 import static org.junit.Assert.*;
 
-/** Disposable R&D characterization. Reflection accesses private engine internals, not production API. */
+/** Disposable R&D contract test; no production UI, file format, or Binder API. */
 public class SavedLocatorEngineResearchTest {
     private static final long FIRST = 1000021L, NEXT = 1000022L;
     static final class GuestRoot { GuestPlayer player = new GuestPlayer(); }
-    static final class GuestPlayer { int coins = 585858; }
+    static final class GuestPlayer { int coins = 585858; static int shared = 9001; }
 
-    @Test public void existingEngineCanEditReboundTargetWithoutSecondSearch() throws Exception {
+    @Test public void rebindsDetachedFieldDescriptorIntoExistingWatchWithoutSearching() {
         ClassLoader loader = getClass().getClassLoader();
-        ManagedJavaMemoryEngine initial = new ManagedJavaMemoryEngine();
         GuestRoot before = new GuestRoot();
+        ManagedJavaMemoryEngine.ResearchFieldLocator descriptor;
         MemoryDiscoveryBridge.install(FIRST, loader);
         MemoryDiscoveryBridge.tailSeen(GuestRoot.class);
         MemoryDiscoveryBridge.setMidletRoot(FIRST, before);
+        ManagedJavaMemoryEngine initial = new ManagedJavaMemoryEngine();
         try {
             ManagedJavaMemoryEngine.ManagedOperationResult search = initial.startExact(FIRST,
                 MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 585858L, 0L, 0L);
             assertEquals(MemoryEngineContract.RESULT_OK, search.code);
             assertEquals(1L, search.resultCount);
-            ManagedJavaMemoryEngine.ManagedPage page = initial.resultPage(FIRST, search.revision, 0, 20);
-            ManagedJavaMemoryEngine.ManagedInspection ins = initial.inspect(FIRST, search.revision, page.ids[0], 2);
-            assertEquals(MemoryEngineContract.PATH_VERIFIED, ins.path.status);
+            long id = initial.resultPage(FIRST, search.revision, 0, 20).ids[0];
+            descriptor = initial.researchCaptureFieldLocator(FIRST, search.revision, id);
+            assertNotNull("Only a complete verified root-to-field path may be saved", descriptor);
+            descriptor = descriptor.copyStringsOnly(); // No objects or runtime IDs carried over.
+            assertEquals(ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_MIDLET,
+                descriptor.rootKind);
+            assertEquals(2, descriptor.fields.length);
+            assertEquals("coins", descriptor.fields[1].name);
         } finally {
             initial.runtimeClosed(FIRST);
             MemoryDiscoveryBridge.close(FIRST);
@@ -39,23 +42,16 @@ public class SavedLocatorEngineResearchTest {
         MemoryDiscoveryBridge.tailSeen(GuestRoot.class);
         MemoryDiscoveryBridge.setMidletRoot(NEXT, after);
         try {
-            restarted.capabilities(NEXT); // Activate without Search.
-            assertEquals(0L, restarted.session(NEXT).resultCount);
-            Field rootField = GuestRoot.class.getDeclaredField("player");
-            Field valueField = GuestPlayer.class.getDeclaredField("coins");
-            rootField.setAccessible(true);
-            valueField.setAccessible(true);
-            Object target = rootField.get(after);
-            assertSame(after.player, target);
-            assertEquals(int.class, valueField.getType());
-            long newId = researchBindToExistingWatch(restarted, target, valueField);
+            assertEquals(MemoryEngineContract.RESULT_OK, restarted.researchBindFieldLocator(
+                NEXT, descriptor, "Saved coins", 0L).code);
+            assertEquals(0L, restarted.session(NEXT).resultCount); // No second scan.
             ManagedJavaMemoryEngine.ManagedPage watch = restarted.watchPage(NEXT);
             assertEquals(1, watch.ids.length);
-            assertEquals(newId, watch.ids[0]);
+            assertEquals("Saved coins", watch.labels[0]);
             assertEquals("585858", watch.values[0]);
-            ManagedJavaMemoryEngine.ManagedOperationResult write = restarted.editTyped(
-                NEXT, 0L, new long[]{newId}, MemoryEngineContract.TYPE_INT, "424242", true, 0L);
-            assertEquals(MemoryEngineContract.RESULT_OK, write.code);
+            ManagedJavaMemoryEngine.ManagedOperationResult edited = restarted.editTyped(
+                NEXT, 0L, new long[]{watch.ids[0]}, MemoryEngineContract.TYPE_INT, "424242", true, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, edited.code);
             assertEquals(424242, after.player.coins);
             assertEquals(585858, before.player.coins);
         } finally {
@@ -64,41 +60,53 @@ public class SavedLocatorEngineResearchTest {
         }
     }
 
-    /** Test-only bridge into existing OwnerBucket/Watch machinery. */
-    private static long researchBindToExistingWatch(ManagedJavaMemoryEngine engine,
-                                                    Object target, Field selected) throws Exception {
-        Class<?> engineType = ManagedJavaMemoryEngine.class;
-        Class<?> schemaType = Class.forName(engineType.getName() + "$Schema");
-        Class<?> ownerType = Class.forName(engineType.getName() + "$OwnerBucket");
-        Method schemaFor = engineType.getDeclaredMethod("schemaFor", Class.class, ClassLoader.class);
-        schemaFor.setAccessible(true);
-        Object schema = schemaFor.invoke(engine, target.getClass(), target.getClass().getClassLoader());
-        Field fields = schemaType.getDeclaredField("fields");
-        fields.setAccessible(true);
-        Object[] entries = (Object[]) fields.get(schema);
-        int slot = -1;
-        for (int index = 0; index < entries.length; index++) {
-            Field field = entries[index].getClass().getDeclaredField("field");
-            field.setAccessible(true);
-            if (selected.equals(field.get(entries[index]))) { slot = index; break; }
+    @Test public void mismatchedPathCannotCreateWatchEvenWhenValuesAreEqual() {
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(NEXT, getClass().getClassLoader());
+        MemoryDiscoveryBridge.tailSeen(GuestRoot.class);
+        MemoryDiscoveryBridge.setMidletRoot(NEXT, new GuestRoot());
+        try {
+            ManagedJavaMemoryEngine.ResearchFieldLocator mismatched = new
+                ManagedJavaMemoryEngine.ResearchFieldLocator(
+                    ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_MIDLET,
+                    GuestRoot.class.getName(), new ManagedJavaMemoryEngine.ResearchField[]{
+                        new ManagedJavaMemoryEngine.ResearchField(GuestRoot.class.getName(),
+                            "player", GuestPlayer.class.getName()),
+                        new ManagedJavaMemoryEngine.ResearchField(GuestPlayer.class.getName(),
+                            "coins", "long")
+                    });
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                engine.researchBindFieldLocator(NEXT, mismatched, "Wrong type", 0L).code);
+            assertEquals(0, engine.watchPage(NEXT).ids.length);
+        } finally {
+            engine.runtimeClosed(NEXT);
+            MemoryDiscoveryBridge.close(NEXT);
         }
-        assertTrue("Field must be resolved by declared identity, not slot order", slot >= 0);
-        Method ownerForObject = engineType.getDeclaredMethod("ownerForObject", Object.class,
-                int.class, schemaType, IdentityHashMap.class);
-        ownerForObject.setAccessible(true);
-        Object owner = ownerForObject.invoke(engine, target,
-                ManagedJavaMemoryEngine.KIND_OBJECT_FIELD, schema, new IdentityHashMap<>());
-        Field handleField = ownerType.getDeclaredField("handle");
-        handleField.setAccessible(true);
-        long id = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_OBJECT_FIELD,
-                handleField.getLong(owner), slot);
-        Field watchesField = engineType.getDeclaredField("watches");
-        watchesField.setAccessible(true);
-        Object watches = watchesField.get(engine);
-        Method append = watches.getClass().getDeclaredMethod("append", long.class, ownerType,
-                int.class, long.class, String.class);
-        append.setAccessible(true);
-        append.invoke(watches, id, owner, slot, (long) ((GuestPlayer) target).coins, "Saved coins");
-        return id;
+    }
+
+    @Test public void staticRootMustBeInAlreadyInitializedGuestRegistry() {
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(NEXT, getClass().getClassLoader());
+        MemoryDiscoveryBridge.tailSeen(GuestRoot.class);
+        MemoryDiscoveryBridge.setMidletRoot(NEXT, new GuestRoot());
+        try {
+            ManagedJavaMemoryEngine.ResearchFieldLocator saved = new
+                ManagedJavaMemoryEngine.ResearchFieldLocator(
+                    ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_INITIALIZED_STATIC,
+                    GuestPlayer.class.getName(), new ManagedJavaMemoryEngine.ResearchField[]{
+                        new ManagedJavaMemoryEngine.ResearchField(GuestPlayer.class.getName(),
+                            "shared", "int")
+                    });
+            assertEquals(MemoryEngineContract.RESULT_TARGET_LOST,
+                engine.researchBindFieldLocator(NEXT, saved, "Shared", 0L).code);
+            assertEquals(0, engine.watchPage(NEXT).ids.length);
+            MemoryDiscoveryBridge.tailSeen(GuestPlayer.class);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.researchBindFieldLocator(NEXT, saved, "Shared", 0L).code);
+            assertEquals(1, engine.watchPage(NEXT).ids.length);
+        } finally {
+            engine.runtimeClosed(NEXT);
+            MemoryDiscoveryBridge.close(NEXT);
+        }
     }
 }
