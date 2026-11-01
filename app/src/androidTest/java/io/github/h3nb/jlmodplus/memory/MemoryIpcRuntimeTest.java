@@ -177,7 +177,7 @@ public final class MemoryIpcRuntimeTest {
 			long operationId = service.startKnownSearch(runtimeToken,
 					MemoryEngineContract.TYPE_INT,
 					MemoryEngineContract.PREDICATE_EQUAL,
-					"0", null);
+					"89", null);
 			OperationResult search = activeCallback.await(operationId);
 			assertEquals("Read-only search must complete successfully",
 					MemoryEngineContract.RESULT_OK, search.resultCode);
@@ -317,15 +317,6 @@ public final class MemoryIpcRuntimeTest {
 				descriptor.putStringArray("researchNames", researchStrings(saved.getJSONArray("names")));
 				descriptor.putStringArray("researchTypes", researchStrings(saved.getJSONArray("types")));
 
-				Bundle forged = new Bundle(descriptor);
-				forged.putStringArray("researchTypes", new String[]{"long"});
-				Bundle rejected = target.researchBindFieldLocator(tokenSecond, forged, "Invalid", 0L);
-				assertEquals("Changed type must fail closed, without Watch membership",
-						MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-						rejected.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
-				assertEquals(0, target.managedWatchPage(tokenSecond)
-						.getLongArray(MemoryEngineContract.KEY_WATCH_IDS).length);
-
 				Bundle bound = target.researchBindFieldLocator(tokenSecond, descriptor,
 						"Saved probe", 0L);
 				assertEquals("Bind failed: " + bound.getString(
@@ -342,6 +333,16 @@ public final class MemoryIpcRuntimeTest {
 				assertNotNull(watchIds);
 				assertEquals(1, watchIds.length);
 				assertEquals(expectedValue, watchValues[0]);
+				// A rejected descriptor must not disturb an already bound Watch entry.
+				Bundle forged = new Bundle(descriptor);
+				forged.putStringArray("researchTypes", new String[]{"long"});
+				Bundle rejected = target.researchBindFieldLocator(tokenSecond, forged, "Invalid", 0L);
+				assertEquals("Changed type must fail closed without changing Watch membership",
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						rejected.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals(1, target.managedWatchPage(tokenSecond)
+						.getLongArray(MemoryEngineContract.KEY_WATCH_IDS).length);
+
 				Bundle write = target.managedEditTyped(tokenSecond, 0L, watchIds,
 						MemoryEngineContract.TYPE_INT, "90", true, 0L);
 				assertEquals(MemoryEngineContract.RESULT_OK,
