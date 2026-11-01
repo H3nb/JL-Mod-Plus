@@ -1433,9 +1433,13 @@ final class ManagedJavaMemoryEngine {
 					"Research locator is invalid or exceeds the bounded depth");
 		}
 		MemoryDiscoveryBridge.Snapshot runtime = MemoryDiscoveryBridge.snapshot(token);
-		if (!runtime.isAvailable() || !beginOperation(token, operationEpoch, runtime.loader())) {
+		if (!runtime.isAvailable()) {
 			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
-					"Research locator runtime is unavailable");
+					"Research locator snapshot unavailable: " + runtime.failure());
+		}
+		if (!beginOperation(token, operationEpoch, runtime.loader())) {
+			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					"Research locator operation epoch or active runtime changed");
 		}
 		try {
 			Object root;
