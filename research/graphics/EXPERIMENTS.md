@@ -883,3 +883,39 @@ framebuffer barriers; GPU compositing would need a native M3G target
 and a readback/materialization contract. GLSLP remains independent
 of which guest target strategy wins. Full rationale, memory estimates,
 and forward gates: [ALTERNATIVE-RENDERING-EXPERIMENTS.md](ALTERNATIVE-RENDERING-EXPERIMENTS.md).
+
+## Actual guest Graphics dual-plane follow-up — 2026-11-01
+
+[Architecture matrix 41283761287](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41283761287)
+was green for **all six independent API23/API35 jobs**: original
+Picture replay (2/2 per API), GPU-owned composition (1/1 per API),
+and newly added **real javax.microedition Graphics/Image boundary**
+(2/2 per API). [GLES control 41283726999](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41283726999)
+remained **13/13** on the existing 9-class API35 shader research suite.
+
+The initial matrix did not preserve its `GraphicsRD_GuestDual`
+logcat tag, so [targeted observation run 41284394009](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41284394009)
+re-executed just **2 guest tests per API** and retained the exact
+numerical evidence:
+
+| Actual Java ME operation | Android 6 / API23 | Android 35 / API35 |
+| --- | ---: | ---: |
+| `Graphics.drawImage`, logical 20x16 / backing 40x32 | 0/320 logical sample mismatches | 0/320 |
+| `Graphics.drawRGB`, same green 3x3 source | 0/320 logical sample mismatches | 0/320 |
+| `Picture` recorded bitmap draw; guest mutates 4x4 Image red->green before playback | **0/16 source pixels differ** | **16/16 source pixels differ** |
+| Explicit immutable bitmap snapshot before guest mutation | exact immediate-draw parity | exact parity |
+
+**Consequence:** current `Graphics.drawRGB` did not exhibit the
+hypothesized Android Canvas scaling failure in this narrow test;
+do not add a workaround without reproducing a real failing case.
+More importantly, `Picture` mutable-Bitmap source ownership varied
+across these Android versions. A deferred guest draw *must not*
+assume a stable snapshot unless its lifetime is explicitly owned.
+Snapshot/copy-on-write barriers cost memory/CPU and must be justified
+against simple per-target HD. Neither `Picture` nor a future
+dual-plane design currently implements actual `Canvas.paint`,
+`GameCanvas.flushGraphics` mixed 2D/3D/M3G/Mascot or GLSLP input.
+Source review confirms `Graphics` owns a final Android Canvas
+bound to Bitmap, while `GameCanvas` owns a persistent separate
+Image plus partial flush. Details and gl4es GLES2-native
+alternative assessment: [ALTERNATIVE-RENDERING-EXPERIMENTS.md](ALTERNATIVE-RENDERING-EXPERIMENTS.md).
