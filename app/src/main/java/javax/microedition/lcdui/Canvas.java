@@ -1864,7 +1864,14 @@ public abstract class Canvas extends Displayable {
 				synchronized (vbo) {
 					program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
 					if (researchTwoPass != null) {
-						try {
+						// During a guest-size enlargement, updateSize publishes width/height
+						// before the new backing bitmap is uploaded. Keep the research
+						// pipeline for the next coherent frame rather than permanently
+						// treating this transient stale texture as a broken shader.
+						// Oversized/padded source textures remain unsupported and fail closed.
+						boolean sourceStillSmaller = lastUploadedWidth < Canvas.this.width
+								|| lastUploadedHeight < Canvas.this.height;
+						if (!sourceStillSmaller) try {
 							researchTwoPass.draw(bgTextureId[0], vbo, lastUploadedWidth,
 									lastUploadedHeight, Canvas.this.width, Canvas.this.height,
 									hostGlWidth, hostGlHeight, frameSequence,
