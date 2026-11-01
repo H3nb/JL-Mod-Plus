@@ -4,6 +4,54 @@ Status (2026-11-01): **CONDITIONAL GO** for a constrained persistent-variable re
 **NO-GO** for the claim that matching source JAR alone guarantees the same semantic variable.
 Base examined: `alpha` at `b51babf3ae1f903ddce64e25d9b91b128f28804b`.
 
+## Current research conclusion: identity fencing and stale owner edits
+
+[Research CI run 41291077208](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41291077208)
+passed emulator Android API 23 and 35 plus JVM 17 and 21.
+[Android CI run 41291077141](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41291077141)
+passed build/tests, screenshot validation and lint.
+[Focused engine research run 41291073161](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41291073161)
+passed the actual Managed Memory Engine test plus standalone graph/locator probes.
+
+**Installed identity experiment** (`SavedLocatorIdentityResearchAndroidTest`):
+- A main-process `InstalledAppWriteGuard.run(canonicalAppPath, capturedAppId, write)`
+  plus JAR digest precondition and Android `AtomicFile` can publish a research
+  definition in the per-install config directory.
+- Uninstall/reinstall at the *same path* with the *same source JAR* produces
+  a different Library `appId`. A request carrying the stale `appId` fails
+  without touching the saved file.
+- Modifying the JAR while retaining the current `appId` makes the added
+  caller-side SHA-256 comparison fail before publication. The existing guard
+  itself does **not** know the source JAR hash.
+- Independent workdirs can both allocate `appId = 1`. The guard validates
+  the **caller-supplied path**; it cannot detect substitution of a different
+  canonical workdir if its current appId happens to be the same. A Saved
+  Variables local record must preserve/capture canonical workdir + storageKey
+  together with the installed ID. Portable exports must instead omit local
+  identifiers and require reassociation with an installed game after import.
+- `AtomicFile` supplies atomic publication but **no concurrent writer
+  serialization**. Use one main-process write authority and the existing
+  installation permit; do not let the `:midlet` process independently write
+  the same Saved Variables file. The test is not an implemented service.
+
+**Stale-reference experiment** (`SavedLocatorEngineResearchTest`): after
+restoring a field-only descriptor into Watch and confirming a VERIFIED path,
+replacing the game root's Player changes the path to CHANGED. While the old
+object remains strongly reachable in the test, ordinary `editTyped` can
+still write its numeric field without affecting the new Player. This respects
+the existing runtime Watch ownership semantics but is **not a safe default
+for an imported Saved Variable**. Restrict the eventual saved-binding Edit/
+Freeze authority when the verified path is lost or changed, without
+retroactively changing ordinary Watch behavior. A pre-write path check still
+cannot eliminate races with concurrent guest threads.
+
+**Integration direction**: keep versioned typed descriptors and source-JAR
+SHA-256 in `configs/<storageKey>`, which is already included in full Library
+bundle export. Separate the portable definition from the local installation
+association and never auto-Edit or auto-Freeze on import/load. One explicitly
+selected game and a successful Resolve precede any user-requested mutation.
+
+
 ## Verified checkpoint: transformed-JAR restart on Android 6 and 15
 
 [Memory locator R&D run 41283720771](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41283720771)
