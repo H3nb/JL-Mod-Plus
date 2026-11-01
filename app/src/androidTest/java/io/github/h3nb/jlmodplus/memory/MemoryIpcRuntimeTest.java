@@ -333,6 +333,17 @@ public final class MemoryIpcRuntimeTest {
 				assertNotNull(watchIds);
 				assertEquals(1, watchIds.length);
 				assertEquals(expectedValue, watchValues[0]);
+
+				Bundle write = target.managedEditTyped(tokenSecond, 0L, watchIds,
+						MemoryEngineContract.TYPE_INT, "90", true, 0L);
+				assertEquals("Recovered Watch edit failed: " + write.getString(
+						MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "<no diagnostic>")
+						+ "; supported=" + target.getManagedCapabilities(tokenSecond)
+						.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED),
+						MemoryEngineContract.RESULT_OK,
+						write.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals("90", target.managedWatchPage(tokenSecond)
+						.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
 				// A rejected descriptor must not disturb an already bound Watch entry.
 				Bundle forged = new Bundle(descriptor);
 				forged.putStringArray("researchTypes", new String[]{"long"});
@@ -343,12 +354,6 @@ public final class MemoryIpcRuntimeTest {
 				assertEquals(1, target.managedWatchPage(tokenSecond)
 						.getLongArray(MemoryEngineContract.KEY_WATCH_IDS).length);
 
-				Bundle write = target.managedEditTyped(tokenSecond, 0L, watchIds,
-						MemoryEngineContract.TYPE_INT, "90", true, 0L);
-				assertEquals(MemoryEngineContract.RESULT_OK,
-						write.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
-				assertEquals("90", target.managedWatchPage(tokenSecond)
-						.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
 			}
 		} finally {
 			file.delete();
