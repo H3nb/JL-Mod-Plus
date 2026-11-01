@@ -357,3 +357,53 @@ The current experimental instrumentation runner occasionally reports
 an engine crash. A recent API 35 attempt also failed at Gradle dependency
 resolution before test execution. Evaluate precise XML/logcat and actual
 test start/completion before attributing failures to application code.
+
+
+## Bundle component compatibility and restored mutation experiment
+
+**Product decision from the maintainer:** sharing Saved Variables is part of the future
+selectable **Export Bundle / Import Bundle** workflow, not a parallel standalone
+sharing feature. Do not modify the current exporter/importer in this research branch:
+their component-selection redesign is explicitly pending.
+
+**Observed boundaries:**
+- The existing exporter includes every file under `configs/<storageKey>`, while
+  Universal Bundle v2 records the retained source JAR's SHA-256 per bundled app.
+  The current importer expects a game JAR in an installable app payload. A future
+  **Saved Variables only** selection therefore must follow an *attach to existing
+  installed game* path rather than pretending to be an installable app.
+- The *portable* Saved Variables component contains an exact source-JAR SHA-256,
+  MIDlet entry-class selector, versioned bounded typed descriptors, labels and
+  intended display metadata. It contains **no absolute workdir, storageKey,
+  local appId, runtime handles, current values requiring autoapplication, or
+  Android-specific file paths**.
+- A *local association* is checked against the installed workdir/storageKey/
+  captured appId and source-JAR fingerprint under one main-process write
+  authority. The bundle importer must establish a **fresh local association**,
+  after the user chooses an installed MIDlet and compatibility checks succeed.
+  Copying the exporter's original appId/path into the recipient's Library is
+  not acceptable; equal numeric appIds can belong to different workdirs.
+- Partial bundle import must not overwrite unrelated config, saved games,
+  layouts, or existing Saved Variables without explicit component ownership
+  and conflict policy. Restore of the definitions is not equivalent to
+  enabling Freeze or auto-Edit. A compatible JAR does not guarantee that a
+  specific game-state owner has the same semantics.
+
+**Disposable mutation-authorization spike:** a research-only Watch membership
+marker is retained per Watch row, not per OwnerBucket. On the actual engine's
+Edit/Freeze precommit path, only a restored Saved Variable row must still have
+`PATH_VERIFIED`; the existing Freeze tick pauses that row if ancestry changes.
+Ordinary Watch rows keep their present original-owner identity behavior.
+Verification is best-effort against concurrently mutating guest code, not an
+atomic transaction with guest threads. The experimental code is **not** a
+production security boundary and contains no user-facing controls.
+
+**Normal-exit test design:** a true user-initiated emulator exit invokes
+`MidletKeepAliveService` and `EmulatorShutdownService`, which intentionally
+terminates `:midlet`, auxiliary processes **and the app's main process**.
+An in-app instrumentation runner cannot safely claim a successful normal-exit
+test if its own process is destroyed. This needs an external ADB/CI host
+harness: record the saved definition, request intentional exit, wait until
+the old process tree is gone, relaunch the same installed game, then start a
+fresh verifier process to read and resolve the saved definition. The existing
+process-death CI is a **separate** proven scenario.
