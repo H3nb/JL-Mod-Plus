@@ -125,3 +125,15 @@ This proves two-texture xBRZ behavior on SwiftShader, not a GLSLP parser,
 Crisp parameter overrides, arbitrary presets or real-device performance.
 Details: [EXPERIMENTS.md](../../../research/graphics/EXPERIMENTS.md)
 and [GLSLP prototype contract](../../../research/graphics/GLSLP-PROTOTYPE-CONTRACT.md).
+
+**Metadata-driven two-pass checkpoint:** [CI 41255596735](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41255596735)
+passed all 13 selected instrumentation tests. The branch-local GLSLP
+planner now feeds the actual Canvas GPU pipeline: pinned Gaussian uses
+two source-sized FBO passes followed by stock host presentation, whereas
+pinned xBRZ Crisp draws its last pass directly to viewport with the
+same RGB readback as the previously validated Crisp pipeline. The mounted
+view also survived a concurrent guest resize after changing the research
+shader source-size ownership to a coherent `offscreenCopy` bitmap+content
+snapshot under `bufferLock`. This remains **R&D, not a shipping GLSLP
+engine**; physical ARM64 performance, full MIDlet execution and true HD
+guest rendering are open. [Full evidence](../../../research/graphics/EXPERIMENTS.md).
