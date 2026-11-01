@@ -139,48 +139,48 @@ class KeyboardLayoutValidatorTest {
 
     @Test
     fun v4KeepsActiveTypeOrthogonalToDormantCustomState() {
-        assertNull(KeyboardLayoutValidator.validate(v4File(type = 3)))
-        assertNull(KeyboardLayoutValidator.validate(v4File(type = 3, base = 7)))
+        assertNull(KeyboardLayoutValidator.validate(orientationLayoutFile(type = 3)))
+        assertNull(KeyboardLayoutValidator.validate(orientationLayoutFile(type = 3, base = 7)))
         assertNull(KeyboardLayoutValidator.validate(
-            v4File(type = 6, base = 8, portrait = true, landscape = true),
+            orientationLayoutFile(type = 6, base = 8, portrait = true, landscape = true),
         ))
 
-        assertNotNull(KeyboardLayoutValidator.validate(v4File(type = 0)))
+        assertNotNull(KeyboardLayoutValidator.validate(orientationLayoutFile(type = 0)))
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(type = 3, portrait = true),
+            orientationLayoutFile(type = 3, portrait = true),
         ))
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(type = 3, base = 7, portrait = true, cycle = true),
+            orientationLayoutFile(type = 3, base = 7, portrait = true, cycle = true),
         ))
     }
 
     @Test
     fun v4AcceptsEverySupportedBaseWithOptionalOrientationOverrides() {
         for (base in 1..8) {
-            assertNull(KeyboardLayoutValidator.validate(v4File(base = base)))
+            assertNull(KeyboardLayoutValidator.validate(orientationLayoutFile(base = base)))
             assertNull(KeyboardLayoutValidator.validate(
-                v4File(base = base, portrait = true),
+                orientationLayoutFile(base = base, portrait = true),
             ))
             assertNull(KeyboardLayoutValidator.validate(
-                v4File(base = base, landscape = true),
+                orientationLayoutFile(base = base, landscape = true),
             ))
         }
-        assertNotNull(KeyboardLayoutValidator.validate(v4File(base = 9)))
-        assertNotNull(KeyboardLayoutValidator.validate(v4File(base = 0)))
+        assertNotNull(KeyboardLayoutValidator.validate(orientationLayoutFile(base = 9)))
+        assertNotNull(KeyboardLayoutValidator.validate(orientationLayoutFile(base = 0)))
     }
 
     @Test
     fun v4AcceptsBothIndependentOverridesWithoutBase() {
         assertNull(KeyboardLayoutValidator.validate(
-            v4File(portrait = true, landscape = true),
+            orientationLayoutFile(portrait = true, landscape = true),
         ))
     }
 
     @Test
     fun v4AcceptsMigrationFallbackOnlyButRejectsSingleUnbackedOverride() {
-        assertNull(KeyboardLayoutValidator.validate(v4File(legacy = true)))
-        assertNotNull(KeyboardLayoutValidator.validate(v4File(portrait = true)))
-        assertNotNull(KeyboardLayoutValidator.validate(v4File(landscape = true)))
+        assertNull(KeyboardLayoutValidator.validate(orientationLayoutFile(legacy = true)))
+        assertNotNull(KeyboardLayoutValidator.validate(orientationLayoutFile(portrait = true)))
+        assertNotNull(KeyboardLayoutValidator.validate(orientationLayoutFile(landscape = true)))
     }
 
     @Test
@@ -199,19 +199,19 @@ class KeyboardLayoutValidatorTest {
     @Test
     fun v4RejectsMalformedCountsTopologyAndGroupedGeometry() {
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(base = 7, portrait = true, keyCount = 27),
+            orientationLayoutFile(base = 7, portrait = true, keyCount = 27),
         ))
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(base = 7, portrait = true, cycle = true),
+            orientationLayoutFile(base = 7, portrait = true, cycle = true),
         ))
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(base = 7, portrait = true, groupedX = Float.NaN),
+            orientationLayoutFile(base = 7, portrait = true, groupedX = Float.NaN),
         ))
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(base = 7, portrait = true, groupedRadius = 0.01f),
+            orientationLayoutFile(base = 7, portrait = true, groupedRadius = 0.01f),
         ))
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(base = 7, portrait = true, groupedRadius = 0.50f),
+            orientationLayoutFile(base = 7, portrait = true, groupedRadius = 0.50f),
         ))
     }
 
@@ -243,23 +243,23 @@ class KeyboardLayoutValidatorTest {
 
     @Test
     fun v5SupportsPerKeyScalesWithoutAcceptingWrongSnapshotSizes() {
-        val v5 = v4File(base = 7, portrait = true, version = 5)
+        val v5 = orientationLayoutFile(base = 7, portrait = true, version = 5)
         assertNull(KeyboardLayoutValidator.validate(v5))
         assertNull(KeyboardLayoutValidator.validateBytes(v5.readBytes()))
 
         // Version 5 writes 56 independent width/height scales, not the 12 v4 group scales.
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(base = 7, portrait = true, version = 5, scaleCount = 12),
+            orientationLayoutFile(base = 7, portrait = true, version = 5, scaleCount = 12),
         ))
         assertNotNull(KeyboardLayoutValidator.validate(
-            v4File(base = 7, portrait = true, version = 4, scaleCount = 56),
+            orientationLayoutFile(base = 7, portrait = true, version = 4, scaleCount = 56),
         ))
-        assertNull(KeyboardLayoutValidator.validate(v4File(base = 7, portrait = true)))
+        assertNull(KeyboardLayoutValidator.validate(orientationLayoutFile(base = 7, portrait = true)))
     }
 
     @Test
     fun encodedBytesUseTheSameValidationRulesAsFiles() {
-        val valid = v4File(type = 3).readBytes()
+        val valid = orientationLayoutFile(type = 3).readBytes()
         assertNull(KeyboardLayoutValidator.validateBytes(valid))
         assertNotNull(KeyboardLayoutValidator.validateBytes(byteArrayOf(1, 2, 3)))
         assertNotNull(KeyboardLayoutValidator.validateBytes(ByteArray(0)))
@@ -267,10 +267,10 @@ class KeyboardLayoutValidatorTest {
 
     @Test
     fun futureLayoutVersionRemainsUnsupported() {
-        assertNotNull(KeyboardLayoutValidator.validate(v4File(base = 7, version = 6)))
+        assertNotNull(KeyboardLayoutValidator.validate(orientationLayoutFile(base = 7, version = 6)))
     }
 
-    private fun v4File(
+    private fun orientationLayoutFile(
         type: Int = 0,
         version: Int = 4,
         base: Int? = null,
@@ -288,9 +288,12 @@ class KeyboardLayoutValidatorTest {
             writeHeader(out, version)
             writeType(out, type)
             if (base != null) writeBase(out, base)
-            if (legacy) writeOrientationSnapshot(out, LEGACY_SHARED, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
-            if (portrait) writeOrientationSnapshot(out, PORTRAIT_OVERRIDE, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
-            if (landscape) writeOrientationSnapshot(out, LANDSCAPE_OVERRIDE, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
+            if (legacy) writeOrientationSnapshot(
+                out, LEGACY_SHARED, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
+            if (portrait) writeOrientationSnapshot(
+                out, PORTRAIT_OVERRIDE, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
+            if (landscape) writeOrientationSnapshot(
+                out, LANDSCAPE_OVERRIDE, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
             writeEnd(out)
         }
         return file
