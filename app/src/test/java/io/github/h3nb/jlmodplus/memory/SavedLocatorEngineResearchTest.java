@@ -64,6 +64,16 @@ public class SavedLocatorEngineResearchTest {
                 restarted.inspect(NEXT, 0L, watch.ids[0], 1, true).path.status);
             assertEquals(424242, previousOwner.coins);
             assertEquals(585858, after.player.coins);
+            // Diagnostic finding: existing Edit checks the live object identity,
+            // not its now-changed ancestry. It can still modify a detached owner.
+            // This is not a regression in ordinary Watch, but a Saved Variables
+            // policy risk: an imported target should not silently mutate stale state.
+            ManagedJavaMemoryEngine.ManagedOperationResult staleEdit = restarted.editTyped(
+                NEXT, 0L, new long[]{watch.ids[0]}, MemoryEngineContract.TYPE_INT,
+                "919191", true, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, staleEdit.code);
+            assertEquals(919191, previousOwner.coins);
+            assertEquals(585858, after.player.coins);
         } finally {
             restarted.runtimeClosed(NEXT);
             MemoryDiscoveryBridge.close(NEXT);
