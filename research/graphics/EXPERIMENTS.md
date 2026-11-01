@@ -775,3 +775,65 @@ arbitrary GLSLP presets, GPU throughput, real MIDlet operation, power
 or true HD internal rendering. The two-pass executor still uses the
 existing research-only injection path and has no production preset
 selection/import. Default shader behavior remains unchanged.
+
+## HD target logical/physical boundary — 2026-11-01
+
+**Frozen executable checkpoints:** `08ac66d3716580ade6b9622bb1f2c29baa07f85b`
+(initial API35, LCDUI PASS, Mascot headless cleanup blocked),
+`46b2a35149648228662a2405182c19a897164d9a`
+(follow-up Mascot bind/projection fixture; no product renderer changes).
+[API35 HD run 41259088191](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41259088191)
+passed both independent emulator jobs: **LCDUI 2/2 + Mascot 1/1**.
+[API23 HD run 41259108210](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41259108210)
+passed the same job classes on Android 6. Emulator archives include the
+instrumentation result, SDK version, test SHA, and filtered target logcat.
+
+**LCDUI diagnostic using actual Java ME Image/Graphics methods:** 12x10
+logical target with simulated 24x20 physical backing matches 1x at all
+120 sampled pixels when only integer logical drawing is involved.
+Unadapted `Image.getRGB` and `Graphics.copyArea` read backing coordinates
+as logical; the copy fixture has **5/120** incorrect samples. Using
+physical pixel coordinates for the copy source and logical destination
+restored **120/120**. `CanvasWrapper`'s current source crop policy is
+`Image.getBounds()`, which describes logical dimensions in this
+simulated HD state: it captures only the top-left of the physical backing.
+That fixture had **59/120** wrong samples; a full physical-content source
+rectangle restored **120/120**. API 23 and 35 gave exactly the same counts.
+
+**Mascot GLES2 diagnostic with actual Render.bind():** 16x12 -> 32x24
+pbuffer while the guest Image remains logically 16x12. Android Canvas
+clip remains logically 16x12 and is passed to `glScissor` against a
+32x24 physical target. The existing orthographic projection center (4,3)
+results in NDC x translation **-0.75** instead of the 1x value **-0.5**;
+mapping the center to physical (8,6) restores **-0.5**. Both API 23 and 35
+observed these exact values. This demonstrates a concrete coordinate
+boundary, not rendering quality or 3D model pixels.
+
+**Negative control / test ownership:** initial Mascot probe failed on
+`Render.release` because it initializes `micro3d.Utils` preferences
+using a null `MicroActivity` in the headless fixture (not a product
+rendering failure). It was deliberately narrowed to real pbuffer binding
+and projection/clip inspection with explicit research EGL cleanup; no
+test-only fallback was installed in production `Utils`. Actual
+geometry/flush/JNI readback, M3G native targets, and mixed 2D/3D remain
+unverified. `Canvas` also retains distinct guest `offscreen` and
+published `offscreenCopy`: upscaling *only the latter* is not true HD.
+
+**GLES regression:** [run 41258305293](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41258305293)
+passed the existing full GLES research suite (9 classes, 13 tests).
+Another [run 41259088148](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41259088148)
+passed the `CanvasRendererPublicationResearchTest` 3/3 and all
+earlier selected classes but exited **255** on subsequent ADB/logcat
+collection before the final mounted GlesView case. No shader test
+assertion failure is evidenced; do not represent that run as fully green.
+
+**Architectural consequence:** favor a **selective display drawing
+target** with explicit logical/pixel/content/allocation extents rather
+than adding one global `pixelScale` to all mutable images. Preserve
+game-owned images and M3G Image2D at 1x for the first bounded HD pilot
+unless proven necessary otherwise. Source readback/crops, M3G
+viewport setter **and getter**, Mascot projection/clip, and published
+physical content are explicit adapter responsibilities; shaders consume
+physical image pixels and independently calculated game viewport size.
+The detailed proposal and remaining correctness gates are in
+[HD-TARGET-BOUNDARY-EVALUATION.md](HD-TARGET-BOUNDARY-EVALUATION.md).
