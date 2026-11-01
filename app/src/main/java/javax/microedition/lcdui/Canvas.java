@@ -1871,16 +1871,18 @@ public abstract class Canvas extends Displayable {
 						// Oversized/padded source textures remain unsupported and fail closed.
 						boolean sourceStillSmaller = lastUploadedWidth < Canvas.this.width
 								|| lastUploadedHeight < Canvas.this.height;
-						if (!sourceStillSmaller) try {
-							researchTwoPass.draw(bgTextureId[0], vbo, lastUploadedWidth,
-									lastUploadedHeight, Canvas.this.width, Canvas.this.height,
-									hostGlWidth, hostGlHeight, frameSequence,
-									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
-							libretroDrawn = true;
-						} catch (RuntimeException e) {
-							Log.w(TAG, "R&D Libretro draw failed; reverting to legacy shader", e);
-							researchTwoPass.release();
-							researchTwoPass = null;
+						if (!sourceStillSmaller) {
+							try {
+								researchTwoPass.draw(bgTextureId[0], vbo, lastUploadedWidth,
+										lastUploadedHeight, Canvas.this.width, Canvas.this.height,
+										hostGlWidth, hostGlHeight, frameSequence,
+										settings.screenFilter ? GL_LINEAR : GL_NEAREST);
+								libretroDrawn = true;
+							} catch (RuntimeException e) {
+								Log.w(TAG, "R&D Libretro draw failed; reverting to legacy shader", e);
+								researchTwoPass.release();
+								researchTwoPass = null;
+							}
 						}
 						program.use();
 						program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
