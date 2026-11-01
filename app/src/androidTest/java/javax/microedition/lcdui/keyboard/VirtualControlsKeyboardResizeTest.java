@@ -243,21 +243,56 @@ public class VirtualControlsKeyboardResizeTest {
     @Test
     public void resizingSnapsTheChangingEdgeWithoutMovingTheButtonOrigin() throws Exception {
         keyboard.setEditorGroupResizeEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
         keyboard.setEditorSnapControlsEnabled(false);
+        dragLegacy("5", 13f, 7f);
+        keyboard.setEditorSnapGridEnabled(true);
         keyboard.setEditorSnapResizeEnabled(true);
         RectF before = rectField(keyByLabel("5"));
         float x = before.centerX(), y = before.centerY();
+        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
+        assertTrue(Math.abs(before.bottom - Math.round(before.bottom / step) * step) > EPS);
         assertTrue(keyboard.pointerPressed(0, x, y));
         assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 100f, y));
+        RectF stationary = rectField(keyByLabel("5"));
+        assertEquals(before.left, stationary.left, EPS);
+        assertEquals(before.top, stationary.top, EPS);
+        assertEquals(before.width(), stationary.width(), EPS);
+        assertEquals(before.height(), stationary.height(), EPS);
         assertTrue(keyboard.pointerDragged(1, x + 170f, y));
         RectF after = rectField(keyByLabel("5"));
-        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
         assertTrue(after.width() > before.width());
         assertEquals(before.left, after.left, EPS);
         assertEquals(before.top, after.top, EPS);
         assertEquals(before.height(), after.height(), EPS);
         assertEquals(Math.round(after.right / step) * step, after.right, EPS);
         assertTrue(keyboard.pointerReleased(1, x + 170f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+    }
+
+    @Test
+    public void verticalResizeSnapLeavesOffGridWidthUnchanged() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
+        dragLegacy("5", 13f, 7f);
+        keyboard.setEditorSnapGridEnabled(true);
+        keyboard.setEditorSnapResizeEnabled(true);
+        RectF before = rectField(keyByLabel("5"));
+        float x = before.centerX(), y = before.centerY();
+        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
+        assertTrue(Math.abs(before.right - Math.round(before.right / step) * step) > EPS);
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 100f, y + 70f));
+        RectF after = rectField(keyByLabel("5"));
+        assertTrue(after.height() > before.height());
+        assertEquals(before.left, after.left, EPS);
+        assertEquals(before.top, after.top, EPS);
+        assertEquals(before.width(), after.width(), EPS);
+        assertEquals(Math.round(after.bottom / step) * step, after.bottom, EPS);
+        assertTrue(keyboard.pointerReleased(1, x + 100f, y + 70f));
         assertTrue(keyboard.pointerReleased(0, x, y));
     }
 

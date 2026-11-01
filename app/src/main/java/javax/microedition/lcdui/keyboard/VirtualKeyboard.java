@@ -2270,17 +2270,22 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				factorY = Math.min(factorY, maxFactorY);
 				if (editorSnapResizeEnabled) {
 					VirtualKey selected = keypad[editedIndex];
-					float startWidth = keySize * resizeStartScales[editedIndex * 2];
-					float startHeight = keySize * resizeStartScales[editedIndex * 2 + 1];
 					float reach = editorSnapRadius(selected);
-					float right = snapEditorResizeEdge(
-							selected.rect.left + startWidth * factorX, true, editedIndex, targets,
-							selected.rect.left + 1f, selected.rect.left + startWidth * maxFactorX, reach);
-					float bottom = snapEditorResizeEdge(
-							selected.rect.top + startHeight * factorY, false, editedIndex, targets,
-							selected.rect.top + 1f, selected.rect.top + startHeight * maxFactorY, reach);
-					factorX = (right - selected.rect.left) / startWidth;
-					factorY = (bottom - selected.rect.top) / startHeight;
+					// The pinch axes are independent: do not snap a dimension the user did not change.
+					if (Math.abs(x - offsetX) > 0.5f) {
+						float startWidth = keySize * resizeStartScales[editedIndex * 2];
+						float right = snapEditorResizeEdge(
+								selected.rect.left + startWidth * factorX, true, editedIndex, targets,
+								selected.rect.left + 1f, selected.rect.left + startWidth * maxFactorX, reach);
+						factorX = (right - selected.rect.left) / startWidth;
+					}
+					if (Math.abs(y - offsetY) > 0.5f) {
+						float startHeight = keySize * resizeStartScales[editedIndex * 2 + 1];
+						float bottom = snapEditorResizeEdge(
+								selected.rect.top + startHeight * factorY, false, editedIndex, targets,
+								selected.rect.top + 1f, selected.rect.top + startHeight * maxFactorY, reach);
+						factorY = (bottom - selected.rect.top) / startHeight;
+					}
 				}
 				for (int key : targets) {
 					if (!editorGroupResizeEnabled && key != editedIndex) continue;
