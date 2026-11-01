@@ -271,7 +271,11 @@ public final class CanvasMountedGlesViewResearchTest {
                 canvas.updateSize();
                 mounted[0].requestRender();
             });
-            Frame grown = next(observed, 1, 176, 132, redSequence, 40, 56);
+            // A resize can expose one frame from the old backing before the
+            // newly sized source is published. Require the first coherent
+            // shader-rendered frame rather than that transient observation.
+            Frame grown = next(observed, 1, 176, 132, redSequence, 40, 56,
+                    hostOnlyResize.firstPasses + 1);
             exactColor(grown, Color.RED);
             assertEquals(40, grown.logicalW);
             assertEquals(56, grown.logicalH);
@@ -316,13 +320,20 @@ public final class CanvasMountedGlesViewResearchTest {
 
     private static Frame next(Observer o, int minGeneration, int width, int height,
                               long sequence, int guestW, int guestH) throws Exception {
+        return next(o, minGeneration, width, height, sequence, guestW, guestH, -1);
+    }
+
+    private static Frame next(Observer o, int minGeneration, int width, int height,
+                              long sequence, int guestW, int guestH,
+                              int minimumPasses) throws Exception {
         for (int attempts = 0; attempts < 12; attempts++) {
             Frame f = o.frames.poll(WAIT_SECONDS, TimeUnit.SECONDS);
             assertNotNull("No mounted Canvas.GLRenderer frame", f);
             if (f.failure != null) throw new AssertionError("Mounted Canvas GL failed", f.failure);
             if (f.generation >= minGeneration && f.surfaceW == width && f.surfaceH == height
                     && (sequence < 0 || f.uploadedSequence == sequence)
-                    && (guestW < 0 || f.logicalW == guestW && f.logicalH == guestH)) {
+                    && (guestW < 0 || f.logicalW == guestW && f.logicalH == guestH)
+                    && (minimumPasses < 0 || f.firstPasses >= minimumPasses)) {
                 assertEquals("Mounted GL error", GLES20.GL_NO_ERROR, f.glError);
                 return f;
             }
