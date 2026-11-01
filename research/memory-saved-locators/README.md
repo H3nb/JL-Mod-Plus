@@ -140,9 +140,52 @@ agreement is useful evidence but cannot establish game-semantic identity
 when the game intentionally changes which entity a stable field/index
 refers to. No auto-apply on imported definitions.
 
-Remaining production gates: actual converted JAR and Android :midlet
-integration, concurrent mutation safety, file persistence and import,
+Remaining production gates: converted-JAR Save/Reload through Android :midlet IPC,
+concurrent mutation safety, file persistence and import,
 install/delete/reinstall ownership fencing, and representative-game
 coverage measurements.
 
 All commits remain disposable R&D. Do not merge this branch.
+
+
+## Handset evidence: converted Locator Lab across two launches (2026-11-01)
+
+The maintainer tested the separately compiled `Locator-Lab.jar` through JL-Mod
+Plus on an Android device and supplied ten Memory Editor/Inspector screenshots:
+five from launch 1 and the corresponding five from launch 2. The screenshots
+are retained in the conversation; no device identifiers or screenshot images
+are committed here.
+
+| Field / observed value | Launch 1 label | Launch 2 label | Observed reference |
+| --- | --- | --- | --- |
+| `stable.coins` / 1247 | target #4 | target #1 | `MIDlet -> LocatorLabMIDlet.stable -> Player.coins` |
+| `replaceable.coins` / 2468 | target #5 | target #2 | `MIDlet -> LocatorLabMIDlet.replaceable -> Player.coins` |
+| `globalCoins` / 3579 | static | static | `research.locator.LocatorLabMIDlet.globalCoins` |
+| `health` / 89 | target #7 | target #4 | `MIDlet -> LocatorLabMIDlet.health` |
+| `chest[0]` / 4681 | target #8 | target #5 | `MIDlet -> LocatorLabMIDlet.chest[0]` |
+
+The printed rooted paths and source types stayed consistent, despite different
+runtime target numbers. The fixture's source intentionally creates new owners
+at each launch and resets all initial values; matching values alone do not
+provide identity evidence. This establishes **manual converted-JAR installation,
+execution and provenance display on a handset**, upgrading the prior desktop/
+synthetic-ART-only evidence.
+
+**Not established:** automatic cross-session resolution from a saved
+descriptor, on-disk persistence, matching JAR checksum enforcement, IPC Save/
+Load, or correct Watch/LOST behavior after `Replace player`. In particular,
+two launches each showing `replaceable.coins` do *not* prove that the Watch
+must silently follow a replaced object *during one launch*. Similarly,
+`chest[0]` demonstrates structural indexing but not semantic index stability.
+
+Next discriminating device experiments:
+1. Add `replaceable.coins` to Watch, invoke `Replace player`, and refresh:
+   the old Watch owner must become LOST/not silently retarget to the new
+   same-valued object. A fresh Search may find the new player.
+2. Search `1357` (two equal-valued `party[]` objects), inspect both,
+   invoke `Swap party`, and verify owner identity vs array-position
+   provenance. Value-only matching must not imply ownership.
+3. Build a genuinely user-accessible Save/Reload flow under the runtime IPC
+   and installed-JAR fingerprint gate, then relaunch without any new Search.
+
+Do not infer a general game compatibility rate from this one synthetic JAR.
