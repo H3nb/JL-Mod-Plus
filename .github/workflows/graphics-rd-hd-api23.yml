@@ -5,6 +5,12 @@ on:
     branches: [research/graphics-architecture]
     paths:
       - '.github/workflows/graphics-rd-hd-api23.yml'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/research/HdLogicalTargetBoundaryResearchTest.java'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/research/HdMascotTargetBoundaryResearchTest.java'
+
+concurrency:
+  group: graphics-rd-hd-api23-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
