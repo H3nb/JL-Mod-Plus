@@ -4,9 +4,7 @@
  */
 package javax.microedition.shell.transform;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.android.dx.command.dexer.ConversionResult;
@@ -75,5 +73,63 @@ public class MidletDexInspectionTest {
         Files.write(payload.toPath(), bytes);
         assertFalse("Final reference roots require an instrumented class initializer",
                 MidletTransformMetadata.isRuntimeCompatible(descriptor, payload));
+    }
+
+    @Test
+    public void legacyDexWithoutTailRejectsMutablePrimitiveRoot() throws Exception {
+        // javac --release 8 -g:none:
+        // public final class LegacyPrimitiveRoot { static int score; }
+        File dex = convertClass("LegacyPrimitiveRoot",
+                "yv66vgAAADQADAoAAgADBwAEDAAFAAYBABBqYXZhL2xhbmcvT2JqZWN0AQAGPGluaXQ+AQADKClWBwAIAQATTGVnYWN5UHJpbWl0aXZlUm9vdAEABXNjb3JlAQABSQEABENvZGUAMQAHAAIAAAABAAgACQAKAAAAAQABAAUABgABAAsAAAARAAEAAQAAAAUqtwABsQAAAAAAAA==");
+        Map<String, String> descriptor = new HashMap<>();
+        MidletTransformMetadata.mark(descriptor);
+        assertTrue(MidletTransformMetadata.isRuntimeCompatible(descriptor, dex));
+
+        byte[] bytes = Files.readAllBytes(dex.toPath());
+        byte[] tail = "tailSeen".getBytes(StandardCharsets.US_ASCII);
+        boolean removed = false;
+        for (int i = 0; i <= bytes.length - tail.length; i++) {
+            boolean match = true;
+            for (int j = 0; j < tail.length; j++) {
+                if (bytes[i + j] != tail[j]) { match = false; break; }
+            }
+            if (match) {
+                bytes[i] = (byte) 'f';
+                removed = true;
+            }
+        }
+        assertTrue("The converter must instrument mutable primitive roots", removed);
+        Files.write(dex.toPath(), bytes);
+        assertFalse("An uninstrumented static primitive contradicts the transform marker",
+                MidletTransformMetadata.isRuntimeCompatible(descriptor, dex));
+    }
+
+    @Test
+    public void legacyDexWithoutTailAcceptsCompileTimePrimitiveConstant() throws Exception {
+        // javac --release 8 -g:none:
+        // public final class LegacyPrimitiveConstant { static final int SCORE = 7; }
+        File dex = convertClass("LegacyPrimitiveConstant",
+                "yv66vgAAADQADgoAAgADBwAEDAAFAAYBABBqYXZhL2xhbmcvT2JqZWN0AQAGPGluaXQ+AQADKClWBwAIAQAXTGVnYWN5UHJpbWl0aXZlQ29uc3RhbnQBAAVTQ09SRQEAAUkBAA1Db25zdGFudFZhbHVlAwAAAAcBAARDb2RlADEABwACAAAAAQAYAAkACgABAAsAAAACAAwAAQABAAUABgABAA0AAAARAAEAAQAAAAUqtwABsQAAAAAAAA==");
+        assertFalse("A constant-only class should not publish a managed tail",
+                new String(Files.readAllBytes(dex.toPath()), StandardCharsets.US_ASCII)
+                        .contains("tailSeen"));
+        Map<String, String> descriptor = new HashMap<>();
+        MidletTransformMetadata.mark(descriptor);
+        assertTrue(MidletTransformMetadata.isRuntimeCompatible(descriptor, dex));
+    }
+
+    private File convertClass(String className, String base64) throws Exception {
+        File classFile = new File(temporary.getRoot(), className + ".class");
+        Files.write(classFile.toPath(), Base64.getDecoder().decode(base64));
+        File payload = new File(temporary.getRoot(), className + ".dex");
+        Main.Arguments args = new Main.Arguments();
+        args.fileNames = new String[] {
+                new File(temporary.getRoot(), "." + File.separator + classFile.getName()).getPath()
+        };
+        args.outName = payload.getPath();
+        args.numThreads = 1;
+        ConversionResult converted = Main.runWithResult(args);
+        assertTrue(converted.getDiagnostics().toString(), converted.isSuccess());
+        return payload;
     }
 }
