@@ -128,6 +128,17 @@ should be a conditional optimization at most, not the production
 correctness contract. A functioning GPU-owned M3G target may require
 a different native target API or a coherent GLES2 fixed-function bridge.
 
+### Shader/GLES regression control
+
+[CI 41264320936](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41264320936)
+passed the **9 selected GLES research classes / 13 instrumentation tests**
+on API35 x86_64 SwiftShader after the alternative test sources and
+GLES cross-version fixture were included. This checks unchanged
+GLSLP/legacy shader/presentation lifecycle, texture-update and prior HD
+controls against accidental test-source interference. It does **not**
+integrate Picture or GPU-owned staging into `Canvas.GLRenderer` and
+does not measure throughput or validate any physical ARM64 GPU.
+
 ## First-principles trade-offs
 
 - **Fidelity:** per-target HD and filtered Nx-to-1x readback can change
