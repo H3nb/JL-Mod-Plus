@@ -80,6 +80,21 @@ public final class SavedVariableLocatorResearchAndroidTest {
             assertEquals(DISTINCT_VALUE + 1, second.player.coins);
             assertEquals(DISTINCT_VALUE, first.player.coins);
             assertEquals(DISTINCT_VALUE, second.decoy);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    restarted.setFreezeLockTyped(SECOND_TOKEN, 0L, watch.ids,
+                            "818181", true, 0L).code);
+            Leaf originalPlayer = second.player;
+            second.player = new Leaf(); // Same value, different logical owner.
+            assertEquals(MemoryEngineContract.PATH_CHANGED,
+                    restarted.inspect(SECOND_TOKEN, 0L, watch.ids[0], 1, true).path.status);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    restarted.editTyped(SECOND_TOKEN, 0L, watch.ids, MemoryEngineContract.TYPE_INT,
+                            "919191", true, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    restarted.freezeTick(SECOND_TOKEN, 0L).code);
+            assertTrue(restarted.watchPage(SECOND_TOKEN).freezePaused[0]);
+            assertEquals(DISTINCT_VALUE + 1, originalPlayer.coins);
+            assertEquals(DISTINCT_VALUE, second.player.coins);
         } finally {
             restarted.runtimeClosed(SECOND_TOKEN);
             MemoryDiscoveryBridge.close(SECOND_TOKEN);
