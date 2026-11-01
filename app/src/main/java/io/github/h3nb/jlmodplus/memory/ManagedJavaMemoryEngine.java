@@ -1468,6 +1468,11 @@ final class ManagedJavaMemoryEngine {
 						"Saved root type or loader changed");
 			}
 			Object current = root;
+			ProvenanceNode ancestry = locator.rootKind == ResearchFieldLocator.ROOT_MIDLET
+					? new ProvenanceNode(root, null, null, -1, ProvenanceNode.MIDLET_ROOT)
+					: locator.rootKind == ResearchFieldLocator.ROOT_DISPLAYABLE
+					? new ProvenanceNode(root, null, null, -1, ProvenanceNode.DISPLAYABLE_ROOT)
+					: null;
 			Field selected = null;
 			for (int index = 0; index < locator.fields.length; index++) {
 				if (!isOperationActive(token, operationEpoch)) return failure(token,
@@ -1494,10 +1499,14 @@ final class ManagedJavaMemoryEngine {
 				if (index == locator.fields.length - 1) {
 					selected = field;
 				} else {
-					current = field.get(staticOwner ? null : current);
-					if (current == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					Object next = field.get(staticOwner ? null : current);
+					if (next == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
 							"Saved field chain is not ready");
-				}
+					ancestry = new ProvenanceNode(next, staticOwner ? null : ancestry,
+							field, -1, staticOwner
+							? ProvenanceNode.STATIC_FIELD : ProvenanceNode.INSTANCE_FIELD);
+					current = next;
+			}
 			}
 			if (selected == null || selected.getType().isArray()
 					|| !ManagedJavaValue.isSupportedType(ManagedJavaValue.typeForClass(selected.getType()))
@@ -1513,6 +1522,14 @@ final class ManagedJavaMemoryEngine {
 			}
 			if (slot < 0) return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 					"Saved target is excluded from managed schema");
+			// A bound Watch entry must retain the same weak, re-verifiable ancestry
+			// that Inspector uses after ordinary Search. Values alone do not identify owners.
+			OwnerBucket pathProof = new OwnerBucket(0L, kind, selectedOwner, schema);
+			pathProof.provenancePath = ancestry;
+			if (inspectPath(token, pathProof, selectedOwner, slot).status
+					!= MemoryEngineContract.PATH_VERIFIED) return failure(token,
+					MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"Saved reference chain changed before it could be watched");
 			long[] read = new long[1];
 			int selectedType = ManagedJavaValue.typeForClass(selected.getType());
 			read[0] = ManagedJavaValue.readField(selected,
@@ -1524,6 +1541,7 @@ final class ManagedJavaMemoryEngine {
 				if (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
 					return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Watch is full");
 				OwnerBucket owner = ownerForObject(selectedOwner, kind, schema, null);
+				if (owner.provenancePath == null) owner.provenancePath = ancestry;
 				long id = ManagedJavaMemoryIds.encode(kind, owner.handle, slot);
 				if (watches.indexOf(id) < 0) watches.append(id, owner, slot, read[0], label.trim());
 			}
