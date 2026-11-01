@@ -105,15 +105,28 @@ An unqualified claim of zero copies would be false.
 
 ### EGL GLES1/GLES2 context sharing differential
 
-A separate [API23/API35 CI run](https://github.com/H3nb/JL-Mod-Plus/actions/workflows/graphics-rd-cross-es.yml)
-attempts ES2-to-ES2 shared texture as a positive control and ES1-to-ES2
-shared context/texture as a *capability observation*. Cross-version
-sharing is implementation-dependent under GLES; successful ES2-only
-GPU composition does **not** imply ES1 native M3G can share it. A
-failure in cross-version sharing is recorded as a valid result, not a
-failed research hypothesis. At this checkpoint the final executable
-result was not yet available; do not claim portability from this fixture
-even if a SwiftShader emulator happens to support it.
+[CI 41264320851](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41264320851)
+passed **1/1 on API 23** and **1/1 on API 35**, SwiftShader x86_64.
+The exact emitted capability state was identical on both emulators:
+
+- GLES2-to-GLES2 same-version texture sharing: **true** (positive control).
+- GLES2-shared GLES1 context creation: **true**; `eglGetError=0x3000`
+  (`EGL_SUCCESS`), so merely checking context creation would mislead.
+- GLES2-created texture visible in GLES1 using `GLES11.glIsTexture`
+  **before binding the texture name**: **false**.
+- GLES1 and GLES2 standalone contexts both worked. A prior test-build
+  compile failure was due to looking for `glIsTexture` in `GLES10`
+  instead of `GLES11`, **not** driver failure; the corrected test was
+  executed independently on both API levels.
+
+This rejects **unconditional classic shared-context texture reuse**
+for M3G on the tested SwiftShader configurations even when context
+creation appears successful. It does *not* prove the same failure on
+every physical ARM64 driver or rule out a separately validated
+`EGLImage`/native-image interop path. Cross-GLES interoperability
+should be a conditional optimization at most, not the production
+correctness contract. A functioning GPU-owned M3G target may require
+a different native target API or a coherent GLES2 fixed-function bridge.
 
 ## First-principles trade-offs
 
