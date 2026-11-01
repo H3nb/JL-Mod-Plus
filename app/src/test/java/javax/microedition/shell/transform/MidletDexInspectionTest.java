@@ -45,11 +45,11 @@ public class MidletDexInspectionTest {
 
         File payload = new File(temporary.getRoot(), "converted.dex");
         Main.Arguments arguments = new Main.Arguments();
-        arguments.fileNames = new String[] { classFile.getPath() };
+        arguments.fileNames = new String[] { new File(temporary.getRoot(), "." + File.separator + classFile.getName()).getPath() };
         arguments.outName = payload.getPath();
         arguments.numThreads = 1;
         ConversionResult converted = Main.runWithResult(arguments);
-        assertTrue(converted.toString(), converted.isSuccess());
+        assertTrue(converted.getDiagnostics().toString(), converted.isSuccess());
 
         Map<String, String> descriptor = new HashMap<>();
         MidletTransformMetadata.mark(descriptor);
