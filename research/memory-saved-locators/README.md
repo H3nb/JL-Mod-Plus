@@ -103,3 +103,46 @@ specific demonstrated need.
   imply identical game saves, chosen MIDlet entry point or semantic object.
 
 No production files or branch `alpha` were edited. No merge.
+
+
+## Follow-up: actual engine and alternatives (2026-11-01)
+
+Research-only GitHub Actions run 41260056197 **passed all three jobs**:
+- Java 8 JAR across two JDK classloaders: direct locator pass.
+- Alias-preserving graph traversal: 3 paths to the same target; 2 retained
+  after one equal-valued alias is redirected; bounded traversal pass.
+- The actual `ManagedJavaMemoryEngine` JVM test bound a new target directly
+  into its private OwnerBucket/Watch machinery after a runtime restart,
+  without starting a second search, then edited via the **existing** typed
+  edit method. Pass. The test intentionally uses reflective access to
+  private internals: this is proof of reuse feasibility, not a production API.
+
+**Falsified hypothesis:** a predecessor DAG storing only shortest-depth
+incoming edges is sufficient to retain useful alternative routes. It lost
+both two-hop paths when a one-hop route reached the same target first.
+The corrected `DagProbe` expands each object once but records bounded
+incoming edges even when their routes are longer; path enumeration detects
+cycles and caps depth/results. Local JDK 21 result: 3 routes before one
+alias replacement, 2 afterward, 5 nodes and 5 edges; bounded search pass.
+This is a tiny fixture, not an Android performance benchmark.
+
+Code inspection found the source transformer already handles static
+primitive/reference fields without a source `<clinit>`: the
+`AndroidClassVisitor` synthesizes the initializer tail publication for
+managed static roots. Avoid duplicating this hook. Also, do not bypass
+initialization checks by reflecting an unregistered static class.
+
+**Updated recommendation:** start with the *existing single verified
+provenance route* and direct-binding API for static/instance targets; retain
+the multi-parent on-demand traversal as a measured expansion path only if
+real JAR samples prove an actual coverage gap. Multi-path identity
+agreement is useful evidence but cannot establish game-semantic identity
+when the game intentionally changes which entity a stable field/index
+refers to. No auto-apply on imported definitions.
+
+Remaining production gates: actual converted JAR and Android :midlet
+integration, concurrent mutation safety, file persistence and import,
+install/delete/reinstall ownership fencing, and representative-game
+coverage measurements.
+
+All commits remain disposable R&D. Do not merge this branch.

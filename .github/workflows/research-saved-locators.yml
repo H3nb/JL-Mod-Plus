@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        probe: [direct-locator, alias-graph]
+        probe: [direct-locator, alias-graph, predecessor-graph]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -41,6 +41,17 @@ jobs:
           jar cf out/alias/game.jar -C out/alias/classes .
           javac --release 8 -d out/alias/probe probe/AliasProbe.java
           java -cp out/alias/probe AliasProbe out/alias/game.jar
+
+      - name: Multi-parent bounded predecessor graph
+        if: matrix.probe == 'predecessor-graph'
+        run: |
+          set -euo pipefail
+          cd research/memory-saved-locators
+          mkdir -p out/dag/classes out/dag/probe
+          javac --release 8 -d out/dag/classes fixture/AliasGame.java
+          jar cf out/dag/fixture.jar -C out/dag/classes .
+          javac --release 8 -d out/dag/probe probe/DagProbe.java
+          java -cp out/dag/probe DagProbe out/dag/fixture.jar
 
   existing-engine:
     name: Actual managed engine - focused JVM test
