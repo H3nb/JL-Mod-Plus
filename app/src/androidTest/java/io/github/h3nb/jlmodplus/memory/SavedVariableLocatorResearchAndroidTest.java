@@ -5,7 +5,6 @@ package io.github.h3nb.jlmodplus.memory;
 import static org.junit.Assert.*;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import java.lang.reflect.Field;
 import javax.microedition.shell.MemoryDiscoveryBridge;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,67 +25,63 @@ public final class SavedVariableLocatorResearchAndroidTest {
         static int shared = DISTINCT_VALUE;
     }
 
-    private static Field field(Class<?> owner, String name, Class<?> type) throws Exception {
-        Field f = owner.getDeclaredField(name);
-        assertSame(type, f.getType());
-        f.setAccessible(true);
-        return f;
-    }
-
-    // The persistent recipe stores only two class/field names, never the actual Java objects.
-    private static Leaf resolvePlayer(Object root) throws Exception {
-        if (root == null || root.getClass() != Root.class) throw new IllegalArgumentException();
-        Field player = field(Root.class, "player", Leaf.class);
-        return (Leaf) player.get(root);
-    }
-
-    @Test public void androidArtFindsManagedCandidateAndRebindsToSecondRuntime() throws Exception {
+    @Test public void androidArtUsesExistingManagedEngineToCaptureAndRebind() throws Exception {
+        ManagedJavaMemoryEngine.ResearchFieldLocator saved = null;
+        Root first = new Root();
+        ManagedJavaMemoryEngine initial = new ManagedJavaMemoryEngine();
         MemoryDiscoveryBridge.install(FIRST_TOKEN, Root.class.getClassLoader());
         try {
-            Root first = new Root();
             MemoryDiscoveryBridge.setMidletRoot(FIRST_TOKEN, first);
             MemoryDiscoveryBridge.tailSeen(Root.class);
             MemoryDiscoveryBridge.tailSeen(Leaf.class);
-            ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
             ManagedJavaMemoryEngine.ManagedOperationResult search =
-                    engine.startExact(FIRST_TOKEN, MemoryEngineContract.TYPE_INT,
+                    initial.startExact(FIRST_TOKEN, MemoryEngineContract.TYPE_INT,
                             MemoryEngineContract.PREDICATE_EQUAL, DISTINCT_VALUE, 0L, 0L);
             assertEquals(MemoryEngineContract.RESULT_OK, search.code);
             assertTrue("fixture should contain several equal-valued fields", search.resultCount >= 3L);
             ManagedJavaMemoryEngine.ManagedPage page =
-                    engine.resultPage(FIRST_TOKEN, search.revision, 0, 100);
-            boolean foundVerifiedCoins = false;
+                    initial.resultPage(FIRST_TOKEN, search.revision, 0, 100);
             for (long id : page.ids) {
                 ManagedJavaMemoryEngine.ManagedInspection inspected =
-                        engine.inspect(FIRST_TOKEN, search.revision, id, 1);
+                        initial.inspect(FIRST_TOKEN, search.revision, id, 1);
                 if ("coins".equals(inspected.source.fieldName)
                         && inspected.path.status == MemoryEngineContract.PATH_VERIFIED
                         && inspected.path.path.contains("player")) {
-                    foundVerifiedCoins = true;
+                    saved = initial.researchCaptureFieldLocator(FIRST_TOKEN, search.revision, id);
                     break;
                 }
             }
-            assertTrue("existing scanner/Inspector must expose a rooted numeric field",
-                    foundVerifiedCoins);
-            assertEquals(DISTINCT_VALUE, field(Leaf.class, "coins", int.class)
-                    .getInt(resolvePlayer(first)));
+            assertNotNull("The existing Inspector must supply a verified root-to-target path", saved);
+            saved = saved.copyStringsOnly();
+            assertEquals(ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_MIDLET, saved.rootKind);
+            assertEquals(2, saved.fields.length);
         } finally {
+            initial.runtimeClosed(FIRST_TOKEN);
             MemoryDiscoveryBridge.close(FIRST_TOKEN);
         }
 
+        Root second = new Root();
+        ManagedJavaMemoryEngine restarted = new ManagedJavaMemoryEngine();
         MemoryDiscoveryBridge.install(SECOND_TOKEN, Root.class.getClassLoader());
         try {
-            Root second = new Root();
             MemoryDiscoveryBridge.setMidletRoot(SECOND_TOKEN, second);
-            // Resolve a typed structural path directly, with no second memory scan.
-            Object liveRoot = MemoryDiscoveryBridge.snapshot(SECOND_TOKEN).root();
-            Leaf resolved = resolvePlayer(liveRoot);
-            Field coins = field(Leaf.class, "coins", int.class);
-            assertEquals(DISTINCT_VALUE, coins.getInt(resolved));
-            coins.setInt(resolved, DISTINCT_VALUE + 1);
+            MemoryDiscoveryBridge.tailSeen(Root.class);
+            MemoryDiscoveryBridge.tailSeen(Leaf.class);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    restarted.researchBindFieldLocator(SECOND_TOKEN, saved, "Coins", 0L).code);
+            assertEquals(0L, restarted.session(SECOND_TOKEN).resultCount);
+            ManagedJavaMemoryEngine.ManagedPage watch = restarted.watchPage(SECOND_TOKEN);
+            assertEquals(1, watch.ids.length);
+            assertEquals("Coins", watch.labels[0]);
+            assertEquals(Integer.toString(DISTINCT_VALUE), watch.values[0]);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    restarted.editTyped(SECOND_TOKEN, 0L, watch.ids, MemoryEngineContract.TYPE_INT,
+                            Integer.toString(DISTINCT_VALUE + 1), true, 0L).code);
             assertEquals(DISTINCT_VALUE + 1, second.player.coins);
+            assertEquals(DISTINCT_VALUE, first.player.coins);
             assertEquals(DISTINCT_VALUE, second.decoy);
         } finally {
+            restarted.runtimeClosed(SECOND_TOKEN);
             MemoryDiscoveryBridge.close(SECOND_TOKEN);
         }
     }
