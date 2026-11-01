@@ -75,4 +75,19 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             chmod +x ./gradlew
-            ./gradlew --no-daemon -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.memory.SavedVariableLocatorResearchAndroidTest,io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#researchDescriptorSurvivesProcessRestartAndBindsWatchWithoutNewSearch :app:connectedEmulatorDebugAndroidTest --stacktrace
+            if ! ./gradlew --no-daemon -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.memory.SavedVariableLocatorResearchAndroidTest,io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#researchDescriptorSurvivesProcessRestartAndBindsWatchWithoutNewSearch :app:connectedEmulatorDebugAndroidTest --stacktrace; then
+              echo '---- R&D instrumentation failures ----'
+              find app/build/outputs/androidTest-results/connected -type f -name '*.xml' -print -exec head -c 28000 {} \; || true
+              exit 1
+            fi
+
+      - name: Upload target-process test reports (including failures)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: saved-locator-android-api-${{ matrix.api }}
+          path: |
+            app/build/outputs/androidTest-results/connected/
+            app/build/reports/androidTests/connected/
+          if-no-files-found: ignore
+          retention-days: 7
