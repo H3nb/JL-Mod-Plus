@@ -344,11 +344,46 @@ low-contrast 8x8 guest image at a 96x96 viewport. Replacing the disposable
 pipeline forced one edge-analysis pass; an unchanged host redraw reused
 that pass. No physical GPU timing or full MIDlet lifecycle was measured.
 
-**Next discriminating gate:** connect the actual pass descriptors (including
-source-sized final blit versus viewport-sized final draw) to a bounded
-on-device executor. Preserve `PassPrev2Texture`/source orientation and
-per-pass sampler policy. Parameter edits on a *retained* pipeline must
-invalidate the affected cached pass outputs; the current test only proved
-pipeline replacement, not in-place edits. Do not promote the test's field
-reflection or static research toggles, or add generic LUT/history/feedback
-machinery without a specific, validated preset requiring them.
+**Verified two-pass planning gate:** [GLES CI 41255596735](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41255596735)
+passed 9 research classes / 13 tests on Android 35 SwiftShader.
+The bounded executor consumes parsed pass descriptors: original Gaussian
+`gauss_4tap.glslp` renders both passes at source dimensions, retains the
+second output in a separate RGBA8 FBO, and uses pinned `stock.glsl` to
+present into the host game viewport. Pinned xBRZ Crisp renders its second
+pass directly to the viewport without that FBO, with pixel output exactly
+matching the independently verified prior hardcoded Crisp pipeline.
+The first and second Gaussian FBO passes run once per new guest publication;
+unchanged host redraw reuses both outputs.
+
+**Source ownership correction:** `Canvas.updateSize()` can publish new
+canvas width/height before `offscreenCopy` is replaced. Reading live
+`Canvas.width/height` after uploading an older bitmap mixes two
+generations and can permanently disable the research pipeline. The GLES
+draw path now snapshots `offscreenCopy` logical extent and backing bitmap
+under the **same** `bufferLock` and passes that consistent source extent
+to the executor. The mounted GlesView test waits for the completed,
+recomputed resize frame rather than treating an intermediate old-size
+frame as the settled result. The intentionally padded softbar backing still
+fails closed, and context recreation remains verified. The first CI
+attempt [41254724452](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41254724452)
+exposed this transient race; the final revision passed.
+
+**Remaining contract:** this is **not** a general GLSLP engine. The executor
+supports two RGBA8 passes, known source/previous/original inputs, basic
+filters and clamp-to-edge wrapping; the stock final blit currently uses
+the host's existing filter. It must reject unsupported alias/LUT/history,
+float/sRGB framebuffer and desktop GLSL requirements before user-facing
+activation. The current prototype reparses dimensions/probes GL limits at
+draw time and compiles an unused stock program for viewport-final xBRZ;
+a production implementation should preplan/cache at geometry changes and
+avoid unnecessary programs. Parameter edits on a *retained* pipeline still
+need dependency-aware output invalidation. No actual MIDlet in
+`MicroActivity`, physical ARM64 GPU cost/power or HD guest-renderer path
+has been verified. Do not promote reflected research wiring or static
+injection toggles to shipping code.
+
+**Next discriminating gate:** perform one real MIDlet/host presentation
+smoke test with shader opt-in and verified fallback, then profile the
+two-pass budget and upload behavior on physical ARM64 before finalizing
+runtime architecture. Do not build generic LUT/history/feedback plumbing
+merely because the corpus contains those features.
