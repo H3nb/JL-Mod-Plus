@@ -264,7 +264,10 @@ public class VirtualControlsKeyboardResizeTest {
     @Test
     public void resizeSnapKeepsAnAlreadyAlignedButtonEdgeOverTheGrid() throws Exception {
         keyboard.setEditorSnapResizeEnabled(true);
-        RectF peer = rectField(keyByLabel("5"));
+        Object key = keyByLabel("5");
+        Field rect = findField(key.getClass(), "rect");
+        rect.setAccessible(true);
+        RectF peer = (RectF) rect.get(key);
         float oldLeft = peer.left, oldTop = peer.top;
         try {
             peer.offsetTo(157.7f, 160.7f);
