@@ -39,6 +39,7 @@ internal fun UpdatesScreen(
     repository: UpdateRepository,
     onBack: () -> Unit,
     onOpenRelease: (String) -> Unit,
+    onOpenDownload: (String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val status = repository.status
@@ -131,11 +132,22 @@ internal fun UpdatesScreen(
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(message), style = MaterialTheme.typography.bodyMedium)
+                if (repository.checking && status != UpdateStatus.Checking) {
+                    Text(stringResource(R.string.updates_checking))
+                }
+                if (repository.refreshFailed && status != UpdateStatus.Failed) {
+                    Text(stringResource(R.string.updates_failed))
+                }
                 if (status is UpdateStatus.Available) {
                     Text(
                         status.candidate.versionName,
                         style = MaterialTheme.typography.titleMedium,
                     )
+                    status.candidate.downloadUrl?.let { url ->
+                        Button(onClick = { onOpenDownload(url) }) {
+                            Text(stringResource(R.string.updates_download_apk))
+                        }
+                    }
                     Button(onClick = { onOpenRelease(status.candidate.releaseUrl) }) {
                         Text(stringResource(R.string.updates_view_release))
                     }
@@ -153,7 +165,7 @@ internal fun UpdatesScreen(
             }
             Button(
                 onClick = { scope.launch { repository.check(manual = true) } },
-                enabled = status != UpdateStatus.Checking,
+                enabled = !repository.checking,
             ) {
                 Text(stringResource(R.string.updates_check))
             }

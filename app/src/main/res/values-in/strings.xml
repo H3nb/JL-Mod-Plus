@@ -1033,12 +1033,12 @@
     <string name="updates_channel">Saluran pembaruan</string>
     <string name="updates_stable">Stabil</string>
     <string name="updates_preview">Pratinjau</string>
-    <string name="updates_automatic">Periksa otomatis saat membuka Pustaka</string>
+    <string name="updates_automatic">Periksa otomatis saat Pustaka aktif</string>
     <string name="updates_not_checked">Belum ada pemeriksaan pembaruan yang selesai.</string>
     <string name="updates_checking">Memeriksa pembaruan…</string>
     <string name="updates_current">Anda sudah menggunakan versi terbaru.</string>
     <string name="updates_no_release">Belum ada rilis kompatibel yang dipublikasikan di saluran ini.</string>
-    <string name="updates_not_installable">Ada rilis yang lebih baru, tetapi nomor build-nya tidak dapat memperbarui instalasi ini.</string>
+    <string name="updates_not_installable">Ada rilis yang lebih baru, tetapi tidak kompatibel dengan perangkat atau instalasi ini.</string>
     <string name="updates_failed">Gagal memeriksa pembaruan. Periksa koneksi lalu coba lagi.</string>
     <string name="updates_available">Pembaruan tersedia</string>
     <string name="updates_view_release">Lihat rilis</string>
@@ -1195,6 +1195,9 @@
     <string name="layout_editor_guide_tools">Alat editor</string>
     <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan, membatalkan, atau melanjutkan pengeditan.</string>
     <string name="layout_editor_guide_start">Mulai mengedit</string>
+    <string name="updates_download_apk">Unduh APK</string>
+    <string name="updates_skip_version">Lewati versi ini</string>
+    <string name="updates_dialog_message">JL-Mod Plus %1$s tersedia. Versi terpasang: %2$s. Unduh APK atau lihat rilisnya di GitHub.</string>
     <string name="memory_editor_panel_opacity">Opasitas panel</string>
     <string name="memory_editor_panel_opacity_help">Mengatur latar panel tanpa memudarkan teks atau ikon.</string>
     <string name="memory_editor_reconversion_required">Hasil konversi MIDlet ini tidak kompatibel dengan Memory Editor. Tutup game, lalu konversi ulang atau instal kembali menggunakan JL-Mod Plus.</string>
