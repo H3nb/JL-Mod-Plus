@@ -21,32 +21,31 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import java.util.Base64;
 
 public class MidletDexInspectionTest {
     @Rule public final TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
     public void legacyDexWithoutTailRejectsFinalObjectAndArrayRoots() throws Exception {
-        // Compile a real class and convert it with the production DEX pipeline.
-        // Static final does not mean a reference has a ConstantValue initializer.
-        File sourceDir = temporary.newFolder("source");
-        File source = new File(sourceDir, "LegacyRoot.java");
-        Files.write(source.toPath(), (
-                "public final class LegacyRoot {\n" +
-                "  static final Object ROOT = new Object();\n" +
-                "  static final int[] VALUES = new int[] { 1, 2 };\n" +
-                "  static final String LABEL = \"constant\";\n" +
-                "}\n").getBytes(StandardCharsets.UTF_8));
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        assertNotNull("JVM tests require a JDK compiler", compiler);
-        assertEquals(0, compiler.run(null, null, null, "--release", "8",
-                "-d", sourceDir.getPath(), source.getPath()));
+        // Class bytes produced by javac --release 8 for the source below.
+        // An inline fixture avoids javax.tools on Android's unit-test boot classpath.
+        // public final class LegacyRoot {
+        //   static final Object ROOT = new Object();
+        //   static final int[] VALUES = new int[] {1, 2};
+        //   static final String LABEL = "constant";
+        // }
+        File classFile = new File(temporary.getRoot(), "LegacyRoot.class");
+        byte[] bytecode = Base64.getDecoder().decode(
+                "yv66vgAAADQAGwoAAgADBwAEDAAFAAYBABBqYXZhL2xhbmcvT2JqZWN0AQAGPGluaXQ+AQADKClWCQAIAAkHAAoMAAsADAEACkxlZ2FjeVJvb3QBAARST09UAQASTGphdmEvbGFuZy9PYmplY3Q7" +
+                "CQAIAA4MAA8AEAEABlZBTFVFUwEAAltJAQAFTEFCRUwBABJMamF2YS9sYW5nL1N0cmluZzsBAA1Db25zdGFudFZhbHVlCAAVAQAIY29uc3RhbnQBAARDb2RlAQAPTGluZU51bWJlclRhYmxl" +
+                "AQAIPGNsaW5pdD4BAApTb3VyY2VGaWxlAQAPTGVnYWN5Um9vdC5qYXZhADEACAACAAAAAwAYAAsADAAAABgADwAQAAAAGAARABIAAQATAAAAAgAUAAIAAQAFAAYAAQAWAAAAHQABAAEAAAAFKrcAAbEAAAAB" +
+                "ABcAAAAGAAEAAAABAAgAGAAGAAEAFgAAADUABAAAAAAAGbsAAlm3AAGzAAcFvApZAwRPWQQFT7MADbEAAAABABcAAAAKAAIAAAACAAoAAwABABkAAAACABo=");
+        Files.write(classFile.toPath(), bytecode);
 
         File payload = new File(temporary.getRoot(), "converted.dex");
         Main.Arguments arguments = new Main.Arguments();
-        arguments.fileNames = new String[] { new File(sourceDir, "LegacyRoot.class").getPath() };
+        arguments.fileNames = new String[] { classFile.getPath() };
         arguments.outName = payload.getPath();
         arguments.numThreads = 1;
         ConversionResult converted = Main.runWithResult(arguments);
