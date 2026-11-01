@@ -1543,7 +1543,11 @@ final class ManagedJavaMemoryEngine {
 				OwnerBucket owner = ownerForObject(selectedOwner, kind, schema, null);
 				if (owner.provenancePath == null) owner.provenancePath = ancestry;
 				long id = ManagedJavaMemoryIds.encode(kind, owner.handle, slot);
-				if (watches.indexOf(id) < 0) watches.append(id, owner, slot, read[0], label.trim());
+				if (watches.indexOf(id) >= 0) return failureLocked(
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"Research binding cannot silently change an existing Watch policy");
+				watches.append(id, owner, slot, read[0], label.trim());
+				watches.researchSaved[watches.count - 1] = true;
 			}
 			return success(token, "Research locator was added to Watch without Search");
 		} catch (ReflectiveOperationException | RuntimeException | LinkageError error) {
@@ -1799,7 +1803,10 @@ final class ManagedJavaMemoryEngine {
 				if (owner != snapshot.owners[index] || slot != snapshot.slots[index]) continue;
 				eligible++;
 				Object strongOwner = owner == null ? null : owner.strongOwner();
-				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
+				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)
+						|| (watches.researchSaved[watchIndex]
+						&& inspectPath(token, owner, strongOwner, slot).status
+						!= MemoryEngineContract.PATH_VERIFIED)) {
 					watches.freezePaused[watchIndex] = true;
 					rejected++;
 					continue;
@@ -2248,6 +2255,12 @@ final class ManagedJavaMemoryEngine {
 			if (owner.kind != KIND_STATIC_FIELD && owner.strongOwner() != batch.strongOwners[index]) {
 				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"The managed owner was collected or rebound before the mutation could commit");
+			}
+			if (watchIndex >= 0 && watches.researchSaved[watchIndex]
+					&& inspectPath(token, owner, batch.strongOwners[index], batch.slots[index]).status
+					!= MemoryEngineContract.PATH_VERIFIED) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"Saved-variable ancestry changed; explicitly resolve the definition again");
 			}
 		}
 		return null;
@@ -3990,6 +4003,8 @@ final class ManagedJavaMemoryEngine {
 		final boolean[] freeze = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final long[] freezeValues = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freezePaused = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
+		// R&D only: denotes a verified imported binding, not an ordinary Watch target.
+		final boolean[] researchSaved = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		int count;
 
 		int indexOf(long id) {
@@ -4006,6 +4021,7 @@ final class ManagedJavaMemoryEngine {
 			labels[count] = label;
 			freeze[count] = false;
 			freezePaused[count] = false;
+			researchSaved[count] = false;
 			count++;
 		}
 
@@ -4023,12 +4039,14 @@ final class ManagedJavaMemoryEngine {
 				freeze[index] = freeze[last];
 				freezeValues[index] = freezeValues[last];
 				freezePaused[index] = freezePaused[last];
+				researchSaved[index] = researchSaved[last];
 			}
 			ids[last] = 0L;
 			owners[last] = null;
 			labels[last] = null;
 			freeze[last] = false;
 			freezePaused[last] = false;
+			researchSaved[last] = false;
 			count = last;
 		}
 
