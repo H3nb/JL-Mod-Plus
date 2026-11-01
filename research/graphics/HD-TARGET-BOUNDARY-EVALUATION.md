@@ -52,18 +52,42 @@ research-only state with logical 12x10 pixels and physical 24x20 backing.
   that mutation is neither a production implementation nor a recommended API.
 
 **GLES control:** [CI 41258305293](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41258305293)
-passed the existing instrumented GLES research suite after the 2D probes
-were added. Nothing from this 2D experiment changes production guest
-rendering, profile persistence or the shader executor.
+passed the existing **9 classes / 13 instrumentation tests** after
+the two new fixture sources were added. Nothing in these HD probes changes
+guest production drawing, profiles or the GLSLP executor. A later
+[CI 41259088148](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41259088148)
+reached and passed the real Canvas 3/3 suite but its shell exited 255
+at the subsequent ADB/logcat operation, before the final mounted-view class.
+This is an incomplete environment/logging run, *not* a demonstrated shader
+pixel failure or a second full green suite. The earlier full green suite
+remains the strongest existing GLES regression checkpoint.
 
-**Mascot evidence boundary:** a first isolated pbuffer probe on Android 35
-reached the real `Render.bind` path but failed at `Render.release` because
-`micro3d.Utils` initializes preferences through
-`ContextHolder.getActivity()` and there was no `MicroActivity` in this
-headless fixture. This is **not evidence of a broken Mascot renderer**.
-The follow-up separates pbuffer/projection examination from the
-`MicroActivity`-dependent JNI readback path; final CI outcome must be
-recorded only when obtained.
+**Android 6 differential:** [CI 41259108210](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41259108210),
+API 23 x86_64 emulator, passed **LCDUI 2/2 and Mascot 1/1**.
+The LCDUI diagnostic mismatch counts were unchanged from Android 35:
+5 naive copy-area pixels and 59 wrong-crop pixels out of 120 logical samples.
+
+**Verified Mascot pbuffer/projection boundary:** [API 35 CI 41259088191](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41259088191)
+passed **Mascot 1/1** and LCDUI 2/2; [API 23 CI 41259108210](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41259108210)
+passed the same probe. Both emulator artifacts show real `Render.bind`
+pbuffer dimensions **16x12 -> 32x24** while `Image` still reports
+**16x12** logical pixels. The current `glScissor` source clip is **16x12**
+from the scaled Android Canvas, which no longer spans the 32x24
+physical target. For a logical center (4,3), the real projection's
+normalized horizontal translation changed **-0.5 -> -0.75** when physical
+dimensions doubled without a center adjustment. Mapping the center to
+physical (8,6) restored **-0.5**. This is evidence that the projection
+and clip require *separate* logical-to-physical adaptation.
+
+The initial Mascot run failed at `Render.release` because
+`micro3d.Utils` accesses `ContextHolder.getActivity()`, which is null
+in a headless test (and its JNI readback helper was not part of the
+native-disabled fast test). The final bounded probe avoids that call,
+checks the actual GLES pbuffer/projection, then explicitly destroys
+its EGL resources in test cleanup. **The experiment does not claim that
+`draw/flush/release`, geometry, background-to-3D-to-HUD composition, JNI
+readback, or performance works at 2x.** Those need real `MicroActivity`
+and native-enabled tests, not a fake Activity fallback in production.
 
 ## Candidate architecture — smallest compatible scope
 
