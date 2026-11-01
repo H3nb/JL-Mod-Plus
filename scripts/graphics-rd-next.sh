@@ -4,6 +4,7 @@
 set -euo pipefail
 case "${GRAPHICS_ARCH_CASE:-}" in
   replay) selector=io.github.h3nb.jlmodplus.research.RecordedDualPlaneResearchTest ;;
+  guest) selector=io.github.h3nb.jlmodplus.research.GuestGraphicsDualPlaneResearchTest ;;
   gpu) selector=io.github.h3nb.jlmodplus.research.GpuResidentCompositionResearchTest ;;
   *) echo 'Unknown GRAPHICS_ARCH_CASE' >&2; exit 2 ;;
 esac
