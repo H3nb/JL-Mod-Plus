@@ -240,3 +240,35 @@ actual converted `Locator-Lab.jar` running on their Android device.
 
 Screenshot contents are summarized, not checked into this repository. No
 production code was changed as a consequence of these two manual tests.
+
+
+## Restored Watch provenance and mutation boundary
+
+The converted-JAR test now exercises an authentic installation/conversion path
+and confirms that a versioned, source-JAR-fingerprinted field locator can be
+read after an actual `:midlet` process relaunch and rebound to a fresh Watch
+ID **without a second Search**. Android 15 reached the verified Watch value;
+the subsequent Write/runner-lifecycle stage remains unverified. Do not count
+a compile-only or synthetic-JVM pass as proof of the final Write.
+
+A source inspection found a previously missing invariant: research rebinding
+inserted the owner into Watch without restoring `OwnerBucket.provenancePath`.
+The Inspector would therefore report `PATH_UNKNOWN` even for a verified
+import. The research resolver now builds weak `ProvenanceNode` ancestry
+along the exact typed field chain and verifies it before binding, reusing
+the existing Inspector observation mechanism. A focused engine contract test
+checks that the recovered Watch path is `PATH_VERIFIED` and becomes
+`PATH_CHANGED` (without retargeting) when the MIDlet replaces its owner.
+
+**Important remaining policy decision:** path observation remains diagnostic,
+not mutation authorization. A verified rebinding can become stale between
+resolution and Edit. The production Saved Variables design must explicitly
+decide how to suppress or require confirmation of writes after path change;
+do not silently change existing general-purpose Watch edit behavior solely
+to make this research test pass. No automatic imported writes/freezes.
+
+The current experimental instrumentation runner occasionally reports
+`Process crashed` without an assertion; this alone does not establish
+an engine crash. A recent API 35 attempt also failed at Gradle dependency
+resolution before test execution. Evaluate precise XML/logcat and actual
+test start/completion before attributing failures to application code.
