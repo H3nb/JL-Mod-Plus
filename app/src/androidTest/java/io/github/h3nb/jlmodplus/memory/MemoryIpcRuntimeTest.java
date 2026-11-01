@@ -65,8 +65,8 @@ import io.github.h3nb.jlmodplus.util.Constants;
 public final class MemoryIpcRuntimeTest {
 	private static final long SERVICE_TIMEOUT_MILLIS = 10_000L;
 	private static final long OPERATION_TIMEOUT_MILLIS = 30_000L;
-	private static final String FIXTURE_NAME = "Memory IPC Fixture";
-	private static final String FIXTURE_CLASS = "jlmod.platformfixture.PlatformCompatMidlet";
+	private static final String FIXTURE_NAME = "Locator Lab R&D";
+	private static final String FIXTURE_CLASS = "research.locator.LocatorLabMIDlet";
 
 	private Context context;
 	private SharedPreferences preferences;
@@ -92,8 +92,22 @@ public final class MemoryIpcRuntimeTest {
 		File configDirectory = new File(new File(root, "configs"), "fixture");
 		assertTrue(appDirectory.mkdirs() || appDirectory.isDirectory());
 		assertTrue(configDirectory.mkdirs() || configDirectory.isDirectory());
-		copyFile(new File(context.getApplicationInfo().sourceDir),
-				new File(appDirectory, "converted.zip"));
+		File sourceJar = new File(appDirectory, "res.jar");
+		try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext()
+				.getAssets().open("saved-locator/Locator-Lab.jar");
+				OutputStream output = new FileOutputStream(sourceJar)) {
+			byte[] bytes = new byte[8192];
+			for (int n; (n = input.read(bytes)) != -1; ) output.write(bytes, 0, n);
+		}
+		// Use the exact transform pipeline used by AppInstaller; do not fake the marker
+		// or substitute debug-APK classes for converted guest bytecode.
+		com.android.dx.command.dexer.ConversionResult converted =
+				com.android.dx.command.dexer.Main.convert(new String[]{
+						"--no-optimize", "--output="
+						+ new File(appDirectory, "converted.zip").getAbsolutePath(),
+						sourceJar.getAbsolutePath()
+				});
+		assertTrue("Research MIDlet conversion failed", converted.isSuccess());
 		fixtureAppId = ResearchLibraryFixture.register(context, root);
 		assertTrue("Debug MIDlet must have an installed Library identity", fixtureAppId > 0L);
 		writeManifest(new File(appDirectory, "converted.dex.conf"));
@@ -131,7 +145,7 @@ public final class MemoryIpcRuntimeTest {
 		try {
 			OperationResult result = callback.await(service.startKnownSearch(0L,
 						MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
-						"0", null));
+						"1247", null));
 			assertEquals(MemoryEngineContract.RESULT_NO_SESSION, result.resultCode);
 			assertEquals(MemoryEngineContract.REASON_NO_RUNTIME,
 					result.details.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
@@ -222,7 +236,7 @@ public final class MemoryIpcRuntimeTest {
 	 */
 	@Test
 	public void researchDescriptorSurvivesProcessRestartAndBindsWatchWithoutNewSearch() throws Exception {
-		final String expectedValue = "881177";
+		final String expectedValue = "89";
 		android.util.AtomicFile file = new android.util.AtomicFile(
 				new File(context.getFilesDir(), "memory-rnd-field-locator.json"));
 		file.delete();
@@ -245,7 +259,7 @@ public final class MemoryIpcRuntimeTest {
 				assertNotNull(fields);
 				Bundle descriptor = null;
 				for (int i = 0; i < ids.length; i++) {
-					if ("savedLocatorProbe".equals(fields[i])) {
+					if ("health".equals(fields[i])) {
 						descriptor = target.researchCaptureFieldLocator(tokenFirst, revision, ids[i]);
 						break;
 					}
@@ -255,13 +269,13 @@ public final class MemoryIpcRuntimeTest {
 						descriptor.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
 				assertEquals(1, descriptor.getInt("researchSchema"));
 				assertEquals(1, descriptor.getStringArray("researchNames").length);
-				assertEquals("savedLocatorProbe",
+				assertEquals("health",
 						descriptor.getStringArray("researchNames")[0]);
 
 				org.json.JSONObject record = new org.json.JSONObject();
 				record.put("fileSchema", 1);
-				record.put("fixtureArchiveSha256",
-						researchSha256(new File(appDirectory, "converted.zip")));
+				record.put("sourceJarSha256",
+						researchSha256(new File(appDirectory, "res.jar")));
 				record.put("rootKind", descriptor.getInt("researchRootKind"));
 				record.put("rootClass", descriptor.getString("researchRootClass"));
 				record.put("classes", researchJsonArray(descriptor.getStringArray("researchClasses")));
@@ -293,8 +307,8 @@ public final class MemoryIpcRuntimeTest {
 						new String(file.readFully(), StandardCharsets.UTF_8));
 				assertEquals(1, saved.getInt("fileSchema"));
 				assertEquals("Fixture identity must survive restart",
-						saved.getString("fixtureArchiveSha256"),
-						researchSha256(new File(appDirectory, "converted.zip")));
+						saved.getString("sourceJarSha256"),
+						researchSha256(new File(appDirectory, "res.jar")));
 				Bundle descriptor = new Bundle();
 				descriptor.putInt("researchSchema", 1);
 				descriptor.putInt("researchRootKind", saved.getInt("rootKind"));
@@ -325,10 +339,10 @@ public final class MemoryIpcRuntimeTest {
 				assertEquals(1, watchIds.length);
 				assertEquals(expectedValue, watchValues[0]);
 				Bundle write = target.managedEditTyped(tokenSecond, 0L, watchIds,
-						MemoryEngineContract.TYPE_INT, "881178", true, 0L);
+						MemoryEngineContract.TYPE_INT, "90", true, 0L);
 				assertEquals(MemoryEngineContract.RESULT_OK,
 						write.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
-				assertEquals("881178", target.managedWatchPage(tokenSecond)
+				assertEquals("90", target.managedWatchPage(tokenSecond)
 						.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
 			}
 		} finally {
@@ -554,11 +568,11 @@ public final class MemoryIpcRuntimeTest {
 				+ "MIDlet-Name: " + FIXTURE_NAME + "\n"
 				+ "MIDlet-Vendor: JL-Mod Plus\n"
 				+ "MIDlet-Version: 1.0\n"
-				+ "JLMod-Transform-Version: 2\n"
 				+ "MIDlet-1: " + FIXTURE_NAME + ",," + FIXTURE_CLASS + "\n";
-		try (FileOutputStream output = new FileOutputStream(manifest)) {
-			output.write(text.getBytes(StandardCharsets.UTF_8));
-		}
+		io.github.h3nb.jlmodplus.jar.Descriptor descriptor =
+				new io.github.h3nb.jlmodplus.jar.Descriptor(text, false);
+		javax.microedition.shell.transform.MidletTransformMetadata.mark(descriptor.getAttrs());
+		descriptor.writeTo(manifest);
 	}
 
 	private static void copyFile(File source, File destination) throws IOException {
