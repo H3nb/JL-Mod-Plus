@@ -291,7 +291,9 @@ public final class MemoryIpcRuntimeTest {
 				}
 			}
 
-			stopMidletAndTasks();
+			// Simulate an isolated guest process death without removing the task.
+			// Task removal invokes asynchronous user-stop work and can kill the next session.
+			stopMidletProcessOnly();
 			launchFixture();
 			awaitProcess(FIXTURE_NAME);
 			try (ResearchTargetConnection second = ResearchTargetConnection.connect(context)) {
@@ -547,6 +549,20 @@ public final class MemoryIpcRuntimeTest {
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
 		throw new AssertionError("MIDlet process did not start for " + name);
+	}
+
+	/** Research crash/restart only: unlike task removal, this does not request user-stop. */
+	private void stopMidletProcessOnly() {
+		String processName = context.getPackageName() + ":midlet";
+		int pid = processPid(processName);
+		assertTrue("A real target process must exist before restart", pid > 0);
+		android.os.Process.killProcess(pid);
+		long deadline = SystemClock.uptimeMillis() + SERVICE_TIMEOUT_MILLIS;
+		while (processPid(processName) == pid && SystemClock.uptimeMillis() < deadline) {
+			SystemClock.sleep(50L);
+		}
+		assertTrue("Old guest process did not exit before relaunch",
+				processPid(processName) != pid);
 	}
 
 	private void stopMidletAndTasks() {
