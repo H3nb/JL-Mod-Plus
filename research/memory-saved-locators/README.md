@@ -345,12 +345,12 @@ the existing Inspector observation mechanism. A focused engine contract test
 checks that the recovered Watch path is `PATH_VERIFIED` and becomes
 `PATH_CHANGED` (without retargeting) when the MIDlet replaces its owner.
 
-**Important remaining policy decision:** path observation remains diagnostic,
-not mutation authorization. A verified rebinding can become stale between
-resolution and Edit. The production Saved Variables design must explicitly
-decide how to suppress or require confirmation of writes after path change;
-do not silently change existing general-purpose Watch edit behavior solely
-to make this research test pass. No automatic imported writes/freezes.
+**Later R&D outcome:** the experiment now marks restored Saved Variables
+per Watch row, not by shared owner, and checks exact provenance in the existing
+Edit/Freeze commit path. Changed ancestry rejects a Saved Variable Edit and
+pauses its Freeze tick; ordinary Watch behavior is unchanged. This does not
+create an atomic transaction with concurrent guest code, and imported
+variables are never automatically edited or frozen.
 
 The current experimental instrumentation runner occasionally reports
 `Process crashed` without an assertion; this alone does not establish
@@ -397,6 +397,11 @@ Ordinary Watch rows keep their present original-owner identity behavior.
 Verification is best-effort against concurrently mutating guest code, not an
 atomic transaction with guest threads. The experimental code is **not** a
 production security boundary and contains no user-facing controls.
+The single-predecessor owner model has one more important limitation:
+two typed paths may reach the same Java owner. R&D currently compares
+actual weak predecessor edges and rejects a Bind when an existing owner
+would lend it a **different** provenance. This deliberately sacrifices
+some alias coverage instead of falsely authorizing an unrelated path.
 
 **Normal-exit test design:** a true user-initiated emulator exit invokes
 `MidletKeepAliveService` and `EmulatorShutdownService`, which intentionally
