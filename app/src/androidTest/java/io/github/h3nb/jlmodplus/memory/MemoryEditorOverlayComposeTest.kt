@@ -11,6 +11,7 @@ import android.view.KeyEvent
 import android.view.Window
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
@@ -52,38 +53,63 @@ import org.junit.Test
 class MemoryEditorOverlayComposeTest {
     @get:Rule val rule = createComposeRule()
 
+    @Test fun dialogPreservesVisibleHostSystemBars() {
+        var window: Window? = null
+        rule.setContent {
+            CompositionLocalProvider(LocalMemoryEditorSystemBars provides MemoryEditorSystemBars(true, true)) {
+                JLModPlusTheme {
+                    MemoryEditorDialog(onDismissRequest = {}, text = {
+                        val view = LocalView.current
+                        SideEffect { window = (view.parent as DialogWindowProvider).window }
+                        Text("Visible system bars")
+                    })
+                }
+            }
+        }
+        rule.waitUntil(5_000) {
+            window?.let { dialog ->
+                ViewCompat.getRootWindowInsets(dialog.decorView)?.let { insets ->
+                    insets.isVisible(WindowInsetsCompat.Type.statusBars()) &&
+                        insets.isVisible(WindowInsetsCompat.Type.navigationBars())
+                }
+            } == true
+        }
+    }
+
     @Test fun peekAboveNestedDialogsHidesEveryWindowAndKeepsItsPosition() {
         val overlay = MemoryEditorOverlayState()
         val nested = mutableStateOf(false)
         val windows = mutableMapOf<String, Window>()
         rule.setContent {
-            JLModPlusTheme {
-                MemoryEditorOverlayScope(overlay) {
-                    Box(Modifier.fillMaxSize().background(Color.Magenta))
-                    MemoryEditorDialog(onDismissRequest = {}, text = {
-                        val view = LocalView.current
-                        SideEffect { windows["form"] = (view.parent as DialogWindowProvider).window }
-                        TextButton(onClick = { nested.value = true }) { Text("Choices") }
-                        if (nested.value) {
-                            MemoryEditorDialog(onDismissRequest = { nested.value = false }, text = {
-                                val menuView = LocalView.current
-                                SideEffect { windows["menu"] = (menuView.parent as DialogWindowProvider).window }
-                                Text("Nested choice")
-                            })
-                        }
-                    })
+            CompositionLocalProvider(LocalMemoryEditorSystemBars provides MemoryEditorSystemBars(false, false)) {
+                JLModPlusTheme {
+                    MemoryEditorOverlayScope(overlay) {
+                        Box(Modifier.fillMaxSize().background(Color.Magenta))
+                        MemoryEditorDialog(onDismissRequest = {}, text = {
+                            val view = LocalView.current
+                            SideEffect { windows["form"] = (view.parent as DialogWindowProvider).window }
+                            TextButton(onClick = { nested.value = true }) { Text("Choices") }
+                            if (nested.value) {
+                                MemoryEditorDialog(onDismissRequest = { nested.value = false }, text = {
+                                    val menuView = LocalView.current
+                                    SideEffect { windows["menu"] = (menuView.parent as DialogWindowProvider).window }
+                                    Text("Nested choice")
+                                })
+                            }
+                        })
+                    }
                 }
             }
         }
         val originalBounds = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
         rule.onNodeWithText("Choices").performClick()
         assertEquals(originalBounds, rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot())
-        // Nested modal windows must not bring back Android navigation controls when
-        // they take focus (e.g. the Memory Editor overflow menu).
+        // Nested modals must retain the Canvas host's hidden bars after gaining focus.
         rule.waitUntil(5_000) {
             windows["menu"]?.let { menu ->
                 ViewCompat.getRootWindowInsets(menu.decorView)
-                    ?.isVisible(WindowInsetsCompat.Type.navigationBars()) == false
+                    ?.let { !it.isVisible(WindowInsetsCompat.Type.navigationBars()) &&
+                        !it.isVisible(WindowInsetsCompat.Type.statusBars()) } == true
             } == true
         }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput { down(center) }

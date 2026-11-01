@@ -22,6 +22,7 @@ import android.os.PersistableBundle
 import android.os.RemoteException
 import android.view.View
 import android.widget.Toast
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -41,6 +42,7 @@ import java.util.concurrent.atomic.AtomicLong
 internal class MemoryEditorComposeController(
     private val composeView: ComposeView,
     private val ownedRuntimeToken: Long,
+    private val systemBars: MemoryEditorSystemBars? = null,
     private val closeHost: () -> Unit,
 ) : MemoryEditorActions {
     private val context = composeView.context
@@ -238,8 +240,10 @@ internal class MemoryEditorComposeController(
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         composeView.visibility = View.GONE
         composeView.setContent {
-            JLModPlusTheme(paintWindowBackground = false) {
-                MemoryEditorRuntimeRoot(state = state, actions = this)
+            CompositionLocalProvider(LocalMemoryEditorSystemBars provides systemBars) {
+                JLModPlusTheme(paintWindowBackground = false) {
+                    MemoryEditorRuntimeRoot(state = state, actions = this)
+                }
             }
         }
     }

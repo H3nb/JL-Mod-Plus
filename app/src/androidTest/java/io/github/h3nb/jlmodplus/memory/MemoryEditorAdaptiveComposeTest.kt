@@ -19,6 +19,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
@@ -52,6 +53,20 @@ import org.junit.Test
 @OptIn(ExperimentalTestApi::class)
 class MemoryEditorAdaptiveComposeTest {
     @get:Rule val rule = createComposeRule()
+
+    @Test fun inspectorTabOnlyEnablesForOneSelectedCandidate() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val state = mutableStateOf(MemoryEditorUiState(visible = true, connected = true, supported = true))
+        val label = context.getString(R.string.memory_editor_inspector)
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) } }
+        rule.onNodeWithContentDescription(label).assertIsNotEnabled()
+        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L)) }
+        rule.onNodeWithContentDescription(label).assertIsEnabled()
+        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L, 2L)) }
+        rule.onNodeWithContentDescription(label).assertIsNotEnabled()
+        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L), busy = true) }
+        rule.onNodeWithContentDescription(label).assertIsNotEnabled()
+    }
 
     @Test fun shortInspectorWithLargeTextScrollsToTheLastEditableValue() {
         val snapshot = inspectorSnapshot()

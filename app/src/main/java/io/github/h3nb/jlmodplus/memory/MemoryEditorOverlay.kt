@@ -4,6 +4,7 @@ package io.github.h3nb.jlmodplus.memory
 
 import android.os.Build
 import android.view.RoundedCorner
+import android.view.Window
 import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.core.view.WindowInsetsCompat
@@ -51,6 +52,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -95,6 +97,24 @@ import androidx.core.os.ConfigurationCompat
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.sqrt
+
+/** Effective system-bar visibility from the MIDlet host, shared by the editor and its dialogs. */
+internal data class MemoryEditorSystemBars(
+    val statusBarVisible: Boolean,
+    val navigationBarVisible: Boolean,
+) {
+    fun applyTo(window: Window) {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            if (statusBarVisible) show(WindowInsetsCompat.Type.statusBars())
+            else hide(WindowInsetsCompat.Type.statusBars())
+            if (navigationBarVisible) show(WindowInsetsCompat.Type.navigationBars())
+            else hide(WindowInsetsCompat.Type.navigationBars())
+        }
+    }
+}
+
+internal val LocalMemoryEditorSystemBars = staticCompositionLocalOf<MemoryEditorSystemBars?> { null }
 
 /** Dialog controls stay inside visible system bars, cutouts and waterfall edges. */
 @Composable
@@ -442,6 +462,7 @@ private fun MemoryEditorWindowDimming(
 ) {
     val view = LocalView.current
     val window = (view.parent as? DialogWindowProvider)?.window
+    val systemBars = LocalMemoryEditorSystemBars.current
     val baseline = remember(view, window) {
         window?.attributes?.let { attributes ->
             MemoryEditorWindowBaseline(
@@ -451,26 +472,17 @@ private fun MemoryEditorWindowDimming(
         }
     }
 
-    DisposableEffect(view, window, baseline) {
+    DisposableEffect(view, window, baseline, systemBars) {
         if (window == null) {
             onDispose {}
         } else {
-            // Compose Dialog has its own focused Android window. The host Activity's
-            // navigation-bar policy does not propagate when that window gains focus.
-            val decor = window.decorView
-            val observer = decor.viewTreeObserver
-            val hideNavigation = {
-                WindowInsetsControllerCompat(window, decor).apply {
-                    systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    hide(WindowInsetsCompat.Type.navigationBars())
-                }
-            }
+            // Compose Dialog has its own focused window; keep the host policy on focus changes.
+            val observer = window.decorView.viewTreeObserver
             val listener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
-                if (hasFocus) hideNavigation()
+                if (hasFocus) systemBars?.applyTo(window)
             }
             observer.addOnWindowFocusChangeListener(listener)
-            hideNavigation()
+            systemBars?.applyTo(window)
             onDispose {
                 if (observer.isAlive) observer.removeOnWindowFocusChangeListener(listener)
                 if (baseline != null) applyMemoryEditorWindowState(window, baseline, peeking = false)

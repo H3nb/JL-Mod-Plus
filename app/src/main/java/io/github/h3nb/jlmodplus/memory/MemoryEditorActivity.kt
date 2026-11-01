@@ -9,25 +9,24 @@ package io.github.h3nb.jlmodplus.memory
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat
-import io.github.h3nb.jlmodplus.settings.RuntimeChromeClient
-import io.github.h3nb.jlmodplus.settings.RuntimeChromeState
 
 /** Translucent app Activity containing the production Memory Editor UI in :memory_engine. */
 class MemoryEditorActivity : AppCompatActivity() {
     private var controller: MemoryEditorComposeController? = null
     private var listenerRegistered = false
-    private var chromeClient: RuntimeChromeClient? = null
-    private var showStatusBar = false
+    private val systemBars by lazy {
+        MemoryEditorSystemBars(
+            statusBarVisible = intent.getBooleanExtra(EXTRA_STATUS_BAR_VISIBLE, true),
+            navigationBarVisible = intent.getBooleanExtra(EXTRA_NAVIGATION_BAR_VISIBLE, true),
+        )
+    }
 
     private val runtimeListener = MemoryEngineService.LocalRuntimeListener {
         runOnUiThread {
@@ -46,17 +45,7 @@ class MemoryEditorActivity : AppCompatActivity() {
         window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
         window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         EdgeToEdgeCompat.enableForComposeSurface(this)
-        updateSystemBars()
-        chromeClient = RuntimeChromeClient(this, object : RuntimeChromeClient.Listener {
-            override fun onChromeChanged(state: RuntimeChromeState) {
-                showStatusBar = state.showStatusBar
-                updateSystemBars()
-            }
-
-            override fun onChromeError(failure: Exception) {
-                Log.w("MemoryEditorActivity", "Could not read runtime chrome preferences", failure)
-            }
-        })
+        systemBars.applyTo(window)
 
         MemoryEngineService.addLocalRuntimeListener(runtimeListener)
         listenerRegistered = true
@@ -69,10 +58,11 @@ class MemoryEditorActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
             ),
         )
-        updateSystemBars()
+        systemBars.applyTo(window)
         controller = MemoryEditorComposeController(
             composeView = composeView,
             ownedRuntimeToken = token,
+            systemBars = systemBars,
             closeHost = ::finish,
         ).also(MemoryEditorComposeController::open)
 
@@ -83,41 +73,19 @@ class MemoryEditorActivity : AppCompatActivity() {
         })
     }
 
-    override fun onStart() {
-        super.onStart()
-        chromeClient?.start()
-    }
-
     override fun onResume() {
         super.onResume()
-        updateSystemBars()
-    }
-
-    override fun onStop() {
-        chromeClient?.close()
-        super.onStop()
+        systemBars.applyTo(window)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) updateSystemBars()
-    }
-
-    private fun updateSystemBars() {
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            hide(WindowInsetsCompat.Type.navigationBars())
-            if (showStatusBar) show(WindowInsetsCompat.Type.statusBars())
-            else hide(WindowInsetsCompat.Type.statusBars())
-        }
+        if (hasFocus) systemBars.applyTo(window)
     }
 
     override fun onDestroy() {
         controller?.destroy()
         controller = null
-        chromeClient?.close()
-        chromeClient = null
         if (listenerRegistered) {
             MemoryEngineService.removeLocalRuntimeListener(runtimeListener)
             listenerRegistered = false
@@ -128,9 +96,20 @@ class MemoryEditorActivity : AppCompatActivity() {
     companion object {
         private const val EXTRA_RUNTIME_TOKEN =
             "ru.playsoftware.j2meloader.memory.extra.RUNTIME_TOKEN"
+        private const val EXTRA_STATUS_BAR_VISIBLE =
+            "ru.playsoftware.j2meloader.memory.extra.STATUS_BAR_VISIBLE"
+        private const val EXTRA_NAVIGATION_BAR_VISIBLE =
+            "ru.playsoftware.j2meloader.memory.extra.NAVIGATION_BAR_VISIBLE"
 
-        fun createIntent(context: Context, runtimeToken: Long): Intent =
-            Intent(context, MemoryEditorActivity::class.java)
-                .putExtra(EXTRA_RUNTIME_TOKEN, runtimeToken)
+        @JvmStatic
+        fun createIntent(
+            context: Context,
+            runtimeToken: Long,
+            statusBarVisible: Boolean,
+            navigationBarVisible: Boolean,
+        ): Intent = Intent(context, MemoryEditorActivity::class.java)
+            .putExtra(EXTRA_RUNTIME_TOKEN, runtimeToken)
+            .putExtra(EXTRA_STATUS_BAR_VISIBLE, statusBarVisible)
+            .putExtra(EXTRA_NAVIGATION_BAR_VISIBLE, navigationBarVisible)
     }
 }

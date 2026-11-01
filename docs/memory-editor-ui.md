@@ -43,6 +43,13 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   the title/close glyph edges on symmetric screens, only moving them inward
   when a larger physical corner requires it. Do not raise the dock by hidden
   gesture insets. Respect the shared status-bar setting.
+- Inherit the effective status/navigation-bar visibility from the active MIDlet screen when
+  opening the editor (non-Canvas forms show both; Canvas follows its status-bar setting
+  and hides navigation). Keep that same policy in nested dialogs and on focus changes;
+  no editor window may independently force fullscreen.
+- The Inspector tab is visually disabled using Material 3 disabled emphasis when no
+  candidate or multiple candidates are selected, or while busy. Enable it for exactly
+  one selection; retain access to an Inspector already open.
 - Keep the editor title and labeled navigation visible. Place them in one row when
   width permits; stack them otherwise. In short windows with large text, retain the
   labeled tabs and omit the redundant app title to protect the data viewport.

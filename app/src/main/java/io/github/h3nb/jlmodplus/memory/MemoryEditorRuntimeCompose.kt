@@ -321,22 +321,27 @@ private fun RuntimeMemoryTabs(
         containerColor = Color.Transparent,
     ) {
         MemoryEditorTab.entries.forEach { tab ->
+            val enabled = tab != MemoryEditorTab.INSPECTOR ||
+                state.activeTab == tab || state.selected.size == 1 && !state.busy
             Tab(
                 selected = state.activeTab == tab,
                 onClick = { onTab(tab) },
-                enabled = tab != MemoryEditorTab.INSPECTOR ||
-                    state.activeTab == tab || state.selected.size == 1 && !state.busy,
+                enabled = enabled,
                 modifier = Modifier.semantics { contentDescription = when (tab) {
                     MemoryEditorTab.RESULTS -> searchLabel
                     MemoryEditorTab.WATCH -> watchLabel
                     MemoryEditorTab.INSPECTOR -> inspectorLabel
                 } },
                 text = {
-                    Text(stringResource(when (tab) {
-                        MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
-                        MemoryEditorTab.WATCH -> R.string.memory_editor_watch
-                        MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
-                    }))
+                    Text(
+                        stringResource(when (tab) {
+                            MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
+                            MemoryEditorTab.WATCH -> R.string.memory_editor_watch
+                            MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
+                        }),
+                        color = if (enabled) Color.Unspecified
+                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    )
                 },
             )
         }
