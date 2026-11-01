@@ -1841,8 +1841,15 @@ public abstract class Canvas extends Displayable {
 				program.use();
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, bgTextureId[0]);
+				int contentWidth, contentHeight;
 				synchronized (bufferLock) {
-					Bitmap bitmap = offscreenCopy.getBitmap();
+					// Take the logical content extent from the same source snapshot
+					// as the uploaded Bitmap. Canvas.width/height may already reflect
+					// a concurrent resize while offscreenCopy is still the old image.
+					Image source = offscreenCopy;
+					Bitmap bitmap = source.getBitmap();
+					contentWidth = source.getWidth();
+					contentHeight = source.getHeight();
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
@@ -1864,25 +1871,16 @@ public abstract class Canvas extends Displayable {
 				synchronized (vbo) {
 					program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
 					if (researchTwoPass != null) {
-						// During a guest-size enlargement, updateSize publishes width/height
-						// before the new backing bitmap is uploaded. Keep the research
-						// pipeline for the next coherent frame rather than permanently
-						// treating this transient stale texture as a broken shader.
-						// Oversized/padded source textures remain unsupported and fail closed.
-						boolean sourceStillSmaller = lastUploadedWidth < Canvas.this.width
-								|| lastUploadedHeight < Canvas.this.height;
-						if (!sourceStillSmaller) {
-							try {
-								researchTwoPass.draw(bgTextureId[0], vbo, lastUploadedWidth,
-										lastUploadedHeight, Canvas.this.width, Canvas.this.height,
-										hostGlWidth, hostGlHeight, frameSequence,
-										settings.screenFilter ? GL_LINEAR : GL_NEAREST);
-								libretroDrawn = true;
-							} catch (RuntimeException e) {
-								Log.w(TAG, "R&D Libretro draw failed; reverting to legacy shader", e);
-								researchTwoPass.release();
-								researchTwoPass = null;
-							}
+						try {
+							researchTwoPass.draw(bgTextureId[0], vbo, lastUploadedWidth,
+									lastUploadedHeight, contentWidth, contentHeight,
+									hostGlWidth, hostGlHeight, frameSequence,
+									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
+							libretroDrawn = true;
+						} catch (RuntimeException e) {
+							Log.w(TAG, "R&D Libretro draw failed; reverting to legacy shader", e);
+							researchTwoPass.release();
+							researchTwoPass = null;
 						}
 						program.use();
 						program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
