@@ -17,8 +17,9 @@ passed the actual Managed Memory Engine test plus standalone graph/locator probe
 - A main-process `InstalledAppWriteGuard.run(canonicalAppPath, capturedAppId, write)`
   plus JAR digest precondition and Android `AtomicFile` can publish a research
   definition in the per-install config directory.
-- Uninstall/reinstall at the *same path* with the *same source JAR* produces
-  a different Library `appId`. A request carrying the stale `appId` fails
+- Simulating uninstall/reinstall by deleting and reinserting the Library row
+  at the *same path* with the *same source JAR* produces a different `appId`.
+  This exercises the installed-identity fence, **not** the full installer. A request carrying the stale `appId` fails
   without touching the saved file.
 - Modifying the JAR while retaining the current `appId` makes the added
   caller-side SHA-256 comparison fail before publication. The existing guard
