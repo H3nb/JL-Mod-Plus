@@ -328,7 +328,11 @@ public final class MemoryIpcRuntimeTest {
 
 				Bundle bound = target.researchBindFieldLocator(tokenSecond, descriptor,
 						"Saved probe", 0L);
-				assertEquals(MemoryEngineContract.RESULT_OK,
+				assertEquals("Bind failed: " + bound.getString(
+						MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "<no diagnostic>")
+						+ "; epoch=" + target.getManagedCapabilities(tokenSecond).getLong(
+						MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH),
+						MemoryEngineContract.RESULT_OK,
 						bound.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
 				assertEquals(0L, target.getManagedSessionInfo(tokenSecond)
 						.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
