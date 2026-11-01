@@ -41,6 +41,8 @@ public final class PlatformCompatMidlet extends MIDlet {
 	private boolean transitionMode;
 	/** Stable primitive owned by the live target for the Managed memory IPC test. */
 	private int memoryProbeValue;
+	/** Distinct research-only numeric value for cross-process capture/relaunch tests. */
+	private int savedLocatorProbe = 881177;
 
 	@Override
 	public void startApp() {
