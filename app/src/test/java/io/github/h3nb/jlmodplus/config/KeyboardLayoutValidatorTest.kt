@@ -242,6 +242,22 @@ class KeyboardLayoutValidatorTest {
     }
 
     @Test
+    fun v5SupportsPerKeyScalesWithoutAcceptingWrongSnapshotSizes() {
+        val v5 = v4File(base = 7, portrait = true, version = 5)
+        assertNull(KeyboardLayoutValidator.validate(v5))
+        assertNull(KeyboardLayoutValidator.validateBytes(v5.readBytes()))
+
+        // Version 5 writes 56 independent width/height scales, not the 12 v4 group scales.
+        assertNotNull(KeyboardLayoutValidator.validate(
+            v4File(base = 7, portrait = true, version = 5, scaleCount = 12),
+        ))
+        assertNotNull(KeyboardLayoutValidator.validate(
+            v4File(base = 7, portrait = true, version = 4, scaleCount = 56),
+        ))
+        assertNull(KeyboardLayoutValidator.validate(v4File(base = 7, portrait = true)))
+    }
+
+    @Test
     fun encodedBytesUseTheSameValidationRulesAsFiles() {
         val valid = v4File(type = 3).readBytes()
         assertNull(KeyboardLayoutValidator.validateBytes(valid))
@@ -251,11 +267,12 @@ class KeyboardLayoutValidatorTest {
 
     @Test
     fun futureLayoutVersionRemainsUnsupported() {
-        assertNotNull(KeyboardLayoutValidator.validate(layoutFile(version = 5, type = 0)))
+        assertNotNull(KeyboardLayoutValidator.validate(v4File(base = 7, version = 6)))
     }
 
     private fun v4File(
         type: Int = 0,
+        version: Int = 4,
         base: Int? = null,
         legacy: Boolean = false,
         portrait: Boolean = false,
@@ -264,15 +281,16 @@ class KeyboardLayoutValidatorTest {
         cycle: Boolean = false,
         groupedX: Float = 0.25f,
         groupedRadius: Float = 0.16f,
+        scaleCount: Int? = null,
     ): File {
         val file = tempFile()
         DataOutputStream(FileOutputStream(file)).use { out ->
-            writeHeader(out, 4)
+            writeHeader(out, version)
             writeType(out, type)
             if (base != null) writeBase(out, base)
-            if (legacy) writeV4Snapshot(out, LEGACY_SHARED, keyCount, cycle, groupedX, groupedRadius)
-            if (portrait) writeV4Snapshot(out, PORTRAIT_OVERRIDE, keyCount, cycle, groupedX, groupedRadius)
-            if (landscape) writeV4Snapshot(out, LANDSCAPE_OVERRIDE, keyCount, cycle, groupedX, groupedRadius)
+            if (legacy) writeOrientationSnapshot(out, LEGACY_SHARED, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
+            if (portrait) writeOrientationSnapshot(out, PORTRAIT_OVERRIDE, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
+            if (landscape) writeOrientationSnapshot(out, LANDSCAPE_OVERRIDE, keyCount, cycle, groupedX, groupedRadius, version, scaleCount)
             writeEnd(out)
         }
         return file
@@ -284,16 +302,19 @@ class KeyboardLayoutValidatorTest {
         out.writeByte(base)
     }
 
-    private fun writeV4Snapshot(
+    private fun writeOrientationSnapshot(
         out: DataOutputStream,
         block: Int,
         keyCount: Int,
         cycle: Boolean,
         groupedX: Float,
         groupedRadius: Float,
+        version: Int,
+        scaleCount: Int?,
     ) {
+        val scales = scaleCount ?: if (version == 4) 12 else 56
         out.writeInt(block)
-        out.writeInt(V4_SNAPSHOT_LENGTH)
+        out.writeInt(4 + 28 * KEY_RECORD_SIZE_V2 + 4 + scales * 4 + 2 + 6 * 4)
         out.writeInt(keyCount)
         repeat(keyCount) { index ->
             out.writeInt(VirtualKeyboard.persistedKeyHashForIndex(index))
@@ -312,8 +333,8 @@ class KeyboardLayoutValidatorTest {
         // validator must reject the count before attempting to consume the absent records.
         if (keyCount != 28) return
 
-        out.writeInt(12)
-        repeat(12) { out.writeFloat(1.0f) }
+        out.writeInt(scales)
+        repeat(scales) { out.writeFloat(1.0f) }
         out.writeBoolean(true)
         out.writeBoolean(false)
         out.writeFloat(groupedX)
