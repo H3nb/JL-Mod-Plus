@@ -1114,4 +1114,6 @@
     <string name="layout_editor_guide_tools">編集ツール</string>
     <string name="layout_editor_guide_done">完了をタップして保存、破棄、または編集を続行します。</string>
     <string name="layout_editor_guide_start">編集を開始</string>
+    <string name="memory_editor_panel_opacity">パネルの不透明度</string>
+    <string name="memory_editor_panel_opacity_help">文字やアイコンを薄くせずに、パネルの背景を調整します。</string>
 </resources>

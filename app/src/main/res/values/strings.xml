@@ -1286,4 +1286,7 @@
     <string name="updates_download_apk" tools:ignore="MissingTranslation">Download APK</string>
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Skip this version</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus %1$s is available. You are using %2$s. Download the APK or view the release on GitHub.</string>
+    <string name="memory_editor_panel_opacity">Panel opacity</string>
+    <string name="memory_editor_panel_opacity_help">Adjusts the panel background without fading text or icons.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">This MIDlet\'s installed conversion is incompatible with Memory Editor. Close the game, then reconvert or reinstall it using JL-Mod Plus.</string>
 </resources>

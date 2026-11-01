@@ -1148,4 +1148,6 @@
     <string name="layout_editor_guide_tools">Editor-Werkzeuge</string>
     <string name="layout_editor_guide_done">Tippe auf Fertig, um zu speichern, zu verwerfen oder weiterzubearbeiten.</string>
     <string name="layout_editor_guide_start">Bearbeitung starten</string>
+    <string name="memory_editor_panel_opacity">Deckkraft des Panels</string>
+    <string name="memory_editor_panel_opacity_help">Ändert die Deckkraft des Panelhintergrunds. Text und Symbole bleiben deckend.</string>
 </resources>

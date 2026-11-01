@@ -1114,4 +1114,6 @@
     <string name="layout_editor_guide_tools">编辑工具</string>
     <string name="layout_editor_guide_done">点击完成以保存、放弃或继续编辑。</string>
     <string name="layout_editor_guide_start">开始编辑</string>
+    <string name="memory_editor_panel_opacity">面板不透明度</string>
+    <string name="memory_editor_panel_opacity_help">调整面板背景，不会淡化文字或图标。</string>
 </resources>

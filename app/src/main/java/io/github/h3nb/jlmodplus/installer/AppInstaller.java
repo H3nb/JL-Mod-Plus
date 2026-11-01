@@ -557,6 +557,7 @@ public class AppInstaller {
             }
             MidletConversionPolicy.requireRunnableEntryClasses(conversionResult, newDesc);
             MidletTransformMetadata.mark(newDesc.getAttrs());
+            MidletTransformMetadata.recordPayload(newDesc.getAttrs(), payload);
 
             File resJar = child(tmpDir, Config.MIDLET_RES_FILE);
             FileUtils.copyFileUsingChannel(srcJar, resJar);

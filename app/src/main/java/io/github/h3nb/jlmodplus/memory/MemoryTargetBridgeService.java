@@ -265,6 +265,8 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, state.supported);
 		result.putBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, state.writeSupported);
 		result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, state.supported);
+		result.putBoolean(MemoryEngineContract.KEY_MANAGED_RECONVERSION_REQUIRED,
+				javax.microedition.shell.MemoryDiscoveryBridge.requiresReconversion(runtimeToken));
 		result.putBoolean(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, state.writeSupported);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, state.controlEpoch);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);

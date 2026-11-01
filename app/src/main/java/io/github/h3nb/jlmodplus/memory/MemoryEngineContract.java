@@ -103,6 +103,8 @@ public final class MemoryEngineContract {
 	public static final String KEY_SUPPORTED = "supported";
 	public static final String KEY_WRITE_SUPPORTED = "writeSupported";
 	public static final String KEY_MANAGED_SUPPORTED = "managedSupported";
+	/** Current running payload has a known incompatible bytecode transform. */
+	public static final String KEY_MANAGED_RECONVERSION_REQUIRED = "managedReconversionRequired";
 	public static final String KEY_MANAGED_WRITE_SUPPORTED = "managedWriteSupported";
 	public static final String KEY_MANAGED_CONTROL_EPOCH = "managedControlEpoch";
 	public static final String KEY_MANAGED_REVISION = "managedRevision";

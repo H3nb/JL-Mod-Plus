@@ -1213,4 +1213,6 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="memory_editor_panel_opacity">Krytí panelu</string>
+    <string name="memory_editor_panel_opacity_help">Upravuje pozadí panelu, aniž by zeslabovalo text nebo ikony.</string>
 </resources>

@@ -1213,4 +1213,6 @@
     <string name="layout_editor_guide_tools">Инструменты редактора</string>
     <string name="layout_editor_guide_done">Нажмите «Готово», чтобы сохранить, отменить или продолжить редактирование.</string>
     <string name="layout_editor_guide_start">Начать редактирование</string>
+    <string name="memory_editor_panel_opacity">Непрозрачность панели</string>
+    <string name="memory_editor_panel_opacity_help">Настраивает фон панели, не делая текст и значки полупрозрачными.</string>
 </resources>

@@ -1148,4 +1148,6 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="memory_editor_panel_opacity">Panel opaklığı</string>
+    <string name="memory_editor_panel_opacity_help">Metin veya simgeleri soldurmadan panel arka planını ayarlar.</string>
 </resources>

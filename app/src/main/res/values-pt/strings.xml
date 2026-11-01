@@ -1180,4 +1180,6 @@
     <string name="layout_editor_guide_tools">Ferramentas de edição</string>
     <string name="layout_editor_guide_done">Toque em Concluído para guardar, descartar ou continuar a editar.</string>
     <string name="layout_editor_guide_start">Começar a editar</string>
+    <string name="memory_editor_panel_opacity">Opacidade do painel</string>
+    <string name="memory_editor_panel_opacity_help">Ajusta o fundo do painel sem atenuar o texto ou os ícones.</string>
 </resources>

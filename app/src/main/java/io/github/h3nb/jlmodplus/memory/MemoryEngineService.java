@@ -151,6 +151,9 @@ public final class MemoryEngineService extends Service {
 					managed = null;
 				}
 				boolean managedAvailable = token != 0L && managedSupported;
+				result.putBoolean(MemoryEngineContract.KEY_MANAGED_RECONVERSION_REQUIRED,
+						token != 0L && managed != null && managed.getBoolean(
+								MemoryEngineContract.KEY_MANAGED_RECONVERSION_REQUIRED, false));
 				boolean managedWriteAvailable = token != 0L && managedWriteSupported;
 				if (token != 0L && configuredToken == 0L && managedAvailable
 						&& (managedRevision > 0L || managedWatchCount > 0 || managedFreezeCount > 0)) {

@@ -332,6 +332,8 @@ internal class MemoryEditorComposeController(
             state = state.copy(
                 connecting = true,
                 connected = false,
+                supported = false,
+                writeSupported = false,
                 busy = false,
                 searching = false,
                 scanBytesScanned = 0L,
@@ -383,10 +385,17 @@ internal class MemoryEditorComposeController(
             MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, 0L,
         )
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
-        val capabilityMessage = operationMessage(
-            capabilities.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, MemoryEngineContract.RESULT_OK),
-            capabilities,
+        val reconversionRequired = capabilities.getBoolean(
+            MemoryEngineContract.KEY_MANAGED_RECONVERSION_REQUIRED, false,
         )
+        val capabilityMessage = if (reconversionRequired) {
+            context.getString(R.string.memory_editor_reconversion_required)
+        } else {
+            operationMessage(
+                capabilities.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, MemoryEngineContract.RESULT_OK),
+                capabilities,
+            )
+        }
 
         // The target bridge binds asynchronously. Token 0 is transient/unknown here; runtime
         // teardown has a dedicated lifecycle callback and is the authoritative close signal.
@@ -432,11 +441,15 @@ internal class MemoryEditorComposeController(
                 if (!state.visible || service !== engine || connection != connectionGeneration ||
                     stateRequest != stateRequestGeneration.get()
                 ) return@post
+                // A loaded runtime token can precede the MIDlet constructor publishing its root.
+                // Retry that transient gap, but do not retry a known incompatible conversion.
+                val retrying = !reconversionRequired && retry < CAPABILITY_RETRY_DELAYS_MS.size
                 state = state.copy(
-                    connecting = false,
+                    connecting = retrying,
                     connected = true,
                     supported = false,
                     writeSupported = false,
+                    messageIsError = !retrying,
                     revision = revision,
                     baselineCount = baselineCount,
                     runtimeToken = token,
@@ -448,8 +461,14 @@ internal class MemoryEditorComposeController(
                     } else {
                         MemoryEditorRuntimePreferences.unknownPredicate(token)
                     },
-                    message = capabilityMessage ?: context.getString(R.string.memory_editor_unsupported),
+                    message = if (retrying) context.getString(R.string.memory_editor_engine_reconnecting)
+                        else capabilityMessage ?: context.getString(R.string.memory_editor_unsupported),
                 )
+                if (retrying) composeView.postDelayed({
+                    if (!destroyed && state.visible && service === engine &&
+                        connection == connectionGeneration && stateRequest == stateRequestGeneration.get()
+                    ) reloadState(retry + 1)
+                }, CAPABILITY_RETRY_DELAYS_MS[retry])
             }
             return@runIpc
         }
@@ -517,6 +536,7 @@ internal class MemoryEditorComposeController(
                 unknownPredicate = MemoryEditorRuntimePreferences.unknownPredicate(token),
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
+                messageIsError = false,
             )
         }
     }
@@ -680,6 +700,7 @@ internal class MemoryEditorComposeController(
     }
 
     override fun setWatchTab(watch: Boolean) {
+        closeInspector()
         if (state.watchTab == watch) return
         invalidateVisiblePageRequest()
         state = state.copy(watchTab = watch, selected = emptySet())
@@ -1167,7 +1188,7 @@ internal class MemoryEditorComposeController(
 
     private fun runLiveRefreshTick() {
         if (destroyed || !state.visible) return
-        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending && state.inspector == null) {
+        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending && state.activeTab != MemoryEditorTab.INSPECTOR) {
             if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
         }
         if (!destroyed && state.visible) {
