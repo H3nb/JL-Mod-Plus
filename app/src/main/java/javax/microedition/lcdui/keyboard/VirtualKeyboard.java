@@ -1880,6 +1880,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (editorSnapControlsEnabled) {
 			float nearest = reach;
 			float matched = requested;
+			boolean found = false;
 			for (int i = 0; i < keypad.length; i++) {
 				if (i == editedKey || !keypad[i].visible) continue;
 				if (editorGroupResizeEnabled && resizedGroup != null) {
@@ -1896,14 +1897,16 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						Math.abs(first - requested) < nearest) {
 					nearest = Math.abs(first - requested);
 					matched = first;
+					found = true;
 				}
 				if (second >= min && second <= max &&
 						Math.abs(second - requested) < nearest) {
 					nearest = Math.abs(second - requested);
 					matched = second;
+					found = true;
 				}
 			}
-			if (matched != requested) return matched;
+			if (found) return matched;
 		}
 		if (editorSnapGridEnabled) {
 			float grid = snapToEditorGrid(requested,

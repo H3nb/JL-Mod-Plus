@@ -262,6 +262,22 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void resizeSnapKeepsAnAlreadyAlignedButtonEdgeOverTheGrid() throws Exception {
+        keyboard.setEditorSnapResizeEnabled(true);
+        RectF peer = rectField(keyByLabel("5"));
+        float oldLeft = peer.left, oldTop = peer.top;
+        try {
+            peer.offsetTo(157.7f, 160.7f);
+            float aligned = peer.right;
+            float result = keyboard.snapEditorResizeEdge(
+                    aligned, true, -1, null, aligned - 1f, aligned + 1f, 0.5f);
+            assertEquals(aligned, result, EPS);
+        } finally {
+            peer.offsetTo(oldLeft, oldTop);
+        }
+    }
+
+    @Test
     public void groupedPinchSnapsCircularEdgeToGrid() throws Exception {
         settings.virtualDpadEnabled = true;
         keyboard.setEditorSnapControlsEnabled(false);
