@@ -1541,6 +1541,13 @@ final class ManagedJavaMemoryEngine {
 				if (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
 					return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Watch is full");
 				OwnerBucket owner = ownerForObject(selectedOwner, kind, schema, null);
+				// Owners may be shared by different game references. Do not authorize an
+				// imported path using an unrelated predecessor captured by Search/Watch.
+				if (owner.provenancePath != null
+						&& !researchSameAncestry(owner.provenancePath, ancestry)) {
+					return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+							"Existing owner has a different reference path; retry after a fresh runtime");
+				}
 				if (owner.provenancePath == null) owner.provenancePath = ancestry;
 				long id = ManagedJavaMemoryIds.encode(kind, owner.handle, slot);
 				if (watches.indexOf(id) >= 0) return failureLocked(
@@ -1554,6 +1561,23 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 					"Research locator could not resolve the exact field");
 		}
+	}
+
+	/** R&D only: compare actual reference edges, never just values or printed path text. */
+	private static boolean researchSameAncestry(@Nullable ProvenanceNode a,
+	                                            @Nullable ProvenanceNode b) {
+		for (int depth = 0; depth <= MAX_PROVENANCE_DEPTH; depth++) {
+			if (a == null || b == null) return a == null && b == null;
+			Object left = a.target.get();
+			if (left == null || left != b.target.get()
+					|| a.kind != b.kind || a.index != b.index
+					|| (a.field == null ? b.field != null : !a.field.equals(b.field))) {
+				return false;
+			}
+			a = a.parent;
+			b = b.parent;
+		}
+		return false;
 	}
 
 	ManagedOperationResult addWatch(long token, long expectedRevision, @Nullable long[] ids,
