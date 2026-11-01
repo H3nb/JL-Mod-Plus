@@ -1138,6 +1138,9 @@
     <string name="layout_editor_group_off">Einzeln skalieren</string>
     <string name="layout_editor_snap_grid">Am Raster ausrichten</string>
     <string name="layout_editor_snap_controls">An Tasten ausrichten</string>
+    <string name="layout_editor_snap_resize">Beim Ändern der Größe einrasten</string>
+    <string name="layout_editor_snap_resize_on">Einrasten beim Skalieren: Ein</string>
+    <string name="layout_editor_snap_resize_off">Einrasten beim Skalieren: Aus</string>
     <string name="layout_editor_snap_grid_on">Rasterfang: Ein</string>
     <string name="layout_editor_snap_grid_off">Rasterfang: Aus</string>
     <string name="layout_editor_snap_controls_on">Tastenfang: Ein</string>

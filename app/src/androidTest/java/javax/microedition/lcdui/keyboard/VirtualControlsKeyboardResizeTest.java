@@ -144,11 +144,19 @@ public class VirtualControlsKeyboardResizeTest {
 
         assertTrue(keyboard.isEditorSnapGridEnabled());
         assertTrue(keyboard.isEditorSnapControlsEnabled());
+        assertFalse(keyboard.isEditorSnapResizeEnabled());
         assertTrue(keyboard.isEditorGroupResizeEnabled());
         assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
 
+        keyboard.setEditorSnapResizeEnabled(true);
+        assertTrue(keyboard.isEditorSnapResizeEnabled());
         keyboard.setEditorSnapGridEnabled(false);
         keyboard.setEditorSnapControlsEnabled(false);
+        assertFalse(keyboard.isEditorSnapResizeEnabled());
+        keyboard.setEditorSnapResizeEnabled(true);
+        assertFalse(keyboard.isEditorSnapResizeEnabled());
+        keyboard.setEditorSnapGridEnabled(true);
+        keyboard.setEditorSnapResizeEnabled(true);
         keyboard.setEditorGroupResizeEnabled(false);
         keyboard.setEditorGridDivisions(VirtualKeyboard.EDITOR_GRID_FINE);
         assertEquals(before, keyboard.captureLayoutEditState());
@@ -156,6 +164,7 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resetLayoutEditorTools();
         assertTrue(keyboard.isEditorSnapGridEnabled());
         assertTrue(keyboard.isEditorSnapControlsEnabled());
+        assertFalse(keyboard.isEditorSnapResizeEnabled());
         assertTrue(keyboard.isEditorGroupResizeEnabled());
         assertEquals(VirtualKeyboard.EDITOR_GRID_NORMAL, keyboard.getEditorGridDivisions());
     }
@@ -229,6 +238,110 @@ public class VirtualControlsKeyboardResizeTest {
         RectF after = rectField(keyByLabel("L"));
         assertTrue(after.width() > before.width());
         assertEquals(before.height(), after.height(), EPS);
+    }
+
+    @Test
+    public void resizingSnapsTheChangingEdgeWithoutMovingTheButtonOrigin() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
+        dragLegacy("5", 13f, 7f);
+        keyboard.setEditorSnapGridEnabled(true);
+        keyboard.setEditorSnapResizeEnabled(true);
+        RectF before = rectField(keyByLabel("5"));
+        float x = before.centerX(), y = before.centerY();
+        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
+        assertTrue(Math.abs(before.bottom - Math.round(before.bottom / step) * step) > EPS);
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 100f, y));
+        RectF stationary = rectField(keyByLabel("5"));
+        assertEquals(before.left, stationary.left, EPS);
+        assertEquals(before.top, stationary.top, EPS);
+        assertEquals(before.width(), stationary.width(), EPS);
+        assertEquals(before.height(), stationary.height(), EPS);
+        assertTrue(keyboard.pointerDragged(1, x + 170f, y));
+        RectF after = rectField(keyByLabel("5"));
+        assertTrue(after.width() > before.width());
+        assertEquals(before.left, after.left, EPS);
+        assertEquals(before.top, after.top, EPS);
+        assertEquals(before.height(), after.height(), EPS);
+        assertEquals(Math.round(after.right / step) * step, after.right, EPS);
+        assertTrue(keyboard.pointerReleased(1, x + 170f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+    }
+
+    @Test
+    public void verticalResizeSnapLeavesOffGridWidthUnchanged() throws Exception {
+        keyboard.setEditorGroupResizeEnabled(false);
+        keyboard.setEditorSnapGridEnabled(false);
+        keyboard.setEditorSnapControlsEnabled(false);
+        dragLegacy("5", 13f, 7f);
+        keyboard.setEditorSnapGridEnabled(true);
+        keyboard.setEditorSnapResizeEnabled(true);
+        RectF before = rectField(keyByLabel("5"));
+        float x = before.centerX(), y = before.centerY();
+        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
+        assertTrue(Math.abs(before.right - Math.round(before.right / step) * step) > EPS);
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 100f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 100f, y + 70f));
+        RectF after = rectField(keyByLabel("5"));
+        assertTrue(after.height() > before.height());
+        assertEquals(before.left, after.left, EPS);
+        assertEquals(before.top, after.top, EPS);
+        assertEquals(before.width(), after.width(), EPS);
+        assertEquals(Math.round(after.bottom / step) * step, after.bottom, EPS);
+        assertTrue(keyboard.pointerReleased(1, x + 100f, y + 70f));
+        assertTrue(keyboard.pointerReleased(0, x, y));
+    }
+
+    @Test
+    public void resizeSnapKeepsAnAlreadyAlignedButtonEdgeOverTheGrid() throws Exception {
+        keyboard.setEditorSnapResizeEnabled(true);
+        Object key = keyByLabel("5");
+        Field rect = findField(key.getClass(), "rect");
+        rect.setAccessible(true);
+        RectF peer = (RectF) rect.get(key);
+        float oldLeft = peer.left, oldTop = peer.top;
+        try {
+            peer.offsetTo(157.7f, 160.7f);
+            float aligned = peer.right;
+            float result = keyboard.snapEditorResizeEdge(
+                    aligned, true, -1, null, aligned - 1f, aligned + 1f, 0.5f);
+            assertEquals(aligned, result, EPS);
+        } finally {
+            peer.offsetTo(oldLeft, oldTop);
+        }
+    }
+
+    @Test
+    public void groupedPinchSnapsCircularEdgeToGrid() throws Exception {
+        settings.virtualDpadEnabled = true;
+        keyboard.setEditorSnapControlsEnabled(false);
+        keyboard.setEditorSnapResizeEnabled(true);
+        VirtualDpadGeometry before = geometry("dpadGeometry");
+        float x = before.getCenterX(), y = before.getCenterY();
+        assertTrue(keyboard.pointerPressed(0, x, y));
+        assertTrue(keyboard.pointerPressed(1, x + 50f, y));
+        assertTrue(keyboard.pointerDragged(1, x + 68f, y));
+        VirtualDpadGeometry after = geometry("dpadGeometry");
+        float step = 600f / VirtualKeyboard.EDITOR_GRID_NORMAL;
+        float[] edges = {
+                after.getCenterX() + after.getRadius(),
+                after.getCenterX() - after.getRadius(),
+                after.getCenterY() + after.getRadius(),
+                after.getCenterY() - after.getRadius()
+        };
+        float minDistance = Float.MAX_VALUE;
+        for (float edge : edges) {
+            minDistance = Math.min(minDistance,
+                    Math.abs(edge - Math.round(edge / step) * step));
+        }
+        assertTrue(after.getRadius() > before.getRadius());
+        assertEquals(0f, minDistance, EPS);
+        assertTrue(keyboard.pointerReleased(1, x + 68f, y));
+        assertTrue(keyboard.pointerReleased(0, x, y));
     }
 
     @Test

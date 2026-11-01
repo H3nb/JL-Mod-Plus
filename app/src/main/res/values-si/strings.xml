@@ -1137,6 +1137,9 @@
     <string name="layout_editor_group_off">Resize individually</string>
     <string name="layout_editor_snap_grid">Snap to grid</string>
     <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_resize">ප්‍රමාණය වෙනස් කිරීමේදී පෙළගස්වන්න</string>
+    <string name="layout_editor_snap_resize_on">ප්‍රමාණය වෙනස් කිරීමේදී පෙළගැස්ම: සක්‍රීය</string>
+    <string name="layout_editor_snap_resize_off">ප්‍රමාණය වෙනස් කිරීමේදී පෙළගැස්ම: අක්‍රීය</string>
     <string name="layout_editor_snap_grid_on">Grid snap: On</string>
     <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
     <string name="layout_editor_snap_controls_on">Button snap: On</string>

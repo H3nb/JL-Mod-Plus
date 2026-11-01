@@ -1170,6 +1170,9 @@
     <string name="layout_editor_group_off">Redimensionar individualmente</string>
     <string name="layout_editor_snap_grid">Ajustar à grelha</string>
     <string name="layout_editor_snap_controls">Ajustar aos botões</string>
+    <string name="layout_editor_snap_resize">Ajustar ao redimensionar</string>
+    <string name="layout_editor_snap_resize_on">Ajuste ao redimensionar: Ativo</string>
+    <string name="layout_editor_snap_resize_off">Ajuste ao redimensionar: Inativo</string>
     <string name="layout_editor_snap_grid_on">Ajuste à grelha: Ativo</string>
     <string name="layout_editor_snap_grid_off">Ajuste à grelha: Inativo</string>
     <string name="layout_editor_snap_controls_on">Ajuste aos botões: Ativo</string>

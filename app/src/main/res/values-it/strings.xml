@@ -1170,6 +1170,9 @@
     <string name="layout_editor_group_off">Ridimensiona singolarmente</string>
     <string name="layout_editor_snap_grid">Aggancia alla griglia</string>
     <string name="layout_editor_snap_controls">Aggancia ai pulsanti</string>
+    <string name="layout_editor_snap_resize">Aggancia durante il ridimensionamento</string>
+    <string name="layout_editor_snap_resize_on">Aggancio ridimensionamento: Attivo</string>
+    <string name="layout_editor_snap_resize_off">Aggancio ridimensionamento: Disattivo</string>
     <string name="layout_editor_snap_grid_on">Aggancio griglia: Attivo</string>
     <string name="layout_editor_snap_grid_off">Aggancio griglia: Disattivo</string>
     <string name="layout_editor_snap_controls_on">Aggancio pulsanti: Attivo</string>

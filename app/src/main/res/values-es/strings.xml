@@ -1170,6 +1170,9 @@
     <string name="layout_editor_group_off">Redimensionar individualmente</string>
     <string name="layout_editor_snap_grid">Ajustar a la cuadrícula</string>
     <string name="layout_editor_snap_controls">Ajustar a los botones</string>
+    <string name="layout_editor_snap_resize">Ajustar al cambiar el tamaño</string>
+    <string name="layout_editor_snap_resize_on">Ajuste al redimensionar: Activado</string>
+    <string name="layout_editor_snap_resize_off">Ajuste al redimensionar: Desactivado</string>
     <string name="layout_editor_snap_grid_on">Ajuste a cuadrícula: Activado</string>
     <string name="layout_editor_snap_grid_off">Ajuste a cuadrícula: Desactivado</string>
     <string name="layout_editor_snap_controls_on">Ajuste a botones: Activado</string>
