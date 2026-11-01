@@ -1185,6 +1185,9 @@
     <string name="layout_editor_group_off">Ubah ukuran: Per tombol</string>
     <string name="layout_editor_snap_grid">Snap ke grid</string>
     <string name="layout_editor_snap_controls">Snap ke tombol</string>
+    <string name="layout_editor_snap_resize">Snap saat ubah ukuran</string>
+    <string name="layout_editor_snap_resize_on">Snap ubah ukuran: Aktif</string>
+    <string name="layout_editor_snap_resize_off">Snap ubah ukuran: Nonaktif</string>
     <string name="layout_editor_snap_grid_on">Snap grid: Aktif</string>
     <string name="layout_editor_snap_grid_off">Snap grid: Nonaktif</string>
     <string name="layout_editor_snap_controls_on">Snap tombol: Aktif</string>

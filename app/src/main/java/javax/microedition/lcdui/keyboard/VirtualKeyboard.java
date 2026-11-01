@@ -236,6 +236,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private int layoutEditMode = LAYOUT_EOF;
 	private boolean editorSnapGridEnabled = true;
 	private boolean editorSnapControlsEnabled = true;
+	private boolean editorSnapResizeEnabled;
 	private boolean editorGroupResizeEnabled = true;
 	private int editorGridDivisions = EDITOR_GRID_NORMAL;
 	private int editedIndex;
@@ -1831,14 +1832,25 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public void resetLayoutEditorTools() {
 		editorSnapGridEnabled = true;
 		editorSnapControlsEnabled = true;
+		editorSnapResizeEnabled = false;
 		editorGroupResizeEnabled = true;
 		editorGridDivisions = EDITOR_GRID_NORMAL;
 	}
 
 	public boolean isEditorSnapGridEnabled() { return editorSnapGridEnabled; }
-	public void setEditorSnapGridEnabled(boolean value) { editorSnapGridEnabled = value; }
+	public void setEditorSnapGridEnabled(boolean value) {
+		editorSnapGridEnabled = value;
+		if (!value && !editorSnapControlsEnabled) editorSnapResizeEnabled = false;
+	}
 	public boolean isEditorSnapControlsEnabled() { return editorSnapControlsEnabled; }
-	public void setEditorSnapControlsEnabled(boolean value) { editorSnapControlsEnabled = value; }
+	public void setEditorSnapControlsEnabled(boolean value) {
+		editorSnapControlsEnabled = value;
+		if (!value && !editorSnapGridEnabled) editorSnapResizeEnabled = false;
+	}
+	public boolean isEditorSnapResizeEnabled() { return editorSnapResizeEnabled; }
+	public void setEditorSnapResizeEnabled(boolean value) {
+		editorSnapResizeEnabled = value && (editorSnapGridEnabled || editorSnapControlsEnabled);
+	}
 	public boolean isEditorGroupResizeEnabled() { return editorGroupResizeEnabled; }
 	public void setEditorGroupResizeEnabled(boolean value) { editorGroupResizeEnabled = value; }
 
@@ -1859,6 +1871,46 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	protected final float snapToEditorGrid(float coordinate, float origin, float step) {
 		return origin + Math.round((coordinate - origin) / step) * step;
+	}
+
+	/** Align the changing edge without moving the fixed edge of the edited control. */
+	protected final float snapEditorResizeEdge(float requested, boolean horizontal,
+			int editedKey, int[] resizedGroup, float min, float max, float reach) {
+		if (!editorSnapResizeEnabled || !isUsableScreen(screen)) return requested;
+		if (editorSnapControlsEnabled) {
+			float nearest = reach;
+			float matched = requested;
+			for (int i = 0; i < keypad.length; i++) {
+				if (i == editedKey || !keypad[i].visible) continue;
+				if (editorGroupResizeEnabled && resizedGroup != null) {
+					boolean resizing = false;
+					for (int member : resizedGroup) {
+						if (member == i) { resizing = true; break; }
+					}
+					if (resizing) continue;
+				}
+				RectF peer = keypad[i].rect;
+				float first = horizontal ? peer.left : peer.top;
+				float second = horizontal ? peer.right : peer.bottom;
+				if (first >= min && first <= max &&
+						Math.abs(first - requested) < nearest) {
+					nearest = Math.abs(first - requested);
+					matched = first;
+				}
+				if (second >= min && second <= max &&
+						Math.abs(second - requested) < nearest) {
+					nearest = Math.abs(second - requested);
+					matched = second;
+				}
+			}
+			if (matched != requested) return matched;
+		}
+		if (editorSnapGridEnabled) {
+			float grid = snapToEditorGrid(requested,
+					horizontal ? screen.left : screen.top, editorGridStep(screen));
+			if (grid >= min && grid <= max) return grid;
+		}
+		return requested;
 	}
 
 	public void setLayoutEditMode(int mode) {
@@ -1886,9 +1938,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	/**
-	 * Shape editing must not magnetically reposition controls. Express each current
-	 * rectangle through its existing anchor and updated offset before the normal
-	 * geometry reconstruction. This also keeps dependent controls in place.
+	 * Reshaping preserves key origins, even if their changing edges snap.
+	 * Update anchor offsets before reconstructing dependent controls.
 	 */
 	private void preservePositionsAfterResize() {
 		for (VirtualKey key : keypad) {
@@ -2203,10 +2254,30 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				int[] targets = keyScaleGroups[resizeGroupForKey(editedIndex)];
 				float factorX = Math.max(1f / keySize, newX) / prevScaleX;
 				float factorY = Math.max(1f / keySize, newY) / prevScaleY;
+				float maxFactorX = Float.POSITIVE_INFINITY;
+				float maxFactorY = Float.POSITIVE_INFINITY;
 				for (int key : targets) {
 					if (!editorGroupResizeEnabled && key != editedIndex) continue;
-					factorX = Math.min(factorX, screen.width() / (keySize * resizeStartScales[key * 2]));
-					factorY = Math.min(factorY, screen.height() / (keySize * resizeStartScales[key * 2 + 1]));
+					maxFactorX = Math.min(maxFactorX,
+							screen.width() / (keySize * resizeStartScales[key * 2]));
+					maxFactorY = Math.min(maxFactorY,
+							screen.height() / (keySize * resizeStartScales[key * 2 + 1]));
+				}
+				factorX = Math.min(factorX, maxFactorX);
+				factorY = Math.min(factorY, maxFactorY);
+				if (editorSnapResizeEnabled) {
+					VirtualKey selected = keypad[editedIndex];
+					float startWidth = keySize * resizeStartScales[editedIndex * 2];
+					float startHeight = keySize * resizeStartScales[editedIndex * 2 + 1];
+					float reach = editorSnapRadius(selected);
+					float right = snapEditorResizeEdge(
+							selected.rect.left + startWidth * factorX, true, editedIndex, targets,
+							selected.rect.left + 1f, selected.rect.left + startWidth * maxFactorX, reach);
+					float bottom = snapEditorResizeEdge(
+							selected.rect.top + startHeight * factorY, false, editedIndex, targets,
+							selected.rect.top + 1f, selected.rect.top + startHeight * maxFactorY, reach);
+					factorX = (right - selected.rect.left) / startWidth;
+					factorY = (bottom - selected.rect.top) / startHeight;
 				}
 				for (int key : targets) {
 					if (!editorGroupResizeEnabled && key != editedIndex) continue;

@@ -1221,6 +1221,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float distance = (float) Math.hypot(editPinchX - editPointerX, editPinchY - editPointerY);
 		float radius = pinchStartRadius * distance / Math.max(1.0f, pinchStartDistance);
 		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
+		if (isEditorSnapResizeEnabled()) radius = snapGroupedResizeRadius(radius, shortest);
 		setControlRadius(editControl, radius / shortest);
 
 		// Pinch is an explicit edit. If the larger radius makes the preferred center impossible,
@@ -1234,6 +1235,38 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				(resolved.getCenterY() - screenBounds.top) /
 						Math.max(1.0f, screenBounds.height()));
 		notifyLayoutEditStateChanged();
+	}
+
+	/** Snap the closest circular edge, preserving a single radius for both axes. */
+	private float snapGroupedResizeRadius(float radius, float shortest) {
+		VirtualDpadGeometry geometry = currentEditGeometry();
+		if (geometry == null) return radius;
+		float cx = geometry.getCenterX();
+		float cy = geometry.getCenterY();
+		float minRadius = MIN_RADIUS_FRACTION * shortest;
+		float maxRadius = MAX_RADIUS_FRACTION * shortest;
+		float reach = Math.min(editorGridStep(screenBounds) / 2f,
+				Math.max(4f, radius / 8f));
+		float right = snapEditorResizeEdge(cx + radius, true, -1, null,
+				cx + minRadius, cx + maxRadius, reach) - cx;
+		float left = cx - snapEditorResizeEdge(cx - radius, true, -1, null,
+				cx - maxRadius, cx - minRadius, reach);
+		float bottom = snapEditorResizeEdge(cy + radius, false, -1, null,
+				cy + minRadius, cy + maxRadius, reach) - cy;
+		float top = cy - snapEditorResizeEdge(cy - radius, false, -1, null,
+				cy - maxRadius, cy - minRadius, reach);
+		float closest = Math.abs(right - radius);
+		float result = right;
+		if (Math.abs(left - radius) < closest) {
+			closest = Math.abs(left - radius);
+			result = left;
+		}
+		if (Math.abs(bottom - radius) < closest) {
+			closest = Math.abs(bottom - radius);
+			result = bottom;
+		}
+		if (Math.abs(top - radius) < closest) result = top;
+		return result;
 	}
 
 	private void resetMoveOffsetFromPrimary() {
