@@ -869,6 +869,13 @@ the shortcut of treating EGL shared-context creation as proof of
 ES1/ES2 texture interoperability. It is a driver observation, not
 a universal statement about ARM64 or EGLImage extension viability.
 
+**Regression control:** [CI 41264320936](https://github.com/H3nb/JL-Mod-Plus/actions/runs/41264320936)
+passed all **9 selected GLES classes / 13 instrumentation tests** on
+API35 x86_64 after the alternative experiment sources were added.
+No production renderer or shader source was changed in this iteration.
+These emulator checks are functional evidence, not GPU performance
+or physical ARM64 energy measurements.
+
 **Architecture impact:** hold both command replay and GPU-owned
 composition as tested *mechanisms*, not production-ready architectures.
 Replaying Java ME semantics requires real `Graphics` adapters and
