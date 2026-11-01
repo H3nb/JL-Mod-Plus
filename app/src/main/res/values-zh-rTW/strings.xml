@@ -1104,6 +1104,9 @@
     <string name="layout_editor_group_off">個別調整大小</string>
     <string name="layout_editor_snap_grid">貼齊格線</string>
     <string name="layout_editor_snap_controls">貼齊按鈕</string>
+    <string name="layout_editor_snap_resize">調整大小時貼齊</string>
+    <string name="layout_editor_snap_resize_on">調整大小吸附：開啟</string>
+    <string name="layout_editor_snap_resize_off">調整大小吸附：關閉</string>
     <string name="layout_editor_snap_grid_on">格線吸附：開啟</string>
     <string name="layout_editor_snap_grid_off">格線吸附：關閉</string>
     <string name="layout_editor_snap_controls_on">按鈕吸附：開啟</string>

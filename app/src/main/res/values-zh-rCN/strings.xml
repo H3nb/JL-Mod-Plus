@@ -1104,6 +1104,9 @@
     <string name="layout_editor_group_off">单独调整大小</string>
     <string name="layout_editor_snap_grid">吸附到网格</string>
     <string name="layout_editor_snap_controls">吸附到按钮</string>
+    <string name="layout_editor_snap_resize">调整大小时吸附</string>
+    <string name="layout_editor_snap_resize_on">缩放吸附：开启</string>
+    <string name="layout_editor_snap_resize_off">缩放吸附：关闭</string>
     <string name="layout_editor_snap_grid_on">网格吸附：开启</string>
     <string name="layout_editor_snap_grid_off">网格吸附：关闭</string>
     <string name="layout_editor_snap_controls_on">按钮吸附：开启</string>

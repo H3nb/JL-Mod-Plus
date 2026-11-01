@@ -1170,6 +1170,9 @@
     <string name="layout_editor_group_off">Redimensionner individuellement</string>
     <string name="layout_editor_snap_grid">Aligner sur la grille</string>
     <string name="layout_editor_snap_controls">Aligner sur les boutons</string>
+    <string name="layout_editor_snap_resize">Aligner pendant le redimensionnement</string>
+    <string name="layout_editor_snap_resize_on">Alignement au redimensionnement : activé</string>
+    <string name="layout_editor_snap_resize_off">Alignement au redimensionnement : désactivé</string>
     <string name="layout_editor_snap_grid_on">Grille magnétique : activée</string>
     <string name="layout_editor_snap_grid_off">Grille magnétique : désactivée</string>
     <string name="layout_editor_snap_controls_on">Boutons magnétiques : activés</string>
