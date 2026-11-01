@@ -180,8 +180,10 @@ must silently follow a replaced object *during one launch*. Similarly,
 
 Next discriminating device experiments:
 1. Add `replaceable.coins` to Watch, invoke `Replace player`, and refresh:
-   the old Watch owner must become LOST/not silently retarget to the new
-   same-valued object. A fresh Search may find the new player.
+   the existing Watch must not silently retarget to the new same-valued
+   object. It may still read the detached old object until GC; Inspector
+   should mark its reference path changed, and Watch may become LOST after
+   collection. A fresh Search may find the new player.
 2. Search `1357` (two equal-valued `party[]` objects), inspect both,
    invoke `Swap party`, and verify owner identity vs array-position
    provenance. Value-only matching must not imply ownership.
