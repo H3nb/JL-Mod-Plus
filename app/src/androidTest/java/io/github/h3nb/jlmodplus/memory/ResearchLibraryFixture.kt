@@ -13,6 +13,25 @@ import java.io.File
 import kotlinx.coroutines.runBlocking
 
 internal object ResearchLibraryFixture {
+    /** Same filesystem slot, fresh durable Library identity. No files are removed here. */
+    @JvmStatic
+    fun replace(context: Context, root: File): Long = runBlocking {
+        val database = LibraryDatabase.open(context, root)
+        try {
+            check(database.libraryDao().deleteAppByStorageKey("fixture") == 1)
+            database.libraryDao().insertApp(
+                LibraryAppEntity(
+                    storageKey = "fixture",
+                    sourceTitle = "Memory IPC Fixture",
+                    sourceVendor = "JL-Mod Plus",
+                    sourceVersion = "1.0",
+                ),
+            )
+        } finally {
+            database.close()
+        }
+    }
+
     @JvmStatic
     fun register(context: Context, root: File): Long = runBlocking {
         val database = LibraryDatabase.open(context, root)
