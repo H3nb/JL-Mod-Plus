@@ -28,6 +28,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.testing.Test
 import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import javax.inject.Inject
@@ -505,6 +506,11 @@ fun getMidletManifestProperties(): Attributes {
     }.mainAttributes
 }
 
+// Limit JUnit Platform to app local JVM tests; screenshot and Android instrumentation use separate runners.
+tasks.withType<Test>().configureEach {
+    if (name.endsWith("UnitTest")) useJUnitPlatform()
+}
+
 dependencies {
     implementation(project(":dexlib"))
 
@@ -548,7 +554,11 @@ implementation(libs.androidx.activity.compose)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.vintage.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     // Frozen v7 reader oracle only; Gson is absent from application runtime/APKs.
     testImplementation("com.google.code.gson:gson:2.14.0")
     testImplementation(libs.androidx.room3.testing)

@@ -93,7 +93,7 @@ For deciding which previews deserve golden references and evaluating visual mism
 
 ## Existing test structure
 
-- `app/src/test/`: JUnit tests, including Library migration files reconstructed from `app/schemas/` using bundled SQLite.
+- `app/src/test/`: JUnit Platform local JVM tests (Jupiter; Vintage for remaining JUnit 4 tests), including Library migration files reconstructed from `app/schemas/` using bundled SQLite.
 - `dexlib/src/test/`: JUnit tests for bytecode transformation and related dexlib contracts.
 - `app/src/androidTest/`: AndroidJUnitRunner tests, including Compose interaction, file-picker intents, database, and runtime boundary checks on Android.
 - `app/src/screenshotTest/`: Compose Preview Screenshot Testing cases. Committed references are under `app/src/screenshotTestDefaultEmulatorDebug/reference/`; inspect rendered images before accepting reference changes.
