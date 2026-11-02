@@ -1195,4 +1195,11 @@
     <string name="layout_editor_guide_tools">Alat editor</string>
     <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan, membatalkan, atau melanjutkan pengeditan.</string>
     <string name="layout_editor_guide_start">Mulai mengedit</string>
+    <string name="memory_saved_tab">Tersimpan</string>
+    <string name="memory_saved_save">Simpan variabel</string>
+    <string name="memory_saved_name">Nama variabel</string>
+    <string name="memory_saved_explanation">Menyimpan referensi struktural, bukan nilai saat ini. Prototipe ini hanya mendukung jalur field yang terverifikasi.</string>
+    <string name="memory_saved_empty">Belum ada variabel tersimpan untuk game ini. Pilih satu hasil pencarian atau Watch, lalu ketuk Simpan.</string>
+    <string name="memory_saved_resolve">Temukan</string>
+    <string name="memory_saved_delete_confirm">Hapus definisi variabel ini? Memori game tidak akan berubah.</string>
 </resources>
