@@ -460,4 +460,111 @@ public class SavedLocatorEngineResearchTest {
         }
     }
 
+    // Model the actual Ninja Prophecy bytecode shape:
+    // static ag.a -> ag.a:al[] -> [party index] -> al.a:f -> f.a:short.
+    static final class PartyStats { short hp; PartyStats(int hp) { this.hp = (short) hp; } }
+    static final class PartyUnit { PartyStats stats; PartyUnit(int hp) { stats = new PartyStats(hp); } }
+    static final class PartyHolder {
+        static PartyHolder active;
+        PartyUnit[] party = new PartyUnit[] {
+            new PartyUnit(100), new PartyUnit(120), new PartyUnit(195),
+            new PartyUnit(80), new PartyUnit(60)
+        };
+    }
+
+    @Test public void rootedObjectArrayIndexRebindsShortHpWithoutSearchOrWatch() {
+        final PartyHolder original = PartyHolder.active;
+        ManagedJavaMemoryEngine.ResearchFieldLocator path;
+        ManagedJavaMemoryEngine first = new ManagedJavaMemoryEngine();
+        PartyHolder.active = new PartyHolder();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, new GuestRoot());
+        MemoryDiscoveryBridge.tailSeen(PartyHolder.class);
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult search = first.startExact(FIRST,
+                    MemoryEngineContract.TYPE_SHORT, MemoryEngineContract.PREDICATE_EQUAL,
+                    195L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+            assertEquals(1, search.resultCount);
+            long id = first.resultPage(FIRST, search.revision, 0, 10).ids[0];
+            path = first.researchCaptureFieldLocator(FIRST, search.revision, id);
+            assertNotNull("Search-selected character must have a rooted path", path);
+            assertEquals(ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_INITIALIZED_STATIC, path.rootKind);
+            assertEquals(4, path.fields.length);
+            assertEquals(4, path.fieldIndices.length);
+            assertEquals(-1, path.fieldIndices[0]);
+            assertEquals(2, path.fieldIndices[1]);
+            assertEquals(-1, path.fieldIndices[2]);
+            assertEquals(-1, path.fieldIndices[3]);
+            assertEquals("hp", path.fields[3].name);
+            assertEquals(MemoryEngineContract.RESULT_OK, first.researchResolveSavedLocator(
+                    FIRST, path.copyStringsOnly(), "ninja-hp-owner", 0L).code);
+            assertEquals("195", first.researchReadSaved(FIRST, "ninja-hp-owner").value);
+            assertEquals(0, first.watchPage(FIRST).ids.length);
+            assertEquals(MemoryEngineContract.RESULT_OK, first.researchEditSaved(
+                    FIRST, "ninja-hp-owner", "180", 0L).code);
+            assertEquals(180, PartyHolder.active.party[2].stats.hp);
+            PartyUnit originalUnit = PartyHolder.active.party[2];
+            PartyHolder.active.party[2] = new PartyUnit(195);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    first.researchReadSaved(FIRST, "ninja-hp-owner").code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    first.researchEditSaved(FIRST, "ninja-hp-owner", "50", 0L).code);
+            assertEquals(180, originalUnit.stats.hp);
+            assertEquals(195, PartyHolder.active.party[2].stats.hp);
+        } finally {
+            first.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+        // Restart creates different objects; only structural identity is established.
+        PartyHolder.active = new PartyHolder();
+        ManagedJavaMemoryEngine second = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(NEXT, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(NEXT, new GuestRoot());
+        MemoryDiscoveryBridge.tailSeen(PartyHolder.class);
+        try {
+            assertEquals(MemoryEngineContract.RESULT_OK, second.researchResolveSavedLocator(
+                    NEXT, path.copyStringsOnly(), "ninja-hp-owner", 0L).code);
+            assertEquals("195", second.researchReadSaved(NEXT, "ninja-hp-owner").value);
+            assertEquals(0, second.watchPage(NEXT).ids.length);
+        } finally {
+            second.runtimeClosed(NEXT);
+            MemoryDiscoveryBridge.close(NEXT);
+            PartyHolder.active = original;
+        }
+    }
+
+    @Test public void objectArrayIndexMustMatchActualArrayBounds() {
+        PartyHolder previous = PartyHolder.active;
+        PartyHolder.active = new PartyHolder();
+        PartyHolder.active.party = new PartyUnit[1];
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(NEXT, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(NEXT, new GuestRoot());
+        MemoryDiscoveryBridge.tailSeen(PartyHolder.class);
+        try {
+            ManagedJavaMemoryEngine.ResearchFieldLocator location =
+                    new ManagedJavaMemoryEngine.ResearchFieldLocator(
+                        ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_INITIALIZED_STATIC,
+                        PartyHolder.class.getName(),
+                        new ManagedJavaMemoryEngine.ResearchField[] {
+                            new ManagedJavaMemoryEngine.ResearchField(
+                                PartyHolder.class.getName(), "active", PartyHolder.class.getName()),
+                            new ManagedJavaMemoryEngine.ResearchField(
+                                PartyHolder.class.getName(), "party", "[L" + PartyUnit.class.getName() + ";"),
+                            new ManagedJavaMemoryEngine.ResearchField(
+                                PartyUnit.class.getName(), "stats", PartyStats.class.getName()),
+                            new ManagedJavaMemoryEngine.ResearchField(
+                                PartyStats.class.getName(), "hp", "short")
+                        }, -1, new int[]{-1, 2, -1, -1});
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.researchResolveSavedLocator(NEXT, location, "ninja-hp-owner", 0L).code);
+            assertEquals(0, engine.watchPage(NEXT).ids.length);
+        } finally {
+            engine.runtimeClosed(NEXT);
+            MemoryDiscoveryBridge.close(NEXT);
+            PartyHolder.active = previous;
+        }
+    }
+
 }
