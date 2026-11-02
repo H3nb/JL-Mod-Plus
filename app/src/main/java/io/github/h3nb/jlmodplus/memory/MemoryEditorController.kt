@@ -757,7 +757,7 @@ internal class MemoryEditorComposeController(
                 if (descriptor.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, -1) !=
                     MemoryEngineContract.RESULT_OK
                 ) {
-                    throw IllegalStateException("This target has no verified field-only path")
+                    throw IllegalStateException("No supported, verified path to this target was found")
                 }
                 SavedVariablesPrototypeClient.save(
                     context, name, SavedVariablesPrototypeClient.toJson(descriptor),
