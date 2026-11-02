@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
-# Disposable external-host experiment: intentional user-stop kills the instrumented app.
+# Disposable host-side normal-exit experiment, following runtime-shutdown-smoke.ps1.
+# The production Exit must kill AndroidJUnitRunner itself; only external ADB can
+# observe all processes dying and launch the independent verification phase.
 set -euo pipefail
 APP=io.github.h3nb.jlmodplus.debug
 TEST_APP=${APP}.test
 RUNNER="${TEST_APP}/androidx.test.runner.AndroidJUnitRunner"
 TEST_CLASS=io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest
 
+processes() {
+  adb shell ps -A -o PID,NAME | tr -d '\r' |
+    awk -v app="$APP" '$2 == app || index($2, app ":") == 1'
+}
+
 diagnostics() {
-  local code=$?
-  if (( code != 0 )); then
-    echo "---- Normal-exit experiment: logcat / active processes ----"
-    adb shell "ps -A | grep 'jlmodplus' || true" || true
+  local status=$?
+  if (( status != 0 )); then
+    echo "---- Normal-exit experiment failure diagnostics ----"
+    processes || true
     adb logcat -d -b crash -v threadtime 2>/dev/null | tail -n 100 || true
     adb logcat -d -v threadtime -t 2500 2>/dev/null |
       grep -E 'SavedLocatorRND|AndroidRuntime|EmulatorShutdown|MidletKeepAlive|MidletThread|MemoryTargetBridgeService|FATAL EXCEPTION' |
@@ -19,52 +26,57 @@ diagnostics() {
 }
 trap diagnostics EXIT
 
-# connectedAndroidTest normally installs both packages; do not depend on it retaining the test APK.
 if ! adb shell pm path "$TEST_APP" | grep -q 'package:'; then
   apk=$(find app/build/outputs/apk/androidTest -name '*.apk' -type f | head -n 1)
   test -n "$apk"
   adb install -r "$apk"
 fi
 
-run_stage() {
-  local method=$1
-  local output
-  output=$(adb shell am instrument -w -r \
-    -e class "${TEST_CLASS}#${method}" "$RUNNER")
-  printf '%s\n' "$output"
-  grep -Fq 'OK (1 test)' <<< "$output"
-}
-
-echo "---- Prepare installed-game locator under the first instrumented process ----"
-run_stage researchPrepareNormalExit
-
-old_midlet=$(adb shell pidof "${APP}:midlet" | tr -d '\r' || true)
-test -n "$old_midlet"
-echo "Initial :midlet PID: $old_midlet"
-
-# Run the real application's stop handler as its own UID. The service remains
-# non-exported; this is not a shell-UID external service invocation.
-echo "---- Request real STOP_EMULATOR from outside the app process ----"
-stop_output=$(adb shell run-as "$APP" /system/bin/am startservice \
-  -a runtime.STOP_EMULATOR \
-  -n "${APP}/io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService" 2>&1)
-printf '%s\n' "$stop_output"
-if grep -Eiq 'Error:|SecurityException|not exported|Permission Denial|not found' <<< "$stop_output"; then
-  echo "STOP_EMULATOR could not be dispatched under app UID" >&2
+echo "---- Stage 1: capture locator and invoke the production Exit in instrumented main ----"
+# Normal Exit terminates AndroidJUnitRunner, so a non-zero process exit is
+# expected. Trust a checkpoint + externally observed shutdown, not runner OK.
+set +e
+prepare_output=$(adb shell am instrument -w -r \
+  -e class "${TEST_CLASS}#researchPrepareNormalExit" "$RUNNER" 2>&1)
+prepare_status=$?
+set -e
+printf '%s\n' "$prepare_output"
+echo "Prepare instrumentation status: $prepare_status (shutdown can kill runner)"
+grep -Fq 'shutdownRequested=saved-locator-exit' <<< "$prepare_output"
+if grep -Eq 'FAILURES!!!|INSTRUMENTATION_STATUS_CODE: -2' <<< "$prepare_output"; then
+  echo "Preparation failed before the intended shutdown" >&2
   exit 1
 fi
 
-# The host must observe old guest death; otherwise it has not tested normal exit.
+echo "---- Host observes the whole application process family stop ----"
 stopped=0
 for ((i=0; i<100; i++)); do
-  current=$(adb shell pidof "${APP}:midlet" | tr -d '\r' || true)
-  if [[ -z "$current" ]]; then stopped=1; break; fi
+  active=$(processes)
+  if [[ -z "$active" ]]; then stopped=1; break; fi
   sleep 0.2
 done
-if (( stopped != 1 )); then echo "Old :midlet survived emulator stop" >&2; exit 1; fi
-echo "Normal stop removed the prior guest process."
+if (( stopped != 1 )); then
+  echo "Emulator processes survived intentional Exit: $active" >&2
+  exit 1
+fi
+# Delayed service callbacks must not resurrect the app before verification.
+for ((i=0; i<10; i++)); do
+  sleep 0.3
+  active=$(processes)
+  if [[ -n "$active" ]]; then
+    echo "Emulator restarted after intentional Exit: $active" >&2
+    exit 1
+  fi
+done
+services=$(adb shell dumpsys activity services "$APP")
+if grep 'ServiceRecord{' <<< "$services" | grep -Fq "$APP/"; then
+  echo "A service survived intentional Exit" >&2
+  exit 1
+fi
 
-# A fresh am instrument call starts a fresh main process; no manual Search.
-echo "---- Relaunch and resolve saved definition with fresh instrumentation ----"
-run_stage researchVerifyNormalExit
-echo "PASS: normal Exit -> new process -> Saved Watch -> explicit Edit/readback."
+echo "---- Stage 2: new main + new :midlet; Watch without Search; Edit readback ----"
+verify_output=$(adb shell am instrument -w -r \
+  -e class "${TEST_CLASS}#researchVerifyNormalExit" "$RUNNER" 2>&1)
+printf '%s\n' "$verify_output"
+grep -Fq 'OK (1 test)' <<< "$verify_output"
+echo "PASS: normal Exit -> clean process family -> saved locator rebound -> Edit/readback."
