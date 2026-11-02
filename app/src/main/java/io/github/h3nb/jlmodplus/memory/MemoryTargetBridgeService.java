@@ -234,7 +234,8 @@ public final class MemoryTargetBridgeService extends Service {
 			String[] classes = new String[count];
 			String[] names = new String[count];
 			String[] types = new String[count];
-			for (int i = 0; i < count; i++) {
+            int[] indices = locator.fieldIndices.clone();
+            for (int i = 0; i < count; i++) {
 				ManagedJavaMemoryEngine.ResearchField f = locator.fields[i];
 				if (!researchSafeName(f.declaringClass) || !researchSafeName(f.name)
 						|| !researchSafeName(f.type)) {
@@ -250,6 +251,7 @@ public final class MemoryTargetBridgeService extends Service {
 			result.putStringArray("researchClasses", classes);
 			result.putStringArray("researchNames", names);
 			result.putStringArray("researchTypes", types);
+            result.putIntArray("researchFieldIndices", indices);
             result.putInt("researchArrayIndex", locator.arrayIndex);
 			return result;
 		}
@@ -317,9 +319,19 @@ public final class MemoryTargetBridgeService extends Service {
         }
         int index = descriptor.getInt("researchArrayIndex", -1);
         if (index < -1 || index >= 2_000_000) return null;
+        int[] selections = descriptor.getIntArray("researchFieldIndices");
+        if (selections != null) {
+            if (selections.length != fields.length || index >= 0) return null;
+            for (int i = 0; i < selections.length; i++) {
+                int selected = selections[i];
+                if (selected < -1 || selected >= 100_000
+                        || (selected >= 0 && (i == selections.length - 1
+                        || !fields[i].type.startsWith("[L")))) return null;
+            }
+        }
         return new ManagedJavaMemoryEngine.ResearchFieldLocator(
                 descriptor.getInt("researchRootKind", 0),
-                descriptor.getString("researchRootClass"), fields, index);
+                descriptor.getString("researchRootClass"), fields, index, selections);
     }
 
     private static Bundle researchSavedValue(long token, ManagedJavaMemoryEngine.SavedValue value) {
