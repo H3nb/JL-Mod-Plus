@@ -128,6 +128,47 @@ public final class MemoryEngineService extends Service {
 	};
 
 	private final IMemoryEngineService.Stub binder = new IMemoryEngineService.Stub() {
+        // Saved Variable operations are scoped by runtime token and do not create Watch rows.
+        @Override public Bundle researchResolveSavedLocator(long token, Bundle descriptor, String savedId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return researchPrototypeFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "The MIDlet runtime is unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                return bridge.researchResolveSavedLocator(token, descriptor, savedId, epoch);
+            } catch (RemoteException error) {
+                return researchPrototypeFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "The MIDlet connection was lost");
+            }
+        }
+
+        @Override public Bundle researchReadSaved(long token, String savedId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return researchPrototypeFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "The MIDlet runtime is unavailable");
+            try {
+                return bridge.researchReadSaved(token, savedId);
+            } catch (RemoteException error) {
+                return researchPrototypeFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "The MIDlet connection was lost");
+            }
+        }
+
+        @Override public Bundle researchEditSaved(long token, String savedId, String replacement) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return researchPrototypeFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "The MIDlet runtime is unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                return bridge.researchEditSaved(token, savedId, replacement, epoch);
+            } catch (RemoteException error) {
+                return researchPrototypeFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "The MIDlet connection was lost");
+            }
+        }
+
         @Override public Bundle researchCaptureFieldLocator(long token, long revision, long candidateId) {
             Bundle failure = new Bundle();
             failure.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
@@ -572,6 +613,13 @@ public final class MemoryEngineService extends Service {
 		}
 		super.onDestroy();
 	}
+
+    private static Bundle researchPrototypeFailure(int code, String message) {
+        Bundle result = new Bundle();
+        result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, code);
+        result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, message);
+        return result;
+    }
 
 	private long enqueueManagedSearch(long token, Operation operation) {
 		return enqueueManaged(token, true, operation);
