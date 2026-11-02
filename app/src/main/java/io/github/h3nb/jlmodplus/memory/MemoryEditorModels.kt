@@ -364,6 +364,7 @@ internal data class MemoryEditorUiState(
     val pageOffset: Int = 0,
     val results: List<MemoryResultRow> = emptyList(),
     val watches: List<MemoryWatchRow> = emptyList(),
+    val savedVariables: List<SavedVariablePrototypeRow> = emptyList(),
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
     val message: String? = null,
@@ -393,6 +394,10 @@ internal interface MemoryEditorActions {
     fun groupSearch(type: Int, values: Array<String>)
     fun undo()
     fun refresh()
+    fun refreshSavedVariables() = Unit
+    fun saveSelectedVariable(label: String) = Unit
+    fun resolveSavedVariable(id: String) = Unit
+    fun deleteSavedVariable(id: String) = Unit
     fun setWatchTab(watch: Boolean)
     fun toggleSelection(id: Long)
     fun selectVisible()
