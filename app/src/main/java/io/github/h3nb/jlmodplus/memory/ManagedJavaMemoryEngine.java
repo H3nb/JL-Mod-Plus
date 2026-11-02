@@ -1507,10 +1507,19 @@ final class ManagedJavaMemoryEngine {
 				}
 				if (declaring == null || declaring.getClassLoader() != runtime.loader()) return failure(token,
 						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Declaring class differs");
-				Field field = declaring.getDeclaredField(expected.name);
-				if (!field.getType().getName().equals(expected.type)
-						|| Modifier.isStatic(field.getModifiers()) != staticOwner) return failure(token,
-						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Field signature changed");
+				// Obfuscated JARs may legitimately contain multiple fields with the same
+				// name and different descriptors. getDeclaredField(name) is ambiguous.
+				Field field = null;
+				for (Field candidate : declaring.getDeclaredFields()) {
+					if (!candidate.getName().equals(expected.name)
+							|| !candidate.getType().getName().equals(expected.type)
+							|| Modifier.isStatic(candidate.getModifiers()) != staticOwner) continue;
+					if (field != null) return failure(token,
+							MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Ambiguous saved field signature");
+					field = candidate;
+				}
+				if (field == null) return failure(token,
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Exact field signature not found");
 				field.setAccessible(true);
 				if (index == locator.fields.length - 1) {
 					selected = field;
