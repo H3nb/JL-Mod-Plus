@@ -165,7 +165,23 @@ public final class SavedVariablesPrototypeService extends Service {
         JSONArray names = descriptor.getJSONArray("names");
         JSONArray types = descriptor.getJSONArray("types");
         int count = classes.length();
+        JSONArray hops = descriptor.optJSONArray("indices");
+        if (hops != null && hops.length() != 0 && hops.length() != count)
+            throw new IOException("Saved reference path length differs");
+        if (hops != null) for (int i = 0; i < hops.length(); i++) {
+            int choice = hops.getInt(i);
+            if (choice < -1 || choice >= 100_000 ||
+                    (choice >= 0 && (i == count - 1 ||
+                            !classes.getString(i).isEmpty() &&
+                            !types.getString(i).startsWith("[L"))))
+                throw new IOException("Unsupported saved object-array selector");
+        }
         int index = descriptor.optInt("arrayIndex", -1);
+        if (index >= 0 && hops != null && hops.length() > 0) {
+            for (int i = 0; i < hops.length(); i++)
+                if (hops.getInt(i) >= 0)
+                    throw new IOException("Array element and object-array hops cannot be combined");
+        }
         if (index < -1 || index >= 2_000_000 ||
                 (index >= 0 && (kind != 3 || count != 1
                         || !isPrimitiveArrayType(types.optString(0))))) {
