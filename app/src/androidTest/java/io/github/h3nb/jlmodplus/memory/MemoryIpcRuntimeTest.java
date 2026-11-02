@@ -36,6 +36,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Rule;
+import org.junit.Assume;
 import org.junit.rules.TestName;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,11 +85,18 @@ public final class MemoryIpcRuntimeTest {
 	private long fixtureAppId;
 	private ServiceConnection connection;
 	private IMemoryEngineService service;
+	private boolean normalExitOptIn;
 
 	@Before
 	public void setUp() throws Exception {
 		context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean externalStage = NORMAL_EXIT_PREPARE.equals(testName.getMethodName())
+				|| NORMAL_EXIT_VERIFY.equals(testName.getMethodName());
+		normalExitOptIn = externalStage && "true".equals(
+				InstrumentationRegistry.getArguments().getString("savedLocatorNormalExit"));
+		if (externalStage) Assume.assumeTrue(
+				"Destructive normal-exit fixture requires an external ADB observer", normalExitOptIn);
 		hadEmulatorDirectory = preferences.contains(Constants.PREF_EMULATOR_DIR);
 		previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
 		if (NORMAL_EXIT_VERIFY.equals(testName.getMethodName())) {
@@ -146,6 +154,9 @@ public final class MemoryIpcRuntimeTest {
 
 	@After
 	public void tearDown() {
+		// No destructive setup occurred when this external-host-only test was skipped.
+		if (!normalExitOptIn && (NORMAL_EXIT_PREPARE.equals(testName.getMethodName())
+				|| NORMAL_EXIT_VERIFY.equals(testName.getMethodName()))) return;
 		if (NORMAL_EXIT_PREPARE.equals(testName.getMethodName())) return;
 		unbindEngine();
 		stopMidletAndTasks();
