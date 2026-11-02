@@ -26,6 +26,17 @@ diagnostics() {
 }
 trap diagnostics EXIT
 
+# Gradle's connectedAndroidTest can uninstall the tested application after its
+# runner finishes. This host-owned phase must reinstall the exact APK it just
+# built before invoking a separate instrumentation session.
+target_apk=$(find app/build/outputs/apk/emulator/debug -maxdepth 1 -type f -name '*.apk' -print -quit)
+if [[ -z "$target_apk" ]]; then
+  echo "Missing built emulatorDebug APK for normal-exit verification" >&2
+  exit 1
+fi
+adb install -r "$target_apk"
+adb shell pm path "$APP" | grep -q 'package:'
+
 if ! adb shell pm path "$TEST_APP" | grep -q 'package:'; then
   apk=$(find app/build/outputs/apk/androidTest -name '*.apk' -type f | head -n 1)
   test -n "$apk"
