@@ -81,6 +81,8 @@ final class ManagedJavaMemoryEngine {
 	private final Map<Long, OwnerBucket> owners = new HashMap<>();
 	private final Map<Class<?>, Schema> schemaCache = new HashMap<>();
 	private final WatchStore watches = new WatchStore();
+    /** Bounded runtime-only bindings, independent from Watch membership. */
+    private final Map<String, SavedBinding> savedBindings = new HashMap<>();
 	@Nullable private ManagedMemoryMutationJournal editJournal;
 	private final ArrayDeque<SearchState> searchHistory = new ArrayDeque<>();
 	private volatile long activeToken;
@@ -1425,7 +1427,21 @@ final class ManagedJavaMemoryEngine {
 
 	/** Resolve only through initialized roots; never run Search or write during binding. */
 	ManagedOperationResult researchBindFieldLocator(long token, ResearchFieldLocator locator,
-	                                               String label, long operationEpoch) {
+                                               String label, long operationEpoch) {
+        return researchResolveFieldLocator(token, locator, label, operationEpoch, null);
+    }
+
+    ManagedOperationResult researchResolveSavedLocator(long token, ResearchFieldLocator locator,
+                                                       String savedId, long operationEpoch) {
+        if (savedId == null || savedId.length() < 8 || savedId.length() > 64) {
+            return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST, "Saved ID is invalid");
+        }
+        return researchResolveFieldLocator(token, locator, savedId, operationEpoch, savedId);
+    }
+
+    private ManagedOperationResult researchResolveFieldLocator(long token,
+            ResearchFieldLocator locator, String label, long operationEpoch,
+            @Nullable String savedId) {
 		if (locator == null || locator.rootClass == null || locator.fields == null
 				|| locator.fields.length == 0 || locator.fields.length > MAX_PROVENANCE_DEPTH
 				|| label == null || label.length() > MemoryEngineContract.MAX_WATCH_LABEL_CHARS) {
@@ -1538,6 +1554,17 @@ final class ManagedJavaMemoryEngine {
 				if (!isOperationActive(token, operationEpoch)
 						|| !isCurrentLocked(token)) return failureLocked(
 						MemoryEngineContract.RESULT_CANCELLED, "Runtime changed before saved binding");
+                if (savedId != null) {
+                    // Never silently retarget an existing session binding when a game
+                    // swaps its owner object, even if the typed path still resolves.
+                    if (savedBindings.containsKey(savedId)) return failureLocked(
+                            MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            "Saved target is already bound");
+                    if (savedBindings.size() >= 64) return failureLocked(
+                            MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Saved binding capacity reached");
+                    savedBindings.put(savedId, new SavedBinding(pathProof, slot, selectedType));
+                    return success(token, "Saved target resolved separately from Watch");
+                }
 				if (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
 					return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Watch is full");
 				OwnerBucket owner = ownerForObject(selectedOwner, kind, schema, null);
@@ -1562,6 +1589,100 @@ final class ManagedJavaMemoryEngine {
 					"Research locator could not resolve the exact field");
 		}
 	}
+
+
+    static final class SavedValue {
+        final int code;
+        final int type;
+        final String value;
+        final String detail;
+        SavedValue(int code, int type, String value, String detail) {
+            this.code = code;
+            this.type = type;
+            this.value = value;
+            this.detail = detail;
+        }
+    }
+
+    private static final class SavedBinding {
+        final OwnerBucket owner;
+        final int slot;
+        final int type;
+        SavedBinding(OwnerBucket owner, int slot, int type) {
+            this.owner = owner;
+            this.slot = slot;
+            this.type = type;
+        }
+    }
+
+    SavedValue researchReadSaved(long token, String id) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token)) return new SavedValue(
+                    MemoryEngineContract.RESULT_TARGET_LOST, 0, "", "Runtime is no longer active");
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return new SavedValue(
+                    MemoryEngineContract.RESULT_NO_SESSION, 0, "", "Saved variable is not resolved");
+            Object owner = binding.owner.strongOwner();
+            if (owner == null || inspectPath(token, binding.owner, owner, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved variable reference changed; editing is blocked");
+            }
+            FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
+            if (field == null) return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    binding.type, "", "Saved field is unavailable");
+            try {
+                long bits = ManagedJavaValue.readField(field.field,
+                        binding.owner.kind == KIND_STATIC_FIELD ? null : owner, binding.type);
+                return new SavedValue(MemoryEngineContract.RESULT_OK, binding.type,
+                        ManagedJavaValue.format(binding.type, bits), "");
+            } catch (RuntimeException | LinkageError error) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved value could not be read");
+            }
+        }
+    }
+
+    SavedValue researchEditSaved(long token, String id, String replacement,
+                                long operationEpoch) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, operationEpoch)) {
+                return new SavedValue(MemoryEngineContract.RESULT_TARGET_LOST,
+                        0, "", "Runtime or operation epoch changed");
+            }
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return new SavedValue(
+                    MemoryEngineContract.RESULT_NO_SESSION, 0, "", "Saved variable is not resolved");
+            Object owner = binding.owner.strongOwner();
+            if (owner == null || inspectPath(token, binding.owner, owner, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved variable reference changed; edit rejected");
+            }
+            long[] bits = new long[1];
+            if (!ManagedJavaValue.parse(replacement, binding.type, bits)) return new SavedValue(
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, binding.type, "",
+                    "Replacement is invalid for the saved primitive type");
+            FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
+            if (field == null || field.finalField) return new SavedValue(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, binding.type, "",
+                    "Saved field is not editable");
+            try {
+                Object target = binding.owner.kind == KIND_STATIC_FIELD ? null : owner;
+                ManagedJavaValue.writeField(field.field, target, binding.type, bits[0]);
+                long actual = ManagedJavaValue.readField(field.field, target, binding.type);
+                if (actual != bits[0]) return new SavedValue(
+                        MemoryEngineContract.RESULT_PARTIAL_WRITE, binding.type,
+                        ManagedJavaValue.format(binding.type, actual),
+                        "Saved value changed concurrently or the write was not confirmed");
+                return new SavedValue(MemoryEngineContract.RESULT_OK, binding.type,
+                        ManagedJavaValue.format(binding.type, actual), "");
+            } catch (RuntimeException | LinkageError error) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved value could not be written");
+            }
+        }
+    }
 
 	/** R&D only: compare actual reference edges, never just values or printed path text. */
 	private static boolean researchSameAncestry(@Nullable ProvenanceNode a,
@@ -1932,6 +2053,7 @@ final class ManagedJavaMemoryEngine {
 				requestedType = MemoryEngineContract.TYPE_AUTO;
 				lastMessage = null;
 				watches.clear();
+                savedBindings.clear();
 				owners.clear();
 				schemaCache.clear();
 			}
@@ -1973,6 +2095,7 @@ final class ManagedJavaMemoryEngine {
 		requestedType = MemoryEngineContract.TYPE_AUTO;
 		lastMessage = null;
 		watches.clear();
+        savedBindings.clear();
 		editJournal = null;
 		owners.clear();
 		schemaCache.clear();
