@@ -35,6 +35,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -67,6 +69,11 @@ public final class MemoryIpcRuntimeTest {
 	private static final long OPERATION_TIMEOUT_MILLIS = 30_000L;
 	private static final String FIXTURE_NAME = "Locator Lab R&D";
 	private static final String FIXTURE_CLASS = "research.locator.LocatorLabMIDlet";
+	private static final String NORMAL_EXIT_PREPARE = "researchPrepareNormalExit";
+	private static final String NORMAL_EXIT_VERIFY = "researchVerifyNormalExit";
+	private static final String NORMAL_EXIT_RECORD = "memory-rnd-normal-exit.json";
+
+	@Rule public final TestName testName = new TestName();
 
 	private Context context;
 	private SharedPreferences preferences;
@@ -84,6 +91,19 @@ public final class MemoryIpcRuntimeTest {
 		preferences = PreferenceManager.getDefaultSharedPreferences(context);
 		hadEmulatorDirectory = preferences.contains(Constants.PREF_EMULATOR_DIR);
 		previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		if (NORMAL_EXIT_VERIFY.equals(testName.getMethodName())) {
+			// The first instrumentation process was deliberately killed by normal Exit.
+			// Keep its installed fixture and saved definition intact for this new process.
+			org.json.JSONObject saved = normalExitRecord();
+			hadEmulatorDirectory = saved.getBoolean("hadPreviousDirectory");
+			previousEmulatorDirectory = saved.isNull("previousDirectory")
+					? null : saved.getString("previousDirectory");
+			fixtureAppId = saved.getLong("installedAppId");
+			root = new File(context.getFilesDir(), "memory-ipc-fixture");
+			appDirectory = new File(new File(root, "converted"), "fixture");
+			assertTrue("Normal-exit fixture must survive user Exit", appDirectory.isDirectory());
+			return;
+		}
 		stopMidletAndTasks();
 
 		root = new File(context.getFilesDir(), "memory-ipc-fixture");
@@ -126,8 +146,10 @@ public final class MemoryIpcRuntimeTest {
 
 	@After
 	public void tearDown() {
+		if (NORMAL_EXIT_PREPARE.equals(testName.getMethodName())) return;
 		unbindEngine();
 		stopMidletAndTasks();
+		if (NORMAL_EXIT_VERIFY.equals(testName.getMethodName())) normalExitFile().delete();
 		if (hadEmulatorDirectory) {
 			preferences.edit().putString(Constants.PREF_EMULATOR_DIR,
 					previousEmulatorDirectory).commit();
@@ -378,6 +400,114 @@ public final class MemoryIpcRuntimeTest {
 		} finally {
 			file.delete();
 		}
+	}
+
+
+	/** Stage one deliberately leaves the converted fixture and atomic definition on disk. */
+	@Test
+	public void researchPrepareNormalExit() throws Exception {
+		android.util.AtomicFile file = normalExitFile();
+		file.delete();
+		launchFixture();
+		awaitProcess(FIXTURE_NAME);
+		try (ResearchTargetConnection connection = ResearchTargetConnection.connect(context)) {
+			IMemoryTargetBridge target = connection.target;
+			long token = researchAwaitToken(target);
+			Bundle search = target.managedStartExact(token, MemoryEngineContract.TYPE_INT,
+					MemoryEngineContract.PREDICATE_EQUAL, "89", null, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					search.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			long revision = search.getLong(MemoryEngineContract.KEY_MANAGED_REVISION);
+			Bundle page = target.managedResultPage(token, revision, 0, 100);
+			long[] ids = page.getLongArray(MemoryEngineContract.KEY_RESULT_IDS);
+			String[] fields = page.getStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS);
+			assertNotNull(ids);
+			assertNotNull(fields);
+			Bundle locator = null;
+			for (int i = 0; i < ids.length; i++) {
+				if ("health".equals(fields[i])) {
+					locator = target.researchCaptureFieldLocator(token, revision, ids[i]);
+					break;
+				}
+			}
+			assertNotNull("Normal-exit fixture must expose a verified field", locator);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					locator.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			org.json.JSONObject record = new org.json.JSONObject()
+					.put("fileSchema", 1)
+					.put("installedAppId", fixtureAppId)
+					.put("runtimeToken", token)
+					.put("hadPreviousDirectory", hadEmulatorDirectory)
+					.put("previousDirectory", previousEmulatorDirectory == null
+							? org.json.JSONObject.NULL : previousEmulatorDirectory)
+					.put("sourceJarSha256", researchSha256(new File(appDirectory, "res.jar")))
+					.put("rootKind", locator.getInt("researchRootKind"))
+					.put("rootClass", locator.getString("researchRootClass"))
+					.put("classes", researchJsonArray(locator.getStringArray("researchClasses")))
+					.put("names", researchJsonArray(locator.getStringArray("researchNames")))
+					.put("types", researchJsonArray(locator.getStringArray("researchTypes")));
+			FileOutputStream output = file.startWrite();
+			try {
+				output.write(record.toString().getBytes(StandardCharsets.UTF_8));
+				file.finishWrite(output);
+			} catch (Exception | Error error) {
+				file.failWrite(output);
+				throw error;
+			}
+		}
+	}
+
+	/** Stage two runs under a fresh instrumented main process after real user-stop. */
+	@Test
+	public void researchVerifyNormalExit() throws Exception {
+		org.json.JSONObject record = normalExitRecord();
+		assertEquals(1, record.getInt("fileSchema"));
+		assertEquals("Installed retained JAR changed across normal Exit",
+				record.getString("sourceJarSha256"),
+				researchSha256(new File(appDirectory, "res.jar")));
+		launchFixture();
+		awaitProcess(FIXTURE_NAME);
+		try (ResearchTargetConnection connection = ResearchTargetConnection.connect(context)) {
+			IMemoryTargetBridge target = connection.target;
+			long token = researchAwaitToken(target);
+			assertTrue("Normal Exit must create a fresh runtime", token != record.getLong("runtimeToken"));
+			Bundle before = target.getManagedSessionInfo(token);
+			assertEquals(0L, before.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+			assertEquals(0, before.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT));
+			Bundle locator = new Bundle();
+			locator.putInt("researchSchema", 1);
+			locator.putInt("researchRootKind", record.getInt("rootKind"));
+			locator.putString("researchRootClass", record.getString("rootClass"));
+			locator.putStringArray("researchClasses", researchStrings(record.getJSONArray("classes")));
+			locator.putStringArray("researchNames", researchStrings(record.getJSONArray("names")));
+			locator.putStringArray("researchTypes", researchStrings(record.getJSONArray("types")));
+			Bundle bound = target.researchBindFieldLocator(token, locator, "Normal-exit recovery", 0L);
+			assertEquals("Normal-exit binding failed: "
+					+ bound.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL),
+					MemoryEngineContract.RESULT_OK,
+					bound.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			Bundle watch = target.managedWatchPage(token);
+			assertEquals(1, watch.getLongArray(MemoryEngineContract.KEY_WATCH_IDS).length);
+			assertEquals("89", watch.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
+			assertEquals(0L, target.getManagedSessionInfo(token)
+					.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+			Bundle edit = target.managedEditTyped(token, 0L,
+					watch.getLongArray(MemoryEngineContract.KEY_WATCH_IDS),
+					MemoryEngineContract.TYPE_INT, "90", true, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					edit.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			assertEquals("90", target.managedWatchPage(token)
+					.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
+		}
+	}
+
+	private android.util.AtomicFile normalExitFile() {
+		return new android.util.AtomicFile(new File(context.getFilesDir(), NORMAL_EXIT_RECORD));
+	}
+
+	private org.json.JSONObject normalExitRecord() throws Exception {
+		return new org.json.JSONObject(new String(normalExitFile().readFully(),
+				StandardCharsets.UTF_8));
 	}
 
 	private static long researchAwaitToken(IMemoryTargetBridge target) throws Exception {
