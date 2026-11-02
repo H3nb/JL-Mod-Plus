@@ -1,8 +1,8 @@
 package io.github.h3nb.jlmodplus.memory
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class MemorySearchExpressionTest {
     @Test
@@ -22,11 +22,11 @@ class MemorySearchExpressionTest {
     fun groupRejectsAddressDistanceModifiers() {
         for (query in listOf("500;1000:128", "500;1000::128", "500;1000::")) {
             val parsed = parseMemorySearchExpression(query)
-            assertTrue(query, parsed is MemorySearchExpression.Invalid)
+            assertTrue(parsed is MemorySearchExpression.Invalid, query)
             assertEquals(
-                query,
                 MemorySearchExpression.Reason.UNEXPECTED_RANGE,
                 (parsed as MemorySearchExpression.Invalid).reason,
+                query,
             )
         }
     }

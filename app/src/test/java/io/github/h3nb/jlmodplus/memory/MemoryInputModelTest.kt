@@ -4,9 +4,9 @@
  */
 package io.github.h3nb.jlmodplus.memory
 
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class MemoryInputModelTest {
     @Test fun integerSpecsRejectWrongCharactersAndOutOfRangeValues() {
@@ -28,10 +28,10 @@ class MemoryInputModelTest {
     @Test fun floatingSpecAllowsUsefulPartialScientificNotationOnly() {
         val spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_DOUBLE)
         for (partial in listOf("-", ".", "-.", "1.", "1.5", "1.5E", "1.5E-", "1.5E-3")) {
-            assertTrue(partial, spec.acceptsPartial(partial))
+            assertTrue(spec.acceptsPartial(partial), partial)
         }
         for (invalid in listOf("1..2", "E2", "1E2E3", "1A", "--1")) {
-            assertFalse(invalid, spec.acceptsPartial(invalid))
+            assertFalse(spec.acceptsPartial(invalid), invalid)
         }
         assertFalse(spec.isComplete("1.5E-"))
         assertTrue(spec.isComplete("1.5E-3"))

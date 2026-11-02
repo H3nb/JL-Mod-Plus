@@ -14,13 +14,13 @@
 
 package io.github.h3nb.jlmodplus.memory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -39,7 +39,7 @@ public class ManagedJavaMemoryEngineTest {
 	private ManagedJavaMemoryEngine engine;
 	private FixtureRoot root;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		root = new FixtureRoot();
 		engine = new ManagedJavaMemoryEngine();
@@ -48,7 +48,7 @@ public class ManagedJavaMemoryEngineTest {
 		MemoryDiscoveryBridge.setMidletRoot(TOKEN, root);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		MemoryDiscoveryBridge.close(TOKEN);
 	}
@@ -143,8 +143,7 @@ public class ManagedJavaMemoryEngineTest {
 		assertTrue(page.ids.length >= 2);
 		for (int index = 0; index < page.ids.length; index++) {
 			for (int other = index + 1; other < page.ids.length; other++) {
-				assertFalse("group published the same logical slot twice",
-						page.ids[index] == page.ids[other]);
+				assertFalse(page.ids[index] == page.ids[other], "group published the same logical slot twice");
 			}
 		}
 	}
@@ -832,7 +831,7 @@ public class ManagedJavaMemoryEngineTest {
 	private void assertTypedMatch(int type, long valueBits, String address, String text) {
 		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN, type,
 				MemoryEngineContract.PREDICATE_EQUAL, valueBits, 0L, 0L);
-		assertEquals("type=" + type, MemoryEngineContract.RESULT_OK, result.code);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code, "type=" + type);
 		long id = idForAddress(result.revision, address);
 		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
 				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
@@ -1300,11 +1299,11 @@ public class ManagedJavaMemoryEngineTest {
 					123457L, 0L, 0L);
 			assertEquals(MemoryEngineContract.RESULT_OK, search.code);
 			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
-			assertEquals(Arrays.toString(page.addresses), 2, page.ids.length);
-			assertTrue(Arrays.toString(page.addresses),
-					hasAddress(page, "FixtureRoot.staticArray [static]"));
-			assertTrue(Arrays.toString(page.addresses),
-					hasAddress(page, "FixtureRoot.array [instance]"));
+			assertEquals(2, page.ids.length, Arrays.toString(page.addresses));
+			assertTrue(hasAddress(page, "FixtureRoot.staticArray [static]"),
+					Arrays.toString(page.addresses));
+			assertTrue(hasAddress(page, "FixtureRoot.array [instance]"),
+					Arrays.toString(page.addresses));
 			int staticIndex = -1;
 			int instanceIndex = -1;
 			for (int index = 0; index < page.ids.length; index++) {

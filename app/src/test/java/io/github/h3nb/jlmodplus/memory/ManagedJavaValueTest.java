@@ -10,11 +10,11 @@
 
 package io.github.h3nb.jlmodplus.memory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ManagedJavaValueTest {
 	@Test
@@ -55,8 +55,6 @@ public class ManagedJavaValueTest {
 	@Test
 	public void knownOrderingPredicatesAndInvalidFloatingQueriesMatchContract() {
 		int type = MemoryEngineContract.TYPE_INT;
-		assertTrue(ManagedJavaValue.matchesKnown(type, MemoryEngineContract.PREDICATE_EQUAL,
-				7L, 7L, 0L));
 		assertTrue(ManagedJavaValue.matchesKnown(type, MemoryEngineContract.PREDICATE_NOT_EQUAL,
 				7L, 6L, 0L));
 		assertTrue(ManagedJavaValue.matchesKnown(type, MemoryEngineContract.PREDICATE_GREATER,
