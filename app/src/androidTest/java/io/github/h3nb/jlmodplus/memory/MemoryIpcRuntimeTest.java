@@ -455,6 +455,15 @@ public final class MemoryIpcRuntimeTest {
 				throw error;
 			}
 		}
+		// Align with the repository's existing runtime-shutdown smoke protocol:
+		// the real stop handler must kill the instrumented main process. A normal
+		// JUnit return would force-stop the target before its async shutdown runs.
+		Bundle checkpoint = new Bundle();
+		checkpoint.putString("shutdownRequested", "saved-locator-exit");
+		InstrumentationRegistry.getInstrumentation().sendStatus(0, checkpoint);
+		io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService.exitEmulator(context);
+		SystemClock.sleep(30_000L);
+		throw new AssertionError("Production Exit did not terminate instrumentation");
 	}
 
 	/** Stage two runs under a fresh instrumented main process after real user-stop. */
