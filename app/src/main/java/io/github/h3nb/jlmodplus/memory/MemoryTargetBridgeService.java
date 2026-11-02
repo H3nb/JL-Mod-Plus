@@ -250,6 +250,7 @@ public final class MemoryTargetBridgeService extends Service {
 			result.putStringArray("researchClasses", classes);
 			result.putStringArray("researchNames", names);
 			result.putStringArray("researchTypes", types);
+            result.putInt("researchArrayIndex", locator.arrayIndex);
 			return result;
 		}
 
@@ -314,9 +315,11 @@ public final class MemoryTargetBridgeService extends Service {
                     || !researchSafeName(types[i])) return null;
             fields[i] = new ManagedJavaMemoryEngine.ResearchField(classes[i], names[i], types[i]);
         }
+        int index = descriptor.getInt("researchArrayIndex", -1);
+        if (index < -1 || index >= 2_000_000) return null;
         return new ManagedJavaMemoryEngine.ResearchFieldLocator(
                 descriptor.getInt("researchRootKind", 0),
-                descriptor.getString("researchRootClass"), fields);
+                descriptor.getString("researchRootClass"), fields, index);
     }
 
     private static Bundle researchSavedValue(long token, ManagedJavaMemoryEngine.SavedValue value) {
