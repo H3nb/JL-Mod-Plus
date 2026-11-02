@@ -1283,4 +1283,11 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="memory_saved_tab">Saved</string>
+    <string name="memory_saved_save">Save variable</string>
+    <string name="memory_saved_name">Variable name</string>
+    <string name="memory_saved_explanation">Saves a structural reference, not its current value. Only verified field paths are supported in this prototype.</string>
+    <string name="memory_saved_empty">No saved variables for this game. Select one Search result or Watch entry and tap Save.</string>
+    <string name="memory_saved_resolve">Resolve</string>
+    <string name="memory_saved_delete_confirm">Delete this saved variable definition? This will not change game memory.</string>
 </resources>
