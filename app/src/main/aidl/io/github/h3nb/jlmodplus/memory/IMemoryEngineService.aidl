@@ -58,5 +58,11 @@ interface IMemoryEngineService {
             String firstValue, String secondValue);
     long clearFreeze(long runtimeToken, in long[] candidateIds);
     void clearSearch(long runtimeToken);
+
+    Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
+    Bundle resolveSavedLocator(long runtimeToken, in Bundle descriptor, String savedId);
+    Bundle readSaved(long runtimeToken, String savedId);
+    Bundle editSaved(long runtimeToken, String savedId, String replacement);
+    void releaseSaved(long runtimeToken, String savedId);
     void cancelOperation(long runtimeToken);
 }

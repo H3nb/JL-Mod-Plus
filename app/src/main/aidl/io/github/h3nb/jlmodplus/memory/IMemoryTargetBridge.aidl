@@ -59,5 +59,11 @@ interface IMemoryTargetBridge {
     Bundle managedClearFreeze(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch);
     Bundle managedClearSearch(long runtimeToken, long expectedRevision, long cancellationEpoch);
+
+    Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
+    Bundle resolveSavedLocator(long runtimeToken, in Bundle descriptor, String savedId, long cancellationEpoch);
+    Bundle readSaved(long runtimeToken, String savedId);
+    Bundle editSaved(long runtimeToken, String savedId, String replacement, long cancellationEpoch);
+    void releaseSaved(long runtimeToken, String savedId);
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }

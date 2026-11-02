@@ -217,11 +217,136 @@ public final class MemoryTargetBridgeService extends Service {
 					expectedRevision, cancellationEpoch));
 		}
 
+		// Production Saved transport. Keep external persistence and compatibility checks
+		// outside :midlet; the target supplies only bounded typed identities.
+		@Override
+		public Bundle captureSavedLocator(long runtimeToken, long expectedRevision,
+		                                         long candidateId) {
+			ManagedJavaMemoryEngine.SavedLocator locator =
+					managedEngine.captureSavedLocator(runtimeToken, expectedRevision, candidateId);
+			Bundle result = savedStatus(runtimeToken, locator == null
+					? MemoryEngineContract.RESULT_IDENTITY_UNSAFE : MemoryEngineContract.RESULT_OK);
+			if (locator == null) return result;
+			int count = locator.fields.length;
+			if (!savedSafeName(locator.rootClass) || count < 1 || count > 24) {
+				return savedStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+			}
+			String[] classes = new String[count];
+			String[] names = new String[count];
+			String[] types = new String[count];
+            int[] indices = locator.fieldIndices.clone();
+            for (int i = 0; i < count; i++) {
+				ManagedJavaMemoryEngine.SavedField f = locator.fields[i];
+				if (!savedSafeName(f.declaringClass) || !savedSafeName(f.name)
+						|| !savedSafeName(f.type)) {
+					return savedStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+				}
+				classes[i] = f.declaringClass;
+				names[i] = f.name;
+				types[i] = f.type;
+			}
+			result.putInt("savedSchema", 1);
+			result.putInt("savedRootKind", locator.rootKind);
+			result.putString("savedRootClass", locator.rootClass);
+			result.putStringArray("savedClasses", classes);
+			result.putStringArray("savedNames", names);
+			result.putStringArray("savedTypes", types);
+            result.putIntArray("savedFieldIndices", indices);
+            result.putInt("savedArrayIndex", locator.arrayIndex);
+			return result;
+		}
+
+
+        @Override
+        public Bundle resolveSavedLocator(long runtimeToken, Bundle descriptor,
+                                                 String savedId, long cancellationEpoch) {
+            ManagedJavaMemoryEngine.SavedLocator locator = savedDecode(descriptor);
+            if (locator == null) {
+                return savedStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+            }
+            return managedResult(runtimeToken, managedEngine.resolveSavedLocator(
+                    runtimeToken, locator, savedId, cancellationEpoch));
+        }
+
+        @Override
+        public Bundle readSaved(long runtimeToken, String savedId) {
+            return savedValueBundle(runtimeToken, managedEngine.readSaved(runtimeToken, savedId));
+        }
+
+        @Override
+        public Bundle editSaved(long runtimeToken, String savedId, String replacement,
+                                        long cancellationEpoch) {
+            return savedValueBundle(runtimeToken, managedEngine.editSaved(
+                    runtimeToken, savedId, replacement, cancellationEpoch));
+        }
+
+        @Override
+        public void releaseSaved(long runtimeToken, String savedId) {
+            managedEngine.releaseSaved(runtimeToken, savedId);
+        }
+
 		@Override
 		public void cancelManaged(long runtimeToken, long cancellationEpoch) {
 			managedEngine.cancel(runtimeToken, cancellationEpoch);
 		}
 	};
+
+    @Nullable
+    private static ManagedJavaMemoryEngine.SavedLocator savedDecode(Bundle descriptor) {
+        if (descriptor == null || descriptor.getInt("savedSchema", -1) != 1
+                || !savedSafeName(descriptor.getString("savedRootClass"))) return null;
+        String[] classes = descriptor.getStringArray("savedClasses");
+        String[] names = descriptor.getStringArray("savedNames");
+        String[] types = descriptor.getStringArray("savedTypes");
+        if (classes == null || names == null || types == null || classes.length < 1
+                || classes.length > 24 || names.length != classes.length
+                || types.length != classes.length) return null;
+        ManagedJavaMemoryEngine.SavedField[] fields =
+                new ManagedJavaMemoryEngine.SavedField[classes.length];
+        for (int i = 0; i < fields.length; i++) {
+            if (!savedSafeName(classes[i]) || !savedSafeName(names[i])
+                    || !savedSafeName(types[i])) return null;
+            fields[i] = new ManagedJavaMemoryEngine.SavedField(classes[i], names[i], types[i]);
+        }
+        int index = descriptor.getInt("savedArrayIndex", -1);
+        if (index < -1 || index >= 2_000_000) return null;
+        int[] selections = descriptor.getIntArray("savedFieldIndices");
+        if (selections != null) {
+            if (selections.length != fields.length || index >= 0) return null;
+            for (int i = 0; i < selections.length; i++) {
+                int selected = selections[i];
+                if (selected < -1 || selected >= 100_000
+                        || (selected >= 0 && (i == selections.length - 1
+                        || !fields[i].type.startsWith("[L")))) return null;
+            }
+        }
+        return new ManagedJavaMemoryEngine.SavedLocator(
+                descriptor.getInt("savedRootKind", 0),
+                descriptor.getString("savedRootClass"), fields, index, selections);
+    }
+
+    private static Bundle savedValueBundle(long token, ManagedJavaMemoryEngine.SavedValue value) {
+        Bundle result = savedStatus(token, value.code);
+        result.putString("savedValue", value.value);
+        result.putInt("savedValueType", value.type);
+        if (value.detail != null && !value.detail.isEmpty()) {
+            result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
+                    MemoryEngineContract.truncateMessage(value.detail));
+        }
+        return result;
+    }
+
+	private static Bundle savedStatus(long runtimeToken, int code) {
+		Bundle result = new Bundle();
+		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, code);
+		return result;
+	}
+
+	private static boolean savedSafeName(String name) {
+		return name != null && !name.isEmpty()
+				&& name.length() <= MemoryEngineContract.MAX_IPC_DISPLAY_CHARS;
+	}
 
 	@Override
 	public void onCreate() {
