@@ -1707,12 +1707,20 @@ final class ManagedJavaMemoryEngine {
                 return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         binding.type, "", "Saved variable reference changed; editing is blocked");
             }
-            FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
-            if (field == null) return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                    binding.type, "", "Saved field is unavailable");
             try {
-                long bits = ManagedJavaValue.readField(field.field,
-                        binding.owner.kind == KIND_STATIC_FIELD ? null : owner, binding.type);
+                long bits;
+                if (binding.owner.kind == KIND_ARRAY) {
+                    if (binding.slot < 0 || binding.slot >= Array.getLength(owner))
+                        return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                binding.type, "", "Saved array index no longer exists");
+                    bits = ManagedJavaValue.readArrayElement(owner, binding.slot, binding.type);
+                } else {
+                    FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
+                    if (field == null) return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            binding.type, "", "Saved field is unavailable");
+                    bits = ManagedJavaValue.readField(field.field,
+                            binding.owner.kind == KIND_STATIC_FIELD ? null : owner, binding.type);
+                }
                 return new SavedValue(MemoryEngineContract.RESULT_OK, binding.type,
                         ManagedJavaValue.format(binding.type, bits), "");
             } catch (IllegalAccessException | RuntimeException | LinkageError error) {
@@ -1742,14 +1750,23 @@ final class ManagedJavaMemoryEngine {
             if (!ManagedJavaValue.parse(replacement, binding.type, bits)) return new SavedValue(
                     MemoryEngineContract.RESULT_INVALID_REQUEST, binding.type, "",
                     "Replacement is invalid for the saved primitive type");
-            FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
-            if (field == null || field.finalField) return new SavedValue(
-                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, binding.type, "",
-                    "Saved field is not editable");
             try {
-                Object target = binding.owner.kind == KIND_STATIC_FIELD ? null : owner;
-                ManagedJavaValue.writeField(field.field, target, binding.type, bits[0]);
-                long actual = ManagedJavaValue.readField(field.field, target, binding.type);
+                long actual;
+                if (binding.owner.kind == KIND_ARRAY) {
+                    if (binding.slot < 0 || binding.slot >= Array.getLength(owner))
+                        return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                binding.type, "", "Saved array index no longer exists");
+                    ManagedJavaValue.writeArrayElement(owner, binding.slot, binding.type, bits[0]);
+                    actual = ManagedJavaValue.readArrayElement(owner, binding.slot, binding.type);
+                } else {
+                    FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
+                    if (field == null || field.finalField) return new SavedValue(
+                            MemoryEngineContract.RESULT_IDENTITY_UNSAFE, binding.type, "",
+                            "Saved field is not editable");
+                    Object target = binding.owner.kind == KIND_STATIC_FIELD ? null : owner;
+                    ManagedJavaValue.writeField(field.field, target, binding.type, bits[0]);
+                    actual = ManagedJavaValue.readField(field.field, target, binding.type);
+                }
                 if (actual != bits[0]) return new SavedValue(
                         MemoryEngineContract.RESULT_PARTIAL_WRITE, binding.type,
                         ManagedJavaValue.format(binding.type, actual),
