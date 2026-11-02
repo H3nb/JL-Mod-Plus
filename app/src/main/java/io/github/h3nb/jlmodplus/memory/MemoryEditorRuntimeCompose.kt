@@ -892,6 +892,7 @@ private fun RuntimeSavedVariablesTab(
     modifier: Modifier = Modifier,
 ) {
     var deleteId by remember { mutableStateOf<String?>(null) }
+    var editRow by remember { mutableStateOf<SavedVariablePrototypeRow?>(null) }
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
@@ -902,7 +903,7 @@ private fun RuntimeSavedVariablesTab(
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = actions::refreshSavedVariables) {
+            TextButton(onClick = actions::refreshSavedVariables, enabled = !state.busy) {
                 Text(stringResource(R.string.memory_editor_refresh))
             }
         }
@@ -914,6 +915,8 @@ private fun RuntimeSavedVariablesTab(
         } else {
             LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 items(state.savedVariables, key = { it.id }) { item ->
+                    val runtime = state.savedValues[item.id]
+                    val ready = runtime?.resolved == true
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -921,15 +924,27 @@ private fun RuntimeSavedVariablesTab(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(item.label, style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                item.description,
+                                item.description + " · " +
+                                    (if (ready) runtime.value else
+                                        runtime?.detail?.takeIf(String::isNotBlank)
+                                            ?: stringResource(R.string.memory_saved_unresolved)),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (ready) MaterialTheme.colorScheme.onSurfaceVariant
+                                    else MaterialTheme.colorScheme.error,
+                                maxLines = 3,
                             )
                         }
-                        TextButton(
-                            enabled = !state.busy,
-                            onClick = { actions.resolveSavedVariable(item.id) },
-                        ) { Text(stringResource(R.string.memory_saved_resolve)) }
+                        if (ready) {
+                            TextButton(enabled = !state.busy, onClick = { editRow = item }) {
+                                Text(stringResource(R.string.memory_editor_edit))
+                            }
+                        } else {
+                            TextButton(
+                                enabled = !state.busy &&
+                                    runtime?.code != MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                onClick = { actions.resolveSavedVariable(item.id) },
+                            ) { Text(stringResource(R.string.memory_saved_resolve)) }
+                        }
                         IconButton(
                             enabled = !state.busy,
                             onClick = { deleteId = item.id },
@@ -942,6 +957,47 @@ private fun RuntimeSavedVariablesTab(
                 }
             }
         }
+    }
+    val editing = editRow
+    if (editing != null) {
+        var replacement by remember(editing.id) {
+            mutableStateOf(state.savedValues[editing.id]?.value.orEmpty())
+        }
+        AlertDialog(
+            onDismissRequest = { editRow = null },
+            title = { Text(editing.label) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.memory_saved_edit_description))
+                    OutlinedTextField(
+                        value = replacement,
+                        onValueChange = { if (it.length <= 96) replacement = it },
+                        singleLine = true,
+                        label = {
+                            Text(stringResource(R.string.memory_saved_value) + " (" +
+                                runtimeTypeShort(state.savedValues[editing.id]?.type
+                                    ?: MemoryEngineContract.TYPE_AUTO) + ")")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = replacement.isNotBlank() &&
+                        state.savedValues[editing.id]?.resolved == true,
+                    onClick = {
+                        actions.editSavedVariable(editing.id, replacement)
+                        editRow = null
+                    },
+                ) { Text(stringResource(R.string.memory_editor_edit)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { editRow = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
     }
     if (deleteId != null) {
         AlertDialog(
