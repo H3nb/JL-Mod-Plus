@@ -1328,19 +1328,28 @@ final class ManagedJavaMemoryEngine {
 		final int rootKind;
 		final String rootClass;
 		final ResearchField[] fields;
+        /** Optional Object[] selection after each field. -1 means no selection. */
+        final int[] fieldIndices;
         /** -1 for primitive fields; nonnegative only for a direct primitive-array element. */
         final int arrayIndex;
 
 		ResearchFieldLocator(int rootKind, String rootClass, ResearchField[] fields) {
-            this(rootKind, rootClass, fields, -1);
+            this(rootKind, rootClass, fields, -1, null);
         }
 
         ResearchFieldLocator(int rootKind, String rootClass, ResearchField[] fields, int arrayIndex) {
-			this.rootKind = rootKind;
-			this.rootClass = rootClass;
-			this.fields = fields.clone();
+            this(rootKind, rootClass, fields, arrayIndex, null);
+        }
+
+        ResearchFieldLocator(int rootKind, String rootClass, ResearchField[] fields,
+                             int arrayIndex, @Nullable int[] fieldIndices) {
+            this.rootKind = rootKind;
+            this.rootClass = rootClass;
+            this.fields = fields.clone();
             this.arrayIndex = arrayIndex;
-		}
+            this.fieldIndices = fieldIndices == null ? new int[fields.length] : fieldIndices.clone();
+            if (fieldIndices == null) Arrays.fill(this.fieldIndices, -1);
+        }
 
 		ResearchFieldLocator copyStringsOnly() {
 			ResearchField[] copied = new ResearchField[fields.length];
@@ -1348,7 +1357,7 @@ final class ManagedJavaMemoryEngine {
 				ResearchField f = fields[i];
 				copied[i] = new ResearchField(f.declaringClass, f.name, f.type);
 			}
-			return new ResearchFieldLocator(rootKind, rootClass, copied, arrayIndex);
+			return new ResearchFieldLocator(rootKind, rootClass, copied, arrayIndex, fieldIndices);
 		}
 	}
 
@@ -1442,19 +1451,33 @@ final class ManagedJavaMemoryEngine {
 		if (rootObject == null) return null;
 		String rootClass = kind == ResearchFieldLocator.ROOT_INITIALIZED_STATIC
 				? root.field.getDeclaringClass().getName() : rootObject.getClass().getName();
-		ArrayList<ResearchField> fields = new ArrayList<>();
-		if (kind == ResearchFieldLocator.ROOT_INITIALIZED_STATIC) {
-			fields.add(ResearchField.of(root.field));
-		}
-		for (int index = reversed.size() - 2; index >= 0; index--) {
-			ProvenanceNode node = reversed.get(index);
-			if (node.kind != ProvenanceNode.INSTANCE_FIELD || node.field == null) return null;
-			fields.add(ResearchField.of(node.field));
-		}
-		fields.add(ResearchField.of(target.field));
-		if (fields.size() > MAX_PROVENANCE_DEPTH) return null;
-		return new ResearchFieldLocator(kind, rootClass,
-				fields.toArray(new ResearchField[0]));
+        ArrayList<ResearchField> fields = new ArrayList<>();
+        ArrayList<Integer> indices = new ArrayList<>();
+        if (kind == ResearchFieldLocator.ROOT_INITIALIZED_STATIC) {
+            fields.add(ResearchField.of(root.field));
+            indices.add(-1);
+        }
+        for (int index = reversed.size() - 2; index >= 0; index--) {
+            ProvenanceNode node = reversed.get(index);
+            if (node.kind == ProvenanceNode.ARRAY_INDEX) {
+                if (fields.isEmpty() || node.index < 0 || node.index >= limits.maxPending)
+                    return null;
+                int last = fields.size() - 1;
+                if (indices.get(last) != -1 || !fields.get(last).type.startsWith("[L"))
+                    return null;
+                indices.set(last, node.index);
+            } else if (node.kind == ProvenanceNode.INSTANCE_FIELD && node.field != null) {
+                fields.add(ResearchField.of(node.field));
+                indices.add(-1);
+            } else return null;
+        }
+        fields.add(ResearchField.of(target.field));
+        indices.add(-1);
+        if (fields.size() > MAX_PROVENANCE_DEPTH) return null;
+        int[] selections = new int[indices.size()];
+        for (int i = 0; i < selections.length; i++) selections[i] = indices.get(i);
+        return new ResearchFieldLocator(kind, rootClass,
+                fields.toArray(new ResearchField[0]), -1, selections);
 	}
 
 	/** Resolve only through initialized roots; never run Search or write during binding. */
@@ -1475,6 +1498,8 @@ final class ManagedJavaMemoryEngine {
             ResearchFieldLocator locator, String label, long operationEpoch,
             @Nullable String savedId) {
 		if (locator == null || locator.rootClass == null || locator.fields == null
+                || locator.fieldIndices == null
+                || locator.fieldIndices.length != locator.fields.length
                 || locator.arrayIndex < -1 || (locator.arrayIndex >= 0 &&
                     (savedId == null || locator.rootKind != ResearchFieldLocator.ROOT_INITIALIZED_STATIC
                     || locator.fields.length != 1))
@@ -1557,16 +1582,35 @@ final class ManagedJavaMemoryEngine {
 						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Exact field signature not found");
 				field.setAccessible(true);
 				if (index == locator.fields.length - 1) {
+                    if (locator.fieldIndices[index] != -1) return failure(token,
+                            MemoryEngineContract.RESULT_INVALID_REQUEST,
+                            "Saved final field cannot select an object-array element");
 					selected = field;
 				} else {
-					Object next = field.get(staticOwner ? null : current);
-					if (next == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
-							"Saved field chain is not ready");
-					ancestry = new ProvenanceNode(next, staticOwner ? null : ancestry,
-							field, -1, staticOwner
-							? ProvenanceNode.STATIC_FIELD : ProvenanceNode.INSTANCE_FIELD);
-					current = next;
-			}
+                    Object next = field.get(staticOwner ? null : current);
+                    if (next == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+                            "Saved field chain is not ready");
+                    ancestry = new ProvenanceNode(next, staticOwner ? null : ancestry,
+                            field, -1, staticOwner
+                            ? ProvenanceNode.STATIC_FIELD : ProvenanceNode.INSTANCE_FIELD);
+                    int chosenIndex = locator.fieldIndices[index];
+                    if (chosenIndex >= 0) {
+                        if (!(next instanceof Object[]) || chosenIndex >= limits.maxPending
+                                || chosenIndex >= ((Object[]) next).length)
+                            return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                    "Saved object-array selector is invalid");
+                        Object selectedObject = ((Object[]) next)[chosenIndex];
+                        if (selectedObject == null) return failure(token,
+                                MemoryEngineContract.RESULT_TARGET_LOST,
+                                "Saved object-array element is not ready");
+                        ancestry = new ProvenanceNode(selectedObject, ancestry,
+                                null, chosenIndex, ProvenanceNode.ARRAY_INDEX);
+                        next = selectedObject;
+                    } else if (chosenIndex != -1) return failure(token,
+                            MemoryEngineContract.RESULT_INVALID_REQUEST,
+                            "Saved array selector is invalid");
+                    current = next;
+                }
 			}
             if (locator.arrayIndex >= 0) {
                 if (selected == null || !(current instanceof Class)
