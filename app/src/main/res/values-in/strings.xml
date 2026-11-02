@@ -1202,4 +1202,7 @@
     <string name="memory_saved_empty">Belum ada variabel tersimpan untuk game ini. Pilih satu hasil pencarian atau Watch, lalu ketuk Simpan.</string>
     <string name="memory_saved_resolve">Temukan</string>
     <string name="memory_saved_delete_confirm">Hapus definisi variabel ini? Memori game tidak akan berubah.</string>
+    <string name="memory_saved_unresolved">Belum ditemukan</string>
+    <string name="memory_saved_value">Nilai</string>
+    <string name="memory_saved_edit_description">Ubah variabel tersimpan yang sudah ditemukan secara langsung. Ini akan mengubah nilai dalam game.</string>
 </resources>
