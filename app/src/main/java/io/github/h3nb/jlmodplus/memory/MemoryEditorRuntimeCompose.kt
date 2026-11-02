@@ -925,7 +925,7 @@ private fun RuntimeSavedVariablesTab(
                             Text(item.label, style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 item.description + " · " +
-                                    (if (ready) runtime.value else
+                                    (if (ready) runtime?.value.orEmpty() else
                                         runtime?.detail?.takeIf(String::isNotBlank)
                                             ?: stringResource(R.string.memory_saved_unresolved)),
                                 style = MaterialTheme.typography.bodySmall,
