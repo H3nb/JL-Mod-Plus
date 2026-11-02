@@ -159,7 +159,7 @@ class MemoryEditorModelsTest {
         )
     }
 
-    @Test fun unknownPredicatePreferenceSurvivesControllerRecreationForRuntimeToken() {
+    @Test fun unknownPredicateIsScopedToTheCurrentRuntimeToken() {
         val runtimeA = 0x7A11L
         val runtimeB = 0x7A12L
 
@@ -172,7 +172,7 @@ class MemoryEditorModelsTest {
             MemoryEngineContract.PREDICATE_DECREASED,
             MemoryEditorRuntimePreferences.unknownPredicate(runtimeA),
         )
-        // A new controller for the same MIDlet session reads the process-local value again.
+        // Repeated reads of the same active runtime retain its preference.
         assertEquals(
             MemoryEngineContract.PREDICATE_DECREASED,
             MemoryEditorRuntimePreferences.unknownPredicate(runtimeA),
@@ -180,6 +180,11 @@ class MemoryEditorModelsTest {
         assertEquals(
             MemoryEngineContract.PREDICATE_CHANGED,
             MemoryEditorRuntimePreferences.unknownPredicate(runtimeB),
+        )
+        // Returning to the old token must not revive its previous selection.
+        assertEquals(
+            MemoryEngineContract.PREDICATE_CHANGED,
+            MemoryEditorRuntimePreferences.unknownPredicate(runtimeA),
         )
     }
 

@@ -8,6 +8,7 @@ package io.github.h3nb.jlmodplus.memory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -102,5 +103,16 @@ public class ManagedMemoryMutationJournalTest {
 		assertFalse(journal.canRecord(1025L));
 		assertTrue(journal.canRecord(11L));
 		assertFalse(journal.canRecord(new long[]{11L, 1025L}, 2));
+
+		// A rejected new target must neither be recorded nor evict earlier edits.
+		journal.record(1025L, MemoryEngineContract.TYPE_INT, 0L, 2L);
+		assertNull(journal.get(1025L));
+		ManagedMemoryMutationJournal.Entry first = journal.get(0L);
+		ManagedMemoryMutationJournal.Entry last = journal.get(1023L);
+		assertNotNull(first);
+		assertNotNull(last);
+		assertEquals(0L, first.before);
+		assertEquals(1L, first.after);
+		assertEquals(1L, last.after);
 	}
 }

@@ -17,24 +17,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 public class ManagedJavaValueTest {
-	@Test
+@Test
 	public void parsesAndFormatsEverySupportedPrimitiveWithoutWidening() {
 		long[] bits = new long[1];
 		assertTrue(ManagedJavaValue.parse("-7", MemoryEngineContract.TYPE_BYTE, bits));
 		assertEquals("-7", ManagedJavaValue.format(MemoryEngineContract.TYPE_BYTE, bits[0]));
 		assertTrue(ManagedJavaValue.parse("0x7f", MemoryEngineContract.TYPE_BYTE, bits));
 		assertEquals("127", ManagedJavaValue.format(MemoryEngineContract.TYPE_BYTE, bits[0]));
-		assertFalse(ManagedJavaValue.parse("0xff", MemoryEngineContract.TYPE_BYTE, bits));
+		assertTrue(ManagedJavaValue.parse("-32768", MemoryEngineContract.TYPE_SHORT, bits));
+		assertEquals("-32768", ManagedJavaValue.format(MemoryEngineContract.TYPE_SHORT, bits[0]));
+		assertTrue(ManagedJavaValue.parse("32767", MemoryEngineContract.TYPE_SHORT, bits));
+		assertEquals("32767", ManagedJavaValue.format(MemoryEngineContract.TYPE_SHORT, bits[0]));
 		assertTrue(ManagedJavaValue.parse("65535", MemoryEngineContract.TYPE_CHAR, bits));
 		assertEquals("65535", ManagedJavaValue.format(MemoryEngineContract.TYPE_CHAR, bits[0]));
-		assertFalse(ManagedJavaValue.parse("256", MemoryEngineContract.TYPE_BYTE, bits));
-		assertFalse(ManagedJavaValue.parse("2147483648", MemoryEngineContract.TYPE_INT, bits));
+		assertTrue(ManagedJavaValue.parse("-2147483648", MemoryEngineContract.TYPE_INT, bits));
+		assertEquals("-2147483648", ManagedJavaValue.format(MemoryEngineContract.TYPE_INT, bits[0]));
+		assertTrue(ManagedJavaValue.parse("2147483647", MemoryEngineContract.TYPE_INT, bits));
+		assertEquals("2147483647", ManagedJavaValue.format(MemoryEngineContract.TYPE_INT, bits[0]));
 		assertTrue(ManagedJavaValue.parse("9007199254740993", MemoryEngineContract.TYPE_LONG, bits));
 		assertEquals("9007199254740993", ManagedJavaValue.format(MemoryEngineContract.TYPE_LONG, bits[0]));
 		assertTrue(ManagedJavaValue.parse("-0.0", MemoryEngineContract.TYPE_FLOAT, bits));
 		assertEquals("-0.0", ManagedJavaValue.format(MemoryEngineContract.TYPE_FLOAT, bits[0]));
 		assertTrue(ManagedJavaValue.parse("1.0e-300", MemoryEngineContract.TYPE_DOUBLE, bits));
 		assertEquals("1.0E-300", ManagedJavaValue.format(MemoryEngineContract.TYPE_DOUBLE, bits[0]));
+	}
+
+	@Test
+	public void rejectsOutOfRangeAndMalformedPrimitiveValues() {
+		long[] bits = new long[1];
+		assertFalse(ManagedJavaValue.parse("0xff", MemoryEngineContract.TYPE_BYTE, bits));
+		assertFalse(ManagedJavaValue.parse("256", MemoryEngineContract.TYPE_BYTE, bits));
+		assertFalse(ManagedJavaValue.parse("-32769", MemoryEngineContract.TYPE_SHORT, bits));
+		assertFalse(ManagedJavaValue.parse("32768", MemoryEngineContract.TYPE_SHORT, bits));
+		assertFalse(ManagedJavaValue.parse("-2147483649", MemoryEngineContract.TYPE_INT, bits));
+		assertFalse(ManagedJavaValue.parse("2147483648", MemoryEngineContract.TYPE_INT, bits));
 		assertFalse(ManagedJavaValue.parse("1.0f", MemoryEngineContract.TYPE_FLOAT, bits));
 	}
 
