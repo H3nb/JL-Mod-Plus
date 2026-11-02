@@ -253,38 +253,41 @@ public final class MemoryTargetBridgeService extends Service {
 			return result;
 		}
 
-		@Override
-		public Bundle researchBindFieldLocator(long runtimeToken, Bundle descriptor, String label,
-		                                      long cancellationEpoch) {
-			if (descriptor == null || descriptor.getInt("researchSchema", -1) != 1
-					|| !researchSafeName(descriptor.getString("researchRootClass"))
-					|| label == null || label.length() > MemoryEngineContract.MAX_WATCH_LABEL_CHARS) {
-				return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
-			}
-			String[] classes = descriptor.getStringArray("researchClasses");
-			String[] names = descriptor.getStringArray("researchNames");
-			String[] types = descriptor.getStringArray("researchTypes");
-			if (classes == null || names == null || types == null || classes.length < 1
-					|| classes.length > 24 || names.length != classes.length
-					|| types.length != classes.length) {
-				return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
-			}
-			ManagedJavaMemoryEngine.ResearchField[] fields =
-					new ManagedJavaMemoryEngine.ResearchField[classes.length];
-			for (int i = 0; i < fields.length; i++) {
-				if (!researchSafeName(classes[i]) || !researchSafeName(names[i])
-						|| !researchSafeName(types[i])) {
-					return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
-				}
-				fields[i] = new ManagedJavaMemoryEngine.ResearchField(classes[i], names[i], types[i]);
-			}
-			ManagedJavaMemoryEngine.ResearchFieldLocator locator =
-					new ManagedJavaMemoryEngine.ResearchFieldLocator(
-							descriptor.getInt("researchRootKind", 0),
-							descriptor.getString("researchRootClass"), fields);
-			return managedResult(runtimeToken, managedEngine.researchBindFieldLocator(
-					runtimeToken, locator, label, cancellationEpoch));
-		}
+
+        @Override
+        public Bundle researchBindFieldLocator(long runtimeToken, Bundle descriptor, String label,
+                                              long cancellationEpoch) {
+            ManagedJavaMemoryEngine.ResearchFieldLocator locator = researchDecode(descriptor);
+            if (locator == null || label == null
+                    || label.length() > MemoryEngineContract.MAX_WATCH_LABEL_CHARS) {
+                return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+            }
+            return managedResult(runtimeToken, managedEngine.researchBindFieldLocator(
+                    runtimeToken, locator, label, cancellationEpoch));
+        }
+
+        @Override
+        public Bundle researchResolveSavedLocator(long runtimeToken, Bundle descriptor,
+                                                 String savedId, long cancellationEpoch) {
+            ManagedJavaMemoryEngine.ResearchFieldLocator locator = researchDecode(descriptor);
+            if (locator == null) {
+                return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+            }
+            return managedResult(runtimeToken, managedEngine.researchResolveSavedLocator(
+                    runtimeToken, locator, savedId, cancellationEpoch));
+        }
+
+        @Override
+        public Bundle researchReadSaved(long runtimeToken, String savedId) {
+            return researchSavedValue(runtimeToken, managedEngine.researchReadSaved(runtimeToken, savedId));
+        }
+
+        @Override
+        public Bundle researchEditSaved(long runtimeToken, String savedId, String replacement,
+                                        long cancellationEpoch) {
+            return researchSavedValue(runtimeToken, managedEngine.researchEditSaved(
+                    runtimeToken, savedId, replacement, cancellationEpoch));
+        }
 
 		@Override
 		public void cancelManaged(long runtimeToken, long cancellationEpoch) {
@@ -292,6 +295,40 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 	};
 
+
+
+    @Nullable
+    private static ManagedJavaMemoryEngine.ResearchFieldLocator researchDecode(Bundle descriptor) {
+        if (descriptor == null || descriptor.getInt("researchSchema", -1) != 1
+                || !researchSafeName(descriptor.getString("researchRootClass"))) return null;
+        String[] classes = descriptor.getStringArray("researchClasses");
+        String[] names = descriptor.getStringArray("researchNames");
+        String[] types = descriptor.getStringArray("researchTypes");
+        if (classes == null || names == null || types == null || classes.length < 1
+                || classes.length > 24 || names.length != classes.length
+                || types.length != classes.length) return null;
+        ManagedJavaMemoryEngine.ResearchField[] fields =
+                new ManagedJavaMemoryEngine.ResearchField[classes.length];
+        for (int i = 0; i < fields.length; i++) {
+            if (!researchSafeName(classes[i]) || !researchSafeName(names[i])
+                    || !researchSafeName(types[i])) return null;
+            fields[i] = new ManagedJavaMemoryEngine.ResearchField(classes[i], names[i], types[i]);
+        }
+        return new ManagedJavaMemoryEngine.ResearchFieldLocator(
+                descriptor.getInt("researchRootKind", 0),
+                descriptor.getString("researchRootClass"), fields);
+    }
+
+    private static Bundle researchSavedValue(long token, ManagedJavaMemoryEngine.SavedValue value) {
+        Bundle result = researchStatus(token, value.code);
+        result.putString("researchValue", value.value);
+        result.putInt("researchValueType", value.type);
+        if (value.detail != null && !value.detail.isEmpty()) {
+            result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
+                    MemoryEngineContract.truncateMessage(value.detail));
+        }
+        return result;
+    }
 
 	// Experimental Bundle keys are deliberately private to the R&D transport; not a file schema.
 	private static Bundle researchStatus(long runtimeToken, int code) {
