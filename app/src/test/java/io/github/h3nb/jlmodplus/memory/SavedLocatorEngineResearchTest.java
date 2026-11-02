@@ -360,4 +360,104 @@ public class SavedLocatorEngineResearchTest {
         }
     }
 
+    /** Paris Nights-style g.aa[34]: the array field is static; the target is an element. */
+    static final class StaticNeeds {
+        static byte[] hunger = new byte[64];
+    }
+
+    @Test public void directStaticPrimitiveArrayIndexSurvivesRestartWithoutWatch() {
+        ClassLoader loader = getClass().getClassLoader();
+        byte[] original = StaticNeeds.hunger;
+        long firstToken = FIRST;
+        long secondToken = NEXT;
+        ManagedJavaMemoryEngine.ResearchFieldLocator descriptor;
+        StaticNeeds.hunger = new byte[64];
+        StaticNeeds.hunger[34] = 95;
+        MemoryDiscoveryBridge.install(firstToken, loader);
+        MemoryDiscoveryBridge.setMidletRoot(firstToken, new GuestRoot());
+        MemoryDiscoveryBridge.tailSeen(StaticNeeds.class);
+        ManagedJavaMemoryEngine first = new ManagedJavaMemoryEngine();
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult search = first.startExact(firstToken,
+                    MemoryEngineContract.TYPE_BYTE, MemoryEngineContract.PREDICATE_EQUAL,
+                    95L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+            assertEquals(1, search.resultCount);
+            long id = first.resultPage(firstToken, search.revision, 0, 10).ids[0];
+            descriptor = first.researchCaptureFieldLocator(firstToken, search.revision, id);
+            assertNotNull("Exact, live static array owner must be capturable", descriptor);
+            assertEquals(ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_INITIALIZED_STATIC,
+                    descriptor.rootKind);
+            assertEquals(34, descriptor.arrayIndex);
+            assertEquals("[B", descriptor.fields[0].type);
+            assertEquals(StaticNeeds.class.getName(), descriptor.rootClass);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    first.researchResolveSavedLocator(firstToken, descriptor.copyStringsOnly(),
+                            "static-array-hunger", 0L).code);
+            assertEquals(0, first.watchPage(firstToken).ids.length);
+            assertEquals("95", first.researchReadSaved(firstToken, "static-array-hunger").value);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    first.researchEditSaved(firstToken, "static-array-hunger", "40", 0L).code);
+            assertEquals(40, StaticNeeds.hunger[34]);
+            byte[] previous = StaticNeeds.hunger;
+            StaticNeeds.hunger = new byte[64];
+            StaticNeeds.hunger[34] = 6;
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    first.researchReadSaved(firstToken, "static-array-hunger").code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    first.researchEditSaved(firstToken, "static-array-hunger", "77", 0L).code);
+            assertEquals(40, previous[34]);
+            assertEquals(6, StaticNeeds.hunger[34]);
+            assertEquals(0, first.watchPage(firstToken).ids.length);
+        } finally {
+            first.runtimeClosed(firstToken);
+            MemoryDiscoveryBridge.close(firstToken);
+        }
+        ManagedJavaMemoryEngine second = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(secondToken, loader);
+        MemoryDiscoveryBridge.setMidletRoot(secondToken, new GuestRoot());
+        MemoryDiscoveryBridge.tailSeen(StaticNeeds.class);
+        try {
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    second.researchResolveSavedLocator(secondToken, descriptor.copyStringsOnly(),
+                            "static-array-hunger", 0L).code);
+            assertEquals("6", second.researchReadSaved(secondToken, "static-array-hunger").value);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    second.researchEditSaved(secondToken, "static-array-hunger", "30", 0L).code);
+            assertEquals(30, StaticNeeds.hunger[34]);
+            assertEquals(0, second.watchPage(secondToken).ids.length);
+        } finally {
+            second.runtimeClosed(secondToken);
+            MemoryDiscoveryBridge.close(secondToken);
+            StaticNeeds.hunger = original;
+        }
+    }
+
+    @Test public void primitiveArrayLocatorRejectsOutOfBoundsWithoutEditing() {
+        ClassLoader loader = getClass().getClassLoader();
+        byte[] original = StaticNeeds.hunger;
+        StaticNeeds.hunger = new byte[4];
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, loader);
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, new GuestRoot());
+        MemoryDiscoveryBridge.tailSeen(StaticNeeds.class);
+        try {
+            ManagedJavaMemoryEngine.ResearchFieldLocator descriptor = new
+                ManagedJavaMemoryEngine.ResearchFieldLocator(
+                    ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_INITIALIZED_STATIC,
+                    StaticNeeds.class.getName(),
+                    new ManagedJavaMemoryEngine.ResearchField[] {
+                        new ManagedJavaMemoryEngine.ResearchField(
+                            StaticNeeds.class.getName(), "hunger", "[B")
+                    }, 34);
+            assertEquals(MemoryEngineContract.RESULT_TARGET_LOST,
+                    engine.researchResolveSavedLocator(FIRST, descriptor, "invalid-array-index", 0L).code);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+            StaticNeeds.hunger = original;
+        }
+    }
+
 }
