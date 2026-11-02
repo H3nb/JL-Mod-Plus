@@ -250,6 +250,7 @@ internal class MemoryEditorComposeController(
         composeView.visibility = View.VISIBLE
         composeView.requestFocus()
         if (service == null) connectEngine() else reloadState()
+        refreshSavedVariables()
         composeView.removeCallbacks(liveRefreshRunnable)
         composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
     }
@@ -677,6 +678,120 @@ internal class MemoryEditorComposeController(
             return
         }
         launchOperation { engine, token -> engine.refreshCandidates(token, ids, false) }
+    }
+
+    // R&D: definitions are stored under the installed game, never in the guest process.
+    override fun refreshSavedVariables() {
+        runIpc {
+            val result = runCatching { SavedVariablesPrototypeClient.list(context) }
+            post {
+                if (result.isSuccess) {
+                    val response = result.getOrThrow()
+                    state = if (response.optBoolean("ok")) state.copy(
+                        savedVariables = SavedVariablesPrototypeClient.rows(response),
+                    ) else state.copy(
+                        savedVariables = emptyList(),
+                        message = response.optString("error", "Saved Variables unavailable"),
+                        messageIsError = true,
+                    )
+                } else {
+                    state = state.copy(
+                        message = "Unable to read saved variables", messageIsError = true,
+                    )
+                }
+            }
+        }
+    }
+
+    override fun saveSelectedVariable(label: String) {
+        val id = state.selected.singleOrNull() ?: return
+        val watch = state.watchTab
+        val revision = if (watch) 0L else state.revision
+        val token = state.runtimeToken
+        val name = label.trim()
+        if (state.busy || name.isEmpty() || name.length > 64 || token == 0L) return
+        val engine = service ?: return
+        runIpc {
+            val result = runCatching {
+                val descriptor = engine.researchCaptureFieldLocator(token, revision, id)
+                if (descriptor.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, -1) !=
+                    MemoryEngineContract.RESULT_OK
+                ) {
+                    throw IllegalStateException("This target has no verified field-only path")
+                }
+                SavedVariablesPrototypeClient.save(
+                    context, name, SavedVariablesPrototypeClient.toJson(descriptor),
+                )
+            }
+            post {
+                val response = result.getOrNull()
+                if (response?.optBoolean("ok") == true) {
+                    state = state.copy(
+                        savedVariables = SavedVariablesPrototypeClient.rows(response),
+                        message = "Saved variable: $name", messageIsError = false,
+                    )
+                } else {
+                    state = state.copy(
+                        message = response?.optString("error")
+                            ?: result.exceptionOrNull()?.message
+                            ?: "Unable to save this variable",
+                        messageIsError = true,
+                    )
+                }
+            }
+        }
+    }
+
+    override fun resolveSavedVariable(id: String) {
+        val token = state.runtimeToken
+        val engine = service ?: return
+        if (token == 0L || state.busy) return
+        runIpc {
+            val result = runCatching {
+                val response = SavedVariablesPrototypeClient.list(context)
+                if (!response.optBoolean("ok")) {
+                    throw IllegalStateException(response.optString("error", "Incompatible saved variable"))
+                }
+                val descriptor = SavedVariablesPrototypeClient.descriptor(response, id)
+                    ?: throw IllegalStateException("Saved variable no longer exists")
+                val label = descriptor.optString("label").take(64)
+                engine.researchBindFieldLocator(
+                    token, SavedVariablesPrototypeClient.toBundle(descriptor), label,
+                )
+            }
+            val response = result.getOrNull()
+            val success = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, -1) ==
+                MemoryEngineContract.RESULT_OK
+            post {
+                state = state.copy(
+                    message = if (success) "Saved variable added to Watch"
+                        else result.exceptionOrNull()?.message
+                            ?: "Could not resolve this variable (it may not be ready or may already be watched)",
+                    messageIsError = !success,
+                )
+            }
+            if (success) reloadState()
+        }
+    }
+
+    override fun deleteSavedVariable(id: String) {
+        runIpc {
+            val result = runCatching { SavedVariablesPrototypeClient.remove(context, id) }
+            post {
+                val response = result.getOrNull()
+                if (response?.optBoolean("ok") == true) {
+                    state = state.copy(
+                        savedVariables = SavedVariablesPrototypeClient.rows(response),
+                        message = "Saved variable removed", messageIsError = false,
+                    )
+                } else {
+                    state = state.copy(
+                        message = response?.optString("error") ?: "Unable to remove saved variable",
+                        messageIsError = true,
+                    )
+                }
+            }
+        }
     }
 
     override fun setWatchTab(watch: Boolean) {
