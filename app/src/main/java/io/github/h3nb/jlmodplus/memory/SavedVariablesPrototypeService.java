@@ -165,6 +165,12 @@ public final class SavedVariablesPrototypeService extends Service {
         JSONArray names = descriptor.getJSONArray("names");
         JSONArray types = descriptor.getJSONArray("types");
         int count = classes.length();
+        int index = descriptor.optInt("arrayIndex", -1);
+        if (index < -1 || index >= 2_000_000 ||
+                (index >= 0 && (kind != 3 || count != 1
+                        || !isPrimitiveArrayType(types.optString(0))))) {
+            throw new IOException("Unsupported saved array element");
+        }
         if (kind < 1 || kind > 3 || root.isEmpty() || root.length() > 256
                 || count == 0 || count > 24 || names.length() != count || types.length() != count) {
             throw new IOException("Unsupported locator structure");
@@ -176,6 +182,12 @@ public final class SavedVariablesPrototypeService extends Service {
                 throw new IOException("Invalid locator field");
             }
         }
+    }
+
+    private static boolean isPrimitiveArrayType(String name) {
+        return "[B".equals(name) || "[S".equals(name) || "[C".equals(name)
+                || "[I".equals(name) || "[J".equals(name)
+                || "[F".equals(name) || "[D".equals(name);
     }
 
     private static void write(Target target, JSONObject document) throws Exception {
