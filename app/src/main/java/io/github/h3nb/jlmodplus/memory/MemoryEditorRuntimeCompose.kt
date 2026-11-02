@@ -819,10 +819,6 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
-    if (saveDialog) RuntimeSaveVariableDialog(
-        onSave = { actions.saveSelectedVariable(it); saveDialog = false },
-        onDismiss = { saveDialog = false },
-    )
     deleteSnapshot?.let { (revision, ids) ->
         AlertDialog(
             onDismissRequest = { deleteSnapshot = null },
@@ -1146,6 +1142,10 @@ private fun RuntimeWatchTab(
         }
     }
 
+    if (saveDialog) RuntimeSaveVariableDialog(
+        onSave = { actions.saveSelectedVariable(it); saveDialog = false },
+        onDismiss = { saveDialog = false },
+    )
     val currentEditTargets = editTargets
     if (currentEditTargets != null) {
         RuntimeEditDialog(
