@@ -1636,7 +1636,7 @@ final class ManagedJavaMemoryEngine {
                         binding.owner.kind == KIND_STATIC_FIELD ? null : owner, binding.type);
                 return new SavedValue(MemoryEngineContract.RESULT_OK, binding.type,
                         ManagedJavaValue.format(binding.type, bits), "");
-            } catch (RuntimeException | LinkageError error) {
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
                 return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         binding.type, "", "Saved value could not be read");
             }
@@ -1677,7 +1677,7 @@ final class ManagedJavaMemoryEngine {
                         "Saved value changed concurrently or the write was not confirmed");
                 return new SavedValue(MemoryEngineContract.RESULT_OK, binding.type,
                         ManagedJavaValue.format(binding.type, actual), "");
-            } catch (RuntimeException | LinkageError error) {
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
                 return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         binding.type, "", "Saved value could not be written");
             }
