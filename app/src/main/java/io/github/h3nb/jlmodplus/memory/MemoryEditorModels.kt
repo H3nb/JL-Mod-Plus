@@ -347,6 +347,15 @@ internal object MemoryWatchPageParser {
     }
 }
 
+internal data class SavedVariableRuntimeValue(
+    val code: Int,
+    val type: Int = MemoryEngineContract.TYPE_AUTO,
+    val value: String = "",
+    val detail: String = "",
+) {
+    val resolved: Boolean get() = code == MemoryEngineContract.RESULT_OK
+}
+
 internal data class MemoryEditorUiState(
     val visible: Boolean = false,
     val connecting: Boolean = false,
@@ -365,6 +374,7 @@ internal data class MemoryEditorUiState(
     val results: List<MemoryResultRow> = emptyList(),
     val watches: List<MemoryWatchRow> = emptyList(),
     val savedVariables: List<SavedVariablePrototypeRow> = emptyList(),
+    val savedValues: Map<String, SavedVariableRuntimeValue> = emptyMap(),
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
     val message: String? = null,
@@ -398,6 +408,7 @@ internal interface MemoryEditorActions {
     fun saveSelectedVariable(label: String) = Unit
     fun resolveSavedVariable(id: String) = Unit
     fun deleteSavedVariable(id: String) = Unit
+    fun editSavedVariable(id: String, value: String) = Unit
     fun setWatchTab(watch: Boolean)
     fun toggleSelection(id: Long)
     fun selectVisible()
