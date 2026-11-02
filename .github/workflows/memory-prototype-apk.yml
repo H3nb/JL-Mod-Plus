@@ -1,0 +1,67 @@
+# Disposable user-test packaging workflow. Never publish as a release.
+name: Saved Variables Prototype APK
+on:
+  push:
+    branches: [research/memory-saved-locators]
+    paths:
+      - 'app/src/main/**'
+      - '.github/workflows/memory-prototype-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saved-variables-prototype-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Build installable ARM64 debug prototype
+    runs-on: ubuntu-26.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Restore project debug signing key when available
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          if [[ -n "$ANDROID_DEBUG_KEYSTORE_BASE64" ]]; then
+            printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+            chmod 600 debug.keystore
+          fi
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+      - name: Provision NDK r30
+        run: sdkmanager 'ndk;30.0.16248370' >/dev/null
+      - name: Assemble and run focused unit suite
+        run: |
+          chmod +x gradlew
+          ./gradlew --daemon --stacktrace :app:assembleEmulatorDebug :app:testEmulatorDebugUnitTest
+      - name: Stage prototype
+        run: |
+          mkdir -p ci-prototype
+          cp app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk ci-prototype/JL-Mod-Plus-Saved-Variables-Prototype-arm64.apk
+          {
+            echo 'R&D / DEVICE TEST ONLY. NOT A RELEASE.'
+            echo "Source commit: ${GITHUB_SHA}"
+            echo "CI run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo 'Supports Android 6+ ARM64. Install only after backing up important games and data.'
+          } > ci-prototype/README.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: JL-Mod-Plus-Saved-Variables-Prototype-arm64
+          path: ci-prototype/
+          retention-days: 14
+          compression-level: 0
+          if-no-files-found: error
