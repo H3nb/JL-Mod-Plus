@@ -213,4 +213,82 @@ public class SavedLocatorEngineResearchTest {
             MemoryDiscoveryBridge.close(NEXT);
         }
     }
+
+    @Test public void directSavedStaticVariableDoesNotCreateWatchEvenAfterSearch() {
+        ClassLoader loader = getClass().getClassLoader();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, loader);
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, new GuestRoot());
+        MemoryDiscoveryBridge.tailSeen(GuestPlayer.class);
+        final int oldValue = GuestPlayer.shared;
+        try {
+            GuestPlayer.shared = 9001;
+            ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(FIRST,
+                    MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+                    9001L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+            ManagedJavaMemoryEngine.ResearchFieldLocator saved = null;
+            ManagedJavaMemoryEngine.ManagedPage page =
+                    engine.resultPage(FIRST, search.revision, 0, 100);
+            for (long id : page.ids) {
+                ManagedJavaMemoryEngine.ResearchFieldLocator candidate =
+                        engine.researchCaptureFieldLocator(FIRST, search.revision, id);
+                if (candidate != null
+                        && candidate.rootKind ==
+                            ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_INITIALIZED_STATIC
+                        && candidate.fields.length == 1
+                        && "shared".equals(candidate.fields[0].name)) saved = candidate;
+            }
+            assertNotNull("A searched static field must expose a saved descriptor", saved);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.researchResolveSavedLocator(FIRST, saved.copyStringsOnly(),
+                            "test-static-identity", 0L).code);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+            assertEquals("9001", engine.researchReadSaved(FIRST, "test-static-identity").value);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.researchEditSaved(FIRST, "test-static-identity", "9002", 0L).code);
+            assertEquals(9002, GuestPlayer.shared);
+            assertEquals("9002", engine.researchReadSaved(FIRST, "test-static-identity").value);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+        } finally {
+            GuestPlayer.shared = oldValue;
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
+    @Test public void savedDirectInstanceEditRejectsReplacedOwner() {
+        ClassLoader loader = getClass().getClassLoader();
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, loader);
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            ManagedJavaMemoryEngine.ResearchFieldLocator locator =
+                    new ManagedJavaMemoryEngine.ResearchFieldLocator(
+                            ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_MIDLET,
+                            GuestRoot.class.getName(),
+                            new ManagedJavaMemoryEngine.ResearchField[] {
+                                new ManagedJavaMemoryEngine.ResearchField(
+                                        GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
+                                new ManagedJavaMemoryEngine.ResearchField(
+                                        GuestPlayer.class.getName(), "coins", "int")
+                            });
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.researchResolveSavedLocator(
+                    FIRST, locator, "test-player-identity", 0L).code);
+            GuestPlayer original = root.player;
+            root.player = new GuestPlayer();
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.researchReadSaved(FIRST, "test-player-identity").code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.researchEditSaved(FIRST, "test-player-identity", "1234", 0L).code);
+            assertEquals(585858, root.player.coins);
+            assertEquals(585858, original.coins);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
 }
