@@ -119,7 +119,7 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, INSPECTOR }
+private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, SAVED, INSPECTOR }
 private enum class RuntimeInputField { FIRST, SECOND }
 
 private data class RuntimeKeypadCell(
@@ -196,6 +196,7 @@ internal fun MemoryEditorRuntimeRoot(
         when (tab) {
             RuntimeMemoryTab.SEARCH_RESULTS -> actions.setWatchTab(false)
             RuntimeMemoryTab.WATCH -> actions.setWatchTab(true)
+            RuntimeMemoryTab.SAVED -> actions.refreshSavedVariables()
             RuntimeMemoryTab.INSPECTOR -> Unit
         }
     }
@@ -243,6 +244,7 @@ internal fun MemoryEditorRuntimeRoot(
                             tab = tab,
                             results = state.resultCount,
                             watches = state.watches.size,
+                            saved = state.savedVariables.size,
                             inspectorEnabled = selectedId != null,
                             onTab = { tab = it },
                             modifier = Modifier.width(176.dp).fillMaxHeight(),
@@ -271,6 +273,7 @@ internal fun MemoryEditorRuntimeRoot(
                         tab = tab,
                         results = state.resultCount,
                         watches = state.watches.size,
+                        saved = state.savedVariables.size,
                         inspectorEnabled = selectedId != null,
                         onTab = { tab = it },
                     )
@@ -315,6 +318,11 @@ private fun RuntimeMemoryTabContent(
             onPeekUnderlayChanged = onPeekUnderlayChanged,
             modifier = modifier,
         )
+        RuntimeMemoryTab.SAVED -> RuntimeSavedVariablesTab(
+            state = state,
+            actions = actions,
+            modifier = modifier,
+        )
         RuntimeMemoryTab.INSPECTOR -> RuntimeInspectorTab(
             state = state,
             actions = actions,
@@ -329,6 +337,7 @@ private fun RuntimeMemoryTabRail(
     tab: RuntimeMemoryTab,
     results: Long,
     watches: Int,
+    saved: Int,
     inspectorEnabled: Boolean,
     onTab: (RuntimeMemoryTab) -> Unit,
     modifier: Modifier = Modifier,
@@ -358,6 +367,12 @@ private fun RuntimeMemoryTabRail(
             } else {
                 stringResource(R.string.memory_editor_watch)
             },
+        )
+        RuntimeMemoryRailTab(
+            selected = tab == RuntimeMemoryTab.SAVED,
+            onClick = { onTab(RuntimeMemoryTab.SAVED) },
+            icon = R.drawable.ic_save,
+            label = "${stringResource(R.string.memory_saved_tab)} · $saved",
         )
         RuntimeMemoryRailTab(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
@@ -441,6 +456,7 @@ private fun RuntimeMemoryTabs(
     tab: RuntimeMemoryTab,
     results: Long,
     watches: Int,
+    saved: Int,
     inspectorEnabled: Boolean,
     onTab: (RuntimeMemoryTab) -> Unit,
 ) {
@@ -481,6 +497,12 @@ private fun RuntimeMemoryTabs(
             icon = {
                 Icon(painterResource(R.drawable.ic_memory_editor_watch), contentDescription = null)
             },
+        )
+        Tab(
+            selected = tab == RuntimeMemoryTab.SAVED,
+            onClick = { onTab(RuntimeMemoryTab.SAVED) },
+            text = { Text(stringResource(R.string.memory_saved_tab), maxLines = 1) },
+            icon = { Icon(painterResource(R.drawable.ic_save), contentDescription = null) },
         )
         Tab(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
@@ -590,6 +612,7 @@ private fun RuntimeSearchResultsTab(
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
     var deleteSnapshot by remember { mutableStateOf<Pair<Long, List<Long>>?>(null) }
+    var saveDialog by remember { mutableStateOf(false) }
     val unknownBaseline = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
     val selectedRows = state.results.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
@@ -619,6 +642,12 @@ private fun RuntimeSearchResultsTab(
                 description = R.string.memory_editor_add_to_watch,
                 enabled = state.selected.isNotEmpty() && !state.busy,
                 onClick = { actions.watchSelected(true) },
+            )
+            RuntimeActionIcon(
+                icon = R.drawable.ic_save,
+                description = R.string.memory_saved_save,
+                enabled = selectedRows.size == 1 && !state.busy,
+                onClick = { saveDialog = true },
             )
             RuntimeActionIcon(
                 icon = R.drawable.ic_edit,
@@ -761,6 +790,10 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
+    if (saveDialog) RuntimeSaveVariableDialog(
+        onSave = { actions.saveSelectedVariable(it); saveDialog = false },
+        onDismiss = { saveDialog = false },
+    )
     val currentEditTargets = editTargets
     if (currentEditTargets != null) {
         RuntimeEditDialog(
@@ -786,6 +819,10 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
+    if (saveDialog) RuntimeSaveVariableDialog(
+        onSave = { actions.saveSelectedVariable(it); saveDialog = false },
+        onDismiss = { saveDialog = false },
+    )
     deleteSnapshot?.let { (revision, ids) ->
         AlertDialog(
             onDismissRequest = { deleteSnapshot = null },
@@ -812,6 +849,117 @@ private fun RuntimeSearchResultsTab(
             },
             dismissButton = {
                 TextButton(onClick = { deleteSnapshot = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun RuntimeSaveVariableDialog(
+    onSave: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var name by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.memory_saved_save)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.memory_saved_explanation))
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { if (it.length <= 64) name = it },
+                    label = { Text(stringResource(R.string.memory_saved_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = name.isNotBlank(),
+                onClick = { onSave(name.trim()) },
+            ) { Text(stringResource(R.string.memory_saved_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun RuntimeSavedVariablesTab(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    modifier: Modifier = Modifier,
+) {
+    var deleteId by remember { mutableStateOf<String?>(null) }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(R.string.memory_saved_tab),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = actions::refreshSavedVariables) {
+                Text(stringResource(R.string.memory_editor_refresh))
+            }
+        }
+        HorizontalDivider()
+        if (state.savedVariables.isEmpty()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.memory_saved_empty))
+            }
+        } else {
+            LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                items(state.savedVariables, key = { it.id }) { item ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(item.label, style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                item.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        TextButton(
+                            enabled = !state.busy,
+                            onClick = { actions.resolveSavedVariable(item.id) },
+                        ) { Text(stringResource(R.string.memory_saved_resolve)) }
+                        IconButton(
+                            enabled = !state.busy,
+                            onClick = { deleteId = item.id },
+                        ) {
+                            Icon(painterResource(R.drawable.ic_delete),
+                                contentDescription = stringResource(R.string.memory_editor_remove))
+                        }
+                    }
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+    if (deleteId != null) {
+        AlertDialog(
+            onDismissRequest = { deleteId = null },
+            title = { Text(stringResource(R.string.memory_editor_remove)) },
+            text = { Text(stringResource(R.string.memory_saved_delete_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteId?.let(actions::deleteSavedVariable)
+                    deleteId = null
+                }) { Text(stringResource(R.string.memory_editor_remove)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteId = null }) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
@@ -908,6 +1056,7 @@ private fun RuntimeWatchTab(
     modifier: Modifier = Modifier,
 ) {
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
+    var saveDialog by remember { mutableStateOf(false) }
     val selectedRows = state.watches.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
 
@@ -922,6 +1071,11 @@ private fun RuntimeWatchTab(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
             )
+            RuntimeActionIcon(
+                R.drawable.ic_save,
+                R.string.memory_saved_save,
+                enabled = selectedRows.size == 1 && !state.busy,
+            ) { saveDialog = true }
             RuntimeActionIcon(
                 R.drawable.ic_edit,
                 R.string.memory_editor_edit,
