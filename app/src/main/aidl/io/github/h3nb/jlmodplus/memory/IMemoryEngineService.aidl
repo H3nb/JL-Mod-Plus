@@ -58,6 +58,9 @@ interface IMemoryEngineService {
             String firstValue, String secondValue);
     long clearFreeze(long runtimeToken, in long[] candidateIds);
     void clearSearch(long runtimeToken);
+    Bundle researchResolveSavedLocator(long runtimeToken, in Bundle descriptor, String savedId);
+    Bundle researchReadSaved(long runtimeToken, String savedId);
+    Bundle researchEditSaved(long runtimeToken, String savedId, String replacement);
     void cancelOperation(long runtimeToken);
 
     // Disposable R&D bridge. The target process remains the only owner of runtime candidates.
