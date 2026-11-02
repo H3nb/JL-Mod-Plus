@@ -291,4 +291,73 @@ public class SavedLocatorEngineResearchTest {
         }
     }
 
+    /**
+     * A legal classfile may contain two fields with the same name but different descriptors.
+     * This tiny classfile has a public default constructor plus static int f and static long f.
+     * javac cannot emit such a class from Java source, so retain the bytecode as a fixture.
+     */
+    @Test public void exactStaticFieldDescriptorResolvesDespiteDuplicateObfuscatedName() throws Exception {
+        final String classfile =
+                "yv66vgAAADQADQEAAWIHAAEBABBqYXZhL2xhbmcvT2JqZWN0BwADAQAGPGluaXQ+"
+                + "AQADKClWAQAEQ29kZQwABQAGCgAEAAgBAAFmAQABSQEAAUoAIQACAAQAAAACAAkA"
+                + "CgALAAAACQAKAAwAAAABAAEABQAGAAEABwAAABEAAQABAAAABSq3AAmxAAAAAAAA";
+        final byte[] bytes = java.util.Base64.getDecoder().decode(classfile);
+        class GuestLoader extends ClassLoader {
+            GuestLoader() { super(SavedLocatorEngineResearchTest.class.getClassLoader()); }
+            Class<?> defineGuest() { return defineClass("b", bytes, 0, bytes.length); }
+        }
+        GuestLoader loader = new GuestLoader();
+        Class<?> guest = loader.defineGuest();
+        assertEquals("fixture has duplicate field names", 2, guest.getDeclaredFields().length);
+        java.lang.reflect.Field ambiguous = guest.getDeclaredField("f");
+        java.lang.reflect.Field target = null;
+        for (java.lang.reflect.Field field : guest.getDeclaredFields()) {
+            if (field.getType() != ambiguous.getType()) {
+                target = field;
+                break;
+            }
+        }
+        assertNotNull(target);
+        final int type = target.getType() == int.class
+                ? MemoryEngineContract.TYPE_INT : MemoryEngineContract.TYPE_LONG;
+        for (java.lang.reflect.Field field : guest.getDeclaredFields()) {
+            if (field.getType() == int.class) field.setInt(null, 12345);
+            else field.setLong(null, 5566778899L);
+        }
+        final long queryValue = type == MemoryEngineContract.TYPE_INT ? 12345L : 5566778899L;
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, loader);
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, guest.getDeclaredConstructor().newInstance());
+        MemoryDiscoveryBridge.tailSeen(guest);
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(FIRST,
+                    type, MemoryEngineContract.PREDICATE_EQUAL, queryValue, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+            assertEquals(1L, search.resultCount);
+            long id = engine.resultPage(FIRST, search.revision, 0, 10).ids[0];
+            ManagedJavaMemoryEngine.ResearchFieldLocator saved =
+                    engine.researchCaptureFieldLocator(FIRST, search.revision, id);
+            assertNotNull(saved);
+            assertEquals(ManagedJavaMemoryEngine.ResearchFieldLocator.ROOT_INITIALIZED_STATIC,
+                    saved.rootKind);
+            assertEquals("b", saved.rootClass);
+            assertEquals("f", saved.fields[0].name);
+            assertEquals(target.getType().getName(), saved.fields[0].type);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.researchResolveSavedLocator(
+                    FIRST, saved.copyStringsOnly(), "duplicate-static-field", 0L).code);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+            assertEquals(Long.toString(queryValue),
+                    engine.researchReadSaved(FIRST, "duplicate-static-field").value);
+            final String replacement = "67890";
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.researchEditSaved(FIRST, "duplicate-static-field", replacement, 0L).code);
+            assertEquals(67890L, type == MemoryEngineContract.TYPE_INT
+                    ? target.getInt(null) : target.getLong(null));
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
 }
