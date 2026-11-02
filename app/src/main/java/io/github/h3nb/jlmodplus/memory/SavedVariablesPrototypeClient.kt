@@ -77,7 +77,7 @@ internal object SavedVariablesPrototypeClient {
                 description = row.optJSONArray("names")?.let {
                     val last = if (it.length() > 0) it.optString(it.length() - 1) else ""
                     val index = row.optInt("arrayIndex", -1)
-                    if (index >= 0) "$" + "{last}[$" + "{index}]" else last
+                    if (index >= 0) last + "[" + index + "]" else last
                 }.orEmpty(),
             )
         }
