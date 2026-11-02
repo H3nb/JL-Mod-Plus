@@ -63,5 +63,8 @@ interface IMemoryTargetBridge {
     Bundle researchCaptureFieldLocator(long runtimeToken, long expectedRevision, long candidateId);
     Bundle researchBindFieldLocator(long runtimeToken, in Bundle descriptor,
             String label, long cancellationEpoch);
+    Bundle researchResolveSavedLocator(long runtimeToken, in Bundle descriptor, String savedId, long cancellationEpoch);
+    Bundle researchReadSaved(long runtimeToken, String savedId);
+    Bundle researchEditSaved(long runtimeToken, String savedId, String replacement, long cancellationEpoch);
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }
