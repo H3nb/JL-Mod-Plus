@@ -146,12 +146,12 @@ public final class MemoryEngineService extends Service {
             failure.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
                     MemoryEngineContract.RESULT_TARGET_LOST);
             IMemoryTargetBridge bridge = target;
-            if (bridge == null || !isCurrentToken(token)) return failure;
+            if (bridge == null || !isTargetToken(token)) return failure;
             try {
                 Bundle result = bridge.researchBindFieldLocator(token, descriptor, label,
                         cancelEpoch.get());
                 if (result.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
-                        == MemoryEngineContract.RESULT_OK && isCurrentToken(token)) {
+                        == MemoryEngineContract.RESULT_OK && isTargetToken(token)) {
                     configuredToken = token;
                     Bundle session = bridge.getManagedSessionInfo(token);
                     updateManagedState(token, session);
