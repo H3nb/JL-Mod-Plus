@@ -22,11 +22,11 @@ class MemorySearchExpressionTest {
     fun groupRejectsAddressDistanceModifiers() {
         for (query in listOf("500;1000:128", "500;1000::128", "500;1000::")) {
             val parsed = parseMemorySearchExpression(query)
-            assertTrue(query, parsed is MemorySearchExpression.Invalid)
+            assertTrue(parsed is MemorySearchExpression.Invalid, query)
             assertEquals(
-                query,
                 MemorySearchExpression.Reason.UNEXPECTED_RANGE,
                 (parsed as MemorySearchExpression.Invalid).reason,
+                query,
             )
         }
     }

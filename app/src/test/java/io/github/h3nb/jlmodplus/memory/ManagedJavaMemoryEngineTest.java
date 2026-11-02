@@ -1300,10 +1300,10 @@ public class ManagedJavaMemoryEngineTest {
 			assertEquals(MemoryEngineContract.RESULT_OK, search.code);
 			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
 			assertEquals(2, page.ids.length, Arrays.toString(page.addresses));
-			assertTrue(Arrays.toString(page.addresses),
-					hasAddress(page, "FixtureRoot.staticArray [static]"));
-			assertTrue(Arrays.toString(page.addresses),
-					hasAddress(page, "FixtureRoot.array [instance]"));
+			assertTrue(hasAddress(page, "FixtureRoot.staticArray [static]"),
+					Arrays.toString(page.addresses));
+			assertTrue(hasAddress(page, "FixtureRoot.array [instance]"),
+					Arrays.toString(page.addresses));
 			int staticIndex = -1;
 			int instanceIndex = -1;
 			for (int index = 0; index < page.ids.length; index++) {
