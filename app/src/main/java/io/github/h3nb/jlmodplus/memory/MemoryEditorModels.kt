@@ -347,7 +347,18 @@ internal object MemoryWatchPageParser {
     }
 }
 
-internal enum class MemoryEditorTab { RESULTS, WATCH, INSPECTOR }
+internal enum class MemoryEditorTab { RESULTS, WATCH, SAVED, INSPECTOR }
+
+internal data class SavedVariableRow(val id: String, val label: String, val path: String)
+
+internal data class SavedVariableRuntimeValue(
+    val code: Int,
+    val type: Int = MemoryEngineContract.TYPE_AUTO,
+    val value: String = "",
+    val detail: String = "",
+) {
+    val resolved: Boolean get() = code == MemoryEngineContract.RESULT_OK
+}
 
 internal data class MemoryEditorUiState(
     val visible: Boolean = false,
@@ -366,8 +377,12 @@ internal data class MemoryEditorUiState(
     val pageOffset: Int = 0,
     val results: List<MemoryResultRow> = emptyList(),
     val watches: List<MemoryWatchRow> = emptyList(),
+    val savedVariables: List<SavedVariableRow> = emptyList(),
+    val savedValues: Map<String, SavedVariableRuntimeValue> = emptyMap(),
+    val savedError: String? = null,
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
+    val savedTab: Boolean = false,
     val message: String? = null,
     val messageIsError: Boolean = false,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
@@ -385,6 +400,7 @@ internal data class MemoryEditorUiState(
     val activeTab: MemoryEditorTab
         get() = when {
             inspectorLoading || inspector != null -> MemoryEditorTab.INSPECTOR
+            savedTab -> MemoryEditorTab.SAVED
             watchTab -> MemoryEditorTab.WATCH
             else -> MemoryEditorTab.RESULTS
         }
@@ -406,6 +422,13 @@ internal interface MemoryEditorActions {
     fun undo()
     fun refresh()
     fun setWatchTab(watch: Boolean)
+    fun setSavedTab() = Unit
+    fun refreshSavedVariables() = Unit
+    fun saveSelectedVariable(name: String) = Unit
+    fun resolveSavedVariable(id: String) = Unit
+    fun editSavedVariable(id: String, replacement: String) = Unit
+    fun renameSavedVariable(id: String, name: String) = Unit
+    fun deleteSavedVariable(id: String) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
     fun invertVisible()
