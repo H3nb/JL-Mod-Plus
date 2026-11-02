@@ -4,6 +4,7 @@ chmod +x ./gradlew
 if ./gradlew --no-daemon -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 \
   -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.memory.SavedLocatorIdentityResearchAndroidTest,io.github.h3nb.jlmodplus.memory.SavedVariableLocatorResearchAndroidTest,io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#researchDescriptorSurvivesProcessRestartAndBindsWatchWithoutNewSearch \
   :app:connectedEmulatorDebugAndroidTest --stacktrace; then
+  bash research/memory-saved-locators/normal-exit-adb.sh
   exit 0
 fi
 printf '%s\n' '---- R&D instrumentation XML failure details ----'
