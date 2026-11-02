@@ -1313,6 +1313,273 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
+
+	/**
+	 * Disposable saved-variable research spike. All strings describe guest field identities.
+	 * No owner handles, schema slots, Class instances, or Java objects escape in this record.
+	 * This is deliberately not a persisted or IPC-compatible production format.
+	 */
+	static final class ResearchFieldLocator {
+		static final int ROOT_MIDLET = 1;
+		static final int ROOT_DISPLAYABLE = 2;
+		static final int ROOT_INITIALIZED_STATIC = 3;
+		final int rootKind;
+		final String rootClass;
+		final ResearchField[] fields;
+
+		ResearchFieldLocator(int rootKind, String rootClass, ResearchField[] fields) {
+			this.rootKind = rootKind;
+			this.rootClass = rootClass;
+			this.fields = fields.clone();
+		}
+
+		ResearchFieldLocator copyStringsOnly() {
+			ResearchField[] copied = new ResearchField[fields.length];
+			for (int i = 0; i < copied.length; i++) {
+				ResearchField f = fields[i];
+				copied[i] = new ResearchField(f.declaringClass, f.name, f.type);
+			}
+			return new ResearchFieldLocator(rootKind, rootClass, copied);
+		}
+	}
+
+	static final class ResearchField {
+		final String declaringClass;
+		final String name;
+		final String type;
+
+		ResearchField(String declaringClass, String name, String type) {
+			this.declaringClass = declaringClass;
+			this.name = name;
+			this.type = type;
+		}
+
+		static ResearchField of(Field field) {
+			return new ResearchField(field.getDeclaringClass().getName(),
+					field.getName(), field.getType().getName());
+		}
+	}
+
+	/**
+	 * Snapshot a bounded, verified field-only path from a selected live result.
+	 * An unknown, changed, object-array, or unrooted path is intentionally unsupported.
+	 */
+	@Nullable
+	ResearchFieldLocator researchCaptureFieldLocator(long token, long revision, long candidateId) {
+		ResolvedBatch selected = resolveBatch(token, revision, new long[]{candidateId}, true);
+		if (selected.error != null) return null;
+		OwnerBucket owner = selected.owners[0];
+		Object actual = selected.strongOwners[0];
+		int slot = selected.slots[0];
+		if (inspectPath(token, owner, actual, slot).status != MemoryEngineContract.PATH_VERIFIED) {
+			return null;
+		}
+		if (owner.kind == KIND_STATIC_FIELD) {
+			FieldSlot field = owner.schema.fieldAt(slot);
+			if (field == null || field.finalField || !field.kindStatic
+					|| field.declaringClass != owner.staticClass) return null;
+			return new ResearchFieldLocator(ResearchFieldLocator.ROOT_INITIALIZED_STATIC,
+					field.declaringClass.getName(),
+					new ResearchField[]{ResearchField.of(field.field)});
+		}
+		if (owner.kind != KIND_OBJECT_FIELD || actual == null) return null;
+		FieldSlot target = owner.schema.fieldAt(slot);
+		if (target == null || target.finalField || !target.primitiveField || target.kindStatic) {
+			return null;
+		}
+		ArrayList<ProvenanceNode> reversed = new ArrayList<>();
+		for (ProvenanceNode node = owner.provenancePath; node != null; node = node.parent) {
+			if (reversed.size() >= MAX_PROVENANCE_DEPTH) return null;
+			reversed.add(node);
+		}
+		if (reversed.isEmpty()) return null;
+		ProvenanceNode root = reversed.get(reversed.size() - 1);
+		int kind;
+		if (root.kind == ProvenanceNode.MIDLET_ROOT) {
+			kind = ResearchFieldLocator.ROOT_MIDLET;
+		} else if (root.kind == ProvenanceNode.DISPLAYABLE_ROOT) {
+			kind = ResearchFieldLocator.ROOT_DISPLAYABLE;
+		} else if (root.kind == ProvenanceNode.STATIC_FIELD && root.field != null) {
+			kind = ResearchFieldLocator.ROOT_INITIALIZED_STATIC;
+		} else {
+			return null;
+		}
+		Object rootObject = root.target.get();
+		if (rootObject == null) return null;
+		String rootClass = kind == ResearchFieldLocator.ROOT_INITIALIZED_STATIC
+				? root.field.getDeclaringClass().getName() : rootObject.getClass().getName();
+		ArrayList<ResearchField> fields = new ArrayList<>();
+		if (kind == ResearchFieldLocator.ROOT_INITIALIZED_STATIC) {
+			fields.add(ResearchField.of(root.field));
+		}
+		for (int index = reversed.size() - 2; index >= 0; index--) {
+			ProvenanceNode node = reversed.get(index);
+			if (node.kind != ProvenanceNode.INSTANCE_FIELD || node.field == null) return null;
+			fields.add(ResearchField.of(node.field));
+		}
+		fields.add(ResearchField.of(target.field));
+		if (fields.size() > MAX_PROVENANCE_DEPTH) return null;
+		return new ResearchFieldLocator(kind, rootClass,
+				fields.toArray(new ResearchField[0]));
+	}
+
+	/** Resolve only through initialized roots; never run Search or write during binding. */
+	ManagedOperationResult researchBindFieldLocator(long token, ResearchFieldLocator locator,
+	                                               String label, long operationEpoch) {
+		if (locator == null || locator.rootClass == null || locator.fields == null
+				|| locator.fields.length == 0 || locator.fields.length > MAX_PROVENANCE_DEPTH
+				|| label == null || label.length() > MemoryEngineContract.MAX_WATCH_LABEL_CHARS) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Research locator is invalid or exceeds the bounded depth");
+		}
+		MemoryDiscoveryBridge.Snapshot runtime = MemoryDiscoveryBridge.snapshot(token);
+		if (!runtime.isAvailable()) {
+			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					"Research locator snapshot unavailable: " + runtime.failure());
+		}
+		if (!beginOperation(token, operationEpoch, runtime.loader())) {
+			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					"Research locator operation epoch or active runtime changed");
+		}
+		try {
+			Object root;
+			if (locator.rootKind == ResearchFieldLocator.ROOT_MIDLET) root = runtime.root();
+			else if (locator.rootKind == ResearchFieldLocator.ROOT_DISPLAYABLE)
+				root = runtime.displayableRoot();
+			else if (locator.rootKind == ResearchFieldLocator.ROOT_INITIALIZED_STATIC) {
+				Class<?> readyClass = null;
+				for (Class<?> ready : runtime.classes()) {
+					if (ready.getName().equals(locator.rootClass)) {
+						readyClass = ready;
+						break;
+					}
+				}
+				root = readyClass;
+			} else {
+				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Unsupported research root kind");
+			}
+			if (root == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					"Saved root is not ready");
+			Class<?> rootType = root instanceof Class ? (Class<?>) root : root.getClass();
+			if (!rootType.getName().equals(locator.rootClass)
+					|| rootType.getClassLoader() != runtime.loader()) {
+				return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"Saved root type or loader changed");
+			}
+			Object current = root;
+			ProvenanceNode ancestry = locator.rootKind == ResearchFieldLocator.ROOT_MIDLET
+					? new ProvenanceNode(root, null, null, -1, ProvenanceNode.MIDLET_ROOT)
+					: locator.rootKind == ResearchFieldLocator.ROOT_DISPLAYABLE
+					? new ProvenanceNode(root, null, null, -1, ProvenanceNode.DISPLAYABLE_ROOT)
+					: null;
+			Field selected = null;
+			for (int index = 0; index < locator.fields.length; index++) {
+				if (!isOperationActive(token, operationEpoch)) return failure(token,
+						MemoryEngineContract.RESULT_CANCELLED, "Research locator cancelled");
+				boolean staticOwner = current instanceof Class;
+				Class<?> actual = staticOwner ? (Class<?>) current : current.getClass();
+				if (actual.getClassLoader() != runtime.loader()) return failure(token,
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved intermediate owner is not guest-owned");
+				ResearchField expected = locator.fields[index];
+				if (expected == null || expected.declaringClass == null
+						|| expected.name == null || expected.type == null) return failure(token,
+						MemoryEngineContract.RESULT_INVALID_REQUEST, "Incomplete research path");
+				Class<?> declaring = actual;
+				while (declaring != null && !declaring.getName().equals(expected.declaringClass)) {
+					declaring = declaring.getSuperclass();
+				}
+				if (declaring == null || declaring.getClassLoader() != runtime.loader()) return failure(token,
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Declaring class differs");
+				Field field = declaring.getDeclaredField(expected.name);
+				if (!field.getType().getName().equals(expected.type)
+						|| Modifier.isStatic(field.getModifiers()) != staticOwner) return failure(token,
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Field signature changed");
+				field.setAccessible(true);
+				if (index == locator.fields.length - 1) {
+					selected = field;
+				} else {
+					Object next = field.get(staticOwner ? null : current);
+					if (next == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+							"Saved field chain is not ready");
+					ancestry = new ProvenanceNode(next, staticOwner ? null : ancestry,
+							field, -1, staticOwner
+							? ProvenanceNode.STATIC_FIELD : ProvenanceNode.INSTANCE_FIELD);
+					current = next;
+			}
+			}
+			if (selected == null || selected.getType().isArray()
+					|| !ManagedJavaValue.isSupportedType(ManagedJavaValue.typeForClass(selected.getType()))
+					|| Modifier.isFinal(selected.getModifiers())) return failure(token,
+					MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved target is not editable");
+			boolean staticTarget = current instanceof Class;
+			int kind = staticTarget ? KIND_STATIC_FIELD : KIND_OBJECT_FIELD;
+			Object selectedOwner = current;
+			Schema schema = schemaFor(staticTarget ? (Class<?>) current : current.getClass(), runtime.loader());
+			int slot = -1;
+			for (FieldSlot field : schema.fields) {
+				if (field.field.equals(selected)) { slot = field.slot; break; }
+			}
+			if (slot < 0) return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"Saved target is excluded from managed schema");
+			// A bound Watch entry must retain the same weak, re-verifiable ancestry
+			// that Inspector uses after ordinary Search. Values alone do not identify owners.
+			OwnerBucket pathProof = new OwnerBucket(0L, kind, selectedOwner, schema);
+			pathProof.provenancePath = ancestry;
+			if (inspectPath(token, pathProof, selectedOwner, slot).status
+					!= MemoryEngineContract.PATH_VERIFIED) return failure(token,
+					MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"Saved reference chain changed before it could be watched");
+			long[] read = new long[1];
+			int selectedType = ManagedJavaValue.typeForClass(selected.getType());
+			read[0] = ManagedJavaValue.readField(selected,
+					staticTarget ? null : selectedOwner, selectedType);
+			synchronized (stateLock) {
+				if (!isOperationActive(token, operationEpoch)
+						|| !isCurrentLocked(token)) return failureLocked(
+						MemoryEngineContract.RESULT_CANCELLED, "Runtime changed before saved binding");
+				if (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
+					return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Watch is full");
+				OwnerBucket owner = ownerForObject(selectedOwner, kind, schema, null);
+				// Owners may be shared by different game references. Do not authorize an
+				// imported path using an unrelated predecessor captured by Search/Watch.
+				if (owner.provenancePath != null
+						&& !researchSameAncestry(owner.provenancePath, ancestry)) {
+					return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+							"Existing owner has a different reference path; retry after a fresh runtime");
+				}
+				if (owner.provenancePath == null) owner.provenancePath = ancestry;
+				long id = ManagedJavaMemoryIds.encode(kind, owner.handle, slot);
+				if (watches.indexOf(id) >= 0) return failureLocked(
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"Research binding cannot silently change an existing Watch policy");
+				watches.append(id, owner, slot, read[0], label.trim());
+				watches.researchSaved[watches.count - 1] = true;
+			}
+			return success(token, "Research locator was added to Watch without Search");
+		} catch (ReflectiveOperationException | RuntimeException | LinkageError error) {
+			return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"Research locator could not resolve the exact field");
+		}
+	}
+
+	/** R&D only: compare actual reference edges, never just values or printed path text. */
+	private static boolean researchSameAncestry(@Nullable ProvenanceNode a,
+	                                            @Nullable ProvenanceNode b) {
+		for (int depth = 0; depth <= MAX_PROVENANCE_DEPTH; depth++) {
+			if (a == null || b == null) return a == null && b == null;
+			Object left = a.target.get();
+			if (left == null || left != b.target.get()
+					|| a.kind != b.kind || a.index != b.index
+					|| (a.field == null ? b.field != null : !a.field.equals(b.field))) {
+				return false;
+			}
+			a = a.parent;
+			b = b.parent;
+		}
+		return false;
+	}
+
 	ManagedOperationResult addWatch(long token, long expectedRevision, @Nullable long[] ids,
 	                               long operationEpoch) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
@@ -1560,7 +1827,10 @@ final class ManagedJavaMemoryEngine {
 				if (owner != snapshot.owners[index] || slot != snapshot.slots[index]) continue;
 				eligible++;
 				Object strongOwner = owner == null ? null : owner.strongOwner();
-				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
+				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)
+						|| (watches.researchSaved[watchIndex]
+						&& inspectPath(token, owner, strongOwner, slot).status
+						!= MemoryEngineContract.PATH_VERIFIED)) {
 					watches.freezePaused[watchIndex] = true;
 					rejected++;
 					continue;
@@ -2009,6 +2279,12 @@ final class ManagedJavaMemoryEngine {
 			if (owner.kind != KIND_STATIC_FIELD && owner.strongOwner() != batch.strongOwners[index]) {
 				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"The managed owner was collected or rebound before the mutation could commit");
+			}
+			if (watchIndex >= 0 && watches.researchSaved[watchIndex]
+					&& inspectPath(token, owner, batch.strongOwners[index], batch.slots[index]).status
+					!= MemoryEngineContract.PATH_VERIFIED) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"Saved-variable ancestry changed; explicitly resolve the definition again");
 			}
 		}
 		return null;
@@ -3751,6 +4027,8 @@ final class ManagedJavaMemoryEngine {
 		final boolean[] freeze = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final long[] freezeValues = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freezePaused = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
+		// R&D only: denotes a verified imported binding, not an ordinary Watch target.
+		final boolean[] researchSaved = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		int count;
 
 		int indexOf(long id) {
@@ -3767,6 +4045,7 @@ final class ManagedJavaMemoryEngine {
 			labels[count] = label;
 			freeze[count] = false;
 			freezePaused[count] = false;
+			researchSaved[count] = false;
 			count++;
 		}
 
@@ -3784,12 +4063,14 @@ final class ManagedJavaMemoryEngine {
 				freeze[index] = freeze[last];
 				freezeValues[index] = freezeValues[last];
 				freezePaused[index] = freezePaused[last];
+				researchSaved[index] = researchSaved[last];
 			}
 			ids[last] = 0L;
 			owners[last] = null;
 			labels[last] = null;
 			freeze[last] = false;
 			freezePaused[last] = false;
+			researchSaved[last] = false;
 			count = last;
 		}
 

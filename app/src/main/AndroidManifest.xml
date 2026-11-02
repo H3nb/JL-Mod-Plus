@@ -250,6 +250,9 @@
             android:exported="false"
             android:process=":midlet" />
         <service
+            android:name=".memory.SavedVariablesPrototypeService"
+            android:exported="false" />
+        <service
             android:name=".memory.MemoryEngineService"
             android:exported="false"
             android:process=":memory_engine" />

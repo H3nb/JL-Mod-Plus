@@ -128,6 +128,41 @@ public final class MemoryEngineService extends Service {
 	};
 
 	private final IMemoryEngineService.Stub binder = new IMemoryEngineService.Stub() {
+        @Override public Bundle researchCaptureFieldLocator(long token, long revision, long candidateId) {
+            Bundle failure = new Bundle();
+            failure.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                    MemoryEngineContract.RESULT_TARGET_LOST);
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isCurrentToken(token)) return failure;
+            try {
+                return bridge.researchCaptureFieldLocator(token, revision, candidateId);
+            } catch (RemoteException error) {
+                return failure;
+            }
+        }
+
+        @Override public Bundle researchBindFieldLocator(long token, Bundle descriptor, String label) {
+            Bundle failure = new Bundle();
+            failure.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                    MemoryEngineContract.RESULT_TARGET_LOST);
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isCurrentToken(token)) return failure;
+            try {
+                Bundle result = bridge.researchBindFieldLocator(token, descriptor, label,
+                        cancelEpoch.get());
+                if (result.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
+                        == MemoryEngineContract.RESULT_OK && isCurrentToken(token)) {
+                    configuredToken = token;
+                    Bundle session = bridge.getManagedSessionInfo(token);
+                    updateManagedState(token, session);
+                    reconcileFreezeScheduler();
+                }
+                return result;
+            } catch (RemoteException error) {
+                return failure;
+            }
+        }
+
 		@Override
 		public Bundle getCapabilities() {
 			Bundle result = new Bundle();

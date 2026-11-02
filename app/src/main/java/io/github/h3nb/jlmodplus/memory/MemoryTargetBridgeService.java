@@ -217,11 +217,94 @@ public final class MemoryTargetBridgeService extends Service {
 					expectedRevision, cancellationEpoch));
 		}
 
+		// Disposable research transport. Keep external persistence and compatibility checks
+		// outside :midlet; the target supplies only bounded typed identities.
+		@Override
+		public Bundle researchCaptureFieldLocator(long runtimeToken, long expectedRevision,
+		                                         long candidateId) {
+			ManagedJavaMemoryEngine.ResearchFieldLocator locator =
+					managedEngine.researchCaptureFieldLocator(runtimeToken, expectedRevision, candidateId);
+			Bundle result = researchStatus(runtimeToken, locator == null
+					? MemoryEngineContract.RESULT_IDENTITY_UNSAFE : MemoryEngineContract.RESULT_OK);
+			if (locator == null) return result;
+			int count = locator.fields.length;
+			if (!researchSafeName(locator.rootClass) || count < 1 || count > 24) {
+				return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+			}
+			String[] classes = new String[count];
+			String[] names = new String[count];
+			String[] types = new String[count];
+			for (int i = 0; i < count; i++) {
+				ManagedJavaMemoryEngine.ResearchField f = locator.fields[i];
+				if (!researchSafeName(f.declaringClass) || !researchSafeName(f.name)
+						|| !researchSafeName(f.type)) {
+					return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+				}
+				classes[i] = f.declaringClass;
+				names[i] = f.name;
+				types[i] = f.type;
+			}
+			result.putInt("researchSchema", 1);
+			result.putInt("researchRootKind", locator.rootKind);
+			result.putString("researchRootClass", locator.rootClass);
+			result.putStringArray("researchClasses", classes);
+			result.putStringArray("researchNames", names);
+			result.putStringArray("researchTypes", types);
+			return result;
+		}
+
+		@Override
+		public Bundle researchBindFieldLocator(long runtimeToken, Bundle descriptor, String label,
+		                                      long cancellationEpoch) {
+			if (descriptor == null || descriptor.getInt("researchSchema", -1) != 1
+					|| !researchSafeName(descriptor.getString("researchRootClass"))
+					|| label == null || label.length() > MemoryEngineContract.MAX_WATCH_LABEL_CHARS) {
+				return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+			}
+			String[] classes = descriptor.getStringArray("researchClasses");
+			String[] names = descriptor.getStringArray("researchNames");
+			String[] types = descriptor.getStringArray("researchTypes");
+			if (classes == null || names == null || types == null || classes.length < 1
+					|| classes.length > 24 || names.length != classes.length
+					|| types.length != classes.length) {
+				return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+			}
+			ManagedJavaMemoryEngine.ResearchField[] fields =
+					new ManagedJavaMemoryEngine.ResearchField[classes.length];
+			for (int i = 0; i < fields.length; i++) {
+				if (!researchSafeName(classes[i]) || !researchSafeName(names[i])
+						|| !researchSafeName(types[i])) {
+					return researchStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
+				}
+				fields[i] = new ManagedJavaMemoryEngine.ResearchField(classes[i], names[i], types[i]);
+			}
+			ManagedJavaMemoryEngine.ResearchFieldLocator locator =
+					new ManagedJavaMemoryEngine.ResearchFieldLocator(
+							descriptor.getInt("researchRootKind", 0),
+							descriptor.getString("researchRootClass"), fields);
+			return managedResult(runtimeToken, managedEngine.researchBindFieldLocator(
+					runtimeToken, locator, label, cancellationEpoch));
+		}
+
 		@Override
 		public void cancelManaged(long runtimeToken, long cancellationEpoch) {
 			managedEngine.cancel(runtimeToken, cancellationEpoch);
 		}
 	};
+
+
+	// Experimental Bundle keys are deliberately private to the R&D transport; not a file schema.
+	private static Bundle researchStatus(long runtimeToken, int code) {
+		Bundle result = new Bundle();
+		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, code);
+		return result;
+	}
+
+	private static boolean researchSafeName(String name) {
+		return name != null && !name.isEmpty()
+				&& name.length() <= MemoryEngineContract.MAX_IPC_DISPLAY_CHARS;
+	}
 
 	@Override
 	public void onCreate() {

@@ -35,6 +35,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Rule;
+import org.junit.Assume;
+import org.junit.rules.TestName;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,8 +68,13 @@ import io.github.h3nb.jlmodplus.util.Constants;
 public final class MemoryIpcRuntimeTest {
 	private static final long SERVICE_TIMEOUT_MILLIS = 10_000L;
 	private static final long OPERATION_TIMEOUT_MILLIS = 30_000L;
-	private static final String FIXTURE_NAME = "Memory IPC Fixture";
-	private static final String FIXTURE_CLASS = "jlmod.platformfixture.PlatformCompatMidlet";
+	private static final String FIXTURE_NAME = "Locator Lab R&D";
+	private static final String FIXTURE_CLASS = "research.locator.LocatorLabMIDlet";
+	private static final String NORMAL_EXIT_PREPARE = "researchPrepareNormalExit";
+	private static final String NORMAL_EXIT_VERIFY = "researchVerifyNormalExit";
+	private static final String NORMAL_EXIT_RECORD = "memory-rnd-normal-exit.json";
+
+	@Rule public final TestName testName = new TestName();
 
 	private Context context;
 	private SharedPreferences preferences;
@@ -74,15 +82,36 @@ public final class MemoryIpcRuntimeTest {
 	private String previousEmulatorDirectory;
 	private File root;
 	private File appDirectory;
+	private long fixtureAppId;
 	private ServiceConnection connection;
 	private IMemoryEngineService service;
+	private boolean normalExitOptIn;
 
 	@Before
 	public void setUp() throws Exception {
 		context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean externalStage = NORMAL_EXIT_PREPARE.equals(testName.getMethodName())
+				|| NORMAL_EXIT_VERIFY.equals(testName.getMethodName());
+		normalExitOptIn = externalStage && "true".equals(
+				InstrumentationRegistry.getArguments().getString("savedLocatorNormalExit"));
+		if (externalStage) Assume.assumeTrue(
+				"Destructive normal-exit fixture requires an external ADB observer", normalExitOptIn);
 		hadEmulatorDirectory = preferences.contains(Constants.PREF_EMULATOR_DIR);
 		previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		if (NORMAL_EXIT_VERIFY.equals(testName.getMethodName())) {
+			// The first instrumentation process was deliberately killed by normal Exit.
+			// Keep its installed fixture and saved definition intact for this new process.
+			org.json.JSONObject saved = normalExitRecord();
+			hadEmulatorDirectory = saved.getBoolean("hadPreviousDirectory");
+			previousEmulatorDirectory = saved.isNull("previousDirectory")
+					? null : saved.getString("previousDirectory");
+			fixtureAppId = saved.getLong("installedAppId");
+			root = new File(context.getFilesDir(), "memory-ipc-fixture");
+			appDirectory = new File(new File(root, "converted"), "fixture");
+			assertTrue("Normal-exit fixture must survive user Exit", appDirectory.isDirectory());
+			return;
+		}
 		stopMidletAndTasks();
 
 		root = new File(context.getFilesDir(), "memory-ipc-fixture");
@@ -91,8 +120,24 @@ public final class MemoryIpcRuntimeTest {
 		File configDirectory = new File(new File(root, "configs"), "fixture");
 		assertTrue(appDirectory.mkdirs() || appDirectory.isDirectory());
 		assertTrue(configDirectory.mkdirs() || configDirectory.isDirectory());
-		copyFile(new File(context.getApplicationInfo().sourceDir),
-				new File(appDirectory, "converted.zip"));
+		File sourceJar = new File(appDirectory, "res.jar");
+		try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext()
+				.getAssets().open("saved-locator/Locator-Lab.jar");
+				OutputStream output = new FileOutputStream(sourceJar)) {
+			byte[] bytes = new byte[8192];
+			for (int n; (n = input.read(bytes)) != -1; ) output.write(bytes, 0, n);
+		}
+		// Use the exact transform pipeline used by AppInstaller; do not fake the marker
+		// or substitute debug-APK classes for converted guest bytecode.
+		com.android.dx.command.dexer.ConversionResult converted =
+				com.android.dx.command.dexer.Main.convert(new String[]{
+						"--no-optimize", "--output="
+						+ new File(appDirectory, "converted.zip").getAbsolutePath(),
+						sourceJar.getAbsolutePath()
+				});
+		assertTrue("Research MIDlet conversion failed", converted.isSuccess());
+		fixtureAppId = ResearchLibraryFixture.register(context, root);
+		assertTrue("Debug MIDlet must have an installed Library identity", fixtureAppId > 0L);
 		writeManifest(new File(appDirectory, "converted.dex.conf"));
 
 		ProfileModel profile = ProfileModel.fresh();
@@ -109,8 +154,13 @@ public final class MemoryIpcRuntimeTest {
 
 	@After
 	public void tearDown() {
+		// No destructive setup occurred when this external-host-only test was skipped.
+		if (!normalExitOptIn && (NORMAL_EXIT_PREPARE.equals(testName.getMethodName())
+				|| NORMAL_EXIT_VERIFY.equals(testName.getMethodName()))) return;
+		if (NORMAL_EXIT_PREPARE.equals(testName.getMethodName())) return;
 		unbindEngine();
 		stopMidletAndTasks();
+		if (NORMAL_EXIT_VERIFY.equals(testName.getMethodName())) normalExitFile().delete();
 		if (hadEmulatorDirectory) {
 			preferences.edit().putString(Constants.PREF_EMULATOR_DIR,
 					previousEmulatorDirectory).commit();
@@ -128,7 +178,7 @@ public final class MemoryIpcRuntimeTest {
 		try {
 			OperationResult result = callback.await(service.startKnownSearch(0L,
 						MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
-						"0", null));
+						"1247", null));
 			assertEquals(MemoryEngineContract.RESULT_NO_SESSION, result.resultCode);
 			assertEquals(MemoryEngineContract.REASON_NO_RUNTIME,
 					result.details.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
@@ -160,7 +210,7 @@ public final class MemoryIpcRuntimeTest {
 			long operationId = service.startKnownSearch(runtimeToken,
 					MemoryEngineContract.TYPE_INT,
 					MemoryEngineContract.PREDICATE_EQUAL,
-					"0", null);
+					"89", null);
 			OperationResult search = activeCallback.await(operationId);
 			assertEquals("Read-only search must complete successfully",
 					MemoryEngineContract.RESULT_OK, search.resultCode);
@@ -208,6 +258,364 @@ public final class MemoryIpcRuntimeTest {
 					// The engine may already have gone away during a failing test.
 				}
 			}
+		}
+	}
+
+	/**
+	 * R&D only. This runs the real debug guest fixture in :midlet, transports a
+	 * field descriptor over Binder, atomically saves it in the test process,
+	 * kills/relaunches the target, then binds Watch without a second Search.
+	 * The fixture archive hash is NOT yet the production original-JAR hash.
+	 */
+	@Test
+	public void researchDescriptorSurvivesProcessRestartAndBindsWatchWithoutNewSearch() throws Exception {
+		final String expectedValue = "89";
+		android.util.AtomicFile file = new android.util.AtomicFile(
+				new File(context.getFilesDir(), "memory-rnd-field-locator.json"));
+		file.delete();
+		try {
+			launchFixture();
+			awaitProcess(FIXTURE_NAME);
+			long tokenFirst;
+			try (ResearchTargetConnection first = ResearchTargetConnection.connect(context)) {
+				IMemoryTargetBridge target = first.target;
+				tokenFirst = researchAwaitToken(target);
+				Bundle search = target.managedStartExact(tokenFirst, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, expectedValue, null, 0L);
+				assertEquals(MemoryEngineContract.RESULT_OK,
+						search.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				long revision = search.getLong(MemoryEngineContract.KEY_MANAGED_REVISION);
+				Bundle page = target.managedResultPage(tokenFirst, revision, 0, 100);
+				long[] ids = page.getLongArray(MemoryEngineContract.KEY_RESULT_IDS);
+				String[] fields = page.getStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS);
+				assertNotNull(ids);
+				assertNotNull(fields);
+				Bundle descriptor = null;
+				for (int i = 0; i < ids.length; i++) {
+					if ("health".equals(fields[i])) {
+						descriptor = target.researchCaptureFieldLocator(tokenFirst, revision, ids[i]);
+						break;
+					}
+				}
+				assertNotNull("Fixture field must have rooted, verified provenance", descriptor);
+				assertEquals(MemoryEngineContract.RESULT_OK,
+						descriptor.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals(1, descriptor.getInt("researchSchema"));
+				assertEquals(1, descriptor.getStringArray("researchNames").length);
+				assertEquals("health",
+						descriptor.getStringArray("researchNames")[0]);
+
+				org.json.JSONObject record = new org.json.JSONObject();
+				record.put("fileSchema", 1);
+				record.put("sourceJarSha256",
+						researchSha256(new File(appDirectory, "res.jar")));
+				record.put("rootKind", descriptor.getInt("researchRootKind"));
+				record.put("rootClass", descriptor.getString("researchRootClass"));
+				record.put("classes", researchJsonArray(descriptor.getStringArray("researchClasses")));
+				record.put("names", researchJsonArray(descriptor.getStringArray("researchNames")));
+				record.put("types", researchJsonArray(descriptor.getStringArray("researchTypes")));
+				java.io.FileOutputStream output = file.startWrite();
+				try {
+					output.write(record.toString().getBytes(StandardCharsets.UTF_8));
+					file.finishWrite(output);
+				} catch (Exception | Error failure) {
+					file.failWrite(output);
+					throw failure;
+				}
+			}
+
+			// Simulate an isolated guest process death without removing the task.
+			// Task removal invokes asynchronous user-stop work and can kill the next session.
+			stopMidletProcessOnly();
+			launchFixture();
+			awaitProcess(FIXTURE_NAME);
+			try (ResearchTargetConnection second = ResearchTargetConnection.connect(context)) {
+				IMemoryTargetBridge target = second.target;
+				long tokenSecond = researchAwaitToken(target);
+				assertTrue("Runtime generation must change across process restart",
+						tokenFirst != tokenSecond);
+				Bundle before = target.getManagedSessionInfo(tokenSecond);
+				assertEquals(0L, before.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+				assertEquals(0, before.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT));
+
+				org.json.JSONObject saved = new org.json.JSONObject(
+						new String(file.readFully(), StandardCharsets.UTF_8));
+				assertEquals(1, saved.getInt("fileSchema"));
+				assertEquals("Fixture identity must survive restart",
+						saved.getString("sourceJarSha256"),
+						researchSha256(new File(appDirectory, "res.jar")));
+				Bundle descriptor = new Bundle();
+				descriptor.putInt("researchSchema", 1);
+				descriptor.putInt("researchRootKind", saved.getInt("rootKind"));
+				descriptor.putString("researchRootClass", saved.getString("rootClass"));
+				descriptor.putStringArray("researchClasses", researchStrings(saved.getJSONArray("classes")));
+				descriptor.putStringArray("researchNames", researchStrings(saved.getJSONArray("names")));
+				descriptor.putStringArray("researchTypes", researchStrings(saved.getJSONArray("types")));
+
+				Bundle bound = target.researchBindFieldLocator(tokenSecond, descriptor,
+						"Saved probe", 0L);
+				assertEquals("Bind failed: " + bound.getString(
+						MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "<no diagnostic>")
+						+ "; epoch=" + target.getManagedCapabilities(tokenSecond).getLong(
+						MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH),
+						MemoryEngineContract.RESULT_OK,
+						bound.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals(0L, target.getManagedSessionInfo(tokenSecond)
+						.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+				Bundle watch = target.managedWatchPage(tokenSecond);
+				long[] watchIds = watch.getLongArray(MemoryEngineContract.KEY_WATCH_IDS);
+				String[] watchValues = watch.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES);
+				assertNotNull(watchIds);
+				assertEquals(1, watchIds.length);
+				assertEquals(expectedValue, watchValues[0]);
+				// Cross-process research diagnostic: keep it next to the observed boundary.
+				Bundle activeBeforeEdit = target.getManagedCapabilities(tokenSecond);
+				android.util.Log.i("SavedLocatorRND", "beforeEdit token=" + tokenSecond
+						+ " current=" + target.getRuntimeToken()
+						+ " supported=" + activeBeforeEdit.getBoolean(
+						MemoryEngineContract.KEY_MANAGED_SUPPORTED)
+						+ " watch=" + activeBeforeEdit.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT)
+						+ " epoch=" + activeBeforeEdit.getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH)
+						+ " state=" + java.util.Arrays.toString(
+						watch.getIntArray(MemoryEngineContract.KEY_WATCH_STATES)));
+				assertEquals("Runtime must not silently change after Watch binding",
+						tokenSecond, target.getRuntimeToken());
+
+
+				Bundle write = target.managedEditTyped(tokenSecond, 0L, watchIds,
+						MemoryEngineContract.TYPE_INT, "90", true, 0L);
+				android.util.Log.i("SavedLocatorRND", "afterEdit code="
+						+ write.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
+						+ " diagnostic=" + write.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+						+ " currentToken=" + target.getRuntimeToken());
+
+				assertEquals("Recovered Watch edit failed: " + write.getString(
+						MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "<no diagnostic>")
+						+ "; supported=" + target.getManagedCapabilities(tokenSecond)
+						.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED),
+						MemoryEngineContract.RESULT_OK,
+						write.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals("90", target.managedWatchPage(tokenSecond)
+						.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
+				// A rejected descriptor must not disturb an already bound Watch entry.
+				Bundle forged = new Bundle(descriptor);
+				forged.putStringArray("researchTypes", new String[]{"long"});
+				Bundle rejected = target.researchBindFieldLocator(tokenSecond, forged, "Invalid", 0L);
+				assertEquals("Changed type must fail closed without changing Watch membership",
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						rejected.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+				assertEquals(1, target.managedWatchPage(tokenSecond)
+						.getLongArray(MemoryEngineContract.KEY_WATCH_IDS).length);
+
+			}
+		} finally {
+			file.delete();
+		}
+	}
+
+
+	/** Stage one deliberately leaves the converted fixture and atomic definition on disk. */
+	@Test
+	public void researchPrepareNormalExit() throws Exception {
+		android.util.AtomicFile file = normalExitFile();
+		file.delete();
+		launchFixture();
+		awaitProcess(FIXTURE_NAME);
+		try (ResearchTargetConnection connection = ResearchTargetConnection.connect(context)) {
+			IMemoryTargetBridge target = connection.target;
+			long token = researchAwaitToken(target);
+			Bundle search = target.managedStartExact(token, MemoryEngineContract.TYPE_INT,
+					MemoryEngineContract.PREDICATE_EQUAL, "89", null, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					search.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			long revision = search.getLong(MemoryEngineContract.KEY_MANAGED_REVISION);
+			Bundle page = target.managedResultPage(token, revision, 0, 100);
+			long[] ids = page.getLongArray(MemoryEngineContract.KEY_RESULT_IDS);
+			String[] fields = page.getStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS);
+			assertNotNull(ids);
+			assertNotNull(fields);
+			Bundle locator = null;
+			for (int i = 0; i < ids.length; i++) {
+				if ("health".equals(fields[i])) {
+					locator = target.researchCaptureFieldLocator(token, revision, ids[i]);
+					break;
+				}
+			}
+			assertNotNull("Normal-exit fixture must expose a verified field", locator);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					locator.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			org.json.JSONObject record = new org.json.JSONObject()
+					.put("fileSchema", 1)
+					.put("installedAppId", fixtureAppId)
+					.put("runtimeToken", token)
+					.put("hadPreviousDirectory", hadEmulatorDirectory)
+					.put("previousDirectory", previousEmulatorDirectory == null
+							? org.json.JSONObject.NULL : previousEmulatorDirectory)
+					.put("sourceJarSha256", researchSha256(new File(appDirectory, "res.jar")))
+					.put("rootKind", locator.getInt("researchRootKind"))
+					.put("rootClass", locator.getString("researchRootClass"))
+					.put("classes", researchJsonArray(locator.getStringArray("researchClasses")))
+					.put("names", researchJsonArray(locator.getStringArray("researchNames")))
+					.put("types", researchJsonArray(locator.getStringArray("researchTypes")));
+			FileOutputStream output = file.startWrite();
+			try {
+				output.write(record.toString().getBytes(StandardCharsets.UTF_8));
+				file.finishWrite(output);
+			} catch (Exception | Error error) {
+				file.failWrite(output);
+				throw error;
+			}
+		}
+		// Align with the repository's existing runtime-shutdown smoke protocol:
+		// the real stop handler must kill the instrumented main process. A normal
+		// JUnit return would force-stop the target before its async shutdown runs.
+		Bundle checkpoint = new Bundle();
+		checkpoint.putString("shutdownRequested", "saved-locator-exit");
+		InstrumentationRegistry.getInstrumentation().sendStatus(0, checkpoint);
+		io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService.exitEmulator(context);
+		SystemClock.sleep(30_000L);
+		throw new AssertionError("Production Exit did not terminate instrumentation");
+	}
+
+	/** Stage two runs under a fresh instrumented main process after real user-stop. */
+	@Test
+	public void researchVerifyNormalExit() throws Exception {
+		org.json.JSONObject record = normalExitRecord();
+		assertEquals(1, record.getInt("fileSchema"));
+		assertEquals("Installed retained JAR changed across normal Exit",
+				record.getString("sourceJarSha256"),
+				researchSha256(new File(appDirectory, "res.jar")));
+		launchFixture();
+		awaitProcess(FIXTURE_NAME);
+		try (ResearchTargetConnection connection = ResearchTargetConnection.connect(context)) {
+			IMemoryTargetBridge target = connection.target;
+			long token = researchAwaitToken(target);
+			assertTrue("Normal Exit must create a fresh runtime", token != record.getLong("runtimeToken"));
+			Bundle before = target.getManagedSessionInfo(token);
+			assertEquals(0L, before.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+			assertEquals(0, before.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT));
+			Bundle locator = new Bundle();
+			locator.putInt("researchSchema", 1);
+			locator.putInt("researchRootKind", record.getInt("rootKind"));
+			locator.putString("researchRootClass", record.getString("rootClass"));
+			locator.putStringArray("researchClasses", researchStrings(record.getJSONArray("classes")));
+			locator.putStringArray("researchNames", researchStrings(record.getJSONArray("names")));
+			locator.putStringArray("researchTypes", researchStrings(record.getJSONArray("types")));
+			Bundle bound = target.researchBindFieldLocator(token, locator, "Normal-exit recovery", 0L);
+			assertEquals("Normal-exit binding failed: "
+					+ bound.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL),
+					MemoryEngineContract.RESULT_OK,
+					bound.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			Bundle watch = target.managedWatchPage(token);
+			assertEquals(1, watch.getLongArray(MemoryEngineContract.KEY_WATCH_IDS).length);
+			assertEquals("89", watch.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
+			assertEquals(0L, target.getManagedSessionInfo(token)
+					.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT));
+			Bundle edit = target.managedEditTyped(token, 0L,
+					watch.getLongArray(MemoryEngineContract.KEY_WATCH_IDS),
+					MemoryEngineContract.TYPE_INT, "90", true, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					edit.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT));
+			assertEquals("90", target.managedWatchPage(token)
+					.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES)[0]);
+		}
+	}
+
+	private android.util.AtomicFile normalExitFile() {
+		return new android.util.AtomicFile(new File(context.getFilesDir(), NORMAL_EXIT_RECORD));
+	}
+
+	private org.json.JSONObject normalExitRecord() throws Exception {
+		return new org.json.JSONObject(new String(normalExitFile().readFully(),
+				StandardCharsets.UTF_8));
+	}
+
+	private static long researchAwaitToken(IMemoryTargetBridge target) throws Exception {
+		long deadline = SystemClock.uptimeMillis() + 20_000L;
+		long lastToken = 0L;
+		boolean lastSupported = false;
+		String lastDiagnostic = "";
+		while (SystemClock.uptimeMillis() < deadline) {
+			lastToken = target.getRuntimeToken();
+			if (lastToken != 0L) {
+				Bundle capabilities = target.getManagedCapabilities(lastToken);
+				lastSupported = capabilities.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED);
+				lastDiagnostic = capabilities.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "");
+				if (lastSupported) return lastToken;
+			}
+			SystemClock.sleep(100L);
+		}
+		throw new AssertionError("Managed target not ready: token=" + lastToken
+				+ " supported=" + lastSupported + " diagnostic=" + lastDiagnostic);
+	}
+
+	private static org.json.JSONArray researchJsonArray(String[] values) {
+		org.json.JSONArray result = new org.json.JSONArray();
+		for (String value : values) result.put(value);
+		return result;
+	}
+
+	private static String[] researchStrings(org.json.JSONArray values) throws org.json.JSONException {
+		String[] result = new String[values.length()];
+		for (int i = 0; i < result.length; i++) result[i] = values.getString(i);
+		return result;
+	}
+
+	private static String researchSha256(File file) throws Exception {
+		java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+		try (InputStream input = new FileInputStream(file)) {
+			byte[] buffer = new byte[8192];
+			for (int count; (count = input.read(buffer)) >= 0; ) {
+				if (count > 0) digest.update(buffer, 0, count);
+			}
+		}
+		StringBuilder output = new StringBuilder(64);
+		for (byte value : digest.digest()) {
+			int unsigned = value & 255;
+			output.append(Character.forDigit(unsigned >>> 4, 16));
+			output.append(Character.forDigit(unsigned & 15, 16));
+		}
+		return output.toString();
+	}
+
+	private static final class ResearchTargetConnection implements AutoCloseable {
+		final Context context;
+		final ServiceConnection connection;
+		final IMemoryTargetBridge target;
+
+		private ResearchTargetConnection(Context context, ServiceConnection connection,
+		                                IMemoryTargetBridge target) {
+			this.context = context;
+			this.connection = connection;
+			this.target = target;
+		}
+
+		static ResearchTargetConnection connect(Context context) throws Exception {
+			java.util.concurrent.atomic.AtomicReference<IBinder> binder =
+					new java.util.concurrent.atomic.AtomicReference<>();
+			CountDownLatch latch = new CountDownLatch(1);
+			ServiceConnection connection = new ServiceConnection() {
+				@Override public void onServiceConnected(ComponentName name, IBinder service) {
+					binder.set(service);
+					latch.countDown();
+				}
+				@Override public void onServiceDisconnected(ComponentName name) {}
+			};
+			assertTrue(context.bindService(new Intent(context, MemoryTargetBridgeService.class),
+					connection, Context.BIND_AUTO_CREATE));
+			try {
+				assertTrue(latch.await(SERVICE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
+				assertNotNull(binder.get());
+				return new ResearchTargetConnection(context, connection,
+						IMemoryTargetBridge.Stub.asInterface(binder.get()));
+			} catch (Exception | Error failure) {
+				context.unbindService(connection);
+				throw failure;
+			}
+		}
+
+		@Override public void close() {
+			context.unbindService(connection);
 		}
 	}
 
@@ -276,6 +684,7 @@ public final class MemoryIpcRuntimeTest {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDirectory.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, FIXTURE_NAME)
+				.putExtra(Constants.KEY_LIBRARY_APP_ID, fixtureAppId)
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
 	}
@@ -290,6 +699,20 @@ public final class MemoryIpcRuntimeTest {
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
 		throw new AssertionError("MIDlet process did not start for " + name);
+	}
+
+	/** Research crash/restart only: unlike task removal, this does not request user-stop. */
+	private void stopMidletProcessOnly() {
+		String processName = context.getPackageName() + ":midlet";
+		int pid = processPid(processName);
+		assertTrue("A real target process must exist before restart", pid > 0);
+		android.os.Process.killProcess(pid);
+		long deadline = SystemClock.uptimeMillis() + SERVICE_TIMEOUT_MILLIS;
+		while (processPid(processName) == pid && SystemClock.uptimeMillis() < deadline) {
+			SystemClock.sleep(50L);
+		}
+		assertTrue("Old guest process did not exit before relaunch",
+				processPid(processName) != pid);
 	}
 
 	private void stopMidletAndTasks() {
@@ -339,11 +762,11 @@ public final class MemoryIpcRuntimeTest {
 				+ "MIDlet-Name: " + FIXTURE_NAME + "\n"
 				+ "MIDlet-Vendor: JL-Mod Plus\n"
 				+ "MIDlet-Version: 1.0\n"
-				+ "JLMod-Transform-Version: 2\n"
 				+ "MIDlet-1: " + FIXTURE_NAME + ",," + FIXTURE_CLASS + "\n";
-		try (FileOutputStream output = new FileOutputStream(manifest)) {
-			output.write(text.getBytes(StandardCharsets.UTF_8));
-		}
+		io.github.h3nb.jlmodplus.jar.Descriptor descriptor =
+				new io.github.h3nb.jlmodplus.jar.Descriptor(text, false);
+		javax.microedition.shell.transform.MidletTransformMetadata.mark(descriptor.getAttrs());
+		descriptor.writeTo(manifest);
 	}
 
 	private static void copyFile(File source, File destination) throws IOException {

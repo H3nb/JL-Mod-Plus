@@ -59,5 +59,9 @@ interface IMemoryTargetBridge {
     Bundle managedClearFreeze(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch);
     Bundle managedClearSearch(long runtimeToken, long expectedRevision, long cancellationEpoch);
+    // EXPERIMENT ONLY: bounded typed structural locator, no persistent format and no auto-write.
+    Bundle researchCaptureFieldLocator(long runtimeToken, long expectedRevision, long candidateId);
+    Bundle researchBindFieldLocator(long runtimeToken, in Bundle descriptor,
+            String label, long cancellationEpoch);
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }
