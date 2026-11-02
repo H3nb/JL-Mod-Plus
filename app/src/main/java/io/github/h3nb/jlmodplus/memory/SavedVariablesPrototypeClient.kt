@@ -75,7 +75,9 @@ internal object SavedVariablesPrototypeClient {
                 id = id,
                 label = row.optString("label"),
                 description = row.optJSONArray("names")?.let {
-                    if (it.length() > 0) it.optString(it.length() - 1) else ""
+                    val last = if (it.length() > 0) it.optString(it.length() - 1) else ""
+                    val index = row.optInt("arrayIndex", -1)
+                    if (index >= 0) "$" + "{last}[$" + "{index}]" else last
                 }.orEmpty(),
             )
         }
@@ -99,6 +101,7 @@ internal object SavedVariablesPrototypeClient {
             .put("classes", array("researchClasses"))
             .put("names", array("researchNames"))
             .put("types", array("researchTypes"))
+            .put("arrayIndex", descriptor.getInt("researchArrayIndex", -1))
     }
 
     fun toBundle(descriptor: JSONObject): android.os.Bundle {
@@ -113,6 +116,7 @@ internal object SavedVariablesPrototypeClient {
             putStringArray("researchClasses", strings("classes"))
             putStringArray("researchNames", strings("names"))
             putStringArray("researchTypes", strings("types"))
+            putInt("researchArrayIndex", descriptor.optInt("arrayIndex", -1))
         }
     }
 }
