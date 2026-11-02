@@ -680,23 +680,63 @@ internal class MemoryEditorComposeController(
         launchOperation { engine, token -> engine.refreshCandidates(token, ids, false) }
     }
 
-    // R&D: definitions are stored under the installed game, never in the guest process.
+    // Definitions are file-owned; runtime bindings are independent of Watch.
+    private fun savedValue(bundle: Bundle) = SavedVariableRuntimeValue(
+        code = bundle.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+            MemoryEngineContract.RESULT_TARGET_LOST),
+        type = bundle.getInt("researchValueType", MemoryEngineContract.TYPE_AUTO),
+        value = bundle.getString("researchValue").orEmpty(),
+        detail = bundle.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty(),
+    )
+
     override fun refreshSavedVariables() {
+        val engine = service
+        val token = state.runtimeToken
+        val connection = connectionGeneration
         runIpc {
-            val result = runCatching { SavedVariablesPrototypeClient.list(context) }
+            val result = runCatching {
+                val stored = SavedVariablesPrototypeClient.list(context)
+                if (!stored.optBoolean("ok")) throw IllegalStateException(
+                    stored.optString("error", "Saved Variables unavailable"))
+                val rows = SavedVariablesPrototypeClient.rows(stored)
+                val values = buildMap {
+                    if (token != 0L && engine != null) for (row in rows) {
+                        var current = savedValue(engine.researchReadSaved(token, row.id))
+                        if (!current.resolved &&
+                            current.code != MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+                            val descriptor = SavedVariablesPrototypeClient.descriptor(stored, row.id)
+                            if (descriptor != null) {
+                                val attempt = engine.researchResolveSavedLocator(
+                                    token, SavedVariablesPrototypeClient.toBundle(descriptor), row.id)
+                                current = if (attempt.getInt(
+                                        MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                                        MemoryEngineContract.RESULT_OK
+                                ) savedValue(engine.researchReadSaved(token, row.id))
+                                else SavedVariableRuntimeValue(
+                                    code = attempt.getInt(
+                                        MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                                        MemoryEngineContract.RESULT_TARGET_LOST),
+                                    detail = attempt.getString(
+                                        MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty(),
+                                )
+                            }
+                        }
+                        put(row.id, current)
+                    }
+                }
+                rows to values
+            }
             post {
-                if (result.isSuccess) {
-                    val response = result.getOrThrow()
-                    state = if (response.optBoolean("ok")) state.copy(
-                        savedVariables = SavedVariablesPrototypeClient.rows(response),
-                    ) else state.copy(
-                        savedVariables = emptyList(),
-                        message = response.optString("error", "Saved Variables unavailable"),
-                        messageIsError = true,
-                    )
+                if (connection != connectionGeneration || service !== engine ||
+                    token != state.runtimeToken) return@post
+                val data = result.getOrNull()
+                if (data != null) {
+                    state = state.copy(savedVariables = data.first,
+                        savedValues = data.second, message = null, messageIsError = false)
                 } else {
                     state = state.copy(
-                        message = "Unable to read saved variables", messageIsError = true,
+                        message = result.exceptionOrNull()?.message ?: "Saved Variables unavailable",
+                        messageIsError = true,
                     )
                 }
             }
@@ -748,29 +788,59 @@ internal class MemoryEditorComposeController(
         if (token == 0L || state.busy) return
         runIpc {
             val result = runCatching {
-                val response = SavedVariablesPrototypeClient.list(context)
-                if (!response.optBoolean("ok")) {
-                    throw IllegalStateException(response.optString("error", "Incompatible saved variable"))
-                }
-                val descriptor = SavedVariablesPrototypeClient.descriptor(response, id)
+                val stored = SavedVariablesPrototypeClient.list(context)
+                if (!stored.optBoolean("ok")) throw IllegalStateException(
+                    stored.optString("error", "Saved Variables unavailable"))
+                val descriptor = SavedVariablesPrototypeClient.descriptor(stored, id)
                     ?: throw IllegalStateException("Saved variable no longer exists")
-                val label = descriptor.optString("label").take(64)
-                engine.researchBindFieldLocator(
-                    token, SavedVariablesPrototypeClient.toBundle(descriptor), label,
-                )
+                val old = savedValue(engine.researchReadSaved(token, id))
+                if (old.resolved || old.code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) old
+                else {
+                    val attempt = engine.researchResolveSavedLocator(
+                        token, SavedVariablesPrototypeClient.toBundle(descriptor), id)
+                    if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                        MemoryEngineContract.RESULT_OK) savedValue(engine.researchReadSaved(token, id))
+                    else SavedVariableRuntimeValue(
+                        code = attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT),
+                        detail = attempt.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty(),
+                    )
+                }
             }
-            val response = result.getOrNull()
-            val success = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, -1) ==
-                MemoryEngineContract.RESULT_OK
             post {
+                val current = result.getOrNull() ?: SavedVariableRuntimeValue(
+                    code = MemoryEngineContract.RESULT_TARGET_LOST,
+                    detail = result.exceptionOrNull()?.message.orEmpty(),
+                )
                 state = state.copy(
-                    message = if (success) "Saved variable added to Watch"
-                        else result.exceptionOrNull()?.message
-                            ?: "Could not resolve this variable (it may not be ready or may already be watched)",
-                    messageIsError = !success,
+                    savedValues = state.savedValues + (id to current),
+                    message = if (current.resolved) null
+                        else current.detail.ifBlank { "Saved variable is not ready (code " + current.code + ")" },
+                    messageIsError = !current.resolved,
                 )
             }
-            if (success) reloadState()
+        }
+    }
+
+    override fun editSavedVariable(id: String, value: String) {
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (token == 0L || state.busy) return
+        runIpc {
+            val result = runCatching {
+                savedValue(engine.researchEditSaved(token, id, value.trim()))
+            }
+            post {
+                val current = result.getOrNull() ?: SavedVariableRuntimeValue(
+                    code = MemoryEngineContract.RESULT_TARGET_LOST,
+                    detail = result.exceptionOrNull()?.message.orEmpty(),
+                )
+                state = state.copy(
+                    savedValues = state.savedValues + (id to current),
+                    message = if (current.resolved) "Saved variable updated"
+                        else current.detail.ifBlank { "Edit failed (code " + current.code + ")" },
+                    messageIsError = !current.resolved,
+                )
+            }
         }
     }
 
@@ -782,6 +852,7 @@ internal class MemoryEditorComposeController(
                 if (response?.optBoolean("ok") == true) {
                     state = state.copy(
                         savedVariables = SavedVariablesPrototypeClient.rows(response),
+                        savedValues = state.savedValues - id,
                         message = "Saved variable removed", messageIsError = false,
                     )
                 } else {
