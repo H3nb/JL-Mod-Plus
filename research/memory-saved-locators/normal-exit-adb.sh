@@ -37,6 +37,7 @@ echo "---- Stage 1: capture locator and invoke the production Exit in instrument
 # expected. Trust a checkpoint + externally observed shutdown, not runner OK.
 set +e
 prepare_output=$(adb shell am instrument -w -r \
+  -e savedLocatorNormalExit true \
   -e class "${TEST_CLASS}#researchPrepareNormalExit" "$RUNNER" 2>&1)
 prepare_status=$?
 set -e
@@ -76,6 +77,7 @@ fi
 
 echo "---- Stage 2: new main + new :midlet; Watch without Search; Edit readback ----"
 verify_output=$(adb shell am instrument -w -r \
+  -e savedLocatorNormalExit true \
   -e class "${TEST_CLASS}#researchVerifyNormalExit" "$RUNNER" 2>&1)
 printf '%s\n' "$verify_output"
 grep -Fq 'OK (1 test)' <<< "$verify_output"
