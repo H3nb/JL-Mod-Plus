@@ -74,10 +74,13 @@ internal object SavedVariablesPrototypeClient {
             SavedVariablePrototypeRow(
                 id = id,
                 label = row.optString("label"),
-                description = row.optJSONArray("names")?.let {
-                    val last = if (it.length() > 0) it.optString(it.length() - 1) else ""
-                    val index = row.optInt("arrayIndex", -1)
-                    if (index >= 0) last + "[" + index + "]" else last
+                description = row.optJSONArray("names")?.let { names ->
+                    val hops = row.optJSONArray("indices")
+                    (0 until names.length()).joinToString(" → ") { position ->
+                        names.optString(position) + (hops?.optInt(position, -1)
+                            ?.takeIf { it >= 0 }?.let { "[" + it + "]" } ?: "")
+                    } + (row.optInt("arrayIndex", -1).takeIf { it >= 0 }
+                        ?.let { "[" + it + "]" } ?: "")
                 }.orEmpty(),
             )
         }
@@ -102,6 +105,9 @@ internal object SavedVariablesPrototypeClient {
             .put("names", array("researchNames"))
             .put("types", array("researchTypes"))
             .put("arrayIndex", descriptor.getInt("researchArrayIndex", -1))
+            .put("indices", JSONArray().also { out ->
+                descriptor.getIntArray("researchFieldIndices")?.forEach(out::put)
+            })
     }
 
     fun toBundle(descriptor: JSONObject): android.os.Bundle {
@@ -117,6 +123,10 @@ internal object SavedVariablesPrototypeClient {
             putStringArray("researchNames", strings("names"))
             putStringArray("researchTypes", strings("types"))
             putInt("researchArrayIndex", descriptor.optInt("arrayIndex", -1))
+            descriptor.optJSONArray("indices")?.let { choices ->
+                if (choices.length() > 0) putIntArray("researchFieldIndices",
+                    IntArray(choices.length()) { choices.getInt(it) })
+            }
         }
     }
 }
