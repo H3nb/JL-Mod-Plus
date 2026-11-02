@@ -1328,11 +1328,18 @@ final class ManagedJavaMemoryEngine {
 		final int rootKind;
 		final String rootClass;
 		final ResearchField[] fields;
+        /** -1 for primitive fields; nonnegative only for a direct primitive-array element. */
+        final int arrayIndex;
 
 		ResearchFieldLocator(int rootKind, String rootClass, ResearchField[] fields) {
+            this(rootKind, rootClass, fields, -1);
+        }
+
+        ResearchFieldLocator(int rootKind, String rootClass, ResearchField[] fields, int arrayIndex) {
 			this.rootKind = rootKind;
 			this.rootClass = rootClass;
 			this.fields = fields.clone();
+            this.arrayIndex = arrayIndex;
 		}
 
 		ResearchFieldLocator copyStringsOnly() {
@@ -1341,7 +1348,7 @@ final class ManagedJavaMemoryEngine {
 				ResearchField f = fields[i];
 				copied[i] = new ResearchField(f.declaringClass, f.name, f.type);
 			}
-			return new ResearchFieldLocator(rootKind, rootClass, copied);
+			return new ResearchFieldLocator(rootKind, rootClass, copied, arrayIndex);
 		}
 	}
 
@@ -1373,6 +1380,31 @@ final class ManagedJavaMemoryEngine {
 		OwnerBucket owner = selected.owners[0];
 		Object actual = selected.strongOwners[0];
 		int slot = selected.slots[0];
+        if (owner.kind == KIND_ARRAY) {
+            // Only a *direct* static primitive-array reference is supported so far.
+            // Inspector's verified source is not by itself a persistent locator for
+            // arbitrary array aliases or dynamic object-array indexes.
+            if (actual == null || !actual.getClass().isArray() || slot < 0
+                    || slot >= Array.getLength(actual)) return null;
+            Field direct = null;
+            ProvenanceNode path = owner.provenancePath;
+            if (path != null && path.kind == ProvenanceNode.STATIC_FIELD
+                    && path.parent == null && path.target.get() == actual) direct = path.field;
+            if (direct == null && owner.arrayReference != null
+                    && owner.arrayReference.instance == null) direct = owner.arrayReference.field;
+            if (direct == null || !Modifier.isStatic(direct.getModifiers())
+                    || direct.getType() != actual.getClass()
+                    || !ManagedJavaValue.isSupportedType(
+                            ManagedJavaValue.typeForClass(actual.getClass().getComponentType()))) return null;
+            try {
+                if (direct.get(null) != actual) return null;
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
+                return null;
+            }
+            return new ResearchFieldLocator(ResearchFieldLocator.ROOT_INITIALIZED_STATIC,
+                    direct.getDeclaringClass().getName(),
+                    new ResearchField[]{ResearchField.of(direct)}, slot);
+        }
 		if (inspectPath(token, owner, actual, slot).status != MemoryEngineContract.PATH_VERIFIED) {
 			return null;
 		}
@@ -1443,6 +1475,9 @@ final class ManagedJavaMemoryEngine {
             ResearchFieldLocator locator, String label, long operationEpoch,
             @Nullable String savedId) {
 		if (locator == null || locator.rootClass == null || locator.fields == null
+                || locator.arrayIndex < -1 || (locator.arrayIndex >= 0 &&
+                    (savedId == null || locator.rootKind != ResearchFieldLocator.ROOT_INITIALIZED_STATIC
+                    || locator.fields.length != 1))
 				|| locator.fields.length == 0 || locator.fields.length > MAX_PROVENANCE_DEPTH
 				|| label == null || label.length() > MemoryEngineContract.MAX_WATCH_LABEL_CHARS) {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
@@ -1533,6 +1568,41 @@ final class ManagedJavaMemoryEngine {
 					current = next;
 			}
 			}
+            if (locator.arrayIndex >= 0) {
+                if (selected == null || !(current instanceof Class)
+                        || !selected.getType().isArray()
+                        || !selected.getType().getComponentType().isPrimitive()) return failure(
+                        token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Saved array descriptor is not a direct static primitive array");
+                int type = ManagedJavaValue.typeForClass(selected.getType().getComponentType());
+                if (!ManagedJavaValue.isSupportedType(type)) return failure(token,
+                        MemoryEngineContract.RESULT_INVALID_REQUEST, "Unsupported primitive array");
+                Object array = selected.get(null);
+                if (array == null || locator.arrayIndex >= Array.getLength(array)
+                        || locator.arrayIndex >= limits.maxArrayElements) return failure(token,
+                        MemoryEngineContract.RESULT_TARGET_LOST,
+                        "Saved array is missing or the index is outside its bounds");
+                OwnerBucket proof = new OwnerBucket(0L, KIND_ARRAY, array, null);
+                proof.provenancePath = new ProvenanceNode(array, null, selected,
+                        -1, ProvenanceNode.STATIC_FIELD);
+                if (inspectPath(token, proof, array, locator.arrayIndex).status
+                        != MemoryEngineContract.PATH_VERIFIED) return failure(token,
+                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Saved array reference changed before binding");
+                synchronized (stateLock) {
+                    if (!isOperationActive(token, operationEpoch) || !isCurrentLocked(token))
+                        return failureLocked(MemoryEngineContract.RESULT_CANCELLED,
+                                "Runtime changed before saved array binding");
+                    if (savedBindings.containsKey(savedId)) return failureLocked(
+                            MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            "Saved target is already bound");
+                    if (savedBindings.size() >= 64) return failureLocked(
+                            MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+                            "Saved binding capacity reached");
+                    savedBindings.put(savedId, new SavedBinding(proof, locator.arrayIndex, type));
+                }
+                return success(token, "Saved primitive array element resolved");
+            }
 			if (selected == null || selected.getType().isArray()
 					|| !ManagedJavaValue.isSupportedType(ManagedJavaValue.typeForClass(selected.getType()))
 					|| Modifier.isFinal(selected.getModifiers())) return failure(token,
