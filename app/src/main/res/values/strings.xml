@@ -1290,4 +1290,7 @@
     <string name="memory_saved_empty">No saved variables for this game. Select one Search result or Watch entry and tap Save.</string>
     <string name="memory_saved_resolve">Resolve</string>
     <string name="memory_saved_delete_confirm">Delete this saved variable definition? This will not change game memory.</string>
+    <string name="memory_saved_unresolved">Not resolved</string>
+    <string name="memory_saved_value">Value</string>
+    <string name="memory_saved_edit_description">Edit the resolved Saved Variable directly. This will change the game value.</string>
 </resources>
