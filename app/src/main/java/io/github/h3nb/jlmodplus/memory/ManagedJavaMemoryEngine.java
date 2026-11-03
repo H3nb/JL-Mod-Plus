@@ -2043,6 +2043,16 @@ final class ManagedJavaMemoryEngine {
                 watches.append(id, owner, slot, current[0], "");
                 existing = watches.count - 1;
                 if (sourceKey != null) watches.savedSourceIds[existing] = sourceKey;
+            } else if (savedId != null) {
+                if (watches.owners[existing] == null) return failureLocked(
+                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Inspector Watch owner is unavailable");
+                boolean moved = retargetSavedWatch(existing, proof, actual, slot, current[0]);
+                // An explicit Watch action may retarget, but must not revive an old Freeze.
+                if (moved && !freeze) {
+                    watches.freeze[existing] = false;
+                    watches.freezePaused[existing] = false;
+                }
             }
             if (freeze) {
                 watches.freeze[existing] = true;
@@ -2121,26 +2131,10 @@ final class ManagedJavaMemoryEngine {
                     MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                     "Saved value changed after edit; Freeze was not started");
             if (existing >= 0) {
-                // Explicitly starting Freeze after Saved rebound must retarget the
-                // existing Watch. A passive Saved rebind never moves a Watch.
-                OwnerBucket previous = watches.owners[existing];
-                if (previous == null) return failureLocked(
-                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved Watch owner is unavailable");
-                if (previous.strongOwner() != actual || previous.kind != proof.kind
-                        || watches.slots[existing] != binding.slot
-                        || previous.provenancePath != proof.provenancePath) {
-                    OwnerBucket replacement = new OwnerBucket(previous.handle, proof.kind,
-                            actual, proof.schema);
-                    replacement.provenancePath = proof.provenancePath;
-                    replacement.arrayReference = proof.arrayReference;
-                    owners.put(replacement.handle, replacement);
-                    watches.owners[existing] = replacement;
-                    watches.slots[existing] = binding.slot;
-                    watches.ids[existing] = ManagedJavaMemoryIds.encode(
-                            proof.kind, replacement.handle, binding.slot);
-                    watches.initial[existing] = expected[0];
-                    watches.previous[existing] = expected[0];
-                }
+                if (watches.owners[existing] == null) return failureLocked(
+                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Saved Watch owner is unavailable");
+                retargetSavedWatch(existing, proof, actual, binding.slot, expected[0]);
                 watches.freeze[existing] = true;
                 watches.freezeValues[existing] = expected[0];
                 watches.freezePaused[existing] = false;
@@ -2159,6 +2153,25 @@ final class ManagedJavaMemoryEngine {
             watches.freezePaused[index] = false;
             return successLocked("Saved value added to Watch and frozen");
         }
+    }
+
+    /** Only explicit Watch/Freeze actions may replace a Saved-origin Watch binding. */
+    private boolean retargetSavedWatch(int index, OwnerBucket proof, Object actual,
+                                       int slot, long value) {
+        OwnerBucket previous = watches.owners[index];
+        if (previous.strongOwner() == actual && previous.kind == proof.kind
+                && watches.slots[index] == slot
+                && previous.provenancePath == proof.provenancePath) return false;
+        OwnerBucket replacement = new OwnerBucket(previous.handle, proof.kind, actual, proof.schema);
+        replacement.provenancePath = proof.provenancePath;
+        replacement.arrayReference = proof.arrayReference;
+        owners.put(replacement.handle, replacement);
+        watches.owners[index] = replacement;
+        watches.slots[index] = slot;
+        watches.ids[index] = ManagedJavaMemoryIds.encode(proof.kind, replacement.handle, slot);
+        watches.initial[index] = value;
+        watches.previous[index] = value;
+        return true;
     }
 
     /** Release a definition after Delete; it must not consume a bounded runtime slot. */

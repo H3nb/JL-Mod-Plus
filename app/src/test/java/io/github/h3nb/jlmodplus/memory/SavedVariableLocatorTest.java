@@ -616,6 +616,19 @@ public class SavedVariableLocatorTest {
                 engine.freezeTick(FIRST, 0L).code);
             assertEquals(456, old.flag);
             assertEquals(272727, root.player.flag);
+            engine.releaseSaved(FIRST, "watched-inspector-owner");
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.resolveSavedLocator(FIRST, locator, "watched-inspector-owner", 0L).code);
+            inspected = engine.inspectSaved(FIRST, "watched-inspector-owner", 8);
+            assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.watchInspector(FIRST, "watched-inspector-owner", 0L, 0L,
+                    false, offset, MemoryEngineContract.TYPE_INT, 272727L, true, 0L).code);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            root.player.flag = 17;
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
+            assertEquals(272727, root.player.flag);
+            assertEquals(456, old.flag);
         } finally {
             engine.runtimeClosed(FIRST);
             MemoryDiscoveryBridge.close(FIRST);
