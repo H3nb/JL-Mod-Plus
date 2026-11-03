@@ -936,7 +936,7 @@ internal class MemoryEditorComposeController(
         }
     }
 
-    override fun renameSavedVariable(id: String, name: String) = mutateSaved(id, name, false)
+    override fun renameSavedVariable(id: String, name: String) = renameSaved(id, name)
     override fun deleteSavedVariable(id: String) = deleteSavedVariables(listOf(id))
     override fun deleteSavedVariables(ids: List<String>) {
         val authority = savedAuthority ?: return
@@ -986,19 +986,14 @@ internal class MemoryEditorComposeController(
         state = state.copy(savedSelection = emptySet())
     }
 
-    private fun mutateSaved(id: String, name: String, remove: Boolean) {
+    private fun renameSaved(id: String, name: String) {
         val authority = savedAuthority ?: return
         val token = state.runtimeToken
         val generation = savedGeneration
-        val engine = service
         runIpc {
             val result = runCatching {
                 val (path, appId, entry) = savedTarget()
-                val result = if (remove) authority.remove(path, appId, entry, id)
-                    else authority.rename(path, appId, entry, id, name.trim())
-                val rows = savedRows(result).map { it.first }
-                if (remove && engine != null && token != 0L) engine.releaseSaved(token, id)
-                rows
+                savedRows(authority.rename(path, appId, entry, id, name.trim())).map { it.first }
             }
             post {
                 if (destroyed || generation != savedGeneration || !state.savedTab ||
@@ -1006,7 +1001,7 @@ internal class MemoryEditorComposeController(
                 val rows = result.getOrNull()
                 state = if (rows != null) state.copy(savedVariables = rows,
                     savedValues = state.savedValues.filterKeys { key -> rows.any { it.id == key } },
-                    message = if (remove) "Saved variable removed" else "Saved variable renamed",
+                    message = "Saved variable renamed",
                     messageIsError = false)
                 else state.copy(message = result.exceptionOrNull()?.message, messageIsError = true)
             }
@@ -1471,6 +1466,7 @@ internal class MemoryEditorComposeController(
                 state = state.copy(
                     message = result.exceptionOrNull()?.message ?: "Variable saved",
                     messageIsError = result.isFailure)
+                if (result.isSuccess && state.savedTab) refreshSavedVariables()
             }
         }
     }
@@ -1489,7 +1485,8 @@ internal class MemoryEditorComposeController(
         watchAnchor: Boolean,
     ) {
         val snapshot = state.inspector ?: return
-        if (snapshot.candidateId != anchorCandidateId || !MemoryEngineContract.isCandidateType(type)) return
+        if (snapshot.savedId != null || snapshot.candidateId != anchorCandidateId ||
+            !MemoryEngineContract.isCandidateType(type)) return
         if (!canLaunchOperation()) return
         pendingInspectorRefresh = PendingInspectorRefresh(
             anchorCandidateId,

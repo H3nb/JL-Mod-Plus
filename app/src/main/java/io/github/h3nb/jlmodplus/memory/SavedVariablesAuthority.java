@@ -77,11 +77,7 @@ public final class SavedVariablesAuthority extends Service {
 
         @Override public Bundle rename(String path, long appId, String entry, String id,
                                        String label) {
-            return mutate(path, appId, entry, id, checkedNameOrNull(label), false);
-        }
-
-        @Override public Bundle remove(String path, long appId, String entry, String id) {
-            return removeMany(path, appId, entry, new String[]{id});
+            return renameRecord(path, appId, entry, id, checkedNameOrNull(label));
         }
 
         @Override public Bundle removeMany(String path, long appId, String entry, String[] ids) {
@@ -121,12 +117,12 @@ public final class SavedVariablesAuthority extends Service {
         }
     };
 
-    private Bundle mutate(String path, long appId, String entry, String id,
-                          @Nullable String label, boolean delete) {
+    private Bundle renameRecord(String path, long appId, String entry, String id,
+                                @Nullable String label) {
         synchronized (lock) {
             try {
                 if (id == null || id.length() > 64 || id.isEmpty()
-                        || (!delete && label == null)) return failed("Invalid Saved record");
+                        || label == null) return failed("Invalid Saved record");
                 Target target = target(path, appId, entry);
                 Bundle[] response = new Bundle[1];
                 InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
@@ -140,7 +136,6 @@ public final class SavedVariablesAuthority extends Service {
                         JSONObject record = old.getJSONObject(index);
                         if (id.equals(record.getString("id"))) {
                             found = true;
-                            if (delete) continue;
                             record.put("label", label);
                         }
                         next.put(record);
