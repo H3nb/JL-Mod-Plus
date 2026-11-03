@@ -71,5 +71,11 @@ interface IMemoryEngineService {
                               long expectedBits, String replacement);
     void releaseSaved(long runtimeToken, String savedId);
     Bundle freezeSaved(long runtimeToken, String savedId, String label);
+    Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
+                          long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                          int type, long expectedBits);
+    Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
+                                  long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                                  int type, long expectedBits, String replacement);
     void cancelOperation(long runtimeToken);
 }

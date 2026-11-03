@@ -287,6 +287,25 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
+        public Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
+                                     long anchorId, boolean watchAnchor, int offset,
+                                     int type, long expectedBits, boolean freeze, long epoch) {
+            return managedResult(runtimeToken, managedEngine.watchInspector(runtimeToken,
+                    savedId, expectedRevision, anchorId, watchAnchor, offset, type,
+                    expectedBits, freeze, epoch));
+        }
+
+        @Override
+        public Bundle editInspectorAndFreeze(long runtimeToken, String savedId,
+                                             long expectedRevision, long anchorId,
+                                             boolean watchAnchor, int offset, int type,
+                                             long expectedBits, String replacement, long epoch) {
+            return managedResult(runtimeToken, managedEngine.editInspectorAndFreeze(runtimeToken,
+                    savedId, expectedRevision, anchorId, watchAnchor, offset, type,
+                    expectedBits, replacement, epoch));
+        }
+
+        @Override
         public void releaseSaved(long runtimeToken, String savedId) {
             managedEngine.releaseSaved(runtimeToken, savedId);
         }

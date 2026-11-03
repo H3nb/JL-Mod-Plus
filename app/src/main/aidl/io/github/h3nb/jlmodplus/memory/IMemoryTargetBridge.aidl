@@ -72,5 +72,11 @@ interface IMemoryTargetBridge {
                               long expectedBits, String replacement, long cancellationEpoch);
     void releaseSaved(long runtimeToken, String savedId);
     Bundle freezeSaved(long runtimeToken, String savedId, String label, long cancellationEpoch);
+    Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
+                          long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                          int type, long expectedBits, boolean freeze, long cancellationEpoch);
+    Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
+                                  long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                                  int type, long expectedBits, String replacement, long cancellationEpoch);
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }
