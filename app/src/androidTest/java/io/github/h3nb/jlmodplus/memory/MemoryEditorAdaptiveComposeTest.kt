@@ -67,7 +67,14 @@ class MemoryEditorAdaptiveComposeTest {
         ))
         val editStates = mutableListOf<String?>()
         val actions = object : TestMemoryEditorActions() {
-            override fun setSavedEditActive(id: String?) { editStates.add(id) }
+            override fun beginSavedEdit(
+                id: String,
+                onReady: (SavedVariableRuntimeValue?) -> Unit,
+            ) {
+                editStates.add(id)
+                onReady(state.value.savedValues[id])
+            }
+            override fun endSavedEdit() { editStates.add(null) }
         }
         rule.setContent {
             JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) }

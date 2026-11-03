@@ -791,15 +791,17 @@ private fun RuntimeSavedVariablesTab(
 ) {
     var editDraft by remember { mutableStateOf<SavedEditDraft?>(null) }
     fun openSavedEdit(row: SavedVariableRow) {
-        val value = state.savedValues[row.id]?.takeIf { it.resolved } ?: return
-        if (!state.writeSupported || state.busy) return
-        // Stop automatic Saved rebinding before displaying an editable snapshot.
-        actions.setSavedEditActive(row.id)
-        editDraft = SavedEditDraft(
-            row, listOf(MemoryEditTarget(
-                0L, value.type, value.value, listOf(value.type), watch = true,
-            )),
-        )
+        if (state.savedValues[row.id]?.resolved != true || !state.writeSupported || state.busy) return
+        // The controller drains any in-flight Saved refresh before returning a bound
+        // snapshot. Editing never starts against a binding that can still be rebound.
+        actions.beginSavedEdit(row.id) { current ->
+            if (current == null) return@beginSavedEdit
+            editDraft = SavedEditDraft(
+                row, listOf(MemoryEditTarget(
+                    0L, current.type, current.value, listOf(current.type), watch = true,
+                )),
+            )
+        }
     }
     var renameRow by remember { mutableStateOf<SavedVariableRow?>(null) }
     var deleteIds by remember { mutableStateOf<List<String>?>(null) }
@@ -933,7 +935,7 @@ private fun RuntimeSavedVariablesTab(
     editDraft?.let { draft ->
         // Also release the pause if the whole Saved tab is removed by navigation.
         DisposableEffect(draft.row.id) {
-            onDispose { actions.setSavedEditActive(null) }
+            onDispose { actions.endSavedEdit() }
         }
         val current = state.savedValues[draft.row.id]
         RuntimeEditDialog(

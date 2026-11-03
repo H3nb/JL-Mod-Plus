@@ -954,17 +954,51 @@ internal class MemoryEditorComposeController(
         }
     }
 
-    override fun setSavedEditActive(id: String?) {
-        if (savedEditId == id) return
+    override fun beginSavedEdit(id: String, onReady: (SavedVariableRuntimeValue?) -> Unit) {
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (savedEditId != null || !state.visible || !state.savedTab || !state.writeSupported ||
+            state.busy || state.savedValues[id]?.resolved != true || token == 0L) return
+
         savedEditId = id
-        if (id != null) {
-            // Invalidate queued Saved updates and resolution attempts from the old tick.
-            savedGeneration++
-            savedRefreshPending = false
-        } else {
-            nextSavedResolveAt = 0L
-            refreshSavedLive()
+        // Stop new refreshes immediately; the single-threaded IPC queue drains the
+        // preceding refresh before taking the dialog's authoritative binding snapshot.
+        val generation = ++savedGeneration
+        savedRefreshPending = false
+        val connection = connectionGeneration
+        runIpc {
+            val value = runCatching { savedValue(engine.readSaved(token, id), bound = true) }
+                .getOrElse {
+                    SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
+                        detail = it.message.orEmpty())
+                }
+            post {
+                if (savedEditId != id || generation != savedGeneration) return@post
+                if (destroyed || !state.visible || !state.savedTab || state.runtimeToken != token ||
+                    connection != connectionGeneration || service !== engine ||
+                    state.savedVariables.none { it.id == id }) {
+                    endSavedEdit()
+                    return@post
+                }
+                if (!value.resolved) {
+                    state = state.copy(
+                        savedValues = state.savedValues + (id to value),
+                        message = value.detail,
+                        messageIsError = true,
+                    )
+                    endSavedEdit()
+                    return@post
+                }
+                onReady(value)
+            }
         }
+    }
+
+    override fun endSavedEdit() {
+        if (savedEditId == null) return
+        savedEditId = null
+        nextSavedResolveAt = 0L
+        refreshSavedLive()
     }
 
     override fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean) {
@@ -1100,6 +1134,7 @@ internal class MemoryEditorComposeController(
         invalidateVisiblePageRequest()
         savedGeneration++
         savedRefreshPending = false
+        savedEditId = null
         state = state.copy(watchTab = watch, savedTab = false, savedSelection = emptySet(), selected = emptySet())
     }
 
