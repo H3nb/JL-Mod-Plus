@@ -40,14 +40,12 @@ public class SavedVariableLocatorTest {
                         && candidate.fields.length == 1
                         && "shared".equals(candidate.fields[0].name)) saved = candidate;
             }
-            assertNotNull("A searched static field must expose a saved descriptor", saved);
-            assertEquals(MemoryEngineContract.RESULT_OK,
-                    engine.resolveSavedLocator(FIRST, saved,
+            assertNotNull(saved, "A searched static field must expose a saved descriptor");
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(FIRST, saved,
                             "test-static-identity", 0L).code);
             assertEquals(0, engine.watchPage(FIRST).ids.length);
             assertEquals("9001", engine.readSaved(FIRST, "test-static-identity").value);
-            assertEquals(MemoryEngineContract.RESULT_OK,
-                    engine.editSaved(FIRST, "test-static-identity", "9002", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.editSaved(FIRST, "test-static-identity", "9002", 0L).code);
             assertEquals(9002, GuestPlayer.shared);
             assertEquals("9002", engine.readSaved(FIRST, "test-static-identity").value);
             assertEquals(0, engine.watchPage(FIRST).ids.length);
@@ -79,10 +77,8 @@ public class SavedVariableLocatorTest {
                     FIRST, locator, "test-player-identity", 0L).code);
             GuestPlayer original = root.player;
             root.player = new GuestPlayer();
-            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                    engine.readSaved(FIRST, "test-player-identity").code);
-            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                    engine.editSaved(FIRST, "test-player-identity", "1234", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, engine.readSaved(FIRST, "test-player-identity").code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, engine.editSaved(FIRST, "test-player-identity", "1234", 0L).code);
             assertEquals(585858, root.player.coins);
             assertEquals(585858, original.coins);
             assertEquals(0, engine.watchPage(FIRST).ids.length);
@@ -104,7 +100,7 @@ public class SavedVariableLocatorTest {
         }
         GuestLoader loader = new GuestLoader();
         Class<?> guest = loader.defineGuest();
-        assertEquals("fixture has duplicate field names", 2, guest.getDeclaredFields().length);
+        assertEquals(2, guest.getDeclaredFields().length, "fixture has duplicate field names");
         java.lang.reflect.Field ambiguous = guest.getDeclaredField("f");
         java.lang.reflect.Field target = null;
         for (java.lang.reflect.Field field : guest.getDeclaredFields()) {
@@ -134,19 +130,16 @@ public class SavedVariableLocatorTest {
             ManagedJavaMemoryEngine.SavedLocator saved =
                     engine.captureSavedLocator(FIRST, search.revision, id);
             assertNotNull(saved);
-            assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC,
-                    saved.rootKind);
+            assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC, saved.rootKind);
             assertEquals("b", saved.rootClass);
             assertEquals("f", saved.fields[0].name);
             assertEquals(target.getType().getName(), saved.fields[0].type);
             assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
                     FIRST, saved, "duplicate-static-field", 0L).code);
             assertEquals(0, engine.watchPage(FIRST).ids.length);
-            assertEquals(Long.toString(queryValue),
-                    engine.readSaved(FIRST, "duplicate-static-field").value);
+            assertEquals(Long.toString(queryValue), engine.readSaved(FIRST, "duplicate-static-field").value);
             final String replacement = "67890";
-            assertEquals(MemoryEngineContract.RESULT_OK,
-                    engine.editSaved(FIRST, "duplicate-static-field", replacement, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.editSaved(FIRST, "duplicate-static-field", replacement, 0L).code);
             assertEquals(67890L, type == MemoryEngineContract.TYPE_INT
                     ? target.getInt(null) : target.getLong(null));
             assertEquals(0, engine.watchPage(FIRST).ids.length);
@@ -181,27 +174,22 @@ public class SavedVariableLocatorTest {
             assertEquals(1, search.resultCount);
             long id = first.resultPage(firstToken, search.revision, 0, 10).ids[0];
             descriptor = first.captureSavedLocator(firstToken, search.revision, id);
-            assertNotNull("Exact, live static array owner must be capturable", descriptor);
-            assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC,
-                    descriptor.rootKind);
+            assertNotNull(descriptor, "Exact, live static array owner must be capturable");
+            assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC, descriptor.rootKind);
             assertEquals(34, descriptor.arrayIndex);
             assertEquals("[B", descriptor.fields[0].type);
             assertEquals(StaticNeeds.class.getName(), descriptor.rootClass);
-            assertEquals(MemoryEngineContract.RESULT_OK,
-                    first.resolveSavedLocator(firstToken, descriptor,
+            assertEquals(MemoryEngineContract.RESULT_OK, first.resolveSavedLocator(firstToken, descriptor,
                             "static-array-hunger", 0L).code);
             assertEquals(0, first.watchPage(firstToken).ids.length);
             assertEquals("95", first.readSaved(firstToken, "static-array-hunger").value);
-            assertEquals(MemoryEngineContract.RESULT_OK,
-                    first.editSaved(firstToken, "static-array-hunger", "40", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, first.editSaved(firstToken, "static-array-hunger", "40", 0L).code);
             assertEquals(40, StaticNeeds.hunger[34]);
             byte[] previous = StaticNeeds.hunger;
             StaticNeeds.hunger = new byte[64];
             StaticNeeds.hunger[34] = 6;
-            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                    first.readSaved(firstToken, "static-array-hunger").code);
-            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                    first.editSaved(firstToken, "static-array-hunger", "77", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, first.readSaved(firstToken, "static-array-hunger").code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, first.editSaved(firstToken, "static-array-hunger", "77", 0L).code);
             assertEquals(40, previous[34]);
             assertEquals(6, StaticNeeds.hunger[34]);
             assertEquals(0, first.watchPage(firstToken).ids.length);
@@ -214,12 +202,10 @@ public class SavedVariableLocatorTest {
         MemoryDiscoveryBridge.setMidletRoot(secondToken, new GuestRoot());
         MemoryDiscoveryBridge.tailSeen(StaticNeeds.class);
         try {
-            assertEquals(MemoryEngineContract.RESULT_OK,
-                    second.resolveSavedLocator(secondToken, descriptor,
+            assertEquals(MemoryEngineContract.RESULT_OK, second.resolveSavedLocator(secondToken, descriptor,
                             "static-array-hunger", 0L).code);
             assertEquals("6", second.readSaved(secondToken, "static-array-hunger").value);
-            assertEquals(MemoryEngineContract.RESULT_OK,
-                    second.editSaved(secondToken, "static-array-hunger", "30", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, second.editSaved(secondToken, "static-array-hunger", "30", 0L).code);
             assertEquals(30, StaticNeeds.hunger[34]);
             assertEquals(0, second.watchPage(secondToken).ids.length);
         } finally {
@@ -256,7 +242,7 @@ public class SavedVariableLocatorTest {
             assertEquals(1, search.resultCount);
             long id = first.resultPage(FIRST, search.revision, 0, 10).ids[0];
             path = first.captureSavedLocator(FIRST, search.revision, id);
-            assertNotNull("Search-selected character must have a rooted path", path);
+            assertNotNull(path, "Search-selected character must have a rooted path");
             assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC, path.rootKind);
             assertEquals(4, path.fields.length);
             assertEquals(4, path.fieldIndices.length);
@@ -274,10 +260,8 @@ public class SavedVariableLocatorTest {
             assertEquals(180, PartyHolder.active.party[2].stats.hp);
             PartyUnit originalUnit = PartyHolder.active.party[2];
             PartyHolder.active.party[2] = new PartyUnit(195);
-            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                    first.readSaved(FIRST, "ninja-hp-owner").code);
-            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                    first.editSaved(FIRST, "ninja-hp-owner", "50", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, first.readSaved(FIRST, "ninja-hp-owner").code);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, first.editSaved(FIRST, "ninja-hp-owner", "50", 0L).code);
             assertEquals(180, originalUnit.stats.hp);
             assertEquals(195, PartyHolder.active.party[2].stats.hp);
         } finally {
