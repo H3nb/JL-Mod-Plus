@@ -58,8 +58,7 @@ public final class ImportedBundleProfileLinkage {
         /** Imported snapshot is already committed; unmatched imports remain CUSTOM. */
         public void complete() {
             synchronized (ProfilesManager.presetSourceLock()) {
-                ProfileModel imported = ProfilesManager.loadConfig(
-                        configDir, false, BackgroundMigrationContext.MIDLET_CONFIG, false);
+                ProfileModel imported = ProfilesManager.loadConfig(configDir, false);
                 if (imported == null) return;
                 String matchingName = null;
                 for (Profile profile : ProfilesManager.getList(profilesRoot)) {

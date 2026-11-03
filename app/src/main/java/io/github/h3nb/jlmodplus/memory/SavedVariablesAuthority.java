@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.UUID;
 
 /**
  * Main-process authority for Saved definitions. Live guest objects and operation state never
