@@ -41,7 +41,7 @@ object LibraryAppBundleImporter {
     private const val MAX_MANIFEST_BYTES = 4L * 1024L
     private const val MAX_DESCRIPTOR_BYTES = 1024L * 1024L
     private const val MAX_TOTAL_BYTES = 1024L * 1024L * 1024L
-    private const val MAX_REPLACEMENTS = 3
+    private const val MAX_REPLACEMENTS = 4
     private const val STALE_STAGING_AGE_MILLIS = 24L * 60L * 60L * 1000L
 
     class PreparedImport internal constructor(
@@ -50,6 +50,7 @@ object LibraryAppBundleImporter {
         internal val convertedConfigFile: File?,
         internal val configDir: File?,
         internal val dataDir: File?,
+        internal val savedVariablesFile: File? = null,
         internal val formatVersion: Int,
         internal val preflightSourceMetadata: SourceMetadata? = null,
     )
@@ -92,12 +93,14 @@ object LibraryAppBundleImporter {
                 )
             }
             val item = plan.items.single().app
-            val prepared = if (parsed.formatVersion == LibraryAppBundleFormat.UNIVERSAL_VERSION) {
+            val prepared = if (parsed.formatVersion == LibraryAppBundleFormat.UNIVERSAL_VERSION ||
+                parsed.formatVersion == LibraryAppBundleFormat.SELECTIVE_VERSION) {
                 openSource(context, source).use { input ->
                     extractUniversalSingleToStaging(
                         input = input,
                         staging = staging,
                         app = item,
+                        formatVersion = parsed.formatVersion,
                         parseSourceMetadata = true,
                     )
                 }
@@ -122,6 +125,7 @@ object LibraryAppBundleImporter {
         input: InputStream,
         staging: File,
         app: BundleApp,
+        formatVersion: Int = LibraryAppBundleFormat.UNIVERSAL_VERSION,
         parseSourceMetadata: Boolean = false,
     ): PreparedImport {
         ensureDirectory(staging)
@@ -130,6 +134,7 @@ object LibraryAppBundleImporter {
         val convertedConfigFile = File(canonicalRoot, "converted.dex.conf")
         val configDir = File(canonicalRoot, "config")
         val dataDir = File(canonicalRoot, "data")
+        val savedFile = File(canonicalRoot, "saved-variables.json")
         val seen = HashSet<String>()
         val buffer = ByteArray(COPY_BUFFER_SIZE)
         var entryCount = 0
@@ -137,6 +142,7 @@ object LibraryAppBundleImporter {
         var hasJar = false
         var hasConfig = false
         var hasData = false
+        var hasSaved = false
         var hasConvertedConfig = false
 
         ZipInputStream(BufferedInputStream(input)).use { zip ->
@@ -168,6 +174,10 @@ object LibraryAppBundleImporter {
                         convertedConfigFile
                     }
                     relative == "app/icon.png" -> null
+                    relative == "saved/saved-variables.json" -> {
+                        hasSaved = true
+                        savedFile
+                    }
                     relative == "config/" -> {
                         hasConfig = true
                         ensureDirectory(configDir)
@@ -236,7 +246,8 @@ object LibraryAppBundleImporter {
             convertedConfigFile = convertedConfigFile.takeIf { hasConvertedConfig && it.isFile },
             configDir = configDir.takeIf { hasConfig && it.isDirectory },
             dataDir = dataDir.takeIf { hasData && it.isDirectory },
-            formatVersion = LibraryAppBundleFormat.UNIVERSAL_VERSION,
+            savedVariablesFile = savedFile.takeIf { hasSaved && it.isFile },
+            formatVersion = formatVersion,
             preflightSourceMetadata = sourceMetadata,
         )
     }
@@ -247,6 +258,7 @@ object LibraryAppBundleImporter {
         input: InputStream,
         staging: File,
         apps: List<BundleApp>,
+        formatVersion: Int = LibraryAppBundleFormat.UNIVERSAL_VERSION,
         parseSourceMetadata: Boolean = false,
     ): List<PreparedUniversalApp> {
         if (apps.isEmpty()) throw IOException("Universal app bundle has no apps")
@@ -294,6 +306,10 @@ object LibraryAppBundleImporter {
                         File(state.root, "converted.dex.conf")
                     }
                     relative == "app/icon.png" -> null
+                    relative == "saved/saved-variables.json" -> {
+                        state.hasSaved = true
+                        File(state.root, "saved-variables.json")
+                    }
                     relative == "config/" -> {
                         state.hasConfig = true
                         ensureDirectory(File(state.root, "config"))
@@ -375,7 +391,9 @@ object LibraryAppBundleImporter {
                     },
                     configDir = configDir.takeIf { state.hasConfig && it.isDirectory },
                     dataDir = dataDir.takeIf { state.hasData && it.isDirectory },
-                    formatVersion = LibraryAppBundleFormat.UNIVERSAL_VERSION,
+                    savedVariablesFile = File(state.root, "saved-variables.json")
+                        .takeIf { state.hasSaved && it.isFile },
+                    formatVersion = formatVersion,
                     preflightSourceMetadata = sourceMetadata,
                 ),
             )
@@ -617,6 +635,16 @@ object LibraryAppBundleImporter {
                 transactionId = transactionId,
             )
         }
+        if (prepared.configDir == null) prepared.savedVariablesFile?.let { source ->
+            replacements += prepareReplacement(
+                source = source,
+                sourceIsDirectory = false,
+                root = root,
+                storageKey = storageKey,
+                target = File(File(File(root, "configs"), storageKey), "saved-variables.json"),
+                transactionId = transactionId,
+            )
+        }
         prepared.dataDir?.let { source ->
             replacements += prepareReplacement(
                 source = source,
@@ -658,6 +686,16 @@ object LibraryAppBundleImporter {
                 FreshInstalledMidletInitializer.preserveReviewState(
                     configReplacement.target, configReplacement.staged,
                 )
+                if (prepared.formatVersion == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+                    // Config and Saved are independent choices. A config-only import
+                    // must not erase the user's existing Saved definitions.
+                    val previousSaved = File(configReplacement.target, "saved-variables.json")
+                    val savedSource = prepared.savedVariablesFile ?: previousSaved.takeIf(File::isFile)
+                    if (savedSource != null) {
+                        savedSource.copyTo(File(configReplacement.staged, "saved-variables.json"),
+                            overwrite = true)
+                    }
+                }
             }
             publishReplacements(replacements, afterPublished)
             val iconRevision = if (prepared.configDir != null) {
@@ -686,7 +724,8 @@ object LibraryAppBundleImporter {
         check(insideRoot(root, prepared.jarFile.canonicalFile) && prepared.jarFile.isFile) {
             "Prepared import JAR is unavailable"
         }
-        listOfNotNull(prepared.convertedConfigFile, prepared.configDir, prepared.dataDir).forEach { candidate ->
+        listOfNotNull(prepared.convertedConfigFile, prepared.configDir, prepared.dataDir,
+            prepared.savedVariablesFile).forEach { candidate ->
             check(insideRoot(root, candidate.canonicalFile)) { "Prepared import escaped its staging directory" }
         }
     }
@@ -901,6 +940,7 @@ object LibraryAppBundleImporter {
         val allowed = listOf(
             File(File(root, "configs"), storageKey).canonicalFile,
             File(File(root, "data"), storageKey).canonicalFile,
+            File(File(File(root, "configs"), storageKey), "saved-variables.json").canonicalFile,
             File(File(File(root, "converted"), storageKey), "converted.dex.conf").canonicalFile,
         )
         return target in allowed
@@ -990,6 +1030,7 @@ object LibraryAppBundleImporter {
         var hasConvertedConfig: Boolean = false,
         var hasConfig: Boolean = false,
         var hasData: Boolean = false,
+        var hasSaved: Boolean = false,
     )
 
     private fun normalizeEntryName(raw: String): String {

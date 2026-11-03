@@ -53,6 +53,7 @@ internal object LibraryUniversalBundleStager {
                     input = input,
                     staging = root,
                     apps = plan.items.map { it.app },
+                    formatVersion = parsed.formatVersion,
                     parseSourceMetadata = true,
                 )
             }
