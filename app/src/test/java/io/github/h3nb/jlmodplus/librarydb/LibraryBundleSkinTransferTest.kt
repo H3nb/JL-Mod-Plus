@@ -145,6 +145,27 @@ class LibraryBundleSkinTransferTest {
         assertTrue(LibraryBundleSkinAssets.controlSkin(target, control)!!.isDirectory)
     }
 
+    @Test fun existingSharedAssetsAreKeptWhenValid() {
+        val id = UUID.randomUUID().toString()
+        val workdir = File(temp, "available").apply { mkdirs() }
+        val config = File(workdir, "configs/game").apply { mkdirs() }
+        val json = """{"ScreenBackgroundImage":"frame.png","ControlSkinSetId":"$id","SoundBank":"music.sf2","Shader":{"name":"CRT Filter","author":"Example","fragment":"crt.fsh","vertex":"crt.vsh"}}"""
+        File(config, "config.json").writeText(json)
+        File(workdir, "skins").apply { mkdirs() }.resolve("frame.png").writeBytes(png(21))
+        File(workdir, "soundbanks").apply { mkdirs() }.resolve("music.sf2").writeText("asset")
+        File(workdir, "shaders").apply { mkdirs() }.resolve("crt.ini").writeText(
+            "[CRT preset]\nName = CRT Filter\nAuthor = Example\nFragment = crt.fsh\nVertex = crt.vsh\n",
+        )
+        File(workdir, "skins/controls/Shared").apply { mkdirs() }.also {
+            File(it, "skin.json").writeText("""{"id":"$id"}""")
+        }
+        LibraryBundleSkinAssets.normalizeConfig(config, workdir, null, null)
+        assertEquals(
+            Json.parseToJsonElement(json),
+            Json.parseToJsonElement(File(config, "config.json").readText()),
+        )
+    }
+
     private fun createSource(root: File, id: String) {
         File(root, "converted/game").apply { mkdirs() }.also {
             File(it, "res.jar").writeBytes(byteArrayOf(1, 2, 3))

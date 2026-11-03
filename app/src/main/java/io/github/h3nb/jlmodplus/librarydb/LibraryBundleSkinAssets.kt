@@ -145,7 +145,8 @@ internal object LibraryBundleSkinAssets {
         }
 
         val controlId = importedControlSkin ?: original.string("ControlSkinSetId")
-        if (fallbackMissingAssets && controlId != null && controlSkin(workdir, controlId) == null) {
+        if (fallbackMissingAssets && controlId != null &&
+            runCatching { controlSkin(workdir, controlId) }.getOrNull() == null) {
             current["ControlSkinSetId"] = JsonNull
         } else if (importedControlSkin != null) {
             current["ControlSkinSetId"] = JsonPrimitive(importedControlSkin)
@@ -168,19 +169,20 @@ internal object LibraryBundleSkinAssets {
             val lines = runCatching { file.readLines() }.getOrNull() ?: return@any false
             var section = ""
             var values = mutableMapOf<String, String>()
-            fun matches(): Boolean = section == name &&
+            fun matches(): Boolean = (values["Name"] ?: section) == name &&
                 values["Fragment"] == fragment && values["Vertex"] == vertex &&
                 (values["Author"] ?: "unknown") == author
             for (line in lines) {
                 val trimmed = line.trim()
-                if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                if (trimmed.startsWith("[")) {
                     if (matches()) return@any true
-                    section = trimmed.removeSurrounding("[", "]")
+                    section = trimmed.replace("[", "").replace("]", "")
                     values = mutableMapOf()
                 } else {
-                    val key = trimmed.substringBefore('=', "")
-                    if (trimmed.contains('=') && key.isNotEmpty()) {
-                        values[key] = trimmed.substringAfter('=').trim()
+                    val equal = trimmed.indexOf('=')
+                    if (equal >= 4) {
+                        values[trimmed.substring(0, equal).trim()] =
+                            trimmed.substring(equal + 1).trim()
                     }
                 }
             }
