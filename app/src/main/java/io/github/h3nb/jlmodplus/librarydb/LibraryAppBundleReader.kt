@@ -52,6 +52,8 @@ internal data class BundleApp(
     val configState: BundleNamespaceState,
     val dataState: BundleNamespaceState,
     val savedState: BundleNamespaceState = BundleNamespaceState.Excluded,
+    val layoutSkinState: BundleNamespaceState = BundleNamespaceState.Excluded,
+    val controlSkinState: BundleNamespaceState = BundleNamespaceState.Excluded,
     val legacyAssurance: Boolean = false,
 )
 
@@ -173,6 +175,12 @@ internal object LibraryAppBundleReader {
                     relative == "app/icon.png" ||
                     (version == LibraryAppBundleFormat.SELECTIVE_VERSION &&
                         relative == "saved/saved-variables.json") ||
+                    (version == LibraryAppBundleFormat.SELECTIVE_VERSION &&
+                        relative.startsWith("skin-layout/") &&
+                        LibraryBundleSkinAssets.validScreenName(relative.removePrefix("skin-layout/"))) ||
+                    (version == LibraryAppBundleFormat.SELECTIVE_VERSION &&
+                        relative.startsWith("control-skin/") &&
+                        LibraryBundleSkinAssets.validControlName(relative.removePrefix("control-skin/"))) ||
                     relative.startsWith("config/") ||
                     relative.startsWith("data/")
                 if (!allowed) throw IOException("Unsupported app bundle entry: $entry")
@@ -187,6 +195,19 @@ internal object LibraryAppBundleReader {
                 entries.mapNotNull { it.removePrefix(app.payloadRoot).takeIf { relative -> relative.startsWith("data/") } },
                 "dataState",
             )
+            if (version == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+                val layout = entries.map { it.removePrefix(app.payloadRoot) }
+                    .filter { it.startsWith("skin-layout/") }
+                val skins = entries.map { it.removePrefix(app.payloadRoot) }
+                    .filter { it.startsWith("control-skin/") }
+                validateNamespaceState(app.layoutSkinState, layout, "layoutSkinState")
+                validateNamespaceState(app.controlSkinState, skins, "controlSkinState")
+                if (layout.size > 1 ||
+                    (app.controlSkinState == BundleNamespaceState.Present &&
+                        "control-skin/skin.json" !in skins)) {
+                    throw IOException("Invalid selected skin payload")
+                }
+            }
             val hasSaved = entries.contains(app.payloadRoot + "saved/saved-variables.json")
             if (hasSaved != (app.savedState == BundleNamespaceState.Present)) {
                 throw IOException("savedState does not match the Saved Variables payload")
@@ -268,6 +289,18 @@ internal object LibraryAppBundleReader {
             BundleNamespaceState.parse(requiredString("savedState"), "savedState")
         } else BundleNamespaceState.Excluded
         if (savedState == BundleNamespaceState.PresentEmpty) throw IOException("Invalid savedState")
+        val layoutSkinState = if (version == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+            BundleNamespaceState.parse(
+                (app["layoutSkinState"] as? JsonPrimitive)?.content ?: "excluded", "layoutSkinState")
+        } else BundleNamespaceState.Excluded
+        val controlSkinState = if (version == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+            BundleNamespaceState.parse(
+                (app["controlSkinState"] as? JsonPrimitive)?.content ?: "excluded", "controlSkinState")
+        } else BundleNamespaceState.Excluded
+        if (layoutSkinState == BundleNamespaceState.PresentEmpty ||
+            controlSkinState == BundleNamespaceState.PresentEmpty) {
+            throw IOException("Invalid skin component state")
+        }
         return BundleApp(
             bundleId = bundleId,
             title = requiredString("title"),
@@ -278,6 +311,8 @@ internal object LibraryAppBundleReader {
             configState = configState,
             dataState = dataState,
             savedState = savedState,
+            layoutSkinState = layoutSkinState,
+            controlSkinState = controlSkinState,
         )
     }
 

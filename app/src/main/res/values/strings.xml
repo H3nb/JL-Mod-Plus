@@ -1307,9 +1307,11 @@
     <string name="memory_saved_failed" tools:ignore="MissingTranslation">Failed</string>
     <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Remove %1$d Saved definitions? Game values will not change.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Export bundle</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">The game is always included. Choose any additional data to export.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">The game is always included. Close it before exporting, then choose the additional data to include.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Configuration</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Save data</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Saved variables</string>
     <string name="library_bundle_export" tools:ignore="MissingTranslation">Export</string>
+    <string name="library_bundle_layout_skin" tools:ignore="MissingTranslation">Screen layout skin</string>
+    <string name="library_bundle_control_skin" tools:ignore="MissingTranslation">Virtual control skin</string>
 </resources>

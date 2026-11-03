@@ -191,9 +191,24 @@ internal object LibraryBundleSkinAssets {
         val other = runCatching { selectedControlFiles(existing) }.getOrNull() ?: return false
         if (source.map(File::getName) != other.map(File::getName)) return false
         return source.zip(other).all { (a, b) ->
-            a.length() == b.length() && a.inputStream().use { left ->
+            if (a.length() != b.length()) return@all false
+            a.inputStream().use { left ->
                 b.inputStream().use { right ->
-                    left.buffered().contentEquals(right.buffered())
+                    val first = ByteArray(8192)
+                    val second = ByteArray(8192)
+                    while (true) {
+                        val count = left.read(first)
+                        if (count < 0) return@use right.read() == -1
+                        var offset = 0
+                        while (offset < count) {
+                            val n = right.read(second, offset, count - offset)
+                            if (n < 0) return@use false
+                            offset += n
+                        }
+                        for (i in 0 until count) if (first[i] != second[i]) return@use false
+                    }
+                    @Suppress("UNREACHABLE_CODE")
+                    false
                 }
             }
         }

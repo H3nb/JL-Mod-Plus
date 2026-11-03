@@ -66,7 +66,10 @@ object LibraryAppBundleExporter {
             val target = File(directory, fileName)
             val staging = File(directory, "$fileName.tmp")
             try {
-                LibraryUniversalBundleExporter.exportToZip(
+                LibraryBundleRuntimeGuard.withClosedMidlets(
+                    context, listOf(emulatorDir to storageKey),
+                ) {
+                    LibraryUniversalBundleExporter.exportToZip(
                     apps = listOf(
                         LibraryUniversalBundleExporter.AppSource(
                             bundleId = "a0001",
@@ -80,7 +83,8 @@ object LibraryAppBundleExporter {
                     ),
                     target = staging,
                     onProgress = onProgress,
-                )
+                    )
+                }
                 if (target.exists() && !target.delete()) {
                     throw IOException("Unable to replace previous app bundle")
                 }

@@ -640,11 +640,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                         getApplication(), generation.emulatorDir, storageKey)
                 } else null
                 val result = try {
-                    LibraryAppBundleImporter.restore(
-                        prepared,
-                        generation.emulatorDir,
-                        storageKey,
-                    )
+                    LibraryBundleRuntimeGuard.withClosedMidlets(
+                        getApplication(), listOf(generation.emulatorDir to storageKey),
+                    ) {
+                        LibraryAppBundleImporter.restore(
+                            prepared,
+                            generation.emulatorDir,
+                            storageKey,
+                        )
+                    }
                 } catch (error: Throwable) {
                     ownership?.rollback()
                     throw error
