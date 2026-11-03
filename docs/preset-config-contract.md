@@ -43,6 +43,7 @@ Runtime swaps never persist those temporary lens overrides to config or preset.
 
 ## Runtime storage
 
+- A selective app bundle exports only the chosen MIDlet-owned data and explicitly chosen referenced shared skin assets. Importing a configuration normalizes missing screen skin, virtual control skin, soundbank, and shader selections to the built-in defaults; an asset-name/ID collision may create a distinct imported asset without changing the existing shared asset. Runtime storage leases prohibit export/restore while any selected MIDlet is active.
 - A live runtime must hold an exclusive lifetime reservation for its installed storage identity that is meaningful across process concurrency and distinguishes an active owner from stale filesystem residue. The current implementation uses an OS-backed file lock.
 - A deleted or replaced installed identity must not let an old runtime gain authority over its replacement. Fresh allocation must avoid filesystem identities still reserved by active runtime state or surviving side data.
 - Runtime private/cache paths must remain scoped to the launched workdir/storage identity whose lifetime is reserved.
