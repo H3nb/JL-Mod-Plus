@@ -164,7 +164,11 @@ internal fun MemoryEditorRuntimeRoot(
         val watchListState = rememberLazyListState()
         val savedListState = rememberLazyListState()
         val inspectSelected = {
-            state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.watchTab) }
+            if (state.savedTab) {
+                state.savedSelection.singleOrNull()?.let { actions.inspectSavedVariable(it) }
+            } else {
+                state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.watchTab) }
+            }
             Unit
         }
         val selectTab: (MemoryEditorTab) -> Unit = {
@@ -328,7 +332,11 @@ private fun RuntimeMemoryTabs(
     ) {
         MemoryEditorTab.entries.forEach { tab ->
             val enabled = tab != MemoryEditorTab.INSPECTOR ||
-                state.activeTab == tab || state.selected.size == 1 && !state.busy
+                state.activeTab == tab || (!state.busy && (
+                    state.selected.size == 1 ||
+                    state.savedTab && state.savedSelection.size == 1 &&
+                        state.savedValues[state.savedSelection.first()]?.resolved == true
+                ))
             Tab(
                 selected = state.activeTab == tab,
                 onClick = { onTab(tab) },
@@ -2017,6 +2025,7 @@ internal fun RuntimeInspectorTab(
     modifier: Modifier = Modifier,
 ) {
     var editLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
+    var saveLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
     when {
         state.inspectorLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -2098,10 +2107,14 @@ internal fun RuntimeInspectorTab(
                                 R.string.memory_editor_refresh_snapshot,
                                 enabled = !state.busy,
                             ) {
-                                actions.inspectCandidate(
-                                    snapshot.candidateId,
-                                    watchAnchor = snapshot.watchAnchor,
-                                )
+                                if (snapshot.savedId != null) {
+                                    actions.inspectSavedVariable(snapshot.savedId)
+                                } else {
+                                    actions.inspectCandidate(
+                                        snapshot.candidateId,
+                                        watchAnchor = snapshot.watchAnchor,
+                                    )
+                                }
                             }
                         }
                         HorizontalDivider()
@@ -2126,7 +2139,7 @@ internal fun RuntimeInspectorTab(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(
-                                    enabled = row.editable &&
+                                    enabled = row.editable && snapshot.savedId == null &&
                                         state.writeSupported && !state.busy,
                                     onClick = { editLogicalRow = row },
                                 )
@@ -2159,6 +2172,11 @@ internal fun RuntimeInspectorTab(
                                 textAlign = TextAlign.End,
                                 style = runtimeMemoryDataTextStyle(),
                             )
+                            RuntimeActionIcon(
+                                R.drawable.ic_save,
+                                R.string.memory_saved_save,
+                                enabled = row.editable && !state.busy,
+                            ) { saveLogicalRow = row }
                         }
                     }
                     HorizontalDivider()
@@ -2172,6 +2190,36 @@ internal fun RuntimeInspectorTab(
                     actions = actions,
                     onDismiss = {
                         editLogicalRow = null
+                    },
+                )
+            }
+            saveLogicalRow?.let { row ->
+                var name by remember(row.id) { mutableStateOf("") }
+                AlertDialog(
+                    onDismissRequest = { saveLogicalRow = null },
+                    title = { Text(stringResource(R.string.memory_saved_save)) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.memory_saved_explanation))
+                            Text(row.label, style = MaterialTheme.typography.bodySmall)
+                            OutlinedTextField(
+                                value = name,
+                                onValueChange = { if (it.length <= 64) name = it },
+                                label = { Text(stringResource(R.string.memory_saved_name)) },
+                                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(enabled = name.isNotBlank(), onClick = {
+                            actions.saveInspectorVariable(name.trim(), row.relativeOffset)
+                            saveLogicalRow = null
+                        }) { Text(stringResource(R.string.memory_saved_save)) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { saveLogicalRow = null }) {
+                            Text(stringResource(android.R.string.cancel))
+                        }
                     },
                 )
             }
