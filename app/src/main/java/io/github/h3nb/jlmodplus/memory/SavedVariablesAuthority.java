@@ -28,6 +28,7 @@ import java.util.HashSet;
  */
 public final class SavedVariablesAuthority extends Service {
     static final int SCHEMA = 2;
+    private static final int LOCATOR_SCHEMA = 1;
     static final int MAX_ITEMS = 64;
     static final int MAX_BYTES = 65_536;
     private static final String FILE_NAME = "saved-variables.json";
@@ -236,7 +237,7 @@ public final class SavedVariablesAuthority extends Service {
     }
 
     private static JSONObject encodeLocator(Bundle input) throws Exception {
-        if (input == null || input.getInt("savedSchema", -1) != SCHEMA) {
+        if (input == null || input.getInt("savedSchema", -1) != LOCATOR_SCHEMA) {
             throw new IOException("Invalid Saved locator version");
         }
         String[] classes = input.getStringArray("savedClasses");
@@ -290,7 +291,7 @@ public final class SavedVariablesAuthority extends Service {
             throw new IOException("Unsupported Saved primitive array");
         }
         Bundle descriptor = new Bundle();
-        descriptor.putInt("savedSchema", SCHEMA);
+        descriptor.putInt("savedSchema", LOCATOR_SCHEMA);
         descriptor.putInt("savedRootKind", rootKind);
         descriptor.putString("savedRootClass", rootClass);
         descriptor.putStringArray("savedClasses", owners);

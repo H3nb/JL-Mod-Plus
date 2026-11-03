@@ -13,7 +13,6 @@ import androidx.preference.PreferenceManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Bridges a Library bundle configuration restore to named-preset ownership.
@@ -98,7 +97,9 @@ public final class ImportedBundleProfileLinkage {
                     if (n < 0) return false;
                     offset += n;
                 }
-                if (!Arrays.equals(first, 0, size, second, 0, size)) return false;
+                for (int i = 0; i < size; i++) {
+                    if (first[i] != second[i]) return false;
+                }
             }
             return b.read() == -1;
         } catch (IOException error) {
