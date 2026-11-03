@@ -271,6 +271,9 @@ internal class MemoryEditorComposeController(
         hostForeground = foreground
         composeView.removeCallbacks(liveRefreshRunnable)
         if (foreground && state.visible) {
+            if (state.savedTab && savedLocators.isEmpty() && savedAuthority != null) {
+                refreshSavedVariables()
+            }
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
         } else {
             savedGeneration++
