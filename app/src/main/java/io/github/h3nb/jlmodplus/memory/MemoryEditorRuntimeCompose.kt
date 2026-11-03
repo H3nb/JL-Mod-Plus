@@ -2077,6 +2077,9 @@ internal fun RuntimeInspectorTab(
         else -> {
             val snapshot = requireNotNull(state.inspector)
             val logicalRows = snapshot.logicalRows
+            val sourceUntraced = snapshot.source == MemoryCandidateSource.UNKNOWN
+            val hasVerifiedPath = snapshot.pathStatus == MemoryEngineContract.PATH_VERIFIED &&
+                snapshot.referencePath.isNotBlank()
             val listState = rememberLazyListState()
             LaunchedEffect(snapshot.candidateId) {
                 val anchorIndex = logicalRows.indexOfFirst { it.relativeOffset == 0 }
@@ -2101,19 +2104,25 @@ internal fun RuntimeInspectorTab(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    runtimeCandidateLocation(
-                                        snapshot.candidateId, snapshot.source,
-                                        snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
-                                    ),
+                                    if (sourceUntraced) {
+                                        snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) }
+                                    } else {
+                                        runtimeCandidateLocation(
+                                            snapshot.candidateId, snapshot.source,
+                                            snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                                        )
+                                    },
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold,
                                 )
                                 Text(
-                                    if (snapshot.source == MemoryCandidateSource.UNKNOWN) {
-                                        stringResource(R.string.memory_editor_source_unknown)
-                                    } else {
-                                        "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
-                                            snapshot.source.fieldType
+                                    when {
+                                        !sourceUntraced ->
+                                            "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
+                                                snapshot.source.fieldType
+                                        hasVerifiedPath ->
+                                            stringResource(R.string.memory_editor_path_verified)
+                                        else -> stringResource(R.string.memory_editor_source_unknown)
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -2173,6 +2182,8 @@ internal fun RuntimeInspectorTab(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
+                                .clickable(enabled = row.editable && state.writeSupported &&
+                                    !state.busy) { editLogicalRow = row }
                                 .padding(horizontal = 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -2199,8 +2210,6 @@ internal fun RuntimeInspectorTab(
                                 row.valueText,
                                 modifier = Modifier.weight(1f)
                                     .heightIn(min = 48.dp)
-                                    .clickable(enabled = row.editable && state.writeSupported &&
-                                        !state.busy) { editLogicalRow = row }
                                     .wrapContentHeight(align = Alignment.CenterVertically),
                                 textAlign = TextAlign.End,
                                 style = runtimeMemoryDataTextStyle(),

@@ -54,7 +54,9 @@ accounted during scanning without double-charging them at the commit boundary.
 
 The presentation renders a compact summary from typed source metadata while
 Inspector exposes the full declaring class, field name, type and, when verified,
-the root-relative path. A checked path is only an observation of the current
+the root-relative path. When direct-field source metadata is unavailable but a
+root-relative path is verified, Inspector identifies that verified path rather
+than reporting the source as untraced. A checked path is only an observation of the current
 runtime, not a stable identity of a game entity after restart. The existing
 diagnostic location text remains available independently, but must not be parsed
 to construct structural identity. An observation may become stale immediately
