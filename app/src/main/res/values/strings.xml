@@ -1292,4 +1292,18 @@
     <string name="memory_editor_panel_opacity">Panel opacity</string>
     <string name="memory_editor_panel_opacity_help">Adjusts the panel background without fading text or icons.</string>
     <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">This MIDlet\'s installed conversion is incompatible with Memory Editor. Close the game, then reconvert or reinstall it using JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Saved</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Save variable</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Name</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Save this verified memory path for later sessions. Values are never written automatically.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">No Saved variables yet. Select one search result to save it.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Not ready</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Retry</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Rename</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Value</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Remove this Saved definition? The game value will not change.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Changed</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Incompatible</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Failed</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Remove %1$d Saved definitions? Game values will not change.</string>
 </resources>

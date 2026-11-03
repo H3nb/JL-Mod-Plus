@@ -128,6 +128,172 @@ public final class MemoryEngineService extends Service {
 	};
 
 	private final IMemoryEngineService.Stub binder = new IMemoryEngineService.Stub() {
+        @Override public Bundle resolveSavedLocator(long token, Bundle descriptor, String savedId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "The MIDlet runtime is unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                return bridge.resolveSavedLocator(token, descriptor, savedId, epoch);
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "The MIDlet connection was lost");
+            }
+        }
+
+        @Override public Bundle readSaved(long token, String savedId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "The MIDlet runtime is unavailable");
+            try {
+                return bridge.readSaved(token, savedId);
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "The MIDlet connection was lost");
+            }
+        }
+
+        @Override public Bundle editSaved(long token, String savedId, String replacement) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "The MIDlet runtime is unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                return bridge.editSaved(token, savedId, replacement, epoch);
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "The MIDlet connection was lost");
+            }
+        }
+
+        @Override public Bundle editSavedInspector(long token, String savedId,
+                                                    int relativeOffset, int valueType,
+                                                    long expectedBits, String replacement) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                return bridge.editSavedInspector(token, savedId, relativeOffset, valueType,
+                        expectedBits, replacement, epoch);
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle inspectSaved(long token, String savedId, int radius) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return inspectionFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try { return bridge.inspectSaved(token, savedId, radius); }
+            catch (RemoteException error) { return inspectionFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost"); }
+        }
+
+        @Override public Bundle captureInspectorLocator(long token, long revision,
+                                                         long candidateId, boolean watchAnchor,
+                                                         int relativeOffset) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                return bridge.captureInspectorLocator(token, revision, candidateId,
+                        watchAnchor, relativeOffset);
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle captureSavedNeighborLocator(long token, String savedId,
+                                                             int relativeOffset) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try { return bridge.captureSavedNeighborLocator(token, savedId, relativeOffset); }
+            catch (RemoteException error) { return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost"); }
+        }
+
+        @Override public Bundle captureSavedLocator(long token, long revision, long candidateId) {
+            Bundle failure = new Bundle();
+            failure.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                    MemoryEngineContract.RESULT_TARGET_LOST);
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isCurrentToken(token)) return failure;
+            try {
+                return bridge.captureSavedLocator(token, revision, candidateId);
+            } catch (RemoteException error) {
+                return failure;
+            }
+        }
+
+        @Override public Bundle freezeSaved(long token, String savedId, String label,
+                                           String expectedValue) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime is unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.freezeSaved(token, savedId, label, expectedValue, epoch);
+                if (consumeManagedResult(token, bridge, result) == MemoryEngineContract.RESULT_OK)
+                    startFreezeTaskIfNeeded();
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+
+        @Override public Bundle watchInspector(long token, String savedId,
+                                               long expectedRevision, long anchorId,
+                                               boolean watchAnchor, int offset, int type,
+                                               long expectedBits) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.watchInspector(token, savedId, expectedRevision, anchorId,
+                        watchAnchor, offset, type, expectedBits, false, epoch);
+                consumeManagedResult(token, bridge, result);
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle editInspectorAndFreeze(long token, String savedId,
+                                                       long expectedRevision, long anchorId,
+                                                       boolean watchAnchor, int offset, int type,
+                                                       long expectedBits, String replacement) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.editInspectorAndFreeze(token, savedId, expectedRevision,
+                        anchorId, watchAnchor, offset, type, expectedBits, replacement, epoch);
+                if (consumeManagedResult(token, bridge, result) == MemoryEngineContract.RESULT_OK)
+                    startFreezeTaskIfNeeded();
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public void releaseSaved(long token, String savedId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return;
+            try { bridge.releaseSaved(token, savedId); }
+            catch (RemoteException ignored) { /* Runtime teardown also discards bindings. */ }
+        }
+
 		@Override
 		public Bundle getCapabilities() {
 			Bundle result = new Bundle();
@@ -540,6 +706,13 @@ public final class MemoryEngineService extends Service {
 		}
 		super.onDestroy();
 	}
+
+    private static Bundle savedFailure(int code, String message) {
+        Bundle result = new Bundle();
+        result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, code);
+        result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, message);
+        return result;
+    }
 
 	private long enqueueManagedSearch(long token, Operation operation) {
 		return enqueueManaged(token, true, operation);

@@ -228,6 +228,7 @@ internal data class MemoryInspectorSnapshot(
     val expectedRevision: Long = 0L,
     val provenance: String = "",
     val watchAnchor: Boolean = false,
+    val savedId: String? = null,
     val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
     val pathStatus: Int = MemoryEngineContract.PATH_UNKNOWN,
     val referencePath: String = "",
@@ -347,7 +348,31 @@ internal object MemoryWatchPageParser {
     }
 }
 
-internal enum class MemoryEditorTab { RESULTS, WATCH, INSPECTOR }
+internal enum class MemoryEditorTab { RESULTS, WATCH, SAVED, INSPECTOR }
+
+internal data class SavedVariableRow(val id: String, val label: String, val path: String)
+
+internal enum class SavedVariableStatus { RESOLVED, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
+
+internal data class SavedVariableRuntimeValue(
+    val code: Int,
+    val type: Int = MemoryEngineContract.TYPE_AUTO,
+    val value: String = "",
+    val detail: String = "",
+    val changedOwner: Boolean = false,
+) {
+    val resolved: Boolean get() = code == MemoryEngineContract.RESULT_OK
+    val status: SavedVariableStatus get() = when {
+        resolved -> SavedVariableStatus.RESOLVED
+        changedOwner -> SavedVariableStatus.CHANGED
+        code == MemoryEngineContract.RESULT_NO_SESSION ||
+            code == MemoryEngineContract.RESULT_TARGET_LOST -> SavedVariableStatus.NOT_READY
+        code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE ||
+            code == MemoryEngineContract.RESULT_INVALID_REQUEST ||
+            code == MemoryEngineContract.RESULT_UNSUPPORTED -> SavedVariableStatus.INCOMPATIBLE
+        else -> SavedVariableStatus.FAILED
+    }
+}
 
 internal data class MemoryEditorUiState(
     val visible: Boolean = false,
@@ -366,8 +391,13 @@ internal data class MemoryEditorUiState(
     val pageOffset: Int = 0,
     val results: List<MemoryResultRow> = emptyList(),
     val watches: List<MemoryWatchRow> = emptyList(),
+    val savedVariables: List<SavedVariableRow> = emptyList(),
+    val savedValues: Map<String, SavedVariableRuntimeValue> = emptyMap(),
+    val savedSelection: Set<String> = emptySet(),
+    val savedError: String? = null,
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
+    val savedTab: Boolean = false,
     val message: String? = null,
     val messageIsError: Boolean = false,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
@@ -385,6 +415,7 @@ internal data class MemoryEditorUiState(
     val activeTab: MemoryEditorTab
         get() = when {
             inspectorLoading || inspector != null -> MemoryEditorTab.INSPECTOR
+            savedTab -> MemoryEditorTab.SAVED
             watchTab -> MemoryEditorTab.WATCH
             else -> MemoryEditorTab.RESULTS
         }
@@ -406,6 +437,23 @@ internal interface MemoryEditorActions {
     fun undo()
     fun refresh()
     fun setWatchTab(watch: Boolean)
+    fun setSavedTab() = Unit
+    fun refreshSavedVariables() = Unit
+    fun saveSelectedVariable(name: String) = Unit
+    fun resolveSavedVariable(id: String) = Unit
+    fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean = false) = Unit
+    fun renameSavedVariable(id: String, name: String) = Unit
+    fun deleteSavedVariable(id: String) = Unit
+    fun deleteSavedVariables(ids: List<String>) = Unit
+    fun toggleSavedSelection(id: String) = Unit
+    fun selectAllSaved() = Unit
+    fun clearSavedSelection() = Unit
+    fun inspectSavedVariable(id: String) = Unit
+    fun saveInspectorVariable(name: String, relativeOffset: Int) = Unit
+    fun watchInspectorVariable(relativeOffset: Int) = Unit
+    fun editSavedInspectorValue(id: String, relativeOffset: Int, type: Int,
+                                expectedBits: Long, replacement: String,
+                                freezeAfter: Boolean = false) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
     fun invertVisible()
@@ -465,6 +513,7 @@ internal interface MemoryEditorActions {
         expectedBits: Long,
         replacementValue: String,
         watchAnchor: Boolean = false,
+        freezeAfter: Boolean = false,
     ) = Unit
     fun closeInspector() = Unit
 }

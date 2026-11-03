@@ -81,6 +81,7 @@ final class ManagedJavaMemoryEngine {
 	private final Map<Long, OwnerBucket> owners = new HashMap<>();
 	private final Map<Class<?>, Schema> schemaCache = new HashMap<>();
 	private final WatchStore watches = new WatchStore();
+	private final Map<String, SavedBinding> savedBindings = new HashMap<>();
 	@Nullable private ManagedMemoryMutationJournal editJournal;
 	private final ArrayDeque<SearchState> searchHistory = new ArrayDeque<>();
 	private volatile long activeToken;
@@ -657,9 +658,45 @@ final class ManagedJavaMemoryEngine {
 		if (anchor.error != null) {
 			return ManagedInspection.failure(anchor.error.code, anchor.error.message);
 		}
-		OwnerBucket owner = anchor.owners[0];
-		Object strongOwner = anchor.strongOwners[0];
-		int anchorSlot = anchor.slots[0];
+        return inspectOwner(token, expectedRevision, anchor.owners[0],
+                anchor.strongOwners[0], anchor.slots[0], radius);
+    }
+
+    /** Saved Inspector reads siblings of the pinned guest owner without joining Search or Watch. */
+    ManagedInspection inspectSaved(long token, String id, int radius) {
+        if (!MemoryEngineContract.isInspectRadius(radius)) {
+            return ManagedInspection.failure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                    "Saved Inspector radius is invalid");
+        }
+        OwnerBucket snapshot;
+        Object actual;
+        int slot;
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token)) return ManagedInspection.failure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime ended");
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return ManagedInspection.failure(
+                    MemoryEngineContract.RESULT_NO_SESSION, "Resolve this Saved variable first");
+            actual = binding.owner.strongOwner();
+            slot = binding.slot;
+            if (actual == null || inspectPath(token, binding.owner, actual, slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return ManagedInspection.failure(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Saved Inspector owner changed");
+            }
+            if (nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX) return ManagedInspection.failure(
+                    MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Inspector identity budget exhausted");
+            // Presentation-only handle, deliberately not inserted into the editor owners map.
+            snapshot = new OwnerBucket(nextOwnerHandle++, binding.owner.kind, actual,
+                    binding.owner.schema);
+            snapshot.provenancePath = binding.owner.provenancePath;
+            snapshot.arrayReference = binding.owner.arrayReference;
+        }
+        return inspectOwner(token, 0L, snapshot, actual, slot, radius);
+    }
+
+    private ManagedInspection inspectOwner(long token, long expectedRevision,
+            OwnerBucket owner, Object strongOwner, int anchorSlot, int radius) {
 		// Logical windows use the result-row budget, not the raw byte budget.
 		radius = Math.min(radius, (MemoryEngineContract.MAX_RESULT_PAGE_SIZE - 1) / 2);
 		ArrayList<Integer> slots = new ArrayList<>();
@@ -1313,6 +1350,802 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
+	/** A bounded, typed guest path. Persistent records never contain Java owners. */
+	static final class SavedLocator {
+		static final int ROOT_MIDLET = 1;
+		static final int ROOT_DISPLAYABLE = 2;
+		static final int ROOT_INITIALIZED_STATIC = 3;
+		final int rootKind;
+		final String rootClass;
+		final SavedField[] fields;
+        /** Optional Object[] selection after each field. -1 means no selection. */
+        final int[] fieldIndices;
+        /** -1 for primitive fields; nonnegative only for a direct primitive-array element. */
+        final int arrayIndex;
+
+		SavedLocator(int rootKind, String rootClass, SavedField[] fields) {
+            this(rootKind, rootClass, fields, -1, null);
+        }
+
+        SavedLocator(int rootKind, String rootClass, SavedField[] fields, int arrayIndex) {
+            this(rootKind, rootClass, fields, arrayIndex, null);
+        }
+
+        SavedLocator(int rootKind, String rootClass, SavedField[] fields,
+                             int arrayIndex, @Nullable int[] fieldIndices) {
+            this.rootKind = rootKind;
+            this.rootClass = rootClass;
+            this.fields = fields.clone();
+            this.arrayIndex = arrayIndex;
+            this.fieldIndices = fieldIndices == null ? new int[fields.length] : fieldIndices.clone();
+            if (fieldIndices == null) Arrays.fill(this.fieldIndices, -1);
+        }
+
+	}
+
+	static final class SavedField {
+		final String declaringClass;
+		final String name;
+		final String type;
+
+		SavedField(String declaringClass, String name, String type) {
+			this.declaringClass = declaringClass;
+			this.name = name;
+			this.type = type;
+		}
+
+		static SavedField of(Field field) {
+			return new SavedField(field.getDeclaringClass().getName(),
+					field.getName(), field.getType().getName());
+		}
+	}
+
+	/**
+	 * Snapshot a bounded, verified field-only path from a selected live result.
+	 * An unknown, changed, object-array, or unrooted path is intentionally unsupported.
+	 */
+	@Nullable
+	SavedLocator captureSavedLocator(long token, long revision, long candidateId) {
+		ResolvedBatch selected = resolveBatch(token, revision, new long[]{candidateId}, true);
+		if (selected.error != null) return null;
+		return captureSavedOwner(token, selected.owners[0], selected.strongOwners[0],
+				selected.slots[0]);
+	}
+
+    /** Saved locators for Inspector siblings are verified from the already checked anchor. */
+    @Nullable
+    SavedLocator captureInspectorLocator(long token, long revision, long anchorId,
+                                         boolean watchAnchor, int relativeOffset) {
+        if (Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS) return null;
+        ResolvedBatch selected = resolveBatch(token, revision, new long[]{anchorId}, watchAnchor);
+        if (selected.error != null) return null;
+        long slot = (long) selected.slots[0] + relativeOffset;
+        if (slot < 0 || slot > Integer.MAX_VALUE) return null;
+        return captureSavedOwner(token, selected.owners[0], selected.strongOwners[0], (int) slot);
+    }
+
+    /** A Saved Inspector may save a sibling even though no Search results exist. */
+    @Nullable
+    SavedLocator captureSavedNeighborLocator(long token, String savedId, int relativeOffset) {
+        if (Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS) return null;
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token)) return null;
+            SavedBinding binding = savedBindings.get(savedId);
+            if (binding == null) return null;
+            long slot = (long) binding.slot + relativeOffset;
+            if (slot < 0 || slot > Integer.MAX_VALUE) return null;
+            return captureSavedOwner(token, binding.owner, binding.owner.strongOwner(), (int) slot);
+        }
+    }
+
+    @Nullable
+    private SavedLocator captureSavedOwner(long token, OwnerBucket owner, Object actual, int slot) {
+        if (owner.kind == KIND_ARRAY) {
+            // Only a *direct* static primitive-array reference is supported so far.
+            // Inspector's verified source is not by itself a persistent locator for
+            // arbitrary array aliases or dynamic object-array indexes.
+            if (actual == null || !actual.getClass().isArray() || slot < 0
+                    || slot >= Array.getLength(actual)) return null;
+            Field direct = null;
+            ProvenanceNode path = owner.provenancePath;
+            if (path != null && path.kind == ProvenanceNode.STATIC_FIELD
+                    && path.parent == null && path.target.get() == actual) direct = path.field;
+            if (direct == null && owner.arrayReference != null
+                    && owner.arrayReference.instance == null) direct = owner.arrayReference.field;
+            if (direct == null || !Modifier.isStatic(direct.getModifiers())
+                    || direct.getType() != actual.getClass()
+                    || !ManagedJavaValue.isSupportedType(
+                            ManagedJavaValue.typeForClass(actual.getClass().getComponentType()))) return null;
+            try {
+                if (direct.get(null) != actual) return null;
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
+                return null;
+            }
+            return new SavedLocator(SavedLocator.ROOT_INITIALIZED_STATIC,
+                    direct.getDeclaringClass().getName(),
+                    new SavedField[]{SavedField.of(direct)}, slot);
+        }
+		if (inspectPath(token, owner, actual, slot).status != MemoryEngineContract.PATH_VERIFIED) {
+			return null;
+		}
+		if (owner.kind == KIND_STATIC_FIELD) {
+			FieldSlot field = owner.schema.fieldAt(slot);
+			if (field == null || field.finalField || !field.kindStatic
+					|| field.declaringClass != owner.staticClass) return null;
+			return new SavedLocator(SavedLocator.ROOT_INITIALIZED_STATIC,
+					field.declaringClass.getName(),
+					new SavedField[]{SavedField.of(field.field)});
+		}
+		if (owner.kind != KIND_OBJECT_FIELD || actual == null) return null;
+		FieldSlot target = owner.schema.fieldAt(slot);
+		if (target == null || target.finalField || !target.primitiveField || target.kindStatic) {
+			return null;
+		}
+		ArrayList<ProvenanceNode> reversed = new ArrayList<>();
+		for (ProvenanceNode node = owner.provenancePath; node != null; node = node.parent) {
+			if (reversed.size() >= MAX_PROVENANCE_DEPTH) return null;
+			reversed.add(node);
+		}
+		if (reversed.isEmpty()) return null;
+		ProvenanceNode root = reversed.get(reversed.size() - 1);
+		int kind;
+		if (root.kind == ProvenanceNode.MIDLET_ROOT) {
+			kind = SavedLocator.ROOT_MIDLET;
+		} else if (root.kind == ProvenanceNode.DISPLAYABLE_ROOT) {
+			kind = SavedLocator.ROOT_DISPLAYABLE;
+		} else if (root.kind == ProvenanceNode.STATIC_FIELD && root.field != null) {
+			kind = SavedLocator.ROOT_INITIALIZED_STATIC;
+		} else {
+			return null;
+		}
+		Object rootObject = root.target.get();
+		if (rootObject == null) return null;
+		String rootClass = kind == SavedLocator.ROOT_INITIALIZED_STATIC
+				? root.field.getDeclaringClass().getName() : rootObject.getClass().getName();
+        ArrayList<SavedField> fields = new ArrayList<>();
+        ArrayList<Integer> indices = new ArrayList<>();
+        if (kind == SavedLocator.ROOT_INITIALIZED_STATIC) {
+            fields.add(SavedField.of(root.field));
+            indices.add(-1);
+        }
+        for (int index = reversed.size() - 2; index >= 0; index--) {
+            ProvenanceNode node = reversed.get(index);
+            if (node.kind == ProvenanceNode.ARRAY_INDEX) {
+                if (fields.isEmpty() || node.index < 0 || node.index >= limits.maxPending)
+                    return null;
+                int last = fields.size() - 1;
+                if (indices.get(last) != -1 || !fields.get(last).type.startsWith("[L"))
+                    return null;
+                indices.set(last, node.index);
+            } else if (node.kind == ProvenanceNode.INSTANCE_FIELD && node.field != null) {
+                fields.add(SavedField.of(node.field));
+                indices.add(-1);
+            } else return null;
+        }
+        fields.add(SavedField.of(target.field));
+        indices.add(-1);
+        if (fields.size() > MAX_PROVENANCE_DEPTH) return null;
+        int[] selections = new int[indices.size()];
+        for (int i = 0; i < selections.length; i++) selections[i] = indices.get(i);
+        return new SavedLocator(kind, rootClass,
+                fields.toArray(new SavedField[0]), -1, selections);
+	}
+
+    /** Resolve through initialized guest roots only, without changing Search or Watch. */
+    ManagedOperationResult resolveSavedLocator(long token, SavedLocator locator,
+                                               String id, long epoch) {
+        if (id == null || id.length() < 8 || id.length() > 64) {
+            return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST, "Invalid Saved ID");
+        }
+        return resolveSavedLocatorInternal(token, locator, id, epoch, id);
+    }
+
+    private ManagedOperationResult resolveSavedLocatorInternal(long token,
+            SavedLocator locator, String label, long operationEpoch,
+            @Nullable String savedId) {
+		if (locator == null || locator.rootClass == null || locator.fields == null
+                || locator.fieldIndices == null
+                || locator.fieldIndices.length != locator.fields.length
+                || locator.arrayIndex < -1 || (locator.arrayIndex >= 0 &&
+                    (locator.rootKind != SavedLocator.ROOT_INITIALIZED_STATIC
+                    || locator.fields.length != 1))
+				|| locator.fields.length == 0 || locator.fields.length > MAX_PROVENANCE_DEPTH
+				|| label == null || label.length() > MemoryEngineContract.MAX_WATCH_LABEL_CHARS) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Saved locator is invalid or exceeds the bounded depth");
+		}
+		MemoryDiscoveryBridge.Snapshot runtime = MemoryDiscoveryBridge.snapshot(token);
+		if (!runtime.isAvailable()) {
+			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					"Saved locator snapshot unavailable: " + runtime.failure());
+		}
+		if (!beginOperation(token, operationEpoch, runtime.loader())) {
+			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					"Saved locator operation epoch or active runtime changed");
+		}
+		try {
+			Object root;
+			if (locator.rootKind == SavedLocator.ROOT_MIDLET) root = runtime.root();
+			else if (locator.rootKind == SavedLocator.ROOT_DISPLAYABLE)
+				root = runtime.displayableRoot();
+			else if (locator.rootKind == SavedLocator.ROOT_INITIALIZED_STATIC) {
+				Class<?> readyClass = null;
+				for (Class<?> ready : runtime.classes()) {
+					if (ready.getName().equals(locator.rootClass)) {
+						readyClass = ready;
+						break;
+					}
+				}
+				root = readyClass;
+			} else {
+				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Unsupported saved root kind");
+			}
+			if (root == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+					"Saved root is not ready");
+			Class<?> rootType = root instanceof Class ? (Class<?>) root : root.getClass();
+			if (!rootType.getName().equals(locator.rootClass)
+					|| rootType.getClassLoader() != runtime.loader()) {
+				return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"Saved root type or loader changed");
+			}
+			Object current = root;
+			ProvenanceNode ancestry = locator.rootKind == SavedLocator.ROOT_MIDLET
+					? new ProvenanceNode(root, null, null, -1, ProvenanceNode.MIDLET_ROOT)
+					: locator.rootKind == SavedLocator.ROOT_DISPLAYABLE
+					? new ProvenanceNode(root, null, null, -1, ProvenanceNode.DISPLAYABLE_ROOT)
+					: null;
+			Field selected = null;
+			for (int index = 0; index < locator.fields.length; index++) {
+				if (!isOperationActive(token, operationEpoch)) return failure(token,
+						MemoryEngineContract.RESULT_CANCELLED, "Saved locator cancelled");
+				boolean staticOwner = current instanceof Class;
+				Class<?> actual = staticOwner ? (Class<?>) current : current.getClass();
+				if (actual.getClassLoader() != runtime.loader()) return failure(token,
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved intermediate owner is not guest-owned");
+				SavedField expected = locator.fields[index];
+				if (expected == null || expected.declaringClass == null
+						|| expected.name == null || expected.type == null) return failure(token,
+						MemoryEngineContract.RESULT_INVALID_REQUEST, "Incomplete saved path");
+				Class<?> declaring = actual;
+				while (declaring != null && !declaring.getName().equals(expected.declaringClass)) {
+					declaring = declaring.getSuperclass();
+				}
+				if (declaring == null || declaring.getClassLoader() != runtime.loader()) return failure(token,
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Declaring class differs");
+				// Obfuscated JARs may legitimately contain multiple fields with the same
+				// name and different descriptors. getDeclaredField(name) is ambiguous.
+				Field field = null;
+				for (Field candidate : declaring.getDeclaredFields()) {
+					if (!candidate.getName().equals(expected.name)
+							|| !candidate.getType().getName().equals(expected.type)
+							|| Modifier.isStatic(candidate.getModifiers()) != staticOwner) continue;
+					if (field != null) return failure(token,
+							MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Ambiguous saved field signature");
+					field = candidate;
+				}
+				if (field == null) return failure(token,
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Exact field signature not found");
+				field.setAccessible(true);
+				if (index == locator.fields.length - 1) {
+                    if (locator.fieldIndices[index] != -1) return failure(token,
+                            MemoryEngineContract.RESULT_INVALID_REQUEST,
+                            "Saved final field cannot select an object-array element");
+					selected = field;
+				} else {
+                    Object next = field.get(staticOwner ? null : current);
+                    if (next == null) return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
+                            "Saved field chain is not ready");
+                    ancestry = new ProvenanceNode(next, staticOwner ? null : ancestry,
+                            field, -1, staticOwner
+                            ? ProvenanceNode.STATIC_FIELD : ProvenanceNode.INSTANCE_FIELD);
+                    int chosenIndex = locator.fieldIndices[index];
+                    if (chosenIndex >= 0) {
+                        if (!(next instanceof Object[]) || chosenIndex >= limits.maxPending
+                                || chosenIndex >= ((Object[]) next).length)
+                            return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                    "Saved object-array selector is invalid");
+                        Object selectedObject = ((Object[]) next)[chosenIndex];
+                        if (selectedObject == null) return failure(token,
+                                MemoryEngineContract.RESULT_TARGET_LOST,
+                                "Saved object-array element is not ready");
+                        ancestry = new ProvenanceNode(selectedObject, ancestry,
+                                null, chosenIndex, ProvenanceNode.ARRAY_INDEX);
+                        next = selectedObject;
+                    } else if (chosenIndex != -1) return failure(token,
+                            MemoryEngineContract.RESULT_INVALID_REQUEST,
+                            "Saved array selector is invalid");
+                    current = next;
+                }
+			}
+            if (locator.arrayIndex >= 0) {
+                if (selected == null || !(current instanceof Class)
+                        || !selected.getType().isArray()
+                        || !selected.getType().getComponentType().isPrimitive()) return failure(
+                        token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Saved array descriptor is not a direct static primitive array");
+                int type = ManagedJavaValue.typeForClass(selected.getType().getComponentType());
+                if (!ManagedJavaValue.isSupportedType(type)) return failure(token,
+                        MemoryEngineContract.RESULT_INVALID_REQUEST, "Unsupported primitive array");
+                Object array = selected.get(null);
+                if (array == null || locator.arrayIndex >= Array.getLength(array)
+                        || locator.arrayIndex >= limits.maxArrayElements) return failure(token,
+                        MemoryEngineContract.RESULT_TARGET_LOST,
+                        "Saved array is missing or the index is outside its bounds");
+                OwnerBucket proof = new OwnerBucket(0L, KIND_ARRAY, array, null);
+                proof.provenancePath = new ProvenanceNode(array, null, selected,
+                        -1, ProvenanceNode.STATIC_FIELD);
+                if (inspectPath(token, proof, array, locator.arrayIndex).status
+                        != MemoryEngineContract.PATH_VERIFIED) return failure(token,
+                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Saved array reference changed before binding");
+                synchronized (stateLock) {
+                    if (!isOperationActive(token, operationEpoch) || !isCurrentLocked(token))
+                        return failureLocked(MemoryEngineContract.RESULT_CANCELLED,
+                                "Runtime changed before saved array binding");
+                    if (savedBindings.containsKey(savedId)) return failureLocked(
+                            MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            "Saved target is already bound");
+                    if (savedBindings.size() >= 64) return failureLocked(
+                            MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+                            "Saved binding capacity reached");
+                    savedBindings.put(savedId, new SavedBinding(proof, locator.arrayIndex, type));
+                }
+                return success(token, "Saved primitive array element resolved");
+            }
+			if (selected == null || selected.getType().isArray()
+					|| !ManagedJavaValue.isSupportedType(ManagedJavaValue.typeForClass(selected.getType()))
+					|| Modifier.isFinal(selected.getModifiers())) return failure(token,
+					MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved target is not editable");
+			boolean staticTarget = current instanceof Class;
+			int kind = staticTarget ? KIND_STATIC_FIELD : KIND_OBJECT_FIELD;
+			Object selectedOwner = current;
+			Schema schema = schemaFor(staticTarget ? (Class<?>) current : current.getClass(), runtime.loader());
+			int slot = -1;
+			for (FieldSlot field : schema.fields) {
+				if (field.field.equals(selected)) { slot = field.slot; break; }
+			}
+			if (slot < 0) return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"Saved target is excluded from managed schema");
+			// A bound Watch entry must retain the same weak, re-verifiable ancestry
+			// that Inspector uses after ordinary Search. Values alone do not identify owners.
+			OwnerBucket pathProof = new OwnerBucket(0L, kind, selectedOwner, schema);
+			pathProof.provenancePath = ancestry;
+			if (inspectPath(token, pathProof, selectedOwner, slot).status
+					!= MemoryEngineContract.PATH_VERIFIED) return failure(token,
+					MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"Saved reference changed before binding");
+			long[] read = new long[1];
+			int selectedType = ManagedJavaValue.typeForClass(selected.getType());
+			read[0] = ManagedJavaValue.readField(selected,
+					staticTarget ? null : selectedOwner, selectedType);
+			synchronized (stateLock) {
+				if (!isOperationActive(token, operationEpoch)
+						|| !isCurrentLocked(token)) return failureLocked(
+						MemoryEngineContract.RESULT_CANCELLED, "Runtime changed before saved binding");
+				// A pinned Saved binding must never follow a replacement game object.
+				if (savedBindings.containsKey(savedId)) return failureLocked(
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Already resolved this session");
+				if (savedBindings.size() >= 64) return failureLocked(
+						MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Saved binding capacity reached");
+				savedBindings.put(savedId, new SavedBinding(pathProof, slot, selectedType));
+			}
+			return success(token, "Saved target resolved");
+		} catch (ReflectiveOperationException | RuntimeException | LinkageError error) {
+			return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"Saved locator could not resolve the exact field");
+		}
+	}
+
+
+    static final class SavedValue {
+        final int code;
+        final int type;
+        final String value;
+        final String detail;
+        SavedValue(int code, int type, String value, String detail) {
+            this.code = code;
+            this.type = type;
+            this.value = value;
+            this.detail = detail;
+        }
+    }
+
+    private static final class SavedBinding {
+        final OwnerBucket owner;
+        final int slot;
+        final int type;
+        SavedBinding(OwnerBucket owner, int slot, int type) {
+            this.owner = owner;
+            this.slot = slot;
+            this.type = type;
+        }
+    }
+
+    SavedValue readSaved(long token, String id) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token)) return new SavedValue(
+                    MemoryEngineContract.RESULT_TARGET_LOST, 0, "", "Runtime is no longer active");
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return new SavedValue(
+                    MemoryEngineContract.RESULT_NO_SESSION, 0, "", "Saved variable is not resolved");
+            Object owner = binding.owner.strongOwner();
+            if (owner == null || inspectPath(token, binding.owner, owner, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved variable reference changed; editing is blocked");
+            }
+            try {
+                long bits;
+                if (binding.owner.kind == KIND_ARRAY) {
+                    if (binding.slot < 0 || binding.slot >= Array.getLength(owner))
+                        return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                binding.type, "", "Saved array index no longer exists");
+                    bits = ManagedJavaValue.readArrayElement(owner, binding.slot, binding.type);
+                } else {
+                    FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
+                    if (field == null) return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            binding.type, "", "Saved field is unavailable");
+                    bits = ManagedJavaValue.readField(field.field,
+                            binding.owner.kind == KIND_STATIC_FIELD ? null : owner, binding.type);
+                }
+                return new SavedValue(MemoryEngineContract.RESULT_OK, binding.type,
+                        ManagedJavaValue.format(binding.type, bits), "");
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved value could not be read");
+            }
+        }
+    }
+
+    SavedValue editSaved(long token, String id, String replacement,
+                                long operationEpoch) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, operationEpoch)) {
+                return new SavedValue(MemoryEngineContract.RESULT_TARGET_LOST,
+                        0, "", "Runtime or operation epoch changed");
+            }
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return new SavedValue(
+                    MemoryEngineContract.RESULT_NO_SESSION, 0, "", "Saved variable is not resolved");
+            Object owner = binding.owner.strongOwner();
+            if (owner == null || inspectPath(token, binding.owner, owner, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved variable reference changed; edit rejected");
+            }
+            long[] bits = new long[1];
+            if (!ManagedJavaValue.parse(replacement, binding.type, bits)) return new SavedValue(
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, binding.type, "",
+                    "Replacement is invalid for the saved primitive type");
+            try {
+                long actual;
+                if (binding.owner.kind == KIND_ARRAY) {
+                    if (binding.slot < 0 || binding.slot >= Array.getLength(owner))
+                        return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                binding.type, "", "Saved array index no longer exists");
+                    ManagedJavaValue.writeArrayElement(owner, binding.slot, binding.type, bits[0]);
+                    actual = ManagedJavaValue.readArrayElement(owner, binding.slot, binding.type);
+                } else {
+                    FieldSlot field = binding.owner.schema.fieldAt(binding.slot);
+                    if (field == null || field.finalField) return new SavedValue(
+                            MemoryEngineContract.RESULT_IDENTITY_UNSAFE, binding.type, "",
+                            "Saved field is not editable");
+                    Object target = binding.owner.kind == KIND_STATIC_FIELD ? null : owner;
+                    ManagedJavaValue.writeField(field.field, target, binding.type, bits[0]);
+                    actual = ManagedJavaValue.readField(field.field, target, binding.type);
+                }
+                if (actual != bits[0]) return new SavedValue(
+                        MemoryEngineContract.RESULT_PARTIAL_WRITE, binding.type,
+                        ManagedJavaValue.format(binding.type, actual),
+                        "Saved value changed concurrently or the write was not confirmed");
+                return new SavedValue(MemoryEngineContract.RESULT_OK, binding.type,
+                        ManagedJavaValue.format(binding.type, actual), "");
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        binding.type, "", "Saved value could not be written");
+            }
+        }
+    }
+
+
+
+
+    /**
+     * Edit a sibling from a pinned Saved Inspector snapshot. The anchor and every reference
+     * edge are revalidated, and the displayed value must still equal expectedBits.
+     * This never admits an unrelated Search/Watch identity or silently follows a new owner.
+     */
+    SavedValue editSavedInspector(long token, String id, int offset, int type,
+                                 long expectedBits, String replacement, long epoch) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, epoch)) {
+                return new SavedValue(MemoryEngineContract.RESULT_TARGET_LOST, type, "",
+                        "Saved Inspector runtime or operation changed");
+            }
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return new SavedValue(
+                    MemoryEngineContract.RESULT_NO_SESSION, type, "", "Saved variable is not resolved");
+            if (!MemoryEngineContract.isCandidateType(type)
+                    || Math.abs((long) offset) > MemoryEngineContract.MAX_INSPECT_RADIUS) {
+                return new SavedValue(MemoryEngineContract.RESULT_INVALID_REQUEST, type, "",
+                        "Saved Inspector edit is outside its supported type or radius");
+            }
+            OwnerBucket owner = binding.owner;
+            Object actual = owner.strongOwner();
+            if (actual == null || inspectPath(token, owner, actual, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector owner changed; edit rejected");
+            }
+            long wanted = (long) binding.slot + offset;
+            if (wanted < 0 || wanted > Integer.MAX_VALUE) {
+                return new SavedValue(MemoryEngineContract.RESULT_INVALID_REQUEST, type, "",
+                        "Saved Inspector field offset is invalid");
+            }
+            int slot = (int) wanted;
+            if (valueTypeFor(owner, slot) != type) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector field type changed");
+            }
+            if (owner.kind == KIND_ARRAY) {
+                if (slot >= Array.getLength(actual)) {
+                    return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                            "Saved array element is no longer available");
+                }
+            } else {
+                FieldSlot field = owner.schema.fieldAt(slot);
+                if (field == null || field.finalField || !field.primitiveField
+                        || field.kindStatic != (owner.kind == KIND_STATIC_FIELD)
+                        || (owner.kind == KIND_STATIC_FIELD
+                        && field.declaringClass != owner.staticClass)) {
+                    return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                            "Saved Inspector field is not editable");
+                }
+            }
+            long[] bits = new long[1];
+            if (!ManagedJavaValue.parse(replacement, type, bits)) return new SavedValue(
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, type, "",
+                    "Replacement is invalid for this primitive type");
+            long[] current = new long[1];
+            if (!readTyped(owner, slot, actual, current) || current[0] != expectedBits) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector value changed since the snapshot");
+            }
+            if (!isOperationActive(token, epoch)
+                    || inspectPath(token, owner, actual, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector reference changed before writing");
+            }
+            try {
+                if (current[0] != bits[0]) writeTyped(owner, slot, actual, type, bits[0]);
+                if (!readTyped(owner, slot, actual, current) || current[0] != bits[0]) {
+                    return new SavedValue(MemoryEngineContract.RESULT_PARTIAL_WRITE, type,
+                            "", "Saved Inspector write was not confirmed");
+                }
+                return new SavedValue(MemoryEngineContract.RESULT_OK, type,
+                        ManagedJavaValue.format(type, current[0]), "");
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector field could not be written");
+            }
+        }
+    }
+
+
+    /**
+     * Add an Inspector sibling to Watch without treating its presentation-only ID as
+     * a Search result. Saved-origin siblings preserve checked rooted ancestry.
+     */
+    ManagedOperationResult watchInspector(long token, @Nullable String savedId,
+            long expectedRevision, long anchorId, boolean watchAnchor, int relativeOffset,
+            int expectedType, long expectedBits, boolean freeze, long epoch) {
+        if (Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS
+                || !MemoryEngineContract.isCandidateType(expectedType)) {
+            return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+                    "Inspector sibling is outside the supported watch contract");
+        }
+        ResolvedBatch source = null;
+        if (savedId == null) {
+            source = resolveBatch(token, expectedRevision, new long[]{anchorId}, watchAnchor);
+            if (source.error != null) return source.error;
+        }
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, epoch)) {
+                return failureLocked(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "Inspector runtime or operation changed");
+            }
+            OwnerBucket proof;
+            Object actual;
+            int anchorSlot;
+            if (savedId != null) {
+                SavedBinding binding = savedBindings.get(savedId);
+                if (binding == null) return failureLocked(
+                        MemoryEngineContract.RESULT_NO_SESSION, "Saved Inspector owner is not resolved");
+                proof = binding.owner;
+                actual = proof.strongOwner();
+                anchorSlot = binding.slot;
+                if (actual == null || inspectPath(token, proof, actual, anchorSlot).status
+                        != MemoryEngineContract.PATH_VERIFIED) {
+                    return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            "Saved Inspector reference changed");
+                }
+            } else {
+                ManagedOperationResult validation = revalidateBatchLocked(token,
+                        expectedRevision, source, watchAnchor, epoch);
+                if (validation != null) return validation;
+                proof = source.owners[0];
+                actual = source.strongOwners[0];
+                anchorSlot = source.slots[0];
+            }
+            long requested = (long) anchorSlot + relativeOffset;
+            if (requested < 0 || requested > Integer.MAX_VALUE) return failureLocked(
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, "Inspector slot is outside the owner");
+            int slot = (int) requested;
+            if (proof.kind == KIND_ARRAY) {
+                if (actual == null || slot >= Array.getLength(actual)) return failureLocked(
+                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Inspector array index changed");
+            } else {
+                FieldSlot field = proof.schema.fieldAt(slot);
+                if (field == null || field.finalField
+                        || field.kindStatic != (proof.kind == KIND_STATIC_FIELD)
+                        || (proof.kind == KIND_STATIC_FIELD
+                            && field.declaringClass != proof.staticClass)) {
+                    return failureLocked(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                            "Inspector sibling cannot be watched");
+                }
+            }
+            if (valueTypeFor(proof, slot) != expectedType) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Inspector sibling type changed");
+            if (savedId != null && inspectPath(token, proof, actual, slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Inspector ancestry is no longer verified");
+            long[] current = new long[1];
+            if (!readTyped(proof, slot, actual, current) || current[0] != expectedBits)
+                return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Inspector value changed since its snapshot");
+            String sourceKey = savedId == null ? null : relativeOffset == 0
+                    ? savedId : savedId + "#" + slot;
+            long existingId = savedId == null
+                    ? ManagedJavaMemoryIds.encode(proof.kind, proof.handle, slot) : 0L;
+            int existing = savedId == null ? watches.indexOf(existingId) : -1;
+            if (savedId != null) {
+                for (int i = 0; i < watches.count; i++) {
+                    if (sourceKey.equals(watches.savedSourceIds[i])) {
+                        existing = i;
+                        break;
+                    }
+                }
+            }
+            boolean needsFreezeSlot = freeze && (existing < 0 || !watches.freeze[existing]);
+            if ((existing < 0 && watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
+                    || (needsFreezeSlot
+                        && watches.freezeCount() >= MemoryEngineContract.MAX_FREEZE_RECORDS)
+                    || (existing < 0 && savedId != null
+                        && (owners.size() >= limits.maxOwners
+                        || nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX))) {
+                return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+                        "Inspector Watch or Freeze capacity reached");
+            }
+            if (existing < 0) {
+                OwnerBucket owner = proof;
+                long id = existingId;
+                if (savedId != null) {
+                    owner = new OwnerBucket(nextOwnerHandle++, proof.kind, actual, proof.schema);
+                    owner.provenancePath = proof.provenancePath;
+                    owner.arrayReference = proof.arrayReference;
+                    id = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, slot);
+                    owners.put(owner.handle, owner);
+                }
+                watches.append(id, owner, slot, current[0], "");
+                existing = watches.count - 1;
+                if (sourceKey != null) watches.savedSourceIds[existing] = sourceKey;
+            }
+            if (freeze) {
+                watches.freeze[existing] = true;
+                watches.freezeValues[existing] = current[0];
+                watches.freezePaused[existing] = false;
+            }
+            return successLocked(freeze
+                    ? "Inspector value added to Watch and frozen"
+                    : "Inspector value added to Watch");
+        }
+    }
+
+    ManagedOperationResult editInspectorAndFreeze(long token, @Nullable String savedId,
+            long expectedRevision, long anchorId, boolean watchAnchor, int relativeOffset,
+            int type, long expectedBits, String replacement, long epoch) {
+        if (!MemoryEngineContract.isCandidateType(type)) return failure(token,
+                MemoryEngineContract.RESULT_INVALID_REQUEST, "Inspector type is unsupported");
+        long[] parsed = new long[1];
+        if (!ManagedJavaValue.parse(replacement, type, parsed)) return failure(token,
+                MemoryEngineContract.RESULT_INVALID_REQUEST, "Inspector replacement is invalid");
+        if (savedId != null) {
+            SavedValue edited = editSavedInspector(token, savedId, relativeOffset,
+                    type, expectedBits, replacement, epoch);
+            if (edited.code != MemoryEngineContract.RESULT_OK) return failure(token,
+                    edited.code, edited.detail);
+        } else {
+            ManagedOperationResult edited = editInspector(token, expectedRevision, anchorId,
+                    watchAnchor, relativeOffset, type, expectedBits, replacement, epoch);
+            if (edited.code != MemoryEngineContract.RESULT_OK) return edited;
+        }
+        ManagedOperationResult watched = watchInspector(token, savedId, expectedRevision,
+                anchorId, watchAnchor, relativeOffset, type, parsed[0], true, epoch);
+        return watched.code == MemoryEngineContract.RESULT_OK ? watched :
+                result(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
+                        "Value edited, but Freeze could not start: " + watched.message,
+                        1, 1, 0, 0);
+    }
+
+    /** Explicit Freeze promotes a pinned Saved target into Watch, with guarded periodic writes. */
+    ManagedOperationResult freezeSaved(long token, String id, String label,
+                                      String expectedValue, long epoch) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, epoch))
+                return failureLocked(MemoryEngineContract.RESULT_TARGET_LOST, "Saved runtime changed");
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return failureLocked(
+                    MemoryEngineContract.RESULT_NO_SESSION, "Resolve the Saved variable first");
+            OwnerBucket proof = binding.owner;
+            Object actual = proof.strongOwner();
+            if (actual == null || inspectPath(token, proof, actual, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved owner changed");
+            int existing = -1;
+            for (int i = 0; i < watches.count; i++) {
+                if (id.equals(watches.savedSourceIds[i])) {
+                    existing = i;
+                    break;
+                }
+            }
+            long[] expected = new long[1];
+            if (!ManagedJavaValue.parse(expectedValue, binding.type, expected)) {
+                return failureLocked(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                        "Invalid expected Saved freeze value");
+            }
+            boolean additionalFreeze = existing < 0 || !watches.freeze[existing];
+            if ((existing < 0 && (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS ||
+                    owners.size() >= limits.maxOwners ||
+                    nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX)) ||
+                    (additionalFreeze && watches.freezeCount() >= MemoryEngineContract.MAX_FREEZE_RECORDS)) {
+                return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+                        "Watch/Freeze capacity reached");
+            }
+            long[] current = new long[1];
+            if (!readTyped(proof, binding.slot, actual, current)
+                    || current[0] != expected[0]) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    "Saved value changed after edit; Freeze was not started");
+            if (existing >= 0) {
+                watches.freeze[existing] = true;
+                watches.freezeValues[existing] = expected[0];
+                watches.freezePaused[existing] = false;
+                return successLocked("Saved Watch freeze value updated");
+            }
+            OwnerBucket owner = new OwnerBucket(nextOwnerHandle++, proof.kind, actual, proof.schema);
+            owner.provenancePath = proof.provenancePath;
+            owner.arrayReference = proof.arrayReference;
+            long candidateId = ManagedJavaMemoryIds.encode(proof.kind, owner.handle, binding.slot);
+            owners.put(owner.handle, owner);
+            watches.append(candidateId, owner, binding.slot, expected[0], label == null ? "" : label);
+            int index = watches.count - 1;
+            watches.savedSourceIds[index] = id;
+            watches.freeze[index] = true;
+            watches.freezeValues[index] = expected[0];
+            watches.freezePaused[index] = false;
+            return successLocked("Saved value added to Watch and frozen");
+        }
+    }
+
+    /** Release a definition after Delete; it must not consume a bounded runtime slot. */
+    void releaseSaved(long token, String id) {
+        synchronized (stateLock) {
+            if (isCurrentLocked(token) && id != null) savedBindings.remove(id);
+        }
+    }
+
 	ManagedOperationResult addWatch(long token, long expectedRevision, @Nullable long[] ids,
 	                               long operationEpoch) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
@@ -1560,7 +2393,10 @@ final class ManagedJavaMemoryEngine {
 				if (owner != snapshot.owners[index] || slot != snapshot.slots[index]) continue;
 				eligible++;
 				Object strongOwner = owner == null ? null : owner.strongOwner();
-				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
+				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)
+                        || (watches.savedSourceIds[watchIndex] != null &&
+                            inspectPath(token, owner, strongOwner, slot).status !=
+                            MemoryEngineContract.PATH_VERIFIED)) {
 					watches.freezePaused[watchIndex] = true;
 					rejected++;
 					continue;
@@ -1663,6 +2499,7 @@ final class ManagedJavaMemoryEngine {
 				lastMessage = null;
 				watches.clear();
 				owners.clear();
+				savedBindings.clear();
 				schemaCache.clear();
 			}
 		}
@@ -1703,6 +2540,7 @@ final class ManagedJavaMemoryEngine {
 		requestedType = MemoryEngineContract.TYPE_AUTO;
 		lastMessage = null;
 		watches.clear();
+		savedBindings.clear();
 		editJournal = null;
 		owners.clear();
 		schemaCache.clear();
@@ -2009,6 +2847,12 @@ final class ManagedJavaMemoryEngine {
 			if (owner.kind != KIND_STATIC_FIELD && owner.strongOwner() != batch.strongOwners[index]) {
 				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"The managed owner was collected or rebound before the mutation could commit");
+			}
+			if (watchIndex >= 0 && watches.savedSourceIds[watchIndex] != null
+					&& inspectPath(token, owner, batch.strongOwners[index],
+						batch.slots[index]).status != MemoryEngineContract.PATH_VERIFIED) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"The Saved-origin Watch reference changed; mutation is blocked");
 			}
 		}
 		return null;
@@ -3751,6 +4595,7 @@ final class ManagedJavaMemoryEngine {
 		final boolean[] freeze = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final long[] freezeValues = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freezePaused = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
+        final String[] savedSourceIds = new String[MemoryEngineContract.MAX_WATCH_RECORDS];
 		int count;
 
 		int indexOf(long id) {
@@ -3766,6 +4611,7 @@ final class ManagedJavaMemoryEngine {
 			previous[count] = value;
 			labels[count] = label;
 			freeze[count] = false;
+            savedSourceIds[count] = null;
 			freezePaused[count] = false;
 			count++;
 		}
@@ -3784,12 +4630,14 @@ final class ManagedJavaMemoryEngine {
 				freeze[index] = freeze[last];
 				freezeValues[index] = freezeValues[last];
 				freezePaused[index] = freezePaused[last];
+                savedSourceIds[index] = savedSourceIds[last];
 			}
 			ids[last] = 0L;
 			owners[last] = null;
 			labels[last] = null;
 			freeze[last] = false;
 			freezePaused[last] = false;
+            savedSourceIds[last] = null;
 			count = last;
 		}
 
@@ -3840,6 +4688,7 @@ final class ManagedJavaMemoryEngine {
 			Arrays.fill(labels, null);
 			Arrays.fill(freeze, false);
 			Arrays.fill(freezePaused, false);
+            Arrays.fill(savedSourceIds, null);
 			count = 0;
 		}
 	}

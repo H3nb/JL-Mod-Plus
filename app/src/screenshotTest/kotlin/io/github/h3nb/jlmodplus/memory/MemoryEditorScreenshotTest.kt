@@ -103,7 +103,7 @@ private val previewWatch = MemoryWatchRow(
     locationText = "0x73492150",
     label = "HP",
     freezeMode = MemoryEngineContract.FREEZE_LOCK,
-    freezePaused = true,
+    freezePaused = false,
 )
 
 @PreviewTest
@@ -146,6 +146,7 @@ fun MemoryEditorLandscapeWatchScreenshot() {
         )
     }
 }
+
 
 @PreviewTest
 @Preview(name = "Memory Editor landscape results", widthDp = 720, heightDp = 360, showBackground = true)

@@ -59,5 +59,25 @@ interface IMemoryTargetBridge {
     Bundle managedClearFreeze(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch);
     Bundle managedClearSearch(long runtimeToken, long expectedRevision, long cancellationEpoch);
+
+    Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
+    Bundle inspectSaved(long runtimeToken, String savedId, int radius);
+    Bundle captureInspectorLocator(long runtimeToken, long expectedRevision,
+                                  long candidateId, boolean watchAnchor, int relativeOffset);
+    Bundle captureSavedNeighborLocator(long runtimeToken, String savedId, int relativeOffset);
+    Bundle resolveSavedLocator(long runtimeToken, in Bundle descriptor, String savedId, long cancellationEpoch);
+    Bundle readSaved(long runtimeToken, String savedId);
+    Bundle editSaved(long runtimeToken, String savedId, String replacement, long cancellationEpoch);
+    Bundle editSavedInspector(long runtimeToken, String savedId, int relativeOffset, int valueType,
+                              long expectedBits, String replacement, long cancellationEpoch);
+    void releaseSaved(long runtimeToken, String savedId);
+    Bundle freezeSaved(long runtimeToken, String savedId, String label, String expectedValue,
+                       long cancellationEpoch);
+    Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
+                          long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                          int type, long expectedBits, boolean freeze, long cancellationEpoch);
+    Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
+                                  long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                                  int type, long expectedBits, String replacement, long cancellationEpoch);
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }

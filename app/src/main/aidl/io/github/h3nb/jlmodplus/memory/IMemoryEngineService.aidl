@@ -58,5 +58,24 @@ interface IMemoryEngineService {
             String firstValue, String secondValue);
     long clearFreeze(long runtimeToken, in long[] candidateIds);
     void clearSearch(long runtimeToken);
+
+    Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
+    Bundle inspectSaved(long runtimeToken, String savedId, int radius);
+    Bundle captureInspectorLocator(long runtimeToken, long expectedRevision,
+                                  long candidateId, boolean watchAnchor, int relativeOffset);
+    Bundle captureSavedNeighborLocator(long runtimeToken, String savedId, int relativeOffset);
+    Bundle resolveSavedLocator(long runtimeToken, in Bundle descriptor, String savedId);
+    Bundle readSaved(long runtimeToken, String savedId);
+    Bundle editSaved(long runtimeToken, String savedId, String replacement);
+    Bundle editSavedInspector(long runtimeToken, String savedId, int relativeOffset, int valueType,
+                              long expectedBits, String replacement);
+    void releaseSaved(long runtimeToken, String savedId);
+    Bundle freezeSaved(long runtimeToken, String savedId, String label, String expectedValue);
+    Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
+                          long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                          int type, long expectedBits);
+    Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
+                                  long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                                  int type, long expectedBits, String replacement);
     void cancelOperation(long runtimeToken);
 }

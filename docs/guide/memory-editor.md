@@ -10,7 +10,7 @@ A MIDlet can run from a converted DEX without the JL-Mod Plus bytecode transform
 
 ## Start with an observation
 
-Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The main areas are **Search**, **Watch**, and **Inspector**. Wide workspaces show values and locations together, while narrower ones stack the details. When results span multiple pages, the bottom pager moves between result ranges alongside the **Peek** control.
+Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The main areas are **Search**, **Watch**, **Saved**, and **Inspector**. Wide workspaces show values and locations together, while narrower ones stack the details. When results span multiple pages, the bottom pager moves between result ranges alongside the **Peek** control.
 
 A good search begins with something you can reproduce in the game: a counter that increases, health that falls, or a value that stays constant while other numbers change. The editor cannot tell you which candidate is “health” merely from the number alone.
 
@@ -50,13 +50,29 @@ Where available, **Undo** and revert actions help reverse recent edits. They do 
 
 A practical approach is to change **one candidate at a time**, check the game, then decide whether to watch or freeze it. If the game crashes or behaves strangely, restart it and repeat the search more carefully.
 
+## Saved Variables across sessions
+
+After identifying a primitive Search candidate, select exactly one result and choose **Save variable**. Give the definition a meaningful name. Saving requires a bounded, currently verified path through an initialized static field, the MIDlet root, or the current Displayable root. Unsupported, ambiguous or untraced locations cannot be saved safely.
+
+The **Saved** tab lists definitions independently from Watch. On a later launch of the same installed MIDlet, open Saved to resolve a recorded structural path and read the latest value **without running Search again**. Select Saved entries with the row checkboxes (or Select all) and use the contextual toolbar. **Edit**, **Rename**, **Inspector** and **Freeze** require exactly one appropriate selection; **Delete** supports several selected definitions in one confirmed operation. Use **Refresh** to retry unresolved definitions. Editing is manual; opening Saved never freezes, restores or writes a game value.
+
+Inspector can open from a resolved Saved entry without repeating Search. Tap an editable primitive **value cell** to open the same keypad editor used by Search, including an optional **Freeze after edit** checkbox. The three-dot menu for each Inspector field offers **Add to Watch** and **Save variable**. When Inspector originates from Saved, editing, Watch insertion, and Freeze all check the pinned reference chain and the displayed snapshot value; stale or replaced owners are rejected. Save can create a separately named definition in Search, Watch, or Saved Inspector contexts. Only a verified rooted path can be saved.
+
+The **Freeze** checkbox inside the Saved value editor explicitly creates or updates a Watch entry and starts its periodic lock at the edited value. No separate Saved toolbar Freeze action is needed. Freeze from Search likewise adds the target to Watch. A Watch entry originating from Saved pauses its Freeze if an owner or intermediate reference changes, rather than writing to the replacement object.
+
+A **Changed** status means the saved path's bound object/array reference was replaced within the current session. Editing is blocked rather than silently following the replacement. **Not ready** means an initialized guest root or target is not currently available, **Incompatible** means the requested path cannot be verified, and **Failed** indicates another error. Restarting the game allows a new explicit resolution, but an indexed party array may then refer to a different character even when the path is structurally valid; verify the value before editing.
+
+Definitions are local to the installed game identity, source JAR and MIDlet entry point. They do not migrate from the experimental `saved-variables-prototype.json` format. Existing full config bundles can contain these files incidentally, but copying them is not a supported Saved Variables sharing flow; a definition from another installation is rejected. Selectable Saved export/import is separate work.
+
+Supported paths include primitive static fields, rooted primitive instance fields, direct static primitive-array elements, and verified rooted `Object[]` hops leading to a primitive instance field. Generic arrays, untraced containers, multidimensional array navigation and automatic Cheat/Freeze application are not supported.
+
 ## Why candidates sometimes disappear
 
 A managed-memory candidate identifies a value within the current MIDlet execution. Objects can be collected, arrays can be replaced, and the runtime can restart. The editor deliberately does **not** guess that another object with the same type, field, or value is the one you previously selected.
 
 As a result, a watch entry may become unavailable after a level change, game transition, or relaunch. This is safer than silently editing a different object.
 
-Candidate identities and watches are **session-bound**. They are not persistent cheat definitions or save states.
+Candidate identities and watches are **session-bound**. Saved definitions separately preserve checked structural locations; they are not save states and do not automatically restore values.
 
 ## If a search or edit doesn't work
 
