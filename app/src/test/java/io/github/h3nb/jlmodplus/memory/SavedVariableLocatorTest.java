@@ -315,6 +315,10 @@ public class SavedVariableLocatorTest {
             root.player.coins = 55;
             oldOwner.coins = 66;
             assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, engine.freezeTick(FIRST, 0L).code);
+            long watchId = engine.watchPage(FIRST).ids[0];
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                engine.editTyped(FIRST, 0L, new long[]{watchId},
+                    MemoryEngineContract.TYPE_INT, "555", true, 0L).code);
             assertEquals(66, oldOwner.coins);
             assertEquals(55, root.player.coins);
             assertTrue(engine.watchPage(FIRST).freezePaused[0]);

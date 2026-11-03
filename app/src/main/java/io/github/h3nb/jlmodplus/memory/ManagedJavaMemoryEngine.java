@@ -2598,6 +2598,12 @@ final class ManagedJavaMemoryEngine {
 				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"The managed owner was collected or rebound before the mutation could commit");
 			}
+			if (watchIndex >= 0 && watches.savedSourceIds[watchIndex] != null
+					&& inspectPath(token, owner, batch.strongOwners[index],
+						batch.slots[index]).status != MemoryEngineContract.PATH_VERIFIED) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"The Saved-origin Watch reference changed; mutation is blocked");
+			}
 		}
 		return null;
 	}
