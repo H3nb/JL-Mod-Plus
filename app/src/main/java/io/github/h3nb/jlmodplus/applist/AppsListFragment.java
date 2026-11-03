@@ -1311,20 +1311,8 @@ public class AppsListFragment extends Fragment {
     }
 
     private void showBundleOptions(@NonNull Consumer<LibraryBundleComponents> onExport) {
-        final boolean[] selected = new boolean[3];
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle(R.string.library_bundle_components_title)
-                .setMessage(R.string.library_bundle_components_explanation)
-                .setMultiChoiceItems(new String[]{
-                        getString(R.string.library_bundle_config),
-                        getString(R.string.library_bundle_save_data),
-                        getString(R.string.memory_saved_tab),
-                }, selected, (dialog, index, checked) -> selected[index] = checked)
-                .setPositiveButton(R.string.library_bundle_export, (dialog, which) ->
-                        onExport.accept(new LibraryBundleComponents(
-                                selected[0], selected[1], selected[2])))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        LibraryComposeController controller = composeController;
+        if (controller != null) controller.showBundleOptions(onExport);
     }
 
     private void onImportBundlePicked(Uri uri) {

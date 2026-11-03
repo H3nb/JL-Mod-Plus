@@ -885,7 +885,9 @@ internal class MemoryEditorComposeController(
                     }
                 }
             } finally {
-                post { savedRefreshPending = false }
+                post {
+                    if (generation == savedGeneration) savedRefreshPending = false
+                }
             }
         }
     }
