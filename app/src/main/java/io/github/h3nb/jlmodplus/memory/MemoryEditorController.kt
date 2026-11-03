@@ -798,8 +798,10 @@ internal class MemoryEditorComposeController(
                     generation != savedGeneration || connection != connectionGeneration) return@post
                 state = if (records.isSuccess) state.copy(
                     savedVariables = records.getOrThrow().map { it.first },
+                    savedSelection = state.savedSelection.intersect(
+                        records.getOrThrow().map { it.first.id }.toSet()),
                     savedValues = emptyMap(), savedError = null,
-                ) else state.copy(savedVariables = emptyList(), savedValues = emptyMap(),
+                ) else state.copy(savedVariables = emptyList(), savedSelection = emptySet(), savedValues = emptyMap(),
                     savedError = records.exceptionOrNull()?.message ?: "Unable to load Saved definitions")
             }
             if (engine == null || token == 0L) return@runIpc
@@ -909,7 +911,54 @@ internal class MemoryEditorComposeController(
     }
 
     override fun renameSavedVariable(id: String, name: String) = mutateSaved(id, name, false)
-    override fun deleteSavedVariable(id: String) = mutateSaved(id, "", true)
+    override fun deleteSavedVariable(id: String) = deleteSavedVariables(listOf(id))
+    override fun deleteSavedVariables(ids: List<String>) {
+        val authority = savedAuthority ?: return
+        val token = state.runtimeToken
+        val engine = service
+        val generation = savedGeneration
+        val current = state.savedVariables.map { it.id }.toSet()
+        val unique = ids.distinct()
+        if (unique.isEmpty() || unique.size > 64 || unique.any { it !in current }) return
+        runIpc {
+            val result = runCatching {
+                val (path, appId, entry) = savedTarget()
+                val rows = savedRows(authority.removeMany(path, appId, entry, unique.toTypedArray()))
+                    .map { it.first }
+                if (engine != null && token != 0L) {
+                    unique.forEach { engine.releaseSaved(token, it) }
+                }
+                rows
+            }
+            post {
+                if (destroyed || generation != savedGeneration || !state.savedTab ||
+                    state.runtimeToken != token) return@post
+                val rows = result.getOrNull()
+                state = if (rows != null) state.copy(
+                    savedVariables = rows,
+                    savedSelection = state.savedSelection - unique.toSet(),
+                    savedValues = state.savedValues.filterKeys { id -> rows.any { it.id == id } },
+                    message = if (unique.size == 1) "Saved variable removed" else "Saved variables removed",
+                    messageIsError = false,
+                ) else state.copy(
+                    message = result.exceptionOrNull()?.message, messageIsError = true)
+            }
+        }
+    }
+
+    override fun toggleSavedSelection(id: String) {
+        if (!state.savedTab || state.savedVariables.none { it.id == id }) return
+        state = state.copy(savedSelection = if (id in state.savedSelection)
+            state.savedSelection - id else state.savedSelection + id)
+    }
+
+    override fun selectAllSaved() {
+        state = state.copy(savedSelection = state.savedVariables.map { it.id }.toSet())
+    }
+
+    override fun clearSavedSelection() {
+        state = state.copy(savedSelection = emptySet())
+    }
 
     private fun mutateSaved(id: String, name: String, remove: Boolean) {
         val authority = savedAuthority ?: return
@@ -943,7 +992,7 @@ internal class MemoryEditorComposeController(
         if (state.watchTab == watch && !state.savedTab) return
         invalidateVisiblePageRequest()
         savedGeneration++
-        state = state.copy(watchTab = watch, savedTab = false, selected = emptySet())
+        state = state.copy(watchTab = watch, savedTab = false, savedSelection = emptySet(), selected = emptySet())
     }
 
     override fun toggleSelection(id: Long) {

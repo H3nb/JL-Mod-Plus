@@ -392,6 +392,7 @@ internal data class MemoryEditorUiState(
     val watches: List<MemoryWatchRow> = emptyList(),
     val savedVariables: List<SavedVariableRow> = emptyList(),
     val savedValues: Map<String, SavedVariableRuntimeValue> = emptyMap(),
+    val savedSelection: Set<String> = emptySet(),
     val savedError: String? = null,
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
@@ -442,6 +443,13 @@ internal interface MemoryEditorActions {
     fun editSavedVariable(id: String, replacement: String) = Unit
     fun renameSavedVariable(id: String, name: String) = Unit
     fun deleteSavedVariable(id: String) = Unit
+    fun deleteSavedVariables(ids: List<String>) = Unit
+    fun toggleSavedSelection(id: String) = Unit
+    fun selectAllSaved() = Unit
+    fun clearSavedSelection() = Unit
+    fun inspectSavedVariable(id: String) = Unit
+    fun freezeSavedVariable(id: String) = Unit
+    fun saveInspectorVariable(name: String) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
     fun invertVisible()

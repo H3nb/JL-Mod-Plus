@@ -81,7 +81,43 @@ public final class SavedVariablesAuthority extends Service {
         }
 
         @Override public Bundle remove(String path, long appId, String entry, String id) {
-            return mutate(path, appId, entry, id, null, true);
+            return removeMany(path, appId, entry, new String[]{id});
+        }
+
+        @Override public Bundle removeMany(String path, long appId, String entry, String[] ids) {
+            synchronized (lock) {
+                try {
+                    if (ids == null || ids.length == 0 || ids.length > MAX_ITEMS) {
+                        return failed("Invalid Saved selection");
+                    }
+                    HashSet<String> selected = new HashSet<>();
+                    for (String id : ids) {
+                        if (id == null || id.isEmpty() || id.length() > 64
+                                || !selected.add(id)) return failed("Invalid Saved record IDs");
+                    }
+                    Target target = target(path, appId, entry);
+                    Bundle[] response = new Bundle[1];
+                    InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
+                            getApplicationContext()).run(target.path, target.appId, () -> {
+                        if (!target.sha.equals(sha256(target.jar))) return false;
+                        JSONObject data = load(target);
+                        JSONArray old = data.getJSONArray("items");
+                        JSONArray next = new JSONArray();
+                        for (int i = 0; i < old.length(); i++) {
+                            JSONObject item = old.getJSONObject(i);
+                            if (selected.remove(item.getString("id"))) continue;
+                            next.put(item);
+                        }
+                        if (!selected.isEmpty()) return false;
+                        data.put("items", next);
+                        write(target, data);
+                        response[0] = rows(data);
+                        return true;
+                    });
+                    return guard == InstalledAppWriteGuard.Result.SUCCESS
+                            ? response[0] : failed("Saved records missing or installation changed");
+                } catch (Exception error) { return failed(error); }
+            }
         }
     };
 
