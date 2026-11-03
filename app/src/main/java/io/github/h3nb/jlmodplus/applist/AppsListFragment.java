@@ -94,6 +94,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
+import io.github.h3nb.jlmodplus.librarydb.LibraryBundleComponents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferIntents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.settings.SettingsActivity;
@@ -571,9 +572,10 @@ public class AppsListFragment extends Fragment {
             public void onExportAppBundle(int appId) {
                 LibraryAppRow app = findRow(appId);
                 if (app == null) return;
-                LibraryTransferActions.prepareExportAppBundle(
+                showBundleOptions(components -> LibraryTransferActions.prepareExportAppBundle(
                         libraryViewModel,
                         app.getId(),
+                        components,
                         progress -> {
                             if (!isAdded()) return;
                             LibraryComposeController controller = composeController;
@@ -596,7 +598,7 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        });
+                        }));
             }
 
             @Override
@@ -842,9 +844,10 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onExportSelectedBundle(@NonNull Set<Long> appIds) {
-                LibraryTransferActions.prepareExportAppsBundle(
+                showBundleOptions(components -> LibraryTransferActions.prepareExportAppsBundle(
                         libraryViewModel,
                         appIds,
+                        components,
                         progress -> {
                             if (!isAdded()) return;
                             LibraryComposeController controller = composeController;
@@ -867,7 +870,7 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        });
+                        }));
             }
 
             @Override
@@ -1304,6 +1307,11 @@ public class AppsListFragment extends Fragment {
         manager.beginTransaction()
                 .add(BulkInstallerDialog.newFiles(Collections.singletonList(folder)), BulkInstallerDialog.TAG)
                 .commitAllowingStateLoss();
+    }
+
+    private void showBundleOptions(@NonNull LibraryBundleExportHandler onExport) {
+        LibraryComposeController controller = composeController;
+        if (controller != null) controller.showBundleOptions(onExport);
     }
 
     private void onImportBundlePicked(Uri uri) {

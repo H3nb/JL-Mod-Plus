@@ -54,6 +54,7 @@ object LibraryAppBundleExporter {
         onProgress: ((Progress) -> Unit)? = null,
         sourceVendor: String = "",
         sourceVersion: String = "",
+        components: LibraryBundleComponents = LibraryBundleComponents(),
     ): PreparedExport = prepareMutex.withLock {
         withContext(Dispatchers.IO) {
             requireSafeStorageKey(storageKey)
@@ -65,26 +66,24 @@ object LibraryAppBundleExporter {
             val target = File(directory, fileName)
             val staging = File(directory, "$fileName.tmp")
             try {
-                if (sourceVendor.isNotBlank() && sourceVersion.isNotBlank()) {
+                LibraryBundleRuntimeGuard.withClosedMidlets(
+                    context, listOf(emulatorDir to storageKey),
+                ) {
                     LibraryUniversalBundleExporter.exportToZip(
-                        apps = listOf(
-                            LibraryUniversalBundleExporter.AppSource(
-                                bundleId = "a0001",
-                                title = displayTitle,
-                                vendor = sourceVendor,
-                                version = sourceVersion,
-                                emulatorDir = emulatorDir,
-                                storageKey = storageKey,
-                            ),
+                    apps = listOf(
+                        LibraryUniversalBundleExporter.AppSource(
+                            bundleId = "a0001",
+                            title = displayTitle,
+                            vendor = sourceVendor.ifBlank { "Unknown vendor" },
+                            version = sourceVersion.ifBlank { "0" },
+                            emulatorDir = emulatorDir,
+                            storageKey = storageKey,
+                            components = components,
                         ),
-                        target = staging,
-                        onProgress = onProgress,
+                    ),
+                    target = staging,
+                    onProgress = onProgress,
                     )
-                } else {
-                    // Callers without retained source identity (including old integrations) keep
-                    // the v1 payload path; once identity is available, single exports share v2
-                    // with bulk exports.
-                    exportToZip(emulatorDir, storageKey, staging, onProgress)
                 }
                 if (target.exists() && !target.delete()) {
                     throw IOException("Unable to replace previous app bundle")

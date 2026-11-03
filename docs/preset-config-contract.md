@@ -11,7 +11,7 @@ This document records durable semantic correctness boundaries for preset/configu
 
 ## Preset ownership
 
-- LINKED ownership is explicit metadata. File/config equality may detect a no-op but must never create, restore, or promote linked ownership.
+- LINKED ownership is explicit metadata. File/config equality may detect a no-op but must never create, restore, or promote linked ownership during ordinary editing. Explicit bundle import is an exception: after the imported snapshot is durably published, exactly one matching complete named preset may be linked based on normalized configuration and identical keyboard layout; no match or multiple matches remain CUSTOM.
 - A user-owned local change detaches linked ownership before its local publication becomes authoritative. Provenance may describe where state came from without implying a live link.
 - Whole-preset activation may establish LINKED ownership only after the complete source snapshot is valid and the local snapshot has been durably materialized.
 - Changes to the global named-preset default are prospective. Existing installed identities retain their Built-in, CUSTOM, or LINKED ownership; fresh installation binds the then-current eligible default or a Built-in fallback.
@@ -43,6 +43,7 @@ Runtime swaps never persist those temporary lens overrides to config or preset.
 
 ## Runtime storage
 
+- A selective app bundle exports only the chosen MIDlet-owned data and explicitly chosen referenced shared skin assets. Importing a configuration normalizes missing screen skin, virtual control skin, soundbank, and shader selections to the built-in defaults; an asset-name/ID collision may create a distinct imported asset without changing the existing shared asset. Runtime storage leases prohibit export/restore while any selected MIDlet is active.
 - A live runtime must hold an exclusive lifetime reservation for its installed storage identity that is meaningful across process concurrency and distinguishes an active owner from stale filesystem residue. The current implementation uses an OS-backed file lock.
 - A deleted or replaced installed identity must not let an old runtime gain authority over its replacement. Fresh allocation must avoid filesystem identities still reserved by active runtime state or surviving side data.
 - Runtime private/cache paths must remain scoped to the launched workdir/storage identity whose lifetime is reserved.

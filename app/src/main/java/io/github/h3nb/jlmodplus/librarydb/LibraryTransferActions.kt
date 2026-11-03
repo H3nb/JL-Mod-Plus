@@ -34,6 +34,7 @@ fun LibraryViewModel.prepareShareApp(
 
 fun LibraryViewModel.prepareExportAppBundle(
     appId: Long,
+    components: LibraryBundleComponents,
     progressCallback: LibraryExportProgressCallback?,
     callback: LibraryViewModel.MutationCallback<LibraryAppBundleExporter.PreparedExport>,
 ) {
@@ -46,6 +47,7 @@ fun LibraryViewModel.prepareExportAppBundle(
             displayTitle = app.title,
             sourceVendor = app.vendor,
             sourceVersion = app.version,
+            components = components,
             onProgress = if (progressCallback == null) {
                 null
             } else {
@@ -85,6 +87,7 @@ fun LibraryViewModel.prepareShareApps(
 
 fun LibraryViewModel.prepareExportAppsBundle(
     appIds: Set<Long>,
+    components: LibraryBundleComponents,
     progressCallback: LibraryExportProgressCallback?,
     callback: LibraryViewModel.MutationCallback<LibraryAppBundleExporter.PreparedExport>,
 ) {
@@ -103,6 +106,7 @@ fun LibraryViewModel.prepareExportAppsBundle(
                     version = app.version.ifBlank { "0" },
                     emulatorDir = generation.emulatorDir,
                     storageKey = app.storageKey,
+                    components = components,
                 )
             },
             displayTitle = "JL-Mod-Plus-Apps",

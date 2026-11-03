@@ -28,13 +28,15 @@ import java.util.zip.ZipInputStream
 internal enum class BundleNamespaceState {
     Absent,
     PresentEmpty,
-    Present;
+    Present,
+    Excluded;
 
     companion object {
         fun parse(value: String, field: String): BundleNamespaceState = when (value) {
             "absent" -> Absent
             "present-empty" -> PresentEmpty
             "present" -> Present
+            "excluded" -> Excluded
             else -> throw IOException("Invalid $field in app bundle manifest: $value")
         }
     }
@@ -49,6 +51,10 @@ internal data class BundleApp(
     val sourceSha256: String?,
     val configState: BundleNamespaceState,
     val dataState: BundleNamespaceState,
+    val savedState: BundleNamespaceState = BundleNamespaceState.Excluded,
+    val layoutSkinState: BundleNamespaceState = BundleNamespaceState.Excluded,
+    val controlSkinState: BundleNamespaceState = BundleNamespaceState.Excluded,
+    val controlSkinName: String? = null,
     val legacyAssurance: Boolean = false,
 )
 
@@ -63,7 +69,7 @@ internal data class ParsedBundle(
  * Existing v0/v1 payloads are represented as one legacy-assured logical app and remain readable.
  */
 internal object LibraryAppBundleReader {
-    private const val MAX_MANIFEST_BYTES = 4L * 1024L
+    private const val MAX_MANIFEST_BYTES = 512L * 1024L
     private const val MAX_ENTRIES = 10_000
     private const val MAX_BUNDLE_APPS = 1_024
     private const val MAX_TOTAL_BYTES = 1024L * 1024L * 1024L
@@ -105,7 +111,8 @@ internal object LibraryAppBundleReader {
             throw IOException("Invalid app bundle format version", error)
         }
         return when (formatVersion) {
-            LibraryAppBundleFormat.UNIVERSAL_VERSION -> parseUniversal(root, names)
+            LibraryAppBundleFormat.UNIVERSAL_VERSION -> parseUniversal(root, names, formatVersion)
+            LibraryAppBundleFormat.SELECTIVE_VERSION -> parseUniversal(root, names, formatVersion)
             LibraryAppBundleFormat.CURRENT_VERSION -> legacyBundle(names, formatVersion = LibraryAppBundleFormat.CURRENT_VERSION)
             else -> throw IOException("Unsupported app bundle format version")
         }
@@ -119,7 +126,7 @@ internal object LibraryAppBundleReader {
     }
 
     @Throws(IOException::class)
-    private fun parseUniversal(root: JsonObject, names: Set<String>): ParsedBundle = try {
+    private fun parseUniversal(root: JsonObject, names: Set<String>, version: Int): ParsedBundle = try {
         val schema = root.get("schema")?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
         if (schema != LibraryAppBundleFormat.UNIVERSAL_SCHEMA) {
             throw IOException("Invalid app bundle schema")
@@ -134,7 +141,7 @@ internal object LibraryAppBundleReader {
 
         val apps = appsElement.jsonArray.map { element ->
             if (element !is JsonObject) throw IOException("Invalid app record in bundle manifest")
-            parseApp(element.jsonObject)
+            parseApp(element.jsonObject, version)
         }
         val ids = apps.map(BundleApp::bundleId)
         if (ids.size != ids.toSet().size) throw IOException("Duplicate bundleId in app bundle manifest")
@@ -167,6 +174,14 @@ internal object LibraryAppBundleReader {
                 val allowed = relative == "app/res.jar" ||
                     relative == "app/converted.dex.conf" ||
                     relative == "app/icon.png" ||
+                    (version == LibraryAppBundleFormat.SELECTIVE_VERSION &&
+                        relative == "saved/saved-variables.json") ||
+                    (version == LibraryAppBundleFormat.SELECTIVE_VERSION &&
+                        relative.startsWith("skin-layout/") &&
+                        LibraryBundleSkinAssets.validScreenName(relative.removePrefix("skin-layout/"))) ||
+                    (version == LibraryAppBundleFormat.SELECTIVE_VERSION &&
+                        relative.startsWith("control-skin/") &&
+                        LibraryBundleSkinAssets.validControlName(relative.removePrefix("control-skin/"))) ||
                     relative.startsWith("config/") ||
                     relative.startsWith("data/")
                 if (!allowed) throw IOException("Unsupported app bundle entry: $entry")
@@ -181,9 +196,26 @@ internal object LibraryAppBundleReader {
                 entries.mapNotNull { it.removePrefix(app.payloadRoot).takeIf { relative -> relative.startsWith("data/") } },
                 "dataState",
             )
+            if (version == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+                val layout = entries.map { it.removePrefix(app.payloadRoot) }
+                    .filter { it.startsWith("skin-layout/") }
+                val skins = entries.map { it.removePrefix(app.payloadRoot) }
+                    .filter { it.startsWith("control-skin/") }
+                validateNamespaceState(app.layoutSkinState, layout, "layoutSkinState")
+                validateNamespaceState(app.controlSkinState, skins, "controlSkinState")
+                if (layout.size > 1 ||
+                    (app.controlSkinState == BundleNamespaceState.Present &&
+                        "control-skin/skin.json" !in skins)) {
+                    throw IOException("Invalid selected skin payload")
+                }
+            }
+            val hasSaved = entries.contains(app.payloadRoot + "saved/saved-variables.json")
+            if (hasSaved != (app.savedState == BundleNamespaceState.Present)) {
+                throw IOException("savedState does not match the Saved Variables payload")
+            }
         }
         ParsedBundle(
-            formatVersion = LibraryAppBundleFormat.UNIVERSAL_VERSION,
+            formatVersion = version,
             apps = apps,
             legacyAssurance = false,
         )
@@ -200,7 +232,7 @@ internal object LibraryAppBundleReader {
     ) {
         val hasFile = entries.any { !it.endsWith('/') }
         when (state) {
-            BundleNamespaceState.Absent -> if (entries.isNotEmpty()) {
+            BundleNamespaceState.Absent, BundleNamespaceState.Excluded -> if (entries.isNotEmpty()) {
                 throw IOException("$field is absent but the ZIP contains namespace entries")
             }
             BundleNamespaceState.PresentEmpty -> if (hasFile) {
@@ -229,7 +261,7 @@ internal object LibraryAppBundleReader {
     }
 
     @Throws(IOException::class)
-    private fun parseApp(app: JsonObject): BundleApp {
+    private fun parseApp(app: JsonObject, version: Int): BundleApp {
         fun requiredString(field: String): String {
             val value = app.get(field)?.takeUnless { it == JsonNull }?.jsonPrimitive?.content?.trim()
             if (value.isNullOrEmpty()) throw IOException("Missing $field in app bundle manifest")
@@ -248,6 +280,33 @@ internal object LibraryAppBundleReader {
         }
         val sourceSha256 = requiredString("sourceSha256")
         if (!SHA256.matches(sourceSha256)) throw IOException("Invalid sourceSha256 in app bundle manifest")
+        val configState = BundleNamespaceState.parse(requiredString("configState"), "configState")
+        val dataState = BundleNamespaceState.parse(requiredString("dataState"), "dataState")
+        if (version == LibraryAppBundleFormat.UNIVERSAL_VERSION &&
+            (configState == BundleNamespaceState.Excluded || dataState == BundleNamespaceState.Excluded)) {
+            throw IOException("Unsupported v2 namespace state")
+        }
+        val savedState = if (version == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+            BundleNamespaceState.parse(requiredString("savedState"), "savedState")
+        } else BundleNamespaceState.Excluded
+        if (savedState == BundleNamespaceState.PresentEmpty) throw IOException("Invalid savedState")
+        val layoutSkinState = if (version == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+            BundleNamespaceState.parse(
+                (app["layoutSkinState"] as? JsonPrimitive)?.content ?: "excluded", "layoutSkinState")
+        } else BundleNamespaceState.Excluded
+        val controlSkinState = if (version == LibraryAppBundleFormat.SELECTIVE_VERSION) {
+            BundleNamespaceState.parse(
+                (app["controlSkinState"] as? JsonPrimitive)?.content ?: "excluded", "controlSkinState")
+        } else BundleNamespaceState.Excluded
+        val controlSkinName = (app["controlSkinName"] as? JsonPrimitive)
+            ?.content?.takeIf(String::isNotBlank)
+        if (controlSkinName != null && !LibraryBundleSkinAssets.validSetName(controlSkinName)) {
+            throw IOException("Invalid control skin name")
+        }
+        if (layoutSkinState == BundleNamespaceState.PresentEmpty ||
+            controlSkinState == BundleNamespaceState.PresentEmpty) {
+            throw IOException("Invalid skin component state")
+        }
         return BundleApp(
             bundleId = bundleId,
             title = requiredString("title"),
@@ -255,8 +314,12 @@ internal object LibraryAppBundleReader {
             version = requiredString("version"),
             payloadRoot = payloadRoot,
             sourceSha256 = sourceSha256,
-            configState = BundleNamespaceState.parse(requiredString("configState"), "configState"),
-            dataState = BundleNamespaceState.parse(requiredString("dataState"), "dataState"),
+            configState = configState,
+            dataState = dataState,
+            savedState = savedState,
+            layoutSkinState = layoutSkinState,
+            controlSkinState = controlSkinState,
+            controlSkinName = controlSkinName,
         )
     }
 

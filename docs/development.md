@@ -93,9 +93,9 @@ For deciding which previews deserve golden references and evaluating visual mism
 
 ## Existing test structure
 
-- `app/src/test/`: JUnit Platform local JVM tests (Jupiter; Vintage for remaining JUnit 4 tests), including Library migration files reconstructed from `app/schemas/` using bundled SQLite.
-- `dexlib/src/test/`: JUnit tests for bytecode transformation and related dexlib contracts.
-- `app/src/androidTest/`: AndroidJUnitRunner tests, including Compose interaction, file-picker intents, database, and runtime boundary checks on Android.
+- `app/src/test/`: JUnit Platform local JVM tests. Write new tests with **JUnit 5/Jupiter**; Vintage continues to execute existing JUnit 4 tests. Includes Library migration fixtures reconstructed from `app/schemas/` using bundled SQLite.
+- `dexlib/src/test/`: **currently JUnit 4** bytecode/dexlib tests; Jupiter is the preferred standard for new local tests but requires JUnit Platform/Jupiter Gradle setup in dexlib first. Do not add undiscovered Jupiter tests.
+- `app/src/androidTest/`: **JUnit 4/AndroidJUnitRunner** instrumentation, including Compose interaction, file-picker intents, database, and runtime boundary checks on Android. The local JVM JUnit 5 policy does not change this runner.
 - `app/src/screenshotTest/`: Compose Preview Screenshot Testing cases. Committed references are under `app/src/screenshotTestDefaultEmulatorDebug/reference/`; inspect rendered images before accepting reference changes.
 
 The default Android CI mode runs lint, app and dexlib JVM unit tests, screenshot

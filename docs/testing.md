@@ -31,6 +31,14 @@ Choose the lowest layer that exercises the failure mode with adequate fidelity; 
 
 A single flow may need complementary assertions across layers when they protect **different** invariants; avoid repeating the same scenario everywhere. App and dexlib tests, screenshots, and opt-in Android/runtime suites are different kinds of evidence, not interchangeable checkmarks.
 
+## Local JVM test framework
+
+Use **JUnit 5 (Jupiter)** for new local JVM unit tests and materially revised tests where a framework change is already warranted. Prefer `org.junit.jupiter.api.Test`, Jupiter assertions, and Jupiter lifecycle/parameterized features when they improve the test. Keep tests readable and focused; JUnit 5 is not a reason to introduce extra fixtures or extensions.
+
+Existing JUnit 4 local tests may remain while they protect active contracts. Do not bulk-convert working tests or mix JUnit 4 and Jupiter annotations/rules within one test class. The app JVM suite already runs on JUnit Platform with Jupiter and the Vintage engine for remaining JUnit 4 tests. **dexlib currently uses JUnit 4**; enabling Jupiter there requires a separate, validated Gradle/test-runner change before introducing Jupiter tests. Never claim a new test runs unless its module discovers and executes it.
+
+This policy applies to **local JVM tests** (`src/test/`), not Android instrumentation (`src/androidTest/`). AndroidJUnitRunner/Compose instrumentation remains JUnit 4 until a separately verified Android runner migration is adopted. See [Build and validation](development.md#existing-test-structure) for current module support and commands.
+
 ## Test design and quality
 
 - Favor observable postconditions and stable contracts over private class layout, delegated calls, or incidental ordering. An interaction/order assertion is appropriate when the order **is** the contract (for example, persistence/recovery ordering).

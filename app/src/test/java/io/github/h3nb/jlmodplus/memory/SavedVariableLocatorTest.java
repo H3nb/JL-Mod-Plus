@@ -81,6 +81,16 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, engine.editSaved(FIRST, "test-player-identity", "1234", 0L).code);
             assertEquals(585858, root.player.coins);
             assertEquals(585858, original.coins);
+            // A later automatic retry may intentionally bind the new game object.
+            // Existing bindings must never redirect before being released.
+            root.player.coins = 222;
+            engine.releaseSaved(FIRST, "test-player-identity");
+            assertEquals(MemoryEngineContract.RESULT_NO_SESSION,
+                    engine.readSaved(FIRST, "test-player-identity").code);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
+                    FIRST, locator, "test-player-identity", 0L).code);
+            assertEquals("222", engine.readSaved(FIRST, "test-player-identity").value);
+            assertEquals(585858, original.coins);
             assertEquals(0, engine.watchPage(FIRST).ids.length);
         } finally {
             engine.runtimeClosed(FIRST);

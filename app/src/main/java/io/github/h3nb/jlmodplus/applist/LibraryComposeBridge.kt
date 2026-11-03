@@ -17,6 +17,7 @@ package io.github.h3nb.jlmodplus.applist
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
+import io.github.h3nb.jlmodplus.librarydb.LibraryBundleComponents
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
@@ -414,6 +415,11 @@ interface LibraryActions {
     fun onRetryLibrary()
 }
 
+/** A Java-callable selection callback without requiring java.util.function on API 23. */
+fun interface LibraryBundleExportHandler {
+    fun onExport(components: LibraryBundleComponents)
+}
+
 class LibraryComposeController(
     composeView: ComposeView,
     private val actions: LibraryActions,
@@ -433,6 +439,7 @@ class LibraryComposeController(
     @Volatile
     private var controllerBackAvailable = false
     private var controllerEventSequence = 0L
+    private var pendingBundleExport by mutableStateOf<LibraryBundleExportHandler?>(null)
     private var state by mutableStateOf(
         LibraryUiState(
             layout = initialLayout,
@@ -464,8 +471,21 @@ class LibraryComposeController(
                     },
                     noticeHost = { TransientNoticeHost(state = noticeState) },
                 )
+                pendingBundleExport?.let { request ->
+                    BundleComponentsDialog(
+                        onDismiss = { pendingBundleExport = null },
+                        onConfirm = { options ->
+                            pendingBundleExport = null
+                            request.onExport(options)
+                        },
+                    )
+                }
             }
         }
+    }
+
+    fun showBundleOptions(onExport: LibraryBundleExportHandler) {
+        pendingBundleExport = onExport
     }
 
     fun close() {
@@ -611,6 +631,55 @@ class LibraryComposeController(
 
     fun onControllerKeyEvent(event: KeyEvent): Boolean =
         controllerKeyEventHandler?.onControllerKeyEvent(event) == true
+}
+
+@Composable
+private fun BundleComponentsDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (LibraryBundleComponents) -> Unit,
+) {
+    var config by remember { mutableStateOf(false) }
+    var saveData by remember { mutableStateOf(false) }
+    var saved by remember { mutableStateOf(false) }
+    var layoutSkin by remember { mutableStateOf(false) }
+    var controlSkin by remember { mutableStateOf(false) }
+    val layout = libraryDialogLayout()
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.library_bundle_components_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.library_bundle_components_explanation))
+                listOf(
+                    Triple(R.string.library_bundle_config, config) { checked: Boolean -> config = checked },
+                    Triple(R.string.library_bundle_save_data, saveData) { checked: Boolean -> saveData = checked },
+                    Triple(R.string.library_bundle_saved_variables, saved) { checked: Boolean -> saved = checked },
+                    Triple(R.string.library_bundle_layout_skin, layoutSkin) { checked: Boolean -> layoutSkin = checked },
+                    Triple(R.string.library_bundle_control_skin, controlSkin) { checked: Boolean -> controlSkin = checked },
+                ).forEach { (label, checked, toggle) ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .toggleable(value = checked, onValueChange = toggle)
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = checked, onCheckedChange = null)
+                        Text(stringResource(label), modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onConfirm(LibraryBundleComponents(config, saveData, saved, layoutSkin, controlSkin))
+            }) { Text(stringResource(R.string.library_bundle_export)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
 }
 
 internal enum class LibraryInfoDialog {

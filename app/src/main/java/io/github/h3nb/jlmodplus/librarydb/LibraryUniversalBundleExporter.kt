@@ -27,6 +27,7 @@ import java.util.HashSet
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import io.github.h3nb.jlmodplus.memory.SavedVariablesDocument
 
 /**
  * Deterministic writer for the universal app-payload bundle. A single app is represented by the
@@ -47,6 +48,7 @@ internal object LibraryUniversalBundleExporter {
         val version: String,
         val emulatorDir: File,
         val storageKey: String,
+        val components: LibraryBundleComponents = LibraryBundleComponents(),
     )
 
     @Throws(IOException::class)
@@ -61,6 +63,7 @@ internal object LibraryUniversalBundleExporter {
             throw IOException("Universal app bundle contains duplicate bundle IDs")
         }
         val manifest = manifestBytes(plannedApps)
+        if (manifest.size > 512 * 1024) throw IOException("Universal bundle manifest is too large")
         val entries = plannedApps.flatMap(PlannedApp::entries).sortedBy(SourceEntry::path)
         val totalEntries = entries.size + 1
         val totalBytes = entries.fold(manifest.size.toLong()) { total, entry ->
@@ -132,24 +135,82 @@ internal object LibraryUniversalBundleExporter {
         addOptionalFile(entries, workdirRoot, File(convertedRoot, "converted.dex.conf"), "${payloadRoot}app/converted.dex.conf")
         addOptionalFile(entries, workdirRoot, File(convertedRoot, "icon.png"), "${payloadRoot}app/icon.png")
 
-        val configState = addNamespace(
+        val configRoot = File(File(source.emulatorDir, "configs"), source.storageKey)
+        val references = if (source.components.layoutSkin || source.components.controlSkin) {
+            LibraryBundleSkinAssets.references(configRoot)
+        } else LibraryBundleSkinAssets.References(null, null)
+        val layoutSkin = if (source.components.layoutSkin) {
+            LibraryBundleSkinAssets.screenSkin(source.emulatorDir, references.screenSkin)
+        } else null
+        val layoutSkinState = when {
+            !source.components.layoutSkin -> BundleNamespaceState.Excluded
+            layoutSkin == null -> BundleNamespaceState.Absent
+            else -> {
+                if (layoutSkin.length() > LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES) {
+                    throw IOException("Screen skin exceeds the 16 MiB bundle import limit")
+                }
+                addOptionalFile(entries, workdirRoot, layoutSkin,
+                    "${payloadRoot}skin-layout/${layoutSkin.name}")
+                BundleNamespaceState.Present
+            }
+        }
+        val controlSkin = if (source.components.controlSkin) {
+            LibraryBundleSkinAssets.controlSkin(source.emulatorDir, references.controlSkinId)
+        } else null
+        val controlSkinState = when {
+            !source.components.controlSkin -> BundleNamespaceState.Excluded
+            controlSkin == null -> BundleNamespaceState.Absent
+            else -> {
+                LibraryBundleSkinAssets.selectedControlFiles(controlSkin).forEach { asset ->
+                    entries += SourceEntry(
+                        path = "${payloadRoot}control-skin/${asset.name}",
+                        file = requiredFile(workdirRoot, asset, "Control skin"),
+                        directory = false,
+                    )
+                }
+                BundleNamespaceState.Present
+            }
+        }
+        val configState = if (source.components.configuration) addNamespace(
             entries = entries,
             workdirRoot = workdirRoot,
-            root = File(File(source.emulatorDir, "configs"), source.storageKey),
+            root = configRoot,
             prefix = "${payloadRoot}config",
-        )
-        val dataState = addNamespace(
+            excludeSavedVariables = true,
+        ) else BundleNamespaceState.Excluded
+        val dataState = if (source.components.saveData) addNamespace(
             entries = entries,
             workdirRoot = workdirRoot,
             root = File(File(source.emulatorDir, "data"), source.storageKey),
             prefix = "${payloadRoot}data",
-        )
+        ) else BundleNamespaceState.Excluded
+        val savedState = if (!source.components.savedVariables) BundleNamespaceState.Excluded
+        else {
+            val savedFile = SavedVariablesDocument.committedFile(configRoot)
+            if (savedFile != null) {
+                if (!savedFile.isFile || savedFile.length() > SavedVariablesDocument.MAX_BYTES) {
+                    throw IOException("Saved definitions are unavailable or too large")
+                }
+                val committed = requiredFile(workdirRoot, savedFile, "Saved definitions")
+                SavedVariablesDocument.validate(committed.readBytes())
+                entries += SourceEntry(
+                    path = "${payloadRoot}saved/saved-variables.json",
+                    file = committed,
+                    directory = false,
+                )
+                BundleNamespaceState.Present
+            } else BundleNamespaceState.Absent
+        }
         return PlannedApp(
             source = source,
             payloadRoot = payloadRoot,
             sourceSha256 = entries.first().expectedSha256!!,
             configState = configState,
             dataState = dataState,
+            savedState = savedState,
+            layoutSkinState = layoutSkinState,
+            controlSkinState = controlSkinState,
+            controlSkinName = controlSkin?.name?.takeIf(LibraryBundleSkinAssets::validSetName),
             entries = entries,
         )
     }
@@ -159,6 +220,7 @@ internal object LibraryUniversalBundleExporter {
         workdirRoot: File,
         root: File,
         prefix: String,
+        excludeSavedVariables: Boolean = false,
     ): BundleNamespaceState {
         if (!root.exists()) return BundleNamespaceState.Absent
         val canonicalRoot = requiredDirectory(workdirRoot, root, "App-owned namespace")
@@ -169,6 +231,8 @@ internal object LibraryUniversalBundleExporter {
             directory = canonicalRoot,
             prefix = prefix,
             visitedDirectories = HashSet(),
+            excludeSavedVariables = excludeSavedVariables,
+            topLevel = true,
         )
         return if (entries.any { !it.directory && it.path.startsWith("$prefix/") }) {
             BundleNamespaceState.Present
@@ -183,6 +247,8 @@ internal object LibraryUniversalBundleExporter {
         directory: File,
         prefix: String,
         visitedDirectories: MutableSet<String>,
+        excludeSavedVariables: Boolean,
+        topLevel: Boolean,
     ) {
         val canonicalDirectory = directory.canonicalFile
         if (!insideRoot(workdirRoot, canonicalDirectory)) {
@@ -199,6 +265,8 @@ internal object LibraryUniversalBundleExporter {
         val children = canonicalDirectory.listFiles()
             ?: throw IOException("Unable to list app-owned directory: ${directory.absolutePath}")
         children.sortedBy(File::getName).forEach { child ->
+            if (topLevel && excludeSavedVariables &&
+                child.name.startsWith("saved-variables.json")) return@forEach
             val canonical = child.canonicalFile
             if (!insideRoot(workdirRoot, canonical)) {
                 throw IOException("App-owned path resolves outside the active workdir: ${child.absolutePath}")
@@ -213,6 +281,8 @@ internal object LibraryUniversalBundleExporter {
                         directory = canonical,
                         prefix = path,
                         visitedDirectories = visitedDirectories,
+                        excludeSavedVariables = excludeSavedVariables,
+                        topLevel = false,
                     )
                 }
                 canonical.isFile -> entries += SourceEntry(path = path, file = canonical, directory = false)
@@ -253,7 +323,7 @@ internal object LibraryUniversalBundleExporter {
     private fun manifestBytes(apps: List<PlannedApp>): ByteArray {
         val root = linkedMapOf<String, JsonElement>()
         root["schema"] = JsonPrimitive(LibraryAppBundleFormat.UNIVERSAL_SCHEMA)
-        root["formatVersion"] = JsonPrimitive(LibraryAppBundleFormat.UNIVERSAL_VERSION)
+        root["formatVersion"] = JsonPrimitive(LibraryAppBundleFormat.SELECTIVE_VERSION)
         val records = arrayListOf<JsonElement>()
         apps.forEach { app ->
             val record = linkedMapOf<String, JsonElement>()
@@ -265,6 +335,10 @@ internal object LibraryUniversalBundleExporter {
             record["sourceSha256"] = JsonPrimitive(app.sourceSha256)
             record["configState"] = JsonPrimitive(app.configState.manifestValue())
             record["dataState"] = JsonPrimitive(app.dataState.manifestValue())
+            record["savedState"] = JsonPrimitive(app.savedState.manifestValue())
+            record["layoutSkinState"] = JsonPrimitive(app.layoutSkinState.manifestValue())
+            record["controlSkinState"] = JsonPrimitive(app.controlSkinState.manifestValue())
+            app.controlSkinName?.let { record["controlSkinName"] = JsonPrimitive(it) }
             records.add(JsonObject(record))
         }
         root["apps"] = JsonArray(records)
@@ -335,6 +409,7 @@ internal object LibraryUniversalBundleExporter {
         BundleNamespaceState.Absent -> "absent"
         BundleNamespaceState.PresentEmpty -> "present-empty"
         BundleNamespaceState.Present -> "present"
+        BundleNamespaceState.Excluded -> "excluded"
     }
 
     private fun insideRoot(root: File, candidate: File): Boolean =
@@ -349,6 +424,10 @@ internal object LibraryUniversalBundleExporter {
         val sourceSha256: String,
         val configState: BundleNamespaceState,
         val dataState: BundleNamespaceState,
+        val savedState: BundleNamespaceState,
+        val layoutSkinState: BundleNamespaceState,
+        val controlSkinState: BundleNamespaceState,
+        val controlSkinName: String?,
         val entries: List<SourceEntry>,
     )
 

@@ -65,7 +65,11 @@ internal object LibraryBulkTransfer {
             displayTitle = displayTitle,
             mimeType = MIME_ZIP,
         ) { target ->
-            LibraryUniversalBundleExporter.exportToZip(sources, target, onProgress)
+            LibraryBundleRuntimeGuard.withClosedMidlets(
+                context, sources.map { it.emulatorDir to it.storageKey },
+            ) {
+                LibraryUniversalBundleExporter.exportToZip(sources, target, onProgress)
+            }
         }.let { published ->
             LibraryAppBundleExporter.PreparedExport(
                 uri = published.uri,

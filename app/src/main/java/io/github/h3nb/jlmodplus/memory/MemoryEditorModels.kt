@@ -441,6 +441,8 @@ internal interface MemoryEditorActions {
     fun refreshSavedVariables() = Unit
     fun saveSelectedVariable(name: String) = Unit
     fun resolveSavedVariable(id: String) = Unit
+    fun beginSavedEdit(id: String, onReady: (SavedVariableRuntimeValue?) -> Unit) = Unit
+    fun endSavedEdit() = Unit
     fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean = false) = Unit
     fun renameSavedVariable(id: String, name: String) = Unit
     fun deleteSavedVariable(id: String) = Unit

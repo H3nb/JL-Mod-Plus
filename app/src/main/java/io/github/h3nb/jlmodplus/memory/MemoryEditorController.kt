@@ -57,6 +57,12 @@ internal class MemoryEditorComposeController(
     private var savedBound = false
     private var savedIdentity: MidletSessionStore.State? = null
     @Volatile private var savedGeneration = 0L
+    private var savedLocators: Map<String, Bundle> = emptyMap()
+    private var savedRefreshPending = false
+    @Volatile private var savedEditId: String? = null
+    private var savedEditReady = false
+    private var hostForeground = true
+    private var nextSavedResolveAt = 0L
     private val savedConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             savedAuthority = ISavedVariablesAuthority.Stub.asInterface(binder)
@@ -262,6 +268,24 @@ internal class MemoryEditorComposeController(
         }
     }
 
+    fun setHostForeground(foreground: Boolean) {
+        if (destroyed || hostForeground == foreground) return
+        hostForeground = foreground
+        composeView.removeCallbacks(liveRefreshRunnable)
+        if (foreground && state.visible) {
+            if (state.savedTab && savedLocators.isEmpty() && savedAuthority != null) {
+                refreshSavedVariables()
+            }
+            composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
+        } else {
+            // If backgrounding interrupts the queued binding snapshot, no dialog
+            // owns its pause yet. An already-open edit keeps its binding pinned.
+            if (!savedEditReady) savedEditId = null
+            savedGeneration++
+            savedRefreshPending = false
+        }
+    }
+
     fun open() {
         if (destroyed || ownedRuntimeToken == 0L) return
         if (savedIdentity == null) savedIdentity = MidletSessionStore.read(context)
@@ -274,7 +298,7 @@ internal class MemoryEditorComposeController(
         composeView.requestFocus()
         if (service == null) connectEngine() else reloadState()
         composeView.removeCallbacks(liveRefreshRunnable)
-        composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
+        if (hostForeground) composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
     }
 
     override fun close() {
@@ -284,6 +308,9 @@ internal class MemoryEditorComposeController(
         liveRefreshPending = false
         stateRequestGeneration.incrementAndGet()
         savedGeneration++
+        savedRefreshPending = false
+        savedEditId = null
+        savedEditReady = false
         visiblePageRequestGeneration++
         visiblePageRequestPending = false
         visiblePageRequestInFlightGeneration = 0L
@@ -296,6 +323,9 @@ internal class MemoryEditorComposeController(
         if (destroyed) return
         destroyed = true
         savedGeneration++
+        savedRefreshPending = false
+        savedEditId = null
+        savedEditReady = false
         savedAuthority = null
         if (savedBound) {
             runCatching { context.unbindService(savedConnection) }
@@ -781,9 +811,9 @@ internal class MemoryEditorComposeController(
     override fun refreshSavedVariables() {
         val generation = ++savedGeneration
         val authority = savedAuthority
-        val engine = service
-        val token = state.runtimeToken
         val connection = connectionGeneration
+        savedLocators = emptyMap()
+        savedRefreshPending = false
         if (authority == null) {
             state = state.copy(savedError = "Saved storage is connecting")
             return
@@ -796,37 +826,77 @@ internal class MemoryEditorComposeController(
             post {
                 if (destroyed || !state.visible || !state.savedTab ||
                     generation != savedGeneration || connection != connectionGeneration) return@post
-                state = if (records.isSuccess) state.copy(
-                    savedVariables = records.getOrThrow().map { it.first },
-                    savedSelection = state.savedSelection.intersect(
-                        records.getOrThrow().map { it.first.id }.toSet()),
-                    savedValues = emptyMap(), savedError = null,
-                ) else state.copy(savedVariables = emptyList(), savedSelection = emptySet(), savedValues = emptyMap(),
-                    savedError = records.exceptionOrNull()?.message ?: "Unable to load Saved definitions")
-            }
-            if (engine == null || token == 0L) return@runIpc
-            val all = records.getOrNull() ?: return@runIpc
-            all.chunked(8).forEach { batch ->
-                if (generation != savedGeneration) return@runIpc
-                val values = batch.associate { (row, locator) ->
-                    val observed = runCatching {
-                        var value = savedValue(engine.readSaved(token, row.id), bound = true)
-                        if (value.code == MemoryEngineContract.RESULT_NO_SESSION) {
-                            val attempt = engine.resolveSavedLocator(token, locator, row.id)
-                            value = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
-                                MemoryEngineContract.RESULT_OK
-                            ) savedValue(engine.readSaved(token, row.id), bound = true) else savedValue(attempt)
-                        }
-                        value
-                    }.getOrElse { SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
-                        detail = it.message.orEmpty()) }
-                    row.id to observed
+                if (records.isSuccess) {
+                    val rows = records.getOrThrow()
+                    savedLocators = rows.associate { it.first.id to it.second }
+                    nextSavedResolveAt = 0L
+                    state = state.copy(
+                        savedVariables = rows.map { it.first },
+                        savedSelection = state.savedSelection.intersect(rows.map { it.first.id }.toSet()),
+                        savedValues = emptyMap(),
+                        savedError = null,
+                    )
+                    refreshSavedLive()
+                } else {
+                    state = state.copy(
+                        savedVariables = emptyList(), savedSelection = emptySet(),
+                        savedValues = emptyMap(),
+                        savedError = records.exceptionOrNull()?.message ?: "Unable to load Saved definitions",
+                    )
                 }
+            }
+        }
+    }
+
+    /** The existing editor tick owns Saved polling; never reload definitions on every frame. */
+    private fun refreshSavedLive() {
+        if (savedRefreshPending || savedEditId != null || destroyed || !hostForeground ||
+            !state.visible || !state.savedTab || state.busy || savedLocators.isEmpty()) return
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (token == 0L) return
+        val connection = connectionGeneration
+        val generation = savedGeneration
+        val retry = android.os.SystemClock.uptimeMillis() >= nextSavedResolveAt
+        if (retry) nextSavedResolveAt = android.os.SystemClock.uptimeMillis() + SAVED_RESOLVE_INTERVAL_MS
+        val locators = savedLocators.toList()
+        savedRefreshPending = true
+        runIpc {
+            try {
+                locators.chunked(8).forEach { batch ->
+                    if (generation != savedGeneration || savedEditId != null) return@runIpc
+                    val values = batch.associate { (id, locator) ->
+                        val observed = runCatching {
+                            var value = savedValue(engine.readSaved(token, id), bound = true)
+                            if (retry && savedEditId == null &&
+                                (value.code == MemoryEngineContract.RESULT_NO_SESSION ||
+                                value.code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE)) {
+                                if (value.code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+                                    engine.releaseSaved(token, id)
+                                }
+                                val attempt = engine.resolveSavedLocator(token, locator, id)
+                                value = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                                    MemoryEngineContract.RESULT_OK
+                                ) savedValue(engine.readSaved(token, id), bound = true)
+                                else savedValue(attempt)
+                            }
+                            value
+                        }.getOrElse {
+                            SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
+                                detail = it.message.orEmpty())
+                        }
+                        id to observed
+                    }
+                    post {
+                        if (destroyed || !state.visible || !state.savedTab ||
+                            generation != savedGeneration || connection != connectionGeneration ||
+                            service !== engine || state.runtimeToken != token) return@post
+                        state = state.copy(savedValues = state.savedValues + values)
+                    }
+                }
+            } finally {
                 post {
-                    if (destroyed || !state.visible || !state.savedTab ||
-                        generation != savedGeneration || connection != connectionGeneration ||
-                        service !== engine || state.runtimeToken != token) return@post
-                    state = state.copy(savedValues = state.savedValues + values)
+                    if (generation == savedGeneration) savedRefreshPending = false
                 }
             }
         }
@@ -888,6 +958,56 @@ internal class MemoryEditorComposeController(
                     messageIsError = !value.resolved)
             }
         }
+    }
+
+    override fun beginSavedEdit(id: String, onReady: (SavedVariableRuntimeValue?) -> Unit) {
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (savedEditId != null || !state.visible || !state.savedTab || !state.writeSupported ||
+            state.busy || state.savedValues[id]?.resolved != true || token == 0L) return
+
+        savedEditId = id
+        savedEditReady = false
+        // Stop new refreshes immediately; the single-threaded IPC queue drains the
+        // preceding refresh before taking the dialog's authoritative binding snapshot.
+        val generation = ++savedGeneration
+        savedRefreshPending = false
+        val connection = connectionGeneration
+        runIpc {
+            val value = runCatching { savedValue(engine.readSaved(token, id), bound = true) }
+                .getOrElse {
+                    SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
+                        detail = it.message.orEmpty())
+                }
+            post {
+                if (savedEditId != id || generation != savedGeneration) return@post
+                if (destroyed || !state.visible || !state.savedTab || state.runtimeToken != token ||
+                    connection != connectionGeneration || service !== engine ||
+                    state.savedVariables.none { it.id == id }) {
+                    endSavedEdit()
+                    return@post
+                }
+                if (!value.resolved) {
+                    state = state.copy(
+                        savedValues = state.savedValues + (id to value),
+                        message = value.detail,
+                        messageIsError = true,
+                    )
+                    endSavedEdit()
+                    return@post
+                }
+                savedEditReady = true
+                onReady(value)
+            }
+        }
+    }
+
+    override fun endSavedEdit() {
+        if (savedEditId == null) return
+        savedEditId = null
+        savedEditReady = false
+        nextSavedResolveAt = 0L
+        refreshSavedLive()
     }
 
     override fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean) {
@@ -1022,6 +1142,9 @@ internal class MemoryEditorComposeController(
         if (state.watchTab == watch && !state.savedTab) return
         invalidateVisiblePageRequest()
         savedGeneration++
+        savedRefreshPending = false
+        savedEditId = null
+        savedEditReady = false
         state = state.copy(watchTab = watch, savedTab = false, savedSelection = emptySet(), selected = emptySet())
     }
 
@@ -1699,12 +1822,16 @@ internal class MemoryEditorComposeController(
     }
 
     private fun runLiveRefreshTick() {
-        if (destroyed || !state.visible) return
-        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending &&
-            (state.activeTab == MemoryEditorTab.RESULTS || state.activeTab == MemoryEditorTab.WATCH)) {
-            if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
+        if (destroyed || !hostForeground || !state.visible) return
+        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending) {
+            when (state.activeTab) {
+                MemoryEditorTab.RESULTS, MemoryEditorTab.WATCH ->
+                    if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
+                MemoryEditorTab.SAVED -> refreshSavedLive()
+                MemoryEditorTab.INSPECTOR -> Unit
+            }
         }
-        if (!destroyed && state.visible) {
+        if (!destroyed && hostForeground && state.visible) {
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INTERVAL_MS)
         }
     }
@@ -1806,6 +1933,7 @@ internal class MemoryEditorComposeController(
         private const val ENGINE_RECONNECT_DELAY_MS = 250L
         private const val LIVE_REFRESH_INITIAL_DELAY_MS = 100L
         private const val LIVE_REFRESH_INTERVAL_MS = 250L
+        private const val SAVED_RESOLVE_INTERVAL_MS = 1_000L
         private const val CAPABILITY_RETRY_IDLE_MS = 1_000L
         private val CAPABILITY_RETRY_DELAYS_MS = longArrayOf(80L, 160L, 320L, 640L)
     }
