@@ -11,7 +11,7 @@ This document records durable semantic correctness boundaries for preset/configu
 
 ## Preset ownership
 
-- LINKED ownership is explicit metadata. File/config equality may detect a no-op but must never create, restore, or promote linked ownership.
+- LINKED ownership is explicit metadata. File/config equality may detect a no-op but must never create, restore, or promote linked ownership during ordinary editing. Explicit bundle import is an exception: after the imported snapshot is durably published, exactly one matching complete named preset may be linked based on normalized configuration and identical keyboard layout; no match or multiple matches remain CUSTOM.
 - A user-owned local change detaches linked ownership before its local publication becomes authoritative. Provenance may describe where state came from without implying a live link.
 - Whole-preset activation may establish LINKED ownership only after the complete source snapshot is valid and the local snapshot has been durably materialized.
 - Changes to the global named-preset default are prospective. Existing installed identities retain their Built-in, CUSTOM, or LINKED ownership; fresh installation binds the then-current eligible default or a Built-in fallback.

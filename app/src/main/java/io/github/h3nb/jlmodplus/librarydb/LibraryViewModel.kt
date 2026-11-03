@@ -22,6 +22,7 @@ import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.locks.ReentrantLock
 import io.github.h3nb.jlmodplus.installer.InstallerExecutionCoordinator
+import io.github.h3nb.jlmodplus.config.ImportedBundleProfileLinkage
 import kotlin.concurrent.withLock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -632,11 +633,23 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                         "App bundle descriptor identity does not match the retained JAR",
                     )
                 }
-                val result = LibraryAppBundleImporter.restore(
-                    prepared,
-                    generation.emulatorDir,
-                    storageKey,
-                )
+                // Source ownership must be detached before a selected configuration replaces
+                // the installed snapshot. Restore it only if the import rolls back.
+                val ownership = if (prepared.configDir != null) {
+                    ImportedBundleProfileLinkage.begin(
+                        getApplication(), generation.emulatorDir, storageKey)
+                } else null
+                val result = try {
+                    LibraryAppBundleImporter.restore(
+                        prepared,
+                        generation.emulatorDir,
+                        storageKey,
+                    )
+                } catch (error: Throwable) {
+                    ownership?.rollback()
+                    throw error
+                }
+                ownership?.complete()
                 ImportRestoreOutcome(result.iconRevision, sourceMetadata)
             }
         }
