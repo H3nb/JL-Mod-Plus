@@ -228,6 +228,7 @@ internal data class MemoryInspectorSnapshot(
     val expectedRevision: Long = 0L,
     val provenance: String = "",
     val watchAnchor: Boolean = false,
+    val savedId: String? = null,
     val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
     val pathStatus: Int = MemoryEngineContract.PATH_UNKNOWN,
     val referencePath: String = "",
@@ -449,7 +450,7 @@ internal interface MemoryEditorActions {
     fun clearSavedSelection() = Unit
     fun inspectSavedVariable(id: String) = Unit
     fun freezeSavedVariable(id: String) = Unit
-    fun saveInspectorVariable(name: String) = Unit
+    fun saveInspectorVariable(name: String, relativeOffset: Int) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
     fun invertVisible()

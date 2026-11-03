@@ -1321,6 +1321,17 @@ internal class MemoryEditorComposeController(
         val rowResult = state.results.firstOrNull { it.id == candidateId }
         val rowWatch = state.watches.firstOrNull { it.id == candidateId }
         if (rowWatch == null && rowResult == null) return
+        openInspector(candidateId, null, radius, watchAnchor)
+    }
+
+    override fun inspectSavedVariable(id: String) {
+        if (state.busy || !state.savedTab || state.savedValues[id]?.resolved != true) return
+        if (state.savedVariables.none { it.id == id }) return
+        openInspector(0L, id, MemoryEngineContract.DEFAULT_INSPECT_RADIUS, true)
+    }
+
+    private fun openInspector(candidateId: Long, savedId: String?, radius: Int,
+                              watchAnchor: Boolean) {
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
@@ -1330,7 +1341,8 @@ internal class MemoryEditorComposeController(
         val operation = operationGeneration
         state = state.copy(inspectorLoading = true, inspector = null, message = null, messageIsError = false)
         runIpc {
-            val bundle = engine.inspectCandidate(token, candidateId, radius, watchAnchor)
+            val bundle = if (savedId == null) engine.inspectCandidate(token, candidateId, radius, watchAnchor)
+                else engine.inspectSaved(token, savedId, radius)
             val result = bundle.getInt(
                 MemoryEngineContract.KEY_INSPECT_RESULT,
                 MemoryEngineContract.RESULT_INVALID_REQUEST,
@@ -1345,6 +1357,9 @@ internal class MemoryEditorComposeController(
             val logicalExpected = bundle.getLongArray(MemoryEngineContract.KEY_INSPECT_EXPECTED_BITS)
             val logicalLabels = bundle.getStringArray(MemoryEngineContract.KEY_INSPECT_LABELS)
             val logicalEditable = bundle.getBooleanArray(MemoryEngineContract.KEY_INSPECT_EDITABLE)
+            val inspectedId = if (savedId == null) candidateId else {
+                logicalIds?.getOrNull(logicalOffsets?.indexOfFirst { it == 0 } ?: -1) ?: 0L
+            }
             val logicalRows = if (logicalIds != null && logicalValues != null && logicalInitial != null &&
                 logicalPrevious != null && logicalTypes != null && logicalStates != null &&
                 logicalOffsets != null && logicalExpected != null && logicalLabels != null &&
@@ -1356,9 +1371,9 @@ internal class MemoryEditorComposeController(
                 logicalIds.indices.all { index ->
                     ManagedJavaMemoryIds.hasValidNamespace(logicalIds[index]) &&
                         ManagedJavaMemoryIds.ownerHandle(logicalIds[index]) ==
-                        ManagedJavaMemoryIds.ownerHandle(candidateId) &&
+                        ManagedJavaMemoryIds.ownerHandle(inspectedId) &&
                         MemoryEngineContract.isCandidateType(logicalTypes[index])
-                } && logicalIds.contains(candidateId)
+                } && logicalIds.contains(inspectedId)
             ) {
                 logicalIds.indices.map { index ->
                     MemoryInspectorLogicalRow(logicalIds[index], logicalOffsets[index], logicalTypes[index],
@@ -1372,8 +1387,8 @@ internal class MemoryEditorComposeController(
                     service !== engine || state.runtimeToken != token || !state.visible
                 ) return@post
                 if (operation != operationGeneration ||
-                    (!watchAnchor && state.revision != revision) ||
-                    (!watchAnchor && logicalRows.isNotEmpty() && bundle.getLong(
+                    (savedId == null && !watchAnchor && state.revision != revision) ||
+                    (savedId == null && !watchAnchor && logicalRows.isNotEmpty() && bundle.getLong(
                         MemoryEngineContract.KEY_INSPECT_EXPECTED_REVISION, 0L,
                     ) != revision)
                 ) {
@@ -1391,7 +1406,8 @@ internal class MemoryEditorComposeController(
                     state = state.copy(
                         inspectorLoading = false,
                         inspector = MemoryInspectorSnapshot(
-                            candidateId = candidateId,
+                            candidateId = inspectedId,
+                            savedId = savedId,
                             type = logicalRows.first().type,
                             label = logicalRows.firstOrNull { it.relativeOffset == 0 }?.label.orEmpty(),
                             logicalRows = logicalRows,
@@ -1419,6 +1435,42 @@ internal class MemoryEditorComposeController(
                         messageIsError = true,
                     )
                 }
+            }
+        }
+    }
+
+
+    override fun saveInspectorVariable(name: String, relativeOffset: Int) {
+        val snapshot = state.inspector ?: return
+        val row = snapshot.logicalRows.firstOrNull { it.relativeOffset == relativeOffset } ?: return
+        if (!row.editable || state.busy) return
+        val token = state.runtimeToken
+        val engine = service ?: return
+        val authority = savedAuthority ?: return
+        val generation = inspectorRequestGeneration
+        val connection = connectionGeneration
+        runIpc {
+            val result = runCatching {
+                val locator = if (snapshot.savedId != null) {
+                    engine.captureSavedNeighborLocator(token, snapshot.savedId, relativeOffset)
+                } else {
+                    engine.captureInspectorLocator(token, snapshot.expectedRevision,
+                        snapshot.candidateId, snapshot.watchAnchor, relativeOffset)
+                }
+                if (locator.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) !=
+                    MemoryEngineContract.RESULT_OK) {
+                    error("Inspector cannot verify a persistent path to this field")
+                }
+                val (path, appId, entry) = savedTarget()
+                savedRows(authority.save(path, appId, entry, name.trim(), locator))
+            }
+            post {
+                if (destroyed || generation != inspectorRequestGeneration ||
+                    connection != connectionGeneration || !state.visible ||
+                    service !== engine || state.runtimeToken != token) return@post
+                state = state.copy(
+                    message = result.exceptionOrNull()?.message ?: "Variable saved",
+                    messageIsError = result.isFailure)
             }
         }
     }
