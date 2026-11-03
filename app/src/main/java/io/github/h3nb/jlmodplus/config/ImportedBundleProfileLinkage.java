@@ -58,6 +58,7 @@ public final class ImportedBundleProfileLinkage {
         /** Imported snapshot is already committed; unmatched imports remain CUSTOM. */
         public void complete() {
             synchronized (ProfilesManager.presetSourceLock()) {
+              try {
                 ProfileModel imported = ProfilesManager.loadConfig(configDir, false);
                 if (imported == null) return;
                 String matchingName = null;
@@ -76,6 +77,12 @@ public final class ImportedBundleProfileLinkage {
                 if (matchingName != null) {
                     new PresetLinkage(preferences, configDir).linkTo(matchingName);
                 }
+              } catch (RuntimeException failedInspection) {
+                // The import has already committed. Keep safe CUSTOM ownership rather
+                // than report that the successful data restore failed.
+                android.util.Log.w("ImportedBundleProfileLinkage",
+                        "Imported configuration remains CUSTOM", failedInspection);
+              }
             }
         }
     }

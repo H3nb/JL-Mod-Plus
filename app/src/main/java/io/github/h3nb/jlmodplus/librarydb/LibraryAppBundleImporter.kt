@@ -41,7 +41,7 @@ object LibraryAppBundleImporter {
     private const val MAX_MANIFEST_BYTES = 4L * 1024L
     private const val MAX_DESCRIPTOR_BYTES = 1024L * 1024L
     private const val MAX_TOTAL_BYTES = 1024L * 1024L * 1024L
-    private const val MAX_REPLACEMENTS = 4
+    private const val MAX_REPLACEMENTS = 3
     private const val STALE_STAGING_AGE_MILLIS = 24L * 60L * 60L * 1000L
 
     class PreparedImport internal constructor(
@@ -626,23 +626,28 @@ object LibraryAppBundleImporter {
         val root = emulatorDir.canonicalFile
         val transactionId = UUID.randomUUID().toString()
         val replacements = ArrayList<Replacement>(MAX_REPLACEMENTS)
-        prepared.configDir?.let { source ->
+        val configTarget = File(File(root, "configs"), storageKey)
+        // Saved-only publication replaces a coherent config directory rather than a
+        // single AtomicFile base, so old .bak/.new files cannot revive stale definitions.
+        val savedOnlyConfig = if (prepared.configDir == null &&
+            prepared.savedVariablesFile != null) {
+            val scratch = File(prepared.stagingDir, "saved-config-replacement")
+            deleteIfExists(scratch, "previous Saved import staging")
+            if (configTarget.exists()) {
+                if (!configTarget.isDirectory || !configTarget.copyRecursively(scratch)) {
+                    throw IOException("Unable to stage existing configuration for Saved import")
+                }
+            } else ensureDirectory(scratch)
+            scratch
+        } else null
+        val configSource = prepared.configDir ?: savedOnlyConfig
+        configSource?.let { source ->
             replacements += prepareReplacement(
                 source = source,
                 sourceIsDirectory = true,
                 root = root,
                 storageKey = storageKey,
-                target = File(File(root, "configs"), storageKey),
-                transactionId = transactionId,
-            )
-        }
-        if (prepared.configDir == null) prepared.savedVariablesFile?.let { source ->
-            replacements += prepareReplacement(
-                source = source,
-                sourceIsDirectory = false,
-                root = root,
-                storageKey = storageKey,
-                target = File(File(File(root, "configs"), storageKey), "saved-variables.json"),
+                target = configTarget,
                 transactionId = transactionId,
             )
         }
@@ -682,19 +687,35 @@ object LibraryAppBundleImporter {
         writeTransaction(transaction)
         try {
             replacements.forEach(::stageReplacement)
-            if (prepared.configDir != null) {
+            if (configSource != null) {
                 val configReplacement = replacements.first()
-                FreshInstalledMidletInitializer.preserveReviewState(
-                    configReplacement.target, configReplacement.staged,
-                )
+                if (prepared.configDir != null) {
+                    FreshInstalledMidletInitializer.preserveReviewState(
+                        configReplacement.target, configReplacement.staged,
+                    )
+                }
                 if (prepared.formatVersion == LibraryAppBundleFormat.SELECTIVE_VERSION) {
-                    // Config and Saved are independent choices. A config-only import
-                    // must not erase the user's existing Saved definitions.
-                    val previousSaved = File(configReplacement.target, "saved-variables.json")
-                    val savedSource = prepared.savedVariablesFile ?: previousSaved.takeIf(File::isFile)
-                    if (savedSource != null) {
-                        savedSource.copyTo(File(configReplacement.staged, "saved-variables.json"),
-                            overwrite = true)
+                    val savedNames = listOf("saved-variables.json", "saved-variables.json.new",
+                        "saved-variables.json.bak")
+                    if (prepared.savedVariablesFile != null) {
+                        // The imported document supersedes the entire AtomicFile family.
+                        savedNames.forEach { name ->
+                            deleteIfExists(File(configReplacement.staged, name),
+                                "old Saved definitions")
+                        }
+                        prepared.savedVariablesFile.copyTo(
+                            File(configReplacement.staged, "saved-variables.json"),
+                        )
+                    } else if (prepared.configDir != null) {
+                        // Config-only import retains the target's committed/recoverable Saved
+                        // document, including any interrupted AtomicFile backup/new state.
+                        savedNames.forEach { name ->
+                            val previous = File(configReplacement.target, name)
+                            if (previous.isFile) {
+                                previous.copyTo(File(configReplacement.staged, name),
+                                    overwrite = true)
+                            }
+                        }
                     }
                 }
             }
@@ -941,7 +962,6 @@ object LibraryAppBundleImporter {
         val allowed = listOf(
             File(File(root, "configs"), storageKey).canonicalFile,
             File(File(root, "data"), storageKey).canonicalFile,
-            File(File(File(root, "configs"), storageKey), "saved-variables.json").canonicalFile,
             File(File(File(root, "converted"), storageKey), "converted.dex.conf").canonicalFile,
         )
         return target in allowed

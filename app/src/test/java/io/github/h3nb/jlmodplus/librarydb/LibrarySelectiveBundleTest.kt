@@ -43,12 +43,14 @@ class LibrarySelectiveBundleTest {
         val target = File(temp, "target").apply { mkdirs() }
         val config = File(target, "configs/destination").apply { mkdirs() }
         File(config, "config.json").writeText("existing configuration")
+        File(config, "saved-variables.json.bak").writeText("old Saved backup")
         val data = File(target, "data/destination").apply { mkdirs() }
         File(data, "old.sav").writeText("existing save")
         LibraryAppBundleImporter.restore(prepared, target, "destination")
         assertEquals("existing configuration", File(config, "config.json").readText())
         assertEquals("existing save", File(data, "old.sav").readText())
         assertEquals(saved, File(config, "saved-variables.json").readText())
+        assertFalse(File(config, "saved-variables.json.bak").exists())
     }
 
     @Test fun configOnlyPreservesTargetSavedDefinitionsWhileReplacingConfiguration() {
@@ -74,10 +76,12 @@ class LibrarySelectiveBundleTest {
         val config = File(target, "configs/destination").apply { mkdirs() }
         File(config, "old.cfg").writeText("old")
         File(config, "saved-variables.json").writeText("keep these definitions")
+        File(config, "saved-variables.json.bak").writeText("recoverable backup")
         LibraryAppBundleImporter.restore(prepared, target, "destination")
         assertFalse(File(config, "old.cfg").exists())
         assertEquals("source configuration", File(config, "config.json").readText())
         assertEquals("keep these definitions", File(config, "saved-variables.json").readText())
+        assertEquals("recoverable backup", File(config, "saved-variables.json.bak").readText())
     }
 
     private fun sourceApp(root: File, key: String, saved: String) {
