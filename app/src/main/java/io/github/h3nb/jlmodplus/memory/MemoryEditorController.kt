@@ -59,6 +59,7 @@ internal class MemoryEditorComposeController(
     @Volatile private var savedGeneration = 0L
     private var savedLocators: Map<String, Bundle> = emptyMap()
     private var savedRefreshPending = false
+    private var hostForeground = true
     private var nextSavedResolveAt = 0L
     private val savedConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
@@ -265,6 +266,18 @@ internal class MemoryEditorComposeController(
         }
     }
 
+    fun setHostForeground(foreground: Boolean) {
+        if (destroyed || hostForeground == foreground) return
+        hostForeground = foreground
+        composeView.removeCallbacks(liveRefreshRunnable)
+        if (foreground && state.visible) {
+            composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
+        } else {
+            savedGeneration++
+            savedRefreshPending = false
+        }
+    }
+
     fun open() {
         if (destroyed || ownedRuntimeToken == 0L) return
         if (savedIdentity == null) savedIdentity = MidletSessionStore.read(context)
@@ -277,7 +290,7 @@ internal class MemoryEditorComposeController(
         composeView.requestFocus()
         if (service == null) connectEngine() else reloadState()
         composeView.removeCallbacks(liveRefreshRunnable)
-        composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
+        if (hostForeground) composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
     }
 
     override fun close() {
@@ -825,7 +838,7 @@ internal class MemoryEditorComposeController(
 
     /** The existing editor tick owns Saved polling; never reload definitions on every frame. */
     private fun refreshSavedLive() {
-        if (savedRefreshPending || destroyed || !state.visible || !state.savedTab ||
+        if (savedRefreshPending || destroyed || !hostForeground || !state.visible || !state.savedTab ||
             state.busy || savedLocators.isEmpty()) return
         val engine = service ?: return
         val token = state.runtimeToken
@@ -1742,7 +1755,7 @@ internal class MemoryEditorComposeController(
     }
 
     private fun runLiveRefreshTick() {
-        if (destroyed || !state.visible) return
+        if (destroyed || !hostForeground || !state.visible) return
         if (!state.busy && !liveRefreshPending && !visiblePageRequestPending) {
             when (state.activeTab) {
                 MemoryEditorTab.RESULTS, MemoryEditorTab.WATCH ->
@@ -1751,7 +1764,7 @@ internal class MemoryEditorComposeController(
                 MemoryEditorTab.INSPECTOR -> Unit
             }
         }
-        if (!destroyed && state.visible) {
+        if (!destroyed && hostForeground && state.visible) {
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INTERVAL_MS)
         }
     }

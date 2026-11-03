@@ -62,6 +62,7 @@ internal object LibraryUniversalBundleExporter {
             throw IOException("Universal app bundle contains duplicate bundle IDs")
         }
         val manifest = manifestBytes(plannedApps)
+        if (manifest.size > 512 * 1024) throw IOException("Universal bundle manifest is too large")
         val entries = plannedApps.flatMap(PlannedApp::entries).sortedBy(SourceEntry::path)
         val totalEntries = entries.size + 1
         val totalBytes = entries.fold(manifest.size.toLong()) { total, entry ->
@@ -151,6 +152,7 @@ internal object LibraryUniversalBundleExporter {
         else {
             val savedFile = File(configRoot, "saved-variables.json")
             if (savedFile.isFile) {
+                if (savedFile.length() > 65_536L) throw IOException("Saved definitions exceed size limit")
                 addOptionalFile(entries, workdirRoot, savedFile, "${payloadRoot}saved/saved-variables.json")
                 BundleNamespaceState.Present
             } else BundleNamespaceState.Absent

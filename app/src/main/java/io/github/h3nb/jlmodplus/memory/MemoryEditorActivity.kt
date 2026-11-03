@@ -73,6 +73,16 @@ class MemoryEditorActivity : AppCompatActivity() {
         })
     }
 
+    override fun onStart() {
+        super.onStart()
+        controller?.setHostForeground(true)
+    }
+
+    override fun onStop() {
+        controller?.setHostForeground(false)
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
         systemBars.applyTo(window)

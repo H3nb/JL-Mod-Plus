@@ -206,6 +206,7 @@ object LibraryAppBundleImporter {
 
                 var entryBytes = 0L
                 val entryLimit = when (relative) {
+                    "saved/saved-variables.json" -> 65_536L
                     "app/converted.dex.conf" -> MAX_DESCRIPTOR_BYTES
                     else -> MAX_ENTRY_BYTES
                 }
@@ -337,10 +338,10 @@ object LibraryAppBundleImporter {
                 }
 
                 var entryBytes = 0L
-                val entryLimit = if (relative == "app/converted.dex.conf") {
-                    MAX_DESCRIPTOR_BYTES
-                } else {
-                    MAX_ENTRY_BYTES
+                val entryLimit = when (relative) {
+                    "saved/saved-variables.json" -> 65_536L
+                    "app/converted.dex.conf" -> MAX_DESCRIPTOR_BYTES
+                    else -> MAX_ENTRY_BYTES
                 }
                 val output = target?.let {
                     ensureDirectory(it.parentFile ?: throw IOException("Bundle entry has no parent"))
