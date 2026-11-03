@@ -281,9 +281,9 @@ public final class MemoryTargetBridgeService extends Service {
 
         @Override
         public Bundle freezeSaved(long runtimeToken, String savedId, String label,
-                                  long cancellationEpoch) {
+                                  String expectedValue, long cancellationEpoch) {
             return managedResult(runtimeToken, managedEngine.freezeSaved(
-                    runtimeToken, savedId, label, cancellationEpoch));
+                    runtimeToken, savedId, label, expectedValue, cancellationEpoch));
         }
 
         @Override

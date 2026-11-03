@@ -70,7 +70,7 @@ interface IMemoryEngineService {
     Bundle editSavedInspector(long runtimeToken, String savedId, int relativeOffset, int valueType,
                               long expectedBits, String replacement);
     void releaseSaved(long runtimeToken, String savedId);
-    Bundle freezeSaved(long runtimeToken, String savedId, String label);
+    Bundle freezeSaved(long runtimeToken, String savedId, String label, String expectedValue);
     Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
                           long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                           int type, long expectedBits);

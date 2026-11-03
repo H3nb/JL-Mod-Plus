@@ -2080,7 +2080,8 @@ final class ManagedJavaMemoryEngine {
     }
 
     /** Explicit Freeze promotes a pinned Saved target into Watch, with guarded periodic writes. */
-    ManagedOperationResult freezeSaved(long token, String id, String label, long epoch) {
+    ManagedOperationResult freezeSaved(long token, String id, String label,
+                                      String expectedValue, long epoch) {
         synchronized (stateLock) {
             if (!isCurrentLocked(token) || !isOperationActive(token, epoch))
                 return failureLocked(MemoryEngineContract.RESULT_TARGET_LOST, "Saved runtime changed");
@@ -2099,6 +2100,11 @@ final class ManagedJavaMemoryEngine {
                     break;
                 }
             }
+            long[] expected = new long[1];
+            if (!ManagedJavaValue.parse(expectedValue, binding.type, expected)) {
+                return failureLocked(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                        "Invalid expected Saved freeze value");
+            }
             boolean additionalFreeze = existing < 0 || !watches.freeze[existing];
             if ((existing < 0 && (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS ||
                     owners.size() >= limits.maxOwners ||
@@ -2108,11 +2114,13 @@ final class ManagedJavaMemoryEngine {
                         "Watch/Freeze capacity reached");
             }
             long[] current = new long[1];
-            if (!readTyped(proof, binding.slot, actual, current)) return failureLocked(
-                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved value is unavailable");
+            if (!readTyped(proof, binding.slot, actual, current)
+                    || current[0] != expected[0]) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    "Saved value changed after edit; Freeze was not started");
             if (existing >= 0) {
                 watches.freeze[existing] = true;
-                watches.freezeValues[existing] = current[0];
+                watches.freezeValues[existing] = expected[0];
                 watches.freezePaused[existing] = false;
                 return successLocked("Saved Watch freeze value updated");
             }
@@ -2121,11 +2129,11 @@ final class ManagedJavaMemoryEngine {
             owner.arrayReference = proof.arrayReference;
             long candidateId = ManagedJavaMemoryIds.encode(proof.kind, owner.handle, binding.slot);
             owners.put(owner.handle, owner);
-            watches.append(candidateId, owner, binding.slot, current[0], label == null ? "" : label);
+            watches.append(candidateId, owner, binding.slot, expected[0], label == null ? "" : label);
             int index = watches.count - 1;
             watches.savedSourceIds[index] = id;
             watches.freeze[index] = true;
-            watches.freezeValues[index] = current[0];
+            watches.freezeValues[index] = expected[0];
             watches.freezePaused[index] = false;
             return successLocked("Saved value added to Watch and frozen");
         }

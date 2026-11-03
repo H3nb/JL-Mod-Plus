@@ -901,7 +901,7 @@ internal class MemoryEditorComposeController(
             val result = runCatching {
                 val edited = savedValue(engine.editSaved(token, id, replacement.trim()), bound = true)
                 val freezeResult = if (freezeAfter && edited.resolved) {
-                    engine.freezeSaved(token, id, label)
+                    engine.freezeSaved(token, id, label, replacement.trim())
                 } else null
                 edited to freezeResult
             }
@@ -955,7 +955,13 @@ internal class MemoryEditorComposeController(
                 val rows = savedRows(authority.removeMany(path, appId, entry, unique.toTypedArray()))
                     .map { it.first }
                 if (engine != null && token != 0L) {
-                    unique.forEach { engine.releaseSaved(token, it) }
+                    unique.forEach { id ->
+                        try {
+                            engine.releaseSaved(token, id)
+                        } catch (_: RemoteException) {
+                            // Persistent delete already committed; runtime teardown clears bindings.
+                        }
+                    }
                 }
                 rows
             }
@@ -1329,7 +1335,7 @@ internal class MemoryEditorComposeController(
     }
 
     private fun openInspector(candidateId: Long, savedId: String?, radius: Int,
-                              watchAnchor: Boolean) {
+                              watchAnchor: Boolean, partialWriteMessage: String? = null) {
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
@@ -1337,7 +1343,12 @@ internal class MemoryEditorComposeController(
         val connection = connectionGeneration
         val revision = state.revision
         val operation = operationGeneration
-        state = state.copy(inspectorLoading = true, inspector = null, message = null, messageIsError = false)
+        state = state.copy(
+            inspectorLoading = true,
+            inspector = null,
+            message = partialWriteMessage,
+            messageIsError = partialWriteMessage != null,
+        )
         runIpc {
             val bundle = if (savedId == null) engine.inspectCandidate(token, candidateId, radius, watchAnchor)
                 else engine.inspectSaved(token, savedId, radius)
@@ -1543,8 +1554,16 @@ internal class MemoryEditorComposeController(
                 val result = outcome.getOrNull()
                 val code = result?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
                     ?: MemoryEngineContract.RESULT_TARGET_LOST
-                if (code == MemoryEngineContract.RESULT_OK) {
-                    inspectSavedVariable(id)
+                if (code == MemoryEngineContract.RESULT_OK ||
+                    code == MemoryEngineContract.RESULT_PARTIAL_WRITE) {
+                    openInspector(
+                        snapshot.candidateId, id, MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
+                        snapshot.watchAnchor,
+                        if (code == MemoryEngineContract.RESULT_PARTIAL_WRITE)
+                            result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                                ?: "Value edited, but Freeze could not start"
+                        else null,
+                    )
                 } else {
                     state = state.copy(
                         message = result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
@@ -1594,9 +1613,17 @@ internal class MemoryEditorComposeController(
                     val result = outcome.getOrNull()
                     val code = result?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
                         ?: MemoryEngineContract.RESULT_TARGET_LOST
-                    if (code == MemoryEngineContract.RESULT_OK) {
+                    if (code == MemoryEngineContract.RESULT_OK ||
+                        code == MemoryEngineContract.RESULT_PARTIAL_WRITE) {
                         reloadState()
-                        inspectCandidate(anchorCandidateId, watchAnchor = watchAnchor)
+                        openInspector(
+                            anchorCandidateId, null, MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
+                            watchAnchor,
+                            if (code == MemoryEngineContract.RESULT_PARTIAL_WRITE)
+                                result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                                    ?: "Value edited, but Freeze could not start"
+                            else null,
+                        )
                     } else {
                         state = state.copy(
                             message = result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
@@ -1673,7 +1700,8 @@ internal class MemoryEditorComposeController(
 
     private fun runLiveRefreshTick() {
         if (destroyed || !state.visible) return
-        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending && state.activeTab != MemoryEditorTab.INSPECTOR) {
+        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending &&
+            (state.activeTab == MemoryEditorTab.RESULTS || state.activeTab == MemoryEditorTab.WATCH)) {
             if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
         }
         if (!destroyed && state.visible) {

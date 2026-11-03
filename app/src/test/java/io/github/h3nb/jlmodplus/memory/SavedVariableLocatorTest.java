@@ -306,14 +306,14 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.resolveSavedLocator(FIRST, locator, "saved-coins-freeze", 0L).code);
             assertEquals(MemoryEngineContract.RESULT_OK,
-                engine.freezeSaved(FIRST, "saved-coins-freeze", "Coins", 0L).code);
+                engine.freezeSaved(FIRST, "saved-coins-freeze", "Coins", "585858", 0L).code);
             assertEquals(1, engine.watchPage(FIRST).ids.length);
             assertEquals(1, engine.watchPage(FIRST).freezeModes.length);
             assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.editSaved(FIRST, "saved-coins-freeze", "700", 0L).code);
             assertEquals(MemoryEngineContract.RESULT_OK,
-                engine.freezeSaved(FIRST, "saved-coins-freeze", "Coins", 0L).code);
+                engine.freezeSaved(FIRST, "saved-coins-freeze", "Coins", "700", 0L).code);
             assertEquals(1, engine.watchPage(FIRST).ids.length);
             root.player.coins = 99;
             assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
@@ -330,6 +330,46 @@ public class SavedVariableLocatorTest {
             assertEquals(66, oldOwner.coins);
             assertEquals(55, root.player.coins);
             assertTrue(engine.watchPage(FIRST).freezePaused[0]);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
+
+    @Test public void savedFreezeRejectsInterveningGuestWriteInsteadOfFreezingWrongValue() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            ManagedJavaMemoryEngine.SavedLocator locator =
+                    new ManagedJavaMemoryEngine.SavedLocator(
+                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
+                        GuestRoot.class.getName(),
+                        new ManagedJavaMemoryEngine.SavedField[]{
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestPlayer.class.getName(), "coins", "int")
+                        });
+            String savedId = "saved-freeze-expected";
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.resolveSavedLocator(FIRST, locator, savedId, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.editSaved(FIRST, savedId, "700", 0L).code);
+            root.player.coins = 99; // The guest writes between the two UI IPC calls.
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.freezeSaved(FIRST, savedId, "Coins", "700", 0L).code);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+            assertEquals(99, root.player.coins);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.editSaved(FIRST, savedId, "800", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.freezeSaved(FIRST, savedId, "Coins", "800", 0L).code);
+            root.player.coins = 50;
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
+            assertEquals(800, root.player.coins);
         } finally {
             engine.runtimeClosed(FIRST);
             MemoryDiscoveryBridge.close(FIRST);
