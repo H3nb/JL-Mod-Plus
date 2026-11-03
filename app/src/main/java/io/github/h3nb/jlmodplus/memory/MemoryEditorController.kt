@@ -738,13 +738,17 @@ internal class MemoryEditorComposeController(
         refreshSavedVariables()
     }
 
-    private fun savedValue(value: Bundle): SavedVariableRuntimeValue = SavedVariableRuntimeValue(
-        code = value.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
-            MemoryEngineContract.RESULT_TARGET_LOST),
-        type = value.getInt("savedValueType", MemoryEngineContract.TYPE_AUTO),
-        value = value.getString("savedValue").orEmpty(),
-        detail = value.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty(),
-    )
+    private fun savedValue(value: Bundle, bound: Boolean = false): SavedVariableRuntimeValue {
+        val code = value.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+            MemoryEngineContract.RESULT_TARGET_LOST)
+        return SavedVariableRuntimeValue(
+            code = code,
+            type = value.getInt("savedValueType", MemoryEngineContract.TYPE_AUTO),
+            value = value.getString("savedValue").orEmpty(),
+            detail = value.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty(),
+            changedOwner = bound && code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+        )
+    }
 
     @Suppress("DEPRECATION")
     private fun savedRows(response: Bundle): List<Pair<SavedVariableRow, Bundle>> {
@@ -802,12 +806,12 @@ internal class MemoryEditorComposeController(
                 if (generation != savedGeneration) return@runIpc
                 val values = batch.associate { (row, locator) ->
                     val observed = runCatching {
-                        var value = savedValue(engine.readSaved(token, row.id))
+                        var value = savedValue(engine.readSaved(token, row.id), bound = true)
                         if (value.code == MemoryEngineContract.RESULT_NO_SESSION) {
                             val attempt = engine.resolveSavedLocator(token, locator, row.id)
                             value = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
                                 MemoryEngineContract.RESULT_OK
-                            ) savedValue(engine.readSaved(token, row.id)) else savedValue(attempt)
+                            ) savedValue(engine.readSaved(token, row.id), bound = true) else savedValue(attempt)
                         }
                         value
                     }.getOrElse { SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
@@ -861,12 +865,12 @@ internal class MemoryEditorComposeController(
                 val (path, appId, entry) = savedTarget()
                 val record = savedRows(authority.list(path, appId, entry))
                     .firstOrNull { it.first.id == id } ?: error("Saved definition missing")
-                var current = savedValue(engine.readSaved(token, id))
+                var current = savedValue(engine.readSaved(token, id), bound = true)
                 if (current.code == MemoryEngineContract.RESULT_NO_SESSION) {
                     val attempt = engine.resolveSavedLocator(token, record.second, id)
                     current = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
                         MemoryEngineContract.RESULT_OK
-                    ) savedValue(engine.readSaved(token, id)) else savedValue(attempt)
+                    ) savedValue(engine.readSaved(token, id), bound = true) else savedValue(attempt)
                 }
                 current
             }.getOrElse { SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
@@ -888,7 +892,7 @@ internal class MemoryEditorComposeController(
         val generation = savedGeneration
         if (token == 0L || state.savedValues[id]?.resolved != true || state.busy) return
         runIpc {
-            val value = runCatching { savedValue(engine.editSaved(token, id, replacement.trim())) }
+            val value = runCatching { savedValue(engine.editSaved(token, id, replacement.trim()), bound = true) }
                 .getOrElse { SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
                     detail = it.message.orEmpty()) }
             post {

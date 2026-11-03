@@ -351,13 +351,26 @@ internal enum class MemoryEditorTab { RESULTS, WATCH, SAVED, INSPECTOR }
 
 internal data class SavedVariableRow(val id: String, val label: String, val path: String)
 
+internal enum class SavedVariableStatus { RESOLVED, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
+
 internal data class SavedVariableRuntimeValue(
     val code: Int,
     val type: Int = MemoryEngineContract.TYPE_AUTO,
     val value: String = "",
     val detail: String = "",
+    val changedOwner: Boolean = false,
 ) {
     val resolved: Boolean get() = code == MemoryEngineContract.RESULT_OK
+    val status: SavedVariableStatus get() = when {
+        resolved -> SavedVariableStatus.RESOLVED
+        changedOwner -> SavedVariableStatus.CHANGED
+        code == MemoryEngineContract.RESULT_NO_SESSION ||
+            code == MemoryEngineContract.RESULT_TARGET_LOST -> SavedVariableStatus.NOT_READY
+        code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE ||
+            code == MemoryEngineContract.RESULT_INVALID_REQUEST ||
+            code == MemoryEngineContract.RESULT_UNSUPPORTED -> SavedVariableStatus.INCOMPATIBLE
+        else -> SavedVariableStatus.FAILED
+    }
 }
 
 internal data class MemoryEditorUiState(

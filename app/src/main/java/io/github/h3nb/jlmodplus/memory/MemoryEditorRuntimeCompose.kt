@@ -797,11 +797,18 @@ private fun RuntimeSavedVariablesTab(
             items(state.savedVariables, key = { it.id }) { item ->
                 val value = state.savedValues[item.id]
                 val ready = value?.resolved == true
+                val status = value?.status ?: SavedVariableStatus.NOT_READY
+                val statusText = stringResource(when (status) {
+                    SavedVariableStatus.RESOLVED -> R.string.memory_saved_tab
+                    SavedVariableStatus.NOT_READY -> R.string.memory_saved_not_ready
+                    SavedVariableStatus.CHANGED -> R.string.memory_saved_changed
+                    SavedVariableStatus.INCOMPATIBLE -> R.string.memory_saved_incompatible
+                    SavedVariableStatus.FAILED -> R.string.memory_saved_failed
+                })
                 val label = if (ready) {
                     value.value + " (" + runtimeTypeShort(value.type) + ")"
                 } else {
-                    value?.detail?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.memory_saved_not_ready)
+                    statusText + (value?.detail?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
                 }
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically) {
@@ -816,7 +823,8 @@ private fun RuntimeSavedVariablesTab(
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 2)
                     }
-                    TextButton(enabled = !state.busy, onClick = {
+                    TextButton(enabled = !state.busy && status != SavedVariableStatus.CHANGED &&
+                        status != SavedVariableStatus.INCOMPATIBLE, onClick = {
                         if (ready) editRow = item else actions.resolveSavedVariable(item.id)
                     }) {
                         Text(stringResource(if (ready) R.string.memory_editor_edit
