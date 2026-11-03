@@ -350,7 +350,7 @@ public class SavedVariableLocatorTest {
             for (int i = 0; i < inspected.labels.length; i++) {
                 if (inspected.labels[i].contains("flag")) sibling = inspected.relativeOffsets[i];
             }
-            assertTrue("Inspector must include a real primitive sibling", sibling != -1);
+            assertTrue(sibling != -1, "Inspector must include a real primitive sibling");
             ManagedJavaMemoryEngine.SavedLocator adjacent =
                 engine.captureSavedNeighborLocator(FIRST, "saved-coins-inspect", sibling);
             assertNotNull(adjacent);
