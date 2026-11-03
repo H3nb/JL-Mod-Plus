@@ -73,6 +73,14 @@ class LibrarySelectiveBundleTest {
         val prepared = LibraryAppBundleImporter.extractUniversalSingleToStaging(
             archive.inputStream(), File(temp, "stage"), parsed.apps.single(), parsed.formatVersion)
         val target = File(temp, "target").apply { mkdirs() }
+        // Configuration restore also reconciles the effective icon against the
+        // already-installed retained JAR and descriptor.
+        File(target, "converted/destination").apply { mkdirs() }.also { installed ->
+            File(installed, "res.jar").writeBytes(byteArrayOf(1, 2, 3))
+            File(installed, "converted.dex.conf").writeText(
+                "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1\n",
+            )
+        }
         val config = File(target, "configs/destination").apply { mkdirs() }
         File(config, "old.cfg").writeText("old")
         File(config, "saved-variables.json").writeText("keep these definitions")
