@@ -801,10 +801,6 @@ private fun RuntimeSavedVariablesTab(
                 ready != null && state.writeSupported && !state.busy) { editRow = ready },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready != null && !state.busy) { ready?.let { actions.inspectSavedVariable(it.id) } },
-            RuntimeToolbarAction(R.drawable.ic_lock, R.string.memory_editor_freeze,
-                ready != null && state.writeSupported && !state.busy) {
-                ready?.let { actions.freezeSavedVariable(it.id) }
-            },
             RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_saved_rename,
                 one != null && !state.busy) { renameRow = one },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
@@ -859,6 +855,8 @@ private fun RuntimeSavedVariablesTab(
             items(state.savedVariables, key = { it.id }) { item ->
                 val value = state.savedValues[item.id]
                 val status = value?.status ?: SavedVariableStatus.NOT_READY
+                val selectedRow = item.id in state.savedSelection
+                val editEnabled = value?.resolved == true && state.writeSupported && !state.busy
                 val statusText = stringResource(when (status) {
                     SavedVariableStatus.RESOLVED -> R.string.memory_saved_tab
                     SavedVariableStatus.NOT_READY -> R.string.memory_saved_not_ready
@@ -866,10 +864,6 @@ private fun RuntimeSavedVariablesTab(
                     SavedVariableStatus.INCOMPATIBLE -> R.string.memory_saved_incompatible
                     SavedVariableStatus.FAILED -> R.string.memory_saved_failed
                 })
-                val detail = if (value?.resolved == true) {
-                    value.value + " (" + runtimeTypeShort(value.type) + ")"
-                } else statusText + (value?.detail?.takeIf(String::isNotBlank)?.let { " · $it" } ?: "")
-                val selectedRow = item.id in state.savedSelection
                 Surface(color = if (selectedRow) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
                     else Color.Transparent) {
                     Row(Modifier.fillMaxWidth()
@@ -887,10 +881,31 @@ private fun RuntimeSavedVariablesTab(
                             Text(item.path, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(detail, style = MaterialTheme.typography.bodySmall,
-                                color = if (value?.resolved == true) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2)
+                            if (value?.resolved != true) {
+                                Text(
+                                    statusText + (value?.detail?.takeIf(String::isNotBlank)
+                                        ?.let { " · $it" } ?: ""),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                )
+                            }
+                        }
+                        if (value?.resolved == true) {
+                            Column(
+                                modifier = Modifier
+                                    .widthIn(min = 96.dp)
+                                    .clickable(enabled = editEnabled) { editRow = item }
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                horizontalAlignment = Alignment.End,
+                            ) {
+                                Text(value.value, style = runtimeMemoryDataTextStyle(),
+                                    textAlign = TextAlign.End,
+                                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(runtimeTypeShort(value.type),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     }
                 }
@@ -899,32 +914,25 @@ private fun RuntimeSavedVariablesTab(
         }
     }
     editRow?.let { item ->
-        var replacement by remember(item.id) {
-            mutableStateOf(state.savedValues[item.id]?.value.orEmpty())
+        val value = state.savedValues[item.id]
+        if (value?.resolved == true) {
+            val target = remember(item.id, value.type, value.value) {
+                listOf(MemoryEditTarget(
+                    0L, value.type, value.value, listOf(value.type), watch = true,
+                ))
+            }
+            RuntimeEditDialog(
+                targets = target,
+                writeSupported = state.writeSupported,
+                title = item.label,
+                onDismiss = { editRow = null },
+                onApply = { replacement, _, freeze, _, _ ->
+                    actions.editSavedVariable(item.id, replacement, freeze)
+                },
+            )
         }
-        AlertDialog(
-            onDismissRequest = { editRow = null },
-            title = { Text(item.label) },
-            text = {
-                OutlinedTextField(value = replacement,
-                    onValueChange = { if (it.length <= 96) replacement = it },
-                    label = { Text(stringResource(R.string.memory_saved_value)) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth())
-            },
-            confirmButton = {
-                TextButton(enabled = replacement.isNotBlank() && state.writeSupported &&
-                    state.savedValues[item.id]?.resolved == true,
-                    onClick = { actions.editSavedVariable(item.id, replacement); editRow = null }) {
-                    Text(stringResource(R.string.memory_editor_edit))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { editRow = null }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-        )
     }
+
     renameRow?.let { item ->
         var name by remember(item.id) { mutableStateOf(item.label) }
         AlertDialog(
@@ -1304,65 +1312,65 @@ private fun RuntimeWatchRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
-                    when {
-                        row.freezePaused -> Text(
-                            stringResource(R.string.memory_editor_freeze_paused),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                        row.freezeMode >= 0 -> Icon(
-                            painterResource(R.drawable.ic_lock),
-                            contentDescription = stringResource(R.string.memory_editor_freeze),
-                        )
-                        else -> RuntimeCandidateStatus(row.state, row.relocations)
-                    }
+                    RuntimeWatchStatus(row)
                 }
             } else {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        row.label.ifBlank { runtimeTypeShort(row.type) },
-                        style = MaterialTheme.typography.titleSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        row.valueText,
-                        style = runtimeMemoryDataTextStyle(),
-                        modifier = Modifier.weight(1f).padding(start = 8.dp),
-                        textAlign = TextAlign.End,
-                    )
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            row.label.ifBlank { runtimeTypeShort(row.type) },
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Row(
+                            modifier = Modifier.weight(1f).padding(start = 8.dp),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                row.valueText,
+                                style = runtimeMemoryDataTextStyle(),
+                                textAlign = TextAlign.End,
+                                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            RuntimeWatchStatus(row)
+                        }
+                    }
                     Text(
                         "${runtimeCandidateLocation(row.id, row.source, row.locationText)} · " +
                             runtimeTypeShort(row.type),
                         style = runtimeMemoryMetaTextStyle(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    when {
-                        row.freezePaused -> Text(
-                            stringResource(R.string.memory_editor_freeze_paused),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                        row.freezeMode >= 0 -> Icon(
-                            painterResource(R.drawable.ic_lock),
-                            contentDescription = stringResource(R.string.memory_editor_freeze),
-                        )
-                        else -> RuntimeCandidateStatus(row.state, row.relocations)
-                    }
                 }
-            }
             }
         }
     }
     HorizontalDivider()
 }
 
+
+@Composable
+private fun RuntimeWatchStatus(row: MemoryWatchRow) {
+    when {
+        row.freezePaused -> Text(
+            stringResource(R.string.memory_editor_freeze_paused),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+        row.freezeMode >= 0 -> Icon(
+            painterResource(R.drawable.ic_lock),
+            contentDescription = stringResource(R.string.memory_editor_freeze),
+        )
+        else -> RuntimeCandidateStatus(row.state, row.relocations)
+    }
+}
 
 @Composable
 private fun RuntimeSearchDialogBody(
@@ -1802,6 +1810,8 @@ private fun RuntimeUnknownSearchDialog(
 private fun RuntimeEditDialog(
     targets: List<MemoryEditTarget>,
     writeSupported: Boolean,
+    title: String? = null,
+    showFreeze: Boolean = true,
     onDismiss: () -> Unit,
     onApply: (String, Int, Boolean, Boolean, String) -> Unit,
 ) {
@@ -1866,7 +1876,7 @@ private fun RuntimeEditDialog(
                                 targets.size,
                                 targets.size,
                             )
-                        } else stringResource(R.string.memory_editor_edit),
+                        } else title ?: stringResource(R.string.memory_editor_edit),
                     )
                 },
                 showKeypad = true,
@@ -1921,7 +1931,7 @@ private fun RuntimeEditDialog(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    if (!batch) {
+                    if (!batch && showFreeze) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = freeze, onCheckedChange = { freeze = it })
                             Text(stringResource(R.string.memory_editor_freeze_after_edit))
@@ -2138,11 +2148,6 @@ internal fun RuntimeInspectorTab(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(
-                                    enabled = row.editable && snapshot.savedId == null &&
-                                        state.writeSupported && !state.busy,
-                                    onClick = { editLogicalRow = row },
-                                )
                                 .heightIn(min = 48.dp)
                                 .padding(horizontal = 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -2168,7 +2173,10 @@ internal fun RuntimeInspectorTab(
                             }
                             Text(
                                 row.valueText,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f)
+                                    .clickable(enabled = row.editable && state.writeSupported &&
+                                        !state.busy) { editLogicalRow = row }
+                                    .padding(vertical = 8.dp),
                                 textAlign = TextAlign.End,
                                 style = runtimeMemoryDataTextStyle(),
                             )
@@ -2188,6 +2196,7 @@ internal fun RuntimeInspectorTab(
                     snapshot = snapshot,
                     row = row,
                     actions = actions,
+                    writeSupported = state.writeSupported,
                     onDismiss = {
                         editLogicalRow = null
                     },
@@ -2232,65 +2241,30 @@ private fun RuntimeInspectorLogicalEditDialog(
     snapshot: MemoryInspectorSnapshot,
     row: MemoryInspectorLogicalRow,
     actions: MemoryEditorActions,
+    writeSupported: Boolean,
     onDismiss: () -> Unit,
 ) {
-    val spec = remember(row.type) { MemoryInputSpec.forType(row.type) }
-    var value by remember(row) {
-        mutableStateOf(TextFieldValue(row.valueText, TextRange(row.valueText.length)))
+    val target = remember(row) {
+        listOf(MemoryEditTarget(row.id, row.type, row.valueText, listOf(row.type), watch = true))
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = {
-            RuntimeSearchDialogBody(
-                title = {
-                    RuntimeInputDialogTitle(
-                        title = row.label.ifBlank { runtimeTypeShort(row.type) },
-                    )
-                },
-                showKeypad = true,
-                controls = { _ ->
-                    RuntimeSearchField(
-                        label = "${runtimeTypeShort(row.type)} · ${row.relativeOffset.formatRelativeOffset()}",
-                        value = value,
-                        onClick = {},
-                        onValueChange = { value = it },
-                        valueSpec = spec,
-                        modifier = Modifier.fillMaxWidth(),
-                        initialFocus = true,
-                    )
-                },
-                keypad = { landscape ->
-                    RuntimeSearchKeypad(
-                        landscape = landscape,
-                        allowGroup = false,
-                        valueSpec = spec,
-                        onToken = { value = runtimeInsertValidated(value, it, spec) },
-                        onBackspace = { value = runtimeBackspace(value) },
-                        onMove = { value = runtimeMove(value, it) },
-                        onClear = { value = TextFieldValue("", TextRange(0)) },
-                    )
-                },
-            )
-        },
-        textScrollable = true,
-        confirmButton = {
-            Button(
-                enabled = row.editable && spec.isComplete(value.text),
-                onClick = {
-                    actions.editInspectorValue(
-                        snapshot.candidateId,
-                        row.relativeOffset,
-                        row.type,
-                        row.expectedBits,
-                        value.text,
-                        snapshot.watchAnchor,
-                    )
-                    onDismiss()
-                },
-            ) { Text(stringResource(R.string.memory_editor_apply)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+    RuntimeEditDialog(
+        targets = target,
+        writeSupported = writeSupported && row.editable,
+        title = row.label.ifBlank { runtimeTypeShort(row.type) },
+        showFreeze = false,
+        onDismiss = onDismiss,
+        onApply = { replacement, _, _, _, _ ->
+            if (snapshot.savedId != null) {
+                actions.editSavedInspectorValue(
+                    snapshot.savedId, row.relativeOffset, row.type,
+                    row.expectedBits, replacement,
+                )
+            } else {
+                actions.editInspectorValue(
+                    snapshot.candidateId, row.relativeOffset, row.type,
+                    row.expectedBits, replacement, snapshot.watchAnchor,
+                )
+            }
         },
     )
 }
