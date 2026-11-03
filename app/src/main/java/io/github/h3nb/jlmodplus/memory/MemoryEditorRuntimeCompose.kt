@@ -162,6 +162,7 @@ internal fun MemoryEditorRuntimeRoot(
         var opacityDialog by remember { mutableStateOf(false) }
         val resultsListState = rememberLazyListState()
         val watchListState = rememberLazyListState()
+        val savedListState = rememberLazyListState()
         val inspectSelected = {
             state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.watchTab) }
             Unit
@@ -170,6 +171,7 @@ internal fun MemoryEditorRuntimeRoot(
             when (it) {
                 MemoryEditorTab.RESULTS -> actions.setWatchTab(false)
                 MemoryEditorTab.WATCH -> actions.setWatchTab(true)
+                MemoryEditorTab.SAVED -> actions.setSavedTab()
                 MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
             }
         }
@@ -221,6 +223,9 @@ internal fun MemoryEditorRuntimeRoot(
                             )
                             MemoryEditorTab.WATCH -> RuntimeWatchTab(
                                 state, actions, watchListState, compactResults, Modifier.weight(1f),
+                            )
+                            MemoryEditorTab.SAVED -> RuntimeSavedVariablesTab(
+                                state, actions, savedListState, Modifier.weight(1f),
                             )
                             MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
                                 state, actions, Modifier.weight(1f),
@@ -313,6 +318,7 @@ private fun RuntimeMemoryTabs(
 ) {
     val searchLabel = stringResource(R.string.memory_editor_search_tab)
     val watchLabel = stringResource(R.string.memory_editor_watch)
+    val savedLabel = stringResource(R.string.memory_saved_tab)
     val inspectorLabel = stringResource(R.string.memory_editor_inspector)
     SecondaryScrollableTabRow(
         selectedTabIndex = state.activeTab.ordinal,
@@ -330,6 +336,7 @@ private fun RuntimeMemoryTabs(
                 modifier = Modifier.semantics { contentDescription = when (tab) {
                     MemoryEditorTab.RESULTS -> searchLabel
                     MemoryEditorTab.WATCH -> watchLabel
+                    MemoryEditorTab.SAVED -> savedLabel
                     MemoryEditorTab.INSPECTOR -> inspectorLabel
                 } },
                 text = {
@@ -337,6 +344,7 @@ private fun RuntimeMemoryTabs(
                         stringResource(when (tab) {
                             MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
                             MemoryEditorTab.WATCH -> R.string.memory_editor_watch
+                            MemoryEditorTab.SAVED -> R.string.memory_saved_tab
                             MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
                         }),
                         color = if (enabled) Color.Unspecified
@@ -442,6 +450,7 @@ private fun RuntimeSearchResultsTab(
     modifier: Modifier = Modifier,
 ) {
     var knownDialog by remember { mutableStateOf(false) }
+    var saveDialog by remember { mutableStateOf(false) }
     var unknownDialog by remember { mutableStateOf(false) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
@@ -477,6 +486,8 @@ private fun RuntimeSearchResultsTab(
         val extraActions = listOf(
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 selectedRows.size == 1 && !state.busy, onInspectSelected),
+            RuntimeToolbarAction(R.drawable.ic_save, R.string.memory_saved_save,
+                selectedRows.size == 1 && !state.busy && state.supported) { saveDialog = true },
             RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
                 state.canUndo && !state.busy, actions::undo),
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
@@ -723,7 +734,177 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
+    if (saveDialog) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { saveDialog = false },
+            title = { Text(stringResource(R.string.memory_saved_save)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.memory_saved_explanation))
+                    OutlinedTextField(
+                        value = name, onValueChange = { if (it.length <= 64) name = it },
+                        label = { Text(stringResource(R.string.memory_saved_name)) },
+                        singleLine = true, modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = name.isNotBlank(), onClick = {
+                    actions.saveSelectedVariable(name.trim())
+                    saveDialog = false
+                }) { Text(stringResource(R.string.memory_saved_save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { saveDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+
 }
+
+
+@Composable
+private fun RuntimeSavedVariablesTab(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+) {
+    var editRow by remember { mutableStateOf<SavedVariableRow?>(null) }
+    var renameRow by remember { mutableStateOf<SavedVariableRow?>(null) }
+    var deleteId by remember { mutableStateOf<String?>(null) }
+    Column(modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.memory_saved_tab),
+                style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            TextButton(onClick = actions::refreshSavedVariables, enabled = !state.busy) {
+                Text(stringResource(R.string.memory_editor_refresh))
+            }
+        }
+        state.savedError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(12.dp))
+        }
+        if (state.savedVariables.isEmpty() && state.savedError == null) {
+            Text(stringResource(R.string.memory_saved_empty), modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().weight(1f)) {
+            items(state.savedVariables, key = { it.id }) { item ->
+                val value = state.savedValues[item.id]
+                val ready = value?.resolved == true
+                val label = if (ready) {
+                    value.value + " (" + runtimeTypeShort(value.type) + ")"
+                } else {
+                    value?.detail?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.memory_saved_not_ready)
+                }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f).padding(start = 8.dp)) {
+                        Text(item.label, style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(item.path, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(label, style = MaterialTheme.typography.bodySmall,
+                            color = if (ready) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2)
+                    }
+                    TextButton(enabled = !state.busy, onClick = {
+                        if (ready) editRow = item else actions.resolveSavedVariable(item.id)
+                    }) {
+                        Text(stringResource(if (ready) R.string.memory_editor_edit
+                            else R.string.memory_saved_retry))
+                    }
+                    IconButton(enabled = !state.busy, onClick = { renameRow = item }) {
+                        Icon(painterResource(R.drawable.ic_edit),
+                            contentDescription = stringResource(R.string.memory_saved_rename))
+                    }
+                    IconButton(enabled = !state.busy, onClick = { deleteId = item.id }) {
+                        Icon(painterResource(R.drawable.ic_delete),
+                            contentDescription = stringResource(R.string.memory_editor_remove))
+                    }
+                }
+                HorizontalDivider()
+            }
+        }
+    }
+    editRow?.let { item ->
+        var replacement by remember(item.id) {
+            mutableStateOf(state.savedValues[item.id]?.value.orEmpty())
+        }
+        AlertDialog(
+            onDismissRequest = { editRow = null },
+            title = { Text(item.label) },
+            text = {
+                OutlinedTextField(value = replacement,
+                    onValueChange = { if (it.length <= 96) replacement = it },
+                    label = { Text(stringResource(R.string.memory_saved_value)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth())
+            },
+            confirmButton = {
+                TextButton(enabled = replacement.isNotBlank() &&
+                    state.savedValues[item.id]?.resolved == true,
+                    onClick = { actions.editSavedVariable(item.id, replacement); editRow = null }) {
+                    Text(stringResource(R.string.memory_editor_edit))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editRow = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+    renameRow?.let { item ->
+        var name by remember(item.id) { mutableStateOf(item.label) }
+        AlertDialog(
+            onDismissRequest = { renameRow = null },
+            title = { Text(stringResource(R.string.memory_saved_rename)) },
+            text = {
+                OutlinedTextField(value = name,
+                    onValueChange = { if (it.length <= 64) name = it },
+                    label = { Text(stringResource(R.string.memory_saved_name)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth())
+            },
+            confirmButton = {
+                TextButton(enabled = name.isNotBlank(), onClick = {
+                    actions.renameSavedVariable(item.id, name); renameRow = null
+                }) { Text(stringResource(R.string.memory_saved_rename)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { renameRow = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+    if (deleteId != null) {
+        AlertDialog(
+            onDismissRequest = { deleteId = null },
+            title = { Text(stringResource(R.string.memory_editor_remove)) },
+            text = { Text(stringResource(R.string.memory_saved_delete_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteId?.let(actions::deleteSavedVariable)
+                    deleteId = null
+                }) { Text(stringResource(R.string.memory_editor_remove)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteId = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
 
 @Composable
 private fun runtimeCandidateLocation(id: Long, source: MemoryCandidateSource, fallback: String): String {
