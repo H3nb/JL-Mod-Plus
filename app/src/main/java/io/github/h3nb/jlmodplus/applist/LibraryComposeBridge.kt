@@ -18,7 +18,6 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.librarydb.LibraryBundleComponents
-import java.util.function.Consumer
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
@@ -416,6 +415,11 @@ interface LibraryActions {
     fun onRetryLibrary()
 }
 
+/** A Java-callable selection callback without requiring java.util.function on API 23. */
+fun interface LibraryBundleExportHandler {
+    fun onExport(components: LibraryBundleComponents)
+}
+
 class LibraryComposeController(
     composeView: ComposeView,
     private val actions: LibraryActions,
@@ -435,7 +439,7 @@ class LibraryComposeController(
     @Volatile
     private var controllerBackAvailable = false
     private var controllerEventSequence = 0L
-    private var pendingBundleExport by mutableStateOf<Consumer<LibraryBundleComponents>?>(null)
+    private var pendingBundleExport by mutableStateOf<LibraryBundleExportHandler?>(null)
     private var state by mutableStateOf(
         LibraryUiState(
             layout = initialLayout,
@@ -472,7 +476,7 @@ class LibraryComposeController(
                         onDismiss = { pendingBundleExport = null },
                         onConfirm = { options ->
                             pendingBundleExport = null
-                            request.accept(options)
+                            request.onExport(options)
                         },
                     )
                 }
@@ -480,7 +484,7 @@ class LibraryComposeController(
         }
     }
 
-    fun showBundleOptions(onExport: Consumer<LibraryBundleComponents>) {
+    fun showBundleOptions(onExport: LibraryBundleExportHandler) {
         pendingBundleExport = onExport
     }
 

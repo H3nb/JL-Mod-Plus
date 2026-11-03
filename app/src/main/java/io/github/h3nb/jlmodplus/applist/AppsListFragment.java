@@ -77,7 +77,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
@@ -1310,7 +1309,7 @@ public class AppsListFragment extends Fragment {
                 .commitAllowingStateLoss();
     }
 
-    private void showBundleOptions(@NonNull Consumer<LibraryBundleComponents> onExport) {
+    private void showBundleOptions(@NonNull LibraryBundleExportHandler onExport) {
         LibraryComposeController controller = composeController;
         if (controller != null) controller.showBundleOptions(onExport);
     }
