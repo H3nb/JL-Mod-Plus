@@ -54,7 +54,9 @@ class LibrarySelectiveBundleTest {
         File(config, "saved-variables.json.bak").writeText(previous)
         val data = File(target, "data/destination").apply { mkdirs() }
         File(data, "old.sav").writeText("existing save")
-        LibraryAppBundleImporter.restore(prepared, target, "destination")
+        val imported = LibraryAppBundleImporter.restore(prepared, target, "destination")
+        assertEquals(1, imported.savedAdded)
+        assertEquals(0, imported.savedSkipped)
         assertEquals("existing configuration", File(config, "config.json").readText())
         assertEquals("existing save", File(data, "old.sav").readText())
         val savedBytes = File(config, "saved-variables.json").readBytes()

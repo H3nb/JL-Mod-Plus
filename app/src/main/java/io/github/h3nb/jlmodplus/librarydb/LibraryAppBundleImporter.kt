@@ -72,7 +72,7 @@ object LibraryAppBundleImporter {
         val description: String?,
     )
 
-    data class RestoreResult(val iconRevision: Long?)
+    data class RestoreResult(val iconRevision: Long?, val savedAdded: Int? = null, val savedSkipped: Int? = null)
 
     @JvmStatic
     @Throws(IOException::class)
@@ -682,6 +682,8 @@ object LibraryAppBundleImporter {
         val root = emulatorDir.canonicalFile
         val transactionId = UUID.randomUUID().toString()
         val replacements = ArrayList<Replacement>(MAX_REPLACEMENTS)
+        var savedAdded: Int? = null
+        var savedSkipped: Int? = null
         val configTarget = File(File(root, "configs"), storageKey)
         // Partial Saved/skin imports preserve the existing config directory, then change
         // only the requested components in one recoverable directory publication.
@@ -778,7 +780,10 @@ object LibraryAppBundleImporter {
                         val contents = if (prepared.configDir == null) {
                             val committed = SavedVariablesDocument.committedFile(
                                 configReplacement.target)
-                            SavedVariablesDocument.merge(committed?.readBytes(), imported).bytes
+                            val merged = SavedVariablesDocument.merge(committed?.readBytes(), imported)
+                            savedAdded = merged.added
+                            savedSkipped = merged.skipped
+                            merged.bytes
                         } else imported
                         savedNames.forEach { name ->
                             deleteIfExists(File(configReplacement.staged, name),
@@ -814,7 +819,7 @@ object LibraryAppBundleImporter {
                 android.util.Log.w("LibraryAppBundleImporter",
                     "Committed restore cleanup will be retried", cleanupError)
             }
-            return RestoreResult(iconRevision)
+            return RestoreResult(iconRevision, savedAdded, savedSkipped)
         } catch (error: Throwable) {
             if (!transaction.commitMarker.exists()) {
                 try {
