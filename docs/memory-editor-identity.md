@@ -1,7 +1,6 @@
 # Managed Memory Editor candidate identity
 
-This document records the currently supported candidate-identity contract and the boundary
-for future saved-cheat work. It does not define a saved-cheat format or enable persistence.
+This document records runtime candidate identity and the separately supported Saved Variables contract. Saved definitions are not Watch entries.
 
 ## Runtime target identity
 
@@ -61,21 +60,17 @@ diagnostic location text remains available independently, but must not be parsed
 to construct structural identity. An observation may become stale immediately
 after it is read because the guest is concurrent; refreshing revalidates it.
 
-## Boundary for future resumable targets
+## Persistent Saved locator contract
 
-A future resolver may investigate a selected candidate on demand with bounded
-memory, traversal depth, cancellation and identity-based visited tracking.
-It must establish a complete, unambiguous root-to-target path, not infer one
-from coincidentally equal values or the order in which objects were discovered.
-Static paths need declaring class, field name, type and array index; instance
-paths also need a route from a trusted root to the specific instance. No
-candidate is claimed portable until tested in a new runtime. Such a resolver
-must not force initialization of a guest class that is not ready.
+Saved definitions contain a name, stable record ID and versioned root-relative locator. Each ordered segment identifies the exact declaring class, field name, Java type/descriptor and optional qualified `Object[]` index; the terminal target is a supported primitive field or a direct static primitive-array element. No field slot, runtime handle, object reference, search revision or last-seen value is persisted.
 
-A future persistent record will need independent installed-MIDlet identity
-and compatible source-JAR identity, plus structural path verification. Nothing
-in the current contract serializes candidates, auto-applies writes or introduces
-raw-address scanning, JVM instrumentation, or additional MIDlet bytecode hooks.
+Capture requires a complete current verification, and Resolve checks the exact declaring class/type/staticness and every rooted reference edge in the guest process. For initialized static roots, resolving uses only the current runtime's already-initialized class registry; it never initializes a guest class. Bound runtime owners remain weak and pinned to the resolved path: a replaced reference causes a Changed failure rather than reselecting a different object. No automatic edit or Watch/Freeze creation occurs. A new launch resolves the structural path afresh, which cannot prove the same semantic character if party order has changed.
+
+Saved storage is main-process-owned, under `configs/<storageKey>/saved-variables.json`, with an AtomicFile document capped at 64 records/64 KiB. A separate marker in the installed converted workdir prevents a copied config or a reused workdir from silently acquiring the original installation's records. Every access checks the current Library app ID/workdir, and the stored record also checks source-JAR SHA-256 and MIDlet entry class. Mutations use `InstalledAppWriteGuard`. Corrupt, unsupported-version, mismatched or truncated files are errors and are not overwritten. The experimental `saved-variables-prototype.json` file is isolated and not migrated.
+
+The definition can be listed without running guest code; Capture/Resolve/Read/checked Edit require a live runtime. Deleting a definition also releases its runtime binding, and per-session bindings are invalidated on runtime exit. Data may be incidentally included by the existing full-config bundle exporter but **selective Saved Variables sharing is not implemented**.
+
+Paths through unsupported containers, arbitrary untraced arrays, multidimensional arrays or a fabricated root are rejected. The saved resolver does not add a graph-recovery pass, raw-address scanner, VM hooks or automatic freeze/write behavior.
 
 ## Accounting and resource bounds
 

@@ -568,6 +568,8 @@ internal class MemoryEditorComposeController(
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
                 messageIsError = false,
             )
+            if (state.savedTab && state.savedVariables.isNotEmpty()
+                && state.savedValues.isEmpty() && savedAuthority != null) refreshSavedVariables()
         }
     }
 
