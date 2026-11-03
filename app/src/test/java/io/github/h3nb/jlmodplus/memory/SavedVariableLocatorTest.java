@@ -286,4 +286,82 @@ public class SavedVariableLocatorTest {
         }
     }
 
+
+    @Test public void frozenSavedReferenceStopsWritingAfterOwnerReplacement() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            ManagedJavaMemoryEngine.SavedLocator locator =
+                    new ManagedJavaMemoryEngine.SavedLocator(
+                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
+                        GuestRoot.class.getName(),
+                        new ManagedJavaMemoryEngine.SavedField[]{
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestPlayer.class.getName(), "coins", "int")
+                        });
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.resolveSavedLocator(FIRST, locator, "saved-coins-freeze", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.freezeSaved(FIRST, "saved-coins-freeze", "Coins", 0L).code);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            assertEquals(1, engine.watchPage(FIRST).freezeModes.length);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
+            GuestPlayer oldOwner = root.player;
+            root.player = new GuestPlayer();
+            root.player.coins = 55;
+            oldOwner.coins = 66;
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, engine.freezeTick(FIRST, 0L).code);
+            assertEquals(66, oldOwner.coins);
+            assertEquals(55, root.player.coins);
+            assertTrue(engine.watchPage(FIRST).freezePaused[0]);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
+    @Test public void savedInspectorReadsSiblingsAndCapturesTheirTypedPath() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            ManagedJavaMemoryEngine.SavedLocator locator =
+                    new ManagedJavaMemoryEngine.SavedLocator(
+                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
+                        GuestRoot.class.getName(),
+                        new ManagedJavaMemoryEngine.SavedField[]{
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestPlayer.class.getName(), "coins", "int")
+                        });
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.resolveSavedLocator(FIRST, locator, "saved-coins-inspect", 0L).code);
+            ManagedJavaMemoryEngine.ManagedInspection inspected =
+                engine.inspectSaved(FIRST, "saved-coins-inspect", 10);
+            assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+            int sibling = -1;
+            for (int i = 0; i < inspected.labels.length; i++) {
+                if (inspected.labels[i].contains("flag")) sibling = inspected.relativeOffsets[i];
+            }
+            assertTrue("Inspector must include a real primitive sibling", sibling != -1);
+            ManagedJavaMemoryEngine.SavedLocator adjacent =
+                engine.captureSavedNeighborLocator(FIRST, "saved-coins-inspect", sibling);
+            assertNotNull(adjacent);
+            assertEquals("flag", adjacent.fields[adjacent.fields.length - 1].name);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.resolveSavedLocator(FIRST, adjacent, "saved-player-flag", 0L).code);
+            assertEquals("272727", engine.readSaved(FIRST, "saved-player-flag").value);
+            assertEquals(0, engine.watchPage(FIRST).ids.length);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
 }
