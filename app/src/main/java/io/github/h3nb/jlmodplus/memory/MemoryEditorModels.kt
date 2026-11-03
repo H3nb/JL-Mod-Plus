@@ -352,7 +352,7 @@ internal enum class MemoryEditorTab { RESULTS, WATCH, SAVED, INSPECTOR }
 
 internal data class SavedVariableRow(val id: String, val label: String, val path: String)
 
-internal enum class SavedVariableStatus { RESOLVED, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
+internal enum class SavedVariableStatus { RESOLVED, REBOUND, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
 
 internal data class SavedVariableRuntimeValue(
     val code: Int,
@@ -360,9 +360,11 @@ internal data class SavedVariableRuntimeValue(
     val value: String = "",
     val detail: String = "",
     val changedOwner: Boolean = false,
+    val rebound: Boolean = false,
 ) {
     val resolved: Boolean get() = code == MemoryEngineContract.RESULT_OK
     val status: SavedVariableStatus get() = when {
+        resolved && rebound -> SavedVariableStatus.REBOUND
         resolved -> SavedVariableStatus.RESOLVED
         changedOwner -> SavedVariableStatus.CHANGED
         code == MemoryEngineContract.RESULT_NO_SESSION ||

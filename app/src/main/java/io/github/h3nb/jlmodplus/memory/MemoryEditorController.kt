@@ -789,12 +789,14 @@ internal class MemoryEditorComposeController(
         }
         return response.getParcelableArrayList<Bundle>("items").orEmpty().map { record ->
             val locator = record.getBundle("locator") ?: error("Saved locator is missing")
-            val names = locator.getStringArray("savedNames").orEmpty()
-            val indices = locator.getIntArray("savedFieldIndices")
-            val description = names.mapIndexed { index, name ->
-                name + (indices?.getOrNull(index)?.takeIf { it >= 0 }?.let { "[$it]" } ?: "")
-            }.joinToString(" → ") +
-                (locator.getInt("savedArrayIndex", -1).takeIf { it >= 0 }?.let { "[$it]" } ?: "")
+            val steps = locator.getParcelableArrayList<Bundle>("savedSteps").orEmpty()
+            val description = steps.joinToString(" → ") { step ->
+                when (step.getInt("kind")) {
+                    1 -> step.getString("name").orEmpty()
+                    2 -> "[${step.getInt("index")}]"
+                    else -> "?"
+                }
+            }
             SavedVariableRow(record.getString("id").orEmpty(),
                 record.getString("label").orEmpty(), description) to locator
         }
@@ -878,6 +880,8 @@ internal class MemoryEditorComposeController(
                                 value = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
                                     MemoryEngineContract.RESULT_OK
                                 ) savedValue(engine.readSaved(token, id), bound = true)
+                                    .copy(rebound = value.code ==
+                                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE)
                                 else savedValue(attempt)
                             }
                             value
@@ -891,7 +895,12 @@ internal class MemoryEditorComposeController(
                         if (destroyed || !state.visible || !state.savedTab ||
                             generation != savedGeneration || connection != connectionGeneration ||
                             service !== engine || state.runtimeToken != token) return@post
-                        state = state.copy(savedValues = state.savedValues + values)
+                        val merged = values.mapValues { (id, current) ->
+                            if (current.resolved &&
+                                (current.rebound || state.savedValues[id]?.rebound == true)
+                            ) current.copy(rebound = true) else current
+                        }
+                        state = state.copy(savedValues = state.savedValues + merged)
                     }
                 }
             } finally {

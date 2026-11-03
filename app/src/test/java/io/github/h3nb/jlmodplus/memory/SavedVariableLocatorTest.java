@@ -37,8 +37,8 @@ public class SavedVariableLocatorTest {
                 if (candidate != null
                         && candidate.rootKind ==
                             ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC
-                        && candidate.fields.length == 1
-                        && "shared".equals(candidate.fields[0].name)) saved = candidate;
+                        && candidate.steps.length == 1
+                        && "shared".equals(candidate.steps[0].field.name)) saved = candidate;
             }
             assertNotNull(saved, "A searched static field must expose a saved descriptor");
             assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(FIRST, saved,
@@ -142,8 +142,8 @@ public class SavedVariableLocatorTest {
             assertNotNull(saved);
             assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC, saved.rootKind);
             assertEquals("b", saved.rootClass);
-            assertEquals("f", saved.fields[0].name);
-            assertEquals(target.getType().getName(), saved.fields[0].type);
+            assertEquals("f", saved.steps[0].field.name);
+            assertEquals(target.getType().getName(), saved.steps[0].field.type);
             assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
                     FIRST, saved, "duplicate-static-field", 0L).code);
             assertEquals(0, engine.watchPage(FIRST).ids.length);
@@ -186,8 +186,8 @@ public class SavedVariableLocatorTest {
             descriptor = first.captureSavedLocator(firstToken, search.revision, id);
             assertNotNull(descriptor, "Exact, live static array owner must be capturable");
             assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC, descriptor.rootKind);
-            assertEquals(34, descriptor.arrayIndex);
-            assertEquals("[B", descriptor.fields[0].type);
+            assertEquals(34, descriptor.steps[1].index);
+            assertEquals("[B", descriptor.steps[0].field.type);
             assertEquals(StaticNeeds.class.getName(), descriptor.rootClass);
             assertEquals(MemoryEngineContract.RESULT_OK, first.resolveSavedLocator(firstToken, descriptor,
                             "static-array-hunger", 0L).code);
@@ -254,13 +254,13 @@ public class SavedVariableLocatorTest {
             path = first.captureSavedLocator(FIRST, search.revision, id);
             assertNotNull(path, "Search-selected character must have a rooted path");
             assertEquals(ManagedJavaMemoryEngine.SavedLocator.ROOT_INITIALIZED_STATIC, path.rootKind);
-            assertEquals(4, path.fields.length);
-            assertEquals(4, path.fieldIndices.length);
-            assertEquals(-1, path.fieldIndices[0]);
-            assertEquals(2, path.fieldIndices[1]);
-            assertEquals(-1, path.fieldIndices[2]);
-            assertEquals(-1, path.fieldIndices[3]);
-            assertEquals("hp", path.fields[3].name);
+            assertEquals(5, path.steps.length);
+            assertEquals(ManagedJavaMemoryEngine.SavedStep.FIELD, path.steps[0].kind);
+            assertEquals(ManagedJavaMemoryEngine.SavedStep.FIELD, path.steps[1].kind);
+            assertEquals(2, path.steps[2].index);
+            assertEquals(ManagedJavaMemoryEngine.SavedStep.FIELD, path.steps[3].kind);
+            assertEquals(ManagedJavaMemoryEngine.SavedStep.FIELD, path.steps[4].kind);
+            assertEquals("hp", path.steps[4].field.name);
             assertEquals(MemoryEngineContract.RESULT_OK, first.resolveSavedLocator(
                     FIRST, path, "ninja-hp-owner", 0L).code);
             assertEquals("195", first.readSaved(FIRST, "ninja-hp-owner").value);
@@ -436,6 +436,87 @@ public class SavedVariableLocatorTest {
         }
     }
 
+    static final class ArrayRoot {
+        int[] health = { 8, 678901, 16 };
+        byte[][] inventory = { { 2, 7 }, { 3, 95 } };
+    }
+
+    @Test public void rootedPrimitiveArraysAndNestedIndicesPersistThroughRestart() {
+        ArrayRoot root = new ArrayRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        ManagedJavaMemoryEngine.SavedLocator oneDimensional = null, nested = null;
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult found = engine.startExact(FIRST,
+                    MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+                    678901L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, found.code);
+            for (long id : engine.resultPage(FIRST, found.revision, 0, 100).ids) {
+                ManagedJavaMemoryEngine.SavedLocator captured =
+                        engine.captureSavedLocator(FIRST, found.revision, id);
+                if (captured != null && captured.steps.length == 2
+                        && captured.steps[1].kind == ManagedJavaMemoryEngine.SavedStep.INDEX)
+                    oneDimensional = captured;
+            }
+            assertNotNull(oneDimensional, "Instance primitive array must be bookmarkable");
+            assertEquals(ManagedJavaMemoryEngine.SavedStep.INDEX, oneDimensional.steps[1].kind);
+            assertEquals("[I", oneDimensional.steps[1].arrayType);
+            assertEquals(1, oneDimensional.steps[1].index);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.resolveSavedLocator(FIRST, oneDimensional, "array-int", 0L).code);
+            assertEquals("678901", engine.readSaved(FIRST, "array-int").value);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.editSaved(FIRST, "array-int", "1234", 0L).code);
+            assertEquals(1234, root.health[1]);
+
+            found = engine.startExact(FIRST, MemoryEngineContract.TYPE_BYTE,
+                    MemoryEngineContract.PREDICATE_EQUAL, 95L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, found.code);
+            for (long id : engine.resultPage(FIRST, found.revision, 0, 100).ids) {
+                ManagedJavaMemoryEngine.SavedLocator captured =
+                        engine.captureSavedLocator(FIRST, found.revision, id);
+                if (captured != null && captured.steps.length == 3
+                        && captured.steps[2].kind == ManagedJavaMemoryEngine.SavedStep.INDEX)
+                    nested = captured;
+            }
+            assertNotNull(nested, "Nested primitive array must have a typed rooted path");
+            assertEquals("[[B", nested.steps[1].arrayType);
+            assertEquals("[B", nested.steps[2].arrayType);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.resolveSavedLocator(FIRST, nested, "array-nested", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.editSaved(FIRST, "array-nested", "20", 0L).code);
+            assertEquals(20, root.inventory[1][1]);
+            root.inventory = new byte[][]{{2, 7}, {3, 66}};
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.readSaved(FIRST, "array-nested").code);
+            engine.releaseSaved(FIRST, "array-nested");
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.resolveSavedLocator(FIRST, nested, "array-nested", 0L).code);
+            assertEquals("66", engine.readSaved(FIRST, "array-nested").value);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+        root.health[1] = 678901;
+        root.inventory = new byte[][]{{2, 7}, {3, 95}};
+        ManagedJavaMemoryEngine nextEngine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(NEXT, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(NEXT, root);
+        try {
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    nextEngine.resolveSavedLocator(NEXT, oneDimensional, "array-int", 0L).code);
+            assertEquals("678901", nextEngine.readSaved(NEXT, "array-int").value);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    nextEngine.resolveSavedLocator(NEXT, nested, "array-nested", 0L).code);
+            assertEquals("95", nextEngine.readSaved(NEXT, "array-nested").value);
+        } finally {
+            nextEngine.runtimeClosed(NEXT);
+            MemoryDiscoveryBridge.close(NEXT);
+        }
+    }
+
     @Test public void savedInspectorReadsSiblingsAndCapturesTheirTypedPath() {
         GuestRoot root = new GuestRoot();
         ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
@@ -466,7 +547,7 @@ public class SavedVariableLocatorTest {
             ManagedJavaMemoryEngine.SavedLocator adjacent =
                 engine.captureSavedNeighborLocator(FIRST, "saved-coins-inspect", sibling);
             assertNotNull(adjacent);
-            assertEquals("flag", adjacent.fields[adjacent.fields.length - 1].name);
+            assertEquals("flag", adjacent.steps[adjacent.steps.length - 1].field.name);
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.resolveSavedLocator(FIRST, adjacent, "saved-player-flag", 0L).code);
             assertEquals("272727", engine.readSaved(FIRST, "saved-player-flag").value);

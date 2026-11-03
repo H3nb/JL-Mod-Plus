@@ -878,6 +878,7 @@ private fun RuntimeSavedVariablesTab(
                 val editEnabled = value?.resolved == true && state.writeSupported && !state.busy
                 val statusText = stringResource(when (status) {
                     SavedVariableStatus.RESOLVED -> R.string.memory_saved_tab
+                    SavedVariableStatus.REBOUND -> R.string.memory_saved_rebound
                     SavedVariableStatus.NOT_READY -> R.string.memory_saved_not_ready
                     SavedVariableStatus.CHANGED -> R.string.memory_saved_changed
                     SavedVariableStatus.INCOMPATIBLE -> R.string.memory_saved_incompatible
@@ -900,6 +901,10 @@ private fun RuntimeSavedVariablesTab(
                             Text(item.path, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (value?.status == SavedVariableStatus.REBOUND) {
+                                Text(statusText, style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                             if (value?.resolved != true) {
                                 Text(
                                     statusText + (value?.detail?.takeIf(String::isNotBlank)
