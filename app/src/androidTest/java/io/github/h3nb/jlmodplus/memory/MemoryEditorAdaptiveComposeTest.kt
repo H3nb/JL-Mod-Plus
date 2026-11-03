@@ -42,6 +42,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.R
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -53,6 +55,46 @@ import org.junit.Test
 @OptIn(ExperimentalTestApi::class)
 class MemoryEditorAdaptiveComposeTest {
     @get:Rule val rule = createComposeRule()
+
+    @Test fun savedEditKeepsDraftWhenLiveValueChangesAndPausesRebindingUntilDismissed() {
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            runtimeToken = 1L, savedTab = true,
+            savedVariables = listOf(SavedVariableRow("hp", "Hit points", "guest.Game.hp")),
+            savedValues = mapOf("hp" to SavedVariableRuntimeValue(
+                MemoryEngineContract.RESULT_OK, MemoryEngineContract.TYPE_INT, "42",
+            )),
+        ))
+        val editStates = mutableListOf<String?>()
+        val actions = object : TestMemoryEditorActions() {
+            override fun setSavedEditActive(id: String?) { editStates.add(id) }
+        }
+        rule.setContent {
+            JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) }
+        }
+        rule.onNodeWithText("Hit points").performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("999")
+        rule.runOnIdle {
+            state.value = state.value.copy(savedValues = mapOf(
+                "hp" to SavedVariableRuntimeValue(
+                    MemoryEngineContract.RESULT_OK, MemoryEngineContract.TYPE_INT, "35",
+                ),
+            ))
+        }
+        rule.onNode(hasSetTextAction()).assertTextContains("999")
+        rule.runOnIdle {
+            state.value = state.value.copy(savedValues = mapOf(
+                "hp" to SavedVariableRuntimeValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE),
+            ))
+        }
+        rule.onNode(hasSetTextAction()).assertTextContains("999")
+        rule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation().targetContext
+                .getString(R.string.memory_editor_save),
+        ).assertIsNotEnabled()
+        rule.onNodeWithText("Cancel").performClick()
+        rule.runOnIdle { assertEquals(listOf("hp", null), editStates) }
+    }
 
     @Test fun inspectorTabOnlyEnablesForOneSelectedCandidate() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext

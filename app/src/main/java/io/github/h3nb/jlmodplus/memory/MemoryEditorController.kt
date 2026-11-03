@@ -59,6 +59,7 @@ internal class MemoryEditorComposeController(
     @Volatile private var savedGeneration = 0L
     private var savedLocators: Map<String, Bundle> = emptyMap()
     private var savedRefreshPending = false
+    @Volatile private var savedEditId: String? = null
     private var hostForeground = true
     private var nextSavedResolveAt = 0L
     private val savedConnection = object : ServiceConnection {
@@ -304,6 +305,7 @@ internal class MemoryEditorComposeController(
         stateRequestGeneration.incrementAndGet()
         savedGeneration++
         savedRefreshPending = false
+        savedEditId = null
         visiblePageRequestGeneration++
         visiblePageRequestPending = false
         visiblePageRequestInFlightGeneration = 0L
@@ -317,6 +319,7 @@ internal class MemoryEditorComposeController(
         destroyed = true
         savedGeneration++
         savedRefreshPending = false
+        savedEditId = null
         savedAuthority = null
         if (savedBound) {
             runCatching { context.unbindService(savedConnection) }
@@ -841,8 +844,8 @@ internal class MemoryEditorComposeController(
 
     /** The existing editor tick owns Saved polling; never reload definitions on every frame. */
     private fun refreshSavedLive() {
-        if (savedRefreshPending || destroyed || !hostForeground || !state.visible || !state.savedTab ||
-            state.busy || savedLocators.isEmpty()) return
+        if (savedRefreshPending || savedEditId != null || destroyed || !hostForeground ||
+            !state.visible || !state.savedTab || state.busy || savedLocators.isEmpty()) return
         val engine = service ?: return
         val token = state.runtimeToken
         if (token == 0L) return
@@ -855,11 +858,12 @@ internal class MemoryEditorComposeController(
         runIpc {
             try {
                 locators.chunked(8).forEach { batch ->
-                    if (generation != savedGeneration) return@runIpc
+                    if (generation != savedGeneration || savedEditId != null) return@runIpc
                     val values = batch.associate { (id, locator) ->
                         val observed = runCatching {
                             var value = savedValue(engine.readSaved(token, id), bound = true)
-                            if (retry && (value.code == MemoryEngineContract.RESULT_NO_SESSION ||
+                            if (retry && savedEditId == null &&
+                                (value.code == MemoryEngineContract.RESULT_NO_SESSION ||
                                 value.code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE)) {
                                 if (value.code == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
                                     engine.releaseSaved(token, id)
@@ -947,6 +951,19 @@ internal class MemoryEditorComposeController(
                     message = if (value.resolved) null else value.detail,
                     messageIsError = !value.resolved)
             }
+        }
+    }
+
+    override fun setSavedEditActive(id: String?) {
+        if (savedEditId == id) return
+        savedEditId = id
+        if (id != null) {
+            // Invalidate queued Saved updates and resolution attempts from the old tick.
+            savedGeneration++
+            savedRefreshPending = false
+        } else {
+            nextSavedResolveAt = 0L
+            refreshSavedLive()
         }
     }
 

@@ -70,6 +70,7 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
@@ -776,6 +777,11 @@ private fun RuntimeSearchResultsTab(
 }
 
 
+private data class SavedEditDraft(
+    val row: SavedVariableRow,
+    val targets: List<MemoryEditTarget>,
+)
+
 @Composable
 private fun RuntimeSavedVariablesTab(
     state: MemoryEditorUiState,
@@ -783,7 +789,18 @@ private fun RuntimeSavedVariablesTab(
     listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
-    var editRow by remember { mutableStateOf<SavedVariableRow?>(null) }
+    var editDraft by remember { mutableStateOf<SavedEditDraft?>(null) }
+    fun openSavedEdit(row: SavedVariableRow) {
+        val value = state.savedValues[row.id]?.takeIf { it.resolved } ?: return
+        if (!state.writeSupported || state.busy) return
+        // Stop automatic Saved rebinding before displaying an editable snapshot.
+        actions.setSavedEditActive(row.id)
+        editDraft = SavedEditDraft(
+            row, listOf(MemoryEditTarget(
+                0L, value.type, value.value, listOf(value.type), watch = true,
+            )),
+        )
+    }
     var renameRow by remember { mutableStateOf<SavedVariableRow?>(null) }
     var deleteIds by remember { mutableStateOf<List<String>?>(null) }
     var moreMenu by remember { mutableStateOf(false) }
@@ -798,7 +815,7 @@ private fun RuntimeSavedVariablesTab(
     Column(modifier.fillMaxWidth()) {
         val actionsForSelection = listOf(
             RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit,
-                ready != null && state.writeSupported && !state.busy) { editRow = ready },
+                ready != null && state.writeSupported && !state.busy) { ready?.let(::openSavedEdit) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready != null && !state.busy) { ready?.let { actions.inspectSavedVariable(it.id) } },
             RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_saved_rename,
@@ -867,7 +884,7 @@ private fun RuntimeSavedVariablesTab(
                 Surface(color = if (selectedRow) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
                     else Color.Transparent) {
                     Row(Modifier.fillMaxWidth()
-                        .clickable(enabled = editEnabled) { editRow = item }
+                        .clickable(enabled = editEnabled) { openSavedEdit(item) }
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
@@ -913,24 +930,22 @@ private fun RuntimeSavedVariablesTab(
             }
         }
     }
-    editRow?.let { item ->
-        val value = state.savedValues[item.id]
-        if (value?.resolved == true) {
-            val target = remember(item.id, value.type, value.value) {
-                listOf(MemoryEditTarget(
-                    0L, value.type, value.value, listOf(value.type), watch = true,
-                ))
-            }
-            RuntimeEditDialog(
-                targets = target,
-                writeSupported = state.writeSupported,
-                title = item.label,
-                onDismiss = { editRow = null },
-                onApply = { replacement, _, freeze, _, _ ->
-                    actions.editSavedVariable(item.id, replacement, freeze)
-                },
-            )
+    editDraft?.let { draft ->
+        // Also release the pause if the whole Saved tab is removed by navigation.
+        DisposableEffect(draft.row.id) {
+            onDispose { actions.setSavedEditActive(null) }
         }
+        val current = state.savedValues[draft.row.id]
+        RuntimeEditDialog(
+            targets = draft.targets,
+            writeSupported = state.writeSupported && !state.busy &&
+                current?.resolved == true && current.type == draft.targets.single().type,
+            title = draft.row.label,
+            onDismiss = { editDraft = null },
+            onApply = { replacement, _, freeze, _, _ ->
+                actions.editSavedVariable(draft.row.id, replacement, freeze)
+            },
+        )
     }
 
     renameRow?.let { item ->

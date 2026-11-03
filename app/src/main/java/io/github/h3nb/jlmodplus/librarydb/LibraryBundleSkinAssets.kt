@@ -22,8 +22,9 @@ import kotlinx.serialization.json.jsonObject
  */
 internal object LibraryBundleSkinAssets {
     private const val META = "skin.json"
-    private const val MAX_META = 65_536L
-    private const val MAX_IMAGE = 8L * 1024L * 1024L
+    internal const val MAX_META = 65_536L
+    internal const val MAX_LAYOUT_SKIN_BYTES = 16L * 1024L * 1024L
+    internal const val MAX_CONTROL_SKIN_BYTES = 8L * 1024L * 1024L
     private val IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp", "bmp", "gif", "svg")
     private val CONTROL_EXTENSIONS = setOf("png", "webp", "svg")
 
@@ -75,7 +76,7 @@ internal object LibraryBundleSkinAssets {
         return files.sortedBy(File::getName).onEach {
             if (!it.isFile || !validControlName(it.name) ||
                 it.canonicalFile.parentFile != folder.canonicalFile ||
-                it.length() > if (it.name == META) MAX_META else MAX_IMAGE) {
+                it.length() > if (it.name == META) MAX_META else MAX_CONTROL_SKIN_BYTES) {
                 throw IOException("Invalid control skin asset: ${it.name}")
             }
         }

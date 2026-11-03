@@ -225,11 +225,14 @@ object LibraryAppBundleImporter {
 
                 var entryBytes = 0L
                 val entryLimit = when (relative) {
-                    "saved/saved-variables.json", "control-skin/skin.json" -> 65_536L
+                    "saved/saved-variables.json", "control-skin/skin.json" ->
+                        LibraryBundleSkinAssets.MAX_META
                     "app/converted.dex.conf" -> MAX_DESCRIPTOR_BYTES
                     else -> when {
-                        relative.startsWith("control-skin/") -> 8L * 1024L * 1024L
-                        relative.startsWith("skin-layout/") -> 16L * 1024L * 1024L
+                        relative.startsWith("control-skin/") ->
+                            LibraryBundleSkinAssets.MAX_CONTROL_SKIN_BYTES
+                        relative.startsWith("skin-layout/") ->
+                            LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES
                         else -> MAX_ENTRY_BYTES
                     }
                 }
@@ -378,11 +381,14 @@ object LibraryAppBundleImporter {
 
                 var entryBytes = 0L
                 val entryLimit = when (relative) {
-                    "saved/saved-variables.json", "control-skin/skin.json" -> 65_536L
+                    "saved/saved-variables.json", "control-skin/skin.json" ->
+                        LibraryBundleSkinAssets.MAX_META
                     "app/converted.dex.conf" -> MAX_DESCRIPTOR_BYTES
                     else -> when {
-                        relative.startsWith("control-skin/") -> 8L * 1024L * 1024L
-                        relative.startsWith("skin-layout/") -> 16L * 1024L * 1024L
+                        relative.startsWith("control-skin/") ->
+                            LibraryBundleSkinAssets.MAX_CONTROL_SKIN_BYTES
+                        relative.startsWith("skin-layout/") ->
+                            LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES
                         else -> MAX_ENTRY_BYTES
                     }
                 }

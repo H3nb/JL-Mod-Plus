@@ -4,6 +4,9 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import java.io.File
+import java.io.RandomAccessFile
+import java.io.IOException
+import org.junit.jupiter.api.Assertions.assertThrows
 import java.util.UUID
 import java.util.zip.ZipFile
 import kotlinx.serialization.json.Json
@@ -70,6 +73,28 @@ class LibraryBundleSkinTransferTest {
         assertEquals(JsonNull, imported.getValue("Shader"))
         assertTrue(existingImage.readBytes().contentEquals(png(88)))
         assertTrue(originalControl.readBytes().contentEquals(png(66)))
+    }
+
+    @Test fun exportRejectsScreenSkinThatImporterWouldRefuse() {
+        val id = UUID.randomUUID().toString()
+        val source = File(temp, "oversized-source").apply { mkdirs() }
+        createSource(source, id)
+        RandomAccessFile(File(source, "skins/frame.png"), "rw").use {
+            it.setLength(LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES + 1)
+        }
+        val archive = File(temp, "oversized.zip")
+        assertThrows(IOException::class.java) {
+            LibraryUniversalBundleExporter.exportToZip(
+                listOf(LibraryUniversalBundleExporter.AppSource(
+                    "a0001", "Game", "Vendor", "1", source, "game",
+                    LibraryBundleComponents(
+                        configuration = false, saveData = false, savedVariables = false,
+                        layoutSkin = true, controlSkin = false,
+                    ),
+                )), archive,
+            )
+        }
+        assertFalse(archive.exists())
     }
 
     @Test fun repeatedImportReusesRemappedSkinIdAfterSourceIdCollision() {

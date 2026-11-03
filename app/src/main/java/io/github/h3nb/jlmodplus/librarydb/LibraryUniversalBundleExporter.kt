@@ -146,6 +146,9 @@ internal object LibraryUniversalBundleExporter {
             !source.components.layoutSkin -> BundleNamespaceState.Excluded
             layoutSkin == null -> BundleNamespaceState.Absent
             else -> {
+                if (layoutSkin.length() > LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES) {
+                    throw IOException("Screen skin exceeds the 16 MiB bundle import limit")
+                }
                 addOptionalFile(entries, workdirRoot, layoutSkin,
                     "${payloadRoot}skin-layout/${layoutSkin.name}")
                 BundleNamespaceState.Present
