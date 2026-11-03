@@ -60,6 +60,7 @@ internal class MemoryEditorComposeController(
     private var savedLocators: Map<String, Bundle> = emptyMap()
     private var savedRefreshPending = false
     @Volatile private var savedEditId: String? = null
+    private var savedEditReady = false
     private var hostForeground = true
     private var nextSavedResolveAt = 0L
     private val savedConnection = object : ServiceConnection {
@@ -277,6 +278,9 @@ internal class MemoryEditorComposeController(
             }
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
         } else {
+            // If backgrounding interrupts the queued binding snapshot, no dialog
+            // owns its pause yet. An already-open edit keeps its binding pinned.
+            if (!savedEditReady) savedEditId = null
             savedGeneration++
             savedRefreshPending = false
         }
@@ -306,6 +310,7 @@ internal class MemoryEditorComposeController(
         savedGeneration++
         savedRefreshPending = false
         savedEditId = null
+        savedEditReady = false
         visiblePageRequestGeneration++
         visiblePageRequestPending = false
         visiblePageRequestInFlightGeneration = 0L
@@ -320,6 +325,7 @@ internal class MemoryEditorComposeController(
         savedGeneration++
         savedRefreshPending = false
         savedEditId = null
+        savedEditReady = false
         savedAuthority = null
         if (savedBound) {
             runCatching { context.unbindService(savedConnection) }
@@ -961,6 +967,7 @@ internal class MemoryEditorComposeController(
             state.busy || state.savedValues[id]?.resolved != true || token == 0L) return
 
         savedEditId = id
+        savedEditReady = false
         // Stop new refreshes immediately; the single-threaded IPC queue drains the
         // preceding refresh before taking the dialog's authoritative binding snapshot.
         val generation = ++savedGeneration
@@ -989,6 +996,7 @@ internal class MemoryEditorComposeController(
                     endSavedEdit()
                     return@post
                 }
+                savedEditReady = true
                 onReady(value)
             }
         }
@@ -997,6 +1005,7 @@ internal class MemoryEditorComposeController(
     override fun endSavedEdit() {
         if (savedEditId == null) return
         savedEditId = null
+        savedEditReady = false
         nextSavedResolveAt = 0L
         refreshSavedLive()
     }
@@ -1135,6 +1144,7 @@ internal class MemoryEditorComposeController(
         savedGeneration++
         savedRefreshPending = false
         savedEditId = null
+        savedEditReady = false
         state = state.copy(watchTab = watch, savedTab = false, savedSelection = emptySet(), selected = emptySet())
     }
 
