@@ -894,7 +894,8 @@ private fun RuntimeSavedVariablesTab(
                         if (value?.resolved == true) {
                             Column(
                                 modifier = Modifier
-                                    .widthIn(min = 96.dp)
+                                    .widthIn(min = 96.dp, max = 160.dp)
+                                    .heightIn(min = 48.dp)
                                     .clickable(enabled = editEnabled) { editRow = item }
                                     .padding(horizontal = 8.dp, vertical = 6.dp),
                                 horizontalAlignment = Alignment.End,
@@ -1333,6 +1334,7 @@ private fun RuntimeWatchRow(
                         ) {
                             Text(
                                 row.valueText,
+                                modifier = Modifier.weight(1f),
                                 style = runtimeMemoryDataTextStyle(),
                                 textAlign = TextAlign.End,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -2174,9 +2176,10 @@ internal fun RuntimeInspectorTab(
                             Text(
                                 row.valueText,
                                 modifier = Modifier.weight(1f)
+                                    .heightIn(min = 48.dp)
                                     .clickable(enabled = row.editable && state.writeSupported &&
                                         !state.busy) { editLogicalRow = row }
-                                    .padding(vertical = 8.dp),
+                                    .wrapContentHeight(align = Alignment.CenterVertically),
                                 textAlign = TextAlign.End,
                                 style = runtimeMemoryDataTextStyle(),
                             )
