@@ -2005,7 +2005,8 @@ final class ManagedJavaMemoryEngine {
             if (!readTyped(proof, slot, actual, current) || current[0] != expectedBits)
                 return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Inspector value changed since its snapshot");
-            String sourceKey = savedId == null ? null : savedId + "#" + slot;
+            String sourceKey = savedId == null ? null : relativeOffset == 0
+                    ? savedId : savedId + "#" + slot;
             long existingId = savedId == null
                     ? ManagedJavaMemoryIds.encode(proof.kind, proof.handle, slot) : 0L;
             int existing = savedId == null ? watches.indexOf(existingId) : -1;

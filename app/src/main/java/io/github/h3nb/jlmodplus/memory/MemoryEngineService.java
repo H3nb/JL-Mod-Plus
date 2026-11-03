@@ -257,8 +257,10 @@ public final class MemoryEngineService extends Service {
             try {
                 long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
                         .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
-                return bridge.watchInspector(token, savedId, expectedRevision, anchorId,
+                Bundle result = bridge.watchInspector(token, savedId, expectedRevision, anchorId,
                         watchAnchor, offset, type, expectedBits, false, epoch);
+                consumeManagedResult(token, bridge, result);
+                return result;
             } catch (RemoteException error) {
                 return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
             }
