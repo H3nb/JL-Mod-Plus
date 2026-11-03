@@ -1292,4 +1292,17 @@
     <string name="memory_editor_panel_opacity">Panel opacity</string>
     <string name="memory_editor_panel_opacity_help">Adjusts the panel background without fading text or icons.</string>
     <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">This MIDlet\'s installed conversion is incompatible with Memory Editor. Close the game, then reconvert or reinstall it using JL-Mod Plus.</string>
+    <string name="memory_saved_tab">Saved</string>
+    <string name="memory_saved_save">Save variable</string>
+    <string name="memory_saved_name">Name</string>
+    <string name="memory_saved_explanation">Save this verified memory path for later sessions. Values are never written automatically.</string>
+    <string name="memory_saved_empty">No Saved variables yet. Select one search result to save it.</string>
+    <string name="memory_saved_not_ready">Not ready</string>
+    <string name="memory_saved_retry">Retry</string>
+    <string name="memory_saved_rename">Rename</string>
+    <string name="memory_saved_value">Value</string>
+    <string name="memory_saved_delete_confirm">Remove this Saved definition? The game value will not change.</string>
+    <string name="memory_saved_changed">Changed</string>
+    <string name="memory_saved_incompatible">Incompatible</string>
+    <string name="memory_saved_failed">Failed</string>
 </resources>

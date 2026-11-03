@@ -177,7 +177,7 @@ public final class SavedVariablesAuthority extends Service {
         return data;
     }
 
-    private static JSONObject empty(Target target) {
+    private static JSONObject empty(Target target) throws Exception {
         return new JSONObject().put("schema", SCHEMA)
                 .put("appId", target.appId).put("path", target.path)
                 .put("entry", target.entry).put("jarSha256", target.sha)

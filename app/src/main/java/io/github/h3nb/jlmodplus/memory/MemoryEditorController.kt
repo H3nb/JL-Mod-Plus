@@ -56,7 +56,7 @@ internal class MemoryEditorComposeController(
     private var savedAuthority: ISavedVariablesAuthority? = null
     private var savedBound = false
     private var savedIdentity: MidletSessionStore.State? = null
-    private var savedGeneration = 0L
+    @Volatile private var savedGeneration = 0L
     private val savedConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             savedAuthority = ISavedVariablesAuthority.Stub.asInterface(binder)

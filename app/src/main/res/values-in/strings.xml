@@ -1204,4 +1204,17 @@
     <string name="memory_editor_panel_opacity">Opasitas panel</string>
     <string name="memory_editor_panel_opacity_help">Mengatur latar panel tanpa memudarkan teks atau ikon.</string>
     <string name="memory_editor_reconversion_required">Hasil konversi MIDlet ini tidak kompatibel dengan Memory Editor. Tutup game, lalu konversi ulang atau instal kembali menggunakan JL-Mod Plus.</string>
+    <string name="memory_saved_tab">Tersimpan</string>
+    <string name="memory_saved_save">Simpan variabel</string>
+    <string name="memory_saved_name">Nama</string>
+    <string name="memory_saved_explanation">Simpan jalur memori terverifikasi untuk sesi berikutnya. Nilai tidak pernah ditulis otomatis.</string>
+    <string name="memory_saved_empty">Belum ada variabel tersimpan. Pilih satu hasil pencarian untuk menyimpannya.</string>
+    <string name="memory_saved_not_ready">Belum siap</string>
+    <string name="memory_saved_retry">Coba lagi</string>
+    <string name="memory_saved_rename">Ganti nama</string>
+    <string name="memory_saved_value">Nilai</string>
+    <string name="memory_saved_delete_confirm">Hapus definisi tersimpan ini? Nilai dalam game tidak berubah.</string>
+    <string name="memory_saved_changed">Berubah</string>
+    <string name="memory_saved_incompatible">Tidak kompatibel</string>
+    <string name="memory_saved_failed">Gagal</string>
 </resources>
