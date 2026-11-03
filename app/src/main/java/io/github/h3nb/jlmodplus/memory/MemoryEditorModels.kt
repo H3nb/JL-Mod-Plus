@@ -441,7 +441,7 @@ internal interface MemoryEditorActions {
     fun refreshSavedVariables() = Unit
     fun saveSelectedVariable(name: String) = Unit
     fun resolveSavedVariable(id: String) = Unit
-    fun editSavedVariable(id: String, replacement: String) = Unit
+    fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean = false) = Unit
     fun renameSavedVariable(id: String, name: String) = Unit
     fun deleteSavedVariable(id: String) = Unit
     fun deleteSavedVariables(ids: List<String>) = Unit
@@ -449,8 +449,9 @@ internal interface MemoryEditorActions {
     fun selectAllSaved() = Unit
     fun clearSavedSelection() = Unit
     fun inspectSavedVariable(id: String) = Unit
-    fun freezeSavedVariable(id: String) = Unit
     fun saveInspectorVariable(name: String, relativeOffset: Int) = Unit
+    fun editSavedInspectorValue(id: String, relativeOffset: Int, type: Int,
+                                expectedBits: Long, replacement: String) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
     fun invertVisible()

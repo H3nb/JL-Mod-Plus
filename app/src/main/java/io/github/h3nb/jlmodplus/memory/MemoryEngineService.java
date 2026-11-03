@@ -168,6 +168,22 @@ public final class MemoryEngineService extends Service {
             }
         }
 
+        @Override public Bundle editSavedInspector(long token, String savedId,
+                                                    int relativeOffset, int valueType,
+                                                    long expectedBits, String replacement) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                return bridge.editSavedInspector(token, savedId, relativeOffset, valueType,
+                        expectedBits, replacement, epoch);
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
         @Override public Bundle inspectSaved(long token, String savedId, int radius) {
             IMemoryTargetBridge bridge = target;
             if (bridge == null || !isTargetToken(token)) return inspectionFailure(
