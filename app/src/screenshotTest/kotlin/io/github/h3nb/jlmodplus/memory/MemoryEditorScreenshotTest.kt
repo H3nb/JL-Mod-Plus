@@ -148,42 +148,6 @@ fun MemoryEditorLandscapeWatchScreenshot() {
 }
 
 
-private val previewSavedVariables = listOf(
-    SavedVariableRow("egg", "Egg", "b.f"),
-    SavedVariableRow("hp", "HP", "MIDlet → Player.hp"),
-)
-
-private val previewSavedValues = mapOf(
-    "egg" to SavedVariableRuntimeValue(
-        MemoryEngineContract.RESULT_OK, MemoryEngineContract.TYPE_INT, "6",
-    ),
-    "hp" to SavedVariableRuntimeValue(
-        MemoryEngineContract.RESULT_NO_SESSION, detail = "Awaiting game state",
-    ),
-)
-
-@PreviewTest
-@Preview(name = "Memory Editor saved portrait", widthDp = 360, heightDp = 640, showBackground = true)
-@Composable
-fun MemoryEditorSavedPortraitScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        MemoryEditorRuntimeRoot(
-            state = MemoryEditorUiState(
-                visible = true,
-                connected = true,
-                supported = true,
-                writeSupported = true,
-                runtimeToken = 1,
-                savedTab = true,
-                savedVariables = previewSavedVariables,
-                savedValues = previewSavedValues,
-                savedSelection = setOf("egg"),
-            ),
-            actions = NoOpMemoryEditorActions,
-        )
-    }
-}
-
 @PreviewTest
 @Preview(name = "Memory Editor landscape results", widthDp = 720, heightDp = 360, showBackground = true)
 @Composable
