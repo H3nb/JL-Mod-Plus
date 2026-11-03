@@ -672,10 +672,11 @@ object LibraryAppBundleImporter {
         val transactionId = UUID.randomUUID().toString()
         val replacements = ArrayList<Replacement>(MAX_REPLACEMENTS)
         val configTarget = File(File(root, "configs"), storageKey)
-        // Saved-only publication replaces a coherent config directory rather than a
-        // single AtomicFile base, so old .bak/.new files cannot revive stale definitions.
-        val savedOnlyConfig = if (prepared.configDir == null &&
-            prepared.savedVariablesFile != null) {
+        // Partial Saved/skin imports preserve the existing config directory, then change
+        // only the requested components in one recoverable directory publication.
+        val partialConfig = if (prepared.configDir == null &&
+            (prepared.savedVariablesFile != null || prepared.layoutSkinFile != null ||
+                prepared.controlSkinDir != null)) {
             val scratch = File(prepared.stagingDir, "saved-config-replacement")
             deleteIfExists(scratch, "previous Saved import staging")
             if (configTarget.exists()) {
@@ -685,7 +686,7 @@ object LibraryAppBundleImporter {
             } else ensureDirectory(scratch)
             scratch
         } else null
-        val configSource = prepared.configDir ?: savedOnlyConfig
+        val configSource = prepared.configDir ?: partialConfig
         configSource?.let { source ->
             replacements += prepareReplacement(
                 source = source,
@@ -748,9 +749,12 @@ object LibraryAppBundleImporter {
                     )
                 }
                 if (prepared.formatVersion == LibraryAppBundleFormat.SELECTIVE_VERSION &&
-                    prepared.configDir != null) {
+                    (prepared.configDir != null || importedLayoutSkin != null ||
+                        importedControlSkin != null)) {
                     LibraryBundleSkinAssets.normalizeConfig(
-                        configReplacement.staged, root, importedLayoutSkin, importedControlSkin)
+                        configReplacement.staged, root, importedLayoutSkin, importedControlSkin,
+                        fallbackMissingAssets = prepared.configDir != null,
+                    )
                 }
                 if (prepared.formatVersion == LibraryAppBundleFormat.SELECTIVE_VERSION) {
                     val savedNames = listOf("saved-variables.json", "saved-variables.json.new",

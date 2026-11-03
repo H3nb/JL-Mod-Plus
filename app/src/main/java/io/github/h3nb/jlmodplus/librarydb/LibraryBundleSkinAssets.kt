@@ -117,6 +117,7 @@ internal object LibraryBundleSkinAssets {
         workdir: File,
         importedScreenSkin: String?,
         importedControlSkin: String?,
+        fallbackMissingAssets: Boolean = true,
     ) {
         val file = File(stagedConfig, "config.json")
         if (!file.isFile) return
@@ -125,26 +126,26 @@ internal object LibraryBundleSkinAssets {
         val current = original.toMutableMap()
 
         val screen = importedScreenSkin ?: original.string("ScreenBackgroundImage")
-        if (screen != null && screenSkin(workdir, screen) == null) {
+        if (fallbackMissingAssets && screen != null && screenSkin(workdir, screen) == null) {
             current["ScreenBackgroundImage"] = JsonNull
         } else if (importedScreenSkin != null) {
             current["ScreenBackgroundImage"] = JsonPrimitive(importedScreenSkin)
         }
 
         val soundBank = original.string("SoundBank")
-        if (soundBank != null &&
+        if (fallbackMissingAssets && soundBank != null &&
             (!validLeaf(soundBank) ||
                 !File(File(workdir, "soundbanks"), soundBank).isFile)) {
             current["SoundBank"] = JsonNull
         }
 
-        if (original["Shader"] != null && original["Shader"] != JsonNull &&
+        if (fallbackMissingAssets && original["Shader"] != null && original["Shader"] != JsonNull &&
             !shaderAvailable(workdir, original["Shader"] as? JsonObject)) {
             current["Shader"] = JsonNull
         }
 
         val controlId = importedControlSkin ?: original.string("ControlSkinSetId")
-        if (controlId != null && controlSkin(workdir, controlId) == null) {
+        if (fallbackMissingAssets && controlId != null && controlSkin(workdir, controlId) == null) {
             current["ControlSkinSetId"] = JsonNull
         } else if (importedControlSkin != null) {
             current["ControlSkinSetId"] = JsonPrimitive(importedControlSkin)

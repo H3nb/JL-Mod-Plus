@@ -108,6 +108,43 @@ class LibraryBundleSkinTransferTest {
         assertFalse(File(target, "skins/controls").exists())
     }
 
+    @Test fun skinOnlyImportAppliesSkinsWithoutResettingUnrelatedLocalConfiguration() {
+        val id = UUID.randomUUID().toString()
+        val source = File(temp, "source").apply { mkdirs() }
+        createSource(source, id)
+        val zip = File(temp, "skins-only.zip")
+        LibraryUniversalBundleExporter.exportToZip(
+            listOf(LibraryUniversalBundleExporter.AppSource(
+                "a0001", "Game", "Vendor", "1", source, "game",
+                LibraryBundleComponents(
+                    configuration = false, saveData = false, savedVariables = false,
+                    layoutSkin = true, controlSkin = true,
+                ),
+            )), zip,
+        )
+        val parsed = LibraryAppBundleReader.read(zip.inputStream())
+        assertEquals(BundleNamespaceState.Excluded, parsed.apps.single().configState)
+        val prepared = LibraryAppBundleImporter.extractUniversalSingleToStaging(
+            zip.inputStream(), File(temp, "stage-only"), parsed.apps.single(), parsed.formatVersion)
+        val target = File(temp, "target-only").apply { mkdirs() }
+        installTarget(target)
+        val config = File(target, "configs/game").apply { mkdirs() }
+        File(config, "config.json").writeText(
+            """{"ScreenWidth":480,"SoundBank":"keep-me.sf2","ScreenBackgroundImage":"old.png"}""",
+        )
+        val data = File(target, "data/game").apply { mkdirs() }
+        File(data, "old.sav").writeText("keep this save")
+        LibraryAppBundleImporter.restore(prepared, target, "game")
+        val restored = Json.parseToJsonElement(File(config, "config.json").readText()).jsonObject
+        assertEquals("480", restored.getValue("ScreenWidth").jsonPrimitive.content)
+        assertEquals("keep-me.sf2", restored.getValue("SoundBank").jsonPrimitive.content)
+        assertEquals("keep this save", File(data, "old.sav").readText())
+        val screen = restored.getValue("ScreenBackgroundImage").jsonPrimitive.content
+        val control = restored.getValue("ControlSkinSetId").jsonPrimitive.content
+        assertTrue(File(target, "skins/$screen").isFile)
+        assertTrue(LibraryBundleSkinAssets.controlSkin(target, control)!!.isDirectory)
+    }
+
     private fun createSource(root: File, id: String) {
         File(root, "converted/game").apply { mkdirs() }.also {
             File(it, "res.jar").writeBytes(byteArrayOf(1, 2, 3))

@@ -635,7 +635,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 }
                 // Source ownership must be detached before a selected configuration replaces
                 // the installed snapshot. Restore it only if the import rolls back.
-                val ownership = if (prepared.configDir != null) {
+                val ownership = if (prepared.configDir != null ||
+                    prepared.layoutSkinFile != null || prepared.controlSkinDir != null) {
                     ImportedBundleProfileLinkage.begin(
                         getApplication(), generation.emulatorDir, storageKey)
                 } else null
