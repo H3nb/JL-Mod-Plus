@@ -1933,6 +1933,151 @@ final class ManagedJavaMemoryEngine {
         }
     }
 
+
+    /**
+     * Add an Inspector sibling to Watch without treating its presentation-only ID as
+     * a Search result. Saved-origin siblings preserve checked rooted ancestry.
+     */
+    ManagedOperationResult watchInspector(long token, @Nullable String savedId,
+            long expectedRevision, long anchorId, boolean watchAnchor, int relativeOffset,
+            int expectedType, long expectedBits, boolean freeze, long epoch) {
+        if (Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS
+                || !MemoryEngineContract.isCandidateType(expectedType)) {
+            return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+                    "Inspector sibling is outside the supported watch contract");
+        }
+        ResolvedBatch source = null;
+        if (savedId == null) {
+            source = resolveBatch(token, expectedRevision, new long[]{anchorId}, watchAnchor);
+            if (source.error != null) return source.error;
+        }
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, epoch)) {
+                return failureLocked(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "Inspector runtime or operation changed");
+            }
+            OwnerBucket proof;
+            Object actual;
+            int anchorSlot;
+            if (savedId != null) {
+                SavedBinding binding = savedBindings.get(savedId);
+                if (binding == null) return failureLocked(
+                        MemoryEngineContract.RESULT_NO_SESSION, "Saved Inspector owner is not resolved");
+                proof = binding.owner;
+                actual = proof.strongOwner();
+                anchorSlot = binding.slot;
+                if (actual == null || inspectPath(token, proof, actual, anchorSlot).status
+                        != MemoryEngineContract.PATH_VERIFIED) {
+                    return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            "Saved Inspector reference changed");
+                }
+            } else {
+                ManagedOperationResult validation = revalidateBatchLocked(token,
+                        expectedRevision, source, watchAnchor, epoch);
+                if (validation != null) return validation;
+                proof = source.owners[0];
+                actual = source.strongOwners[0];
+                anchorSlot = source.slots[0];
+            }
+            long requested = (long) anchorSlot + relativeOffset;
+            if (requested < 0 || requested > Integer.MAX_VALUE) return failureLocked(
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, "Inspector slot is outside the owner");
+            int slot = (int) requested;
+            if (proof.kind == KIND_ARRAY) {
+                if (actual == null || slot >= Array.getLength(actual)) return failureLocked(
+                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Inspector array index changed");
+            } else {
+                FieldSlot field = proof.schema.fieldAt(slot);
+                if (field == null || field.finalField
+                        || field.kindStatic != (proof.kind == KIND_STATIC_FIELD)
+                        || (proof.kind == KIND_STATIC_FIELD
+                            && field.declaringClass != proof.staticClass)) {
+                    return failureLocked(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                            "Inspector sibling cannot be watched");
+                }
+            }
+            if (valueTypeFor(proof, slot) != expectedType) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Inspector sibling type changed");
+            if (savedId != null && inspectPath(token, proof, actual, slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Inspector ancestry is no longer verified");
+            long[] current = new long[1];
+            if (!readTyped(proof, slot, actual, current) || current[0] != expectedBits)
+                return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Inspector value changed since its snapshot");
+            String sourceKey = savedId == null ? null : savedId + "#" + slot;
+            long existingId = savedId == null
+                    ? ManagedJavaMemoryIds.encode(proof.kind, proof.handle, slot) : 0L;
+            int existing = savedId == null ? watches.indexOf(existingId) : -1;
+            if (savedId != null) {
+                for (int i = 0; i < watches.count; i++) {
+                    if (sourceKey.equals(watches.savedSourceIds[i])) {
+                        existing = i;
+                        break;
+                    }
+                }
+            }
+            boolean needsFreezeSlot = freeze && (existing < 0 || !watches.freeze[existing]);
+            if ((existing < 0 && watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
+                    || (needsFreezeSlot
+                        && watches.freezeCount() >= MemoryEngineContract.MAX_FREEZE_RECORDS)
+                    || (existing < 0 && savedId != null
+                        && (owners.size() >= limits.maxOwners
+                        || nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX))) {
+                return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+                        "Inspector Watch or Freeze capacity reached");
+            }
+            if (existing < 0) {
+                OwnerBucket owner = proof;
+                long id = existingId;
+                if (savedId != null) {
+                    owner = new OwnerBucket(nextOwnerHandle++, proof.kind, actual, proof.schema);
+                    owner.provenancePath = proof.provenancePath;
+                    owner.arrayReference = proof.arrayReference;
+                    id = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, slot);
+                    owners.put(owner.handle, owner);
+                }
+                watches.append(id, owner, slot, current[0], "");
+                existing = watches.count - 1;
+                if (sourceKey != null) watches.savedSourceIds[existing] = sourceKey;
+            }
+            if (freeze) {
+                watches.freeze[existing] = true;
+                watches.freezeValues[existing] = current[0];
+                watches.freezePaused[existing] = false;
+            }
+            return successLocked(freeze
+                    ? "Inspector value added to Watch and frozen"
+                    : "Inspector value added to Watch");
+        }
+    }
+
+    ManagedOperationResult editInspectorAndFreeze(long token, @Nullable String savedId,
+            long expectedRevision, long anchorId, boolean watchAnchor, int relativeOffset,
+            int type, long expectedBits, String replacement, long epoch) {
+        if (!MemoryEngineContract.isCandidateType(type)) return failure(token,
+                MemoryEngineContract.RESULT_INVALID_REQUEST, "Inspector type is unsupported");
+        long[] parsed = new long[1];
+        if (!ManagedJavaValue.parse(replacement, type, parsed)) return failure(token,
+                MemoryEngineContract.RESULT_INVALID_REQUEST, "Inspector replacement is invalid");
+        if (savedId != null) {
+            SavedValue edited = editSavedInspector(token, savedId, relativeOffset,
+                    type, expectedBits, replacement, epoch);
+            if (edited.code != MemoryEngineContract.RESULT_OK) return failure(token,
+                    edited.code, edited.detail);
+        } else {
+            ManagedOperationResult edited = editInspector(token, expectedRevision, anchorId,
+                    watchAnchor, relativeOffset, type, expectedBits, replacement, epoch);
+            if (edited.code != MemoryEngineContract.RESULT_OK) return edited;
+        }
+        ManagedOperationResult watched = watchInspector(token, savedId, expectedRevision,
+                anchorId, watchAnchor, relativeOffset, type, parsed[0], true, epoch);
+        return watched.code == MemoryEngineContract.RESULT_OK ? watched :
+                result(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
+                        "Value edited, but Freeze could not start: " + watched.message,
+                        1, 1, 0, 0);
+    }
+
     /** Explicit Freeze promotes a pinned Saved target into Watch, with guarded periodic writes. */
     ManagedOperationResult freezeSaved(long token, String id, String label, long epoch) {
         synchronized (stateLock) {
