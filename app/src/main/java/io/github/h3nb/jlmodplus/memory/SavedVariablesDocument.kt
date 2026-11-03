@@ -5,6 +5,8 @@ package io.github.h3nb.jlmodplus.memory
 
 import java.io.File
 import java.io.IOException
+import java.util.UUID
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -55,6 +57,106 @@ object SavedVariablesDocument {
             throw IOException("Invalid Saved definitions document", error)
         }
     }
+
+    data class MergeResult(val bytes: ByteArray, val added: Int, val skipped: Int)
+
+    /**
+     * Merge a Saved-only transfer without modifying the original document.
+     * Duplicate targets are recognized by a canonical typed path, never by label
+     * or an imported installation's record ID. The caller publishes atomically.
+     */
+    @JvmStatic
+    @Throws(IOException::class)
+    fun merge(local: ByteArray?, incoming: ByteArray): MergeResult {
+        validate(incoming)
+        if (local != null) validate(local)
+        val old = local?.let { Json.parseToJsonElement(it.toString(Charsets.UTF_8)) as JsonObject }
+        val source = Json.parseToJsonElement(incoming.toString(Charsets.UTF_8)) as JsonObject
+        val entries = ArrayList<JsonElement>()
+        val seen = HashSet<String>()
+        val ids = HashSet<String>()
+        fun add(record: JsonObject, schema: Int, imported: Boolean): Boolean {
+            val locator = canonicalLocator(record["locator"] as JsonObject, schema)
+            val signature = locator.toString()
+            if (imported && signature in seen) return false
+            seen.add(signature)
+            var id = record.string("id")
+            if (imported && !ids.add(id)) {
+                do { id = UUID.randomUUID().toString() } while (!ids.add(id))
+            } else if (!imported) {
+                ids.add(id)
+            }
+            entries.add(JsonObject(mapOf(
+                "id" to JsonPrimitive(id),
+                "label" to JsonPrimitive(record.string("label")),
+                "locator" to locator,
+            )))
+            return true
+        }
+        old?.let { document ->
+            val version = document.number("schema")
+            (document["items"] as JsonArray).forEach { add(it as JsonObject, version, false) }
+        }
+        var added = 0
+        var skipped = 0
+        val version = source.number("schema")
+        (source["items"] as JsonArray).forEach {
+            if (add(it as JsonObject, version, true)) added++ else skipped++
+        }
+        if (entries.size > 64) throw IOException("Too many Saved definitions after merge")
+        val document = JsonObject(mapOf(
+            "schema" to JsonPrimitive(SCHEMA),
+            "items" to JsonArray(entries),
+        ))
+        val bytes = document.toString().toByteArray(Charsets.UTF_8)
+        validate(bytes)
+        return MergeResult(bytes, added, skipped)
+    }
+
+    private fun canonicalLocator(locator: JsonObject, schema: Int): JsonObject {
+        val normalized = ArrayList<JsonElement>()
+        if (schema == 2) {
+            val fields = locator["segments"] as JsonArray
+            fields.forEach {
+                val field = it as JsonObject
+                normalized.add(canonicalField(field))
+                val index = field.number("index")
+                if (index >= 0) normalized.add(canonicalIndex(field.string("type"), index))
+            }
+            val terminalIndex = locator.number("arrayIndex")
+            if (terminalIndex >= 0) {
+                val fieldsLast = fields.last() as JsonObject
+                normalized.add(canonicalIndex(fieldsLast.string("type"), terminalIndex))
+            }
+        } else {
+            (locator["steps"] as JsonArray).forEach {
+                val part = it as JsonObject
+                normalized.add(when (part.number("kind")) {
+                    1 -> canonicalField(part)
+                    2 -> canonicalIndex(part.string("arrayType"), part.number("index"))
+                    else -> throw IOException("Unsupported Saved step")
+                })
+            }
+        }
+        return JsonObject(mapOf(
+            "rootKind" to JsonPrimitive(locator.number("rootKind")),
+            "rootClass" to JsonPrimitive(locator.string("rootClass")),
+            "steps" to JsonArray(normalized),
+        ))
+    }
+
+    private fun canonicalField(part: JsonObject): JsonObject = JsonObject(mapOf(
+        "kind" to JsonPrimitive(1),
+        "owner" to JsonPrimitive(part.string("owner")),
+        "name" to JsonPrimitive(part.string("name")),
+        "type" to JsonPrimitive(part.string("type")),
+    ))
+
+    private fun canonicalIndex(arrayType: String, index: Int): JsonObject = JsonObject(mapOf(
+        "kind" to JsonPrimitive(2),
+        "arrayType" to JsonPrimitive(arrayType),
+        "index" to JsonPrimitive(index),
+    ))
 
     /**
      * AtomicFile.openRead() recovers the legacy .bak first when it exists, even if

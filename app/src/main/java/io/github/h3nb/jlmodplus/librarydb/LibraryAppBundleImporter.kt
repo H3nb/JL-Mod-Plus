@@ -771,14 +771,21 @@ object LibraryAppBundleImporter {
                     val savedNames = listOf("saved-variables.json", "saved-variables.json.new",
                         "saved-variables.json.bak")
                     if (prepared.savedVariablesFile != null) {
-                        // The imported document supersedes the entire AtomicFile family.
+                        // A Saved-only transfer adds bookmarks to an installed collection.
+                        // A configuration+Saved restore replaces the collection as backup.
+                        // Both publish through the existing recoverable directory transaction.
+                        val imported = prepared.savedVariablesFile.readBytes()
+                        val contents = if (prepared.configDir == null) {
+                            val committed = SavedVariablesDocument.committedFile(
+                                configReplacement.target)
+                            SavedVariablesDocument.merge(committed?.readBytes(), imported).bytes
+                        } else imported
                         savedNames.forEach { name ->
                             deleteIfExists(File(configReplacement.staged, name),
                                 "old Saved definitions")
                         }
-                        prepared.savedVariablesFile.copyTo(
-                            File(configReplacement.staged, "saved-variables.json"),
-                        )
+                        File(configReplacement.staged, "saved-variables.json")
+                            .writeBytes(contents)
                     } else if (prepared.configDir != null) {
                         // Config-only import retains the target's committed/recoverable Saved
                         // document, including any interrupted AtomicFile backup/new state.
