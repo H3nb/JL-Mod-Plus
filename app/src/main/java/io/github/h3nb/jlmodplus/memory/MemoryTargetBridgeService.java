@@ -224,38 +224,28 @@ public final class MemoryTargetBridgeService extends Service {
 		                                         long candidateId) {
 			ManagedJavaMemoryEngine.SavedLocator locator =
 					managedEngine.captureSavedLocator(runtimeToken, expectedRevision, candidateId);
-			Bundle result = savedStatus(runtimeToken, locator == null
-					? MemoryEngineContract.RESULT_IDENTITY_UNSAFE : MemoryEngineContract.RESULT_OK);
-			if (locator == null) return result;
-			int count = locator.fields.length;
-			if (!savedSafeName(locator.rootClass) || count < 1 || count > 24) {
-				return savedStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
-			}
-			String[] classes = new String[count];
-			String[] names = new String[count];
-			String[] types = new String[count];
-            int[] indices = locator.fieldIndices.clone();
-            for (int i = 0; i < count; i++) {
-				ManagedJavaMemoryEngine.SavedField f = locator.fields[i];
-				if (!savedSafeName(f.declaringClass) || !savedSafeName(f.name)
-						|| !savedSafeName(f.type)) {
-					return savedStatus(runtimeToken, MemoryEngineContract.RESULT_INVALID_REQUEST);
-				}
-				classes[i] = f.declaringClass;
-				names[i] = f.name;
-				types[i] = f.type;
-			}
-			result.putInt("savedSchema", 1);
-			result.putInt("savedRootKind", locator.rootKind);
-			result.putString("savedRootClass", locator.rootClass);
-			result.putStringArray("savedClasses", classes);
-			result.putStringArray("savedNames", names);
-			result.putStringArray("savedTypes", types);
-            result.putIntArray("savedFieldIndices", indices);
-            result.putInt("savedArrayIndex", locator.arrayIndex);
-			return result;
+            return savedLocatorBundle(runtimeToken, locator);
 		}
 
+
+        @Override
+        public Bundle inspectSaved(long runtimeToken, String savedId, int radius) {
+            return managedInspection(runtimeToken, managedEngine.inspectSaved(
+                    runtimeToken, savedId, radius));
+        }
+
+        @Override
+        public Bundle captureInspectorLocator(long runtimeToken, long expectedRevision,
+                                              long candidateId, boolean watchAnchor, int offset) {
+            return savedLocatorBundle(runtimeToken, managedEngine.captureInspectorLocator(
+                    runtimeToken, expectedRevision, candidateId, watchAnchor, offset));
+        }
+
+        @Override
+        public Bundle captureSavedNeighborLocator(long runtimeToken, String savedId, int offset) {
+            return savedLocatorBundle(runtimeToken, managedEngine.captureSavedNeighborLocator(
+                    runtimeToken, savedId, offset));
+        }
 
         @Override
         public Bundle resolveSavedLocator(long runtimeToken, Bundle descriptor,
@@ -297,6 +287,41 @@ public final class MemoryTargetBridgeService extends Service {
 			managedEngine.cancel(runtimeToken, cancellationEpoch);
 		}
 	};
+
+
+    /** Single stable transport for search and Inspector capture. */
+    private static Bundle savedLocatorBundle(long token, ManagedJavaMemoryEngine.SavedLocator locator) {
+			Bundle result = savedStatus(token, locator == null
+					? MemoryEngineContract.RESULT_IDENTITY_UNSAFE : MemoryEngineContract.RESULT_OK);
+			if (locator == null) return result;
+			int count = locator.fields.length;
+			if (!savedSafeName(locator.rootClass) || count < 1 || count > 24) {
+				return savedStatus(token, MemoryEngineContract.RESULT_INVALID_REQUEST);
+			}
+			String[] classes = new String[count];
+			String[] names = new String[count];
+			String[] types = new String[count];
+            int[] indices = locator.fieldIndices.clone();
+            for (int i = 0; i < count; i++) {
+				ManagedJavaMemoryEngine.SavedField f = locator.fields[i];
+				if (!savedSafeName(f.declaringClass) || !savedSafeName(f.name)
+						|| !savedSafeName(f.type)) {
+					return savedStatus(token, MemoryEngineContract.RESULT_INVALID_REQUEST);
+				}
+				classes[i] = f.declaringClass;
+				names[i] = f.name;
+				types[i] = f.type;
+			}
+			result.putInt("savedSchema", 1);
+			result.putInt("savedRootKind", locator.rootKind);
+			result.putString("savedRootClass", locator.rootClass);
+			result.putStringArray("savedClasses", classes);
+			result.putStringArray("savedNames", names);
+			result.putStringArray("savedTypes", types);
+            result.putIntArray("savedFieldIndices", indices);
+            result.putInt("savedArrayIndex", locator.arrayIndex);
+			return result;
+    }
 
     @Nullable
     private static ManagedJavaMemoryEngine.SavedLocator savedDecode(Bundle descriptor) {

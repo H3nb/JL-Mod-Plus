@@ -168,6 +168,39 @@ public final class MemoryEngineService extends Service {
             }
         }
 
+        @Override public Bundle inspectSaved(long token, String savedId, int radius) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return inspectionFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try { return bridge.inspectSaved(token, savedId, radius); }
+            catch (RemoteException error) { return inspectionFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost"); }
+        }
+
+        @Override public Bundle captureInspectorLocator(long token, long revision,
+                                                         long candidateId, boolean watchAnchor,
+                                                         int relativeOffset) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                return bridge.captureInspectorLocator(token, revision, candidateId,
+                        watchAnchor, relativeOffset);
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle captureSavedNeighborLocator(long token, String savedId,
+                                                             int relativeOffset) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try { return bridge.captureSavedNeighborLocator(token, savedId, relativeOffset); }
+            catch (RemoteException error) { return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost"); }
+        }
+
         @Override public Bundle captureSavedLocator(long token, long revision, long candidateId) {
             Bundle failure = new Bundle();
             failure.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,

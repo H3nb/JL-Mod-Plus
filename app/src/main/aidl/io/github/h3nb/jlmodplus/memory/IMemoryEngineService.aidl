@@ -60,6 +60,10 @@ interface IMemoryEngineService {
     void clearSearch(long runtimeToken);
 
     Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
+    Bundle inspectSaved(long runtimeToken, String savedId, int radius);
+    Bundle captureInspectorLocator(long runtimeToken, long expectedRevision,
+                                  long candidateId, boolean watchAnchor, int relativeOffset);
+    Bundle captureSavedNeighborLocator(long runtimeToken, String savedId, int relativeOffset);
     Bundle resolveSavedLocator(long runtimeToken, in Bundle descriptor, String savedId);
     Bundle readSaved(long runtimeToken, String savedId);
     Bundle editSaved(long runtimeToken, String savedId, String replacement);
