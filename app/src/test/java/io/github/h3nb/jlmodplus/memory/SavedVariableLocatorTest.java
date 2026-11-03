@@ -310,6 +310,14 @@ public class SavedVariableLocatorTest {
             assertEquals(1, engine.watchPage(FIRST).ids.length);
             assertEquals(1, engine.watchPage(FIRST).freezeModes.length);
             assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.editSaved(FIRST, "saved-coins-freeze", "700", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.freezeSaved(FIRST, "saved-coins-freeze", "Coins", 0L).code);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            root.player.coins = 99;
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
+            assertEquals(700, root.player.coins);
             GuestPlayer oldOwner = root.player;
             root.player = new GuestPlayer();
             root.player.coins = 55;
@@ -362,6 +370,21 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.resolveSavedLocator(FIRST, adjacent, "saved-player-flag", 0L).code);
             assertEquals("272727", engine.readSaved(FIRST, "saved-player-flag").value);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.editSavedInspector(FIRST, "saved-coins-inspect", sibling,
+                    MemoryEngineContract.TYPE_INT, 272727L, "1234", 0L).code);
+            assertEquals(1234, root.player.flag);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                engine.editSavedInspector(FIRST, "saved-coins-inspect", sibling,
+                    MemoryEngineContract.TYPE_INT, 272727L, "4444", 0L).code);
+            assertEquals(1234, root.player.flag);
+            GuestPlayer previous = root.player;
+            root.player = new GuestPlayer();
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                engine.editSavedInspector(FIRST, "saved-coins-inspect", sibling,
+                    MemoryEngineContract.TYPE_INT, 272727L, "7777", 0L).code);
+            assertEquals(1234, previous.flag);
+            assertEquals(272727, root.player.flag);
             assertEquals(0, engine.watchPage(FIRST).ids.length);
         } finally {
             engine.runtimeClosed(FIRST);
