@@ -40,6 +40,12 @@ internal object LibraryBundleSkinAssets {
     fun validScreenName(name: String): Boolean =
         validLeaf(name) && name.substringAfterLast('.', "").lowercase() in IMAGE_EXTENSIONS
 
+    fun validSetName(name: String): Boolean =
+        name.length in 1..61 && name != "." && name != ".." &&
+            !name.endsWith('.') && name.first().isLetterOrDigit() &&
+            name.all { it.isLetterOrDigit() || it == ' ' || it == '.' ||
+                it == '_' || it == '(' || it == ')' || it == '-' }
+
     fun validControlName(name: String): Boolean {
         if (name == META) return true
         if (!validLeaf(name) || name.substringAfterLast('.', "").lowercase() !in CONTROL_EXTENSIONS) {
@@ -77,7 +83,7 @@ internal object LibraryBundleSkinAssets {
 
     /** Install selected assets without modifying another game's set or an existing skin ID. */
     @Synchronized
-    fun importControlSkin(workdir: File, source: File): String {
+    fun importControlSkin(workdir: File, source: File, sourceName: String?): String {
         val sourceId = readSkinId(source) ?: throw IOException("Imported control skin is invalid")
         val files = selectedControlFiles(source)
         val original = controlSkin(workdir, sourceId)
@@ -86,9 +92,16 @@ internal object LibraryBundleSkinAssets {
         val installedId = if (original == null) sourceId else UUID.randomUUID().toString()
         val root = File(File(workdir, "skins"), "controls")
         if (!root.isDirectory && !root.mkdirs()) throw IOException("Cannot create control skin directory")
-        val name = "Imported-${UUID.randomUUID()}"
-        val staging = File(root, ".$name.tmp")
-        val target = File(root, name)
+        val sourceLabel = sourceName?.takeIf(::validSetName) ?: "Imported control skin"
+        var targetName = sourceLabel
+        var number = 2
+        while (root.listFiles()?.any { it.name.equals(targetName, ignoreCase = true) } == true) {
+            val suffix = " ($number)"
+            targetName = sourceLabel.take(61 - suffix.length).trimEnd(' ', '.') + suffix
+            number++
+        }
+        val staging = File(root, ".skin-${UUID.randomUUID()}.tmp")
+        val target = File(root, targetName)
         if (!staging.mkdir()) throw IOException("Cannot stage imported control skin")
         try {
             files.filterNot { it.name == META }.forEach { sourceFile ->

@@ -198,6 +198,7 @@ internal object LibraryUniversalBundleExporter {
             savedState = savedState,
             layoutSkinState = layoutSkinState,
             controlSkinState = controlSkinState,
+            controlSkinName = controlSkin?.name?.takeIf(LibraryBundleSkinAssets::validSetName),
             entries = entries,
         )
     }
@@ -325,6 +326,7 @@ internal object LibraryUniversalBundleExporter {
             record["savedState"] = JsonPrimitive(app.savedState.manifestValue())
             record["layoutSkinState"] = JsonPrimitive(app.layoutSkinState.manifestValue())
             record["controlSkinState"] = JsonPrimitive(app.controlSkinState.manifestValue())
+            app.controlSkinName?.let { record["controlSkinName"] = JsonPrimitive(it) }
             records.add(JsonObject(record))
         }
         root["apps"] = JsonArray(records)
@@ -413,6 +415,7 @@ internal object LibraryUniversalBundleExporter {
         val savedState: BundleNamespaceState,
         val layoutSkinState: BundleNamespaceState,
         val controlSkinState: BundleNamespaceState,
+        val controlSkinName: String?,
         val entries: List<SourceEntry>,
     )
 

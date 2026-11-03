@@ -50,7 +50,7 @@ class LibraryBundleSkinTransferTest {
             parentFile!!.mkdirs()
             writeBytes(png(88))
         }
-        val existingSet = File(target, "skins/controls/existing").apply { mkdirs() }
+        val existingSet = File(target, "skins/controls/Favorite").apply { mkdirs() }
         File(existingSet, "skin.json").writeText("""{"id":"$id","defaultMode":"icon"}""")
         val originalControl = File(existingSet, "key_1.png").apply { writeBytes(png(66)) }
 
@@ -64,7 +64,8 @@ class LibraryBundleSkinTransferTest {
         assertNotEquals("frame.png", selectedScreen)
         assertTrue(File(target, "skins/$selectedScreen").isFile)
         assertNotEquals(id, selectedControl)
-        assertTrue(LibraryBundleSkinAssets.controlSkin(target, selectedControl)!!.isDirectory)
+        val installedSet = LibraryBundleSkinAssets.controlSkin(target, selectedControl)!!
+        assertEquals("Favorite (2)", installedSet.name)
         assertEquals(JsonNull, imported.getValue("SoundBank"))
         assertEquals(JsonNull, imported.getValue("Shader"))
         assertTrue(existingImage.readBytes().contentEquals(png(88)))

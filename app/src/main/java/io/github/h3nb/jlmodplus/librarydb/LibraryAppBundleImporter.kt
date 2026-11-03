@@ -54,6 +54,7 @@ object LibraryAppBundleImporter {
         internal val savedVariablesFile: File? = null,
         internal val layoutSkinFile: File? = null,
         internal val controlSkinDir: File? = null,
+        internal val controlSkinName: String? = null,
         internal val formatVersion: Int,
         internal val preflightSourceMetadata: SourceMetadata? = null,
     )
@@ -274,6 +275,7 @@ object LibraryAppBundleImporter {
             controlSkinDir = controlSkinDir.takeIf {
                 hasControlSkin && File(it, "skin.json").isFile
             },
+            controlSkinName = app.controlSkinName,
             formatVersion = formatVersion,
             preflightSourceMetadata = sourceMetadata,
         )
@@ -439,6 +441,7 @@ object LibraryAppBundleImporter {
                     controlSkinDir = File(state.root, "control-skin").takeIf {
                         state.hasControlSkin && File(it, "skin.json").isFile
                     },
+                    controlSkinName = state.app.controlSkinName,
                     formatVersion = formatVersion,
                     preflightSourceMetadata = sourceMetadata,
                 ),
@@ -723,7 +726,7 @@ object LibraryAppBundleImporter {
             ConfigAssetFiles.importFile(root, ConfigAssetFiles.Kind.SKIN, it).name
         }
         val importedControlSkin = prepared.controlSkinDir?.let {
-            LibraryBundleSkinAssets.importControlSkin(root, it)
+            LibraryBundleSkinAssets.importControlSkin(root, it, prepared.controlSkinName)
         }
         if (replacements.isEmpty()) return RestoreResult(null)
 

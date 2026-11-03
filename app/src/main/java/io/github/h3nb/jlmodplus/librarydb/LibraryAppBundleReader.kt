@@ -54,6 +54,7 @@ internal data class BundleApp(
     val savedState: BundleNamespaceState = BundleNamespaceState.Excluded,
     val layoutSkinState: BundleNamespaceState = BundleNamespaceState.Excluded,
     val controlSkinState: BundleNamespaceState = BundleNamespaceState.Excluded,
+    val controlSkinName: String? = null,
     val legacyAssurance: Boolean = false,
 )
 
@@ -297,6 +298,11 @@ internal object LibraryAppBundleReader {
             BundleNamespaceState.parse(
                 (app["controlSkinState"] as? JsonPrimitive)?.content ?: "excluded", "controlSkinState")
         } else BundleNamespaceState.Excluded
+        val controlSkinName = (app["controlSkinName"] as? JsonPrimitive)
+            ?.content?.takeIf(String::isNotBlank)
+        if (controlSkinName != null && !LibraryBundleSkinAssets.validSetName(controlSkinName)) {
+            throw IOException("Invalid control skin name")
+        }
         if (layoutSkinState == BundleNamespaceState.PresentEmpty ||
             controlSkinState == BundleNamespaceState.PresentEmpty) {
             throw IOException("Invalid skin component state")
@@ -313,6 +319,7 @@ internal object LibraryAppBundleReader {
             savedState = savedState,
             layoutSkinState = layoutSkinState,
             controlSkinState = controlSkinState,
+            controlSkinName = controlSkinName,
         )
     }
 
