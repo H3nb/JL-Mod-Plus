@@ -1408,9 +1408,9 @@ final class ManagedJavaMemoryEngine {
 	SavedLocator captureSavedLocator(long token, long revision, long candidateId) {
 		ResolvedBatch selected = resolveBatch(token, revision, new long[]{candidateId}, true);
 		if (selected.error != null) return null;
-        return captureSavedOwner(token, selected.owners[0], selected.strongOwners[0],
-                selected.slots[0]);
-    }
+		return captureSavedOwner(token, selected.owners[0], selected.strongOwners[0],
+				selected.slots[0]);
+	}
 
     /** Saved locators for Inspector siblings are verified from the already checked anchor. */
     @Nullable
