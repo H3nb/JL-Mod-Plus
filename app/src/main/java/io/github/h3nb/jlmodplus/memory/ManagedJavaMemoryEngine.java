@@ -1658,14 +1658,14 @@ final class ManagedJavaMemoryEngine {
 				if (!isOperationActive(token, operationEpoch)
 						|| !isCurrentLocked(token)) return failureLocked(
 						MemoryEngineContract.RESULT_CANCELLED, "Runtime changed before saved binding");
-                // A pinned Saved binding must never follow a replacement game object.
-                if (savedBindings.containsKey(savedId)) return failureLocked(
-                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Already resolved this session");
-                if (savedBindings.size() >= 64) return failureLocked(
-                        MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Saved binding capacity reached");
-                savedBindings.put(savedId, new SavedBinding(pathProof, slot, selectedType));
-            }
-            return success(token, "Saved target resolved");
+				// A pinned Saved binding must never follow a replacement game object.
+				if (savedBindings.containsKey(savedId)) return failureLocked(
+						MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Already resolved this session");
+				if (savedBindings.size() >= 64) return failureLocked(
+						MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Saved binding capacity reached");
+				savedBindings.put(savedId, new SavedBinding(pathProof, slot, selectedType));
+			}
+			return success(token, "Saved target resolved");
 		} catch (ReflectiveOperationException | RuntimeException | LinkageError error) {
 			return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 					"Saved locator could not resolve the exact field");

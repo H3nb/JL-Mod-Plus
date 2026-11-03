@@ -34,7 +34,7 @@ public final class SavedVariablesAuthority extends Service {
     static final int MAX_ITEMS = 64;
     static final int MAX_BYTES = 65_536;
     private static final String FILE_NAME = "saved-variables.json";
-    private static final String INSTALL_MARKER = ".saved-variables-installation-id";
+    private static final String MARKER_DIRECTORY = "saved-variable-installations";
     private final Object lock = new Object();
 
     private final ISavedVariablesAuthority.Stub binder = new ISavedVariablesAuthority.Stub() {
@@ -145,7 +145,8 @@ public final class SavedVariablesAuthority extends Service {
                 .getCanonicalFile();
         return new Target(canonical, appId, entry, jar, sha256(jar),
                 new AtomicFile(new File(config, FILE_NAME)),
-                new AtomicFile(new File(dir, INSTALL_MARKER)));
+                new AtomicFile(new File(new File(getNoBackupFilesDir(), MARKER_DIRECTORY),
+                        appId + ".id")));
     }
 
     private static JSONObject load(Target target) throws Exception {
@@ -187,6 +188,10 @@ public final class SavedVariablesAuthority extends Service {
 
     private static void ensureMarkerForNewDocument(Target target) throws Exception {
         if (exists(target.file) || exists(target.marker)) return;
+        File parent = target.marker.getBaseFile().getParentFile();
+        if (!parent.isDirectory() && !parent.mkdirs()) {
+            throw new IOException("Saved installation marker directory unavailable");
+        }
         FileOutputStream output = target.marker.startWrite();
         try {
             output.write(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
