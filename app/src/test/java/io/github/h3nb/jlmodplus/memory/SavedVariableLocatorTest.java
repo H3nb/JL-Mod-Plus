@@ -386,6 +386,56 @@ public class SavedVariableLocatorTest {
         }
     }
 
+    @Test public void savedFreezeExplicitlyRebindsExistingWatchToReplacementOwner() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        ManagedJavaMemoryEngine.SavedLocator locator =
+                new ManagedJavaMemoryEngine.SavedLocator(
+                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
+                        GuestRoot.class.getName(),
+                        new ManagedJavaMemoryEngine.SavedField[]{
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestPlayer.class.getName(), "coins", "int")
+                        });
+        try {
+            String savedId = "hp"; // Portable identifiers have no arbitrary minimum length.
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.resolveSavedLocator(FIRST, locator, savedId, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.freezeSaved(FIRST, savedId, "HP", "585858", 0L).code);
+            GuestPlayer original = root.player;
+            root.player = new GuestPlayer();
+            root.player.coins = 222;
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.freezeTick(FIRST, 0L).code);
+            engine.releaseSaved(FIRST, savedId);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.resolveSavedLocator(FIRST, locator, savedId, 0L).code);
+            // Passive rebind leaves the old Freeze paused and the replacement untouched.
+            root.player.coins = 33;
+            engine.freezeTick(FIRST, 0L);
+            assertEquals(33, root.player.coins);
+            assertTrue(engine.watchPage(FIRST).freezePaused[0]);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.editSaved(FIRST, savedId, "700", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.freezeSaved(FIRST, savedId, "HP", "700", 0L).code);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            root.player.coins = 123;
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                    engine.freezeTick(FIRST, 0L).code);
+            assertEquals(700, root.player.coins);
+            assertEquals(585858, original.coins);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
     @Test public void savedInspectorReadsSiblingsAndCapturesTheirTypedPath() {
         GuestRoot root = new GuestRoot();
         ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();

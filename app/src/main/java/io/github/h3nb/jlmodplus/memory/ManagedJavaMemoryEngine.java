@@ -1534,7 +1534,7 @@ final class ManagedJavaMemoryEngine {
     /** Resolve through initialized guest roots only, without changing Search or Watch. */
     ManagedOperationResult resolveSavedLocator(long token, SavedLocator locator,
                                                String id, long epoch) {
-        if (id == null || id.length() < 8 || id.length() > 64) {
+        if (id == null || id.isEmpty() || id.length() > 64) {
             return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST, "Invalid Saved ID");
         }
         return resolveSavedLocatorInternal(token, locator, id, epoch, id);
@@ -2119,6 +2119,26 @@ final class ManagedJavaMemoryEngine {
                     MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                     "Saved value changed after edit; Freeze was not started");
             if (existing >= 0) {
+                // Explicitly starting Freeze after Saved rebound must retarget the
+                // existing Watch. A passive Saved rebind never moves a Watch.
+                OwnerBucket previous = watches.owners[existing];
+                if (previous == null) return failureLocked(
+                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved Watch owner is unavailable");
+                if (previous.strongOwner() != actual || previous.kind != proof.kind
+                        || watches.slots[existing] != binding.slot
+                        || previous.provenancePath != proof.provenancePath) {
+                    OwnerBucket replacement = new OwnerBucket(previous.handle, proof.kind,
+                            actual, proof.schema);
+                    replacement.provenancePath = proof.provenancePath;
+                    replacement.arrayReference = proof.arrayReference;
+                    owners.put(replacement.handle, replacement);
+                    watches.owners[existing] = replacement;
+                    watches.slots[existing] = binding.slot;
+                    watches.ids[existing] = ManagedJavaMemoryIds.encode(
+                            proof.kind, replacement.handle, binding.slot);
+                    watches.initial[existing] = expected[0];
+                    watches.previous[existing] = expected[0];
+                }
                 watches.freeze[existing] = true;
                 watches.freezeValues[existing] = expected[0];
                 watches.freezePaused[existing] = false;
