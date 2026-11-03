@@ -633,28 +633,27 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                         "App bundle descriptor identity does not match the retained JAR",
                     )
                 }
-                // Source ownership must be detached before a selected configuration replaces
-                // the installed snapshot. Restore it only if the import rolls back.
-                val ownership = if (prepared.configDir != null ||
-                    prepared.layoutSkinFile != null || prepared.controlSkinDir != null) {
-                    ImportedBundleProfileLinkage.begin(
-                        getApplication(), generation.emulatorDir, storageKey)
-                } else null
-                val result = try {
-                    LibraryBundleRuntimeGuard.withClosedMidlets(
-                        getApplication(), listOf(generation.emulatorDir to storageKey),
-                    ) {
+                val result = LibraryBundleRuntimeGuard.withClosedMidlets(
+                    getApplication(), listOf(generation.emulatorDir to storageKey),
+                ) {
+                    // Detach only once the target is reserved. A failed pre-commit
+                    // restore returns its prior ownership after filesystem rollback.
+                    val ownership = if (prepared.configDir != null ||
+                        prepared.layoutSkinFile != null || prepared.controlSkinDir != null) {
+                        ImportedBundleProfileLinkage.begin(
+                            getApplication(), generation.emulatorDir, storageKey)
+                    } else null
+                    val restored = try {
                         LibraryAppBundleImporter.restore(
-                            prepared,
-                            generation.emulatorDir,
-                            storageKey,
+                            prepared, generation.emulatorDir, storageKey,
                         )
+                    } catch (error: Throwable) {
+                        ownership?.rollback()
+                        throw error
                     }
-                } catch (error: Throwable) {
-                    ownership?.rollback()
-                    throw error
+                    ownership?.complete()
+                    restored
                 }
-                ownership?.complete()
                 ImportRestoreOutcome(result.iconRevision, sourceMetadata)
             }
         }

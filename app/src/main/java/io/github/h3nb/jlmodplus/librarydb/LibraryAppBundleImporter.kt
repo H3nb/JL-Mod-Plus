@@ -23,6 +23,7 @@ import java.util.zip.ZipInputStream
 import io.github.h3nb.jlmodplus.jar.Descriptor
 import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer
 import io.github.h3nb.jlmodplus.config.ConfigAssetFiles
+import io.github.h3nb.jlmodplus.memory.SavedVariablesDocument
 
 /** Validates an exported JL-Mod Plus bundle and restores only authoritative app-owned state. */
 object LibraryAppBundleImporter {
@@ -670,6 +671,7 @@ object LibraryAppBundleImporter {
     ): RestoreResult {
         requireSafeStorageKey(storageKey)
         verifyPrepared(prepared)
+        prepared.savedVariablesFile?.let { SavedVariablesDocument.validate(it.readBytes()) }
         recoverInterruptedRestores(emulatorDir)
         val root = emulatorDir.canonicalFile
         val transactionId = UUID.randomUUID().toString()
@@ -791,7 +793,14 @@ object LibraryAppBundleImporter {
                 null
             }
             writeCommitMarker(transaction.commitMarker)
-            finalizeCommittedTransaction(transaction)
+            try {
+                finalizeCommittedTransaction(transaction)
+            } catch (cleanupError: IOException) {
+                // The new config/data is already committed. The durable marker allows
+                // the next Library startup to finish cleanup; never undo ownership.
+                android.util.Log.w("LibraryAppBundleImporter",
+                    "Committed restore cleanup will be retried", cleanupError)
+            }
             return RestoreResult(iconRevision)
         } catch (error: Throwable) {
             if (!transaction.commitMarker.exists()) {

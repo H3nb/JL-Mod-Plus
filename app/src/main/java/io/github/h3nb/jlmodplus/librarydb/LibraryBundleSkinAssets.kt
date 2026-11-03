@@ -89,8 +89,15 @@ internal object LibraryBundleSkinAssets {
         val original = controlSkin(workdir, sourceId)
         if (original != null && sameFiles(files, original)) return sourceId
 
-        val installedId = if (original == null) sourceId else UUID.randomUUID().toString()
         val root = File(File(workdir, "skins"), "controls")
+        // A previous import may have assigned this same set a different UUID
+        // because the original source UUID collided with a local set.
+        root.listFiles()?.sortedBy(File::getName)?.firstOrNull { candidate ->
+            candidate.isDirectory && readSkinId(candidate) != null &&
+                runCatching { sameFiles(files, candidate) }.getOrDefault(false)
+        }?.let { existing -> return readSkinId(existing)!! }
+
+        val installedId = if (original == null) sourceId else UUID.randomUUID().toString()
         if (!root.isDirectory && !root.mkdirs()) throw IOException("Cannot create control skin directory")
         val sourceLabel = sourceName?.takeIf(::validSetName) ?: "Imported control skin"
         var targetName = sourceLabel
@@ -207,6 +214,11 @@ internal object LibraryBundleSkinAssets {
         val other = runCatching { selectedControlFiles(existing) }.getOrNull() ?: return false
         if (source.map(File::getName) != other.map(File::getName)) return false
         return source.zip(other).all { (a, b) ->
+            if (a.name == META) {
+                val left = Json.parseToJsonElement(a.readText()).jsonObject
+                val right = Json.parseToJsonElement(b.readText()).jsonObject
+                return@all (left - "id") == (right - "id")
+            }
             if (a.length() != b.length()) return@all false
             a.inputStream().use { left ->
                 b.inputStream().use { right ->

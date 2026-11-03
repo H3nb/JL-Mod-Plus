@@ -174,24 +174,8 @@ public final class SavedVariablesAuthority extends Service {
     private static JSONObject load(Target target) throws Exception {
         if (!exists(target.file)) return empty();
         byte[] bytes = target.file.readFully();
-        if (bytes.length > MAX_BYTES) throw new IOException("Saved definitions exceed size limit");
-        JSONObject data = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
-        if (data.getInt("schema") != SCHEMA) {
-            throw new IOException("Unsupported Saved definitions version");
-        }
-        JSONArray items = data.getJSONArray("items");
-        if (items.length() > MAX_ITEMS) throw new IOException("Too many Saved definitions");
-        HashSet<String> ids = new HashSet<>();
-        for (int i = 0; i < items.length(); i++) {
-            JSONObject row = items.getJSONObject(i);
-            String id = row.getString("id");
-            if (id.isEmpty() || id.length() > 64 || !ids.add(id)) {
-                throw new IOException("Invalid or duplicate Saved ID");
-            }
-            checkedName(row.getString("label"));
-            decodeLocator(row.getJSONObject("locator"));
-        }
-        return data;
+        SavedVariablesDocument.validate(bytes);
+        return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
     }
 
     private static JSONObject empty() throws Exception {

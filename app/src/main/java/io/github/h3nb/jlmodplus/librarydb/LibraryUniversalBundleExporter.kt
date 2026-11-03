@@ -27,6 +27,7 @@ import java.util.HashSet
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import io.github.h3nb.jlmodplus.memory.SavedVariablesDocument
 
 /**
  * Deterministic writer for the universal app-payload bundle. A single app is represented by the
@@ -182,10 +183,18 @@ internal object LibraryUniversalBundleExporter {
         ) else BundleNamespaceState.Excluded
         val savedState = if (!source.components.savedVariables) BundleNamespaceState.Excluded
         else {
-            val savedFile = File(configRoot, "saved-variables.json")
-            if (savedFile.isFile) {
-                if (savedFile.length() > 65_536L) throw IOException("Saved definitions exceed size limit")
-                addOptionalFile(entries, workdirRoot, savedFile, "${payloadRoot}saved/saved-variables.json")
+            val savedFile = SavedVariablesDocument.committedFile(configRoot)
+            if (savedFile != null) {
+                if (!savedFile.isFile || savedFile.length() > SavedVariablesDocument.MAX_BYTES) {
+                    throw IOException("Saved definitions are unavailable or too large")
+                }
+                val committed = requiredFile(workdirRoot, savedFile, "Saved definitions")
+                SavedVariablesDocument.validate(committed.readBytes())
+                entries += SourceEntry(
+                    path = "${payloadRoot}saved/saved-variables.json",
+                    file = committed,
+                    directory = false,
+                )
                 BundleNamespaceState.Present
             } else BundleNamespaceState.Absent
         }
