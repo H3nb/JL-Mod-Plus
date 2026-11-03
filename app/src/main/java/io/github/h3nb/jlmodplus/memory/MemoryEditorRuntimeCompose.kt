@@ -797,8 +797,6 @@ private fun RuntimeSavedVariablesTab(
 
     Column(modifier.fillMaxWidth()) {
         val actionsForSelection = listOf(
-            RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
-                !state.busy, actions::refreshSavedVariables),
             RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit,
                 ready != null && state.writeSupported && !state.busy) { editRow = ready },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,

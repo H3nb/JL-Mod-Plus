@@ -15,26 +15,22 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.UUID;
 
 /**
  * Main-process authority for Saved definitions. Live guest objects and operation state never
- * enter this service. The immutable source identity and an installation-local marker prevent
- * an imported config or a reused workdir from silently adopting old definitions.
+ * enter this service. Storage writes are guarded against installation replacement; the
+ * definitions themselves are portable and are validated when resolved in the guest runtime.
  */
 public final class SavedVariablesAuthority extends Service {
-    static final int SCHEMA = 1;
+    static final int SCHEMA = 2;
     static final int MAX_ITEMS = 64;
     static final int MAX_BYTES = 65_536;
     private static final String FILE_NAME = "saved-variables.json";
-    private static final String MARKER_DIRECTORY = "saved-variable-installations";
     private final Object lock = new Object();
 
     private final ISavedVariablesAuthority.Stub binder = new ISavedVariablesAuthority.Stub() {
@@ -55,8 +51,6 @@ public final class SavedVariablesAuthority extends Service {
                     final Bundle[] result = new Bundle[1];
                     InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
                             getApplicationContext()).run(target.path, target.appId, () -> {
-                        if (!target.sha.equals(sha256(target.jar))) return false;
-                        ensureMarkerForNewDocument(target);
                         JSONObject data = load(target);
                         JSONArray items = data.getJSONArray("items");
                         if (items.length() >= MAX_ITEMS) return false;
@@ -95,7 +89,6 @@ public final class SavedVariablesAuthority extends Service {
                     Bundle[] response = new Bundle[1];
                     InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
                             getApplicationContext()).run(target.path, target.appId, () -> {
-                        if (!target.sha.equals(sha256(target.jar))) return false;
                         JSONObject data = load(target);
                         JSONArray old = data.getJSONArray("items");
                         JSONArray next = new JSONArray();
@@ -127,7 +120,6 @@ public final class SavedVariablesAuthority extends Service {
                 Bundle[] response = new Bundle[1];
                 InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
                         getApplicationContext()).run(target.path, target.appId, () -> {
-                    if (!target.sha.equals(sha256(target.jar))) return false;
                     JSONObject data = load(target);
                     JSONArray old = data.getJSONArray("items");
                     JSONArray next = new JSONArray();
@@ -174,25 +166,16 @@ public final class SavedVariablesAuthority extends Service {
         if (!jar.isFile()) throw new IOException("Installed source JAR is missing");
         File config = new File(new File(parent.getParentFile(), "configs"), dir.getName())
                 .getCanonicalFile();
-        return new Target(canonical, appId, entry, jar, sha256(jar),
-                new AtomicFile(new File(config, FILE_NAME)),
-                new AtomicFile(new File(new File(getNoBackupFilesDir(), MARKER_DIRECTORY),
-                        appId + ".id")));
+        return new Target(canonical, appId, new AtomicFile(new File(config, FILE_NAME)));
     }
 
     private static JSONObject load(Target target) throws Exception {
-        if (!exists(target.file)) return empty(target);
+        if (!exists(target.file)) return empty();
         byte[] bytes = target.file.readFully();
         if (bytes.length > MAX_BYTES) throw new IOException("Saved definitions exceed size limit");
         JSONObject data = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
-        if (data.getInt("schema") != SCHEMA
-                || data.getLong("appId") != target.appId
-                || !target.path.equals(data.getString("path"))
-                || !target.entry.equals(data.getString("entry"))
-                || !target.sha.equals(data.getString("jarSha256"))
-                || !exists(target.marker)
-                || !marker(target).equals(data.getString("installationMarker"))) {
-            throw new IOException("Saved definitions do not match this installation/JAR");
+        if (data.getInt("schema") != SCHEMA) {
+            throw new IOException("Unsupported Saved definitions version");
         }
         JSONArray items = data.getJSONArray("items");
         if (items.length() > MAX_ITEMS) throw new IOException("Too many Saved definitions");
@@ -209,38 +192,8 @@ public final class SavedVariablesAuthority extends Service {
         return data;
     }
 
-    private static JSONObject empty(Target target) throws Exception {
-        return new JSONObject().put("schema", SCHEMA)
-                .put("appId", target.appId).put("path", target.path)
-                .put("entry", target.entry).put("jarSha256", target.sha)
-                .put("installationMarker", exists(target.marker) ? markerQuiet(target) : "")
-                .put("items", new JSONArray());
-    }
-
-    private static void ensureMarkerForNewDocument(Target target) throws Exception {
-        if (exists(target.file) || exists(target.marker)) return;
-        File parent = target.marker.getBaseFile().getParentFile();
-        if (!parent.isDirectory() && !parent.mkdirs()) {
-            throw new IOException("Saved installation marker directory unavailable");
-        }
-        FileOutputStream output = target.marker.startWrite();
-        try {
-            output.write(UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
-            target.marker.finishWrite(output);
-        } catch (Exception error) {
-            target.marker.failWrite(output);
-            throw error;
-        }
-    }
-
-    private static String marker(Target target) throws Exception {
-        byte[] bytes = target.marker.readFully();
-        if (bytes.length < 16 || bytes.length > 64) throw new IOException("Invalid installation marker");
-        return new String(bytes, StandardCharsets.UTF_8);
-    }
-
-    private static String markerQuiet(Target target) {
-        try { return marker(target); } catch (Exception ignored) { return ""; }
+    private static JSONObject empty() throws Exception {
+        return new JSONObject().put("schema", SCHEMA).put("items", new JSONArray());
     }
 
     private static boolean exists(AtomicFile file) {
@@ -378,30 +331,14 @@ public final class SavedVariablesAuthority extends Service {
         return response;
     }
 
-    private static String sha256(File file) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        try (FileInputStream stream = new FileInputStream(file)) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = stream.read(buffer)) != -1) digest.update(buffer, 0, read);
-        }
-        StringBuilder hex = new StringBuilder(64);
-        for (byte b : digest.digest()) {
-            hex.append(Character.forDigit((b & 255) >>> 4, 16));
-            hex.append(Character.forDigit(b & 15, 16));
-        }
-        return hex.toString();
-    }
-
     private static final class Target {
-        final String path, entry, sha;
+        final String path;
         final long appId;
-        final File jar;
-        final AtomicFile file, marker;
-        Target(String path, long appId, String entry, File jar, String sha,
-               AtomicFile file, AtomicFile marker) {
-            this.path = path; this.appId = appId; this.entry = entry;
-            this.jar = jar; this.sha = sha; this.file = file; this.marker = marker;
+        final AtomicFile file;
+        Target(String path, long appId, AtomicFile file) {
+            this.path = path;
+            this.appId = appId;
+            this.file = file;
         }
     }
 }
