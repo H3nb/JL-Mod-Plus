@@ -72,6 +72,26 @@ class LibraryBundleSkinTransferTest {
         assertTrue(originalControl.readBytes().contentEquals(png(66)))
     }
 
+    @Test fun repeatedImportReusesRemappedSkinIdAfterSourceIdCollision() {
+        val id = UUID.randomUUID().toString()
+        val source = File(temp, "skin-source").apply { mkdirs() }
+        createSource(source, id)
+        val sourceSet = File(source, "skins/controls/Favorite")
+        val target = File(temp, "skin-destination").apply { mkdirs() }
+        val colliding = File(target, "skins/controls/Favorite").apply { mkdirs() }
+        File(colliding, "skin.json").writeText("""{"id":"$id","defaultMode":"icon"}""")
+        File(colliding, "key_1.png").writeBytes(png(67))
+        val first = LibraryBundleSkinAssets.importControlSkin(target, sourceSet, "Favorite")
+        val second = LibraryBundleSkinAssets.importControlSkin(target, sourceSet, "Favorite")
+        assertNotEquals(id, first)
+        assertEquals(first, second)
+        assertEquals(
+            listOf("Favorite", "Favorite (2)"),
+            File(target, "skins/controls").listFiles()!!.map { it.name }.sorted(),
+        )
+        assertTrue(File(colliding, "key_1.png").readBytes().contentEquals(png(67)))
+    }
+
     @Test fun configOnlyFallsBackForMissingSharedAssetsWithoutCopyingGlobalAssets() {
         val id = UUID.randomUUID().toString()
         val source = File(temp, "source").apply { mkdirs() }

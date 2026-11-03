@@ -5,6 +5,8 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import java.io.File
+import java.io.IOException
+import org.junit.jupiter.api.Assertions.assertThrows
 import java.util.zip.ZipFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -90,6 +92,59 @@ class LibrarySelectiveBundleTest {
         assertEquals("source configuration", File(config, "config.json").readText())
         assertEquals("keep these definitions", File(config, "saved-variables.json").readText())
         assertEquals("recoverable backup", File(config, "saved-variables.json.bak").readText())
+    }
+
+    @Test fun malformedSavedDocumentCannotReplaceExistingDefinitions() {
+        val old = """{"schema":2,"items":[]}"""
+        val root = File(temp, "source").apply { mkdirs() }
+        sourceApp(root, "source", old)
+        val archive = File(temp, "valid.zip")
+        LibraryUniversalBundleExporter.exportToZip(
+            listOf(LibraryUniversalBundleExporter.AppSource(
+                "a0001", "Game", "Vendor", "1", root, "source",
+                LibraryBundleComponents(false, false, true),
+            )), archive,
+        )
+        val parsed = LibraryAppBundleReader.read(archive.inputStream())
+        val staged = LibraryAppBundleImporter.extractUniversalSingleToStaging(
+            archive.inputStream(), File(temp, "invalid-stage"),
+            parsed.apps.single(), parsed.formatVersion,
+        )
+        // A ZIP with a valid manifest can still carry a structurally invalid Saved payload.
+        File(requireNotNull(staged.savedVariablesFile).path).writeText(
+            """{"schema":2,"items":[{"id":"same","label":"HP","locator":{}}]}""",
+        )
+        val target = File(temp, "target-invalid").apply { mkdirs() }
+        val config = File(target, "configs/destination").apply { mkdirs() }
+        File(config, "saved-variables.json").writeText(old)
+        File(config, "config.json").writeText("local preferences")
+        assertThrows(IOException::class.java) {
+            LibraryAppBundleImporter.restore(staged, target, "destination")
+        }
+        assertEquals(old, File(config, "saved-variables.json").readText())
+        assertEquals("local preferences", File(config, "config.json").readText())
+        assertFalse(File(target, ".library-import-transactions").exists())
+    }
+
+    @Test fun exportUsesRecoverableAtomicBackupInsteadOfAnInterruptedMainFile() {
+        val recovered = """{"schema":2,"items":[]}"""
+        val root = File(temp, "backup-source").apply { mkdirs() }
+        sourceApp(root, "source", recovered)
+        val config = File(root, "configs/source")
+        File(config, "saved-variables.json").writeText("interrupted write")
+        File(config, "saved-variables.json.bak").writeText(recovered)
+        val archive = File(temp, "backup.zip")
+        LibraryUniversalBundleExporter.exportToZip(
+            listOf(LibraryUniversalBundleExporter.AppSource(
+                "a0001", "Game", "Vendor", "1", root, "source",
+                LibraryBundleComponents(false, false, true),
+            )), archive,
+        )
+        ZipFile(archive).use { zip ->
+            val entry = zip.getEntry("apps/a0001/saved/saved-variables.json")
+            assertEquals(recovered, zip.getInputStream(entry).bufferedReader().readText())
+            assertFalse(zip.entries().asSequence().any { it.name.endsWith(".bak") })
+        }
     }
 
     private fun sourceApp(root: File, key: String, saved: String) {
