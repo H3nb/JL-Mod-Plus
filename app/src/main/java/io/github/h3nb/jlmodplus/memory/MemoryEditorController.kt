@@ -566,7 +566,7 @@ internal class MemoryEditorComposeController(
                 unknownPredicate = MemoryEditorRuntimePreferences.unknownPredicate(token),
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
-                messageIsError = false,
+                messageIsError = if (capabilityMessage.isNullOrBlank()) state.messageIsError else false,
             )
             if (state.savedTab && state.savedVariables.isNotEmpty()
                 && state.savedValues.isEmpty() && savedAuthority != null) refreshSavedVariables()
