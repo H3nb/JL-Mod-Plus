@@ -450,8 +450,10 @@ internal interface MemoryEditorActions {
     fun clearSavedSelection() = Unit
     fun inspectSavedVariable(id: String) = Unit
     fun saveInspectorVariable(name: String, relativeOffset: Int) = Unit
+    fun watchInspectorVariable(relativeOffset: Int) = Unit
     fun editSavedInspectorValue(id: String, relativeOffset: Int, type: Int,
-                                expectedBits: Long, replacement: String) = Unit
+                                expectedBits: Long, replacement: String,
+                                freezeAfter: Boolean = false) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
     fun invertVisible()
@@ -511,6 +513,7 @@ internal interface MemoryEditorActions {
         expectedBits: Long,
         replacementValue: String,
         watchAnchor: Boolean = false,
+        freezeAfter: Boolean = false,
     ) = Unit
     fun closeInspector() = Unit
 }

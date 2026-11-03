@@ -1474,12 +1474,47 @@ internal class MemoryEditorComposeController(
         }
     }
 
+
+    override fun watchInspectorVariable(relativeOffset: Int) {
+        val snapshot = state.inspector ?: return
+        val row = snapshot.logicalRows.firstOrNull { it.relativeOffset == relativeOffset } ?: return
+        if (!row.editable || state.busy || !canLaunchOperation()) return
+        val token = state.runtimeToken
+        val engine = service ?: return
+        val request = inspectorRequestGeneration
+        val connection = connectionGeneration
+        runIpc {
+            val result = runCatching {
+                engine.watchInspector(
+                    token, snapshot.savedId, snapshot.expectedRevision, snapshot.candidateId,
+                    snapshot.watchAnchor, relativeOffset, row.type, row.expectedBits,
+                )
+            }
+            post {
+                if (destroyed || !state.visible || request != inspectorRequestGeneration ||
+                    connection != connectionGeneration || service !== engine ||
+                    state.runtimeToken != token || state.inspector != snapshot) return@post
+                val reply = result.getOrNull()
+                val success = reply?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                    MemoryEngineContract.RESULT_OK
+                state = state.copy(
+                    message = if (success) "Inspector value added to Watch"
+                    else reply?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                        ?: result.exceptionOrNull()?.message ?: "Unable to watch Inspector value",
+                    messageIsError = !success,
+                )
+                if (success) reloadState()
+            }
+        }
+    }
+
     override fun editSavedInspectorValue(
         id: String,
         relativeOffset: Int,
         type: Int,
         expectedBits: Long,
         replacement: String,
+        freezeAfter: Boolean,
     ) {
         val snapshot = state.inspector ?: return
         if (snapshot.savedId != id || !state.writeSupported || state.busy ||
@@ -1494,26 +1529,27 @@ internal class MemoryEditorComposeController(
         val connection = connectionGeneration
         runIpc {
             val outcome = runCatching {
-                savedValue(engine.editSavedInspector(
+                if (freezeAfter) engine.editInspectorAndFreeze(
+                    token, id, snapshot.expectedRevision, snapshot.candidateId,
+                    snapshot.watchAnchor, relativeOffset, type, expectedBits, replacement.trim(),
+                ) else engine.editSavedInspector(
                     token, id, relativeOffset, type, expectedBits, replacement.trim(),
-                ), bound = true)
+                )
             }
             post {
                 if (destroyed || !state.visible || request != inspectorRequestGeneration ||
                     connection != connectionGeneration || service !== engine ||
                     state.runtimeToken != token || state.inspector?.savedId != id) return@post
-                val value = outcome.getOrElse {
-                    SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
-                        detail = it.message.orEmpty())
-                }
-                if (value.resolved) {
-                    if (relativeOffset == 0) {
-                        state = state.copy(savedValues = state.savedValues + (id to value))
-                    }
+                val result = outcome.getOrNull()
+                val code = result?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
+                    ?: MemoryEngineContract.RESULT_TARGET_LOST
+                if (code == MemoryEngineContract.RESULT_OK) {
                     inspectSavedVariable(id)
                 } else {
                     state = state.copy(
-                        message = value.detail.ifBlank { "Saved Inspector edit was rejected" },
+                        message = result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                            ?: outcome.exceptionOrNull()?.message
+                            ?: "Saved Inspector edit was rejected",
                         messageIsError = true,
                     )
                 }
@@ -1533,11 +1569,46 @@ internal class MemoryEditorComposeController(
         expectedBits: Long,
         replacementValue: String,
         watchAnchor: Boolean,
+        freezeAfter: Boolean,
     ) {
         val snapshot = state.inspector ?: return
         if (snapshot.savedId != null || snapshot.candidateId != anchorCandidateId ||
             !MemoryEngineContract.isCandidateType(type)) return
         if (!canLaunchOperation()) return
+        if (freezeAfter) {
+            val token = state.runtimeToken
+            val engine = service ?: return
+            val request = inspectorRequestGeneration
+            val connection = connectionGeneration
+            runIpc {
+                val outcome = runCatching {
+                    engine.editInspectorAndFreeze(
+                        token, null, snapshot.expectedRevision, anchorCandidateId,
+                        watchAnchor, relativeOffset, type, expectedBits, replacementValue.trim(),
+                    )
+                }
+                post {
+                    if (destroyed || !state.visible || request != inspectorRequestGeneration ||
+                        connection != connectionGeneration || service !== engine ||
+                        state.runtimeToken != token || state.inspector != snapshot) return@post
+                    val result = outcome.getOrNull()
+                    val code = result?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
+                        ?: MemoryEngineContract.RESULT_TARGET_LOST
+                    if (code == MemoryEngineContract.RESULT_OK) {
+                        reloadState()
+                        inspectCandidate(anchorCandidateId, watchAnchor = watchAnchor)
+                    } else {
+                        state = state.copy(
+                            message = result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                                ?: outcome.exceptionOrNull()?.message
+                                ?: "Inspector edit/Freeze was rejected",
+                            messageIsError = true,
+                        )
+                    }
+                }
+            }
+            return
+        }
         pendingInspectorRefresh = PendingInspectorRefresh(
             anchorCandidateId,
             MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
