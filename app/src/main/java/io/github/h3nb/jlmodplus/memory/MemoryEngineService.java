@@ -181,6 +181,22 @@ public final class MemoryEngineService extends Service {
             }
         }
 
+        @Override public Bundle freezeSaved(long token, String savedId, String label) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime is unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.freezeSaved(token, savedId, label, epoch);
+                if (consumeManagedResult(token, bridge, result) == MemoryEngineContract.RESULT_OK)
+                    startFreezeTaskIfNeeded();
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
         @Override public void releaseSaved(long token, String savedId) {
             IMemoryTargetBridge bridge = target;
             if (bridge == null || !isTargetToken(token)) return;

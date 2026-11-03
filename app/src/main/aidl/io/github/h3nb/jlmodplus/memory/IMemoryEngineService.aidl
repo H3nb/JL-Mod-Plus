@@ -64,5 +64,6 @@ interface IMemoryEngineService {
     Bundle readSaved(long runtimeToken, String savedId);
     Bundle editSaved(long runtimeToken, String savedId, String replacement);
     void releaseSaved(long runtimeToken, String savedId);
+    Bundle freezeSaved(long runtimeToken, String savedId, String label);
     void cancelOperation(long runtimeToken);
 }

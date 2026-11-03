@@ -1784,6 +1784,46 @@ final class ManagedJavaMemoryEngine {
     }
 
 
+
+    /** Explicit Freeze promotes a pinned Saved target into Watch, with guarded periodic writes. */
+    ManagedOperationResult freezeSaved(long token, String id, String label, long epoch) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, epoch))
+                return failureLocked(MemoryEngineContract.RESULT_TARGET_LOST, "Saved runtime changed");
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return failureLocked(
+                    MemoryEngineContract.RESULT_NO_SESSION, "Resolve the Saved variable first");
+            OwnerBucket proof = binding.owner;
+            Object actual = proof.strongOwner();
+            if (actual == null || inspectPath(token, proof, actual, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved owner changed");
+            for (int i = 0; i < watches.count; i++)
+                if (id.equals(watches.savedSourceIds[i])) return failureLocked(
+                        MemoryEngineContract.RESULT_INVALID_REQUEST, "Already in Watch");
+            if (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS ||
+                    watches.freezeCount() >= MemoryEngineContract.MAX_FREEZE_RECORDS ||
+                    owners.size() >= limits.maxOwners ||
+                    nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX) return failureLocked(
+                    MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Watch/Freeze capacity reached");
+            long[] current = new long[1];
+            if (!readTyped(proof, binding.slot, actual, current)) return failureLocked(
+                    MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved value is unavailable");
+            OwnerBucket owner = new OwnerBucket(nextOwnerHandle++, proof.kind, actual, proof.schema);
+            owner.provenancePath = proof.provenancePath;
+            owner.arrayReference = proof.arrayReference;
+            long candidateId = ManagedJavaMemoryIds.encode(proof.kind, owner.handle, binding.slot);
+            owners.put(owner.handle, owner);
+            watches.append(candidateId, owner, binding.slot, current[0], label == null ? "" : label);
+            int index = watches.count - 1;
+            watches.savedSourceIds[index] = id;
+            watches.freeze[index] = true;
+            watches.freezeValues[index] = current[0];
+            watches.freezePaused[index] = false;
+            return successLocked("Saved value added to Watch and frozen");
+        }
+    }
+
     /** Release a definition after Delete; it must not consume a bounded runtime slot. */
     void releaseSaved(long token, String id) {
         synchronized (stateLock) {
@@ -2038,7 +2078,10 @@ final class ManagedJavaMemoryEngine {
 				if (owner != snapshot.owners[index] || slot != snapshot.slots[index]) continue;
 				eligible++;
 				Object strongOwner = owner == null ? null : owner.strongOwner();
-				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
+				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)
+                        || (watches.savedSourceIds[watchIndex] != null &&
+                            inspectPath(token, owner, strongOwner, slot).status !=
+                            MemoryEngineContract.PATH_VERIFIED)) {
 					watches.freezePaused[watchIndex] = true;
 					rejected++;
 					continue;
@@ -4231,6 +4274,7 @@ final class ManagedJavaMemoryEngine {
 		final boolean[] freeze = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final long[] freezeValues = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freezePaused = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
+        final String[] savedSourceIds = new String[MemoryEngineContract.MAX_WATCH_RECORDS];
 		int count;
 
 		int indexOf(long id) {
@@ -4246,6 +4290,7 @@ final class ManagedJavaMemoryEngine {
 			previous[count] = value;
 			labels[count] = label;
 			freeze[count] = false;
+            savedSourceIds[count] = null;
 			freezePaused[count] = false;
 			count++;
 		}
@@ -4264,12 +4309,14 @@ final class ManagedJavaMemoryEngine {
 				freeze[index] = freeze[last];
 				freezeValues[index] = freezeValues[last];
 				freezePaused[index] = freezePaused[last];
+                savedSourceIds[index] = savedSourceIds[last];
 			}
 			ids[last] = 0L;
 			owners[last] = null;
 			labels[last] = null;
 			freeze[last] = false;
 			freezePaused[last] = false;
+            savedSourceIds[last] = null;
 			count = last;
 		}
 
@@ -4320,6 +4367,7 @@ final class ManagedJavaMemoryEngine {
 			Arrays.fill(labels, null);
 			Arrays.fill(freeze, false);
 			Arrays.fill(freezePaused, false);
+            Arrays.fill(savedSourceIds, null);
 			count = 0;
 		}
 	}

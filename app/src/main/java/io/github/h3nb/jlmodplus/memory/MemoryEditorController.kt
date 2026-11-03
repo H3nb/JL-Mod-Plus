@@ -910,6 +910,32 @@ internal class MemoryEditorComposeController(
         }
     }
 
+    override fun freezeSavedVariable(id: String) {
+        if (!state.writeSupported || state.savedValues[id]?.resolved != true || state.busy) return
+        val engine = service ?: return
+        val token = state.runtimeToken
+        val label = state.savedVariables.firstOrNull { it.id == id }?.label ?: return
+        val generation = savedGeneration
+        runIpc {
+            val answer = runCatching { engine.freezeSaved(token, id, label) }
+            post {
+                if (destroyed || generation != savedGeneration || state.runtimeToken != token
+                    || service !== engine) return@post
+                val result = answer.getOrNull()
+                val code = result?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
+                    ?: MemoryEngineContract.RESULT_TARGET_LOST
+                state = state.copy(
+                    message = if (code == MemoryEngineContract.RESULT_OK)
+                        "Saved value added to Watch and frozen"
+                    else result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                        ?: answer.exceptionOrNull()?.message ?: "Unable to freeze Saved variable",
+                    messageIsError = code != MemoryEngineContract.RESULT_OK,
+                )
+                if (code == MemoryEngineContract.RESULT_OK) reloadState()
+            }
+        }
+    }
+
     override fun renameSavedVariable(id: String, name: String) = mutateSaved(id, name, false)
     override fun deleteSavedVariable(id: String) = deleteSavedVariables(listOf(id))
     override fun deleteSavedVariables(ids: List<String>) {
