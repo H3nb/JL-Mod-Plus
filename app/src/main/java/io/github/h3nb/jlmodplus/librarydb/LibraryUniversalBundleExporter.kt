@@ -47,6 +47,7 @@ internal object LibraryUniversalBundleExporter {
         val version: String,
         val emulatorDir: File,
         val storageKey: String,
+        val components: LibraryBundleComponents = LibraryBundleComponents(),
     )
 
     @Throws(IOException::class)
@@ -132,24 +133,35 @@ internal object LibraryUniversalBundleExporter {
         addOptionalFile(entries, workdirRoot, File(convertedRoot, "converted.dex.conf"), "${payloadRoot}app/converted.dex.conf")
         addOptionalFile(entries, workdirRoot, File(convertedRoot, "icon.png"), "${payloadRoot}app/icon.png")
 
-        val configState = addNamespace(
+        val configRoot = File(File(source.emulatorDir, "configs"), source.storageKey)
+        val configState = if (source.components.configuration) addNamespace(
             entries = entries,
             workdirRoot = workdirRoot,
-            root = File(File(source.emulatorDir, "configs"), source.storageKey),
+            root = configRoot,
             prefix = "${payloadRoot}config",
-        )
-        val dataState = addNamespace(
+            excludeSavedVariables = true,
+        ) else BundleNamespaceState.Excluded
+        val dataState = if (source.components.saveData) addNamespace(
             entries = entries,
             workdirRoot = workdirRoot,
             root = File(File(source.emulatorDir, "data"), source.storageKey),
             prefix = "${payloadRoot}data",
-        )
+        ) else BundleNamespaceState.Excluded
+        val savedState = if (!source.components.savedVariables) BundleNamespaceState.Excluded
+        else {
+            val savedFile = File(configRoot, "saved-variables.json")
+            if (savedFile.isFile) {
+                addOptionalFile(entries, workdirRoot, savedFile, "${payloadRoot}saved/saved-variables.json")
+                BundleNamespaceState.Present
+            } else BundleNamespaceState.Absent
+        }
         return PlannedApp(
             source = source,
             payloadRoot = payloadRoot,
             sourceSha256 = entries.first().expectedSha256!!,
             configState = configState,
             dataState = dataState,
+            savedState = savedState,
             entries = entries,
         )
     }
@@ -159,6 +171,7 @@ internal object LibraryUniversalBundleExporter {
         workdirRoot: File,
         root: File,
         prefix: String,
+        excludeSavedVariables: Boolean = false,
     ): BundleNamespaceState {
         if (!root.exists()) return BundleNamespaceState.Absent
         val canonicalRoot = requiredDirectory(workdirRoot, root, "App-owned namespace")
@@ -169,6 +182,8 @@ internal object LibraryUniversalBundleExporter {
             directory = canonicalRoot,
             prefix = prefix,
             visitedDirectories = HashSet(),
+            excludeSavedVariables = excludeSavedVariables,
+            topLevel = true,
         )
         return if (entries.any { !it.directory && it.path.startsWith("$prefix/") }) {
             BundleNamespaceState.Present
@@ -183,6 +198,8 @@ internal object LibraryUniversalBundleExporter {
         directory: File,
         prefix: String,
         visitedDirectories: MutableSet<String>,
+        excludeSavedVariables: Boolean,
+        topLevel: Boolean,
     ) {
         val canonicalDirectory = directory.canonicalFile
         if (!insideRoot(workdirRoot, canonicalDirectory)) {
@@ -199,6 +216,8 @@ internal object LibraryUniversalBundleExporter {
         val children = canonicalDirectory.listFiles()
             ?: throw IOException("Unable to list app-owned directory: ${directory.absolutePath}")
         children.sortedBy(File::getName).forEach { child ->
+            if (topLevel && excludeSavedVariables &&
+                child.name.startsWith("saved-variables.json")) return@forEach
             val canonical = child.canonicalFile
             if (!insideRoot(workdirRoot, canonical)) {
                 throw IOException("App-owned path resolves outside the active workdir: ${child.absolutePath}")
@@ -213,6 +232,8 @@ internal object LibraryUniversalBundleExporter {
                         directory = canonical,
                         prefix = path,
                         visitedDirectories = visitedDirectories,
+                        excludeSavedVariables = excludeSavedVariables,
+                        topLevel = false,
                     )
                 }
                 canonical.isFile -> entries += SourceEntry(path = path, file = canonical, directory = false)
@@ -253,7 +274,7 @@ internal object LibraryUniversalBundleExporter {
     private fun manifestBytes(apps: List<PlannedApp>): ByteArray {
         val root = linkedMapOf<String, JsonElement>()
         root["schema"] = JsonPrimitive(LibraryAppBundleFormat.UNIVERSAL_SCHEMA)
-        root["formatVersion"] = JsonPrimitive(LibraryAppBundleFormat.UNIVERSAL_VERSION)
+        root["formatVersion"] = JsonPrimitive(LibraryAppBundleFormat.SELECTIVE_VERSION)
         val records = arrayListOf<JsonElement>()
         apps.forEach { app ->
             val record = linkedMapOf<String, JsonElement>()
@@ -265,6 +286,7 @@ internal object LibraryUniversalBundleExporter {
             record["sourceSha256"] = JsonPrimitive(app.sourceSha256)
             record["configState"] = JsonPrimitive(app.configState.manifestValue())
             record["dataState"] = JsonPrimitive(app.dataState.manifestValue())
+            record["savedState"] = JsonPrimitive(app.savedState.manifestValue())
             records.add(JsonObject(record))
         }
         root["apps"] = JsonArray(records)
@@ -335,6 +357,7 @@ internal object LibraryUniversalBundleExporter {
         BundleNamespaceState.Absent -> "absent"
         BundleNamespaceState.PresentEmpty -> "present-empty"
         BundleNamespaceState.Present -> "present"
+        BundleNamespaceState.Excluded -> "excluded"
     }
 
     private fun insideRoot(root: File, candidate: File): Boolean =
@@ -349,6 +372,7 @@ internal object LibraryUniversalBundleExporter {
         val sourceSha256: String,
         val configState: BundleNamespaceState,
         val dataState: BundleNamespaceState,
+        val savedState: BundleNamespaceState,
         val entries: List<SourceEntry>,
     )
 

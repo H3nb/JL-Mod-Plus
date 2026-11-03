@@ -43,8 +43,9 @@ internal object LibraryUniversalBundleStager {
         }
         return try {
             val parsed = openSource(context, source).use(LibraryAppBundleReader::read)
-            if (parsed.formatVersion != LibraryAppBundleFormat.UNIVERSAL_VERSION) {
-                throw IOException("Bulk app import requires a universal v2 app bundle")
+            if (parsed.formatVersion != LibraryAppBundleFormat.UNIVERSAL_VERSION &&
+                parsed.formatVersion != LibraryAppBundleFormat.SELECTIVE_VERSION) {
+                throw IOException("Bulk app import requires a universal app bundle")
             }
             val plan = LibraryAppBundleImportPlanner.plan(parsed)
             val apps = openSource(context, source).use { input ->
