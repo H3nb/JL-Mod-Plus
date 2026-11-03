@@ -42,8 +42,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.R
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasSetTextAction
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

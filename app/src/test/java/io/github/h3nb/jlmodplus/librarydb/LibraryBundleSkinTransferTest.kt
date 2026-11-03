@@ -4,9 +4,8 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import java.io.File
-import java.io.RandomAccessFile
 import java.io.IOException
-import org.junit.jupiter.api.Assertions.assertThrows
+import java.io.RandomAccessFile
 import java.util.UUID
 import java.util.zip.ZipFile
 import kotlinx.serialization.json.Json
@@ -16,6 +15,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
