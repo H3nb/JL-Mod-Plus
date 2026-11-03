@@ -658,9 +658,45 @@ final class ManagedJavaMemoryEngine {
 		if (anchor.error != null) {
 			return ManagedInspection.failure(anchor.error.code, anchor.error.message);
 		}
-		OwnerBucket owner = anchor.owners[0];
-		Object strongOwner = anchor.strongOwners[0];
-		int anchorSlot = anchor.slots[0];
+        return inspectOwner(token, expectedRevision, anchor.owners[0],
+                anchor.strongOwners[0], anchor.slots[0], radius);
+    }
+
+    /** Saved Inspector reads siblings of the pinned guest owner without joining Search or Watch. */
+    ManagedInspection inspectSaved(long token, String id, int radius) {
+        if (!MemoryEngineContract.isInspectRadius(radius)) {
+            return ManagedInspection.failure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                    "Saved Inspector radius is invalid");
+        }
+        OwnerBucket snapshot;
+        Object actual;
+        int slot;
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token)) return ManagedInspection.failure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime ended");
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return ManagedInspection.failure(
+                    MemoryEngineContract.RESULT_NO_SESSION, "Resolve this Saved variable first");
+            actual = binding.owner.strongOwner();
+            slot = binding.slot;
+            if (actual == null || inspectPath(token, binding.owner, actual, slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return ManagedInspection.failure(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Saved Inspector owner changed");
+            }
+            if (nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX) return ManagedInspection.failure(
+                    MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Inspector identity budget exhausted");
+            // Presentation-only handle, deliberately not inserted into the editor owners map.
+            snapshot = new OwnerBucket(nextOwnerHandle++, binding.owner.kind, actual,
+                    binding.owner.schema);
+            snapshot.provenancePath = binding.owner.provenancePath;
+            snapshot.arrayReference = binding.owner.arrayReference;
+        }
+        return inspectOwner(token, 0L, snapshot, actual, slot, radius);
+    }
+
+    private ManagedInspection inspectOwner(long token, long expectedRevision,
+            OwnerBucket owner, Object strongOwner, int anchorSlot, int radius) {
 		// Logical windows use the result-row budget, not the raw byte budget.
 		radius = Math.min(radius, (MemoryEngineContract.MAX_RESULT_PAGE_SIZE - 1) / 2);
 		ArrayList<Integer> slots = new ArrayList<>();
@@ -1372,9 +1408,38 @@ final class ManagedJavaMemoryEngine {
 	SavedLocator captureSavedLocator(long token, long revision, long candidateId) {
 		ResolvedBatch selected = resolveBatch(token, revision, new long[]{candidateId}, true);
 		if (selected.error != null) return null;
-		OwnerBucket owner = selected.owners[0];
-		Object actual = selected.strongOwners[0];
-		int slot = selected.slots[0];
+        return captureSavedOwner(token, selected.owners[0], selected.strongOwners[0],
+                selected.slots[0]);
+    }
+
+    /** Saved locators for Inspector siblings are verified from the already checked anchor. */
+    @Nullable
+    SavedLocator captureInspectorLocator(long token, long revision, long anchorId,
+                                         boolean watchAnchor, int relativeOffset) {
+        if (Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS) return null;
+        ResolvedBatch selected = resolveBatch(token, revision, new long[]{anchorId}, watchAnchor);
+        if (selected.error != null) return null;
+        long slot = (long) selected.slots[0] + relativeOffset;
+        if (slot < 0 || slot > Integer.MAX_VALUE) return null;
+        return captureSavedOwner(token, selected.owners[0], selected.strongOwners[0], (int) slot);
+    }
+
+    /** A Saved Inspector may save a sibling even though no Search results exist. */
+    @Nullable
+    SavedLocator captureSavedNeighborLocator(long token, String savedId, int relativeOffset) {
+        if (Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS) return null;
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token)) return null;
+            SavedBinding binding = savedBindings.get(savedId);
+            if (binding == null) return null;
+            long slot = (long) binding.slot + relativeOffset;
+            if (slot < 0 || slot > Integer.MAX_VALUE) return null;
+            return captureSavedOwner(token, binding.owner, binding.owner.strongOwner(), (int) slot);
+        }
+    }
+
+    @Nullable
+    private SavedLocator captureSavedOwner(long token, OwnerBucket owner, Object actual, int slot) {
         if (owner.kind == KIND_ARRAY) {
             // Only a *direct* static primitive-array reference is supported so far.
             // Inspector's verified source is not by itself a persistent locator for
