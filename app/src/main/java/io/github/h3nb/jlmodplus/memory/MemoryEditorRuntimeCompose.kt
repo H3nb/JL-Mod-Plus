@@ -775,19 +775,73 @@ private fun RuntimeSavedVariablesTab(
 ) {
     var editRow by remember { mutableStateOf<SavedVariableRow?>(null) }
     var renameRow by remember { mutableStateOf<SavedVariableRow?>(null) }
-    var deleteId by remember { mutableStateOf<String?>(null) }
+    var deleteIds by remember { mutableStateOf<List<String>?>(null) }
+    var moreMenu by remember { mutableStateOf(false) }
+    val selected = state.savedVariables.filter { it.id in state.savedSelection }
+    val one = selected.singleOrNull()
+    val ready = one?.takeIf { state.savedValues[it.id]?.resolved == true }
+    val allSelected = state.savedVariables.isNotEmpty() &&
+        state.savedVariables.all { it.id in state.savedSelection }
+    val selectionDescription = stringResource(if (allSelected) R.string.memory_editor_clear_selection
+        else R.string.memory_editor_select_visible)
+
     Column(modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.memory_saved_tab),
-                style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-            TextButton(onClick = actions::refreshSavedVariables, enabled = !state.busy) {
-                Text(stringResource(R.string.memory_editor_refresh))
+        val actionsForSelection = listOf(
+            RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
+                !state.busy, actions::refreshSavedVariables),
+            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit,
+                ready != null && state.writeSupported && !state.busy) { editRow = ready },
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
+                ready != null && !state.busy) { ready?.let { actions.inspectSavedVariable(it.id) } },
+            RuntimeToolbarAction(R.drawable.ic_lock, R.string.memory_editor_freeze,
+                ready != null && state.writeSupported && !state.busy) {
+                ready?.let { actions.freezeSavedVariable(it.id) }
+            },
+            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_saved_rename,
+                one != null && !state.busy) { renameRow = one },
+            RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
+                selected.isNotEmpty() && !state.busy) { deleteIds = selected.map { it.id } },
+        )
+        BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
+            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+        )) {
+            val slotCount = ((maxWidth - 160.dp).value / 48f).toInt().coerceAtLeast(1)
+            val available = actionsForSelection.filter { it.enabled }
+            val directCount = if (available.size > slotCount) (slotCount - 1).coerceAtLeast(0)
+                else slotCount
+            val direct = available.take(directCount)
+            val overflow = available.drop(directCount)
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                RuntimePageSelectionCheckbox(
+                    checked = allSelected,
+                    enabled = state.savedVariables.isNotEmpty() && !state.busy,
+                    description = selectionDescription,
+                    onToggle = { if (it) actions.selectAllSaved() else actions.clearSavedSelection() },
+                )
+                Text(
+                    if (state.savedSelection.isEmpty()) stringResource(R.string.memory_saved_tab)
+                    else pluralStringResource(R.plurals.memory_editor_selected,
+                        selected.size, selected.size),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).padding(start = 4.dp),
+                )
+                direct.forEach { RuntimeActionIcon(it.icon, it.label, it.enabled, it.onClick) }
+                if (overflow.isNotEmpty()) {
+                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, !state.busy) {
+                        moreMenu = true
+                    }
+                }
+            }
+            if (moreMenu && overflow.isNotEmpty()) {
+                RuntimeOverflowActionsDialog(overflow) { moreMenu = false }
             }
         }
+        HorizontalDivider()
         state.savedError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(12.dp))
+            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
         }
         if (state.savedVariables.isEmpty() && state.savedError == null) {
             Text(stringResource(R.string.memory_saved_empty), modifier = Modifier.padding(16.dp),
@@ -796,7 +850,6 @@ private fun RuntimeSavedVariablesTab(
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().weight(1f)) {
             items(state.savedVariables, key = { it.id }) { item ->
                 val value = state.savedValues[item.id]
-                val ready = value?.resolved == true
                 val status = value?.status ?: SavedVariableStatus.NOT_READY
                 val statusText = stringResource(when (status) {
                     SavedVariableStatus.RESOLVED -> R.string.memory_saved_tab
@@ -805,38 +858,32 @@ private fun RuntimeSavedVariablesTab(
                     SavedVariableStatus.INCOMPATIBLE -> R.string.memory_saved_incompatible
                     SavedVariableStatus.FAILED -> R.string.memory_saved_failed
                 })
-                val label = if (ready) {
+                val detail = if (value?.resolved == true) {
                     value.value + " (" + runtimeTypeShort(value.type) + ")"
-                } else {
-                    statusText + (value?.detail?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
-                }
-                Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f).padding(start = 8.dp)) {
-                        Text(item.label, style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(item.path, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(label, style = MaterialTheme.typography.bodySmall,
-                            color = if (ready) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2)
-                    }
-                    TextButton(enabled = !state.busy && status != SavedVariableStatus.CHANGED &&
-                        status != SavedVariableStatus.INCOMPATIBLE, onClick = {
-                        if (ready) editRow = item else actions.resolveSavedVariable(item.id)
-                    }) {
-                        Text(stringResource(if (ready) R.string.memory_editor_edit
-                            else R.string.memory_saved_retry))
-                    }
-                    IconButton(enabled = !state.busy, onClick = { renameRow = item }) {
-                        Icon(painterResource(R.drawable.ic_edit),
-                            contentDescription = stringResource(R.string.memory_saved_rename))
-                    }
-                    IconButton(enabled = !state.busy, onClick = { deleteId = item.id }) {
-                        Icon(painterResource(R.drawable.ic_delete),
-                            contentDescription = stringResource(R.string.memory_editor_remove))
+                } else statusText + (value?.detail?.takeIf(String::isNotBlank)?.let { " · $it" } ?: "")
+                val selectedRow = item.id in state.savedSelection
+                Surface(color = if (selectedRow) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+                    else Color.Transparent) {
+                    Row(Modifier.fillMaxWidth()
+                        .clickable(enabled = !state.busy) { actions.toggleSavedSelection(item.id) }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = selectedRow,
+                            enabled = !state.busy,
+                            onCheckedChange = { actions.toggleSavedSelection(item.id) },
+                        )
+                        Column(Modifier.weight(1f).padding(start = 4.dp)) {
+                            Text(item.label, style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(item.path, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(detail, style = MaterialTheme.typography.bodySmall,
+                                color = if (value?.resolved == true) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2)
+                        }
                     }
                 }
                 HorizontalDivider()
@@ -857,7 +904,7 @@ private fun RuntimeSavedVariablesTab(
                     singleLine = true, modifier = Modifier.fillMaxWidth())
             },
             confirmButton = {
-                TextButton(enabled = replacement.isNotBlank() &&
+                TextButton(enabled = replacement.isNotBlank() && state.writeSupported &&
                     state.savedValues[item.id]?.resolved == true,
                     onClick = { actions.editSavedVariable(item.id, replacement); editRow = null }) {
                     Text(stringResource(R.string.memory_editor_edit))
@@ -893,26 +940,28 @@ private fun RuntimeSavedVariablesTab(
             },
         )
     }
-    if (deleteId != null) {
+    deleteIds?.let { ids ->
         AlertDialog(
-            onDismissRequest = { deleteId = null },
+            onDismissRequest = { deleteIds = null },
             title = { Text(stringResource(R.string.memory_editor_remove)) },
-            text = { Text(stringResource(R.string.memory_saved_delete_confirm)) },
+            text = {
+                Text(if (ids.size == 1) stringResource(R.string.memory_saved_delete_confirm)
+                    else stringResource(R.string.memory_saved_delete_many_confirm, ids.size))
+            },
             confirmButton = {
                 TextButton(onClick = {
-                    deleteId?.let(actions::deleteSavedVariable)
-                    deleteId = null
+                    actions.deleteSavedVariables(ids)
+                    deleteIds = null
                 }) { Text(stringResource(R.string.memory_editor_remove)) }
             },
             dismissButton = {
-                TextButton(onClick = { deleteId = null }) {
+                TextButton(onClick = { deleteIds = null }) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
         )
     }
 }
-
 
 @Composable
 private fun runtimeCandidateLocation(id: Long, source: MemoryCandidateSource, fallback: String): String {

@@ -1305,4 +1305,5 @@
     <string name="memory_saved_changed" tools:ignore="MissingTranslation">Changed</string>
     <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Incompatible</string>
     <string name="memory_saved_failed" tools:ignore="MissingTranslation">Failed</string>
+    <string name="memory_saved_delete_many_confirm">Remove %1$d Saved definitions? Game values will not change.</string>
 </resources>
