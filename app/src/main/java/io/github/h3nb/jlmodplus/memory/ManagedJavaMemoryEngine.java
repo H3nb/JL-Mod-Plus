@@ -1541,7 +1541,7 @@ final class ManagedJavaMemoryEngine {
 				SavedField expected = locator.fields[index];
 				if (expected == null || expected.declaringClass == null
 						|| expected.name == null || expected.type == null) return failure(token,
-						MemoryEngineContract.RESULT_INVALID_REQUEST, "Incomplete research path");
+						MemoryEngineContract.RESULT_INVALID_REQUEST, "Incomplete saved path");
 				Class<?> declaring = actual;
 				while (declaring != null && !declaring.getName().equals(expected.declaringClass)) {
 					declaring = declaring.getSuperclass();
@@ -1783,22 +1783,6 @@ final class ManagedJavaMemoryEngine {
         }
     }
 
-	/** R&D only: compare actual reference edges, never just values or printed path text. */
-	private static boolean researchSameAncestry(@Nullable ProvenanceNode a,
-	                                            @Nullable ProvenanceNode b) {
-		for (int depth = 0; depth <= MAX_PROVENANCE_DEPTH; depth++) {
-			if (a == null || b == null) return a == null && b == null;
-			Object left = a.target.get();
-			if (left == null || left != b.target.get()
-					|| a.kind != b.kind || a.index != b.index
-					|| (a.field == null ? b.field != null : !a.field.equals(b.field))) {
-				return false;
-			}
-			a = a.parent;
-			b = b.parent;
-		}
-		return false;
-	}
 
     /** Release a definition after Delete; it must not consume a bounded runtime slot. */
     void releaseSaved(long token, String id) {

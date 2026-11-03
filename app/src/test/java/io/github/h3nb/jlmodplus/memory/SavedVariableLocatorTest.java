@@ -99,7 +99,7 @@ public class SavedVariableLocatorTest {
                 + "CgALAAAACQAKAAwAAAABAAEABQAGAAEABwAAABEAAQABAAAABSq3AAmxAAAAAAAA";
         final byte[] bytes = java.util.Base64.getDecoder().decode(classfile);
         class GuestLoader extends ClassLoader {
-            GuestLoader() { super(SavedLocatorEngineResearchTest.class.getClassLoader()); }
+            GuestLoader() { super(SavedVariableLocatorTest.class.getClassLoader()); }
             Class<?> defineGuest() { return defineClass("b", bytes, 0, bytes.length); }
         }
         GuestLoader loader = new GuestLoader();
