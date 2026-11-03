@@ -391,4 +391,91 @@ public class SavedVariableLocatorTest {
             MemoryDiscoveryBridge.close(FIRST);
         }
     }
+
+    @Test public void savedInspectorCanWatchSiblingAndFreezeEditedValue() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            ManagedJavaMemoryEngine.SavedLocator locator =
+                    new ManagedJavaMemoryEngine.SavedLocator(
+                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
+                        GuestRoot.class.getName(),
+                        new ManagedJavaMemoryEngine.SavedField[]{
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
+                            new ManagedJavaMemoryEngine.SavedField(
+                                GuestPlayer.class.getName(), "coins", "int")
+                        });
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.resolveSavedLocator(FIRST, locator, "watched-inspector-owner", 0L).code);
+            ManagedJavaMemoryEngine.ManagedInspection inspected =
+                engine.inspectSaved(FIRST, "watched-inspector-owner", 8);
+            int offset = -999;
+            for (int i = 0; i < inspected.labels.length; i++)
+                if (inspected.labels[i].contains("flag")) offset = inspected.relativeOffsets[i];
+            assertTrue(offset != -999);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.watchInspector(FIRST, "watched-inspector-owner", 0L, 0L,
+                    false, offset, MemoryEngineContract.TYPE_INT, 272727L, false, 0L).code);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            assertEquals(-1, engine.watchPage(FIRST).freezeModes[0]);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.editInspectorAndFreeze(FIRST, "watched-inspector-owner", 0L, 0L,
+                    false, offset, MemoryEngineContract.TYPE_INT, 272727L, "456", 0L).code);
+            assertEquals(456, root.player.flag);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            root.player.flag = 9;
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
+            assertEquals(456, root.player.flag);
+            GuestPlayer old = root.player;
+            root.player = new GuestPlayer();
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                engine.freezeTick(FIRST, 0L).code);
+            assertEquals(456, old.flag);
+            assertEquals(272727, root.player.flag);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
+    @Test public void searchInspectorSiblingCanJoinWatchAndFreezeWithoutBecomingSearchResult() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(FIRST,
+                MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+                585858L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+            long selected = engine.resultPage(FIRST, search.revision, 0, 25).ids[0];
+            ManagedJavaMemoryEngine.ManagedInspection inspected =
+                engine.inspect(FIRST, search.revision, selected, 8, false);
+            assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+            int offset = -999;
+            for (int i = 0; i < inspected.labels.length; i++)
+                if (inspected.labels[i].contains("flag")) offset = inspected.relativeOffsets[i];
+            assertTrue(offset != -999);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.watchInspector(FIRST, null, search.revision, selected, false,
+                    offset, MemoryEngineContract.TYPE_INT, 272727L, false, 0L).code);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.editInspectorAndFreeze(FIRST, null, search.revision, selected,
+                    false, offset, MemoryEngineContract.TYPE_INT, 272727L, "888", 0L).code);
+            assertEquals(1, engine.watchPage(FIRST).ids.length);
+            root.player.flag = 1;
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(FIRST, 0L).code);
+            assertEquals(888, root.player.flag);
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                engine.watchInspector(FIRST, null, search.revision, selected,
+                    false, offset, MemoryEngineContract.TYPE_INT, 272727L, false, 0L).code);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
 }
