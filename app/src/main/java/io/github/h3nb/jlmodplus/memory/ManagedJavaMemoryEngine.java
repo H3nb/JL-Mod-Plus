@@ -1850,6 +1850,89 @@ final class ManagedJavaMemoryEngine {
 
 
 
+
+    /**
+     * Edit a sibling from a pinned Saved Inspector snapshot. The anchor and every reference
+     * edge are revalidated, and the displayed value must still equal expectedBits.
+     * This never admits an unrelated Search/Watch identity or silently follows a new owner.
+     */
+    SavedValue editSavedInspector(long token, String id, int offset, int type,
+                                 long expectedBits, String replacement, long epoch) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, epoch)) {
+                return new SavedValue(MemoryEngineContract.RESULT_TARGET_LOST, type, "",
+                        "Saved Inspector runtime or operation changed");
+            }
+            SavedBinding binding = savedBindings.get(id);
+            if (binding == null) return new SavedValue(
+                    MemoryEngineContract.RESULT_NO_SESSION, type, "", "Saved variable is not resolved");
+            if (!MemoryEngineContract.isCandidateType(type)
+                    || Math.abs((long) offset) > MemoryEngineContract.MAX_INSPECT_RADIUS) {
+                return new SavedValue(MemoryEngineContract.RESULT_INVALID_REQUEST, type, "",
+                        "Saved Inspector edit is outside its supported type or radius");
+            }
+            OwnerBucket owner = binding.owner;
+            Object actual = owner.strongOwner();
+            if (actual == null || inspectPath(token, owner, actual, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector owner changed; edit rejected");
+            }
+            long wanted = (long) binding.slot + offset;
+            if (wanted < 0 || wanted > Integer.MAX_VALUE) {
+                return new SavedValue(MemoryEngineContract.RESULT_INVALID_REQUEST, type, "",
+                        "Saved Inspector field offset is invalid");
+            }
+            int slot = (int) wanted;
+            if (valueTypeFor(owner, slot) != type) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector field type changed");
+            }
+            if (owner.kind == KIND_ARRAY) {
+                if (slot >= Array.getLength(actual)) {
+                    return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                            "Saved array element is no longer available");
+                }
+            } else {
+                FieldSlot field = owner.schema.fieldAt(slot);
+                if (field == null || field.finalField || !field.primitiveField
+                        || field.kindStatic != (owner.kind == KIND_STATIC_FIELD)
+                        || (owner.kind == KIND_STATIC_FIELD
+                        && field.declaringClass != owner.staticClass)) {
+                    return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                            "Saved Inspector field is not editable");
+                }
+            }
+            long[] bits = new long[1];
+            if (!ManagedJavaValue.parse(replacement, type, bits)) return new SavedValue(
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, type, "",
+                    "Replacement is invalid for this primitive type");
+            long[] current = new long[1];
+            if (!readTyped(owner, slot, actual, current) || current[0] != expectedBits) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector value changed since the snapshot");
+            }
+            if (!isOperationActive(token, epoch)
+                    || inspectPath(token, owner, actual, binding.slot).status
+                    != MemoryEngineContract.PATH_VERIFIED) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector reference changed before writing");
+            }
+            try {
+                if (current[0] != bits[0]) writeTyped(owner, slot, actual, type, bits[0]);
+                if (!readTyped(owner, slot, actual, current) || current[0] != bits[0]) {
+                    return new SavedValue(MemoryEngineContract.RESULT_PARTIAL_WRITE, type,
+                            "", "Saved Inspector write was not confirmed");
+                }
+                return new SavedValue(MemoryEngineContract.RESULT_OK, type,
+                        ManagedJavaValue.format(type, current[0]), "");
+            } catch (IllegalAccessException | RuntimeException | LinkageError error) {
+                return new SavedValue(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, type, "",
+                        "Saved Inspector field could not be written");
+            }
+        }
+    }
+
     /** Explicit Freeze promotes a pinned Saved target into Watch, with guarded periodic writes. */
     ManagedOperationResult freezeSaved(long token, String id, String label, long epoch) {
         synchronized (stateLock) {
@@ -1863,17 +1946,30 @@ final class ManagedJavaMemoryEngine {
             if (actual == null || inspectPath(token, proof, actual, binding.slot).status
                     != MemoryEngineContract.PATH_VERIFIED) return failureLocked(
                     MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved owner changed");
-            for (int i = 0; i < watches.count; i++)
-                if (id.equals(watches.savedSourceIds[i])) return failureLocked(
-                        MemoryEngineContract.RESULT_INVALID_REQUEST, "Already in Watch");
-            if (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS ||
-                    watches.freezeCount() >= MemoryEngineContract.MAX_FREEZE_RECORDS ||
+            int existing = -1;
+            for (int i = 0; i < watches.count; i++) {
+                if (id.equals(watches.savedSourceIds[i])) {
+                    existing = i;
+                    break;
+                }
+            }
+            boolean additionalFreeze = existing < 0 || !watches.freeze[existing];
+            if ((existing < 0 && (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS ||
                     owners.size() >= limits.maxOwners ||
-                    nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX) return failureLocked(
-                    MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Watch/Freeze capacity reached");
+                    nextOwnerHandle > ManagedJavaMemoryIds.OWNER_MAX)) ||
+                    (additionalFreeze && watches.freezeCount() >= MemoryEngineContract.MAX_FREEZE_RECORDS)) {
+                return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+                        "Watch/Freeze capacity reached");
+            }
             long[] current = new long[1];
             if (!readTyped(proof, binding.slot, actual, current)) return failureLocked(
                     MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Saved value is unavailable");
+            if (existing >= 0) {
+                watches.freeze[existing] = true;
+                watches.freezeValues[existing] = current[0];
+                watches.freezePaused[existing] = false;
+                return successLocked("Saved Watch freeze value updated");
+            }
             OwnerBucket owner = new OwnerBucket(nextOwnerHandle++, proof.kind, actual, proof.schema);
             owner.provenancePath = proof.provenancePath;
             owner.arrayReference = proof.arrayReference;
