@@ -49,6 +49,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -868,7 +869,7 @@ private fun RuntimeSavedVariablesTab(
                 Surface(color = if (selectedRow) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
                     else Color.Transparent) {
                     Row(Modifier.fillMaxWidth()
-                        .clickable(enabled = !state.busy) { actions.toggleSavedSelection(item.id) }
+                        .clickable(enabled = editEnabled) { editRow = item }
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
@@ -897,7 +898,6 @@ private fun RuntimeSavedVariablesTab(
                                 modifier = Modifier
                                     .widthIn(min = 96.dp, max = 160.dp)
                                     .heightIn(min = 48.dp)
-                                    .clickable(enabled = editEnabled) { editRow = item }
                                     .padding(horizontal = 8.dp, vertical = 6.dp),
                                 horizontalAlignment = Alignment.End,
                             ) {
@@ -2143,6 +2143,7 @@ internal fun RuntimeInspectorTab(
                     }
                 }
                 items(logicalRows, key = { it.id }) { row ->
+                    var rowMenuOpen by remember(row.id) { mutableStateOf(false) }
                     Surface(
                         color = if (row.relativeOffset == 0) {
                             MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
@@ -2184,11 +2185,41 @@ internal fun RuntimeInspectorTab(
                                 textAlign = TextAlign.End,
                                 style = runtimeMemoryDataTextStyle(),
                             )
-                            RuntimeActionIcon(
-                                R.drawable.ic_save,
-                                R.string.memory_saved_save,
-                                enabled = row.editable && !state.busy,
-                            ) { saveLogicalRow = row }
+                            Box {
+                                RuntimeActionIcon(
+                                    R.drawable.ic_more_vert,
+                                    R.string.more,
+                                    enabled = !state.busy,
+                                ) { rowMenuOpen = true }
+                                DropdownMenu(
+                                    expanded = rowMenuOpen,
+                                    onDismissRequest = { rowMenuOpen = false },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.memory_editor_add_to_watch)) },
+                                        enabled = row.editable && !state.busy,
+                                        leadingIcon = {
+                                            Icon(painterResource(R.drawable.ic_memory_editor_watch_add),
+                                                contentDescription = null)
+                                        },
+                                        onClick = {
+                                            rowMenuOpen = false
+                                            actions.watchInspectorVariable(row.relativeOffset)
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.memory_saved_save)) },
+                                        enabled = row.editable && !state.busy,
+                                        leadingIcon = {
+                                            Icon(painterResource(R.drawable.ic_save), contentDescription = null)
+                                        },
+                                        onClick = {
+                                            rowMenuOpen = false
+                                            saveLogicalRow = row
+                                        },
+                                    )
+                                }
+                            }
                         }
                     }
                     HorizontalDivider()
@@ -2255,18 +2286,18 @@ private fun RuntimeInspectorLogicalEditDialog(
         targets = target,
         writeSupported = writeSupported && row.editable,
         title = row.label.ifBlank { runtimeTypeShort(row.type) },
-        showFreeze = false,
+        showFreeze = true,
         onDismiss = onDismiss,
-        onApply = { replacement, _, _, _, _ ->
+        onApply = { replacement, _, freeze, _, _ ->
             if (snapshot.savedId != null) {
                 actions.editSavedInspectorValue(
                     snapshot.savedId, row.relativeOffset, row.type,
-                    row.expectedBits, replacement,
+                    row.expectedBits, replacement, freeze,
                 )
             } else {
                 actions.editInspectorValue(
                     snapshot.candidateId, row.relativeOffset, row.type,
-                    row.expectedBits, replacement, snapshot.watchAnchor,
+                    row.expectedBits, replacement, snapshot.watchAnchor, freeze,
                 )
             }
         },
