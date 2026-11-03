@@ -77,6 +77,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
@@ -94,6 +95,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
+import io.github.h3nb.jlmodplus.librarydb.LibraryBundleComponents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferIntents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.settings.SettingsActivity;
@@ -571,9 +573,10 @@ public class AppsListFragment extends Fragment {
             public void onExportAppBundle(int appId) {
                 LibraryAppRow app = findRow(appId);
                 if (app == null) return;
-                LibraryTransferActions.prepareExportAppBundle(
+                showBundleOptions(components -> LibraryTransferActions.prepareExportAppBundle(
                         libraryViewModel,
                         app.getId(),
+                        components,
                         progress -> {
                             if (!isAdded()) return;
                             LibraryComposeController controller = composeController;
@@ -596,7 +599,7 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        });
+                        }));
             }
 
             @Override
@@ -842,9 +845,10 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onExportSelectedBundle(@NonNull Set<Long> appIds) {
-                LibraryTransferActions.prepareExportAppsBundle(
+                showBundleOptions(components -> LibraryTransferActions.prepareExportAppsBundle(
                         libraryViewModel,
                         appIds,
+                        components,
                         progress -> {
                             if (!isAdded()) return;
                             LibraryComposeController controller = composeController;
@@ -867,7 +871,7 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        });
+                        }));
             }
 
             @Override
@@ -1304,6 +1308,23 @@ public class AppsListFragment extends Fragment {
         manager.beginTransaction()
                 .add(BulkInstallerDialog.newFiles(Collections.singletonList(folder)), BulkInstallerDialog.TAG)
                 .commitAllowingStateLoss();
+    }
+
+    private void showBundleOptions(@NonNull Consumer<LibraryBundleComponents> onExport) {
+        final boolean[] selected = new boolean[3];
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle(R.string.library_bundle_components_title)
+                .setMessage(R.string.library_bundle_components_explanation)
+                .setMultiChoiceItems(new String[]{
+                        getString(R.string.library_bundle_config),
+                        getString(R.string.library_bundle_save_data),
+                        getString(R.string.memory_saved_tab),
+                }, selected, (dialog, index, checked) -> selected[index] = checked)
+                .setPositiveButton(R.string.library_bundle_export, (dialog, which) ->
+                        onExport.accept(new LibraryBundleComponents(
+                                selected[0], selected[1], selected[2])))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void onImportBundlePicked(Uri uri) {
