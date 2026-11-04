@@ -1036,7 +1036,15 @@ internal class MemoryEditorComposeController(
         savedEditReady = false
         nextSavedResolveAt = 0L
         if (savedLocators.isEmpty() && state.savedVariables.isNotEmpty()) {
-            refreshSavedVariables()
+            // Apply may already be queued on IPC. Deliver its feedback before a
+            // catalog reload advances savedGeneration and discards that response.
+            runIpc {
+                post {
+                    if (hostForeground && state.visible && state.savedTab &&
+                        savedEditId == null && savedLocators.isEmpty() &&
+                        state.savedVariables.isNotEmpty()) refreshSavedVariables()
+                }
+            }
         } else {
             refreshSavedLive()
         }
