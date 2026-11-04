@@ -337,9 +337,12 @@ internal fun ConfigScreen(
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
     var shadersOpenedFromPipeline by rememberSaveable { mutableStateOf(false) }
+    var passesOpenedFromPipeline by rememberSaveable { mutableStateOf(false) }
     val backRendering: () -> Unit = {
         renderingSubpage = when (renderingSubpage) {
-            RenderingSubpage.PARAMETERS, RenderingSubpage.PASSES -> RenderingSubpage.SHADERS
+            RenderingSubpage.PARAMETERS -> RenderingSubpage.SHADERS
+            RenderingSubpage.PASSES ->
+                if (passesOpenedFromPipeline) RenderingSubpage.PIPELINE else RenderingSubpage.SHADERS
             RenderingSubpage.SHADERS ->
                 if (shadersOpenedFromPipeline) RenderingSubpage.PIPELINE else null
             else -> null
@@ -400,7 +403,10 @@ internal fun ConfigScreen(
                 renderingSubpage = RenderingSubpage.SHADERS
             },
             onOpenParameters = { renderingSubpage = RenderingSubpage.PARAMETERS },
-            onOpenPasses = { renderingSubpage = RenderingSubpage.PASSES },
+            onOpenPasses = {
+                passesOpenedFromPipeline = renderingSubpage == RenderingSubpage.PIPELINE
+                renderingSubpage = RenderingSubpage.PASSES
+            },
             onBack = backRendering,
         )
     } else if (systemPropertiesEditorVisible) {
