@@ -282,9 +282,9 @@ internal class MemoryEditorComposeController(
         hostForeground = foreground
         composeView.removeCallbacks(liveRefreshRunnable)
         if (foreground && state.visible) {
-            if (state.savedTab && savedLocators.isEmpty() && savedAuthority != null) {
-                refreshSavedVariables()
-            }
+            // A Saved mutation may have committed while the UI was backgrounded and
+            // its callback was discarded. Reconcile from the authority on return.
+            if (state.savedTab && savedAuthority != null) refreshSavedVariables()
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
         } else {
             // If backgrounding interrupts the queued binding snapshot, no dialog
@@ -1091,15 +1091,27 @@ internal class MemoryEditorComposeController(
         val authority = savedAuthority ?: return
         val token = state.runtimeToken
         val engine = service
-        val generation = savedGeneration
         val current = state.savedVariables.map { it.id }.toSet()
         val unique = ids.distinct()
-        if (unique.isEmpty() || unique.size > 64 || unique.any { it !in current }) return
+        if (!state.savedTab || unique.isEmpty() || unique.size > 64 ||
+            unique.any { it !in current || it !in savedLocators }) return
+
+        // Invalidate queued polling *before* the delete enters the serial IPC worker.
+        // Otherwise a queued retry can rebind an ID after releaseSaved has run but
+        // before the authority's response reaches the UI thread.
+        val removed = unique.toSet()
+        val generation = ++savedGeneration
+        savedRefreshPending = false
+        savedLocators = savedLocators.filterKeys { it !in removed }
+        state = state.copy(
+            savedVariables = state.savedVariables.filterNot { it.id in removed },
+            savedSelection = state.savedSelection - removed,
+            savedValues = state.savedValues.filterKeys { it !in removed },
+        )
         runIpc {
             val result = runCatching {
                 val (path, appId, entry) = savedTarget()
                 val rows = savedRows(authority.removeMany(path, appId, entry, unique.toTypedArray()))
-                    .map { it.first }
                 if (engine != null && token != 0L) {
                     unique.forEach { id ->
                         try {
@@ -1116,14 +1128,10 @@ internal class MemoryEditorComposeController(
                     state.runtimeToken != token) return@post
                 val rows = result.getOrNull()
                 if (rows != null) {
-                    val retained = rows.mapTo(HashSet()) { it.id }
-                    // The persisted delete is authoritative. Reconcile the live locator
-                    // catalog too, and invalidate any queued polling of removed IDs.
-                    savedGeneration++
-                    savedRefreshPending = false
-                    savedLocators = savedLocators.filterKeys { it in retained }
+                    val retained = rows.mapTo(HashSet()) { it.first.id }
+                    savedLocators = rows.associate { it.first.id to it.second }
                     state = state.copy(
-                        savedVariables = rows,
+                        savedVariables = rows.map { it.first },
                         savedSelection = state.savedSelection.intersect(retained),
                         savedValues = state.savedValues.filterKeys { it in retained },
                         message = if (unique.size == 1) "Saved variable removed" else "Saved variables removed",
@@ -1133,6 +1141,8 @@ internal class MemoryEditorComposeController(
                     state = state.copy(
                         message = result.exceptionOrNull()?.message, messageIsError = true,
                     )
+                    // The optimistic exclusion is only valid if the authority committed.
+                    refreshSavedVariables()
                 }
             }
         }
