@@ -135,17 +135,23 @@ private fun ShaderEffectsContent(
 ) {
     val form = state.form
     val shader = form.shader
+    var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     SectionLabel(stringResource(R.string.render_shader_preset))
-    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        ConfigChoicePreference(
-            title = stringResource(R.string.render_shader_choose),
-            description = null,
+    ActionSurface(
+        title = selectedShaderLabel(state),
+        subtitle = stringResource(R.string.render_shader_change),
+        onClick = { presetPickerVisible = true },
+    )
+    if (presetPickerVisible) {
+        ConfigChoiceDialog(
+            title = stringResource(R.string.render_shader_preset),
             selected = selectedShaderLabel(state),
             options = state.shaders.map {
                 if (it.fragment == null && it.preset == null) "Off" else it.toString()
             },
-            compact = true,
+            onDismissRequest = { presetPickerVisible = false },
             onSelected = { index ->
+                presetPickerVisible = false
                 onFormChanged(form.toBuilder()
                     .shader(if (index == 0) null else state.shaders.getOrNull(index)).build())
             },
