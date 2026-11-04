@@ -17,6 +17,13 @@ Neither is suitable for a cross-restart descriptor or for comparing DX/D8 output
 Search, Refine, Results, Watch, Freeze, Inspector, and edits continue using the checked
 runtime ID rather than a field-path string. Provenance never authorizes a write.
 
+Closing the bubble editor remembers its last tab and Search page only in the
+`:memory_engine` process for the current MIDlet runtime token. Inspector remembers
+only its target identity and origin tab; reopening fetches a fresh, checked
+snapshot. Missing or changed Inspector targets fall back to Search, Watch or
+Saved, never to an old snapshot. A new MIDlet token starts at Search. No tab
+preference, Inspector value, or guest object is written to persistent storage.
+
 ## Direct-reference observation
 
 Results and Watch pages optionally include a structured source record with a kind

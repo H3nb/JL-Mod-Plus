@@ -215,4 +215,39 @@ class MemoryEditorModelsTest {
         )
     }
 
+    @Test fun editorNavigationRestoresOnlyWithinOneRuntime() {
+        val firstToken = 91_001L
+        val nextToken = 91_002L
+        assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(firstToken).tab)
+
+        val saved = MemoryEditorNavigationState(MemoryEditorTab.SAVED, pageOffset = 100)
+        MemoryEditorSessionNavigation.remember(firstToken, saved)
+        assertEquals(saved, MemoryEditorSessionNavigation.read(firstToken))
+
+        val inspector = MemoryEditorInspectorTarget(0L, "hp", watchAnchor = true)
+        val opened = MemoryEditorNavigationState(
+            MemoryEditorTab.INSPECTOR, pageOffset = 100, inspectorTarget = inspector,
+        )
+        MemoryEditorSessionNavigation.remember(firstToken, opened)
+        assertEquals(MemoryEditorTab.SAVED, opened.underlyingTab)
+        assertEquals(opened, MemoryEditorSessionNavigation.read(firstToken))
+
+        assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(nextToken).tab)
+        MemoryEditorSessionNavigation.remember(firstToken, opened)
+        assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(nextToken).tab)
+        assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(0L).tab)
+    }
+
+    @Test fun inspectorNavigationRetainsItsOriginForSafeFallback() {
+        val result = MemoryEditorNavigationState(
+            MemoryEditorTab.INSPECTOR,
+            inspectorTarget = MemoryEditorInspectorTarget(42L, null, watchAnchor = false),
+        )
+        val watch = result.copy(inspectorTarget = result.inspectorTarget?.copy(watchAnchor = true))
+        assertEquals(MemoryEditorTab.RESULTS, result.underlyingTab)
+        assertEquals(MemoryEditorTab.WATCH, watch.underlyingTab)
+        assertEquals(MemoryEditorTab.WATCH,
+            MemoryEditorNavigationState(MemoryEditorTab.WATCH).underlyingTab)
+    }
+
 }

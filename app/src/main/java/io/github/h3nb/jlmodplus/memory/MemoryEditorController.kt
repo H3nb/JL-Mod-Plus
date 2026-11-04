@@ -51,7 +51,16 @@ internal class MemoryEditorComposeController(
         Thread(runnable, "MemoryEditorUiIpc").apply { priority = Thread.NORM_PRIORITY - 1 }
     }
 
-    private var state by mutableStateOf(MemoryEditorUiState())
+    private val previousNavigation = MemoryEditorSessionNavigation.read(ownedRuntimeToken)
+    private var pendingInspectorRestore = previousNavigation.inspectorTarget
+        .takeIf { previousNavigation.tab == MemoryEditorTab.INSPECTOR }
+    private var inspectorRequestTarget: MemoryEditorInspectorTarget? = pendingInspectorRestore
+    private var state by mutableStateOf(MemoryEditorUiState(
+        pageOffset = previousNavigation.pageOffset,
+        savedTab = previousNavigation.underlyingTab == MemoryEditorTab.SAVED,
+        watchTab = previousNavigation.underlyingTab == MemoryEditorTab.WATCH,
+        inspectorLoading = pendingInspectorRestore != null,
+    ))
     private var service: IMemoryEngineService? = null
     private var savedAuthority: ISavedVariablesAuthority? = null
     private var savedBound = false
@@ -301,8 +310,22 @@ internal class MemoryEditorComposeController(
         if (hostForeground) composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
     }
 
+    private fun rememberNavigation() {
+        val inspector = inspectorRequestTarget
+            .takeIf { state.inspectorLoading || state.inspector != null }
+        val tab = when {
+            inspector != null -> MemoryEditorTab.INSPECTOR
+            state.savedTab -> MemoryEditorTab.SAVED
+            state.watchTab -> MemoryEditorTab.WATCH
+            else -> MemoryEditorTab.RESULTS
+        }
+        MemoryEditorSessionNavigation.remember(ownedRuntimeToken,
+            MemoryEditorNavigationState(tab, state.pageOffset, inspector))
+    }
+
     override fun close() {
         if (destroyed) return
+        rememberNavigation()
         inspectorRequestGeneration++
         composeView.removeCallbacks(liveRefreshRunnable)
         liveRefreshPending = false
@@ -321,6 +344,7 @@ internal class MemoryEditorComposeController(
 
     fun destroy() {
         if (destroyed) return
+        if (state.visible) rememberNavigation()
         destroyed = true
         savedGeneration++
         savedRefreshPending = false
@@ -529,6 +553,7 @@ internal class MemoryEditorComposeController(
                         connection == connectionGeneration && stateRequest == stateRequestGeneration.get()
                     ) reloadState(retry + 1)
                 }, CAPABILITY_RETRY_DELAYS_MS[retry])
+                else if (pendingInspectorRestore != null) closeInspector()
             }
             return@runIpc
         }
@@ -600,7 +625,30 @@ internal class MemoryEditorComposeController(
             )
             if (state.savedTab && state.savedVariables.isNotEmpty()
                 && state.savedValues.isEmpty() && savedAuthority != null) refreshSavedVariables()
+            restoreInspectorIfNeeded()
         }
+    }
+
+    private fun restoreInspectorIfNeeded() {
+        val target = pendingInspectorRestore ?: return
+        pendingInspectorRestore = null
+        val available = if (target.savedId != null) {
+            true // The target-side Saved binding is verified by inspectSaved.
+        } else if (target.watchAnchor) {
+            state.watches.any { it.id == target.candidateId }
+        } else {
+            state.results.any { it.id == target.candidateId }
+        }
+        if (!available) {
+            closeInspector()
+            state = state.copy(
+                message = context.getString(R.string.memory_editor_identity_unsafe),
+                messageIsError = true,
+            )
+            return
+        }
+        openInspector(target.candidateId, target.savedId, target.radius,
+            target.watchAnchor, restoring = true)
     }
 
     /** Reads only the visible page; managed reads are getters and never refresh search baselines. */
@@ -1447,7 +1495,8 @@ internal class MemoryEditorComposeController(
     }
 
     private fun openInspector(candidateId: Long, savedId: String?, radius: Int,
-                              watchAnchor: Boolean, partialWriteMessage: String? = null) {
+                              watchAnchor: Boolean, partialWriteMessage: String? = null,
+                              restoring: Boolean = false) {
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
@@ -1455,6 +1504,7 @@ internal class MemoryEditorComposeController(
         val connection = connectionGeneration
         val revision = state.revision
         val operation = operationGeneration
+        inspectorRequestTarget = MemoryEditorInspectorTarget(candidateId, savedId, watchAnchor, radius)
         state = state.copy(
             inspectorLoading = true,
             inspector = null,
@@ -1516,7 +1566,7 @@ internal class MemoryEditorComposeController(
                     closeInspector()
                     return@post
                 }
-                if (result == MemoryEngineContract.RESULT_TARGET_LOST) {
+                if (result == MemoryEngineContract.RESULT_TARGET_LOST && !restoring) {
                     state = state.copy(
                         inspectorLoading = false,
                         inspector = null,
@@ -1690,6 +1740,8 @@ internal class MemoryEditorComposeController(
 
     override fun closeInspector() {
         inspectorRequestGeneration++
+        pendingInspectorRestore = null
+        inspectorRequestTarget = null
         state = state.copy(inspectorLoading = false, inspector = null)
     }
 

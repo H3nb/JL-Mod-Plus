@@ -350,6 +350,47 @@ internal object MemoryWatchPageParser {
 
 internal enum class MemoryEditorTab { RESULTS, WATCH, SAVED, INSPECTOR }
 
+/** Session-only navigation; Inspector always re-reads a checked target after reopening. */
+internal data class MemoryEditorInspectorTarget(
+    val candidateId: Long,
+    val savedId: String?,
+    val watchAnchor: Boolean,
+    val radius: Int = MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
+)
+
+internal data class MemoryEditorNavigationState(
+    val tab: MemoryEditorTab = MemoryEditorTab.RESULTS,
+    val pageOffset: Int = 0,
+    val inspectorTarget: MemoryEditorInspectorTarget? = null,
+) {
+    val underlyingTab: MemoryEditorTab
+        get() = if (tab != MemoryEditorTab.INSPECTOR) tab else when {
+            inspectorTarget?.savedId != null -> MemoryEditorTab.SAVED
+            inspectorTarget?.watchAnchor == true -> MemoryEditorTab.WATCH
+            else -> MemoryEditorTab.RESULTS
+        }
+}
+
+/** Held only in :memory_engine memory. A different MIDlet token starts with Search. */
+internal object MemoryEditorSessionNavigation {
+    private var runtimeToken = 0L
+    private var last = MemoryEditorNavigationState()
+
+    @Synchronized fun read(token: Long): MemoryEditorNavigationState {
+        if (token == 0L) return MemoryEditorNavigationState()
+        if (runtimeToken != token) {
+            runtimeToken = token
+            last = MemoryEditorNavigationState()
+        }
+        return last
+    }
+
+    @Synchronized fun remember(token: Long, navigation: MemoryEditorNavigationState) {
+        // Ignore late closes from an older Activity after a new session has opened.
+        if (token != 0L && token == runtimeToken) last = navigation
+    }
+}
+
 internal data class SavedVariableRow(val id: String, val label: String, val path: String)
 
 internal enum class SavedVariableStatus { RESOLVED, REBOUND, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }

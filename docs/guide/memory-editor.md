@@ -12,6 +12,8 @@ A MIDlet can run from a converted DEX without the JL-Mod Plus bytecode transform
 
 Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The main areas are **Search**, **Watch**, **Saved**, and **Inspector**. Wide workspaces show values and locations together, while narrower ones stack the details. When results span multiple pages, the bottom pager moves between result ranges alongside the **Peek** control.
 
+Closing and reopening the bubble editor during the same running MIDlet returns to the last tab. Inspector rechecks its last target rather than displaying an old memory snapshot; if the target is unavailable, the editor returns to its source tab. A new MIDlet session starts at Search.
+
 A good search begins with something you can reproduce in the game: a counter that increases, health that falls, or a value that stays constant while other numbers change. The editor cannot tell you which candidate is “health” merely from the number alone.
 
 ### Search for a known value
