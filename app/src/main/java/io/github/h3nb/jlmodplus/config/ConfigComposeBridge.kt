@@ -336,6 +336,18 @@ internal fun ConfigScreen(
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
+    var shadersOpenedFromPipeline by rememberSaveable { mutableStateOf(false) }
+    val backRendering: () -> Unit = {
+        renderingSubpage = when (renderingSubpage) {
+            RenderingSubpage.PARAMETERS, RenderingSubpage.PASSES -> RenderingSubpage.SHADERS
+            RenderingSubpage.SHADERS ->
+                if (shadersOpenedFromPipeline) RenderingSubpage.PIPELINE else null
+            else -> null
+        }
+        if (renderingSubpage == null || renderingSubpage == RenderingSubpage.PIPELINE) {
+            shadersOpenedFromPipeline = false
+        }
+    }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
@@ -344,7 +356,7 @@ internal fun ConfigScreen(
     }
     val requestBack = {
         if (renderingSubpage != null) {
-            renderingSubpage = null
+            backRendering()
         } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
             discardProfileChangesVisible = true
         } else {
@@ -383,8 +395,13 @@ internal fun ConfigScreen(
             state = state,
             onFormChanged = updateForm,
             onLegacyTuning = events::onShaderTuning,
-            onOpenShaders = { renderingSubpage = RenderingSubpage.SHADERS },
-            onBack = { renderingSubpage = null },
+            onOpenShaders = {
+                shadersOpenedFromPipeline = true
+                renderingSubpage = RenderingSubpage.SHADERS
+            },
+            onOpenParameters = { renderingSubpage = RenderingSubpage.PARAMETERS },
+            onOpenPasses = { renderingSubpage = RenderingSubpage.PASSES },
+            onBack = backRendering,
         )
     } else if (systemPropertiesEditorVisible) {
         val context = LocalContext.current
@@ -467,8 +484,14 @@ internal fun ConfigScreen(
                                     cutoutAvailable = cutoutAvailable,
                                     onRequestAction = { pendingAction = it },
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
-                                    onOpenShaders = { renderingSubpage = RenderingSubpage.SHADERS },
-                                    onOpenPipeline = { renderingSubpage = RenderingSubpage.PIPELINE },
+                                    onOpenShaders = {
+                                        shadersOpenedFromPipeline = false
+                                        renderingSubpage = RenderingSubpage.SHADERS
+                                    },
+                                    onOpenPipeline = {
+                                        shadersOpenedFromPipeline = false
+                                        renderingSubpage = RenderingSubpage.PIPELINE
+                                    },
                                     onUsePreset = { presetPickerVisible = true },
                                     onSavePreset = { savePresetVisible = true },
                                     modifier = Modifier.widthIn(max = 880.dp),
