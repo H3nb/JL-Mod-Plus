@@ -38,8 +38,8 @@ public final class GlslpGpuSmokeTest {
         execute("builtin:libretro:xbrz-4x", 2);
     }
 
-    @Test public void sevenPassSuper4xbrAndOriginalSampler() throws Exception {
-        execute("builtin:libretro:super-4xbr", 7);
+    @Test public void eightPassOriginalAndPreviousPreviousSamplers() throws Exception {
+        execute("builtin:glslp:stress8", 8);
     }
 
     private static void execute(String selection, int expectedPasses) throws Exception {

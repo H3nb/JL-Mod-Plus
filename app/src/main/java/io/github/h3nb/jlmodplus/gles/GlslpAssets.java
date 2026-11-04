@@ -26,7 +26,7 @@ public final class GlslpAssets {
         if ("builtin:libretro:fsr".equals(selection)) bundled = "libretro/fsr/fsr.glslp";
         if ("builtin:libretro:xbrz-crisp".equals(selection)) bundled = "libretro/xbrz/xbrz-crisp.glslp";
         if ("builtin:libretro:xbrz-4x".equals(selection)) bundled = "libretro/xbrz/4xbrz-linear.glslp";
-        if ("builtin:libretro:super-4xbr".equals(selection)) bundled = "libretro/xbr/super-4xbr-3d-6p-smoother.glslp";
+        if ("builtin:glslp:stress8".equals(selection)) bundled = "libretro/stress/eight-pass-composition.glslp";
         if (bundled != null) return GlslpPreset.load(GlslpAssets::readBundled, bundled);
         if (selection == null || (!selection.endsWith(".glslp") && !selection.endsWith(".glsl"))
                 || selection.contains("/") || selection.contains("\\") || selection.contains(":")) {

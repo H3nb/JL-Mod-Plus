@@ -2,7 +2,7 @@
 
 Select **OpenGL ES 2.0** as the graphics renderer, then choose **GLSLP demo:
 Scanlines** or **GLSLP demo: Soft blur** from the existing Shader filter
-control. These two packaged Apache-2.0 examples work without copying files.\nYou can also select the bundled Libretro FSR, xBRZ Crisp, xBRZ fixed 4x and\nSuper 4xBR (7-pass) presets for comparison.
+control. These two packaged Apache-2.0 examples work without copying files.\nYou can also select the bundled Libretro FSR, xBRZ Crisp, xBRZ fixed 4x and\n8-pass Gaussian + xBRZ + FSR stress composition for comparison.
 **Identity filter** restores the original path.
 
 For external shaders, place a root-level `.glslp` preset alongside its
@@ -34,10 +34,15 @@ kept separate from application-owned shader code.
 **Licensing review is required before redistributing or merging this
 prototype.** xBRZ sources include GPL-3.0 notices alongside other
 licenses; do not assume the repository's shaders share one license.
-FSR and Super 4xBR have their own upstream author notices.
+FSR and Gaussian shaders have their own upstream author notices.
 
-The 7-pass Super 4xBR preset exercises offscreen sizing, texture history
-limited to the previous-previous pass and the original guest texture.
+The eight-pass stress preset is **JL-Mod Plus-authored composition**, not
+an upstream Libretro preset. It uses unchanged upstream Gaussian, xBRZ and
+FSR shader sources to stress offscreen sizing, the previous-previous image,
+the original guest texture, and viewport resizing.
+A genuine upstream seven-pass Super 4xBR preset was also tested but failed
+on GLES2 because its shader requires non-square `mat4x3` matrices, absent
+from GLSL ES 1.00. It is intentionally **not selectable** on GLES2.
 The pipeline preserves each `#version 130` source file on disk, but
 removes that exact directive in-memory for GLES2 compilation so the
 shader's compatibility macros select GLSL ES 1.00. Compilation still
