@@ -3,7 +3,6 @@ package io.github.h3nb.jlmodplus.gles;
 
 import static android.opengl.GLES20.*;
 
-import android.opengl.GLES20;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -24,7 +23,7 @@ public final class GlslpPipeline {
     private final int[] framebuffer = new int[2];
     private final int[] intermediate = new int[2];
     private final GlslpPreset preset;
-    // R&D: xBRZ pass 1 reads the original source as PassPrev2Texture.
+    // An xBRZ analysis stage can be combined with the original game texture.
     private final boolean hasOriginalSourceInput;
     private final Map<String, Float> parameters;
     private final FloatBuffer quad = ByteBuffer.allocateDirect(4 * 8 * 4)
@@ -35,8 +34,6 @@ public final class GlslpPipeline {
     private int finalHeight;
     private long processedSequence = Long.MIN_VALUE;
     private long processedFinalSequence = Long.MIN_VALUE;
-    private int offscreenPassExecutions;
-    private int finalPassExecutions;
 
     public GlslpPipeline(GlslpPreset resolved, String stockSource) throws IOException {
         if (resolved == null || resolved.passes.isEmpty() || resolved.passes.size() > 2) {
@@ -56,9 +53,14 @@ public final class GlslpPipeline {
             programs[2] = link(stockSource, false);
             hasOriginalSourceInput = preset.passes.size() == 2
                     && glGetUniformLocation(programs[1], "PassPrev2Texture") >= 0;
+            if (glGetUniformLocation(programs[0], "PassPrev2Texture") >= 0) {
+                throw new IllegalArgumentException("Original-source sampler on first pass");
+            }
             for (int i = 0; i < preset.passes.size(); i++) {
                 String[] unsupported = {"OrigTexture", "PrevTexture", "Prev1Texture",
-                        "PassPrev3Texture", "Pass1Texture"};
+                        "Prev2Texture", "Prev3Texture", "FeedbackTexture",
+                        "PassPrev3Texture", "PassPrev4Texture", "Pass1Texture",
+                        "FrameCount", "FrameDirection"};
                 for (String sampler : unsupported) {
                     if (glGetUniformLocation(programs[i], sampler) >= 0) {
                         throw new IllegalArgumentException("Unsupported GLSLP sampler: " + sampler);
@@ -71,19 +73,6 @@ public final class GlslpPipeline {
         }
     }
 
-    /** Counts first-pass execution, not host-only presentation redraws. */
-    public int offscreenPassExecutions() {
-        return offscreenPassExecutions;
-    }
-
-    /** Counts the final GLSLP shader pass when it targets an FBO before stock presentation. */
-    public int finalPassExecutions() {
-        return finalPassExecutions;
-    }
-
-    public int finalOutputWidth() { return finalWidth; }
-    public int finalOutputHeight() { return finalHeight; }
-
     /**
      * Real production quad uses (x,y,u,v) per vertex in the order LT LB RT RB.
      * GLSLP requires an exact content-sized source, not a padded softbar backing.
@@ -92,7 +81,7 @@ public final class GlslpPipeline {
                      int textureWidth, int textureHeight, int logicalWidth, int logicalHeight,
                      int surfaceWidth, int surfaceHeight, long guestSequence, int legacyFilter) {
         if (textureWidth != logicalWidth || textureHeight != logicalHeight) {
-            throw new IllegalStateException("R&D GLSLP needs a tight guest texture, got "
+            throw new IllegalStateException("GLSLP requires a content-sized guest texture, got "
                     + logicalWidth + "x" + logicalHeight + " inside "
                     + textureWidth + "x" + textureHeight);
         }
@@ -104,24 +93,19 @@ public final class GlslpPipeline {
                     Math.abs(legacyQuad.get(8) - legacyQuad.get(0)) * surfaceWidth / 2));
             int outputHeight = Math.max(1, Math.round(
                     Math.abs(legacyQuad.get(1) - legacyQuad.get(5)) * surfaceHeight / 2));
-            GlslpPreset.Plan plan = null;
-            if (preset != null) {
-                int[] maxTextureSize = new int[1];
-                glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize, 0);
-                plan = preset.plan(logicalWidth, logicalHeight, outputWidth, outputHeight,
-                        maxTextureSize[0], 64L * 1024L * 1024L);
-            }
-            int pass0W = plan == null ? logicalWidth : plan.passes.get(0).outputWidth;
-            int pass0H = plan == null ? logicalHeight : plan.passes.get(0).outputHeight;
-            int pass1W = plan == null ? outputWidth
-                    : plan.passes.get(plan.passes.size() - 1).outputWidth;
-            int pass1H = plan == null ? outputHeight
-                    : plan.passes.get(plan.passes.size() - 1).outputHeight;
-            boolean needsFinalBlit = plan != null && plan.finalBlitRequired;
-            int filter0 = plan == null ? (hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR)
-                    : passFilter(plan.passes.get(0).pass.linearFilter, legacyFilter);
-            int filter1 = plan == null ? (hasOriginalSourceInput ? GL_NEAREST : GL_LINEAR)
-                    : passFilter(plan.passes.get(1).pass.linearFilter, legacyFilter);
+            int[] maxTextureSize = new int[1];
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize, 0);
+            GlslpPreset.Plan plan = preset.plan(logicalWidth, logicalHeight,
+                    outputWidth, outputHeight, maxTextureSize[0], 64L * 1024L * 1024L);
+            int pass0W = plan.passes.get(0).outputWidth;
+            int pass0H = plan.passes.get(0).outputHeight;
+            int last = plan.passes.size() - 1;
+            int pass1W = plan.passes.get(last).outputWidth;
+            int pass1H = plan.passes.get(last).outputHeight;
+            boolean needsFinalBlit = plan.finalBlitRequired;
+            int filter0 = passFilter(plan.passes.get(0).pass.linearFilter, legacyFilter);
+            int filter1 = last == 1
+                    ? passFilter(plan.passes.get(1).pass.linearFilter, legacyFilter) : legacyFilter;
             if (preset.passes.size() == 1 && !needsFinalBlit) {
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 glViewport(0, 0, surfaceWidth, surfaceHeight);
@@ -130,6 +114,7 @@ public final class GlslpPipeline {
                 drawPass(programs[0], sourceTexture, 0,
                         logicalWidth, logicalHeight, outputWidth, outputHeight, filter0,
                         logicalWidth, logicalHeight);
+                verifyGlError();
                 return;
             }
             if (intermediateWidth != pass0W || intermediateHeight != pass0H) {
@@ -149,7 +134,6 @@ public final class GlslpPipeline {
                         logicalWidth, logicalHeight);
                 processedSequence = guestSequence;
                 processedFinalSequence = Long.MIN_VALUE;
-                offscreenPassExecutions++;
             }
 
             if (preset.passes.size() == 1) {
@@ -160,6 +144,7 @@ public final class GlslpPipeline {
                 drawPass(programs[2], intermediate[0], 0,
                         pass0W, pass0H, outputWidth, outputHeight, legacyFilter,
                         logicalWidth, logicalHeight);
+                verifyGlError();
                 return;
             }
             if (needsFinalBlit) {
@@ -179,14 +164,12 @@ public final class GlslpPipeline {
                             pass0W, pass0H, pass1W, pass1H, filter1,
                             logicalWidth, logicalHeight);
                     processedFinalSequence = guestSequence;
-                    finalPassExecutions++;
                 }
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 glViewport(0, 0, surfaceWidth, surfaceHeight);
                 glEnable(GL_SCISSOR_TEST);
                 setGameQuad(legacyQuad);
-                // This R&D stock presentation uses the host's existing filter.
-                // The pass-1 input filter is still applied independently above.
+                // The final stock blit retains the host filter independently.
                 drawPass(programs[2], intermediate[1], 0,
                         pass1W, pass1H, outputWidth, outputHeight, legacyFilter,
                         logicalWidth, logicalHeight);
@@ -200,11 +183,7 @@ public final class GlslpPipeline {
                         pass0W, pass0H, pass1W, pass1H, filter1,
                         logicalWidth, logicalHeight);
             }
-            int error = glGetError();
-            if (error != GL_NO_ERROR) {
-                throw new IllegalStateException("Libretro research GL error: 0x"
-                        + Integer.toHexString(error));
-            }
+            verifyGlError();
         } finally {
             // Restore host FB/viewport/scissor and the original source sampler
             // even on shader/FBO failure. The caller rebinds the legacy program.
@@ -217,6 +196,13 @@ public final class GlslpPipeline {
             glBindTexture(GL_TEXTURE_2D, sourceTexture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, legacyFilter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, legacyFilter);
+        }
+    }
+
+    private static void verifyGlError() {
+        int error = glGetError();
+        if (error != GL_NO_ERROR) {
+            throw new IllegalStateException("GLSLP GL error: 0x" + Integer.toHexString(error));
         }
     }
 
