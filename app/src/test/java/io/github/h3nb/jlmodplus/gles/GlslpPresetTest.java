@@ -195,6 +195,26 @@ public class GlslpPresetTest {
         assertEquals(VIEWPORT, plan(shader).passes.get(0).outputWidth);
     }
 
+    @Test public void multiplePassPlanningAndBudgetAreBounded() throws Exception {
+        Bundle bundle = new Bundle();
+        StringBuilder preset = new StringBuilder("shaders = 7\n");
+        for (int i = 0; i < 7; i++) {
+            preset.append("shader").append(i).append(" = p").append(i).append(".glsl\n")
+                    .append("scale_type").append(i).append(" = source\n")
+                    .append("scale").append(i).append(" = ").append(i == 1 ? 2 : 1).append(".0\n");
+            bundle.put("many/p" + i + ".glsl", "void main(){}");
+        }
+        bundle.put("many/preset.glslp", preset.toString());
+        GlslpPreset shader = GlslpPreset.load(bundle, "many/preset.glslp");
+        assertEquals(7, shader.passes.size());
+        GlslpPreset.Plan plan = shader.plan(16, 12, 128, 96, 2048, 1024 * 1024);
+        assertEquals(32, plan.passes.get(1).outputWidth);
+        assertEquals(32, plan.passes.get(2).inputWidth);
+        assertTrue(plan.finalBlitRequired);
+        expectFailure(() -> shader.plan(16, 12, 128, 96, 2048, 1000),
+                "Intermediate GPU budget exceeded");
+    }
+
     private interface ThrowingAction { void run() throws Exception; }
 
     private static void expectFailure(ThrowingAction action, String message)
