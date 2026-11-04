@@ -485,7 +485,7 @@ private fun RuntimeSearchResultsTab(
                 R.string.memory_editor_search_unknown_values, state.canSearch) {
                 unknownDialog = true
             },
-            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
                 editTargets = selectedRows.map { MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes) }
                 editRevision = state.revision
             },
@@ -816,11 +816,11 @@ private fun RuntimeSavedVariablesTab(
 
     Column(modifier.fillMaxWidth()) {
         val actionsForSelection = listOf(
-            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit,
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit,
                 ready != null && state.writeSupported && !state.busy) { ready?.let(::openSavedEdit) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready != null && !state.busy) { ready?.let { actions.inspectSavedVariable(it.id) } },
-            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_saved_rename,
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
                 one != null && !state.busy) { renameRow = one },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                 selected.isNotEmpty() && !state.busy) { deleteIds = selected.map { it.id } },
@@ -1199,7 +1199,7 @@ private fun RuntimeWatchTab(
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
             )
             RuntimeActionIcon(
-                R.drawable.ic_edit,
+                R.drawable.ic_memory_editor_edit_value,
                 R.string.memory_editor_edit,
                 enabled = selectedWriteSupported && !state.busy,
             ) {

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Material Symbols: bookmark (Google, Apache-2.0). -->
+<!-- Material Symbols: monitoring (Google, Apache-2.0). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="960"
     android:viewportHeight="960">
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M240,840L240,200Q240,167 263.5,143.5Q287,120 320,120L640,120Q673,120 696.5,143.5Q720,167 720,200L720,840L480,720L240,840ZM320,710L480,630L640,710L640,200L320,200L320,710Z" />
+    <group android:translateY="960">
+        <path android:fillColor="#FF000000"
+            android:pathData="M120-120v-80l80-80v160h-80Zm160 0v-240l80-80v320h-80Zm160 0v-320l80 81v239h-80Zm160 0v-239l80-80v319h-80Zm160 0v-400l80-80v480h-80ZM120-327v-113l280-280 160 160 280-280v113L560-447 400-607 120-327Z" />
+    </group>
 </vector>

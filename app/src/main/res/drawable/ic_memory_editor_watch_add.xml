@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Material Symbols: bookmark_add (Google, Apache-2.0). -->
+<!-- Material Symbols: add_chart (Google, Apache-2.0). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="960"
     android:viewportHeight="960">
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M240,840L240,200Q240,167 263.5,143.5Q287,120 320,120L640,120Q673,120 696.5,143.5Q720,167 720,200L720,545L640,545L640,200L320,200L320,710L480,630L560,670L480,720L240,840Z" />
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M700,760L700,700L740,700L740,760L800,760L800,800L740,800L740,860L700,860L700,800L640,800L640,760Z" />
+    <group android:translateY="960">
+        <path android:fillColor="#FF000000"
+            android:pathData="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h360v80H200v560h560v-360h80v360q0 33-23.5 56.5T760-120H200Zm80-160h80v-280h-80v280Zm160 0h80v-400h-80v400Zm160 0h80v-160h-80v160Zm80-320v-80h-80v-80h80v-80h80v80h80v80h-80v80h-80ZM480-480Z" />
+    </group>
 </vector>
