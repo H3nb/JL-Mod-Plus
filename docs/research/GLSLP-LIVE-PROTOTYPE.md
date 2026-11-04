@@ -2,7 +2,9 @@
 
 Select **OpenGL ES 2.0** as the graphics renderer, then choose **GLSLP demo:
 Scanlines** or **GLSLP demo: Soft blur** from the existing Shader filter
-control. These two packaged Apache-2.0 examples work without copying files.\nYou can also select the bundled Libretro FSR, xBRZ Crisp, xBRZ fixed 4x and\n8-pass Gaussian + xBRZ + FSR stress composition for comparison.
+control. These two packaged Apache-2.0 examples work without copying files.
+You can also select the bundled Libretro FSR, xBRZ Crisp, xBRZ fixed 4x and
+8-pass Gaussian + xBRZ + FSR stress composition for comparison.
 **Identity filter** restores the original path.
 
 For external shaders, place a root-level `.glslp` preset alongside its
@@ -26,10 +28,11 @@ and 2D/M3G/Mascot games on a physical device.
 
 ## Bundled upstream sources and restrictions
 
-The `libretro/` asset tree is copied unmodified from
-https://github.com/libretro/glsl-shaders at pinned upstream commit\n`1aaabbebdd88a8a89a82edfdc94e10580c99ffdd` with its original embedded
-copyright and license notices intact. The source files are intentionally
-kept separate from application-owned shader code.
+The upstream `.glsl` sources and original `.glslp` presets are copied unmodified from
+https://github.com/libretro/glsl-shaders at pinned upstream commit
+`1aaabbebdd88a8a89a82edfdc94e10580c99ffdd` with its original embedded
+copyright and license notices intact. The upstream sources are kept separate from application-owned shader code;
+`stress/eight-pass-composition.glslp` is an explicitly local test composition.
 
 **Licensing review is required before redistributing or merging this
 prototype.** xBRZ sources include GPL-3.0 notices alongside other
@@ -43,9 +46,9 @@ the original guest texture, and viewport resizing.
 A genuine upstream seven-pass Super 4xBR preset was also tested but failed
 on GLES2 because its shader requires non-square `mat4x3` matrices, absent
 from GLSL ES 1.00. It is intentionally **not selectable** on GLES2.
-The pipeline preserves each `#version 130` source file on disk, but
-removes that exact directive in-memory for GLES2 compilation so the
-shader's compatibility macros select GLSL ES 1.00. Compilation still
+The pipeline preserves upstream `#version 130` source files on disk, but
+removes that exact directive in-memory for GLES2 compatibility shaders.
+This is not a general desktop GLSL-to-GLES translation. Compilation still
 rejects unsupported GPU syntax. Presets requiring float/sRGB framebuffer
 formats, LUTs, or temporal feedback are rejected rather than silently
 substituting an incorrect RGBA8 approximation.
