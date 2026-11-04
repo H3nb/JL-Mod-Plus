@@ -2115,18 +2115,18 @@ internal fun RuntimeInspectorTab(
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold,
                                 )
-                                Text(
-                                    when {
-                                        !sourceUntraced ->
+                                if (!sourceUntraced || !hasVerifiedPath) {
+                                    Text(
+                                        if (sourceUntraced) {
+                                            stringResource(R.string.memory_editor_source_unknown)
+                                        } else {
                                             "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
                                                 snapshot.source.fieldType
-                                        hasVerifiedPath ->
-                                            stringResource(R.string.memory_editor_path_verified)
-                                        else -> stringResource(R.string.memory_editor_source_unknown)
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                                 val pathSummary = when (snapshot.pathStatus) {
                                     MemoryEngineContract.PATH_VERIFIED ->
                                         snapshot.referencePath.takeIf { it.isNotEmpty() }
