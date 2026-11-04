@@ -48,4 +48,5 @@
     <string name="render_host_layers">Background, skins and controls</string>
     <string name="render_composition_short">Host UI elements are not processed by the GLSL passes.</string>
     <string name="render_pipeline_note">Display layout determines the viewport before shader passes are planned. The steps show image flow.</string>
+    <string name="render_shader_change">Choose another effect</string>
 </resources>
