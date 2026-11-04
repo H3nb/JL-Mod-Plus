@@ -28,4 +28,24 @@
     <string name="render_composition">Screen composition</string>
     <string name="render_composition_help">Background, skin, soft keys and virtual controls are composed outside the GLSL shader passes.</string>
     <string name="render_pipeline_help">See how the game frame reaches the display, and edit each stage.</string>
+    <string name="render_shader_choose">Selected preset</string>
+    <string name="render_no_shader">Choose a preset to change how the game looks.</string>
+    <string name="render_shader_adjust">Adjust parameters</string>
+    <string name="render_legacy_tuning_hint">Fine-tune this legacy effect.</string>
+    <string name="render_shader_customization">Customize</string>
+    <string name="render_adjustable_count">%1$d adjustable values</string>
+    <string name="render_pass_summary">%1$d stages · Defined by the preset</string>
+    <string name="render_shader_preset_note">Shader stages are defined by the preset. You can inspect them without changing their order.</string>
+    <string name="render_parameters_hint">Move a slider to adjust its value. Changes are saved when you release it.</string>
+    <string name="render_pass_readonly">Stages run in this order. Input filtering and output scaling come from the selected preset.</string>
+    <string name="render_pipeline_intro">The path from the game framebuffer to your screen.</string>
+    <string name="render_native_short">Native (1×) · Higher internal resolutions are not available yet</string>
+    <string name="render_shader_inactive">Not applied</string>
+    <string name="render_expand_passes">Show stages</string>
+    <string name="render_collapse_passes">Hide stages</string>
+    <string name="render_view_all_passes">Stage details</string>
+    <string name="render_pipeline_filter_summary">Texture filtering: %1$s</string>
+    <string name="render_host_layers">Background, skins and controls</string>
+    <string name="render_composition_short">Host UI elements are not processed by the GLSL passes.</string>
+    <string name="render_pipeline_note">Display layout determines the viewport before shader passes are planned. The steps show image flow.</string>
 </resources>
