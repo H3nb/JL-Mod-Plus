@@ -859,6 +859,8 @@ internal class MemoryEditorComposeController(
     }
 
     override fun refreshSavedVariables() {
+        // A pinned Saved edit owns its binding and displayed snapshot until dismissal.
+        if (savedEditId != null) return
         val generation = ++savedGeneration
         val authority = savedAuthority
         val connection = connectionGeneration
@@ -1093,8 +1095,9 @@ internal class MemoryEditorComposeController(
         val engine = service
         val current = state.savedVariables.map { it.id }.toSet()
         val unique = ids.distinct()
+        // The authority deletes by record ID; the locator catalog can be empty during reload.
         if (!state.savedTab || unique.isEmpty() || unique.size > 64 ||
-            unique.any { it !in current || it !in savedLocators }) return
+            unique.any { it !in current }) return
 
         // Invalidate queued polling *before* the delete enters the serial IPC worker.
         // Otherwise a queued retry can rebind an ID after releaseSaved has run but
