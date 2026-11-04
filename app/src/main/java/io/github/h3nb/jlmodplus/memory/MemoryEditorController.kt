@@ -68,6 +68,7 @@ internal class MemoryEditorComposeController(
     @Volatile private var savedGeneration = 0L
     private var savedLocators: Map<String, Bundle> = emptyMap()
     private var savedRefreshPending = false
+    private var savedCatalogDirty = false
     @Volatile private var savedEditId: String? = null
     private var savedEditReady = false
     private var hostForeground = true
@@ -881,6 +882,7 @@ internal class MemoryEditorComposeController(
                 if (records.isSuccess) {
                     val rows = records.getOrThrow()
                     savedLocators = rows.associate { it.first.id to it.second }
+                    savedCatalogDirty = false
                     nextSavedResolveAt = 0L
                     state = state.copy(
                         savedVariables = rows.map { it.first },
@@ -1035,14 +1037,17 @@ internal class MemoryEditorComposeController(
         savedEditId = null
         savedEditReady = false
         nextSavedResolveAt = 0L
-        if (savedLocators.isEmpty() && state.savedVariables.isNotEmpty()) {
+        if (savedCatalogDirty ||
+            (savedLocators.isEmpty() && state.savedVariables.isNotEmpty())) {
             // Apply may already be queued on IPC. Deliver its feedback before a
             // catalog reload advances savedGeneration and discards that response.
             runIpc {
                 post {
                     if (hostForeground && state.visible && state.savedTab &&
-                        savedEditId == null && savedLocators.isEmpty() &&
-                        state.savedVariables.isNotEmpty()) refreshSavedVariables()
+                        savedEditId == null && (savedCatalogDirty ||
+                            (savedLocators.isEmpty() && state.savedVariables.isNotEmpty()))) {
+                        refreshSavedVariables()
+                    }
                 }
             }
         } else {
@@ -1117,6 +1122,7 @@ internal class MemoryEditorComposeController(
         val removed = unique.toSet()
         val generation = ++savedGeneration
         savedRefreshPending = false
+        savedCatalogDirty = true
         savedLocators = savedLocators.filterKeys { it !in removed }
         state = state.copy(
             savedVariables = state.savedVariables.filterNot { it.id in removed },
@@ -1139,12 +1145,19 @@ internal class MemoryEditorComposeController(
                 rows
             }
             post {
-                if (destroyed || generation != savedGeneration || !state.savedTab ||
-                    state.runtimeToken != token) return@post
+                if (destroyed || !state.savedTab || state.runtimeToken != token) return@post
+                if (generation != savedGeneration) {
+                    if (result.isFailure) {
+                        state = state.copy(message = result.exceptionOrNull()?.message,
+                            messageIsError = true)
+                    }
+                    return@post // A newer mutation or reload owns the final catalog.
+                }
                 val rows = result.getOrNull()
                 if (rows != null) {
                     val retained = rows.mapTo(HashSet()) { it.first.id }
                     savedLocators = rows.associate { it.first.id to it.second }
+                    savedCatalogDirty = false
                     state = state.copy(
                         savedVariables = rows.map { it.first },
                         savedSelection = state.savedSelection.intersect(retained),
@@ -1179,22 +1192,41 @@ internal class MemoryEditorComposeController(
 
     private fun renameSaved(id: String, name: String) {
         val authority = savedAuthority ?: return
+        if (!state.savedTab || state.savedVariables.none { it.id == id }) return
         val token = state.runtimeToken
-        val generation = savedGeneration
+        val generation = ++savedGeneration
+        savedRefreshPending = false
+        savedCatalogDirty = true
         runIpc {
             val result = runCatching {
                 val (path, appId, entry) = savedTarget()
-                savedRows(authority.rename(path, appId, entry, id, name.trim())).map { it.first }
+                savedRows(authority.rename(path, appId, entry, id, name.trim()))
             }
             post {
-                if (destroyed || generation != savedGeneration || !state.savedTab ||
-                    state.runtimeToken != token) return@post
+                if (destroyed || !state.savedTab || state.runtimeToken != token) return@post
+                if (generation != savedGeneration) {
+                    if (result.isFailure) {
+                        state = state.copy(message = result.exceptionOrNull()?.message,
+                            messageIsError = true)
+                    }
+                    return@post // A newer mutation or reload owns the final catalog.
+                }
                 val rows = result.getOrNull()
-                state = if (rows != null) state.copy(savedVariables = rows,
-                    savedValues = state.savedValues.filterKeys { key -> rows.any { it.id == key } },
-                    message = "Saved variable renamed",
-                    messageIsError = false)
-                else state.copy(message = result.exceptionOrNull()?.message, messageIsError = true)
+                if (rows != null) {
+                    val retained = rows.mapTo(HashSet()) { it.first.id }
+                    savedLocators = rows.associate { it.first.id to it.second }
+                    savedCatalogDirty = false
+                    state = state.copy(
+                        savedVariables = rows.map { it.first },
+                        savedSelection = state.savedSelection.intersect(retained),
+                        savedValues = state.savedValues.filterKeys { it in retained },
+                        message = "Saved variable renamed", messageIsError = false,
+                    )
+                } else {
+                    state = state.copy(message = result.exceptionOrNull()?.message,
+                        messageIsError = true)
+                    refreshSavedVariables()
+                }
             }
         }
     }
