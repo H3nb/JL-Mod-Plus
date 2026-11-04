@@ -1035,7 +1035,11 @@ internal class MemoryEditorComposeController(
         savedEditId = null
         savedEditReady = false
         nextSavedResolveAt = 0L
-        refreshSavedLive()
+        if (savedLocators.isEmpty() && state.savedVariables.isNotEmpty()) {
+            refreshSavedVariables()
+        } else {
+            refreshSavedLive()
+        }
     }
 
     override fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean) {
