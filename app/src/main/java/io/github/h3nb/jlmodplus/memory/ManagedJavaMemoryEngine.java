@@ -1365,30 +1365,6 @@ final class ManagedJavaMemoryEngine {
             this.steps = steps.clone();
         }
 
-        // Convenience constructors for existing field-only fixtures. Production
-        // capture, persistence, transport and resolution use the typed steps.
-        SavedLocator(int rootKind, String rootClass, SavedField[] fields) {
-            this(rootKind, rootClass, fields, -1, null);
-        }
-
-        SavedLocator(int rootKind, String rootClass, SavedField[] fields, int arrayIndex) {
-            this(rootKind, rootClass, fields, arrayIndex, null);
-        }
-
-        SavedLocator(int rootKind, String rootClass, SavedField[] fields,
-                     int arrayIndex, @Nullable int[] fieldIndices) {
-            this.rootKind = rootKind;
-            this.rootClass = rootClass;
-            ArrayList<SavedStep> path = new ArrayList<>();
-            for (int i = 0; i < fields.length; i++) {
-                path.add(SavedStep.field(fields[i]));
-                if (fieldIndices != null && i < fieldIndices.length && fieldIndices[i] >= 0)
-                    path.add(SavedStep.index(fieldIndices[i], fields[i].type));
-            }
-            if (arrayIndex >= 0 && fields.length > 0)
-                path.add(SavedStep.index(arrayIndex, fields[fields.length - 1].type));
-            steps = path.toArray(new SavedStep[0]);
-        }
     }
 
     static final class SavedStep {

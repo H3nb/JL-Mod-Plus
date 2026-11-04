@@ -11,6 +11,38 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class MemoryEditorModelsTest {
+    @Test fun savedReboundHintExpiresWithoutLosingTheCurrentValue() {
+        val bound = SavedVariableRuntimeValue(
+            MemoryEngineContract.RESULT_OK,
+            MemoryEngineContract.TYPE_INT,
+            value = "190",
+            rebound = true,
+        )
+        val first = savedValueAfterRefresh(bound, null, 1_000L, 4_000L)
+        assertEquals(SavedVariableStatus.REBOUND, first.status)
+        assertEquals(5_000L, first.reboundUntilUptimeMs)
+
+        val stable = savedValueAfterRefresh(
+            bound.copy(value = "191", rebound = false), first, 3_000L, 4_000L,
+        )
+        assertEquals(SavedVariableStatus.REBOUND, stable.status)
+        assertEquals("191", stable.value)
+
+        val expired = savedValueAfterRefresh(
+            bound.copy(value = "192", rebound = false), stable, 5_000L, 4_000L,
+        )
+        assertEquals(SavedVariableStatus.RESOLVED, expired.status)
+        assertEquals(0L, expired.reboundUntilUptimeMs)
+        assertEquals("192", expired.value)
+
+        val unavailable = savedValueAfterRefresh(
+            SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST),
+            first, 3_100L, 4_000L,
+        )
+        assertEquals(SavedVariableStatus.NOT_READY, unavailable.status)
+        assertFalse(unavailable.rebound)
+    }
+
     @Test fun sourceMetadataRequiresACompleteCheckedFieldDescriptor() {
         assertEquals(
             MemoryCandidateSource.UNKNOWN,

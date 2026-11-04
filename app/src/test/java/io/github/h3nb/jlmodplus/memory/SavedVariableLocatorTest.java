@@ -8,6 +8,20 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SavedVariableLocatorTest {
     private static final long FIRST = 1000021L, NEXT = 1000022L;
     static final class GuestRoot { GuestPlayer player = new GuestPlayer(); }
+    private static ManagedJavaMemoryEngine.SavedLocator savedCoinsLocator() {
+        return new ManagedJavaMemoryEngine.SavedLocator(
+                ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET, GuestRoot.class.getName(),
+                new ManagedJavaMemoryEngine.SavedStep[]{
+                        ManagedJavaMemoryEngine.SavedStep.field(
+                                new ManagedJavaMemoryEngine.SavedField(
+                                        GuestRoot.class.getName(), "player", GuestPlayer.class.getName())),
+                        ManagedJavaMemoryEngine.SavedStep.field(
+                                new ManagedJavaMemoryEngine.SavedField(
+                                        GuestPlayer.class.getName(), "coins", "int"))
+                });
+    }
+
+
     static final class GuestPlayer { int coins = 585858; int flag = 272727; static int shared = 9001; }
     static final class AliasRoot {
         GuestPlayer pathOne = new GuestPlayer();
@@ -64,15 +78,7 @@ public class SavedVariableLocatorTest {
         MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
         try {
             ManagedJavaMemoryEngine.SavedLocator locator =
-                    new ManagedJavaMemoryEngine.SavedLocator(
-                            ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
-                            GuestRoot.class.getName(),
-                            new ManagedJavaMemoryEngine.SavedField[] {
-                                new ManagedJavaMemoryEngine.SavedField(
-                                        GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
-                                new ManagedJavaMemoryEngine.SavedField(
-                                        GuestPlayer.class.getName(), "coins", "int")
-                            });
+                    savedCoinsLocator();
             assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
                     FIRST, locator, "test-player-identity", 0L).code);
             GuestPlayer original = root.player;
@@ -304,15 +310,7 @@ public class SavedVariableLocatorTest {
         MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
         try {
             ManagedJavaMemoryEngine.SavedLocator locator =
-                    new ManagedJavaMemoryEngine.SavedLocator(
-                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
-                        GuestRoot.class.getName(),
-                        new ManagedJavaMemoryEngine.SavedField[]{
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestPlayer.class.getName(), "coins", "int")
-                        });
+                    savedCoinsLocator();
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.resolveSavedLocator(FIRST, locator, "saved-coins-freeze", 0L).code);
             assertEquals(MemoryEngineContract.RESULT_OK,
@@ -354,15 +352,7 @@ public class SavedVariableLocatorTest {
         MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
         try {
             ManagedJavaMemoryEngine.SavedLocator locator =
-                    new ManagedJavaMemoryEngine.SavedLocator(
-                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
-                        GuestRoot.class.getName(),
-                        new ManagedJavaMemoryEngine.SavedField[]{
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestPlayer.class.getName(), "coins", "int")
-                        });
+                    savedCoinsLocator();
             String savedId = "saved-freeze-expected";
             assertEquals(MemoryEngineContract.RESULT_OK,
                     engine.resolveSavedLocator(FIRST, locator, savedId, 0L).code);
@@ -392,15 +382,7 @@ public class SavedVariableLocatorTest {
         MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
         MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
         ManagedJavaMemoryEngine.SavedLocator locator =
-                new ManagedJavaMemoryEngine.SavedLocator(
-                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
-                        GuestRoot.class.getName(),
-                        new ManagedJavaMemoryEngine.SavedField[]{
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestPlayer.class.getName(), "coins", "int")
-                        });
+                savedCoinsLocator();
         try {
             String savedId = "hp"; // Portable identifiers have no arbitrary minimum length.
             assertEquals(MemoryEngineContract.RESULT_OK,
@@ -524,15 +506,7 @@ public class SavedVariableLocatorTest {
         MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
         try {
             ManagedJavaMemoryEngine.SavedLocator locator =
-                    new ManagedJavaMemoryEngine.SavedLocator(
-                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
-                        GuestRoot.class.getName(),
-                        new ManagedJavaMemoryEngine.SavedField[]{
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestPlayer.class.getName(), "coins", "int")
-                        });
+                    savedCoinsLocator();
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.resolveSavedLocator(FIRST, locator, "saved-coins-inspect", 0L).code);
             ManagedJavaMemoryEngine.ManagedInspection inspected =
@@ -580,15 +554,7 @@ public class SavedVariableLocatorTest {
         MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
         try {
             ManagedJavaMemoryEngine.SavedLocator locator =
-                    new ManagedJavaMemoryEngine.SavedLocator(
-                        ManagedJavaMemoryEngine.SavedLocator.ROOT_MIDLET,
-                        GuestRoot.class.getName(),
-                        new ManagedJavaMemoryEngine.SavedField[]{
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestRoot.class.getName(), "player", GuestPlayer.class.getName()),
-                            new ManagedJavaMemoryEngine.SavedField(
-                                GuestPlayer.class.getName(), "coins", "int")
-                        });
+                    savedCoinsLocator();
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.resolveSavedLocator(FIRST, locator, "watched-inspector-owner", 0L).code);
             ManagedJavaMemoryEngine.ManagedInspection inspected =

@@ -361,6 +361,7 @@ internal data class SavedVariableRuntimeValue(
     val detail: String = "",
     val changedOwner: Boolean = false,
     val rebound: Boolean = false,
+    val reboundUntilUptimeMs: Long = 0L,
 ) {
     val resolved: Boolean get() = code == MemoryEngineContract.RESULT_OK
     val status: SavedVariableStatus get() = when {
@@ -374,6 +375,22 @@ internal data class SavedVariableRuntimeValue(
             code == MemoryEngineContract.RESULT_UNSUPPORTED -> SavedVariableStatus.INCOMPATIBLE
         else -> SavedVariableStatus.FAILED
     }
+}
+
+/** One transient hint per verified rebind, without adding a timer to the Saved tab. */
+internal fun savedValueAfterRefresh(
+    current: SavedVariableRuntimeValue,
+    previous: SavedVariableRuntimeValue?,
+    nowUptimeMs: Long,
+    noticeDurationMs: Long,
+): SavedVariableRuntimeValue {
+    if (!current.resolved) return current.copy(rebound = false, reboundUntilUptimeMs = 0L)
+    val until = if (current.rebound) nowUptimeMs + noticeDurationMs
+        else previous?.reboundUntilUptimeMs ?: 0L
+    return current.copy(
+        rebound = until > nowUptimeMs,
+        reboundUntilUptimeMs = until.takeIf { it > nowUptimeMs } ?: 0L,
+    )
 }
 
 internal data class MemoryEditorUiState(
@@ -442,7 +459,6 @@ internal interface MemoryEditorActions {
     fun setSavedTab() = Unit
     fun refreshSavedVariables() = Unit
     fun saveSelectedVariable(name: String) = Unit
-    fun resolveSavedVariable(id: String) = Unit
     fun beginSavedEdit(id: String, onReady: (SavedVariableRuntimeValue?) -> Unit) = Unit
     fun endSavedEdit() = Unit
     fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean = false) = Unit

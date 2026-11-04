@@ -895,10 +895,11 @@ internal class MemoryEditorComposeController(
                         if (destroyed || !state.visible || !state.savedTab ||
                             generation != savedGeneration || connection != connectionGeneration ||
                             service !== engine || state.runtimeToken != token) return@post
+                        val now = android.os.SystemClock.uptimeMillis()
                         val merged = values.mapValues { (id, current) ->
-                            if (current.resolved &&
-                                (current.rebound || state.savedValues[id]?.rebound == true)
-                            ) current.copy(rebound = true) else current
+                            savedValueAfterRefresh(
+                                current, state.savedValues[id], now, SAVED_REBOUND_NOTICE_MS,
+                            )
                         }
                         state = state.copy(savedValues = state.savedValues + merged)
                     }
@@ -933,38 +934,6 @@ internal class MemoryEditorComposeController(
                 state = state.copy(
                     message = outcome.exceptionOrNull()?.message ?: "Saved variable created",
                     messageIsError = outcome.isFailure)
-            }
-        }
-    }
-
-    override fun resolveSavedVariable(id: String) {
-        val engine = service ?: return
-        val authority = savedAuthority ?: return
-        val token = state.runtimeToken
-        val generation = savedGeneration
-        if (token == 0L || state.busy) return
-        runIpc {
-            val value = runCatching {
-                val (path, appId, entry) = savedTarget()
-                val record = savedRows(authority.list(path, appId, entry))
-                    .firstOrNull { it.first.id == id } ?: error("Saved definition missing")
-                var current = savedValue(engine.readSaved(token, id), bound = true)
-                if (current.code == MemoryEngineContract.RESULT_NO_SESSION) {
-                    val attempt = engine.resolveSavedLocator(token, record.second, id)
-                    current = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
-                        MemoryEngineContract.RESULT_OK
-                    ) savedValue(engine.readSaved(token, id), bound = true) else savedValue(attempt)
-                }
-                current
-            }.getOrElse { SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
-                detail = it.message.orEmpty()) }
-            post {
-                if (destroyed || generation != savedGeneration || !state.savedTab ||
-                    state.runtimeToken != token || service !== engine ||
-                    state.savedVariables.none { it.id == id }) return@post
-                state = state.copy(savedValues = state.savedValues + (id to value),
-                    message = if (value.resolved) null else value.detail,
-                    messageIsError = !value.resolved)
             }
         }
     }
@@ -1098,14 +1067,25 @@ internal class MemoryEditorComposeController(
                 if (destroyed || generation != savedGeneration || !state.savedTab ||
                     state.runtimeToken != token) return@post
                 val rows = result.getOrNull()
-                state = if (rows != null) state.copy(
-                    savedVariables = rows,
-                    savedSelection = state.savedSelection - unique.toSet(),
-                    savedValues = state.savedValues.filterKeys { id -> rows.any { it.id == id } },
-                    message = if (unique.size == 1) "Saved variable removed" else "Saved variables removed",
-                    messageIsError = false,
-                ) else state.copy(
-                    message = result.exceptionOrNull()?.message, messageIsError = true)
+                if (rows != null) {
+                    val retained = rows.mapTo(HashSet()) { it.id }
+                    // The persisted delete is authoritative. Reconcile the live locator
+                    // catalog too, and invalidate any queued polling of removed IDs.
+                    savedGeneration++
+                    savedRefreshPending = false
+                    savedLocators = savedLocators.filterKeys { it in retained }
+                    state = state.copy(
+                        savedVariables = rows,
+                        savedSelection = state.savedSelection.intersect(retained),
+                        savedValues = state.savedValues.filterKeys { it in retained },
+                        message = if (unique.size == 1) "Saved variable removed" else "Saved variables removed",
+                        messageIsError = false,
+                    )
+                } else {
+                    state = state.copy(
+                        message = result.exceptionOrNull()?.message, messageIsError = true,
+                    )
+                }
             }
         }
     }
@@ -1943,6 +1923,7 @@ internal class MemoryEditorComposeController(
         private const val LIVE_REFRESH_INITIAL_DELAY_MS = 100L
         private const val LIVE_REFRESH_INTERVAL_MS = 250L
         private const val SAVED_RESOLVE_INTERVAL_MS = 1_000L
+        private const val SAVED_REBOUND_NOTICE_MS = 4_000L
         private const val CAPABILITY_RETRY_IDLE_MS = 1_000L
         private val CAPABILITY_RETRY_DELAYS_MS = longArrayOf(80L, 160L, 320L, 640L)
     }

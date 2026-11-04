@@ -76,7 +76,7 @@ Capture requires a current verified ancestry from the MIDlet, Displayable or an
 already-initialized static class; resolving never initializes guest classes. It
 checks every field signature and array bound and retains weak, pinned runtime
 ancestry. The Saved tab may release and resolve a changed binding again while no
-Saved edit is open, displaying a nonblocking **Target updated** hint. An open edit
+Saved edit is open, displaying a nonblocking **Target updated** hint for a few seconds during foreground polling. An open edit
 pins its original binding: replacement during the dialog rejects the write, and
 the user can reopen the editor. Rebinding never writes or activates Watch/Freeze.
 An indexed party slot can refer to a different character without any structural
@@ -93,7 +93,9 @@ Every Saved authority mutation still validates active installed identity and
 uses `InstalledAppWriteGuard`. The R&D prototype format is not migrated.
 
 Definitions can be listed and renamed/deleted without a running guest; resolving,
-reading, editing and Inspector require a live MIDlet. Saved selection is separate
+reading, editing and Inspector require a live MIDlet. A committed delete removes
+the definition from the active polling catalog and releases its runtime Saved
+binding; it does not remove or reactivate a separate Watch/Freeze. Saved selection is separate
 from Search/Watch selection. Foreground Saved polling reads active values and
 retries unresolved paths without reloading the document on every frame. Opening
 an edit drains preceding IPC, snapshots the bound value and pauses automatic Saved
