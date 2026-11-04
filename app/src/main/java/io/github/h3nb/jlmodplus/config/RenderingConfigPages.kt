@@ -58,7 +58,8 @@ internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, PIPELINE }
 internal fun selectedShaderLabel(state: ConfigUiState): String {
     val selected = state.form.shader ?: return "Off"
     return state.shaders.firstOrNull { it == selected }?.toString()
-        ?: "Unavailable: ${selected}"
+        ?: "Unavailable: " + (selected.name ?: selected.preset?.substringAfterLast('/')
+            ?: selected.fragment?.substringAfterLast('/') ?: "Shader")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
