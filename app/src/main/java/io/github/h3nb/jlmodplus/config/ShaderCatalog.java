@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -61,7 +60,7 @@ public final class ShaderCatalog {
     private static File[] sorted(File folder) {
         File[] entries = folder.listFiles();
         if (entries == null) return new File[0];
-        Arrays.sort(entries, Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
+        Arrays.sort(entries, (left, right) -> left.getName().compareToIgnoreCase(right.getName()));
         return entries;
     }
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- Prototyping only: localized UI copy is pending design review. -->
     <string name="render_shader_effects">Shader effects</string>
     <string name="render_pipeline_title">Rendering pipeline</string>
     <string name="render_shader_preset">Shader preset</string>

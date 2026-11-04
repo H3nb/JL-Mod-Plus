@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.config;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class ShaderCatalogTest {
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    @TempDir Path temporary;
 
-    @Test public void migratesLegacyWithoutBreakingStoredSourcePaths() throws Exception {
-        File root = temporary.newFolder("shaders");
+    @Test void migratesLegacyWithoutBreakingStoredSourcePaths() throws Exception {
+        File root = temporary.resolve("shaders").toFile();
+        assertTrue(root.mkdir());
         Files.write(new File(root, "pixel.ini").toPath(),
                 ("[Pixel]\nVertex = pixel.vsh\nFragment = pixel.fsh\n")
                         .getBytes(StandardCharsets.UTF_8));
@@ -30,8 +31,8 @@ public class ShaderCatalogTest {
         assertEquals(1, ShaderCatalog.scan(root).size());
     }
 
-    @Test public void discoversNestedGlslpWithoutOfferingItsPassFiles() throws Exception {
-        File root = temporary.newFolder("shaders");
+    @Test void discoversNestedGlslpWithoutOfferingItsPassFiles() throws Exception {
+        File root = temporary.resolve("shaders").toFile();
         File nested = new File(root, "shaders_glsl/xbrz/shaders");
         assertTrue(nested.mkdirs());
         Files.write(new File(nested, "pass.glsl").toPath(), "pass".getBytes(StandardCharsets.UTF_8));

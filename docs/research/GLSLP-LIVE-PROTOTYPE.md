@@ -81,3 +81,7 @@ The pipeline overview is a configuration preview, not evidence of successful
 GPU compilation. Runtime GLES still owns shader programs and can fall back
 to identity if a preset is unsupported or invalid. Existing GLSLP scope and
 physical-device qualification restrictions above still apply.
+
+Rendering page strings currently use the canonical English source copy. Missing
+translations are explicitly scoped to the prototype resource file for lint;
+this must be revisited once the UX wording is accepted for release.
