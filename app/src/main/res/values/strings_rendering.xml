@@ -28,7 +28,6 @@
     <string name="render_composition">Screen composition</string>
     <string name="render_composition_help">Background, skin, soft keys and virtual controls are composed outside the GLSL shader passes.</string>
     <string name="render_pipeline_help">See how the game frame reaches the display, and edit each stage.</string>
-    <string name="render_shader_choose">Selected preset</string>
     <string name="render_no_shader">Choose a preset to change how the game looks.</string>
     <string name="render_shader_adjust">Adjust parameters</string>
     <string name="render_legacy_tuning_hint">Fine-tune this legacy effect.</string>
