@@ -1298,6 +1298,7 @@
     <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Save this verified memory path for later sessions. Values are never written automatically.</string>
     <string name="memory_saved_empty" tools:ignore="MissingTranslation">No Saved variables yet. Select one search result to save it.</string>
     <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Not ready</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Retry</string>
     <string name="memory_saved_rename" tools:ignore="MissingTranslation">Rename</string>
     <string name="memory_saved_value" tools:ignore="MissingTranslation">Value</string>
     <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Remove this Saved definition? The game value will not change.</string>
