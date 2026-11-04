@@ -30,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -334,6 +335,7 @@ private fun RenderingPipelineContent(
                 fallbackLabel = "100",
                 valueSuffix = "%",
                 validIntegerRange = 1..1000,
+                keyboardType = KeyboardType.Number,
                 onValueChange = { onFormChanged(form.toBuilder().screenScaleRatio(it).build()) },
             )
         }

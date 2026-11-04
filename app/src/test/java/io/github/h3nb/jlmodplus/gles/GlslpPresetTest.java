@@ -80,6 +80,20 @@ public class GlslpPresetTest {
         assertEquals(3.2f, values.get("XBRZ_STEEP"), 0f);
         assertEquals(24f, values.get("XBRZ_MINC"), 0f);
         assertEquals(100f, values.get("XBRZ_DIAG"), 0f);
+        GlslpPreset.Parameter minimumContrast = crisp.parameterDefinitions().stream()
+                .filter(parameter -> parameter.id.equals("XBRZ_MINC")).findFirst().get();
+        assertEquals("Minimum contrast", minimumContrast.label);
+        assertEquals(0f, minimumContrast.minimum, 0f);
+        assertEquals(80f, minimumContrast.maximum, 0f);
+        assertEquals(24f, minimumContrast.value, 0f);
+        GlslpPreset tuned = crisp.withParameterOverrides(
+                java.util.Collections.singletonMap("XBRZ_MINC", 40f));
+        assertEquals(40f, tuned.resolvedParameters().get("XBRZ_MINC"), 0f);
+        assertEquals(24f, crisp.resolvedParameters().get("XBRZ_MINC"), 0f);
+        expectFailure(() -> crisp.withParameterOverrides(
+                java.util.Collections.singletonMap("XBRZ_MINC", 1000f)).resolvedParameters(),
+                "Preset parameter outside GLSL range");
+
         assets.put("xbrz/out-of-range.glslp", source
                 + "parameters = XBRZ_MINC\nXBRZ_MINC = 100\n");
         expectFailure(() -> GlslpPreset.load(assets, "xbrz/out-of-range.glslp")

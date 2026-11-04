@@ -56,3 +56,28 @@ substituting an incorrect RGBA8 approximation.
 All offscreen stages are subject to a combined 64 MiB RGBA8 budget.
 Unsupported passes revert to the identity presentation, leaving the
 guest rendering, controls, and background logic unchanged.
+
+## Rendering configuration prototype (PR #224)
+
+The Display > Rendering section now provides **Shader effects** and **Rendering
+pipeline** pages. Choose a preset in Shader effects; GLSLP numeric parameters
+can be tuned per game without editing the .glslp file. The pipeline page shows
+the resolved pass order and input filter/output sizing, alongside the existing
+graphics renderer, scaling and texture filtering settings. Pass structure is
+read-only in this prototype; arbitrary editing is intentionally not advertised.
+The internal resolution indicator remains Native, not an HD implementation.
+
+External storage uses `shaders/shaders_legacy/` for .ini/.vsh/.fsh files and
+`shaders/shaders_glsl/` for GLSLP preset trees, with nested relative GLSL
+dependencies. Root-level old shader files are moved on configuration opening
+when no destination collision exists. The legacy loader checks both old and
+new locations so existing saved vertex/fragment references still resolve.
+For an older emulator sharing the same directory, moved files may need to be
+restored before using that older version. Root-level external .glsl/.glslp
+remain readable for compatibility. Reopen the configuration screen to
+refresh the catalog after manually adding files.
+
+The pipeline overview is a configuration preview, not evidence of successful
+GPU compilation. Runtime GLES still owns shader programs and can fall back
+to identity if a preset is unsupported or invalid. Existing GLSLP scope and
+physical-device qualification restrictions above still apply.

@@ -224,9 +224,7 @@ public final class ConfigFormState {
 		params.screenFilter = screenFilter;
 		params.immediateMode = immediateMode;
 		params.graphicsMode = graphicsMode;
-		if (graphicsMode == 1) {
-			params.shader = ShaderSelection.fromInfo(shader);
-		}
+		params.shader = ShaderSelection.fromInfo(shader);
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
 		params.allowDisplayCutout = allowDisplayCutout;
