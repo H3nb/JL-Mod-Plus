@@ -27,7 +27,7 @@ and 2D/M3G/Mascot games on a physical device.
 ## Bundled upstream sources and restrictions
 
 The `libretro/` asset tree is copied unmodified from
-https://github.com/libretro/glsl-shaders with its original embedded
+https://github.com/libretro/glsl-shaders at pinned upstream commit\n`1aaabbebdd88a8a89a82edfdc94e10580c99ffdd` with its original embedded
 copyright and license notices intact. The source files are intentionally
 kept separate from application-owned shader code.
 

@@ -17,7 +17,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -129,13 +128,16 @@ public final class GlslpGpuSmokeTest {
     }
 
     private static FloatBuffer quad(float left, float right) {
-        return ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder())
-                .asFloatBuffer().put(new float[]{
-                        left, right, 0, 0,
-                        left, -right, 0, 1,
-                        right, right, 1, 0,
-                        right, -right, 1, 1
-                }).rewind();
+        FloatBuffer buffer = ByteBuffer.allocateDirect(16 * 4)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        buffer.put(new float[]{
+                left, right, 0, 0,
+                left, -right, 0, 1,
+                right, right, 1, 0,
+                right, -right, 1, 1
+        });
+        buffer.rewind();
+        return buffer;
     }
 
     private static byte[] image() {
