@@ -102,6 +102,9 @@ import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.BackgroundMode;
+import io.github.h3nb.jlmodplus.gles.GlslpAssets;
+import io.github.h3nb.jlmodplus.gles.GlslpPipeline;
+import io.github.h3nb.jlmodplus.gles.GlslpPreset;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
@@ -160,6 +163,10 @@ public abstract class Canvas extends Displayable {
 	// Also read by the overlay sampler; guest/runtime code can change it while the surface is live.
 	private static volatile int fpsLimit;
 	private static boolean screenshotRawMode;
+	private static boolean usesGlslp() {
+		return settings != null && settings.graphicsMode == 1
+				&& settings.shader != null && settings.shader.preset != null;
+	}
 	private static boolean timingOverlayEnabled;
 
 	private final Object bufferLock = new Object();
@@ -1119,9 +1126,21 @@ public abstract class Canvas extends Displayable {
 
 		synchronized (bufferLock) {
 			if (offscreenCopy == null) {
-				offscreenCopy = Image.createImage(width, maxHeight);
+				offscreenCopy = Image.createImage(width, usesGlslp() ? height : maxHeight);
 			}
-			if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
+			if (usesGlslp() && (offscreenCopy.getBitmap().getWidth() != width
+					|| offscreenCopy.getBitmap().getHeight() != height)) {
+				// GLSLP input must end at the actual content edge, not padded softbar pixels.
+				Image next = Image.createImage(width, height);
+				int overlapWidth = Math.min(width, offscreenCopy.getWidth());
+				int overlapHeight = Math.min(height, offscreenCopy.getHeight());
+				if (overlapWidth > 0 && overlapHeight > 0) {
+					Rect rect = new Rect(0, 0, overlapWidth, overlapHeight);
+					new android.graphics.Canvas(next.getBitmap()).drawBitmap(
+							offscreenCopy.getBitmap(), rect, rect, null);
+				}
+				offscreenCopy = next;
+			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
 				offscreenCopy.setSize(width, height);
 			}
 		}
@@ -1705,6 +1724,8 @@ public abstract class Canvas extends Displayable {
 		private GLSurfaceView mView;
 		private final int[] bgTextureId = new int[1];
 		private ShaderProgram program;
+		private GlslpPipeline glslpPipeline;
+		private int hostGlWidth, hostGlHeight;
 		private AmbientGlRenderer ambientRenderer;
 		private long lastUploadedSequence = Long.MIN_VALUE;
 		private int lastUploadedWidth;
@@ -1714,7 +1735,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-			program = new ShaderProgram(settings.shader, shaderDirectory);
+			program = new ShaderProgram(usesGlslp() ? null : settings.shader, shaderDirectory);
 			program.use();
 			int c = effectiveBackgroundArgb();
 			glClearColor((c >> 16 & 0xff) / 255.0f, (c >> 8 & 0xff) / 255.0f,
@@ -1723,6 +1744,16 @@ public abstract class Canvas extends Displayable {
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(false);
 			initTex();
+			glslpPipeline = null;
+			if (usesGlslp()) {
+				try {
+					GlslpPreset preset = GlslpAssets.load(settings.shader.preset, shaderDirectory);
+					glslpPipeline = new GlslpPipeline(preset, GlslpAssets.stockSource());
+				} catch (Exception e) {
+					Log.w(TAG, "GLSLP prototype unavailable; using identity renderer", e);
+				}
+				program.use();
+			}
 			Bitmap bitmap = offscreenCopy.getBitmap();
 			textureValid = false;
 			lastUploadedSequence = Long.MIN_VALUE;
@@ -1745,6 +1776,8 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onSurfaceChanged(GL10 gl, int width, int height) {
+			hostGlWidth = width;
+			hostGlHeight = height;
 			glViewport(0, 0, width, height);
 			SkinLayer skinLayer = SkinLayer.getInstance();
 			int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
@@ -1786,8 +1819,12 @@ public abstract class Canvas extends Displayable {
 				program.use();
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, bgTextureId[0]);
+				int contentWidth, contentHeight;
 				synchronized (bufferLock) {
-					Bitmap bitmap = offscreenCopy.getBitmap();
+					Image source = offscreenCopy;
+					Bitmap bitmap = source.getBitmap();
+					contentWidth = source.getWidth();
+					contentHeight = source.getHeight();
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
@@ -1805,10 +1842,26 @@ public abstract class Canvas extends Displayable {
 						lastUploadedHeight = bitmap.getHeight();
 					}
 				}
+				boolean glslpDrawn = false;
 				synchronized (vbo) {
 					program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
+					if (glslpPipeline != null) {
+						try {
+							glslpPipeline.draw(bgTextureId[0], vbo, lastUploadedWidth,
+									lastUploadedHeight, contentWidth, contentHeight,
+									hostGlWidth, hostGlHeight, frameSequence,
+									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
+							glslpDrawn = true;
+						} catch (RuntimeException e) {
+							Log.w(TAG, "GLSLP prototype draw failed; using identity renderer", e);
+							glslpPipeline.release();
+							glslpPipeline = null;
+						}
+						program.use();
+						program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
+					}
 				}
-				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				if (!glslpDrawn) glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 				presented = true;
 				if (metrics != null) {
 					metrics.recordRender(frameSequence);
