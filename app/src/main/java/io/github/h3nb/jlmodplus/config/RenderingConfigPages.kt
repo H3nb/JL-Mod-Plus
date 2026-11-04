@@ -466,7 +466,7 @@ private fun RenderingPipelineContent(
                     if (form.screenScaleType == 0) {
                         ConfigNumberPreference(
                             title = stringResource(R.string.PREF_SCALE_RATIO),
-                            description = null,
+                            description = "",
                             value = form.screenScaleRatio,
                             fallbackLabel = "100",
                             valueSuffix = "%",
