@@ -33,6 +33,17 @@ Ground the solution in current evidence before committing to a production fix. T
 - When resuming substantial work or accepting another agent's handoff, distinguish verified findings, explicit requirements, unresolved hypotheses, and superseded decisions. Reconstruct the relevant design from current source, specifications, and observable evidence rather than treating previous agent reasoning or implementation choices as authority.
 - Review the result as if reviewing someone else's PR. Check correctness, failure paths, scope, unnecessary complexity, and whether a reasonable simpler approach meets the same contracts. Distinguish verified findings from hypotheses; do not manufacture issues or repeat reviews without new evidence. For nontrivial changes, briefly report the cause, design rationale, and validation evidence.
 
+## Comments and documentation
+
+Prefer self-explanatory code through clear names, types, and structure over comments that narrate implementation.
+
+- Comment when the code alone cannot clearly convey intent, rationale, invariants, lifecycle or concurrency constraints, compatibility requirements, or non-obvious contracts and failure modes. Explain why a constraint exists rather than repeating what each statement does.
+- Keep necessary comments concise and close to the relevant code. Simplify confusing code when that genuinely reduces complexity; do not add abstractions solely to eliminate useful comments.
+- Use language-appropriate API documentation (such as KDoc or Javadoc) when usage, preconditions, side effects, or limitations are not apparent from a public contract. Avoid boilerplate documentation for obvious code.
+- Treat existing comments as claims to verify against current implementation and applicable contracts, not as proof of behavior. Update or remove inaccurate comments when changing the affected behavior.
+- Use TODO comments only for actionable, unresolved work with enough context to investigate. Do not create speculative placeholders.
+- During implementation and review, judge comments by accuracy and information value, not quantity. Avoid comment-coverage targets and unrelated bulk comment rewrites.
+
 ## Working in this repository
 
 - For analysis, review, or planning requests, inspect and report; implement only when requested. For change, build, or fix requests, complete the scoped work and relevant non-destructive validation without pausing for routine local decisions. Reading/searching source, editing in-scope files, running relevant builds/tests, and reversible diagnostics are routine local actions and do not require separate approval.

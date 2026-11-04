@@ -520,8 +520,10 @@ class BulkInstallViewModel : ViewModel() {
         if (item.restoreAppId != null) {
             return try {
                 check(bundleImport != null) { "Bundle restore sources are no longer available" }
-                restoreBundlePayload(plan, item, item.restoreAppId, item.restoreStorageKey, library)
-                BulkInstallResult(item.id, item.name, BulkInstallResultKind.Restored)
+                val counts = restoreBundlePayload(plan, item, item.restoreAppId,
+                    item.restoreStorageKey, library)
+                BulkInstallResult(item.id, item.name, BulkInstallResultKind.Restored,
+                    savedImportSummary(library, counts))
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
                 BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
@@ -639,8 +641,9 @@ class BulkInstallViewModel : ViewModel() {
                         library.getApplication<Application>().getString(R.string.bulk_install_status_same),
                     )
                 }
+                var savedCounts: Pair<Int, Int>? = null
                 try {
-                    restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
+                    savedCounts = restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) {
                     return BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
@@ -651,7 +654,10 @@ class BulkInstallViewModel : ViewModel() {
                     item.id,
                     item.name,
                     BulkInstallResultKind.Restored,
-                    library.getApplication<Application>().getString(R.string.library_import_done),
+                    listOfNotNull(
+                        library.getApplication<Application>().getString(R.string.library_import_done),
+                        savedImportSummary(library, savedCounts),
+                    ).joinToString("\n"),
                 )
             }
             if (!authorized(item, currentStatus, candidates.size)) {
@@ -723,8 +729,8 @@ class BulkInstallViewModel : ViewModel() {
         item: BulkInstallItem,
         installer: AppInstaller,
         library: LibraryViewModel,
-    ) {
-        restoreBundlePayload(plan, item, installer.installedId,
+    ): Pair<Int, Int>? {
+        return restoreBundlePayload(plan, item, installer.installedId,
             installer.installedPath?.let { File(it).name }, library)
     }
 
@@ -734,8 +740,8 @@ class BulkInstallViewModel : ViewModel() {
         installedId: Long,
         storageKey: String?,
         library: LibraryViewModel,
-    ) {
-        val bundle = bundleImport ?: return
+    ): Pair<Int, Int>? {
+        val bundle = bundleImport ?: return null
         val staged = bundle.apps.firstOrNull {
             it.prepared.jarFile.canonicalFile.path == item.unit.primaryFile.canonicalFile.path
         } ?: throw IllegalStateException("Universal app-bundle payload is unavailable")
@@ -743,13 +749,19 @@ class BulkInstallViewModel : ViewModel() {
         val app = library.getApp(plan.generation, plan.workdir, installedId)
             ?: throw IllegalStateException("Installed app is not visible after bundle import")
         check(app.storageKey == storageKey) { "Bundle restore target changed" }
-        library.restoreImportedBundleAwait(
+        return library.restoreImportedBundleAwait(
             expectedGeneration = plan.generation,
             expectedWorkdir = plan.workdir,
             appId = app.id,
             storageKey = app.storageKey,
             prepared = staged.prepared,
         )
+    }
+
+    private fun savedImportSummary(library: LibraryViewModel,
+                                   counts: Pair<Int, Int>?): String? = counts?.let {
+        library.getApplication<Application>().getString(
+            R.string.memory_saved_import_summary, it.first, it.second)
     }
 
     private fun authorized(

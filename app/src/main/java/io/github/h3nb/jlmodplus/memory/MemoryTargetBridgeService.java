@@ -25,6 +25,8 @@ import android.os.RemoteException;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+
 /** Minimal :midlet bridge for runtime identity and target-owned Managed Java memory operations. */
 public final class MemoryTargetBridgeService extends Service {
 	private final RemoteCallbackList<IMemoryTargetCallback> callbacks = new RemoteCallbackList<>();
@@ -317,72 +319,72 @@ public final class MemoryTargetBridgeService extends Service {
 	};
 
 
-    /** Single stable transport for search and Inspector capture. */
+    /** Shared typed transport for Search, Saved and Inspector capture. */
     private static Bundle savedLocatorBundle(long token, ManagedJavaMemoryEngine.SavedLocator locator) {
-			Bundle result = savedStatus(token, locator == null
-					? MemoryEngineContract.RESULT_IDENTITY_UNSAFE : MemoryEngineContract.RESULT_OK);
-			if (locator == null) return result;
-			int count = locator.fields.length;
-			if (!savedSafeName(locator.rootClass) || count < 1 || count > 24) {
-				return savedStatus(token, MemoryEngineContract.RESULT_INVALID_REQUEST);
-			}
-			String[] classes = new String[count];
-			String[] names = new String[count];
-			String[] types = new String[count];
-            int[] indices = locator.fieldIndices.clone();
-            for (int i = 0; i < count; i++) {
-				ManagedJavaMemoryEngine.SavedField f = locator.fields[i];
-				if (!savedSafeName(f.declaringClass) || !savedSafeName(f.name)
-						|| !savedSafeName(f.type)) {
-					return savedStatus(token, MemoryEngineContract.RESULT_INVALID_REQUEST);
-				}
-				classes[i] = f.declaringClass;
-				names[i] = f.name;
-				types[i] = f.type;
-			}
-			result.putInt("savedSchema", 1);
-			result.putInt("savedRootKind", locator.rootKind);
-			result.putString("savedRootClass", locator.rootClass);
-			result.putStringArray("savedClasses", classes);
-			result.putStringArray("savedNames", names);
-			result.putStringArray("savedTypes", types);
-            result.putIntArray("savedFieldIndices", indices);
-            result.putInt("savedArrayIndex", locator.arrayIndex);
-			return result;
+        Bundle result = savedStatus(token, locator == null
+                ? MemoryEngineContract.RESULT_IDENTITY_UNSAFE : MemoryEngineContract.RESULT_OK);
+        if (locator == null) return result;
+        if (!savedSafeName(locator.rootClass) || locator.steps.length < 1
+                || locator.steps.length > 24) return savedStatus(token,
+                        MemoryEngineContract.RESULT_INVALID_REQUEST);
+        ArrayList<Bundle> steps = new ArrayList<>();
+        for (ManagedJavaMemoryEngine.SavedStep step : locator.steps) {
+            Bundle encoded = new Bundle();
+            encoded.putInt("kind", step.kind);
+            if (step.kind == ManagedJavaMemoryEngine.SavedStep.FIELD && step.field != null) {
+                if (!savedSafeName(step.field.declaringClass)
+                        || !savedSafeName(step.field.name)
+                        || !savedSafeName(step.field.type)) return savedStatus(token,
+                                MemoryEngineContract.RESULT_INVALID_REQUEST);
+                encoded.putString("owner", step.field.declaringClass);
+                encoded.putString("name", step.field.name);
+                encoded.putString("type", step.field.type);
+            } else if (step.kind == ManagedJavaMemoryEngine.SavedStep.INDEX
+                    && savedSafeName(step.arrayType) && step.index >= 0
+                    && step.index < 2_000_000) {
+                encoded.putInt("index", step.index);
+                encoded.putString("arrayType", step.arrayType);
+            } else return savedStatus(token, MemoryEngineContract.RESULT_INVALID_REQUEST);
+            steps.add(encoded);
+        }
+        result.putInt("savedSchema", 2);
+        result.putInt("savedRootKind", locator.rootKind);
+        result.putString("savedRootClass", locator.rootClass);
+        result.putParcelableArrayList("savedSteps", steps);
+        return result;
     }
 
     @Nullable
     private static ManagedJavaMemoryEngine.SavedLocator savedDecode(Bundle descriptor) {
-        if (descriptor == null || descriptor.getInt("savedSchema", -1) != 1
+        if (descriptor == null || descriptor.getInt("savedSchema", -1) != 2
                 || !savedSafeName(descriptor.getString("savedRootClass"))) return null;
-        String[] classes = descriptor.getStringArray("savedClasses");
-        String[] names = descriptor.getStringArray("savedNames");
-        String[] types = descriptor.getStringArray("savedTypes");
-        if (classes == null || names == null || types == null || classes.length < 1
-                || classes.length > 24 || names.length != classes.length
-                || types.length != classes.length) return null;
-        ManagedJavaMemoryEngine.SavedField[] fields =
-                new ManagedJavaMemoryEngine.SavedField[classes.length];
-        for (int i = 0; i < fields.length; i++) {
-            if (!savedSafeName(classes[i]) || !savedSafeName(names[i])
-                    || !savedSafeName(types[i])) return null;
-            fields[i] = new ManagedJavaMemoryEngine.SavedField(classes[i], names[i], types[i]);
-        }
-        int index = descriptor.getInt("savedArrayIndex", -1);
-        if (index < -1 || index >= 2_000_000) return null;
-        int[] selections = descriptor.getIntArray("savedFieldIndices");
-        if (selections != null) {
-            if (selections.length != fields.length || index >= 0) return null;
-            for (int i = 0; i < selections.length; i++) {
-                int selected = selections[i];
-                if (selected < -1 || selected >= 100_000
-                        || (selected >= 0 && (i == selections.length - 1
-                        || !fields[i].type.startsWith("[L")))) return null;
-            }
+        int rootKind = descriptor.getInt("savedRootKind", -1);
+        if (rootKind < 1 || rootKind > 3) return null;
+        ArrayList<Bundle> parts = descriptor.getParcelableArrayList("savedSteps");
+        if (parts == null || parts.isEmpty() || parts.size() > 24) return null;
+        ManagedJavaMemoryEngine.SavedStep[] steps =
+                new ManagedJavaMemoryEngine.SavedStep[parts.size()];
+        for (int i = 0; i < parts.size(); i++) {
+            Bundle part = parts.get(i);
+            if (part == null) return null;
+            int kind = part.getInt("kind", -1);
+            if (kind == ManagedJavaMemoryEngine.SavedStep.FIELD) {
+                String owner = part.getString("owner"), name = part.getString("name"),
+                        type = part.getString("type");
+                if (!savedSafeName(owner) || !savedSafeName(name)
+                        || !savedSafeName(type)) return null;
+                steps[i] = ManagedJavaMemoryEngine.SavedStep.field(
+                        new ManagedJavaMemoryEngine.SavedField(owner, name, type));
+            } else if (kind == ManagedJavaMemoryEngine.SavedStep.INDEX) {
+                int index = part.getInt("index", -1);
+                String arrayType = part.getString("arrayType");
+                if (index < 0 || index >= 2_000_000 || !savedSafeName(arrayType)
+                        || !arrayType.startsWith("[")) return null;
+                steps[i] = ManagedJavaMemoryEngine.SavedStep.index(index, arrayType);
+            } else return null;
         }
         return new ManagedJavaMemoryEngine.SavedLocator(
-                descriptor.getInt("savedRootKind", 0),
-                descriptor.getString("savedRootClass"), fields, index, selections);
+                rootKind, descriptor.getString("savedRootClass"), steps);
     }
 
     private static Bundle savedValueBundle(long token, ManagedJavaMemoryEngine.SavedValue value) {

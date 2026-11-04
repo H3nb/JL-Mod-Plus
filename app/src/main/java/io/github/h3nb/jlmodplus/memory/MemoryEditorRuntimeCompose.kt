@@ -485,7 +485,7 @@ private fun RuntimeSearchResultsTab(
                 R.string.memory_editor_search_unknown_values, state.canSearch) {
                 unknownDialog = true
             },
-            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
                 editTargets = selectedRows.map { MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes) }
                 editRevision = state.revision
             },
@@ -816,11 +816,11 @@ private fun RuntimeSavedVariablesTab(
 
     Column(modifier.fillMaxWidth()) {
         val actionsForSelection = listOf(
-            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_editor_edit,
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit,
                 ready != null && state.writeSupported && !state.busy) { ready?.let(::openSavedEdit) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready != null && !state.busy) { ready?.let { actions.inspectSavedVariable(it.id) } },
-            RuntimeToolbarAction(R.drawable.ic_edit, R.string.memory_saved_rename,
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
                 one != null && !state.busy) { renameRow = one },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                 selected.isNotEmpty() && !state.busy) { deleteIds = selected.map { it.id } },
@@ -878,6 +878,7 @@ private fun RuntimeSavedVariablesTab(
                 val editEnabled = value?.resolved == true && state.writeSupported && !state.busy
                 val statusText = stringResource(when (status) {
                     SavedVariableStatus.RESOLVED -> R.string.memory_saved_tab
+                    SavedVariableStatus.REBOUND -> R.string.memory_saved_rebound
                     SavedVariableStatus.NOT_READY -> R.string.memory_saved_not_ready
                     SavedVariableStatus.CHANGED -> R.string.memory_saved_changed
                     SavedVariableStatus.INCOMPATIBLE -> R.string.memory_saved_incompatible
@@ -900,6 +901,10 @@ private fun RuntimeSavedVariablesTab(
                             Text(item.path, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (value?.status == SavedVariableStatus.REBOUND) {
+                                Text(statusText, style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                             if (value?.resolved != true) {
                                 Text(
                                     statusText + (value?.detail?.takeIf(String::isNotBlank)
@@ -1194,7 +1199,7 @@ private fun RuntimeWatchTab(
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
             )
             RuntimeActionIcon(
-                R.drawable.ic_edit,
+                R.drawable.ic_memory_editor_edit_value,
                 R.string.memory_editor_edit,
                 enabled = selectedWriteSupported && !state.busy,
             ) {
@@ -2072,6 +2077,9 @@ internal fun RuntimeInspectorTab(
         else -> {
             val snapshot = requireNotNull(state.inspector)
             val logicalRows = snapshot.logicalRows
+            val sourceUntraced = snapshot.source == MemoryCandidateSource.UNKNOWN
+            val hasVerifiedPath = snapshot.pathStatus == MemoryEngineContract.PATH_VERIFIED &&
+                snapshot.referencePath.isNotBlank()
             val listState = rememberLazyListState()
             LaunchedEffect(snapshot.candidateId) {
                 val anchorIndex = logicalRows.indexOfFirst { it.relativeOffset == 0 }
@@ -2096,23 +2104,29 @@ internal fun RuntimeInspectorTab(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    runtimeCandidateLocation(
-                                        snapshot.candidateId, snapshot.source,
-                                        snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
-                                    ),
+                                    if (sourceUntraced) {
+                                        snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) }
+                                    } else {
+                                        runtimeCandidateLocation(
+                                            snapshot.candidateId, snapshot.source,
+                                            snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                                        )
+                                    },
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold,
                                 )
-                                Text(
-                                    if (snapshot.source == MemoryCandidateSource.UNKNOWN) {
-                                        stringResource(R.string.memory_editor_source_unknown)
-                                    } else {
-                                        "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
-                                            snapshot.source.fieldType
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                                if (!sourceUntraced || !hasVerifiedPath) {
+                                    Text(
+                                        if (sourceUntraced) {
+                                            stringResource(R.string.memory_editor_source_unknown)
+                                        } else {
+                                            "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
+                                                snapshot.source.fieldType
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                                 val pathSummary = when (snapshot.pathStatus) {
                                     MemoryEngineContract.PATH_VERIFIED ->
                                         snapshot.referencePath.takeIf { it.isNotEmpty() }
@@ -2168,6 +2182,8 @@ internal fun RuntimeInspectorTab(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
+                                .clickable(enabled = row.editable && state.writeSupported &&
+                                    !state.busy) { editLogicalRow = row }
                                 .padding(horizontal = 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -2194,8 +2210,6 @@ internal fun RuntimeInspectorTab(
                                 row.valueText,
                                 modifier = Modifier.weight(1f)
                                     .heightIn(min = 48.dp)
-                                    .clickable(enabled = row.editable && state.writeSupported &&
-                                        !state.busy) { editLogicalRow = row }
                                     .wrapContentHeight(align = Alignment.CenterVertically),
                                 textAlign = TextAlign.End,
                                 style = runtimeMemoryDataTextStyle(),

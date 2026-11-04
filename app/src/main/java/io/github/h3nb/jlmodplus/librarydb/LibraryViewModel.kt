@@ -105,6 +105,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private data class ImportRestoreOutcome(
         val iconRevision: Long?,
         val sourceMetadata: LibraryAppBundleImporter.SourceMetadata?,
+        val savedAdded: Int?,
+        val savedSkipped: Int?,
     )
 
     private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
@@ -581,6 +583,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 storageKey = app.storageKey,
                 prepared = prepared,
             )
+            Unit
         }
     }
 
@@ -607,7 +610,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         appId: Long,
         storageKey: String,
         prepared: LibraryAppBundleImporter.PreparedImport,
-    ) {
+    ): Pair<Int, Int>? {
         val generation = token(expectedGeneration, expectedWorkdir)
         val app = requireNotNull(repository.currentApp(generation, appId)) {
             "Library import target disappeared before restore"
@@ -654,7 +657,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     ownership?.complete()
                     restored
                 }
-                ImportRestoreOutcome(result.iconRevision, sourceMetadata)
+                ImportRestoreOutcome(result.iconRevision, sourceMetadata,
+                    result.savedAdded, result.savedSkipped)
             }
         }
         // Restoring configs/ can change either artwork source, even without a main icon.
@@ -683,6 +687,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 resolvedIconRevision,
             )
         }
+        return outcome.savedAdded?.let { it to (outcome.savedSkipped ?: 0) }
     }
 
     fun setFavorite(appId: Long, favorite: Boolean, callback: MutationCallback<Unit>) {

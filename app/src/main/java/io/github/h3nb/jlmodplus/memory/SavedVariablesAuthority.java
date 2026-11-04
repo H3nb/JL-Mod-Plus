@@ -28,8 +28,8 @@ import java.util.UUID;
  * definitions themselves are portable and are validated when resolved in the guest runtime.
  */
 public final class SavedVariablesAuthority extends Service {
-    static final int SCHEMA = 2;
-    private static final int LOCATOR_SCHEMA = 1;
+    static final int SCHEMA = 3;
+    private static final int LOCATOR_SCHEMA = 2;
     static final int MAX_ITEMS = 64;
     static final int MAX_BYTES = 65_536;
     private static final String FILE_NAME = "saved-variables.json";
@@ -192,7 +192,17 @@ public final class SavedVariablesAuthority extends Service {
         if (!parent.isDirectory() && !parent.mkdirs()) {
             throw new IOException("Saved config directory is unavailable");
         }
+        if (data.getInt("schema") != SCHEMA) {
+            JSONArray entries = data.getJSONArray("items");
+            for (int i = 0; i < entries.length(); i++) {
+                JSONObject record = entries.getJSONObject(i);
+                record.put("locator", encodeLocator(decodeLocator(
+                        record.getJSONObject("locator"))));
+            }
+            data.put("schema", SCHEMA);
+        }
         byte[] bytes = data.toString().getBytes(StandardCharsets.UTF_8);
+        SavedVariablesDocument.validate(bytes);
         if (bytes.length > MAX_BYTES) throw new IOException("Saved definitions exceed size limit");
         FileOutputStream output = target.file.startWrite();
         try {
@@ -221,28 +231,36 @@ public final class SavedVariablesAuthority extends Service {
         return response;
     }
 
+    /** Encode only canonical typed steps. Legacy data is upgraded on the storage boundary. */
     private static JSONObject encodeLocator(Bundle input) throws Exception {
-        if (input == null || input.getInt("savedSchema", -1) != LOCATOR_SCHEMA) {
+        if (input == null || input.getInt("savedSchema", -1) != LOCATOR_SCHEMA)
             throw new IOException("Invalid Saved locator version");
-        }
-        String[] classes = input.getStringArray("savedClasses");
-        String[] names = input.getStringArray("savedNames");
-        String[] types = input.getStringArray("savedTypes");
-        int[] indices = input.getIntArray("savedFieldIndices");
-        if (classes == null || names == null || types == null
-                || classes.length == 0 || classes.length > 24
-                || classes.length != names.length || classes.length != types.length
-                || (indices != null && indices.length != classes.length)) {
-            throw new IOException("Invalid Saved locator segments");
-        }
-        JSONArray parts = new JSONArray();
-        for (int i = 0; i < classes.length; i++) {
-            parts.put(new JSONObject().put("owner", classes[i]).put("name", names[i])
-                    .put("type", types[i]).put("index", indices == null ? -1 : indices[i]));
+        ArrayList<Bundle> parts = input.getParcelableArrayList("savedSteps");
+        if (parts == null || parts.isEmpty() || parts.size() > 24)
+            throw new IOException("Invalid Saved locator steps");
+        JSONArray steps = new JSONArray();
+        for (Bundle part : parts) {
+            if (part == null) throw new IOException("Missing Saved step");
+            int kind = part.getInt("kind", -1);
+            if (kind == 1) {
+                String owner = part.getString("owner"), name = part.getString("name"),
+                        type = part.getString("type");
+                if (!safeString(owner) || !safeString(name) || !safeString(type))
+                    throw new IOException("Invalid Saved field step");
+                steps.put(new JSONObject().put("kind", kind).put("owner", owner)
+                        .put("name", name).put("type", type));
+            } else if (kind == 2) {
+                String arrayType = part.getString("arrayType");
+                int index = part.getInt("index", -1);
+                if (!safeString(arrayType) || !arrayType.startsWith("[")
+                        || index < 0 || index >= 2_000_000)
+                    throw new IOException("Invalid Saved index step");
+                steps.put(new JSONObject().put("kind", kind).put("arrayType", arrayType)
+                        .put("index", index));
+            } else throw new IOException("Unsupported Saved step");
         }
         JSONObject locator = new JSONObject().put("rootKind", input.getInt("savedRootKind"))
-                .put("rootClass", input.getString("savedRootClass"))
-                .put("segments", parts).put("arrayIndex", input.getInt("savedArrayIndex", -1));
+                .put("rootClass", input.getString("savedRootClass")).put("steps", steps);
         decodeLocator(locator);
         return locator;
     }
@@ -250,47 +268,67 @@ public final class SavedVariablesAuthority extends Service {
     private static Bundle decodeLocator(JSONObject locator) throws Exception {
         int rootKind = locator.getInt("rootKind");
         String rootClass = locator.getString("rootClass");
-        JSONArray parts = locator.getJSONArray("segments");
-        int arrayIndex = locator.getInt("arrayIndex");
-        if (rootKind < 1 || rootKind > 3 || !safeString(rootClass)
-                || parts.length() < 1 || parts.length() > 24 || arrayIndex < -1
-                || arrayIndex >= 2_000_000) throw new IOException("Invalid Saved locator");
-        String[] owners = new String[parts.length()], names = new String[parts.length()],
-                types = new String[parts.length()];
-        int[] indices = new int[parts.length()];
-        for (int i = 0; i < parts.length(); i++) {
-            JSONObject part = parts.getJSONObject(i);
-            owners[i] = part.getString("owner");
-            names[i] = part.getString("name");
-            types[i] = part.getString("type");
-            indices[i] = part.getInt("index");
-            if (!safeString(owners[i]) || !safeString(names[i]) || !safeString(types[i])
-                    || indices[i] < -1 || indices[i] >= 100_000
-                    || (indices[i] >= 0 && (i == parts.length() - 1
-                    || !types[i].startsWith("[L")))) {
-                throw new IOException("Unsupported Saved field segment");
+        if (rootKind < 1 || rootKind > 3 || !safeString(rootClass))
+            throw new IOException("Invalid Saved root");
+        JSONArray encoded;
+        if (locator.has("steps")) {
+            encoded = locator.getJSONArray("steps");
+        } else {
+            // Read-only schema-2 conversion: field + optional Object[] index,
+            // and the direct-static primitive array target become typed steps.
+            JSONArray fields = locator.getJSONArray("segments");
+            int primitiveIndex = locator.getInt("arrayIndex");
+            if (fields.length() < 1 || fields.length() > 24 || primitiveIndex < -1
+                    || primitiveIndex >= 2_000_000)
+                throw new IOException("Invalid legacy Saved locator");
+            encoded = new JSONArray();
+            for (int i = 0; i < fields.length(); i++) {
+                JSONObject field = fields.getJSONObject(i);
+                String type = field.getString("type");
+                encoded.put(new JSONObject().put("kind", 1)
+                        .put("owner", field.getString("owner"))
+                        .put("name", field.getString("name")).put("type", type));
+                int index = field.getInt("index");
+                if (index >= 0) encoded.put(new JSONObject().put("kind", 2)
+                        .put("arrayType", type).put("index", index));
             }
+            if (primitiveIndex >= 0) encoded.put(new JSONObject().put("kind", 2)
+                    .put("arrayType", fields.getJSONObject(fields.length() - 1).getString("type"))
+                    .put("index", primitiveIndex));
         }
-        if (arrayIndex >= 0 && (rootKind != 3 || parts.length() != 1
-                || !primitiveArray(types[0]) || indices[0] != -1)) {
-            throw new IOException("Unsupported Saved primitive array");
+        if (encoded.length() < 1 || encoded.length() > 24)
+            throw new IOException("Invalid Saved path length");
+        ArrayList<Bundle> steps = new ArrayList<>();
+        for (int i = 0; i < encoded.length(); i++) {
+            JSONObject part = encoded.getJSONObject(i);
+            int kind = part.getInt("kind");
+            Bundle step = new Bundle();
+            step.putInt("kind", kind);
+            if (kind == 1) {
+                String owner = part.getString("owner"), name = part.getString("name"),
+                        type = part.getString("type");
+                if (!safeString(owner) || !safeString(name) || !safeString(type))
+                    throw new IOException("Invalid Saved field");
+                step.putString("owner", owner);
+                step.putString("name", name);
+                step.putString("type", type);
+            } else if (kind == 2) {
+                int index = part.getInt("index");
+                String arrayType = part.getString("arrayType");
+                if (index < 0 || index >= 2_000_000 || !safeString(arrayType)
+                        || !arrayType.startsWith("["))
+                    throw new IOException("Invalid Saved index");
+                step.putInt("index", index);
+                step.putString("arrayType", arrayType);
+            } else throw new IOException("Unsupported Saved step");
+            steps.add(step);
         }
         Bundle descriptor = new Bundle();
         descriptor.putInt("savedSchema", LOCATOR_SCHEMA);
         descriptor.putInt("savedRootKind", rootKind);
         descriptor.putString("savedRootClass", rootClass);
-        descriptor.putStringArray("savedClasses", owners);
-        descriptor.putStringArray("savedNames", names);
-        descriptor.putStringArray("savedTypes", types);
-        descriptor.putIntArray("savedFieldIndices", indices);
-        descriptor.putInt("savedArrayIndex", arrayIndex);
+        descriptor.putParcelableArrayList("savedSteps", steps);
         return descriptor;
-    }
-
-    private static boolean primitiveArray(String type) {
-        return "[B".equals(type) || "[S".equals(type) || "[C".equals(type)
-                || "[I".equals(type) || "[J".equals(type) || "[F".equals(type)
-                || "[D".equals(type);
     }
 
     private static boolean safeString(String input) {

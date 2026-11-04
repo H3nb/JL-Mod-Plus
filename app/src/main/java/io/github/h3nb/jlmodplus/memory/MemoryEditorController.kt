@@ -51,7 +51,16 @@ internal class MemoryEditorComposeController(
         Thread(runnable, "MemoryEditorUiIpc").apply { priority = Thread.NORM_PRIORITY - 1 }
     }
 
-    private var state by mutableStateOf(MemoryEditorUiState())
+    private val previousNavigation = MemoryEditorSessionNavigation.read(ownedRuntimeToken)
+    private var pendingInspectorRestore = previousNavigation.inspectorTarget
+        .takeIf { previousNavigation.tab == MemoryEditorTab.INSPECTOR }
+    private var inspectorRequestTarget: MemoryEditorInspectorTarget? = pendingInspectorRestore
+    private var state by mutableStateOf(MemoryEditorUiState(
+        pageOffset = previousNavigation.pageOffset,
+        savedTab = previousNavigation.underlyingTab == MemoryEditorTab.SAVED,
+        watchTab = previousNavigation.underlyingTab == MemoryEditorTab.WATCH,
+        inspectorLoading = pendingInspectorRestore != null,
+    ))
     private var service: IMemoryEngineService? = null
     private var savedAuthority: ISavedVariablesAuthority? = null
     private var savedBound = false
@@ -59,6 +68,7 @@ internal class MemoryEditorComposeController(
     @Volatile private var savedGeneration = 0L
     private var savedLocators: Map<String, Bundle> = emptyMap()
     private var savedRefreshPending = false
+    private var savedCatalogDirty = false
     @Volatile private var savedEditId: String? = null
     private var savedEditReady = false
     private var hostForeground = true
@@ -273,9 +283,9 @@ internal class MemoryEditorComposeController(
         hostForeground = foreground
         composeView.removeCallbacks(liveRefreshRunnable)
         if (foreground && state.visible) {
-            if (state.savedTab && savedLocators.isEmpty() && savedAuthority != null) {
-                refreshSavedVariables()
-            }
+            // A Saved mutation may have committed while the UI was backgrounded and
+            // its callback was discarded. Reconcile from the authority on return.
+            if (state.savedTab && savedAuthority != null) refreshSavedVariables()
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
         } else {
             // If backgrounding interrupts the queued binding snapshot, no dialog
@@ -301,8 +311,22 @@ internal class MemoryEditorComposeController(
         if (hostForeground) composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
     }
 
+    private fun rememberNavigation() {
+        val inspector = inspectorRequestTarget
+            .takeIf { state.inspectorLoading || state.inspector != null }
+        val tab = when {
+            inspector != null -> MemoryEditorTab.INSPECTOR
+            state.savedTab -> MemoryEditorTab.SAVED
+            state.watchTab -> MemoryEditorTab.WATCH
+            else -> MemoryEditorTab.RESULTS
+        }
+        MemoryEditorSessionNavigation.remember(ownedRuntimeToken,
+            MemoryEditorNavigationState(tab, state.pageOffset, inspector))
+    }
+
     override fun close() {
         if (destroyed) return
+        rememberNavigation()
         inspectorRequestGeneration++
         composeView.removeCallbacks(liveRefreshRunnable)
         liveRefreshPending = false
@@ -321,6 +345,7 @@ internal class MemoryEditorComposeController(
 
     fun destroy() {
         if (destroyed) return
+        if (state.visible) rememberNavigation()
         destroyed = true
         savedGeneration++
         savedRefreshPending = false
@@ -529,6 +554,7 @@ internal class MemoryEditorComposeController(
                         connection == connectionGeneration && stateRequest == stateRequestGeneration.get()
                     ) reloadState(retry + 1)
                 }, CAPABILITY_RETRY_DELAYS_MS[retry])
+                else if (pendingInspectorRestore != null) closeInspector()
             }
             return@runIpc
         }
@@ -600,7 +626,30 @@ internal class MemoryEditorComposeController(
             )
             if (state.savedTab && state.savedVariables.isNotEmpty()
                 && state.savedValues.isEmpty() && savedAuthority != null) refreshSavedVariables()
+            restoreInspectorIfNeeded()
         }
+    }
+
+    private fun restoreInspectorIfNeeded() {
+        val target = pendingInspectorRestore ?: return
+        pendingInspectorRestore = null
+        val available = if (target.savedId != null) {
+            true // The target-side Saved binding is verified by inspectSaved.
+        } else if (target.watchAnchor) {
+            state.watches.any { it.id == target.candidateId }
+        } else {
+            state.results.any { it.id == target.candidateId }
+        }
+        if (!available) {
+            closeInspector()
+            state = state.copy(
+                message = context.getString(R.string.memory_editor_identity_unsafe),
+                messageIsError = true,
+            )
+            return
+        }
+        openInspector(target.candidateId, target.savedId, target.radius,
+            target.watchAnchor, restoring = true)
     }
 
     /** Reads only the visible page; managed reads are getters and never refresh search baselines. */
@@ -789,12 +838,14 @@ internal class MemoryEditorComposeController(
         }
         return response.getParcelableArrayList<Bundle>("items").orEmpty().map { record ->
             val locator = record.getBundle("locator") ?: error("Saved locator is missing")
-            val names = locator.getStringArray("savedNames").orEmpty()
-            val indices = locator.getIntArray("savedFieldIndices")
-            val description = names.mapIndexed { index, name ->
-                name + (indices?.getOrNull(index)?.takeIf { it >= 0 }?.let { "[$it]" } ?: "")
-            }.joinToString(" → ") +
-                (locator.getInt("savedArrayIndex", -1).takeIf { it >= 0 }?.let { "[$it]" } ?: "")
+            val steps = locator.getParcelableArrayList<Bundle>("savedSteps").orEmpty()
+            val description = steps.joinToString(" → ") { step ->
+                when (step.getInt("kind")) {
+                    1 -> step.getString("name").orEmpty()
+                    2 -> "[${step.getInt("index")}]"
+                    else -> "?"
+                }
+            }
             SavedVariableRow(record.getString("id").orEmpty(),
                 record.getString("label").orEmpty(), description) to locator
         }
@@ -809,6 +860,8 @@ internal class MemoryEditorComposeController(
     }
 
     override fun refreshSavedVariables() {
+        // A pinned Saved edit owns its binding and displayed snapshot until dismissal.
+        if (savedEditId != null) return
         val generation = ++savedGeneration
         val authority = savedAuthority
         val connection = connectionGeneration
@@ -829,6 +882,7 @@ internal class MemoryEditorComposeController(
                 if (records.isSuccess) {
                     val rows = records.getOrThrow()
                     savedLocators = rows.associate { it.first.id to it.second }
+                    savedCatalogDirty = false
                     nextSavedResolveAt = 0L
                     state = state.copy(
                         savedVariables = rows.map { it.first },
@@ -878,6 +932,8 @@ internal class MemoryEditorComposeController(
                                 value = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
                                     MemoryEngineContract.RESULT_OK
                                 ) savedValue(engine.readSaved(token, id), bound = true)
+                                    .copy(rebound = value.code ==
+                                        MemoryEngineContract.RESULT_IDENTITY_UNSAFE)
                                 else savedValue(attempt)
                             }
                             value
@@ -891,7 +947,13 @@ internal class MemoryEditorComposeController(
                         if (destroyed || !state.visible || !state.savedTab ||
                             generation != savedGeneration || connection != connectionGeneration ||
                             service !== engine || state.runtimeToken != token) return@post
-                        state = state.copy(savedValues = state.savedValues + values)
+                        val now = android.os.SystemClock.uptimeMillis()
+                        val merged = values.mapValues { (id, current) ->
+                            savedValueAfterRefresh(
+                                current, state.savedValues[id], now, SAVED_REBOUND_NOTICE_MS,
+                            )
+                        }
+                        state = state.copy(savedValues = state.savedValues + merged)
                     }
                 }
             } finally {
@@ -924,38 +986,6 @@ internal class MemoryEditorComposeController(
                 state = state.copy(
                     message = outcome.exceptionOrNull()?.message ?: "Saved variable created",
                     messageIsError = outcome.isFailure)
-            }
-        }
-    }
-
-    override fun resolveSavedVariable(id: String) {
-        val engine = service ?: return
-        val authority = savedAuthority ?: return
-        val token = state.runtimeToken
-        val generation = savedGeneration
-        if (token == 0L || state.busy) return
-        runIpc {
-            val value = runCatching {
-                val (path, appId, entry) = savedTarget()
-                val record = savedRows(authority.list(path, appId, entry))
-                    .firstOrNull { it.first.id == id } ?: error("Saved definition missing")
-                var current = savedValue(engine.readSaved(token, id), bound = true)
-                if (current.code == MemoryEngineContract.RESULT_NO_SESSION) {
-                    val attempt = engine.resolveSavedLocator(token, record.second, id)
-                    current = if (attempt.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
-                        MemoryEngineContract.RESULT_OK
-                    ) savedValue(engine.readSaved(token, id), bound = true) else savedValue(attempt)
-                }
-                current
-            }.getOrElse { SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
-                detail = it.message.orEmpty()) }
-            post {
-                if (destroyed || generation != savedGeneration || !state.savedTab ||
-                    state.runtimeToken != token || service !== engine ||
-                    state.savedVariables.none { it.id == id }) return@post
-                state = state.copy(savedValues = state.savedValues + (id to value),
-                    message = if (value.resolved) null else value.detail,
-                    messageIsError = !value.resolved)
             }
         }
     }
@@ -1007,7 +1037,22 @@ internal class MemoryEditorComposeController(
         savedEditId = null
         savedEditReady = false
         nextSavedResolveAt = 0L
-        refreshSavedLive()
+        if (savedCatalogDirty ||
+            (savedLocators.isEmpty() && state.savedVariables.isNotEmpty())) {
+            // Apply may already be queued on IPC. Deliver its feedback before a
+            // catalog reload advances savedGeneration and discards that response.
+            runIpc {
+                post {
+                    if (hostForeground && state.visible && state.savedTab &&
+                        savedEditId == null && (savedCatalogDirty ||
+                            (savedLocators.isEmpty() && state.savedVariables.isNotEmpty()))) {
+                        refreshSavedVariables()
+                    }
+                }
+            }
+        } else {
+            refreshSavedLive()
+        }
     }
 
     override fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean) {
@@ -1065,15 +1110,29 @@ internal class MemoryEditorComposeController(
         val authority = savedAuthority ?: return
         val token = state.runtimeToken
         val engine = service
-        val generation = savedGeneration
         val current = state.savedVariables.map { it.id }.toSet()
         val unique = ids.distinct()
-        if (unique.isEmpty() || unique.size > 64 || unique.any { it !in current }) return
+        // The authority deletes by record ID; the locator catalog can be empty during reload.
+        if (!state.savedTab || unique.isEmpty() || unique.size > 64 ||
+            unique.any { it !in current }) return
+
+        // Invalidate queued polling *before* the delete enters the serial IPC worker.
+        // Otherwise a queued retry can rebind an ID after releaseSaved has run but
+        // before the authority's response reaches the UI thread.
+        val removed = unique.toSet()
+        val generation = ++savedGeneration
+        savedRefreshPending = false
+        savedCatalogDirty = true
+        savedLocators = savedLocators.filterKeys { it !in removed }
+        state = state.copy(
+            savedVariables = state.savedVariables.filterNot { it.id in removed },
+            savedSelection = state.savedSelection - removed,
+            savedValues = state.savedValues.filterKeys { it !in removed },
+        )
         runIpc {
             val result = runCatching {
                 val (path, appId, entry) = savedTarget()
                 val rows = savedRows(authority.removeMany(path, appId, entry, unique.toTypedArray()))
-                    .map { it.first }
                 if (engine != null && token != 0L) {
                     unique.forEach { id ->
                         try {
@@ -1086,17 +1145,33 @@ internal class MemoryEditorComposeController(
                 rows
             }
             post {
-                if (destroyed || generation != savedGeneration || !state.savedTab ||
-                    state.runtimeToken != token) return@post
+                if (destroyed || !state.savedTab || state.runtimeToken != token) return@post
+                if (generation != savedGeneration) {
+                    if (result.isFailure) {
+                        state = state.copy(message = result.exceptionOrNull()?.message,
+                            messageIsError = true)
+                    }
+                    return@post // A newer mutation or reload owns the final catalog.
+                }
                 val rows = result.getOrNull()
-                state = if (rows != null) state.copy(
-                    savedVariables = rows,
-                    savedSelection = state.savedSelection - unique.toSet(),
-                    savedValues = state.savedValues.filterKeys { id -> rows.any { it.id == id } },
-                    message = if (unique.size == 1) "Saved variable removed" else "Saved variables removed",
-                    messageIsError = false,
-                ) else state.copy(
-                    message = result.exceptionOrNull()?.message, messageIsError = true)
+                if (rows != null) {
+                    val retained = rows.mapTo(HashSet()) { it.first.id }
+                    savedLocators = rows.associate { it.first.id to it.second }
+                    savedCatalogDirty = false
+                    state = state.copy(
+                        savedVariables = rows.map { it.first },
+                        savedSelection = state.savedSelection.intersect(retained),
+                        savedValues = state.savedValues.filterKeys { it in retained },
+                        message = if (unique.size == 1) "Saved variable removed" else "Saved variables removed",
+                        messageIsError = false,
+                    )
+                } else {
+                    state = state.copy(
+                        message = result.exceptionOrNull()?.message, messageIsError = true,
+                    )
+                    // The optimistic exclusion is only valid if the authority committed.
+                    refreshSavedVariables()
+                }
             }
         }
     }
@@ -1117,22 +1192,41 @@ internal class MemoryEditorComposeController(
 
     private fun renameSaved(id: String, name: String) {
         val authority = savedAuthority ?: return
+        if (!state.savedTab || state.savedVariables.none { it.id == id }) return
         val token = state.runtimeToken
-        val generation = savedGeneration
+        val generation = ++savedGeneration
+        savedRefreshPending = false
+        savedCatalogDirty = true
         runIpc {
             val result = runCatching {
                 val (path, appId, entry) = savedTarget()
-                savedRows(authority.rename(path, appId, entry, id, name.trim())).map { it.first }
+                savedRows(authority.rename(path, appId, entry, id, name.trim()))
             }
             post {
-                if (destroyed || generation != savedGeneration || !state.savedTab ||
-                    state.runtimeToken != token) return@post
+                if (destroyed || !state.savedTab || state.runtimeToken != token) return@post
+                if (generation != savedGeneration) {
+                    if (result.isFailure) {
+                        state = state.copy(message = result.exceptionOrNull()?.message,
+                            messageIsError = true)
+                    }
+                    return@post // A newer mutation or reload owns the final catalog.
+                }
                 val rows = result.getOrNull()
-                state = if (rows != null) state.copy(savedVariables = rows,
-                    savedValues = state.savedValues.filterKeys { key -> rows.any { it.id == key } },
-                    message = "Saved variable renamed",
-                    messageIsError = false)
-                else state.copy(message = result.exceptionOrNull()?.message, messageIsError = true)
+                if (rows != null) {
+                    val retained = rows.mapTo(HashSet()) { it.first.id }
+                    savedLocators = rows.associate { it.first.id to it.second }
+                    savedCatalogDirty = false
+                    state = state.copy(
+                        savedVariables = rows.map { it.first },
+                        savedSelection = state.savedSelection.intersect(retained),
+                        savedValues = state.savedValues.filterKeys { it in retained },
+                        message = "Saved variable renamed", messageIsError = false,
+                    )
+                } else {
+                    state = state.copy(message = result.exceptionOrNull()?.message,
+                        messageIsError = true)
+                    refreshSavedVariables()
+                }
             }
         }
     }
@@ -1458,7 +1552,8 @@ internal class MemoryEditorComposeController(
     }
 
     private fun openInspector(candidateId: Long, savedId: String?, radius: Int,
-                              watchAnchor: Boolean, partialWriteMessage: String? = null) {
+                              watchAnchor: Boolean, partialWriteMessage: String? = null,
+                              restoring: Boolean = false) {
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
@@ -1466,6 +1561,7 @@ internal class MemoryEditorComposeController(
         val connection = connectionGeneration
         val revision = state.revision
         val operation = operationGeneration
+        inspectorRequestTarget = MemoryEditorInspectorTarget(candidateId, savedId, watchAnchor, radius)
         state = state.copy(
             inspectorLoading = true,
             inspector = null,
@@ -1527,7 +1623,7 @@ internal class MemoryEditorComposeController(
                     closeInspector()
                     return@post
                 }
-                if (result == MemoryEngineContract.RESULT_TARGET_LOST) {
+                if (result == MemoryEngineContract.RESULT_TARGET_LOST && !restoring) {
                     state = state.copy(
                         inspectorLoading = false,
                         inspector = null,
@@ -1701,6 +1797,8 @@ internal class MemoryEditorComposeController(
 
     override fun closeInspector() {
         inspectorRequestGeneration++
+        pendingInspectorRestore = null
+        inspectorRequestTarget = null
         state = state.copy(inspectorLoading = false, inspector = null)
     }
 
@@ -1934,6 +2032,7 @@ internal class MemoryEditorComposeController(
         private const val LIVE_REFRESH_INITIAL_DELAY_MS = 100L
         private const val LIVE_REFRESH_INTERVAL_MS = 250L
         private const val SAVED_RESOLVE_INTERVAL_MS = 1_000L
+        private const val SAVED_REBOUND_NOTICE_MS = 4_000L
         private const val CAPABILITY_RETRY_IDLE_MS = 1_000L
         private val CAPABILITY_RETRY_DELAYS_MS = longArrayOf(80L, 160L, 320L, 640L)
     }

@@ -350,9 +350,50 @@ internal object MemoryWatchPageParser {
 
 internal enum class MemoryEditorTab { RESULTS, WATCH, SAVED, INSPECTOR }
 
+/** Session-only navigation; Inspector always re-reads a checked target after reopening. */
+internal data class MemoryEditorInspectorTarget(
+    val candidateId: Long,
+    val savedId: String?,
+    val watchAnchor: Boolean,
+    val radius: Int = MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
+)
+
+internal data class MemoryEditorNavigationState(
+    val tab: MemoryEditorTab = MemoryEditorTab.RESULTS,
+    val pageOffset: Int = 0,
+    val inspectorTarget: MemoryEditorInspectorTarget? = null,
+) {
+    val underlyingTab: MemoryEditorTab
+        get() = if (tab != MemoryEditorTab.INSPECTOR) tab else when {
+            inspectorTarget?.savedId != null -> MemoryEditorTab.SAVED
+            inspectorTarget?.watchAnchor == true -> MemoryEditorTab.WATCH
+            else -> MemoryEditorTab.RESULTS
+        }
+}
+
+/** Held only in :memory_engine memory. A different MIDlet token starts with Search. */
+internal object MemoryEditorSessionNavigation {
+    private var runtimeToken = 0L
+    private var last = MemoryEditorNavigationState()
+
+    @Synchronized fun read(token: Long): MemoryEditorNavigationState {
+        if (token == 0L) return MemoryEditorNavigationState()
+        if (runtimeToken != token) {
+            runtimeToken = token
+            last = MemoryEditorNavigationState()
+        }
+        return last
+    }
+
+    @Synchronized fun remember(token: Long, navigation: MemoryEditorNavigationState) {
+        // Ignore late closes from an older Activity after a new session has opened.
+        if (token != 0L && token == runtimeToken) last = navigation
+    }
+}
+
 internal data class SavedVariableRow(val id: String, val label: String, val path: String)
 
-internal enum class SavedVariableStatus { RESOLVED, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
+internal enum class SavedVariableStatus { RESOLVED, REBOUND, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
 
 internal data class SavedVariableRuntimeValue(
     val code: Int,
@@ -360,9 +401,12 @@ internal data class SavedVariableRuntimeValue(
     val value: String = "",
     val detail: String = "",
     val changedOwner: Boolean = false,
+    val rebound: Boolean = false,
+    val reboundUntilUptimeMs: Long = 0L,
 ) {
     val resolved: Boolean get() = code == MemoryEngineContract.RESULT_OK
     val status: SavedVariableStatus get() = when {
+        resolved && rebound -> SavedVariableStatus.REBOUND
         resolved -> SavedVariableStatus.RESOLVED
         changedOwner -> SavedVariableStatus.CHANGED
         code == MemoryEngineContract.RESULT_NO_SESSION ||
@@ -372,6 +416,22 @@ internal data class SavedVariableRuntimeValue(
             code == MemoryEngineContract.RESULT_UNSUPPORTED -> SavedVariableStatus.INCOMPATIBLE
         else -> SavedVariableStatus.FAILED
     }
+}
+
+/** One transient hint per verified rebind, without adding a timer to the Saved tab. */
+internal fun savedValueAfterRefresh(
+    current: SavedVariableRuntimeValue,
+    previous: SavedVariableRuntimeValue?,
+    nowUptimeMs: Long,
+    noticeDurationMs: Long,
+): SavedVariableRuntimeValue {
+    if (!current.resolved) return current.copy(rebound = false, reboundUntilUptimeMs = 0L)
+    val until = if (current.rebound) nowUptimeMs + noticeDurationMs
+        else previous?.reboundUntilUptimeMs ?: 0L
+    return current.copy(
+        rebound = until > nowUptimeMs,
+        reboundUntilUptimeMs = until.takeIf { it > nowUptimeMs } ?: 0L,
+    )
 }
 
 internal data class MemoryEditorUiState(
@@ -440,7 +500,6 @@ internal interface MemoryEditorActions {
     fun setSavedTab() = Unit
     fun refreshSavedVariables() = Unit
     fun saveSelectedVariable(name: String) = Unit
-    fun resolveSavedVariable(id: String) = Unit
     fun beginSavedEdit(id: String, onReady: (SavedVariableRuntimeValue?) -> Unit) = Unit
     fun endSavedEdit() = Unit
     fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean = false) = Unit

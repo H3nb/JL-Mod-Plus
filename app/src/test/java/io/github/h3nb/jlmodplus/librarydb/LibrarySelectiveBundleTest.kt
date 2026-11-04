@@ -6,6 +6,11 @@ package io.github.h3nb.jlmodplus.librarydb
 
 import java.io.File
 import java.io.IOException
+import io.github.h3nb.jlmodplus.memory.SavedVariablesDocument
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertThrows
 import java.util.zip.ZipFile
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -20,7 +25,7 @@ class LibrarySelectiveBundleTest {
 
     @Test fun savedOnlyIsPortableAndLeavesExistingConfigurationAndSaveAlone() {
         val root = File(temp, "source").apply { mkdirs() }
-        val saved = """{"schema":2,"items":[]}"""
+        val saved = """{"schema":2,"items":[{"id":"hp","label":"HP","locator":{"rootKind":1,"rootClass":"game.Main","segments":[{"owner":"game.Main","name":"hp","type":"int","index":-1}],"arrayIndex":-1}}]}"""
         sourceApp(root, "source", saved)
         val archive = File(temp, "saved-only.zip")
         LibraryUniversalBundleExporter.exportToZip(
@@ -45,14 +50,70 @@ class LibrarySelectiveBundleTest {
         val target = File(temp, "target").apply { mkdirs() }
         val config = File(target, "configs/destination").apply { mkdirs() }
         File(config, "config.json").writeText("existing configuration")
-        File(config, "saved-variables.json.bak").writeText("old Saved backup")
+        val previous = """{"schema":2,"items":[{"id":"coins","label":"Coins","locator":{"rootKind":1,"rootClass":"game.Main","segments":[{"owner":"game.Main","name":"coins","type":"int","index":-1}],"arrayIndex":-1}}]}"""
+        File(config, "saved-variables.json.bak").writeText(previous)
         val data = File(target, "data/destination").apply { mkdirs() }
         File(data, "old.sav").writeText("existing save")
-        LibraryAppBundleImporter.restore(prepared, target, "destination")
+        val imported = LibraryAppBundleImporter.restore(prepared, target, "destination")
+        assertEquals(1, imported.savedAdded)
+        assertEquals(0, imported.savedSkipped)
         assertEquals("existing configuration", File(config, "config.json").readText())
         assertEquals("existing save", File(data, "old.sav").readText())
-        assertEquals(saved, File(config, "saved-variables.json").readText())
+        val savedBytes = File(config, "saved-variables.json").readBytes()
+        SavedVariablesDocument.validate(savedBytes)
+        val savedDoc = Json.parseToJsonElement(savedBytes.toString(Charsets.UTF_8)).jsonObject
+        assertEquals("3", savedDoc["schema"]!!.jsonPrimitive.content)
+        assertEquals(listOf("Coins", "HP"), savedDoc["items"]!!.jsonArray
+            .map { it.jsonObject["label"]!!.jsonPrimitive.content })
         assertFalse(File(config, "saved-variables.json.bak").exists())
+    }
+
+    @Test fun configAndSavedRestoreReplacesExistingBookmarksWithoutTouchingSaveData() {
+        val incoming = """{"schema":3,"items":[{"id":"imported","label":"Imported HP","locator":
+            {"rootKind":1,"rootClass":"game.Main","steps":[
+            {"kind":1,"owner":"game.Main","name":"hp","type":"int"}]}}]}"""
+        val source = File(temp, "source-restore").apply { mkdirs() }
+        sourceApp(source, "source", incoming)
+        val archive = File(temp, "config-and-saved.zip")
+        LibraryUniversalBundleExporter.exportToZip(
+            listOf(LibraryUniversalBundleExporter.AppSource(
+                "a0001", "Game", "Vendor", "1", source, "source",
+                LibraryBundleComponents(configuration = true, saveData = false, savedVariables = true),
+            )), archive,
+        )
+        val parsed = LibraryAppBundleReader.read(archive.inputStream())
+        assertEquals(BundleNamespaceState.Present, parsed.apps.single().configState)
+        assertEquals(BundleNamespaceState.Present, parsed.apps.single().savedState)
+        val prepared = LibraryAppBundleImporter.extractUniversalSingleToStaging(
+            archive.inputStream(), File(temp, "staged-restore"), parsed.apps.single(), parsed.formatVersion)
+
+        val target = File(temp, "installed-restore").apply { mkdirs() }
+        File(target, "converted/destination").apply { mkdirs() }.also { installed ->
+            File(installed, "res.jar").writeBytes(byteArrayOf(1, 2, 3))
+            File(installed, "converted.dex.conf").writeText(
+                "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1\n",
+            )
+        }
+        val config = File(target, "configs/destination").apply { mkdirs() }
+        File(config, "config.json").writeText("local configuration")
+        File(config, "old.cfg").writeText("obsolete configuration")
+        File(config, "saved-variables.json").writeText(
+            """{"schema":2,"items":[{"id":"local","label":"Local Coins","locator":
+            {"rootKind":1,"rootClass":"game.Main","segments":[
+            {"owner":"game.Main","name":"coins","type":"int","index":-1}],"arrayIndex":-1}}]}""",
+        )
+        File(config, "saved-variables.json.bak").writeText("""{"schema":2,"items":[]}""")
+        val data = File(target, "data/destination").apply { mkdirs() }
+        File(data, "my-save.sav").writeText("local save")
+
+        val outcome = LibraryAppBundleImporter.restore(prepared, target, "destination")
+        assertEquals(null, outcome.savedAdded) // Backup restore is replace, not merge.
+        assertEquals("source configuration", File(config, "config.json").readText())
+        assertFalse(File(config, "old.cfg").exists())
+        assertEquals(incoming, File(config, "saved-variables.json").readText())
+        assertFalse(File(config, "saved-variables.json.bak").exists())
+        assertEquals("local save", File(data, "my-save.sav").readText())
+        SavedVariablesDocument.validate(File(config, "saved-variables.json").readBytes())
     }
 
     @Test fun configOnlyPreservesTargetSavedDefinitionsWhileReplacingConfiguration() {

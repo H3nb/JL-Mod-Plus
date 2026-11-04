@@ -1303,6 +1303,8 @@
     <string name="memory_saved_value" tools:ignore="MissingTranslation">Value</string>
     <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Remove this Saved definition? The game value will not change.</string>
     <string name="memory_saved_changed" tools:ignore="MissingTranslation">Changed</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Target updated</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Saved: %1$d added, %2$d already present</string>
     <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Incompatible</string>
     <string name="memory_saved_failed" tools:ignore="MissingTranslation">Failed</string>
     <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Remove %1$d Saved definitions? Game values will not change.</string>
