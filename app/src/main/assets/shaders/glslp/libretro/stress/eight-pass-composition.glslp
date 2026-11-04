@@ -1,0 +1,36 @@
+# JL-Mod Plus R&D composition — not a libretro upstream preset.
+# Original upstream source files are included unmodified.
+# 2x Gaussian blur pairs -> 2-pass xBRZ -> FSR EASU + RCAS.
+shaders = 8
+shader0 = ../../blurs/shaders/gauss_4tap/gauss_2tap_h.glsl
+filter_linear0 = true
+scale_type0 = source
+scale0 = 1.0
+shader1 = ../../blurs/shaders/gauss_4tap/gauss_2tap_v.glsl
+filter_linear1 = true
+scale_type1 = source
+scale1 = 1.0
+shader2 = ../../blurs/shaders/gauss_4tap/gauss_2tap_h.glsl
+filter_linear2 = true
+scale_type2 = source
+scale2 = 1.0
+shader3 = ../../blurs/shaders/gauss_4tap/gauss_2tap_v.glsl
+filter_linear3 = true
+scale_type3 = source
+scale3 = 1.0
+shader4 = ../../xbrz/shaders/xbrz-freescale-multipass/xbrz-freescale-pass0.glsl
+filter_linear4 = false
+scale_type4 = source
+scale4 = 1.0
+shader5 = ../../xbrz/shaders/xbrz-freescale-multipass/xbrz-freescale-pass1.glsl
+filter_linear5 = false
+scale_type5 = viewport
+scale5 = 1.0
+shader6 = ../../fsr/shaders/fsr-pass0.glsl
+filter_linear6 = true
+scale_type6 = viewport
+scale6 = 1.0
+shader7 = ../../fsr/shaders/fsr-pass1.glsl
+filter_linear7 = true
+scale_type7 = viewport
+scale7 = 1.0
