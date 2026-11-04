@@ -29,6 +29,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	public transient String dir;
 	public String fragment;
 	public String vertex;
+	public String preset;
 	String name;
 	String author;
 	transient boolean outputResolution;
@@ -50,6 +51,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		ShaderInfo copy = new ShaderInfo(name, author);
 		copy.fragment = fragment;
 		copy.vertex = vertex;
+		copy.preset = preset;
 		copy.outputResolution = outputResolution;
 		copy.upscaling = upscaling;
 		copy.settings = settings;
@@ -62,6 +64,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		author = in.readString();
 		fragment = in.readString();
 		vertex = in.readString();
+		preset = in.readString();
 		outputResolution = in.readByte() != 0;
 		upscaling = in.readByte() != 0;
 		settings = in.createTypedArray(Setting.CREATOR);
@@ -76,7 +79,8 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		return equalsNullable(name, that.name) &&
 				equalsNullable(author, that.author) &&
 				equalsNullable(fragment, that.fragment) &&
-				equalsNullable(vertex, that.vertex);
+				equalsNullable(vertex, that.vertex) &&
+				equalsNullable(preset, that.preset);
 	}
 
 	@SuppressWarnings("EqualsReplaceableByObjectsCall")// ObjectsCall require API19
@@ -92,6 +96,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		result = 31 * result + (author == null ? 0 : author.hashCode());
 		result = 31 * result + (fragment == null ? 0 : fragment.hashCode());
 		result = 31 * result + (vertex == null ? 0 : vertex.hashCode());
+		result = 31 * result + (preset == null ? 0 : preset.hashCode());
 		return result;
 	}
 
@@ -255,6 +260,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		dest.writeString(author);
 		dest.writeString(fragment);
 		dest.writeString(vertex);
+		dest.writeString(preset);
 		dest.writeByte((byte) (outputResolution ? 1 : 0));
 		dest.writeByte((byte) (upscaling ? 1 : 0));
 		dest.writeTypedArray(settings, flags);

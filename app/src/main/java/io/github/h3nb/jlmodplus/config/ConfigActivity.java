@@ -1555,6 +1555,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		String[] files = dir.list();
 		if (files != null) {
 			for (String fileName : files) {
+				if (TextUtils.endsWithIgnoreCase(fileName, ".glslp")
+						|| TextUtils.endsWithIgnoreCase(fileName, ".glsl")) {
+					ShaderInfo shader = new ShaderInfo(fileName + " (GLSL)", "external");
+					shader.preset = fileName;
+					shaders.add(shader);
+					continue;
+				}
 				if (!TextUtils.endsWithIgnoreCase(fileName, ".ini")) {
 					continue;
 				}
@@ -1588,8 +1595,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					shaders.add(info);
 				}
 			}
-			Collections.sort(shaders);
 		}
+		ShaderInfo scanlines = new ShaderInfo("GLSLP demo: Scanlines", "JL-Mod Plus");
+		scanlines.preset = "builtin:scanlines";
+		shaders.add(scanlines);
+		ShaderInfo soften = new ShaderInfo("GLSLP demo: Soft blur", "JL-Mod Plus");
+		soften.preset = "builtin:soften";
+		shaders.add(soften);
+		Collections.sort(shaders);
 		shaders.add(0, new ShaderInfo(getString(R.string.identity_filter), "woesss"));
 		ShaderInfo selected = params.shader == null ? null : params.shader.toInfo();
 		if (selected != null) {

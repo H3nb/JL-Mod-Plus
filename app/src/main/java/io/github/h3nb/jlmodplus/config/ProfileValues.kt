@@ -22,19 +22,21 @@ data class ShaderSelection internal constructor(
     @JvmField val name: String? = null,
     @JvmField val author: String? = null,
     @SerialName("Settings") @JvmField val values: List<Float>? = null,
+    @SerialName("Preset") @JvmField val preset: String? = null,
 ) {
     fun valuesArray(): FloatArray? = values?.toFloatArray()
 
     fun toInfo(): ShaderInfo = ShaderInfo(name, author).also {
         it.fragment = fragment
         it.vertex = vertex
+        it.preset = preset
         it.values = values?.toFloatArray()
     }
 
     companion object {
         @JvmStatic fun fromInfo(info: ShaderInfo?): ShaderSelection? = info?.let {
             ShaderSelection(it.fragment, it.vertex, it.name, it.author,
-                it.values?.toList()?.let(Collections::unmodifiableList))
+                it.values?.toList()?.let(Collections::unmodifiableList), it.preset)
         }
     }
 }
