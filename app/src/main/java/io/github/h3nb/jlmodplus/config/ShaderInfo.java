@@ -24,6 +24,8 @@ import androidx.annotation.NonNull;
 
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	public transient String dir;
@@ -36,6 +38,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	transient boolean upscaling;
 	transient Setting[] settings = new Setting[4];
 	public float[] values;
+	public Map<String, Float> glslParameters;
 
 
 	public ShaderInfo() {
@@ -56,6 +59,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		copy.upscaling = upscaling;
 		copy.settings = settings;
 		copy.values = values == null ? null : values.clone();
+		copy.glslParameters = glslParameters == null ? null : new LinkedHashMap<>(glslParameters);
 		return copy;
 	}
 
@@ -69,6 +73,11 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		upscaling = in.readByte() != 0;
 		settings = in.createTypedArray(Setting.CREATOR);
 		values = in.createFloatArray();
+		int count = in.readInt();
+		if (count > 0) {
+			glslParameters = new LinkedHashMap<>();
+			for (int i = 0; i < count; i++) glslParameters.put(in.readString(), in.readFloat());
+		}
 	}
 
 	@Override
@@ -265,6 +274,11 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		dest.writeByte((byte) (upscaling ? 1 : 0));
 		dest.writeTypedArray(settings, flags);
 		dest.writeFloatArray(values);
+		dest.writeInt(glslParameters == null ? 0 : glslParameters.size());
+		if (glslParameters != null) for (Map.Entry<String, Float> entry : glslParameters.entrySet()) {
+			dest.writeString(entry.getKey());
+			dest.writeFloat(entry.getValue());
+		}
 	}
 
 	static class Setting implements Parcelable {

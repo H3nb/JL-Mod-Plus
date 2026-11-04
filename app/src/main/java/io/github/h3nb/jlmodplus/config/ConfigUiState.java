@@ -49,6 +49,8 @@ public final class ConfigUiState {
 	public final List<String> soundBanks;
 	@NonNull
 	public final List<ShaderInfo> shaders;
+	/** Resolved preset metadata for the configuration screen, never GPU state. */
+	@Nullable public ShaderPipelineSummary shaderPipeline;
 	@NonNull
 	public final ProfileStatus profileStatus;
 	@NonNull

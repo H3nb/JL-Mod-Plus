@@ -150,6 +150,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private File configDir;
 	private File profilesRoot;
 	private ArrayList<ShaderInfo> shaders;
+	@Nullable private String inspectedShaderPreset;
+	@Nullable private ShaderPipelineSummary inspectedShaderPipeline;
 	private String workDir;
 	private boolean needShow;
 	private boolean operationRunning;
@@ -1546,56 +1548,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (shaders != null) {
 			return;
 		}
-		File dir = new File(workDir + Config.SHADERS_DIR);
-		if (!dir.exists()) {
-			//noinspection ResultOfMethodCallIgnored
-			dir.mkdirs();
-		}
-		shaders = new ArrayList<>();
-		String[] files = dir.list();
-		if (files != null) {
-			for (String fileName : files) {
-				if (TextUtils.endsWithIgnoreCase(fileName, ".glslp")
-						|| TextUtils.endsWithIgnoreCase(fileName, ".glsl")) {
-					ShaderInfo shader = new ShaderInfo(fileName + " (GLSL)", "external");
-					shader.preset = fileName;
-					shaders.add(shader);
-					continue;
-				}
-				if (!TextUtils.endsWithIgnoreCase(fileName, ".ini")) {
-					continue;
-				}
-				File file = new File(dir, fileName);
-				String text;
-				try {
-					//noinspection CharsetObjectCanBeUsed
-					text = FilesKt.readText(file, Charset.forName("UTF-8"));
-				} catch (Exception e) {
-					Log.e(TAG, "getText: " + file, e);
-					continue;
-				}
-
-				String[] split = text.split("[\\n\\r]+");
-				ShaderInfo info = null;
-				for (String line : split) {
-					if (line.startsWith("[")) {
-						if (info != null && info.fragment != null && info.vertex != null) {
-							shaders.add(info);
-						}
-						info = new ShaderInfo(line.replaceAll("[\\[\\]]", ""), "unknown");
-					} else if (info != null) {
-						try {
-							info.set(line);
-						} catch (Exception e) {
-							Log.e(TAG, "initShaderSpinner: ", e);
-						}
-					}
-				}
-				if (info != null && info.fragment != null && info.vertex != null) {
-					shaders.add(info);
-				}
-			}
-		}
+		shaders = ShaderCatalog.scan(new File(workDir + Config.SHADERS_DIR));
 		ShaderInfo scanlines = new ShaderInfo("GLSLP demo: Scanlines", "JL-Mod Plus");
 		scanlines.preset = "builtin:scanlines";
 		shaders.add(scanlines);
@@ -2649,6 +2602,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				profileNames, hasControllerDevice(), updatePresetName, fileAccessBusy ? null : fileAccess);
+		String requestedPreset = state.shader == null ? null : state.shader.preset;
+		if (!Objects.equals(inspectedShaderPreset, requestedPreset)) {
+			inspectedShaderPreset = requestedPreset;
+			inspectedShaderPipeline = requestedPreset == null ? null
+					: ShaderPipelineSummary.inspect(requestedPreset,
+							new File(workDir + Config.SHADERS_DIR));
+		}
+		result.shaderPipeline = inspectedShaderPipeline;
 		if (state.controlSkinSetId == null) {
 			result.controlSkinName = getString(R.string.control_skin_default);
 		} else {

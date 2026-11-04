@@ -335,6 +335,7 @@ internal fun ConfigScreen(
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
+    var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
@@ -342,7 +343,9 @@ internal fun ConfigScreen(
         events.onFormChanged(next)
     }
     val requestBack = {
-        if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
+        if (renderingSubpage != null) {
+            renderingSubpage = null
+        } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
             discardProfileChangesVisible = true
         } else {
             menuActions?.onBack()
@@ -374,7 +377,16 @@ internal fun ConfigScreen(
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
 
-    if (systemPropertiesEditorVisible) {
+    if (renderingSubpage != null) {
+        RenderingSettingsPage(
+            page = renderingSubpage!!,
+            state = state,
+            onFormChanged = updateForm,
+            onLegacyTuning = events::onShaderTuning,
+            onOpenShaders = { renderingSubpage = RenderingSubpage.SHADERS },
+            onBack = { renderingSubpage = null },
+        )
+    } else if (systemPropertiesEditorVisible) {
         val context = LocalContext.current
         val defaultProperties = remember(context) {
             ConfigFormState.normalizeSystemProperties(
@@ -455,6 +467,8 @@ internal fun ConfigScreen(
                                     cutoutAvailable = cutoutAvailable,
                                     onRequestAction = { pendingAction = it },
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                    onOpenShaders = { renderingSubpage = RenderingSubpage.SHADERS },
+                                    onOpenPipeline = { renderingSubpage = RenderingSubpage.PIPELINE },
                                     onUsePreset = { presetPickerVisible = true },
                                     onSavePreset = { savePresetVisible = true },
                                     modifier = Modifier.widthIn(max = 880.dp),
@@ -570,6 +584,8 @@ private fun ConfigDestinationContent(
     cutoutAvailable: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
+    onOpenShaders: () -> Unit,
+    onOpenPipeline: () -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
@@ -589,7 +605,7 @@ private fun ConfigDestinationContent(
                 onRequestAction = onRequestAction,
             )
             ConfigDestination.Display -> {
-                ScreenSection(form, state, onFormChanged, events)
+                ScreenSection(form, state, onFormChanged, events, onOpenShaders, onOpenPipeline)
                 FontSection(form, state, onFormChanged)
             }
             ConfigDestination.Media -> {
@@ -883,10 +899,9 @@ private fun ScreenSection(
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
+    onOpenShaders: () -> Unit,
+    onOpenPipeline: () -> Unit,
 ) {
-    val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
-    val selectedShader = state.shaders.getOrNull(shaderIndex)
-    val customShaderSelected = form.graphicsMode == 1 && shaderIndex > 0 && selectedShader != null
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         val backgroundModes = listOf(
             stringResource(R.string.config_background_custom),
@@ -955,18 +970,6 @@ private fun ScreenSection(
             keyboardType = KeyboardType.Number,
             onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
         )
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_FILTER),
-            description = stringResource(R.string.config_help_filter),
-            checked = form.screenFilter,
-            message = if (form.screenFilter && customShaderSelected) {
-                stringResource(R.string.config_warning_filter_shader)
-            } else {
-                null
-            },
-            messageLevel = ConfigMessageLevel.Warning,
-            onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
-        )
     }
     ConfigSection(title = stringResource(R.string.config_display_rendering)) {
         ConfigSwitchPreference(
@@ -983,26 +986,26 @@ private fun ScreenSection(
             options = graphicsOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
         )
-        if (form.graphicsMode == 1) {
-            ConfigChoicePreference(
-                title = stringResource(R.string.PREF_SHADER_FILTER),
-                description = stringResource(R.string.config_help_shader),
-                selected = state.shaders.getOrElse(shaderIndex) { "" }.toString(),
-                options = state.shaders.map { it.toString() },
-                onSelected = { index ->
-                    onFormChanged(
-                        form.toBuilder().shader(if (index == 0) null else state.shaders.getOrNull(index)).build(),
-                    )
-                },
-            )
-            if (selectedShader?.hasTunableSettings() == true) {
-                ConfigActionPreference(
-                    title = stringResource(R.string.shader_tuning),
-                    description = stringResource(R.string.config_help_shader_tuning),
-                    onClick = events::onShaderTuning,
-                )
-            }
-        }
+        ConfigValuePreference(
+            title = stringResource(R.string.render_shader_effects),
+            description = stringResource(R.string.render_shader_picker_help),
+            value = selectedShaderLabel(state),
+            onClick = onOpenShaders,
+        )
+        ConfigChoicePreference(
+            title = stringResource(R.string.render_texture_filtering),
+            description = stringResource(R.string.render_texture_filtering_help),
+            selected = if (form.screenFilter) "Linear" else "Nearest",
+            options = listOf("Nearest", "Linear"),
+            onSelected = { index ->
+                onFormChanged(form.toBuilder().screenFilter(index == 1).build())
+            },
+        )
+        ConfigActionPreference(
+            title = stringResource(R.string.render_pipeline_title),
+            description = stringResource(R.string.render_pipeline_help),
+            onClick = onOpenPipeline,
+        )
         if (form.graphicsMode == 0 || form.graphicsMode == 3) {
             ConfigSwitchPreference(
                 title = stringResource(R.string.parallel_screen_redrawing),

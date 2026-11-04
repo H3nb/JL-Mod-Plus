@@ -23,6 +23,7 @@ data class ShaderSelection internal constructor(
     @JvmField val author: String? = null,
     @SerialName("Settings") @JvmField val values: List<Float>? = null,
     @SerialName("Preset") @JvmField val preset: String? = null,
+    @SerialName("GLSLParameters") @JvmField val glslParameters: Map<String, Float>? = null,
 ) {
     fun valuesArray(): FloatArray? = values?.toFloatArray()
 
@@ -31,12 +32,14 @@ data class ShaderSelection internal constructor(
         it.vertex = vertex
         it.preset = preset
         it.values = values?.toFloatArray()
+        it.glslParameters = glslParameters?.toMutableMap()
     }
 
     companion object {
         @JvmStatic fun fromInfo(info: ShaderInfo?): ShaderSelection? = info?.let {
             ShaderSelection(it.fragment, it.vertex, it.name, it.author,
-                it.values?.toList()?.let(Collections::unmodifiableList), it.preset)
+                it.values?.toList()?.let(Collections::unmodifiableList), it.preset,
+                it.glslParameters?.let { values -> Collections.unmodifiableMap(LinkedHashMap(values)) })
         }
     }
 }

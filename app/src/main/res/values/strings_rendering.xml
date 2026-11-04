@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="render_shader_effects">Shader effects</string>
+    <string name="render_pipeline_title">Rendering pipeline</string>
+    <string name="render_shader_preset">Shader preset</string>
+    <string name="render_shader_picker_help">Choose a visual effect or GLSL preset for OpenGL ES.</string>
+    <string name="render_shader_requires_gles">Shaders are saved but only applied when OpenGL ES is selected.</string>
+    <string name="render_shader_missing">The selected shader is not in the library. Choose another preset or restore its files.</string>
+    <string name="render_shader_parameters">Shader parameters</string>
+    <string name="render_shader_reset_parameters">Reset parameters</string>
+    <string name="render_shader_passes">Shader passes</string>
+    <string name="render_shader_pass_count">%1$d passes</string>
+    <string name="render_shader_pass_hint">View the stages from the selected GLSLP preset.</string>
+    <string name="render_pass_filter">Input filtering</string>
+    <string name="render_pass_output">Output size (width × height)</string>
+    <string name="render_pipeline_unavailable">Preset unavailable</string>
+    <string name="render_game_output">Game output</string>
+    <string name="render_logical_screen_help">Logical size reported to the game.</string>
+    <string name="render_internal_resolution">Internal resolution</string>
+    <string name="render_internal_unavailable">Native only. HD rendering is still experimental.</string>
+    <string name="render_display_renderer">Presentation renderer</string>
+    <string name="render_shader_processing">Shader processing</string>
+    <string name="render_display_scaling">Display scaling</string>
+    <string name="render_texture_filtering">Texture filtering</string>
+    <string name="render_texture_filtering_help">Default sampling for the game image and unspecified shader passes.</string>
+    <string name="render_viewport_note">The viewport size is resolved from the screen layout before shader passes are planned. The arrows show image flow, not the order of layout calculations.</string>
+    <string name="render_composition">Screen composition</string>
+    <string name="render_composition_help">Background, skin, soft keys and virtual controls are composed outside the GLSL shader passes.</string>
+    <string name="render_pipeline_help">See how the game frame reaches the display, and edit each stage.</string>
+</resources>

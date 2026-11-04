@@ -29,7 +29,7 @@ public final class GlslpAssets {
         if ("builtin:glslp:stress8".equals(selection)) bundled = "libretro/stress/eight-pass-composition.glslp";
         if (bundled != null) return GlslpPreset.load(GlslpAssets::readBundled, bundled);
         if (selection == null || (!selection.endsWith(".glslp") && !selection.endsWith(".glsl"))
-                || selection.contains("/") || selection.contains("\\") || selection.contains(":")) {
+                || (selection.contains("/") && !selection.startsWith("shaders_glsl/")) || selection.contains("\\") || selection.contains(":")) {
             throw new IOException("Unsupported shader selection");
         }
         if (shaderDirectory == null) throw new IOException("Shader directory unavailable");

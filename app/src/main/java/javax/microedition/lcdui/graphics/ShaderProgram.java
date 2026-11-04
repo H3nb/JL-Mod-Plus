@@ -28,6 +28,7 @@ import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.ShaderSelection;
+import io.github.h3nb.jlmodplus.config.ShaderCatalog;
 import java.io.File;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 
@@ -49,8 +50,10 @@ public class ShaderProgram {
 			String vertex = shader.vertex;
 			String fragment = shader.fragment;
 			if (vertex != null && fragment != null && shaderDirectory != null) {
-				String vertexCode = FileUtils.getText(new File(shaderDirectory, vertex).getPath());
-				String fragmentCode = FileUtils.getText(new File(shaderDirectory, fragment).getPath());
+				File vertexFile = ShaderCatalog.resolveLegacySource(shaderDirectory, vertex);
+				File fragmentFile = ShaderCatalog.resolveLegacySource(shaderDirectory, fragment);
+				String vertexCode = vertexFile == null ? null : FileUtils.getText(vertexFile.getPath());
+				String fragmentCode = fragmentFile == null ? null : FileUtils.getText(fragmentFile.getPath());
 				if (createProgram(vertexCode, fragmentCode) != -1) {
 					glReleaseShaderCompiler();
 					return;

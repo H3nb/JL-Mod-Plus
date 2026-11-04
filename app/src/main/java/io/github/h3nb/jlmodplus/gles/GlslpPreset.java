@@ -77,6 +77,23 @@ public final class GlslpPreset {
         }
     }
 
+    /** Editor metadata from #pragma, with preset defaults and optional user override. */
+    public static final class Parameter {
+        public final String id, label;
+        public final float defaultValue, minimum, maximum, step, value;
+
+        private Parameter(String id, String label, float def, float min, float max,
+                float step, float value) {
+            this.id = id;
+            this.label = label;
+            this.defaultValue = def;
+            this.minimum = min;
+            this.maximum = max;
+            this.step = step;
+            this.value = value;
+        }
+    }
+
     public static final class PlannedPass {
         public final Pass pass;
         public final int inputWidth, inputHeight, outputWidth, outputHeight;
@@ -225,10 +242,21 @@ public final class GlslpPreset {
      * the overridden names silently leaves the remaining uniforms at zero.
      * This is research metadata, not evidence the shaders link on a given GLES.
      */
-    public Map<String, Float> resolvedParameters() throws IOException {
-        Map<String, Float> defaults = new LinkedHashMap<>();
-        Map<String, Float> minima = new LinkedHashMap<>();
-        Map<String, Float> maxima = new LinkedHashMap<>();
+    public GlslpPreset withParameterOverrides(Map<String, Float> userOverrides) {
+        if (userOverrides == null || userOverrides.isEmpty()) return this;
+        Map<String, Double> combined = new LinkedHashMap<>(parameterOverrides);
+        for (Map.Entry<String, Float> entry : userOverrides.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                throw new IllegalArgumentException("Null GLSL parameter");
+            }
+            combined.put(entry.getKey(), entry.getValue().doubleValue());
+        }
+        return new GlslpPreset(passes, combined);
+    }
+
+    /** Source declarations provide the editor's labels/ranges as well as runtime defaults. */
+    public List<Parameter> parameterDefinitions() throws IOException {
+        Map<String, Parameter> definitions = new LinkedHashMap<>();
         for (Pass pass : passes) {
             for (String line : pass.sourceText.split("\\n")) {
                 String declaration = line.trim();
@@ -238,6 +266,7 @@ public final class GlslpPreset {
                     throw new IOException("Malformed GLSL parameter declaration in " + pass.sourcePath);
                 }
                 String id = m.group(1);
+                String label = declaration.substring(declaration.indexOf('"') + 1, declaration.lastIndexOf('"'));
                 float fallback = checkedFloat(number(m.group(2), id), id);
                 float minimum = checkedFloat(number(m.group(3), id), id);
                 float maximum = checkedFloat(number(m.group(4), id), id);
@@ -245,31 +274,41 @@ public final class GlslpPreset {
                 if (minimum > maximum || step <= 0 || fallback < minimum || fallback > maximum) {
                     throw new IOException("Invalid GLSL parameter range: " + id);
                 }
-                if (defaults.containsKey(id)) {
-                    if (!defaults.get(id).equals(fallback)
-                            || !minima.get(id).equals(minimum)
-                            || !maxima.get(id).equals(maximum)) {
+                Parameter previous = definitions.get(id);
+                if (previous != null) {
+                    if (previous.defaultValue != fallback || previous.minimum != minimum
+                            || previous.maximum != maximum || previous.step != step) {
                         throw new IOException("Conflicting GLSL parameter: " + id);
                     }
                 } else {
-                    defaults.put(id, fallback);
-                    minima.put(id, minimum);
-                    maxima.put(id, maximum);
+                    definitions.put(id, new Parameter(id, label, fallback, minimum,
+                            maximum, step, fallback));
                 }
             }
         }
         for (Map.Entry<String, Double> entry : parameterOverrides.entrySet()) {
             String id = entry.getKey();
-            if (!defaults.containsKey(id)) {
+            Parameter declared = definitions.get(id);
+            if (declared == null) {
                 throw new IOException("Preset overrides undeclared GLSL parameter: " + id);
             }
             float value = checkedFloat(entry.getValue(), id);
-            if (value < minima.get(id) || value > maxima.get(id)) {
+            if (value < declared.minimum || value > declared.maximum) {
                 throw new IOException("Preset parameter outside GLSL range: " + id);
             }
-            defaults.put(id, value);
+            definitions.put(id, new Parameter(declared.id, declared.label,
+                    declared.defaultValue, declared.minimum, declared.maximum,
+                    declared.step, value));
         }
-        return Collections.unmodifiableMap(defaults);
+        return Collections.unmodifiableList(new ArrayList<>(definitions.values()));
+    }
+
+    public Map<String, Float> resolvedParameters() throws IOException {
+        Map<String, Float> values = new LinkedHashMap<>();
+        for (Parameter parameter : parameterDefinitions()) {
+            values.put(parameter.id, parameter.value);
+        }
+        return Collections.unmodifiableMap(values);
     }
 
     private static float checkedFloat(double value, String name) throws IOException {
