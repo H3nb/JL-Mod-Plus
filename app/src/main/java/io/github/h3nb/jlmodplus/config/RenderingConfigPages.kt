@@ -436,30 +436,30 @@ private fun RenderingPipelineContent(
                     onClick = onOpenShaders,
                 )
                 if (summary?.error == null && !summary?.passes.isNullOrEmpty()) {
-                TextButton(
-                    modifier = Modifier.padding(start = 38.dp),
-                    onClick = { passPreviewVisible = !passPreviewVisible },
-                ) {
-                    Text(stringResource(if (passPreviewVisible)
-                        R.string.render_collapse_passes else R.string.render_expand_passes))
-                }
-                if (passPreviewVisible) {
-                    Surface(
-                        modifier = Modifier.padding(start = 38.dp, bottom = 4.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceContainer,
+                    TextButton(
+                        modifier = Modifier.padding(start = 38.dp),
+                        onClick = { passPreviewVisible = !passPreviewVisible },
                     ) {
-                        Column {
-                            PassList(summary!!, form.screenFilter)
-                            TextButton(
-                                modifier = Modifier.align(Alignment.End),
-                                onClick = onOpenPasses,
-                            ) {
-                                Text(stringResource(R.string.render_view_all_passes))
+                        Text(stringResource(if (passPreviewVisible)
+                            R.string.render_collapse_passes else R.string.render_expand_passes))
+                    }
+                    if (passPreviewVisible) {
+                        Surface(
+                            modifier = Modifier.padding(start = 38.dp, bottom = 4.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                        ) {
+                            Column {
+                                PassList(summary!!, form.screenFilter)
+                                TextButton(
+                                    modifier = Modifier.align(Alignment.End),
+                                    onClick = onOpenPasses,
+                                ) {
+                                    Text(stringResource(R.string.render_view_all_passes))
+                                }
                             }
                         }
                     }
-                }
                 }
             }
             StageConnector()
