@@ -1015,21 +1015,25 @@ private fun ScreenSection(
             options = graphicsOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
         )
-        ConfigValuePreference(
-            title = stringResource(R.string.render_shader_effects),
-            description = stringResource(R.string.render_shader_picker_help),
-            value = selectedShaderLabel(state),
-            onClick = onOpenShaders,
-        )
-        ConfigChoicePreference(
-            title = stringResource(R.string.render_texture_filtering),
-            description = stringResource(R.string.render_texture_filtering_help),
-            selected = if (form.screenFilter) "Linear" else "Nearest",
-            options = listOf("Nearest", "Linear"),
-            onSelected = { index ->
-                onFormChanged(form.toBuilder().screenFilter(index == 1).build())
-            },
-        )
+        if (form.graphicsMode == 1) {
+            ConfigValuePreference(
+                title = stringResource(R.string.render_shader_effects),
+                description = stringResource(R.string.render_shader_picker_help),
+                value = selectedShaderLabel(state),
+                onClick = onOpenShaders,
+            )
+        }
+        if (isTextureFilteringApplicable(state)) {
+            ConfigChoicePreference(
+                title = stringResource(R.string.render_texture_filtering),
+                description = stringResource(R.string.render_texture_filtering_help),
+                selected = if (form.screenFilter) "Linear" else "Nearest",
+                options = listOf("Nearest", "Linear"),
+                onSelected = { index ->
+                    onFormChanged(form.toBuilder().screenFilter(index == 1).build())
+                },
+            )
+        }
         ConfigActionPreference(
             title = stringResource(R.string.render_pipeline_title),
             description = stringResource(R.string.render_pipeline_help),
