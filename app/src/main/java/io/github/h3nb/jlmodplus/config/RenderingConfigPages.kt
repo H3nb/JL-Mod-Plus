@@ -60,6 +60,22 @@ internal fun selectedShaderLabel(state: ConfigUiState): String {
             ?: selected.fragment?.substringAfterLast('/') ?: "Shader")
 }
 
+/**
+ * The game-wide texture filter is ignored only when every GLSLP pass
+ * specifies its own filter and the last pass draws directly to the viewport.
+ * Keep the control visible if inspection fails: the fallback presenter uses it.
+ */
+internal fun isTextureFilteringApplicable(state: ConfigUiState): Boolean {
+    if (state.form.graphicsMode != 1 || state.form.shader?.preset == null) return true
+    val summary = state.shaderPipeline ?: return true
+    if (summary.error != null || summary.passes.isEmpty()) return true
+    if (summary.passes.any { it.linearFilter == null }) return true
+    val finalPass = summary.passes.last()
+    return !(finalPass.x.basis == GlslpPreset.SizeBasis.VIEWPORT
+        && finalPass.y.basis == GlslpPreset.SizeBasis.VIEWPORT
+        && finalPass.x.scale == 1.0 && finalPass.y.scale == 1.0)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RenderingSettingsPage(
@@ -407,21 +423,19 @@ private fun RenderingPipelineContent(
                     else renderers.getOrElse(form.graphicsMode) { renderers.firstOrNull().orEmpty() },
                 onClick = { rendererPickerVisible = true },
             )
-            StageConnector()
-            val summary = state.shaderPipeline
-            PipelineStage(
-                number = "03",
-                label = stringResource(R.string.render_shader_processing),
-                value = if (form.graphicsMode == 1) selectedShaderLabel(state)
-                    else stringResource(R.string.render_shader_inactive),
-                note = if (form.graphicsMode == 1 && summary?.error == null && form.shader?.preset != null)
-                    stringResource(R.string.render_pass_summary, summary?.passes?.size ?: 0)
-                else if (form.graphicsMode != 1 && form.shader != null)
-                    stringResource(R.string.render_shader_requires_gles)
-                else null,
-                onClick = onOpenShaders,
-            )
-            if (form.graphicsMode == 1 && summary?.error == null && !summary?.passes.isNullOrEmpty()) {
+            if (form.graphicsMode == 1) {
+                StageConnector()
+                val summary = state.shaderPipeline
+                PipelineStage(
+                    number = "03",
+                    label = stringResource(R.string.render_shader_processing),
+                    value = selectedShaderLabel(state),
+                    note = if (form.shader?.preset != null && summary?.error == null)
+                        summary?.passes?.size?.let { stringResource(R.string.render_pass_summary, it) }
+                    else null,
+                    onClick = onOpenShaders,
+                )
+                if (summary?.error == null && !summary?.passes.isNullOrEmpty()) {
                 TextButton(
                     modifier = Modifier.padding(start = 38.dp),
                     onClick = { passPreviewVisible = !passPreviewVisible },
@@ -446,16 +460,18 @@ private fun RenderingPipelineContent(
                         }
                     }
                 }
+                }
             }
             StageConnector()
             PipelineStage(
-                number = "04",
-                label = stringResource(R.string.render_display_scaling),
+                number = if (form.graphicsMode == 1) "04" else "03",
+                label = stringResource(R.string.render_display_viewport),
                 value = scales.getOrElse(form.screenScaleType) { scales.firstOrNull().orEmpty() },
-                note = stringResource(
-                    R.string.render_pipeline_filter_summary,
-                    if (form.screenFilter) "Linear" else "Nearest",
-                ),
+                note = if (isTextureFilteringApplicable(state))
+                    stringResource(
+                        R.string.render_pipeline_filter_summary,
+                        if (form.screenFilter) "Linear" else "Nearest",
+                    ) else null,
                 onClick = { scaleControlsVisible = !scaleControlsVisible },
             )
             if (scaleControlsVisible) {
@@ -482,25 +498,20 @@ private fun RenderingPipelineContent(
                             },
                         )
                     }
-                    ConfigChoicePreference(
-                        title = stringResource(R.string.render_texture_filtering),
-                        description = null,
-                        selected = if (form.screenFilter) "Linear" else "Nearest",
-                        options = listOf("Nearest", "Linear"),
-                        compact = true,
-                        onSelected = {
-                            onFormChanged(form.toBuilder().screenFilter(it == 1).build())
-                        },
-                    )
+                    if (isTextureFilteringApplicable(state)) {
+                        ConfigChoicePreference(
+                            title = stringResource(R.string.render_texture_filtering),
+                            description = null,
+                            selected = if (form.screenFilter) "Linear" else "Nearest",
+                            options = listOf("Nearest", "Linear"),
+                            compact = true,
+                            onSelected = {
+                                onFormChanged(form.toBuilder().screenFilter(it == 1).build())
+                            },
+                        )
+                    }
                 }
             }
-            StageConnector()
-            PipelineStage(
-                number = "05",
-                label = stringResource(R.string.render_composition),
-                value = stringResource(R.string.render_host_layers),
-                note = stringResource(R.string.render_composition_short),
-            )
         }
     }
     MutedText(stringResource(R.string.render_pipeline_note))
