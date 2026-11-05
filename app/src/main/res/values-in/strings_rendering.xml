@@ -21,11 +21,10 @@
     <string name="render_display_renderer">Renderer tampilan</string>
     <string name="render_shader_processing">Pemrosesan shader</string>
     <string name="render_display_scaling">Penskalaan tampilan</string>
+    <string name="render_display_viewport">Area tampilan game</string>
     <string name="render_texture_filtering">Filter tekstur</string>
     <string name="render_texture_filtering_help">Filter default untuk gambar game dan pass yang tidak menentukan filternya sendiri.</string>
     <string name="render_viewport_note">Ukuran viewport ditentukan sebelum tahapan shader direncanakan. Panah menunjukkan aliran gambar, bukan urutan perhitungan layout.</string>
-    <string name="render_composition">Komposisi layar</string>
-    <string name="render_composition_help">Latar belakang, skin, soft key, dan kontrol virtual dikomposisikan di luar tahapan GLSL.</string>
     <string name="render_pipeline_help">Lihat perjalanan gambar game ke layar dan pengaturan tiap tahap.</string>
     <string name="render_no_shader">Pilih preset untuk mengubah tampilan game.</string>
     <string name="render_shader_adjust">Sesuaikan parameter</string>
@@ -38,13 +37,10 @@
     <string name="render_pass_readonly">Tahap dijalankan berurutan. Filter input dan skala output mengikuti preset yang dipilih.</string>
     <string name="render_pipeline_intro">Aliran gambar dari framebuffer game hingga tampil di layar.</string>
     <string name="render_native_short">Native (1×) · Resolusi internal yang lebih tinggi belum tersedia</string>
-    <string name="render_shader_inactive">Tidak diterapkan</string>
     <string name="render_expand_passes">Tampilkan tahapan</string>
     <string name="render_collapse_passes">Sembunyikan tahapan</string>
     <string name="render_view_all_passes">Detail tahapan</string>
     <string name="render_pipeline_filter_summary">Filter tekstur: %1$s</string>
-    <string name="render_host_layers">Latar belakang, skin, dan kontrol</string>
-    <string name="render_composition_short">Elemen antarmuka emulator tidak diproses oleh shader GLSL.</string>
     <string name="render_pipeline_note">Layout tampilan menentukan viewport sebelum shader direncanakan. Urutan ini menunjukkan aliran gambar.</string>
     <string name="render_shader_change">Pilih efek lain</string>
 </resources>
