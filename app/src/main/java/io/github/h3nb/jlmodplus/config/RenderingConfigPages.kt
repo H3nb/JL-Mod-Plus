@@ -430,8 +430,8 @@ private fun RenderingPipelineContent(
                     number = "03",
                     label = stringResource(R.string.render_shader_processing),
                     value = selectedShaderLabel(state),
-                    note = if (form.shader?.preset != null && summary?.error == null)
-                        summary?.passes?.size?.let { stringResource(R.string.render_pass_summary, it) }
+                    note = if (form.shader?.preset != null && summary != null && summary.error == null)
+                        stringResource(R.string.render_pass_summary, summary.passes.size)
                     else null,
                     onClick = onOpenShaders,
                 )
