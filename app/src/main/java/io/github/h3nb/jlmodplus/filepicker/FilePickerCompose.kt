@@ -218,7 +218,14 @@ fun FilePickerScreen(
             )
         },
         bottomBar = {
-            BottomAppBar {
+            if (state.request.rootPath != null && state.request.singleClick && !state.request.allowMultiple) {
+                BottomAppBar {
+                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                    TextButton(onClick = actions::onExit) {
+                        Text(stringResource(R.string.file_picker_cancel))
+                    }
+                }
+            } else BottomAppBar {
                 Text(
                     text = when {
                         state.request.mode == FilePickerContract.MODE_DIR ||
