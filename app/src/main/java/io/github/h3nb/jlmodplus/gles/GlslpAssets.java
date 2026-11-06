@@ -76,18 +76,6 @@ public final class GlslpAssets {
 
 
     public static GlslpPreset load(String selection, File shaderDirectory) throws IOException {
-        if ("builtin:scanlines".equals(selection)) {
-            return GlslpPreset.load(GlslpAssets::readBundled, "scanlines.glslp");
-        }
-        if ("builtin:soften".equals(selection)) {
-            return GlslpPreset.load(GlslpAssets::readBundled, "soften.glslp");
-        }
-        String bundled = null;
-        if ("builtin:libretro:fsr".equals(selection)) bundled = "libretro/fsr/fsr.glslp";
-        if ("builtin:libretro:xbrz-crisp".equals(selection)) bundled = "libretro/xbrz/xbrz-crisp.glslp";
-        if ("builtin:libretro:xbrz-4x".equals(selection)) bundled = "libretro/xbrz/4xbrz-linear.glslp";
-        if ("builtin:glslp:stress8".equals(selection)) bundled = "libretro/stress/eight-pass-composition.glslp";
-        if (bundled != null) return GlslpPreset.load(GlslpAssets::readBundled, bundled);
         if (selection == null || (!selection.endsWith(".glslp") && !selection.endsWith(".glsl"))
                 || (selection.contains("/") && !selection.startsWith("shaders_glsl/")) || selection.contains("\\") || selection.contains(":")) {
             throw new IOException("Unsupported shader selection");
@@ -105,22 +93,16 @@ public final class GlslpAssets {
         if (!(lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg"))) {
             throw new IOException("Unsupported LUT format: " + path);
         }
+        if (shaderDirectory == null) throw new IOException("Shader directory unavailable");
+        File root = shaderDirectory.getCanonicalFile();
+        File resource = new File(root, path).getCanonicalFile();
+        if (!resource.getPath().startsWith(root.getPath() + File.separator)
+                || !resource.isFile() || resource.length() > MAX_IMAGE_FILE_BYTES) {
+            throw new IOException("Unsafe or oversized LUT: " + path);
+        }
         byte[] encoded;
-        if (selection != null && selection.startsWith("builtin:")) {
-            try (InputStream in = ContextHolder.getAppContext().getAssets().open(ASSETS + path)) {
-                encoded = readLimited(in, MAX_IMAGE_FILE_BYTES);
-            }
-        } else {
-            if (shaderDirectory == null) throw new IOException("Shader directory unavailable");
-            File root = shaderDirectory.getCanonicalFile();
-            File resource = new File(root, path).getCanonicalFile();
-            if (!resource.getPath().startsWith(root.getPath() + File.separator)
-                    || !resource.isFile() || resource.length() > MAX_IMAGE_FILE_BYTES) {
-                throw new IOException("Unsafe or oversized LUT: " + path);
-            }
-            try (InputStream in = new FileInputStream(resource)) {
-                encoded = readLimited(in, MAX_IMAGE_FILE_BYTES);
-            }
+        try (InputStream in = new FileInputStream(resource)) {
+            encoded = readLimited(in, MAX_IMAGE_FILE_BYTES);
         }
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;

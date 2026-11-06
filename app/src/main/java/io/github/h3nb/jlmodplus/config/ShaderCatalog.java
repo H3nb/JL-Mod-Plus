@@ -12,7 +12,7 @@ import java.util.Locale;
 import java.util.Set;
 import kotlin.io.FilesKt;
 
-/** External shader discovery and non-overwriting migration of old root-level shaders. */
+/** Discovers external GLSL/GLSLP and legacy shaders without moving user files. */
 public final class ShaderCatalog {
     public static final String LEGACY = "shaders_legacy";
     public static final String GLSL = "shaders_glsl";
@@ -26,7 +26,6 @@ public final class ShaderCatalog {
         File legacy = new File(root, LEGACY), glsl = new File(root, GLSL);
         if (!legacy.isDirectory() && !legacy.mkdirs()) Log.w(TAG, "Legacy shader folder unavailable");
         if (!glsl.isDirectory() && !glsl.mkdirs()) Log.w(TAG, "GLSL shader folder unavailable");
-        moveLegacy(root, legacy);
         Set<String> seen = new HashSet<>();
         collectLegacy(legacy, result, seen);
         collectLegacy(root, result, seen);
@@ -66,17 +65,6 @@ public final class ShaderCatalog {
 
     private static boolean ext(File file, String suffix) {
         return file.getName().toLowerCase(Locale.ROOT).endsWith(suffix);
-    }
-
-    private static void moveLegacy(File root, File legacy) {
-        if (!legacy.isDirectory()) return;
-        for (File file : sorted(root)) {
-            if (!file.isFile() || !(ext(file, ".ini") || ext(file, ".vsh") || ext(file, ".fsh")))
-                continue;
-            File target = new File(legacy, file.getName());
-            // Never overwrite user files; an incomplete move is resolved from both locations.
-            if (!target.exists() && !file.renameTo(target)) Log.w(TAG, "Migration skipped: " + file.getName());
-        }
     }
 
     private static void collectLegacy(File folder, ArrayList<ShaderInfo> out, Set<String> seen) {

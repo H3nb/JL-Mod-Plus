@@ -1550,24 +1550,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return;
 		}
 		shaders = ShaderCatalog.scan(new File(workDir + Config.SHADERS_DIR));
-		ShaderInfo scanlines = new ShaderInfo("GLSLP demo: Scanlines", "JL-Mod Plus");
-		scanlines.preset = "builtin:scanlines";
-		shaders.add(scanlines);
-		ShaderInfo soften = new ShaderInfo("GLSLP demo: Soft blur", "JL-Mod Plus");
-		soften.preset = "builtin:soften";
-		shaders.add(soften);
-		ShaderInfo upstream0 = new ShaderInfo("Libretro: FSR upscale", "libretro/glsl-shaders");
-		upstream0.preset = "builtin:libretro:fsr";
-		shaders.add(upstream0);
-		ShaderInfo upstream1 = new ShaderInfo("Libretro: xBRZ Crisp upscale", "libretro/glsl-shaders");
-		upstream1.preset = "builtin:libretro:xbrz-crisp";
-		shaders.add(upstream1);
-		ShaderInfo upstream2 = new ShaderInfo("Libretro: xBRZ fixed 4x", "libretro/glsl-shaders");
-		upstream2.preset = "builtin:libretro:xbrz-4x";
-		shaders.add(upstream2);
-		ShaderInfo upstream3 = new ShaderInfo("GLSLP stress: 8-pass upscale composition", "JL-Mod Plus R&D");
-		upstream3.preset = "builtin:glslp:stress8";
-		shaders.add(upstream3);
 		Collections.sort(shaders);
 		shaders.add(0, new ShaderInfo(getString(R.string.identity_filter), "woesss"));
 		ShaderInfo selected = params.shader == null ? null : params.shader.toInfo();

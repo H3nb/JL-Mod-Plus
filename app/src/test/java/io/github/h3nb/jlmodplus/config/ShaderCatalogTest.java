@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 public class ShaderCatalogTest {
     @TempDir Path temporary;
 
-    @Test void migratesLegacyWithoutBreakingStoredSourcePaths() throws Exception {
+    @Test void readsLegacyWithoutMovingUserFiles() throws Exception {
         File root = temporary.resolve("shaders").toFile();
         assertTrue(root.mkdir());
         Files.write(new File(root, "pixel.ini").toPath(),
@@ -25,8 +25,9 @@ public class ShaderCatalogTest {
         List<ShaderInfo> catalog = ShaderCatalog.scan(root);
         assertEquals(1, catalog.size());
         assertEquals("Pixel", catalog.get(0).toString());
-        assertTrue(new File(root, "shaders_legacy/pixel.ini").isFile());
-        assertEquals(new File(root, "shaders_legacy/pixel.fsh").getCanonicalFile(),
+        assertTrue(new File(root, "pixel.ini").isFile());
+        assertFalse(new File(root, "shaders_legacy/pixel.ini").exists());
+        assertEquals(new File(root, "pixel.fsh").getCanonicalFile(),
                 ShaderCatalog.resolveLegacySource(root, "pixel.fsh"));
         assertEquals(1, ShaderCatalog.scan(root).size());
     }
