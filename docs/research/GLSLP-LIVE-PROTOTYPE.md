@@ -44,8 +44,7 @@ The same GPU texture is reused between frames and released with its pipeline.
 The configuration UI only parses metadata; it never decodes or uploads images.
 
 Common exported per-pass metadata `mipmap_inputN=false`,
-`float_framebufferN=false`, `srgb_framebufferN=false`, and
-`frame_count_modN=0` is accepted. Input sampling can now use repeat or
+`float_framebufferN=false`, and `srgb_framebufferN=false` is accepted. Input sampling can now use repeat or
 mirrored-repeat and optional `mipmap_inputN=true` on power-of-two images.
 Mipmaps are generated only when the guest frame or pass layout changes and
 their extra level allocations count against the 64 MiB plan budget. Unsupported non-power-of-two GLES2 input combinations are rejected explicitly
@@ -86,7 +85,7 @@ explicit capability rejection on unsupported contexts. A passing rejection
 test is not evidence that a physical device supports float rendering.
 
 Other unsupported keys, history, feedback, sRGB framebuffers and
-desktop-only GLSL constructs remain unsupported. It is not
+desktop-only GLSL constructs remain unsupported. This is not
 general RetroArch GLSLP compatibility. Failed programs revert to the
 identity presentation; inspect logcat for the rejection reason.
 
@@ -119,8 +118,8 @@ from GLSL ES 1.00. It is intentionally **not selectable** on GLES2.
 The pipeline preserves upstream `#version 130` source files on disk, but
 removes that exact directive in-memory for GLES2 compatibility shaders.
 This is not a general desktop GLSL-to-GLES translation. Compilation still
-rejects unsupported GPU syntax. Presets requiring float/sRGB framebuffer
-formats or temporal feedback are rejected rather than silently substituting
+rejects unsupported GPU syntax. Presets requiring unsupported sRGB formats
+or temporal feedback are rejected rather than silently substituting
 an incorrect RGBA8 approximation. LUTs with unsupported formats, too many
 samplers, or invalid GLES2 texture options are also rejected.
 
@@ -129,7 +128,8 @@ and viewport dimensions are unchanged, and rebuilt on resize or source-size
 change. This reduces per-presentation CPU work; no device-level speedup is
 claimed without profiling.
 
-All offscreen stages are subject to a combined 64 MiB RGBA8 budget.
+All offscreen stages share a 64 MiB budget, accounting for RGBA8, RGBA16F
+and the required mipmap levels individually.
 Unsupported passes revert to the identity presentation, leaving the
 guest rendering, controls, and background logic unchanged.
 
