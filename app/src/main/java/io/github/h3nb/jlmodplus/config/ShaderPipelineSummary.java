@@ -37,14 +37,34 @@ public final class ShaderPipelineSummary {
 
     public static ShaderPipelineSummary inspect(String presetPath, File shaderRoot) {
         try {
-            GlslpPreset preset = GlslpAssets.load(presetPath, shaderRoot);
+            return fromPreset(GlslpAssets.load(presetPath, shaderRoot));
+        } catch (IOException | RuntimeException e) {
+            return failed(e);
+        }
+    }
+
+    public static ShaderPipelineSummary inspectCustom(
+            List<CustomShaderStage> stages, File shaderRoot) {
+        try {
+            return fromPreset(GlslpAssets.loadCustom(stages, shaderRoot));
+        } catch (IOException | RuntimeException e) {
+            return failed(e);
+        }
+    }
+
+    private static ShaderPipelineSummary failed(Exception error) {
+        return new ShaderPipelineSummary(Collections.emptyList(), Collections.emptyList(),
+                error.getMessage() == null ? "Invalid shader preset" : error.getMessage());
+    }
+
+    private static ShaderPipelineSummary fromPreset(GlslpPreset preset) {
             List<Pass> passes = new ArrayList<>(preset.passes.size());
             for (GlslpPreset.Pass pass : preset.passes) passes.add(new Pass(pass));
-            return new ShaderPipelineSummary(Collections.unmodifiableList(passes),
-                    preset.parameterDefinitions(), null);
-        } catch (IOException | RuntimeException e) {
-            return new ShaderPipelineSummary(Collections.emptyList(),
-                    Collections.emptyList(), e.getMessage() == null ? "Invalid shader preset" : e.getMessage());
-        }
+            try {
+                return new ShaderPipelineSummary(Collections.unmodifiableList(passes),
+                        preset.parameterDefinitions(), null);
+            } catch (IOException e) {
+                return failed(e);
+            }
     }
 }

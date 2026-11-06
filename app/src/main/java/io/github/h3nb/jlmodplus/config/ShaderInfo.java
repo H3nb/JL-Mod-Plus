@@ -26,6 +26,8 @@ import androidx.annotation.NonNull;
 import java.util.Locale;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	public transient String dir;
@@ -39,6 +41,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	transient Setting[] settings = new Setting[4];
 	public float[] values;
 	public Map<String, Float> glslParameters;
+	public List<CustomShaderStage> customStages;
 
 
 	public ShaderInfo() {
@@ -60,6 +63,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		copy.settings = settings;
 		copy.values = values == null ? null : values.clone();
 		copy.glslParameters = glslParameters == null ? null : new LinkedHashMap<>(glslParameters);
+		copy.customStages = customStages == null ? null : new ArrayList<>(customStages);
 		return copy;
 	}
 
@@ -77,6 +81,17 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		if (count > 0) {
 			glslParameters = new LinkedHashMap<>();
 			for (int i = 0; i < count; i++) glslParameters.put(in.readString(), in.readFloat());
+		}
+		int stages = in.readInt();
+		if (stages >= 0) {
+			customStages = new ArrayList<>(stages);
+			for (int i = 0; i < stages; i++) {
+				String path = in.readString();
+				int scale = in.readInt();
+				byte filter = in.readByte();
+				customStages.add(new CustomShaderStage(path, scale,
+						filter < 0 ? null : filter == 1));
+			}
 		}
 	}
 
@@ -278,6 +293,12 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		if (glslParameters != null) for (Map.Entry<String, Float> entry : glslParameters.entrySet()) {
 			dest.writeString(entry.getKey());
 			dest.writeFloat(entry.getValue());
+		}
+		dest.writeInt(customStages == null ? -1 : customStages.size());
+		if (customStages != null) for (CustomShaderStage stage : customStages) {
+			dest.writeString(stage.path);
+			dest.writeInt(stage.sourceScale);
+			dest.writeByte((byte) (stage.filterLinear == null ? -1 : stage.filterLinear ? 1 : 0));
 		}
 	}
 

@@ -9,6 +9,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import io.github.h3nb.jlmodplus.config.CustomShaderStage;
 import javax.microedition.util.ContextHolder;
 
 /** Resolves packaged demos and local shader resources without path traversal. */
@@ -18,7 +22,58 @@ public final class GlslpAssets {
     private static final int MAX_IMAGE_FILE_BYTES = 4 * 1024 * 1024;
     private static final int MAX_IMAGE_PIXELS = 4 * 1024 * 1024;
 
+    private static final Pattern SAMPLER = Pattern.compile(
+            "\\buniform\\s+(?:(?:lowp|mediump|highp)\\s+)?sampler\\w+\\s+(\\w+)");
     private GlslpAssets() {}
+
+    /**
+     * Resolve standalone external sources as a virtual GLSLP preset.
+     * The existing GLSLP parser and GPU executor remain the only execution path.
+     */
+    public static GlslpPreset loadCustom(List<CustomShaderStage> stages, File shaderDirectory)
+            throws IOException {
+        if (shaderDirectory == null || stages == null || stages.isEmpty() || stages.size() > 16) {
+            throw new IOException("Custom shader chain must contain 1–16 stages");
+        }
+        StringBuilder preset = new StringBuilder("shaders = ").append(stages.size()).append('\n');
+        for (int i = 0; i < stages.size(); i++) {
+            CustomShaderStage stage = stages.get(i);
+            if (stage == null || stage.path == null || stage.path.indexOf('\n') >= 0
+                    || stage.path.indexOf('\r') >= 0 || stage.path.indexOf('=') >= 0
+                    || stage.path.indexOf('\\') >= 0 || stage.path.indexOf(':') >= 0) {
+                throw new IOException("Invalid custom stage path");
+            }
+            String path = GlslpPreset.normalize("", stage.path);
+            if (!path.equals(stage.path) || !path.endsWith(".glsl")
+                    || (path.contains("/") && !path.startsWith("shaders_glsl/"))
+                    || (stage.sourceScale != 1 && stage.sourceScale != 2 && stage.sourceScale != 4)) {
+                throw new IOException("Unsupported custom stage: " + stage.path);
+            }
+            preset.append("shader").append(i).append(" = ").append(path).append('\n');
+            if (i < stages.size() - 1) {
+                preset.append("scale_type").append(i).append(" = source\n");
+                preset.append("scale").append(i).append(" = ").append(stage.sourceScale).append('\n');
+            }
+            if (stage.filterLinear != null) {
+                preset.append("filter_linear").append(i).append(" = ")
+                        .append(stage.filterLinear).append('\n');
+            }
+        }
+        File root = shaderDirectory.getCanonicalFile();
+        return GlslpPreset.load(path -> {
+            if ("__jlmod_custom__.glslp".equals(path)) return preset.toString();
+            String source = readLocal(root, path);
+            Matcher samplers = SAMPLER.matcher(source);
+            while (samplers.find()) {
+                if (!"Texture".equals(samplers.group(1))) {
+                    throw new IOException("Custom stage requires additional sampler: "
+                            + samplers.group(1) + " (" + path + ")");
+                }
+            }
+            return source;
+        }, "__jlmod_custom__.glslp");
+    }
+
 
     public static GlslpPreset load(String selection, File shaderDirectory) throws IOException {
         if ("builtin:scanlines".equals(selection)) {

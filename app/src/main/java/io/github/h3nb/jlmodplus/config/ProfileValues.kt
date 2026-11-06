@@ -13,6 +13,14 @@ import java.util.Collections
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** One standalone GLSL source in a linear custom chain. */
+@Serializable
+data class CustomShaderStage(
+    @JvmField val path: String,
+    @JvmField val sourceScale: Int = 1,
+    @JvmField val filterLinear: Boolean? = null,
+)
+
 /** The persisted selection is independent of catalog metadata and mutable tuning dialogs. */
 @Serializable
 @ConsistentCopyVisibility
@@ -24,6 +32,7 @@ data class ShaderSelection internal constructor(
     @SerialName("Settings") @JvmField val values: List<Float>? = null,
     @SerialName("Preset") @JvmField val preset: String? = null,
     @SerialName("GLSLParameters") @JvmField val glslParameters: Map<String, Float>? = null,
+    @SerialName("CustomStages") @JvmField val customStages: List<CustomShaderStage>? = null,
 ) {
     fun valuesArray(): FloatArray? = values?.toFloatArray()
 
@@ -33,13 +42,15 @@ data class ShaderSelection internal constructor(
         it.preset = preset
         it.values = values?.toFloatArray()
         it.glslParameters = glslParameters?.toMutableMap()
+        it.customStages = customStages?.toList()
     }
 
     companion object {
         @JvmStatic fun fromInfo(info: ShaderInfo?): ShaderSelection? = info?.let {
             ShaderSelection(it.fragment, it.vertex, it.name, it.author,
                 it.values?.toList()?.let(Collections::unmodifiableList), it.preset,
-                it.glslParameters?.let { values -> Collections.unmodifiableMap(LinkedHashMap(values)) })
+                it.glslParameters?.let { values -> Collections.unmodifiableMap(LinkedHashMap(values)) },
+                it.customStages?.toList()?.let(Collections::unmodifiableList))
         }
     }
 }

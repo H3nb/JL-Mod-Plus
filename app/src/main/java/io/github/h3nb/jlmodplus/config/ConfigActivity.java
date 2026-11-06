@@ -152,6 +152,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ArrayList<ShaderInfo> shaders;
 	@Nullable private String inspectedShaderPreset;
 	@Nullable private ShaderPipelineSummary inspectedShaderPipeline;
+	@Nullable private List<CustomShaderStage> inspectedCustomShaderStages;
 	private String workDir;
 	private boolean needShow;
 	private boolean operationRunning;
@@ -2603,11 +2604,18 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				profileNames, hasControllerDevice(), updatePresetName, fileAccessBusy ? null : fileAccess);
 		String requestedPreset = state.shader == null ? null : state.shader.preset;
-		if (!Objects.equals(inspectedShaderPreset, requestedPreset)) {
+		List<CustomShaderStage> requestedStages = state.shader == null
+				? null : state.shader.customStages;
+		if (!Objects.equals(inspectedShaderPreset, requestedPreset)
+				|| !Objects.equals(inspectedCustomShaderStages, requestedStages)) {
 			inspectedShaderPreset = requestedPreset;
-			inspectedShaderPipeline = requestedPreset == null ? null
-					: ShaderPipelineSummary.inspect(requestedPreset,
-							new File(workDir + Config.SHADERS_DIR));
+			inspectedCustomShaderStages = requestedStages == null
+					? null : new ArrayList<>(requestedStages);
+			File shaderRoot = new File(workDir + Config.SHADERS_DIR);
+			inspectedShaderPipeline = requestedStages != null
+					? ShaderPipelineSummary.inspectCustom(requestedStages, shaderRoot)
+					: requestedPreset != null
+						? ShaderPipelineSummary.inspect(requestedPreset, shaderRoot) : null;
 		}
 		result.shaderPipeline = inspectedShaderPipeline;
 		if (state.controlSkinSetId == null) {

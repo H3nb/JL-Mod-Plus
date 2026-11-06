@@ -165,7 +165,8 @@ public abstract class Canvas extends Displayable {
 	private static boolean screenshotRawMode;
 	private static boolean usesGlslp() {
 		return settings != null && settings.graphicsMode == 1
-				&& settings.shader != null && settings.shader.preset != null;
+				&& settings.shader != null && (settings.shader.preset != null
+					|| settings.shader.customStages != null);
 	}
 	private static boolean timingOverlayEnabled;
 
@@ -1747,7 +1748,9 @@ public abstract class Canvas extends Displayable {
 			glslpPipeline = null;
 			if (usesGlslp()) {
 				try {
-					GlslpPreset preset = GlslpAssets.load(settings.shader.preset, shaderDirectory);
+					GlslpPreset preset = settings.shader.customStages != null
+							? GlslpAssets.loadCustom(settings.shader.customStages, shaderDirectory)
+							: GlslpAssets.load(settings.shader.preset, shaderDirectory);
 					preset = preset.withParameterOverrides(settings.shader.glslParameters);
 					String shaderSelection = settings.shader.preset;
 					glslpPipeline = new GlslpPipeline(preset, GlslpAssets.stockSource(),
