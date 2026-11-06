@@ -46,7 +46,7 @@
     <string name="render_shader_change">Choose another effect</string>
     <string name="render_custom_pipeline">Custom pipeline</string>
     <string name="render_custom_pipeline_hint">Combine standalone GLSL shaders from your shader folder.</string>
-    <string name="render_custom_order_help">Effects run from top to bottom. Complex GLSLP presets are kept intact and cannot be split here.</string>
+    <string name="render_custom_order_help">Effects run from top to bottom. Inherited GLSLP settings remain in effect unless changed.</string>
     <string name="render_custom_empty">Add a shader to start a custom chain.</string>
     <string name="render_custom_stage_count">%1$d custom shader stages</string>
     <string name="render_custom_add">Add shader</string>
@@ -88,4 +88,10 @@
     <string name="render_custom_remove_pass">Decrease number of shader passes</string>
     <string name="render_shader_selected_name">Active: %1$s</string>
     <string name="render_shader_invalid_picker">Cannot use the selected file. Select a GLSLP preset inside the shaders folder.</string>
+    <string name="render_custom_mode">Shader type</string>
+    <string name="render_custom_mode_legacy">Legacy</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Choose legacy shader</string>
+    <string name="render_custom_preserve_size">Output: From preset</string>
+    <string name="render_custom_loading">Reading preset passes…</string>
 </resources>

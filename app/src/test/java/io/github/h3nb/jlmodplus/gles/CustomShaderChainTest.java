@@ -95,4 +95,62 @@ class CustomShaderChainTest {
         assertEquals("nested/detail.GLSL", custom.passes.get(0).sourcePath);
     }
 
+
+    @Test void inheritedTenPassPresetRetainsMetadataAndParameters() throws Exception {
+        StringBuilder text = new StringBuilder("shaders = 10\n")
+                .append("textures = LUT\nLUT = lut.png\n");
+        for (int i = 0; i < 10; i++) {
+            text.append("shader").append(i).append(" = pass").append(i).append(".glsl\n");
+            source("many/pass" + i + ".glsl", "uniform sampler2D Texture;\n"
+                    + (i == 0 ? "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\n" : "")
+                    + "void main() {}\n");
+        }
+        text.append("scale_type0 = source\nscale0 = 2\n");
+        text.append("filter_linear0 = true\nwrap_mode0 = repeat\nalias0 = PREVIEW\n");
+        text.append("GAIN = 1.3\nparameters = GAIN\n");
+        source("many/ten.glslp", text.toString());
+        GlslpPreset original = GlslpAssets.load("many/ten.glslp", shaderRoot.toFile());
+        java.util.List<CustomShaderStage> stages = new java.util.ArrayList<>();
+        for (GlslpPreset.Pass pass : original.passes) {
+            stages.add(new CustomShaderStage(pass.sourcePath, 0, null));
+        }
+        GlslpPreset inherited = GlslpAssets.loadCustom(stages,
+                shaderRoot.toFile(), "many/ten.glslp", "glsl");
+        assertEquals(10, inherited.passes.size());
+        assertEquals(1, inherited.textures.size());
+        assertEquals("many/lut.png", inherited.textures.get(0).sourcePath);
+        assertEquals("PREVIEW", inherited.passes.get(0).alias);
+        assertEquals("repeat", inherited.passes.get(0).wrapMode);
+        assertEquals(Boolean.TRUE, inherited.passes.get(0).linearFilter);
+        assertEquals(1.3f, inherited.resolvedParameters().get("GAIN"), 0.001f);
+        assertEquals(64, inherited.plan(32, 32, 128, 128, 4096,
+                64L * 1024 * 1024).passes.get(0).outputWidth);
+    }
+
+    @Test void legacyCustomPassesRetainSeparateShaderPairsAndTuningValues() throws Exception {
+        source("legacy/one.vsh", "attribute vec4 a_position;\n"
+                + "attribute vec2 a_texcoord0;\nvarying vec2 v_texcoord0;\n"
+                + "void main() { gl_Position=a_position; v_texcoord0=a_texcoord0; }\n");
+        source("legacy/one.fsh", "precision mediump float;\n"
+                + "uniform sampler2D sampler0;\nuniform vec4 u_setting;\n"
+                + "varying vec2 v_texcoord0;\n"
+                + "void main() { gl_FragColor = texture2D(sampler0,v_texcoord0); }\n");
+        java.util.List<CustomShaderStage> stages = Arrays.asList(
+                new CustomShaderStage("legacy/one.fsh", 1, null, "legacy/one.vsh",
+                        Arrays.asList(0.1f, 0.2f, 0.3f, 0.4f), "Old CRT"),
+                new CustomShaderStage("legacy/one.fsh", 2, false, "legacy/one.vsh",
+                        Arrays.asList(0.7f, 0.8f, 0.9f, 1.0f), "Old CRT"));
+        GlslpPreset chain = GlslpAssets.loadCustom(stages,
+                shaderRoot.toFile(), null, "legacy");
+        assertEquals(2, chain.passes.size());
+        assertTrue(chain.passes.get(0).sourceText.contains("#define sampler0 Texture"));
+        assertTrue(chain.passes.get(0).sourceText.contains("#define a_position VertexCoord"));
+        assertEquals(0.2f, chain.passes.get(0).legacyValues.get(1));
+        assertEquals(0.8f, chain.passes.get(1).legacyValues.get(1));
+        assertEquals(64, chain.plan(32, 32, 128, 128, 4096,
+                64L * 1024 * 1024).passes.get(0).outputWidth);
+        assertThrows(IOException.class, () -> GlslpAssets.loadCustom(stages,
+                shaderRoot.toFile(), null, "glsl"));
+    }
+
 }

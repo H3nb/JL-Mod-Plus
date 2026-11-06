@@ -166,9 +166,9 @@ private fun ShaderEffectsContent(
     val shader = state.form.shader
     val root = state.shaderDirectory
     val context = LocalContext.current
-    val legacy = shader?.fragment != null && shader.vertex != null
-    val preset = shader?.preset != null
     val custom = shader?.customStages != null
+    val legacy = !custom && shader?.fragment != null && shader.vertex != null
+    val preset = !custom && shader?.preset != null
     val legacyChoices = state.shaders.filter { it.vertex != null && it.fragment != null }
     var legacyDialogVisible by rememberSaveable { mutableStateOf(false) }
     var invalidPickerResult by rememberSaveable { mutableStateOf(false) }

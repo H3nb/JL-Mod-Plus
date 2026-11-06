@@ -45,7 +45,7 @@
     <string name="render_shader_change">Pilih efek lain</string>
     <string name="render_custom_pipeline">Pipeline kustom</string>
     <string name="render_custom_pipeline_hint">Gabungkan shader GLSL mandiri dari folder shader.</string>
-    <string name="render_custom_order_help">Efek dijalankan dari atas ke bawah. Preset GLSLP kompleks tetap utuh dan tidak dapat dipecah di sini.</string>
+    <string name="render_custom_order_help">Efek dijalankan dari atas ke bawah. Pengaturan GLSLP sebelumnya tetap digunakan kecuali diubah.</string>
     <string name="render_custom_empty">Tambahkan shader untuk membuat rangkaian kustom.</string>
     <string name="render_custom_stage_count">%1$d tahap shader kustom</string>
     <string name="render_custom_add">Tambah shader</string>
@@ -87,4 +87,10 @@
     <string name="render_custom_remove_pass">Kurangi jumlah pass shader</string>
     <string name="render_shader_selected_name">Aktif: %1$s</string>
     <string name="render_shader_invalid_picker">File tidak dapat digunakan. Pilih preset GLSLP di dalam folder shaders.</string>
+    <string name="render_custom_mode">Jenis shader</string>
+    <string name="render_custom_mode_legacy">Legacy</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Pilih shader legacy</string>
+    <string name="render_custom_preserve_size">Output: Dari preset</string>
+    <string name="render_custom_loading">Membaca pass dari preset…</string>
 </resources>

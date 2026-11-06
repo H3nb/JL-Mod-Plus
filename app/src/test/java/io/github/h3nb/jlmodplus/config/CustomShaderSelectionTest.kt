@@ -24,4 +24,23 @@ class CustomShaderSelectionTest {
         assertEquals(original.customStages, restored.toInfo().copyForDialog().customStages)
         assertEquals(null, restored.preset)
     }
+
+    @Test
+    fun legacyStagePreservesModePathsAndPerPassSettings() {
+        val source = ShaderInfo("Custom pipeline", "JL-Mod Plus").apply {
+            customMode = "legacy"
+            customStages = listOf(
+                CustomShaderStage("legacy/old.fsh", 2, false,
+                    "legacy/old.vsh", listOf(1f, 2f, 3f, 4f), "Old shader"),
+            )
+        }
+        val restored = Json.decodeFromString<ShaderSelection>(
+            Json.encodeToString(ShaderSelection.fromInfo(source)),
+        )
+        assertEquals("legacy", restored.customMode)
+        assertEquals("legacy/old.vsh", restored.customStages?.single()?.legacyVertex)
+        assertEquals(listOf(1f, 2f, 3f, 4f),
+            restored.toInfo().copyForDialog().customStages?.single()?.legacyValues)
+    }
+
 }
