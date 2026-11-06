@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * GLES2 presentation-only execution of one or two GLSLP passes.
+ * GLES2 presentation-only execution of bounded GLSLP multipass presets.
  * Uses the existing guest frame sequence; unsupported dependencies fail closed.
  */
 public final class GlslpPipeline {
@@ -26,6 +26,8 @@ public final class GlslpPipeline {
     private final FloatBuffer quad = ByteBuffer.allocateDirect(4 * 8 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private long processedSequence = Long.MIN_VALUE;
+    private GlslpPreset.Plan cachedPlan;
+    private int planSourceWidth, planSourceHeight, planViewportWidth, planViewportHeight;
 
     public GlslpPipeline(GlslpPreset resolved, String stockSource) throws IOException {
         if (resolved == null || resolved.passes.isEmpty() || resolved.passes.size() > 16) {
@@ -90,10 +92,21 @@ public final class GlslpPipeline {
                     * surfaceWidth / 2f));
             int vh = Math.max(1, Math.round(Math.abs(legacyQuad.get(1) - legacyQuad.get(5))
                     * surfaceHeight / 2f));
-            int[] maxTexture = new int[1];
-            glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTexture, 0);
-            GlslpPreset.Plan plan = preset.plan(logicalWidth, logicalHeight,
-                    vw, vh, maxTexture[0], 64L * 1024L * 1024L);
+            boolean planChanged = cachedPlan == null || planSourceWidth != logicalWidth
+                    || planSourceHeight != logicalHeight || planViewportWidth != vw
+                    || planViewportHeight != vh;
+            if (planChanged) {
+                int[] maxTexture = new int[1];
+                glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTexture, 0);
+                GlslpPreset.Plan updated = preset.plan(logicalWidth, logicalHeight,
+                        vw, vh, maxTexture[0], 64L * 1024L * 1024L);
+                cachedPlan = updated;
+                planSourceWidth = logicalWidth;
+                planSourceHeight = logicalHeight;
+                planViewportWidth = vw;
+                planViewportHeight = vh;
+            }
+            GlslpPreset.Plan plan = cachedPlan;
             boolean resized = false;
             for (int i = 0; i < plan.passes.size(); i++) {
                 GlslpPreset.PlannedPass pass = plan.passes.get(i);
@@ -105,7 +118,7 @@ public final class GlslpPipeline {
                     resized = true;
                 }
             }
-            boolean newFrame = resized || guestSequence != processedSequence;
+            boolean newFrame = planChanged || resized || guestSequence != processedSequence;
             int n = plan.passes.size();
             for (int i = 0; i < n; i++) {
                 GlslpPreset.PlannedPass pass = plan.passes.get(i);

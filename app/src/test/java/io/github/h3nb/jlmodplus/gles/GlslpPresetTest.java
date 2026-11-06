@@ -179,7 +179,7 @@ public class GlslpPresetTest {
         String base = "shaders = 1\nshader0 = p.glsl\n";
         assets.put("test/refs.glslp", "#reference \"elsewhere.glslp\"\n" + base);
         expectFailure(() -> GlslpPreset.load(assets, "test/refs.glslp"),
-                "Unsupported GLSLP #reference");
+                "GLSLP #reference cannot redefine shader structure");
         assets.put("test/lut.glslp", base + "textures = mask\nmask = tex.png\n");
         expectFailure(() -> GlslpPreset.load(assets, "test/lut.glslp"),
                 "Unsupported GLSLP key");
@@ -198,6 +198,46 @@ public class GlslpPresetTest {
         assets.put("test/unknown.glslp", base + "feedback_pass = 0\n");
         expectFailure(() -> GlslpPreset.load(assets, "test/unknown.glslp"),
                 "Unsupported GLSLP key");
+    }
+
+    @Test public void simpleReferenceInheritsRelativeSourcesAndLastOverrideWins()
+            throws Exception {
+        Bundle assets = new Bundle()
+                .put("lib/shaders/main.glsl", "#pragma parameter GAIN \"Gain\" 1 0 5 0.25\n")
+                .put("lib/pipeline.glslp",
+                        "shaders = 1\nshader0 = shaders/main.glsl\n"
+                        + "parameters = GAIN\nGAIN = 1.5\n")
+                .put("custom/base.glslp", "#reference \"../lib/pipeline.glslp\"\nGAIN = 2.0\n")
+                .put("custom/tuned.glslp", "#reference \"base.glslp\"\nGAIN = 3.5\n");
+        GlslpPreset preset = GlslpPreset.load(assets, "custom/tuned.glslp");
+        assertEquals(1, preset.passes.size());
+        assertEquals("lib/shaders/main.glsl", preset.passes.get(0).sourcePath);
+        assertEquals(3.5f, preset.resolvedParameters().get("GAIN"), 0f);
+        assertEquals(VIEWPORT, plan(preset).passes.get(0).outputWidth);
+
+        assets.put("custom/bad.glslp", "#reference \"../lib/pipeline.glslp\"\nGAIN = 6\n");
+        expectFailure(() -> GlslpPreset.load(assets, "custom/bad.glslp"),
+                "Preset parameter outside GLSL range");
+    }
+
+    @Test public void referenceRejectsCyclesTraversalAndUnsupportedEdits() throws Exception {
+        Bundle assets = new Bundle()
+                .put("presets/cycle-a.glslp", "#reference \"cycle-b.glslp\"\n")
+                .put("presets/cycle-b.glslp", "#reference \"cycle-a.glslp\"\n")
+                .put("presets/escape.glslp", "#reference \"../../outside.glslp\"\n")
+                .put("presets/multiple.glslp",
+                        "#reference \"a.glslp\"\n#reference \"b.glslp\"\n")
+                .put("presets/main.glsl", "#pragma parameter GAIN \"Gain\" 1 0 5 0.5\n")
+                .put("presets/base.glslp", "shaders = 1\nshader0 = main.glsl\n")
+                .put("presets/unknown.glslp", "#reference \"base.glslp\"\nNoSuchParameter = 5\n");
+        expectFailure(() -> GlslpPreset.load(assets, "presets/cycle-a.glslp"),
+                "Cyclic or too deep GLSLP #reference");
+        expectFailure(() -> GlslpPreset.load(assets, "presets/escape.glslp"),
+                "Asset escapes GLSLP bundle");
+        expectFailure(() -> GlslpPreset.load(assets, "presets/multiple.glslp"),
+                "Invalid or multiple GLSLP #reference");
+        expectFailure(() -> GlslpPreset.load(assets, "presets/unknown.glslp"),
+                "Unsupported GLSLP #reference override");
     }
 
     @Test public void standaloneGlslCompilesAsViewportSizedOnePass() throws Exception {

@@ -15,7 +15,12 @@ to refresh the list. Other graphics modes do not use GLSLP.
 
 This branch supports **one to sixteen passes**, GLES2-compatible combined
 shader sources, basic GLSLP scaling/filtering and numeric parameters.
-It rejects unsupported preset keys, LUTs, history, feedback, `#reference`,
+It accepts a bounded chain (maximum 8 files) of simple `#reference` GLSLP
+presets that inherit a full preset and override declared scalar parameters.
+Referenced shader paths remain relative to the file that declares the full
+preset. Cycles, unsafe paths, structural pass overrides, `.params` references,
+LUT overrides and other advanced reference features are rejected.
+It rejects other unsupported preset keys, LUTs, history, feedback,
 float/sRGB framebuffers, unverified desktop-only GLSL constructs and non-clamp wrap. It is not
 general RetroArch GLSLP compatibility. Failed programs revert to the
 identity presentation; inspect logcat for the rejection reason.
@@ -52,6 +57,11 @@ This is not a general desktop GLSL-to-GLES translation. Compilation still
 rejects unsupported GPU syntax. Presets requiring float/sRGB framebuffer
 formats, LUTs, or temporal feedback are rejected rather than silently
 substituting an incorrect RGBA8 approximation.
+
+Pipeline size planning and GL_MAX_TEXTURE_SIZE queries are cached while source
+and viewport dimensions are unchanged, and rebuilt on resize or source-size
+change. This reduces per-presentation CPU work; no device-level speedup is
+claimed without profiling.
 
 All offscreen stages are subject to a combined 64 MiB RGBA8 budget.
 Unsupported passes revert to the identity presentation, leaving the

@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.gles.GlslpPreset
 import java.util.LinkedHashMap
+import androidx.compose.ui.platform.LocalConfiguration
+import android.os.Build
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -274,6 +276,10 @@ private fun ShaderParameterControl(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
+    val configuration = LocalConfiguration.current
+    @Suppress("DEPRECATION")
+    val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        configuration.locales[0] else configuration.locale
     val savedValue = (shader.glslParameters?.get(parameter.id) ?: parameter.value)
         .coerceIn(parameter.minimum, parameter.maximum)
     var draft by rememberSaveable(shader.preset, parameter.id) { mutableFloatStateOf(savedValue) }
@@ -295,7 +301,7 @@ private fun ShaderParameterControl(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                String.format(Locale.getDefault(), "%.2f", draft),
+                String.format(locale, "%.2f", draft),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )

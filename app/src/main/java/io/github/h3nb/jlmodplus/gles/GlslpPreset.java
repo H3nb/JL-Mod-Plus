@@ -21,6 +21,9 @@ public final class GlslpPreset {
             "^#pragma\\s+parameter\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\\"[^\\\"]*\\\""
                     + "\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
     private static final int MAX_PASSES = 16;
+    private static final int MAX_REFERENCE_DEPTH = 8;
+    private static final Pattern REFERENCE = Pattern.compile(
+            "^#reference\\s+\\\"([^\\\"]+)\\\"\\s*(?:#.*)?$");
     private static final int MAX_PRESET_CHARS = 256 * 1024;
     private static final int MAX_SOURCE_CHARS = 512 * 1024;
     private static final int MAX_TOTAL_SOURCE_CHARS = 2 * 1024 * 1024;
@@ -137,7 +140,23 @@ public final class GlslpPreset {
      */
     public static GlslpPreset load(AssetReader assets, String presetPath)
             throws IOException {
-        String preset = normalize("", presetPath);
+        return loadReferenced(assets, normalize("", presetPath), new LinkedHashSet<>());
+    }
+
+    private static GlslpPreset loadReferenced(AssetReader assets, String preset,
+            Set<String> stack) throws IOException {
+        if (stack.size() >= MAX_REFERENCE_DEPTH || !stack.add(preset)) {
+            throw new IOException("Cyclic or too deep GLSLP #reference: " + preset);
+        }
+        try {
+            return readPreset(assets, preset, stack);
+        } finally {
+            stack.remove(preset);
+        }
+    }
+
+    private static GlslpPreset readPreset(AssetReader assets, String preset,
+            Set<String> stack) throws IOException {
         if (preset.endsWith(".glsl")) {
             String source = assets.read(preset);
             if (source == null || source.length() > MAX_SOURCE_CHARS) {
@@ -152,7 +171,33 @@ public final class GlslpPreset {
         if (text == null || text.length() > MAX_PRESET_CHARS) {
             throw new IOException("Missing or oversized GLSLP preset: " + preset);
         }
-        Map<String, String> entries = parse(text);
+        List<String> references = new ArrayList<>();
+        Map<String, String> entries = parse(text, references);
+        if (!references.isEmpty()) {
+            // A simple preset inherits a complete shader chain and overrides parameter values.
+            // Pass edits, LUT paths and .params references are not supported by this subset.
+            if (entries.containsKey("shaders") || entries.containsKey("parameters")) {
+                throw new IOException("GLSLP #reference cannot redefine shader structure");
+            }
+            String parent = preset.contains("/")
+                    ? preset.substring(0, preset.lastIndexOf('/') + 1) : "";
+            GlslpPreset inherited = loadReferenced(assets,
+                    normalize(parent, references.get(0)), stack);
+            Map<String, Double> overrides = new LinkedHashMap<>(inherited.parameterOverrides);
+            Set<String> declared = new LinkedHashSet<>();
+            for (Parameter parameter : inherited.parameterDefinitions()) {
+                declared.add(parameter.id);
+            }
+            for (Map.Entry<String, String> entry : entries.entrySet()) {
+                if (!declared.contains(entry.getKey())) {
+                    throw new IOException("Unsupported GLSLP #reference override: " + entry.getKey());
+                }
+                overrides.put(entry.getKey(), number(entry.getValue(), entry.getKey()));
+            }
+            GlslpPreset resolved = new GlslpPreset(inherited.passes, overrides);
+            resolved.parameterDefinitions(); // Check bounds before exposing a preset to the UI or GPU.
+            return resolved;
+        }
         String countText = entries.remove("shaders");
         final int count;
         try {
@@ -229,7 +274,7 @@ public final class GlslpPreset {
             passes.add(new Pass(shader, shaderText, filter, wrap, x, y));
         }
         if (!entries.isEmpty()) {
-            // Reject LUT, temporal, feedback, #reference and newer preset features
+            // Reject LUT, temporal, feedback and newer preset features
             // rather than rendering a visually wrong approximation.
             throw new IOException("Unsupported GLSLP key: " + entries.keySet().iterator().next());
         }
@@ -406,13 +451,17 @@ public final class GlslpPreset {
         return result;
     }
 
-    private static Map<String, String> parse(String source) throws IOException {
+    private static Map<String, String> parse(String source, List<String> references)
+            throws IOException {
         Map<String, String> values = new LinkedHashMap<>();
         for (String original : source.split("\n", -1)) {
-            // #reference is a directive, not an ordinary # comment. Refuse it
-            // until recursive import and declaring-file-relative paths are modeled.
             if (original.trim().startsWith("#reference")) {
-                throw new IOException("Unsupported GLSLP #reference");
+                Matcher matcher = REFERENCE.matcher(original.trim());
+                if (!matcher.matches() || !references.isEmpty()) {
+                    throw new IOException("Invalid or multiple GLSLP #reference");
+                }
+                references.add(matcher.group(1));
+                continue;
             }
             String line = uncomment(original).trim();
             if (line.isEmpty()) continue;
