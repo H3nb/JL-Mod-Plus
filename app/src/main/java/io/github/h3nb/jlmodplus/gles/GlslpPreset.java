@@ -68,16 +68,18 @@ public final class GlslpPreset {
         public final Boolean linearFilter; // null = unspecified; not a forced nearest filter
         public final String wrapMode; // null = unspecified
         public final String alias; // optional preset name for this pass's output
+        public final boolean mipmapInput;
         public final Axis x;
         public final Axis y;
 
         private Pass(String sourcePath, String sourceText, Boolean linearFilter,
-                String wrapMode, String alias, Axis x, Axis y) {
+                String wrapMode, String alias, boolean mipmapInput, Axis x, Axis y) {
             this.sourcePath = sourcePath;
             this.sourceText = sourceText;
             this.linearFilter = linearFilter;
             this.wrapMode = wrapMode;
             this.alias = alias;
+            this.mipmapInput = mipmapInput;
             this.x = x;
             this.y = y;
         }
@@ -187,7 +189,7 @@ public final class GlslpPreset {
             if (source == null || source.length() > MAX_SOURCE_CHARS) {
                 throw new IOException("Missing or oversized GLSL source: " + preset);
             }
-            Pass single = new Pass(preset, source, null, null, null,
+            Pass single = new Pass(preset, source, null, null, null, false,
                     new Axis(SizeBasis.VIEWPORT, 1), new Axis(SizeBasis.VIEWPORT, 1));
             return new GlslpPreset(Collections.singletonList(single), Collections.emptyMap(),
                     Collections.emptyList());
@@ -299,9 +301,32 @@ public final class GlslpPreset {
             String linear = entries.remove("filter_linear" + i);
             Boolean filter = linear == null ? null : bool(linear, "filter_linear" + i);
             String wrap = entries.remove("wrap_mode" + i);
+            if ("clamp_to_border".equals(wrap)) {
+                throw new IOException("GLSLP clamp_to_border cannot be reproduced on baseline GLES2");
+            }
             if (wrap != null && !wrap.equals("clamp_to_edge")
                     && !wrap.equals("repeat") && !wrap.equals("mirrored_repeat")) {
                 throw new IOException("Unsupported wrap mode " + wrap + " in pass " + i);
+            }
+            String mipmapText = entries.remove("mipmap_input" + i);
+            boolean mipmap = mipmapText != null && bool(mipmapText, "mipmap_input" + i);
+            for (String format : new String[] {"float_framebuffer", "srgb_framebuffer"}) {
+                String value = entries.remove(format + i);
+                if (value != null && bool(value, format + i)) {
+                    throw new IOException("Unsupported GLSLP framebuffer format: " + format + i);
+                }
+            }
+            String frameMod = entries.remove("frame_count_mod" + i);
+            if (frameMod != null) {
+                final int divisor;
+                try {
+                    divisor = Integer.parseInt(frameMod);
+                } catch (NumberFormatException e) {
+                    throw new IOException("Invalid GLSLP frame_count_mod" + i, e);
+                }
+                if (divisor != 0) {
+                    throw new IOException("Unsupported GLSLP temporal frame_count_mod" + i);
+                }
             }
 
             String commonType = entries.remove("scale_type" + i);
@@ -320,7 +345,7 @@ public final class GlslpPreset {
             SizeBasis yBasis = basis(commonType != null ? commonType : yType, defaultBasis);
             Axis x = axis(xBasis, commonScale != null ? commonScale : xScale, i);
             Axis y = axis(yBasis, commonScale != null ? commonScale : yScale, i);
-            passes.add(new Pass(shader, shaderText, filter, wrap, alias, x, y));
+            passes.add(new Pass(shader, shaderText, filter, wrap, alias, mipmap, x, y));
         }
         Set<String> passSamplerNames = new LinkedHashSet<>(passAliases);
         for (String alias : passAliases) passSamplerNames.add(alias + "Texture");
@@ -473,6 +498,18 @@ public final class GlslpPreset {
         List<PlannedPass> result = new ArrayList<>();
         for (int i = 0; i < passes.size(); i++) {
             Pass pass = passes.get(i);
+            if ((pass.mipmapInput || "repeat".equals(pass.wrapMode)
+                    || "mirrored_repeat".equals(pass.wrapMode))
+                    && (!powerOfTwo(inW) || !powerOfTwo(inH))) {
+                throw new IllegalArgumentException(
+                        "GLES2 input for mipmaps/repeat must be power-of-two in pass " + i);
+            }
+            if (pass.mipmapInput) {
+                bytes += mipChainBytes(inW, inH);
+                if (bytes > maxIntermediateBytes) {
+                    throw new IllegalArgumentException("Intermediate GPU budget exceeded");
+                }
+            }
             int w = pass.x.resolve(inW, viewportW, maxTextureSize);
             int h = pass.y.resolve(inH, viewportH, maxTextureSize);
             // RetroArch's final-pass decision is semantic: any non-identity
@@ -494,6 +531,20 @@ public final class GlslpPreset {
         }
         boolean blit = result.get(result.size() - 1).offscreen;
         return new Plan(result, blit, bytes);
+    }
+
+    private static boolean powerOfTwo(int value) {
+        return value > 0 && (value & (value - 1)) == 0;
+    }
+
+    private static long mipChainBytes(int width, int height) {
+        long bytes = 0;
+        while (width > 1 || height > 1) {
+            width = Math.max(1, width / 2);
+            height = Math.max(1, height / 2);
+            bytes += 4L * width * height;
+        }
+        return bytes;
     }
 
     private static Axis axis(SizeBasis basis, String scaleText, int pass) throws IOException {

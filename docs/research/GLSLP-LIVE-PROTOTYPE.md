@@ -43,9 +43,18 @@ GLES2 non-power-of-two images cannot use repeat/mirrored-repeat or mipmaps.
 The same GPU texture is reused between frames and released with its pipeline.
 The configuration UI only parses metadata; it never decodes or uploads images.
 
-Other unsupported keys, history, feedback, float/sRGB framebuffers,
-unverified desktop-only GLSL constructs and non-clamp per-pass wrap remain
-unsupported. It is not
+Common exported per-pass metadata `mipmap_inputN=false`,
+`float_framebufferN=false`, `srgb_framebufferN=false`, and
+`frame_count_modN=0` is accepted. Input sampling can now use repeat or
+mirrored-repeat and optional `mipmap_inputN=true` on power-of-two images.
+Mipmaps are generated only when the guest frame or pass layout changes and
+their extra level allocations count against the 64 MiB plan budget. Unsupported
+non-power-of-two GLES2 input combinations are rejected explicitly.
+GLES2 does not natively reproduce `clamp_to_border`; it remains rejected
+rather than silently substituted with clamp-to-edge.
+
+Other unsupported keys, history, feedback, float/sRGB framebuffers
+when enabled, and desktop-only GLSL constructs remain unsupported. It is not
 general RetroArch GLSLP compatibility. Failed programs revert to the
 identity presentation; inspect logcat for the rejection reason.
 

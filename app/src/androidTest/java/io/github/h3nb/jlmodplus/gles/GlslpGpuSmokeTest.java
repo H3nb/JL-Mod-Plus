@@ -164,6 +164,39 @@ public final class GlslpGpuSmokeTest {
                 + fragment + "#endif\n";
     }
 
+    @Test public void powerOfTwoRepeatAndMirroredRepeatPreserveSampling() throws Exception {
+        String fragment = "uniform sampler2D Texture;\n"
+                + "void main(){gl_FragColor=texture2D(Texture,vec2(1.25,0.5));}\n";
+        for (String mode : new String[]{"repeat", "mirrored_repeat"}) {
+            Map<String, String> files = new HashMap<>();
+            files.put("wrap.glslp", "shaders = 1\nshader0 = sample.glsl\n"
+                    + "filter_linear0 = false\nwrap_mode0 = " + mode + "\n");
+            files.put("sample.glsl", colorPass(fragment));
+            GlslpPreset preset = GlslpPreset.load(files::get, "wrap.glslp");
+            int expected = mode.equals("repeat") ? Color.rgb(40, 170, 255)
+                    : Color.rgb(255, 70, 35);
+            execute(preset, 1,
+                    path -> { throw new java.io.IOException("Unexpected LUT: " + path); },
+                    expected);
+        }
+    }
+
+    @Test public void mipmapInputGeneratesValidGpuLevels() throws Exception {
+        Map<String, String> files = new HashMap<>();
+        files.put("mip.glslp", "shaders = 2\nshader0 = first.glsl\n"
+                + "scale_type0 = source\nscale0 = 1\n"
+                + "shader1 = second.glsl\nmipmap_input1 = true\n"
+                + "filter_linear1 = true\n");
+        String fragment = "uniform sampler2D Texture;\n"
+                + "void main(){gl_FragColor=texture2D(Texture,uv);}\n";
+        files.put("first.glsl", colorPass(fragment));
+        files.put("second.glsl", colorPass(fragment));
+        GlslpPreset preset = GlslpPreset.load(files::get, "mip.glslp");
+        execute(preset, 2,
+                path -> { throw new java.io.IOException("Unexpected LUT: " + path); },
+                -1);
+    }
+
     private static void execute(String selection, int expectedPasses) throws Exception {
         execute(GlslpAssets.load(selection, null), expectedPasses,
                 path -> { throw new java.io.IOException("Unexpected LUT: " + path); }, -1);

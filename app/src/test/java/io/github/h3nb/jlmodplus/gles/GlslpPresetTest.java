@@ -323,6 +323,56 @@ public class GlslpPresetTest {
                 "Invalid or reserved GLSLP texture alias");
     }
 
+    @Test public void exportedNeutralGlslpMetadataIsAcceptedWithoutEmulation() throws Exception {
+        Bundle assets = new Bundle().put("pass.glsl", "void main(){}")
+                .put("neutral.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                        + "mipmap_input0 = false\nfloat_framebuffer0 = false\n"
+                        + "srgb_framebuffer0 = false\nframe_count_mod0 = 0\n");
+        GlslpPreset preset = GlslpPreset.load(assets, "neutral.glslp");
+        assertEquals(1, preset.passes.size());
+        assertFalse(preset.passes.get(0).mipmapInput);
+
+        assets.put("float.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                + "float_framebuffer0 = true\n");
+        expectFailure(() -> GlslpPreset.load(assets, "float.glslp"),
+                "Unsupported GLSLP framebuffer format");
+        assets.put("srgb.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                + "srgb_framebuffer0 = true\n");
+        expectFailure(() -> GlslpPreset.load(assets, "srgb.glslp"),
+                "Unsupported GLSLP framebuffer format");
+        assets.put("temporal.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                + "frame_count_mod0 = 2\n");
+        expectFailure(() -> GlslpPreset.load(assets, "temporal.glslp"),
+                "Unsupported GLSLP temporal");
+        assets.put("border.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                + "wrap_mode0 = clamp_to_border\n");
+        expectFailure(() -> GlslpPreset.load(assets, "border.glslp"),
+                "GLSLP clamp_to_border");
+    }
+
+    @Test public void mipmapsAndRepeatRequirePowerOfTwoAndRespectMemoryBudget() throws Exception {
+        Bundle assets = new Bundle().put("pass.glsl", "void main(){}")
+                .put("mip.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                        + "mipmap_input0 = true\nwrap_mode0 = mirrored_repeat\n");
+        GlslpPreset preset = GlslpPreset.load(assets, "mip.glslp");
+        assertTrue(preset.passes.get(0).mipmapInput);
+        assertEquals("mirrored_repeat", preset.passes.get(0).wrapMode);
+        GlslpPreset.Plan planned = preset.plan(32, 32, 96, 96, 2048, 1024 * 1024);
+        assertTrue(planned.conservativeIntermediateBytes > 0);
+        expectFailure(() -> preset.plan(31, 32, 96, 96, 2048, 1024 * 1024),
+                "power-of-two");
+        expectFailure(() -> preset.plan(32, 32, 96, 96, 2048, 0),
+                "Intermediate GPU budget exceeded");
+
+        assets.put("two.glslp", "shaders = 2\n"
+                + "shader0 = pass.glsl\nscale_type0 = source\nscale0 = 1\n"
+                + "shader1 = pass.glsl\nmipmap_input1 = true\n");
+        GlslpPreset.Plan passes = GlslpPreset.load(assets, "two.glslp")
+                .plan(32, 32, 96, 96, 2048, 1024 * 1024);
+        assertEquals(2, passes.passes.size());
+        assertTrue(passes.conservativeIntermediateBytes > 4L * 32 * 32);
+    }
+
     @Test public void standaloneGlslCompilesAsViewportSizedOnePass() throws Exception {
         Bundle assets = new Bundle().put("custom.glsl", "#ifdef VERTEX\\n#endif");
         GlslpPreset shader = GlslpPreset.load(assets, "custom.glsl");

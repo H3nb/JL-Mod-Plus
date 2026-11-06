@@ -90,9 +90,6 @@ public final class GlslpPipeline {
         try {
             for (int i = 0; i < n; i++) {
                 GlslpPreset.Pass pass = preset.passes.get(i);
-                if (pass.wrapMode != null && !"clamp_to_edge".equals(pass.wrapMode)) {
-                    throw new IOException("Unsupported sampler wrap " + pass.wrapMode);
-                }
                 programs[i] = link(pass.sourceText, !parameters.isEmpty());
                 vertexAttributes[i] = glGetAttribLocation(programs[i], "VertexCoord");
                 textureAttributes[i] = glGetAttribLocation(programs[i], "TexCoord");
@@ -309,6 +306,11 @@ public final class GlslpPipeline {
                 int prev2 = i == 1 ? sourceTexture : (i > 1 ? intermediate[i - 2] : 0);
                 int prevW = i < 2 ? logicalWidth : targetWidth[i - 2];
                 int prevH = i < 2 ? logicalHeight : targetHeight[i - 2];
+                if (pass.pass.mipmapInput && newFrame) {
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, input);
+                    glGenerateMipmap(GL_TEXTURE_2D);
+                }
                 drawPass(i, input, usesOriginal[i] ? sourceTexture : 0,
                         usesPrev2[i] ? prev2 : 0, pass.inputWidth, pass.inputHeight,
                         pass.outputWidth, pass.outputHeight,
@@ -344,6 +346,8 @@ public final class GlslpPipeline {
             glBindTexture(GL_TEXTURE_2D, sourceTexture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, legacyFilter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, legacyFilter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
 
@@ -426,8 +430,17 @@ public final class GlslpPipeline {
         }
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        GlslpPreset.Pass pass = stage < preset.passes.size() ? preset.passes.get(stage) : null;
+        boolean mipmap = pass != null && pass.mipmapInput;
+        int minFilter = !mipmap ? filter
+                : (filter == GL_LINEAR ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        int wrap = pass == null || pass.wrapMode == null
+                || "clamp_to_edge".equals(pass.wrapMode) ? GL_CLAMP_TO_EDGE
+                : ("repeat".equals(pass.wrapMode) ? GL_REPEAT : GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
         if (originalTexture != 0) {
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, originalTexture);
