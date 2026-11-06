@@ -15,10 +15,13 @@ import kotlinx.serialization.Serializable
 
 /** One standalone GLSL source in a linear custom chain. */
 @Serializable
-data class CustomShaderStage(
+data class CustomShaderStage @JvmOverloads constructor(
     @JvmField val path: String,
     @JvmField val sourceScale: Int = 1,
     @JvmField val filterLinear: Boolean? = null,
+    @JvmField val legacyVertex: String? = null,
+    @JvmField val legacyValues: List<Float>? = null,
+    @JvmField val legacyName: String? = null,
 )
 
 /** The persisted selection is independent of catalog metadata and mutable tuning dialogs. */
@@ -33,6 +36,7 @@ data class ShaderSelection internal constructor(
     @SerialName("Preset") @JvmField val preset: String? = null,
     @SerialName("GLSLParameters") @JvmField val glslParameters: Map<String, Float>? = null,
     @SerialName("CustomStages") @JvmField val customStages: List<CustomShaderStage>? = null,
+    @SerialName("CustomMode") @JvmField val customMode: String? = null,
 ) {
     fun valuesArray(): FloatArray? = values?.toFloatArray()
 
@@ -42,7 +46,10 @@ data class ShaderSelection internal constructor(
         it.preset = preset
         it.values = values?.toFloatArray()
         it.glslParameters = glslParameters?.toMutableMap()
-        it.customStages = customStages?.toList()
+        it.customStages = customStages?.map { stage ->
+            stage.copy(legacyValues = stage.legacyValues?.toList())
+        }
+        it.customMode = customMode
     }
 
     companion object {
@@ -50,7 +57,9 @@ data class ShaderSelection internal constructor(
             ShaderSelection(it.fragment, it.vertex, it.name, it.author,
                 it.values?.toList()?.let(Collections::unmodifiableList), it.preset,
                 it.glslParameters?.let { values -> Collections.unmodifiableMap(LinkedHashMap(values)) },
-                it.customStages?.toList()?.let(Collections::unmodifiableList))
+                it.customStages?.map { stage ->
+                    stage.copy(legacyValues = stage.legacyValues?.toList()?.let(Collections::unmodifiableList))
+                }?.let(Collections::unmodifiableList), it.customMode)
         }
     }
 }

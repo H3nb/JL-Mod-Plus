@@ -2602,7 +2602,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					? null : new ArrayList<>(requestedStages);
 			File shaderRoot = new File(workDir + Config.SHADERS_DIR);
 			inspectedShaderPipeline = requestedStages != null
-					? ShaderPipelineSummary.inspectCustom(requestedStages, shaderRoot)
+					? ShaderPipelineSummary.inspectCustom(requestedStages, shaderRoot,
+							requestedPreset, state.shader.customMode)
 					: requestedPreset != null
 						? ShaderPipelineSummary.inspect(requestedPreset, shaderRoot) : null;
 		}

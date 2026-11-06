@@ -580,6 +580,18 @@ public final class GlslpPipeline {
         glActiveTexture(GL_TEXTURE0);
         glDisable(GL_BLEND);
         uniform1i(stage, "Texture", 0);
+        if (pass != null && pass.legacyValues != null) {
+            int location = uniformLocation(stage, "u_setting");
+            if (location >= 0) {
+                float[] values = new float[4];
+                for (int i = 0; i < Math.min(4, pass.legacyValues.size()); i++) {
+                    values[i] = pass.legacyValues.get(i);
+                }
+                glUniform4fv(location, 1, values, 0);
+            }
+            uniform2f(stage, "u_texelDelta", 1f / inputW, 1f / inputH);
+            uniform2f(stage, "u_pixelDelta", 1f / outputW, 1f / outputH);
+        }
         uniform2f(stage, "InputSize", inputW, inputH);
         uniform2f(stage, "TextureSize", inputW, inputH);
         uniform2f(stage, "OutputSize", outputW, outputH);

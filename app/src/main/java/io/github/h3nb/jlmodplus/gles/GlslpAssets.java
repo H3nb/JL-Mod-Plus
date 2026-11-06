@@ -32,23 +32,68 @@ public final class GlslpAssets {
      */
     public static GlslpPreset loadCustom(List<CustomShaderStage> stages, File shaderDirectory)
             throws IOException {
+        return loadCustom(stages, shaderDirectory, null, "glsl");
+    }
+
+    /** An inherited GLSLP chain retains its original non-source pass metadata. */
+    public static GlslpPreset loadCustom(List<CustomShaderStage> stages, File shaderDirectory,
+            String basePreset, String mode) throws IOException {
         if (shaderDirectory == null || stages == null || stages.isEmpty() || stages.size() > 16) {
             throw new IOException("Custom shader chain must contain 1–16 stages");
         }
+        File root = shaderDirectory.getCanonicalFile();
+        if ("glsl".equals(mode) || mode == null) {
+            if (basePreset != null) {
+                return load(basePreset, root).withCustomSources(stages, path -> readLocal(root, path));
+            }
+            return loadStandaloneStages(stages, root, false);
+        }
+        if ("legacy".equals(mode)) return loadStandaloneStages(stages, root, true);
+        throw new IOException("Unknown custom shader mode: " + mode);
+    }
+
+    private static GlslpPreset loadStandaloneStages(List<CustomShaderStage> stages,
+            File root, boolean legacy) throws IOException {
         StringBuilder preset = new StringBuilder("shaders = ").append(stages.size()).append('\n');
+        java.util.Map<String, String> generated = new java.util.HashMap<>();
         for (int i = 0; i < stages.size(); i++) {
             CustomShaderStage stage = stages.get(i);
             if (stage == null || stage.path == null || stage.path.indexOf('\n') >= 0
                     || stage.path.indexOf('\r') >= 0 || stage.path.indexOf('=') >= 0
-                    || stage.path.indexOf('\\') >= 0 || stage.path.indexOf(':') >= 0) {
-                throw new IOException("Invalid custom stage path");
+                    || stage.sourceScale == 0 || (stage.sourceScale != 1
+                    && stage.sourceScale != 2 && stage.sourceScale != 4)) {
+                throw new IOException("Invalid custom shader stage");
             }
             String path = GlslpPreset.normalize("", stage.path);
-            if (!path.equals(stage.path) || !path.toLowerCase(java.util.Locale.ROOT).endsWith(".glsl")
-                    || (stage.sourceScale != 1 && stage.sourceScale != 2 && stage.sourceScale != 4)) {
-                throw new IOException("Unsupported custom stage: " + stage.path);
+            if (!path.equals(stage.path)) throw new IOException("Unsafe stage path: " + stage.path);
+            String key;
+            if (legacy) {
+                if (stage.legacyVertex == null
+                        || !path.toLowerCase(java.util.Locale.ROOT).endsWith(".fsh")) {
+                    throw new IOException("Legacy stage requires .vsh and .fsh");
+                }
+                String vertexPath = GlslpPreset.normalize("", stage.legacyVertex);
+                if (!vertexPath.equals(stage.legacyVertex)
+                        || !vertexPath.toLowerCase(java.util.Locale.ROOT).endsWith(".vsh")) {
+                    throw new IOException("Unsafe legacy vertex path");
+                }
+                String vertex = readLocal(root, vertexPath);
+                String fragment = readLocal(root, path);
+                key = "__jlmod_legacy" + i + ".glsl";
+                generated.put(key, "#ifdef VERTEX\n"
+                        + "#define a_position VertexCoord\n"
+                        + "#define a_texcoord0 TexCoord\n"
+                        + vertex + "\n#endif\n#ifdef FRAGMENT\n"
+                        + "#define sampler0 Texture\n"
+                        + fragment + "\n#endif\n");
+            } else {
+                if (!path.toLowerCase(java.util.Locale.ROOT).endsWith(".glsl")
+                        || stage.legacyVertex != null) {
+                    throw new IOException("Custom GLSL requires standalone .glsl sources");
+                }
+                key = path;
             }
-            preset.append("shader").append(i).append(" = ").append(path).append('\n');
+            preset.append("shader").append(i).append(" = ").append(key).append('\n');
             if (i < stages.size() - 1) {
                 preset.append("scale_type").append(i).append(" = source\n");
                 preset.append("scale").append(i).append(" = ").append(stage.sourceScale).append('\n');
@@ -58,9 +103,9 @@ public final class GlslpAssets {
                         .append(stage.filterLinear).append('\n');
             }
         }
-        File root = shaderDirectory.getCanonicalFile();
-        return GlslpPreset.load(path -> {
+        GlslpPreset result = GlslpPreset.load(path -> {
             if ("__jlmod_custom__.glslp".equals(path)) return preset.toString();
+            if (generated.containsKey(path)) return generated.get(path);
             String source = readLocal(root, path);
             Matcher samplers = SAMPLER.matcher(source);
             while (samplers.find()) {
@@ -71,6 +116,7 @@ public final class GlslpAssets {
             }
             return source;
         }, "__jlmod_custom__.glslp");
+        return legacy ? result.withLegacyValues(stages) : result;
     }
 
 

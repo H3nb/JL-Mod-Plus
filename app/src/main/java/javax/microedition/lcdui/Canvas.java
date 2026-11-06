@@ -1749,7 +1749,8 @@ public abstract class Canvas extends Displayable {
 			if (usesGlslp()) {
 				try {
 					GlslpPreset preset = settings.shader.customStages != null
-							? GlslpAssets.loadCustom(settings.shader.customStages, shaderDirectory)
+							? GlslpAssets.loadCustom(settings.shader.customStages, shaderDirectory,
+								settings.shader.preset, settings.shader.customMode)
 							: GlslpAssets.load(settings.shader.preset, shaderDirectory);
 					preset = preset.withParameterOverrides(settings.shader.glslParameters);
 					String shaderSelection = settings.shader.preset;

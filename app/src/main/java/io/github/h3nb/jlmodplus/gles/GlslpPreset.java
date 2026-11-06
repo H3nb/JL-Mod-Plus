@@ -73,10 +73,19 @@ public final class GlslpPreset {
         public final int frameCountMod;
         public final Axis x;
         public final Axis y;
+        public final List<Float> legacyValues;
 
         private Pass(String sourcePath, String sourceText, Boolean linearFilter,
                 String wrapMode, String alias, boolean mipmapInput,
                 boolean floatFramebuffer, int frameCountMod, Axis x, Axis y) {
+            this(sourcePath, sourceText, linearFilter, wrapMode, alias, mipmapInput,
+                    floatFramebuffer, frameCountMod, x, y, null);
+        }
+
+        private Pass(String sourcePath, String sourceText, Boolean linearFilter,
+                String wrapMode, String alias, boolean mipmapInput,
+                boolean floatFramebuffer, int frameCountMod, Axis x, Axis y,
+                List<Float> legacyValues) {
             this.sourcePath = sourcePath;
             this.sourceText = sourceText;
             this.linearFilter = linearFilter;
@@ -87,6 +96,8 @@ public final class GlslpPreset {
             this.frameCountMod = frameCountMod;
             this.x = x;
             this.y = y;
+            this.legacyValues = legacyValues == null ? null
+                    : Collections.unmodifiableList(new ArrayList<>(legacyValues));
         }
     }
 
@@ -404,6 +415,68 @@ public final class GlslpPreset {
             throw new IOException("Unsupported GLSLP key: " + entries.keySet().iterator().next());
         }
         return new GlslpPreset(passes, overrides, textures);
+    }
+
+    /**
+     * Preserve original pass sizing, alias, LUT, framebuffer flags and parameter
+     * overrides, even if the user changes only one of the source files.
+     * sourceScale=0 retains the exact inherited scale basis and value.
+     */
+    public GlslpPreset withCustomSources(
+            List<io.github.h3nb.jlmodplus.config.CustomShaderStage> stages,
+            AssetReader assets) throws IOException {
+        if (stages == null || stages.isEmpty() || stages.size() > MAX_PASSES) {
+            throw new IOException("Custom shader chain must contain 1–16 stages");
+        }
+        List<Pass> edited = new ArrayList<>(stages.size());
+        for (int i = 0; i < stages.size(); i++) {
+            io.github.h3nb.jlmodplus.config.CustomShaderStage stage = stages.get(i);
+            String path = normalize("", stage.path);
+            if (!path.equals(stage.path) || !path.toLowerCase(java.util.Locale.ROOT).endsWith(".glsl")) {
+                throw new IOException("Unsupported custom shader path: " + stage.path);
+            }
+            String source = assets.read(path);
+            if (source == null || source.length() > MAX_SOURCE_CHARS) {
+                throw new IOException("Missing or oversized custom shader: " + path);
+            }
+            Pass old = i < passes.size() ? passes.get(i) : null;
+            int scale = stage.sourceScale;
+            if (scale != 0 && scale != 1 && scale != 2 && scale != 4) {
+                throw new IOException("Invalid custom stage scale: " + scale);
+            }
+            boolean preserveSize = old != null && scale == 0;
+            Axis x = preserveSize ? old.x : new Axis(
+                    i == stages.size() - 1 ? SizeBasis.VIEWPORT : SizeBasis.SOURCE,
+                    i == stages.size() - 1 ? 1 : scale == 0 ? 1 : scale);
+            Axis y = preserveSize ? old.y : new Axis(
+                    i == stages.size() - 1 ? SizeBasis.VIEWPORT : SizeBasis.SOURCE,
+                    i == stages.size() - 1 ? 1 : scale == 0 ? 1 : scale);
+            edited.add(new Pass(path, source,
+                    stage.filterLinear != null ? stage.filterLinear
+                            : old == null ? null : old.linearFilter,
+                    old == null ? null : old.wrapMode,
+                    old == null ? null : old.alias,
+                    old != null && old.mipmapInput,
+                    old != null && old.floatFramebuffer,
+                    old == null ? 0 : old.frameCountMod,
+                    x, y));
+        }
+        GlslpPreset updated = new GlslpPreset(edited, parameterOverrides, textures);
+        updated.parameterDefinitions();
+        return updated;
+    }
+
+    public GlslpPreset withLegacyValues(
+            List<io.github.h3nb.jlmodplus.config.CustomShaderStage> stages) {
+        List<Pass> result = new ArrayList<>(passes.size());
+        for (int i = 0; i < passes.size(); i++) {
+            Pass pass = passes.get(i);
+            result.add(new Pass(pass.sourcePath, pass.sourceText, pass.linearFilter,
+                    pass.wrapMode, pass.alias, pass.mipmapInput,
+                    pass.floatFramebuffer, pass.frameCountMod, pass.x, pass.y,
+                    stages.get(i).legacyValues));
+        }
+        return new GlslpPreset(result, parameterOverrides, textures);
     }
 
     /**

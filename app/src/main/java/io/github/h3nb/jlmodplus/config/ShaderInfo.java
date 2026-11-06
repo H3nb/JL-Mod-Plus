@@ -42,6 +42,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	public float[] values;
 	public Map<String, Float> glslParameters;
 	public List<CustomShaderStage> customStages;
+	public String customMode;
 
 
 	public ShaderInfo() {
@@ -64,6 +65,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		copy.values = values == null ? null : values.clone();
 		copy.glslParameters = glslParameters == null ? null : new LinkedHashMap<>(glslParameters);
 		copy.customStages = customStages == null ? null : new ArrayList<>(customStages);
+		copy.customMode = customMode;
 		return copy;
 	}
 
@@ -89,10 +91,18 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 				String path = in.readString();
 				int scale = in.readInt();
 				byte filter = in.readByte();
+				String vertex = in.readString();
+				float[] valueArray = in.createFloatArray();
+				List<Float> settingValues = null;
+				if (valueArray != null) {
+					settingValues = new ArrayList<>(valueArray.length);
+					for (float value : valueArray) settingValues.add(value);
+				}
 				customStages.add(new CustomShaderStage(path, scale,
-						filter < 0 ? null : filter == 1));
+						filter < 0 ? null : filter == 1, vertex, settingValues, in.readString()));
 			}
 		}
+		customMode = in.readString();
 	}
 
 	@Override
@@ -299,7 +309,16 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 			dest.writeString(stage.path);
 			dest.writeInt(stage.sourceScale);
 			dest.writeByte((byte) (stage.filterLinear == null ? -1 : stage.filterLinear ? 1 : 0));
+			dest.writeString(stage.legacyVertex);
+			float[] legacy = null;
+			if (stage.legacyValues != null) {
+					legacy = new float[stage.legacyValues.size()];
+					for (int i = 0; i < legacy.length; i++) legacy[i] = stage.legacyValues.get(i);
+			}
+			dest.writeFloatArray(legacy);
+			dest.writeString(stage.legacyName);
 		}
+		dest.writeString(customMode);
 	}
 
 	static class Setting implements Parcelable {

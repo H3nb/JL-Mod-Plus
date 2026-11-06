@@ -44,9 +44,10 @@ public final class ShaderPipelineSummary {
     }
 
     public static ShaderPipelineSummary inspectCustom(
-            List<CustomShaderStage> stages, File shaderRoot) {
+            List<CustomShaderStage> stages, File shaderRoot,
+            String presetPath, String mode) {
         try {
-            return fromPreset(GlslpAssets.loadCustom(stages, shaderRoot));
+            return fromPreset(GlslpAssets.loadCustom(stages, shaderRoot, presetPath, mode));
         } catch (IOException | RuntimeException e) {
             return failed(e);
         }
