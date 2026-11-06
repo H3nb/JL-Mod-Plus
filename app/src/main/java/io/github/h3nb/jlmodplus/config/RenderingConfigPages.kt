@@ -103,7 +103,7 @@ internal fun RenderingSettingsPage(
         RenderingSubpage.SHADERS -> R.string.render_shader_effects
         RenderingSubpage.PARAMETERS -> R.string.render_shader_parameters
         RenderingSubpage.PASSES -> R.string.render_shader_passes
-        RenderingSubpage.CUSTOM -> R.string.render_custom_pipeline
+        RenderingSubpage.CUSTOM -> R.string.render_shader_effects
     }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -135,15 +135,12 @@ internal fun RenderingSettingsPage(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 when (page) {
-                    RenderingSubpage.SHADERS -> ShaderEffectsContent(
+                    RenderingSubpage.SHADERS, RenderingSubpage.CUSTOM -> ShaderEffectsContent(
                         state, onFormChanged, onLegacyTuning, onOpenParameters, onOpenPasses,
-                        onOpenCustom,
+                        onOpenCustom, onBack, page == RenderingSubpage.CUSTOM,
                     )
                     RenderingSubpage.PARAMETERS -> ShaderParametersContent(state, onFormChanged)
                     RenderingSubpage.PASSES -> ShaderPassesContent(state)
-                    RenderingSubpage.CUSTOM -> CustomPipelineContent(
-                        state, onFormChanged, onBack,
-                    )
                 }
             }
         }
@@ -160,6 +157,8 @@ private fun ShaderEffectsContent(
     onOpenParameters: () -> Unit,
     onOpenPasses: () -> Unit,
     onOpenCustom: () -> Unit,
+    onCancelCustom: () -> Unit,
+    editingCustom: Boolean,
 ) {
     val shader = state.form.shader
     val root = state.shaderDirectory
@@ -230,7 +229,7 @@ private fun ShaderEffectsContent(
         onClick = {
             legacyOptions = emptyList()
             legacyError = null
-            onFormChanged(state.form.toBuilder().shader(null).build())
+            if (shader != null) onFormChanged(state.form.toBuilder().shader(null).build())
         },
     )
     ShaderModeRow(
@@ -274,9 +273,13 @@ private fun ShaderEffectsContent(
     ShaderModeRow(
         title = stringResource(R.string.render_custom_pipeline),
         description = stringResource(R.string.render_custom_pipeline_hint),
-        selected = custom,
+        selected = custom || editingCustom,
         onClick = onOpenCustom,
     )
+    if (editingCustom) {
+        CustomPipelineContent(state, onFormChanged, onCancelCustom)
+        return
+    }
 
     if (legacy && shader.hasTunableSettings()) {
         ActionSurface(
