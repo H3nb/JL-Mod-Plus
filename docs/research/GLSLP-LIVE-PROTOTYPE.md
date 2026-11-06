@@ -29,8 +29,9 @@ outputs from **earlier passes in the current frame**; self/future references
 are rejected when active. The output textures are already allocated for the
 chain, so this support adds no extra intermediate render targets. The sampler
 units are assigned once per linked program and must fit the device's fragment
-sampler limit. Secondary historical pass outputs currently use nearest
-filtering, following the existing PassPrev2 behavior. This is not temporal
+sampler limit. Secondary and indexed pass samplers use the filtering associated
+with the referenced source output (the corresponding `filter_linearN`, or the
+default). Static lookup samplers default to linear if `NAME_linear` is absent. This is not temporal
 frame history/feedback and does not imply full RetroArch equivalence.
 
 Static GLSLP lookup textures are now supported as a bounded GLES2 subset:

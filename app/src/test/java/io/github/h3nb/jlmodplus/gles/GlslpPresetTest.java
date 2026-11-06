@@ -184,6 +184,7 @@ public class GlslpPresetTest {
         GlslpPreset withLut = GlslpPreset.load(assets, "test/lut.glslp");
         assertEquals(1, withLut.textures.size());
         assertEquals("test/tex.png", withLut.textures.get(0).sourcePath);
+        assertTrue("Unspecified LUT filtering defaults to linear", withLut.textures.get(0).linear);
         assets.put("test/escape.glslp",
                 "shaders = 1\nshader0 = ../../outside.glsl\n");
         expectFailure(() -> GlslpPreset.load(assets, "test/escape.glslp"),
@@ -303,6 +304,17 @@ public class GlslpPresetTest {
                 + "shader0 = p.glsl\nalias0 = Pass1Texture\n");
         expectFailure(() -> GlslpPreset.load(files, "named/reserved.glslp"),
                 "Invalid or duplicate GLSLP pass alias");
+
+        files.put("named/numeric-collision.glslp", "shaders = 1\n"
+                + "shader0 = p.glsl\nalias0 = Pass1\n");
+        expectFailure(() -> GlslpPreset.load(files, "named/numeric-collision.glslp"),
+                "Invalid or duplicate GLSLP pass alias");
+
+        files.put("named/derived-collision.glslp", "shaders = 1\n"
+                + "shader0 = p.glsl\nalias0 = Edge\n"
+                + "textures = EdgeTexture\nEdgeTexture = mask.png\n");
+        expectFailure(() -> GlslpPreset.load(files, "named/derived-collision.glslp"),
+                "Invalid or reserved GLSLP texture alias");
 
         files.put("named/collision.glslp", "shaders = 1\n"
                 + "shader0 = p.glsl\nalias0 = Mask\n"

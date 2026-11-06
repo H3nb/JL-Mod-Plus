@@ -120,10 +120,12 @@ public final class GlslpGpuSmokeTest {
                 "void main(){gl_FragColor=vec4(0.0,uv.x*0.001,1.0,1.0);}\n"));
         source.put("composite.glsl", colorPass(
                 "uniform sampler2D Pass1Texture;\n"
+                + "uniform sampler2D PassPrev3Texture;\n"
                 + "uniform sampler2D MiddleOutput;\n"
                 + "uniform sampler2D Texture;\n"
                 + "void main(){gl_FragColor=vec4("
-                + "texture2D(Pass1Texture,uv).r,"
+                + "0.5*texture2D(Pass1Texture,uv).r"
+                + "+0.5*texture2D(PassPrev3Texture,uv).r,"
                 + "texture2D(MiddleOutput,uv).g,"
                 + "texture2D(Texture,uv).b,1.0);}\n"));
         GlslpPreset preset = GlslpPreset.load(path -> {

@@ -290,6 +290,9 @@ public final class GlslpPreset {
             if (alias != null && !alias.isEmpty()
                     && (!alias.matches("[A-Za-z_][A-Za-z0-9_]*")
                     || reservedSamplerName(alias) || parameterNames.contains(alias)
+                    || passAliases.contains(alias + "Texture")
+                    || (alias.endsWith("Texture") && passAliases.contains(
+                            alias.substring(0, alias.length() - "Texture".length())))
                     || !passAliases.add(alias))) {
                 throw new IOException("Invalid or duplicate GLSLP pass alias: " + alias);
             }
@@ -319,6 +322,8 @@ public final class GlslpPreset {
             Axis y = axis(yBasis, commonScale != null ? commonScale : yScale, i);
             passes.add(new Pass(shader, shaderText, filter, wrap, alias, x, y));
         }
+        Set<String> passSamplerNames = new LinkedHashSet<>(passAliases);
+        for (String alias : passAliases) passSamplerNames.add(alias + "Texture");
         List<Texture> textures = new ArrayList<>();
         String textureList = entries.remove("textures");
         if (textureList != null && !textureList.isEmpty()) {
@@ -330,7 +335,7 @@ public final class GlslpPreset {
                         || alias.equals("PassPrev2Texture") || alias.equals("MVPMatrix")
                         || alias.equals("InputSize") || alias.equals("TextureSize")
                         || alias.equals("OutputSize") || parameterNames.contains(alias)
-                        || passAliases.contains(alias) || reservedSamplerName(alias)
+                        || passSamplerNames.contains(alias) || reservedSamplerName(alias)
                         || !aliases.add(alias)) {
                     throw new IOException("Invalid or reserved GLSLP texture alias: " + alias);
                 }
@@ -344,7 +349,8 @@ public final class GlslpPreset {
                     throw new IOException("Unsupported GLSLP texture format: " + image);
                 }
                 String linearValue = entries.remove(alias + "_linear");
-                boolean linear = linearValue != null && bool(linearValue, alias + "_linear");
+                // Libretro's lookup-texture default is bilinear when unspecified.
+                boolean linear = linearValue == null || bool(linearValue, alias + "_linear");
                 String wrap = entries.remove(alias + "_wrap_mode");
                 String repeat = entries.remove(alias + "_repeat");
                 if (wrap != null && repeat != null) {
@@ -518,7 +524,8 @@ public final class GlslpPreset {
                 || name.equals("InputSize") || name.equals("TextureSize")
                 || name.equals("OutputSize") || name.equals("FrameCount")
                 || name.equals("FrameDirection")
-                || name.matches("Pass[0-9]+Texture|PassPrev[0-9]+Texture|Prev[0-9]+Texture");
+                || name.matches("Pass[0-9]+(?:Texture)?|PassPrev[0-9]+(?:Texture)?"
+                        + "|Prev[0-9]+(?:Texture)?");
     }
 
     private static Boolean bool(String value, String key) throws IOException {

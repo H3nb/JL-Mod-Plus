@@ -312,7 +312,7 @@ public final class GlslpPipeline {
                 drawPass(i, input, usesOriginal[i] ? sourceTexture : 0,
                         usesPrev2[i] ? prev2 : 0, pass.inputWidth, pass.inputHeight,
                         pass.outputWidth, pass.outputHeight,
-                        passFilter(pass.pass.linearFilter, legacyFilter),
+                        passFilter(pass.pass.linearFilter, legacyFilter), legacyFilter,
                         logicalWidth, logicalHeight, prevW, prevH);
             }
             if (plan.finalBlitRequired) {
@@ -323,7 +323,7 @@ public final class GlslpPipeline {
                 setGameQuad(legacyQuad);
                 drawPass(n, intermediate[n - 1], 0, 0,
                         last.outputWidth, last.outputHeight, vw, vh,
-                        legacyFilter, logicalWidth, logicalHeight, 0, 0);
+                        legacyFilter, legacyFilter, logicalWidth, logicalHeight, 0, 0);
             }
             verifyGlError();
             processedSequence = guestSequence;
@@ -408,7 +408,8 @@ public final class GlslpPipeline {
     }
 
     private void drawPass(int stage, int texture, int originalTexture, int prev2Texture,
-                          int inputW, int inputH, int outputW, int outputH, int filter,
+                          int inputW, int inputH, int outputW, int outputH,
+                          int filter, int fallbackFilter,
                           int originalW, int originalH, int prevW, int prevH) {
         glUseProgram(programs[stage]);
         if (stage < lookupUniforms.length) {
@@ -430,8 +431,9 @@ public final class GlslpPipeline {
         if (originalTexture != 0) {
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, originalTexture);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            int originalFilter = passFilter(preset.passes.get(0).linearFilter, fallbackFilter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, originalFilter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, originalFilter);
             uniform1i(stage, "OrigTexture", 1);
             uniform2f(stage, "OrigTextureSize", originalW, originalH);
             uniform2f(stage, "OrigInputSize", originalW, originalH);
@@ -439,8 +441,10 @@ public final class GlslpPipeline {
         if (prev2Texture != 0) {
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, prev2Texture);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            int previousFilter = passFilter(
+                    preset.passes.get(stage - 1).linearFilter, fallbackFilter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, previousFilter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, previousFilter);
             uniform1i(stage, "PassPrev2Texture", 2);
             uniform2f(stage, "PassPrev2TextureSize", prevW, prevH);
             uniform2f(stage, "PassPrev2InputSize", prevW, prevH);
@@ -450,8 +454,12 @@ public final class GlslpPipeline {
                 if (reference.unit >= 3 + lookupIds.length) {
                     glActiveTexture(GL_TEXTURE0 + reference.unit);
                     glBindTexture(GL_TEXTURE_2D, intermediate[reference.sourcePass]);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                    // filter_linearN describes sampling the output of pass N-1.
+                    int sourceFilter = passFilter(
+                            preset.passes.get(reference.sourcePass + 1).linearFilter,
+                            fallbackFilter);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sourceFilter);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sourceFilter);
                 }
                 glUniform1i(reference.location, reference.unit);
                 int w = targetWidth[reference.sourcePass];
