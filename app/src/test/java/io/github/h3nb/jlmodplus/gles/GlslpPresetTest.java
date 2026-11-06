@@ -181,8 +181,9 @@ public class GlslpPresetTest {
         expectFailure(() -> GlslpPreset.load(assets, "test/refs.glslp"),
                 "GLSLP #reference cannot redefine shader structure");
         assets.put("test/lut.glslp", base + "textures = mask\nmask = tex.png\n");
-        expectFailure(() -> GlslpPreset.load(assets, "test/lut.glslp"),
-                "Unsupported GLSLP key");
+        GlslpPreset withLut = GlslpPreset.load(assets, "test/lut.glslp");
+        assertEquals(1, withLut.textures.size());
+        assertEquals("test/tex.png", withLut.textures.get(0).sourcePath);
         assets.put("test/escape.glslp",
                 "shaders = 1\nshader0 = ../../outside.glsl\n");
         expectFailure(() -> GlslpPreset.load(assets, "test/escape.glslp"),

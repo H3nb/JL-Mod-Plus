@@ -124,7 +124,9 @@ public final class GlslpPipeline {
                 if (bitmap == null) throw new IOException("Missing GLSLP LUT: " + lookup.sourcePath);
                 try {
                     int w = bitmap.getWidth(), h = bitmap.getHeight();
-                    bytes += 4L * w * h;
+                    long baseBytes = 4L * w * h;
+                    // A full mip chain can add just under one third of base-level storage.
+                    bytes += baseBytes + (lookup.mipmap ? (baseBytes + 2) / 3 : 0);
                     if (w <= 0 || h <= 0 || w > maxSize[0] || h > maxSize[0]
                             || bytes > MAX_LOOKUP_BYTES) {
                         throw new IOException("GLSLP lookup texture budget exceeded: " + lookup.sourcePath);
