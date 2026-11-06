@@ -119,15 +119,27 @@ public final class ShaderCatalog {
     }
 
     private static void collectLegacy(File folder, ArrayList<ShaderInfo> out, Set<String> seen) {
-        File[] files = sorted(folder);
-        for (File file : files) {
-            if (!file.isFile() || !ext(file, ".ini")) continue;
-            if (!seen.add(file.getName().toLowerCase(Locale.ROOT))) continue;
+        boolean nested = LEGACY.equals(folder.getName());
+        File root = nested ? folder.getParentFile() : folder;
+        collectLegacy(folder, root, out, seen, 0, nested);
+    }
+
+    private static void collectLegacy(File folder, File root, ArrayList<ShaderInfo> out,
+            Set<String> seen, int depth, boolean recurse) {
+        if (depth > 12) return;
+        for (File file : sorted(folder)) {
             try {
-                File root = ShaderCatalog.LEGACY.equals(folder.getName())
-                        ? folder.getParentFile() : folder;
-                String relative = file.getCanonicalPath()
-                        .substring(root.getCanonicalPath().length() + 1)
+                File canonicalRoot = root.getCanonicalFile();
+                File canonicalFile = file.getCanonicalFile();
+                if (!within(canonicalRoot, canonicalFile)) continue;
+                if (recurse && file.isDirectory()) {
+                    collectLegacy(file, root, out, seen, depth + 1, true);
+                    continue;
+                }
+                if (!file.isFile() || !ext(file, ".ini")
+                        || !seen.add(canonicalFile.getPath())) continue;
+                String relative = canonicalFile.getPath()
+                        .substring(canonicalRoot.getPath().length() + 1)
                         .replace(File.separatorChar, '/');
                 out.addAll(readLegacyFile(root, relative));
             } catch (IOException | RuntimeException e) {

@@ -72,6 +72,11 @@ public class ShaderCatalogTest {
         assertEquals("shaders_legacy/custom/common.vsh", entries.get(0).vertex);
         assertEquals("shaders_legacy/custom/cool.fsh", entries.get(1).fragment);
         assertEquals(2, ShaderCatalog.readLegacyFile(root, "shaders_legacy/custom/effects.ini").size());
+        // A saved nested selection must be rediscovered to recover its tuning metadata.
+        List<ShaderInfo> scanned = ShaderCatalog.scan(root);
+        assertEquals(2, scanned.size());
+        assertEquals("shaders_legacy/custom/common.vsh", scanned.get(0).vertex);
+        assertEquals("shaders_legacy/custom/cool.fsh", scanned.get(1).fragment);
 
         assertThrows(java.io.IOException.class,
                 () -> ShaderCatalog.readLegacyFile(root, "../outside.ini"));
