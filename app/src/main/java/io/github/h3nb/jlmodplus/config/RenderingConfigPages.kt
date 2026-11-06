@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.config
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,12 +38,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.gles.GlslpPreset
 import java.util.LinkedHashMap
+import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.IOException
 import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Build
 import kotlin.math.abs
@@ -54,12 +60,14 @@ internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, CUSTOM }
 internal fun selectedShaderLabel(state: ConfigUiState): String {
     val selected = state.form.shader ?: return stringResource(R.string.render_shader_off)
     if (selected.customStages != null) return stringResource(R.string.render_custom_pipeline)
-    return state.shaders.firstOrNull { it == selected }?.toString()
-        ?: stringResource(
-            R.string.render_shader_unavailable,
-            selected.name ?: selected.preset?.substringAfterLast('/')
-                ?: selected.fragment?.substringAfterLast('/') ?: "Shader",
-        )
+    return state.shaders.firstOrNull {
+        (selected.preset != null && it.preset == selected.preset) ||
+            (selected.vertex != null && selected.fragment != null &&
+                it.vertex == selected.vertex && it.fragment == selected.fragment)
+    }?.toString() ?: selected.name?.takeIf { it.isNotBlank() }
+        ?: selected.preset?.substringAfterLast('/')
+        ?: selected.fragment?.substringAfterLast('/')
+        ?: stringResource(R.string.render_shader_off)
 }
 
 /**
@@ -143,6 +151,7 @@ internal fun RenderingSettingsPage(
 }
 
 /** Selection is the primary action. Tuning and pass inspection never crowd this page. */
+/** A shader mode is chosen directly on the page; file selection uses the scoped picker. */
 @Composable
 private fun ShaderEffectsContent(
     state: ConfigUiState,
@@ -152,114 +161,197 @@ private fun ShaderEffectsContent(
     onOpenPasses: () -> Unit,
     onOpenCustom: () -> Unit,
 ) {
-    val form = state.form
-    val shader = form.shader
-    // A preset is an entire GLSLP definition; custom chains contain standalone .glsl stages.
-    val presets = state.shaders.filter { it.fragment != null || it.preset != null }
-    val customAvailable = shader?.customStages != null || presets.any {
-        it.preset?.endsWith(".glsl", ignoreCase = true) == true
+    val shader = state.form.shader
+    val root = state.shaderDirectory
+    val context = LocalContext.current
+    val legacy = shader?.fragment != null && shader.vertex != null
+    val preset = shader?.preset != null
+    val custom = shader?.customStages != null
+
+    var legacyPath by rememberSaveable { mutableStateOf<String?>(null) }
+    var legacyRequest by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(0) }
+    var legacyOptions by androidx.compose.runtime.remember {
+        mutableStateOf<List<ShaderInfo>>(emptyList())
     }
-    val customLabel = stringResource(R.string.render_custom_pipeline)
-    val choices = listOf(stringResource(R.string.render_shader_off)) +
-        presets.map { it.toString() } + if (customAvailable) listOf(customLabel) else emptyList()
-    var pickerVisible by rememberSaveable { mutableStateOf(false) }
+    var legacyError by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val legacyPicker = rememberLauncherForActivityResult(FilePickerResultContract()) { results ->
+        relativeShaderPath(root, results.firstOrNull(), listOf(".ini"))?.let { path ->
+            legacyOptions = emptyList()
+            legacyError = null
+            legacyPath = path
+            legacyRequest++
+        }
+    }
+    val presetPicker = rememberLauncherForActivityResult(FilePickerResultContract()) { results ->
+        relativeShaderPath(root, results.firstOrNull(), listOf(".glslp"))?.let { path ->
+            val picked = ShaderInfo(path.substringAfterLast('/'), "external")
+            picked.preset = path
+            legacyOptions = emptyList()
+            legacyError = null
+            onFormChanged(state.form.toBuilder().shader(picked).build())
+        }
+    }
+
+    LaunchedEffect(root, legacyPath, legacyRequest) {
+        val path = legacyPath ?: return@LaunchedEffect
+        try {
+            val options = withContext(Dispatchers.IO) {
+                ShaderCatalog.readLegacyFile(root ?: throw IOException("Shader folder unavailable"), path)
+            }
+            if (options.isEmpty()) {
+                legacyError = context.getString(R.string.render_legacy_empty)
+            } else if (options.size == 1) {
+                onFormChanged(state.form.toBuilder().shader(options.first()).build())
+                legacyOptions = emptyList()
+            } else {
+                legacyOptions = options
+            }
+        } catch (error: IOException) {
+            legacyOptions = emptyList()
+            legacyError = error.message ?: context.getString(R.string.render_shader_missing)
+        }
+        legacyPath = null
+    }
 
     SectionLabel(stringResource(R.string.render_active_shader))
-    // A fresh install has no external shaders. Do not offer an Off-only picker.
-    if (shader == null && presets.isEmpty()) {
-        Surface(
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(stringResource(R.string.render_shader_off),
-                    style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    stringResource(R.string.render_no_shader_sources),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
-        return
-    }
-    ActionSurface(
-        title = selectedShaderLabel(state),
-        subtitle = stringResource(R.string.render_shader_change),
-        onClick = { pickerVisible = true },
+    Text(
+        selectedShaderLabel(state),
+        color = MaterialTheme.colorScheme.onSurface,
+        style = MaterialTheme.typography.titleMedium,
     )
-    if (pickerVisible) {
-        ConfigChoiceDialog(
-            title = stringResource(R.string.render_shader_effects),
-            selected = if (shader?.customStages != null) customLabel else selectedShaderLabel(state),
-            options = choices,
-            onDismissRequest = { pickerVisible = false },
-            onSelected = { index ->
-                pickerVisible = false
-                when {
-                    index == 0 -> onFormChanged(form.toBuilder().shader(null).build())
-                    index in 1..presets.size -> onFormChanged(
-                        form.toBuilder().shader(presets[index - 1]).build(),
-                    )
-                    customAvailable && index == choices.lastIndex -> onOpenCustom()
-                }
-            },
+    MutedText(stringResource(R.string.render_gles_shader_default))
+    SectionLabel(stringResource(R.string.render_shader_mode))
+
+    ShaderModeRow(
+        title = stringResource(R.string.render_shader_off),
+        description = stringResource(R.string.render_shader_off_help),
+        selected = shader == null,
+        onClick = {
+            legacyOptions = emptyList()
+            legacyError = null
+            onFormChanged(state.form.toBuilder().shader(null).build())
+        },
+    )
+    ShaderModeRow(
+        title = stringResource(R.string.render_legacy_mode),
+        description = stringResource(R.string.render_legacy_mode_help),
+        selected = legacy,
+        onClick = {
+            if (root != null) legacyPicker.launch(shaderPickerIntent(
+                context, root, listOf(".ini"), context.getString(R.string.render_legacy_mode),
+            ))
+        },
+    )
+    if (legacyOptions.isNotEmpty()) {
+        Text(
+            stringResource(R.string.render_legacy_select_variant),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        legacyOptions.forEach { option ->
+            ShaderModeRow(
+                title = option.toString(),
+                description = stringResource(R.string.render_legacy_variant_description),
+                selected = false,
+                onClick = {
+                    legacyOptions = emptyList()
+                    onFormChanged(state.form.toBuilder().shader(option).build())
+                },
+            )
+        }
+    }
+    legacyError?.let { MutedText(it, isError = true) }
+    ShaderModeRow(
+        title = stringResource(R.string.render_preset_mode),
+        description = stringResource(R.string.render_preset_mode_help),
+        selected = preset,
+        onClick = {
+            if (root != null) presetPicker.launch(shaderPickerIntent(
+                context, root, listOf(".glslp"), context.getString(R.string.render_preset_mode),
+            ))
+        },
+    )
+    ShaderModeRow(
+        title = stringResource(R.string.render_custom_pipeline),
+        description = stringResource(R.string.render_custom_pipeline_hint),
+        selected = custom,
+        onClick = onOpenCustom,
+    )
+
+    if (legacy && shader.hasTunableSettings()) {
+        ActionSurface(
+            title = stringResource(R.string.render_shader_adjust),
+            subtitle = stringResource(R.string.render_legacy_tuning_hint),
+            onClick = onLegacyTuning,
         )
     }
-
-    if (shader == null) return
-    if (shader.customStages != null) {
+    if (preset) {
         val summary = state.shaderPipeline
         if (summary?.error != null) {
             MutedText(summary.error, isError = true)
         } else if (summary != null) {
-            MutedText(stringResource(R.string.render_custom_stage_count, summary.passes.size))
+            val adjustable = summary.parameters.count { it.maximum > it.minimum }
+            if (adjustable > 0) {
+                ActionSurface(
+                    title = stringResource(R.string.render_shader_adjust),
+                    subtitle = stringResource(R.string.render_adjustable_count, adjustable),
+                    onClick = onOpenParameters,
+                )
+            }
+            if (summary.passes.size > 1) {
+                ActionSurface(
+                    title = stringResource(R.string.render_shader_passes),
+                    subtitle = stringResource(R.string.render_pass_summary, summary.passes.size),
+                    onClick = onOpenPasses,
+                )
+            }
         }
+    }
+    if (custom) {
         ActionSurface(
             title = stringResource(R.string.render_edit_custom_pipeline),
-            subtitle = stringResource(R.string.render_custom_order_help),
+            subtitle = stringResource(R.string.render_custom_stage_count,
+                shader.customStages?.size ?: 0),
             onClick = onOpenCustom,
         )
-        return
+        state.shaderPipeline?.error?.let { MutedText(it, isError = true) }
     }
+}
 
-    if (state.shaders.none { it == shader }) {
-        MutedText(stringResource(R.string.render_shader_missing), isError = true)
-        return
-    }
-    if (shader.preset == null) {
-        if (shader.hasTunableSettings()) {
-            ActionSurface(
-                title = stringResource(R.string.render_shader_adjust),
-                subtitle = stringResource(R.string.render_legacy_tuning_hint),
-                onClick = onLegacyTuning,
-            )
+@Composable
+private fun ShaderModeRow(
+    title: String,
+    description: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (selected) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_check),
+                    contentDescription = stringResource(R.string.render_mode_selected),
+                )
+            }
         }
-        return
-    }
-
-    val summary = state.shaderPipeline ?: return
-    if (summary.error != null) {
-        MutedText(summary.error, isError = true)
-        return
-    }
-    val adjustable = summary.parameters.count { it.maximum > it.minimum }
-    if (adjustable > 0) {
-        ActionSurface(
-            title = stringResource(R.string.render_shader_adjust),
-            subtitle = stringResource(R.string.render_adjustable_count, adjustable),
-            onClick = onOpenParameters,
-        )
-    }
-    if (summary.passes.size > 1) {
-        ActionSurface(
-            title = stringResource(R.string.render_shader_passes),
-            subtitle = stringResource(R.string.render_pass_summary, summary.passes.size),
-            onClick = onOpenPasses,
-        )
     }
 }
 

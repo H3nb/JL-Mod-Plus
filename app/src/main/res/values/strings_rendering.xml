@@ -70,4 +70,15 @@
     <string name="render_edit_custom_pipeline">Edit shader chain</string>
     <string name="render_shader_unavailable">Unavailable: %1$s</string>
     <string name="render_no_shader_sources">No GLSL shaders found. Add .glsl or .glslp files to the shader folder, then reopen settings.</string>
+    <string name="render_shader_mode">Shader mode</string>
+    <string name="render_mode_selected">Selected</string>
+    <string name="render_gles_shader_default">OpenGL ES uses the original game image when shader effects are off.</string>
+    <string name="render_shader_off_help">No additional visual effects.</string>
+    <string name="render_legacy_mode">Legacy shader</string>
+    <string name="render_legacy_mode_help">Choose an .ini file from the shaders folder.</string>
+    <string name="render_legacy_empty">No usable shader definitions in this .ini file.</string>
+    <string name="render_legacy_select_variant">Choose a legacy shader</string>
+    <string name="render_legacy_variant_description">Shader definition in the selected .ini file</string>
+    <string name="render_preset_mode">GLSLP preset</string>
+    <string name="render_preset_mode_help">Load a complete .glslp pipeline with its own passes.</string>
 </resources>

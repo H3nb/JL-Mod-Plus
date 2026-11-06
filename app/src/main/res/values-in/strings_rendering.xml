@@ -69,4 +69,15 @@
     <string name="render_edit_custom_pipeline">Edit rangkaian shader</string>
     <string name="render_shader_unavailable">Tidak tersedia: %1$s</string>
     <string name="render_no_shader_sources">Belum ada shader GLSL. Tambahkan berkas .glsl atau .glslp ke folder shader, lalu buka kembali pengaturan.</string>
+    <string name="render_shader_mode">Mode shader</string>
+    <string name="render_mode_selected">Terpilih</string>
+    <string name="render_gles_shader_default">OpenGL ES menggunakan tampilan asli game saat efek shader dimatikan.</string>
+    <string name="render_shader_off_help">Tanpa efek visual tambahan.</string>
+    <string name="render_legacy_mode">Shader legacy</string>
+    <string name="render_legacy_mode_help">Pilih file .ini dari folder shaders.</string>
+    <string name="render_legacy_empty">Tidak ada definisi shader yang dapat digunakan dalam file .ini ini.</string>
+    <string name="render_legacy_select_variant">Pilih shader legacy</string>
+    <string name="render_legacy_variant_description">Definisi shader dari file .ini yang dipilih</string>
+    <string name="render_preset_mode">Preset GLSLP</string>
+    <string name="render_preset_mode_help">Muat pipeline .glslp lengkap dengan susunan pass-nya.</string>
 </resources>
