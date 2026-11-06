@@ -61,4 +61,7 @@
     <string name="render_custom_remove">Remove</string>
     <string name="render_custom_cancel">Cancel</string>
     <string name="render_custom_save">Save</string>
+    <string name="render_custom_default">Default</string>
+    <string name="render_custom_nearest">Nearest</string>
+    <string name="render_custom_linear">Linear</string>
 </resources>

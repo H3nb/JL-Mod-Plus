@@ -60,4 +60,7 @@
     <string name="render_custom_remove">Hapus</string>
     <string name="render_custom_cancel">Batal</string>
     <string name="render_custom_save">Simpan</string>
+    <string name="render_custom_default">Default</string>
+    <string name="render_custom_nearest">Terdekat</string>
+    <string name="render_custom_linear">Linear</string>
 </resources>
