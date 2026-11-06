@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - alpha
-      - feat/glslp-live-prototype # Temporary stacked-PR validation only
       - stable
       - main
     paths-ignore:
