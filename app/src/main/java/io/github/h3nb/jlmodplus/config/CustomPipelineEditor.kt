@@ -239,10 +239,10 @@ internal fun CustomPipelineContent(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     onClick = {
-                        state.shaderDirectory?.let { root ->
-                            if (mode == "legacy") {
-                                legacyPickerIndex = index
-                            } else {
+                        if (mode == "legacy") {
+                            legacyPickerIndex = index
+                        } else {
+                            state.shaderDirectory?.let { root ->
                                 pickingIndex = index
                                 onShaderPickerOpened()
                                 filePicker.launch(shaderPickerIntent(
