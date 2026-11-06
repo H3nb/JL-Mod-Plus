@@ -174,6 +174,20 @@ public final class GlslpGpuSmokeTest {
         execute(preset, 1, loader, Color.BLUE, true);
     }
 
+    @Test public void frameCountModuloFollowsGuestFramesNotHostRedraws() throws Exception {
+        Map<String, String> files = new HashMap<>();
+        files.put("count.glslp", "shaders = 1\nshader0 = count.glsl\n"
+                + "frame_count_mod0 = 2\n");
+        files.put("count.glsl", colorPass("uniform int FrameCount;\n"
+                + "uniform int FrameDirection;\n"
+                + "void main(){gl_FragColor=vec4(float(FrameCount),"
+                + "float(FrameDirection),1.0,1.0);}\n"));
+        GlslpPreset preset = GlslpPreset.load(files::get, "count.glslp");
+        execute(preset, 1,
+                path -> { throw new java.io.IOException("Unexpected LUT: " + path); },
+                Color.WHITE, false, Color.CYAN);
+    }
+
     private static String colorPass(String fragment) {
         return "#if defined(VERTEX)\n"
                 + "attribute vec4 VertexCoord; attribute vec4 TexCoord;\n"
@@ -224,12 +238,18 @@ public final class GlslpGpuSmokeTest {
 
     private static void execute(GlslpPreset preset, int expectedPasses,
             GlslpPipeline.TextureLoader images, int expectedRgb) throws Exception {
-        execute(preset, expectedPasses, images, expectedRgb, false);
+        execute(preset, expectedPasses, images, expectedRgb, false, -1);
     }
 
     private static void execute(GlslpPreset preset, int expectedPasses,
             GlslpPipeline.TextureLoader images, int expectedRgb,
             boolean borderCapabilityTest) throws Exception {
+        execute(preset, expectedPasses, images, expectedRgb, borderCapabilityTest, -1);
+    }
+
+    private static void execute(GlslpPreset preset, int expectedPasses,
+            GlslpPipeline.TextureLoader images, int expectedRgb,
+            boolean borderCapabilityTest, int expectedNextRgb) throws Exception {
         EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
         assertTrue(EGL14.eglInitialize(display, new int[1], 0, new int[1], 0));
@@ -314,6 +334,13 @@ public final class GlslpGpuSmokeTest {
             pipeline.draw(sourceTexture[0], quad(-0.75f, 0.75f), SOURCE, SOURCE,
                     SOURCE, SOURCE, SURFACE, SURFACE, 102L, GL_NEAREST);
             assertEquals(GL_NO_ERROR, glGetError());
+            if (expectedNextRgb != -1) {
+                byte[] changed = image();
+                int center = ((SURFACE / 2) * SURFACE + SURFACE / 2) * 4;
+                assertEquals(Color.red(expectedNextRgb), changed[center] & 255);
+                assertEquals(Color.green(expectedNextRgb), changed[center + 1] & 255);
+                assertEquals(Color.blue(expectedNextRgb), changed[center + 2] & 255);
+            }
             int[] currentFbo = new int[1];
             glGetIntegerv(GL_FRAMEBUFFER_BINDING, currentFbo, 0);
             assertEquals(0, currentFbo[0]);

@@ -19,5 +19,5 @@ adb shell am instrument -w -r -e class \
   cat "$log"; exit 1;
 }
 cat "$log"
-grep -Eq 'OK \(11 tests?\)' "$log"
+grep -Eq 'OK \(12 tests?\)' "$log"
 grep -q 'INSTRUMENTATION_CODE: -1' "$log"

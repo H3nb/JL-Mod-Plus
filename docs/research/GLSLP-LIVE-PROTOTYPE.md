@@ -62,6 +62,15 @@ full NPOT support. The existing default for omitted wrap modes remains unchanged
 The new emulator GPU test checks real out-of-range sampling when supported,
 or the explicit rejection path when the extension is absent.
 
+The GLES2 pipeline now binds integer `FrameCount` and `FrameDirection`
+uniforms. `FrameCount` follows the guest frame publication sequence (rather
+than advancing on host-only repaints), with per-pass positive `frame_count_modN`
+when specified. `FrameDirection` is always +1 because JL-Mod Plus does not
+provide guest rewind. This enables frame-driven GLSL effects without adding
+history buffers; it does **not** implement previous-frame feedback or guarantee
+phase parity with RetroArch when its frontend renders frames on a different
+cadence.
+
 Other unsupported keys, history, feedback, float/sRGB framebuffers
 when enabled, and desktop-only GLSL constructs remain unsupported. It is not
 general RetroArch GLSLP compatibility. Failed programs revert to the

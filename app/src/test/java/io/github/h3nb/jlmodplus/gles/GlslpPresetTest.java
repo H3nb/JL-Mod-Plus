@@ -342,8 +342,12 @@ public class GlslpPresetTest {
                 "Unsupported GLSLP framebuffer format");
         assets.put("temporal.glslp", "shaders = 1\nshader0 = pass.glsl\n"
                 + "frame_count_mod0 = 2\n");
-        expectFailure(() -> GlslpPreset.load(assets, "temporal.glslp"),
-                "Unsupported GLSLP temporal");
+        assertEquals(2, GlslpPreset.load(assets, "temporal.glslp")
+                .passes.get(0).frameCountMod);
+        assets.put("negative.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                + "frame_count_mod0 = -2\n");
+        expectFailure(() -> GlslpPreset.load(assets, "negative.glslp"),
+                "Negative GLSLP frame_count_mod");
         assets.put("border.glslp", "shaders = 1\nshader0 = pass.glsl\n"
                 + "wrap_mode0 = clamp_to_border\n");
         assertEquals("clamp_to_border",

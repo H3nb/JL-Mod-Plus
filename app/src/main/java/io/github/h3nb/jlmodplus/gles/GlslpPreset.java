@@ -69,17 +69,20 @@ public final class GlslpPreset {
         public final String wrapMode; // null = unspecified
         public final String alias; // optional preset name for this pass's output
         public final boolean mipmapInput;
+        public final int frameCountMod;
         public final Axis x;
         public final Axis y;
 
         private Pass(String sourcePath, String sourceText, Boolean linearFilter,
-                String wrapMode, String alias, boolean mipmapInput, Axis x, Axis y) {
+                String wrapMode, String alias, boolean mipmapInput,
+                int frameCountMod, Axis x, Axis y) {
             this.sourcePath = sourcePath;
             this.sourceText = sourceText;
             this.linearFilter = linearFilter;
             this.wrapMode = wrapMode;
             this.alias = alias;
             this.mipmapInput = mipmapInput;
+            this.frameCountMod = frameCountMod;
             this.x = x;
             this.y = y;
         }
@@ -189,7 +192,7 @@ public final class GlslpPreset {
             if (source == null || source.length() > MAX_SOURCE_CHARS) {
                 throw new IOException("Missing or oversized GLSL source: " + preset);
             }
-            Pass single = new Pass(preset, source, null, null, null, false,
+            Pass single = new Pass(preset, source, null, null, null, false, 0,
                     new Axis(SizeBasis.VIEWPORT, 1), new Axis(SizeBasis.VIEWPORT, 1));
             return new GlslpPreset(Collections.singletonList(single), Collections.emptyMap(),
                     Collections.emptyList());
@@ -315,15 +318,15 @@ public final class GlslpPreset {
                 }
             }
             String frameMod = entries.remove("frame_count_mod" + i);
+            int frameCountMod = 0;
             if (frameMod != null) {
-                final int divisor;
                 try {
-                    divisor = Integer.parseInt(frameMod);
+                    frameCountMod = Integer.parseInt(frameMod);
                 } catch (NumberFormatException e) {
                     throw new IOException("Invalid GLSLP frame_count_mod" + i, e);
                 }
-                if (divisor != 0) {
-                    throw new IOException("Unsupported GLSLP temporal frame_count_mod" + i);
+                if (frameCountMod < 0) {
+                    throw new IOException("Negative GLSLP frame_count_mod" + i);
                 }
             }
 
@@ -343,7 +346,8 @@ public final class GlslpPreset {
             SizeBasis yBasis = basis(commonType != null ? commonType : yType, defaultBasis);
             Axis x = axis(xBasis, commonScale != null ? commonScale : xScale, i);
             Axis y = axis(yBasis, commonScale != null ? commonScale : yScale, i);
-            passes.add(new Pass(shader, shaderText, filter, wrap, alias, mipmap, x, y));
+            passes.add(new Pass(shader, shaderText, filter, wrap, alias, mipmap,
+                    frameCountMod, x, y));
         }
         Set<String> passSamplerNames = new LinkedHashSet<>(passAliases);
         for (String alias : passAliases) passSamplerNames.add(alias + "Texture");

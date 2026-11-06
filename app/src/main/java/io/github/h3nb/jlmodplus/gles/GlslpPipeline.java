@@ -117,7 +117,7 @@ public final class GlslpPipeline {
                 }
                 for (String unsupported : new String[] {
                         "PrevTexture", "Prev1Texture", "Prev2Texture", "Prev3Texture",
-                        "FeedbackTexture", "FrameCount", "FrameDirection"
+                        "FeedbackTexture"
                 }) {
                     if (glGetUniformLocation(programs[i], unsupported) >= 0) {
                         throw new IOException("Unsupported GLSLP dependency " + unsupported);
@@ -363,7 +363,7 @@ public final class GlslpPipeline {
                         usesPrev2[i] ? prev2 : 0, pass.inputWidth, pass.inputHeight,
                         pass.outputWidth, pass.outputHeight,
                         passFilter(pass.pass.linearFilter, legacyFilter), legacyFilter,
-                        logicalWidth, logicalHeight, prevW, prevH);
+                        logicalWidth, logicalHeight, prevW, prevH, guestSequence);
             }
             if (plan.finalBlitRequired) {
                 GlslpPreset.PlannedPass last = plan.passes.get(n - 1);
@@ -373,7 +373,8 @@ public final class GlslpPipeline {
                 setGameQuad(legacyQuad);
                 drawPass(n, intermediate[n - 1], 0, 0,
                         last.outputWidth, last.outputHeight, vw, vh,
-                        legacyFilter, legacyFilter, logicalWidth, logicalHeight, 0, 0);
+                        legacyFilter, legacyFilter, logicalWidth, logicalHeight, 0, 0,
+                        guestSequence);
             }
             verifyGlError();
             processedSequence = guestSequence;
@@ -462,8 +463,18 @@ public final class GlslpPipeline {
     private void drawPass(int stage, int texture, int originalTexture, int prev2Texture,
                           int inputW, int inputH, int outputW, int outputH,
                           int filter, int fallbackFilter,
-                          int originalW, int originalH, int prevW, int prevH) {
+                          int originalW, int originalH, int prevW, int prevH,
+                          long guestSequence) {
         glUseProgram(programs[stage]);
+        if (stage < preset.passes.size()) {
+            int divisor = preset.passes.get(stage).frameCountMod;
+            int frameCount = divisor > 0
+                    ? (int) Math.floorMod(guestSequence, (long) divisor)
+                    : (int) guestSequence;
+            uniform1i(stage, "FrameCount", frameCount);
+            // The guest renderer has no rewind direction; the sequence is forward-only.
+            uniform1i(stage, "FrameDirection", 1);
+        }
         if (stage < lookupUniforms.length) {
             for (int i = 0; i < lookupIds.length; i++) {
                 if (lookupUniforms[stage][i] < 0) continue;
