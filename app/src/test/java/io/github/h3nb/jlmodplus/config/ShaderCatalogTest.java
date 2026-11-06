@@ -77,6 +77,15 @@ public class ShaderCatalogTest {
         assertEquals(2, scanned.size());
         assertEquals("shaders_legacy/custom/common.vsh", scanned.get(0).vertex);
         assertEquals("shaders_legacy/custom/cool.fsh", scanned.get(1).fragment);
+        // The picker also permits arbitrary nested folders under shaders/.
+        File alternate = new File(root, "misc/legacy");
+        assertTrue(alternate.mkdirs());
+        Files.write(new File(alternate, "reuse.ini").toPath(),
+                ("[Reuse]\nVertex = common.vsh\nFragment = warm.fsh\n")
+                        .getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(alternate, "common.vsh").toPath(), "v".getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(alternate, "warm.fsh").toPath(), "f".getBytes(StandardCharsets.UTF_8));
+        assertEquals(3, ShaderCatalog.scan(root).size());
 
         assertThrows(java.io.IOException.class,
                 () -> ShaderCatalog.readLegacyFile(root, "../outside.ini"));
