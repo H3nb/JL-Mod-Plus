@@ -85,4 +85,6 @@
     <string name="render_custom_pick_file">Pilih file GLSL</string>
     <string name="render_custom_add_pass">Tambah jumlah pass shader</string>
     <string name="render_custom_remove_pass">Kurangi jumlah pass shader</string>
+    <string name="render_shader_selected_name">Aktif: %1$s</string>
+    <string name="render_shader_invalid_picker">File tidak dapat digunakan. Pilih preset GLSLP di dalam folder shaders.</string>
 </resources>

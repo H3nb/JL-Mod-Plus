@@ -393,6 +393,7 @@ internal fun ConfigScreen(
             state = state,
             onFormChanged = updateForm,
             onLegacyTuning = events::onShaderTuning,
+            onShaderPickerOpened = events::onShaderPickerOpened,
             onOpenParameters = { renderingSubpage = RenderingSubpage.PARAMETERS },
             onOpenCustom = { renderingSubpage = RenderingSubpage.CUSTOM },
             onOpenPasses = { renderingSubpage = RenderingSubpage.PASSES },
@@ -929,45 +930,6 @@ private fun ScreenSection(
     events: ConfigFormEvents,
     onOpenShaders: () -> Unit,
 ) {
-    ConfigSection(title = stringResource(R.string.config_display_rendering)) {
-        val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
-        ConfigChoicePreference(
-            title = stringResource(R.string.pref_graphics_mode_title),
-            description = stringResource(R.string.config_help_graphics_mode),
-            selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
-            options = graphicsOptions,
-            onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
-        )
-        if (form.graphicsMode == 1) {
-            ConfigValuePreference(
-                title = stringResource(R.string.render_shader_effects),
-                description = stringResource(R.string.render_shader_picker_help),
-                value = selectedShaderLabel(state),
-                onClick = onOpenShaders,
-            )
-        }
-        if (isTextureFilteringApplicable(state)) {
-            ConfigChoicePreference(
-                title = stringResource(R.string.render_texture_filtering),
-                description = stringResource(R.string.render_texture_filtering_help),
-                selected = if (form.screenFilter) "Linear" else "Nearest",
-                options = listOf("Nearest", "Linear"),
-                onSelected = { index ->
-                    onFormChanged(form.toBuilder().screenFilter(index == 1).build())
-                },
-            )
-        }
-        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
-            ConfigSwitchPreference(
-                title = stringResource(R.string.parallel_screen_redrawing),
-                description = stringResource(R.string.config_help_parallel_redraw),
-                checked = form.parallelRedrawScreen,
-                onCheckedChange = { checked ->
-                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
-                },
-            )
-        }
-    }
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         val backgroundModes = listOf(
             stringResource(R.string.config_background_custom),
@@ -1021,7 +983,46 @@ private fun ScreenSection(
             onDelete = { name -> events.onDeleteAsset(ConfigFormEvents.AssetKind.SKIN, name) },
         )
     }
-    ConfigSection(title = stringResource(R.string.config_display_performance)) {
+    ConfigSection(title = stringResource(R.string.config_display_rendering)) {
+        val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_graphics_mode_title),
+            description = stringResource(R.string.config_help_graphics_mode),
+            selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
+            options = graphicsOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
+        )
+        if (form.graphicsMode == 1) {
+            ConfigValuePreference(
+                title = stringResource(R.string.render_shader_effects),
+                description = stringResource(R.string.render_shader_picker_help),
+                value = selectedShaderLabel(state),
+                onClick = onOpenShaders,
+            )
+        }
+        if (isTextureFilteringApplicable(state)) {
+            ConfigChoicePreference(
+                title = stringResource(R.string.render_texture_filtering),
+                description = stringResource(R.string.render_texture_filtering_help),
+                selected = if (form.screenFilter) "Linear" else "Nearest",
+                options = listOf("Nearest", "Linear"),
+                onSelected = { index ->
+                    onFormChanged(form.toBuilder().screenFilter(index == 1).build())
+                },
+            )
+        }
+        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
+            ConfigSwitchPreference(
+                title = stringResource(R.string.parallel_screen_redrawing),
+                description = stringResource(R.string.config_help_parallel_redraw),
+                checked = form.parallelRedrawScreen,
+                onCheckedChange = { checked ->
+                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
+                },
+            )
+        }
+        // Runtime performance controls belong to Rendering, not a fourth Display section.
+        SectionLabel(stringResource(R.string.config_display_performance))
         ConfigNumberPreference(
             title = stringResource(R.string.PREF_LIMIT_FPS),
             description = stringResource(R.string.config_help_fps_limit),

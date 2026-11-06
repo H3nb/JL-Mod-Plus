@@ -337,6 +337,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
+		public void onShaderPickerOpened() {
+			// The selected GLSLP/GLSL path is applied to the in-memory form via
+			// ActivityResult. onResume must not reload the previous disk snapshot.
+			skipNextAssetPickerReload = true;
+		}
+
+		@Override
 		public void onShaderTuning() {
 			showShaderSettings();
 		}

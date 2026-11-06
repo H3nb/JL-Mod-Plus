@@ -44,6 +44,7 @@ internal fun CustomPipelineContent(
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     onBack: () -> Unit,
+    onShaderPickerOpened: () -> Unit,
 ) {
     val previous = state.form.shader?.customStages
     val saver = Saver<MutableState<List<CustomShaderStage>>, ArrayList<String>>(
@@ -146,6 +147,7 @@ internal fun CustomPipelineContent(
                     onClick = {
                         state.shaderDirectory?.let { root ->
                             pickingIndex = index
+                            onShaderPickerOpened()
                             filePicker.launch(shaderPickerIntent(
                                 context, root, listOf(".glsl"),
                                 pickerTitle,

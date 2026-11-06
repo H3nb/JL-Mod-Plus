@@ -86,4 +86,6 @@
     <string name="render_custom_pick_file">Choose GLSL file</string>
     <string name="render_custom_add_pass">Increase number of shader passes</string>
     <string name="render_custom_remove_pass">Decrease number of shader passes</string>
+    <string name="render_shader_selected_name">Active: %1$s</string>
+    <string name="render_shader_invalid_picker">Cannot use the selected file. Select a GLSLP preset inside the shaders folder.</string>
 </resources>
