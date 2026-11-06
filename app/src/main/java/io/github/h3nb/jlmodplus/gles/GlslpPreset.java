@@ -189,7 +189,7 @@ public final class GlslpPreset {
 
     private static GlslpPreset readPreset(AssetReader assets, String preset,
             Set<String> stack) throws IOException {
-        if (preset.endsWith(".glsl")) {
+        if (preset.toLowerCase(java.util.Locale.ROOT).endsWith(".glsl")) {
             String source = assets.read(preset);
             if (source == null || source.length() > MAX_SOURCE_CHARS) {
                 throw new IOException("Missing or oversized GLSL source: " + preset);
@@ -199,7 +199,7 @@ public final class GlslpPreset {
             return new GlslpPreset(Collections.singletonList(single), Collections.emptyMap(),
                     Collections.emptyList());
         }
-        if (!preset.endsWith(".glslp")) throw new IOException("Unsupported GLSLP extension");
+        if (!preset.toLowerCase(java.util.Locale.ROOT).endsWith(".glslp")) throw new IOException("Unsupported GLSLP extension");
         String text = assets.read(preset);
         if (text == null || text.length() > MAX_PRESET_CHARS) {
             throw new IOException("Missing or oversized GLSLP preset: " + preset);
@@ -281,7 +281,7 @@ public final class GlslpPreset {
         for (int i = 0; i < count; i++) {
             String fileName = required(entries, "shader" + i);
             String shader = normalize(parent, fileName);
-            if (!shader.endsWith(".glsl")) {
+            if (!shader.toLowerCase(java.util.Locale.ROOT).endsWith(".glsl")) {
                 throw new IOException("Unsupported shader source format: " + shader);
             }
             String shaderText = assets.read(shader);

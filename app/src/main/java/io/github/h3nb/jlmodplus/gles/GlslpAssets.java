@@ -44,7 +44,7 @@ public final class GlslpAssets {
                 throw new IOException("Invalid custom stage path");
             }
             String path = GlslpPreset.normalize("", stage.path);
-            if (!path.equals(stage.path) || !path.endsWith(".glsl")
+            if (!path.equals(stage.path) || !path.toLowerCase(java.util.Locale.ROOT).endsWith(".glsl")
                     || (stage.sourceScale != 1 && stage.sourceScale != 2 && stage.sourceScale != 4)) {
                 throw new IOException("Unsupported custom stage: " + stage.path);
             }
@@ -75,7 +75,8 @@ public final class GlslpAssets {
 
 
     public static GlslpPreset load(String selection, File shaderDirectory) throws IOException {
-        if (selection == null || (!selection.endsWith(".glslp") && !selection.endsWith(".glsl"))
+        if (selection == null || (!selection.toLowerCase(java.util.Locale.ROOT).endsWith(".glslp")
+                && !selection.toLowerCase(java.util.Locale.ROOT).endsWith(".glsl"))
                 || selection.contains("\\") || selection.contains(":")
                 || !GlslpPreset.normalize("", selection).equals(selection)) {
             throw new IOException("Unsupported shader selection");

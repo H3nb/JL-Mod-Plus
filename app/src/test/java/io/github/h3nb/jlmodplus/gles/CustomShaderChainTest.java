@@ -83,4 +83,16 @@ class CustomShaderChainTest {
         assertThrows(IOException.class,
                 () -> GlslpAssets.load("../unsafe.glslp", shaderRoot.toFile()));
     }
+
+    @Test void mixedCaseExtensionsPreserveRealFileNames() throws Exception {
+        source("nested/effect.GLSLP",
+                "shaders = 1\nshader0 = detail.GLSL\n");
+        source("nested/detail.GLSL", "uniform sampler2D Texture;\nvoid main() {}");
+        GlslpPreset preset = GlslpAssets.load("nested/effect.GLSLP", shaderRoot.toFile());
+        assertEquals("nested/detail.GLSL", preset.passes.get(0).sourcePath);
+        GlslpPreset custom = GlslpAssets.loadCustom(Collections.singletonList(
+                new CustomShaderStage("nested/detail.GLSL", 1, null)), shaderRoot.toFile());
+        assertEquals("nested/detail.GLSL", custom.passes.get(0).sourcePath);
+    }
+
 }
