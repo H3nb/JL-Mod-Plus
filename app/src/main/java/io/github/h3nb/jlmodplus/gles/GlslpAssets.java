@@ -77,8 +77,8 @@ public final class GlslpAssets {
                         || !vertexPath.toLowerCase(java.util.Locale.ROOT).endsWith(".vsh")) {
                     throw new IOException("Unsafe legacy vertex path");
                 }
-                String vertex = readLocal(root, vertexPath);
-                String fragment = readLocal(root, path);
+                String vertex = readLegacySource(root, vertexPath);
+                String fragment = readLegacySource(root, path);
                 key = "__jlmod_legacy" + i + ".glsl";
                 generated.put(key, "#ifdef VERTEX\n"
                         + "#define a_position VertexCoord\n"
@@ -119,6 +119,18 @@ public final class GlslpAssets {
         return legacy ? result.withLegacyValues(stages) : result;
     }
 
+
+    /** Old profiles may still refer to sources later moved under shaders_legacy/. */
+    private static String readLegacySource(File root, String path) throws IOException {
+        File found = io.github.h3nb.jlmodplus.config.ShaderCatalog.resolveLegacySource(root, path);
+        if (found == null) throw new IOException("Unsafe legacy shader source: " + path);
+        File canonical = found.getCanonicalFile();
+        String relative = canonical.getPath();
+        String prefix = root.getCanonicalPath() + File.separator;
+        if (!relative.startsWith(prefix)) throw new IOException("Legacy shader escapes shader folder");
+        return readLocal(root, relative.substring(prefix.length())
+                .replace(File.separatorChar, '/'));
+    }
 
     public static GlslpPreset load(String selection, File shaderDirectory) throws IOException {
         if (selection == null || (!selection.toLowerCase(java.util.Locale.ROOT).endsWith(".glslp")

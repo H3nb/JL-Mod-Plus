@@ -153,4 +153,20 @@ class CustomShaderChainTest {
                 shaderRoot.toFile(), null, "glsl"));
     }
 
+
+    @Test void legacyCustomResolvesSourcesMovedByEarlierAppVersions() throws Exception {
+        source("shaders_legacy/old.vsh",
+                "attribute vec4 a_position; attribute vec2 a_texcoord0; "
+                + "void main() { gl_Position = a_position; }");
+        source("shaders_legacy/old.fsh",
+                "precision mediump float; uniform sampler2D sampler0;"
+                + "void main() { gl_FragColor = texture2D(sampler0, vec2(0.5)); }");
+        GlslpPreset chain = GlslpAssets.loadCustom(Collections.singletonList(
+                new CustomShaderStage("old.fsh", 1, null, "old.vsh",
+                        Arrays.asList(1f, 2f, 3f, 4f), "Original")),
+                shaderRoot.toFile(), null, "legacy");
+        assertEquals(1, chain.passes.size());
+        assertTrue(chain.passes.get(0).sourceText.contains("#define sampler0 Texture"));
+    }
+
 }
