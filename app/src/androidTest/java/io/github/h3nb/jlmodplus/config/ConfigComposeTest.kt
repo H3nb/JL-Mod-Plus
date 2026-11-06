@@ -1262,8 +1262,8 @@ class ConfigComposeTest {
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline))
-            .performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline),
+            useUnmergedTree = true).performScrollTo().performClick()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 1)).assertExists()
         composeRule.onNodeWithTag("shader_custom_increase_passes").performScrollTo().performClick()
@@ -1428,8 +1428,8 @@ class ConfigComposeTest {
             }
             composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
                 .performScrollTo().performClick()
-            composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline))
-                .performScrollTo().performClick()
+            composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline),
+                useUnmergedTree = true).performScrollTo().performClick()
             composeRule.waitUntil(8_000) {
                 runCatching {
                     composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("10")
