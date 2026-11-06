@@ -44,4 +44,21 @@
     <string name="render_pipeline_filter_summary">Texture filtering: %1$s</string>
     <string name="render_pipeline_note">Display layout determines the viewport before shader passes are planned. The steps show image flow.</string>
     <string name="render_shader_change">Choose another effect</string>
+    <string name="render_custom_pipeline">Custom pipeline</string>
+    <string name="render_custom_pipeline_hint">Combine standalone GLSL shaders from your shader folder.</string>
+    <string name="render_custom_order_help">Effects run from top to bottom. Complex GLSLP presets are kept intact and cannot be split here.</string>
+    <string name="render_custom_empty">Add a shader to start a custom chain.</string>
+    <string name="render_custom_stage_count">%1$d custom shader stages</string>
+    <string name="render_custom_add">Add shader</string>
+    <string name="render_custom_add_hint">Choose an external standalone .glsl source.</string>
+    <string name="render_custom_no_sources">No external .glsl shaders found. Add files to shaders/shaders_glsl/ and reopen configuration.</string>
+    <string name="render_custom_scale">Output: %1$d× input</string>
+    <string name="render_custom_output_scale">Intermediate output size</string>
+    <string name="render_custom_final_viewport">Final output: game viewport</string>
+    <string name="render_custom_filter">Input filter: %1$s</string>
+    <string name="render_custom_up">Up</string>
+    <string name="render_custom_down">Down</string>
+    <string name="render_custom_remove">Remove</string>
+    <string name="render_custom_cancel">Cancel</string>
+    <string name="render_custom_save">Save</string>
 </resources>

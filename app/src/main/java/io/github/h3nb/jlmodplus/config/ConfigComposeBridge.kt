@@ -340,6 +340,7 @@ internal fun ConfigScreen(
     var passesOpenedFromPipeline by rememberSaveable { mutableStateOf(false) }
     val backRendering: () -> Unit = {
         renderingSubpage = when (renderingSubpage) {
+            RenderingSubpage.CUSTOM -> RenderingSubpage.SHADERS
             RenderingSubpage.PARAMETERS -> RenderingSubpage.SHADERS
             RenderingSubpage.PASSES ->
                 if (passesOpenedFromPipeline) RenderingSubpage.PIPELINE else RenderingSubpage.SHADERS
@@ -403,6 +404,7 @@ internal fun ConfigScreen(
                 renderingSubpage = RenderingSubpage.SHADERS
             },
             onOpenParameters = { renderingSubpage = RenderingSubpage.PARAMETERS },
+            onOpenCustom = { renderingSubpage = RenderingSubpage.CUSTOM },
             onOpenPasses = {
                 passesOpenedFromPipeline = renderingSubpage == RenderingSubpage.PIPELINE
                 renderingSubpage = RenderingSubpage.PASSES

@@ -43,4 +43,21 @@
     <string name="render_pipeline_filter_summary">Filter tekstur: %1$s</string>
     <string name="render_pipeline_note">Layout tampilan menentukan viewport sebelum shader direncanakan. Urutan ini menunjukkan aliran gambar.</string>
     <string name="render_shader_change">Pilih efek lain</string>
+    <string name="render_custom_pipeline">Pipeline kustom</string>
+    <string name="render_custom_pipeline_hint">Gabungkan shader GLSL mandiri dari folder shader.</string>
+    <string name="render_custom_order_help">Efek dijalankan dari atas ke bawah. Preset GLSLP kompleks tetap utuh dan tidak dapat dipecah di sini.</string>
+    <string name="render_custom_empty">Tambahkan shader untuk membuat rangkaian kustom.</string>
+    <string name="render_custom_stage_count">%1$d tahap shader kustom</string>
+    <string name="render_custom_add">Tambah shader</string>
+    <string name="render_custom_add_hint">Pilih sumber .glsl eksternal yang berdiri sendiri.</string>
+    <string name="render_custom_no_sources">Belum ada shader .glsl eksternal. Tambahkan file ke shaders/shaders_glsl/ lalu buka kembali konfigurasi.</string>
+    <string name="render_custom_scale">Output: %1$d× input</string>
+    <string name="render_custom_output_scale">Ukuran output perantara</string>
+    <string name="render_custom_final_viewport">Output akhir: area tampilan game</string>
+    <string name="render_custom_filter">Filter input: %1$s</string>
+    <string name="render_custom_up">Naik</string>
+    <string name="render_custom_down">Turun</string>
+    <string name="render_custom_remove">Hapus</string>
+    <string name="render_custom_cancel">Batal</string>
+    <string name="render_custom_save">Simpan</string>
 </resources>

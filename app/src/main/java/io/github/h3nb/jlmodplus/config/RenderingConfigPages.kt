@@ -53,10 +53,11 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, PIPELINE }
+internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, PIPELINE, CUSTOM }
 
 internal fun selectedShaderLabel(state: ConfigUiState): String {
     val selected = state.form.shader ?: return "Off"
+    if (selected.customStages != null) return "Custom pipeline"
     return state.shaders.firstOrNull { it == selected }?.toString()
         ?: "Unavailable: " + (selected.name ?: selected.preset?.substringAfterLast('/')
             ?: selected.fragment?.substringAfterLast('/') ?: "Shader")
@@ -68,7 +69,8 @@ internal fun selectedShaderLabel(state: ConfigUiState): String {
  * Keep the control visible if inspection fails: the fallback presenter uses it.
  */
 internal fun isTextureFilteringApplicable(state: ConfigUiState): Boolean {
-    if (state.form.graphicsMode != 1 || state.form.shader?.preset == null) return true
+    if (state.form.graphicsMode != 1 || (state.form.shader?.preset == null
+            && state.form.shader?.customStages == null)) return true
     val summary = state.shaderPipeline ?: return true
     if (summary.error != null || summary.passes.isEmpty()) return true
     if (summary.passes.any { it.linearFilter == null }) return true
@@ -88,6 +90,7 @@ internal fun RenderingSettingsPage(
     onOpenShaders: () -> Unit,
     onOpenParameters: () -> Unit,
     onOpenPasses: () -> Unit,
+    onOpenCustom: () -> Unit,
     onBack: () -> Unit,
 ) {
     val title = when (page) {
@@ -95,6 +98,7 @@ internal fun RenderingSettingsPage(
         RenderingSubpage.PARAMETERS -> R.string.render_shader_parameters
         RenderingSubpage.PASSES -> R.string.render_shader_passes
         RenderingSubpage.PIPELINE -> R.string.render_pipeline_title
+        RenderingSubpage.CUSTOM -> R.string.render_custom_pipeline
     }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -128,11 +132,15 @@ internal fun RenderingSettingsPage(
                 when (page) {
                     RenderingSubpage.SHADERS -> ShaderEffectsContent(
                         state, onFormChanged, onLegacyTuning, onOpenParameters, onOpenPasses,
+                        onOpenCustom,
                     )
                     RenderingSubpage.PARAMETERS -> ShaderParametersContent(state, onFormChanged)
                     RenderingSubpage.PASSES -> ShaderPassesContent(state)
                     RenderingSubpage.PIPELINE -> RenderingPipelineContent(
                         state, onFormChanged, onOpenShaders, onOpenPasses,
+                    )
+                    RenderingSubpage.CUSTOM -> CustomPipelineContent(
+                        state, onFormChanged, onBack,
                     )
                 }
             }
@@ -148,6 +156,7 @@ private fun ShaderEffectsContent(
     onLegacyTuning: () -> Unit,
     onOpenParameters: () -> Unit,
     onOpenPasses: () -> Unit,
+    onOpenCustom: () -> Unit,
 ) {
     val form = state.form
     val shader = form.shader
@@ -173,6 +182,11 @@ private fun ShaderEffectsContent(
             },
         )
     }
+    ActionSurface(
+        title = stringResource(R.string.render_custom_pipeline),
+        subtitle = stringResource(R.string.render_custom_pipeline_hint),
+        onClick = onOpenCustom,
+    )
     if (shader == null) {
         MutedText(stringResource(R.string.render_no_shader))
         return
@@ -180,8 +194,16 @@ private fun ShaderEffectsContent(
     if (form.graphicsMode != 1) {
         MutedText(stringResource(R.string.render_shader_requires_gles))
     }
-    if (state.shaders.none { it == shader }) {
+    if (shader.customStages == null && state.shaders.none { it == shader }) {
         MutedText(stringResource(R.string.render_shader_missing), isError = true)
+    }
+    if (shader.customStages != null) {
+        val summary = state.shaderPipeline
+        if (summary?.error != null) MutedText(summary.error, isError = true)
+        else if (summary != null) MutedText(
+            stringResource(R.string.render_custom_stage_count, summary.passes.size),
+        )
+        return
     }
     if (shader.preset == null) {
         if (shader.hasTunableSettings()) {
