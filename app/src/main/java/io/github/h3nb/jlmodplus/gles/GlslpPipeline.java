@@ -602,18 +602,20 @@ public final class GlslpPipeline {
         if (matrix >= 0) glUniformMatrix4fv(matrix, 1, false, IDENTITY, 0);
         int position = vertexAttributes[stage];
         int texcoord = textureAttributes[stage];
-        if (position < 0 || texcoord < 0) {
-            throw new IllegalStateException("GLSLP attributes VertexCoord/TexCoord missing");
+        if (position < 0) {
+            throw new IllegalStateException("GLSLP position attribute missing");
         }
         quad.position(0);
         glVertexAttribPointer(position, 4, GL_FLOAT, false, 32, quad);
         glEnableVertexAttribArray(position);
-        quad.position(4);
-        glVertexAttribPointer(texcoord, 4, GL_FLOAT, false, 32, quad);
-        glEnableVertexAttribArray(texcoord);
+        if (texcoord >= 0) {
+            quad.position(4);
+            glVertexAttribPointer(texcoord, 4, GL_FLOAT, false, 32, quad);
+            glEnableVertexAttribArray(texcoord);
+        }
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glDisableVertexAttribArray(position);
-        glDisableVertexAttribArray(texcoord);
+        if (texcoord >= 0) glDisableVertexAttribArray(texcoord);
     }
 
     private int uniformLocation(int stage, String name) {
