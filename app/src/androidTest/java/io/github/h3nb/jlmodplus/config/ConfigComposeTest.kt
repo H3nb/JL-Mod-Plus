@@ -1236,6 +1236,75 @@ class ConfigComposeTest {
         assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)
     }
 
+    @Test
+    fun shaderSubpagesHonorRepeatedHostBackWithoutExitingConfiguration() {
+        val base = sampleState()
+        val external = ShaderInfo("Simple GLSL", "test").apply {
+            preset = "shaders_glsl/example.glsl"
+        }
+        val shaders = listOf(ShaderInfo("None", "test"), external)
+        val state = ConfigUiState(
+            base.form, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, shaders, base.removableScreenPresets,
+        )
+        val backRequests = mutableStateOf(0)
+        val host = RecordingMenuActions()
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(
+                    state, events, initialDestination = ConfigDestination.Display,
+                    menuActions = host, backRequest = backRequests.value,
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_empty)).assertExists()
+
+        composeRule.runOnIdle { backRequests.value++ }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_empty)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertExists()
+        assertEquals(0, events.formChanges)
+        assertEquals(0, host.backCalls)
+
+        composeRule.runOnIdle { backRequests.value++ }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.pref_graphics_mode_title)).assertExists()
+        assertEquals(0, host.backCalls)
+
+        composeRule.runOnIdle { backRequests.value++ }
+        composeRule.waitForIdle()
+        assertEquals(1, host.backCalls)
+    }
+
+    @Test
+    fun rendererAndLayoutOptionsHideUnrelatedSettingsWithoutResettingValues() {
+        val base = sampleState()
+        val legacy = ShaderInfo("Remembered shader", "test").apply {
+            preset = "shaders_glsl/preserve.glslp"
+        }
+        val software = base.form.toBuilder().graphicsMode(0).shader(legacy).build()
+        val state = ConfigUiState(
+            software, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, base.shaders, base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.parallel_screen_redrawing)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_pipeline_title)).assertDoesNotExist()
+        assertEquals(legacy.preset, state.form.shader?.preset)
+    }
+
     private fun sampleState(): ConfigUiState {
         val form = ConfigFormState.builder()
             .screenWidth("240")
@@ -1339,11 +1408,12 @@ class ConfigComposeTest {
     }
 
     private class RecordingMenuActions : ConfigMenuActions {
+        var backCalls = 0
         var clearDataCalls = 0
         var resetSettingsCalls = 0
         var resetLayoutCalls = 0
 
-        override fun onBack() = Unit
+        override fun onBack() { backCalls++ }
         override fun onStart() = Unit
         override fun onClearData() {
             clearDataCalls++
