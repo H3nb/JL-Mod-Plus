@@ -13,6 +13,13 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLUtils;
 import android.util.Log;
+import androidx.test.platform.app.InstrumentationRegistry;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import io.github.h3nb.jlmodplus.config.CustomShaderStage;
+import java.util.Arrays;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -25,11 +32,43 @@ import javax.microedition.util.ContextHolder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/** Runs the actual application GLSLP executor against the packaged Libretro shaders. */
+/** Runs the application executor against independent test-only Libretro fixtures. */
 @RunWith(AndroidJUnit4.class)
 public final class GlslpGpuSmokeTest {
     private static final int SURFACE = 256;
     private static final int SOURCE = 32;
+
+
+    @Test public void customExternalChainSamplesItsPredecessor() throws Exception {
+        File root = new File(ContextHolder.getAppContext().getCacheDir(),
+                "glslp-custom-" + System.nanoTime());
+        File folder = new File(root, "shaders_glsl");
+        assertTrue(folder.mkdirs());
+        File first = new File(folder, "red.glsl");
+        File second = new File(folder, "sample.glsl");
+        try {
+            try (FileOutputStream out = new FileOutputStream(first)) {
+                out.write(colorPass("void main(){gl_FragColor=vec4(1.0,0.0,0.0,1.0);}\n")
+                        .getBytes(StandardCharsets.UTF_8));
+            }
+            try (FileOutputStream out = new FileOutputStream(second)) {
+                out.write(colorPass("uniform sampler2D Texture;\n"
+                        + "void main(){vec4 c=texture2D(Texture,uv);"
+                        + "gl_FragColor=vec4(c.r,0.0,0.0,1.0);}\n")
+                        .getBytes(StandardCharsets.UTF_8));
+            }
+            GlslpPreset preset = GlslpAssets.loadCustom(Arrays.asList(
+                    new CustomShaderStage("shaders_glsl/red.glsl", 2, false),
+                    new CustomShaderStage("shaders_glsl/sample.glsl", 1, false)),
+                    root);
+            execute(preset, 2, path -> { throw new IOException("No LUT expected"); }, Color.RED);
+        } finally {
+            assertTrue(first.delete());
+            assertTrue(second.delete());
+            assertTrue(folder.delete());
+            assertTrue(root.delete());
+        }
+    }
 
     @Test public void fsrEasuAndRcas() throws Exception {
         execute("builtin:libretro:fsr", 2);
@@ -248,8 +287,30 @@ public final class GlslpGpuSmokeTest {
                 -1);
     }
 
+    private static GlslpPreset fixturePreset(String selection) throws IOException {
+        String relative;
+        switch (selection) {
+            case "builtin:libretro:fsr": relative = "libretro/fsr/fsr.glslp"; break;
+            case "builtin:libretro:xbrz-crisp": relative = "libretro/xbrz/xbrz-crisp.glslp"; break;
+            case "builtin:libretro:xbrz-4x": relative = "libretro/xbrz/4xbrz-linear.glslp"; break;
+            case "builtin:glslp:stress8":
+                relative = "libretro/stress/eight-pass-composition.glslp"; break;
+            default: throw new IOException("Unknown GPU test fixture " + selection);
+        }
+        return GlslpPreset.load(path -> {
+            try (InputStream stream = InstrumentationRegistry.getInstrumentation()
+                    .getContext().getAssets().open("shaders/glslp/" + path);
+                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                byte[] block = new byte[8192];
+                int count;
+                while ((count = stream.read(block)) != -1) out.write(block, 0, count);
+                return new String(out.toByteArray(), StandardCharsets.UTF_8);
+            }
+        }, relative);
+    }
+
     private static void execute(String selection, int expectedPasses) throws Exception {
-        execute(GlslpAssets.load(selection, null), expectedPasses,
+        execute(fixturePreset(selection), expectedPasses,
                 path -> { throw new java.io.IOException("Unexpected LUT: " + path); }, -1);
     }
 

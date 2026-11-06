@@ -1,7 +1,0 @@
-shaders = 2
-shader0 = blur-h.glsl
-shader1 = blur-v.glsl
-scale_type0 = source
-scale_type1 = viewport
-filter_linear0 = true
-filter_linear1 = true

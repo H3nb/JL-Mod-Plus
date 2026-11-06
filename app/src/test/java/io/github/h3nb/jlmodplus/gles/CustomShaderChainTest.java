@@ -55,8 +55,8 @@ class CustomShaderChainTest {
                 () -> GlslpAssets.loadCustom(Collections.singletonList(
                         new CustomShaderStage("../escape.glsl", 1, null)),
                         shaderRoot.toFile()));
-        assertTrue(unsafe.getMessage().contains("path") ||
-                unsafe.getMessage().contains("stage"));
+        assertTrue(unsafe.getMessage().contains("Asset escapes GLSLP bundle"),
+                unsafe.getMessage());
 
         IOException empty = assertThrows(IOException.class,
                 () -> GlslpAssets.loadCustom(Collections.emptyList(), shaderRoot.toFile()));
