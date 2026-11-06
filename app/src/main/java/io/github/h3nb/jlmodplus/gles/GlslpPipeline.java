@@ -7,7 +7,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -23,6 +26,8 @@ public final class GlslpPipeline {
     private final Map<String, Float> parameters;
     private final int[] programs, framebuffer, intermediate, targetWidth, targetHeight;
     private final boolean[] usesOriginal, usesPrev2;
+    private final int[] vertexAttributes, textureAttributes;
+    private final List<Map<String, Integer>> uniformLocations = new ArrayList<>();
     private final FloatBuffer quad = ByteBuffer.allocateDirect(4 * 8 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private long processedSequence = Long.MIN_VALUE;
@@ -43,6 +48,9 @@ public final class GlslpPipeline {
         targetHeight = new int[n];
         usesOriginal = new boolean[n];
         usesPrev2 = new boolean[n];
+        vertexAttributes = new int[n + 1];
+        textureAttributes = new int[n + 1];
+        for (int i = 0; i <= n; i++) uniformLocations.add(new HashMap<>());
         try {
             for (int i = 0; i < n; i++) {
                 GlslpPreset.Pass pass = preset.passes.get(i);
@@ -50,6 +58,8 @@ public final class GlslpPipeline {
                     throw new IOException("Unsupported sampler wrap " + pass.wrapMode);
                 }
                 programs[i] = link(pass.sourceText, !parameters.isEmpty());
+                vertexAttributes[i] = glGetAttribLocation(programs[i], "VertexCoord");
+                textureAttributes[i] = glGetAttribLocation(programs[i], "TexCoord");
                 usesOriginal[i] = glGetUniformLocation(programs[i], "OrigTexture") >= 0;
                 usesPrev2[i] = glGetUniformLocation(programs[i], "PassPrev2Texture") >= 0;
                 if (i == 0 && (usesOriginal[i] || usesPrev2[i])) {
@@ -67,6 +77,8 @@ public final class GlslpPipeline {
                 }
             }
             programs[n] = link(stockSource, false);
+            vertexAttributes[n] = glGetAttribLocation(programs[n], "VertexCoord");
+            textureAttributes[n] = glGetAttribLocation(programs[n], "TexCoord");
         } catch (IOException | RuntimeException e) {
             release();
             throw e;
@@ -138,7 +150,7 @@ public final class GlslpPipeline {
                 int prev2 = i == 1 ? sourceTexture : (i > 1 ? intermediate[i - 2] : 0);
                 int prevW = i < 2 ? logicalWidth : targetWidth[i - 2];
                 int prevH = i < 2 ? logicalHeight : targetHeight[i - 2];
-                drawPass(programs[i], input, usesOriginal[i] ? sourceTexture : 0,
+                drawPass(i, input, usesOriginal[i] ? sourceTexture : 0,
                         usesPrev2[i] ? prev2 : 0, pass.inputWidth, pass.inputHeight,
                         pass.outputWidth, pass.outputHeight,
                         passFilter(pass.pass.linearFilter, legacyFilter),
@@ -150,7 +162,7 @@ public final class GlslpPipeline {
                 glViewport(0, 0, surfaceWidth, surfaceHeight);
                 glEnable(GL_SCISSOR_TEST);
                 setGameQuad(legacyQuad);
-                drawPass(programs[n], intermediate[n - 1], 0, 0,
+                drawPass(n, intermediate[n - 1], 0, 0,
                         last.outputWidth, last.outputHeight, vw, vh,
                         legacyFilter, logicalWidth, logicalHeight, 0, 0);
             }
@@ -232,10 +244,10 @@ public final class GlslpPipeline {
         quad.rewind();
     }
 
-    private void drawPass(int program, int texture, int originalTexture, int prev2Texture,
+    private void drawPass(int stage, int texture, int originalTexture, int prev2Texture,
                           int inputW, int inputH, int outputW, int outputH, int filter,
                           int originalW, int originalH, int prevW, int prevH) {
-        glUseProgram(program);
+        glUseProgram(programs[stage]);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
@@ -245,32 +257,32 @@ public final class GlslpPipeline {
             glBindTexture(GL_TEXTURE_2D, originalTexture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            uniform1i(program, "OrigTexture", 1);
-            uniform2f(program, "OrigTextureSize", originalW, originalH);
-            uniform2f(program, "OrigInputSize", originalW, originalH);
+            uniform1i(stage, "OrigTexture", 1);
+            uniform2f(stage, "OrigTextureSize", originalW, originalH);
+            uniform2f(stage, "OrigInputSize", originalW, originalH);
         }
         if (prev2Texture != 0) {
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, prev2Texture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            uniform1i(program, "PassPrev2Texture", 2);
-            uniform2f(program, "PassPrev2TextureSize", prevW, prevH);
-            uniform2f(program, "PassPrev2InputSize", prevW, prevH);
+            uniform1i(stage, "PassPrev2Texture", 2);
+            uniform2f(stage, "PassPrev2TextureSize", prevW, prevH);
+            uniform2f(stage, "PassPrev2InputSize", prevW, prevH);
         }
         glActiveTexture(GL_TEXTURE0);
         glDisable(GL_BLEND);
-        uniform1i(program, "Texture", 0);
-        uniform2f(program, "InputSize", inputW, inputH);
-        uniform2f(program, "TextureSize", inputW, inputH);
-        uniform2f(program, "OutputSize", outputW, outputH);
+        uniform1i(stage, "Texture", 0);
+        uniform2f(stage, "InputSize", inputW, inputH);
+        uniform2f(stage, "TextureSize", inputW, inputH);
+        uniform2f(stage, "OutputSize", outputW, outputH);
         for (Map.Entry<String, Float> param : parameters.entrySet()) {
-            uniform1f(program, param.getKey(), param.getValue());
+            uniform1f(stage, param.getKey(), param.getValue());
         }
-        int matrix = glGetUniformLocation(program, "MVPMatrix");
+        int matrix = uniformLocation(stage, "MVPMatrix");
         if (matrix >= 0) glUniformMatrix4fv(matrix, 1, false, IDENTITY, 0);
-        int position = glGetAttribLocation(program, "VertexCoord");
-        int texcoord = glGetAttribLocation(program, "TexCoord");
+        int position = vertexAttributes[stage];
+        int texcoord = textureAttributes[stage];
         if (position < 0 || texcoord < 0) {
             throw new IllegalStateException("GLSLP attributes VertexCoord/TexCoord missing");
         }
@@ -285,18 +297,27 @@ public final class GlslpPipeline {
         glDisableVertexAttribArray(texcoord);
     }
 
-    private static void uniform1i(int program, String name, int value) {
-        int location = glGetUniformLocation(program, name);
+    private int uniformLocation(int stage, String name) {
+        Map<String, Integer> locations = uniformLocations.get(stage);
+        Integer cached = locations.get(name);
+        if (cached != null) return cached;
+        int location = glGetUniformLocation(programs[stage], name);
+        locations.put(name, location); // Missing/optimized-out uniforms are cached as -1.
+        return location;
+    }
+
+    private void uniform1i(int stage, String name, int value) {
+        int location = uniformLocation(stage, name);
         if (location >= 0) glUniform1i(location, value);
     }
 
-    private static void uniform1f(int program, String name, float value) {
-        int location = glGetUniformLocation(program, name);
+    private void uniform1f(int stage, String name, float value) {
+        int location = uniformLocation(stage, name);
         if (location >= 0) glUniform1f(location, value);
     }
 
-    private static void uniform2f(int program, String name, float x, float y) {
-        int location = glGetUniformLocation(program, name);
+    private void uniform2f(int stage, String name, float x, float y) {
+        int location = uniformLocation(stage, name);
         if (location >= 0) glUniform2f(location, x, y);
     }
 
