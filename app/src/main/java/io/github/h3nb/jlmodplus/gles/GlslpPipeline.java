@@ -3,6 +3,9 @@ package io.github.h3nb.jlmodplus.gles;
 
 import static android.opengl.GLES20.*;
 
+import android.graphics.Bitmap;
+import android.opengl.GLUtils;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -27,6 +30,13 @@ public final class GlslpPipeline {
     private final int[] programs, framebuffer, intermediate, targetWidth, targetHeight;
     private final boolean[] usesOriginal, usesPrev2;
     private final int[] vertexAttributes, textureAttributes;
+    private final int[] lookupIds, lookupWidths, lookupHeights;
+    private final int[][] lookupUniforms;
+    private static final long MAX_LOOKUP_BYTES = 16L * 1024L * 1024L;
+
+    public interface TextureLoader {
+        Bitmap load(String sourcePath) throws IOException;
+    }
     private final List<Map<String, Integer>> uniformLocations = new ArrayList<>();
     private final FloatBuffer quad = ByteBuffer.allocateDirect(4 * 8 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -35,6 +45,13 @@ public final class GlslpPipeline {
     private int planSourceWidth, planSourceHeight, planViewportWidth, planViewportHeight;
 
     public GlslpPipeline(GlslpPreset resolved, String stockSource) throws IOException {
+        this(resolved, stockSource, path -> {
+            throw new IOException("GLSLP lookup image loader is unavailable: " + path);
+        });
+    }
+
+    public GlslpPipeline(GlslpPreset resolved, String stockSource,
+            TextureLoader images) throws IOException {
         if (resolved == null || resolved.passes.isEmpty() || resolved.passes.size() > 16) {
             throw new IOException("GLSLP supports 1–16 passes in this prototype");
         }
@@ -50,6 +67,10 @@ public final class GlslpPipeline {
         usesPrev2 = new boolean[n];
         vertexAttributes = new int[n + 1];
         textureAttributes = new int[n + 1];
+        lookupIds = new int[preset.textures.size()];
+        lookupWidths = new int[preset.textures.size()];
+        lookupHeights = new int[preset.textures.size()];
+        lookupUniforms = new int[n][preset.textures.size()];
         for (int i = 0; i <= n; i++) uniformLocations.add(new HashMap<>());
         try {
             for (int i = 0; i < n; i++) {
@@ -79,9 +100,69 @@ public final class GlslpPipeline {
             programs[n] = link(stockSource, false);
             vertexAttributes[n] = glGetAttribLocation(programs[n], "VertexCoord");
             textureAttributes[n] = glGetAttribLocation(programs[n], "TexCoord");
+            uploadLookups(images);
         } catch (IOException | RuntimeException e) {
             release();
             throw e;
+        }
+    }
+
+    private void uploadLookups(TextureLoader images) throws IOException {
+        if (lookupIds.length == 0) return;
+        int[] maxUnits = new int[1], maxSize = new int[1];
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, maxUnits, 0);
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxSize, 0);
+        if (lookupIds.length + 3 > maxUnits[0]) {
+            throw new IOException("Not enough fragment texture units for GLSLP LUTs");
+        }
+        long bytes = 0;
+        glGenTextures(lookupIds.length, lookupIds, 0);
+        try {
+            for (int i = 0; i < lookupIds.length; i++) {
+                GlslpPreset.Texture lookup = preset.textures.get(i);
+                Bitmap bitmap = images.load(lookup.sourcePath);
+                if (bitmap == null) throw new IOException("Missing GLSLP LUT: " + lookup.sourcePath);
+                try {
+                    int w = bitmap.getWidth(), h = bitmap.getHeight();
+                    bytes += 4L * w * h;
+                    if (w <= 0 || h <= 0 || w > maxSize[0] || h > maxSize[0]
+                            || bytes > MAX_LOOKUP_BYTES) {
+                        throw new IOException("GLSLP lookup texture budget exceeded: " + lookup.sourcePath);
+                    }
+                    boolean pot = (w & (w - 1)) == 0 && (h & (h - 1)) == 0;
+                    if (!pot && (lookup.mipmap || !"clamp_to_edge".equals(lookup.wrapMode))) {
+                        throw new IOException("GLES2 NPOT lookup requires clamp and no mipmap: "
+                                + lookup.sourcePath);
+                    }
+                    lookupWidths[i] = w;
+                    lookupHeights[i] = h;
+                    glActiveTexture(GL_TEXTURE0 + 3 + i);
+                    glBindTexture(GL_TEXTURE_2D, lookupIds[i]);
+                    int baseFilter = lookup.linear ? GL_LINEAR : GL_NEAREST;
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, baseFilter);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, !lookup.mipmap
+                            ? baseFilter : (lookup.linear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST));
+                    int wrap = lookup.wrapMode.equals("repeat") ? GL_REPEAT
+                            : lookup.wrapMode.equals("mirrored_repeat") ? GL_MIRRORED_REPEAT
+                            : GL_CLAMP_TO_EDGE;
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+                    GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
+                    if (lookup.mipmap) glGenerateMipmap(GL_TEXTURE_2D);
+                } finally {
+                    bitmap.recycle();
+                }
+                for (int pass = 0; pass < preset.passes.size(); pass++) {
+                    lookupUniforms[pass][i] = glGetUniformLocation(programs[pass], lookup.alias);
+                }
+            }
+            verifyGlError();
+        } finally {
+            for (int i = 0; i < lookupIds.length; i++) {
+                glActiveTexture(GL_TEXTURE0 + 3 + i);
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
+            glActiveTexture(GL_TEXTURE0);
         }
     }
 
@@ -170,6 +251,10 @@ public final class GlslpPipeline {
             processedSequence = guestSequence;
         } finally {
             // Return GL state required by the existing Canvas renderer.
+            for (int i = 0; i < lookupIds.length; i++) {
+                glActiveTexture(GL_TEXTURE0 + 3 + i);
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, surfaceWidth, surfaceHeight);
             glEnable(GL_SCISSOR_TEST);
@@ -248,6 +333,18 @@ public final class GlslpPipeline {
                           int inputW, int inputH, int outputW, int outputH, int filter,
                           int originalW, int originalH, int prevW, int prevH) {
         glUseProgram(programs[stage]);
+        if (stage < lookupUniforms.length) {
+            for (int i = 0; i < lookupIds.length; i++) {
+                if (lookupUniforms[stage][i] < 0) continue;
+                glActiveTexture(GL_TEXTURE0 + 3 + i);
+                glBindTexture(GL_TEXTURE_2D, lookupIds[i]);
+                glUniform1i(lookupUniforms[stage][i], 3 + i);
+                String alias = preset.textures.get(i).alias;
+                uniform2f(stage, alias + "Size", lookupWidths[i], lookupHeights[i]);
+                uniform2f(stage, alias + "TextureSize", lookupWidths[i], lookupHeights[i]);
+                uniform2f(stage, alias + "InputSize", lookupWidths[i], lookupHeights[i]);
+            }
+        }
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
@@ -372,10 +469,12 @@ public final class GlslpPipeline {
     }
 
     public void release() {
+        glDeleteTextures(lookupIds.length, lookupIds, 0);
         glDeleteTextures(intermediate.length, intermediate, 0);
         glDeleteFramebuffers(framebuffer.length, framebuffer, 0);
         for (int program : programs) if (program != 0) glDeleteProgram(program);
         for (int i = 0; i < intermediate.length; i++) intermediate[i] = framebuffer[i] = 0;
         for (int i = 0; i < programs.length; i++) programs[i] = 0;
+        for (int i = 0; i < lookupIds.length; i++) lookupIds[i] = 0;
     }
 }

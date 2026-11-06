@@ -17,6 +17,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,7 +44,38 @@ public final class GlslpGpuSmokeTest {
         execute("builtin:glslp:stress8", 8);
     }
 
+    @Test public void staticLookupSamplerRendersItsImage() throws Exception {
+        Map<String, String> source = new HashMap<>();
+        source.put("example.glslp", "shaders = 1\nshader0 = example.glsl\n"
+                + "textures = ColorLUT\nColorLUT = red.png\nColorLUT_linear = true\n");
+        source.put("example.glsl", "#if defined(VERTEX)\n"
+                + "attribute vec4 VertexCoord; attribute vec4 TexCoord;\n"
+                + "uniform mat4 MVPMatrix; varying vec2 uv;\n"
+                + "void main(){uv=TexCoord.xy;gl_Position=MVPMatrix*VertexCoord;}\n"
+                + "#elif defined(FRAGMENT)\n"
+                + "precision mediump float; uniform sampler2D ColorLUT; varying vec2 uv;\n"
+                + "void main(){gl_FragColor=texture2D(ColorLUT,vec2(0.5,0.5));}\n"
+                + "#endif\n");
+        GlslpPreset preset = GlslpPreset.load(path -> {
+            String text = source.get(path);
+            if (text == null) throw new java.io.IOException("Missing: " + path);
+            return text;
+        }, "example.glslp");
+        execute(preset, 1, path -> {
+            assertEquals("red.png", path);
+            Bitmap bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888);
+            bitmap.eraseColor(Color.rgb(231, 53, 29));
+            return bitmap;
+        }, Color.rgb(231, 53, 29));
+    }
+
     private static void execute(String selection, int expectedPasses) throws Exception {
+        execute(GlslpAssets.load(selection, null), expectedPasses,
+                path -> { throw new java.io.IOException("Unexpected LUT: " + path); }, -1);
+    }
+
+    private static void execute(GlslpPreset preset, int expectedPasses,
+            GlslpPipeline.TextureLoader images, int expectedRgb) throws Exception {
         EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
         assertTrue(EGL14.eglInitialize(display, new int[1], 0, new int[1], 0));
@@ -70,10 +103,9 @@ public final class GlslpGpuSmokeTest {
         Bitmap bitmap = null;
         GlslpPipeline pipeline = null;
         try {
-            Log.i("GLSLP_Smoke", selection + " GPU=" + glGetString(GL_RENDERER));
-            GlslpPreset preset = GlslpAssets.load(selection, null);
+            Log.i("GLSLP_Smoke", "GPU=" + glGetString(GL_RENDERER));
             assertEquals(expectedPasses, preset.passes.size());
-            pipeline = new GlslpPipeline(preset, GlslpAssets.stockSource());
+            pipeline = new GlslpPipeline(preset, GlslpAssets.stockSource(), images);
             bitmap = Bitmap.createBitmap(SOURCE, SOURCE, Bitmap.Config.ARGB_8888);
             int[] pixels = new int[SOURCE * SOURCE];
             for (int y = 0; y < SOURCE; y++) {
@@ -100,12 +132,18 @@ public final class GlslpGpuSmokeTest {
             pipeline.draw(sourceTexture[0], quad, SOURCE, SOURCE, SOURCE, SOURCE,
                     SURFACE, SURFACE, 101L, GL_NEAREST);
             byte[] first = image();
-            assertFilledImage(selection, first);
+            assertFilledImage("GPU preset", first);
+            if (expectedRgb != -1) {
+                int pixel = ((SURFACE / 2) * SURFACE + SURFACE / 2) * 4;
+                assertEquals(Color.red(expectedRgb), first[pixel] & 255);
+                assertEquals(Color.green(expectedRgb), first[pixel + 1] & 255);
+                assertEquals(Color.blue(expectedRgb), first[pixel + 2] & 255);
+            }
             // A host-only repaint must use existing intermediates and preserve pixels.
             glClear(GL_COLOR_BUFFER_BIT);
             pipeline.draw(sourceTexture[0], quad, SOURCE, SOURCE, SOURCE, SOURCE,
                     SURFACE, SURFACE, 101L, GL_NEAREST);
-            assertArrayEquals("Cached frame mismatch for " + selection, first, image());
+            assertArrayEquals("Cached frame mismatch", first, image());
             // Changing the game viewport forces viewport-sized FBOs to resize.
             glClear(GL_COLOR_BUFFER_BIT);
             pipeline.draw(sourceTexture[0], quad(-0.75f, 0.75f), SOURCE, SOURCE,
@@ -114,7 +152,8 @@ public final class GlslpGpuSmokeTest {
             int[] currentFbo = new int[1];
             glGetIntegerv(GL_FRAMEBUFFER_BINDING, currentFbo, 0);
             assertEquals(0, currentFbo[0]);
-            Log.i("GLSLP_Smoke", selection + " passed initial, cached and resized draws");
+            Log.i("GLSLP_Smoke", "Passed initial, cached and resized draws with "
+                    + preset.passes.size() + " passes and " + preset.textures.size() + " LUTs");
         } finally {
             if (pipeline != null) pipeline.release();
             if (sourceTexture[0] != 0) glDeleteTextures(1, sourceTexture, 0);

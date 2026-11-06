@@ -240,6 +240,46 @@ public class GlslpPresetTest {
                 "Unsupported GLSLP #reference override");
     }
 
+    @Test public void lookupTexturesParseAndInheritPaths() throws Exception {
+        Bundle files = new Bundle()
+                .put("look/shaders/p.glsl", "void main(){}")
+                .put("look/p.glslp", "shaders = 1\nshader0 = shaders/p.glsl\n"
+                        + "textures = \"ColorLUT;Mask\"\n"
+                        + "ColorLUT = textures/lut.png\nColorLUT_linear = true\n"
+                        + "Mask = textures/mask.jpg\nMask_repeat = true\nMask_mipmap = true\n")
+                .put("custom/p.glslp", "#reference \"../look/p.glslp\"\n"
+                        + "ColorLUT = custom.png\n");
+        GlslpPreset loaded = GlslpPreset.load(files, "custom/p.glslp");
+        assertEquals(2, loaded.textures.size());
+        assertEquals("custom/custom.png", loaded.textures.get(0).sourcePath);
+        assertEquals("look/textures/mask.jpg", loaded.textures.get(1).sourcePath);
+        assertTrue(loaded.textures.get(0).linear);
+        assertTrue(loaded.textures.get(1).mipmap);
+        assertEquals("repeat", loaded.textures.get(1).wrapMode);
+        assertEquals(2, loaded.withParameterOverrides(java.util.Collections.emptyMap()).textures.size());
+    }
+
+    @Test public void lookupTexturesRejectBadInput() throws Exception {
+        Bundle files = new Bundle().put("look/p.glsl", "void main(){}");
+        String base = "shaders = 1\nshader0 = p.glsl\n";
+        files.put("look/traversal.glslp", base + "textures = LUT\nLUT = ../../bad.png\n");
+        expectFailure(() -> GlslpPreset.load(files, "look/traversal.glslp"),
+                "Asset escapes GLSLP bundle");
+        files.put("look/unsupported.glslp", base + "textures = LUT\nLUT = lut.bmp\n");
+        expectFailure(() -> GlslpPreset.load(files, "look/unsupported.glslp"),
+                "Unsupported GLSLP texture format");
+        files.put("look/collision.glslp", base + "textures = Texture\nTexture = foo.png\n");
+        expectFailure(() -> GlslpPreset.load(files, "look/collision.glslp"),
+                "Invalid or reserved GLSLP texture alias");
+        files.put("look/duplicate.glslp", base + "textures = LUT;LUT\nLUT = foo.png\n");
+        expectFailure(() -> GlslpPreset.load(files, "look/duplicate.glslp"),
+                "Invalid or reserved GLSLP texture alias");
+        files.put("look/bad-mipmap.glslp", base
+                + "textures = LUT\nLUT = foo.png\nLUT_mipmap = maybe\n");
+        expectFailure(() -> GlslpPreset.load(files, "look/bad-mipmap.glslp"),
+                "Invalid boolean");
+    }
+
     @Test public void standaloneGlslCompilesAsViewportSizedOnePass() throws Exception {
         Bundle assets = new Bundle().put("custom.glsl", "#ifdef VERTEX\\n#endif");
         GlslpPreset shader = GlslpPreset.load(assets, "custom.glsl");

@@ -16,12 +16,24 @@ to refresh the list. Other graphics modes do not use GLSLP.
 This branch supports **one to sixteen passes**, GLES2-compatible combined
 shader sources, basic GLSLP scaling/filtering and numeric parameters.
 It accepts a bounded chain (maximum 8 files) of simple `#reference` GLSLP
-presets that inherit a full preset and override declared scalar parameters.
-Referenced shader paths remain relative to the file that declares the full
-preset. Cycles, unsafe paths, structural pass overrides, `.params` references,
-LUT overrides and other advanced reference features are rejected.
-It rejects other unsupported preset keys, LUTs, history, feedback,
-float/sRGB framebuffers, unverified desktop-only GLSL constructs and non-clamp wrap. It is not
+presets that inherit a full preset and override declared scalar parameters or
+the file paths of declared lookup textures. Relative shader and LUT paths are
+resolved from the file that declares them. Cycles, unsafe paths, structural
+pass overrides, `.params` references, LUT sampler-settings overrides through
+`#reference`, and other advanced reference features are rejected.
+
+Static GLSLP lookup textures are now supported as a bounded GLES2 subset:
+up to four PNG/JPEG images per preset, decoded only when the GL context is
+created, with at most 16 MiB of uncompressed RGBA8 pixel storage.
+The GLSLP `textures` list, named sampler, per-lookup `_linear`,
+`_wrap_mode`, legacy `_repeat`, and `_mipmap` are recognized.
+GLES2 non-power-of-two images cannot use repeat/mirrored-repeat or mipmaps.
+The same GPU texture is reused between frames and released with its pipeline.
+The configuration UI only parses metadata; it never decodes or uploads images.
+
+Other unsupported keys, history, feedback, float/sRGB framebuffers,
+unverified desktop-only GLSL constructs and non-clamp per-pass wrap remain
+unsupported. It is not
 general RetroArch GLSLP compatibility. Failed programs revert to the
 identity presentation; inspect logcat for the rejection reason.
 
@@ -55,8 +67,9 @@ The pipeline preserves upstream `#version 130` source files on disk, but
 removes that exact directive in-memory for GLES2 compatibility shaders.
 This is not a general desktop GLSL-to-GLES translation. Compilation still
 rejects unsupported GPU syntax. Presets requiring float/sRGB framebuffer
-formats, LUTs, or temporal feedback are rejected rather than silently
-substituting an incorrect RGBA8 approximation.
+formats or temporal feedback are rejected rather than silently substituting
+an incorrect RGBA8 approximation. LUTs with unsupported formats, too many
+samplers, or invalid GLES2 texture options are also rejected.
 
 Pipeline size planning and GL_MAX_TEXTURE_SIZE queries are cached while source
 and viewport dimensions are unchanged, and rebuilt on resize or source-size

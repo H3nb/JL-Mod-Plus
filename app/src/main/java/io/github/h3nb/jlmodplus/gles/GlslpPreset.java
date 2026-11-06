@@ -21,6 +21,7 @@ public final class GlslpPreset {
             "^#pragma\\s+parameter\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\\"[^\\\"]*\\\""
                     + "\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
     private static final int MAX_PASSES = 16;
+    private static final int MAX_TEXTURES = 4;
     private static final int MAX_REFERENCE_DEPTH = 8;
     private static final Pattern REFERENCE = Pattern.compile(
             "^#reference\\s+\\\"([^\\\"]+)\\\"\\s*(?:#.*)?$");
@@ -80,6 +81,25 @@ public final class GlslpPreset {
         }
     }
 
+    /** Immutable static image sampler declared in the preset. */
+    public static final class Texture {
+        public final String alias, sourcePath, wrapMode;
+        public final boolean linear, mipmap;
+
+        private Texture(String alias, String path, boolean linear, String wrapMode,
+                boolean mipmap) {
+            this.alias = alias;
+            sourcePath = path;
+            this.linear = linear;
+            this.wrapMode = wrapMode;
+            this.mipmap = mipmap;
+        }
+
+        private Texture withPath(String path) {
+            return new Texture(alias, path, linear, wrapMode, mipmap);
+        }
+    }
+
     /** Editor metadata from #pragma, with preset defaults and optional user override. */
     public static final class Parameter {
         public final String id, label;
@@ -126,11 +146,14 @@ public final class GlslpPreset {
     }
 
     public final List<Pass> passes;
+    public final List<Texture> textures;
     public final Map<String, Double> parameterOverrides;
 
-    private GlslpPreset(List<Pass> passes, Map<String, Double> overrides) {
-        this.passes = Collections.unmodifiableList(passes);
-        parameterOverrides = Collections.unmodifiableMap(overrides);
+    private GlslpPreset(List<Pass> passes, Map<String, Double> overrides,
+            List<Texture> textures) {
+        this.passes = Collections.unmodifiableList(new ArrayList<>(passes));
+        this.textures = Collections.unmodifiableList(new ArrayList<>(textures));
+        parameterOverrides = Collections.unmodifiableMap(new LinkedHashMap<>(overrides));
     }
 
     /**
@@ -164,7 +187,8 @@ public final class GlslpPreset {
             }
             Pass single = new Pass(preset, source, null, null,
                     new Axis(SizeBasis.VIEWPORT, 1), new Axis(SizeBasis.VIEWPORT, 1));
-            return new GlslpPreset(Collections.singletonList(single), Collections.emptyMap());
+            return new GlslpPreset(Collections.singletonList(single), Collections.emptyMap(),
+                    Collections.emptyList());
         }
         if (!preset.endsWith(".glslp")) throw new IOException("Unsupported GLSLP extension");
         String text = assets.read(preset);
@@ -174,8 +198,7 @@ public final class GlslpPreset {
         List<String> references = new ArrayList<>();
         Map<String, String> entries = parse(text, references);
         if (!references.isEmpty()) {
-            // A simple preset inherits a complete shader chain and overrides parameter values.
-            // Pass edits, LUT paths and .params references are not supported by this subset.
+            // Simple presets inherit the shader chain and may override parameter and LUT paths.
             if (entries.containsKey("shaders") || entries.containsKey("parameters")) {
                 throw new IOException("GLSLP #reference cannot redefine shader structure");
             }
@@ -188,13 +211,26 @@ public final class GlslpPreset {
             for (Parameter parameter : inherited.parameterDefinitions()) {
                 declared.add(parameter.id);
             }
+            List<Texture> textures = new ArrayList<>(inherited.textures);
             for (Map.Entry<String, String> entry : entries.entrySet()) {
-                if (!declared.contains(entry.getKey())) {
+                if (declared.contains(entry.getKey())) {
+                    overrides.put(entry.getKey(), number(entry.getValue(), entry.getKey()));
+                    continue;
+                }
+                boolean matched = false;
+                for (int i = 0; i < textures.size(); i++) {
+                    Texture texture = textures.get(i);
+                    if (texture.alias.equals(entry.getKey())) {
+                        textures.set(i, texture.withPath(normalize(parent, entry.getValue())));
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
                     throw new IOException("Unsupported GLSLP #reference override: " + entry.getKey());
                 }
-                overrides.put(entry.getKey(), number(entry.getValue(), entry.getKey()));
             }
-            GlslpPreset resolved = new GlslpPreset(inherited.passes, overrides);
+            GlslpPreset resolved = new GlslpPreset(inherited.passes, overrides, textures);
             resolved.parameterDefinitions(); // Check bounds before exposing a preset to the UI or GPU.
             return resolved;
         }
@@ -273,12 +309,54 @@ public final class GlslpPreset {
             Axis y = axis(yBasis, commonScale != null ? commonScale : yScale, i);
             passes.add(new Pass(shader, shaderText, filter, wrap, x, y));
         }
+        List<Texture> textures = new ArrayList<>();
+        String textureList = entries.remove("textures");
+        if (textureList != null && !textureList.isEmpty()) {
+            Set<String> aliases = new LinkedHashSet<>();
+            for (String token : textureList.split(";", -1)) {
+                String alias = token.trim();
+                if (!alias.matches("[A-Za-z_][A-Za-z0-9_]*")
+                        || alias.equals("Texture") || alias.equals("OrigTexture")
+                        || alias.equals("PassPrev2Texture") || alias.equals("MVPMatrix")
+                        || alias.equals("InputSize") || alias.equals("TextureSize")
+                        || alias.equals("OutputSize") || parameterNames.contains(alias)
+                        || !aliases.add(alias)) {
+                    throw new IOException("Invalid or reserved GLSLP texture alias: " + alias);
+                }
+                if (textures.size() >= MAX_TEXTURES) {
+                    throw new IOException("Too many GLSLP lookup textures");
+                }
+                String image = normalize(parent, required(entries, alias));
+                String extension = image.toLowerCase(java.util.Locale.ROOT);
+                if (!(extension.endsWith(".png") || extension.endsWith(".jpg")
+                        || extension.endsWith(".jpeg"))) {
+                    throw new IOException("Unsupported GLSLP texture format: " + image);
+                }
+                String linearValue = entries.remove(alias + "_linear");
+                boolean linear = linearValue != null && bool(linearValue, alias + "_linear");
+                String wrap = entries.remove(alias + "_wrap_mode");
+                String repeat = entries.remove(alias + "_repeat");
+                if (wrap != null && repeat != null) {
+                    throw new IOException("Conflicting GLSLP lookup wrap options: " + alias);
+                }
+                if (repeat != null) wrap = bool(repeat, alias + "_repeat")
+                        ? "repeat" : "clamp_to_edge";
+                if (wrap == null) wrap = "clamp_to_edge";
+                if (!wrap.equals("clamp_to_edge") && !wrap.equals("repeat")
+                        && !wrap.equals("mirrored_repeat")) {
+                    throw new IOException("Unsupported GLSLP lookup wrap: " + wrap);
+                }
+                String mipmapValue = entries.remove(alias + "_mipmap");
+                boolean mipmap = mipmapValue != null && bool(mipmapValue, alias + "_mipmap");
+                textures.add(new Texture(alias, image, linear, wrap, mipmap));
+            }
+        }
         if (!entries.isEmpty()) {
-            // Reject LUT, temporal, feedback and newer preset features
+            // Reject unsupported temporal, feedback and newer preset features
             // rather than rendering a visually wrong approximation.
             throw new IOException("Unsupported GLSLP key: " + entries.keySet().iterator().next());
         }
-        return new GlslpPreset(passes, overrides);
+        return new GlslpPreset(passes, overrides, textures);
     }
 
     /**
@@ -296,7 +374,7 @@ public final class GlslpPreset {
             }
             combined.put(entry.getKey(), entry.getValue().doubleValue());
         }
-        return new GlslpPreset(passes, combined);
+        return new GlslpPreset(passes, combined, textures);
     }
 
     /** Source declarations provide the editor's labels/ranges as well as runtime defaults. */

@@ -1749,7 +1749,9 @@ public abstract class Canvas extends Displayable {
 				try {
 					GlslpPreset preset = GlslpAssets.load(settings.shader.preset, shaderDirectory);
 					preset = preset.withParameterOverrides(settings.shader.glslParameters);
-					glslpPipeline = new GlslpPipeline(preset, GlslpAssets.stockSource());
+					String shaderSelection = settings.shader.preset;
+					glslpPipeline = new GlslpPipeline(preset, GlslpAssets.stockSource(),
+							path -> GlslpAssets.loadTextureBitmap(shaderSelection, shaderDirectory, path));
 				} catch (Exception e) {
 					Log.w(TAG, "GLSLP prototype unavailable; using identity renderer", e);
 				}
