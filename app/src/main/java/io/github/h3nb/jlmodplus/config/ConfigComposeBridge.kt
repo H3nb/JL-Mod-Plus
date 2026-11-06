@@ -382,6 +382,8 @@ internal fun ConfigScreen(
             pagerScope.launch { pagerState.navigateToTab(index) }
         }
     }
+    // Keep Display scroll ownership above shader subpages: their composition replaces the pager.
+    val displayScrollState = rememberScrollState()
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
@@ -457,7 +459,8 @@ internal fun ConfigScreen(
                         .padding(padding)
                         .consumeWindowInsets(padding),
                 ) { page ->
-                        val pageScrollState = rememberScrollState()
+                        val pageScrollState = if (destinations[page] == ConfigDestination.Display)
+                            displayScrollState else rememberScrollState()
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
