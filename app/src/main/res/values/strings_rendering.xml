@@ -51,7 +51,7 @@
     <string name="render_custom_stage_count">%1$d custom shader stages</string>
     <string name="render_custom_add">Add shader</string>
     <string name="render_custom_add_hint">Choose an external standalone .glsl source.</string>
-    <string name="render_custom_no_sources">No external GLSL shaders are available. Add .glsl or .glslp files to the shaders folder and reopen settings.</string>
+    <string name="render_custom_no_sources">No standalone .glsl shaders found. Add files to shaders/shaders_glsl/ and reopen settings.</string>
     <string name="render_custom_scale">Output: %1$d× previous stage</string>
     <string name="render_custom_output_scale">Output size for next stage</string>
     <string name="render_custom_final_viewport">Final output: game viewport</string>
@@ -68,4 +68,6 @@
     <string name="render_active_shader">Active effect</string>
     <string name="render_shader_off">Off</string>
     <string name="render_edit_custom_pipeline">Edit shader chain</string>
+    <string name="render_shader_unavailable">Unavailable: %1$s</string>
+    <string name="render_no_shader_sources">No GLSL shaders found. Add .glsl or .glslp files to the shader folder, then reopen settings.</string>
 </resources>

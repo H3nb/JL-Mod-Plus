@@ -55,12 +55,16 @@ import kotlin.math.roundToInt
 
 internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, CUSTOM }
 
+@Composable
 internal fun selectedShaderLabel(state: ConfigUiState): String {
-    val selected = state.form.shader ?: return "Off"
-    if (selected.customStages != null) return "Custom pipeline"
+    val selected = state.form.shader ?: return stringResource(R.string.render_shader_off)
+    if (selected.customStages != null) return stringResource(R.string.render_custom_pipeline)
     return state.shaders.firstOrNull { it == selected }?.toString()
-        ?: "Unavailable: " + (selected.name ?: selected.preset?.substringAfterLast('/')
-            ?: selected.fragment?.substringAfterLast('/') ?: "Shader")
+        ?: stringResource(
+            R.string.render_shader_unavailable,
+            selected.name ?: selected.preset?.substringAfterLast('/')
+                ?: selected.fragment?.substringAfterLast('/') ?: "Shader",
+        )
 }
 
 /**
@@ -192,7 +196,7 @@ private fun ShaderEffectsContent(
 
     if (shader == null) {
         if (presets.isEmpty()) {
-            MutedText(stringResource(R.string.render_custom_no_sources))
+            MutedText(stringResource(R.string.render_no_shader_sources))
         }
         return
     }
