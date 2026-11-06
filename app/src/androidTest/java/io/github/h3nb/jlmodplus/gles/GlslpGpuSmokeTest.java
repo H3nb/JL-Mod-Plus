@@ -52,7 +52,8 @@ public final class GlslpGpuSmokeTest {
                     + "attribute vec2 a_texcoord0;\nvarying vec2 v_texcoord0;\n"
                     + "void main(){ v_texcoord0=a_texcoord0; gl_Position=a_position; }\n";
             String firstSource = "precision mediump float;\nuniform vec4 u_setting;\n"
-                    + "void main(){gl_FragColor=vec4(u_setting.r,0.0,0.0,1.0);}\n";
+                    + "varying vec2 v_texcoord0;\n"
+                    + "void main(){gl_FragColor=vec4(u_setting.r,v_texcoord0.x*0.00001,0.0,1.0);}\n";
             String secondSource = "precision mediump float;\nuniform sampler2D sampler0;\n"
                     + "uniform vec4 u_setting;\nvarying vec2 v_texcoord0;\n"
                     + "void main(){vec4 c=texture2D(sampler0,v_texcoord0);"
