@@ -336,20 +336,12 @@ internal fun ConfigScreen(
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
-    var shadersOpenedFromPipeline by rememberSaveable { mutableStateOf(false) }
-    var passesOpenedFromPipeline by rememberSaveable { mutableStateOf(false) }
     val backRendering: () -> Unit = {
         renderingSubpage = when (renderingSubpage) {
-            RenderingSubpage.CUSTOM -> RenderingSubpage.SHADERS
-            RenderingSubpage.PARAMETERS -> RenderingSubpage.SHADERS
-            RenderingSubpage.PASSES ->
-                if (passesOpenedFromPipeline) RenderingSubpage.PIPELINE else RenderingSubpage.SHADERS
-            RenderingSubpage.SHADERS ->
-                if (shadersOpenedFromPipeline) RenderingSubpage.PIPELINE else null
-            else -> null
-        }
-        if (renderingSubpage == null || renderingSubpage == RenderingSubpage.PIPELINE) {
-            shadersOpenedFromPipeline = false
+            RenderingSubpage.CUSTOM, RenderingSubpage.PARAMETERS, RenderingSubpage.PASSES ->
+                RenderingSubpage.SHADERS
+            RenderingSubpage.SHADERS -> null
+            null -> null
         }
     }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
@@ -361,6 +353,8 @@ internal fun ConfigScreen(
     val requestBack = {
         if (renderingSubpage != null) {
             backRendering()
+        } else if (systemPropertiesEditorVisible) {
+            systemPropertiesEditorVisible = false
         } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
             discardProfileChangesVisible = true
         } else {
@@ -399,16 +393,9 @@ internal fun ConfigScreen(
             state = state,
             onFormChanged = updateForm,
             onLegacyTuning = events::onShaderTuning,
-            onOpenShaders = {
-                shadersOpenedFromPipeline = true
-                renderingSubpage = RenderingSubpage.SHADERS
-            },
             onOpenParameters = { renderingSubpage = RenderingSubpage.PARAMETERS },
             onOpenCustom = { renderingSubpage = RenderingSubpage.CUSTOM },
-            onOpenPasses = {
-                passesOpenedFromPipeline = renderingSubpage == RenderingSubpage.PIPELINE
-                renderingSubpage = RenderingSubpage.PASSES
-            },
+            onOpenPasses = { renderingSubpage = RenderingSubpage.PASSES },
             onBack = backRendering,
         )
     } else if (systemPropertiesEditorVisible) {
@@ -493,12 +480,7 @@ internal fun ConfigScreen(
                                     onRequestAction = { pendingAction = it },
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
                                     onOpenShaders = {
-                                        shadersOpenedFromPipeline = false
                                         renderingSubpage = RenderingSubpage.SHADERS
-                                    },
-                                    onOpenPipeline = {
-                                        shadersOpenedFromPipeline = false
-                                        renderingSubpage = RenderingSubpage.PIPELINE
                                     },
                                     onUsePreset = { presetPickerVisible = true },
                                     onSavePreset = { savePresetVisible = true },
@@ -616,7 +598,6 @@ private fun ConfigDestinationContent(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
     onOpenShaders: () -> Unit,
-    onOpenPipeline: () -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
@@ -636,7 +617,7 @@ private fun ConfigDestinationContent(
                 onRequestAction = onRequestAction,
             )
             ConfigDestination.Display -> {
-                ScreenSection(form, state, onFormChanged, events, onOpenShaders, onOpenPipeline)
+                ScreenSection(form, state, onFormChanged, events, onOpenShaders)
                 FontSection(form, state, onFormChanged)
             }
             ConfigDestination.Media -> {
@@ -931,7 +912,6 @@ private fun ScreenSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onOpenShaders: () -> Unit,
-    onOpenPipeline: () -> Unit,
 ) {
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         val backgroundModes = listOf(
@@ -1036,11 +1016,6 @@ private fun ScreenSection(
                 },
             )
         }
-        ConfigActionPreference(
-            title = stringResource(R.string.render_pipeline_title),
-            description = stringResource(R.string.render_pipeline_help),
-            onClick = onOpenPipeline,
-        )
         if (form.graphicsMode == 0 || form.graphicsMode == 3) {
             ConfigSwitchPreference(
                 title = stringResource(R.string.parallel_screen_redrawing),

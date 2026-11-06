@@ -53,7 +53,7 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, PIPELINE, CUSTOM }
+internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, CUSTOM }
 
 internal fun selectedShaderLabel(state: ConfigUiState): String {
     val selected = state.form.shader ?: return "Off"
@@ -87,7 +87,6 @@ internal fun RenderingSettingsPage(
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     onLegacyTuning: () -> Unit,
-    onOpenShaders: () -> Unit,
     onOpenParameters: () -> Unit,
     onOpenPasses: () -> Unit,
     onOpenCustom: () -> Unit,
@@ -97,7 +96,6 @@ internal fun RenderingSettingsPage(
         RenderingSubpage.SHADERS -> R.string.render_shader_effects
         RenderingSubpage.PARAMETERS -> R.string.render_shader_parameters
         RenderingSubpage.PASSES -> R.string.render_shader_passes
-        RenderingSubpage.PIPELINE -> R.string.render_pipeline_title
         RenderingSubpage.CUSTOM -> R.string.render_custom_pipeline
     }
     Scaffold(
@@ -136,9 +134,6 @@ internal fun RenderingSettingsPage(
                     )
                     RenderingSubpage.PARAMETERS -> ShaderParametersContent(state, onFormChanged)
                     RenderingSubpage.PASSES -> ShaderPassesContent(state)
-                    RenderingSubpage.PIPELINE -> RenderingPipelineContent(
-                        state, onFormChanged, onOpenShaders, onOpenPasses,
-                    )
                     RenderingSubpage.CUSTOM -> CustomPipelineContent(
                         state, onFormChanged, onBack,
                     )
@@ -417,198 +412,6 @@ private fun axisDescription(axis: GlslpPreset.Axis): String = when (axis.basis) 
     GlslpPreset.SizeBasis.SOURCE -> "Source ${axis.scale}×"
     GlslpPreset.SizeBasis.VIEWPORT -> "Viewport ${axis.scale}×"
     GlslpPreset.SizeBasis.ABSOLUTE -> "${axis.scale.roundToInt()} px"
-}
-
-/** One compact vertical route, not a nested wall of settings cards. */
-@Composable
-private fun RenderingPipelineContent(
-    state: ConfigUiState,
-    onFormChanged: (ConfigFormState) -> Unit,
-    onOpenShaders: () -> Unit,
-    onOpenPasses: () -> Unit,
-) {
-    val form = state.form
-    val renderers = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
-    val scales = stringArrayResource(R.array.pref_scale_type_entries).toList()
-    var rendererPickerVisible by rememberSaveable { mutableStateOf(false) }
-    var scaleControlsVisible by rememberSaveable { mutableStateOf(false) }
-    var passPreviewVisible by rememberSaveable { mutableStateOf(false) }
-
-    MutedText(stringResource(R.string.render_pipeline_intro))
-    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp)) {
-            PipelineStage(
-                number = "01",
-                label = stringResource(R.string.render_game_output),
-                value = "${form.screenWidth} × ${form.screenHeight}",
-                note = stringResource(R.string.render_native_short),
-            )
-            StageConnector()
-            PipelineStage(
-                number = "02",
-                label = stringResource(R.string.render_display_renderer),
-                value = if (form.graphicsMode == 1) "OpenGL ES"
-                    else renderers.getOrElse(form.graphicsMode) { renderers.firstOrNull().orEmpty() },
-                onClick = { rendererPickerVisible = true },
-            )
-            if (form.graphicsMode == 1) {
-                StageConnector()
-                val summary = state.shaderPipeline
-                PipelineStage(
-                    number = "03",
-                    label = stringResource(R.string.render_shader_processing),
-                    value = selectedShaderLabel(state),
-                    note = if (form.shader?.preset != null && summary != null && summary.error == null)
-                        stringResource(R.string.render_pass_summary, summary.passes.size)
-                    else null,
-                    onClick = onOpenShaders,
-                )
-                if (summary?.error == null && !summary?.passes.isNullOrEmpty()) {
-                    TextButton(
-                        modifier = Modifier.padding(start = 38.dp),
-                        onClick = { passPreviewVisible = !passPreviewVisible },
-                    ) {
-                        Text(stringResource(if (passPreviewVisible)
-                            R.string.render_collapse_passes else R.string.render_expand_passes))
-                    }
-                    if (passPreviewVisible) {
-                        Surface(
-                            modifier = Modifier.padding(start = 38.dp, bottom = 4.dp),
-                            shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                        ) {
-                            Column {
-                                PassList(summary!!, form.screenFilter)
-                                TextButton(
-                                    modifier = Modifier.align(Alignment.End),
-                                    onClick = onOpenPasses,
-                                ) {
-                                    Text(stringResource(R.string.render_view_all_passes))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            StageConnector()
-            PipelineStage(
-                number = if (form.graphicsMode == 1) "04" else "03",
-                label = stringResource(R.string.render_display_viewport),
-                value = scales.getOrElse(form.screenScaleType) { scales.firstOrNull().orEmpty() },
-                note = if (isTextureFilteringApplicable(state))
-                    stringResource(
-                        R.string.render_pipeline_filter_summary,
-                        if (form.screenFilter) "Linear" else "Nearest",
-                    ) else null,
-                onClick = { scaleControlsVisible = !scaleControlsVisible },
-            )
-            if (scaleControlsVisible) {
-                Column(modifier = Modifier.padding(start = 38.dp)) {
-                    ConfigChoicePreference(
-                        title = stringResource(R.string.pref_screen_scale_type),
-                        description = null,
-                        selected = scales.getOrElse(form.screenScaleType) { scales.firstOrNull().orEmpty() },
-                        options = scales,
-                        compact = true,
-                        onSelected = { onFormChanged(form.toBuilder().screenScaleType(it).build()) },
-                    )
-                    if (form.screenScaleType == 0) {
-                        ConfigNumberPreference(
-                            title = stringResource(R.string.PREF_SCALE_RATIO),
-                            description = "",
-                            value = form.screenScaleRatio,
-                            fallbackLabel = "100",
-                            valueSuffix = "%",
-                            validIntegerRange = 1..1000,
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
-                            onValueChange = {
-                                onFormChanged(form.toBuilder().screenScaleRatio(it).build())
-                            },
-                        )
-                    }
-                    if (isTextureFilteringApplicable(state)) {
-                        ConfigChoicePreference(
-                            title = stringResource(R.string.render_texture_filtering),
-                            description = null,
-                            selected = if (form.screenFilter) "Linear" else "Nearest",
-                            options = listOf("Nearest", "Linear"),
-                            compact = true,
-                            onSelected = {
-                                onFormChanged(form.toBuilder().screenFilter(it == 1).build())
-                            },
-                        )
-                    }
-                }
-            }
-        }
-    }
-    MutedText(stringResource(R.string.render_pipeline_note))
-
-    if (rendererPickerVisible) {
-        ConfigChoiceDialog(
-            title = stringResource(R.string.pref_graphics_mode_title),
-            selected = renderers.getOrElse(form.graphicsMode) { renderers.firstOrNull().orEmpty() },
-            options = renderers,
-            onDismissRequest = { rendererPickerVisible = false },
-            onSelected = {
-                rendererPickerVisible = false
-                onFormChanged(form.toBuilder().graphicsMode(it).build())
-            },
-        )
-    }
-}
-
-@Composable
-private fun PipelineStage(
-    number: String,
-    label: String,
-    value: String,
-    note: String? = null,
-    onClick: (() -> Unit)? = null,
-) {
-    val modifier = if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick)
-    else Modifier
-    Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Surface(
-            modifier = Modifier.size(30.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    number,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-        }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(label, style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.bodyLarge, maxLines = 2,
-                overflow = TextOverflow.Ellipsis)
-            if (note != null) Text(
-                note, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3,
-            )
-        }
-        if (onClick != null) Text("›", style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun StageConnector() {
-    Text(
-        "│",
-        modifier = Modifier.padding(start = 12.dp),
-        color = MaterialTheme.colorScheme.outlineVariant,
-        style = MaterialTheme.typography.labelMedium,
-    )
 }
 
 @Composable

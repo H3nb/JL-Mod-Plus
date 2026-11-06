@@ -709,7 +709,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
 			@Override
 			public void handleOnBackPressed() {
-				if (isProfile && composeController != null) {
+				if (composeController != null) {
 					composeController.requestBack();
 				} else {
 					finish();
