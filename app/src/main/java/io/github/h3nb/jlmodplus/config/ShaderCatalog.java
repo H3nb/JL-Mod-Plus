@@ -108,13 +108,13 @@ public final class ShaderCatalog {
 
     private static String resolveLegacyPath(File root, File parent, String source)
             throws IOException {
-        File direct = resolveLegacySource(root, source);
-        if (direct != null && direct.isFile()) return source;
         File sibling = new File(parent, source).getCanonicalFile();
         if (within(root, sibling) && sibling.isFile()) {
             return sibling.getPath().substring(root.getPath().length() + 1)
                     .replace(File.separatorChar, '/');
         }
+        File direct = resolveLegacySource(root, source);
+        if (direct != null && direct.isFile()) return source;
         throw new IOException("Missing legacy shader source: " + source);
     }
 

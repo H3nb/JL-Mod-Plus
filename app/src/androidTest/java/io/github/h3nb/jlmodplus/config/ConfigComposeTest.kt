@@ -1261,13 +1261,17 @@ class ConfigComposeTest {
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_custom_empty)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 1)).assertExists()
+        composeRule.onNodeWithText("+").performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 2)).assertExists()
+        composeRule.onNodeWithText("−").performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 2)).assertDoesNotExist()
 
         composeRule.runOnIdle { backRequests.value++ }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.render_custom_empty)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertExists()
         assertEquals(0, events.formChanges)
         assertEquals(0, host.backCalls)
@@ -1284,7 +1288,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun emptyShaderCatalogShowsGuidanceWithoutAnOffOnlyPicker() {
+    fun emptyShaderCatalogStillOffersScopedFileSourcesAndIdentityDefault() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(),
@@ -1292,8 +1296,12 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertHasNoClickAction()
-        composeRule.onNodeWithText(uiString(R.string.render_no_shader_sources)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_gles_shader_default)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_legacy_mode)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_preset_mode)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertDoesNotExist()
     }
 
     @Test

@@ -1,30 +1,48 @@
-# Custom GLSL chain — stacked prototype
+# Scoped shader file selection and custom pass configuration
 
-Status: **draft**. Branch feat/custom-glslp-pipeline extends PR #224, not alpha.
+This draft extends PR #224 without merging. Shader selection uses the existing
+file-picker Activity with an explicit shader-root boundary and single-tap
+selection, not the former shader-list dialog.
 
-## User behavior
+## User-visible modes
 
-- Default shaders remain off. Existing legacy shader and external GLSLP preset selections are not rewritten.
-- Shader effects uses one Off / preset / custom pipeline selector. Choosing custom opens a draft; if no external shader exists, Off is displayed without a pointless one-item picker. Add, remove, or reorder external standalone GLSL stages (up to 16), choose per-stage input filter, and set source-relative 1x, 2x, or 4x on intermediate stages.
-- The final stage draws to the actual game viewport. Back/Cancel discards the draft; Save writes one config selection per game or named profile through existing form ownership.
-- Complex .glslp presets remain opaque and retain their own pass order. External shader directories are read; there is no installer, ZIP import, or new bundled third-party catalog.
-- Save validates source paths, sampler dependencies, and GLSLP parameter metadata on an IO dispatcher before changing the form. The actual GPU still compiles at runtime; real-device compilation and pixel accuracy remain qualification requirements.
+- **Off** is the OpenGL ES default: the game continues through the internal stock
+  presentation shader, with no extra GLSL effects. A new game configuration
+  defaults to OpenGL ES with no selected effect. Changing renderers does not
+  delete a saved shader choice.
+- **Legacy shader** selects one .ini file from shaders/ (including nested
+  folders). A multi-section INI lists its shader variants inline on the
+  configuration page; selecting one saves its original vertex/fragment pair
+  and legacy settings. No GLSL pipeline conversion is attempted.
+- **GLSLP preset** selects one .glslp file from the same scoped picker. It
+  uses all passes and dependencies declared by that preset, without changing
+  their internal ordering.
+- **Custom pipeline** uses a fixed pass count chosen from 1–16 and one .glsl
+  source picker per pass. Intermediate scaling (1x, 2x, 4x) and input filtering
+  remain optional. An incomplete chain cannot be saved.
+- There is no default third-party shader bundle, ZIP installer, preset source
+  editor, or new GPU presentation architecture. The internal stock GLSL remains.
 
-Back and gesture Back navigate Custom/Parameters/Pass details → Shader effects → Display tab → exit settings. System properties returns to its parent tab. Back/Cancel inside the custom editor discards the uncommitted draft.
+## State / compatibility
 
-## Implementation boundary
+- The reusable file picker accepts an optional strict root. It does not expose
+  parent navigation outside the canonical shader directory and only returns
+  in-root files. An additional result validator checks canonical location and
+  allowed extensions. For this mode the picker has no checkboxes and requires
+  only one tap to choose a file.
+- Custom stages persist through the existing ShaderSelection.CustomStages
+  configuration field; the editor keeps its own draft until Save.
+- Legacy ShaderSelection fields, .ini parsing, profile semantics, and old
+  standalone GLSL selections remain intact. An unsupported shader fails back
+  to the stock presenter, subject to PR #224's remaining runtime diagnostics.
+- GLSLP resource paths are relative to shaders/, including nested directories.
+  Canonical root confinement, source-size limits, and the existing GLSLP
+  validator still apply.
 
-- Profile ShaderSelection stores optional CustomStages. Old serialized selections stay valid and the profile authority/ownership contract remains responsible for durable writes.
-- GlslpAssets.loadCustom resolves an in-memory GLSLP preset. It uses the same GlslpPreset planner and GlslpPipeline executor as packaged or external GLSLP.
-- Source files are never modified. A chain accepts only standalone .glsl sources from allowed locations, and rejects additional texture samplers rather than silently breaking multi-input dependencies.
-- No new EGL context, presentation queue, feedback/history textures, internal resolution, M3G or Mascot rendering changes.
+## Qualification
 
-## Important limits
-
-- Custom chains are not general GLSLP graph editing. Source shader assumptions and GLSL dialect still require GPU validation, and the current editor does not edit individual shader pragma parameters inside a custom chain.
-- Missing/invalid files produce a configuration error; runtime falls back to identity. A non-fatal shader failure must not interrupt Java ME rendering.
-- PR #224 has separate prototype Libretro assets and licensing questions. They are not custom-chain requirements; remove nonessential third-party assets before shipping.
-
-## Required qualification
-
-Run focused JVM tests for config round-trip, safe paths, stage order and size, Android build/lint, and representative UI checks. On physical Android ARM64, verify both legacy and external GLSLP rendering, context recovery, resize, softbar/fullscreen, and performance before changing status to production-ready.
+Run focused JVM tests covering root traversal and extension filtering, legacy
+INI multi-variant resolution, and GLSLP/custom nested paths; also run Android
+build, lint, screenshot, and representative Compose interaction tests.
+Validate GPU context loss, real-game softbar/viewport resize and actual ARM64
+performance before marking the stacked PR ready to merge.
