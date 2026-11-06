@@ -20,6 +20,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -1280,6 +1281,19 @@ class ConfigComposeTest {
         composeRule.runOnIdle { backRequests.value++ }
         composeRule.waitForIdle()
         assertEquals(1, host.backCalls)
+    }
+
+    @Test
+    fun emptyShaderCatalogShowsGuidanceWithoutAnOffOnlyPicker() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertHasNoClickAction()
+        composeRule.onNodeWithText(uiString(R.string.render_no_shader_sources)).assertExists()
     }
 
     @Test

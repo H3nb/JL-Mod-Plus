@@ -3,7 +3,6 @@ package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,11 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -41,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -49,7 +45,6 @@ import io.github.h3nb.jlmodplus.gles.GlslpPreset
 import java.util.LinkedHashMap
 import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Build
-import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -170,6 +165,27 @@ private fun ShaderEffectsContent(
     var pickerVisible by rememberSaveable { mutableStateOf(false) }
 
     SectionLabel(stringResource(R.string.render_active_shader))
+    // A fresh install has no external shaders. Do not offer an Off-only picker.
+    if (shader == null && presets.isEmpty()) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(stringResource(R.string.render_shader_off),
+                    style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(R.string.render_no_shader_sources),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        return
+    }
     ActionSurface(
         title = selectedShaderLabel(state),
         subtitle = stringResource(R.string.render_shader_change),
@@ -194,12 +210,7 @@ private fun ShaderEffectsContent(
         )
     }
 
-    if (shader == null) {
-        if (presets.isEmpty()) {
-            MutedText(stringResource(R.string.render_no_shader_sources))
-        }
-        return
-    }
+    if (shader == null) return
     if (shader.customStages != null) {
         val summary = state.shaderPipeline
         if (summary?.error != null) {
