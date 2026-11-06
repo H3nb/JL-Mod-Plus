@@ -19,6 +19,9 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
+import java.io.FileOutputStream;
+import javax.microedition.util.ContextHolder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +45,40 @@ public final class GlslpGpuSmokeTest {
 
     @Test public void eightPassOriginalAndPreviousPreviousSamplers() throws Exception {
         execute("builtin:glslp:stress8", 8);
+    }
+
+    @Test public void externalPngLookupDecodesWithoutEscapingShaderRoot() throws Exception {
+        File root = new File(ContextHolder.getAppContext().getCacheDir(),
+                "glslp-lut-test-" + System.nanoTime());
+        assertTrue(root.mkdir());
+        File png = new File(root, "color.png");
+        Bitmap bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888);
+        try {
+            bitmap.eraseColor(Color.rgb(25, 190, 85));
+            try (FileOutputStream out = new FileOutputStream(png)) {
+                assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, out));
+            }
+            Bitmap decoded = GlslpAssets.loadTextureBitmap(
+                    "shaders_glsl/example.glslp", root, "color.png");
+            try {
+                assertEquals(2, decoded.getWidth());
+                assertEquals(2, decoded.getHeight());
+                assertEquals(Color.rgb(25, 190, 85), decoded.getPixel(0, 0));
+            } finally {
+                decoded.recycle();
+            }
+            try {
+                GlslpAssets.loadTextureBitmap(
+                        "shaders_glsl/example.glslp", root, "../color.png");
+                fail("Texture paths must remain within the shader root");
+            } catch (java.io.IOException expected) {
+                // A traversal must be rejected before opening a file.
+            }
+        } finally {
+            bitmap.recycle();
+            if (png.exists()) assertTrue(png.delete());
+            assertTrue(root.delete());
+        }
     }
 
     @Test public void staticLookupSamplerRendersItsImage() throws Exception {
