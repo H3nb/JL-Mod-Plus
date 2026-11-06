@@ -39,6 +39,52 @@ public final class GlslpGpuSmokeTest {
     private static final int SOURCE = 32;
 
 
+    @Test public void legacyCustomPassesReadPredecessorAndEachStageParameters() throws Exception {
+        File root = new File(ContextHolder.getAppContext().getCacheDir(),
+                "glslp-legacy-test-" + System.nanoTime());
+        File folder = new File(root, "shaders_legacy");
+        assertTrue(folder.mkdirs());
+        File vertex = new File(folder, "pass.vsh");
+        File first = new File(folder, "first.fsh");
+        File second = new File(folder, "second.fsh");
+        try {
+            String vertexSource = "attribute vec4 a_position;\n"
+                    + "attribute vec2 a_texcoord0;\nvarying vec2 v_texcoord0;\n"
+                    + "void main(){ v_texcoord0=a_texcoord0; gl_Position=a_position; }\n";
+            String firstSource = "precision mediump float;\nuniform vec4 u_setting;\n"
+                    + "void main(){gl_FragColor=vec4(u_setting.r,0.0,0.0,1.0);}\n";
+            String secondSource = "precision mediump float;\nuniform sampler2D sampler0;\n"
+                    + "uniform vec4 u_setting;\nvarying vec2 v_texcoord0;\n"
+                    + "void main(){vec4 c=texture2D(sampler0,v_texcoord0);"
+                    + "gl_FragColor=vec4(c.r*u_setting.g,0.0,0.0,1.0);}\n";
+            try (FileOutputStream out = new FileOutputStream(vertex)) {
+                out.write(vertexSource.getBytes(StandardCharsets.UTF_8));
+            }
+            try (FileOutputStream out = new FileOutputStream(first)) {
+                out.write(firstSource.getBytes(StandardCharsets.UTF_8));
+            }
+            try (FileOutputStream out = new FileOutputStream(second)) {
+                out.write(secondSource.getBytes(StandardCharsets.UTF_8));
+            }
+            GlslpPreset preset = GlslpAssets.loadCustom(Arrays.asList(
+                    new CustomShaderStage("shaders_legacy/first.fsh", 1, null,
+                            "shaders_legacy/pass.vsh",
+                            Arrays.asList(1f, 0f, 0f, 0f), "First"),
+                    new CustomShaderStage("shaders_legacy/second.fsh", 1, null,
+                            "shaders_legacy/pass.vsh",
+                            Arrays.asList(0f, 1f, 0f, 0f), "Second")),
+                    root, null, "legacy");
+            execute(preset, 2, path -> { throw new IOException("No LUT expected"); },
+                    Color.RED);
+        } finally {
+            assertTrue(first.delete());
+            assertTrue(second.delete());
+            assertTrue(vertex.delete());
+            assertTrue(folder.delete());
+            assertTrue(root.delete());
+        }
+    }
+
     @Test public void customExternalChainSamplesItsPredecessor() throws Exception {
         File root = new File(ContextHolder.getAppContext().getCacheDir(),
                 "glslp-custom-" + System.nanoTime());
