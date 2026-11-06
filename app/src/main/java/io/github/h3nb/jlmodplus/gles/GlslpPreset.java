@@ -67,15 +67,17 @@ public final class GlslpPreset {
         public final String sourceText;
         public final Boolean linearFilter; // null = unspecified; not a forced nearest filter
         public final String wrapMode; // null = unspecified
+        public final String alias; // optional preset name for this pass's output
         public final Axis x;
         public final Axis y;
 
         private Pass(String sourcePath, String sourceText, Boolean linearFilter,
-                String wrapMode, Axis x, Axis y) {
+                String wrapMode, String alias, Axis x, Axis y) {
             this.sourcePath = sourcePath;
             this.sourceText = sourceText;
             this.linearFilter = linearFilter;
             this.wrapMode = wrapMode;
+            this.alias = alias;
             this.x = x;
             this.y = y;
         }
@@ -185,7 +187,7 @@ public final class GlslpPreset {
             if (source == null || source.length() > MAX_SOURCE_CHARS) {
                 throw new IOException("Missing or oversized GLSL source: " + preset);
             }
-            Pass single = new Pass(preset, source, null, null,
+            Pass single = new Pass(preset, source, null, null, null,
                     new Axis(SizeBasis.VIEWPORT, 1), new Axis(SizeBasis.VIEWPORT, 1));
             return new GlslpPreset(Collections.singletonList(single), Collections.emptyMap(),
                     Collections.emptyList());
@@ -265,6 +267,7 @@ public final class GlslpPreset {
         }
 
         List<Pass> passes = new ArrayList<>();
+        Set<String> passAliases = new LinkedHashSet<>();
         int totalSourceChars = 0;
         String parent = preset.contains("/")
                 ? preset.substring(0, preset.lastIndexOf('/') + 1) : "";
@@ -283,6 +286,13 @@ public final class GlslpPreset {
                 throw new IOException("GLSLP source budget exceeded");
             }
 
+            String alias = entries.remove("alias" + i);
+            if (alias != null && !alias.isEmpty()
+                    && (!alias.matches("[A-Za-z_][A-Za-z0-9_]*")
+                    || reservedSamplerName(alias) || parameterNames.contains(alias)
+                    || !passAliases.add(alias))) {
+                throw new IOException("Invalid or duplicate GLSLP pass alias: " + alias);
+            }
             String linear = entries.remove("filter_linear" + i);
             Boolean filter = linear == null ? null : bool(linear, "filter_linear" + i);
             String wrap = entries.remove("wrap_mode" + i);
@@ -307,7 +317,7 @@ public final class GlslpPreset {
             SizeBasis yBasis = basis(commonType != null ? commonType : yType, defaultBasis);
             Axis x = axis(xBasis, commonScale != null ? commonScale : xScale, i);
             Axis y = axis(yBasis, commonScale != null ? commonScale : yScale, i);
-            passes.add(new Pass(shader, shaderText, filter, wrap, x, y));
+            passes.add(new Pass(shader, shaderText, filter, wrap, alias, x, y));
         }
         List<Texture> textures = new ArrayList<>();
         String textureList = entries.remove("textures");
@@ -320,6 +330,7 @@ public final class GlslpPreset {
                         || alias.equals("PassPrev2Texture") || alias.equals("MVPMatrix")
                         || alias.equals("InputSize") || alias.equals("TextureSize")
                         || alias.equals("OutputSize") || parameterNames.contains(alias)
+                        || passAliases.contains(alias) || reservedSamplerName(alias)
                         || !aliases.add(alias)) {
                     throw new IOException("Invalid or reserved GLSLP texture alias: " + alias);
                 }
@@ -498,6 +509,16 @@ public final class GlslpPreset {
             case "absolute": return SizeBasis.ABSOLUTE;
             default: throw new IOException("Unsupported scale_type " + text);
         }
+    }
+
+    private static boolean reservedSamplerName(String name) {
+        return name.equals("Texture") || name.equals("OrigTexture")
+                || name.equals("PassPrev2Texture") || name.equals("FeedbackTexture")
+                || name.equals("PrevTexture") || name.equals("MVPMatrix")
+                || name.equals("InputSize") || name.equals("TextureSize")
+                || name.equals("OutputSize") || name.equals("FrameCount")
+                || name.equals("FrameDirection")
+                || name.matches("Pass[0-9]+Texture|PassPrev[0-9]+Texture|Prev[0-9]+Texture");
     }
 
     private static Boolean bool(String value, String key) throws IOException {

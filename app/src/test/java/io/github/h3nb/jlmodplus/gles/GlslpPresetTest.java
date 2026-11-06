@@ -281,6 +281,36 @@ public class GlslpPresetTest {
                 "Invalid boolean");
     }
 
+    @Test public void namedPassAliasesAreRetainedAndValidated() throws Exception {
+        Bundle files = new Bundle().put("named/p.glsl", "void main(){}")
+                .put("named/base.glslp", "shaders = 3\n"
+                        + "shader0 = p.glsl\nalias0 = First\n"
+                        + "shader1 = p.glsl\nalias1 = Second\n"
+                        + "shader2 = p.glsl\nalias2 = \"\"\n")
+                .put("named/child.glslp", "#reference \"base.glslp\"\n");
+        GlslpPreset inherited = GlslpPreset.load(files, "named/child.glslp");
+        assertEquals("First", inherited.passes.get(0).alias);
+        assertEquals("Second", inherited.passes.get(1).alias);
+        assertEquals("", inherited.passes.get(2).alias);
+
+        files.put("named/duplicate.glslp", "shaders = 2\n"
+                + "shader0 = p.glsl\nalias0 = Reused\n"
+                + "shader1 = p.glsl\nalias1 = Reused\n");
+        expectFailure(() -> GlslpPreset.load(files, "named/duplicate.glslp"),
+                "Invalid or duplicate GLSLP pass alias");
+
+        files.put("named/reserved.glslp", "shaders = 1\n"
+                + "shader0 = p.glsl\nalias0 = Pass1Texture\n");
+        expectFailure(() -> GlslpPreset.load(files, "named/reserved.glslp"),
+                "Invalid or duplicate GLSLP pass alias");
+
+        files.put("named/collision.glslp", "shaders = 1\n"
+                + "shader0 = p.glsl\nalias0 = Mask\n"
+                + "textures = Mask\nMask = mask.png\n");
+        expectFailure(() -> GlslpPreset.load(files, "named/collision.glslp"),
+                "Invalid or reserved GLSLP texture alias");
+    }
+
     @Test public void standaloneGlslCompilesAsViewportSizedOnePass() throws Exception {
         Bundle assets = new Bundle().put("custom.glsl", "#ifdef VERTEX\\n#endif");
         GlslpPreset shader = GlslpPreset.load(assets, "custom.glsl");

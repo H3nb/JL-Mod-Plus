@@ -22,6 +22,17 @@ resolved from the file that declares them. Cycles, unsafe paths, structural
 pass overrides, `.params` references, LUT sampler-settings overrides through
 `#reference`, and other advanced reference features are rejected.
 
+Named pass outputs are supported using GLSLP `aliasN` as well as
+one-based `PassNTexture` samplers and bounded `PassPrev3Texture`–
+`PassPrev16Texture` references. Aliases and pass-index samplers refer only to
+outputs from **earlier passes in the current frame**; self/future references
+are rejected when active. The output textures are already allocated for the
+chain, so this support adds no extra intermediate render targets. The sampler
+units are assigned once per linked program and must fit the device's fragment
+sampler limit. Secondary historical pass outputs currently use nearest
+filtering, following the existing PassPrev2 behavior. This is not temporal
+frame history/feedback and does not imply full RetroArch equivalence.
+
 Static GLSLP lookup textures are now supported as a bounded GLES2 subset:
 up to four PNG/JPEG images per preset, decoded only when the GL context is
 created, with at most 16 MiB of uncompressed RGBA8 pixel storage.

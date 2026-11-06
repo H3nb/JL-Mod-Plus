@@ -11,6 +11,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,20 @@ public final class GlslpPipeline {
     private final int[] vertexAttributes, textureAttributes;
     private final int[] lookupIds, lookupWidths, lookupHeights;
     private final int[][] lookupUniforms;
+    private final List<List<PassReference>> passReferences = new ArrayList<>();
+    private int extraPassTextureUnits;
+
+    private static final class PassReference {
+        final String uniformName;
+        final int location, sourcePass, unit;
+
+        PassReference(String name, int location, int sourcePass, int unit) {
+            this.uniformName = name;
+            this.location = location;
+            this.sourcePass = sourcePass;
+            this.unit = unit;
+        }
+    }
     private static final long MAX_LOOKUP_BYTES = 16L * 1024L * 1024L;
 
     public interface TextureLoader {
@@ -88,9 +103,7 @@ public final class GlslpPipeline {
                 }
                 for (String unsupported : new String[] {
                         "PrevTexture", "Prev1Texture", "Prev2Texture", "Prev3Texture",
-                        "PassPrev3Texture", "PassPrev4Texture", "PassPrev5Texture",
-                        "FeedbackTexture", "Pass1Texture", "Pass2Texture",
-                        "FrameCount", "FrameDirection"
+                        "FeedbackTexture", "FrameCount", "FrameDirection"
                 }) {
                     if (glGetUniformLocation(programs[i], unsupported) >= 0) {
                         throw new IOException("Unsupported GLSLP dependency " + unsupported);
@@ -100,11 +113,74 @@ public final class GlslpPipeline {
             programs[n] = link(stockSource, false);
             vertexAttributes[n] = glGetAttribLocation(programs[n], "VertexCoord");
             textureAttributes[n] = glGetAttribLocation(programs[n], "TexCoord");
+            resolvePassReferences();
             uploadLookups(images);
         } catch (IOException | RuntimeException e) {
             release();
             throw e;
         }
+    }
+
+    /**
+     * Bind only causal earlier-pass outputs. Sampler location and texture-unit
+     * allocation are resolved once per GL program, not on every frame.
+     * A previously rendered pass is already retained as an offscreen texture.
+     */
+    private void resolvePassReferences() throws IOException {
+        int[] limits = new int[1];
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, limits, 0);
+        int firstExtraUnit = 3 + lookupIds.length;
+        for (int stage = 0; stage < preset.passes.size(); stage++) {
+            int[] assignedUnits = new int[preset.passes.size()];
+            Arrays.fill(assignedUnits, -1);
+            int[] nextUnit = {firstExtraUnit};
+            List<PassReference> refs = new ArrayList<>();
+            for (int source = 0; source < preset.passes.size(); source++) {
+                collectPassReference(stage, source, "Pass" + (source + 1) + "Texture",
+                        assignedUnits, nextUnit, limits[0], refs);
+                String alias = preset.passes.get(source).alias;
+                if (alias != null && !alias.isEmpty()) {
+                    collectPassReference(stage, source, alias,
+                            assignedUnits, nextUnit, limits[0], refs);
+                    collectPassReference(stage, source, alias + "Texture",
+                            assignedUnits, nextUnit, limits[0], refs);
+                }
+            }
+            for (int distance = 3; distance <= 16; distance++) {
+                collectPassReference(stage, stage - distance,
+                        "PassPrev" + distance + "Texture",
+                        assignedUnits, nextUnit, limits[0], refs);
+            }
+            extraPassTextureUnits = Math.max(extraPassTextureUnits,
+                    nextUnit[0] - firstExtraUnit);
+            passReferences.add(Collections.unmodifiableList(refs));
+        }
+    }
+
+    private void collectPassReference(int stage, int source, String name,
+            int[] assignedUnits, int[] nextUnit, int maxUnits,
+            List<PassReference> refs) throws IOException {
+        int location = glGetUniformLocation(programs[stage], name);
+        if (location < 0) return;
+        if (source < 0 || source >= stage) {
+            throw new IOException("Noncausal GLSLP pass dependency: " + name
+                    + " in pass " + stage);
+        }
+        int unit;
+        if (source == stage - 1) {
+            unit = 0; // Identical to the regular previous-pass Texture input.
+        } else if (source == stage - 2 && usesPrev2[stage]) {
+            unit = 2; // Already bound by the existing PassPrev2Texture contract.
+        } else if (assignedUnits[source] >= 0) {
+            unit = assignedUnits[source];
+        } else {
+            unit = nextUnit[0]++;
+            if (unit >= maxUnits) {
+                throw new IOException("Too many simultaneous GLSLP samplers in pass " + stage);
+            }
+            assignedUnits[source] = unit;
+        }
+        refs.add(new PassReference(name, location, source, unit));
     }
 
     private void uploadLookups(TextureLoader images) throws IOException {
@@ -253,7 +329,7 @@ public final class GlslpPipeline {
             processedSequence = guestSequence;
         } finally {
             // Return GL state required by the existing Canvas renderer.
-            for (int i = 0; i < lookupIds.length; i++) {
+            for (int i = 0; i < lookupIds.length + extraPassTextureUnits; i++) {
                 glActiveTexture(GL_TEXTURE0 + 3 + i);
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
@@ -368,6 +444,21 @@ public final class GlslpPipeline {
             uniform1i(stage, "PassPrev2Texture", 2);
             uniform2f(stage, "PassPrev2TextureSize", prevW, prevH);
             uniform2f(stage, "PassPrev2InputSize", prevW, prevH);
+        }
+        if (stage < passReferences.size()) {
+            for (PassReference reference : passReferences.get(stage)) {
+                if (reference.unit >= 3 + lookupIds.length) {
+                    glActiveTexture(GL_TEXTURE0 + reference.unit);
+                    glBindTexture(GL_TEXTURE_2D, intermediate[reference.sourcePass]);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                }
+                glUniform1i(reference.location, reference.unit);
+                int w = targetWidth[reference.sourcePass];
+                int h = targetHeight[reference.sourcePass];
+                uniform2f(stage, reference.uniformName + "Size", w, h);
+                uniform2f(stage, reference.uniformName + "InputSize", w, h);
+            }
         }
         glActiveTexture(GL_TEXTURE0);
         glDisable(GL_BLEND);

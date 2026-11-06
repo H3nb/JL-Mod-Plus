@@ -106,6 +106,62 @@ public final class GlslpGpuSmokeTest {
         }, Color.rgb(231, 53, 29));
     }
 
+    @Test public void namedAndNumericPassOutputsSampleEarlierStages() throws Exception {
+        Map<String, String> source = new HashMap<>();
+        source.put("stages.glslp", "shaders = 4\n"
+                + "shader0 = red.glsl\nalias0 = FirstOutput\n"
+                + "shader1 = green.glsl\nalias1 = MiddleOutput\n"
+                + "shader2 = blue.glsl\nshader3 = composite.glsl\n");
+        source.put("red.glsl", colorPass(
+                "void main(){gl_FragColor=vec4(1.0,0.0,uv.x*0.001,1.0);}\n"));
+        source.put("green.glsl", colorPass(
+                "void main(){gl_FragColor=vec4(uv.x*0.001,1.0,0.0,1.0);}\n"));
+        source.put("blue.glsl", colorPass(
+                "void main(){gl_FragColor=vec4(0.0,uv.x*0.001,1.0,1.0);}\n"));
+        source.put("composite.glsl", colorPass(
+                "uniform sampler2D Pass1Texture;\n"
+                + "uniform sampler2D MiddleOutput;\n"
+                + "uniform sampler2D Texture;\n"
+                + "void main(){gl_FragColor=vec4("
+                + "texture2D(Pass1Texture,uv).r,"
+                + "texture2D(MiddleOutput,uv).g,"
+                + "texture2D(Texture,uv).b,1.0);}\n"));
+        GlslpPreset preset = GlslpPreset.load(path -> {
+            String text = source.get(path);
+            if (text == null) throw new java.io.IOException("Missing " + path);
+            return text;
+        }, "stages.glslp");
+        execute(preset, 4,
+                path -> { throw new java.io.IOException("Unexpected LUT: " + path); },
+                Color.WHITE);
+    }
+
+    @Test public void noncausalPassOutputSamplerIsRejected() throws Exception {
+        Map<String, String> source = new HashMap<>();
+        source.put("bad.glslp", "shaders = 1\nshader0 = bad.glsl\n");
+        source.put("bad.glsl", colorPass(
+                "uniform sampler2D Pass1Texture;\n"
+                + "void main(){gl_FragColor=texture2D(Pass1Texture,uv);}\n"));
+        GlslpPreset preset = GlslpPreset.load(source::get, "bad.glslp");
+        try {
+            execute(preset, 1,
+                    path -> { throw new java.io.IOException("Unexpected LUT: " + path); }, -1);
+            fail("A pass must not sample its own output");
+        } catch (java.io.IOException expected) {
+            assertTrue(expected.getMessage(), expected.getMessage().contains("Noncausal"));
+        }
+    }
+
+    private static String colorPass(String fragment) {
+        return "#if defined(VERTEX)\n"
+                + "attribute vec4 VertexCoord; attribute vec4 TexCoord;\n"
+                + "uniform mat4 MVPMatrix; varying vec2 uv;\n"
+                + "void main(){uv=TexCoord.xy;gl_Position=MVPMatrix*VertexCoord;}\n"
+                + "#elif defined(FRAGMENT)\n"
+                + "precision mediump float; varying vec2 uv;\n"
+                + fragment + "#endif\n";
+    }
+
     private static void execute(String selection, int expectedPasses) throws Exception {
         execute(GlslpAssets.load(selection, null), expectedPasses,
                 path -> { throw new java.io.IOException("Unexpected LUT: " + path); }, -1);
