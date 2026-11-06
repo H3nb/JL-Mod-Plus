@@ -163,13 +163,6 @@ internal fun CustomPipelineContent(
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (stage.path.isNotBlank()) {
-                            Text(stage.path,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.MiddleEllipsis,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
                     }
                 }
                 if (index < stages.lastIndex) {

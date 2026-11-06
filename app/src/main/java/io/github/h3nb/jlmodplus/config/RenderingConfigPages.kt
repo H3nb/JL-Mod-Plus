@@ -60,14 +60,15 @@ internal enum class RenderingSubpage { SHADERS, PARAMETERS, PASSES, CUSTOM }
 internal fun selectedShaderLabel(state: ConfigUiState): String {
     val selected = state.form.shader ?: return stringResource(R.string.render_shader_off)
     if (selected.customStages != null) return stringResource(R.string.render_custom_pipeline)
-    return state.shaders.firstOrNull {
-        (selected.preset != null && it.preset == selected.preset) ||
-            (selected.vertex != null && selected.fragment != null &&
-                it.vertex == selected.vertex && it.fragment == selected.fragment)
-    }?.toString() ?: selected.name?.takeIf { it.isNotBlank() }
-        ?: selected.preset?.substringAfterLast('/')
-        ?: selected.fragment?.substringAfterLast('/')
-        ?: stringResource(R.string.render_shader_off)
+    // GLSLP catalog entries may use relative paths as titles; show the filename only.
+    selected.preset?.let { return it.substringAfterLast('/') }
+    val legacyName = state.shaders.firstOrNull {
+        selected.vertex != null && selected.fragment != null &&
+            it.vertex == selected.vertex && it.fragment == selected.fragment
+    }?.toString()
+    return (legacyName ?: selected.name?.takeIf { it.isNotBlank() }
+        ?: selected.fragment ?: stringResource(R.string.render_shader_off))
+        .substringAfterLast('/')
 }
 
 /**
@@ -315,10 +316,10 @@ private fun ShaderModeRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(title, style = MaterialTheme.typography.bodyLarge)
                 Text(
                     description,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -528,7 +529,7 @@ private fun ActionRow(title: String, subtitle: String, onClick: () -> Unit) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(
-                subtitle, style = MaterialTheme.typography.bodySmall,
+                subtitle, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -538,22 +539,12 @@ private fun ActionRow(title: String, subtitle: String, onClick: () -> Unit) {
 }
 
 @Composable
-internal fun SectionLabel(label: String) {
-    Text(
-        label,
-        modifier = Modifier.padding(start = 2.dp, top = 5.dp),
-        color = MaterialTheme.colorScheme.primary,
-        style = MaterialTheme.typography.titleSmall,
-    )
-}
-
-@Composable
 private fun MutedText(text: String, isError: Boolean = false) {
     Text(
         text,
         modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp),
         color = if (isError) MaterialTheme.colorScheme.error
             else MaterialTheme.colorScheme.onSurfaceVariant,
-        style = MaterialTheme.typography.bodySmall,
+        style = MaterialTheme.typography.bodyMedium,
     )
 }

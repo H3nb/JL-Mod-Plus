@@ -620,6 +620,7 @@ private fun ConfigDestinationContent(
             ConfigDestination.Display -> {
                 ScreenSection(form, state, onFormChanged, events, onOpenShaders)
                 FontSection(form, state, onFormChanged)
+                PerformanceSection(form, onFormChanged)
             }
             ConfigDestination.Media -> {
                 AudioSection(form, state, onFormChanged, events)
@@ -1021,8 +1022,15 @@ private fun ScreenSection(
                 },
             )
         }
-        // Runtime performance controls belong to Rendering, not a fourth Display section.
-        SectionLabel(stringResource(R.string.config_display_performance))
+    }
+}
+
+@Composable
+private fun PerformanceSection(
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+) {
+    ConfigSection(title = stringResource(R.string.config_display_performance)) {
         ConfigNumberPreference(
             title = stringResource(R.string.PREF_LIMIT_FPS),
             description = stringResource(R.string.config_help_fps_limit),

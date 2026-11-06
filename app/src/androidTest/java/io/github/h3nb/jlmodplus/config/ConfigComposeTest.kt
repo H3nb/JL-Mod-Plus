@@ -1328,7 +1328,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun displaySectionsAppearAsScreenThenRenderingThenFonts() {
+    fun displaySectionsAppearAsScreenRenderingFontsThenPerformance() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(),
@@ -1344,8 +1344,34 @@ class ConfigComposeTest {
         val fonts = composeRule.onNodeWithText(
             uiString(R.string.config_display_text),
         ).fetchSemanticsNode().boundsInRoot
+        val performance = composeRule.onNodeWithText(
+            uiString(R.string.config_display_performance),
+        ).fetchSemanticsNode().boundsInRoot
         assertTrue(screen.top < rendering.top)
         assertTrue(rendering.top < fonts.top)
+        assertTrue(fonts.top < performance.top)
+    }
+
+    @Test
+    fun selectedPresetDisplaysFileNameWithoutRelativeShaderPath() {
+        val base = sampleState()
+        val shader = ShaderInfo("shaders_glsl/xbrz/xbrz-crisp.glslp (GLSL)", "external").apply {
+            preset = "shaders_glsl/xbrz/xbrz-crisp.glslp"
+        }
+        val selectedForm = base.form.toBuilder().graphicsMode(1).shader(shader).build()
+        val state = ConfigUiState(
+            selectedForm, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, listOf(shader), base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText("xbrz-crisp.glslp").assertExists()
+        composeRule.onNodeWithText("shaders_glsl/xbrz/xbrz-crisp.glslp (GLSL)")
+            .assertDoesNotExist()
     }
 
     @Test
