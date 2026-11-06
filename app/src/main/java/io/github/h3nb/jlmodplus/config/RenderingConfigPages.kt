@@ -226,7 +226,7 @@ private fun ShaderEffectsContent(
         title = stringResource(R.string.render_preset_mode),
         description = if (preset && !editingCustom) {
             stringResource(R.string.render_shader_selected_name,
-                shader.preset?.substringAfterLast('/') ?: "")
+                shader?.preset?.substringAfterLast('/') ?: "")
         } else {
             stringResource(R.string.render_preset_mode_help)
         },
@@ -252,7 +252,7 @@ private fun ShaderEffectsContent(
         title = stringResource(R.string.render_custom_pipeline),
         description = if (custom && !editingCustom) {
             stringResource(R.string.render_custom_stage_count,
-                shader.customStages?.size ?: 0)
+                shader?.customStages?.size ?: 0)
         } else {
             stringResource(R.string.render_custom_pipeline_hint)
         },
@@ -263,7 +263,7 @@ private fun ShaderEffectsContent(
         CustomPipelineContent(state, onFormChanged, onCancelCustom, onShaderPickerOpened)
         return
     }
-    if (legacy && shader.hasTunableSettings()) {
+    if (legacy && shader?.hasTunableSettings() == true) {
         ActionSurface(
             title = stringResource(R.string.render_shader_adjust),
             subtitle = stringResource(R.string.render_legacy_tuning_hint),

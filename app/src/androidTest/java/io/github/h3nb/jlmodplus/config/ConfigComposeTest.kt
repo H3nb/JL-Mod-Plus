@@ -1261,7 +1261,7 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 1)).assertExists()
@@ -1275,19 +1275,77 @@ class ConfigComposeTest {
         composeRule.runOnIdle { backRequests.value++ }
         composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
         assertEquals(0, events.formChanges)
         assertEquals(0, host.backCalls)
 
         composeRule.runOnIdle { backRequests.value++ }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.pref_graphics_mode_title)).assertExists()
         assertEquals(0, host.backCalls)
 
         composeRule.runOnIdle { backRequests.value++ }
         composeRule.waitForIdle()
         assertEquals(1, host.backCalls)
+    }
+
+
+    @Test
+    fun legacyShaderUsesNamedChooserAndKeepsSelectedNameOnCard() {
+        val base = sampleState()
+        val shader = ShaderInfo("Classic CRT", "test").apply {
+            vertex = "shaders_legacy/crt.vsh"
+            fragment = "shaders_legacy/crt.fsh"
+        }
+        val selected = mutableStateOf(base.form)
+        val events = object : ConfigFormEvents by RecordingConfigEvents() {
+            override fun onFormChanged(form: ConfigFormState) {
+                selected.value = form
+            }
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                val state = ConfigUiState(
+                    selected.value, base.screenPresets, base.fontPresets,
+                    base.skins, base.soundBanks,
+                    listOf(ShaderInfo("Off", "test"), shader),
+                    base.removableScreenPresets,
+                )
+                ConfigScreen(state, events, initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_legacy_mode)).performClick()
+        composeRule.onNodeWithText("Classic CRT").performClick()
+        composeRule.onNodeWithText(
+            uiString(R.string.render_shader_selected_name, "Classic CRT"),
+        ).assertExists()
+        composeRule.runOnIdle {
+            assertEquals(shader.fragment, selected.value.shader?.fragment)
+            assertEquals(shader.vertex, selected.value.shader?.vertex)
+        }
+    }
+
+    @Test
+    fun displaySectionsAppearAsScreenThenRenderingThenFonts() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        val screen = composeRule.onNodeWithText(
+            uiString(R.string.config_display_appearance),
+        ).fetchSemanticsNode().boundsInRoot
+        val rendering = composeRule.onNodeWithText(
+            uiString(R.string.config_display_rendering),
+        ).fetchSemanticsNode().boundsInRoot
+        val fonts = composeRule.onNodeWithText(
+            uiString(R.string.config_display_text),
+        ).fetchSemanticsNode().boundsInRoot
+        assertTrue(screen.top < rendering.top)
+        assertTrue(rendering.top < fonts.top)
     }
 
     @Test
@@ -1299,7 +1357,8 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_gles_shader_default)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_mode)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_legacy_mode)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_preset_mode)).assertExists()
