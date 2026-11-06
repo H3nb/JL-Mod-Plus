@@ -346,8 +346,13 @@ public class GlslpPresetTest {
                 "Unsupported GLSLP temporal");
         assets.put("border.glslp", "shaders = 1\nshader0 = pass.glsl\n"
                 + "wrap_mode0 = clamp_to_border\n");
-        expectFailure(() -> GlslpPreset.load(assets, "border.glslp"),
-                "GLSLP clamp_to_border");
+        assertEquals("clamp_to_border",
+                GlslpPreset.load(assets, "border.glslp").passes.get(0).wrapMode);
+        assets.put("border-lut.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                + "textures = BorderLUT\nBorderLUT = border.png\n"
+                + "BorderLUT_wrap_mode = clamp_to_border\n");
+        assertEquals("clamp_to_border",
+                GlslpPreset.load(assets, "border-lut.glslp").textures.get(0).wrapMode);
     }
 
     @Test public void mipmapsAndRepeatRequirePowerOfTwoAndRespectMemoryBudget() throws Exception {
@@ -364,6 +369,13 @@ public class GlslpPresetTest {
         expectFailure(() -> preset.plan(31, 32, 96, 96, 2048, 1024 * 1024),
                 "power-of-two");
         assertEquals(1, preset.plan(31, 32, 96, 96, 2048,
+                1024 * 1024, true).passes.size());
+        assets.put("border.glslp", "shaders = 1\nshader0 = pass.glsl\n"
+                + "wrap_mode0 = clamp_to_border\n");
+        GlslpPreset border = GlslpPreset.load(assets, "border.glslp");
+        expectFailure(() -> border.plan(31, 32, 96, 96, 2048, 1024 * 1024),
+                "power-of-two");
+        assertEquals(1, border.plan(31, 32, 96, 96, 2048,
                 1024 * 1024, true).passes.size());
         expectFailure(() -> preset.plan(32, 32, 96, 96, 2048, 0),
                 "Intermediate GPU budget exceeded");

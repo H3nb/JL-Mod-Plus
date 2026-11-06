@@ -53,8 +53,14 @@ unless the active context advertises full NPOT support through OpenGL ES 3.x
 or `GL_OES_texture_npot`. The same check applies to static lookup textures.
 The renderer probes the capability once at GL-context initialization; unsupported
 devices do not silently emulate repeat or mipmap behavior.
-GLES2 does not natively reproduce `clamp_to_border`; it remains rejected
-rather than silently substituted with clamp-to-edge.
+A preset can explicitly request `clamp_to_border` for pass inputs or static
+lookup textures. The GLSL pipeline supports transparent-black border sampling
+using GLES 3.2 or `GL_OES/EXT/NV_texture_border_clamp` on the active GL context.
+Unsupported GPUs reject the preset at initialization instead of silently
+substituting clamp-to-edge. Non-power-of-two border sampling also requires
+full NPOT support. The existing default for omitted wrap modes remains unchanged.
+The new emulator GPU test checks real out-of-range sampling when supported,
+or the explicit rejection path when the extension is absent.
 
 Other unsupported keys, history, feedback, float/sRGB framebuffers
 when enabled, and desktop-only GLSL constructs remain unsupported. It is not

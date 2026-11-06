@@ -23,12 +23,16 @@ import java.util.Map;
  * Uses the existing guest frame sequence; unsupported dependencies fail closed.
  */
 public final class GlslpPipeline {
+    // GL_OES/EXT_texture_border_clamp and GLES 3.2 share these enum values.
+    private static final int GL_CLAMP_TO_BORDER_VALUE = 0x812D;
+    private static final int GL_TEXTURE_BORDER_COLOR_VALUE = 0x1004;
+    private static final float[] TRANSPARENT_BORDER = {0f, 0f, 0f, 0f};
     private static final float[] IDENTITY = {
             1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
     };
     private final GlslpPreset preset;
     private final Map<String, Float> parameters;
-    private final boolean fullNpot;
+    private final boolean fullNpot, borderClamp;
     private final int[] programs, framebuffer, intermediate, targetWidth, targetHeight;
     private final boolean[] usesOriginal, usesPrev2;
     private final int[] vertexAttributes, textureAttributes;
@@ -77,6 +81,13 @@ public final class GlslpPipeline {
         fullNpot = (version != null && version.startsWith("OpenGL ES 3."))
                 || (extensions != null
                     && (" " + extensions + " ").contains(" GL_OES_texture_npot "));
+        borderClamp = supportsBorderClamp(version, extensions);
+        for (GlslpPreset.Pass pass : preset.passes) {
+            requireBorderClamp(pass.wrapMode);
+        }
+        for (GlslpPreset.Texture texture : preset.textures) {
+            requireBorderClamp(texture.wrapMode);
+        }
         parameters = Collections.unmodifiableMap(new LinkedHashMap<>(resolved.resolvedParameters()));
         int n = preset.passes.size();
         programs = new int[n + 1];
@@ -122,6 +133,40 @@ public final class GlslpPipeline {
             release();
             throw e;
         }
+    }
+
+    static boolean supportsBorderClamp(String version, String extensions) {
+        boolean core = version != null
+                && version.matches("^OpenGL ES 3\\.(?:[2-9]|[1-9][0-9]).*");
+        if (core) return true;
+        if (extensions == null) return false;
+        String tokens = " " + extensions + " ";
+        return tokens.contains(" GL_OES_texture_border_clamp ")
+                || tokens.contains(" GL_EXT_texture_border_clamp ")
+                || tokens.contains(" GL_NV_texture_border_clamp ");
+    }
+
+    private void requireBorderClamp(String wrapMode) throws IOException {
+        if ("clamp_to_border".equals(wrapMode) && !borderClamp) {
+            throw new IOException("GLSLP clamp_to_border requires GLES 3.2 or border-clamp extension");
+        }
+    }
+
+    private static int wrapValue(String wrap) {
+        if ("clamp_to_border".equals(wrap)) return GL_CLAMP_TO_BORDER_VALUE;
+        if ("repeat".equals(wrap)) return GL_REPEAT;
+        if ("mirrored_repeat".equals(wrap)) return GL_MIRRORED_REPEAT;
+        return GL_CLAMP_TO_EDGE;
+    }
+
+    private static void applyWrap(String wrap) {
+        if ("clamp_to_border".equals(wrap)) {
+            glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR_VALUE,
+                    TRANSPARENT_BORDER, 0);
+        }
+        int mode = wrapValue(wrap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode);
     }
 
     /**
@@ -224,11 +269,7 @@ public final class GlslpPipeline {
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, baseFilter);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, !lookup.mipmap
                             ? baseFilter : (lookup.linear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST));
-                    int wrap = lookup.wrapMode.equals("repeat") ? GL_REPEAT
-                            : lookup.wrapMode.equals("mirrored_repeat") ? GL_MIRRORED_REPEAT
-                            : GL_CLAMP_TO_EDGE;
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+                    applyWrap(lookup.wrapMode);
                     GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
                     if (lookup.mipmap) glGenerateMipmap(GL_TEXTURE_2D);
                 } finally {
@@ -443,11 +484,7 @@ public final class GlslpPipeline {
                 : (filter == GL_LINEAR ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-        int wrap = pass == null || pass.wrapMode == null
-                || "clamp_to_edge".equals(pass.wrapMode) ? GL_CLAMP_TO_EDGE
-                : ("repeat".equals(pass.wrapMode) ? GL_REPEAT : GL_MIRRORED_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+        applyWrap(pass == null ? null : pass.wrapMode);
         if (originalTexture != 0) {
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, originalTexture);

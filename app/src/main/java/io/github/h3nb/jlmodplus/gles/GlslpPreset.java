@@ -301,10 +301,8 @@ public final class GlslpPreset {
             String linear = entries.remove("filter_linear" + i);
             Boolean filter = linear == null ? null : bool(linear, "filter_linear" + i);
             String wrap = entries.remove("wrap_mode" + i);
-            if ("clamp_to_border".equals(wrap)) {
-                throw new IOException("GLSLP clamp_to_border cannot be reproduced on baseline GLES2");
-            }
             if (wrap != null && !wrap.equals("clamp_to_edge")
+                    && !wrap.equals("clamp_to_border")
                     && !wrap.equals("repeat") && !wrap.equals("mirrored_repeat")) {
                 throw new IOException("Unsupported wrap mode " + wrap + " in pass " + i);
             }
@@ -384,8 +382,8 @@ public final class GlslpPreset {
                 if (repeat != null) wrap = bool(repeat, alias + "_repeat")
                         ? "repeat" : "clamp_to_edge";
                 if (wrap == null) wrap = "clamp_to_edge";
-                if (!wrap.equals("clamp_to_edge") && !wrap.equals("repeat")
-                        && !wrap.equals("mirrored_repeat")) {
+                if (!wrap.equals("clamp_to_edge") && !wrap.equals("clamp_to_border")
+                        && !wrap.equals("repeat") && !wrap.equals("mirrored_repeat")) {
                     throw new IOException("Unsupported GLSLP lookup wrap: " + wrap);
                 }
                 String mipmapValue = entries.remove(alias + "_mipmap");
@@ -506,7 +504,8 @@ public final class GlslpPreset {
         for (int i = 0; i < passes.size(); i++) {
             Pass pass = passes.get(i);
             if ((pass.mipmapInput || "repeat".equals(pass.wrapMode)
-                    || "mirrored_repeat".equals(pass.wrapMode))
+                    || "mirrored_repeat".equals(pass.wrapMode)
+                    || "clamp_to_border".equals(pass.wrapMode))
                     && !fullNpot && (!powerOfTwo(inW) || !powerOfTwo(inH))) {
                 throw new IllegalArgumentException(
                         "GLES2 input for mipmaps/repeat must be power-of-two in pass " + i);

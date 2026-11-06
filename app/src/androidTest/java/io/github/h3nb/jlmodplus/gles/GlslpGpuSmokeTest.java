@@ -154,6 +154,26 @@ public final class GlslpGpuSmokeTest {
         }
     }
 
+    @Test public void borderClampUsesTransparentBlackOrRejectsUnsupportedGpu() throws Exception {
+        Map<String, String> files = new HashMap<>();
+        files.put("border.glslp", "shaders = 1\nshader0 = border.glsl\n"
+                + "wrap_mode0 = clamp_to_border\n"
+                + "textures = BorderLUT\nBorderLUT = color.png\n"
+                + "BorderLUT_wrap_mode = clamp_to_border\n");
+        files.put("border.glsl", colorPass("uniform sampler2D Texture;\n"
+                + "uniform sampler2D BorderLUT;\n"
+                + "void main(){gl_FragColor=vec4("
+                + "texture2D(Texture,vec2(-0.25,0.5)).a,"
+                + "texture2D(BorderLUT,vec2(-0.25,0.5)).a,1.0,1.0);}\n"));
+        GlslpPreset preset = GlslpPreset.load(files::get, "border.glslp");
+        GlslpPipeline.TextureLoader loader = path -> {
+            Bitmap lut = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888);
+            lut.eraseColor(Color.WHITE);
+            return lut;
+        };
+        execute(preset, 1, loader, Color.BLUE, true);
+    }
+
     private static String colorPass(String fragment) {
         return "#if defined(VERTEX)\n"
                 + "attribute vec4 VertexCoord; attribute vec4 TexCoord;\n"
@@ -204,6 +224,12 @@ public final class GlslpGpuSmokeTest {
 
     private static void execute(GlslpPreset preset, int expectedPasses,
             GlslpPipeline.TextureLoader images, int expectedRgb) throws Exception {
+        execute(preset, expectedPasses, images, expectedRgb, false);
+    }
+
+    private static void execute(GlslpPreset preset, int expectedPasses,
+            GlslpPipeline.TextureLoader images, int expectedRgb,
+            boolean borderCapabilityTest) throws Exception {
         EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
         assertTrue(EGL14.eglInitialize(display, new int[1], 0, new int[1], 0));
@@ -233,6 +259,17 @@ public final class GlslpGpuSmokeTest {
         try {
             Log.i("GLSLP_Smoke", "GPU=" + glGetString(GL_RENDERER));
             assertEquals(expectedPasses, preset.passes.size());
+            if (borderCapabilityTest && !GlslpPipeline.supportsBorderClamp(
+                    glGetString(GL_VERSION), glGetString(GL_EXTENSIONS))) {
+                try {
+                    new GlslpPipeline(preset, GlslpAssets.stockSource(), images);
+                    fail("Unsupported GPU must reject GLSLP border clamp");
+                } catch (java.io.IOException expected) {
+                    assertTrue(expected.getMessage(), expected.getMessage()
+                            .contains("clamp_to_border requires"));
+                }
+                return;
+            }
             pipeline = new GlslpPipeline(preset, GlslpAssets.stockSource(), images);
             bitmap = Bitmap.createBitmap(SOURCE, SOURCE, Bitmap.Config.ARGB_8888);
             int[] pixels = new int[SOURCE * SOURCE];
