@@ -155,7 +155,7 @@ internal fun CustomPipelineContent(
             }
         }
     }
-    if (stages.size < 16) {
+    if (stages.size < 16 && candidates.isNotEmpty()) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             onClick = { addPicker = true },

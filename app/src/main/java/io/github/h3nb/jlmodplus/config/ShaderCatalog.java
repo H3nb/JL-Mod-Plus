@@ -105,7 +105,8 @@ public final class ShaderCatalog {
                 if (file.isDirectory()) collectGlsl(file, root, out, depth + 1);
                 else if (file.isFile() && (ext(file, ".glslp")
                         || (depth == 0 && ext(file, ".glsl")))) {
-                    addGlsl(out, root.toPath().relativize(file.toPath()).toString()
+                    addGlsl(out, file.getCanonicalPath()
+                            .substring(root.getCanonicalPath().length() + 1)
                             .replace(File.separatorChar, '/'));
                 }
             } catch (IOException e) {
