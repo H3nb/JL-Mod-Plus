@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,6 +69,8 @@ internal fun CustomPipelineContent(
     }
     val context = LocalContext.current
     val pickerTitle = stringResource(R.string.render_custom_pick_file)
+    val increaseDescription = stringResource(R.string.render_custom_add_pass)
+    val decreaseDescription = stringResource(R.string.render_custom_remove_pass)
     val scope = rememberCoroutineScope()
     var pickingIndex by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(-1) }
     var scalePicker by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -104,13 +108,21 @@ internal fun CustomPipelineContent(
             Text(stringResource(R.string.render_custom_pass_count),
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.titleSmall)
-            TextButton(enabled = stages.size > 1, onClick = { stages = stages.dropLast(1) }) {
+            TextButton(
+                modifier = Modifier.testTag("shader_custom_decrease_passes")
+                    .semantics { contentDescription = decreaseDescription },
+                enabled = stages.size > 1,
+                onClick = { stages = stages.dropLast(1) },
+            ) {
                 Text("−")
             }
             Text(stages.size.toString(), modifier = Modifier.testTag("shader_custom_pass_count"), style = MaterialTheme.typography.titleMedium)
-            TextButton(enabled = stages.size < 16, onClick = {
-                stages = stages + CustomShaderStage("")
-            }) {
+            TextButton(
+                modifier = Modifier.testTag("shader_custom_increase_passes")
+                    .semantics { contentDescription = increaseDescription },
+                enabled = stages.size < 16,
+                onClick = { stages = stages + CustomShaderStage("") },
+            ) {
                 Text("+")
             }
         }

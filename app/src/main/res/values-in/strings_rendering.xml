@@ -83,4 +83,6 @@
     <string name="render_custom_pass_count">Jumlah pass</string>
     <string name="render_custom_pass_number">Pass %1$d</string>
     <string name="render_custom_pick_file">Pilih file GLSL</string>
+    <string name="render_custom_add_pass">Tambah jumlah pass shader</string>
+    <string name="render_custom_remove_pass">Kurangi jumlah pass shader</string>
 </resources>

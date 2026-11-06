@@ -1265,10 +1265,10 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 1)).assertExists()
-        composeRule.onNodeWithText("+").performClick()
+        composeRule.onNodeWithTag("shader_custom_increase_passes").performScrollTo().performClick()
         composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("2")
         composeRule.onNodeWithTag("shader_custom_pass_2").assertExists()
-        composeRule.onNodeWithText("−").performClick()
+        composeRule.onNodeWithTag("shader_custom_decrease_passes").performScrollTo().performClick()
         composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("1")
         composeRule.onNodeWithTag("shader_custom_pass_2").assertDoesNotExist()
 
