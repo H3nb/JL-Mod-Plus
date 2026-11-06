@@ -136,7 +136,7 @@ class CustomShaderChainTest {
                 + "varying vec2 v_texcoord0;\n"
                 + "void main() { gl_FragColor = texture2D(sampler0,v_texcoord0); }\n");
         java.util.List<CustomShaderStage> stages = Arrays.asList(
-                new CustomShaderStage("legacy/one.fsh", 1, null, "legacy/one.vsh",
+                new CustomShaderStage("legacy/one.fsh", 2, null, "legacy/one.vsh",
                         Arrays.asList(0.1f, 0.2f, 0.3f, 0.4f), "Old CRT"),
                 new CustomShaderStage("legacy/one.fsh", 2, false, "legacy/one.vsh",
                         Arrays.asList(0.7f, 0.8f, 0.9f, 1.0f), "Old CRT"));
