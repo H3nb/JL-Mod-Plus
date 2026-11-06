@@ -21,3 +21,15 @@ adb shell am instrument -w -r -e class \
 cat "$log"
 grep -Eq 'OK \(14 tests?\)' "$log"
 grep -q 'INSTRUMENTATION_CODE: -1' "$log"
+
+# Exercise the configuration route on the same emulator; the real Activity
+# delegates Back presses to the same Compose requestBack path.
+for method in shaderSubpagesHonorRepeatedHostBackWithoutExitingConfiguration rendererAndLayoutOptionsHideUnrelatedSettingsWithoutResettingValues; do
+  log="ci-artifacts/glslp-prototype/config-${method}.txt"
+  adb shell am instrument -w -r -e class "io.github.h3nb.jlmodplus.config.ConfigComposeTest#${method}" "$runner" > "$log" 2>&1 || {
+    cat "$log"; exit 1
+  }
+  cat "$log"
+  grep -Eq 'OK \(1 test\)' "$log"
+  grep -q 'INSTRUMENTATION_CODE: -1' "$log"
+done
