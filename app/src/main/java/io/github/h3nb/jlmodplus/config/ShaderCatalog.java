@@ -105,7 +105,8 @@ public final class ShaderCatalog {
                 if (file.isDirectory()) collectGlsl(file, root, out, depth + 1);
                 else if (file.isFile() && (ext(file, ".glslp")
                         || (depth == 0 && ext(file, ".glsl")))) {
-                    addGlsl(out, root.toURI().relativize(file.toURI()).getPath());
+                    addGlsl(out, root.toPath().relativize(file.toPath()).toString()
+                            .replace(File.separatorChar, '/'));
                 }
             } catch (IOException e) {
                 Log.w(TAG, "Cannot inspect shader entry", e);

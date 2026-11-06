@@ -64,4 +64,5 @@
     <string name="render_custom_default">Default</string>
     <string name="render_custom_nearest">Nearest</string>
     <string name="render_custom_linear">Linear</string>
+    <string name="render_custom_checking">Checking shader files…</string>
 </resources>

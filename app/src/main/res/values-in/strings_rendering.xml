@@ -63,4 +63,5 @@
     <string name="render_custom_default">Default</string>
     <string name="render_custom_nearest">Terdekat</string>
     <string name="render_custom_linear">Linear</string>
+    <string name="render_custom_checking">Memeriksa berkas shader…</string>
 </resources>

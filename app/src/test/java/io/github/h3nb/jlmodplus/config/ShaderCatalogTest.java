@@ -32,6 +32,17 @@ public class ShaderCatalogTest {
         assertEquals(1, ShaderCatalog.scan(root).size());
     }
 
+    @Test void retainsLiteralFileNamesInShaderPaths() throws Exception {
+        File root = temporary.resolve("name-test").toFile();
+        File folder = new File(root, "shaders_glsl");
+        assertTrue(folder.mkdirs());
+        Files.write(new File(folder, "soft blur.glsl").toPath(),
+                "uniform sampler2D Texture;".getBytes(StandardCharsets.UTF_8));
+        List<ShaderInfo> catalog = ShaderCatalog.scan(root);
+        assertEquals(1, catalog.size());
+        assertEquals("shaders_glsl/soft blur.glsl", catalog.get(0).preset);
+    }
+
     @Test void discoversNestedGlslpWithoutOfferingItsPassFiles() throws Exception {
         File root = temporary.resolve("shaders").toFile();
         File nested = new File(root, "shaders_glsl/xbrz/shaders");

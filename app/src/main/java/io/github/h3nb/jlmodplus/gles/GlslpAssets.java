@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import io.github.h3nb.jlmodplus.config.CustomShaderStage;
 import javax.microedition.util.ContextHolder;
 
-/** Resolves packaged demos and local shader resources without path traversal. */
+/** Resolves external shader resources; stock presentation GLSL is the only production asset. */
 public final class GlslpAssets {
     private static final String ASSETS = "shaders/glslp/";
     private static final int MAX_RESOURCE_BYTES = 512 * 1024;
