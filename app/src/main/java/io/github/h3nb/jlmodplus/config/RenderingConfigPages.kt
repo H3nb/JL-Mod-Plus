@@ -538,7 +538,7 @@ private fun ActionRow(title: String, subtitle: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SectionLabel(label: String) {
+internal fun SectionLabel(label: String) {
     Text(
         label,
         modifier = Modifier.padding(start = 2.dp, top = 5.dp),
