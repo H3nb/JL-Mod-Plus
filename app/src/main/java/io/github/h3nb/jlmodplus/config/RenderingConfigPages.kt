@@ -147,7 +147,6 @@ internal fun RenderingSettingsPage(
     }
 }
 
-/** Selection is the primary action. Tuning and pass inspection never crowd this page. */
 /** A shader mode is chosen directly on the page; file selection uses the scoped picker. */
 @Composable
 private fun ShaderEffectsContent(
@@ -163,6 +162,10 @@ private fun ShaderEffectsContent(
     val shader = state.form.shader
     val root = state.shaderDirectory
     val context = LocalContext.current
+    val legacyEmptyMessage = stringResource(R.string.render_legacy_empty)
+    val missingShaderMessage = stringResource(R.string.render_shader_missing)
+    val legacyPickerTitle = stringResource(R.string.render_legacy_mode)
+    val presetPickerTitle = stringResource(R.string.render_preset_mode)
     val legacy = shader?.fragment != null && shader.vertex != null
     val preset = shader?.preset != null
     val custom = shader?.customStages != null
@@ -200,7 +203,7 @@ private fun ShaderEffectsContent(
                 ShaderCatalog.readLegacyFile(root ?: throw IOException("Shader folder unavailable"), path)
             }
             if (options.isEmpty()) {
-                legacyError = context.getString(R.string.render_legacy_empty)
+                legacyError = legacyEmptyMessage
             } else if (options.size == 1) {
                 onFormChanged(state.form.toBuilder().shader(options.first()).build())
                 if (editingCustom) onCancelCustom()
@@ -210,7 +213,7 @@ private fun ShaderEffectsContent(
             }
         } catch (error: IOException) {
             legacyOptions = emptyList()
-            legacyError = error.message ?: context.getString(R.string.render_shader_missing)
+            legacyError = error.message ?: missingShaderMessage
         }
         legacyPath = null
     }
@@ -241,7 +244,7 @@ private fun ShaderEffectsContent(
         selected = legacy && !editingCustom,
         onClick = {
             if (root != null) legacyPicker.launch(shaderPickerIntent(
-                context, root, listOf(".ini"), context.getString(R.string.render_legacy_mode),
+                context, root, listOf(".ini"), legacyPickerTitle,
             ))
         },
     )
@@ -270,7 +273,7 @@ private fun ShaderEffectsContent(
         selected = preset && !editingCustom,
         onClick = {
             if (root != null) presetPicker.launch(shaderPickerIntent(
-                context, root, listOf(".glslp"), context.getString(R.string.render_preset_mode),
+                context, root, listOf(".glslp"), presetPickerTitle,
             ))
         },
     )

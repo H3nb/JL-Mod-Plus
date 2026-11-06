@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -65,6 +66,7 @@ internal fun CustomPipelineContent(
         mutableStateOf(previous?.takeIf { it.isNotEmpty() } ?: listOf(CustomShaderStage("")))
     }
     val context = LocalContext.current
+    val pickerTitle = stringResource(R.string.render_custom_pick_file)
     val scope = rememberCoroutineScope()
     var pickingIndex by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(-1) }
     var scalePicker by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -105,7 +107,7 @@ internal fun CustomPipelineContent(
             TextButton(enabled = stages.size > 1, onClick = { stages = stages.dropLast(1) }) {
                 Text("−")
             }
-            Text(stages.size.toString(), style = MaterialTheme.typography.titleMedium)
+            Text(stages.size.toString(), modifier = Modifier.testTag("shader_custom_pass_count"), style = MaterialTheme.typography.titleMedium)
             TextButton(enabled = stages.size < 16, onClick = {
                 stages = stages + CustomShaderStage("")
             }) {
@@ -115,7 +117,7 @@ internal fun CustomPipelineContent(
     }
     stages.forEachIndexed { index, stage ->
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("shader_custom_pass_${index + 1}"),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
@@ -134,7 +136,7 @@ internal fun CustomPipelineContent(
                             pickingIndex = index
                             filePicker.launch(shaderPickerIntent(
                                 context, root, listOf(".glsl"),
-                                context.getString(R.string.render_custom_pick_file),
+                                pickerTitle,
                             ))
                         }
                     },
