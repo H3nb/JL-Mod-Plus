@@ -28,6 +28,7 @@ public final class GlslpPipeline {
     };
     private final GlslpPreset preset;
     private final Map<String, Float> parameters;
+    private final boolean fullNpot;
     private final int[] programs, framebuffer, intermediate, targetWidth, targetHeight;
     private final boolean[] usesOriginal, usesPrev2;
     private final int[] vertexAttributes, textureAttributes;
@@ -71,6 +72,11 @@ public final class GlslpPipeline {
             throw new IOException("GLSLP supports 1–16 passes in this prototype");
         }
         preset = resolved;
+        String extensions = glGetString(GL_EXTENSIONS);
+        String version = glGetString(GL_VERSION);
+        fullNpot = (version != null && version.startsWith("OpenGL ES 3."))
+                || (extensions != null
+                    && (" " + extensions + " ").contains(" GL_OES_texture_npot "));
         parameters = Collections.unmodifiableMap(new LinkedHashMap<>(resolved.resolvedParameters()));
         int n = preset.passes.size();
         programs = new int[n + 1];
@@ -198,14 +204,15 @@ public final class GlslpPipeline {
                 try {
                     int w = bitmap.getWidth(), h = bitmap.getHeight();
                     long baseBytes = 4L * w * h;
-                    // A full mip chain can add just under one third of base-level storage.
-                    bytes += baseBytes + (lookup.mipmap ? (baseBytes + 2) / 3 : 0);
+                    bytes += baseBytes + (lookup.mipmap
+                            ? GlslpPreset.mipChainBytes(w, h) : 0);
                     if (w <= 0 || h <= 0 || w > maxSize[0] || h > maxSize[0]
                             || bytes > MAX_LOOKUP_BYTES) {
                         throw new IOException("GLSLP lookup texture budget exceeded: " + lookup.sourcePath);
                     }
                     boolean pot = (w & (w - 1)) == 0 && (h & (h - 1)) == 0;
-                    if (!pot && (lookup.mipmap || !"clamp_to_edge".equals(lookup.wrapMode))) {
+                    if (!fullNpot && !pot
+                            && (lookup.mipmap || !"clamp_to_edge".equals(lookup.wrapMode))) {
                         throw new IOException("GLES2 NPOT lookup requires clamp and no mipmap: "
                                 + lookup.sourcePath);
                     }
@@ -267,7 +274,7 @@ public final class GlslpPipeline {
                 int[] maxTexture = new int[1];
                 glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTexture, 0);
                 GlslpPreset.Plan updated = preset.plan(logicalWidth, logicalHeight,
-                        vw, vh, maxTexture[0], 64L * 1024L * 1024L);
+                        vw, vh, maxTexture[0], 64L * 1024L * 1024L, fullNpot);
                 cachedPlan = updated;
                 planSourceWidth = logicalWidth;
                 planSourceHeight = logicalHeight;

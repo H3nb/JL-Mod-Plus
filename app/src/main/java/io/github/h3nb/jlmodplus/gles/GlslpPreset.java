@@ -486,6 +486,13 @@ public final class GlslpPreset {
 
     public Plan plan(int sourceW, int sourceH, int viewportW, int viewportH,
             int maxTextureSize, long maxIntermediateBytes) {
+        return plan(sourceW, sourceH, viewportW, viewportH,
+                maxTextureSize, maxIntermediateBytes, false);
+    }
+
+    /** Allow GLES2 NPOT repeat/mips only when the GL context supports full NPOT sampling. */
+    public Plan plan(int sourceW, int sourceH, int viewportW, int viewportH,
+            int maxTextureSize, long maxIntermediateBytes, boolean fullNpot) {
         if (sourceW <= 0 || sourceH <= 0 || viewportW <= 0 || viewportH <= 0
                 || maxTextureSize <= 0 || maxIntermediateBytes < 0) {
             throw new IllegalArgumentException("Invalid source, viewport or GPU limit");
@@ -500,7 +507,7 @@ public final class GlslpPreset {
             Pass pass = passes.get(i);
             if ((pass.mipmapInput || "repeat".equals(pass.wrapMode)
                     || "mirrored_repeat".equals(pass.wrapMode))
-                    && (!powerOfTwo(inW) || !powerOfTwo(inH))) {
+                    && !fullNpot && (!powerOfTwo(inW) || !powerOfTwo(inH))) {
                 throw new IllegalArgumentException(
                         "GLES2 input for mipmaps/repeat must be power-of-two in pass " + i);
             }
@@ -537,7 +544,7 @@ public final class GlslpPreset {
         return value > 0 && (value & (value - 1)) == 0;
     }
 
-    private static long mipChainBytes(int width, int height) {
+    static long mipChainBytes(int width, int height) {
         long bytes = 0;
         while (width > 1 || height > 1) {
             width = Math.max(1, width / 2);

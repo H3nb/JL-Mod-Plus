@@ -48,8 +48,11 @@ Common exported per-pass metadata `mipmap_inputN=false`,
 `frame_count_modN=0` is accepted. Input sampling can now use repeat or
 mirrored-repeat and optional `mipmap_inputN=true` on power-of-two images.
 Mipmaps are generated only when the guest frame or pass layout changes and
-their extra level allocations count against the 64 MiB plan budget. Unsupported
-non-power-of-two GLES2 input combinations are rejected explicitly.
+their extra level allocations count against the 64 MiB plan budget. Unsupported non-power-of-two GLES2 input combinations are rejected explicitly
+unless the active context advertises full NPOT support through OpenGL ES 3.x
+or `GL_OES_texture_npot`. The same check applies to static lookup textures.
+The renderer probes the capability once at GL-context initialization; unsupported
+devices do not silently emulate repeat or mipmap behavior.
 GLES2 does not natively reproduce `clamp_to_border`; it remains rejected
 rather than silently substituted with clamp-to-edge.
 

@@ -359,8 +359,12 @@ public class GlslpPresetTest {
         assertEquals("mirrored_repeat", preset.passes.get(0).wrapMode);
         GlslpPreset.Plan planned = preset.plan(32, 32, 96, 96, 2048, 1024 * 1024);
         assertTrue(planned.conservativeIntermediateBytes > 0);
+        assertEquals("Thin textures have almost one extra full level of mip storage",
+                4092L, GlslpPreset.mipChainBytes(1, 1024));
         expectFailure(() -> preset.plan(31, 32, 96, 96, 2048, 1024 * 1024),
                 "power-of-two");
+        assertEquals(1, preset.plan(31, 32, 96, 96, 2048,
+                1024 * 1024, true).passes.size());
         expectFailure(() -> preset.plan(32, 32, 96, 96, 2048, 0),
                 "Intermediate GPU budget exceeded");
 
