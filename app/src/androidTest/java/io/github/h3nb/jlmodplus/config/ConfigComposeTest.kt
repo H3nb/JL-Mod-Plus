@@ -16,6 +16,7 @@ package io.github.h3nb.jlmodplus.config
 
 import io.github.h3nb.jlmodplus.R
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
