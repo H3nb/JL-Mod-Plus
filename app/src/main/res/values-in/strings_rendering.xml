@@ -50,9 +50,9 @@
     <string name="render_custom_stage_count">%1$d tahap shader kustom</string>
     <string name="render_custom_add">Tambah shader</string>
     <string name="render_custom_add_hint">Pilih sumber .glsl eksternal yang berdiri sendiri.</string>
-    <string name="render_custom_no_sources">Belum ada shader .glsl eksternal. Tambahkan file ke shaders/shaders_glsl/ lalu buka kembali konfigurasi.</string>
-    <string name="render_custom_scale">Output: %1$d× input</string>
-    <string name="render_custom_output_scale">Ukuran output perantara</string>
+    <string name="render_custom_no_sources">Belum ada shader GLSL eksternal. Tambahkan berkas .glsl atau .glslp ke folder shaders, lalu buka kembali pengaturan.</string>
+    <string name="render_custom_scale">Output: %1$d× tahap sebelumnya</string>
+    <string name="render_custom_output_scale">Ukuran output untuk tahap berikutnya</string>
     <string name="render_custom_final_viewport">Output akhir: area tampilan game</string>
     <string name="render_custom_filter">Filter input: %1$s</string>
     <string name="render_custom_up">Naik</string>
@@ -64,4 +64,7 @@
     <string name="render_custom_nearest">Terdekat</string>
     <string name="render_custom_linear">Linear</string>
     <string name="render_custom_checking">Memeriksa berkas shader…</string>
+    <string name="render_active_shader">Efek aktif</string>
+    <string name="render_shader_off">Nonaktif</string>
+    <string name="render_edit_custom_pipeline">Edit rangkaian shader</string>
 </resources>

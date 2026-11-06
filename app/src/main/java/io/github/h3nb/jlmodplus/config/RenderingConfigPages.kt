@@ -155,54 +155,68 @@ private fun ShaderEffectsContent(
 ) {
     val form = state.form
     val shader = form.shader
-    var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
-    SectionLabel(stringResource(R.string.render_shader_preset))
+    // A preset is an entire GLSLP definition; custom chains contain standalone .glsl stages.
+    val presets = state.shaders.filter { it.fragment != null || it.preset != null }
+    val customAvailable = shader?.customStages != null || presets.any {
+        it.preset?.endsWith(".glsl", ignoreCase = true) == true
+    }
+    val customLabel = stringResource(R.string.render_custom_pipeline)
+    val choices = listOf(stringResource(R.string.render_shader_off)) +
+        presets.map { it.toString() } + if (customAvailable) listOf(customLabel) else emptyList()
+    var pickerVisible by rememberSaveable { mutableStateOf(false) }
+
+    SectionLabel(stringResource(R.string.render_active_shader))
     ActionSurface(
         title = selectedShaderLabel(state),
         subtitle = stringResource(R.string.render_shader_change),
-        onClick = { presetPickerVisible = true },
+        onClick = { pickerVisible = true },
     )
-    if (presetPickerVisible) {
+    if (pickerVisible) {
         ConfigChoiceDialog(
-            title = stringResource(R.string.render_shader_preset),
-            selected = selectedShaderLabel(state),
-            options = state.shaders.map {
-                if (it.fragment == null && it.preset == null) "Off" else it.toString()
-            },
-            onDismissRequest = { presetPickerVisible = false },
+            title = stringResource(R.string.render_shader_effects),
+            selected = if (shader?.customStages != null) customLabel else selectedShaderLabel(state),
+            options = choices,
+            onDismissRequest = { pickerVisible = false },
             onSelected = { index ->
-                presetPickerVisible = false
-                onFormChanged(form.toBuilder()
-                    .shader(if (index == 0) null else state.shaders.getOrNull(index)).build())
+                pickerVisible = false
+                when {
+                    index == 0 -> onFormChanged(form.toBuilder().shader(null).build())
+                    index in 1..presets.size -> onFormChanged(
+                        form.toBuilder().shader(presets[index - 1]).build(),
+                    )
+                    customAvailable && index == choices.lastIndex -> onOpenCustom()
+                }
             },
         )
     }
-    ActionSurface(
-        title = stringResource(R.string.render_custom_pipeline),
-        subtitle = stringResource(R.string.render_custom_pipeline_hint),
-        onClick = onOpenCustom,
-    )
+
     if (shader == null) {
-        MutedText(stringResource(R.string.render_no_shader))
+        if (presets.isEmpty()) {
+            MutedText(stringResource(R.string.render_custom_no_sources))
+        }
         return
-    }
-    if (form.graphicsMode != 1) {
-        MutedText(stringResource(R.string.render_shader_requires_gles))
-    }
-    if (shader.customStages == null && state.shaders.none { it == shader }) {
-        MutedText(stringResource(R.string.render_shader_missing), isError = true)
     }
     if (shader.customStages != null) {
         val summary = state.shaderPipeline
-        if (summary?.error != null) MutedText(summary.error, isError = true)
-        else if (summary != null) MutedText(
-            stringResource(R.string.render_custom_stage_count, summary.passes.size),
+        if (summary?.error != null) {
+            MutedText(summary.error, isError = true)
+        } else if (summary != null) {
+            MutedText(stringResource(R.string.render_custom_stage_count, summary.passes.size))
+        }
+        ActionSurface(
+            title = stringResource(R.string.render_edit_custom_pipeline),
+            subtitle = stringResource(R.string.render_custom_order_help),
+            onClick = onOpenCustom,
         )
+        return
+    }
+
+    if (state.shaders.none { it == shader }) {
+        MutedText(stringResource(R.string.render_shader_missing), isError = true)
         return
     }
     if (shader.preset == null) {
         if (shader.hasTunableSettings()) {
-            SectionLabel(stringResource(R.string.render_shader_parameters))
             ActionSurface(
                 title = stringResource(R.string.render_shader_adjust),
                 subtitle = stringResource(R.string.render_legacy_tuning_hint),
@@ -211,33 +225,27 @@ private fun ShaderEffectsContent(
         }
         return
     }
-    val summary = state.shaderPipeline
-    if (summary?.error != null) {
+
+    val summary = state.shaderPipeline ?: return
+    if (summary.error != null) {
         MutedText(summary.error, isError = true)
         return
     }
-    if (summary == null) return
-
     val adjustable = summary.parameters.count { it.maximum > it.minimum }
-    SectionLabel(stringResource(R.string.render_shader_customization))
-    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        Column {
-            if (adjustable > 0) {
-                ActionRow(
-                    title = stringResource(R.string.render_shader_adjust),
-                    subtitle = stringResource(R.string.render_adjustable_count, adjustable),
-                    onClick = onOpenParameters,
-                )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            }
-            ActionRow(
-                title = stringResource(R.string.render_shader_passes),
-                subtitle = stringResource(R.string.render_pass_summary, summary.passes.size),
-                onClick = onOpenPasses,
-            )
-        }
+    if (adjustable > 0) {
+        ActionSurface(
+            title = stringResource(R.string.render_shader_adjust),
+            subtitle = stringResource(R.string.render_adjustable_count, adjustable),
+            onClick = onOpenParameters,
+        )
     }
-    MutedText(stringResource(R.string.render_shader_preset_note))
+    if (summary.passes.size > 1) {
+        ActionSurface(
+            title = stringResource(R.string.render_shader_passes),
+            subtitle = stringResource(R.string.render_pass_summary, summary.passes.size),
+            onClick = onOpenPasses,
+        )
+    }
 }
 
 @Composable
