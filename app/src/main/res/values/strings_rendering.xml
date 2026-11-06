@@ -81,4 +81,7 @@
     <string name="render_legacy_variant_description">Shader definition in the selected .ini file</string>
     <string name="render_preset_mode">GLSLP preset</string>
     <string name="render_preset_mode_help">Load a complete .glslp pipeline with its own passes.</string>
+    <string name="render_custom_pass_count">Number of passes</string>
+    <string name="render_custom_pass_number">Pass %1$d</string>
+    <string name="render_custom_pick_file">Choose GLSL file</string>
 </resources>

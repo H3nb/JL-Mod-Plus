@@ -80,4 +80,7 @@
     <string name="render_legacy_variant_description">Definisi shader dari file .ini yang dipilih</string>
     <string name="render_preset_mode">Preset GLSLP</string>
     <string name="render_preset_mode_help">Muat pipeline .glslp lengkap dengan susunan pass-nya.</string>
+    <string name="render_custom_pass_count">Jumlah pass</string>
+    <string name="render_custom_pass_number">Pass %1$d</string>
+    <string name="render_custom_pick_file">Pilih file GLSL</string>
 </resources>
