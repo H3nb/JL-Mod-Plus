@@ -51,7 +51,7 @@ internal fun CustomPipelineContent(
 ) {
     val selection = state.form.shader
     val previous = selection?.customStages
-    val inheritedPreset = selection?.preset?.takeIf { selection.customMode != "legacy" }
+    val inheritedPreset = selection?.preset?.takeIf { selection?.customMode != "legacy" }
     val initialMode = selection?.customMode ?: if (selection?.fragment != null) "legacy" else "glsl"
     var mode by rememberSaveable(selection?.preset, selection?.fragment, previous) {
         mutableStateOf(initialMode)
@@ -125,7 +125,7 @@ internal fun CustomPipelineContent(
         }
     }
     LaunchedEffect(stages) { validationError = null }
-    LaunchedEffect(stages, mode, inheritedPreset, overrides, loading) {
+    LaunchedEffect(stages, mode, inheritedPreset, loading) {
         if (mode != "glsl" || loading || stages.any { it.path.isBlank() }) {
             passParameters = emptyMap()
             return@LaunchedEffect
@@ -134,7 +134,7 @@ internal fun CustomPipelineContent(
             runCatching {
                 val preset = GlslpAssets.loadCustom(stages,
                     state.shaderDirectory ?: throw IOException("Shader folder unavailable"),
-                    inheritedPreset, "glsl").withParameterOverrides(overrides)
+                    inheritedPreset, "glsl")
                 val definitions = preset.parameterDefinitions()
                 preset.passes.mapIndexed { index, pass ->
                     val ids = pass.sourceText.lineSequence().map { it.trim() }

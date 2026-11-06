@@ -1375,6 +1375,72 @@ class ConfigComposeTest {
             .assertDoesNotExist()
     }
 
+
+    @Test
+    fun returningFromShaderPageRetainsDisplayScrollPosition() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        val shaderLink = uiString(R.string.render_shader_effects)
+        composeRule.onNodeWithText(shaderLink).performScrollTo()
+        val before = composeRule.onNodeWithText(shaderLink)
+            .fetchSemanticsNode().boundsInRoot.top
+        composeRule.onNodeWithText(shaderLink).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        val after = composeRule.onNodeWithText(shaderLink)
+            .fetchSemanticsNode().boundsInRoot.top
+        assertTrue("Returning from shader page must retain scroll position",
+            kotlin.math.abs(before - after) < 2f)
+    }
+
+    @Test
+    fun tenPassPresetOpensAsTenPrefilledCustomStages() {
+        val base = sampleState()
+        val root = java.io.File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "glslp-ten-pass-test",
+        )
+        root.mkdirs()
+        try {
+            val shaders = java.io.File(root, "nested").apply { mkdirs() }
+            val preset = java.io.File(shaders, "ten.glslp")
+            preset.writeText("shaders = 10\n" +
+                (0 until 10).joinToString("") { "shader" + it + " = pass" + it + ".glsl\n" })
+            repeat(10) {
+                java.io.File(shaders, "pass" + it + ".glsl")
+                    .writeText("uniform sampler2D Texture;\nvoid main() {}")
+            }
+            val choice = ShaderInfo("ten.glslp", "external").apply { this.preset = "nested/ten.glslp" }
+            val form = base.form.toBuilder().graphicsMode(1).shader(choice).build()
+            val state = ConfigUiState(
+                form, base.screenPresets, base.fontPresets, base.skins,
+                base.soundBanks, listOf(choice), base.removableScreenPresets,
+            ).apply { shaderDirectory = root }
+            composeRule.setContent {
+                JLModPlusTheme {
+                    ConfigScreen(state, RecordingConfigEvents(),
+                        initialDestination = ConfigDestination.Display)
+                }
+            }
+            composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+                .performScrollTo().performClick()
+            composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline))
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("10")
+                }.isSuccess
+            }
+            composeRule.onNodeWithTag("shader_custom_pass_10").assertExists()
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
     @Test
     fun emptyShaderCatalogStillOffersScopedFileSourcesAndIdentityDefault() {
         composeRule.setContent {
