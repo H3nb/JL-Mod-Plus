@@ -2600,6 +2600,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						? ShaderPipelineSummary.inspect(requestedPreset, shaderRoot) : null;
 		}
 		result.shaderPipeline = inspectedShaderPipeline;
+		result.shaderDirectory = new File(workDir + Config.SHADERS_DIR);
 		if (state.controlSkinSetId == null) {
 			result.controlSkinName = getString(R.string.control_skin_default);
 		} else {

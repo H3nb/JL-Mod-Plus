@@ -8,7 +8,7 @@ Status: **draft**. Branch feat/custom-glslp-pipeline extends PR #224, not alpha.
 - Shader effects > Custom pipeline opens a draft. Add, remove, or reorder external standalone GLSL stages (up to 16), choose per-stage input filter, and set source-relative 1x, 2x, or 4x on intermediate stages.
 - The final stage draws to the actual game viewport. Back/Cancel discards the draft; Save writes one config selection per game or named profile through existing form ownership.
 - Complex .glslp presets remain opaque and retain their own pass order. External shader directories are read; there is no installer, ZIP import, or new bundled third-party catalog.
-- The editor performs structural selection only. Shader source compatibility is validated by the resolver and GPU executor; real-device compilation and pixel accuracy remain qualification requirements.
+- Save validates source paths, sampler dependencies, and GLSLP parameter metadata on an IO dispatcher before changing the form. The actual GPU still compiles at runtime; real-device compilation and pixel accuracy remain qualification requirements.
 
 ## Implementation boundary
 

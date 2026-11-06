@@ -12,6 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
@@ -23,6 +26,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.gles.GlslpAssets
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 /** Draft only: the form and linked profile are not changed until Save. */
 @Composable
@@ -60,6 +68,10 @@ internal fun CustomPipelineContent(
     var addPicker by rememberSaveable { mutableStateOf(false) }
     var scalePicker by rememberSaveable { mutableStateOf<Int?>(null) }
     var filterPicker by rememberSaveable { mutableStateOf<Int?>(null) }
+    var validating by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(stages) { validationError = null }
 
     Text(
         stringResource(R.string.render_custom_order_help),
@@ -166,15 +178,38 @@ internal fun CustomPipelineContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+    validationError?.let { message ->
+        Text(message, color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall)
+    }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onBack) { Text(stringResource(R.string.render_custom_cancel)) }
-        TextButton(enabled = stages.isNotEmpty(), onClick = {
-            val selected = ShaderInfo("Custom pipeline", "JL-Mod Plus")
-            selected.customStages = stages
-            onFormChanged(state.form.toBuilder().shader(selected).build())
-            onBack()
+        TextButton(enabled = stages.isNotEmpty() && !validating, onClick = {
+            val requested = stages.toList()
+            validating = true
+            scope.launch {
+                val error = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val root = state.shaderDirectory
+                            ?: throw IOException("Shader directory unavailable")
+                        GlslpAssets.loadCustom(requested, root).parameterDefinitions()
+                    }.exceptionOrNull()
+                }
+                validating = false
+                // The user may change a stage while validation is running.
+                if (requested != stages) return@launch
+                if (error != null) {
+                    validationError = error.message ?: "Invalid shader chain"
+                } else {
+                    val selected = ShaderInfo("Custom pipeline", "JL-Mod Plus")
+                    selected.customStages = requested
+                    onFormChanged(state.form.toBuilder().shader(selected).build())
+                    onBack()
+                }
+            }
         }) {
-            Text(stringResource(R.string.render_custom_save))
+            Text(stringResource(if (validating) R.string.render_custom_checking
+                else R.string.render_custom_save))
         }
     }
 

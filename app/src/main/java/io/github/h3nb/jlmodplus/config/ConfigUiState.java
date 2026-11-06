@@ -19,6 +19,7 @@ import org.microemu.cldc.file.StorageMode;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +52,8 @@ public final class ConfigUiState {
 	public final List<ShaderInfo> shaders;
 	/** Resolved preset metadata for the configuration screen, never GPU state. */
 	@Nullable public ShaderPipelineSummary shaderPipeline;
+	/** Read-only location used for off-main-thread custom source validation. */
+	@Nullable public File shaderDirectory;
 	@NonNull
 	public final ProfileStatus profileStatus;
 	@NonNull
