@@ -712,6 +712,22 @@ private fun GeneralDestination(
                 },
             )
         }
+        val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_screen_gravity),
+            description = stringResource(R.string.config_help_screen_gravity),
+            selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
+            options = gravityOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
+        )
+        ConfigNumberPreference(
+            title = stringResource(R.string.pref_screen_padding_title),
+            description = stringResource(R.string.config_help_screen_padding),
+            value = form.screenPadding,
+            fallbackLabel = "0",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
+        )
         if (cutoutAvailable) {
             ConfigSwitchPreference(
                 title = stringResource(R.string.config_avoid_camera_cutout_title),
@@ -913,6 +929,45 @@ private fun ScreenSection(
     events: ConfigFormEvents,
     onOpenShaders: () -> Unit,
 ) {
+    ConfigSection(title = stringResource(R.string.config_display_rendering)) {
+        val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_graphics_mode_title),
+            description = stringResource(R.string.config_help_graphics_mode),
+            selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
+            options = graphicsOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
+        )
+        if (form.graphicsMode == 1) {
+            ConfigValuePreference(
+                title = stringResource(R.string.render_shader_effects),
+                description = stringResource(R.string.render_shader_picker_help),
+                value = selectedShaderLabel(state),
+                onClick = onOpenShaders,
+            )
+        }
+        if (isTextureFilteringApplicable(state)) {
+            ConfigChoicePreference(
+                title = stringResource(R.string.render_texture_filtering),
+                description = stringResource(R.string.render_texture_filtering_help),
+                selected = if (form.screenFilter) "Linear" else "Nearest",
+                options = listOf("Nearest", "Linear"),
+                onSelected = { index ->
+                    onFormChanged(form.toBuilder().screenFilter(index == 1).build())
+                },
+            )
+        }
+        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
+            ConfigSwitchPreference(
+                title = stringResource(R.string.parallel_screen_redrawing),
+                description = stringResource(R.string.config_help_parallel_redraw),
+                checked = form.parallelRedrawScreen,
+                onCheckedChange = { checked ->
+                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
+                },
+            )
+        }
+    }
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         val backgroundModes = listOf(
             stringResource(R.string.config_background_custom),
@@ -965,69 +1020,16 @@ private fun ScreenSection(
             onRename = { old, stem -> events.onRenameAsset(ConfigFormEvents.AssetKind.SKIN, old, stem) },
             onDelete = { name -> events.onDeleteAsset(ConfigFormEvents.AssetKind.SKIN, name) },
         )
-        val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
-        ConfigChoicePreference(
-            title = stringResource(R.string.pref_screen_gravity),
-            description = stringResource(R.string.config_help_screen_gravity),
-            selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
-            options = gravityOptions,
-            onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
-        )
-        ConfigNumberPreference(
-            title = stringResource(R.string.pref_screen_padding_title),
-            description = stringResource(R.string.config_help_screen_padding),
-            value = form.screenPadding,
-            fallbackLabel = "0",
-            keyboardType = KeyboardType.Number,
-            onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
-        )
-    }
-    ConfigSection(title = stringResource(R.string.config_display_rendering)) {
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_IMMEDIATE),
-            description = stringResource(R.string.config_help_immediate),
-            checked = form.immediateMode,
-            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
-        )
-        val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
-        ConfigChoicePreference(
-            title = stringResource(R.string.pref_graphics_mode_title),
-            description = stringResource(R.string.config_help_graphics_mode),
-            selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
-            options = graphicsOptions,
-            onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
-        )
-        if (form.graphicsMode == 1) {
-            ConfigValuePreference(
-                title = stringResource(R.string.render_shader_effects),
-                description = stringResource(R.string.render_shader_picker_help),
-                value = selectedShaderLabel(state),
-                onClick = onOpenShaders,
-            )
-        }
-        if (isTextureFilteringApplicable(state)) {
-            ConfigChoicePreference(
-                title = stringResource(R.string.render_texture_filtering),
-                description = stringResource(R.string.render_texture_filtering_help),
-                selected = if (form.screenFilter) "Linear" else "Nearest",
-                options = listOf("Nearest", "Linear"),
-                onSelected = { index ->
-                    onFormChanged(form.toBuilder().screenFilter(index == 1).build())
-                },
-            )
-        }
-        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
-            ConfigSwitchPreference(
-                title = stringResource(R.string.parallel_screen_redrawing),
-                description = stringResource(R.string.config_help_parallel_redraw),
-                checked = form.parallelRedrawScreen,
-                onCheckedChange = { checked ->
-                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
-                },
-            )
-        }
     }
     ConfigSection(title = stringResource(R.string.config_display_performance)) {
+        ConfigNumberPreference(
+            title = stringResource(R.string.PREF_LIMIT_FPS),
+            description = stringResource(R.string.config_help_fps_limit),
+            value = form.fpsLimit,
+            fallbackLabel = stringResource(R.string.fps_limit_maximum),
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+        )
         ConfigSwitchPreference(
             title = stringResource(R.string.perf_overlay_title),
             description = stringResource(R.string.perf_overlay_help),
@@ -1037,13 +1039,11 @@ private fun ScreenSection(
         if (form.showFps) {
             PerformanceOverlayPreferences(form, onFormChanged)
         }
-        ConfigNumberPreference(
-            title = stringResource(R.string.PREF_LIMIT_FPS),
-            description = stringResource(R.string.config_help_fps_limit),
-            value = form.fpsLimit,
-            fallbackLabel = stringResource(R.string.fps_limit_maximum),
-            keyboardType = KeyboardType.Number,
-            onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_IMMEDIATE),
+            description = stringResource(R.string.config_help_immediate),
+            checked = form.immediateMode,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
         )
     }
 }
