@@ -55,4 +55,27 @@ public class ShaderCatalogTest {
         assertEquals(1, catalog.size());
         assertEquals("shaders_glsl/xbrz/crisp.glslp", catalog.get(0).preset);
     }
+
+    @Test void selectedLegacyIniExposesAllVariantsAndKeepsNestedPaths() throws Exception {
+        File root = temporary.resolve("nested-shaders").toFile();
+        File sub = new File(root, "shaders_legacy/custom");
+        assertTrue(sub.mkdirs());
+        Files.write(new File(sub, "effects.ini").toPath(),
+                ("[Warm]\nVertex = common.vsh\nFragment = warm.fsh\n"
+                        + "[Cool]\nVertex = common.vsh\nFragment = cool.fsh\n")
+                        .getBytes(StandardCharsets.UTF_8));
+        for (String name : List.of("common.vsh", "warm.fsh", "cool.fsh")) {
+            Files.write(new File(sub, name).toPath(), "source".getBytes(StandardCharsets.UTF_8));
+        }
+        List<ShaderInfo> entries = ShaderCatalog.readLegacyFile(root, "shaders_legacy/custom/effects.ini");
+        assertEquals(List.of("Warm", "Cool"), entries.stream().map(ShaderInfo::toString).toList());
+        assertEquals("shaders_legacy/custom/common.vsh", entries.get(0).vertex);
+        assertEquals("shaders_legacy/custom/cool.fsh", entries.get(1).fragment);
+        assertEquals(2, ShaderCatalog.readLegacyFile(root, "shaders_legacy/custom/effects.ini").size());
+
+        assertThrows(java.io.IOException.class,
+                () -> ShaderCatalog.readLegacyFile(root, "../outside.ini"));
+        assertThrows(java.io.IOException.class,
+                () -> ShaderCatalog.readLegacyFile(root, "shaders_legacy/custom/common.vsh"));
+    }
 }

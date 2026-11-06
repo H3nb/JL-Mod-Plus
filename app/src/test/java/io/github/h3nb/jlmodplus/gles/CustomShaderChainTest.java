@@ -62,4 +62,25 @@ class CustomShaderChainTest {
                 () -> GlslpAssets.loadCustom(Collections.emptyList(), shaderRoot.toFile()));
         assertTrue(empty.getMessage().contains("1–16 stages"));
     }
+
+    @Test void customChainAndPresetAcceptNestedShaderFolderPaths() throws Exception {
+        source("extra/passes/first.glsl", "uniform sampler2D Texture;\nvoid main() {}");
+        source("extra/passes/final.glsl", "uniform sampler2D Texture;\nvoid main() {}");
+        source("extra/passes/effect.glslp",
+                "shaders = 2\nshader0 = first.glsl\n"
+                + "scale_type0 = source\nscale0 = 1\n"
+                + "shader1 = final.glsl\n");
+        GlslpPreset userPreset = GlslpAssets.load("extra/passes/effect.glslp",
+                shaderRoot.toFile());
+        assertEquals(2, userPreset.passes.size());
+        GlslpPreset custom = GlslpAssets.loadCustom(Arrays.asList(
+                new CustomShaderStage("extra/passes/first.glsl", 2, false),
+                new CustomShaderStage("extra/passes/final.glsl", 1, null)),
+                shaderRoot.toFile());
+        assertEquals(2, custom.passes.size());
+        assertEquals(64, custom.plan(32, 32, 100, 100, 4096,
+                64L * 1024 * 1024).passes.get(0).outputWidth);
+        assertThrows(IOException.class,
+                () -> GlslpAssets.load("../unsafe.glslp", shaderRoot.toFile()));
+    }
 }
