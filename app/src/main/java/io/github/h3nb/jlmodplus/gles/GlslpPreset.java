@@ -69,19 +69,21 @@ public final class GlslpPreset {
         public final String wrapMode; // null = unspecified
         public final String alias; // optional preset name for this pass's output
         public final boolean mipmapInput;
+        public final boolean floatFramebuffer;
         public final int frameCountMod;
         public final Axis x;
         public final Axis y;
 
         private Pass(String sourcePath, String sourceText, Boolean linearFilter,
                 String wrapMode, String alias, boolean mipmapInput,
-                int frameCountMod, Axis x, Axis y) {
+                boolean floatFramebuffer, int frameCountMod, Axis x, Axis y) {
             this.sourcePath = sourcePath;
             this.sourceText = sourceText;
             this.linearFilter = linearFilter;
             this.wrapMode = wrapMode;
             this.alias = alias;
             this.mipmapInput = mipmapInput;
+            this.floatFramebuffer = floatFramebuffer;
             this.frameCountMod = frameCountMod;
             this.x = x;
             this.y = y;
@@ -192,7 +194,7 @@ public final class GlslpPreset {
             if (source == null || source.length() > MAX_SOURCE_CHARS) {
                 throw new IOException("Missing or oversized GLSL source: " + preset);
             }
-            Pass single = new Pass(preset, source, null, null, null, false, 0,
+            Pass single = new Pass(preset, source, null, null, null, false, false, 0,
                     new Axis(SizeBasis.VIEWPORT, 1), new Axis(SizeBasis.VIEWPORT, 1));
             return new GlslpPreset(Collections.singletonList(single), Collections.emptyMap(),
                     Collections.emptyList());
@@ -311,11 +313,12 @@ public final class GlslpPreset {
             }
             String mipmapText = entries.remove("mipmap_input" + i);
             boolean mipmap = mipmapText != null && bool(mipmapText, "mipmap_input" + i);
-            for (String format : new String[] {"float_framebuffer", "srgb_framebuffer"}) {
-                String value = entries.remove(format + i);
-                if (value != null && bool(value, format + i)) {
-                    throw new IOException("Unsupported GLSLP framebuffer format: " + format + i);
-                }
+            String floatValue = entries.remove("float_framebuffer" + i);
+            boolean floatFramebuffer = floatValue != null
+                    && bool(floatValue, "float_framebuffer" + i);
+            String srgbValue = entries.remove("srgb_framebuffer" + i);
+            if (srgbValue != null && bool(srgbValue, "srgb_framebuffer" + i)) {
+                throw new IOException("Unsupported GLSLP framebuffer format: srgb_framebuffer" + i);
             }
             String frameMod = entries.remove("frame_count_mod" + i);
             int frameCountMod = 0;
@@ -347,7 +350,7 @@ public final class GlslpPreset {
             Axis x = axis(xBasis, commonScale != null ? commonScale : xScale, i);
             Axis y = axis(yBasis, commonScale != null ? commonScale : yScale, i);
             passes.add(new Pass(shader, shaderText, filter, wrap, alias, mipmap,
-                    frameCountMod, x, y));
+                    floatFramebuffer, frameCountMod, x, y));
         }
         Set<String> passSamplerNames = new LinkedHashSet<>(passAliases);
         for (String alias : passAliases) passSamplerNames.add(alias + "Texture");
@@ -515,7 +518,8 @@ public final class GlslpPreset {
                         "GLES2 input for mipmaps/repeat must be power-of-two in pass " + i);
             }
             if (pass.mipmapInput) {
-                bytes += mipChainBytes(inW, inH);
+                int inputBytesPerPixel = i > 0 && passes.get(i - 1).floatFramebuffer ? 8 : 4;
+                bytes += mipChainBytes(inW, inH, inputBytesPerPixel);
                 if (bytes > maxIntermediateBytes) {
                     throw new IllegalArgumentException("Intermediate GPU budget exceeded");
                 }
@@ -528,9 +532,10 @@ public final class GlslpPreset {
             boolean identityViewport = pass.x.basis == SizeBasis.VIEWPORT
                     && pass.y.basis == SizeBasis.VIEWPORT
                     && pass.x.scale == 1.0 && pass.y.scale == 1.0;
-            boolean offscreen = i < passes.size() - 1 || !identityViewport;
+            boolean offscreen = i < passes.size() - 1 || !identityViewport
+                    || pass.floatFramebuffer;
             if (offscreen) {
-                bytes += 4L * w * h;
+                bytes += (pass.floatFramebuffer ? 8L : 4L) * w * h;
                 if (bytes > maxIntermediateBytes) {
                     throw new IllegalArgumentException("Intermediate GPU budget exceeded");
                 }
@@ -548,11 +553,15 @@ public final class GlslpPreset {
     }
 
     static long mipChainBytes(int width, int height) {
+        return mipChainBytes(width, height, 4);
+    }
+
+    static long mipChainBytes(int width, int height, int bytesPerPixel) {
         long bytes = 0;
         while (width > 1 || height > 1) {
             width = Math.max(1, width / 2);
             height = Math.max(1, height / 2);
-            bytes += 4L * width * height;
+            bytes += (long) bytesPerPixel * width * height;
         }
         return bytes;
     }

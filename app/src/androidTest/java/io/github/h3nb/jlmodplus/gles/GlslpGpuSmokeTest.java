@@ -188,6 +188,23 @@ public final class GlslpGpuSmokeTest {
                 Color.WHITE, false, Color.CYAN);
     }
 
+    @Test public void floatFramebufferPreservesValuesAboveOneOrRejectsUnsupportedGpu()
+            throws Exception {
+        Map<String, String> files = new HashMap<>();
+        files.put("float.glslp", "shaders = 2\n"
+                + "shader0 = high.glsl\nfloat_framebuffer0 = true\n"
+                + "scale_type0 = source\nscale0 = 1\n"
+                + "shader1 = reduce.glsl\nfilter_linear1 = false\n");
+        files.put("high.glsl", colorPass(
+                "void main(){gl_FragColor=vec4(1.5,0.5,0.25,1.0);}\n"));
+        files.put("reduce.glsl", colorPass("uniform sampler2D Texture;\n"
+                + "void main(){gl_FragColor=texture2D(Texture,uv)*0.5;}\n"));
+        GlslpPreset preset = GlslpPreset.load(files::get, "float.glslp");
+        execute(preset, 2, path -> {
+            throw new java.io.IOException("Unexpected lookup texture");
+        }, Color.rgb(191, 64, 32), false, -1, true);
+    }
+
     private static String colorPass(String fragment) {
         return "#if defined(VERTEX)\n"
                 + "attribute vec4 VertexCoord; attribute vec4 TexCoord;\n"
@@ -250,6 +267,14 @@ public final class GlslpGpuSmokeTest {
     private static void execute(GlslpPreset preset, int expectedPasses,
             GlslpPipeline.TextureLoader images, int expectedRgb,
             boolean borderCapabilityTest, int expectedNextRgb) throws Exception {
+        execute(preset, expectedPasses, images, expectedRgb, borderCapabilityTest,
+                expectedNextRgb, false);
+    }
+
+    private static void execute(GlslpPreset preset, int expectedPasses,
+            GlslpPipeline.TextureLoader images, int expectedRgb,
+            boolean borderCapabilityTest, int expectedNextRgb,
+            boolean floatCapabilityTest) throws Exception {
         EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         assertNotEquals(EGL14.EGL_NO_DISPLAY, display);
         assertTrue(EGL14.eglInitialize(display, new int[1], 0, new int[1], 0));
@@ -287,6 +312,17 @@ public final class GlslpGpuSmokeTest {
                 } catch (java.io.IOException expected) {
                     assertTrue(expected.getMessage(), expected.getMessage()
                             .contains("clamp_to_border requires"));
+                }
+                return;
+            }
+            if (floatCapabilityTest && !GlslpPipeline.supportsHalfFloatFramebuffer(
+                    glGetString(GL_VERSION), glGetString(GL_EXTENSIONS))) {
+                try {
+                    new GlslpPipeline(preset, GlslpAssets.stockSource(), images);
+                    fail("Unsupported GPU must reject GLSLP RGBA16F");
+                } catch (java.io.IOException expected) {
+                    assertTrue(expected.getMessage(), expected.getMessage()
+                            .contains("float_framebuffer requires"));
                 }
                 return;
             }

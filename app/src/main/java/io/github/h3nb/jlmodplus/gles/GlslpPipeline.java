@@ -24,6 +24,9 @@ import java.util.Map;
  */
 public final class GlslpPipeline {
     // GL_OES/EXT_texture_border_clamp and GLES 3.2 share these enum values.
+    private static final int GL_RGBA16F_VALUE = 0x881A;
+    private static final int GL_HALF_FLOAT_OES_VALUE = 0x8D61;
+    private static final int GL_HALF_FLOAT_VALUE = 0x140B;
     private static final int GL_CLAMP_TO_BORDER_VALUE = 0x812D;
     private static final int GL_TEXTURE_BORDER_COLOR_VALUE = 0x1004;
     private static final float[] TRANSPARENT_BORDER = {0f, 0f, 0f, 0f};
@@ -32,7 +35,7 @@ public final class GlslpPipeline {
     };
     private final GlslpPreset preset;
     private final Map<String, Float> parameters;
-    private final boolean fullNpot, borderClamp;
+    private final boolean fullNpot, borderClamp, halfFloatLinear, halfFloatEs3;
     private final int[] programs, framebuffer, intermediate, targetWidth, targetHeight;
     private final boolean[] usesOriginal, usesPrev2;
     private final int[] vertexAttributes, textureAttributes;
@@ -82,6 +85,13 @@ public final class GlslpPipeline {
                 || (extensions != null
                     && (" " + extensions + " ").contains(" GL_OES_texture_npot "));
         borderClamp = supportsBorderClamp(version, extensions);
+        halfFloatEs3 = version != null && version.matches("^OpenGL ES 3\\..*");
+        halfFloatLinear = halfFloatEs3 || hasExtension(extensions, "GL_OES_texture_half_float_linear");
+        for (GlslpPreset.Pass pass : preset.passes) {
+            if (pass.floatFramebuffer && !supportsHalfFloatFramebuffer(version, extensions)) {
+                throw new IOException("GLSLP float_framebuffer requires renderable RGBA16F");
+            }
+        }
         for (GlslpPreset.Pass pass : preset.passes) {
             requireBorderClamp(pass.wrapMode);
         }
@@ -133,6 +143,17 @@ public final class GlslpPipeline {
             release();
             throw e;
         }
+    }
+
+    private static boolean hasExtension(String extensions, String extension) {
+        return extensions != null && (" " + extensions + " ").contains(" " + extension + " ");
+    }
+
+    static boolean supportsHalfFloatFramebuffer(String version, String extensions) {
+        boolean es3 = version != null && version.matches("^OpenGL ES 3\\..*");
+        boolean renderable = hasExtension(extensions, "GL_EXT_color_buffer_half_float")
+                || hasExtension(extensions, "GL_EXT_color_buffer_float");
+        return renderable && (es3 || hasExtension(extensions, "GL_OES_texture_half_float"));
     }
 
     static boolean supportsBorderClamp(String version, String extensions) {
@@ -407,6 +428,15 @@ public final class GlslpPipeline {
         }
     }
 
+    private void requireHalfFloatFiltering(int sourcePass, int filter) {
+        if (sourcePass >= 0 && sourcePass < preset.passes.size()
+                && preset.passes.get(sourcePass).floatFramebuffer
+                && filter == GL_LINEAR && !halfFloatLinear) {
+            throw new IllegalStateException(
+                    "GLSLP half-float linear filtering requires GL_OES_texture_half_float_linear");
+        }
+    }
+
     private static int passFilter(Boolean linear, int fallback) {
         return linear == null ? fallback : (linear ? GL_LINEAR : GL_NEAREST);
     }
@@ -422,8 +452,15 @@ public final class GlslpPipeline {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
-                GL_RGBA, GL_UNSIGNED_BYTE, null);
+        if (preset.passes.get(stage).floatFramebuffer) {
+            glTexImage2D(GL_TEXTURE_2D, 0, halfFloatEs3
+                    ? GL_RGBA16F_VALUE : GL_RGBA, w, h, 0,
+                    GL_RGBA, halfFloatEs3 ? GL_HALF_FLOAT_VALUE
+                            : GL_HALF_FLOAT_OES_VALUE, null);
+        } else {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
+                    GL_RGBA, GL_UNSIGNED_BYTE, null);
+        }
         glGenFramebuffers(1, framebuffer, stage);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[stage]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
@@ -433,6 +470,7 @@ public final class GlslpPipeline {
             throw new IllegalStateException("GLSLP FBO stage " + stage + " incomplete: 0x"
                     + Integer.toHexString(status));
         }
+        verifyGlError();
     }
 
     private void setFullQuad() {
@@ -489,6 +527,7 @@ public final class GlslpPipeline {
         }
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+        requireHalfFloatFiltering(stage - 1, filter);
         GlslpPreset.Pass pass = stage < preset.passes.size() ? preset.passes.get(stage) : null;
         boolean mipmap = pass != null && pass.mipmapInput;
         int minFilter = !mipmap ? filter
@@ -511,6 +550,7 @@ public final class GlslpPipeline {
             glBindTexture(GL_TEXTURE_2D, prev2Texture);
             int previousFilter = passFilter(
                     preset.passes.get(stage - 1).linearFilter, fallbackFilter);
+            requireHalfFloatFiltering(stage - 2, previousFilter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, previousFilter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, previousFilter);
             uniform1i(stage, "PassPrev2Texture", 2);
@@ -526,6 +566,7 @@ public final class GlslpPipeline {
                     int sourceFilter = passFilter(
                             preset.passes.get(reference.sourcePass + 1).linearFilter,
                             fallbackFilter);
+                    requireHalfFloatFiltering(reference.sourcePass, sourceFilter);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sourceFilter);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sourceFilter);
                 }

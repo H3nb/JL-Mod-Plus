@@ -334,8 +334,14 @@ public class GlslpPresetTest {
 
         assets.put("float.glslp", "shaders = 1\nshader0 = pass.glsl\n"
                 + "float_framebuffer0 = true\n");
-        expectFailure(() -> GlslpPreset.load(assets, "float.glslp"),
-                "Unsupported GLSLP framebuffer format");
+        GlslpPreset floatPreset = GlslpPreset.load(assets, "float.glslp");
+        assertTrue(floatPreset.passes.get(0).floatFramebuffer);
+        assertTrue(floatPreset.plan(32, 32, 32, 32, 2048, 16384)
+                .finalBlitRequired);
+        assertEquals(8L * 32 * 32, floatPreset.plan(32, 32, 32, 32, 2048, 16384)
+                .conservativeIntermediateBytes);
+        expectFailure(() -> floatPreset.plan(32, 32, 32, 32, 2048, 8191),
+                "Intermediate GPU budget exceeded");
         assets.put("srgb.glslp", "shaders = 1\nshader0 = pass.glsl\n"
                 + "srgb_framebuffer0 = true\n");
         expectFailure(() -> GlslpPreset.load(assets, "srgb.glslp"),
@@ -391,6 +397,26 @@ public class GlslpPresetTest {
                 .plan(32, 32, 96, 96, 2048, 1024 * 1024);
         assertEquals(2, passes.passes.size());
         assertTrue(passes.conservativeIntermediateBytes > 4L * 32 * 32);
+    }
+
+    @Test public void mixedFloatAndRgba8PassesChargeOnlyFloatStorage() throws Exception {
+        Bundle files = new Bundle().put("pass.glsl", "void main(){}")
+                .put("mixed.glslp", "shaders = 2\n"
+                        + "shader0 = pass.glsl\nfloat_framebuffer0 = true\n"
+                        + "scale_type0 = source\nscale0 = 1\n"
+                        + "shader1 = pass.glsl\n");
+        GlslpPreset shader = GlslpPreset.load(files, "mixed.glslp");
+        assertEquals(2, shader.plan(32, 32, 64, 64, 2048, 65536).passes.size());
+        assertEquals(8192, shader.plan(32, 32, 64, 64, 2048, 65536)
+                .conservativeIntermediateBytes);
+        files.put("mipmap.glslp", "shaders = 2\n"
+                + "shader0 = pass.glsl\nfloat_framebuffer0 = true\n"
+                + "scale_type0 = source\nscale0 = 1\n"
+                + "shader1 = pass.glsl\nmipmap_input1 = true\n");
+        GlslpPreset mipmap = GlslpPreset.load(files, "mipmap.glslp");
+        long expected = 8192L + GlslpPreset.mipChainBytes(32, 32, 8);
+        assertEquals(expected, mipmap.plan(32, 32, 64, 64, 2048, 65536)
+                .conservativeIntermediateBytes);
     }
 
     @Test public void standaloneGlslCompilesAsViewportSizedOnePass() throws Exception {

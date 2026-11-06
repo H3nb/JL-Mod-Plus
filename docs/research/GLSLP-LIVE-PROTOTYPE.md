@@ -71,8 +71,22 @@ history buffers; it does **not** implement previous-frame feedback or guarantee
 phase parity with RetroArch when its frontend renders frames on a different
 cadence.
 
-Other unsupported keys, history, feedback, float/sRGB framebuffers
-when enabled, and desktop-only GLSL constructs remain unsupported. It is not
+GLSLP `float_framebufferN=true` now allocates an RGBA16F intermediate only for
+the requested pass, with 8 bytes per pixel charged to the existing 64 MiB
+offscreen budget. A float final pass is automatically offscreen with a normal
+stock blit to the display. GLES2 contexts require `GL_OES_texture_half_float`
+and `GL_EXT_color_buffer_half_float` (or a compatible float color-buffer
+extension); GLES3 contexts still require a renderable half-float attachment.
+The executor checks framebuffer completeness when allocating each output.
+Linear filtering of half-float textures requires the relevant ES2 extension
+(`GL_OES_texture_half_float_linear`); unsupported combinations are rejected
+rather than silently sampling incorrectly. The emulator GPU test checks a value
+above 1.0 survives an intermediate pass when supported, or verifies the
+explicit capability rejection on unsupported contexts. A passing rejection
+test is not evidence that a physical device supports float rendering.
+
+Other unsupported keys, history, feedback, sRGB framebuffers and
+desktop-only GLSL constructs remain unsupported. It is not
 general RetroArch GLSLP compatibility. Failed programs revert to the
 identity presentation; inspect logcat for the rejection reason.
 
