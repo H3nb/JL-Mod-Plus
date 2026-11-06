@@ -4,7 +4,7 @@
     <string name="render_shader_effects">Shader effects</string>
     <string name="render_pipeline_title">Rendering pipeline</string>
     <string name="render_shader_preset">Shader preset</string>
-    <string name="render_shader_picker_help">Choose a visual effect or GLSL preset for OpenGL ES.</string>
+    <string name="render_shader_picker_help">Choose a legacy shader, GLSLP preset, or custom chain for OpenGL ES.</string>
     <string name="render_shader_requires_gles">Shaders are saved but only applied when OpenGL ES is selected.</string>
     <string name="render_shader_missing">The selected shader is not in the library. Choose another preset or restore its files.</string>
     <string name="render_shader_parameters">Shader parameters</string>

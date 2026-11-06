@@ -3,7 +3,7 @@
     <string name="render_shader_effects">Efek shader</string>
     <string name="render_pipeline_title">Alur rendering</string>
     <string name="render_shader_preset">Preset shader</string>
-    <string name="render_shader_picker_help">Pilih efek visual atau preset GLSL untuk OpenGL ES.</string>
+    <string name="render_shader_picker_help">Pilih shader legacy, preset GLSLP, atau rangkaian kustom untuk OpenGL ES.</string>
     <string name="render_shader_requires_gles">Shader tetap tersimpan, tetapi hanya diterapkan pada mode OpenGL ES.</string>
     <string name="render_shader_missing">Shader yang dipilih tidak ada di library. Pilih preset lain atau pulihkan filenya.</string>
     <string name="render_shader_parameters">Parameter shader</string>

@@ -189,6 +189,7 @@ private fun ShaderEffectsContent(
             legacyOptions = emptyList()
             legacyError = null
             onFormChanged(state.form.toBuilder().shader(picked).build())
+            if (editingCustom) onCancelCustom()
         }
     }
 
@@ -202,6 +203,7 @@ private fun ShaderEffectsContent(
                 legacyError = context.getString(R.string.render_legacy_empty)
             } else if (options.size == 1) {
                 onFormChanged(state.form.toBuilder().shader(options.first()).build())
+                if (editingCustom) onCancelCustom()
                 legacyOptions = emptyList()
             } else {
                 legacyOptions = options
@@ -225,17 +227,18 @@ private fun ShaderEffectsContent(
     ShaderModeRow(
         title = stringResource(R.string.render_shader_off),
         description = stringResource(R.string.render_shader_off_help),
-        selected = shader == null,
+        selected = shader == null && !editingCustom,
         onClick = {
             legacyOptions = emptyList()
             legacyError = null
             if (shader != null) onFormChanged(state.form.toBuilder().shader(null).build())
+            if (editingCustom) onCancelCustom()
         },
     )
     ShaderModeRow(
         title = stringResource(R.string.render_legacy_mode),
         description = stringResource(R.string.render_legacy_mode_help),
-        selected = legacy,
+        selected = legacy && !editingCustom,
         onClick = {
             if (root != null) legacyPicker.launch(shaderPickerIntent(
                 context, root, listOf(".ini"), context.getString(R.string.render_legacy_mode),
@@ -255,6 +258,7 @@ private fun ShaderEffectsContent(
                 onClick = {
                     legacyOptions = emptyList()
                     onFormChanged(state.form.toBuilder().shader(option).build())
+                    if (editingCustom) onCancelCustom()
                 },
             )
         }
@@ -263,7 +267,7 @@ private fun ShaderEffectsContent(
     ShaderModeRow(
         title = stringResource(R.string.render_preset_mode),
         description = stringResource(R.string.render_preset_mode_help),
-        selected = preset,
+        selected = preset && !editingCustom,
         onClick = {
             if (root != null) presetPicker.launch(shaderPickerIntent(
                 context, root, listOf(".glslp"), context.getString(R.string.render_preset_mode),
