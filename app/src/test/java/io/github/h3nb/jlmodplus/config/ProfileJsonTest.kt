@@ -182,18 +182,25 @@ class ProfileJsonTest {
         val backing = linkedMapOf<String, JsonElement>("large" to Json.parseToJsonElement("9007199254740993"), "nil" to JsonNull)
         val working = ProfileModel(version = 7, controller = JsonObject(backing))
         val shaderDraft = ShaderInfo("CRT", "tester").apply { values = floatArrayOf(1f, 2f) }
-        working.shader = ShaderSelection.fromInfo(shaderDraft)
+        val shaderParameters = linkedMapOf("GAIN" to 0.5f)
+        working.shader = checkNotNull(ShaderSelection.fromInfo(shaderDraft))
+            .copy(glslParameters = shaderParameters)
         working.keyMappings = mutableMapOf(131 to 0)
         val baseline = ProfileConfigMatcher.copyConfig(working)
         backing["large"] = JsonPrimitive(1)
         shaderDraft.values[0] = 9f
+        shaderParameters["GAIN"] = 1.5f
         (working.keyMappings as MutableMap)[131] = 42
         assertEquals("9007199254740993", baseline.controller!!.jsonObject["large"].toString())
         assertEquals(1f, baseline.shader!!.values!![0])
+        assertEquals(0.5f, baseline.shader!!.glslParameters!!["GAIN"])
         assertEquals(0, baseline.keyMappings[131])
         assertFalse(ProfileConfigMatcher.sameConfig(working, baseline))
         assertThrows(UnsupportedOperationException::class.java) {
             (working.shader!!.values as MutableList<Float>)[0] = 5f
+        }
+        assertThrows(UnsupportedOperationException::class.java) {
+            (baseline.shader!!.glslParameters as MutableMap<String, Float>)["GAIN"] = 3f
         }
 
         val nestedBacking = linkedMapOf<String, JsonElement>("n" to Json.parseToJsonElement("9007199254740993"))

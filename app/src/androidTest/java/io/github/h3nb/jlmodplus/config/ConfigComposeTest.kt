@@ -16,10 +16,12 @@ package io.github.h3nb.jlmodplus.config
 
 import io.github.h3nb.jlmodplus.R
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -31,6 +33,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -1236,6 +1242,394 @@ class ConfigComposeTest {
         assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)
     }
 
+    @Test
+    fun shaderSubpagesHonorRepeatedHostBackWithoutExitingConfiguration() {
+        val base = sampleState()
+        val external = ShaderInfo("Simple GLSL", "test").apply {
+            preset = "shaders_glsl/example.glsl"
+        }
+        val shaders = listOf(ShaderInfo("None", "test"), external)
+        val state = ConfigUiState(
+            base.form, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, shaders, base.removableScreenPresets,
+        )
+        val backRequests = mutableStateOf(0)
+        val host = RecordingMenuActions()
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(
+                    state, events, initialDestination = ConfigDestination.Display,
+                    menuActions = host, backRequest = backRequests.value,
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+            .performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
+        composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 1)).assertExists()
+        composeRule.onNodeWithTag("shader_custom_increase_passes").performScrollTo().performClick()
+        composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("2")
+        composeRule.onNodeWithTag("shader_custom_pass_2").assertExists()
+        composeRule.onNodeWithTag("shader_custom_decrease_passes").performScrollTo().performClick()
+        composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("1")
+        composeRule.onNodeWithTag("shader_custom_pass_2").assertDoesNotExist()
+
+        composeRule.runOnIdle { backRequests.value++ }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
+        assertEquals(0, events.formChanges)
+        assertEquals(0, host.backCalls)
+
+        composeRule.runOnIdle { backRequests.value++ }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.pref_graphics_mode_title)).assertExists()
+        assertEquals(0, host.backCalls)
+
+        composeRule.runOnIdle { backRequests.value++ }
+        composeRule.waitForIdle()
+        assertEquals(1, host.backCalls)
+    }
+
+
+    @Test
+    fun selectedLegacyShaderRetainsItsNameAfterOpeningShaderPage() {
+        val base = sampleState()
+        val shader = ShaderInfo("Classic CRT", "test").apply {
+            vertex = "shaders_legacy/crt.vsh"
+            fragment = "shaders_legacy/crt.fsh"
+        }
+        val form = base.form.toBuilder().graphicsMode(1).shader(shader).build()
+        val state = ConfigUiState(
+            form, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, listOf(shader), base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+            .performScrollTo().performClick()
+        composeRule.onNodeWithText(
+            uiString(R.string.render_shader_selected_name, "Classic CRT"),
+        ).assertExists()
+    }
+
+    @Test
+    fun displaySectionsAppearAsScreenRenderingFontsThenPerformance() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        val screen = composeRule.onNodeWithText(
+            uiString(R.string.config_display_appearance),
+        ).fetchSemanticsNode().boundsInRoot
+        val rendering = composeRule.onNodeWithText(
+            uiString(R.string.config_display_rendering),
+        ).fetchSemanticsNode().boundsInRoot
+        val fonts = composeRule.onNodeWithText(
+            uiString(R.string.config_display_text),
+        ).fetchSemanticsNode().boundsInRoot
+        val performance = composeRule.onNodeWithText(
+            uiString(R.string.config_display_performance),
+        ).fetchSemanticsNode().boundsInRoot
+        assertTrue(screen.top < rendering.top)
+        assertTrue(rendering.top < fonts.top)
+        assertTrue(fonts.top < performance.top)
+    }
+
+    @Test
+    fun selectedPresetDisplaysFileNameWithoutRelativeShaderPath() {
+        val base = sampleState()
+        val shader = ShaderInfo("shaders_glsl/xbrz/xbrz-crisp.glslp (GLSL)", "external").apply {
+            preset = "shaders_glsl/xbrz/xbrz-crisp.glslp"
+        }
+        val selectedForm = base.form.toBuilder().graphicsMode(1).shader(shader).build()
+        val state = ConfigUiState(
+            selectedForm, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, listOf(shader), base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText("xbrz-crisp.glslp").assertExists()
+        composeRule.onNodeWithText("shaders_glsl/xbrz/xbrz-crisp.glslp (GLSL)")
+            .assertDoesNotExist()
+    }
+
+
+    @Test
+    fun returningFromShaderPageRetainsDisplayScrollPosition() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        val shaderLink = uiString(R.string.render_shader_effects)
+        composeRule.onNodeWithText(shaderLink).performScrollTo()
+        val before = composeRule.onNodeWithText(shaderLink)
+            .fetchSemanticsNode().boundsInRoot.top
+        composeRule.onNodeWithText(shaderLink).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        val after = composeRule.onNodeWithText(shaderLink)
+            .fetchSemanticsNode().boundsInRoot.top
+        assertTrue("Returning from shader page must retain scroll position",
+            kotlin.math.abs(before - after) < 2f)
+    }
+
+    @Test
+    fun tenPassPresetOpensAsTenPrefilledCustomStages() {
+        val base = sampleState()
+        val root = java.io.File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "glslp-ten-pass-test",
+        )
+        root.mkdirs()
+        try {
+            val shaders = java.io.File(root, "nested").apply { mkdirs() }
+            val preset = java.io.File(shaders, "ten.glslp")
+            preset.writeText("shaders = 10\n" +
+                (0 until 10).joinToString("") { "shader" + it + " = pass" + it + ".glsl\n" })
+            repeat(10) {
+                java.io.File(shaders, "pass" + it + ".glsl")
+                    .writeText("uniform sampler2D Texture;\nvoid main() {}")
+            }
+            val choice = ShaderInfo("ten.glslp", "external").apply { this.preset = "nested/ten.glslp" }
+            val form = base.form.toBuilder().graphicsMode(1).shader(choice).build()
+            val state = ConfigUiState(
+                form, base.screenPresets, base.fontPresets, base.skins,
+                base.soundBanks, listOf(choice), base.removableScreenPresets,
+            ).apply { shaderDirectory = root }
+            composeRule.setContent {
+                JLModPlusTheme {
+                    ConfigScreen(state, RecordingConfigEvents(),
+                        initialDestination = ConfigDestination.Display)
+                }
+            }
+            composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("10")
+                }.isSuccess
+            }
+            composeRule.onNodeWithTag("shader_custom_pass_10").assertExists()
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun inheritedCustomDraftSurvivesSaveableRestoration() {
+        val base = sampleState()
+        val root = java.io.File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "glslp-restored-draft-test",
+        ).apply { mkdirs() }
+        try {
+            java.io.File(root, "source.glsl").writeText(
+                "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\n" +
+                    "uniform sampler2D Texture;\nvoid main() {}",
+            )
+            java.io.File(root, "chain.glslp").writeText(
+                "shaders = 1\nshader0 = source.glsl\nparameters = GAIN\nGAIN = 1.3\n",
+            )
+            val selected = ShaderInfo("chain.glslp", "test").apply {
+                preset = "chain.glslp"
+            }
+            val state = ConfigUiState(
+                base.form.toBuilder().graphicsMode(1).shader(selected).build(),
+                base.screenPresets, base.fontPresets, base.skins,
+                base.soundBanks, listOf(selected), base.removableScreenPresets,
+            ).apply { shaderDirectory = root }
+            val restoration = StateRestorationTester(composeRule)
+            restoration.setContent {
+                JLModPlusTheme {
+                    ConfigScreen(state, RecordingConfigEvents(),
+                        initialDestination = ConfigDestination.Display)
+                }
+            }
+            composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_parameter_GAIN").assertExists()
+                }.isSuccess
+            }
+            composeRule.onNodeWithTag("shader_custom_parameter_GAIN")
+                .performSemanticsAction(SemanticsActions.SetProgress) { it(1.7f) }
+            composeRule.onNodeWithTag("shader_custom_increase_passes")
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("2")
+
+            restoration.emulateSavedInstanceStateRestore()
+            composeRule.waitForIdle()
+            // Restored stages must not be replaced by the asynchronous preset prefill.
+            composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("2")
+            composeRule.onNodeWithTag("shader_custom_decrease_passes")
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_parameter_GAIN").assertExists()
+                }.isSuccess
+            }
+            val current = composeRule.onNodeWithTag("shader_custom_parameter_GAIN")
+                .fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current
+            assertEquals(1.7f, current, 0.05f)
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun customEditorShowsValidWhitespaceParametersAndSkipsFixedSliders() {
+        val base = sampleState()
+        val root = java.io.File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "glslp-parameter-editor-test",
+        ).apply { mkdirs() }
+        try {
+            java.io.File(root, "source.glsl").writeText(
+                "#pragma  parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\n" +
+                    "#pragma\tparameter HEADING \"Heading\" 1 1 1 0.1\n" +
+                    "uniform sampler2D Texture;\nvoid main() {}",
+            )
+            java.io.File(root, "chain.glslp").writeText(
+                "shaders = 1\nshader0 = source.glsl\n",
+            )
+            val selected = ShaderInfo("chain.glslp", "test").apply { preset = "chain.glslp" }
+            val state = ConfigUiState(
+                base.form.toBuilder().graphicsMode(1).shader(selected).build(),
+                base.screenPresets, base.fontPresets, base.skins,
+                base.soundBanks, listOf(selected), base.removableScreenPresets,
+            ).apply { shaderDirectory = root }
+            composeRule.setContent {
+                JLModPlusTheme {
+                    ConfigScreen(state, RecordingConfigEvents(),
+                        initialDestination = ConfigDestination.Display)
+                }
+            }
+            composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_parameter_GAIN").assertExists()
+                }.isSuccess
+            }
+            composeRule.onNodeWithTag("shader_custom_parameter_HEADING").assertDoesNotExist()
+            composeRule.onNodeWithText("Heading").assertExists()
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun missingInheritedPresetCanBeDiscardedWithoutSavingOldSelection() {
+        val base = sampleState()
+        val root = java.io.File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "glslp-recovery-editor-test",
+        ).apply { mkdirs() }
+        try {
+            val selected = ShaderInfo("missing.glslp", "test").apply {
+                preset = "missing.glslp"
+            }
+            val state = ConfigUiState(
+                base.form.toBuilder().graphicsMode(1).shader(selected).build(),
+                base.screenPresets, base.fontPresets, base.skins,
+                base.soundBanks, listOf(selected), base.removableScreenPresets,
+            ).apply { shaderDirectory = root }
+            val restoration = StateRestorationTester(composeRule)
+            restoration.setContent {
+                JLModPlusTheme {
+                    ConfigScreen(state, RecordingConfigEvents(),
+                        initialDestination = ConfigDestination.Display)
+                }
+            }
+            composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_start_fresh").assertExists()
+                }.isSuccess
+            }
+            composeRule.onNodeWithTag("shader_custom_start_fresh")
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("1")
+            composeRule.onNodeWithTag("shader_custom_start_fresh").assertDoesNotExist()
+            restoration.emulateSavedInstanceStateRestore()
+            composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("1")
+            composeRule.onNodeWithTag("shader_custom_start_fresh").assertDoesNotExist()
+            assertEquals("missing.glslp", state.form.shader?.preset)
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun emptyShaderCatalogStillOffersScopedFileSourcesAndIdentityDefault() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+            .performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_mode)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_legacy_mode)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_preset_mode)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertDoesNotExist()
+    }
+
+    @Test
+    fun rendererAndLayoutOptionsHideUnrelatedSettingsWithoutResettingValues() {
+        val base = sampleState()
+        val legacy = ShaderInfo("Remembered shader", "test").apply {
+            preset = "shaders_glsl/preserve.glslp"
+        }
+        val software = base.form.toBuilder().graphicsMode(0).shader(legacy).build()
+        val state = ConfigUiState(
+            software, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, base.shaders, base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.parallel_screen_redrawing)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_pipeline_title)).assertDoesNotExist()
+        assertEquals(legacy.preset, state.form.shader?.preset)
+    }
+
     private fun sampleState(): ConfigUiState {
         val form = ConfigFormState.builder()
             .screenWidth("240")
@@ -1339,11 +1733,12 @@ class ConfigComposeTest {
     }
 
     private class RecordingMenuActions : ConfigMenuActions {
+        var backCalls = 0
         var clearDataCalls = 0
         var resetSettingsCalls = 0
         var resetLayoutCalls = 0
 
-        override fun onBack() = Unit
+        override fun onBack() { backCalls++ }
         override fun onStart() = Unit
         override fun onClearData() {
             clearDataCalls++

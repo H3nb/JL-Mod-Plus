@@ -47,6 +47,9 @@ public interface ConfigFormEvents {
 	default void onEncodingSelected(String charset) {
 	}
 
+	/** Child shader-file picker must not reload the old persisted form on return. */
+	default void onShaderPickerOpened() {}
+
 	void onShaderTuning();
 
 	/** Called after the Compose shader editor confirms its four-slot value array. */

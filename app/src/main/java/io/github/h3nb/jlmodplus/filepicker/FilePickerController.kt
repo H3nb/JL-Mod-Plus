@@ -47,7 +47,7 @@ class FilePickerController(
     private val onStateChanged: (FilePickerState) -> Unit,
     private val onFilesPicked: (List<File>) -> Unit,
 ) : AutoCloseable {
-    private val root = rootDirectory()
+    private val root = request.rootPath?.let(::File)?.canonicalFile ?: rootDirectory()
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "jlmod-file-picker").apply { isDaemon = true }
     }
@@ -68,7 +68,7 @@ class FilePickerController(
         sortOrder = restoredSortOrder,
         showCreateFolder = request.allowCreateDirectory && restoredShowCreateFolder,
         createFolderName = restoredCreateFolderName,
-        permissionRequired = !StoragePermissionHelper.isGranted(context),
+        permissionRequired = request.rootPath == null && !StoragePermissionHelper.isGranted(context),
     )
 
     init {
@@ -185,7 +185,7 @@ class FilePickerController(
     }
 
     fun retry() {
-        if (StoragePermissionHelper.isGranted(context)) {
+        if (request.rootPath != null || StoragePermissionHelper.isGranted(context)) {
             publish(state.copy(permissionRequired = false, errorMessage = null))
             loadCurrentDirectory()
         } else {
@@ -303,7 +303,7 @@ class FilePickerController(
         }
         val directory = currentDirectory
         val generation = ++loadGeneration
-        if (!StoragePermissionHelper.isGranted(context)) {
+        if (request.rootPath == null && !StoragePermissionHelper.isGranted(context)) {
             publish(state.copy(permissionRequired = true, loading = false))
             return
         }

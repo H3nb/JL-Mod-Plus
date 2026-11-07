@@ -335,6 +335,15 @@ internal fun ConfigScreen(
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
+    var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
+    val backRendering: () -> Unit = {
+        renderingSubpage = when (renderingSubpage) {
+            RenderingSubpage.CUSTOM, RenderingSubpage.PARAMETERS, RenderingSubpage.PASSES ->
+                RenderingSubpage.SHADERS
+            RenderingSubpage.SHADERS -> null
+            null -> null
+        }
+    }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
@@ -342,7 +351,11 @@ internal fun ConfigScreen(
         events.onFormChanged(next)
     }
     val requestBack = {
-        if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
+        if (renderingSubpage != null) {
+            backRendering()
+        } else if (systemPropertiesEditorVisible) {
+            systemPropertiesEditorVisible = false
+        } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
             discardProfileChangesVisible = true
         } else {
             menuActions?.onBack()
@@ -369,12 +382,26 @@ internal fun ConfigScreen(
             pagerScope.launch { pagerState.navigateToTab(index) }
         }
     }
+    // Keep Display scroll ownership above shader subpages: their composition replaces the pager.
+    val displayScrollState = rememberScrollState()
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
 
-    if (systemPropertiesEditorVisible) {
+    if (renderingSubpage != null) {
+        RenderingSettingsPage(
+            page = renderingSubpage!!,
+            state = state,
+            onFormChanged = updateForm,
+            onLegacyTuning = events::onShaderTuning,
+            onShaderPickerOpened = events::onShaderPickerOpened,
+            onOpenParameters = { renderingSubpage = RenderingSubpage.PARAMETERS },
+            onOpenCustom = { renderingSubpage = RenderingSubpage.CUSTOM },
+            onOpenPasses = { renderingSubpage = RenderingSubpage.PASSES },
+            onBack = backRendering,
+        )
+    } else if (systemPropertiesEditorVisible) {
         val context = LocalContext.current
         val defaultProperties = remember(context) {
             ConfigFormState.normalizeSystemProperties(
@@ -432,7 +459,8 @@ internal fun ConfigScreen(
                         .padding(padding)
                         .consumeWindowInsets(padding),
                 ) { page ->
-                        val pageScrollState = rememberScrollState()
+                        val pageScrollState = if (destinations[page] == ConfigDestination.Display)
+                            displayScrollState else rememberScrollState()
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -455,6 +483,9 @@ internal fun ConfigScreen(
                                     cutoutAvailable = cutoutAvailable,
                                     onRequestAction = { pendingAction = it },
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                    onOpenShaders = {
+                                        renderingSubpage = RenderingSubpage.SHADERS
+                                    },
                                     onUsePreset = { presetPickerVisible = true },
                                     onSavePreset = { savePresetVisible = true },
                                     modifier = Modifier.widthIn(max = 880.dp),
@@ -570,6 +601,7 @@ private fun ConfigDestinationContent(
     cutoutAvailable: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
+    onOpenShaders: () -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
@@ -589,8 +621,9 @@ private fun ConfigDestinationContent(
                 onRequestAction = onRequestAction,
             )
             ConfigDestination.Display -> {
-                ScreenSection(form, state, onFormChanged, events)
+                ScreenSection(form, state, onFormChanged, events, onOpenShaders)
                 FontSection(form, state, onFormChanged)
+                PerformanceSection(form, onFormChanged)
             }
             ConfigDestination.Media -> {
                 AudioSection(form, state, onFormChanged, events)
@@ -684,6 +717,22 @@ private fun GeneralDestination(
                 },
             )
         }
+        val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_screen_gravity),
+            description = stringResource(R.string.config_help_screen_gravity),
+            selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
+            options = gravityOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
+        )
+        ConfigNumberPreference(
+            title = stringResource(R.string.pref_screen_padding_title),
+            description = stringResource(R.string.config_help_screen_padding),
+            value = form.screenPadding,
+            fallbackLabel = "0",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
+        )
         if (cutoutAvailable) {
             ConfigSwitchPreference(
                 title = stringResource(R.string.config_avoid_camera_cutout_title),
@@ -883,10 +932,8 @@ private fun ScreenSection(
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
+    onOpenShaders: () -> Unit,
 ) {
-    val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
-    val selectedShader = state.shaders.getOrNull(shaderIndex)
-    val customShaderSelected = form.graphicsMode == 1 && shaderIndex > 0 && selectedShader != null
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         val backgroundModes = listOf(
             stringResource(R.string.config_background_custom),
@@ -939,42 +986,8 @@ private fun ScreenSection(
             onRename = { old, stem -> events.onRenameAsset(ConfigFormEvents.AssetKind.SKIN, old, stem) },
             onDelete = { name -> events.onDeleteAsset(ConfigFormEvents.AssetKind.SKIN, name) },
         )
-        val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
-        ConfigChoicePreference(
-            title = stringResource(R.string.pref_screen_gravity),
-            description = stringResource(R.string.config_help_screen_gravity),
-            selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
-            options = gravityOptions,
-            onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
-        )
-        ConfigNumberPreference(
-            title = stringResource(R.string.pref_screen_padding_title),
-            description = stringResource(R.string.config_help_screen_padding),
-            value = form.screenPadding,
-            fallbackLabel = "0",
-            keyboardType = KeyboardType.Number,
-            onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
-        )
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_FILTER),
-            description = stringResource(R.string.config_help_filter),
-            checked = form.screenFilter,
-            message = if (form.screenFilter && customShaderSelected) {
-                stringResource(R.string.config_warning_filter_shader)
-            } else {
-                null
-            },
-            messageLevel = ConfigMessageLevel.Warning,
-            onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
-        )
     }
     ConfigSection(title = stringResource(R.string.config_display_rendering)) {
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_IMMEDIATE),
-            description = stringResource(R.string.config_help_immediate),
-            checked = form.immediateMode,
-            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
-        )
         val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
         ConfigChoicePreference(
             title = stringResource(R.string.pref_graphics_mode_title),
@@ -984,24 +997,27 @@ private fun ScreenSection(
             onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
         )
         if (form.graphicsMode == 1) {
+            ConfigValuePreference(
+                title = stringResource(R.string.render_shader_effects),
+                description = stringResource(R.string.render_shader_picker_help),
+                value = selectedShaderLabel(state),
+                onClick = onOpenShaders,
+            )
+        }
+        if (isTextureFilteringApplicable(state)) {
+            val filterOptions = listOf(
+                stringResource(R.string.render_custom_nearest),
+                stringResource(R.string.render_custom_linear),
+            )
             ConfigChoicePreference(
-                title = stringResource(R.string.PREF_SHADER_FILTER),
-                description = stringResource(R.string.config_help_shader),
-                selected = state.shaders.getOrElse(shaderIndex) { "" }.toString(),
-                options = state.shaders.map { it.toString() },
+                title = stringResource(R.string.render_texture_filtering),
+                description = stringResource(R.string.render_texture_filtering_help),
+                selected = filterOptions[if (form.screenFilter) 1 else 0],
+                options = filterOptions,
                 onSelected = { index ->
-                    onFormChanged(
-                        form.toBuilder().shader(if (index == 0) null else state.shaders.getOrNull(index)).build(),
-                    )
+                    onFormChanged(form.toBuilder().screenFilter(index == 1).build())
                 },
             )
-            if (selectedShader?.hasTunableSettings() == true) {
-                ConfigActionPreference(
-                    title = stringResource(R.string.shader_tuning),
-                    description = stringResource(R.string.config_help_shader_tuning),
-                    onClick = events::onShaderTuning,
-                )
-            }
         }
         if (form.graphicsMode == 0 || form.graphicsMode == 3) {
             ConfigSwitchPreference(
@@ -1014,7 +1030,22 @@ private fun ScreenSection(
             )
         }
     }
+}
+
+@Composable
+private fun PerformanceSection(
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+) {
     ConfigSection(title = stringResource(R.string.config_display_performance)) {
+        ConfigNumberPreference(
+            title = stringResource(R.string.PREF_LIMIT_FPS),
+            description = stringResource(R.string.config_help_fps_limit),
+            value = form.fpsLimit,
+            fallbackLabel = stringResource(R.string.fps_limit_maximum),
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+        )
         ConfigSwitchPreference(
             title = stringResource(R.string.perf_overlay_title),
             description = stringResource(R.string.perf_overlay_help),
@@ -1024,13 +1055,11 @@ private fun ScreenSection(
         if (form.showFps) {
             PerformanceOverlayPreferences(form, onFormChanged)
         }
-        ConfigNumberPreference(
-            title = stringResource(R.string.PREF_LIMIT_FPS),
-            description = stringResource(R.string.config_help_fps_limit),
-            value = form.fpsLimit,
-            fallbackLabel = stringResource(R.string.fps_limit_maximum),
-            keyboardType = KeyboardType.Number,
-            onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_IMMEDIATE),
+            description = stringResource(R.string.config_help_immediate),
+            checked = form.immediateMode,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
         )
     }
 }

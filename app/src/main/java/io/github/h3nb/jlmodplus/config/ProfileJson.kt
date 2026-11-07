@@ -95,7 +95,15 @@ object ProfileJson {
 
     /** Copy value collections on entry; never retain an externally mutable tree backing map. */
     @JvmStatic fun ownedCopy(source: ProfileModel): ProfileModel = source.copy(
-        shader = source.shader?.let { it.copy(values = it.values?.ownedList()) },
+        shader = source.shader?.let {
+            it.copy(
+                values = it.values?.ownedList(),
+                glslParameters = it.glslParameters?.ownedMap(),
+                customStages = it.customStages?.map { stage ->
+                    stage.copy(legacyValues = stage.legacyValues?.ownedList())
+                }?.ownedList(),
+            )
+        },
         customKeys = source.customKeys?.ownedList(),
         keyMappings = source.keyMappings.ownedMap(),
         controller = source.controller?.let(::ownedJson),

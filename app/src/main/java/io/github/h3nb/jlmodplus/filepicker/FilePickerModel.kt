@@ -29,6 +29,7 @@ data class FilePickerRequest @JvmOverloads constructor(
     val allowExistingFile: Boolean,
     val allowedExtensions: Set<String> = FilePickerRules.DEFAULT_ALLOWED_EXTENSIONS,
     val title: String? = null,
+    val rootPath: String? = null,
 ) {
     val allowsDirectories: Boolean
         get() = mode == FilePickerContract.MODE_DIR || mode == FilePickerContract.MODE_FILE_AND_DIR
@@ -41,6 +42,7 @@ data class FilePickerRequest @JvmOverloads constructor(
     companion object {
         fun fromIntent(intent: Intent): FilePickerRequest = FilePickerRequest(
             startPath = intent.getStringExtra(FilePickerContract.EXTRA_START_PATH),
+            rootPath = intent.getStringExtra(FilePickerContract.EXTRA_ROOT_PATH),
             mode = intent.getIntExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE),
             allowMultiple = intent.getBooleanExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false),
             singleClick = intent.getBooleanExtra(FilePickerContract.EXTRA_SINGLE_CLICK, false),

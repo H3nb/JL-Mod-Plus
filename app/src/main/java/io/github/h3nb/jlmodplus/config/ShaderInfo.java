@@ -24,17 +24,25 @@ import androidx.annotation.NonNull;
 
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	public transient String dir;
 	public String fragment;
 	public String vertex;
+	public String preset;
 	String name;
 	String author;
 	transient boolean outputResolution;
 	transient boolean upscaling;
 	transient Setting[] settings = new Setting[4];
 	public float[] values;
+	public Map<String, Float> glslParameters;
+	public List<CustomShaderStage> customStages;
+	public String customMode;
 
 
 	public ShaderInfo() {
@@ -50,10 +58,14 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		ShaderInfo copy = new ShaderInfo(name, author);
 		copy.fragment = fragment;
 		copy.vertex = vertex;
+		copy.preset = preset;
 		copy.outputResolution = outputResolution;
 		copy.upscaling = upscaling;
 		copy.settings = settings;
 		copy.values = values == null ? null : values.clone();
+		copy.glslParameters = glslParameters == null ? null : new LinkedHashMap<>(glslParameters);
+		copy.customStages = customStages == null ? null : new ArrayList<>(customStages);
+		copy.customMode = customMode;
 		return copy;
 	}
 
@@ -62,10 +74,35 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		author = in.readString();
 		fragment = in.readString();
 		vertex = in.readString();
+		preset = in.readString();
 		outputResolution = in.readByte() != 0;
 		upscaling = in.readByte() != 0;
 		settings = in.createTypedArray(Setting.CREATOR);
 		values = in.createFloatArray();
+		int count = in.readInt();
+		if (count > 0) {
+			glslParameters = new LinkedHashMap<>();
+			for (int i = 0; i < count; i++) glslParameters.put(in.readString(), in.readFloat());
+		}
+		int stages = in.readInt();
+		if (stages >= 0) {
+			customStages = new ArrayList<>(stages);
+			for (int i = 0; i < stages; i++) {
+				String path = in.readString();
+				int scale = in.readInt();
+				byte filter = in.readByte();
+				String vertex = in.readString();
+				float[] valueArray = in.createFloatArray();
+				List<Float> settingValues = null;
+				if (valueArray != null) {
+					settingValues = new ArrayList<>(valueArray.length);
+					for (float value : valueArray) settingValues.add(value);
+				}
+				customStages.add(new CustomShaderStage(path, scale,
+						filter < 0 ? null : filter == 1, vertex, settingValues, in.readString()));
+			}
+		}
+		customMode = in.readString();
 	}
 
 	@Override
@@ -76,7 +113,8 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		return equalsNullable(name, that.name) &&
 				equalsNullable(author, that.author) &&
 				equalsNullable(fragment, that.fragment) &&
-				equalsNullable(vertex, that.vertex);
+				equalsNullable(vertex, that.vertex) &&
+				equalsNullable(preset, that.preset);
 	}
 
 	@SuppressWarnings("EqualsReplaceableByObjectsCall")// ObjectsCall require API19
@@ -92,6 +130,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		result = 31 * result + (author == null ? 0 : author.hashCode());
 		result = 31 * result + (fragment == null ? 0 : fragment.hashCode());
 		result = 31 * result + (vertex == null ? 0 : vertex.hashCode());
+		result = 31 * result + (preset == null ? 0 : preset.hashCode());
 		return result;
 	}
 
@@ -255,10 +294,31 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		dest.writeString(author);
 		dest.writeString(fragment);
 		dest.writeString(vertex);
+		dest.writeString(preset);
 		dest.writeByte((byte) (outputResolution ? 1 : 0));
 		dest.writeByte((byte) (upscaling ? 1 : 0));
 		dest.writeTypedArray(settings, flags);
 		dest.writeFloatArray(values);
+		dest.writeInt(glslParameters == null ? 0 : glslParameters.size());
+		if (glslParameters != null) for (Map.Entry<String, Float> entry : glslParameters.entrySet()) {
+			dest.writeString(entry.getKey());
+			dest.writeFloat(entry.getValue());
+		}
+		dest.writeInt(customStages == null ? -1 : customStages.size());
+		if (customStages != null) for (CustomShaderStage stage : customStages) {
+			dest.writeString(stage.path);
+			dest.writeInt(stage.sourceScale);
+			dest.writeByte((byte) (stage.filterLinear == null ? -1 : stage.filterLinear ? 1 : 0));
+			dest.writeString(stage.legacyVertex);
+			float[] legacy = null;
+			if (stage.legacyValues != null) {
+					legacy = new float[stage.legacyValues.size()];
+					for (int i = 0; i < legacy.length; i++) legacy[i] = stage.legacyValues.get(i);
+			}
+			dest.writeFloatArray(legacy);
+			dest.writeString(stage.legacyName);
+		}
+		dest.writeString(customMode);
 	}
 
 	static class Setting implements Parcelable {

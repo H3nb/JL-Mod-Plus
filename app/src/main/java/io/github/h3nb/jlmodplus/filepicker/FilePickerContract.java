@@ -23,6 +23,8 @@ package io.github.h3nb.jlmodplus.filepicker;
  */
 public final class FilePickerContract {
 	public static final String EXTRA_START_PATH = "nononsense.intent.START_PATH";
+	/** Optional strict picker root. Navigation and results stay within this directory. */
+	public static final String EXTRA_ROOT_PATH = "jlmod.intent.ROOT_PATH";
 	public static final String EXTRA_MODE = "nononsense.intent.MODE";
 	public static final String EXTRA_ALLOW_CREATE_DIR = "nononsense.intent.ALLOW_CREATE_DIR";
 	public static final String EXTRA_SINGLE_CLICK = "nononsense.intent.SINGLE_CLICK";
