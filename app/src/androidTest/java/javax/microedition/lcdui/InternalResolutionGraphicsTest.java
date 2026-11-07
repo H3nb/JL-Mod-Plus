@@ -16,6 +16,16 @@ public class InternalResolutionGraphicsTest {
     private static final int BLUE = 0x000000FF;
     private static final int RGB = 0x00FFFFFF;
 
+    @Test public void oneTimesTargetKeepsLegacyBitmapSizing() {
+        Image ordinary = Image.createDisplayTarget(4097, 1, 1);
+        try {
+            assertEquals(4097, ordinary.getBitmap().getWidth());
+            assertEquals(1, ordinary.getPixelScale());
+        } finally {
+            ordinary.getBitmap().recycle();
+        }
+    }
+
     @Test public void logicalSizeReadbackCopyAreaAndSpriteSourceRects() {
         Image hd = Image.createDisplayTarget(12, 10, 2);
         Image normal = Image.createImage(12, 10);

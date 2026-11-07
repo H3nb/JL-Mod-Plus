@@ -55,7 +55,7 @@ jobs:
           set -euo pipefail
           chmod +x gradlew
           export JLMOD_BUILD_COMMIT="$(git rev-parse HEAD)"
-          ./gradlew --daemon --stacktrace --configuration-cache :app:testEmulatorDebugUnitTest --tests javax.microedition.lcdui.InternalResolutionTest
+          ./gradlew --daemon --stacktrace --configuration-cache :app:testEmulatorDebugUnitTest --tests javax.microedition.lcdui.InternalResolutionTest --tests io.github.h3nb.jlmodplus.config.ConfigFormStateTest
           ./gradlew --daemon --stacktrace --configuration-cache :app:assembleEmulatorDebug
           ./gradlew --daemon --stacktrace --configuration-cache -PjlmodNativeBuild=false :app:assembleEmulatorDebugAndroidTest
       - name: Package artifact

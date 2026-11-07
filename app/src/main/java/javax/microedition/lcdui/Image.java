@@ -54,12 +54,13 @@ public class Image {
 
 	/** Runtime-owned 2D surface; ordinary MIDlet images remain at their logical size. */
 	public static Image createDisplayTarget(int width, int height, int scale) {
+		// Do not add any new size restriction to the existing 1x behavior.
+		if (scale == 1) return createImage(width, height);
 		if (scale < 1 || scale > InternalResolution.MAX_SCALE || width <= 0 || height <= 0
 				|| (long) width * scale > InternalResolution.MAX_TARGET_SIDE
 				|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE) {
 			throw new IllegalArgumentException("Invalid display target size");
 		}
-		if (scale == 1) return createImage(width, height);
 		Bitmap bitmap = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
 		bitmap.eraseColor(Color.WHITE);
 		return new Image(bitmap, true, scale);
