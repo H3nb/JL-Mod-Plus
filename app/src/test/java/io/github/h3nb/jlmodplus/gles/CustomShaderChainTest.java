@@ -127,6 +127,32 @@ class CustomShaderChainTest {
                 64L * 1024 * 1024).passes.get(0).outputWidth);
     }
 
+    @Test void inheritedCustomChainRejectsUnboundSamplerButAllowsExistingDependencies() throws Exception {
+        source("derived/first.glsl", "uniform sampler2D Texture;\nvoid main() {}");
+        source("derived/second.glsl", "uniform sampler2D Texture;\nvoid main() {}");
+        source("derived/chain.glslp", "shaders = 2\nshader0 = first.glsl\n"
+                + "alias0 = FirstOutput\nshader1 = second.glsl\n"
+                + "textures = ColorLUT\nColorLUT = lut.png\n");
+        source("derived/unknown.glsl", "uniform sampler2D UnboundTexture;\nvoid main() {}");
+        source("derived/valid.glsl", "uniform sampler2D Texture;\n"
+                + "uniform sampler2D FirstOutputTexture;\n"
+                + "uniform sampler2D ColorLUT;\nvoid main() {}");
+        java.util.List<CustomShaderStage> invalid = Arrays.asList(
+                new CustomShaderStage("derived/first.glsl", 0, null),
+                new CustomShaderStage("derived/unknown.glsl", 0, null));
+        IOException error = assertThrows(IOException.class,
+                () -> GlslpAssets.loadCustom(invalid, shaderRoot.toFile(),
+                        "derived/chain.glslp", "glsl"));
+        assertTrue(error.getMessage().contains("UnboundTexture"), error.getMessage());
+        GlslpPreset accepted = GlslpAssets.loadCustom(Arrays.asList(
+                new CustomShaderStage("derived/first.glsl", 0, null),
+                new CustomShaderStage("derived/valid.glsl", 0, null)),
+                shaderRoot.toFile(), "derived/chain.glslp", "glsl");
+        assertEquals(2, accepted.passes.size());
+        assertEquals(1, accepted.textures.size());
+        assertEquals("FirstOutput", accepted.passes.get(0).alias);
+    }
+
     @Test void legacyCustomPassesRetainSeparateShaderPairsAndTuningValues() throws Exception {
         source("legacy/one.vsh", "attribute vec4 a_position;\n"
                 + "attribute vec2 a_texcoord0;\nvarying vec2 v_texcoord0;\n"
