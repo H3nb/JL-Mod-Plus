@@ -1,0 +1,73 @@
+name: Internal resolution alpha integration APK
+
+on:
+  push:
+    branches: [feature/internal-resolution-alpha]
+    paths:
+      - '.github/workflows/internal-resolution-alpha.yml'
+      - 'app/src/**'
+      - 'docs/internal-resolution.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: internal-resolution-alpha-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and focused checks
+    runs-on: ubuntu-26.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '14742923'
+          packages: 'platform-tools platforms;android-37.0'
+      - name: Provision NDK
+        run: sdkmanager 'ndk;30.0.16248370' >/dev/null
+      - name: Restore shared debug key
+        env:
+          SHARED_DEBUG_KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          if [[ -n "$SHARED_DEBUG_KEYSTORE" ]]; then
+            printf '%s' "$SHARED_DEBUG_KEYSTORE" | base64 --decode > debug.keystore
+            chmod 600 debug.keystore
+            keytool -list -keystore debug.keystore -storepass android -alias androiddebugkey >/dev/null
+          else
+            echo 'No shared debug key: Android will require a separately signed installation.'
+          fi
+      - name: Focused unit test and APK build
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          export JLMOD_BUILD_COMMIT="$(git rev-parse HEAD)"
+          ./gradlew --daemon --stacktrace --configuration-cache :app:testEmulatorDebugUnitTest --tests javax.microedition.lcdui.InternalResolutionTest
+          ./gradlew --daemon --stacktrace --configuration-cache :app:assembleEmulatorDebug
+          ./gradlew --daemon --stacktrace --configuration-cache -PjlmodNativeBuild=false :app:assembleEmulatorDebugAndroidTest
+      - name: Package artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-apk
+          cp app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk ci-apk/
+          printf 'Internal resolution alpha integration\nCommit: %s\n2D prototype; native M3G/Mascot HD not qualified.\n' "$GITHUB_SHA" > ci-apk/BUILD-INFO.txt
+      - name: Upload arm64 device build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: jl-mod-plus-alpha-internal-resolution-arm64
+          path: ci-apk/
+          retention-days: 14
