@@ -407,9 +407,12 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         } else currentSet?.name ?: stringResource(R.string.control_skin_title)
         val slideOffsetPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         val pageTransition = updateTransition(page, label = "Control skin page")
-        LaunchedEffect(pageTransition.currentState, pageTransition.targetState) {
-            // Outgoing editor stays composed until the transition finishes.
-            if (pageTransition.currentState == SkinPage.Gallery &&
+        LaunchedEffect(
+            pageTransition.currentState, pageTransition.targetState, pageTransition.isRunning,
+        ) {
+            // The target may revert during a fast Back; equal states alone do not mean settled.
+            if (!pageTransition.isRunning &&
+                pageTransition.currentState == SkinPage.Gallery &&
                 pageTransition.targetState == SkinPage.Gallery
             ) {
                 previews = emptyMap()

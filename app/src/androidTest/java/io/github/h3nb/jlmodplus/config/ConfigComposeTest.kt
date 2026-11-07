@@ -16,6 +16,7 @@ package io.github.h3nb.jlmodplus.config
 
 import io.github.h3nb.jlmodplus.R
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsEnabled
@@ -1243,7 +1244,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun shaderSubpagesHonorRepeatedHostBackWithoutExitingConfiguration() {
+    fun shaderSubpagesHonorSystemBackWithoutExitingConfiguration() {
         val base = sampleState()
         val external = ShaderInfo("Simple GLSL", "test").apply {
             preset = "shaders_glsl/example.glsl"
@@ -1253,14 +1254,13 @@ class ConfigComposeTest {
             base.form, base.screenPresets, base.fontPresets, base.skins,
             base.soundBanks, shaders, base.removableScreenPresets,
         )
-        val backRequests = mutableStateOf(0)
         val host = RecordingMenuActions()
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(
                     state, events, initialDestination = ConfigDestination.Display,
-                    menuActions = host, backRequest = backRequests.value,
+                    menuActions = host,
                 )
             }
         }
@@ -1278,22 +1278,19 @@ class ConfigComposeTest {
         composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("1")
         composeRule.onNodeWithTag("shader_custom_pass_2").assertDoesNotExist()
 
-        composeRule.runOnIdle { backRequests.value++ }
+        Espresso.pressBack()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
         assertEquals(0, events.formChanges)
         assertEquals(0, host.backCalls)
 
-        composeRule.runOnIdle { backRequests.value++ }
+        Espresso.pressBack()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.pref_graphics_mode_title)).assertExists()
         assertEquals(0, host.backCalls)
 
-        composeRule.runOnIdle { backRequests.value++ }
-        composeRule.waitForIdle()
-        assertEquals(1, host.backCalls)
     }
 
 
