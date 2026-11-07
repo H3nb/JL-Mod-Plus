@@ -60,10 +60,10 @@ public class ShaderCatalogTest {
         File root = temporary.resolve("mixed-legacy").toFile();
         assertTrue(root.mkdir());
         Files.write(new File(root, "mixed.ini").toPath(),
-                ("[Good]\\nVertex = common.vsh\\nFragment = good.fsh\\n"
-                        + "[Broken]\\nVertex = common.vsh\\nFragment = missing.fsh\\n"
-                        + "[AlsoGood]\\nVertex = common.vsh\\nFragment = other.fsh\\n")
-                        .replace("\\n", "\n").getBytes(StandardCharsets.UTF_8));
+                ("[Good]\nVertex = common.vsh\nFragment = good.fsh\n"
+                        + "[Broken]\nVertex = common.vsh\nFragment = missing.fsh\n"
+                        + "[AlsoGood]\nVertex = common.vsh\nFragment = other.fsh\n")
+                        .getBytes(StandardCharsets.UTF_8));
         Files.write(new File(root, "common.vsh").toPath(), "v".getBytes(StandardCharsets.UTF_8));
         Files.write(new File(root, "good.fsh").toPath(), "a".getBytes(StandardCharsets.UTF_8));
         Files.write(new File(root, "other.fsh").toPath(), "b".getBytes(StandardCharsets.UTF_8));
