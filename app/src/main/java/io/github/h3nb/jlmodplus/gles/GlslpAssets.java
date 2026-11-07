@@ -25,7 +25,9 @@ public final class GlslpAssets {
     private static final int MAX_IMAGE_PIXELS = 4 * 1024 * 1024;
 
     private static final Pattern SAMPLER = Pattern.compile(
-            "\\buniform\\s+(?:(?:lowp|mediump|highp)\\s+)?sampler\\w+\\s+(\\w+)");
+            "\\buniform\\s+(?:(?:lowp|mediump|highp)\\s+)?sampler\\w+\\s+([^;]+);");
+    private static final Pattern COMMENTS = Pattern.compile(
+            "/\\*.*?\\*/|//[^\\r\\n]*", Pattern.DOTALL);
     private GlslpAssets() {}
 
     /**
@@ -143,12 +145,14 @@ public final class GlslpAssets {
                     allowed.add("PassPrev" + distance + "Texture");
                 }
             }
-            Matcher samplers = SAMPLER.matcher(pass.sourceText);
+            Matcher samplers = SAMPLER.matcher(COMMENTS.matcher(pass.sourceText).replaceAll(""));
             while (samplers.find()) {
-                String name = samplers.group(1);
-                if (!allowed.contains(name)) {
-                    throw new IOException("Custom stage requires additional sampler: "
-                            + name + " (" + pass.sourcePath + ")");
+                for (String declared : samplers.group(1).split(",")) {
+                    String name = declared.trim();
+                    if (!name.matches("[A-Za-z_][A-Za-z0-9_]*") || !allowed.contains(name)) {
+                        throw new IOException("Custom stage requires additional sampler: "
+                                + name + " (" + pass.sourcePath + ")");
+                    }
                 }
             }
         }
