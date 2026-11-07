@@ -1,8 +1,9 @@
 # Scoped shader file selection and custom pass configuration
 
-This draft extends PR #224 without merging. Shader selection uses the existing
-file-picker Activity with an explicit shader-root boundary and single-tap
-selection, not the former shader-list dialog.
+This draft extends PR #224 without merging. External Legacy INI and GLSLP
+preset selection uses the existing file-picker Activity with an explicit
+shader-root boundary and single-tap selection. The existing named Legacy
+catalog chooser remains available when assembling a custom Legacy pass.
 
 ## User-visible modes
 
@@ -10,8 +11,10 @@ selection, not the former shader-list dialog.
   presentation shader, with no extra GLSL effects. A new game configuration
   defaults to OpenGL ES with no selected effect. Changing renderers does not
   delete a saved shader choice.
-- **Legacy shader** selects a named effect in the existing legacy catalog
-  dialog. Existing .ini / .vsh / .fsh selections and their settings remain
+- **Legacy shader** selects one .ini file using the scoped picker. A file with
+  multiple valid effects lists those variants inline; a single valid effect
+  is selected directly. A broken variant does not hide valid sections from
+  that file. Existing .ini / .vsh / .fsh selections and their settings remain
   compatible with older profiles.
 - **GLSLP preset** selects one .glslp file from the same scoped picker. It
   uses all passes and dependencies declared by that preset, without changing
@@ -52,7 +55,10 @@ selection, not the former shader-list dialog.
   to the stock presenter, subject to PR #224's remaining runtime diagnostics.
 - GLSLP resource paths are relative to shaders/, including nested directories.
   Canonical root confinement, source-size limits, and the existing GLSLP
-  validator still apply.
+  validator still apply. Custom sources extending a GLSLP preset can use
+  only bound sampler inputs (the source texture, causal earlier passes,
+  inherited aliases and declared lookup textures); unknown sampler inputs
+  fail validation before saving.
 
 ## Qualification
 
