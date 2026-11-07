@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package javax.microedition.media;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ManagerCapabilitiesTest {
 	@Test public void unsupportedLocatorsAndContentAreNotAdvertised() {

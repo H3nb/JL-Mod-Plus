@@ -13,9 +13,9 @@
  */
 package javax.microedition.lcdui.keyboard;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 
