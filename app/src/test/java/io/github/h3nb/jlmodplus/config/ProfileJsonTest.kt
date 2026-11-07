@@ -7,8 +7,8 @@ import com.google.gson.JsonParser
 import java.io.File
 import java.nio.file.Files
 import kotlinx.serialization.json.*
-import org.junit.Assert.*
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 class ProfileJsonTest {
     private fun fixture(name: String): String = checkNotNull(javaClass.getResource("/config/$name")).readText()

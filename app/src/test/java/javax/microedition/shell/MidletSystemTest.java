@@ -14,7 +14,7 @@
 
 package javax.microedition.shell;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MidletSystemTest {
 	@Test
@@ -23,8 +23,8 @@ public class MidletSystemTest {
 		MidletSystem.gc(Runtime.getRuntime());
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void runtimeGcBridgePreservesReceiverNullCheck() {
-		MidletSystem.gc((Runtime) null);
+		org.junit.jupiter.api.Assertions.assertThrows(NullPointerException.class, () -> MidletSystem.gc((Runtime) null));
 	}
 }

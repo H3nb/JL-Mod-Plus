@@ -555,9 +555,7 @@ implementation(libs.androidx.activity.compose)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.vintage.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     // Frozen v7 reader oracle only; Gson is absent from application runtime/APKs.
     testImplementation("com.google.code.gson:gson:2.14.0")

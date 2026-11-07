@@ -6,16 +6,16 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryShareManagerTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test fun safeFileNameKeepsUsefulTitleButRemovesPathSyntax() {
         assertEquals("Prince of Persia.jar", LibraryShareManager.safeFileName("Prince of Persia"))
@@ -31,8 +31,8 @@ class LibraryShareManagerTest {
     }
 
     @Test fun copyFileStreamsExactBytesWithoutChangingSource() {
-        val source = temporaryFolder.newFile("source.jar")
-        val target = File(temporaryFolder.root, "target.jar")
+        val source = TempFiles.newFile(temporaryFolder, "source.jar")
+        val target = File(temporaryFolder, "target.jar")
         val bytes = ByteArray(256 * 1024 + 17) { index -> (index % 251).toByte() }
         source.writeBytes(bytes)
         val beforeModified = source.lastModified()

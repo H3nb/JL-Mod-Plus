@@ -3,23 +3,23 @@
  */
 package io.github.h3nb.jlmodplus.runtime;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.io.TempDir;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 public class RuntimeStorageLeaseTest {
-    @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir public File temporaryFolder;
 
     @Test public void heldLeaseReservesOnlyItsCanonicalStoragePath() throws Exception {
-        File filesDir = temporaryFolder.newFolder("files");
-        File rootA = temporaryFolder.newFolder("work-a");
-        File rootB = temporaryFolder.newFolder("work-b");
+        File filesDir = TempFiles.newFolder(temporaryFolder, "files");
+        File rootA = TempFiles.newFolder(temporaryFolder, "work-a");
+        File rootB = TempFiles.newFolder(temporaryFolder, "work-b");
         File bounceA = new File(rootA, "converted/Bounce");
         File bounceB = new File(rootB, "converted/Bounce");
         try (RuntimeStorageLease lease = RuntimeStorageLease.acquire(filesDir, bounceA)) {
@@ -35,8 +35,8 @@ public class RuntimeStorageLeaseTest {
     }
 
     @Test public void abandonedLockFileDoesNotReservePath() throws Exception {
-        File filesDir = temporaryFolder.newFolder("files-stale");
-        File path = new File(temporaryFolder.newFolder("work-stale"), "converted/Bounce");
+        File filesDir = TempFiles.newFolder(temporaryFolder, "files-stale");
+        File path = new File(TempFiles.newFolder(temporaryFolder, "work-stale"), "converted/Bounce");
         try (RuntimeStorageLease ignored = RuntimeStorageLease.acquire(filesDir, path)) {
             assertTrue(RuntimeStorageLease.isActive(filesDir, path));
         }

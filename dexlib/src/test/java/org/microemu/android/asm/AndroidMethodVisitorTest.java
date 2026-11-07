@@ -14,11 +14,11 @@
 
 package org.microemu.android.asm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -133,9 +133,9 @@ public class AndroidMethodVisitorTest {
 		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.classToString"
 						+ "(Ljava/lang/Class;)Ljava/lang/String;"));
-		assertTrue(calls.toString(), calls.contains(
+		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.newInstance"
-						+ "(Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;"));
+						+ "(Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;"), calls.toString());
 		assertFalse(calls.contains(
 				"INVOKEVIRTUAL java/lang/Class.newInstance()Ljava/lang/Object;"));
 	}

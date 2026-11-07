@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.mmapi;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.h3nb.jlmodplus.mmapi.protocol.device.DeviceDataSource;
 import io.github.h3nb.jlmodplus.mmapi.synth.AudioPlayer;
 import io.github.h3nb.jlmodplus.mmapi.synth.Library;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -29,7 +29,7 @@ public class AudioPlayerDurationTest {
     private final Backend backend = new Backend();
     private final BlockingQueue<Object> durations = new LinkedBlockingQueue<>();
 
-    @Before public void setup() throws Exception {
+    @BeforeEach public void setup() throws Exception {
         active = RuntimeAudioCoordinator.class.getDeclaredField("active");
         active.setAccessible(true);
         previous = (RuntimeAudioCoordinator) active.get(null);
@@ -45,7 +45,7 @@ public class AudioPlayerDurationTest {
         });
     }
 
-    @After public void cleanup() throws Exception {
+    @AfterEach public void cleanup() throws Exception {
         player.close(); coordinator.close(); active.set(null, previous);
     }
 
@@ -132,7 +132,7 @@ public class AudioPlayerDurationTest {
             backend.seekFailure = true;
             try { player.setMediaTime(1); fail("Backend failure escaped contract"); }
             catch (javax.microedition.media.MediaException expected) { }
-            assertEquals("Ordinary seek rejection must preserve the source", Player.REALIZED, player.getState());
+            assertEquals(Player.REALIZED, player.getState(), "Ordinary seek rejection must preserve the source");
         } finally { backend.probeRelease.countDown(); operations.shutdownNow(); }
     }
 

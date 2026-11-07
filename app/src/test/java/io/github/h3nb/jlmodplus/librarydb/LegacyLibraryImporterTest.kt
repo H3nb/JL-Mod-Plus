@@ -6,9 +6,9 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
 class LegacyLibraryImporterTest {
     private val importer = LegacyLibraryImporter()

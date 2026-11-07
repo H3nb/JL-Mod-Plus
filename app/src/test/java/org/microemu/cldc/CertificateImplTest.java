@@ -8,7 +8,7 @@
 
 package org.microemu.cldc;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigInteger;
 import java.security.Principal;
@@ -19,7 +19,7 @@ import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CertificateImplTest {
 	@Test

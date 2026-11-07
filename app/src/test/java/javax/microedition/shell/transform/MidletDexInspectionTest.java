@@ -4,15 +4,14 @@
  */
 package javax.microedition.shell.transform;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.android.dx.command.dexer.ConversionResult;
 import com.android.dx.command.dexer.Main;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +21,7 @@ import java.util.Map;
 import java.util.Base64;
 
 public class MidletDexInspectionTest {
-    @Rule public final TemporaryFolder temporary = new TemporaryFolder();
+    @TempDir public File temporary;
 
     @Test
     public void legacyDexWithoutTailRejectsFinalObjectAndArrayRoots() throws Exception {
@@ -33,7 +32,7 @@ public class MidletDexInspectionTest {
         //   static final int[] VALUES = new int[] {1, 2};
         //   static final String LABEL = "constant";
         // }
-        File classFile = new File(temporary.getRoot(), "LegacyRoot.class");
+        File classFile = new File(temporary, "LegacyRoot.class");
         byte[] bytecode = Base64.getDecoder().decode(
                 "yv66vgAAADQAGwoAAgADBwAEDAAFAAYBABBqYXZhL2xhbmcvT2JqZWN0AQAGPGluaXQ+AQADKClWCQAIAAkHAAoMAAsADAEACkxlZ2FjeVJvb3QBAARST09UAQASTGphdmEvbGFuZy9PYmplY3Q7" +
                 "CQAIAA4MAA8AEAEABlZBTFVFUwEAAltJAQAFTEFCRUwBABJMamF2YS9sYW5nL1N0cmluZzsBAA1Db25zdGFudFZhbHVlCAAVAQAIY29uc3RhbnQBAARDb2RlAQAPTGluZU51bWJlclRhYmxl" +
@@ -41,13 +40,13 @@ public class MidletDexInspectionTest {
                 "ABcAAAAGAAEAAAABAAgAGAAGAAEAFgAAADUABAAAAAAAGbsAAlm3AAGzAAcFvApZAwRPWQQFT7MADbEAAAABABcAAAAKAAIAAAACAAoAAwABABkAAAACABo=");
         Files.write(classFile.toPath(), bytecode);
 
-        File payload = new File(temporary.getRoot(), "converted.dex");
+        File payload = new File(temporary, "converted.dex");
         Main.Arguments arguments = new Main.Arguments();
-        arguments.fileNames = new String[] { new File(temporary.getRoot(), "." + File.separator + classFile.getName()).getPath() };
+        arguments.fileNames = new String[] { new File(temporary, "." + File.separator + classFile.getName()).getPath() };
         arguments.outName = payload.getPath();
         arguments.numThreads = 1;
         ConversionResult converted = Main.runWithResult(arguments);
-        assertTrue(converted.getDiagnostics().toString(), converted.isSuccess());
+        assertTrue(converted.isSuccess(), converted.getDiagnostics().toString());
 
         Map<String, String> descriptor = new HashMap<>();
         MidletTransformMetadata.mark(descriptor);
@@ -69,10 +68,9 @@ public class MidletDexInspectionTest {
                 renamed = true;
             }
         }
-        assertTrue("Expected a transformed discovery-tail method ID", renamed);
+        assertTrue(renamed, "Expected a transformed discovery-tail method ID");
         Files.write(payload.toPath(), bytes);
-        assertFalse("Final reference roots require an instrumented class initializer",
-                MidletTransformMetadata.isRuntimeCompatible(descriptor, payload));
+        assertFalse(MidletTransformMetadata.isRuntimeCompatible(descriptor, payload), "Final reference roots require an instrumented class initializer");
     }
 
     @Test
@@ -98,10 +96,9 @@ public class MidletDexInspectionTest {
                 removed = true;
             }
         }
-        assertTrue("The converter must instrument mutable primitive roots", removed);
+        assertTrue(removed, "The converter must instrument mutable primitive roots");
         Files.write(dex.toPath(), bytes);
-        assertFalse("An uninstrumented static primitive contradicts the transform marker",
-                MidletTransformMetadata.isRuntimeCompatible(descriptor, dex));
+        assertFalse(MidletTransformMetadata.isRuntimeCompatible(descriptor, dex), "An uninstrumented static primitive contradicts the transform marker");
     }
 
     @Test
@@ -110,26 +107,25 @@ public class MidletDexInspectionTest {
         // public final class LegacyPrimitiveConstant { static final int SCORE = 7; }
         File dex = convertClass("LegacyPrimitiveConstant",
                 "yv66vgAAADQADgoAAgADBwAEDAAFAAYBABBqYXZhL2xhbmcvT2JqZWN0AQAGPGluaXQ+AQADKClWBwAIAQAXTGVnYWN5UHJpbWl0aXZlQ29uc3RhbnQBAAVTQ09SRQEAAUkBAA1Db25zdGFudFZhbHVlAwAAAAcBAARDb2RlADEABwACAAAAAQAYAAkACgABAAsAAAACAAwAAQABAAUABgABAA0AAAARAAEAAQAAAAUqtwABsQAAAAAAAA==");
-        assertFalse("A constant-only class should not publish a managed tail",
-                new String(Files.readAllBytes(dex.toPath()), StandardCharsets.US_ASCII)
-                        .contains("tailSeen"));
+        assertFalse(new String(Files.readAllBytes(dex.toPath()), StandardCharsets.US_ASCII)
+                        .contains("tailSeen"), "A constant-only class should not publish a managed tail");
         Map<String, String> descriptor = new HashMap<>();
         MidletTransformMetadata.mark(descriptor);
         assertTrue(MidletTransformMetadata.isRuntimeCompatible(descriptor, dex));
     }
 
     private File convertClass(String className, String base64) throws Exception {
-        File classFile = new File(temporary.getRoot(), className + ".class");
+        File classFile = new File(temporary, className + ".class");
         Files.write(classFile.toPath(), Base64.getDecoder().decode(base64));
-        File payload = new File(temporary.getRoot(), className + ".dex");
+        File payload = new File(temporary, className + ".dex");
         Main.Arguments args = new Main.Arguments();
         args.fileNames = new String[] {
-                new File(temporary.getRoot(), "." + File.separator + classFile.getName()).getPath()
+                new File(temporary, "." + File.separator + classFile.getName()).getPath()
         };
         args.outName = payload.getPath();
         args.numThreads = 1;
         ConversionResult converted = Main.runWithResult(args);
-        assertTrue(converted.getDiagnostics().toString(), converted.isSuccess());
+        assertTrue(converted.isSuccess(), converted.getDiagnostics().toString());
         return payload;
     }
 }

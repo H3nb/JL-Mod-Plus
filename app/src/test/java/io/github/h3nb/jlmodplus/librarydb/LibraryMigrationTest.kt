@@ -6,24 +6,23 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import com.google.gson.JsonParser
 import java.io.File
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryMigrationTest {
     private companion object {
         const val LEGACY_SCHEMA_VERSION = 2
     }
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test fun migrationRegistryCoversEverySupportedAdjacentVersion() {
         assertEquals(
@@ -41,7 +40,7 @@ class LibraryMigrationTest {
      */
     @Test fun everyHistoricalSchemaOpensAndMigratesToLatest() = runBlocking {
         for (version in LibraryMigrations.FIRST_SUPPORTED_VERSION until LibraryDatabase.SCHEMA_VERSION) {
-            val file = File(temporaryFolder.root, "schema-$version.db")
+            val file = File(temporaryFolder, "schema-$version.db")
             createFromCommittedSchema(version, file)
             val database = openLatest(file)
             try {
@@ -54,7 +53,7 @@ class LibraryMigrationTest {
     }
 
     @Test fun schema1MigratesToLatestWithoutLosingLibraryOwnedState() = runBlocking {
-        val file = File(temporaryFolder.root, "preserve-state.db")
+        val file = File(temporaryFolder, "preserve-state.db")
         createFromCommittedSchema(1, file)
         val connection = BundledSQLiteDriver().open(file.absolutePath)
         try {
@@ -120,7 +119,7 @@ class LibraryMigrationTest {
         assertEquals(LEGACY_SCHEMA_VERSION, databaseJson.get("version").asInt)
         val expectedIdentityHash = databaseJson.get("identityHash").asString
 
-        val file = File(temporaryFolder.root, "legacy-v2.db")
+        val file = File(temporaryFolder, "legacy-v2.db")
         createFromSchema(legacySchema, LEGACY_SCHEMA_VERSION, file)
         assertEquals(LEGACY_SCHEMA_VERSION.toLong(), readLong(file, "PRAGMA user_version"))
         assertEquals(
@@ -223,7 +222,7 @@ class LibraryMigrationTest {
         val connection = BundledSQLiteDriver().open(file.absolutePath)
         val statement = connection.prepare(query)
         return try {
-            assertTrue("Expected a row for $query", statement.step())
+            assertTrue(statement.step(), "Expected a row for $query")
             statement.getLong(0)
         } finally {
             statement.close()
@@ -235,7 +234,7 @@ class LibraryMigrationTest {
         val connection = BundledSQLiteDriver().open(file.absolutePath)
         val statement = connection.prepare(query)
         return try {
-            assertTrue("Expected a row for $query", statement.step())
+            assertTrue(statement.step(), "Expected a row for $query")
             statement.getText(0)
         } finally {
             statement.close()

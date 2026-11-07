@@ -15,10 +15,10 @@
 package javax.microedition.lcdui.commands
 
 import javax.microedition.lcdui.Command
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Test
 
 class ScreenSoftBarPolicyTest {
     @Test

@@ -1,21 +1,21 @@
 package io.github.h3nb.jlmodplus.installer;
 
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class InstallerDownloadTest {
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    @TempDir public File temporary;
 
     @Test public void resolvesRootRelativeAndQueryWithoutInheritingJadQuery() throws Exception {
         URI base = URI.create("https://example.com/catalog/app.jad?old=1");
@@ -42,7 +42,7 @@ public class InstallerDownloadTest {
                 } catch (IOException error) { throw new RuntimeException(error); }
             });
             responder.start();
-            File target = new File(temporary.getRoot(), "source.jad");
+            File target = new File(temporary, "source.jad");
             URI finalUri = InstallerDownload.download(
                     URI.create("http://localhost:" + server.getLocalPort() + "/start"),
                     target, () -> false, (bytes, total) -> {});
@@ -55,7 +55,7 @@ public class InstallerDownloadTest {
     }
 
     @Test public void cancellationNeverPublishesSource() throws Exception {
-        File target = new File(temporary.getRoot(), "source.jar");
+        File target = new File(temporary, "source.jar");
         assertThrows(IOException.class, () -> InstallerDownload.download(
                 URI.create("http://127.0.0.1/unused"), target, () -> true, (bytes, total) -> {}));
         assertFalse(target.exists());
@@ -69,19 +69,19 @@ public class InstallerDownloadTest {
 
 
     @Test public void detectsActualArchiveAfterRedirectAndRejectsHtml() throws Exception {
-        File jar = temporary.newFile("archive-with-no-extension");
+        File jar = TempFiles.newFile(temporary, "archive-with-no-extension");
         Files.write(jar.toPath(), new byte[] {'P', 'K', 3, 4, 0, 0});
         assertEquals(InstallerDownload.SourceKind.JAR, InstallerDownload.detectSource(jar));
 
-        File jad = temporary.newFile("misnamed.jar");
+        File jad = TempFiles.newFile(temporary, "misnamed.jar");
         Files.writeString(jad.toPath(), "MIDlet-Name: Example\\r\\nMIDlet-Jar-URL: game.jar\\r\\n");
         assertEquals(InstallerDownload.SourceKind.JAD, InstallerDownload.detectSource(jad));
 
-        File kjx = temporary.newFile("application.dat");
+        File kjx = TempFiles.newFile(temporary, "application.dat");
         Files.write(kjx.toPath(), new byte[] {'K', 'J', 'X', 1});
         assertEquals(InstallerDownload.SourceKind.KJX, InstallerDownload.detectSource(kjx));
 
-        File html = temporary.newFile("redirect-result.jar");
+        File html = TempFiles.newFile(temporary, "redirect-result.jar");
         Files.writeString(html.toPath(), "  <html>Not a package</html>");
         assertThrows(IOException.class, () -> InstallerDownload.detectSource(html));
     }
@@ -98,7 +98,7 @@ public class InstallerDownloadTest {
             });
             responder.setDaemon(true);
             responder.start();
-            File target = new File(temporary.getRoot(), "rejected.jar");
+            File target = new File(temporary, "rejected.jar");
             assertThrows(IOException.class, () -> InstallerDownload.download(
                     URI.create("http://localhost:" + server.getLocalPort() + "/start"),
                     target, () -> false, (bytes, total) -> {}));

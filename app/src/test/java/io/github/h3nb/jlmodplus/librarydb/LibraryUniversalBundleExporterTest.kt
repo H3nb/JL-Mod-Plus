@@ -14,30 +14,30 @@
 
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.security.MessageDigest
 import java.util.zip.ZipFile
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryUniversalBundleExporterTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test
     fun singleAndBulkUseOneDeterministicNamespaceAndManifest() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val first = createApp(root, "first", byteArrayOf(1, 2), config = Empty, data = Missing)
         val second = createApp(root, "second", byteArrayOf(3, 4), config = FileContent("config.json", "{}"), data = Empty)
         File(File(File(root, "converted"), "second"), "converted.dex.conf")
             .writeText("MIDlet-Name: Second\n")
-        val target = File(temporaryFolder.root, "universal.zip")
+        val target = File(temporaryFolder, "universal.zip")
 
         LibraryUniversalBundleExporter.exportToZip(
             apps = listOf(
@@ -62,7 +62,7 @@ class LibraryUniversalBundleExporterTest {
                 zip.entries().asSequence().map { it.name }.toList(),
             )
             zip.entries().asSequence().forEach { entry ->
-                assertEquals("ZIP entries must use the fixed epoch timestamp", 0L, entry.time)
+                assertEquals(0L, entry.time, "ZIP entries must use the fixed epoch timestamp")
             }
             val manifest = zip.getInputStream(zip.getEntry("bundle.json"))
                 .bufferedReader()
@@ -83,7 +83,7 @@ class LibraryUniversalBundleExporterTest {
         assertEquals(BundleNamespaceState.PresentEmpty, parsed.apps[1].dataState)
         assertFalse(parsed.legacyAssurance)
 
-        val secondTarget = File(temporaryFolder.root, "universal-again.zip")
+        val secondTarget = File(temporaryFolder, "universal-again.zip")
         LibraryUniversalBundleExporter.exportToZip(
             apps = listOf(
                 LibraryUniversalBundleExporter.AppSource("a0001", "First", "Vendor", "1.0", root, "first"),
@@ -96,9 +96,9 @@ class LibraryUniversalBundleExporterTest {
 
     @Test
     fun rejectsDuplicateOrUnsafeArchiveIdentityBeforeWriting() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         createApp(root, "first", byteArrayOf(1), config = Missing, data = Missing)
-        val target = File(temporaryFolder.root, "rejected.zip")
+        val target = File(temporaryFolder, "rejected.zip")
         val source = LibraryUniversalBundleExporter.AppSource("a0001", "First", "Vendor", "1.0", root, "first")
 
         assertExportFails(target) {
@@ -114,7 +114,7 @@ class LibraryUniversalBundleExporterTest {
 
     @Test
     fun rejectsCanonicalDirectoryCyclesBeforeRecursing() {
-        val root = temporaryFolder.newFolder("workdir-cycle")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir-cycle")
         createApp(root, "cycle", byteArrayOf(1), config = Empty, data = Missing)
         val namespace = File(File(root, "configs"), "cycle")
         val cycle = namespace.toPath().resolve("loop")
@@ -122,10 +122,10 @@ class LibraryUniversalBundleExporterTest {
             Files.createSymbolicLink(cycle, namespace.toPath())
         } catch (error: Exception) {
             // Symbolic-link creation requires elevated privileges on some Windows test runners.
-            org.junit.Assume.assumeNoException(error)
+            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Symbolic-link creation unavailable: ${error.message}")
         }
 
-        assertExportFails(File(temporaryFolder.root, "cycle.zip")) {
+        assertExportFails(File(temporaryFolder, "cycle.zip")) {
             LibraryUniversalBundleExporter.exportToZip(
                 apps = listOf(
                     LibraryUniversalBundleExporter.AppSource(
@@ -137,7 +137,7 @@ class LibraryUniversalBundleExporterTest {
                         "cycle",
                     ),
                 ),
-                target = File(temporaryFolder.root, "cycle.zip"),
+                target = File(temporaryFolder, "cycle.zip"),
             )
         }
     }

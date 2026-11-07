@@ -5,10 +5,10 @@ package io.github.h3nb.jlmodplus.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class JlModPlusThemeTest {
     @Test
@@ -89,8 +89,8 @@ class JlModPlusThemeTest {
                     scheme.onErrorContainer to scheme.errorContainer,
                 )) {
                     assertTrue(
-                        "Insufficient contrast for ${palette.key}: ${foreground} on ${background}",
                         contrastRatio(foreground, background) >= 4.5f,
+                        "Insufficient contrast for ${palette.key}: ${foreground} on ${background}",
                     )
                 }
                 assertTrue(contrastRatio(scheme.outline, scheme.surfaceContainerHigh) >= 3f)
@@ -115,12 +115,12 @@ class JlModPlusThemeTest {
                 )
                 for (surface in surfaces) {
                     assertTrue(
-                        "Unreadable main text on ${palette.key} ${if (dark) "dark" else "light"}",
                         contrastRatio(scheme.onSurface, surface) >= 4.5f,
+                        "Unreadable main text on ${palette.key} ${if (dark) "dark" else "light"}",
                     )
                     assertTrue(
-                        "Unreadable supporting text on ${palette.key} ${if (dark) "dark" else "light"}",
                         contrastRatio(scheme.onSurfaceVariant, surface) >= 4.5f,
+                        "Unreadable supporting text on ${palette.key} ${if (dark) "dark" else "light"}",
                     )
                 }
                 val containers = listOf(
@@ -131,9 +131,9 @@ class JlModPlusThemeTest {
                 )
                 for ((previous, next) in containers.zipWithNext()) {
                     assertTrue(
-                        "Surface hierarchy reversed for ${palette.key}",
                         if (dark) next.luminance() > previous.luminance()
                         else next.luminance() < previous.luminance(),
+                        "Surface hierarchy reversed for ${palette.key}",
                     )
                 }
                 assertTrue(contrastRatio(scheme.outline, scheme.surfaceContainerHighest) >= 3f)

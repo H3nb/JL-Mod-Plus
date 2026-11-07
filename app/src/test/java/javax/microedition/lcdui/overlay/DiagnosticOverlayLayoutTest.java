@@ -1,10 +1,10 @@
 /* Licensed under the Apache License, Version 2.0. */
 package javax.microedition.lcdui.overlay;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import androidx.core.graphics.Insets;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DiagnosticOverlayLayoutTest {
 	@Test

@@ -6,19 +6,19 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
 import java.util.Locale
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryDescriptionCatalogTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test fun existingInstallUsesInterfaceLocaleAndKeepsCustomFallback() {
-        val workdir = temporaryFolder.newFolder("emulator")
+        val workdir = TempFiles.newFolder(temporaryFolder, "emulator")
         val gameDir = File(workdir, "converted/game").apply { mkdirs() }
         File(gameDir, "converted.dex.conf").writeText(
             "MIDlet-Name: Adventure\n" +
@@ -45,7 +45,7 @@ class LibraryDescriptionCatalogTest {
     }
 
     @Test fun gameConfigurationOverrideMatchesRuntimeLocale() {
-        val workdir = temporaryFolder.newFolder("configured")
+        val workdir = TempFiles.newFolder(temporaryFolder, "configured")
         val gameDir = File(workdir, "converted/game").apply { mkdirs() }
         File(gameDir, "converted.dex.conf").writeText(
             "MIDlet-Name: Adventure\nMIDlet-Vendor: Example\nMIDlet-Version: 1.0\n" +
@@ -67,7 +67,7 @@ class LibraryDescriptionCatalogTest {
     }
 
     @Test fun replacingDescriptorRefreshesLocalizedMetadata() {
-        val workdir = temporaryFolder.newFolder("replacement")
+        val workdir = TempFiles.newFolder(temporaryFolder, "replacement")
         val gameDir = File(workdir, "converted/game").apply { mkdirs() }
         val descriptor = File(gameDir, "converted.dex.conf")
         val header = "MIDlet-Name: Adventure\nMIDlet-Vendor: Example\nMIDlet-Version: 1.0\n"
@@ -80,7 +80,7 @@ class LibraryDescriptionCatalogTest {
     }
 
     @Test fun userTranslationsOverrideDescriptorsAndUseTheSameFallbackChain() {
-        val root = temporaryFolder.newFolder("localized-overrides")
+        val root = TempFiles.newFolder(temporaryFolder, "localized-overrides")
         File(root, "converted/game").apply { mkdirs() }
         File(root, "converted/game/converted.dex.conf").writeText(
             "MIDlet-Name: Adventure\nMIDlet-Vendor: Example\nMIDlet-Version: 1.0\n" +
@@ -106,7 +106,7 @@ class LibraryDescriptionCatalogTest {
     }
 
     @Test fun userTranslationWithoutDescriptorUsesConfiguredGuestLocale() {
-        val root = temporaryFolder.newFolder("user-only")
+        val root = TempFiles.newFolder(temporaryFolder, "user-only")
         File(root, "converted/game").apply { mkdirs() }
         File(root, "converted/game/converted.dex.conf").writeText(
             "MIDlet-Name: Adventure\nMIDlet-Vendor: Example\nMIDlet-Version: 1.0\n",

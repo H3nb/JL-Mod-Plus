@@ -14,19 +14,19 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -35,8 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MidletSessionJournalTest {
-	@Rule
-	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+	@TempDir public File temporaryFolder;
 
 	@Test
 	public void roundTripPreservesDiagnosticFields() throws Exception {
@@ -239,8 +238,8 @@ public class MidletSessionJournalTest {
 
 	@Test
 	public void readingCommittedBasePreservesActiveModernWrite() throws Exception {
-		File base = temporaryFolder.newFile("active.properties");
-		File pending = temporaryFolder.newFile("active.properties.new");
+		File base = TempFiles.newFile(temporaryFolder, "active.properties");
+		File pending = TempFiles.newFile(temporaryFolder, "active.properties.new");
 		String committed = validProperties();
 		String next = committed.replace("stage=RUNNING", "stage=PAUSING");
 		Files.writeString(base.toPath(), committed);
@@ -253,8 +252,8 @@ public class MidletSessionJournalTest {
 
 	@Test
 	public void readingLegacyBackupPreservesInterruptedOrActiveWrite() throws Exception {
-		File base = temporaryFolder.newFile("legacy-write.properties");
-		File backup = temporaryFolder.newFile("legacy-write.properties.bak");
+		File base = TempFiles.newFile(temporaryFolder, "legacy-write.properties");
+		File backup = TempFiles.newFile(temporaryFolder, "legacy-write.properties.bak");
 		Files.writeString(base.toPath(), "incomplete new snapshot");
 		Files.writeString(backup.toPath(), validProperties());
 
@@ -270,8 +269,8 @@ public class MidletSessionJournalTest {
 
 	@Test
 	public void firstUncommittedPublicationIsUnavailableAndUntouched() throws Exception {
-		File base = new File(temporaryFolder.getRoot(), "first-write.properties");
-		File pending = temporaryFolder.newFile("first-write.properties.new");
+		File base = new File(temporaryFolder, "first-write.properties");
+		File pending = TempFiles.newFile(temporaryFolder, "first-write.properties.new");
 		Files.writeString(pending.toPath(), validProperties());
 
 		try {
@@ -285,10 +284,10 @@ public class MidletSessionJournalTest {
 
 	@Test
 	public void atomicSidecarsCollapseToOneCanonicalJournal() throws Exception {
-		File root = temporaryFolder.getRoot();
-		File backup = temporaryFolder.newFile("session.properties.bak");
-		File pending = temporaryFolder.newFile("session.properties.new");
-		File unrelated = temporaryFolder.newFile("notes.txt");
+		File root = temporaryFolder;
+		File backup = TempFiles.newFile(temporaryFolder, "session.properties.bak");
+		File pending = TempFiles.newFile(temporaryFolder, "session.properties.new");
+		File unrelated = TempFiles.newFile(temporaryFolder, "notes.txt");
 
 		List<File> journals = MidletSessionJournal.canonicalJournalFiles(
 				Arrays.asList(pending, unrelated, backup));
@@ -300,9 +299,9 @@ public class MidletSessionJournalTest {
 
 	@Test
 	public void deletingJournalAlsoDeletesAtomicSidecars() throws Exception {
-		File base = temporaryFolder.newFile("session-delete.properties");
-		File backup = temporaryFolder.newFile("session-delete.properties.bak");
-		File pending = temporaryFolder.newFile("session-delete.properties.new");
+		File base = TempFiles.newFile(temporaryFolder, "session-delete.properties");
+		File backup = TempFiles.newFile(temporaryFolder, "session-delete.properties.bak");
+		File pending = TempFiles.newFile(temporaryFolder, "session-delete.properties.new");
 
 		assertTrue(MidletSessionJournal.delete(base));
 		assertFalse(base.exists());
@@ -313,8 +312,8 @@ public class MidletSessionJournalTest {
 	@Test
 	public void retentionDeletesExpiredBackupOnlyJournal() throws Exception {
 		long now = 1_000_000L;
-		File base = new File(temporaryFolder.getRoot(), "backup-only.properties");
-		File backup = temporaryFolder.newFile("backup-only.properties.bak");
+		File base = new File(temporaryFolder, "backup-only.properties");
+		File backup = TempFiles.newFile(temporaryFolder, "backup-only.properties.bak");
 		if (!backup.setLastModified(now - 10_000L)) {
 			throw new IOException("Unable to set backup journal timestamp");
 		}
@@ -373,7 +372,7 @@ public class MidletSessionJournalTest {
 		long now = 1_000_000L;
 		File newest = createJournalFile("newest", now - 10_000L);
 		File older = createJournalFile("older", now - 20_000L);
-		File directory = temporaryFolder.newFolder("not-a-journal");
+		File directory = TempFiles.newFolder(temporaryFolder, "not-a-journal");
 		List<File> journals = Arrays.asList(older, null, directory, newest);
 		List<File> originalOrder = new ArrayList<>(journals);
 
@@ -386,7 +385,7 @@ public class MidletSessionJournalTest {
 	}
 
 	private File createJournalFile(String name, long modified) throws IOException {
-		File file = temporaryFolder.newFile(name);
+		File file = TempFiles.newFile(temporaryFolder, name);
 		if (!file.setLastModified(modified)) {
 			throw new IOException("Unable to set journal timestamp");
 		}

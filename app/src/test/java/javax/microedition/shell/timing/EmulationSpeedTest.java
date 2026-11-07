@@ -14,12 +14,12 @@
 
 package javax.microedition.shell.timing;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EmulationSpeedTest {
 	@Test
@@ -43,9 +43,9 @@ public class EmulationSpeedTest {
 		assertEquals(250, EmulationSpeed.requireValidPercent(250));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void invalidSpeedIsRejected() {
-		EmulationSpeed.requireValidPercent(0);
+		org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> EmulationSpeed.requireValidPercent(0));
 	}
 
 	@Test

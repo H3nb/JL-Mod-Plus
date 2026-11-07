@@ -7,12 +7,12 @@
  */
 package io.github.h3nb.jlmodplus.librarydb;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -25,7 +25,7 @@ public class LibraryIconOverrideTest {
         assertTrue(seen.add(revision));
         for (int i = 0; i < 256; i++) {
             revision = LibraryIconRevision.nextAfterEdit(revision);
-            assertTrue("Artwork edit reused an old revision", seen.add(revision));
+            assertTrue(seen.add(revision), "Artwork edit reused an old revision");
         }
     }
 
@@ -126,7 +126,7 @@ public class LibraryIconOverrideTest {
         } catch (java.io.IOException expected) {
             failed = true;
         }
-        assertTrue("Invalid portrait staging should fail", failed);
+        assertTrue(failed, "Invalid portrait staging should fail");
         assertArrayEquals(new byte[]{1}, Files.readAllBytes(effective.toPath()));
         assertArrayEquals(new byte[]{1}, Files.readAllBytes(durable.toPath()));
     }

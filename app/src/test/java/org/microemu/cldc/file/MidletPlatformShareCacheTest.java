@@ -3,26 +3,26 @@
  */
 package org.microemu.cldc.file;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.io.TempDir;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 public class MidletPlatformShareCacheTest {
-    @Rule public final TemporaryFolder temp = new TemporaryFolder();
+    @TempDir public File temp;
 
     @Test public void stageCopiesFileAndPrunesOnlyExpiredOwnedCopies() throws Exception {
-        File directory = temp.newFolder("midlet-platform-share");
-        File source = temp.newFile("picture.jpg");
+        File directory = TempFiles.newFolder(temp, "midlet-platform-share");
+        File source = TempFiles.newFile(temp, "picture.jpg");
         byte[] payload = {1, 2, 3, 4};
         Files.write(source.toPath(), payload);
 
@@ -47,15 +47,15 @@ public class MidletPlatformShareCacheTest {
     }
 
     @Test public void failedSourceReadLeavesNoPartialCacheFile() throws Exception {
-        File directory = temp.newFolder("midlet-platform-share");
-        File missingSource = new File(temp.getRoot(), "missing.mp4");
+        File directory = TempFiles.newFolder(temp, "midlet-platform-share");
+        File missingSource = new File(temp, "missing.mp4");
 
         assertThrows(IOException.class, () -> MidletPlatformShareCache.stage(missingSource, directory));
         assertEquals(0, directory.list().length);
     }
 
     @Test public void cleanupDoesNotRemoveRecentOrFutureDatedCopies() throws Exception {
-        File directory = temp.newFolder("midlet-platform-share");
+        File directory = TempFiles.newFolder(temp, "midlet-platform-share");
         long now = System.currentTimeMillis();
         File recent = tempFile(directory, "midlet-", now - MidletPlatformShareCache.RETENTION_MILLIS + 1000);
         File future = tempFile(directory, "midlet-", now + 60_000);

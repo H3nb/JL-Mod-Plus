@@ -14,9 +14,9 @@
 
 package org.microemu.android.asm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.android.dex.Dex;
 import com.android.dex.MethodId;
@@ -24,7 +24,7 @@ import com.android.dx.command.dexer.ConversionDiagnostic;
 import com.android.dx.command.dexer.ConversionResult;
 import com.android.dx.command.dexer.Main;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;

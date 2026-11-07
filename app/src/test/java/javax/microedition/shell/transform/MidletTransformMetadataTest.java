@@ -14,25 +14,25 @@
 
 package javax.microedition.shell.transform;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.io.TempDir;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Files;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MidletTransformMetadataTest {
-	@Rule public final TemporaryFolder temporary = new TemporaryFolder();
+	@TempDir public File temporary;
 
 	@Test
 	public void overwrittenDexInvalidatesRuntimeFeaturesWithoutForcingReconversion() throws Exception {
-		File payload = temporary.newFile("converted.zip");
+		File payload = TempFiles.newFile(temporary, "converted.zip");
 		Files.write(payload.toPath(), new byte[]{1, 2, 3});
 		Map<String, String> attributes = new HashMap<>();
 		MidletTransformMetadata.mark(attributes);

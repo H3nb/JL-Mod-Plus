@@ -1,10 +1,10 @@
 package io.github.h3nb.jlmodplus.mmapi;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import android.media.AudioManager;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 

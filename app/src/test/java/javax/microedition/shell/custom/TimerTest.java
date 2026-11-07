@@ -14,14 +14,14 @@
 
 package javax.microedition.shell.custom;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -338,9 +338,8 @@ public class TimerTest {
 			session.updateSpeedPercent(400);
 			releaseBlocker.countDown();
 			assertTrue(targetRan.await(1L, TimeUnit.SECONDS));
-			assertTrue("scheduledExecutionTime retained the old speed projection: "
-							+ observedScheduledTime.get(),
-					observedScheduledTime.get() < initialWallTime + 700L);
+			assertTrue(observedScheduledTime.get() < initialWallTime + 700L,
+					"scheduledExecutionTime retained the old speed projection: " + observedScheduledTime.get());
 		} finally {
 			releaseBlocker.countDown();
 			if (timer != null) {
@@ -415,12 +414,12 @@ public class TimerTest {
 			}, 0L);
 			assertTrue(laterRan.await(1L, TimeUnit.SECONDS));
 			assertEquals(1, failedRuns.get());
-			assertFalse("failed task must already be cancelled", failed.cancel());
+			assertFalse(failed.cancel(), "failed task must already be cancelled");
 			assertTrue(worker.isAlive());
 			assertNull(uncaught.get());
 			session.close();
 			worker.join(1_000L);
-			assertFalse("contained failures must not prevent session cleanup", worker.isAlive());
+			assertFalse(worker.isAlive(), "contained failures must not prevent session cleanup");
 		} finally {
 			releaseFailure.countDown();
 			if (timer != null) {
@@ -651,8 +650,8 @@ public class TimerTest {
 			// (180 ms callback + 100 ms period). CLDC fixed-delay uses the prior dispatch
 			// time, so the nominal dates remain one period apart.
 			long scheduledDelta = secondScheduled.get() - firstScheduled.get();
-			assertTrue("fixed-delay drifted from dispatch time: " + scheduledDelta,
-					scheduledDelta >= 70L && scheduledDelta < 220L);
+			assertTrue(scheduledDelta >= 70L && scheduledDelta < 220L,
+					"fixed-delay drifted from dispatch time: " + scheduledDelta);
 		} finally {
 			if (timer != null) {
 				timer.cancel();

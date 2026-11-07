@@ -8,10 +8,10 @@ package io.github.h3nb.jlmodplus.librarydb
 
 import java.util.Locale
 import java.text.Collator
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryListProjectionTest {
     private val rows = listOf(
@@ -246,9 +246,7 @@ class LibraryListProjectionTest {
                 for (view in LibraryQuickView.entries) {
                     val ordered = LibraryListProjection.prepare(input, sort, locale, view)
                     for (query in listOf("", " quest ", "a", "İSTANBUL", "%", "_", "absent")) {
-                        assertEquals("$locale/$sort/$view/$query",
-                            legacyProject(input, query, sort, locale, view).map { it.id },
-                            LibraryListProjection.project(ordered, query, view).map { it.id })
+                        assertEquals(legacyProject(input, query, sort, locale, view).map { it.id }, LibraryListProjection.project(ordered, query, view).map { it.id }, "$locale/$sort/$view/$query")
                     }
                 }
             }

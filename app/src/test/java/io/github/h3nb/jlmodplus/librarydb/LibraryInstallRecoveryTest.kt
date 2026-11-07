@@ -6,19 +6,19 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryInstallRecoveryTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test fun recoveryArtifactsLiveOutsideConvertedNamespace() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val converted = File(root, "converted").apply { mkdir() }
         val target = File(converted, "game").apply { mkdir() }
         File(target, "converted.dex").writeText("old")
@@ -35,7 +35,7 @@ class LibraryInstallRecoveryTest {
     }
 
     @Test fun failedPublishCanRestoreBackupToOriginalStorageKey() {
-        val root = temporaryFolder.newFolder("restore")
+        val root = TempFiles.newFolder(temporaryFolder, "restore")
         val converted = File(root, "converted").apply { mkdir() }
         val target = File(converted, "game").apply { mkdir() }
         File(target, "marker").writeText("old")
@@ -47,7 +47,7 @@ class LibraryInstallRecoveryTest {
     }
 
     @Test fun publishedReplacementRequestsTargetedRefreshUntilBackupDiscarded() {
-        val root = temporaryFolder.newFolder("refresh")
+        val root = TempFiles.newFolder(temporaryFolder, "refresh")
         val converted = File(root, "converted").apply { mkdir() }
         val target = File(converted, "game").apply { mkdir() }
         File(target, "marker").writeText("old")
@@ -71,7 +71,7 @@ class LibraryInstallRecoveryTest {
     }
 
     @Test fun orphanNewInstallStagingIsRemovedWithoutTouchingInstalledApps() {
-        val root = temporaryFolder.newFolder("orphan-staging")
+        val root = TempFiles.newFolder(temporaryFolder, "orphan-staging")
         val converted = File(root, "converted").apply { mkdir() }
         val installed = File(converted, "existing").apply { mkdir() }
         File(installed, "marker").writeText("keep")
@@ -87,7 +87,7 @@ class LibraryInstallRecoveryTest {
     }
 
     @Test fun startupRecoveryCleansSiblingAndLegacyStagingAfterRollback() {
-        val root = temporaryFolder.newFolder("staging")
+        val root = TempFiles.newFolder(temporaryFolder, "staging")
         val converted = File(root, "converted").apply { mkdir() }
         val target = File(converted, "game").apply { mkdir() }
         File(target, "converted.dex").writeText("old")

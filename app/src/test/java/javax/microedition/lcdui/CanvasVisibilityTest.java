@@ -3,11 +3,11 @@
  */
 package javax.microedition.lcdui;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CanvasVisibilityTest {
 	@Test
@@ -15,8 +15,7 @@ public class CanvasVisibilityTest {
 		Display.initDisplay();
 		long firstForeground = Display.requestForeground();
 		assertEquals(firstForeground, Display.currentForegroundRequestGeneration());
-		assertEquals("Request alone is not a grant", 0L,
-				Display.currentGrantedForegroundGeneration());
+		assertEquals(0L, Display.currentGrantedForegroundGeneration(), "Request alone is not a grant");
 		Display.revokeForeground();
 		assertEquals(0L, Display.currentForegroundRequestGeneration());
 		long returnedForeground = Display.requestForeground();
@@ -39,8 +38,7 @@ public class CanvasVisibilityTest {
 		assertEquals(first, Display.currentGrantedForegroundGeneration());
 
 		long second = Display.requestForeground();
-		assertEquals("A new request invalidates the previous committed grant", 0L,
-				Display.currentGrantedForegroundGeneration());
+		assertEquals(0L, Display.currentGrantedForegroundGeneration(), "A new request invalidates the previous committed grant");
 		assertFalse(Display.grantForeground(first));
 		assertTrue(Display.grantForeground(second));
 		assertEquals(second, Display.currentGrantedForegroundGeneration());

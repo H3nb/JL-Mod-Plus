@@ -14,11 +14,11 @@
 
 package javax.microedition.lcdui.game;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.microedition.lcdui.Canvas;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GameCanvasKeyStateTest {
 	@Test

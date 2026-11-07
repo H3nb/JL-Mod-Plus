@@ -14,11 +14,11 @@
 
 package io.github.h3nb.jlmodplus.micro3d;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.mascotcapsule.micro3d.v3.Graphics3D;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RenderEnvironmentTest {
 	@Test

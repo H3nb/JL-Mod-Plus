@@ -6,27 +6,27 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class LibraryPlayStatReconcilerTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
     private lateinit var database: LibraryDatabase
     private lateinit var dao: LibraryDao
     private val reconciler = LibraryPlayStatReconciler()
 
-    @Before fun setUp() = runBlocking {
-        val file = temporaryFolder.newFile(LibraryDatabase.FILE_NAME)
+    @BeforeEach fun setUp() = runBlocking {
+        val file = TempFiles.newFile(temporaryFolder, LibraryDatabase.FILE_NAME)
         assertTrue(file.delete())
         database = Room.databaseBuilder<LibraryDatabase>(file.absolutePath)
             .setDriver(BundledSQLiteDriver())
@@ -35,11 +35,11 @@ class LibraryPlayStatReconcilerTest {
         dao.setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.READY))
     }
 
-    @After fun tearDown() = database.close()
+    @AfterEach fun tearDown() = database.close()
 
     @Test fun sameStorageKeyFromDifferentWorkdirIsIgnored() = runBlocking {
-        val root = temporaryFolder.newFolder("root-a")
-        val other = temporaryFolder.newFolder("root-b")
+        val root = TempFiles.newFolder(temporaryFolder, "root-a")
+        val other = TempFiles.newFolder(temporaryFolder, "root-b")
         val id = dao.insertApp(app("game"))
 
         val result = reconciler.reconcile(
@@ -56,7 +56,7 @@ class LibraryPlayStatReconcilerTest {
     }
 
     @Test fun installedTargetMissingFromRoomIsIndexedThenAppliedExactlyOnce() = runBlocking {
-        val root = temporaryFolder.newFolder("root")
+        val root = TempFiles.newFolder(temporaryFolder, "root")
         createConvertedApp(root, "game")
         val session = record("session-a", root, "game", activeMillis = 750L)
 
@@ -77,7 +77,7 @@ class LibraryPlayStatReconcilerTest {
     }
 
     @Test fun malformedInstalledTargetRemainsPendingWithoutReceipt() = runBlocking {
-        val root = temporaryFolder.newFolder("root")
+        val root = TempFiles.newFolder(temporaryFolder, "root")
         val converted = File(root, "converted").apply { mkdir() }
         val appDir = File(converted, "broken").apply { mkdir() }
         File(appDir, "converted.dex").writeText("payload")
@@ -95,7 +95,7 @@ class LibraryPlayStatReconcilerTest {
     }
 
     @Test fun confidentlyAbsentTargetCanBeReceiptedWithoutCreatingApp() = runBlocking {
-        val root = temporaryFolder.newFolder("root")
+        val root = TempFiles.newFolder(temporaryFolder, "root")
 
         val result = reconciler.reconcile(
             dao,
