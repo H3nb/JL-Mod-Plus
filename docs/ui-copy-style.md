@@ -60,12 +60,12 @@ different role when the actual hierarchy or readability requires it rather than
 preserving a poor historical mapping for consistency.
 
 - Top app bar titles use `titleLarge` or the component default.
-- Standard setting/list headlines use `bodyLarge`; normal explanatory supporting
-  text uses `bodyMedium`. When a setting renders a current value as a separate line
-  beneath supporting text, keep those roles visually distinguishable; `labelLarge`
-  with `onSurface` is the default baseline for the value while the description stays
-  `bodyMedium` with `onSurfaceVariant`. Do not collapse semantically different
-  adjacent text into the same type role, color, and emphasis.
+- Standard setting/list headlines use `bodyLarge`; explanatory supporting text uses
+  `bodyMedium` with `onSurfaceVariant`. When a setting displays a current value
+  beneath its description, use `bodyLarge` with medium weight and `onSurface` for
+  the value. This gives titles and values a clear 16 sp role above 14 sp
+  supporting text without shrinking explanations. Preserve the distinct hierarchy
+  under user font scaling; disabled values and descriptions retain disabled emphasis.
 - Prefer a semantic Material 3 typography role before adding an explicit font-weight
   override. Explicit weight is still appropriate when the component role cannot
   express a required hierarchy or state. Do not remove an existing hierarchy signal

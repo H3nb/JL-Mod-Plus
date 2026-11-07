@@ -14,14 +14,21 @@
 
 package io.github.h3nb.jlmodplus.config
 
-import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,7 +87,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -114,6 +120,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -304,6 +311,18 @@ internal enum class ConfigAction(val title: Int, val message: Int) {
     ResetLayout(R.string.RESET_LAYOUT_CMD, R.string.message_reset_layout),
 }
 
+private sealed interface ConfigPage {
+    data object Main : ConfigPage
+    data object SystemProperties : ConfigPage
+    data class Rendering(val subpage: RenderingSubpage) : ConfigPage
+}
+
+private fun ConfigPage.depth(): Int = when (this) {
+    ConfigPage.Main -> 0
+    ConfigPage.SystemProperties -> 1
+    is ConfigPage.Rendering -> if (subpage == RenderingSubpage.SHADERS) 1 else 2
+}
+
 @Composable
 internal fun ConfigScreen(
     state: ConfigUiState,
@@ -389,110 +408,155 @@ internal fun ConfigScreen(
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
 
-    if (renderingSubpage != null) {
-        RenderingSettingsPage(
-            page = renderingSubpage!!,
-            state = state,
-            onFormChanged = updateForm,
-            onLegacyTuning = events::onShaderTuning,
-            onShaderPickerOpened = events::onShaderPickerOpened,
-            onOpenParameters = { renderingSubpage = RenderingSubpage.PARAMETERS },
-            onOpenCustom = { renderingSubpage = RenderingSubpage.CUSTOM },
-            onOpenPasses = { renderingSubpage = RenderingSubpage.PASSES },
-            onBack = backRendering,
-        )
-    } else if (systemPropertiesEditorVisible) {
-        val context = LocalContext.current
-        val defaultProperties = remember(context) {
-            ConfigFormState.normalizeSystemProperties(
-                context.assets.open("defaults/system.props").bufferedReader().use { it.readText() }
-            )
-        }
-        ConfigSystemPropertiesPage(
-            value = form.systemProperties,
-            defaultValue = defaultProperties,
-            onBack = { systemPropertiesEditorVisible = false },
-            onSave = { value ->
-                systemPropertiesEditorVisible = false
-                updateForm(form.toBuilder().systemProperties(value).build())
-            },
-            modifier = modifier,
-        )
-    } else {
-        Row(modifier = modifier.fillMaxSize()) {
-            if (useNavigationRail) {
-                ConfigNavigationRail(
-                    destinations = destinations,
-                    selected = selectedDestination,
-                    onSelected = selectDestination,
-                )
-            }
 
-            Scaffold(
-                modifier = Modifier.weight(1f).fillMaxSize(),
-                contentWindowInsets = WindowInsets.safeDrawing,
-                topBar = {
-                    ConfigTopBar(
-                        title = title,
-                        isProfile = isProfile,
-                        onBack = requestBack,
-                        onStart = { menuActions?.onStart() },
-                        onSave = { menuActions?.onSaveProfileDraft() },
-                        saveEnabled = !isProfile || menuActions?.hasUnsavedProfileChanges() == true,
+    val currentPage = when {
+        renderingSubpage != null -> ConfigPage.Rendering(requireNotNull(renderingSubpage))
+        systemPropertiesEditorVisible -> ConfigPage.SystemProperties
+        else -> ConfigPage.Main
+    }
+    val motionOffsetPx = with(density) { 16.dp.roundToPx() }
+    AnimatedContent(
+        targetState = currentPage,
+        modifier = modifier.fillMaxSize(),
+        transitionSpec = {
+            val direction = if (targetState.depth() > initialState.depth()) 1 else -1
+            (slideInHorizontally(
+                animationSpec = tween(220, easing = FastOutSlowInEasing),
+                initialOffsetX = { direction * motionOffsetPx },
+            ) + fadeIn(animationSpec = tween(180))).togetherWith(
+                slideOutHorizontally(
+                    animationSpec = tween(220, easing = FastOutSlowInEasing),
+                    targetOffsetX = { -direction * motionOffsetPx / 2 },
+                ) + fadeOut(animationSpec = tween(180)),
+            )
+        },
+        label = "Config page",
+    ) { shownPage ->
+        val active = shownPage == currentPage
+        Box(
+            modifier = Modifier.fillMaxSize().then(
+                if (active) Modifier else Modifier.clearAndSetSemantics {},
+            ),
+        ) {
+            when (shownPage) {
+                is ConfigPage.Rendering -> {
+                    RenderingSettingsPage(
+                        page = shownPage.subpage,
+                        state = state,
+                        onFormChanged = updateForm,
+                        onLegacyTuning = events::onShaderTuning,
+                        onShaderPickerOpened = events::onShaderPickerOpened,
+                        onOpenParameters = { if (active) renderingSubpage = RenderingSubpage.PARAMETERS },
+                        onOpenCustom = { if (active) renderingSubpage = RenderingSubpage.CUSTOM },
+                        onOpenPasses = { if (active) renderingSubpage = RenderingSubpage.PASSES },
+                        onBack = { if (active) backRendering() },
                     )
-                },
-                bottomBar = {
-                    // Keep the destination bar from floating above the IME while editing text.
-                    if (!useNavigationRail && !imeVisible) {
-                        ConfigNavigationBar(
-                            destinations = destinations,
-                            selected = selectedDestination,
-                            onSelected = selectDestination,
+                }
+                ConfigPage.SystemProperties -> {
+                    val context = LocalContext.current
+                    val defaultProperties = remember(context) {
+                        ConfigFormState.normalizeSystemProperties(
+                            context.assets.open("defaults/system.props").bufferedReader().use { it.readText() }
                         )
                     }
-                },
-            ) { padding ->
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .consumeWindowInsets(padding),
-                ) { page ->
-                        val pageScrollState = if (destinations[page] == ConfigDestination.Display)
-                            displayScrollState else rememberScrollState()
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .imePadding()
-                                .verticalScroll(pageScrollState)
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.TopCenter,
-                            ) {
-                                ConfigDestinationContent(
-                                    destination = destinations[page],
-                                    state = state,
-                                    form = form,
-                                    onFormChanged = updateForm,
-                                    events = events,
+                    ConfigSystemPropertiesPage(
+                        value = form.systemProperties,
+                        defaultValue = defaultProperties,
+                        onBack = { if (active) systemPropertiesEditorVisible = false },
+                        onSave = { value ->
+                            systemPropertiesEditorVisible = false
+                            updateForm(form.toBuilder().systemProperties(value).build())
+                        },
+                        modifier = Modifier,
+                    )
+                }
+                ConfigPage.Main -> {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        if (useNavigationRail) {
+                            ConfigNavigationRail(
+                                destinations = destinations,
+                                selected = selectedDestination,
+                                onSelected = selectDestination,
+                            )
+                        }
+
+                        Scaffold(
+                            modifier = Modifier.weight(1f).fillMaxSize(),
+                            contentWindowInsets = WindowInsets.safeDrawing,
+                            topBar = {
+                                ConfigTopBar(
+                                    title = title,
                                     isProfile = isProfile,
-                                    cutoutAvailable = cutoutAvailable,
-                                    onRequestAction = { pendingAction = it },
-                                    onEditSystemProperties = { systemPropertiesEditorVisible = true },
-                                    onOpenShaders = {
-                                        renderingSubpage = RenderingSubpage.SHADERS
-                                    },
-                                    onUsePreset = { presetPickerVisible = true },
-                                    onSavePreset = { savePresetVisible = true },
-                                    modifier = Modifier.widthIn(max = 880.dp),
+                                    onBack = requestBack,
+                                    onStart = { menuActions?.onStart() },
+                                    onSave = { menuActions?.onSaveProfileDraft() },
+                                    saveEnabled = !isProfile || menuActions?.hasUnsavedProfileChanges() == true,
                                 )
-                            }
+                            },
+                            bottomBar = {
+                                // Keep the destination bar from floating above the IME while editing text.
+                                if (!useNavigationRail && !imeVisible) {
+                                    ConfigNavigationBar(
+                                        destinations = destinations,
+                                        selected = selectedDestination,
+                                        onSelected = selectDestination,
+                                    )
+                                }
+                            },
+                        ) { padding ->
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .consumeWindowInsets(padding),
+                            ) { page ->
+                                    val pageScrollState = if (destinations[page] == ConfigDestination.Display)
+                                        displayScrollState else rememberScrollState()
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .imePadding()
+                                            .verticalScroll(pageScrollState)
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentAlignment = Alignment.TopCenter,
+                                        ) {
+                                            ConfigDestinationContent(
+                                                destination = destinations[page],
+                                                state = state,
+                                                form = form,
+                                                onFormChanged = updateForm,
+                                                events = events,
+                                                isProfile = isProfile,
+                                                cutoutAvailable = cutoutAvailable,
+                                                onRequestAction = { pendingAction = it },
+                                                onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                                onOpenShaders = {
+                                                    renderingSubpage = RenderingSubpage.SHADERS
+                                                },
+                                                onUsePreset = { presetPickerVisible = true },
+                                                onSavePreset = { savePresetVisible = true },
+                                                modifier = Modifier.widthIn(max = 880.dp),
+                                            )
+                                        }
+                                    }
+                                }
                         }
                     }
+                }
+            }
+            // Outgoing pages remain drawn briefly; they must not accept input or accessibility focus.
+            if (!active) {
+                Box(
+                    Modifier.matchParentSize().clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {},
+                )
             }
         }
     }
@@ -2279,14 +2343,6 @@ internal fun ConfigSystemPropertiesPage(
 ) {
     var draft by rememberSaveable(value) { mutableStateOf(value) }
     var resetConfirmationVisible by rememberSaveable { mutableStateOf(false) }
-    val hostView = LocalView.current
-    DisposableEffect(hostView, onBack) {
-        val callback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() = onBack()
-        }
-        (hostView.context as? AppCompatActivity)?.onBackPressedDispatcher?.addCallback(callback)
-        onDispose { callback.remove() }
-    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),

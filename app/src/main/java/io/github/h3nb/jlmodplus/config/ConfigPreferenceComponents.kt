@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -130,7 +131,7 @@ internal fun ConfigCompactValuePreference(
         if (!value.isNullOrEmpty()) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 color = if (enabled) MaterialTheme.colorScheme.onSurface
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
                 maxLines = 2,
@@ -194,7 +195,7 @@ internal fun ConfigValuePreference(
             Text(
                 text = value,
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 color = if (enabled) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
                 maxLines = 2,
@@ -484,7 +485,7 @@ internal fun ConfigColorPreference(
             Text(
                 text = displayLabel ?: "#${value.ifEmpty { "000000" }}",
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
