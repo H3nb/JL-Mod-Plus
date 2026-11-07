@@ -1136,7 +1136,7 @@ public abstract class Canvas extends Displayable {
 		synchronized (bufferLock) {
 			if (offscreenCopy == null) {
 				internalResolutionScale = InternalResolution.resolve(
-						settings.internalResolutionScale, width, maxHeight, onWidth, onHeight);
+						settings.internalResolutionScale, width, height, maxHeight, onWidth, onHeight);
 			}
 			// GLSLP and HD require a tight presentation bitmap with no softbar padding.
 			boolean tight = usesGlslp() || internalResolutionScale > 1;
@@ -1147,7 +1147,17 @@ public abstract class Canvas extends Displayable {
 					|| offscreenCopy.getHeight() != height
 					|| offscreenCopy.getPixelScale() != internalResolutionScale)) {
 				Image next = Image.createDisplayTarget(width, height, internalResolutionScale);
-				offscreenCopy.copyTo(next);
+				int overlapWidth = Math.min(width, offscreenCopy.getWidth());
+				int overlapHeight = Math.min(height, offscreenCopy.getHeight());
+				if (overlapWidth > 0 && overlapHeight > 0) {
+					int oldScale = offscreenCopy.getPixelScale();
+					int newScale = next.getPixelScale();
+					new android.graphics.Canvas(next.getBitmap()).drawBitmap(
+							offscreenCopy.getBitmap(),
+							new Rect(0, 0, overlapWidth * oldScale, overlapHeight * oldScale),
+							new Rect(0, 0, overlapWidth * newScale, overlapHeight * newScale),
+							null);
+				}
 				offscreenCopy = next;
 			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
 				offscreenCopy.setSize(width, height);

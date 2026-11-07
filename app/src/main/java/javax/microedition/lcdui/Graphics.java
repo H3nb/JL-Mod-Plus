@@ -57,6 +57,7 @@ public class Graphics implements
 
 	private final Canvas canvas;
 	private final Image image;
+	private final Matrix pixelScaleMatrix;
 	private Bitmap boundBitmap;
 
 	private final Paint drawPaint = new Paint();
@@ -85,8 +86,10 @@ public class Graphics implements
 		this.image = image;
 		boundBitmap = image.getBitmap();
 		canvas = new Canvas(boundBitmap);
-		if (image.getPixelScale() != 1) {
-			canvas.scale(image.getPixelScale(), image.getPixelScale());
+		pixelScaleMatrix = image.getPixelScale() == 1 ? null : new Matrix();
+		if (pixelScaleMatrix != null) {
+			pixelScaleMatrix.setScale(image.getPixelScale(), image.getPixelScale());
+			canvas.concat(pixelScaleMatrix);
 		}
 		canvas.save();
 		canvas.clipRect(image.getBounds());
@@ -111,11 +114,7 @@ public class Graphics implements
 				canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
 			}
 		}
-		if (image.getPixelScale() != 1) {
-			Matrix scale = new Matrix();
-			scale.setScale(image.getPixelScale(), image.getPixelScale());
-			canvas.setMatrix(scale);
-		}
+		if (pixelScaleMatrix != null) canvas.setMatrix(pixelScaleMatrix);
 		canvas.save();
 	}
 
@@ -721,9 +720,16 @@ public class Graphics implements
 
 	public void getPixels(int[] pixels, int offset, int stride,
 						  int x, int y, int width, int height) {
-		int w = Math.min(width, image.getWidth() - x);
-		int h = Math.min(height, image.getHeight() - y);
-		image.getRGB(pixels, offset, stride, x, y, w, h);
+		Bitmap b = image.getBitmap();
+		if (image.getPixelScale() == 1) {
+			int w = Math.min(width, b.getWidth() - x);
+			int h = Math.min(height, b.getHeight() - y);
+			b.getPixels(pixels, offset, stride, x, y, w, h);
+		} else {
+			int w = Math.min(width, image.getWidth() - x);
+			int h = Math.min(height, image.getHeight() - y);
+			image.getRGB(pixels, offset, stride, x, y, w, h);
+		}
 	}
 
 	public Bitmap getBitmap() {

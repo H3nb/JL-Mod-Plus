@@ -49,6 +49,21 @@ public class InternalResolutionGraphicsTest {
         }
     }
 
+    @Test public void scaledFrameCopyPreservesPhysicalDetailAtEdges() {
+        Image source = Image.createDisplayTarget(12, 10, 2);
+        Image destination = Image.createDisplayTarget(12, 10, 2);
+        try {
+            Graphics g = source.getGraphics();
+            g.setColor(RED);
+            g.fillRect(11, 9, 1, 1);
+            source.copyTo(destination);
+            assertEquals(RED, destination.getBitmap().getPixel(23, 19) & RGB);
+        } finally {
+            source.getBitmap().recycle();
+            destination.getBitmap().recycle();
+        }
+    }
+
     @Test public void scaledTargetGrowsWithoutChangingLogicalCanvasUnits() {
         Image image = Image.createDisplayTarget(12, 10, 2);
         try {

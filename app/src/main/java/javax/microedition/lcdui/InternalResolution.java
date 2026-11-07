@@ -12,7 +12,13 @@ final class InternalResolution {
 
     static int resolve(int requested, int logicalWidth, int logicalHeight,
             int viewportWidth, int viewportHeight) {
-        if (logicalWidth <= 0 || logicalHeight <= 0) return 1;
+        return resolve(requested, logicalWidth, logicalHeight, logicalHeight,
+                viewportWidth, viewportHeight);
+    }
+
+    static int resolve(int requested, int logicalWidth, int logicalHeight, int backingHeight,
+            int viewportWidth, int viewportHeight) {
+        if (logicalWidth <= 0 || logicalHeight <= 0 || backingHeight <= 0) return 1;
         int desired = requested == 0
                 ? viewportWidth <= 0 || viewportHeight <= 0 ? 1
                     : Math.min(viewportWidth / logicalWidth, viewportHeight / logicalHeight)
@@ -20,7 +26,7 @@ final class InternalResolution {
         desired = Math.max(1, Math.min(MAX_SCALE, desired));
         for (int factor = desired; factor > 1; factor--) {
             long w = (long) logicalWidth * factor;
-            long h = (long) logicalHeight * factor;
+            long h = (long) Math.max(logicalHeight, backingHeight) * factor;
             // Guest paint, GameCanvas/other source, published frame, GL upload.
             long estimated = w * h * 4L * 4L;
             if (w <= MAX_TARGET_SIDE && h <= MAX_TARGET_SIDE && estimated <= MAX_ESTIMATED_BYTES)

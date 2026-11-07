@@ -205,15 +205,19 @@ public class Image {
 			int previousHeight = bounds.bottom;
 			bitmap = Bitmap.createBitmap(width * pixelScale, height * pixelScale,
 					Bitmap.Config.ARGB_8888);
-			bitmap.eraseColor(Color.WHITE);
+			if (pixelScale > 1) bitmap.eraseColor(Color.WHITE);
 			bounds.right = width;
 			bounds.bottom = height;
 			if (graphics != null) {
 				graphics.reset(0, 0, width, height);
-				graphics.getCanvas().drawBitmap(previous,
-						new Rect(0, 0, previousWidth * pixelScale,
-								previousHeight * pixelScale),
-						new Rect(0, 0, previousWidth, previousHeight), null);
+				if (pixelScale == 1) {
+					graphics.getCanvas().drawBitmap(previous, 0, 0, null);
+				} else {
+					graphics.getCanvas().drawBitmap(previous,
+							new Rect(0, 0, previousWidth * pixelScale,
+									previousHeight * pixelScale),
+							new Rect(0, 0, previousWidth, previousHeight), null);
+				}
 			}
 		} else {
 			bounds.right = width;
