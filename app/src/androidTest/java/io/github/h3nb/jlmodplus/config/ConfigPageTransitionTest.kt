@@ -1,11 +1,14 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 package io.github.h3nb.jlmodplus.config
 
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.test.espresso.Espresso
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.assertTextDoesNotContain
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -49,25 +52,25 @@ class ConfigPageTransitionTest {
     }
 
     @Test
-    fun systemPropertiesHostBackReturnsToExistingTab() {
-        val hostBack = mutableIntStateOf(0)
+    fun systemPropertiesSystemBackReturnsToExistingTab() {
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(
-                    state(), events,
-                    backRequest = hostBack.intValue,
-                    initialDestination = ConfigDestination.System,
-                )
+                ConfigScreen(state(), events, initialDestination = ConfigDestination.System)
             }
         }
         composeRule.onNodeWithText(label(R.string.config_edit_system_properties))
             .performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(label(R.string.config_help_system_properties_long)).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).performTextInput("UNSAVED_FIELD_TEST")
 
-        composeRule.runOnIdle { hostBack.intValue++ }
+        // The IME has its own Back policy; close it before testing page navigation.
+        Espresso.closeSoftKeyboard()
+        Espresso.pressBack()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(label(R.string.config_edit_system_properties)).assertIsDisplayed()
+        composeRule.onNodeWithText(label(R.string.config_edit_system_properties)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).assertTextDoesNotContain("UNSAVED_FIELD_TEST")
     }
 
     private fun state(graphicsMode: Int = 0): ConfigUiState {

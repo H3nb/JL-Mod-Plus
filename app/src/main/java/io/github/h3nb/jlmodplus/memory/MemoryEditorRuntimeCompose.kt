@@ -116,8 +116,8 @@ import java.util.Locale
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
 import io.github.h3nb.jlmodplus.ui.pageMotionDirection
-import io.github.h3nb.jlmodplus.ui.pageEnter
-import io.github.h3nb.jlmodplus.ui.pageExit
+import io.github.h3nb.jlmodplus.ui.tabEnter
+import io.github.h3nb.jlmodplus.ui.tabExit
 import io.github.h3nb.jlmodplus.memory.MemoryEditorDialog as AlertDialog
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -248,7 +248,7 @@ internal fun MemoryEditorRuntimeRoot(
                                         0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
                                     )
                                 }
-                                pageEnter(direction, tabTravelPx).togetherWith(pageExit(direction, tabTravelPx))
+                                tabEnter(direction, tabTravelPx).togetherWith(tabExit(direction, tabTravelPx))
                             },
                             label = "Memory editor tab",
                         ) { shownState ->

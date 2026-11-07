@@ -40,3 +40,22 @@ internal fun pageExit(direction: Int, travelPx: Int): ExitTransition =
         animationSpec = tween(PAGE_MOTION_MILLIS, easing = FastOutSlowInEasing),
         targetOffsetX = { -direction.coerceIn(-1, 1) * travelPx / 2 },
     ) + fadeOut(animationSpec = tween(PAGE_FADE_MILLIS))
+
+/** Tab selection fades completely through the midpoint, matching PagerTabMotion. */
+internal fun tabEnter(direction: Int, travelPx: Int): EnterTransition =
+    slideInHorizontally(
+        animationSpec = tween(
+            PAGE_MOTION_MILLIS / 2,
+            delayMillis = PAGE_MOTION_MILLIS / 2,
+            easing = FastOutSlowInEasing,
+        ),
+        initialOffsetX = { direction.coerceIn(-1, 1) * travelPx / 2 },
+    ) + fadeIn(animationSpec = tween(
+        PAGE_MOTION_MILLIS / 2, delayMillis = PAGE_MOTION_MILLIS / 2,
+    ))
+
+internal fun tabExit(direction: Int, travelPx: Int): ExitTransition =
+    slideOutHorizontally(
+        animationSpec = tween(PAGE_MOTION_MILLIS / 2, easing = FastOutSlowInEasing),
+        targetOffsetX = { -direction.coerceIn(-1, 1) * travelPx / 2 },
+    ) + fadeOut(animationSpec = tween(PAGE_MOTION_MILLIS / 2))

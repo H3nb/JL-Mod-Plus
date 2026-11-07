@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -63,6 +64,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -380,11 +382,8 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private fun back() {
         if (busy) return
         if (selectedKey != null) selectedKey = null
-        else if (editingId != null) {
-            editingId = null
-            previews = emptyMap()
-            groupedPreviews = emptyMap()
-        } else finish()
+        else if (editingId != null) editingId = null
+        else finish()
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -407,6 +406,16 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             else stringResource(R.string.control_skin_edit_named, label(key))
         } else currentSet?.name ?: stringResource(R.string.control_skin_title)
         val slideOffsetPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
+        val pageTransition = updateTransition(page, label = "Control skin page")
+        LaunchedEffect(pageTransition.currentState, pageTransition.targetState) {
+            // Outgoing editor stays composed until the transition finishes.
+            if (pageTransition.currentState == SkinPage.Gallery &&
+                pageTransition.targetState == SkinPage.Gallery
+            ) {
+                previews = emptyMap()
+                groupedPreviews = emptyMap()
+            }
+        }
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -442,14 +451,12 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             },
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
-                AnimatedContent(
-                    targetState = page,
+                pageTransition.AnimatedContent(
                     modifier = Modifier.fillMaxSize().clipToBounds(),
                     transitionSpec = {
                         val direction = pageMotionDirection(initialState.depth(), targetState.depth())
                         pageEnter(direction, slideOffsetPx).togetherWith(pageExit(direction, slideOffsetPx))
                     },
-                    label = "Control skin page",
                 ) { shownPage ->
                     val active = shownPage == page
                     Box(

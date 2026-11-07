@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.config
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
@@ -82,6 +83,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -160,7 +162,6 @@ class ConfigComposeController @JvmOverloads constructor(
     private var gamepadHelpVisible by mutableStateOf(false)
     private var gamepadDiagnosis by mutableStateOf<String?>(null)
     private var gamepadCalibration by mutableStateOf<GamepadCalibrationUiState?>(null)
-    private var backRequest by mutableIntStateOf(0)
 
     init {
         composeView.id = R.id.config_compose_root
@@ -174,7 +175,6 @@ class ConfigComposeController @JvmOverloads constructor(
                     events = events,
                     title = title,
                     isProfile = isProfile,
-                    backRequest = backRequest,
                     menuActions = menuActions,
                     colorPicker = colorPicker,
                     encodingPicker = encodingPicker,
@@ -280,10 +280,6 @@ class ConfigComposeController @JvmOverloads constructor(
         gamepadCalibration = state
     }
 
-    /** Routes the system Back event through the same draft/discard policy as the top bar. */
-    fun requestBack() {
-        backRequest++
-    }
 }
 
 data class ColorPickerRequest(
@@ -335,7 +331,6 @@ internal fun ConfigScreen(
     modifier: Modifier = Modifier,
     title: String = "",
     isProfile: Boolean = false,
-    backRequest: Int = 0,
     initialDestination: ConfigDestination? = null,
     cutoutSupportOverride: Boolean? = null,
     menuActions: ConfigMenuActions? = null,
@@ -359,6 +354,7 @@ internal fun ConfigScreen(
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
+    var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
     val backRendering: () -> Unit = {
         renderingSubpage = when (renderingSubpage) {
@@ -386,8 +382,9 @@ internal fun ConfigScreen(
             Unit
         }
     }
-    LaunchedEffect(backRequest) {
-        if (backRequest > 0) requestBack()
+    // Only in-app navigation and profile drafts consume Back; the root Activity uses system Back.
+    BackHandler(enabled = renderingSubpage != null || systemPropertiesEditorVisible || isProfile) {
+        requestBack()
     }
 
     val destinations = ConfigDestination.values().toList()
@@ -459,16 +456,18 @@ internal fun ConfigScreen(
                             context.assets.open("defaults/system.props").bufferedReader().use { it.readText() }
                         )
                     }
-                    ConfigSystemPropertiesPage(
-                        value = form.systemProperties,
-                        defaultValue = defaultProperties,
-                        onBack = { if (active) systemPropertiesEditorVisible = false },
-                        onSave = { value ->
-                            systemPropertiesEditorVisible = false
-                            updateForm(form.toBuilder().systemProperties(value).build())
-                        },
-                        modifier = Modifier,
-                    )
+                    key(systemPropertiesSession) {
+                        ConfigSystemPropertiesPage(
+                            value = form.systemProperties,
+                            defaultValue = defaultProperties,
+                            onBack = { if (active) systemPropertiesEditorVisible = false },
+                            onSave = { value ->
+                                systemPropertiesEditorVisible = false
+                                updateForm(form.toBuilder().systemProperties(value).build())
+                            },
+                            modifier = Modifier,
+                        )
+                    }
                 }
                 ConfigPage.Main -> {
                     Row(modifier = Modifier.fillMaxSize()) {
@@ -538,7 +537,10 @@ internal fun ConfigScreen(
                                                 isProfile = isProfile,
                                                 cutoutAvailable = cutoutAvailable,
                                                 onRequestAction = { pendingAction = it },
-                                                onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                                onEditSystemProperties = {
+                                                    systemPropertiesSession++
+                                                    systemPropertiesEditorVisible = true
+                                                },
                                                 onOpenShaders = {
                                                     renderingSubpage = RenderingSubpage.SHADERS
                                                 },

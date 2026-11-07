@@ -49,7 +49,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -717,16 +716,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				},
 				getTitle() == null ? "" : getTitle().toString(),
 				isProfile);
-		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-			@Override
-			public void handleOnBackPressed() {
-				if (composeController != null) {
-					composeController.requestBack();
-				} else {
-					finish();
-				}
-			}
-		});
 		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
 			@Override
 			public javax.microedition.lcdui.Canvas currentCanvas() {

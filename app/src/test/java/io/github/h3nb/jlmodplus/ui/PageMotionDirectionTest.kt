@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 package io.github.h3nb.jlmodplus.ui
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class PageMotionDirectionTest {
     @Test fun peerDestinationsFollowTheirOrderRatherThanAlwaysMovingBack() {
