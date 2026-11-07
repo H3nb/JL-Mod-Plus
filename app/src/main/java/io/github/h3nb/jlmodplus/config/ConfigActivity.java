@@ -151,8 +151,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private File profilesRoot;
 	private ArrayList<ShaderInfo> shaders;
 	@Nullable private String inspectedShaderPreset;
+	@Nullable private String inspectedShaderMode;
 	@Nullable private ShaderPipelineSummary inspectedShaderPipeline;
 	@Nullable private List<CustomShaderStage> inspectedCustomShaderStages;
+	private long shaderInspectionGeneration;
 	private String workDir;
 	private boolean needShow;
 	private boolean operationRunning;
@@ -2595,17 +2597,32 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		String requestedPreset = state.shader == null ? null : state.shader.preset;
 		List<CustomShaderStage> requestedStages = state.shader == null
 				? null : state.shader.customStages;
+		String requestedMode = state.shader == null ? null : state.shader.customMode;
 		if (!Objects.equals(inspectedShaderPreset, requestedPreset)
+				|| !Objects.equals(inspectedShaderMode, requestedMode)
 				|| !Objects.equals(inspectedCustomShaderStages, requestedStages)) {
 			inspectedShaderPreset = requestedPreset;
+			inspectedShaderMode = requestedMode;
 			inspectedCustomShaderStages = requestedStages == null
 					? null : new ArrayList<>(requestedStages);
-			File shaderRoot = new File(workDir + Config.SHADERS_DIR);
-			inspectedShaderPipeline = requestedStages != null
-					? ShaderPipelineSummary.inspectCustom(requestedStages, shaderRoot,
-							requestedPreset, state.shader.customMode)
-					: requestedPreset != null
-						? ShaderPipelineSummary.inspect(requestedPreset, shaderRoot) : null;
+			inspectedShaderPipeline = null;
+			long generation = ++shaderInspectionGeneration;
+			if (requestedStages != null || requestedPreset != null) {
+				List<CustomShaderStage> stages = inspectedCustomShaderStages;
+				File shaderRoot = new File(workDir + Config.SHADERS_DIR);
+				profileMetadataExecutor.execute(() -> {
+					ShaderPipelineSummary summary = stages != null
+							? ShaderPipelineSummary.inspectCustom(stages, shaderRoot,
+									requestedPreset, requestedMode)
+							: ShaderPipelineSummary.inspect(requestedPreset, shaderRoot);
+					runOnUiThread(() -> {
+						if (generation != shaderInspectionGeneration || isFinishing() || isDestroyed())
+							return;
+						inspectedShaderPipeline = summary;
+						if (composeController != null) composeController.update(createUiState());
+					});
+				});
+			}
 		}
 		result.shaderPipeline = inspectedShaderPipeline;
 		result.shaderDirectory = new File(workDir + Config.SHADERS_DIR);
