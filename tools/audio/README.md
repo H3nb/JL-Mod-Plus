@@ -50,7 +50,11 @@ Each `install-<ABI>` contains four shared libraries (`avformat`, `avcodec`,
 including generated configuration headers, and SHA256 checksums. ARMv7 retains the `_neon`
 filenames used by the native integration. All profiles use API 23 and 16 KiB
 ELF alignment. Gradle owns reuse of compiled native dependency outputs through
-its up-to-date checks and Build Cache. When native dependency work executes, the
+its up-to-date checks and Build Cache. Source downloads retry up to three times
+when a connection is interrupted or an HTTP timeout/rate-limit/server error occurs;
+partial downloads are discarded between attempts and on failure. The pinned SHA256
+check remains mandatory, and a checksum mismatch fails immediately rather than
+being retried or publishing the archive. When native dependency work executes, the
 shared preparation service verifies the pinned archives and rematerializes the
 canonical FFmpeg/OpenCORE source trees at most once per Gradle invocation before
 ABI compilation. Each executing ABI task then rebuilds its compiled output fresh;
