@@ -33,11 +33,11 @@ A single flow may need complementary assertions across layers when they protect 
 
 ## Local JVM test framework
 
-Use **JUnit 5 (Jupiter)** for new local JVM unit tests and materially revised tests where a framework change is already warranted. Prefer `org.junit.jupiter.api.Test`, Jupiter assertions, and Jupiter lifecycle/parameterized features when they improve the test. Keep tests readable and focused; JUnit 5 is not a reason to introduce extra fixtures or extensions.
+Use **JUnit 5 (Jupiter)** for all local JVM unit tests. Prefer `org.junit.jupiter.api.Test`, Jupiter assertions, and Jupiter lifecycle/parameterized features when they improve the test. Keep tests readable and focused; JUnit 5 is not a reason to introduce extra fixtures or extensions.
 
-Existing JUnit 4 local tests may remain while they protect active contracts. Do not bulk-convert working tests or mix JUnit 4 and Jupiter annotations/rules within one test class. The app JVM suite already runs on JUnit Platform with Jupiter and the Vintage engine for remaining JUnit 4 tests. **dexlib currently uses JUnit 4**; enabling Jupiter there requires a separate, validated Gradle/test-runner change before introducing Jupiter tests. Never claim a new test runs unless its module discovers and executes it.
+Both `app` and `dexlib` run local JVM tests through JUnit Platform with Jupiter; the Vintage engine is no longer configured. Use Jupiter `@TempDir` for per-test temporary roots, with the small `TempFiles` fixture helpers only where explicit named file/directory creation is needed. Do not mix JUnit 4 annotations/rules into JVM test classes. Verify that tests are discovered and executed, not merely compiled.
 
-This policy applies to **local JVM tests** (`src/test/`), not Android instrumentation (`src/androidTest/`). AndroidJUnitRunner/Compose instrumentation remains JUnit 4 until a separately verified Android runner migration is adopted. See [Build and validation](development.md#existing-test-structure) for current module support and commands.
+This policy applies to **local JVM tests** (`src/test/`), not Android instrumentation (`src/androidTest/`). AndroidJUnitRunner/Compose instrumentation remains JUnit 4; Compose screenshot tests retain their separate `@PreviewTest` runner. See [Build and validation](development.md#existing-test-structure) for current module support and commands.
 
 ## Test design and quality
 
