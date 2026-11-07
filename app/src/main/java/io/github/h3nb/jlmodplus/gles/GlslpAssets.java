@@ -129,7 +129,7 @@ public final class GlslpAssets {
             allowed.add("Texture");
             if (inherited) {
                 if (i > 0) allowed.add("OrigTexture");
-                if (i > 1) allowed.add("PassPrev2Texture");
+                if (i > 0) allowed.add("PassPrev2Texture");
                 for (GlslpPreset.Texture texture : preset.textures) allowed.add(texture.alias);
                 for (int j = 0; j < i; j++) {
                     allowed.add("Pass" + (j + 1) + "Texture");
