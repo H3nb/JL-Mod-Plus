@@ -10,6 +10,15 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,6 +30,7 @@ import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,6 +77,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -76,7 +87,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -129,6 +142,17 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private data class Images(val normal: Bitmap?, val pressed: Bitmap?, val mode: String)
     private data class ImportTarget(val setId: String, val key: String, val pressed: Boolean)
     private enum class NameAction { CREATE, RENAME, DUPLICATE }
+    private sealed interface SkinPage {
+        data object Gallery : SkinPage
+        data class SetEditor(val setId: String) : SkinPage
+        data class InlineDetail(val setId: String, val key: String) : SkinPage
+    }
+
+    private fun SkinPage.depth(): Int = when (this) {
+        SkinPage.Gallery -> 0
+        is SkinPage.SetEditor -> 1
+        is SkinPage.InlineDetail -> 2
+    }
     private data class NamePrompt(val action: NameAction, val setId: String?, val initial: String)
 
     private lateinit var workdir: File
@@ -370,16 +394,27 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         // Short, wide windows need the full height for editing rather than a bottom sheet.
         val inlineDetail = currentSet != null && selectedKey != null &&
             availableWindowHeightDp() < 480.dp && availableWindowWidthDp() >= 600.dp
+        val page = when {
+            inlineDetail -> SkinPage.InlineDetail(currentSet!!.id, requireNotNull(selectedKey))
+            currentSet != null -> SkinPage.SetEditor(currentSet.id)
+            else -> SkinPage.Gallery
+        }
+        val toolbarTitle = if (inlineDetail) {
+            val key = requireNotNull(selectedKey)
+            if (key == "dpad") stringResource(R.string.control_skin_dpad)
+            else if (key == "analog") stringResource(R.string.control_skin_analog)
+            else stringResource(R.string.control_skin_edit_named, label(key))
+        } else currentSet?.name ?: stringResource(R.string.control_skin_title)
+        val slideOffsetPx = with(LocalDensity.current) { 16.dp.roundToPx() }
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(if (inlineDetail) {
-                        val key = requireNotNull(selectedKey)
-                        if (key == "dpad") stringResource(R.string.control_skin_dpad)
-                        else if (key == "analog") stringResource(R.string.control_skin_analog)
-                        else stringResource(R.string.control_skin_edit_named, label(key))
-                    } else currentSet?.name ?: stringResource(R.string.control_skin_title),
-                        maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    title = {
+                        Crossfade(targetState = toolbarTitle, animationSpec = tween(180),
+                            label = "Control skin title") { shownTitle ->
+                            Text(shownTitle, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = ::back, enabled = !busy) {
                             Icon(painterResource(R.drawable.ic_arrow_back),
@@ -406,13 +441,47 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             },
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
-                if (inlineDetail && currentSet != null && selectedKey != null) {
-                    DetailEditor(currentSet, requireNotNull(selectedKey),
-                        Modifier.fillMaxSize(), horizontal = true)
-                } else if (currentSet == null) {
-                    Library(modifier = Modifier.fillMaxSize())
-                } else {
-                    Editor(modifier = Modifier.fillMaxSize())
+                AnimatedContent(
+                    targetState = page,
+                    modifier = Modifier.fillMaxSize().clipToBounds(),
+                    transitionSpec = {
+                        val direction = if (targetState.depth() > initialState.depth()) 1 else -1
+                        (slideInHorizontally(
+                            animationSpec = tween(200, easing = FastOutSlowInEasing),
+                            initialOffsetX = { direction * slideOffsetPx },
+                        ) + fadeIn(animationSpec = tween(160))).togetherWith(
+                            slideOutHorizontally(
+                                animationSpec = tween(200, easing = FastOutSlowInEasing),
+                                targetOffsetX = { -direction * slideOffsetPx / 2 },
+                            ) + fadeOut(animationSpec = tween(160)),
+                        )
+                    },
+                    label = "Control skin page",
+                ) { shownPage ->
+                    val active = shownPage == page
+                    Box(
+                        Modifier.fillMaxSize().then(
+                            if (active) Modifier else Modifier.clearAndSetSemantics {},
+                        ),
+                    ) {
+                        when (shownPage) {
+                            SkinPage.Gallery -> Library(Modifier.fillMaxSize())
+                            is SkinPage.SetEditor -> Editor(Modifier.fillMaxSize())
+                            is SkinPage.InlineDetail -> sets.firstOrNull {
+                                it.id == shownPage.setId
+                            }?.let { set ->
+                                DetailEditor(set, shownPage.key, Modifier.fillMaxSize(), horizontal = true)
+                            }
+                        }
+                        if (!active) {
+                            Box(
+                                Modifier.matchParentSize().clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {},
+                            )
+                        }
+                    }
                 }
                 if (busy) LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),

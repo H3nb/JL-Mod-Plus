@@ -101,6 +101,21 @@ class MemoryEditorAdaptiveComposeTest {
         rule.runOnIdle { assertEquals(listOf("hp", null), editStates) }
     }
 
+    @Test fun changingTabsRestoresSavedContentWithoutRetainingOutgoingSemantics() {
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true, savedTab = true,
+            savedVariables = listOf(SavedVariableRow("hp", "Hit points", "guest.Game.hp")),
+        ))
+        rule.setContent {
+            JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
+        }
+        rule.onNodeWithText("Hit points").assertIsDisplayed()
+        rule.runOnIdle { state.value = state.value.copy(savedTab = false, watchTab = true) }
+        rule.onNodeWithText("Hit points").assertDoesNotExist()
+        rule.runOnIdle { state.value = state.value.copy(savedTab = true, watchTab = false) }
+        rule.onNodeWithText("Hit points").assertIsDisplayed()
+    }
+
     @Test fun inspectorTabOnlyEnablesForOneSelectedCandidate() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val state = mutableStateOf(MemoryEditorUiState(visible = true, connected = true, supported = true))
