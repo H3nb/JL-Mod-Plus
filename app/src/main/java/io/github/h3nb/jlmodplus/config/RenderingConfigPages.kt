@@ -181,6 +181,9 @@ private fun ShaderEffectsContent(
     var invalidPickerResult by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val presetPickerTitle = stringResource(R.string.render_preset_mode)
+    val legacyPickerTitle = stringResource(R.string.render_legacy_mode)
+    val invalidShaderFile = stringResource(R.string.render_shader_invalid_picker)
+    val emptyLegacyFile = stringResource(R.string.render_legacy_empty)
 
     val legacyPicker = rememberLauncherForActivityResult(FilePickerResultContract()) { results ->
         if (results.isEmpty()) return@rememberLauncherForActivityResult
@@ -188,7 +191,7 @@ private fun ShaderEffectsContent(
         legacyVariants = emptyList()
         val requestVersion = ++legacyRequestVersion
         if (path == null || root == null) {
-            legacyError = context.getString(R.string.render_shader_invalid_picker)
+            legacyError = invalidShaderFile
             return@rememberLauncherForActivityResult
         }
         legacyError = null
@@ -201,7 +204,7 @@ private fun ShaderEffectsContent(
             legacyLoading = false
             result.onSuccess { variants ->
                 when (variants.size) {
-                    0 -> legacyError = context.getString(R.string.render_legacy_empty)
+                    0 -> legacyError = emptyLegacyFile
                     1 -> {
                         onFormChanged(state.form.toBuilder().shader(variants.single()).build())
                         if (editingCustom) onCancelCustom()
@@ -209,7 +212,7 @@ private fun ShaderEffectsContent(
                     else -> legacyVariants = variants
                 }
             }.onFailure {
-                legacyError = it.message ?: context.getString(R.string.render_legacy_empty)
+                legacyError = it.message ?: emptyLegacyFile
             }
         }
     }
@@ -259,10 +262,10 @@ private fun ShaderEffectsContent(
                 onShaderPickerOpened()
                 legacyPicker.launch(shaderPickerIntent(
                     context, root, listOf(".ini"),
-                    context.getString(R.string.render_legacy_mode),
+                    legacyPickerTitle,
                 ))
             } else {
-                legacyError = context.getString(R.string.render_shader_invalid_picker)
+                legacyError = invalidShaderFile
             }
         },
     )
