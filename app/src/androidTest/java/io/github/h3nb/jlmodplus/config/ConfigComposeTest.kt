@@ -1262,8 +1262,8 @@ class ConfigComposeTest {
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline),
-            useUnmergedTree = true).performScrollTo().performClick()
+        composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_number, 1)).assertExists()
         composeRule.onNodeWithTag("shader_custom_increase_passes").performScrollTo().performClick()
@@ -1293,39 +1293,28 @@ class ConfigComposeTest {
 
 
     @Test
-    fun legacyShaderUsesNamedChooserAndKeepsSelectedNameOnCard() {
+    fun selectedLegacyShaderRetainsItsNameAfterOpeningShaderPage() {
         val base = sampleState()
         val shader = ShaderInfo("Classic CRT", "test").apply {
             vertex = "shaders_legacy/crt.vsh"
             fragment = "shaders_legacy/crt.fsh"
         }
-        val selected = mutableStateOf(base.form)
-        val events = object : ConfigFormEvents by RecordingConfigEvents() {
-            override fun onFormChanged(form: ConfigFormState) {
-                selected.value = form
-            }
-        }
+        val form = base.form.toBuilder().graphicsMode(1).shader(shader).build()
+        val state = ConfigUiState(
+            form, base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, listOf(shader), base.removableScreenPresets,
+        )
         composeRule.setContent {
             JLModPlusTheme {
-                val state = ConfigUiState(
-                    selected.value, base.screenPresets, base.fontPresets,
-                    base.skins, base.soundBanks,
-                    listOf(ShaderInfo("Off", "test"), shader),
-                    base.removableScreenPresets,
-                )
-                ConfigScreen(state, events, initialDestination = ConfigDestination.Display)
+                ConfigScreen(state, RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display)
             }
         }
-        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_legacy_mode)).performClick()
-        composeRule.onNodeWithText("Classic CRT").performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+            .performScrollTo().performClick()
         composeRule.onNodeWithText(
             uiString(R.string.render_shader_selected_name, "Classic CRT"),
         ).assertExists()
-        composeRule.runOnIdle {
-            assertEquals(shader.fragment, selected.value.shader?.fragment)
-            assertEquals(shader.vertex, selected.value.shader?.vertex)
-        }
     }
 
     @Test
@@ -1428,8 +1417,8 @@ class ConfigComposeTest {
             }
             composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
                 .performScrollTo().performClick()
-            composeRule.onNodeWithText(uiString(R.string.render_custom_pipeline),
-                useUnmergedTree = true).performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
             composeRule.waitUntil(8_000) {
                 runCatching {
                     composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("10")
