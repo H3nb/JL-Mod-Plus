@@ -129,8 +129,8 @@ public final class GlslpAssets {
             GlslpPreset.Pass pass = preset.passes.get(i);
             Set<String> allowed = new HashSet<>();
             allowed.add("Texture");
+            allowed.add("OrigTexture"); // The source image is available in every pass.
             if (inherited) {
-                if (i > 0) allowed.add("OrigTexture");
                 if (i > 0) allowed.add("PassPrev2Texture");
                 for (GlslpPreset.Texture texture : preset.textures) allowed.add(texture.alias);
                 for (int j = 0; j < i; j++) {

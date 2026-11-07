@@ -62,9 +62,10 @@ catalog chooser remains available when assembling a custom Legacy pass.
 - GLSLP resource paths are relative to shaders/, including nested directories.
   Canonical root confinement, individual source limits, the 2 MiB aggregate
   shader-source budget, and the existing GLSLP validator still apply.
-  Custom sources extending a GLSLP preset can use only bound 2D sampler inputs
-  (the source texture, causal earlier passes, inherited aliases and declared
-  lookup textures); unknown samplers and unsupported sampler types fail
+  Custom sources can use Texture and OrigTexture even in the first pass;
+  preset-derived chains additionally support causal earlier passes, inherited
+  aliases and declared lookup textures. Unknown samplers, future-pass references
+  and unsupported sampler types fail
   validation before saving. Active samplers are also checked after GLSL linking
   to reject unsupported bindings introduced by macros.
 

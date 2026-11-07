@@ -131,7 +131,7 @@ public final class GlslpPipeline {
                 textureAttributes[i] = glGetAttribLocation(programs[i], "TexCoord");
                 usesOriginal[i] = glGetUniformLocation(programs[i], "OrigTexture") >= 0;
                 usesPrev2[i] = glGetUniformLocation(programs[i], "PassPrev2Texture") >= 0;
-                if (i == 0 && (usesOriginal[i] || usesPrev2[i])) {
+                if (i == 0 && usesPrev2[i]) {
                     throw new IOException("First pass cannot read preceding images");
                 }
                 for (String unsupported : new String[] {
@@ -581,12 +581,16 @@ public final class GlslpPipeline {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
         applyWrap(pass == null ? null : pass.wrapMode);
         if (originalTexture != 0) {
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, originalTexture);
-            int originalFilter = passFilter(preset.passes.get(0).linearFilter, fallbackFilter);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, originalFilter);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, originalFilter);
-            uniform1i(stage, "OrigTexture", 1);
+            // The first pass reads the original input through Texture already.
+            // Reuse unit 0 so both aliases also share the same GLES2 sampler state.
+            if (stage > 0) {
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, originalTexture);
+                int originalFilter = passFilter(preset.passes.get(0).linearFilter, fallbackFilter);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, originalFilter);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, originalFilter);
+            }
+            uniform1i(stage, "OrigTexture", stage == 0 ? 0 : 1);
             uniform2f(stage, "OrigTextureSize", originalW, originalH);
             uniform2f(stage, "OrigInputSize", originalW, originalH);
         }

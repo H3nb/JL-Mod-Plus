@@ -63,6 +63,41 @@ class CustomShaderChainTest {
         assertTrue(empty.getMessage().contains("1–16 stages"));
     }
 
+    @Test void firstPassCanReadOriginalButNotFuturePasses() throws Exception {
+        source("original/first.glsl",
+                "uniform sampler2D Texture;\nuniform sampler2D OrigTexture;\nvoid main() {}");
+        source("original/second.glsl",
+                "uniform sampler2D Texture;\nuniform sampler2D OrigTexture;\nvoid main() {}");
+        source("original/chain.glslp",
+                "shaders = 2\nshader0 = first.glsl\nshader1 = second.glsl\n");
+
+        GlslpPreset standalone = GlslpAssets.loadCustom(Collections.singletonList(
+                new CustomShaderStage("original/first.glsl", 1, null)),
+                shaderRoot.toFile());
+        assertTrue(standalone.passes.get(0).sourceText.contains("OrigTexture"));
+        GlslpPreset inherited = GlslpAssets.loadCustom(Arrays.asList(
+                new CustomShaderStage("original/first.glsl", 0, null),
+                new CustomShaderStage("original/second.glsl", 0, null)),
+                shaderRoot.toFile(), "original/chain.glslp", "glsl");
+        assertEquals(2, inherited.passes.size());
+
+        source("original/future.glsl", "uniform sampler2D Pass2Texture;\nvoid main() {}");
+        IOException future = assertThrows(IOException.class,
+                () -> GlslpAssets.loadCustom(Arrays.asList(
+                        new CustomShaderStage("original/future.glsl", 0, null),
+                        new CustomShaderStage("original/second.glsl", 0, null)),
+                        shaderRoot.toFile(), "original/chain.glslp", "glsl"));
+        assertTrue(future.getMessage().contains("Pass2Texture"), future.getMessage());
+        source("original/previous.glsl",
+                "uniform sampler2D PassPrev2Texture;\nvoid main() {}");
+        IOException previous = assertThrows(IOException.class,
+                () -> GlslpAssets.loadCustom(Arrays.asList(
+                        new CustomShaderStage("original/previous.glsl", 0, null),
+                        new CustomShaderStage("original/second.glsl", 0, null)),
+                        shaderRoot.toFile(), "original/chain.glslp", "glsl"));
+        assertTrue(previous.getMessage().contains("PassPrev2Texture"), previous.getMessage());
+    }
+
     @Test void customChainAndPresetAcceptNestedShaderFolderPaths() throws Exception {
         source("extra/passes/first.glsl", "uniform sampler2D Texture;\nvoid main() {}");
         source("extra/passes/final.glsl", "uniform sampler2D Texture;\nvoid main() {}");
