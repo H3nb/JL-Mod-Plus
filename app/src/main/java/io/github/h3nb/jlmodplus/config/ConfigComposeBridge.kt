@@ -1005,11 +1005,15 @@ private fun ScreenSection(
             )
         }
         if (isTextureFilteringApplicable(state)) {
+            val filterOptions = listOf(
+                stringResource(R.string.render_custom_nearest),
+                stringResource(R.string.render_custom_linear),
+            )
             ConfigChoicePreference(
                 title = stringResource(R.string.render_texture_filtering),
                 description = stringResource(R.string.render_texture_filtering_help),
-                selected = if (form.screenFilter) "Linear" else "Nearest",
-                options = listOf("Nearest", "Linear"),
+                selected = filterOptions[if (form.screenFilter) 1 else 0],
+                options = filterOptions,
                 onSelected = { index ->
                     onFormChanged(form.toBuilder().screenFilter(index == 1).build())
                 },
