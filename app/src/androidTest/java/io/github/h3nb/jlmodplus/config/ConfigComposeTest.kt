@@ -1262,6 +1262,9 @@ class ConfigComposeTest {
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
+        val shaderUiTree = composeRule.onRoot(useUnmergedTree = true).printToString(maxDepth = 20)
+        assertTrue("Shader effects page missing custom mode row:\n" + shaderUiTree,
+            shaderUiTree.contains("shader_custom_mode_row"))
         composeRule.onNodeWithTag("shader_custom_mode_row")
                 .performScrollTo().performClick()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
