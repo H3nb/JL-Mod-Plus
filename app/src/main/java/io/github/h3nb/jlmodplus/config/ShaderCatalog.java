@@ -100,9 +100,8 @@ public final class ShaderCatalog {
         if (info == null || info.fragment == null || info.vertex == null) return;
         try {
             entries.add(resolveLegacyPaths(root, parent, info));
-        } catch (IOException e) {
-            // One missing source must not hide independent valid sections in the same INI.
-            Log.w(TAG, "Skipping invalid legacy shader: " + info, e);
+        } catch (IOException ignored) {
+            // A malformed section is unusable, but must not discard its valid peers.
         }
     }
 
