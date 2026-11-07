@@ -48,6 +48,8 @@ data class ProfileModel(
     @SerialName("ScreenGravity") @JvmField var screenGravity: Int = 0,
     @SerialName("ScreenPadding") @JvmField var screenPadding: Int = 0,
     @SerialName("ScreenFilter") @JvmField var screenFilter: Boolean = false,
+    // Research-only opt-in. 0 = Auto; 1..10 = manual physical render scale.
+    @SerialName("InternalResolutionScale") @JvmField var internalResolutionScale: Int = 1,
     @SerialName("ImmediateMode") @JvmField var immediateMode: Boolean = false,
     @SerialName("GraphicsMode") @JvmField var graphicsMode: Int = 0,
     @SerialName("Shader") @JvmField var shader: ShaderSelection? = null,

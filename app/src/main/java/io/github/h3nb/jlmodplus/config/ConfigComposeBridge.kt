@@ -983,6 +983,15 @@ private fun ScreenSection(
             options = graphicsOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
         )
+        val internalScaleOptions = listOf(stringResource(R.string.internal_resolution_auto)) +
+            (1..10).map { "${it}×" }
+        ConfigChoicePreference(
+            title = stringResource(R.string.internal_resolution_title),
+            description = stringResource(R.string.internal_resolution_description),
+            selected = internalScaleOptions.getOrElse(form.internalResolutionScale) { internalScaleOptions[1] },
+            options = internalScaleOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().internalResolutionScale(index).build()) },
+        )
         if (form.graphicsMode == 1) {
             ConfigChoicePreference(
                 title = stringResource(R.string.PREF_SHADER_FILTER),
