@@ -145,7 +145,7 @@ public final class GlslpAssets {
                     allowed.add("PassPrev" + distance + "Texture");
                 }
             }
-            Matcher samplers = SAMPLER.matcher(COMMENTS.matcher(pass.sourceText).replaceAll(""));
+            Matcher samplers = SAMPLER.matcher(COMMENTS.matcher(pass.sourceText).replaceAll(" "));
             while (samplers.find()) {
                 for (String declared : samplers.group(1).split(",")) {
                     String name = declared.trim();
