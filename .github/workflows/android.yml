@@ -120,6 +120,7 @@ jobs:
           bash -n scripts/runtime-smoke.sh
           bash -n scripts/release-smoke.sh
           python3 -B -m unittest discover -s scripts/tests -p 'test_*.py' -v
+          pwsh -NoProfile -File tools/audio/tests/test-prepare-native-sources.ps1
 
       - name: Assemble arm64 debug APK
         id: assemble
@@ -377,7 +378,7 @@ jobs:
         with:
           # Ubuntu 26.04 has cmdline-tools 20.0 preinstalled; avoid fetching 22.0.
           cmdline-tools-version: '14742923'
-          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+          packages: 'platform-tools platforms;android-37.0'
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
@@ -386,7 +387,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
+          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:lintEmulatorDebug
 
       - name: Summarize required lint results
         if: always()
