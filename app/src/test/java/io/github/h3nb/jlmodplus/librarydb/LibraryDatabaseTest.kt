@@ -6,28 +6,29 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class LibraryDatabaseTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
     private lateinit var database: LibraryDatabase
     private lateinit var dao: LibraryDao
 
-    @Before fun setUp() {
-        val file = temporaryFolder.newFile(LibraryDatabase.FILE_NAME)
+    @BeforeEach fun setUp() {
+        val file = TempFiles.newFile(temporaryFolder, LibraryDatabase.FILE_NAME)
         assertTrue(file.delete())
         database = Room.databaseBuilder<LibraryDatabase>(file.absolutePath)
             .setDriver(BundledSQLiteDriver())
@@ -35,7 +36,7 @@ class LibraryDatabaseTest {
         dao = database.libraryDao()
     }
 
-    @After fun tearDown() = database.close()
+    @AfterEach fun tearDown() = database.close()
 
     @Test fun duplicateSourceIdentityIsAllowedButStorageKeyIsDistinct() = runBlocking {
         dao.insertApp(app("game-a"))
@@ -83,10 +84,7 @@ class LibraryDatabaseTest {
                 normalizedName = LibraryCollectionNames.normalize("Role Playing"),
             ),
         )
-        assertEquals(
-            "Role Playing",
-            dao.observeCollections().first().first { it.id == firstCollection }.name,
-        )
+        assertEquals(dao.observeCollections().first().first { it.id == firstCollection }.name, , "Role Playing")
 
         dao.setCollectionMembership(firstCollection, firstApp, included = false, addedAt = 50L)
         assertEquals(listOf(secondApp), dao.getCollectionAppIds(firstCollection))

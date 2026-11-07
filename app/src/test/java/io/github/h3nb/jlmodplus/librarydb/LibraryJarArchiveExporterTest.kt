@@ -14,24 +14,24 @@
 
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
 import java.nio.file.Files
 import java.util.zip.ZipFile
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryJarArchiveExporterTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test
     fun archiveSortsAppsSanitizesNamesAndResolvesCollisionsDeterministically() {
-        val first = temporaryFolder.newFile("first.jar").apply { writeBytes(byteArrayOf(1, 2)) }
-        val second = temporaryFolder.newFile("second.jar").apply { writeBytes(byteArrayOf(3, 4)) }
-        val target = File(temporaryFolder.root, "jars.zip")
+        val first = TempFiles.newFile(temporaryFolder, "first.jar").apply { writeBytes(byteArrayOf(1, 2)) }
+        val second = TempFiles.newFile(temporaryFolder, "second.jar").apply { writeBytes(byteArrayOf(3, 4)) }
+        val target = File(temporaryFolder, "jars.zip")
         LibraryJarArchiveExporter.exportToZip(
             sources = listOf(
                 LibraryJarArchiveExporter.JarSource(2L, "A\\Game", second),
@@ -47,7 +47,7 @@ class LibraryJarArchiveExporterTest {
             zip.entries().asSequence().forEach { entry -> assertEquals(0L, entry.time) }
         }
 
-        val secondTarget = File(temporaryFolder.root, "jars-again.zip")
+        val secondTarget = File(temporaryFolder, "jars-again.zip")
         LibraryJarArchiveExporter.exportToZip(
             sources = listOf(
                 LibraryJarArchiveExporter.JarSource(1L, "A/Game", first),
@@ -60,10 +60,10 @@ class LibraryJarArchiveExporterTest {
 
     @Test
     fun emptyOrMissingSourceIsRejected() {
-        val target = File(temporaryFolder.root, "empty.zip")
+        val target = File(temporaryFolder, "empty.zip")
         try {
             LibraryJarArchiveExporter.exportToZip(
-                listOf(LibraryJarArchiveExporter.JarSource(1L, "Missing", File(temporaryFolder.root, "missing.jar"))),
+                listOf(LibraryJarArchiveExporter.JarSource(1L, "Missing", File(temporaryFolder, "missing.jar"))),
                 target,
             )
             throw AssertionError("Expected missing JAR to fail")

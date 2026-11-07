@@ -6,6 +6,8 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
@@ -17,22 +19,20 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class LibraryCollectionRepositoryTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     private lateinit var scope: CoroutineScope
     private lateinit var repository: LibraryRepository
 
-    @Before
+    @BeforeEach
     fun setUp() {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         repository = LibraryRepository(
@@ -45,7 +45,7 @@ class LibraryCollectionRepositoryTest {
         )
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
         repository.close()
         scope.cancel()
@@ -53,7 +53,7 @@ class LibraryCollectionRepositoryTest {
 
     @Test
     fun collectionCrudAndMembershipPublishThroughReadyState() = runBlocking {
-        val root = temporaryFolder.newFolder("collections")
+        val root = TempFiles.newFolder(temporaryFolder, "collections")
         createConvertedApp(root, "game", "Game")
         repository.setEmulatorDirectory(root)
         val ready = awaitReady(root)
@@ -103,8 +103,8 @@ class LibraryCollectionRepositoryTest {
 
     @Test
     fun staleCollectionMutationIsRejectedAfterWorkdirRoundTrip() = runBlocking {
-        val first = temporaryFolder.newFolder("first")
-        val second = temporaryFolder.newFolder("second")
+        val first = TempFiles.newFolder(temporaryFolder, "first")
+        val second = TempFiles.newFolder(temporaryFolder, "second")
         createConvertedApp(first, "one", "One")
         createConvertedApp(second, "two", "Two")
 

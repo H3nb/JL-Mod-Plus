@@ -6,6 +6,8 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
@@ -18,22 +20,20 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class LibraryMetadataOverrideRegressionTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     private lateinit var scope: CoroutineScope
     private lateinit var repository: LibraryRepository
 
-    @Before
+    @BeforeEach
     fun setUp() {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         repository = LibraryRepository(
@@ -46,7 +46,7 @@ class LibraryMetadataOverrideRegressionTest {
         )
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
         repository.close()
         scope.cancel()
@@ -55,7 +55,7 @@ class LibraryMetadataOverrideRegressionTest {
     @Test
     fun savingSourceValueResetsOnlyThatMetadataOverride() {
         runBlocking {
-            val root = temporaryFolder.newFolder("metadata-field-reset")
+            val root = TempFiles.newFolder(temporaryFolder, "metadata-field-reset")
             createConvertedApp(root)
             repository.setEmulatorDirectory(root)
             val ready = awaitReady(root)
@@ -100,7 +100,7 @@ class LibraryMetadataOverrideRegressionTest {
 
     @Test
     fun localizedEditsAreAtomicAndResetWithMetadata() = runBlocking {
-        val root = temporaryFolder.newFolder("localized-metadata")
+        val root = TempFiles.newFolder(temporaryFolder, "localized-metadata")
         createConvertedApp(root)
         repository.setEmulatorDirectory(root)
         val ready = awaitReady(root)
@@ -142,7 +142,7 @@ class LibraryMetadataOverrideRegressionTest {
 
     @Test
     fun metadataFailureRollsBackIconRevisionAndTextTogether() = runBlocking {
-        val file = File(temporaryFolder.root, "atomic-metadata.db")
+        val file = File(temporaryFolder, "atomic-metadata.db")
         val openDatabase = {
             Room.databaseBuilder<LibraryDatabase>(file.absolutePath)
                 .setDriver(BundledSQLiteDriver()).build()
@@ -186,7 +186,7 @@ class LibraryMetadataOverrideRegressionTest {
             } catch (_: Exception) {
                 failed = true
             }
-            assertTrue("The injected metadata failure must reach the caller", failed)
+            assertTrue(failed, "The injected metadata failure must reach the caller")
             val restored = requireNotNull(dao.getApp(appId))
             assertEquals(19L, restored.iconRevision)
             assertEquals(null, restored.customTitle)

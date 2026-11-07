@@ -6,24 +6,24 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 /** Regression coverage for durable Library data whose singleton bootstrap row is missing. */
 class LibraryBootstrapStateProtectionTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test
     fun receiptOnlyDatabaseWithoutBootstrapStateIsNotTreatedAsFresh() = runBlocking {
-        val workDir = temporaryFolder.newFolder("receipt-only")
+        val workDir = TempFiles.newFolder(temporaryFolder, "receipt-only")
         val database = Room.databaseBuilder<LibraryDatabase>(
             File(workDir, LibraryDatabase.FILE_NAME).absolutePath,
         )
