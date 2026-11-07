@@ -597,7 +597,7 @@ public class ProfilesManagerPresetSourceConcurrencyTest {
 			if (children == null) fail("Unable to enumerate " + file);
 			for (File child : children) deleteTree(child);
 		}
-		assertTrue("Unable to delete " + file, file.delete());
+		assertTrue(file.delete(), "Unable to delete " + file);
 	}
 
 	private static boolean containsProfile(ArrayList<Profile> profiles, String name) {

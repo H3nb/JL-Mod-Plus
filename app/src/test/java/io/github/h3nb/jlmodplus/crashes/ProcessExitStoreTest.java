@@ -88,15 +88,15 @@ public class ProcessExitStoreTest {
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE,
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE}) {
-			assertTrue("importance=" + importance, ProcessExitStore.shouldRetain(
-					ProcessExitStore.REASON_LOW_MEMORY, 0, importance, null));
+			assertTrue(ProcessExitStore.shouldRetain(
+					ProcessExitStore.REASON_LOW_MEMORY, 0, importance, null), "importance=" + importance);
 		}
 		for (int importance : new int[]{
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE,
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED,
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE}) {
-			assertFalse("importance=" + importance, ProcessExitStore.shouldRetain(
-					ProcessExitStore.REASON_LOW_MEMORY, 0, importance, null));
+			assertFalse(ProcessExitStore.shouldRetain(
+					ProcessExitStore.REASON_LOW_MEMORY, 0, importance, null), "importance=" + importance);
 		}
 	}
 
@@ -114,8 +114,8 @@ public class ProcessExitStoreTest {
 				ProcessExitStore.REASON_PACKAGE_STATE_CHANGE,
 				ProcessExitStore.REASON_PACKAGE_UPDATED,
 				42}) {
-			assertFalse("reason=" + reason, ProcessExitStore.shouldRetain(
-					reason, 0, foreground, null));
+			assertFalse(ProcessExitStore.shouldRetain(
+					reason, 0, foreground, null), "reason=" + reason);
 		}
 		assertFalse(ProcessExitStore.shouldRetain(
 				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL,

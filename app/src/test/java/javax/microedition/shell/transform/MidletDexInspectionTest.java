@@ -46,7 +46,7 @@ public class MidletDexInspectionTest {
         arguments.outName = payload.getPath();
         arguments.numThreads = 1;
         ConversionResult converted = Main.runWithResult(arguments);
-        assertTrue(converted.getDiagnostics().toString(), converted.isSuccess());
+        assertTrue(converted.isSuccess(), converted.getDiagnostics().toString());
 
         Map<String, String> descriptor = new HashMap<>();
         MidletTransformMetadata.mark(descriptor);
@@ -125,7 +125,7 @@ public class MidletDexInspectionTest {
         args.outName = payload.getPath();
         args.numThreads = 1;
         ConversionResult converted = Main.runWithResult(args);
-        assertTrue(converted.getDiagnostics().toString(), converted.isSuccess());
+        assertTrue(converted.isSuccess(), converted.getDiagnostics().toString());
         return payload;
     }
 }

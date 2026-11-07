@@ -59,7 +59,7 @@ public class MidletPermissionPolicyTest {
 
     private static void assertNonStorageAllowed() {
         for (String permission : NON_STORAGE) {
-            assertEquals(String.valueOf(permission), 1, MidletPermissionManager.checkPermission(permission));
+            assertEquals(1, MidletPermissionManager.checkPermission(permission), String.valueOf(permission));
         }
     }
 

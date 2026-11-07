@@ -338,9 +338,8 @@ public class TimerTest {
 			session.updateSpeedPercent(400);
 			releaseBlocker.countDown();
 			assertTrue(targetRan.await(1L, TimeUnit.SECONDS));
-			assertTrue("scheduledExecutionTime retained the old speed projection: "
-							+ observedScheduledTime.get(),
-					observedScheduledTime.get() < initialWallTime + 700L);
+			assertTrue(observedScheduledTime.get() < initialWallTime + 700L,
+					"scheduledExecutionTime retained the old speed projection: " + observedScheduledTime.get());
 		} finally {
 			releaseBlocker.countDown();
 			if (timer != null) {
@@ -651,8 +650,8 @@ public class TimerTest {
 			// (180 ms callback + 100 ms period). CLDC fixed-delay uses the prior dispatch
 			// time, so the nominal dates remain one period apart.
 			long scheduledDelta = secondScheduled.get() - firstScheduled.get();
-			assertTrue("fixed-delay drifted from dispatch time: " + scheduledDelta,
-					scheduledDelta >= 70L && scheduledDelta < 220L);
+			assertTrue(scheduledDelta >= 70L && scheduledDelta < 220L,
+					"fixed-delay drifted from dispatch time: " + scheduledDelta);
 		} finally {
 			if (timer != null) {
 				timer.cancel();
