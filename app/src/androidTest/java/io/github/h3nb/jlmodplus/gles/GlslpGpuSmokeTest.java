@@ -223,6 +223,31 @@ public final class GlslpGpuSmokeTest {
                 Color.WHITE);
     }
 
+    @Test public void macroDeclaredSamplerMustBeBoundAfterGlslLinking() throws Exception {
+        Map<String, String> sources = new HashMap<>();
+        sources.put("macro.glslp", "shaders = 1\nshader0 = macro.glsl\n");
+        sources.put("macro.glsl", colorPass(
+                "#define SAMPLER_TYPE sampler2D\n"
+                + "uniform SAMPLER_TYPE MysteryTexture;\n"
+                + "void main(){gl_FragColor=texture2D(MysteryTexture,uv);}\n"));
+        GlslpPreset unsafe = GlslpPreset.load(sources::get, "macro.glslp");
+        try {
+            execute(unsafe, 1,
+                    path -> { throw new IOException("No LUT expected"); }, -1);
+            fail("An unbound macro-declared sampler must not read texture unit zero");
+        } catch (IOException expected) {
+            assertTrue(expected.getMessage(), expected.getMessage()
+                    .contains("Unbound GLSLP sampler MysteryTexture"));
+        }
+
+        sources.put("macro.glsl", colorPass(
+                "#define SAMPLER_TYPE sampler2D\n"
+                + "uniform SAMPLER_TYPE Texture;\n"
+                + "void main(){gl_FragColor=texture2D(Texture,uv);}\n"));
+        GlslpPreset supported = GlslpPreset.load(sources::get, "macro.glslp");
+        execute(supported, 1, path -> { throw new IOException("No LUT expected"); }, -1);
+    }
+
     @Test public void noncausalPassOutputSamplerIsRejected() throws Exception {
         Map<String, String> source = new HashMap<>();
         source.put("bad.glslp", "shaders = 1\nshader0 = bad.glsl\n");

@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * GLES2 presentation-only execution of bounded GLSLP multipass presets.
@@ -140,6 +142,7 @@ public final class GlslpPipeline {
                         throw new IOException("Unsupported GLSLP dependency " + unsupported);
                     }
                 }
+                validateLinkedSamplers(i);
             }
             programs[n] = link(stockSource, false);
             vertexAttributes[n] = glGetAttribLocation(programs[n], "VertexCoord");
@@ -195,6 +198,46 @@ public final class GlslpPipeline {
         int mode = wrapValue(wrap);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode);
+    }
+
+    /**
+     * Linked-program uniforms are authoritative after GLSL macro expansion.
+     * Reject active samplers the executor cannot bind; otherwise the GL default
+     * sampler unit (zero) may silently render a plausible but incorrect frame.
+     * Causal checks for named pass samplers are performed by resolvePassReferences.
+     */
+    private void validateLinkedSamplers(int stage) throws IOException {
+        Set<String> boundNames = new HashSet<>();
+        boundNames.add("Texture");
+        boundNames.add("OrigTexture");
+        boundNames.add("PassPrev2Texture");
+        for (GlslpPreset.Texture lookup : preset.textures) {
+            boundNames.add(lookup.alias);
+        }
+        for (int i = 0; i < preset.passes.size(); i++) {
+            boundNames.add("Pass" + (i + 1) + "Texture");
+            String alias = preset.passes.get(i).alias;
+            if (alias != null) {
+                boundNames.add(alias);
+                boundNames.add(alias + "Texture");
+            }
+        }
+        for (int distance = 3; distance <= 16; distance++) {
+            boundNames.add("PassPrev" + distance + "Texture");
+        }
+        int[] count = new int[1], size = new int[1], type = new int[1];
+        glGetProgramiv(programs[stage], GL_ACTIVE_UNIFORMS, count, 0);
+        for (int index = 0; index < count[0]; index++) {
+            String name = glGetActiveUniform(programs[stage], index, size, 0, type, 0);
+            if (type[0] == GL_SAMPLER_2D) {
+                if (size[0] != 1 || !boundNames.contains(name)) {
+                    throw new IOException("Unbound GLSLP sampler " + name + " in pass " + stage);
+                }
+            } else if (type[0] == GL_SAMPLER_CUBE || type[0] == 0x8D66) {
+                // GL_SAMPLER_EXTERNAL_OES (0x8D66) cannot use GL_TEXTURE_2D bindings.
+                throw new IOException("Unsupported GLSLP sampler type for " + name);
+            }
+        }
     }
 
     /**
