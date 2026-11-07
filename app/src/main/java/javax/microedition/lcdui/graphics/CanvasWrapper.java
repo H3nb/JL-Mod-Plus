@@ -315,7 +315,7 @@ public class CanvasWrapper {
 	public void drawImage(Image image, RectF dst) {
 		Bitmap bitmap = image.getBitmap();
 		bitmap.prepareToDraw();
-		canvas.drawBitmap(bitmap, image.getBounds(), dst, imgPaint);
+		canvas.drawBitmap(bitmap, image.getPhysicalContentRect(), dst, imgPaint);
 	}
 
 	public void fillRect(RectF rect) {
