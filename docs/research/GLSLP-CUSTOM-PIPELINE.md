@@ -1,7 +1,7 @@
 # Scoped shader file selection and custom pass configuration
 
-This contract describes the combined integration in PR #225. External Legacy INI
-and GLSLP preset selection uses the existing file-picker Activity with an explicit
+External Legacy INI and GLSLP preset selection uses the existing file-picker
+Activity with an explicit
 shader-root boundary and single-tap selection. The existing named Legacy
 catalog chooser remains available when assembling a custom Legacy pass.
 
@@ -58,10 +58,21 @@ catalog chooser remains available when assembling a custom Legacy pass.
   to the stock presenter. The runtime logs the unsupported GPU feature or shader error.
 - GLSLP resource paths are relative to shaders/, including nested directories.
   Canonical root confinement, individual source limits, the 2 MiB aggregate
-  shader-source budget, and the existing GLSLP validator still apply. Custom sources extending a GLSLP preset can use
-  only bound 2D sampler inputs (the source texture, causal earlier passes,
-  inherited aliases and declared lookup textures); unknown samplers and
-  unsupported sampler types fail validation before saving.
+  shader-source budget, and the existing GLSLP validator still apply.
+  Custom sources extending a GLSLP preset can use only bound 2D sampler inputs
+  (the source texture, causal earlier passes, inherited aliases and declared
+  lookup textures); unknown samplers and unsupported sampler types fail
+  validation before saving. Active samplers are also checked after GLSL linking
+  to reject unsupported bindings introduced by macros.
+
+## Supported runtime subset
+
+The renderer supports 1–16 causal GLSL passes, bounded GLSLP #reference
+inheritance, scalar parameters, and up to four PNG/JPEG lookup textures.
+Intermediate FBOs and mipmaps share a 64 MiB allocation budget. Device
+capabilities gate float framebuffers, border clamping, non-power-of-two
+sampling and mipmap filtering. Unsupported GLSL features fail back to the
+internal stock presenter; there are no bundled third-party presets.
 
 ## Qualification
 
@@ -69,4 +80,5 @@ Run focused JVM tests covering root traversal and extension filtering, legacy
 INI multi-variant resolution, and GLSLP/custom nested paths; also run Android
 build, lint, screenshot, and representative Compose interaction tests.
 Validate GPU context loss, real-game softbar/viewport resize and actual ARM64
-performance before marking the combined PR ready to merge.
+performance with external test shaders before merging. No experimental GPU
+workflow or third-party test shader bundle is part of this integration.

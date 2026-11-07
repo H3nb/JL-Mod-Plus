@@ -1757,7 +1757,7 @@ public abstract class Canvas extends Displayable {
 					glslpPipeline = new GlslpPipeline(preset, GlslpAssets.stockSource(),
 							path -> GlslpAssets.loadTextureBitmap(shaderSelection, shaderDirectory, path));
 				} catch (Exception e) {
-					Log.w(TAG, "GLSLP prototype unavailable; using identity renderer", e);
+					Log.w(TAG, "GLSLP unavailable; using identity renderer", e);
 				}
 				program.use();
 			}
@@ -1860,7 +1860,7 @@ public abstract class Canvas extends Displayable {
 									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
 							glslpDrawn = true;
 						} catch (RuntimeException e) {
-							Log.w(TAG, "GLSLP prototype draw failed; using identity renderer", e);
+							Log.w(TAG, "GLSLP draw failed; using identity renderer", e);
 							glslpPipeline.release();
 							glslpPipeline = null;
 						}

@@ -85,7 +85,7 @@ public final class GlslpPipeline {
     public GlslpPipeline(GlslpPreset resolved, String stockSource,
             TextureLoader images) throws IOException {
         if (resolved == null || resolved.passes.isEmpty() || resolved.passes.size() > 16) {
-            throw new IOException("GLSLP supports 1–16 passes in this prototype");
+            throw new IOException("GLSLP supports 1–16 passes");
         }
         preset = resolved;
         String extensions = glGetString(GL_EXTENSIONS);
@@ -732,7 +732,7 @@ public final class GlslpPipeline {
         if (status[0] != GL_TRUE) {
             String log = glGetShaderInfoLog(shader);
             glDeleteShader(shader);
-            throw new IllegalStateException("Libretro research compile: " + log);
+            throw new IllegalStateException("GLSL shader compile: " + log);
         }
         return shader;
     }

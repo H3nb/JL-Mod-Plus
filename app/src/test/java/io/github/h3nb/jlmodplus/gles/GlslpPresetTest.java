@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-/** CPU-only characterization of pinned Libretro GLSLP preset semantics. */
+/** JVM contracts for GLSLP parsing, parameters, and pass planning. */
 public class GlslpPresetTest {
     private static final int GUEST = 8, VIEWPORT = 96;
 
@@ -28,7 +28,7 @@ public class GlslpPresetTest {
 
     @Test public void xbrzFreescaleAndCrispPreserveSourceAndViewportStages()
             throws Exception {
-        // Layout and parameters from pinned libretro/glsl-shaders@cba01a48.
+        // Representative multipass layout and parameter values.
         String source = "shaders = 2\n"
                 + "shader0 = shaders/xbrz-freescale-multipass/xbrz-freescale-pass0.glsl\n"
                 + "filter_linear0 = false\nscale_type0 = source\nscale0 = 1.0\n"
@@ -122,7 +122,7 @@ public class GlslpPresetTest {
                 "A source-relative last pass remains a separate FBO even"
                         + " when source and viewport dimensions coincide");
 
-        // Pinned 4xbrz-linear has a 4x first pass, then ../stock.glsl
+        // A 4x first pass followed by a stock presentation pass
         // without a scale_type1; the last pass therefore targets viewport.
         assets.put("xbrz/4xbrz-linear.glslp",
                 "shaders = 2\n"
