@@ -33,6 +33,12 @@ public final class GlslpPipeline {
     private static final float[] IDENTITY = {
             1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
     };
+    private static final float[] FULL_QUAD = {
+            -1,  1, 0, 1, 0, 1, 0, 1,
+            -1, -1, 0, 1, 0, 0, 0, 1,
+             1,  1, 0, 1, 1, 1, 0, 1,
+             1, -1, 0, 1, 1, 0, 0, 1
+    };
     private final GlslpPreset preset;
     private final Map<String, Float> parameters;
     private final boolean fullNpot, borderClamp, halfFloatLinear, halfFloatEs3;
@@ -63,6 +69,7 @@ public final class GlslpPipeline {
     private final List<Map<String, Integer>> uniformLocations = new ArrayList<>();
     private final FloatBuffer quad = ByteBuffer.allocateDirect(4 * 8 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
+    private final float[] legacyUniformValues = new float[4];
     private long processedSequence = Long.MIN_VALUE;
     private GlslpPreset.Plan cachedPlan;
     private int planSourceWidth, planSourceHeight, planViewportWidth, planViewportHeight;
@@ -480,12 +487,7 @@ public final class GlslpPipeline {
         // draws must write source y=0 to the FBO bottom row as well.
         // The final host quad deliberately keeps its existing top-left UV
         // orientation; this makes both Texture and PassPrev2Texture agree.
-        quad.put(new float[] {
-                -1,  1, 0, 1, 0, 1, 0, 1,
-                -1, -1, 0, 1, 0, 0, 0, 1,
-                 1,  1, 0, 1, 1, 1, 0, 1,
-                 1, -1, 0, 1, 1, 0, 0, 1
-        });
+        quad.put(FULL_QUAD);
         quad.rewind();
     }
 
@@ -583,11 +585,11 @@ public final class GlslpPipeline {
         if (pass != null && pass.legacyValues != null) {
             int location = uniformLocation(stage, "u_setting");
             if (location >= 0) {
-                float[] values = new float[4];
+                Arrays.fill(legacyUniformValues, 0f);
                 for (int i = 0; i < Math.min(4, pass.legacyValues.size()); i++) {
-                    values[i] = pass.legacyValues.get(i);
+                    legacyUniformValues[i] = pass.legacyValues.get(i);
                 }
-                glUniform4fv(location, 1, values, 0);
+                glUniform4fv(location, 1, legacyUniformValues, 0);
             }
             uniform2f(stage, "u_texelDelta", 1f / inputW, 1f / inputH);
             uniform2f(stage, "u_pixelDelta", 1f / outputW, 1f / outputH);

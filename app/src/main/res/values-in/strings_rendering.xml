@@ -53,7 +53,7 @@
     <string name="render_custom_no_sources">Belum ada shader .glsl mandiri. Tambahkan berkas ke shaders/shaders_glsl/ lalu buka kembali pengaturan.</string>
     <string name="render_custom_scale">Output: %1$d× tahap sebelumnya</string>
     <string name="render_custom_output_scale">Ukuran output untuk tahap berikutnya</string>
-    <string name="render_custom_final_viewport">Output akhir: area tampilan game</string>
+    <string name="render_custom_final_viewport">Output akhir: ditampilkan di layar</string>
     <string name="render_custom_filter">Filter input: %1$s</string>
     <string name="render_custom_up">Naik</string>
     <string name="render_custom_down">Turun</string>

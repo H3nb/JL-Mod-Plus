@@ -54,7 +54,7 @@
     <string name="render_custom_no_sources">No standalone .glsl shaders found. Add files to shaders/shaders_glsl/ and reopen settings.</string>
     <string name="render_custom_scale">Output: %1$d× previous stage</string>
     <string name="render_custom_output_scale">Output size for next stage</string>
-    <string name="render_custom_final_viewport">Final output: game viewport</string>
+    <string name="render_custom_final_viewport">Final output: presented on screen</string>
     <string name="render_custom_filter">Input filter: %1$s</string>
     <string name="render_custom_up">Up</string>
     <string name="render_custom_down">Down</string>
