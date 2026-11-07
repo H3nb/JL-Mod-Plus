@@ -84,7 +84,10 @@ class LibraryDatabaseTest {
                 normalizedName = LibraryCollectionNames.normalize("Role Playing"),
             ),
         )
-        assertEquals(dao.observeCollections().first().first { it.id == firstCollection }.name, , "Role Playing")
+        assertEquals(
+            "Role Playing",
+            dao.observeCollections().first().first { it.id == firstCollection }.name,
+        )
 
         dao.setCollectionMembership(firstCollection, firstApp, included = false, addedAt = 50L)
         assertEquals(listOf(secondApp), dao.getCollectionAppIds(firstCollection))

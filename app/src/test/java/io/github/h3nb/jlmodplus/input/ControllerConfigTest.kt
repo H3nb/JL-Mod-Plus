@@ -74,7 +74,10 @@ class ControllerConfigTest {
         assertEquals(2, config.toJson().getValue("schemaVersion").jsonPrimitive.int)
         assertFalse(config.toJson().containsKey("bindings"))
         assertFalse(config.toJson().containsKey("mode"))
-        assertEquals(config.toJson().getValue("pointer").jsonObject.getValue("joystickMode").jsonPrimitive.content, , "floating")
+        assertEquals(
+            "floating",
+            config.toJson().getValue("pointer").jsonObject.getValue("joystickMode").jsonPrimitive.content,
+        )
     }
 
     @Test

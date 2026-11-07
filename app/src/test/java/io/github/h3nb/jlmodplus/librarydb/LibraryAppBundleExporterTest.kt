@@ -50,9 +50,18 @@ class LibraryAppBundleExporterTest {
                 ),
                 names,
             )
-            assertEquals(zip.getInputStream(zip.getEntry("bundle.json")).reader().readText(), , "{\"formatVersion\":1}\n")
-            assertEquals(zip.getInputStream(zip.getEntry("app/converted.dex.conf")).reader().readText(), , "MIDlet-Name: Game\n")
-            assertEquals(zip.getInputStream(zip.getEntry("config/VirtualKeyboardLayout")).reader().readText(), , "layout")
+            assertEquals(
+                "{\"formatVersion\":1}\n",
+                zip.getInputStream(zip.getEntry("bundle.json")).reader().readText(),
+            )
+            assertEquals(
+                "MIDlet-Name: Game\n",
+                zip.getInputStream(zip.getEntry("app/converted.dex.conf")).reader().readText(),
+            )
+            assertEquals(
+                "layout",
+                zip.getInputStream(zip.getEntry("config/VirtualKeyboardLayout")).reader().readText(),
+            )
             assertEquals(128 * 1024 + 7L, zip.getEntry("data/nested/save.bin").size)
         }
         assertEquals(7, progress.last().completedEntries)
@@ -103,7 +112,10 @@ class LibraryAppBundleExporterTest {
     }
 
     @Test fun exportFileNameIsSafeAndBounded() {
-        assertEquals(LibraryAppBundleExporter.safeFileName("My/Game"), , "My_Game-JLModPlus.zip")
+        assertEquals(
+            "My_Game-JLModPlus.zip",
+            LibraryAppBundleExporter.safeFileName("My/Game"),
+        )
         val longName = LibraryAppBundleExporter.safeFileName("A".repeat(200))
         assertTrue(longName.length <= 72 + "-JLModPlus.zip".length)
     }
