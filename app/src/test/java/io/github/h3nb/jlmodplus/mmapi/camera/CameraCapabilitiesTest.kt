@@ -4,10 +4,10 @@ package io.github.h3nb.jlmodplus.mmapi.camera
 import io.github.h3nb.jlmodplus.config.ProfileConfigMatcher
 import io.github.h3nb.jlmodplus.config.ProfileModel
 import io.github.h3nb.jlmodplus.config.SystemPropertyLayers
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class CameraCapabilitiesTest {
     private val factory = """
