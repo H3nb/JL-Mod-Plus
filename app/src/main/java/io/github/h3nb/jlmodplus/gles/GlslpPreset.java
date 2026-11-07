@@ -418,8 +418,8 @@ public final class GlslpPreset {
     }
 
     /**
-     * Preserve original pass sizing, alias, LUT, framebuffer flags and parameter
-     * overrides, even if the user changes only one of the source files.
+     * Preserve original pass sizing, alias, LUT and framebuffer flags, plus
+     * parameter overrides that remain valid after a source replacement.
      * sourceScale=0 retains the exact inherited scale basis and value.
      */
     public GlslpPreset withCustomSources(
@@ -495,12 +495,6 @@ public final class GlslpPreset {
     }
 
     /**
-     * Resolve upstream #pragma defaults and the preset's explicit overrides.
-     * All parameters need values when PARAMETER_UNIFORM is enabled: sending only
-     * the overridden names silently leaves the remaining uniforms at zero.
-     * This is research metadata, not evidence the shaders link on a given GLES.
-     */
-    /**
      * Custom source edits may invalidate overrides from a previously selected
      * preset. Keep only values supported by the final chain's declarations.
      */
@@ -524,6 +518,11 @@ public final class GlslpPreset {
         return Collections.unmodifiableMap(applicable);
     }
 
+    /**
+     * Resolve upstream #pragma defaults and the preset's explicit overrides.
+     * All parameters need values when PARAMETER_UNIFORM is enabled: sending only
+     * the overridden names silently leaves the remaining uniforms at zero.
+     */
     public GlslpPreset withParameterOverrides(Map<String, Float> userOverrides) {
         if (userOverrides == null || userOverrides.isEmpty()) return this;
         Map<String, Double> combined = new LinkedHashMap<>(parameterOverrides);
