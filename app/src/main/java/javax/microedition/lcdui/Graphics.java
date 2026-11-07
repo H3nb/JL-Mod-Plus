@@ -106,7 +106,12 @@ public class Graphics implements
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
 				// Before Android O setBitmap() preserves the previous clip, so replace it
 				// only when the backing store actually changes.
-				canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
+				// At this boundary the Bitmap may already have changed while the
+				// Canvas matrix is not yet re-established. Use physical extent
+				// to avoid clipping the new backing to its logical top-left.
+				canvas.clipRect(image.getPixelScale() == 1
+						? image.getBounds() : image.getPhysicalContentRect(),
+						Region.Op.REPLACE);
 			}
 		}
 		if (image.getPixelScale() != 1) {

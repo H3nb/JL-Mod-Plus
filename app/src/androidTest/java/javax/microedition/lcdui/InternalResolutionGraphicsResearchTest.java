@@ -51,6 +51,11 @@ public class InternalResolutionGraphicsResearchTest {
             assertEquals(32, image.getBitmap().getWidth());
             assertEquals(24, image.getBitmap().getHeight());
             assertEquals(0x0000FF00, image.getBitmap().getPixel(5, 5) & 0xFFFFFF);
+            // In particular on API23, rebinding must not leave a logical-sized
+            // device-space clip that blocks drawing near the grown physical edge.
+            g.setColor(0x000000FF);
+            g.fillRect(14, 10, 2, 2);
+            assertEquals(0x000000FF, image.getBitmap().getPixel(29, 21) & 0xFFFFFF);
             assertEquals(16, image.getPhysicalContentRect().right / image.getPixelScale());
             assertTrue(Font.getDefaultFont().stringWidth("HD") > 0);
         } finally {
