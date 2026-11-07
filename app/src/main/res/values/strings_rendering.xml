@@ -94,4 +94,5 @@
     <string name="render_custom_pick_legacy">Choose legacy shader</string>
     <string name="render_custom_preserve_size">Output: From preset</string>
     <string name="render_custom_loading">Reading preset passes…</string>
+    <string name="render_custom_start_fresh">Start without preset (discard inherited settings)</string>
 </resources>

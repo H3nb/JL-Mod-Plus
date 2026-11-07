@@ -51,6 +51,9 @@ catalog chooser remains available when assembling a custom Legacy pass.
   legacy per-stage values use additional optional fields. The editor keeps its
   own draft until Save, including unsaved stages and parameter tuning across
   Activity state restoration; older profiles retain their existing selection.
+  If inherited preset resources fail to load or validate, the editor offers
+  an explicit fresh-chain reset that discards inherited settings only in the
+  unsaved draft; the prior saved selection is unchanged until Save.
 - Display scroll state is owned by the parent configuration surface rather than
   the removable shader subpage, so Back does not reset the Display scroll.
 - Legacy ShaderSelection fields, .ini parsing, profile semantics, and old

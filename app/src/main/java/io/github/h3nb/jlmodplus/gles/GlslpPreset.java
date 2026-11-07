@@ -20,6 +20,8 @@ public final class GlslpPreset {
     private static final Pattern PRAGMA_PARAMETER = Pattern.compile(
             "^#pragma\\s+parameter\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\\"[^\\\"]*\\\""
                     + "\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
+    private static final Pattern PARAMETER_PREFIX = Pattern.compile(
+            "^#pragma\\s+parameter(?:\\s|$).*");
     private static final int MAX_PASSES = 16;
     private static final int MAX_TEXTURES = 4;
     private static final int MAX_REFERENCE_DEPTH = 8;
@@ -535,17 +537,36 @@ public final class GlslpPreset {
         return new GlslpPreset(passes, combined, textures);
     }
 
+    private static Matcher parameterDeclaration(String line, String sourcePath)
+            throws IOException {
+        String declaration = line.trim();
+        if (!PARAMETER_PREFIX.matcher(declaration).matches()) return null;
+        Matcher matcher = PRAGMA_PARAMETER.matcher(declaration);
+        if (!matcher.matches()) {
+            throw new IOException("Malformed GLSL parameter declaration in " + sourcePath);
+        }
+        return matcher;
+    }
+
+    /** Parameter IDs declared by a pass, using the same syntax as runtime resolution. */
+    public Set<String> parameterIdsForPass(int passIndex) throws IOException {
+        Pass pass = passes.get(passIndex);
+        Set<String> ids = new LinkedHashSet<>();
+        for (String line : pass.sourceText.split("\\n")) {
+            Matcher matcher = parameterDeclaration(line, pass.sourcePath);
+            if (matcher != null) ids.add(matcher.group(1));
+        }
+        return Collections.unmodifiableSet(ids);
+    }
+
     /** Source declarations provide the editor's labels/ranges as well as runtime defaults. */
     public List<Parameter> parameterDefinitions() throws IOException {
         Map<String, Parameter> definitions = new LinkedHashMap<>();
         for (Pass pass : passes) {
             for (String line : pass.sourceText.split("\\n")) {
                 String declaration = line.trim();
-                if (!declaration.startsWith("#pragma parameter")) continue;
-                Matcher m = PRAGMA_PARAMETER.matcher(declaration);
-                if (!m.matches()) {
-                    throw new IOException("Malformed GLSL parameter declaration in " + pass.sourcePath);
-                }
+                Matcher m = parameterDeclaration(declaration, pass.sourcePath);
+                if (m == null) continue;
                 String id = m.group(1);
                 String label = declaration.substring(declaration.indexOf('"') + 1, declaration.lastIndexOf('"'));
                 float fallback = checkedFloat(number(m.group(2), id), id);

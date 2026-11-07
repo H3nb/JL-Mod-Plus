@@ -93,4 +93,5 @@
     <string name="render_custom_pick_legacy">Pilih shader legacy</string>
     <string name="render_custom_preserve_size">Output: Dari preset</string>
     <string name="render_custom_loading">Membaca pass dari preset…</string>
+    <string name="render_custom_start_fresh">Mulai tanpa preset (buang pengaturan warisan)</string>
 </resources>

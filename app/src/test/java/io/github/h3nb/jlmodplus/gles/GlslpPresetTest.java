@@ -449,6 +449,29 @@ public class GlslpPresetTest {
                 "Intermediate GPU budget exceeded");
     }
 
+    @Test public void passParameterIdsUseTheSameWhitespaceAndValidationAsDefinitions()
+            throws Exception {
+        Bundle assets = new Bundle()
+                .put("params/a.glsl", "#pragma  parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\n"
+                        + "#pragma\tparameter HEADING \"Heading\" 1 1 1 0.1\n")
+                .put("params/b.glsl", "#pragma parameter BIAS \"Bias\" 0.5 0 1 0.1\n")
+                .put("params/preset.glslp",
+                        "shaders = 2\nshader0 = a.glsl\nshader1 = b.glsl\n");
+        GlslpPreset preset = GlslpPreset.load(assets, "params/preset.glslp");
+        assertEquals(3, preset.parameterDefinitions().size());
+        assertEquals(java.util.Set.of("GAIN", "HEADING"), preset.parameterIdsForPass(0));
+        assertEquals(java.util.Set.of("BIAS"), preset.parameterIdsForPass(1));
+        GlslpPreset.Parameter heading = preset.parameterDefinitions().get(1);
+        assertEquals(1f, heading.minimum);
+        assertEquals(1f, heading.maximum);
+
+        assets.put("params/a.glsl", "#pragma  parameter BAD \"Bad\" 1 0 1\n");
+        GlslpPreset malformed = GlslpPreset.load(assets, "params/preset.glslp");
+        expectFailure(malformed::parameterDefinitions, "Malformed GLSL parameter declaration");
+        expectFailure(() -> malformed.parameterIdsForPass(0),
+                "Malformed GLSL parameter declaration");
+    }
+
     private interface ThrowingAction { void run() throws Exception; }
 
     private static void expectFailure(ThrowingAction action, String message)

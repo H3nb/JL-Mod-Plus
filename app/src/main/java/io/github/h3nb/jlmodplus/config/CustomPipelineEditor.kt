@@ -51,7 +51,12 @@ internal fun CustomPipelineContent(
 ) {
     val selection = state.form.shader
     val previous = selection?.customStages
-    val inheritedPreset = selection?.preset?.takeIf { selection?.customMode != "legacy" }
+    var keepInheritedPreset by rememberSaveable(selection?.preset, selection?.fragment, previous) {
+        mutableStateOf(true)
+    }
+    val inheritedPreset = selection?.preset?.takeIf {
+        selection?.customMode != "legacy" && keepInheritedPreset
+    }
     val initialMode = selection?.customMode ?: if (selection?.fragment != null) "legacy" else "glsl"
     var mode by rememberSaveable(selection?.preset, selection?.fragment, previous) {
         mutableStateOf(initialMode)
@@ -150,13 +155,10 @@ internal fun CustomPipelineContent(
                     state.shaderDirectory ?: throw IOException("Shader folder unavailable"),
                     inheritedPreset, "glsl")
                 val definitions = preset.parameterDefinitions()
-                preset.passes.mapIndexed { index, pass ->
-                    val ids = pass.sourceText.lineSequence().map { it.trim() }
-                        .filter { it.startsWith("#pragma parameter ") }
-                        .map { it.removePrefix("#pragma parameter ").substringBefore(' ') }
-                        .toSet()
-                    index to definitions.filter { it.id in ids }
-                }.toMap()
+                preset.passes.indices.associateWith { index ->
+                    val ids = preset.parameterIdsForPass(index)
+                    definitions.filter { it.id in ids }
+                }
             }.getOrDefault(emptyMap())
         }
     }
@@ -181,6 +183,8 @@ internal fun CustomPipelineContent(
                 onClick = {
                     if (mode != value) {
                         mode = value
+                        keepInheritedPreset = false
+                        inheritedInitialized = true
                         stages = listOf(CustomShaderStage(""))
                         loadError = null
                         overrides = emptyMap()
@@ -306,11 +310,13 @@ internal fun CustomPipelineContent(
                         val value = (overrides[parameter.id] ?: parameter.value)
                             .coerceIn(parameter.minimum, parameter.maximum)
                         Text(parameter.label, style = MaterialTheme.typography.bodyMedium)
-                        Slider(modifier = Modifier.testTag("shader_custom_parameter_${parameter.id}"),
-                            value = value, valueRange = parameter.minimum..parameter.maximum,
-                            onValueChange = { next ->
-                                overrides = overrides + (parameter.id to next)
-                            })
+                        if (parameter.maximum > parameter.minimum) {
+                            Slider(modifier = Modifier.testTag("shader_custom_parameter_${parameter.id}"),
+                                value = value, valueRange = parameter.minimum..parameter.maximum,
+                                onValueChange = { next ->
+                                    overrides = overrides + (parameter.id to next)
+                                })
+                        }
                     }
                 }
                 if (index < stages.lastIndex) {
@@ -338,6 +344,22 @@ internal fun CustomPipelineContent(
     validationError?.let {
         Text(it, style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error)
+    }
+    if (mode == "glsl" && inheritedPreset != null &&
+        (loadError != null || validationError != null)) {
+        TextButton(
+            modifier = Modifier.testTag("shader_custom_start_fresh"),
+            onClick = {
+                keepInheritedPreset = false
+                inheritedInitialized = true
+                stages = listOf(CustomShaderStage(""))
+                overrides = emptyMap()
+                loadError = null
+                validationError = null
+            },
+        ) {
+            Text(stringResource(R.string.render_custom_start_fresh))
+        }
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onBack) { Text(stringResource(R.string.render_custom_cancel)) }
