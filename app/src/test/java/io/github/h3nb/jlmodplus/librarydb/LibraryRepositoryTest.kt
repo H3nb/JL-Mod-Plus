@@ -6,6 +6,8 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
@@ -19,25 +21,23 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class LibraryRepositoryTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     private lateinit var repositoryScope: CoroutineScope
     private lateinit var repository: LibraryRepository
     private lateinit var openCount: AtomicInteger
 
-    @Before fun setUp() {
+    @BeforeEach fun setUp() {
         repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         openCount = AtomicInteger()
         repository = LibraryRepository(
@@ -49,14 +49,14 @@ class LibraryRepositoryTest {
         )
     }
 
-    @After fun tearDown() {
+    @AfterEach fun tearDown() {
         repository.close()
         repositoryScope.cancel()
     }
 
     @Test fun switchingWorkdirPublishesRowsFromNewRootOnly() = runBlocking {
-        val first = temporaryFolder.newFolder("first")
-        val second = temporaryFolder.newFolder("second")
+        val first = TempFiles.newFolder(temporaryFolder, "first")
+        val second = TempFiles.newFolder(temporaryFolder, "second")
         createConvertedApp(first, "one", "First Game")
         createConvertedApp(second, "two", "Second Game")
 
@@ -74,7 +74,7 @@ class LibraryRepositoryTest {
     }
 
     @Test fun duplicateSetForSameWorkdirDoesNotCreateAnotherGeneration() = runBlocking {
-        val root = temporaryFolder.newFolder("dedupe")
+        val root = TempFiles.newFolder(temporaryFolder, "dedupe")
         createConvertedApp(root, "game", "Game")
         repository.setEmulatorDirectory(root)
         val initial = awaitReady(root)
@@ -92,7 +92,7 @@ class LibraryRepositoryTest {
     }
 
     @Test fun sameWorkdirSetAfterErrorStartsRecoveryGeneration() = runBlocking {
-        val root = temporaryFolder.newFolder("error-set-retry")
+        val root = TempFiles.newFolder(temporaryFolder, "error-set-retry")
         val invalidConverted = File(root, "converted").apply { writeText("not a directory") }
 
         repository.setEmulatorDirectory(root)
@@ -112,7 +112,7 @@ class LibraryRepositoryTest {
     }
 
     @Test fun retryReopensSameWorkdirAfterRecoverableStorageFailure() = runBlocking {
-        val root = temporaryFolder.newFolder("retry")
+        val root = TempFiles.newFolder(temporaryFolder, "retry")
         val invalidConverted = File(root, "converted").apply { writeText("not a directory") }
 
         repository.setEmulatorDirectory(root)
@@ -133,7 +133,7 @@ class LibraryRepositoryTest {
     }
 
     @Test fun mutationPublishesThroughActiveRoomFlow() = runBlocking {
-        val root = temporaryFolder.newFolder("mutation")
+        val root = TempFiles.newFolder(temporaryFolder, "mutation")
         createConvertedApp(root, "game", "Original")
         repository.setEmulatorDirectory(root)
         val ready = awaitReady(root)
@@ -151,7 +151,7 @@ class LibraryRepositoryTest {
     }
 
     @Test fun metadataOverridesPublishAndResetThroughActiveRoomFlow() = runBlocking {
-        val root = temporaryFolder.newFolder("metadata")
+        val root = TempFiles.newFolder(temporaryFolder, "metadata")
         createConvertedApp(root, "game", "Original")
         repository.setEmulatorDirectory(root)
         val ready = awaitReady(root)
@@ -193,7 +193,7 @@ class LibraryRepositoryTest {
     }
 
     @Test fun favoriteMutationPublishesThroughActiveRoomFlow() = runBlocking {
-        val root = temporaryFolder.newFolder("favorite")
+        val root = TempFiles.newFolder(temporaryFolder, "favorite")
         createConvertedApp(root, "game", "Game")
         repository.setEmulatorDirectory(root)
         val ready = awaitReady(root)
@@ -217,8 +217,8 @@ class LibraryRepositoryTest {
     }
 
     @Test fun workdirRequestInvalidatesOldGenerationBeforeWorkerClosesDatabase() = runBlocking {
-        val first = temporaryFolder.newFolder("sync-first")
-        val second = temporaryFolder.newFolder("sync-second")
+        val first = TempFiles.newFolder(temporaryFolder, "sync-first")
+        val second = TempFiles.newFolder(temporaryFolder, "sync-second")
         createConvertedApp(first, "one", "First")
         createConvertedApp(second, "two", "Second")
         repository.setEmulatorDirectory(first)
@@ -245,8 +245,8 @@ class LibraryRepositoryTest {
     }
 
     @Test fun staleWorkdirMutationIsRejectedAfterSwitch() = runBlocking {
-        val first = temporaryFolder.newFolder("stale-first")
-        val second = temporaryFolder.newFolder("stale-second")
+        val first = TempFiles.newFolder(temporaryFolder, "stale-first")
+        val second = TempFiles.newFolder(temporaryFolder, "stale-second")
         createConvertedApp(first, "one", "First")
         createConvertedApp(second, "two", "Second")
         repository.setEmulatorDirectory(first)
@@ -267,8 +267,8 @@ class LibraryRepositoryTest {
     }
 
     @Test fun staleFeatureMutationIsRejectedAfterAtoBtoA() = runBlocking {
-        val first = temporaryFolder.newFolder("feature-aba-first")
-        val second = temporaryFolder.newFolder("feature-aba-second")
+        val first = TempFiles.newFolder(temporaryFolder, "feature-aba-first")
+        val second = TempFiles.newFolder(temporaryFolder, "feature-aba-second")
         createConvertedApp(first, "one", "First")
         createConvertedApp(second, "two", "Second")
 
@@ -290,8 +290,8 @@ class LibraryRepositoryTest {
     }
 
     @Test fun staleGenerationForSamePathIsRejectedAfterAtoBtoA() = runBlocking {
-        val first = temporaryFolder.newFolder("aba-first")
-        val second = temporaryFolder.newFolder("aba-second")
+        val first = TempFiles.newFolder(temporaryFolder, "aba-first")
+        val second = TempFiles.newFolder(temporaryFolder, "aba-second")
         createConvertedApp(first, "one", "First")
         createConvertedApp(second, "two", "Second")
 
@@ -316,8 +316,8 @@ class LibraryRepositoryTest {
     }
 
     @Test fun sourceIdentityLookupIsGenerationBound() = runBlocking {
-        val first = temporaryFolder.newFolder("identity-first")
-        val second = temporaryFolder.newFolder("identity-second")
+        val first = TempFiles.newFolder(temporaryFolder, "identity-first")
+        val second = TempFiles.newFolder(temporaryFolder, "identity-second")
         createConvertedApp(first, "one", "Same")
         createConvertedApp(second, "two", "Same")
 

@@ -7,22 +7,21 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
 import java.util.UUID
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryUniversalBundleStagerTest {
-    @get:Rule
-    val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test
     fun cleanupStaleRemovesOnlyOldUuidRoots() {
-        val importRoot = temporaryFolder.newFolder("library-bulk-import")
+        val importRoot = TempFiles.newFolder(temporaryFolder, "library-bulk-import")
         val stale = File(importRoot, UUID.randomUUID().toString()).apply {
             mkdir()
             setLastModified(1_000L)

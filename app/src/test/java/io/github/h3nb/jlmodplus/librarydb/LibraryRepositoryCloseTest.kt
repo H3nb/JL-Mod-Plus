@@ -6,6 +6,8 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
@@ -17,19 +19,17 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
 /** Recreation guard: an old Activity/ViewModel repository must lose authority synchronously. */
 class LibraryRepositoryCloseTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test
     fun closeSynchronouslyInvalidatesReadyTokenAndMutations() = runBlocking {
-        val root = temporaryFolder.newFolder("closed-generation")
+        val root = TempFiles.newFolder(temporaryFolder, "closed-generation")
         val appDir = File(File(root, "converted").apply { mkdir() }, "game").apply { mkdir() }
         File(appDir, "converted.dex").writeText("payload")
         File(appDir, "converted.dex.conf").writeText(

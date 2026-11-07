@@ -6,16 +6,16 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 /**
  * Non-flaky scale characterization for the Library v2 target sizes.
@@ -25,8 +25,7 @@ import org.junit.rules.TemporaryFolder
  * so regressions can be compared between runs without turning transient runner load into failures.
  */
 class LibraryScaleCharacterizationTest {
-    @get:Rule
-    val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test fun listProjectionAtTargetScales() {
         for (count in TARGET_SIZES) {
@@ -57,7 +56,7 @@ class LibraryScaleCharacterizationTest {
 
     @Test fun roomBatchPublishAtOneAndFiveThousandRows() = runBlocking {
         for (count in intArrayOf(1_000, 5_000)) {
-            val root = temporaryFolder.newFolder("db-$count")
+            val root = TempFiles.newFolder(temporaryFolder, "db-$count")
             val database = Room.databaseBuilder<LibraryDatabase>(
                 File(root, LibraryDatabase.FILE_NAME).absolutePath,
             )
