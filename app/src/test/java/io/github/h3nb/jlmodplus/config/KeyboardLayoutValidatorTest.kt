@@ -20,9 +20,9 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import javax.microedition.lcdui.keyboard.RectSnap
 import javax.microedition.lcdui.keyboard.VirtualKeyboard
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
 class KeyboardLayoutValidatorTest {
     @Test

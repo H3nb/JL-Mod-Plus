@@ -4,16 +4,16 @@
  */
 package io.github.h3nb.jlmodplus.config;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import android.content.SharedPreferences;
 
 
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -175,9 +175,7 @@ public class MidletConfigLoadBoundaryTest {
 		createInterruptedSyncRollback(target, oldConfig, null, true);
 		writeConfig(target, 999, 1);
 		FakePreferences preferences = linkedPreferences(target, "MissingPreset");
-		preferences.beforeRead = () -> assertFalse(
-				"linkage must not be inspected before local recovery",
-				syncRollbackDir(target).exists());
+		preferences.beforeRead = () -> assertFalse(syncRollbackDir(target).exists(), "linkage must not be inspected before local recovery");
 
 		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
 		assertEquals(176, readConfig(target).screenWidth);
@@ -354,7 +352,7 @@ public class MidletConfigLoadBoundaryTest {
 		}
 
 		reader.join(TimeUnit.SECONDS.toMillis(5));
-		assertFalse("prepare thread did not finish", reader.isAlive());
+		assertFalse(reader.isAlive(), "prepare thread did not finish");
 		if (failure.get() != null) throw new AssertionError(failure.get());
 		assertTrue(result.get());
 		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
@@ -440,8 +438,7 @@ public class MidletConfigLoadBoundaryTest {
 			if (!thread.isAlive()) break;
 			Thread.yield();
 		}
-		assertEquals("Expected prepare to block on preset source monitor",
-				Thread.State.BLOCKED, thread.getState());
+		assertEquals(Thread.State.BLOCKED, thread.getState(), "Expected prepare to block on preset source monitor");
 	}
 
 	private static File configFile(File dir) {
