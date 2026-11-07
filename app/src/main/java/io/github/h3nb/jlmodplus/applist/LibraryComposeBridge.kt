@@ -27,11 +27,14 @@ import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -42,6 +45,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -774,6 +778,13 @@ fun LibraryScreen(
     var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
     var installSourceMenuVisible by remember { mutableStateOf(false) }
     var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
+    // Keep full-screen navigation blocking until the outgoing page finishes fading away.
+    val aboutPageMotion = remember { MutableTransitionState(false) }
+    aboutPageMotion.targetState = aboutPageVisible
+    val updatesPageMotion = remember { MutableTransitionState(false) }
+    updatesPageMotion.targetState = updatesPageVisible
+    val auxiliaryPageOnScreen = aboutPageMotion.currentState || aboutPageMotion.targetState ||
+        updatesPageMotion.currentState || updatesPageMotion.targetState
     var updatePrompt by remember { mutableStateOf<UpdateCandidate?>(null) }
     var sessionDismissedUpdate by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
@@ -840,15 +851,19 @@ fun LibraryScreen(
     val currentControllerMetadataTarget by rememberUpdatedState(metadataTarget)
     val currentControllerDeleteTarget by rememberUpdatedState(deleteTarget)
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
-    val currentControllerAboutPageVisible by rememberUpdatedState(aboutPageVisible)
-    val currentControllerUpdatesPageVisible by rememberUpdatedState(updatesPageVisible)
+    val currentControllerAboutPageVisible by rememberUpdatedState(
+        aboutPageMotion.currentState || aboutPageMotion.targetState,
+    )
+    val currentControllerUpdatesPageVisible by rememberUpdatedState(
+        updatesPageMotion.currentState || updatesPageMotion.targetState,
+    )
     val currentControllerUpdatePrompt by rememberUpdatedState(updatePrompt)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
-            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible ||
-            updatesPageVisible || updatePrompt != null,
+            infoDialog != null || pendingBulkDeleteIds != null || auxiliaryPageOnScreen ||
+            updatePrompt != null,
     )
 
     LaunchedEffect(pagerState) {
@@ -970,10 +985,12 @@ fun LibraryScreen(
     ) {
         selectionState = selectionState.clear()
     }
-    BackHandler(enabled = aboutPageVisible && infoDialog == null) {
+    BackHandler(
+        enabled = (aboutPageMotion.currentState || aboutPageMotion.targetState) && infoDialog == null,
+    ) {
         aboutPageVisible = false
     }
-    BackHandler(enabled = updatesPageVisible) {
+    BackHandler(enabled = updatesPageMotion.currentState || updatesPageMotion.targetState) {
         updatesPageVisible = false
     }
     val availableUpdate = (updateRepository?.status as? UpdateStatus.Available)?.candidate
@@ -1200,7 +1217,7 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
-        || aboutPageVisible || updatesPageVisible
+        || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null
     LaunchedEffect(libraryModalVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryModalVisible || selectionActiveHere)
@@ -1585,13 +1602,33 @@ fun LibraryScreen(
         }
         }
 
-        if (updatesPageVisible) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .zIndex(4f),
-            ) {
+        val auxiliaryPageOffset = with(density) { 16.dp.roundToPx() }
+        val auxiliaryEnter = fadeIn(animationSpec = tween(180)) +
+            slideInHorizontally(
+                animationSpec = tween(220, easing = FastOutSlowInEasing),
+                initialOffsetX = { auxiliaryPageOffset },
+            )
+        val auxiliaryExit = fadeOut(animationSpec = tween(180)) +
+            slideOutHorizontally(
+                animationSpec = tween(220, easing = FastOutSlowInEasing),
+                targetOffsetX = { auxiliaryPageOffset / 2 },
+            )
+        AnimatedVisibility(
+            visibleState = updatesPageMotion,
+            modifier = Modifier.fillMaxSize().zIndex(4f),
+            enter = auxiliaryEnter,
+            exit = auxiliaryExit,
+        ) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                // Catch touches on uncovered parts of the outgoing screen, behind its controls.
+                Box(
+                    Modifier.matchParentSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {}
+                        .clearAndSetSemantics {},
+                )
                 updateRepository?.let { repository ->
                     UpdatesScreen(
                         repository = repository,
@@ -1602,13 +1639,21 @@ fun LibraryScreen(
                 }
             }
         }
-        if (aboutPageVisible) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .zIndex(4f),
-            ) {
+        AnimatedVisibility(
+            visibleState = aboutPageMotion,
+            modifier = Modifier.fillMaxSize().zIndex(4f),
+            enter = auxiliaryEnter,
+            exit = auxiliaryExit,
+        ) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                Box(
+                    Modifier.matchParentSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {}
+                        .clearAndSetSemantics {},
+                )
                 LibraryAboutScreen(
                     onBack = { aboutPageVisible = false },
                     onLicenses = { infoDialog = LibraryInfoDialog.Licenses },

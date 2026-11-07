@@ -67,6 +67,26 @@ class LibraryViewportNavigationTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun aboutBackKeepsLibraryOnMoreTab() {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
+            }
+        }
+
+        swipeToNextPage()
+        swipeToNextPage()
+        composeRule.onNodeWithText(uiString(R.string.about)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+    }
+
+    @Test
     fun listViewportsSurvivePagerRoundTrip() = verifyPagerRoundTrip(LibraryLayout.List)
 
     @Test

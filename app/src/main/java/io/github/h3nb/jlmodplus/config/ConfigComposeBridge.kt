@@ -401,13 +401,12 @@ internal fun ConfigScreen(
             pagerScope.launch { pagerState.navigateToTab(index) }
         }
     }
-    // Keep Display scroll ownership above shader subpages: their composition replaces the pager.
+    // Keep Display scroll ownership above animated subpages so returning preserves its offset.
     val displayScrollState = rememberScrollState()
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
-
 
     val currentPage = when {
         renderingSubpage != null -> ConfigPage.Rendering(requireNotNull(renderingSubpage))
