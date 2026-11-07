@@ -136,6 +136,7 @@ class CustomShaderChainTest {
         source("derived/unknown.glsl", "uniform sampler2D UnboundTexture;\nvoid main() {}");
         source("derived/valid.glsl", "uniform sampler2D Texture;\n"
                 + "uniform sampler2D FirstOutputTexture;\n"
+                + "uniform sampler2D PassPrev2Texture;\n"
                 + "uniform sampler2D ColorLUT;\nvoid main() {}");
         java.util.List<CustomShaderStage> invalid = Arrays.asList(
                 new CustomShaderStage("derived/first.glsl", 0, null),
