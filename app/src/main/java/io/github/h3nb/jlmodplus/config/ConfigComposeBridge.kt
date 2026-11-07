@@ -15,12 +15,6 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -102,6 +96,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
@@ -137,6 +132,11 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
+import io.github.h3nb.jlmodplus.ui.PagerTabMotion
+import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
+import io.github.h3nb.jlmodplus.ui.pageMotionDirection
+import io.github.h3nb.jlmodplus.ui.pageEnter
+import io.github.h3nb.jlmodplus.ui.pageExit
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
@@ -323,6 +323,11 @@ private fun ConfigPage.depth(): Int = when (this) {
     is ConfigPage.Rendering -> if (subpage == RenderingSubpage.SHADERS) 1 else 2
 }
 
+private fun ConfigPage.siblingOrder(): Int = when (this) {
+    is ConfigPage.Rendering -> subpage.ordinal
+    ConfigPage.Main, ConfigPage.SystemProperties -> 0
+}
+
 @Composable
 internal fun ConfigScreen(
     state: ConfigUiState,
@@ -394,11 +399,12 @@ internal fun ConfigScreen(
         pageCount = { destinations.size },
     )
     val pagerScope = rememberCoroutineScope()
+    val tabMotion = remember { PagerTabMotion() }
     val selectedDestination = destinations.getOrElse(pagerState.currentPage) { destinations.first() }
     val selectDestination: (ConfigDestination) -> Unit = { destination ->
         val index = destinations.indexOf(destination)
         if (index >= 0) {
-            pagerScope.launch { pagerState.navigateToTab(index) }
+            pagerScope.launch { pagerState.navigateToTab(index, tabMotion) }
         }
     }
     // Keep Display scroll ownership above animated subpages so returning preserves its offset.
@@ -413,21 +419,16 @@ internal fun ConfigScreen(
         systemPropertiesEditorVisible -> ConfigPage.SystemProperties
         else -> ConfigPage.Main
     }
-    val motionOffsetPx = with(density) { 16.dp.roundToPx() }
+    val motionOffsetPx = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
     AnimatedContent(
         targetState = currentPage,
         modifier = modifier.fillMaxSize(),
         transitionSpec = {
-            val direction = if (targetState.depth() > initialState.depth()) 1 else -1
-            (slideInHorizontally(
-                animationSpec = tween(220, easing = FastOutSlowInEasing),
-                initialOffsetX = { direction * motionOffsetPx },
-            ) + fadeIn(animationSpec = tween(180))).togetherWith(
-                slideOutHorizontally(
-                    animationSpec = tween(220, easing = FastOutSlowInEasing),
-                    targetOffsetX = { -direction * motionOffsetPx / 2 },
-                ) + fadeOut(animationSpec = tween(180)),
+            val direction = pageMotionDirection(
+                initialState.depth(), targetState.depth(),
+                initialState.siblingOrder(), targetState.siblingOrder(),
             )
+            pageEnter(direction, motionOffsetPx).togetherWith(pageExit(direction, motionOffsetPx))
         },
         label = "Config page",
     ) { shownPage ->
@@ -503,13 +504,17 @@ internal fun ConfigScreen(
                                 }
                             },
                         ) { padding ->
-                            HorizontalPager(
-                                state = pagerState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .consumeWindowInsets(padding),
-                            ) { page ->
+                            Box(
+                                Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
+                                    .then(if (tabMotion.isJumping) Modifier.clearAndSetSemantics {} else Modifier),
+                            ) {
+                                HorizontalPager(
+                                    state = pagerState,
+                                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                                        alpha = tabMotion.alpha
+                                        translationX = tabMotion.translationDp * density.density
+                                    },
+                                ) { page ->
                                     val pageScrollState = if (destinations[page] == ConfigDestination.Display)
                                         displayScrollState else rememberScrollState()
                                     Column(
@@ -544,6 +549,15 @@ internal fun ConfigScreen(
                                         }
                                     }
                                 }
+                                if (tabMotion.isJumping) {
+                                    Box(
+                                        Modifier.matchParentSize().clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null,
+                                        ) {},
+                                    )
+                                }
+                            }
                         }
                     }
                 }

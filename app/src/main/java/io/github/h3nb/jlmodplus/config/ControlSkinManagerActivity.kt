@@ -12,12 +12,7 @@ import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -97,6 +92,10 @@ import io.github.h3nb.jlmodplus.filepicker.FilePickerContract
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
+import io.github.h3nb.jlmodplus.ui.pageMotionDirection
+import io.github.h3nb.jlmodplus.ui.pageEnter
+import io.github.h3nb.jlmodplus.ui.pageExit
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat
 import java.io.File
@@ -405,7 +404,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             else if (key == "analog") stringResource(R.string.control_skin_analog)
             else stringResource(R.string.control_skin_edit_named, label(key))
         } else currentSet?.name ?: stringResource(R.string.control_skin_title)
-        val slideOffsetPx = with(LocalDensity.current) { 16.dp.roundToPx() }
+        val slideOffsetPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -445,16 +444,8 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     targetState = page,
                     modifier = Modifier.fillMaxSize().clipToBounds(),
                     transitionSpec = {
-                        val direction = if (targetState.depth() > initialState.depth()) 1 else -1
-                        (slideInHorizontally(
-                            animationSpec = tween(200, easing = FastOutSlowInEasing),
-                            initialOffsetX = { direction * slideOffsetPx },
-                        ) + fadeIn(animationSpec = tween(160))).togetherWith(
-                            slideOutHorizontally(
-                                animationSpec = tween(200, easing = FastOutSlowInEasing),
-                                targetOffsetX = { -direction * slideOffsetPx / 2 },
-                            ) + fadeOut(animationSpec = tween(160)),
-                        )
+                        val direction = pageMotionDirection(initialState.depth(), targetState.depth())
+                        pageEnter(direction, slideOffsetPx).togetherWith(pageExit(direction, slideOffsetPx))
                     },
                     label = "Control skin page",
                 ) { shownPage ->

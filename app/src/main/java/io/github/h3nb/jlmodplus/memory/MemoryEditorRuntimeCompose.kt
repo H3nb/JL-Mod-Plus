@@ -9,9 +9,6 @@ package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -117,6 +114,10 @@ import androidx.core.os.ConfigurationCompat
 import java.text.NumberFormat
 import java.util.Locale
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
+import io.github.h3nb.jlmodplus.ui.pageMotionDirection
+import io.github.h3nb.jlmodplus.ui.pageEnter
+import io.github.h3nb.jlmodplus.ui.pageExit
 import io.github.h3nb.jlmodplus.memory.MemoryEditorDialog as AlertDialog
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -169,6 +170,7 @@ internal fun MemoryEditorRuntimeRoot(
     if (!state.visible) return
     MemoryEditorOverlayScope(overlayState) { overlay ->
         val tab = state.activeTab
+        val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
         val resultsListState = rememberLazyListState()
         val watchListState = rememberLazyListState()
@@ -239,9 +241,14 @@ internal fun MemoryEditorRuntimeRoot(
                             contentKey = { it.activeTab },
                             modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
                             transitionSpec = {
-                                fadeIn(animationSpec = tween(150)).togetherWith(
-                                    fadeOut(animationSpec = tween(110)),
-                                )
+                                val direction = when {
+                                    targetState.activeTab == MemoryEditorTab.INSPECTOR -> 1
+                                    initialState.activeTab == MemoryEditorTab.INSPECTOR -> -1
+                                    else -> pageMotionDirection(
+                                        0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
+                                    )
+                                }
+                                pageEnter(direction, tabTravelPx).togetherWith(pageExit(direction, tabTravelPx))
                             },
                             label = "Memory editor tab",
                         ) { shownState ->

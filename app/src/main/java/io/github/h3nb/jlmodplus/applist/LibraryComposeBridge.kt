@@ -32,9 +32,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -231,6 +229,10 @@ import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
+import io.github.h3nb.jlmodplus.ui.PagerTabMotion
+import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
+import io.github.h3nb.jlmodplus.ui.pageEnter
+import io.github.h3nb.jlmodplus.ui.pageExit
 import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
 import io.github.h3nb.jlmodplus.ui.isNavigationKeyEvent
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
@@ -711,6 +713,7 @@ fun LibraryScreen(
         pageCount = { LibraryDestination.entries.size },
     )
     val coroutineScope = rememberCoroutineScope()
+    val tabMotion = remember { PagerTabMotion() }
     val context = LocalContext.current.applicationContext
     // Screenshot previews have no persistent preferences or active network stack.
     val isInspection = LocalInspectionMode.current
@@ -753,7 +756,7 @@ fun LibraryScreen(
         }
     }
     val selectDestination: (LibraryDestination) -> Unit = { section ->
-        coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
+        coroutineScope.launch { pagerState.navigateToTab(section.ordinal, tabMotion) }
     }
     val initialNavigationFocus = remember { FocusRequester() }
     // Indicators may follow the gesture; state-changing navigation commits only after settling.
@@ -1162,6 +1165,7 @@ fun LibraryScreen(
                                 0,
                                 LibraryDestination.entries.lastIndex,
                             ),
+                            tabMotion,
                         )
                     }
                 }
@@ -1457,14 +1461,21 @@ fun LibraryScreen(
                     bottom = bottom,
                 )
             }
-            HorizontalPager(
-                state = pagerState,
-                // Retain the three bounded destinations; their own lists remain lazy.
-                // Viewport state alone cannot avoid rebuilding a page on every tab return.
-                beyondViewportPageCount = LibraryDestination.entries.lastIndex,
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.Top,
-            ) { page ->
+            Box(
+                Modifier.fillMaxSize()
+                    .then(if (tabMotion.isJumping) Modifier.clearAndSetSemantics {} else Modifier),
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    // Retain the three bounded destinations; their own lists remain lazy.
+                    // Viewport state alone cannot avoid rebuilding a page on every tab return.
+                    beyondViewportPageCount = LibraryDestination.entries.lastIndex,
+                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                        alpha = tabMotion.alpha
+                        translationX = tabMotion.translationDp * density.density
+                    },
+                    verticalAlignment = Alignment.Top,
+                ) { page ->
                 val pageModifier = if (page == pagerState.currentPage) {
                     Modifier
                 } else {
@@ -1599,20 +1610,21 @@ fun LibraryScreen(
                     }
                 }
             }
+                if (tabMotion.isJumping) {
+                    Box(
+                        Modifier.matchParentSize().clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {},
+                    )
+                }
+            }
         }
         }
 
-        val auxiliaryPageOffset = with(density) { 16.dp.roundToPx() }
-        val auxiliaryEnter = fadeIn(animationSpec = tween(180)) +
-            slideInHorizontally(
-                animationSpec = tween(220, easing = FastOutSlowInEasing),
-                initialOffsetX = { auxiliaryPageOffset },
-            )
-        val auxiliaryExit = fadeOut(animationSpec = tween(180)) +
-            slideOutHorizontally(
-                animationSpec = tween(220, easing = FastOutSlowInEasing),
-                targetOffsetX = { auxiliaryPageOffset / 2 },
-            )
+        val auxiliaryPageOffset = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
+        val auxiliaryEnter = pageEnter(1, auxiliaryPageOffset)
+        val auxiliaryExit = pageExit(-1, auxiliaryPageOffset)
         AnimatedVisibility(
             visibleState = updatesPageMotion,
             modifier = Modifier.fillMaxSize().zIndex(4f),
