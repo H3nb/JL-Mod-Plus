@@ -3,8 +3,8 @@ package io.github.h3nb.jlmodplus.installer;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class InstallerExecutionCoordinatorTest {
     @Test public void cancelledWaitDoesNotConsumePermit() throws Exception {
