@@ -3,11 +3,12 @@
  */
 package io.github.h3nb.jlmodplus.config;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +16,10 @@ import java.nio.file.Files;
 import java.util.Collections;
 
 public class LegacyPrivateFilesTest {
-    @Rule public final TemporaryFolder temporary = new TemporaryFolder();
+    @TempDir public File temporary;
 
     @Test public void copiesOnlyChosenSaveAndPreservesRmsAndOriginal() throws Exception {
-        File workdir = temporary.getRoot();
+        File workdir = temporary;
         File data = new File(workdir, "data/One");
         assertTrue(data.mkdirs());
         Files.write(new File(data, "save.dat").toPath(), new byte[]{1, 2, 3});
@@ -40,10 +41,10 @@ public class LegacyPrivateFilesTest {
     }
 
     @Test public void rejectsTraversalLinksAndPrivateNamespaces() throws Exception {
-        File workdir = temporary.getRoot();
+        File workdir = temporary;
         File data = new File(workdir, "data/One");
         assertTrue(data.mkdirs());
-        File other = temporary.newFolder("outside");
+        File other = TempFiles.newFolder(temporary, "outside");
         Files.write(new File(other, "save.dat").toPath(), new byte[]{9});
         Files.createSymbolicLink(new File(data, "linked").toPath(), other.toPath());
         LegacyPrivateFiles importer = new LegacyPrivateFiles(workdir, "One");

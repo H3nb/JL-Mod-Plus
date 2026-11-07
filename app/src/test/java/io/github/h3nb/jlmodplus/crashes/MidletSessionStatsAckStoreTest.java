@@ -6,29 +6,29 @@
  */
 package io.github.h3nb.jlmodplus.crashes;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 public class MidletSessionStatsAckStoreTest {
-	@Rule
-	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+	@TempDir public File temporaryFolder;
 
 	@Test
 	public void orphanAckIsDeletedButAckWithCanonicalJournalIsRetained() throws Exception {
-		File directory = temporaryFolder.newFolder("acks");
+		File directory = TempFiles.newFolder(temporaryFolder, "acks");
 		File retainedAck = new File(directory, "session-a.ack");
 		File orphanAck = new File(directory, "session-b.ack");
 		File unrelated = new File(directory, "notes.txt");
 		assertTrue(retainedAck.createNewFile());
 		assertTrue(orphanAck.createNewFile());
 		assertTrue(unrelated.createNewFile());
-		File journal = temporaryFolder.newFile("session-a.properties");
+		File journal = TempFiles.newFile(temporaryFolder, "session-a.properties");
 
 		MidletSessionStatsAckStore.pruneOrphanFiles(directory, Arrays.asList(journal));
 
@@ -39,11 +39,11 @@ public class MidletSessionStatsAckStoreTest {
 
 	@Test
 	public void sidecarCanonicalJournalNameAlsoRetainsAck() throws Exception {
-		File directory = temporaryFolder.newFolder("acks-sidecar");
+		File directory = TempFiles.newFolder(temporaryFolder, "acks-sidecar");
 		File retainedAck = new File(directory, "session-sidecar.ack");
 		assertTrue(retainedAck.createNewFile());
 		// journalFiles() normally canonicalizes a .bak/.new sidecar to this logical base path.
-		File canonicalBase = new File(temporaryFolder.getRoot(), "session-sidecar.properties");
+		File canonicalBase = new File(temporaryFolder, "session-sidecar.properties");
 
 		MidletSessionStatsAckStore.pruneOrphanFiles(directory, Arrays.asList(canonicalBase));
 

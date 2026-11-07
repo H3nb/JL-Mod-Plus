@@ -14,12 +14,13 @@
 
 package io.github.h3nb.jlmodplus.installer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.InterruptedIOException;
@@ -30,8 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
 
 public class AppReconverterTest {
-	@Rule
-	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+	@TempDir public File temporaryFolder;
 
 	@Test public void cancellationSignalStopsBeforeReconversionPublishesAnything() throws Exception {
 		AtomicBoolean cancelled = new AtomicBoolean(true);
@@ -59,12 +59,12 @@ public class AppReconverterTest {
 	@Test public void missingInstalledDescriptorCanBeRebuiltFromRetainedManifest() throws Exception {
 		Descriptor source = new Descriptor("MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n", false);
 		assertEquals(source, AppReconverter.mergeInstalledDescriptor(source,
-				new File(temporaryFolder.getRoot(), "missing.conf")));
+				new File(temporaryFolder, "missing.conf")));
 	}
 
 	@Test public void jadPropertiesSurviveReconversion() throws Exception {
 		Descriptor source = new Descriptor("MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n", false);
-		File installed = temporaryFolder.newFile("jad.conf");
+		File installed = TempFiles.newFile(temporaryFolder, "jad.conf");
 		Files.writeString(installed.toPath(), "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n"
 				+ "MIDlet-Jar-URL: ../game.jar?token=keep\nNokia-MIDlet-On-Screen-Keypad: no\n");
 		Descriptor result = AppReconverter.mergeInstalledDescriptor(source, installed);
@@ -74,14 +74,14 @@ public class AppReconverterTest {
 
 	@Test public void originalJadRecoversPropertiesWhenMergedDescriptorIsMissing() throws Exception {
 		Descriptor source = new Descriptor("MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n", false);
-		File jad = temporaryFolder.newFile(AppReconverter.RETAINED_JAD);
+		File jad = TempFiles.newFile(temporaryFolder, AppReconverter.RETAINED_JAD);
 		Files.writeString(jad.toPath(), "MIDlet-Name: Game\r\nMIDlet-Vendor: Vendor\r\nMIDlet-Version: 1.0\r\n"
 				+ "MIDlet-Jar-URL: game.jar\r\nMIDlet-Jar-Size: 100\r\nVendor-Option: preserve\r\n");
 		byte[] original = Files.readAllBytes(jad.toPath());
 		Descriptor merged = AppReconverter.mergeInstalledDescriptor(source,
-				new File(temporaryFolder.getRoot(), "converted.dex.conf"));
+				new File(temporaryFolder, "converted.dex.conf"));
 		assertEquals("preserve", merged.getAttrs().get("Vendor-Option"));
-		org.junit.Assert.assertArrayEquals(original, Files.readAllBytes(jad.toPath()));
+		org.junit.jupiter.api.Assertions.assertArrayEquals(original, Files.readAllBytes(jad.toPath()));
 	}
 
 	@Test
@@ -93,7 +93,7 @@ public class AppReconverterTest {
 						+ "MIDlet-Version: 1.0\n"
 						+ "MIDlet-Icon: source.png\n",
 				false);
-		File installed = temporaryFolder.newFile("converted.dex.conf");
+		File installed = TempFiles.newFile(temporaryFolder, "converted.dex.conf");
 		Files.write(installed.toPath(), (
 				"MIDlet-Name: Installed\n"
 						+ "MIDlet-Vendor: Installed Vendor\n"

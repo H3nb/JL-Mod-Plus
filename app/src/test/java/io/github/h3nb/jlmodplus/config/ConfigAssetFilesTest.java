@@ -13,11 +13,12 @@
  */
 package io.github.h3nb.jlmodplus.config;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,7 +26,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class ConfigAssetFilesTest {
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    @TempDir public File temporary;
 
     private File bank(File directory, String name, byte sample) throws IOException {
         File file = new File(directory, name);
@@ -39,10 +40,10 @@ public class ConfigAssetFilesTest {
     }
 
     @Test public void importReusesSameFileAndSuffixesDifferentContent() throws Exception {
-        File root = temporary.newFolder("workdir");
-        File a = bank(temporary.newFolder("source-one"), "Bank.sf2", (byte) 1);
-        File same = bank(temporary.newFolder("source-same"), "Bank.sf2", (byte) 1);
-        File changed = bank(temporary.newFolder("source-changed"), "Bank.sf2", (byte) 2);
+        File root = TempFiles.newFolder(temporary, "workdir");
+        File a = bank(TempFiles.newFolder(temporary, "source-one"), "Bank.sf2", (byte) 1);
+        File same = bank(TempFiles.newFolder(temporary, "source-same"), "Bank.sf2", (byte) 1);
+        File changed = bank(TempFiles.newFolder(temporary, "source-changed"), "Bank.sf2", (byte) 2);
 
         ConfigAssetFiles.Imported first = ConfigAssetFiles.importFile(root,
                 ConfigAssetFiles.Kind.SOUNDBANK, a);
@@ -63,11 +64,11 @@ public class ConfigAssetFilesTest {
     }
 
     @Test public void renamePreservesExtensionAndDoesNotOverwrite() throws Exception {
-        File root = temporary.newFolder("workdir");
+        File root = TempFiles.newFolder(temporary, "workdir");
         ConfigAssetFiles.importFile(root, ConfigAssetFiles.Kind.SOUNDBANK,
-                bank(temporary.newFolder("a"), "First.sf2", (byte) 1));
+                bank(TempFiles.newFolder(temporary, "a"), "First.sf2", (byte) 1));
         ConfigAssetFiles.importFile(root, ConfigAssetFiles.Kind.SOUNDBANK,
-                bank(temporary.newFolder("b"), "Second.sf2", (byte) 2));
+                bank(TempFiles.newFolder(temporary, "b"), "Second.sf2", (byte) 2));
         try {
             ConfigAssetFiles.rename(root, ConfigAssetFiles.Kind.SOUNDBANK, "First.sf2", "Second");
             fail("must refuse name conflict");
@@ -83,14 +84,14 @@ public class ConfigAssetFilesTest {
 
 
     @Test public void simultaneousImportsCannotOverwriteEachOther() throws Exception {
-        File root = temporary.newFolder("concurrent");
+        File root = TempFiles.newFolder(temporary, "concurrent");
         java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(6);
         java.util.concurrent.CountDownLatch go = new java.util.concurrent.CountDownLatch(1);
         java.util.List<java.util.concurrent.Future<ConfigAssetFiles.Imported>> tasks = new java.util.ArrayList<>();
         try {
             for (int i = 0; i < 6; i++) {
                 final byte id = (byte) (i + 1);
-                File source = bank(temporary.newFolder("concurrent-" + i), "Shared.sf2", id);
+                File source = bank(TempFiles.newFolder(temporary, "concurrent-" + i), "Shared.sf2", id);
                 tasks.add(pool.submit(() -> {
                     go.await();
                     return ConfigAssetFiles.importFile(root,
@@ -113,8 +114,8 @@ public class ConfigAssetFilesTest {
     }
 
     @Test public void interruptedImportDoesNotPublishIncompleteFile() throws Exception {
-        File root = temporary.newFolder("interrupt");
-        File source = bank(temporary.newFolder("interrupt-source"), "Bank.sf2", (byte) 3);
+        File root = TempFiles.newFolder(temporary, "interrupt");
+        File source = bank(TempFiles.newFolder(temporary, "interrupt-source"), "Bank.sf2", (byte) 3);
         Thread.currentThread().interrupt();
         try {
             ConfigAssetFiles.importFile(root, ConfigAssetFiles.Kind.SOUNDBANK, source);
@@ -128,8 +129,8 @@ public class ConfigAssetFilesTest {
     }
 
     @Test public void invalidFileDoesNotPublish() throws Exception {
-        File root = temporary.newFolder("workdir");
-        File source = temporary.newFile("Broken.sf2");
+        File root = TempFiles.newFolder(temporary, "workdir");
+        File source = TempFiles.newFile(temporary, "Broken.sf2");
         try (FileOutputStream output = new FileOutputStream(source)) {
             output.write("not a soundfont".getBytes(StandardCharsets.US_ASCII));
         }

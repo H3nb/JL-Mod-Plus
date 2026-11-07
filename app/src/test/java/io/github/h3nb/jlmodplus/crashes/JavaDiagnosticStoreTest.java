@@ -8,14 +8,15 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,8 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class JavaDiagnosticStoreTest {
-	@Rule
-	public final TemporaryFolder temporary = new TemporaryFolder();
+	@TempDir public File temporary;
 
 	@Test
 	public void liveThrowableStructurePreservesPrimaryAndUnderlyingCause() {
@@ -107,7 +107,7 @@ public class JavaDiagnosticStoreTest {
 				List.of(new JavaDiagnosticStore.FrameData(
 						"dalvik.system.BaseDexClassLoader", "findClass",
 						"BaseDexClassLoader.java", 259, false)));
-		File file = new File(temporary.getRoot(), "roundtrip.java.properties");
+		File file = new File(temporary, "roundtrip.java.properties");
 		JavaDiagnosticStore.Snapshot original = new JavaDiagnosticStore.Snapshot(
 				file,
 				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
@@ -275,40 +275,40 @@ public class JavaDiagnosticStoreTest {
 	@Test
 	public void storedRecoverableFailuresDoNotAppearAsCrashReports() throws Exception {
 		for (JavaDiagnosticStore.Kind kind : JavaDiagnosticStore.Kind.values()) {
-			File file = new File(temporary.getRoot(), kind.name() + ".java.properties");
+			File file = new File(temporary, kind.name() + ".java.properties");
 			JavaDiagnosticStore.write(file, minimalSnapshot(file, kind));
 		}
 		for (String host : new String[]{"io.github.h3nb.jlmodplus", "ru.playsoftware.j2meloader"}) {
-			File file = new File(temporary.getRoot(), host + "-installer.java.properties");
+			File file = new File(temporary, host + "-installer.java.properties");
 			JavaDiagnosticStore.write(file, minimalSnapshot(file, JavaDiagnosticStore.Kind.LEGACY_ACRA,
 					new JavaDiagnosticStore.ThrowableData(
 							host + ".crashes.CrashReporter$InstallerFailureException",
 							"Installer failure", List.of())));
 		}
-		List<JavaDiagnosticStore.Snapshot> visible = JavaDiagnosticStore.loadStored(temporary.getRoot());
+		List<JavaDiagnosticStore.Snapshot> visible = JavaDiagnosticStore.loadStored(temporary);
 		assertEquals(4, visible.size());
 		for (JavaDiagnosticStore.Snapshot snapshot : visible) assertTrue(snapshot.kind.fatal);
-		assertTrue(new File(temporary.getRoot(), "CAUGHT_INSTALLER.java.properties").isFile());
-		assertTrue(new File(temporary.getRoot(), "CAUGHT_APP_REPOSITORY.java.properties").isFile());
+		assertTrue(new File(temporary, "CAUGHT_INSTALLER.java.properties").isFile());
+		assertTrue(new File(temporary, "CAUGHT_APP_REPOSITORY.java.properties").isFile());
 	}
 
 	@Test
 	public void hiddenRecoverableFailuresParticipateInRetentionPruning() throws Exception {
 		long now = 40L * 24L * 60L * 60L * 1000L;
-		File installer = new File(temporary.getRoot(), "old-installer.java.properties");
-		File repository = new File(temporary.getRoot(), "old-repository.java.properties");
-		File fatal = new File(temporary.getRoot(), "recent-fatal.java.properties");
+		File installer = new File(temporary, "old-installer.java.properties");
+		File repository = new File(temporary, "old-repository.java.properties");
+		File fatal = new File(temporary, "recent-fatal.java.properties");
 		JavaDiagnosticStore.write(installer, minimalSnapshot(
 				installer, JavaDiagnosticStore.Kind.CAUGHT_INSTALLER, 1L));
 		JavaDiagnosticStore.write(repository, minimalSnapshot(
 				repository, JavaDiagnosticStore.Kind.CAUGHT_APP_REPOSITORY, 1L));
 		JavaDiagnosticStore.write(fatal, minimalSnapshot(
 				fatal, JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, now - 1_000L));
-		JavaDiagnosticStore.pruneStored(temporary.getRoot(), now);
+		JavaDiagnosticStore.pruneStored(temporary, now);
 		assertFalse(installer.exists());
 		assertFalse(repository.exists());
 		assertTrue(fatal.isFile());
-		assertEquals(1, JavaDiagnosticStore.loadStored(temporary.getRoot()).size());
+		assertEquals(1, JavaDiagnosticStore.loadStored(temporary).size());
 	}
 
 	@Test
@@ -323,11 +323,11 @@ public class JavaDiagnosticStoreTest {
 
 	@Test
 	public void successfulLegacyMigrationDeletesSourceOnlyAfterReadableDestination() throws Exception {
-		File source = temporary.newFile("legacy.stacktrace");
+		File source = TempFiles.newFile(temporary, "legacy.stacktrace");
 		try (FileOutputStream output = new FileOutputStream(source)) {
 			output.write("legacy".getBytes(StandardCharsets.UTF_8));
 		}
-		File destination = new File(temporary.getRoot(), "migrated.java.properties");
+		File destination = new File(temporary, "migrated.java.properties");
 		JavaDiagnosticStore.Snapshot snapshot = minimalSnapshot(destination);
 
 		assertTrue(JavaDiagnosticStore.commitMigration(source, destination, snapshot));
@@ -338,7 +338,7 @@ public class JavaDiagnosticStoreTest {
 
 	@Test
 	public void legacyLogicalRecordIdentitySurvivesStoreRoundTrip() throws Exception {
-		File file = new File(temporary.getRoot(), "identity.java.properties");
+		File file = new File(temporary, "identity.java.properties");
 		JavaDiagnosticStore.Snapshot snapshot =
 				minimalSnapshot(file).withLegacyRecordId("acra:legacy-report.stacktrace");
 
@@ -350,8 +350,8 @@ public class JavaDiagnosticStoreTest {
 
 	@Test
 	public void migrationRetryBackfillsLegacyIdentityBeforeDeletingSource() throws Exception {
-		File source = temporary.newFile("retry.stacktrace");
-		File destination = new File(temporary.getRoot(), "retry.java.properties");
+		File source = TempFiles.newFile(temporary, "retry.stacktrace");
+		File destination = new File(temporary, "retry.java.properties");
 		JavaDiagnosticStore.write(destination, minimalSnapshot(destination));
 		JavaDiagnosticStore.Snapshot incoming =
 				minimalSnapshot(destination).withLegacyRecordId("acra:retry.stacktrace");
@@ -365,7 +365,7 @@ public class JavaDiagnosticStoreTest {
 
 	@Test
 	public void interruptedAtomicReplacementRestoresCommittedBackup() throws Exception {
-		File file = new File(temporary.getRoot(), "interrupted.java.properties");
+		File file = new File(temporary, "interrupted.java.properties");
 		JavaDiagnosticStore.Snapshot committed =
 				minimalSnapshot(file).withLegacyRecordId("acra:committed");
 		JavaDiagnosticStore.write(file, committed);
@@ -385,8 +385,8 @@ public class JavaDiagnosticStoreTest {
 
 	@Test
 	public void failedLegacyMigrationLeavesSourceIntact() throws Exception {
-		File source = temporary.newFile("legacy-failed.stacktrace");
-		File parentFile = temporary.newFile("not-a-directory");
+		File source = TempFiles.newFile(temporary, "legacy-failed.stacktrace");
+		File parentFile = TempFiles.newFile(temporary, "not-a-directory");
 		File impossibleDestination = new File(parentFile, "migrated.java.properties");
 
 		try {

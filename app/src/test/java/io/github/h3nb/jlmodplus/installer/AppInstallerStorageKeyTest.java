@@ -6,10 +6,13 @@
  */
 package io.github.h3nb.jlmodplus.installer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertThrows;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,17 +21,14 @@ import java.util.Collections;
 
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
 
 public class AppInstallerStorageKeyTest {
-	@Rule
-	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+	@TempDir public File temporaryFolder;
 
 	@Test
 	public void reservedLegacyStagingNameIsSkipped() throws Exception {
-		File converted = temporaryFolder.newFolder("converted");
+		File converted = TempFiles.newFolder(temporaryFolder, "converted");
 
 		File selected = AppInstaller.chooseTargetDirectory(converted, ".tmp");
 
@@ -37,7 +37,7 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void reservedFallbackStillAvoidsExistingSuffixes() throws Exception {
-		File converted = temporaryFolder.newFolder("converted-existing");
+		File converted = TempFiles.newFolder(temporaryFolder, "converted-existing");
 		assertTrue(new File(converted, ".tmp_1").mkdir());
 
 		File selected = AppInstaller.chooseTargetDirectory(converted, ".tmp");
@@ -47,7 +47,7 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void indexedKeyIsSkippedEvenWhenFolderIsMissing() throws Exception {
-		File converted = temporaryFolder.newFolder("converted-indexed");
+		File converted = TempFiles.newFolder(temporaryFolder, "converted-indexed");
 
 		File selected = AppInstaller.chooseTargetDirectory(
 				converted,
@@ -59,7 +59,7 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void orphanConfigReservesStorageKey() throws Exception {
-		File root = temporaryFolder.newFolder("orphan-config-root");
+		File root = TempFiles.newFolder(temporaryFolder, "orphan-config-root");
 		File converted = new File(root, "converted");
 		File configs = new File(root, "configs");
 		assertTrue(converted.mkdir());
@@ -74,7 +74,7 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void orphanSaveDataReservesStorageKey() throws Exception {
-		File root = temporaryFolder.newFolder("orphan-data-root");
+		File root = TempFiles.newFolder(temporaryFolder, "orphan-data-root");
 		File converted = new File(root, "converted");
 		File data = new File(root, "data");
 		assertTrue(converted.mkdir());
@@ -89,7 +89,7 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void noSideStateKeepsNormalUnsuffixedCandidate() throws Exception {
-		File root = temporaryFolder.newFolder("fresh-root");
+		File root = TempFiles.newFolder(temporaryFolder, "fresh-root");
 		File converted = new File(root, "converted");
 		assertTrue(converted.mkdir());
 
@@ -101,8 +101,8 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void liveRuntimeReservesFreshNameAndNormalSuffixSelectionContinues() throws Exception {
-		File filesDir = temporaryFolder.newFolder("lease-files");
-		File root = temporaryFolder.newFolder("lease-work");
+		File filesDir = TempFiles.newFolder(temporaryFolder, "lease-files");
+		File root = TempFiles.newFolder(temporaryFolder, "lease-work");
 		File converted = new File(root, "converted");
 		assertTrue(converted.mkdir());
 		File configs = new File(root, "configs");
@@ -123,9 +123,9 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void liveLeaseIsScopedToWorkdirAndReleaseAllowsCleanReuse() throws Exception {
-		File filesDir = temporaryFolder.newFolder("lease-files-2");
-		File rootA = temporaryFolder.newFolder("lease-a");
-		File rootB = temporaryFolder.newFolder("lease-b");
+		File filesDir = TempFiles.newFolder(temporaryFolder, "lease-files-2");
+		File rootA = TempFiles.newFolder(temporaryFolder, "lease-a");
+		File rootB = TempFiles.newFolder(temporaryFolder, "lease-b");
 		File convertedA = new File(rootA, "converted");
 		File convertedB = new File(rootB, "converted");
 		assertTrue(convertedA.mkdir());
@@ -143,17 +143,17 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void unknownLeaseStateNeverAllocatesCandidate() throws Exception {
-		File root = temporaryFolder.newFolder("lease-unavailable");
+		File root = TempFiles.newFolder(temporaryFolder, "lease-unavailable");
 		File converted = new File(root, "converted");
 		assertTrue(converted.mkdir());
-		File unusableFilesDir = temporaryFolder.newFile("not-a-directory");
+		File unusableFilesDir = TempFiles.newFile(temporaryFolder, "not-a-directory");
 		assertThrows(IOException.class, () -> AppInstaller.chooseTargetDirectory(
 				converted, "Bounce", Collections.emptySet(), unusableFilesDir));
 	}
 
 	@Test
 	public void normalAvailableNameIsPreserved() throws Exception {
-		File converted = temporaryFolder.newFolder("converted-normal");
+		File converted = TempFiles.newFolder(temporaryFolder, "converted-normal");
 
 		File selected = AppInstaller.chooseTargetDirectory(converted, "Game");
 
@@ -162,7 +162,7 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void emptyAndParentNamesStayInsideConvertedDirectory() throws Exception {
-		File converted = temporaryFolder.newFolder("converted-unsafe-name");
+		File converted = TempFiles.newFolder(temporaryFolder, "converted-unsafe-name");
 
 		assertEquals(
 				new File(converted, "MIDlet"),
@@ -174,8 +174,8 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void sameSizeDifferentJarContentIsNotTreatedAsIdentical() throws Exception {
-		File first = temporaryFolder.newFile("first.jar");
-		File second = temporaryFolder.newFile("second.jar");
+		File first = TempFiles.newFile(temporaryFolder, "first.jar");
+		File second = TempFiles.newFile(temporaryFolder, "second.jar");
 		write(first, new byte[]{'P', 'K', 3, 4, 1, 2, 3, 4});
 		write(second, new byte[]{'P', 'K', 3, 4, 1, 2, 3, 9});
 
@@ -184,8 +184,8 @@ public class AppInstallerStorageKeyTest {
 
 	@Test
 	public void identicalJarContentIsDetectedAcrossWholeFile() throws Exception {
-		File first = temporaryFolder.newFile("same-one.jar");
-		File second = temporaryFolder.newFile("same-two.jar");
+		File first = TempFiles.newFile(temporaryFolder, "same-one.jar");
+		File second = TempFiles.newFile(temporaryFolder, "same-two.jar");
 		byte[] content = new byte[20_000];
 		for (int i = 0; i < content.length; i++) content[i] = (byte) (i * 31);
 		write(first, content);

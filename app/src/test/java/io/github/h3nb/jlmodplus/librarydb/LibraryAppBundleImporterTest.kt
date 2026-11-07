@@ -6,6 +6,9 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -15,18 +18,16 @@ import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryAppBundleImporterTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test fun currentExportPayloadExtractsAuthoritativeImportState() {
-        val staging = temporaryFolder.newFolder("staging")
+        val staging = TempFiles.newFolder(temporaryFolder, "staging")
         val prepared = LibraryAppBundleImporter.extractToStaging(
             bundle(
                 "bundle.json" to "{\"formatVersion\":1}\n".toByteArray(),
@@ -47,7 +48,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun universalSinglePayloadMapsIntoTheSharedRestoreShape() {
-        val staging = temporaryFolder.newFolder("universal-staging")
+        val staging = TempFiles.newFolder(temporaryFolder, "universal-staging")
         val jar = byteArrayOf(1, 2, 3)
         val descriptor = "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n"
         val prepared = LibraryAppBundleImporter.extractUniversalSingleToStaging(
@@ -84,7 +85,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun universalBatchPayloadIsExtractedInOnePassPerManifestOrder() {
-        val staging = temporaryFolder.newFolder("universal-batch-staging")
+        val staging = TempFiles.newFolder(temporaryFolder, "universal-batch-staging")
         val apps = listOf(
             BundleApp(
                 bundleId = "a0001",
@@ -139,7 +140,7 @@ class LibraryAppBundleImporterTest {
                 "app/res.jar" to byteArrayOf(1),
                 "app/converted.dex.conf" to descriptor.toByteArray(),
             ),
-            temporaryFolder.newFolder("source-metadata"),
+            TempFiles.newFolder(temporaryFolder, "source-metadata"),
         )
 
         val metadata = requireNotNull(LibraryAppBundleImporter.readSourceMetadata(prepared))
@@ -162,7 +163,7 @@ class LibraryAppBundleImporterTest {
                 "app/res.jar" to byteArrayOf(1),
                 "app/converted.dex.conf" to descriptor.toByteArray(),
             ),
-            temporaryFolder.newFolder("preflight-identity"),
+            TempFiles.newFolder(temporaryFolder, "preflight-identity"),
             parseSourceMetadata = true,
         )
 
@@ -185,7 +186,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun staleUuidImportStagingIsCleanedConservatively() {
-        val importRoot = temporaryFolder.newFolder("library-import")
+        val importRoot = TempFiles.newFolder(temporaryFolder, "library-import")
         val stale = File(importRoot, UUID.randomUUID().toString()).apply {
             mkdirs()
             File(this, "payload").writeText("stale")
@@ -239,7 +240,7 @@ class LibraryAppBundleImporterTest {
             MIDlet-Vendor: Vendor
             MIDlet-Version: 1.0
         """.trimIndent() + "\n"
-        val workdir = temporaryFolder.newFolder("workdir")
+        val workdir = TempFiles.newFolder(temporaryFolder, "workdir")
         val converted = File(File(workdir, "converted"), "game").apply { mkdirs() }
         val config = File(File(workdir, "configs"), "game").apply { mkdirs() }
         val data = File(File(workdir, "data"), "game").apply { mkdirs() }
@@ -249,7 +250,7 @@ class LibraryAppBundleImporterTest {
         assertTrue(File(config, ".config-review-pending").createNewFile())
         File(data, "keep.sav").writeText("existing save")
 
-        val staging = temporaryFolder.newFolder("restore-staging")
+        val staging = TempFiles.newFolder(temporaryFolder, "restore-staging")
         val prepared = LibraryAppBundleImporter.extractToStaging(
             bundle(
                 "app/res.jar" to byteArrayOf(1),
@@ -272,7 +273,7 @@ class LibraryAppBundleImporterTest {
     @Test fun legacyUnversionedBundleRemainsReadableButFutureFormatIsRejected() {
         val legacy = LibraryAppBundleImporter.extractToStaging(
             bundle("app/res.jar" to byteArrayOf(1)),
-            temporaryFolder.newFolder("legacy-format"),
+            TempFiles.newFolder(temporaryFolder, "legacy-format"),
         )
         assertEquals(0, legacy.formatVersion)
 
@@ -286,7 +287,7 @@ class LibraryAppBundleImporterTest {
 
     @Test fun bundleReviewMarkerDoesNotReopenConfirmedInstalledIdentity() {
         val descriptor = "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n"
-        val workdir = temporaryFolder.newFolder("confirmed-review-workdir")
+        val workdir = TempFiles.newFolder(temporaryFolder, "confirmed-review-workdir")
         val converted = File(File(workdir, "converted"), "game").apply { mkdirs() }
         File(converted, "res.jar").writeBytes(byteArrayOf(7))
         File(converted, "converted.dex.conf").writeText(descriptor)
@@ -298,7 +299,7 @@ class LibraryAppBundleImporterTest {
                 "config/config.json" to byteArrayOf(2),
                 "config/.config-review-pending" to byteArrayOf(),
             ),
-            temporaryFolder.newFolder("confirmed-review-staging"),
+            TempFiles.newFolder(temporaryFolder, "confirmed-review-staging"),
         )
 
         LibraryAppBundleImporter.restore(prepared, workdir, "game")
@@ -307,7 +308,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun midPublishFailureRollsEveryNamespaceBack() {
-        val workdir = temporaryFolder.newFolder("rollback-workdir")
+        val workdir = TempFiles.newFolder(temporaryFolder, "rollback-workdir")
         val config = File(File(workdir, "configs"), "game").apply { mkdirs() }
         val data = File(File(workdir, "data"), "game").apply { mkdirs() }
         val converted = File(File(workdir, "converted"), "game").apply { mkdirs() }
@@ -325,7 +326,7 @@ class LibraryAppBundleImporterTest {
                 "config/new.cfg" to "new config".toByteArray(),
                 "data/new.sav" to "new save".toByteArray(),
             ),
-            temporaryFolder.newFolder("rollback-staging"),
+            TempFiles.newFolder(temporaryFolder, "rollback-staging"),
         )
 
         try {
@@ -346,7 +347,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun preparedTransactionIsRecoveredAfterSimulatedProcessDeath() {
-        val workdir = temporaryFolder.newFolder("crash-recovery-workdir")
+        val workdir = TempFiles.newFolder(temporaryFolder, "crash-recovery-workdir")
         val configParent = File(workdir, "configs").apply { mkdirs() }
         val target = File(configParent, "game").apply { mkdirs() }
         File(target, "new.cfg").writeText("new")
@@ -382,7 +383,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun preparedTransactionWithoutPublishedTargetCleansPartialStaging() {
-        val workdir = temporaryFolder.newFolder("partial-staging-workdir")
+        val workdir = TempFiles.newFolder(temporaryFolder, "partial-staging-workdir")
         val configParent = File(workdir, "configs").apply { mkdirs() }
         val target = File(configParent, "game")
         val staged = File(configParent, ".game.tx.import.tmp").apply {
@@ -412,7 +413,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun committedTransactionKeepsNewStateAndFinishesCleanupAfterProcessDeath() {
-        val workdir = temporaryFolder.newFolder("commit-recovery-workdir")
+        val workdir = TempFiles.newFolder(temporaryFolder, "commit-recovery-workdir")
         val configParent = File(workdir, "configs").apply { mkdirs() }
         val target = File(configParent, "game").apply { mkdirs() }
         File(target, "new.cfg").writeText("new")
@@ -444,7 +445,7 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun recoveryRejectsTransactionThatTargetsUnrelatedWorkdirData() {
-        val workdir = temporaryFolder.newFolder("tampered-recovery-workdir")
+        val workdir = TempFiles.newFolder(temporaryFolder, "tampered-recovery-workdir")
         val unrelated = File(workdir, "unrelated.txt").apply { writeText("keep") }
         val transactionDir = File(workdir, ".library-import-transactions").apply { mkdirs() }
         val marker = File(transactionDir, "tx.txn")
@@ -474,7 +475,7 @@ class LibraryAppBundleImporterTest {
     }
 
     private fun assertImportFails(input: ByteArrayInputStream) {
-        val staging = temporaryFolder.newFolder("bad-${System.nanoTime()}")
+        val staging = TempFiles.newFolder(temporaryFolder, "bad-${System.nanoTime()}")
         try {
             LibraryAppBundleImporter.extractToStaging(input, staging)
             throw AssertionError("Expected import validation to fail")

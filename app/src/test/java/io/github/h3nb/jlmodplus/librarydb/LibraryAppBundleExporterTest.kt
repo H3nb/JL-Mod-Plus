@@ -6,20 +6,21 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
 import java.util.zip.ZipFile
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryAppBundleExporterTest {
-    @get:Rule val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     @Test fun exportStreamsRetainedPackageConfigAndSaveTree() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val converted = File(File(root, "converted"), "game").apply { mkdirs() }
         val configs = File(File(root, "configs"), "game").apply { mkdirs() }
         val data = File(File(root, "data"), "game").apply { mkdirs() }
@@ -30,7 +31,7 @@ class LibraryAppBundleExporterTest {
         File(configs, "VirtualKeyboardLayout").writeText("layout")
         File(data, "nested").mkdirs()
         File(data, "nested/save.bin").writeBytes(ByteArray(128 * 1024 + 7) { (it % 253).toByte() })
-        val target = File(temporaryFolder.root, "bundle.zip")
+        val target = File(temporaryFolder, "bundle.zip")
         val progress = ArrayList<LibraryAppBundleExporter.Progress>()
 
         LibraryAppBundleExporter.exportToZip(root, "game", target, progress::add)
@@ -50,18 +51,9 @@ class LibraryAppBundleExporterTest {
                 ),
                 names,
             )
-            assertEquals(
-                "{\"formatVersion\":1}\n",
-                zip.getInputStream(zip.getEntry("bundle.json")).reader().readText(),
-            )
-            assertEquals(
-                "MIDlet-Name: Game\n",
-                zip.getInputStream(zip.getEntry("app/converted.dex.conf")).reader().readText(),
-            )
-            assertEquals(
-                "layout",
-                zip.getInputStream(zip.getEntry("config/VirtualKeyboardLayout")).reader().readText(),
-            )
+            assertEquals(zip.getInputStream(zip.getEntry("bundle.json")).reader().readText(), , "{\"formatVersion\":1}\n")
+            assertEquals(zip.getInputStream(zip.getEntry("app/converted.dex.conf")).reader().readText(), , "MIDlet-Name: Game\n")
+            assertEquals(zip.getInputStream(zip.getEntry("config/VirtualKeyboardLayout")).reader().readText(), , "layout")
             assertEquals(128 * 1024 + 7L, zip.getEntry("data/nested/save.bin").size)
         }
         assertEquals(7, progress.last().completedEntries)
@@ -72,10 +64,10 @@ class LibraryAppBundleExporterTest {
     }
 
     @Test fun missingOptionalConfigAndSaveAreHandledGracefully() {
-        val root = temporaryFolder.newFolder("minimal")
+        val root = TempFiles.newFolder(temporaryFolder, "minimal")
         val converted = File(File(root, "converted"), "game").apply { mkdirs() }
         File(converted, "res.jar").writeBytes(byteArrayOf(1))
-        val target = File(temporaryFolder.root, "minimal.zip")
+        val target = File(temporaryFolder, "minimal.zip")
 
         LibraryAppBundleExporter.exportToZip(root, "game", target)
 
@@ -85,12 +77,12 @@ class LibraryAppBundleExporterTest {
     }
 
     @Test fun exportFailsWithoutRetainedJarEvenWhenSideDataExists() {
-        val root = temporaryFolder.newFolder("missing-jar")
+        val root = TempFiles.newFolder(temporaryFolder, "missing-jar")
         val converted = File(File(root, "converted"), "game").apply { mkdirs() }
         val config = File(File(root, "configs"), "game").apply { mkdirs() }
         File(converted, "converted.dex.conf").writeText("MIDlet-Name: Game\n")
         File(config, "config.json").writeText("{}")
-        val target = File(temporaryFolder.root, "missing-jar.zip")
+        val target = File(temporaryFolder, "missing-jar.zip")
 
         try {
             LibraryAppBundleExporter.exportToZip(root, "game", target)
@@ -101,8 +93,8 @@ class LibraryAppBundleExporterTest {
     }
 
     @Test fun exportFailsWhenNothingAppOwnedExists() {
-        val root = temporaryFolder.newFolder("empty")
-        val target = File(temporaryFolder.root, "empty.zip")
+        val root = TempFiles.newFolder(temporaryFolder, "empty")
+        val target = File(temporaryFolder, "empty.zip")
         try {
             LibraryAppBundleExporter.exportToZip(root, "missing", target)
             throw AssertionError("Expected empty export to fail")
@@ -112,10 +104,7 @@ class LibraryAppBundleExporterTest {
     }
 
     @Test fun exportFileNameIsSafeAndBounded() {
-        assertEquals(
-            "My_Game-JLModPlus.zip",
-            LibraryAppBundleExporter.safeFileName("My/Game"),
-        )
+        assertEquals(LibraryAppBundleExporter.safeFileName("My/Game"), , "My_Game-JLModPlus.zip")
         val longName = LibraryAppBundleExporter.safeFileName("A".repeat(200))
         assertTrue(longName.length <= 72 + "-JLModPlus.zip".length)
     }
