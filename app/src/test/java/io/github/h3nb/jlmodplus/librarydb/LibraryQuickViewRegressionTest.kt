@@ -7,8 +7,8 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import java.util.Locale
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class LibraryQuickViewRegressionTest {
     @Test
