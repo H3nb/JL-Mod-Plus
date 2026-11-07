@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package javax.microedition.lcdui;
 
-import static org.junit.Assert.assertEquals;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 public class InternalResolutionTest {
     @Test public void autoUsesFinalViewportAndIntegerFactors() {
