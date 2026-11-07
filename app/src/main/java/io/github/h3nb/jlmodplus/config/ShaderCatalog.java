@@ -82,9 +82,7 @@ public final class ShaderCatalog {
         ShaderInfo info = null;
         for (String line : FilesKt.readText(file, StandardCharsets.UTF_8).split("[\\n\\r]+")) {
             if (line.startsWith("[")) {
-                if (info != null && info.fragment != null && info.vertex != null) {
-                    entries.add(resolveLegacyPaths(base, file.getParentFile(), info));
-                }
+                addValidLegacyVariant(entries, base, file.getParentFile(), info);
                 info = new ShaderInfo(line.replaceAll("[\\[\\]]", ""), "unknown");
             } else if (info != null) {
                 try { info.set(line); } catch (RuntimeException e) {
@@ -92,10 +90,19 @@ public final class ShaderCatalog {
                 }
             }
         }
-        if (info != null && info.fragment != null && info.vertex != null) {
-            entries.add(resolveLegacyPaths(base, file.getParentFile(), info));
-        }
+        addValidLegacyVariant(entries, base, file.getParentFile(), info);
         return entries;
+    }
+
+    private static void addValidLegacyVariant(List<ShaderInfo> entries, File root,
+            File parent, ShaderInfo info) {
+        if (info == null || info.fragment == null || info.vertex == null) return;
+        try {
+            entries.add(resolveLegacyPaths(root, parent, info));
+        } catch (IOException e) {
+            // One missing source must not hide independent valid sections in the same INI.
+            Log.w(TAG, "Skipping invalid legacy shader: " + info, e);
+        }
     }
 
     private static ShaderInfo resolveLegacyPaths(File root, File parent, ShaderInfo info)
