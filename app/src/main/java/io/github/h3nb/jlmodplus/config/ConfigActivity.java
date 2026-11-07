@@ -86,6 +86,7 @@ import javax.microedition.util.ContextHolder;
 
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
@@ -438,6 +439,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		AppPageTransitions.install(this);
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		isProfile = ACTION_EDIT_PROFILE.equals(action);

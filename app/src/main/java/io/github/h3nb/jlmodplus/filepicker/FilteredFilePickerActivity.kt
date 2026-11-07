@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.AppPageTransitions
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ThemedToast
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat
@@ -60,6 +61,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppPageTransitions.install(this)
         EdgeToEdgeCompat.enableForComposeSurface(this)
 
         val request = FilePickerRequest.fromIntent(intent)

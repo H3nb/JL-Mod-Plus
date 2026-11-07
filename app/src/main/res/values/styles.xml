@@ -20,6 +20,18 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <!-- Full-screen internal pages use the same brief slide/fade as Compose destinations. -->
+    <style name="AppTheme.NavigationPage" parent="AppTheme.NoActionBar">
+        <item name="android:windowAnimationStyle">@style/AppPageWindowAnimations</item>
+    </style>
+
+    <style name="AppPageWindowAnimations" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/app_page_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/app_page_hold</item>
+        <item name="android:activityCloseEnterAnimation">@anim/app_page_hold</item>
+        <item name="android:activityCloseExitAnimation">@anim/app_page_exit</item>
+    </style>
+
     <style name="AppTheme.MemoryEditorTranslucent" parent="AppTheme.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowIsFloating">false</item>

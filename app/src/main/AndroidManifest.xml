@@ -210,12 +210,12 @@
         <activity
             android:name=".config.ControlSkinManagerActivity"
             android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NavigationPage" />
 
         <activity
             android:name=".config.ConfigActivity"
             android:exported="true"
-            android:theme="@style/AppTheme.NoActionBar"
+            android:theme="@style/AppTheme.NavigationPage"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity-alias
             android:name="ru.playsoftware.j2meloader.config.ConfigActivity"
@@ -267,7 +267,7 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name=".settings.SettingsActivity"
             android:exported="true"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NavigationPage">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
 
@@ -281,26 +281,26 @@
         <activity
             android:name=".settings.KeyMapperActivity"
             android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NavigationPage" />
         <activity
             android:name=".filepicker.FilteredFilePickerActivity"
             android:enableOnBackInvokedCallback="true"
             android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar"
+            android:theme="@style/AppTheme.NavigationPage"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name=".config.ProfilesActivity"
             android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar"
+            android:theme="@style/AppTheme.NavigationPage"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name=".crashes.CrashReportsActivity"
             android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NavigationPage" />
         <activity
             android:name=".crashes.CrashReportDetailsActivity"
             android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NavigationPage" />
         <activity
             android:name="com.nokia.mid.ui.NotificationActivity"
             android:exported="false"

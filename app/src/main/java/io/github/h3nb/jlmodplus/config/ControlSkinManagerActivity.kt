@@ -88,6 +88,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.AppPageTransitions
 import io.github.h3nb.jlmodplus.filepicker.FilePickerContract
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity
@@ -205,6 +206,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppPageTransitions.install(this)
         val path = intent.getStringExtra(EXTRA_WORKDIR) ?: run { finish(); return }
         workdir = File(path)
         selectedId = if (savedInstanceState?.containsKey("selected") == true)
