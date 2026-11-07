@@ -2,6 +2,7 @@ name: CI efficiency research
 
 # Temporary PR-scoped probe, never intended for alpha.
 # The existing Android CI lint job supplies the native-enabled control.
+# This matrix compares two non-native worker configurations independently.
 on:
   pull_request:
     branches:
@@ -22,8 +23,14 @@ jobs:
   lint-no-native:
     # Restrict additional compute to this same-repository research branch.
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/ci-efficiency-experiments'
-    name: Research lint without native
+    name: Research lint (${{ matrix.scenario }})
     runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - lint-no-native
+          - lint-workers2
     timeout-minutes: 20
     steps:
       - name: Check out sources
@@ -56,7 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x gradlew
-          bash scripts/ci-perf-experiment.sh lint-no-native
+          bash scripts/ci-perf-experiment.sh ${{ matrix.scenario }}
 
       - name: Validate lint report presence and summarize
         if: always()
@@ -69,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ci-research-lint-no-native
+          name: ci-research-${{ matrix.scenario }}
           path: |
             build/reports/ci-experiments/**
             app/build/reports/lint-results-*.xml
