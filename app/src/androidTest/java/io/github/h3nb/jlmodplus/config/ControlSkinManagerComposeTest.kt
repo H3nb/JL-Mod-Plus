@@ -73,6 +73,16 @@ class ControlSkinManagerComposeTest {
                 val keypadY = rule.onNodeWithText(keypad).getUnclippedBoundsInRoot().top
                 assertTrue(movementY < keypadY)
 
+                // Returning from a set editor must reveal the existing gallery.
+                rule.onNodeWithContentDescription(context.getString(R.string.action_back))
+                    .performClick()
+                rule.onNodeWithText(context.getString(R.string.control_skin_default))
+                    .assertIsDisplayed()
+                rule.onNodeWithContentDescription(
+                    context.getString(R.string.control_skin_manage_named, set.name)
+                ).performClick()
+                rule.onNodeWithText(context.getString(R.string.control_skin_edit)).performClick()
+
                 scenario.onActivity {
                     it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                 }

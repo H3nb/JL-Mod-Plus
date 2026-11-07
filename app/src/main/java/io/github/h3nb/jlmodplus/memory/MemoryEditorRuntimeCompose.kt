@@ -8,9 +8,12 @@
 package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -81,6 +84,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -110,6 +114,10 @@ import androidx.core.os.ConfigurationCompat
 import java.text.NumberFormat
 import java.util.Locale
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
+import io.github.h3nb.jlmodplus.ui.pageMotionDirection
+import io.github.h3nb.jlmodplus.ui.tabEnter
+import io.github.h3nb.jlmodplus.ui.tabExit
 import io.github.h3nb.jlmodplus.memory.MemoryEditorDialog as AlertDialog
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -162,6 +170,7 @@ internal fun MemoryEditorRuntimeRoot(
     if (!state.visible) return
     MemoryEditorOverlayScope(overlayState) { overlay ->
         val tab = state.activeTab
+        val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
         val resultsListState = rememberLazyListState()
         val watchListState = rememberLazyListState()
@@ -224,19 +233,56 @@ internal fun MemoryEditorRuntimeRoot(
                         state.message?.takeIf(String::isNotBlank)?.let {
                             RuntimeMessage(it, state.messageIsError)
                         }
-                        when (tab) {
-                            MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
-                                state, actions, inspectSelected, resultsListState, compactResults, Modifier.weight(1f),
-                            )
-                            MemoryEditorTab.WATCH -> RuntimeWatchTab(
-                                state, actions, watchListState, compactResults, Modifier.weight(1f),
-                            )
-                            MemoryEditorTab.SAVED -> RuntimeSavedVariablesTab(
-                                state, actions, savedListState, Modifier.weight(1f),
-                            )
-                            MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
-                                state, actions, Modifier.weight(1f),
-                            )
+                        // Use tab identity for motion, not the frequently changing memory snapshot.
+                        // The outgoing snapshot is retained briefly so Inspector can fade out
+                        // without showing an empty state after its target is closed.
+                        AnimatedContent(
+                            targetState = state,
+                            contentKey = { it.activeTab },
+                            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
+                            transitionSpec = {
+                                val direction = when {
+                                    targetState.activeTab == MemoryEditorTab.INSPECTOR -> 1
+                                    initialState.activeTab == MemoryEditorTab.INSPECTOR -> -1
+                                    else -> pageMotionDirection(
+                                        0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
+                                    )
+                                }
+                                tabEnter(direction, tabTravelPx).togetherWith(tabExit(direction, tabTravelPx))
+                            },
+                            label = "Memory editor tab",
+                        ) { shownState ->
+                            val active = shownState.activeTab == tab
+                            Box(
+                                Modifier.fillMaxSize().then(
+                                    if (active) Modifier else Modifier.clearAndSetSemantics {},
+                                ),
+                            ) {
+                                when (shownState.activeTab) {
+                                    MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
+                                        shownState, actions, inspectSelected, resultsListState,
+                                        compactResults, Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.WATCH -> RuntimeWatchTab(
+                                        shownState, actions, watchListState, compactResults,
+                                        Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.SAVED -> RuntimeSavedVariablesTab(
+                                        shownState, actions, savedListState, Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
+                                        shownState, actions, Modifier.fillMaxSize(),
+                                    )
+                                }
+                                if (!active) {
+                                    Box(
+                                        Modifier.matchParentSize().clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null,
+                                        ) {},
+                                    )
+                                }
+                            }
                         }
                     }
                 }

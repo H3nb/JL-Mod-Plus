@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 
@@ -57,6 +58,7 @@ public class CrashReportsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		AppPageTransitions.install(this);
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		composeView = new ComposeView(this);
 		composeView.setId(R.id.crash_reports_compose_root);

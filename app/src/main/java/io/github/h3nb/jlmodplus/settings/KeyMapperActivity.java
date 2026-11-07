@@ -44,6 +44,7 @@ import java.io.File;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.config.MidletConfigLoadBoundary;
 import io.github.h3nb.jlmodplus.config.InstalledAppWriteGuard;
 import io.github.h3nb.jlmodplus.config.PresetLocalOverride;
@@ -71,6 +72,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		AppPageTransitions.install(this);
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		Intent intent = getIntent();
 		String path = intent.getDataString();

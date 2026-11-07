@@ -49,7 +49,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -86,6 +85,7 @@ import javax.microedition.util.ContextHolder;
 
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
@@ -438,6 +438,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		AppPageTransitions.install(this);
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		isProfile = ACTION_EDIT_PROFILE.equals(action);
@@ -715,16 +716,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				},
 				getTitle() == null ? "" : getTitle().toString(),
 				isProfile);
-		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-			@Override
-			public void handleOnBackPressed() {
-				if (composeController != null) {
-					composeController.requestBack();
-				} else {
-					finish();
-				}
-			}
-		});
 		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
 			@Override
 			public javax.microedition.lcdui.Canvas currentCanvas() {

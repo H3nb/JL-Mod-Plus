@@ -27,6 +27,7 @@ import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -42,6 +43,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -227,6 +229,10 @@ import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
+import io.github.h3nb.jlmodplus.ui.PagerTabMotion
+import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
+import io.github.h3nb.jlmodplus.ui.pageEnter
+import io.github.h3nb.jlmodplus.ui.pageExit
 import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
 import io.github.h3nb.jlmodplus.ui.isNavigationKeyEvent
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
@@ -707,6 +713,7 @@ fun LibraryScreen(
         pageCount = { LibraryDestination.entries.size },
     )
     val coroutineScope = rememberCoroutineScope()
+    val tabMotion = remember { PagerTabMotion() }
     val context = LocalContext.current.applicationContext
     // Screenshot previews have no persistent preferences or active network stack.
     val isInspection = LocalInspectionMode.current
@@ -749,7 +756,7 @@ fun LibraryScreen(
         }
     }
     val selectDestination: (LibraryDestination) -> Unit = { section ->
-        coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
+        coroutineScope.launch { pagerState.navigateToTab(section.ordinal, tabMotion) }
     }
     val initialNavigationFocus = remember { FocusRequester() }
     // Indicators may follow the gesture; state-changing navigation commits only after settling.
@@ -774,6 +781,13 @@ fun LibraryScreen(
     var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
     var installSourceMenuVisible by remember { mutableStateOf(false) }
     var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
+    // Keep full-screen navigation blocking until the outgoing page finishes fading away.
+    val aboutPageMotion = remember { MutableTransitionState(false) }
+    aboutPageMotion.targetState = aboutPageVisible
+    val updatesPageMotion = remember { MutableTransitionState(false) }
+    updatesPageMotion.targetState = updatesPageVisible
+    val auxiliaryPageOnScreen = aboutPageMotion.currentState || aboutPageMotion.targetState ||
+        updatesPageMotion.currentState || updatesPageMotion.targetState
     var updatePrompt by remember { mutableStateOf<UpdateCandidate?>(null) }
     var sessionDismissedUpdate by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
@@ -840,15 +854,19 @@ fun LibraryScreen(
     val currentControllerMetadataTarget by rememberUpdatedState(metadataTarget)
     val currentControllerDeleteTarget by rememberUpdatedState(deleteTarget)
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
-    val currentControllerAboutPageVisible by rememberUpdatedState(aboutPageVisible)
-    val currentControllerUpdatesPageVisible by rememberUpdatedState(updatesPageVisible)
+    val currentControllerAboutPageVisible by rememberUpdatedState(
+        aboutPageMotion.currentState || aboutPageMotion.targetState,
+    )
+    val currentControllerUpdatesPageVisible by rememberUpdatedState(
+        updatesPageMotion.currentState || updatesPageMotion.targetState,
+    )
     val currentControllerUpdatePrompt by rememberUpdatedState(updatePrompt)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
-            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible ||
-            updatesPageVisible || updatePrompt != null,
+            infoDialog != null || pendingBulkDeleteIds != null || auxiliaryPageOnScreen ||
+            updatePrompt != null,
     )
 
     LaunchedEffect(pagerState) {
@@ -970,10 +988,12 @@ fun LibraryScreen(
     ) {
         selectionState = selectionState.clear()
     }
-    BackHandler(enabled = aboutPageVisible && infoDialog == null) {
+    BackHandler(
+        enabled = (aboutPageMotion.currentState || aboutPageMotion.targetState) && infoDialog == null,
+    ) {
         aboutPageVisible = false
     }
-    BackHandler(enabled = updatesPageVisible) {
+    BackHandler(enabled = updatesPageMotion.currentState || updatesPageMotion.targetState) {
         updatesPageVisible = false
     }
     val availableUpdate = (updateRepository?.status as? UpdateStatus.Available)?.candidate
@@ -1145,6 +1165,7 @@ fun LibraryScreen(
                                 0,
                                 LibraryDestination.entries.lastIndex,
                             ),
+                            tabMotion,
                         )
                     }
                 }
@@ -1200,7 +1221,7 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
-        || aboutPageVisible || updatesPageVisible
+        || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null
     LaunchedEffect(libraryModalVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryModalVisible || selectionActiveHere)
@@ -1440,14 +1461,21 @@ fun LibraryScreen(
                     bottom = bottom,
                 )
             }
-            HorizontalPager(
-                state = pagerState,
-                // Retain the three bounded destinations; their own lists remain lazy.
-                // Viewport state alone cannot avoid rebuilding a page on every tab return.
-                beyondViewportPageCount = LibraryDestination.entries.lastIndex,
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.Top,
-            ) { page ->
+            Box(
+                Modifier.fillMaxSize()
+                    .then(if (tabMotion.isJumping) Modifier.clearAndSetSemantics {} else Modifier),
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    // Retain the three bounded destinations; their own lists remain lazy.
+                    // Viewport state alone cannot avoid rebuilding a page on every tab return.
+                    beyondViewportPageCount = LibraryDestination.entries.lastIndex,
+                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                        alpha = tabMotion.alpha
+                        translationX = tabMotion.translationDp * density.density
+                    },
+                    verticalAlignment = Alignment.Top,
+                ) { page ->
                 val pageModifier = if (page == pagerState.currentPage) {
                     Modifier
                 } else {
@@ -1582,16 +1610,41 @@ fun LibraryScreen(
                     }
                 }
             }
+                if (tabMotion.isJumping) {
+                    Box(
+                        Modifier.matchParentSize().clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {},
+                    )
+                }
+            }
         }
         }
 
-        if (updatesPageVisible) {
+        val auxiliaryPageOffset = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
+        val auxiliaryEnter = pageEnter(1, auxiliaryPageOffset)
+        val auxiliaryExit = pageExit(-1, auxiliaryPageOffset)
+        AnimatedVisibility(
+            visibleState = updatesPageMotion,
+            modifier = Modifier.fillMaxSize().zIndex(4f),
+            enter = auxiliaryEnter,
+            exit = auxiliaryExit,
+        ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
+                Modifier.fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .zIndex(4f),
+                    .then(if (updatesPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
             ) {
+                // Catch touches on uncovered parts of the outgoing screen, behind its controls.
+                Box(
+                    Modifier.matchParentSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {}
+                        .clearAndSetSemantics {},
+                )
                 updateRepository?.let { repository ->
                     UpdatesScreen(
                         repository = repository,
@@ -1600,20 +1653,54 @@ fun LibraryScreen(
                         onOpenDownload = { actions.onOpenUpdateDownload(it) },
                     )
                 }
+                // Outgoing content is still drawn, but must not accept actions or focus.
+                if (!updatesPageVisible) {
+                    Box(
+                        Modifier.matchParentSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {}
+                            .clearAndSetSemantics {},
+                    )
+                }
             }
         }
-        if (aboutPageVisible) {
+        AnimatedVisibility(
+            visibleState = aboutPageMotion,
+            modifier = Modifier.fillMaxSize().zIndex(4f),
+            enter = auxiliaryEnter,
+            exit = auxiliaryExit,
+        ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
+                Modifier.fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .zIndex(4f),
+                    .then(if (aboutPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
             ) {
+                Box(
+                    Modifier.matchParentSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {}
+                        .clearAndSetSemantics {},
+                )
                 LibraryAboutScreen(
                     onBack = { aboutPageVisible = false },
                     onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
                     onOpenGitHub = actions::onOpenProjectRepository,
                 )
+                // Outgoing content is still drawn, but must not accept actions or focus.
+                if (!aboutPageVisible) {
+                    Box(
+                        Modifier.matchParentSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {}
+                            .clearAndSetSemantics {},
+                    )
+                }
             }
         }
         metadataApp?.let { app ->

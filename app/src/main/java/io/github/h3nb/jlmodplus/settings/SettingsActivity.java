@@ -71,6 +71,7 @@ import java.util.Locale;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.ui.AccentPalette;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
@@ -94,6 +95,7 @@ public class SettingsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		AppPageTransitions.install(this);
 		AppLocaleTags.migrateRetiredSantaliLocale();
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
