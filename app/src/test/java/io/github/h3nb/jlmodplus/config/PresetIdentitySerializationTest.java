@@ -4,18 +4,18 @@
 package io.github.h3nb.jlmodplus.config;
 
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import android.content.SharedPreferences;
 
 
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -937,13 +937,12 @@ public class PresetIdentitySerializationTest {
 			if (!thread.isAlive()) break;
 			Thread.yield();
 		}
-		assertEquals("Expected thread to block on preset identity monitor",
-				Thread.State.BLOCKED, thread.getState());
+		assertEquals(Thread.State.BLOCKED, thread.getState(), "Expected thread to block on preset identity monitor");
 	}
 
 	private static void join(Thread thread, AtomicReference<Throwable> failure) throws Exception {
 		thread.join(TimeUnit.SECONDS.toMillis(5));
-		assertFalse("Thread did not finish", thread.isAlive());
+		assertFalse(thread.isAlive(), "Thread did not finish");
 		if (failure.get() != null) throw new AssertionError(failure.get());
 	}
 
@@ -1000,8 +999,7 @@ public class PresetIdentitySerializationTest {
 		}
 
 		void awaitBlockedCommit() throws Exception {
-			assertTrue("Expected preference commit to reach blocking point",
-					commitEntered != null && commitEntered.await(5, TimeUnit.SECONDS));
+			assertTrue(commitEntered != null && commitEntered.await(5, TimeUnit.SECONDS), "Expected preference commit to reach blocking point");
 		}
 
 		void releaseBlockedCommit() {

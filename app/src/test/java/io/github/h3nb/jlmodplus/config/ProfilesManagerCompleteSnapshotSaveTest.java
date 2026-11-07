@@ -4,15 +4,15 @@
  */
 package io.github.h3nb.jlmodplus.config;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -275,7 +275,7 @@ public class ProfilesManagerCompleteSnapshotSaveTest {
 
 	private static void join(Thread thread) throws Exception {
 		thread.join(TimeUnit.SECONDS.toMillis(5));
-		assertFalse("Thread did not finish", thread.isAlive());
+		assertFalse(thread.isAlive(), "Thread did not finish");
 	}
 
 	private static File tempDir(String suffix) throws Exception {
