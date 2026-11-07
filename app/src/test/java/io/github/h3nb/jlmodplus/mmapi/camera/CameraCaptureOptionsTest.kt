@@ -130,14 +130,14 @@ class CameraCaptureOptionsTest {
             "width=320&height=240&crop=true", "encoding=jpeg&", "encoding=jpeg=png",
         )
         for (request in requests) {
-            assertThrows("request=$request", MediaException::class.java) {
+            assertThrows(MediaException::class.java, {
                 CameraCaptureOptions.parseSnapshot(request)
-            }
+            }, "request=$request")
         }
         for (locator in listOf("capture://devcam2", "capture://videogarbage", "capture://video?camera=front", "capture://video?")) {
-            assertThrows("locator=$locator", MediaException::class.java) {
+            assertThrows(MediaException::class.java, {
                 CameraCaptureOptions.parseLocator(locator)
-            }
+            }, "locator=$locator")
         }
     }
 }

@@ -133,9 +133,9 @@ public class AndroidMethodVisitorTest {
 		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.classToString"
 						+ "(Ljava/lang/Class;)Ljava/lang/String;"));
-		assertTrue(calls.toString(), calls.contains(
+		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.newInstance"
-						+ "(Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;"));
+						+ "(Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;"), calls.toString());
 		assertFalse(calls.contains(
 				"INVOKEVIRTUAL java/lang/Class.newInstance()Ljava/lang/Object;"));
 	}
