@@ -134,7 +134,10 @@ class CustomShaderChainTest {
                 + "alias0 = FirstOutput\nshader1 = second.glsl\n"
                 + "textures = ColorLUT\nColorLUT = lut.png\n");
         source("derived/unknown.glsl", "uniform sampler2D UnboundTexture;\nvoid main() {}");
-        source("derived/valid.glsl", "uniform sampler2D Texture;\n"
+        source("derived/unknown-list.glsl", "uniform sampler2D Texture, UnboundTexture;\n");
+        source("derived/valid.glsl", "// uniform sampler2D NotBound;\n"
+                + "/* uniform sampler2D AlsoNotBound; */\n"
+                + "uniform sampler2D Texture;\n"
                 + "uniform sampler2D FirstOutputTexture;\n"
                 + "uniform sampler2D PassPrev2Texture;\n"
                 + "uniform sampler2D ColorLUT;\nvoid main() {}");
@@ -145,6 +148,12 @@ class CustomShaderChainTest {
                 () -> GlslpAssets.loadCustom(invalid, shaderRoot.toFile(),
                         "derived/chain.glslp", "glsl"));
         assertTrue(error.getMessage().contains("UnboundTexture"), error.getMessage());
+        IOException grouped = assertThrows(IOException.class,
+                () -> GlslpAssets.loadCustom(Arrays.asList(
+                        new CustomShaderStage("derived/first.glsl", 0, null),
+                        new CustomShaderStage("derived/unknown-list.glsl", 0, null)),
+                        shaderRoot.toFile(), "derived/chain.glslp", "glsl"));
+        assertTrue(grouped.getMessage().contains("UnboundTexture"), grouped.getMessage());
         GlslpPreset accepted = GlslpAssets.loadCustom(Arrays.asList(
                 new CustomShaderStage("derived/first.glsl", 0, null),
                 new CustomShaderStage("derived/valid.glsl", 0, null)),
