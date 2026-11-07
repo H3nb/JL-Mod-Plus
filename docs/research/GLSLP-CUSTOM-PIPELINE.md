@@ -55,13 +55,13 @@ catalog chooser remains available when assembling a custom Legacy pass.
   the removable shader subpage, so Back does not reset the Display scroll.
 - Legacy ShaderSelection fields, .ini parsing, profile semantics, and old
   standalone GLSL selections remain intact. An unsupported shader fails back
-  to the stock presenter, subject to PR #224's remaining runtime diagnostics.
+  to the stock presenter. The runtime logs the unsupported GPU feature or shader error.
 - GLSLP resource paths are relative to shaders/, including nested directories.
   Canonical root confinement, individual source limits, the 2 MiB aggregate
   shader-source budget, and the existing GLSLP validator still apply. Custom sources extending a GLSLP preset can use
-  only bound sampler inputs (the source texture, causal earlier passes,
-  inherited aliases and declared lookup textures); unknown sampler inputs
-  fail validation before saving.
+  only bound 2D sampler inputs (the source texture, causal earlier passes,
+  inherited aliases and declared lookup textures); unknown samplers and
+  unsupported sampler types fail validation before saving.
 
 ## Qualification
 
@@ -69,4 +69,4 @@ Run focused JVM tests covering root traversal and extension filtering, legacy
 INI multi-variant resolution, and GLSLP/custom nested paths; also run Android
 build, lint, screenshot, and representative Compose interaction tests.
 Validate GPU context loss, real-game softbar/viewport resize and actual ARM64
-performance before marking the stacked PR ready to merge.
+performance before marking the combined PR ready to merge.

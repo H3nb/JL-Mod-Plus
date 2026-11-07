@@ -163,6 +163,15 @@ class CustomShaderChainTest {
         assertEquals("FirstOutput", accepted.passes.get(0).alias);
     }
 
+    @Test void customPipelineRejectsNon2dSamplerBeforeGpuInitialization() throws Exception {
+        source("samplers/cube.glsl", "uniform samplerCube Texture;\nvoid main() {}");
+        IOException rejected = assertThrows(IOException.class,
+                () -> GlslpAssets.loadCustom(Collections.singletonList(
+                                new CustomShaderStage("samplers/cube.glsl", 1, null)),
+                        shaderRoot.toFile()));
+        assertTrue(rejected.getMessage().contains("samplerCube"), rejected.getMessage());
+    }
+
     @Test void inheritedCustomSourceReplacementDropsOnlyObsoleteParameters() throws Exception {
         source("parameters/original.glsl",
                 "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\n"
