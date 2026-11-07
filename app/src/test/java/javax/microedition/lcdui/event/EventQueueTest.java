@@ -14,10 +14,10 @@
 
 package javax.microedition.lcdui.event;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EventQueueTest {
 	@Test
@@ -35,7 +35,7 @@ public class EventQueueTest {
 				delivered.countDown();
 			}).asGuestCallback());
 			assertTrue(delivered.await(1, java.util.concurrent.TimeUnit.SECONDS));
-			org.junit.Assert.assertNotSame(postingThread, executingThread.get());
+			org.junit.jupiter.api.Assertions.assertNotSame(postingThread, executingThread.get());
 		} finally {
 			EventQueue.setImmediate(false);
 			queue.stopProcessing();
@@ -66,14 +66,13 @@ public class EventQueueTest {
 				if (order.get() == 1) order.set(2);
 				completed.countDown();
 			}).asGuestCallback());
-			assertFalse("callback escaped an unfinished screen change",
-					completed.await(100, java.util.concurrent.TimeUnit.MILLISECONDS));
+			assertFalse(completed.await(100, java.util.concurrent.TimeUnit.MILLISECONDS), "callback escaped an unfinished screen change");
 			// The host cancels the mount: no visibility callback is required to release the queue.
 			ready.set(true);
 			queue.signalEventReady();
 			assertTrue(completed.await(1, java.util.concurrent.TimeUnit.SECONDS));
 			assertFalse(processedBeforeReady.get());
-			org.junit.Assert.assertEquals(2, order.get());
+			org.junit.jupiter.api.Assertions.assertEquals(2, order.get());
 		} finally {
 			queue.stopProcessing();
 		}

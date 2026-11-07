@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 package javax.microedition.lcdui;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 public class TextFieldValueContractTest {
     @Test public void textMutationsRespectBoundsAndRemainAtomic() {
