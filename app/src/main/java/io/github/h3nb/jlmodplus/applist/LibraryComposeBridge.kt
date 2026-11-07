@@ -1619,7 +1619,11 @@ fun LibraryScreen(
             enter = auxiliaryEnter,
             exit = auxiliaryExit,
         ) {
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .then(if (updatesPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
+            ) {
                 // Catch touches on uncovered parts of the outgoing screen, behind its controls.
                 Box(
                     Modifier.matchParentSize()
@@ -1637,6 +1641,17 @@ fun LibraryScreen(
                         onOpenDownload = { actions.onOpenUpdateDownload(it) },
                     )
                 }
+                // Outgoing content is still drawn, but must not accept actions or focus.
+                if (!updatesPageVisible) {
+                    Box(
+                        Modifier.matchParentSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {}
+                            .clearAndSetSemantics {},
+                    )
+                }
             }
         }
         AnimatedVisibility(
@@ -1645,7 +1660,11 @@ fun LibraryScreen(
             enter = auxiliaryEnter,
             exit = auxiliaryExit,
         ) {
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .then(if (aboutPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
+            ) {
                 Box(
                     Modifier.matchParentSize()
                         .clickable(
@@ -1659,6 +1678,17 @@ fun LibraryScreen(
                     onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
                     onOpenGitHub = actions::onOpenProjectRepository,
                 )
+                // Outgoing content is still drawn, but must not accept actions or focus.
+                if (!aboutPageVisible) {
+                    Box(
+                        Modifier.matchParentSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {}
+                            .clearAndSetSemantics {},
+                    )
+                }
             }
         }
         metadataApp?.let { app ->
