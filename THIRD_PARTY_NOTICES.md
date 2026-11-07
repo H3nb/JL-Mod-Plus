@@ -151,11 +151,15 @@ authored eight-pass stress preset is distinct from upstream shader sources.
   HqMAME/xBRZ GPL-3.0-with-MAME-exception notices. The exception is not a
   blanket relicensing of JL-Mod Plus or this test fixture.
 
-Preserve all per-file notices and verify the applicable license-text and
+Full GNU GPL-3.0 and MIT license texts are included alongside these fixtures
+as `COPYING.GPL-3.0` and `LICENSE.MIT` in the Android instrumentation
+assets, in addition to the upstream per-file notices. Their text is the
+canonical SPDX license-list version; the source headers retain any
+file-specific MAME exception or author conditions. Verify the applicable
 source-redistribution obligations before distributing the test APK or declaring
-this fixture inventory license-qualified. URLs and header notices alone
-do not establish complete GPL compliance. No third-party example is included
-in the application's production shader assets.
+this fixture inventory license-qualified. These notices alone do not establish
+complete GPL compliance. No third-party example is included in the
+application's production shader assets.
 
 ## Repository-only vendored material
 
