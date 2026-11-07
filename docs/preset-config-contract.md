@@ -34,6 +34,15 @@ rear/automatic without requiring publication or a configuration-version change.
 They participate in form drafts, preset copies and effective-change comparison.
 Runtime swaps never persist those temporary lens overrides to config or preset.
 
+## Internal resolution profile setting
+
+`InternalResolutionScale` is an additive per-MIDlet profile property that defaults
+to 1 (existing 1x rendering). A value of 0 selects Auto; 1–10 requests a manual
+integer factor. Editor drafts, preset copies, and runtime configuration preserve
+the choice without changing the guest-visible logical dimensions. The runtime
+resolves and bounds the effective factor at Canvas creation; the selected
+factor takes effect on MIDlet restart, not during an active frame.
+
 ## Persistence and recovery
 
 - Preset source and installed-snapshot publication must not expose a partially written state as committed. Recover interrupted publication before consuming, replacing, renaming, deleting, or synchronizing the affected snapshot.

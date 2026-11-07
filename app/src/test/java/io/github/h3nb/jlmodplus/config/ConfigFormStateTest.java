@@ -25,6 +25,22 @@ import javax.microedition.shell.timing.TimingMode;
 
 public class ConfigFormStateTest {
 	@Test
+	public void internalResolutionChoiceRoundTripsThroughUnrelatedDraftEdits() {
+		ProfileModel original = new ProfileModel();
+		original.internalResolutionScale = 0; // Auto
+		ConfigFormState updated = ConfigFormState.fromProfile(original, "")
+				.toBuilder().screenWidth("240").build();
+		assertEquals(0, updated.internalResolutionScale);
+		assertEquals(0, updated.applyTo(new ProfileModel()).internalResolutionScale);
+
+		ConfigFormState manual = updated.toBuilder().internalResolutionScale(10).build();
+		assertEquals(10, manual.applyTo(new ProfileModel()).internalResolutionScale);
+		assertEquals(1, ConfigFormState.builder().build().internalResolutionScale);
+		assertEquals(10, ConfigFormState.builder()
+				.internalResolutionScale(99).build().internalResolutionScale);
+	}
+
+	@Test
 	public void cameraPreferencesSurviveUnrelatedDraftEditsAndApply() {
 		ProfileModel profile = new ProfileModel();
 		profile.cameraDefaultFacing = 0;

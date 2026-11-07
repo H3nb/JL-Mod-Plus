@@ -1218,4 +1218,7 @@
     <string name="memory_saved_incompatible">Tidak kompatibel</string>
     <string name="memory_saved_failed">Gagal</string>
     <string name="memory_saved_delete_many_confirm">Hapus %1$d definisi tersimpan? Nilai dalam game tidak berubah.</string>
+    <string name="internal_resolution_title">Resolusi internal (eksperimental)</string>
+    <string name="internal_resolution_auto">Otomatis</string>
+    <string name="internal_resolution_description">Render konten 2D yang didukung dengan resolusi lebih tinggi. Mode Otomatis memilih skala bilangan bulat terbesar yang sesuai area game. Mulai ulang game untuk menerapkan. Rendering 3D belum tervalidasi.</string>
 </resources>

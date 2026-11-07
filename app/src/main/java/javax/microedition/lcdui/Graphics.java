@@ -57,6 +57,7 @@ public class Graphics implements
 
 	private final Canvas canvas;
 	private final Image image;
+	private final Matrix pixelScaleMatrix;
 	private Bitmap boundBitmap;
 
 	private final Paint drawPaint = new Paint();
@@ -85,6 +86,11 @@ public class Graphics implements
 		this.image = image;
 		boundBitmap = image.getBitmap();
 		canvas = new Canvas(boundBitmap);
+		pixelScaleMatrix = image.getPixelScale() == 1 ? null : new Matrix();
+		if (pixelScaleMatrix != null) {
+			pixelScaleMatrix.setScale(image.getPixelScale(), image.getPixelScale());
+			canvas.concat(pixelScaleMatrix);
+		}
 		canvas.save();
 		canvas.clipRect(image.getBounds());
 		canvas.getClipBounds(clip);
@@ -108,6 +114,7 @@ public class Graphics implements
 				canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
 			}
 		}
+		if (pixelScaleMatrix != null) canvas.setMatrix(pixelScaleMatrix);
 		canvas.save();
 	}
 
@@ -507,7 +514,12 @@ public class Graphics implements
 			ly = y;
 		}
 
-		canvas.drawBitmap(image.getBitmap(), lx, ly, null);
+		if (image.getPixelScale() == 1) {
+			canvas.drawBitmap(image.getBitmap(), lx, ly, null);
+		} else {
+			rectF.set(lx, ly, lx + image.getWidth(), ly + image.getHeight());
+			canvas.drawBitmap(image.getBitmap(), image.getPhysicalContentRect(), rectF, null);
+		}
 	}
 
 	public void drawSubstring(String str, int offset, int len, int x, int y, int anchor) {
@@ -543,7 +555,9 @@ public class Graphics implements
 		RectF dstR = rectF;
 		float dx;
 		float dy;
-		srcR.set(x_src, y_src, x_src + width, y_src + height);
+		int sourceScale = image.getPixelScale();
+		srcR.set(x_src * sourceScale, y_src * sourceScale,
+				(x_src + width) * sourceScale, (y_src + height) * sourceScale);
 
 		Matrix matrix = new Matrix();
 		switch (transform) {
@@ -668,8 +682,11 @@ public class Graphics implements
 	public void copyArea(int x_src, int y_src, int width, int height,
 						 int x_dest, int y_dest, int anchor) {
 		if (width <= 0 || height <= 0) return;
-		final int[] pixels = new int[width * height];
-		image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
+		final int scale = image.getPixelScale();
+		final int[] pixels = scale == 1 ? new int[width * height] : null;
+		if (scale == 1) {
+			image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
+		}
 		float dx;
 		if ((anchor & Graphics.RIGHT) != 0) {
 			dx = x_dest - width;
@@ -686,15 +703,33 @@ public class Graphics implements
 		} else {
 			dy = y_dest;
 		}
-		canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
+		if (scale == 1) {
+			canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
+		} else {
+			// Snapshot before writing: source/destination may overlap on the same Bitmap.
+			Bitmap snapshot = Bitmap.createBitmap(image.getBitmap(),
+					x_src * scale, y_src * scale, width * scale, height * scale);
+			try {
+				rectF.set(dx, dy, dx + width, dy + height);
+				canvas.drawBitmap(snapshot, null, rectF, null);
+			} finally {
+				if (snapshot != image.getBitmap()) snapshot.recycle();
+			}
+		}
 	}
 
 	public void getPixels(int[] pixels, int offset, int stride,
 						  int x, int y, int width, int height) {
 		Bitmap b = image.getBitmap();
-		int w = Math.min(width, b.getWidth() - x);
-		int h = Math.min(height, b.getHeight() - y);
-		b.getPixels(pixels, offset, stride, x, y, w, h);
+		if (image.getPixelScale() == 1) {
+			int w = Math.min(width, b.getWidth() - x);
+			int h = Math.min(height, b.getHeight() - y);
+			b.getPixels(pixels, offset, stride, x, y, w, h);
+		} else {
+			int w = Math.min(width, image.getWidth() - x);
+			int h = Math.min(height, image.getHeight() - y);
+			image.getRGB(pixels, offset, stride, x, y, w, h);
+		}
 	}
 
 	public Bitmap getBitmap() {
@@ -703,7 +738,14 @@ public class Graphics implements
 
 	void flush(Image image, int x, int y, int width, int height) {
 		rect.set(x, y, x + width, y + height);
-		canvas.drawBitmap(image.getBitmap(), rect, rect, null);
+		int sourceScale = image.getPixelScale();
+		if (sourceScale == 1) {
+			canvas.drawBitmap(image.getBitmap(), rect, rect, null);
+		} else {
+			Rect physicalSource = new Rect(x * sourceScale, y * sourceScale,
+					(x + width) * sourceScale, (y + height) * sourceScale);
+			canvas.drawBitmap(image.getBitmap(), physicalSource, rect, null);
+		}
 	}
 
 	@Override

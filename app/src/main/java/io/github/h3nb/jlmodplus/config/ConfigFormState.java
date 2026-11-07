@@ -67,6 +67,7 @@ public final class ConfigFormState {
 	public final int screenScaleType;
 	public final int screenGravity;
 	public final int graphicsMode;
+	public final int internalResolutionScale;
 	public final int keyCodesLayout;
 	public final int vkButtonShape;
 	public final int vkAlpha;
@@ -120,6 +121,7 @@ public final class ConfigFormState {
 		screenScaleType = builder.screenScaleType;
 		screenGravity = builder.screenGravity;
 		graphicsMode = builder.graphicsMode;
+		internalResolutionScale = Math.max(0, Math.min(10, builder.internalResolutionScale));
 		keyCodesLayout = builder.keyCodesLayout;
 		vkButtonShape = builder.vkButtonShape;
 		vkAlpha = builder.vkAlpha;
@@ -172,6 +174,7 @@ public final class ConfigFormState {
 				.forceFullscreen(params.forceFullscreen)
 				.allowDisplayCutout(params.allowDisplayCutout)
 				.graphicsMode(params.graphicsMode)
+				.internalResolutionScale(params.internalResolutionScale)
 				.shader(params.shader == null ? null : params.shader.toInfo())
 				.controller(params.controller)
 				.showFps(params.showFps)
@@ -224,6 +227,7 @@ public final class ConfigFormState {
 		params.screenFilter = screenFilter;
 		params.immediateMode = immediateMode;
 		params.graphicsMode = graphicsMode;
+		params.internalResolutionScale = internalResolutionScale;
 		params.shader = ShaderSelection.fromInfo(shader);
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
@@ -342,6 +346,7 @@ public final class ConfigFormState {
 		private int screenScaleType;
 		private int screenGravity;
 		private int graphicsMode;
+		private int internalResolutionScale = 1;
 		private int keyCodesLayout;
 		private int vkButtonShape;
 		private int vkAlpha;
@@ -396,6 +401,7 @@ public final class ConfigFormState {
 			screenScaleType = source.screenScaleType;
 			screenGravity = source.screenGravity;
 			graphicsMode = source.graphicsMode;
+			internalResolutionScale = source.internalResolutionScale;
 			keyCodesLayout = source.keyCodesLayout;
 			vkButtonShape = source.vkButtonShape;
 			vkAlpha = source.vkAlpha;
@@ -450,6 +456,7 @@ public final class ConfigFormState {
 		public Builder screenScaleType(int value) { screenScaleType = value; return this; }
 		public Builder screenGravity(int value) { screenGravity = value; return this; }
 		public Builder graphicsMode(int value) { graphicsMode = value; return this; }
+		public Builder internalResolutionScale(int value) { internalResolutionScale = value; return this; }
 		public Builder keyCodesLayout(int value) { keyCodesLayout = value; return this; }
 		public Builder vkButtonShape(int value) { vkButtonShape = value; return this; }
 		public Builder vkAlpha(int value) { vkAlpha = value; return this; }
