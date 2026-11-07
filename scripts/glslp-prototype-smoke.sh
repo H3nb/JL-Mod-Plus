@@ -19,7 +19,7 @@ adb shell am instrument -w -r -e class \
   cat "$log"; exit 1;
 }
 cat "$log"
-grep -Eq 'OK \(15 tests?\)' "$log"
+grep -Eq 'OK \(16 tests\)' "$log"
 grep -q 'INSTRUMENTATION_CODE: -1' "$log"
 
 # Exercise the configuration route on the same emulator; the real Activity
