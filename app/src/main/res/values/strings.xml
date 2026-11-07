@@ -1316,4 +1316,7 @@
     <string name="library_bundle_export" tools:ignore="MissingTranslation">Export</string>
     <string name="library_bundle_layout_skin" tools:ignore="MissingTranslation">Screen layout skin</string>
     <string name="library_bundle_control_skin" tools:ignore="MissingTranslation">Virtual control skin</string>
+    <string name="internal_resolution_title">Internal resolution (experimental)</string>
+    <string name="internal_resolution_auto">Auto</string>
+    <string name="internal_resolution_description">Renders supported 2D game content at a higher resolution. Auto picks the largest integer scale fitting the game viewport. Restart the game to apply. 3D rendering is not yet qualified.</string>
 </resources>
