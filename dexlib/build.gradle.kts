@@ -40,10 +40,17 @@ androidComponents {
     }
 }
 
+// Use the same JUnit Platform as app local JVM tests; Android instrumentation is unchanged.
+tasks.withType<Test>().configureEach {
+    if (name.endsWith("UnitTest")) useJUnitPlatform()
+}
+
 dependencies {
     implementation(fileTree("dir" to "libs", "include" to listOf("*.jar")))
     api(libs.zip4j)
     implementation(libs.asm)
 
-    testImplementation(libs.junit)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
