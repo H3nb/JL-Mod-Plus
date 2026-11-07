@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.mmapi.control;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicInteger;

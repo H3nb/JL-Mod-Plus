@@ -2,10 +2,10 @@
 package io.github.h3nb.jlmodplus.mmapi.camera
 
 import javax.microedition.media.MediaException
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
 
 class CameraCaptureOptionsTest {
     @Test fun configuredResolutionOverridesScreenOnlyForDefaultRequests() {

@@ -14,11 +14,11 @@
 
 package io.github.h3nb.jlmodplus.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import androidx.core.graphics.Insets;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EdgeToEdgeCompatTest {
 	@Test
