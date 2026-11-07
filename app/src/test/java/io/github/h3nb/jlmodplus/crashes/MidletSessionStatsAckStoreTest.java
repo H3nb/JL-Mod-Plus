@@ -12,7 +12,6 @@ import io.github.h3nb.jlmodplus.testutil.TempFiles;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 

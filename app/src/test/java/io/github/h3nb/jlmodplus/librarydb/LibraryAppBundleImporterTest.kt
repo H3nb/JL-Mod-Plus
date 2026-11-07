@@ -11,7 +11,6 @@ import java.io.File
 import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.IOException
 import java.util.Properties
 import java.util.UUID

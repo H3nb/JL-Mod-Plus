@@ -9,7 +9,6 @@ package io.github.h3nb.jlmodplus.librarydb
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import io.github.h3nb.jlmodplus.testutil.TempFiles
-import java.io.File
 import java.util.zip.ZipFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
