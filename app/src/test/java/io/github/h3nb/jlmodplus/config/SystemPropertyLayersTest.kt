@@ -4,8 +4,8 @@ package io.github.h3nb.jlmodplus.config
 import java.nio.file.Files
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import org.junit.Assert.*
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 class SystemPropertyLayersTest {
     private val old = SystemPropertyLayers.currentFactory()
