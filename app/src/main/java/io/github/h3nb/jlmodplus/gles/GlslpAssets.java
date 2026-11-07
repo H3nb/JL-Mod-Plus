@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import io.github.h3nb.jlmodplus.config.CustomShaderStage;
@@ -44,7 +46,10 @@ public final class GlslpAssets {
         File root = shaderDirectory.getCanonicalFile();
         if ("glsl".equals(mode) || mode == null) {
             if (basePreset != null) {
-                return load(basePreset, root).withCustomSources(stages, path -> readLocal(root, path));
+                GlslpPreset inherited = load(basePreset, root)
+                        .withCustomSources(stages, path -> readLocal(root, path));
+                validateCustomSamplers(inherited, true);
+                return inherited;
             }
             return loadStandaloneStages(stages, root, false);
         }
@@ -106,19 +111,48 @@ public final class GlslpAssets {
         GlslpPreset result = GlslpPreset.load(path -> {
             if ("__jlmod_custom__.glslp".equals(path)) return preset.toString();
             if (generated.containsKey(path)) return generated.get(path);
-            String source = readLocal(root, path);
-            Matcher samplers = SAMPLER.matcher(source);
-            while (samplers.find()) {
-                if (!"Texture".equals(samplers.group(1))) {
-                    throw new IOException("Custom stage requires additional sampler: "
-                            + samplers.group(1) + " (" + path + ")");
-                }
-            }
-            return source;
+            return readLocal(root, path);
         }, "__jlmod_custom__.glslp");
+        if (!legacy) validateCustomSamplers(result, false);
         return legacy ? result.withLegacyValues(stages) : result;
     }
 
+    /**
+     * A custom source may only sample inputs the executor actually binds.
+     * Preset-derived chains additionally retain their original LUTs and causal pass aliases.
+     */
+    private static void validateCustomSamplers(GlslpPreset preset, boolean inherited)
+            throws IOException {
+        for (int i = 0; i < preset.passes.size(); i++) {
+            GlslpPreset.Pass pass = preset.passes.get(i);
+            Set<String> allowed = new HashSet<>();
+            allowed.add("Texture");
+            if (inherited) {
+                if (i > 0) allowed.add("OrigTexture");
+                if (i > 1) allowed.add("PassPrev2Texture");
+                for (GlslpPreset.Texture texture : preset.textures) allowed.add(texture.alias);
+                for (int j = 0; j < i; j++) {
+                    allowed.add("Pass" + (j + 1) + "Texture");
+                    String alias = preset.passes.get(j).alias;
+                    if (alias != null) {
+                        allowed.add(alias);
+                        allowed.add(alias + "Texture");
+                    }
+                }
+                for (int distance = 3; distance <= i; distance++) {
+                    allowed.add("PassPrev" + distance + "Texture");
+                }
+            }
+            Matcher samplers = SAMPLER.matcher(pass.sourceText);
+            while (samplers.find()) {
+                String name = samplers.group(1);
+                if (!allowed.contains(name)) {
+                    throw new IOException("Custom stage requires additional sampler: "
+                            + name + " (" + pass.sourcePath + ")");
+                }
+            }
+        }
+    }
 
     /** Old profiles may still refer to sources later moved under shaders_legacy/. */
     private static String readLegacySource(File root, String path) throws IOException {
