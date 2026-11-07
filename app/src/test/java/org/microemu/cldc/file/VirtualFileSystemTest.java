@@ -1,16 +1,16 @@
 package org.microemu.cldc.file;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.io.TempDir;
+import io.github.h3nb.jlmodplus.testutil.TempFiles;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,14 +19,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class VirtualFileSystemTest {
-    @Rule public final TemporaryFolder temp = new TemporaryFolder();
+    @TempDir public File temp;
 
-    @After public void tearDown() {
+    @AfterEach public void tearDown() {
         VirtualFileSystem.clear();
     }
 
     @Test public void sharedDrivesExistAndOnlyEnumerableMountsAreAdvertised() throws Exception {
-        VirtualFileSystem.install(temp.getRoot(), "game-a");
+        VirtualFileSystem.install(temp, "game-a");
         assertTrue(VirtualFileSystem.resolve("c:/", "").isDirectory());
         assertTrue(VirtualFileSystem.resolve("e:/", "").isDirectory());
         assertEquals("storage/c", relative(VirtualFileSystem.resolve("c:/", "")));
@@ -45,7 +45,7 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void aliasesShareBackingFilesWithoutAdvertisingExtraRoots() throws Exception {
-        VirtualFileSystem.install(temp.getRoot(), "game-a");
+        VirtualFileSystem.install(temp, "game-a");
         assertEquals(VirtualFileSystem.resolve("c:/", "example.dat"),
                 VirtualFileSystem.resolve("0:/", "example.dat"));
         assertEquals(VirtualFileSystem.resolve("e:/", "example.dat"),
@@ -55,7 +55,7 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void installationPrivateDataIsSeparateFromSharedMounts() throws Exception {
-        VirtualFileSystem.install(temp.getRoot(), "game-a");
+        VirtualFileSystem.install(temp, "game-a");
         File first = VirtualFileSystem.resolve("private:/", "save.dat");
         File vendor = VirtualFileSystem.resolve("siemens:/", "save.dat");
         File vendorDrive = VirtualFileSystem.resolve("a:/", "save.dat");
@@ -63,7 +63,7 @@ public class VirtualFileSystemTest {
         assertTrue(VirtualFileSystem.isPrivate("b:/"));
         assertTrue(relative(first).startsWith("data/game-a/private/"));
         assertEquals("data/game-a/vendor/siemens/save.dat", relative(vendor));
-        VirtualFileSystem.install(temp.getRoot(), "game-b");
+        VirtualFileSystem.install(temp, "game-b");
         File second = VirtualFileSystem.resolve("private:/", "save.dat");
         assertNotEquals(first, second);
         assertNotEquals(vendorDrive, VirtualFileSystem.resolve("a:/", "save.dat"));
@@ -72,7 +72,7 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void rejectsUnknownRootsAndTraversal() throws Exception {
-        VirtualFileSystem.install(temp.getRoot(), "game-a");
+        VirtualFileSystem.install(temp, "game-a");
         assertThrows(IOException.class, () -> VirtualFileSystem.rootFor("unknown/file"));
         assertThrows(IOException.class, () -> VirtualFileSystem.resolve("z:/", "file"));
         assertThrows(IOException.class, () -> VirtualFileSystem.resolve("c:/", "../data/game-a"));
@@ -84,12 +84,12 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void rejectsSymlinksOutsideMountAndLinkedMountRoots() throws Exception {
-        VirtualFileSystem.install(temp.getRoot(), "game-a");
-        File outside = temp.newFolder("outside");
+        VirtualFileSystem.install(temp, "game-a");
+        File outside = TempFiles.newFolder(temp, "outside");
         File mount = VirtualFileSystem.resolve("c:/", "");
         Files.createSymbolicLink(new File(mount, "escape").toPath(), outside.toPath());
         assertThrows(IOException.class, () -> VirtualFileSystem.resolve("c:/", "escape/secret"));
-        File root = temp.newFolder("workdir");
+        File root = TempFiles.newFolder(temp, "workdir");
         File storage = new File(root, "storage");
         assertTrue(storage.mkdirs());
         Files.createSymbolicLink(new File(storage, "c").toPath(), outside.toPath());
@@ -97,11 +97,11 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void vendorFilesCannotExposeLegacyRmsRecords() throws Exception {
-        File recordData = new File(temp.getRoot(), "data/game-a/score.rsh");
+        File recordData = new File(temp, "data/game-a/score.rsh");
         File directory = recordData.getParentFile();
         assertTrue(directory.mkdirs() || directory.isDirectory());
         Files.write(recordData.toPath(), new byte[]{1, 2, 3});
-        VirtualFileSystem.install(temp.getRoot(), "game-a");
+        VirtualFileSystem.install(temp, "game-a");
         File vendorFile = VirtualFileSystem.resolve("siemens:/", "score.rsh");
         assertNotEquals(recordData.getCanonicalFile(), vendorFile);
         assertFalse(vendorFile.exists());
@@ -109,14 +109,14 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void refusesInvalidInstallationIdentifiers() throws Exception {
-        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "../game"));
-        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "a/b"));
-        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "a:b"));
+        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp, "../game"));
+        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp, "a/b"));
+        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp, "a:b"));
     }
 
     @Test public void legacyPrivateUrlsStayWithinTheirOriginalInstallation() throws Exception {
-        File workdir = new File(temp.getRoot(), "WorkDir");
-        VirtualFileSystem.install(workdir, "GameOne", temp.getRoot());
+        File workdir = new File(temp, "WorkDir");
+        VirtualFileSystem.install(workdir, "GameOne", temp);
         String oldRoot = "c:/WorkDir/data/GameOne/private/";
         assertEquals(oldRoot, VirtualFileSystem.rootFor(oldRoot + "save.dat"));
         assertTrue(VirtualFileSystem.isPrivate(oldRoot));
@@ -127,7 +127,7 @@ public class VirtualFileSystemTest {
         Files.write(first.toPath(), new byte[]{42});
         File shared = VirtualFileSystem.resolve("c:/", "shared.dat");
         Files.write(shared.toPath(), new byte[]{7});
-        VirtualFileSystem.install(workdir, "GameTwo", temp.getRoot());
+        VirtualFileSystem.install(workdir, "GameTwo", temp);
         assertThrows(IOException.class, () -> VirtualFileSystem.resolve(oldRoot, "save.dat"));
         // An old URL for another installation can refer only to the shared C namespace,
         // where no private data is mounted or copied.
@@ -140,8 +140,8 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void androidModeMountsPhysicalVolumesButKeepsPrivateLocations() throws Exception {
-        File primary = temp.newFolder("primary");
-        File card = temp.newFolder("card");
+        File primary = TempFiles.newFolder(temp, "primary");
+        File card = TempFiles.newFolder(temp, "card");
         File work = new File(primary, "WorkDir");
         VirtualFileSystem.install(work, "one");
         File privateSave = VirtualFileSystem.resolve("private:/", "save");
@@ -167,7 +167,7 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void androidModeProtectsInternalsAndTheirAncestorsIncludingSymlinks() throws Exception {
-        File primary = temp.newFolder("volume");
+        File primary = TempFiles.newFolder(temp, "volume");
         File work = new File(primary, "parent/WorkDir");
         VirtualFileSystem.install(work, "one", primary, StorageMode.ANDROID, new File[]{primary});
         for (String internal : new String[]{"data/other/record.rsh", "configs/other", "converted/other",
@@ -191,16 +191,16 @@ public class VirtualFileSystemTest {
     }
 
     @Test public void unavailableAndroidVolumeDoesNotGetCreated() throws Exception {
-        File absent = new File(temp.getRoot(), "unmounted");
-        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "one", absent,
+        File absent = new File(temp, "unmounted");
+        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp, "one", absent,
                 StorageMode.ANDROID, new File[]{absent}));
         assertFalse(absent.exists());
-        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp.getRoot(), "one", null,
+        assertThrows(IOException.class, () -> VirtualFileSystem.install(temp, "one", null,
                 StorageMode.ANDROID, new File[0]));
     }
 
     private String relative(File file) throws IOException {
-        String base = temp.getRoot().getCanonicalPath();
+        String base = temp.getCanonicalPath();
         return file.getCanonicalPath().substring(base.length() + 1).replace(File.separatorChar, '/');
     }
 }

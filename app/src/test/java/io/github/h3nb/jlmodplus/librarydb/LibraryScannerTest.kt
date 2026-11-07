@@ -14,24 +14,23 @@
 
 package io.github.h3nb.jlmodplus.librarydb
 
+import org.junit.jupiter.api.io.TempDir
+import io.github.h3nb.jlmodplus.testutil.TempFiles
 import java.io.File
 import java.io.IOException
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class LibraryScannerTest {
-    @get:Rule
-    val temporaryFolder = TemporaryFolder()
+    @field:TempDir lateinit var temporaryFolder: File
 
     private val scanner = LibraryScanner()
 
     @Test
     fun scanReadsSourceMetadataWithoutWritingConvertedDirectory() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val appDir = createConvertedApp(
             root = root,
             storageKey = "Game",
@@ -61,7 +60,7 @@ class LibraryScannerTest {
 
     @Test
     fun malformedDescriptorIsReportedWithoutDeletingEvidence() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val appDir = createConvertedApp(
             root = root,
             storageKey = "Broken",
@@ -81,7 +80,7 @@ class LibraryScannerTest {
 
     @Test
     fun missingConvertedPayloadIsReportedWithoutDeletingDirectory() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val appDir = File(File(root, "converted").apply { mkdir() }, "Incomplete").apply { mkdir() }
         File(appDir, "converted.dex.conf").writeText(
             "MIDlet-Name: Incomplete\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n",
@@ -97,7 +96,7 @@ class LibraryScannerTest {
 
     @Test
     fun emptyArchiveFallsBackToNonEmptyDexPayload() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val appDir = createConvertedApp(
             root = root,
             storageKey = "Fallback",
@@ -117,7 +116,7 @@ class LibraryScannerTest {
 
     @Test
     fun legacyConvertedStagingDirectoryIsIgnoredCaseInsensitively() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val converted = File(root, "converted").apply { mkdir() }
         val legacy = File(converted, ".TMP").apply { mkdir() }
         File(legacy, "converted.dex").writeText("legacy partial")
@@ -134,7 +133,7 @@ class LibraryScannerTest {
 
     @Test
     fun storageKeySnapshotDoesNotRequireDescriptorParsing() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         val converted = File(root, "converted").apply { mkdir() }
         File(converted, "One").mkdir()
         File(converted, "Two").mkdir()
@@ -144,12 +143,14 @@ class LibraryScannerTest {
         assertEquals(linkedSetOf("One", "Two"), scanner.storageKeys(root))
     }
 
-    @Test(expected = IOException::class)
+    @Test
     fun convertedPathThatIsNotDirectoryIsNotTreatedAsEmptyLibrary() {
-        val root = temporaryFolder.newFolder("workdir")
+        val root = TempFiles.newFolder(temporaryFolder, "workdir")
         File(root, "converted").writeText("not a directory")
 
-        scanner.storageKeys(root)
+        org.junit.jupiter.api.Assertions.assertThrows(IOException::class.java) {
+            scanner.storageKeys(root)
+        }
     }
 
     private fun createConvertedApp(root: File, storageKey: String, descriptor: String): File {

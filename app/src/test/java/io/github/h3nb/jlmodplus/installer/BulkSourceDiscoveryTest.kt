@@ -13,10 +13,10 @@ import java.nio.file.Files
 import java.util.concurrent.CancellationException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class BulkSourceDiscoveryTest {
     private fun zip(vararg entries: Pair<String, ByteArray>): ByteArray {
@@ -205,9 +205,13 @@ class BulkSourceDiscoveryTest {
         assertFalse(stage.exists())
     }
 
-    @Test(expected = CancellationException::class)
-    fun cancellationAbortsDiscovery() = tempRoot { root ->
-        val game = File(root, "Game.jar").apply { writeBytes(midletJar()) }
-        BulkSourceDiscovery(File(root, "stage")) { false }.discover(listOf(game))
+    @Test
+    fun cancellationAbortsDiscovery() {
+        org.junit.jupiter.api.Assertions.assertThrows(CancellationException::class.java) {
+            tempRoot { root ->
+                val game = File(root, "Game.jar").apply { writeBytes(midletJar()) }
+                BulkSourceDiscovery(File(root, "stage")) { false }.discover(listOf(game))
+            }
+        }
     }
 }
