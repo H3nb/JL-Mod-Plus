@@ -29,6 +29,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -48,6 +51,7 @@ import java.util.LinkedHashMap
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.io.IOException
 import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Build
@@ -169,10 +173,42 @@ private fun ShaderEffectsContent(
     val custom = shader?.customStages != null
     val legacy = !custom && shader?.fragment != null && shader.vertex != null
     val preset = !custom && shader?.preset != null
-    val legacyChoices = state.shaders.filter { it.vertex != null && it.fragment != null }
-    var legacyDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var legacyVariants by remember { mutableStateOf<List<ShaderInfo>>(emptyList()) }
+    var legacyError by remember { mutableStateOf<String?>(null) }
+    var legacyLoading by remember { mutableStateOf(false) }
     var invalidPickerResult by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val presetPickerTitle = stringResource(R.string.render_preset_mode)
+
+    val legacyPicker = rememberLauncherForActivityResult(FilePickerResultContract()) { results ->
+        if (results.isEmpty()) return@rememberLauncherForActivityResult
+        val path = relativeShaderPath(root, results.firstOrNull(), listOf(".ini"))
+        legacyVariants = emptyList()
+        if (path == null || root == null) {
+            legacyError = context.getString(R.string.render_shader_invalid_picker)
+            return@rememberLauncherForActivityResult
+        }
+        legacyError = null
+        legacyLoading = true
+        scope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching { ShaderCatalog.readLegacyFile(root, path) }
+            }
+            legacyLoading = false
+            result.onSuccess { variants ->
+                when (variants.size) {
+                    0 -> legacyError = context.getString(R.string.render_legacy_empty)
+                    1 -> {
+                        onFormChanged(state.form.toBuilder().shader(variants.single()).build())
+                        if (editingCustom) onCancelCustom()
+                    }
+                    else -> legacyVariants = variants
+                }
+            }.onFailure {
+                legacyError = it.message ?: context.getString(R.string.render_legacy_empty)
+            }
+        }
+    }
 
     val presetPicker = rememberLauncherForActivityResult(FilePickerResultContract()) { results ->
         if (results.isEmpty()) return@rememberLauncherForActivityResult
@@ -206,22 +242,37 @@ private fun ShaderEffectsContent(
             stringResource(R.string.render_legacy_mode_help)
         },
         selected = legacy && !editingCustom,
-        onClick = { legacyDialogVisible = true },
+        onClick = {
+            legacyVariants = emptyList()
+            legacyError = null
+            if (root != null) {
+                onShaderPickerOpened()
+                legacyPicker.launch(shaderPickerIntent(
+                    context, root, listOf(".ini"),
+                    context.getString(R.string.render_legacy_mode),
+                ))
+            } else {
+                legacyError = context.getString(R.string.render_shader_invalid_picker)
+            }
+        },
     )
-    if (legacyDialogVisible) {
-        ConfigChoiceDialog(
-            title = stringResource(R.string.render_legacy_mode),
-            selected = if (legacy) selectedShaderLabel(state) else "",
-            options = legacyChoices.map { it.toString() },
-            onDismissRequest = { legacyDialogVisible = false },
-            onSelected = { index ->
-                legacyDialogVisible = false
-                legacyChoices.getOrNull(index)?.let { chosen ->
-                    onFormChanged(state.form.toBuilder().shader(chosen.copyForDialog()).build())
+    if (legacyLoading) MutedText(stringResource(R.string.render_custom_checking))
+    legacyError?.let { MutedText(it, isError = true) }
+    if (legacyVariants.isNotEmpty()) {
+        Text(stringResource(R.string.render_legacy_select_variant),
+            style = MaterialTheme.typography.titleSmall)
+        legacyVariants.forEach { variant ->
+            ActionSurface(
+                title = variant.toString(),
+                subtitle = variant.fragment?.substringAfterLast('/')
+                    ?: stringResource(R.string.render_legacy_variant_description),
+                onClick = {
+                    legacyVariants = emptyList()
+                    onFormChanged(state.form.toBuilder().shader(variant.copyForDialog()).build())
                     if (editingCustom) onCancelCustom()
-                }
-            },
-        )
+                },
+            )
+        }
     }
     ShaderModeRow(
         title = stringResource(R.string.render_preset_mode),
@@ -259,6 +310,7 @@ private fun ShaderEffectsContent(
         },
         selected = custom || editingCustom,
         onClick = onOpenCustom,
+        modifier = Modifier.testTag("shader_custom_mode_row"),
     )
     if (editingCustom) {
         CustomPipelineContent(state, onFormChanged, onCancelCustom, onShaderPickerOpened)
@@ -302,9 +354,10 @@ private fun ShaderModeRow(
     description: String,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer
