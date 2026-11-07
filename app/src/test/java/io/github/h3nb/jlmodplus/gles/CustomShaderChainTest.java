@@ -163,6 +163,61 @@ class CustomShaderChainTest {
         assertEquals("FirstOutput", accepted.passes.get(0).alias);
     }
 
+    @Test void inheritedCustomSourceReplacementDropsOnlyObsoleteParameters() throws Exception {
+        source("parameters/original.glsl",
+                "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\\n"
+                + "#pragma parameter KEEP \"Keep\" 0.5 0.0 1.0 0.1\\n"
+                + "uniform sampler2D Texture;\\nvoid main() {}");
+        source("parameters/replacement.glsl",
+                "#pragma parameter KEEP \"Keep\" 0.5 0.0 1.0 0.1\\n"
+                + "uniform sampler2D Texture;\\nvoid main() {}");
+        source("parameters/preset.glslp",
+                "shaders = 1\\nshader0 = original.glsl\\n"
+                + "parameters = \"GAIN;KEEP\"\\nGAIN = 1.3\\nKEEP = 0.6\\n");
+        CustomShaderStage original = new CustomShaderStage("parameters/original.glsl", 0, null);
+        GlslpPreset unchanged = GlslpAssets.loadCustom(
+                Collections.singletonList(original), shaderRoot.toFile(),
+                "parameters/preset.glslp", "glsl");
+        assertEquals(1.3f, unchanged.resolvedParameters().get("GAIN"), 0.001f);
+        assertEquals(0.6f, unchanged.resolvedParameters().get("KEEP"), 0.001f);
+
+        GlslpPreset changed = GlslpAssets.loadCustom(
+                Collections.singletonList(new CustomShaderStage(
+                        "parameters/replacement.glsl", 0, null)),
+                shaderRoot.toFile(), "parameters/preset.glslp", "glsl");
+        assertFalse(changed.parameterOverrides.containsKey("GAIN"));
+        assertEquals(0.6f, changed.resolvedParameters().get("KEEP"), 0.001f);
+
+        java.util.Map<String, Float> userEdits = new java.util.LinkedHashMap<>();
+        userEdits.put("GAIN", 1.8f); // removed #pragma
+        userEdits.put("KEEP", 0.7f); // still declared
+        userEdits.put("UNKNOWN", 0.3f);
+        java.util.Map<String, Float> applicable = changed.applicableParameterOverrides(userEdits);
+        assertEquals(Collections.singletonMap("KEEP", 0.7f), applicable);
+        assertEquals(0.7f,
+                changed.withParameterOverrides(applicable).resolvedParameters().get("KEEP"), 0.001f);
+    }
+
+    @Test void inheritedCustomChainCannotBypassAggregateSourceBudget() throws Exception {
+        StringBuilder description = new StringBuilder("shaders = 5\\n");
+        java.util.List<CustomShaderStage> stages = new java.util.ArrayList<>();
+        String largeSource = "//" + "x".repeat(450 * 1024) + "\\nvoid main() {}";
+        for (int i = 0; i < 5; i++) {
+            description.append("shader").append(i).append(" = base")
+                    .append(i).append(".glsl\\n");
+            source("budget/base" + i + ".glsl", "void main() {}");
+            source("budget/large" + i + ".glsl", largeSource);
+            stages.add(new CustomShaderStage("budget/large" + i + ".glsl", 0, null));
+        }
+        source("budget/preset.glslp", description.toString());
+        assertEquals(4, GlslpAssets.loadCustom(stages.subList(0, 4), shaderRoot.toFile(),
+                "budget/preset.glslp", "glsl").passes.size());
+        IOException rejected = assertThrows(IOException.class,
+                () -> GlslpAssets.loadCustom(stages, shaderRoot.toFile(),
+                        "budget/preset.glslp", "glsl"));
+        assertTrue(rejected.getMessage().contains("source budget"), rejected.getMessage());
+    }
+
     @Test void legacyCustomPassesRetainSeparateShaderPairsAndTuningValues() throws Exception {
         source("legacy/one.vsh", "attribute vec4 a_position;\n"
                 + "attribute vec2 a_texcoord0;\nvarying vec2 v_texcoord0;\n"

@@ -89,13 +89,26 @@ internal fun CustomPipelineContent(
         mutableStateOf(previous?.takeIf { it.isNotEmpty() }
             ?: listOf(legacyInitial ?: CustomShaderStage("")))
     }
-    var loading by remember(selection?.preset, previous) {
-        mutableStateOf(inheritedPreset != null && previous == null)
+    var inheritedInitialized by rememberSaveable(selection?.preset, selection?.fragment, previous) {
+        mutableStateOf(inheritedPreset == null || previous != null)
     }
     var loadError by remember { mutableStateOf<String?>(null) }
-    var overrides by remember(selection?.glslParameters) {
+    val overrideSaver = Saver<MutableState<Map<String, Float>>, ArrayList<String>>(
+        save = { value -> ArrayList(value.value.flatMap { (id, number) ->
+            listOf(id, number.toString())
+        }) },
+        restore = { values -> mutableStateOf(values.chunked(2).associate { fields ->
+            fields[0] to fields[1].toFloat()
+        }) },
+    )
+    var overrides by rememberSaveable(
+        selection?.preset, selection?.fragment, previous, selection?.glslParameters,
+        saver = overrideSaver,
+    ) {
         mutableStateOf(selection?.glslParameters?.toMap() ?: emptyMap())
     }
+    val loading = mode == "glsl" && inheritedPreset != null &&
+        previous == null && !inheritedInitialized && loadError == null
     var passParameters by remember { mutableStateOf<Map<Int, List<GlslpPreset.Parameter>>>(emptyMap()) }
     val context = LocalContext.current
     val pickerTitle = stringResource(R.string.render_custom_pick_file)
@@ -108,9 +121,8 @@ internal fun CustomPipelineContent(
     var filterPicker by rememberSaveable { mutableStateOf<Int?>(null) }
     var validating by remember { mutableStateOf(false) }
     var validationError by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(inheritedPreset, previous) {
-        if (inheritedPreset != null && previous == null) {
-            loading = true
+    LaunchedEffect(inheritedPreset, previous, mode, inheritedInitialized) {
+        if (loading) {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     GlslpAssets.load(inheritedPreset,
@@ -118,8 +130,10 @@ internal fun CustomPipelineContent(
                         .passes.map { CustomShaderStage(it.sourcePath, 0, null) }
                 }
             }
-            loading = false
-            result.onSuccess { stages = it }.onFailure {
+            result.onSuccess {
+                stages = it
+                inheritedInitialized = true
+            }.onFailure {
                 loadError = it.message ?: "Unable to read GLSLP preset"
             }
         }
@@ -292,7 +306,8 @@ internal fun CustomPipelineContent(
                         val value = (overrides[parameter.id] ?: parameter.value)
                             .coerceIn(parameter.minimum, parameter.maximum)
                         Text(parameter.label, style = MaterialTheme.typography.bodyMedium)
-                        Slider(value = value, valueRange = parameter.minimum..parameter.maximum,
+                        Slider(modifier = Modifier.testTag("shader_custom_parameter_${parameter.id}"),
+                            value = value, valueRange = parameter.minimum..parameter.maximum,
                             onValueChange = { next ->
                                 overrides = overrides + (parameter.id to next)
                             })
@@ -333,32 +348,38 @@ internal fun CustomPipelineContent(
             onClick = {
                 val requested = stages.toList()
                 val requestedMode = mode
+                val requestedOverrides = overrides.toMap()
                 val presetPath = if (requestedMode == "glsl") inheritedPreset else null
                 validating = true
                 scope.launch {
-                    val error = withContext(Dispatchers.IO) {
+                    val result = withContext(Dispatchers.IO) {
                         runCatching {
-                            GlslpAssets.loadCustom(
+                            val preset = GlslpAssets.loadCustom(
                                 requested,
                                 state.shaderDirectory
                                     ?: throw IOException("Shader directory unavailable"),
                                 presetPath, requestedMode,
-                            ).withParameterOverrides(if (requestedMode == "glsl") overrides else null)
-                                .parameterDefinitions()
-                        }.exceptionOrNull()
+                            )
+                            val applicable = if (requestedMode == "glsl")
+                                preset.applicableParameterOverrides(requestedOverrides)
+                            else emptyMap()
+                            preset.withParameterOverrides(applicable).parameterDefinitions()
+                            applicable
+                        }
                     }
                     validating = false
-                    if (requested != stages || requestedMode != mode) return@launch
-                    if (error != null) {
-                        validationError = error.message ?: "Invalid shader chain"
-                    } else {
+                    if (requested != stages || requestedMode != mode ||
+                        requestedOverrides != overrides) return@launch
+                    result.onSuccess { applicable ->
                         val selected = ShaderInfo("Custom pipeline", "JL-Mod Plus")
                         selected.customStages = requested
                         selected.customMode = requestedMode
                         selected.preset = presetPath
-                        selected.glslParameters = if (requestedMode == "glsl") overrides else null
+                        selected.glslParameters = if (requestedMode == "glsl") applicable else null
                         onFormChanged(state.form.toBuilder().shader(selected).build())
                         onBack()
+                    }.onFailure {
+                        validationError = it.message ?: "Invalid shader chain"
                     }
                 }
             },

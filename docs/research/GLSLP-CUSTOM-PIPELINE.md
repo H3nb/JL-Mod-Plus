@@ -1,7 +1,7 @@
 # Scoped shader file selection and custom pass configuration
 
-This draft extends PR #224 without merging. External Legacy INI and GLSLP
-preset selection uses the existing file-picker Activity with an explicit
+This contract describes the combined integration in PR #225. External Legacy INI
+and GLSLP preset selection uses the existing file-picker Activity with an explicit
 shader-root boundary and single-tap selection. The existing named Legacy
 catalog chooser remains available when assembling a custom Legacy pass.
 
@@ -27,9 +27,11 @@ catalog chooser remains available when assembling a custom Legacy pass.
   including nested source paths and #reference inheritance, and initializes
   exactly the same number of pass slots (e.g. ten GLSLP passes -> ten custom
   stages). Unedited passes retain source/viewport/absolute size rules, aliases,
-  wrap/mipmap/float-framebuffer flags, LUTs and parameter overrides. Editing a
-  pass source keeps the original pass metadata; unsupported dependencies are
-  rejected instead of silently approximated. A custom shader derived from GLSLP
+  wrap/mipmap/float-framebuffer flags, LUTs and compatible parameter overrides.
+  Editing a pass source keeps non-source metadata while discarding parameter
+  overrides whose declarations were removed or whose ranges no longer allow
+  the saved value. Unsupported dependencies are rejected instead of silently
+  approximated. A custom shader derived from GLSLP
   retains its original preset path as the base; custom source paths are deltas.
 - Opening Custom from a legacy shader creates one stage with its vertex,
   fragment, name and values. Additional Legacy stages are compiled through a
@@ -47,15 +49,16 @@ catalog chooser remains available when assembling a custom Legacy pass.
   only one tap to choose a file.
 - Custom stages persist through ShaderSelection.CustomStages + CustomMode;
   legacy per-stage values use additional optional fields. The editor keeps its
-  own draft until Save, and older profiles retain their existing selection.
+  own draft until Save, including unsaved stages and parameter tuning across
+  Activity state restoration; older profiles retain their existing selection.
 - Display scroll state is owned by the parent configuration surface rather than
   the removable shader subpage, so Back does not reset the Display scroll.
 - Legacy ShaderSelection fields, .ini parsing, profile semantics, and old
   standalone GLSL selections remain intact. An unsupported shader fails back
   to the stock presenter, subject to PR #224's remaining runtime diagnostics.
 - GLSLP resource paths are relative to shaders/, including nested directories.
-  Canonical root confinement, source-size limits, and the existing GLSLP
-  validator still apply. Custom sources extending a GLSLP preset can use
+  Canonical root confinement, individual source limits, the 2 MiB aggregate
+  shader-source budget, and the existing GLSLP validator still apply. Custom sources extending a GLSLP preset can use
   only bound sampler inputs (the source texture, causal earlier passes,
   inherited aliases and declared lookup textures); unknown sampler inputs
   fail validation before saving.

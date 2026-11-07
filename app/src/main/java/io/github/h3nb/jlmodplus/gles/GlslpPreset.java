@@ -429,6 +429,7 @@ public final class GlslpPreset {
             throw new IOException("Custom shader chain must contain 1–16 stages");
         }
         List<Pass> edited = new ArrayList<>(stages.size());
+        int totalSourceChars = 0;
         for (int i = 0; i < stages.size(); i++) {
             io.github.h3nb.jlmodplus.config.CustomShaderStage stage = stages.get(i);
             String path = normalize("", stage.path);
@@ -438,6 +439,10 @@ public final class GlslpPreset {
             String source = assets.read(path);
             if (source == null || source.length() > MAX_SOURCE_CHARS) {
                 throw new IOException("Missing or oversized custom shader: " + path);
+            }
+            totalSourceChars += source.length();
+            if (totalSourceChars > MAX_TOTAL_SOURCE_CHARS) {
+                throw new IOException("GLSLP source budget exceeded");
             }
             Pass old = i < passes.size() ? passes.get(i) : null;
             int scale = stage.sourceScale;
@@ -461,9 +466,19 @@ public final class GlslpPreset {
                     old == null ? 0 : old.frameCountMod,
                     x, y));
         }
-        GlslpPreset updated = new GlslpPreset(edited, parameterOverrides, textures);
-        updated.parameterDefinitions();
-        return updated;
+        // Source replacement can remove or narrow a #pragma declaration.
+        // Retain inherited values only while the new source can actually use them.
+        GlslpPreset declarations = new GlslpPreset(
+                edited, Collections.emptyMap(), textures);
+        Map<String, Double> applicable = new LinkedHashMap<>();
+        for (Parameter definition : declarations.parameterDefinitions()) {
+            Double value = parameterOverrides.get(definition.id);
+            if (value != null && finite(value)
+                    && value >= definition.minimum && value <= definition.maximum) {
+                applicable.put(definition.id, value);
+            }
+        }
+        return new GlslpPreset(edited, applicable, textures);
     }
 
     public GlslpPreset withLegacyValues(
@@ -485,6 +500,30 @@ public final class GlslpPreset {
      * the overridden names silently leaves the remaining uniforms at zero.
      * This is research metadata, not evidence the shaders link on a given GLES.
      */
+    /**
+     * Custom source edits may invalidate overrides from a previously selected
+     * preset. Keep only values supported by the final chain's declarations.
+     */
+    public Map<String, Float> applicableParameterOverrides(
+            Map<String, Float> requested) throws IOException {
+        if (requested == null || requested.isEmpty()) return Collections.emptyMap();
+        Map<String, Parameter> declarations = new LinkedHashMap<>();
+        for (Parameter parameter : parameterDefinitions()) {
+            declarations.put(parameter.id, parameter);
+        }
+        Map<String, Float> applicable = new LinkedHashMap<>();
+        for (Map.Entry<String, Float> entry : requested.entrySet()) {
+            Parameter declared = declarations.get(entry.getKey());
+            Float value = entry.getValue();
+            if (declared != null && value != null
+                    && !Float.isNaN(value) && !Float.isInfinite(value)
+                    && value >= declared.minimum && value <= declared.maximum) {
+                applicable.put(entry.getKey(), value);
+            }
+        }
+        return Collections.unmodifiableMap(applicable);
+    }
+
     public GlslpPreset withParameterOverrides(Map<String, Float> userOverrides) {
         if (userOverrides == null || userOverrides.isEmpty()) return this;
         Map<String, Double> combined = new LinkedHashMap<>(parameterOverrides);

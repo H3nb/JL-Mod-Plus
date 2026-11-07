@@ -136,6 +136,27 @@ mentions portions outside the selected decoder build; it is preserved verbatim.
 
 The Gradle runtime graph and native packaging are the authority for what resolves into the current APK configuration. If a dependency is added, removed, or changes license/package composition, this ledger and the in-app notice must be reviewed in the same change or immediately before release.
 
+## Test-only Libretro GLSL fixtures
+
+The `app/src/androidTest/assets/shaders/glslp/libretro/` fixtures are copied
+from [Libretro GLSL shaders](https://github.com/libretro/glsl-shaders), pinned
+at `1aaabbebdd88a8a89a82edfdc94e10580c99ffdd`. They are not in the
+production APK's `main` assets; the repository and Android instrumentation
+APK nevertheless redistribute copies of these source files. The locally
+authored eight-pass stress preset is distinct from upstream shader sources.
+
+- `blurs/shaders/gauss_4tap/`: fishku Gauss-4tap, CC0 notice in source.
+- `fsr/shaders/`: FSR shader ports, MIT notice in source.
+- `xbrz/shaders/`: mixed provenance, including Hyllian MIT notices and
+  HqMAME/xBRZ GPL-3.0-with-MAME-exception notices. The exception is not a
+  blanket relicensing of JL-Mod Plus or this test fixture.
+
+Preserve all per-file notices and verify the applicable license-text and
+source-redistribution obligations before distributing the test APK or declaring
+this fixture inventory license-qualified. URLs and header notices alone
+do not establish complete GPL compliance. No third-party example is included
+in the application's production shader assets.
+
 ## Repository-only vendored material
 
 `app/src/main/cpp/sonivox/lib_src/minimp3.h` is retained from the pinned upstream snapshot under its CC0 notice. Its optional decoder is disabled in the Android build and is not shipped as active runtime code.

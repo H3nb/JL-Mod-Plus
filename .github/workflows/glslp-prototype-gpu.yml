@@ -2,7 +2,7 @@ name: GLSLP prototype GPU smoke
 
 on:
   pull_request:
-    branches: [alpha, feat/glslp-live-prototype]
+    branches: [alpha]
     paths:
       - '.github/workflows/glslp-prototype-gpu.yml'
       - 'scripts/glslp-prototype-smoke.sh'
@@ -11,6 +11,9 @@ on:
       - 'app/src/main/java/io/github/h3nb/jlmodplus/filepicker/**'
       - 'app/src/main/assets/shaders/glslp/**'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/gles/**'
+      - 'app/src/androidTest/assets/shaders/glslp/**'
+      - 'app/src/main/java/javax/microedition/lcdui/Canvas.java'
+      - 'app/src/main/java/javax/microedition/lcdui/graphics/ShaderProgram.java'
 
 permissions:
   contents: read
@@ -21,7 +24,6 @@ concurrency:
 
 jobs:
   gpu-smoke:
-    if: github.event.pull_request.head.ref == 'feat/glslp-live-prototype' || github.event.pull_request.head.ref == 'feat/custom-glslp-pipeline'
     runs-on: ubuntu-26.04
     timeout-minutes: 35
     steps:

@@ -1,17 +1,18 @@
 # GLSL/GLSLP live prototype
 
-Select **OpenGL ES 2.0** as the graphics renderer, then choose **GLSLP demo:
-Scanlines** or **GLSLP demo: Soft blur** from the existing Shader filter
-control. These two packaged Apache-2.0 examples work without copying files.
-You can also select the bundled Libretro FSR, xBRZ Crisp, xBRZ fixed 4x and
-8-pass Gaussian + xBRZ + FSR stress composition for comparison.
-**Identity filter** restores the original path.
+This document records the research leading to PR #225. Earlier prototypes
+offered built-in demo presets, but the combined integration no longer bundles
+third-party shaders in the production APK. Only the stock GLSL presentation
+shader is bundled. Libretro examples live under `app/src/androidTest/assets/`
+for instrumented testing and must be copied externally to use in the app.
 
-For external shaders, place a root-level `.glslp` preset alongside its
-relative `.glsl` resources in the emulator `shaders/` directory.
-A root-level `.glsl` source may also be selected as a standalone
-Libretro-style combined VERTEX/FRAGMENT shader. Reopen game configuration
-to refresh the list. Other graphics modes do not use GLSLP.
+In the current configuration UI, choose **OpenGL ES 2.0** then **Shader effects**
+to select an external `.glslp` preset within the installation's `shaders/`
+directory, or select **Custom pipeline** to combine individual `.glsl` passes.
+Relative sources and LUTs are resolved below that root; nested directories are
+supported. Off/identity uses the stock presenter. Other graphics modes do not
+execute GLSLP. Earlier `builtin:` prototype selection IDs are not supported;
+a saved one is reported as unavailable rather than silently mapped to a preset.
 
 This branch supports **one to sixteen passes**, GLES2-compatible combined
 shader sources, basic GLSLP scaling/filtering and numeric parameters.
@@ -91,20 +92,21 @@ identity presentation; inspect logcat for the rejection reason.
 
 GLSLP postprocesses the published guest frame. It does not change
 guest logical size, M3G/Mascot rasterization, controls or HD internal
-resolution. This is a **testing branch**, not production support.
+resolution. This integration remains **experimental pending physical-device qualification**, not a promise of full Libretro support.
 Validate first launch, softbar/fullscreen changes, resize, context loss,
 and 2D/M3G/Mascot games on a physical device.
 
-## Bundled upstream sources and restrictions
+## Test-only upstream sources and restrictions
 
-The upstream `.glsl` sources and original `.glslp` presets are copied unmodified from
+The upstream `.glsl` sources and original `.glslp` presets in `androidTest/assets`
+are copied from
 https://github.com/libretro/glsl-shaders at pinned upstream commit
 `1aaabbebdd88a8a89a82edfdc94e10580c99ffdd` with its original embedded
 copyright and license notices intact. The upstream sources are kept separate from application-owned shader code;
 `stress/eight-pass-composition.glslp` is an explicitly local test composition.
 
-**Licensing review is required before redistributing or merging this
-prototype.** xBRZ sources include GPL-3.0 notices alongside other
+**Licensing qualification remains necessary for repository/test APK
+redistribution.** xBRZ sources include GPL-3.0 notices alongside other
 licenses; do not assume the repository's shaders share one license.
 FSR and Gaussian shaders have their own upstream author notices.
 
@@ -133,31 +135,19 @@ and the required mipmap levels individually.
 Unsupported passes revert to the identity presentation, leaving the
 guest rendering, controls, and background logic unchanged.
 
-## Rendering configuration prototype (PR #224)
+## Combined configuration integration (PR #225)
 
-The Display > Rendering section now provides **Shader effects** and **Rendering
-pipeline** pages. Choose a preset in Shader effects; GLSLP numeric parameters
-can be tuned per game without editing the .glslp file. The pipeline page shows
-the resolved pass order and input filter/output sizing, alongside the existing
-graphics renderer, scaling and texture filtering settings. Pass structure is
-read-only in this prototype; arbitrary editing is intentionally not advertised.
-The internal resolution indicator remains Native, not an HD implementation.
+Display > Rendering exposes **Shader effects**. GLSLP presets support per-game
+numeric parameter tuning and a read-only view of pass order, filtering and
+output sizing. **Custom pipeline** supports editable GLSL or Legacy pass chains.
+Internal resolution remains native; this integration does not add HD rendering.
 
-External storage uses `shaders/shaders_legacy/` for .ini/.vsh/.fsh files and
-`shaders/shaders_glsl/` for GLSLP preset trees, with nested relative GLSL
-dependencies. Root-level old shader files are moved on configuration opening
-when no destination collision exists. The legacy loader checks both old and
-new locations so existing saved vertex/fragment references still resolve.
-For an older emulator sharing the same directory, moved files may need to be
-restored before using that older version. Root-level external .glsl/.glslp
-remain readable for compatibility. Reopen the configuration screen to
-refresh the catalog after manually adding files.
+External files can be organized in `shaders/shaders_legacy/` and
+`shaders/shaders_glsl/`, or kept under the root `shaders/` directory.
+Legacy sources are not moved automatically. Existing profiles that refer to
+older root-level paths remain loadable. A GLSLP source and its nested resources
+must stay within the canonical shader root.
 
-The pipeline overview is a configuration preview, not evidence of successful
-GPU compilation. Runtime GLES still owns shader programs and can fall back
-to identity if a preset is unsupported or invalid. Existing GLSLP scope and
-physical-device qualification restrictions above still apply.
-
-Rendering page strings currently use the canonical English source copy. Missing
-translations are explicitly scoped to the prototype resource file for lint;
-this must be revisited once the UX wording is accepted for release.
+The pipeline overview is metadata only, not proof of successful GPU compilation.
+Unsupported GPU features continue to fall back to the identity presenter.
+English and Indonesian strings are maintained in `strings_rendering.xml`.

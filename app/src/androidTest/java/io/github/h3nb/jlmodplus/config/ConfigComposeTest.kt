@@ -33,6 +33,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -1426,6 +1430,70 @@ class ConfigComposeTest {
                 }.isSuccess
             }
             composeRule.onNodeWithTag("shader_custom_pass_10").assertExists()
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun inheritedCustomDraftSurvivesSaveableRestoration() {
+        val base = sampleState()
+        val root = java.io.File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "glslp-restored-draft-test",
+        ).apply { mkdirs() }
+        try {
+            java.io.File(root, "source.glsl").writeText(
+                "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\\n" +
+                    "uniform sampler2D Texture;\\nvoid main() {}",
+            )
+            java.io.File(root, "chain.glslp").writeText(
+                "shaders = 1\\nshader0 = source.glsl\\nGAIN = 1.3\\n",
+            )
+            val selected = ShaderInfo("chain.glslp", "test").apply {
+                preset = "chain.glslp"
+            }
+            val state = ConfigUiState(
+                base.form.toBuilder().graphicsMode(1).shader(selected).build(),
+                base.screenPresets, base.fontPresets, base.skins,
+                base.soundBanks, listOf(selected), base.removableScreenPresets,
+            ).apply { shaderDirectory = root }
+            val restoration = StateRestorationTester(composeRule)
+            restoration.setContent {
+                JLModPlusTheme {
+                    ConfigScreen(state, RecordingConfigEvents(),
+                        initialDestination = ConfigDestination.Display)
+                }
+            }
+            composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_mode_row")
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_parameter_GAIN").assertExists()
+                }.isSuccess
+            }
+            composeRule.onNodeWithTag("shader_custom_parameter_GAIN")
+                .performSemanticsAction(SemanticsActions.SetProgress) { it(1.7f) }
+            composeRule.onNodeWithTag("shader_custom_increase_passes")
+                .performScrollTo().performClick()
+            composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("2")
+
+            restoration.emulateSavedInstanceStateRestore()
+            composeRule.waitForIdle()
+            // Restored stages must not be replaced by the asynchronous preset prefill.
+            composeRule.onNodeWithTag("shader_custom_pass_count").assertTextEquals("2")
+            composeRule.onNodeWithTag("shader_custom_decrease_passes")
+                .performScrollTo().performClick()
+            composeRule.waitUntil(8_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("shader_custom_parameter_GAIN").assertExists()
+                }.isSuccess
+            }
+            val current = composeRule.onNodeWithTag("shader_custom_parameter_GAIN")
+                .fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current
+            assertEquals(1.7f, current, 0.05f)
         } finally {
             root.deleteRecursively()
         }
