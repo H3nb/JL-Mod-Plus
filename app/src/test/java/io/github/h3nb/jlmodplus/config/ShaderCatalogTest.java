@@ -56,6 +56,24 @@ public class ShaderCatalogTest {
         assertEquals("shaders_glsl/xbrz/crisp.glslp", catalog.get(0).preset);
     }
 
+    @Test void brokenLegacyIniVariantDoesNotHideOtherValidSections() throws Exception {
+        File root = temporary.resolve("mixed-legacy").toFile();
+        assertTrue(root.mkdir());
+        Files.write(new File(root, "mixed.ini").toPath(),
+                ("[Good]\\nVertex = common.vsh\\nFragment = good.fsh\\n"
+                        + "[Broken]\\nVertex = common.vsh\\nFragment = missing.fsh\\n"
+                        + "[AlsoGood]\\nVertex = common.vsh\\nFragment = other.fsh\\n")
+                        .replace("\\n", "\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(root, "common.vsh").toPath(), "v".getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(root, "good.fsh").toPath(), "a".getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(root, "other.fsh").toPath(), "b".getBytes(StandardCharsets.UTF_8));
+
+        List<ShaderInfo> valid = ShaderCatalog.readLegacyFile(root, "mixed.ini");
+        assertEquals(List.of("Good", "AlsoGood"),
+                valid.stream().map(ShaderInfo::toString).toList());
+        assertEquals(2, ShaderCatalog.scan(root).size());
+    }
+
     @Test void selectedLegacyIniExposesAllVariantsAndKeepsNestedPaths() throws Exception {
         File root = temporary.resolve("nested-shaders").toFile();
         File sub = new File(root, "shaders_legacy/custom");
