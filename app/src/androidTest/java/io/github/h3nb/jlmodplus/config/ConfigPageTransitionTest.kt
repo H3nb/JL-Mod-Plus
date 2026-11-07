@@ -7,7 +7,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.assertTextDoesNotContain
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -70,7 +70,7 @@ class ConfigPageTransitionTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText(label(R.string.config_edit_system_properties)).performClick()
         composeRule.waitForIdle()
-        composeRule.onNode(hasSetTextAction()).assertTextDoesNotContain("UNSAVED_FIELD_TEST")
+        composeRule.onNodeWithText("UNSAVED_FIELD_TEST", substring = true).assertDoesNotExist()
     }
 
     private fun state(graphicsMode: Int = 0): ConfigUiState {
