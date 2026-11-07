@@ -3,13 +3,13 @@
  */
 package javax.microedition.shell;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.microemu.cldc.file.StorageMode;
 
 import io.github.h3nb.jlmodplus.config.MidletPermissionStore;
@@ -26,7 +26,7 @@ public class MidletPermissionPolicyTest {
             "unknown.permission", "", null
     };
 
-    @After public void clear() {
+    @AfterEach public void clear() {
         MidletPermissionManager.clear();
     }
 
