@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -176,6 +177,7 @@ private fun ShaderEffectsContent(
     var legacyVariants by remember { mutableStateOf<List<ShaderInfo>>(emptyList()) }
     var legacyError by remember { mutableStateOf<String?>(null) }
     var legacyLoading by remember { mutableStateOf(false) }
+    var legacyRequestVersion by remember { mutableIntStateOf(0) }
     var invalidPickerResult by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val presetPickerTitle = stringResource(R.string.render_preset_mode)
@@ -184,6 +186,7 @@ private fun ShaderEffectsContent(
         if (results.isEmpty()) return@rememberLauncherForActivityResult
         val path = relativeShaderPath(root, results.firstOrNull(), listOf(".ini"))
         legacyVariants = emptyList()
+        val requestVersion = ++legacyRequestVersion
         if (path == null || root == null) {
             legacyError = context.getString(R.string.render_shader_invalid_picker)
             return@rememberLauncherForActivityResult
@@ -194,6 +197,7 @@ private fun ShaderEffectsContent(
             val result = withContext(Dispatchers.IO) {
                 runCatching { ShaderCatalog.readLegacyFile(root, path) }
             }
+            if (requestVersion != legacyRequestVersion) return@launch
             legacyLoading = false
             result.onSuccess { variants ->
                 when (variants.size) {
@@ -229,6 +233,10 @@ private fun ShaderEffectsContent(
         description = stringResource(R.string.render_shader_off_help),
         selected = shader == null && !editingCustom,
         onClick = {
+            legacyRequestVersion++
+            legacyLoading = false
+            legacyVariants = emptyList()
+            legacyError = null
             if (shader != null) onFormChanged(state.form.toBuilder().shader(null).build())
             if (editingCustom) onCancelCustom()
         },
@@ -243,6 +251,8 @@ private fun ShaderEffectsContent(
         },
         selected = legacy && !editingCustom,
         onClick = {
+            legacyRequestVersion++
+            legacyLoading = false
             legacyVariants = emptyList()
             legacyError = null
             if (root != null) {
@@ -284,6 +294,10 @@ private fun ShaderEffectsContent(
         },
         selected = preset && !editingCustom,
         onClick = {
+            legacyRequestVersion++
+            legacyLoading = false
+            legacyVariants = emptyList()
+            legacyError = null
             if (root != null) {
                 onShaderPickerOpened()
                 presetPicker.launch(shaderPickerIntent(
@@ -309,7 +323,13 @@ private fun ShaderEffectsContent(
             stringResource(R.string.render_custom_pipeline_hint)
         },
         selected = custom || editingCustom,
-        onClick = onOpenCustom,
+        onClick = {
+            legacyRequestVersion++
+            legacyLoading = false
+            legacyVariants = emptyList()
+            legacyError = null
+            onOpenCustom()
+        },
         modifier = Modifier.testTag("shader_custom_mode_row"),
     )
     if (editingCustom) {
