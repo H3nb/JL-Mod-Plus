@@ -123,7 +123,7 @@ internal fun ConfigCompactValuePreference(
         if (!description.isNullOrEmpty()) {
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
             )
@@ -131,7 +131,7 @@ internal fun ConfigCompactValuePreference(
         if (!value.isNullOrEmpty()) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = if (enabled) MaterialTheme.colorScheme.onSurface
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
                 maxLines = 2,
@@ -180,7 +180,7 @@ internal fun ConfigValuePreference(
         if (!description.isNullOrEmpty()) {
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
             )
@@ -195,7 +195,7 @@ internal fun ConfigValuePreference(
             Text(
                 text = value,
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = if (enabled) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
                 maxLines = 2,
@@ -241,7 +241,7 @@ internal fun ConfigSwitchPreference(
             if (!description.isNullOrEmpty()) {
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
                 )
@@ -465,7 +465,7 @@ internal fun ConfigColorPreference(
         Text(text = title, style = MaterialTheme.typography.bodyLarge)
         Text(
             text = description,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(
@@ -485,7 +485,7 @@ internal fun ConfigColorPreference(
             Text(
                 text = displayLabel ?: "#${value.ifEmpty { "000000" }}",
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -525,7 +525,7 @@ internal fun ConfigActionPreference(
             )
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
             )
@@ -553,7 +553,7 @@ internal fun ConfigDisclosurePreference(
             Text(text = title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

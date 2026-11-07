@@ -60,12 +60,14 @@ different role when the actual hierarchy or readability requires it rather than
 preserving a poor historical mapping for consistency.
 
 - Top app bar titles use `titleLarge` or the component default.
-- Standard setting/list headlines use `bodyLarge`; explanatory supporting text uses
-  `bodyMedium` with `onSurfaceVariant`. When a setting displays a current value
-  beneath its description, use `bodyLarge` with medium weight and `onSurface` for
-  the value. This gives titles and values a clear 16 sp role above 14 sp
-  supporting text without shrinking explanations. Preserve the distinct hierarchy
-  under user font scaling; disabled values and descriptions retain disabled emphasis.
+- Standard preference titles use `bodyLarge` (16 sp); concise preference
+  descriptions and summaries use `bodySmall` (12 sp) with `onSurfaceVariant`.
+  Values below descriptions use `labelLarge` (14 sp) with semi-bold weight
+  and `onSurface`. This gives the title the largest role while keeping the value
+  easy to find. These are semantic roles, not measured sizes from another app.
+  Preserve font scaling and readable wrapping; disabled values and descriptions
+  retain disabled emphasis. Longer instructions, messages, and dialog body text
+  retain `bodyMedium` (14 sp), rather than shrinking actionable explanations.
 - Prefer a semantic Material 3 typography role before adding an explicit font-weight
   override. Explicit weight is still appropriate when the component role cannot
   express a required hierarchy or state. Do not remove an existing hierarchy signal
@@ -77,7 +79,7 @@ preserving a poor historical mapping for consistency.
   `headlineSmall`; alert/dialog headlines use `headlineSmall`.
 - Dialog body text uses `bodyMedium`; actions use `labelLarge` or their Material
   component default.
-- `bodySmall` is for genuinely compact secondary content such as metadata,
+- `bodySmall` is for concise preference summaries and compact secondary content such as metadata,
   timestamps, diagnostics, measurements, telemetry, or minor annotations.
 - Field labels, units, and compact secondary annotations use `labelMedium` or
   `labelSmall`.
