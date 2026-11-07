@@ -31,8 +31,8 @@ limits, device memory/fps, Android 6/physical ARM64 rendering. These need
 dedicated integration testing before production adoption. Use 1x for games
 with those native 3D engines until their backing/viewport/readback is adapted.
 
-Validation on this feature branch includes a pure scale-policy unit test,
-Android Bitmap/Canvas instrumentation characterization sources, and a
-branch-only ARM64 APK workflow. This workflow must not be merged into alpha;
-remove it before production integration. It is independent of screenshot and
-normal alpha CI to avoid unnecessary CI execution during exploration.
+Validation includes JVM scale-policy and form-state tests, Android
+Bitmap/Canvas instrumentation characterization sources, and the standard
+pull-request checks. Instrumentation sources must also be executed on suitable
+Android devices before full production qualification. The disposable APK build
+workflow used during development is not part of this integration.
