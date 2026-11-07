@@ -165,15 +165,15 @@ class CustomShaderChainTest {
 
     @Test void inheritedCustomSourceReplacementDropsOnlyObsoleteParameters() throws Exception {
         source("parameters/original.glsl",
-                "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\\n"
-                + "#pragma parameter KEEP \"Keep\" 0.5 0.0 1.0 0.1\\n"
-                + "uniform sampler2D Texture;\\nvoid main() {}");
+                "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\n"
+                + "#pragma parameter KEEP \"Keep\" 0.5 0.0 1.0 0.1\n"
+                + "uniform sampler2D Texture;\nvoid main() {}");
         source("parameters/replacement.glsl",
-                "#pragma parameter KEEP \"Keep\" 0.5 0.0 1.0 0.1\\n"
-                + "uniform sampler2D Texture;\\nvoid main() {}");
+                "#pragma parameter KEEP \"Keep\" 0.5 0.0 1.0 0.1\n"
+                + "uniform sampler2D Texture;\nvoid main() {}");
         source("parameters/preset.glslp",
-                "shaders = 1\\nshader0 = original.glsl\\n"
-                + "parameters = \"GAIN;KEEP\"\\nGAIN = 1.3\\nKEEP = 0.6\\n");
+                "shaders = 1\nshader0 = original.glsl\n"
+                + "parameters = \"GAIN;KEEP\"\nGAIN = 1.3\nKEEP = 0.6\n");
         CustomShaderStage original = new CustomShaderStage("parameters/original.glsl", 0, null);
         GlslpPreset unchanged = GlslpAssets.loadCustom(
                 Collections.singletonList(original), shaderRoot.toFile(),
@@ -199,12 +199,12 @@ class CustomShaderChainTest {
     }
 
     @Test void inheritedCustomChainCannotBypassAggregateSourceBudget() throws Exception {
-        StringBuilder description = new StringBuilder("shaders = 5\\n");
+        StringBuilder description = new StringBuilder("shaders = 5\n");
         java.util.List<CustomShaderStage> stages = new java.util.ArrayList<>();
-        String largeSource = "//" + "x".repeat(450 * 1024) + "\\nvoid main() {}";
+        String largeSource = "//" + "x".repeat(450 * 1024) + "\nvoid main() {}";
         for (int i = 0; i < 5; i++) {
             description.append("shader").append(i).append(" = base")
-                    .append(i).append(".glsl\\n");
+                    .append(i).append(".glsl\n");
             source("budget/base" + i + ".glsl", "void main() {}");
             source("budget/large" + i + ".glsl", largeSource);
             stages.add(new CustomShaderStage("budget/large" + i + ".glsl", 0, null));

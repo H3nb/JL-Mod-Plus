@@ -1444,11 +1444,11 @@ class ConfigComposeTest {
         ).apply { mkdirs() }
         try {
             java.io.File(root, "source.glsl").writeText(
-                "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\\n" +
-                    "uniform sampler2D Texture;\\nvoid main() {}",
+                "#pragma parameter GAIN \"Gain\" 1.0 0.0 2.0 0.1\n" +
+                    "uniform sampler2D Texture;\nvoid main() {}",
             )
             java.io.File(root, "chain.glslp").writeText(
-                "shaders = 1\\nshader0 = source.glsl\\nGAIN = 1.3\\n",
+                "shaders = 1\nshader0 = source.glsl\nGAIN = 1.3\n",
             )
             val selected = ShaderInfo("chain.glslp", "test").apply {
                 preset = "chain.glslp"
