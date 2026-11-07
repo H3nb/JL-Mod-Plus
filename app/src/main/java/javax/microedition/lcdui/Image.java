@@ -60,8 +60,11 @@ public class Image {
 				|| (long) height * scale > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException("Invalid display target size");
 		}
-		return new Image(Bitmap.createBitmap(width * scale, height * scale,
-				Bitmap.Config.ARGB_8888), true, scale);
+		if (scale == 1) return createImage(width, height);
+		Bitmap bitmap = Bitmap.createBitmap(width * scale, height * scale,
+				Bitmap.Config.ARGB_8888);
+		bitmap.eraseColor(Color.WHITE);
+		return new Image(bitmap, true, scale);
 	}
 
 	public int getPixelScale() {
