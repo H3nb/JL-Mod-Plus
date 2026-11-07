@@ -36,7 +36,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
@@ -1261,11 +1260,9 @@ class ConfigComposeTest {
                 )
             }
         }
-        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
-        val shaderUiTree = composeRule.onRoot(useUnmergedTree = true).printToString(maxDepth = 20)
-        assertTrue("Shader effects page missing custom mode row:\n" + shaderUiTree,
-            shaderUiTree.contains("shader_custom_mode_row"))
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+            .performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
         composeRule.onNodeWithTag("shader_custom_mode_row")
                 .performScrollTo().performClick()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertExists()
@@ -1280,13 +1277,13 @@ class ConfigComposeTest {
         composeRule.runOnIdle { backRequests.value++ }
         composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.render_custom_pass_count)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
         assertEquals(0, events.formChanges)
         assertEquals(0, host.backCalls)
 
         composeRule.runOnIdle { backRequests.value++ }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.render_shader_off)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.pref_graphics_mode_title)).assertExists()
         assertEquals(0, host.backCalls)
 
@@ -1442,7 +1439,8 @@ class ConfigComposeTest {
                     initialDestination = ConfigDestination.Display)
             }
         }
-        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects))
+            .performScrollTo().performClick()
         composeRule.onNodeWithText(uiString(R.string.render_active_shader)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.render_shader_mode)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.render_shader_off_help)).assertExists()
