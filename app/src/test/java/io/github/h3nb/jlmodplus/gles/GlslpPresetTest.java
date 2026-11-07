@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.gles;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** CPU-only characterization of pinned Libretro GLSLP preset semantics. */
 public class GlslpPresetTest {
@@ -113,14 +113,14 @@ public class GlslpPresetTest {
         GlslpPreset.Plan gauss = plan(GlslpPreset.load(
                 assets, "blurs/gauss_4tap.glslp"));
         assertEquals(GUEST, gauss.passes.get(1).outputWidth);
-        assertTrue("Source-sized final stage requires a presentation blit",
-                gauss.finalBlitRequired);
+        assertTrue(gauss.finalBlitRequired,
+                "Source-sized final stage requires a presentation blit");
         assertEquals(2L * 4 * GUEST * GUEST, gauss.conservativeIntermediateBytes);
         GlslpPreset gaussian = GlslpPreset.load(
                 assets, "blurs/gauss_4tap.glslp");
-        assertTrue("A source-relative last pass remains a separate FBO even"
-                        + " when source and viewport dimensions coincide",
-                gaussian.plan(8, 8, 8, 8, 2048, 1024).finalBlitRequired);
+        assertTrue(gaussian.plan(8, 8, 8, 8, 2048, 1024).finalBlitRequired,
+                "A source-relative last pass remains a separate FBO even"
+                        + " when source and viewport dimensions coincide");
 
         // Pinned 4xbrz-linear has a 4x first pass, then ../stock.glsl
         // without a scale_type1; the last pass therefore targets viewport.
@@ -155,9 +155,9 @@ public class GlslpPresetTest {
         assertEquals(96, fsr.passes.get(0).outputWidth);
         assertEquals(96, fsr.passes.get(1).inputWidth);
         assertEquals(96, fsr.passes.get(1).outputWidth);
-        assertTrue("Source-based final FSR stage still needs a stock blit,"
-                        + " even when its dimensions happen to equal viewport",
-                fsr.finalBlitRequired);
+        assertTrue(fsr.finalBlitRequired,
+                "Source-based final FSR stage still needs a stock blit,"
+                        + " even when its dimensions happen to equal viewport");
 
         assets.put("fsr/mixed.glslp", "shaders = 1\nshader0 = a.glsl\n"
                 + "scale_type_x0 = absolute\nscale_x0 = 128\n"
@@ -169,8 +169,8 @@ public class GlslpPresetTest {
         assertTrue(mixed.finalBlitRequired);
         GlslpPreset.Plan fractional = GlslpPreset.load(
                 assets, "fsr/mixed.glslp").plan(8, 8, 95, 95, 2048, 1024 * 1024);
-        assertEquals("Relative viewport FBO sizes truncate toward zero",
-                47, fractional.passes.get(0).outputHeight);
+        assertEquals(47, fractional.passes.get(0).outputHeight,
+                "Relative viewport FBO sizes truncate toward zero");
     }
 
     @Test public void unsupportedFeaturesAndInvalidAllocationsFailClosed()
@@ -184,7 +184,8 @@ public class GlslpPresetTest {
         GlslpPreset withLut = GlslpPreset.load(assets, "test/lut.glslp");
         assertEquals(1, withLut.textures.size());
         assertEquals("test/tex.png", withLut.textures.get(0).sourcePath);
-        assertTrue("Unspecified LUT filtering defaults to linear", withLut.textures.get(0).linear);
+        assertTrue(withLut.textures.get(0).linear,
+                "Unspecified LUT filtering defaults to linear");
         assets.put("test/escape.glslp",
                 "shaders = 1\nshader0 = ../../outside.glsl\n");
         expectFailure(() -> GlslpPreset.load(assets, "test/escape.glslp"),
@@ -374,8 +375,8 @@ public class GlslpPresetTest {
         assertEquals("mirrored_repeat", preset.passes.get(0).wrapMode);
         GlslpPreset.Plan planned = preset.plan(32, 32, 96, 96, 2048, 1024 * 1024);
         assertTrue(planned.conservativeIntermediateBytes > 0);
-        assertEquals("Thin textures have almost one extra full level of mip storage",
-                4092L, GlslpPreset.mipChainBytes(1, 1024));
+        assertEquals(4092L, GlslpPreset.mipChainBytes(1, 1024),
+                "Thin textures have almost one extra full level of mip storage");
         expectFailure(() -> preset.plan(31, 32, 96, 96, 2048, 1024 * 1024),
                 "power-of-two");
         assertEquals(1, preset.plan(31, 32, 96, 96, 2048,
@@ -456,8 +457,8 @@ public class GlslpPresetTest {
             action.run();
             fail("Expected: " + message);
         } catch (IOException | IllegalArgumentException e) {
-            assertTrue("Wrong rejection: " + e.getMessage(),
-                    e.getMessage().contains(message));
+            assertTrue(e.getMessage().contains(message),
+                    "Wrong rejection: " + e.getMessage());
         }
     }
 }
