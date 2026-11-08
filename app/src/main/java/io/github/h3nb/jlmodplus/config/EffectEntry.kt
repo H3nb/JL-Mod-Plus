@@ -14,7 +14,6 @@ data class EffectEntry(
     @SerialName("Key") @JvmField val key: String,
     @SerialName("Builtin") @JvmField val builtinId: String? = null,
     @SerialName("User") @JvmField val user: ShaderSelection? = null,
-    @SerialName("Enabled") @JvmField val enabled: Boolean = true,
     @SerialName("Parameters") @JvmField val parameters: Map<String, Float> = emptyMap(),
 ) {
     init {

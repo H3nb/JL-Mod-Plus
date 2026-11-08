@@ -7,11 +7,19 @@ or the renderer-specific semantics of M3G and Mascot Capsule.
 ## Model and persistence
 
 `ProfileModel.PostEffects` stores an ordered list of `EffectEntry` values.
-Each has a stable instance key, enabled state, parameters and either a built-in
-effect ID or a legacy user shader selection. Catalog names, descriptions and
+Each has a stable instance key, parameters and either a built-in
+effect ID or a legacy user shader selection. All entries in the stack are active;
+old pre-release per-effect disable flags are intentionally discarded. Catalog names, descriptions and
 GPU handles are not persisted. A profile's historical single `Shader`
 selection migrates to one user entry on v9-to-v10 publication if it references
 both legacy source files. Obsolete pre-release GLSLP selections are not activated.
+
+The Compose editor has three surfaces: an ordered stack, a two-tab built-in/user
+catalog, and per-effect parameters. A row opens its parameters; separate compact
+controls delete, move one position, or long-press-drag the reorder handle. An
+empty parameter list is displayed read-only. Returning from the catalog or
+parameters does not mutate the draft unless the user selected an effect,
+changed a parameter, deleted, or reordered an entry.
 
 The Compose editor owns only a draft. ConfigActivity/preset publication owns
 persistence, installed-app identity and cancellation. Built-in GLSL sources

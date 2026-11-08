@@ -159,7 +159,7 @@ public class ProfileConfigMatcherTest {
 		java.util.Map<String, Float> backing = new java.util.LinkedHashMap<>();
 		backing.put("uContrast", 1.0f);
 		working.effects = Collections.singletonList(new EffectEntry(
-				"color-0", "color", null, true, backing));
+				"color-0", "color", null, backing));
 		ProfileModel baseline = ProfileConfigMatcher.copyConfig(working);
 		ConfigFormState form = ConfigFormState.fromProfile(working, working.systemProperties);
 
@@ -169,7 +169,7 @@ public class ProfileConfigMatcherTest {
 		assertTrue(ProfileConfigMatcher.sameEffectiveConfig(working, form, baseline));
 
 		ConfigFormState changed = form.toBuilder().effects(Collections.singletonList(
-				new EffectEntry("color-0", "color", null, true,
+				new EffectEntry("color-0", "color", null,
 						Collections.singletonMap("uContrast", 1.5f)))).build();
 		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(working, changed, baseline));
 	}

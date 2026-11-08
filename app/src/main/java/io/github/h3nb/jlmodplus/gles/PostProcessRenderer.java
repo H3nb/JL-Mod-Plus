@@ -90,7 +90,6 @@ public final class PostProcessRenderer {
             String sharedVertex = asset("fullscreen.vsh");
             identity = program("builtin/identity", sharedVertex, asset("identity.fsh"));
             if (configured != null) for (EffectEntry entry : configured) {
-                if (!entry.enabled) continue;
                 EffectCatalog.Effect definition = EffectCatalog.get(entry.builtinId);
                 if (entry.builtinId != null && definition == null) {
                     throw new IOException("Unknown built-in effect: " + entry.builtinId);

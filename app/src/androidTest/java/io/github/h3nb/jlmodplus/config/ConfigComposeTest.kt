@@ -39,6 +39,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithTag
@@ -335,10 +336,56 @@ class ConfigComposeTest {
         scrollTo(uiString(R.string.render_shader_effects))
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
         composeRule.onNodeWithText(uiString(R.string.render_effect_add)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_effect_user)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.render_effect_user_empty)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_effect_builtin)).performClick()
         composeRule.onNodeWithText(uiString(R.string.effect_color)).performClick()
         composeRule.runOnIdle {
             assertEquals(1, state.value.form.effects.size)
             assertEquals("color", state.value.form.effects.single().builtinId)
+        }
+        composeRule.onNodeWithText(uiString(R.string.effect_color)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.effect_brightness)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.render_effect_restore)).performClick()
+        composeRule.runOnIdle {
+            assertTrue(state.value.form.effects.single().parameters.isEmpty())
+        }
+    }
+
+    @Test
+    fun effectStackMovesAndRemovesInstancesWithoutSwitches() {
+        val base = sampleState()
+        val effects = listOf(
+            EffectEntry("first", builtinId = "color"),
+            EffectEntry("second", builtinId = "vignette"),
+        )
+        val initial = base.form.toBuilder().effects(effects).build()
+        val state = mutableStateOf(
+            ConfigUiState(initial, base.screenPresets, base.fontPresets,
+                base.skins, base.soundBanks, base.shaders, base.removableScreenPresets)
+        )
+        val events = object : ConfigFormEvents by RecordingConfigEvents() {
+            override fun onFormChanged(updated: ConfigFormState) {
+                state.value = ConfigUiState(updated, base.screenPresets, base.fontPresets,
+                    base.skins, base.soundBanks, base.shaders, base.removableScreenPresets)
+            }
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Display)
+            }
+        }
+        scrollTo(uiString(R.string.render_shader_effects))
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_move_down))[0]
+            .performClick()
+        composeRule.runOnIdle {
+            assertEquals(listOf("second", "first"), state.value.form.effects.map { it.key })
+        }
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_remove))[0]
+            .performClick()
+        composeRule.runOnIdle {
+            assertEquals(listOf("first"), state.value.form.effects.map { it.key })
         }
     }
 

@@ -18,7 +18,6 @@ class EffectStackProfileTest {
         assertEquals("filter.fsh", migrated.user!!.fragment)
         assertEquals("filter.vsh", migrated.user.vertex)
         assertEquals(listOf(0.4f, 0.2f, 0f, 1f), migrated.user.values)
-        assertTrue(migrated.enabled)
         val reread = ProfileJson.decode(ProfileJson.encode(result.model), false)
         assertEquals(result.model.effects, reread.model.effects)
         assertFalse(reread.needsPublication)
@@ -32,13 +31,12 @@ class EffectStackProfileTest {
             fragment = "a.fsh"
             values = floatArrayOf(0.7f, 0f, 0f, 0f)
         })!!
-        val b = EffectEntry("b", user = legacy, enabled = false)
+        val b = EffectEntry("b", user = legacy)
         val c = EffectEntry("c", builtinId = "color", parameters = mapOf("uContrast" to 0.6f))
         val source = ProfileModel(effects = listOf(a, b, c))
         val saved = ProfileJson.decode(ProfileJson.encode(source), false).model
         assertEquals(listOf("a", "b", "c"), saved.effects.map { it.key })
         assertEquals(1.5f, saved.effects[0].parameters["uContrast"])
-        assertFalse(saved.effects[1].enabled)
         assertEquals(0.7f, saved.effects[1].user!!.values!![0])
         assertEquals(0.6f, saved.effects[2].parameters["uContrast"])
     }
