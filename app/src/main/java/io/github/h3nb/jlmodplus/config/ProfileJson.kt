@@ -103,13 +103,16 @@ object ProfileJson {
     ))
 
     /** Copy value collections on entry; never retain an externally mutable tree backing map. */
-    @JvmStatic fun ownedCopy(source: ProfileModel): ProfileModel = source.copy(
-        effects = source.effects.map { effect ->
+    @JvmStatic fun ownedEffects(source: List<EffectEntry>): List<EffectEntry> =
+        source.map { effect ->
             effect.copy(
                 parameters = effect.parameters.ownedMap(),
                 user = effect.user?.copy(values = effect.user.values?.ownedList()),
             )
-        }.ownedList(),
+        }.ownedList()
+
+    @JvmStatic fun ownedCopy(source: ProfileModel): ProfileModel = source.copy(
+        effects = ownedEffects(source.effects),
         shader = source.shader?.let { it.copy(values = it.values?.ownedList()) },
         customKeys = source.customKeys?.ownedList(),
         keyMappings = source.keyMappings.ownedMap(),

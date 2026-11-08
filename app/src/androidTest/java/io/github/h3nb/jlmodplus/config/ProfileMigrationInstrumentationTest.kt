@@ -58,58 +58,35 @@ class ProfileMigrationInstrumentationTest {
         }
     }
 
-    @Test fun openingAndCancellingShaderTuningDoesNotMaterializeDefaultParameters() {
+    @Test fun reopeningUnchangedEffectProfileDoesNotPublishDefaultParameters() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val root = File(context.cacheDir, "gson-shader-cancel-${UUID.randomUUID()}")
-        val source = File(root, "templates/CRT").apply { mkdirs() }
-        File(root, "shaders").apply { mkdirs() }.resolve("crt.ini").writeText("""
-            [CRT]
-            Name=CRT
-            Author=tester
-            Fragment=crt.fsh
-            Vertex=crt.vsh
-            SettingName1=Amount
-            SettingDefaultValue1=1
-            SettingMinValue1=0
-            SettingMaxValue1=2
-            SettingStep1=0.25
-        """.trimIndent())
-        val model = ProfileModel.fresh("").apply {
-            shader = ShaderSelection.fromInfo(ShaderInfo("CRT", "tester").apply {
-                fragment = "crt.fsh"; vertex = "crt.vsh"
-            })
-        }
+        val root = File(context.cacheDir, "effect-editor-${UUID.randomUUID()}")
+        val source = File(root, "templates/Color").apply { mkdirs() }
+        val entry = EffectEntry("color-0", builtinId = "color")
+        val model = ProfileModel.fresh("").apply { effects = listOf(entry) }
         try {
             assertTrue(ProfilesManager.saveConfig(source, model))
             val before = File(source, "config.json").readBytes()
-            val intent = Intent(Constants.ACTION_EDIT_PROFILE, Uri.fromFile(source), context, ConfigActivity::class.java)
+            val intent = Intent(Constants.ACTION_EDIT_PROFILE, Uri.fromFile(source),
+                context, ConfigActivity::class.java)
             ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
-                scenario.onActivity { activity ->
-                    val params = ConfigActivity::class.java.getDeclaredField("params").apply { isAccessible = true }
-                    val loaded = params.get(activity) as ProfileModel
-                    assertNull(loaded.shader!!.values)
-                    ConfigActivity::class.java.getDeclaredMethod("showShaderSettings").apply {
-                        isAccessible = true
-                    }.invoke(activity)
-                    activity.supportFragmentManager.executePendingTransactions()
-                    assertNotNull(activity.supportFragmentManager.findFragmentByTag("ShaderTuning"))
+                repeat(2) { iteration ->
+                    scenario.onActivity { activity ->
+                        val params = ConfigActivity::class.java.getDeclaredField("params")
+                            .apply { isAccessible = true }
+                        val form = ConfigActivity::class.java.getDeclaredField("currentForm")
+                            .apply { isAccessible = true }
+                        val loaded = params.get(activity) as ProfileModel
+                        val draft = form.get(activity) as ConfigFormState
+                        assertEquals(listOf(entry), loaded.effects)
+                        assertEquals(listOf(entry), draft.effects)
+                        assertTrue(draft.effects.single().parameters.isEmpty())
+                        assertNull(loaded.shader)
+                    }
+                    if (iteration == 0) scenario.recreate()
                 }
-                // Keep the actual dialog open across recreation, exercising fragment arguments.
-                scenario.recreate()
-                scenario.onActivity { activity ->
-                    val params = ConfigActivity::class.java.getDeclaredField("params").apply { isAccessible = true }
-                    val dialog = activity.supportFragmentManager.findFragmentByTag("ShaderTuning") as ShaderTuneAlert
-                    val restored = dialog.requireArguments().getParcelable<ShaderInfo>("shader")!!
-                    assertTrue(restored.hasTunableSettings())
-                    assertEquals(1f, restored.values[0], 0f)
-                    dialog.dismiss()
-                    activity.supportFragmentManager.executePendingTransactions()
-                    assertNull((params.get(activity) as ProfileModel).shader!!.values)
-                    val form = ConfigActivity::class.java.getDeclaredField("currentForm").apply { isAccessible = true }
-                    assertNull((form.get(activity) as ConfigFormState).shader!!.values)
-                }
-                scenario.recreate()
             }
+            // Navigating/recreating the editor must not publish default slider values.
             assertArrayEquals(before, File(source, "config.json").readBytes())
         } finally {
             root.deleteRecursively()

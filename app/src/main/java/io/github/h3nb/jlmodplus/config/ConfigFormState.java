@@ -113,7 +113,7 @@ public final class ConfigFormState {
 		systemProperties = builder.systemProperties;
 		screenBackgroundImage = builder.screenBackgroundImage;
 		soundBank = builder.soundBank;
-		effects = Collections.unmodifiableList(new ArrayList<>(builder.effects));
+		effects = ProfileJson.ownedEffects(builder.effects);
 		controller = builder.controller;
 		orientation = builder.orientation;
 		screenBackgroundMode = BackgroundMode.sanitize(builder.screenBackgroundMode);
@@ -225,7 +225,7 @@ public final class ConfigFormState {
 		params.immediateMode = immediateMode;
 		params.graphicsMode = graphicsMode;
 		params.shader = null;
-		params.effects = new ArrayList<>(effects);
+		params.effects = ProfileJson.ownedEffects(effects);
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
 		params.allowDisplayCutout = allowDisplayCutout;

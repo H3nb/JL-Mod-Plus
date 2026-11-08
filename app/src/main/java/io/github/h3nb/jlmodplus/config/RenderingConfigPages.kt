@@ -82,6 +82,7 @@ internal fun RenderingSettingsPage(
     var error by remember { mutableStateOf<String?>(null) }
     val unavailable = stringResource(R.string.render_effect_legacy_file_error)
     val limitError = stringResource(R.string.render_effect_limit)
+    val legacyPickerTitle = stringResource(R.string.render_effect_user_file)
     val currentEffects = state.form.effects
     fun apply(items: List<EffectEntry>) = onFormChanged(form.toBuilder().effects(items).build())
     fun add(entry: EffectEntry) {
@@ -341,7 +342,7 @@ internal fun RenderingSettingsPage(
                         if (root != null) {
                             onShaderPickerOpened()
                             picker.launch(shaderPickerIntent(context, root, listOf(".ini"),
-                                context.getString(R.string.render_effect_user_file)))
+                                legacyPickerTitle))
                         } else error = unavailable
                     }) { Text(stringResource(R.string.render_effect_user_add)) }
                     if (legacyVariants.isNotEmpty()) {

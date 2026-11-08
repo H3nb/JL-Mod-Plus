@@ -150,24 +150,28 @@ public class ProfileConfigMatcherTest {
 	}
 
 	@Test
-	public void persistedBaselineIsDeepAndDetectsDirectNestedShaderMutation() {
+	public void effectDraftAndBaselineOwnParametersIndependently() {
 		ProfileModel working = new ProfileModel();
 		working.version = ProfileModel.VERSION;
 		working.screenWidth = 240;
 		working.screenHeight = 320;
 		working.systemProperties = "platform: test\n";
-		ShaderInfo shader = new ShaderInfo("CRT", "tester");
-        shader.values = new float[] {1.0f, 2.0f};
-        working.shader = ShaderSelection.fromInfo(shader);
+		java.util.Map<String, Float> backing = new java.util.LinkedHashMap<>();
+		backing.put("uContrast", 1.0f);
+		working.effects = Collections.singletonList(new EffectEntry(
+				"color-0", "color", null, true, backing));
 		ProfileModel baseline = ProfileConfigMatcher.copyConfig(working);
 		ConfigFormState form = ConfigFormState.fromProfile(working, working.systemProperties);
 
-		shader.values[0] = 9.0f;
-        working.shader = ShaderSelection.fromInfo(shader);
-		form.shader.values[0] = 9.0f;
+		backing.put("uContrast", 9.0f);
+		assertEquals(1.0f, baseline.effects.get(0).parameters.get("uContrast"), 0.0f);
+		assertEquals(1.0f, form.effects.get(0).parameters.get("uContrast"), 0.0f);
+		assertTrue(ProfileConfigMatcher.sameEffectiveConfig(working, form, baseline));
 
-		assertEquals(1.0f, baseline.shader.values.get(0), 0.0f);
-		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(working, form, baseline));
+		ConfigFormState changed = form.toBuilder().effects(Collections.singletonList(
+				new EffectEntry("color-0", "color", null, true,
+						Collections.singletonMap("uContrast", 1.5f)))).build();
+		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(working, changed, baseline));
 	}
 
 	@Test
