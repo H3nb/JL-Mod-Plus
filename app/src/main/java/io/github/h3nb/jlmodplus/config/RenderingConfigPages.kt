@@ -639,11 +639,14 @@ private fun EffectParameterSlider(
     var draft by remember(value, minimum, maximum) {
         mutableFloatStateOf(value.coerceIn(minimum, maximum))
     }
+    val locale = androidx.core.os.ConfigurationCompat.getLocales(
+        androidx.compose.ui.platform.LocalConfiguration.current
+    ).get(0) ?: java.util.Locale.ROOT
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(label, modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyMedium)
-            Text("%.2f".format(java.util.Locale.getDefault(), draft),
+            Text("%.2f".format(locale, draft),
                 style = MaterialTheme.typography.bodySmall)
         }
         Slider(
