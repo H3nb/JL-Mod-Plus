@@ -102,7 +102,7 @@
     <string name="render_effect_user_add">Choose a shader from folder</string>
     <string name="render_effect_user_empty">No legacy shader found in the shaders folder.</string>
     <string name="render_effect_user_file">Choose a legacy .ini file</string>
-    <string name="render_effect_empty">No effects. Add one to customize the game's appearance.</string>
+    <string name="render_effect_empty">No effects. Add one to customize the game\'s appearance.</string>
     <string name="render_effect_hint">Effects run in order, from top to bottom.</string>
     <string name="render_effect_enable">Enable</string>
     <string name="render_effect_disable">Disable</string>
@@ -128,7 +128,7 @@
     <string name="effect_bloom">Bloom</string>
     <string name="effect_bloom_desc">A soft glow around bright areas.</string>
     <string name="effect_crt_easy">CRT EasyMode</string>
-    <string name="effect_crt_easy_desc">Scanlines and phosphor mask based on EasyMode's CRT shader.</string>
+    <string name="effect_crt_easy_desc">Scanlines and phosphor mask based on EasyMode\'s CRT shader.</string>
     <string name="effect_brightness">Brightness</string>
     <string name="effect_contrast">Contrast</string>
     <string name="effect_saturation">Saturation</string>

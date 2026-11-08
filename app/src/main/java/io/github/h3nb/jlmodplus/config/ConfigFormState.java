@@ -56,6 +56,8 @@ public final class ConfigFormState {
 	public final String screenBackgroundImage;
 	@Nullable
 	public final String soundBank;
+	/** Ordered per-game GLES post-processing effect drafts. */
+	public final List<EffectEntry> effects;
 	@Nullable
 	/** Opaque controller subtree; known controller editors merge into it instead of dropping fields. */
 	@Nullable
@@ -112,6 +114,7 @@ public final class ConfigFormState {
 		systemProperties = builder.systemProperties;
 		screenBackgroundImage = builder.screenBackgroundImage;
 		soundBank = builder.soundBank;
+		effects = Collections.unmodifiableList(new ArrayList<>(builder.effects));
 		controller = builder.controller;
 		orientation = builder.orientation;
 		screenBackgroundMode = BackgroundMode.sanitize(builder.screenBackgroundMode);
@@ -170,6 +173,7 @@ public final class ConfigFormState {
 				.forceFullscreen(params.forceFullscreen)
 				.allowDisplayCutout(params.allowDisplayCutout)
 				.graphicsMode(params.graphicsMode)
+				.effects(params.effects)
 					.controller(params.controller)
 				.showFps(params.showFps)
 				.performanceOverlayMetrics(params.performanceOverlayMetrics)
@@ -221,7 +225,8 @@ public final class ConfigFormState {
 		params.screenFilter = screenFilter;
 		params.immediateMode = immediateMode;
 		params.graphicsMode = graphicsMode;
-		params.shader = ShaderSelection.fromInfo(shader);
+		params.shader = null;
+		params.effects = new ArrayList<>(effects);
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
 		params.allowDisplayCutout = allowDisplayCutout;
@@ -328,6 +333,7 @@ public final class ConfigFormState {
 		private String systemProperties = "";
 		private String screenBackgroundImage;
 		private String soundBank;
+		private List<EffectEntry> effects = Collections.emptyList();
 		private JsonElement controller;
 		private int orientation;
 		private int screenBackgroundMode = BackgroundMode.CUSTOM;
@@ -381,6 +387,7 @@ public final class ConfigFormState {
 			systemProperties = source.systemProperties;
 			screenBackgroundImage = source.screenBackgroundImage;
 			soundBank = source.soundBank;
+			effects = source.effects;
 			controller = source.controller;
 			orientation = source.orientation;
 			screenBackgroundMode = source.screenBackgroundMode;
@@ -431,6 +438,10 @@ public final class ConfigFormState {
 		public Builder systemProperties(String value) { systemProperties = value; return this; }
 		public Builder screenBackgroundImage(String value) { screenBackgroundImage = value; return this; }
 		public Builder soundBank(String value) { soundBank = value; return this; }
+		public Builder effects(List<EffectEntry> entries) {
+			effects = entries == null ? Collections.emptyList() : new ArrayList<>(entries);
+			return this;
+		}
 		public Builder controller(JsonElement value) {
 			controller = ProfileJson.copyJson(value);
 			return this;
