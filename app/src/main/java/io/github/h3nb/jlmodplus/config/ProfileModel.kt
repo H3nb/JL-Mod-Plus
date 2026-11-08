@@ -51,6 +51,7 @@ data class ProfileModel(
     @SerialName("ImmediateMode") @JvmField var immediateMode: Boolean = false,
     @SerialName("GraphicsMode") @JvmField var graphicsMode: Int = 0,
     @SerialName("Shader") @JvmField var shader: ShaderSelection? = null,
+    @SerialName("PostEffects") @JvmField var effects: List<EffectEntry> = emptyList(),
     @SerialName("ParallelRedrawScreen") @JvmField var parallelRedrawScreen: Boolean = false,
     @SerialName("ShowFps") @JvmField var showFps: Boolean = false,
     @SerialName("PerformanceOverlayMetrics") @JvmField var performanceOverlayMetrics: Int = PerformanceOverlayOptions.STANDARD,
@@ -99,7 +100,7 @@ data class ProfileModel(
     @SerialName("SkipResumeCall") @JvmField var skipResumeCall: Boolean = false,
 ) {
     companion object {
-        const val VERSION = 9
+        const val VERSION = 10
 
         @JvmStatic fun builtInThemePreferenceKey(configDir: File): String =
             "config_profile_builtin_theme:" + configDir.absolutePath

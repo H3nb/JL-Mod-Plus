@@ -55,6 +55,15 @@ object ProfileJson {
         } else backgroundMode(tree["ScreenBackgroundMode"]))
         normalized["KeyMappings"] = format.encodeToJsonElement(decodeMappings(tree["KeyMappings"]))
         val model = format.decodeFromJsonElement<ProfileModel>(JsonObject(normalized))
+        if (version < 10) {
+            // v9 used a single shader selection. Convert only released legacy shaders;
+            // the experimental external GLSLP/custom format is intentionally retired.
+            val legacy = model.shader
+            if (model.effects.isEmpty() && legacy?.vertex != null && legacy.fragment != null) {
+                model.effects = listOf(EffectEntry("legacy-0", user = legacy))
+            }
+            model.shader = null
+        }
         if (!tree.containsKey("SystemPropertyOverrides")) {
             val oldProperties = tree["SystemProperties"]?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
             model.systemProperties = oldProperties
@@ -95,6 +104,12 @@ object ProfileJson {
 
     /** Copy value collections on entry; never retain an externally mutable tree backing map. */
     @JvmStatic fun ownedCopy(source: ProfileModel): ProfileModel = source.copy(
+        effects = source.effects.map { effect ->
+            effect.copy(
+                parameters = effect.parameters.ownedMap(),
+                user = effect.user?.copy(values = effect.user.values?.ownedList()),
+            )
+        }.ownedList(),
         shader = source.shader?.let {
             it.copy(
                 values = it.values?.ownedList(),
