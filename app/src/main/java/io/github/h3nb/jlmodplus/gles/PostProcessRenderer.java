@@ -1,0 +1,410 @@
+// SPDX-License-Identifier: Apache-2.0
+package io.github.h3nb.jlmodplus.gles;
+
+import static android.opengl.GLES20.*;
+
+import android.util.Log;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.microedition.util.ContextHolder;
+
+import io.github.h3nb.jlmodplus.config.EffectEntry;
+import io.github.h3nb.jlmodplus.config.ShaderCatalog;
+import io.github.h3nb.jlmodplus.config.ShaderSelection;
+import io.github.h3nb.jlmodplus.util.FileUtils;
+
+/**
+ * OpenGL ES 2.0 post-processing on the owning GLSurfaceView thread.
+ * Passes form a linear effect chain; an effect may retain its original input
+ * for compositing (Bloom). Guest framebuffer and Android host UI stay untouched.
+ */
+public final class PostProcessRenderer {
+    private static final String TAG = "PostProcessRenderer";
+    private static final String ASSETS = "shaders/effects/";
+    private static final int MAX_PASSES = 16;
+    private static final long MAX_TEMP_BYTES = 64L * 1024 * 1024;
+    private static final int MAX_SOURCE_CHARS = 256 * 1024;
+
+    private final ArrayList<Stage> stages = new ArrayList<>();
+    private final ArrayList<Target> targets = new ArrayList<>();
+    private final Map<String, Program> programs = new HashMap<>();
+    private final FloatBuffer quad = ByteBuffer.allocateDirect(16 * 4)
+            .order(ByteOrder.nativeOrder()).asFloatBuffer();
+    private final int maxTextureSize;
+    private long targetBytes;
+    private int lastViewportWidth, lastViewportHeight;
+    private final Program stock;
+
+    private static final class Program {
+        int id;
+        int position, uv, input, base, inputSize, contentSize, outputSize;
+        int texelDelta, pixelDelta, setting, baseScale, baseOffset;
+        final Map<String, Integer> parameters = new HashMap<>();
+    }
+
+    private static final class Stage {
+        final Program program;
+        final EffectEntry entry;
+        final EffectCatalog.Pass pass;
+        final EffectCatalog.Effect definition;
+        final boolean first, last;
+        final float[] legacyValues;
+
+        Stage(Program program, EffectEntry entry, EffectCatalog.Pass pass,
+              EffectCatalog.Effect definition, boolean first, boolean last) {
+            this.program = program;
+            this.entry = entry;
+            this.pass = pass;
+            this.definition = definition;
+            this.first = first;
+            this.last = last;
+            this.legacyValues = new float[4];
+            if (entry.user != null && entry.user.values != null) {
+                for (int i = 0; i < Math.min(4, entry.user.values.size()); i++) {
+                    Float value = entry.user.values.get(i);
+                    if (value != null && !Float.isNaN(value) && !Float.isInfinite(value)) legacyValues[i] = value;
+                }
+            }
+        }
+    }
+
+    private static final class Target {
+        int texture, framebuffer, width, height;
+    }
+
+    public PostProcessRenderer(List<EffectEntry> configured, File shaderDirectory) throws IOException {
+        int[] limit = new int[1];
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, limit, 0);
+        maxTextureSize = limit[0];
+        Program identity = null;
+        try {
+            String sharedVertex = asset("fullscreen.vsh");
+            identity = program("builtin/identity", sharedVertex, asset("identity.fsh"));
+            if (configured != null) for (EffectEntry entry : configured) {
+                if (!entry.enabled) continue;
+                EffectCatalog.Effect definition = EffectCatalog.get(entry.builtinId);
+                if (entry.builtinId != null && definition == null) {
+                    throw new IOException("Unknown built-in effect: " + entry.builtinId);
+                }
+                if (definition != null) {
+                    int index = 0;
+                    for (EffectCatalog.Pass pass : definition.passes) {
+                        Program p = program("builtin/" + pass.fragment, sharedVertex,
+                                asset(pass.fragment));
+                        stages.add(new Stage(p, entry, pass, definition,
+                                index == 0, index == definition.passes.size() - 1));
+                        index++;
+                    }
+                } else {
+                    ShaderSelection user = entry.user;
+                    if (user == null || user.vertex == null || user.fragment == null
+                            || shaderDirectory == null) throw new IOException("Missing user shader");
+                    String vert = local(shaderDirectory, user.vertex);
+                    String frag = local(shaderDirectory, user.fragment);
+                    Program p = program("user/" + user.vertex + "|" + user.fragment, vert, frag);
+                    EffectCatalog.Pass pass = new EffectCatalog.Pass(
+                            user.fragment,
+                            (user.outputResolution || user.upscaling)
+                                ? EffectCatalog.Size.VIEWPORT : EffectCatalog.Size.INPUT,
+                            user.upscaling, false);
+                    stages.add(new Stage(p, entry, pass, null, true, true));
+                }
+                if (stages.size() > MAX_PASSES) throw new IOException("Too many shader passes");
+            }
+        } catch (IOException | RuntimeException e) {
+            release();
+            throw e;
+        }
+        stock = identity;
+    }
+
+    private static String asset(String name) throws IOException {
+        String text = ContextHolder.getAssetAsString(ASSETS + name);
+        if (text == null || text.length() > MAX_SOURCE_CHARS) {
+            throw new IOException("Missing or oversized bundled shader: " + name);
+        }
+        return text;
+    }
+
+    private static String local(File root, String name) throws IOException {
+        File file = ShaderCatalog.resolveLegacySource(root, name);
+        if (file == null || !file.isFile() || file.length() > MAX_SOURCE_CHARS) {
+            throw new IOException("Unavailable user shader: " + name);
+        }
+        String source = FileUtils.getText(file.getPath());
+        if (source == null || source.length() > MAX_SOURCE_CHARS) {
+            throw new IOException("Unreadable user shader: " + name);
+        }
+        return source;
+    }
+
+    private Program program(String key, String vertex, String fragment) throws IOException {
+        Program existing = programs.get(key);
+        if (existing != null) return existing;
+        int vert = compile(GL_VERTEX_SHADER, vertex);
+        int frag = 0, id = 0;
+        try {
+            frag = compile(GL_FRAGMENT_SHADER, fragment);
+            id = glCreateProgram();
+            glAttachShader(id, vert);
+            glAttachShader(id, frag);
+            glLinkProgram(id);
+            int[] linked = new int[1];
+            glGetProgramiv(id, GL_LINK_STATUS, linked, 0);
+            if (linked[0] != GL_TRUE) throw new IOException("Shader link: " + glGetProgramInfoLog(id));
+            Program p = new Program();
+            p.id = id;
+            p.position = glGetAttribLocation(id, "a_position");
+            p.uv = glGetAttribLocation(id, "a_texcoord0");
+            if (p.position < 0) throw new IOException("Missing vertex position in " + key);
+            p.input = glGetUniformLocation(id, "sampler0");
+            p.base = glGetUniformLocation(id, "uBase");
+            p.inputSize = glGetUniformLocation(id, "uInputSize");
+            p.contentSize = glGetUniformLocation(id, "uContentSize");
+            p.outputSize = glGetUniformLocation(id, "uOutputSize");
+            p.texelDelta = glGetUniformLocation(id, "u_texelDelta");
+            p.pixelDelta = glGetUniformLocation(id, "u_pixelDelta");
+            p.setting = glGetUniformLocation(id, "u_setting");
+            p.baseScale = glGetUniformLocation(id, "uBaseUvScale");
+            p.baseOffset = glGetUniformLocation(id, "uBaseUvOffset");
+            programs.put(key, p);
+            return p;
+        } catch (IOException | RuntimeException e) {
+            if (id != 0) glDeleteProgram(id);
+            throw e;
+        } finally {
+            glDeleteShader(vert);
+            if (frag != 0) glDeleteShader(frag);
+        }
+    }
+
+    private static int compile(int type, String source) throws IOException {
+        int shader = glCreateShader(type);
+        if (shader == 0) throw new IOException("glCreateShader failed");
+        glShaderSource(shader, source);
+        glCompileShader(shader);
+        int[] status = new int[1];
+        glGetShaderiv(shader, GL_COMPILE_STATUS, status, 0);
+        if (status[0] != GL_TRUE) {
+            String log = glGetShaderInfoLog(shader);
+            glDeleteShader(shader);
+            throw new IOException("Shader compile: " + log);
+        }
+        return shader;
+    }
+
+    public boolean isEmpty() { return stages.isEmpty(); }
+
+    /**
+     * @param displayQuad guest screen geometry in NDC, including the cropped original UVs.
+     * @return true when a post-processing program presented the game image.
+     */
+    public boolean draw(int sourceTexture, FloatBuffer displayQuad,
+                        int textureW, int textureH, int contentW, int contentH,
+                        int hostW, int hostH, int filter) {
+        if (stages.isEmpty() || hostW <= 0 || hostH <= 0) return false;
+        float left = displayQuad.get(0), right = displayQuad.get(8);
+        float top = displayQuad.get(1), bottom = displayQuad.get(5);
+        int width = Math.max(1, Math.round(Math.abs(right - left) * hostW * 0.5f));
+        int height = Math.max(1, Math.round(Math.abs(top - bottom) * hostH * 0.5f));
+        if (width > maxTextureSize || height > maxTextureSize) {
+            throw new IllegalStateException("Post-processing target exceeds texture size limit");
+        }
+        if (width != lastViewportWidth || height != lastViewportHeight) {
+            clearTargets();
+            lastViewportWidth = width;
+            lastViewportHeight = height;
+        }
+
+        int current = sourceTexture, inW = textureW, inH = textureH;
+        int visibleW = contentW, visibleH = contentH;
+        float uMax = (float) contentW / textureW;
+        float vMax = (float) contentH / textureH;
+        boolean flipped = false;
+        int base = sourceTexture, baseW = textureW, baseH = textureH;
+        float baseU = uMax, baseV = vMax;
+        boolean baseFlip = false;
+        try {
+            glDisable(GL_BLEND);
+            glDisable(GL_DEPTH_TEST);
+            glDepthMask(false);
+            for (int i = 0; i < stages.size(); i++) {
+                Stage stage = stages.get(i);
+                if (stage.first) {
+                    base = current;
+                    baseW = inW;
+                    baseH = inH;
+                    baseU = uMax;
+                    baseV = vMax;
+                    baseFlip = flipped;
+                }
+                int outW = width, outH = height;
+                if (stage.pass.size == EffectCatalog.Size.HALF_VIEWPORT) {
+                    outW = Math.max(1, width / 2);
+                    outH = Math.max(1, height / 2);
+                } else if (stage.pass.size == EffectCatalog.Size.INPUT) {
+                    outW = visibleW;
+                    outH = visibleH;
+                }
+                boolean direct = i == stages.size() - 1 && outW == width && outH == height;
+                Target target = direct ? null : target(outW, outH, current, base);
+                if (direct) {
+                    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                    glViewport(0, 0, hostW, hostH);
+                    glEnable(GL_SCISSOR_TEST);
+                } else {
+                    glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer);
+                    glViewport(0, 0, outW, outH);
+                    glDisable(GL_SCISSOR_TEST);
+                }
+                drawPass(stage.program, stage, current, inW, inH, visibleW, visibleH,
+                        uMax, vMax, flipped, base, baseU, baseV, baseFlip,
+                        outW, outH, hostW, hostH, filter,
+                        direct ? left : -1f, direct ? right : 1f,
+                        direct ? top : 1f, direct ? bottom : -1f);
+                if (direct) return true;
+                current = target.texture;
+                inW = outW;
+                inH = outH;
+                visibleW = outW;
+                visibleH = outH;
+                uMax = vMax = 1f;
+                flipped = true;
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, hostW, hostH);
+            glEnable(GL_SCISSOR_TEST);
+            drawPass(stock, null, current, inW, inH, visibleW, visibleH,
+                    uMax, vMax, flipped, 0, 1f, 1f, true, width, height,
+                    hostW, hostH, filter, left, right, top, bottom);
+            return true;
+        } finally {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, hostW, hostH);
+            glEnable(GL_SCISSOR_TEST);
+            glActiveTexture(GL_TEXTURE0);
+        }
+    }
+
+    private void drawPass(Program p, Stage stage, int texture, int inputW, int inputH,
+                          int visibleW, int visibleH, float uMax, float vMax, boolean flipped,
+                          int base, float baseU, float baseV, boolean baseFlip,
+                          int outW, int outH, int hostW, int hostH, int filter,
+                          float left, float right, float top, float bottom) {
+        glUseProgram(p.id);
+        float topUv = flipped ? vMax : 0f, bottomUv = flipped ? 0f : vMax;
+        quad.clear();
+        quad.put(left).put(top).put(0f).put(topUv);
+        quad.put(left).put(bottom).put(0f).put(bottomUv);
+        quad.put(right).put(top).put(uMax).put(topUv);
+        quad.put(right).put(bottom).put(uMax).put(bottomUv);
+        quad.position(0);
+        glVertexAttribPointer(p.position, 2, GL_FLOAT, false, 16, quad);
+        glEnableVertexAttribArray(p.position);
+        if (p.uv >= 0) {
+            quad.position(2);
+            glVertexAttribPointer(p.uv, 2, GL_FLOAT, false, 16, quad);
+            glEnableVertexAttribArray(p.uv);
+        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        int sample = stage != null && stage.pass.sampleNearest ? GL_NEAREST : filter;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sample);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sample);
+        if (p.input >= 0) glUniform1i(p.input, 0);
+        if (p.inputSize >= 0) glUniform2f(p.inputSize, inputW, inputH);
+        if (p.contentSize >= 0) glUniform2f(p.contentSize, visibleW, visibleH);
+        if (p.outputSize >= 0) glUniform2f(p.outputSize, outW, outH);
+        if (p.texelDelta >= 0) glUniform2f(p.texelDelta, 1f / inputW, 1f / inputH);
+        if (p.pixelDelta >= 0) glUniform2f(p.pixelDelta, 1f / hostW, 1f / hostH);
+        if (stage != null) {
+            if (p.setting >= 0) glUniform4fv(p.setting, 1, stage.legacyValues, 0);
+            if (stage.definition != null) for (EffectCatalog.Parameter parameter : stage.definition.parameters) {
+                Float override = stage.entry.parameters.get(parameter.id);
+                float value = override != null && !Float.isNaN(override) && !Float.isInfinite(override) ? override : parameter.initial;
+                value = Math.max(parameter.minimum, Math.min(parameter.maximum, value));
+                Integer location = p.parameters.get(parameter.id);
+                if (location == null) {
+                    location = glGetUniformLocation(p.id, parameter.id);
+                    p.parameters.put(parameter.id, location);
+                }
+                if (location >= 0) glUniform1f(location, value);
+            }
+            if (stage.pass.composite) {
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, base);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+                if (p.base >= 0) glUniform1i(p.base, 1);
+                // The blurred input is a top-left-aligned framebuffer texture.
+                if (p.baseScale >= 0) glUniform2f(p.baseScale, baseU, baseFlip ? baseV : -baseV);
+                if (p.baseOffset >= 0) glUniform2f(p.baseOffset, 0f, baseFlip ? 0f : baseV);
+            }
+        }
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glDisableVertexAttribArray(p.position);
+        if (p.uv >= 0) glDisableVertexAttribArray(p.uv);
+        glActiveTexture(GL_TEXTURE0);
+    }
+
+    private Target target(int w, int h, int current, int original) {
+        for (Target candidate : targets) {
+            if (candidate.width == w && candidate.height == h
+                    && candidate.texture != current && candidate.texture != original)
+                return candidate;
+        }
+        long bytes = 4L * w * h;
+        if (w > maxTextureSize || h > maxTextureSize || targetBytes + bytes > MAX_TEMP_BYTES)
+            throw new IllegalStateException("Post-processing texture budget exceeded");
+        Target result = new Target();
+        int[] id = new int[1];
+        glGenTextures(1, id, 0);
+        result.texture = id[0];
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, result.texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
+        glGenFramebuffers(1, id, 0);
+        result.framebuffer = id[0];
+        glBindFramebuffer(GL_FRAMEBUFFER, result.framebuffer);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result.texture, 0);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            glDeleteFramebuffers(1, new int[]{result.framebuffer}, 0);
+            glDeleteTextures(1, new int[]{result.texture}, 0);
+            throw new IllegalStateException("Incomplete post-processing framebuffer");
+        }
+        result.width = w;
+        result.height = h;
+        targetBytes += bytes;
+        targets.add(result);
+        return result;
+    }
+
+    private void clearTargets() {
+        for (Target t : targets) {
+            glDeleteTextures(1, new int[]{t.texture}, 0);
+            glDeleteFramebuffers(1, new int[]{t.framebuffer}, 0);
+        }
+        targets.clear();
+        targetBytes = 0L;
+    }
+
+    public void release() {
+        clearTargets();
+        for (Program p : programs.values()) if (p.id != 0) glDeleteProgram(p.id);
+        programs.clear();
+        stages.clear();
+    }
+}

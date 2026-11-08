@@ -26,11 +26,6 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.util.ContextHolder;
 
-import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.config.ShaderSelection;
-import io.github.h3nb.jlmodplus.config.ShaderCatalog;
-import java.io.File;
-import io.github.h3nb.jlmodplus.util.FileUtils;
 
 public class ShaderProgram {
 	private static final String TAG = ShaderProgram.class.getName();
@@ -45,34 +40,24 @@ public class ShaderProgram {
 	public int uPixelDelta;
 	private int programHandle = -1;
 
-	public ShaderProgram(ShaderSelection shader, File shaderDirectory) {
-		if (shader != null) {
-			String vertex = shader.vertex;
-			String fragment = shader.fragment;
-			if (vertex != null && fragment != null && shaderDirectory != null) {
-				File vertexFile = ShaderCatalog.resolveLegacySource(shaderDirectory, vertex);
-				File fragmentFile = ShaderCatalog.resolveLegacySource(shaderDirectory, fragment);
-				String vertexCode = vertexFile == null ? null : FileUtils.getText(vertexFile.getPath());
-				String fragmentCode = fragmentFile == null ? null : FileUtils.getText(fragmentFile.getPath());
-				if (createProgram(vertexCode, fragmentCode) != -1) {
-					glReleaseShaderCompiler();
-					return;
-				}
-			}
-			ContextHolder.getActivity().toast(R.string.msg_error_loading_shader);
-		}
+	/** Identity program for the presentation path; user effects are owned by PostProcessRenderer. */
+	public ShaderProgram() {
 		String vertexCode = ContextHolder.getAssetAsString(VERTEX);
 		String fragmentCode = ContextHolder.getAssetAsString(FRAGMENT);
 		int program = createProgram(vertexCode, fragmentCode);
-		glReleaseShaderCompiler();
 		if (program == -1) {
-			throw new RuntimeException("Init shader program error: see log for detail");
+			throw new IllegalStateException("Unable to initialize identity GLES program");
 		}
 	}
 
 	public int createProgram(String vertex, String fragment) {
 		int vertexId = loadShader(GL_VERTEX_SHADER, vertex);
 		int fragmentId = loadShader(GL_FRAGMENT_SHADER, fragment);
+		if (vertexId < 0 || fragmentId < 0) {
+			if (vertexId >= 0) glDeleteShader(vertexId);
+			if (fragmentId >= 0) glDeleteShader(fragmentId);
+			return -1;
+		}
 
 		int program = glCreateProgram();     // create empty OpenGL ShaderProgram
 		glAttachShader(program, vertexId);   // add the vertex shader to program

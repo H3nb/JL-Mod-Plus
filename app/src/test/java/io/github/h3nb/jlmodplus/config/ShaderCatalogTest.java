@@ -32,28 +32,16 @@ public class ShaderCatalogTest {
         assertEquals(1, ShaderCatalog.scan(root).size());
     }
 
-    @Test void retainsLiteralFileNamesInShaderPaths() throws Exception {
-        File root = temporary.resolve("name-test").toFile();
-        File folder = new File(root, "shaders_glsl");
-        assertTrue(folder.mkdirs());
-        Files.write(new File(folder, "soft blur.glsl").toPath(),
-                "uniform sampler2D Texture;".getBytes(StandardCharsets.UTF_8));
-        List<ShaderInfo> catalog = ShaderCatalog.scan(root);
-        assertEquals(1, catalog.size());
-        assertEquals("shaders_glsl/soft blur.glsl", catalog.get(0).preset);
-    }
-
-    @Test void discoversNestedGlslpWithoutOfferingItsPassFiles() throws Exception {
+    @Test void ignoresUnreleasedGlslFilesWithoutCreatingSeparateShaderFolders() throws Exception {
         File root = temporary.resolve("shaders").toFile();
-        File nested = new File(root, "shaders_glsl/xbrz/shaders");
-        assertTrue(nested.mkdirs());
-        Files.write(new File(nested, "pass.glsl").toPath(), "pass".getBytes(StandardCharsets.UTF_8));
-        Files.write(new File(nested.getParentFile(), "crisp.glslp").toPath(),
-                "shaders = 1\nshader0 = shaders/pass.glsl\n".getBytes(StandardCharsets.UTF_8));
-
-        List<ShaderInfo> catalog = ShaderCatalog.scan(root);
-        assertEquals(1, catalog.size());
-        assertEquals("shaders_glsl/xbrz/crisp.glslp", catalog.get(0).preset);
+        assertTrue(root.mkdir());
+        Files.write(new File(root, "effects.glslp").toPath(),
+                "shaders = 1".getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(root, "pass.glsl").toPath(),
+                "void main() {}".getBytes(StandardCharsets.UTF_8));
+        assertTrue(ShaderCatalog.scan(root).isEmpty());
+        assertFalse(new File(root, "shaders_glsl").exists());
+        assertFalse(new File(root, "shaders_legacy").exists());
     }
 
     @Test void brokenLegacyIniVariantDoesNotHideOtherValidSections() throws Exception {

@@ -102,9 +102,7 @@ import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.BackgroundMode;
-import io.github.h3nb.jlmodplus.gles.GlslpAssets;
-import io.github.h3nb.jlmodplus.gles.GlslpPipeline;
-import io.github.h3nb.jlmodplus.gles.GlslpPreset;
+import io.github.h3nb.jlmodplus.gles.PostProcessRenderer;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
@@ -163,11 +161,6 @@ public abstract class Canvas extends Displayable {
 	// Also read by the overlay sampler; guest/runtime code can change it while the surface is live.
 	private static volatile int fpsLimit;
 	private static boolean screenshotRawMode;
-	private static boolean usesGlslp() {
-		return settings != null && settings.graphicsMode == 1
-				&& settings.shader != null && (settings.shader.preset != null
-					|| settings.shader.customStages != null);
-	}
 	private static boolean timingOverlayEnabled;
 
 	private final Object bufferLock = new Object();
@@ -1126,22 +1119,8 @@ public abstract class Canvas extends Displayable {
 		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
 
 		synchronized (bufferLock) {
-			if (offscreenCopy == null) {
-				offscreenCopy = Image.createImage(width, usesGlslp() ? height : maxHeight);
-			}
-			if (usesGlslp() && (offscreenCopy.getBitmap().getWidth() != width
-					|| offscreenCopy.getBitmap().getHeight() != height)) {
-				// GLSLP input must end at the actual content edge, not padded softbar pixels.
-				Image next = Image.createImage(width, height);
-				int overlapWidth = Math.min(width, offscreenCopy.getWidth());
-				int overlapHeight = Math.min(height, offscreenCopy.getHeight());
-				if (overlapWidth > 0 && overlapHeight > 0) {
-					Rect rect = new Rect(0, 0, overlapWidth, overlapHeight);
-					new android.graphics.Canvas(next.getBitmap()).drawBitmap(
-							offscreenCopy.getBitmap(), rect, rect, null);
-				}
-				offscreenCopy = next;
-			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
+			if (offscreenCopy == null) offscreenCopy = Image.createImage(width, maxHeight);
+			if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
 				offscreenCopy.setSize(width, height);
 			}
 		}
@@ -1725,7 +1704,7 @@ public abstract class Canvas extends Displayable {
 		private GLSurfaceView mView;
 		private final int[] bgTextureId = new int[1];
 		private ShaderProgram program;
-		private GlslpPipeline glslpPipeline;
+		private PostProcessRenderer effectRenderer;
 		private int hostGlWidth, hostGlHeight;
 		private AmbientGlRenderer ambientRenderer;
 		private long lastUploadedSequence = Long.MIN_VALUE;
@@ -1736,7 +1715,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-			program = new ShaderProgram(usesGlslp() ? null : settings.shader, shaderDirectory);
+			program = new ShaderProgram();
 			program.use();
 			int c = effectiveBackgroundArgb();
 			glClearColor((c >> 16 & 0xff) / 255.0f, (c >> 8 & 0xff) / 255.0f,
@@ -1745,19 +1724,12 @@ public abstract class Canvas extends Displayable {
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(false);
 			initTex();
-			glslpPipeline = null;
-			if (usesGlslp()) {
+			effectRenderer = null;
+			if (settings.effects != null && !settings.effects.isEmpty()) {
 				try {
-					GlslpPreset preset = settings.shader.customStages != null
-							? GlslpAssets.loadCustom(settings.shader.customStages, shaderDirectory,
-								settings.shader.preset, settings.shader.customMode)
-							: GlslpAssets.load(settings.shader.preset, shaderDirectory);
-					preset = preset.withParameterOverrides(settings.shader.glslParameters);
-					String shaderSelection = settings.shader.preset;
-					glslpPipeline = new GlslpPipeline(preset, GlslpAssets.stockSource(),
-							path -> GlslpAssets.loadTextureBitmap(shaderSelection, shaderDirectory, path));
+					effectRenderer = new PostProcessRenderer(settings.effects, shaderDirectory);
 				} catch (Exception e) {
-					Log.w(TAG, "GLSLP unavailable; using identity renderer", e);
+					Log.w(TAG, "Post-processing effects unavailable; using identity renderer", e);
 				}
 				program.use();
 			}
@@ -1767,10 +1739,6 @@ public abstract class Canvas extends Displayable {
 			lastUploadedWidth = bitmap.getWidth();
 			lastUploadedHeight = bitmap.getHeight();
 			program.loadVbo(vbo, bitmap.getWidth(), bitmap.getHeight());
-			if (settings.shader != null && program.uSetting >= 0) {
-				float[] values = settings.shader.valuesArray();
-				if (values != null) glUniform4fv(program.uSetting, 1, values, 0);
-			}
 			if (isImmersiveMode()) {
 				ambientRenderer = new AmbientGlRenderer();
 				if (!ambientRenderer.initialize()) {
@@ -1849,26 +1817,32 @@ public abstract class Canvas extends Displayable {
 						lastUploadedHeight = bitmap.getHeight();
 					}
 				}
-				boolean glslpDrawn = false;
+				boolean effectDrawn = false;
 				synchronized (vbo) {
 					program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
-					if (glslpPipeline != null) {
+					if (effectRenderer != null) {
 						try {
-							glslpPipeline.draw(bgTextureId[0], vbo, lastUploadedWidth,
-									lastUploadedHeight, contentWidth, contentHeight,
-									hostGlWidth, hostGlHeight, frameSequence,
+							effectDrawn = effectRenderer.draw(bgTextureId[0], vbo,
+									lastUploadedWidth, lastUploadedHeight, contentWidth, contentHeight,
+									hostGlWidth, hostGlHeight,
 									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
-							glslpDrawn = true;
 						} catch (RuntimeException e) {
-							Log.w(TAG, "GLSLP draw failed; using identity renderer", e);
-							glslpPipeline.release();
-							glslpPipeline = null;
+							Log.w(TAG, "Post-processing failed; using identity renderer", e);
+							effectRenderer.release();
+							effectRenderer = null;
 						}
 						program.use();
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, bgTextureId[0]);
 						program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
 					}
 				}
-				if (!glslpDrawn) glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				if (!effectDrawn) {
+					int sample = settings.screenFilter ? GL_LINEAR : GL_NEAREST;
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sample);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sample);
+					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				}
 				presented = true;
 				if (metrics != null) {
 					metrics.recordRender(frameSequence);

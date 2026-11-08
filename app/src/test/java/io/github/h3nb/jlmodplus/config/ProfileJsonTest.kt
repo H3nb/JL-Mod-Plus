@@ -24,7 +24,7 @@ class ProfileJsonTest {
         assertEquals(208, model.screenHeight)
         assertEquals(85, model.screenScaleRatio)
         assertEquals("背景 & skin.png", model.screenBackgroundImage)
-        assertEquals(listOf(1.25f, -0.0f, 2.5f, 4f), model.shader!!.values)
+        assertEquals(listOf(1.25f, -0.0f, 2.5f, 4f), model.effects.single().user!!.values)
         assertEquals("上 Ω", model.customKeys!!.single().keyName)
         assertEquals(mapOf(131 to 0, 132 to Int.MIN_VALUE, 133 to 42), model.keyMappings)
         assertEquals("9007199254740993", model.controller!!.jsonObject.getValue("future").jsonObject.getValue("large").toString())
@@ -34,7 +34,8 @@ class ProfileJsonTest {
         assertEquals(176, old.screenWidth)
         assertEquals(0, old.keyMappings[131])
         assertEquals(Int.MIN_VALUE, old.keyMappings[132])
-        assertArrayEquals(floatArrayOf(1.25f, -0.0f, 2.5f, 4f), old.shader.values, 0f)
+        assertNull(old.shader)
+        assertEquals(1, model.effects.size)
         // Compare every emitted known field through the frozen old v7 reader, not a manual field list.
         val oldTree = JsonParser.parseString(GsonBuilder().serializeNulls().create().toJson(old)).asJsonObject
         listOf("HwAcceleration", "ScreenScaleToFit", "ScreenKeepAspectRatio").forEach(oldTree::remove)
@@ -48,7 +49,7 @@ class ProfileJsonTest {
         assertEquals(JsonPrimitive(1), newTree["CameraDefaultFacing"])
         assertEquals(JsonPrimitive(0), newTree["CameraResolution"])
         assertTrue(ProfileJson.sameValue(JsonObject(comparableOld),
-            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides"))))
+            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides", "PostEffects"))))
     }
 
     @Test fun cameraDefaultsMigrateV7SnapshotAndRoundTripExplicitChoices() {
@@ -106,7 +107,7 @@ class ProfileJsonTest {
         val config = File(directory, Config.MIDLET_CONFIG_FILE).apply { writeText(input) }
         try {
             assertTrue(checkNotNull(ProfilesManager.loadConfig(directory)).allowDisplayCutout)
-            assertEquals(JsonPrimitive(9), Json.parseToJsonElement(config.readText()).jsonObject["Version"])
+            assertEquals(JsonPrimitive(10), Json.parseToJsonElement(config.readText()).jsonObject["Version"])
             assertEquals(JsonPrimitive(true), Json.parseToJsonElement(config.readText()).jsonObject["AllowDisplayCutout"])
             assertEquals(setOf(config.name), directory.list()!!.toSet())
 
@@ -166,7 +167,7 @@ class ProfileJsonTest {
         val xmlArrays = mapOf<String, Any?>(
             "Version" to 2,
             "ScreenWidth" to 128,
-            "Shader" to mapOf("name" to "CRT", "Settings" to doubleArrayOf(1.25, 2.5)),
+            "Shader" to mapOf("name" to "CRT", "fragment" to "crt.fsh", "vertex" to "crt.vsh", "Settings" to doubleArrayOf(1.25, 2.5)),
             "ignoredBytes" to byteArrayOf(1, 2),
             "ignoredBooleans" to booleanArrayOf(true, false),
             "ignoredInts" to intArrayOf(1, 2),
@@ -175,32 +176,25 @@ class ProfileJsonTest {
         )
         val arrays = ProfileJson.decodeXml(xmlArrays, false).model
         assertEquals(128, arrays.screenWidth)
-        assertEquals(listOf(1.25f, 2.5f), arrays.shader!!.values)
+        assertEquals(listOf(1.25f, 2.5f), arrays.effects.single().user!!.values)
     }
 
     @Test fun opaqueValuesAndSnapshotsPreserveOwnershipAndExactComparison() {
         val backing = linkedMapOf<String, JsonElement>("large" to Json.parseToJsonElement("9007199254740993"), "nil" to JsonNull)
         val working = ProfileModel(version = 7, controller = JsonObject(backing))
-        val shaderDraft = ShaderInfo("CRT", "tester").apply { values = floatArrayOf(1f, 2f) }
         val shaderParameters = linkedMapOf("GAIN" to 0.5f)
-        working.shader = checkNotNull(ShaderSelection.fromInfo(shaderDraft))
-            .copy(glslParameters = shaderParameters)
+        working.effects = listOf(EffectEntry("effect-0", builtinId = "color", parameters = shaderParameters))
         working.keyMappings = mutableMapOf(131 to 0)
         val baseline = ProfileConfigMatcher.copyConfig(working)
         backing["large"] = JsonPrimitive(1)
-        shaderDraft.values[0] = 9f
         shaderParameters["GAIN"] = 1.5f
         (working.keyMappings as MutableMap)[131] = 42
         assertEquals("9007199254740993", baseline.controller!!.jsonObject["large"].toString())
-        assertEquals(1f, baseline.shader!!.values!![0])
-        assertEquals(0.5f, baseline.shader!!.glslParameters!!["GAIN"])
+        assertEquals(0.5f, baseline.effects.single().parameters["GAIN"])
         assertEquals(0, baseline.keyMappings[131])
         assertFalse(ProfileConfigMatcher.sameConfig(working, baseline))
         assertThrows(UnsupportedOperationException::class.java) {
-            (working.shader!!.values as MutableList<Float>)[0] = 5f
-        }
-        assertThrows(UnsupportedOperationException::class.java) {
-            (baseline.shader!!.glslParameters as MutableMap<String, Float>)["GAIN"] = 3f
+            (baseline.effects.single().parameters as MutableMap<String, Float>)["GAIN"] = 3f
         }
 
         val nestedBacking = linkedMapOf<String, JsonElement>("n" to Json.parseToJsonElement("9007199254740993"))
@@ -247,11 +241,11 @@ class ProfileJsonTest {
             ProfilesManager.loadConfigResult(dir, true, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false).status
         })
         assertEquals("broken", config.readText())
-        config.writeText("""{"Version":10,"ScreenWidth":999}""")
+        config.writeText("""{"Version":11,"ScreenWidth":999}""")
         val before = dir.listFiles()!!.associate { it.name to it.readBytes().toList() }
         val result = ProfilesManager.loadConfigResult(dir, true, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false)
         assertEquals(ProfilesManager.LoadStatus.UNSUPPORTED_VERSION, result.status)
-        assertEquals(10, result.sourceVersion)
+        assertEquals(11, result.sourceVersion)
         assertEquals(before, dir.listFiles()!!.associate { it.name to it.readBytes().toList() })
         assertTrue(layout.exists() && data.exists() && xml.exists())
     }

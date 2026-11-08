@@ -316,7 +316,7 @@ private sealed interface ConfigPage {
 private fun ConfigPage.depth(): Int = when (this) {
     ConfigPage.Main -> 0
     ConfigPage.SystemProperties -> 1
-    is ConfigPage.Rendering -> if (subpage == RenderingSubpage.SHADERS) 1 else 2
+    is ConfigPage.Rendering -> 1
 }
 
 private fun ConfigPage.siblingOrder(): Int = when (this) {
@@ -356,14 +356,7 @@ internal fun ConfigScreen(
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
     var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
-    val backRendering: () -> Unit = {
-        renderingSubpage = when (renderingSubpage) {
-            RenderingSubpage.CUSTOM, RenderingSubpage.PARAMETERS, RenderingSubpage.PASSES ->
-                RenderingSubpage.SHADERS
-            RenderingSubpage.SHADERS -> null
-            null -> null
-        }
-    }
+    val backRendering: () -> Unit = { renderingSubpage = null }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
@@ -438,14 +431,9 @@ internal fun ConfigScreen(
             when (shownPage) {
                 is ConfigPage.Rendering -> {
                     RenderingSettingsPage(
-                        page = shownPage.subpage,
                         state = state,
                         onFormChanged = updateForm,
-                        onLegacyTuning = events::onShaderTuning,
                         onShaderPickerOpened = events::onShaderPickerOpened,
-                        onOpenParameters = { if (active) renderingSubpage = RenderingSubpage.PARAMETERS },
-                        onOpenCustom = { if (active) renderingSubpage = RenderingSubpage.CUSTOM },
-                        onOpenPasses = { if (active) renderingSubpage = RenderingSubpage.PASSES },
                         onBack = { if (active) backRendering() },
                     )
                 }

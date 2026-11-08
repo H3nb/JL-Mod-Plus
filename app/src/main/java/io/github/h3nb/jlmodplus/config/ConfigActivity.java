@@ -115,7 +115,7 @@ import io.github.h3nb.jlmodplus.input.StickProcessor;
 import io.github.h3nb.jlmodplus.input.StickMode;
 import static io.github.h3nb.jlmodplus.config.ConfigFormEvents.ColorField;
 
-public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert.Callback {
+public class ConfigActivity extends AppCompatActivity {
 	private static final String TAG = ConfigActivity.class.getSimpleName();
 
 	@FunctionalInterface
@@ -150,11 +150,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private File configDir;
 	private File profilesRoot;
 	private ArrayList<ShaderInfo> shaders;
-	@Nullable private String inspectedShaderPreset;
-	@Nullable private String inspectedShaderMode;
-	@Nullable private ShaderPipelineSummary inspectedShaderPipeline;
-	@Nullable private List<CustomShaderStage> inspectedCustomShaderStages;
-	private long shaderInspectionGeneration;
 	private String workDir;
 	private boolean needShow;
 	private boolean operationRunning;
@@ -340,19 +335,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		@Override
 		public void onShaderPickerOpened() {
-			// The selected GLSLP/GLSL path is applied to the in-memory form via
-			// ActivityResult. onResume must not reload the previous disk snapshot.
+			// Preserve the Config draft while the user selects a legacy shader file.
 			skipNextAssetPickerReload = true;
-		}
-
-		@Override
-		public void onShaderTuning() {
-			showShaderSettings();
-		}
-
-		@Override
-		public void onShaderTuningComplete(@NonNull float[] values) {
-			onTuneComplete(values);
 		}
 
 		@Override
@@ -1527,38 +1511,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private ConfigFormState formFromParams() {
-		ConfigFormState form = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-		if (form.shader != null && shaders != null) {
-			int index = shaders.indexOf(form.shader);
-			if (index >= 0) form.shader.settings = shaders.get(index).settings;
-		}
-		return form;
-	}
-
-	private void showShaderSettings() {
-		ShaderInfo shader = currentForm == null ? null : currentForm.shader;
-		if (shader == null || !shader.hasTunableSettings()) {
-			return;
-		}
-		ShaderInfo draft = shader.copyForDialog();
-		ensureShaderValues(draft);
-		ShaderTuneAlert.newInstance(draft).show(getSupportFragmentManager(), "ShaderTuning");
+		return ConfigFormState.fromProfile(params, normalizedSystemProperties());
 	}
 
 	private void initShaderSpinner() {
-		if (shaders != null) {
-			return;
-		}
+		if (shaders != null) return;
 		shaders = ShaderCatalog.scan(new File(workDir + Config.SHADERS_DIR));
 		Collections.sort(shaders);
-		shaders.add(0, new ShaderInfo(getString(R.string.identity_filter), "woesss"));
-		ShaderInfo selected = params.shader == null ? null : params.shader.toInfo();
-		if (selected != null) {
-			int position = shaders.indexOf(selected);
-			if (position > 0) {
-				shaders.get(position).values = selected.values == null ? null : selected.values.clone();
-			}
-		}
 	}
 
 	private void showCharsetPicker() {
@@ -2484,20 +2443,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		ThemedToast.show(this, getString(R.string.removed, size.toString()), Toast.LENGTH_SHORT);
 	}
 
-	@Override
-	public void onTuneComplete(float[] values) {
-		if (currentForm != null && currentForm.shader != null) {
-			if (isProfile) profileDraftDirty = true;
-			ShaderInfo draft = currentForm.shader;
-			draft.values = values.clone();
-			currentForm = currentForm.toBuilder().shader(draft).build();
-			params.shader = ShaderSelection.fromInfo(currentForm.shader);
-			if (composeController != null) {
-				composeController.update(createUiState());
-			}
-		}
-	}
-
 	private void refreshProfileMatchCache() {
 		if (isProfile) {
 			inspectedProfiles = Collections.emptyList();
@@ -2585,37 +2530,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				profileNames, hasControllerDevice(), updatePresetName, fileAccessBusy ? null : fileAccess);
-		String requestedPreset = state.shader == null ? null : state.shader.preset;
-		List<CustomShaderStage> requestedStages = state.shader == null
-				? null : state.shader.customStages;
-		String requestedMode = state.shader == null ? null : state.shader.customMode;
-		if (!Objects.equals(inspectedShaderPreset, requestedPreset)
-				|| !Objects.equals(inspectedShaderMode, requestedMode)
-				|| !Objects.equals(inspectedCustomShaderStages, requestedStages)) {
-			inspectedShaderPreset = requestedPreset;
-			inspectedShaderMode = requestedMode;
-			inspectedCustomShaderStages = requestedStages == null
-					? null : new ArrayList<>(requestedStages);
-			inspectedShaderPipeline = null;
-			long generation = ++shaderInspectionGeneration;
-			if (requestedStages != null || requestedPreset != null) {
-				List<CustomShaderStage> stages = inspectedCustomShaderStages;
-				File shaderRoot = new File(workDir + Config.SHADERS_DIR);
-				profileMetadataExecutor.execute(() -> {
-					ShaderPipelineSummary summary = stages != null
-							? ShaderPipelineSummary.inspectCustom(stages, shaderRoot,
-									requestedPreset, requestedMode)
-							: ShaderPipelineSummary.inspect(requestedPreset, shaderRoot);
-					runOnUiThread(() -> {
-						if (generation != shaderInspectionGeneration || isFinishing() || isDestroyed())
-							return;
-						inspectedShaderPipeline = summary;
-						if (composeController != null) composeController.update(createUiState());
-					});
-				});
-			}
-		}
-		result.shaderPipeline = inspectedShaderPipeline;
 		result.shaderDirectory = new File(workDir + Config.SHADERS_DIR);
 		if (state.controlSkinSetId == null) {
 			result.controlSkinName = getString(R.string.control_skin_default);
@@ -2749,23 +2663,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				&& !ProfileConfigMatcher.sameEffectiveConfig(current, draft, builtInDefault);
 	}
 
-	private void ensureShaderValues(ShaderInfo shader) {
-		if (shader.values != null || shader.settings == null) {
-			return;
-		}
-		float[] values = new float[4];
-		boolean hasValues = false;
-		for (int i = 0; i < shader.settings.length; i++) {
-			ShaderInfo.Setting setting = shader.settings[i];
-			if (setting != null) {
-				values[i] = setting.def;
-				hasValues = true;
-			}
-		}
-		if (hasValues) {
-			shader.values = values;
-		}
-	}
+
 
 	private static String colorValue(ConfigFormState state, ColorField field) {
 		return switch (field) {

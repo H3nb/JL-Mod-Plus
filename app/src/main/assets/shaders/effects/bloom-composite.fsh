@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+precision mediump float;
+varying vec2 v_texcoord0;
+uniform sampler2D sampler0;
+uniform sampler2D uBase;
+uniform vec2 uBaseUvScale, uBaseUvOffset;
+uniform float uIntensity;
+void main() {
+    vec4 original = texture2D(uBase, v_texcoord0 * uBaseUvScale + uBaseUvOffset);
+    vec3 blurred = texture2D(sampler0, v_texcoord0).rgb;
+    gl_FragColor = vec4(clamp(original.rgb + blurred * uIntensity, 0.0, 1.0), original.a);
+}
