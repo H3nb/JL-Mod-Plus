@@ -58,7 +58,6 @@ public final class ConfigFormState {
 	public final String soundBank;
 	/** Ordered per-game GLES post-processing effect drafts. */
 	public final List<EffectEntry> effects;
-	@Nullable
 	/** Opaque controller subtree; known controller editors merge into it instead of dropping fields. */
 	@Nullable
 	public final JsonElement controller;
