@@ -388,6 +388,10 @@ class ConfigComposeTest {
         composeRule.runOnIdle {
             assertEquals(listOf("first"), state.value.form.effects.map { it.key })
         }
+        composeRule.onNodeWithText(uiString(R.string.render_effect_undo)).performClick()
+        composeRule.runOnIdle {
+            assertEquals(listOf("second", "first"), state.value.form.effects.map { it.key })
+        }
     }
 
     @Test

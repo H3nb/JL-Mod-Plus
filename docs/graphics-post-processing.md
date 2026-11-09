@@ -15,11 +15,18 @@ selection migrates to one user entry on v9-to-v10 publication if it references
 both legacy source files. Obsolete pre-release GLSLP selections are not activated.
 
 The Compose editor has three surfaces: an ordered stack, a two-tab built-in/user
-catalog, and per-effect parameters. A row opens its parameters; separate compact
-controls delete, move one position, or long-press-drag the card itself. An
-empty parameter list is displayed read-only. Returning from the catalog or
-parameters does not mutate the draft unless the user selected an effect,
-changed a parameter, deleted, or reordered an entry.
+catalog, and per-effect details/parameters. The catalog briefly describes an
+effect's appearance; a stack card instead summarizes its effective settings.
+A card opens details; compact controls delete, move one position, or long-press
+and drag the card. Removing an effect offers Undo, restoring the same instance,
+parameters and former index. An empty parameter list is read-only. Legacy catalog
+rows show available INI author metadata or the fragment filename instead of a
+generic subtitle. Shared GLSL files do not imply shared tuning: the selected INI
+variant must be matched by name, author and source pair. Missing INI metadata
+does not necessarily mean shader source files are missing. The picker browses
+existing INI files under shaders/; it does not import files from elsewhere.
+Returning from the catalog or details does not mutate the draft unless the
+user selected an effect, changed a parameter, deleted, or reordered an entry.
 
 The Compose editor owns only a draft. ConfigActivity/preset publication owns
 persistence, installed-app identity and cancellation. Built-in GLSL sources

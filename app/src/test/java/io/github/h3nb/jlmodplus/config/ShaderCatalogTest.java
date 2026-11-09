@@ -13,6 +13,26 @@ import org.junit.jupiter.api.io.TempDir;
 public class ShaderCatalogTest {
     @TempDir Path temporary;
 
+    @Test void selectionResolvesTheCorrectIniVariantEvenWithSharedSources() {
+        ShaderInfo warm = new ShaderInfo("Warm", "Maker");
+        warm.vertex = "common.vsh";
+        warm.fragment = "shared.fsh";
+        warm.set("SettingName1=Warmth");
+        ShaderInfo cool = new ShaderInfo("Cool", "Maker");
+        cool.vertex = "common.vsh";
+        cool.fragment = "shared.fsh";
+        cool.set("SettingName1=Coolness");
+        ShaderInfo absent = new ShaderInfo("Absent", "Maker");
+        absent.vertex = "common.vsh";
+        absent.fragment = "shared.fsh";
+        assertSame(cool, ShaderCatalog.matchSelection(List.of(warm, cool),
+                ShaderSelection.fromInfo(cool)));
+        assertNull(ShaderCatalog.matchSelection(List.of(warm, cool),
+                ShaderSelection.fromInfo(absent)));
+        assertSame(warm, ShaderCatalog.matchSelection(List.of(warm),
+                ShaderSelection.fromInfo(cool)));
+    }
+
     @Test void readsLegacyWithoutMovingUserFiles() throws Exception {
         File root = temporary.resolve("shaders").toFile();
         assertTrue(root.mkdir());

@@ -34,6 +34,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -67,6 +71,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.round
+import kotlin.math.abs
 
 internal enum class RenderingSubpage { SHADERS }
 
@@ -87,6 +92,54 @@ private fun passCount(effects: List<EffectEntry>): Int =
 private fun moved(effects: List<EffectEntry>, from: Int, to: Int): List<EffectEntry> =
     effects.toMutableList().apply { add(to, removeAt(from)) }
 
+/** The catalog explains effects; the active stack shows effective settings. */
+@Composable
+private fun effectStackSummary(
+    entry: EffectEntry, definition: EffectCatalog.Effect?, legacy: ShaderInfo?,
+): String {
+    if (definition != null) {
+        val choices = definition.parameters.filter { it.options.isNotEmpty() }
+        if (choices.isNotEmpty()) {
+            val labels = mutableListOf<String>()
+            for (parameter in choices.take(2)) {
+                val value = entry.parameters[parameter.id] ?: parameter.initial
+                val index = round(value).toInt().coerceIn(0, parameter.options.lastIndex)
+                labels.add(stringResource(parameter.options[index]))
+            }
+            return labels.joinToString(" · ")
+        }
+        val modified = definition.parameters.filter { parameter ->
+            val value = entry.parameters[parameter.id]
+            value != null && value.isFinite() && abs(value - parameter.initial) > 0.0001f
+        }
+        if (modified.isEmpty()) return stringResource(R.string.render_effect_default_settings)
+        val locale = androidx.core.os.ConfigurationCompat.getLocales(
+            androidx.compose.ui.platform.LocalConfiguration.current
+        ).get(0) ?: java.util.Locale.ROOT
+        val labels = mutableListOf<String>()
+        for (parameter in modified.take(2)) {
+            labels.add(stringResource(parameter.label) + " " +
+                "%.2f".format(locale, entry.parameters.getValue(parameter.id)))
+        }
+        if (modified.size > 2) labels.add(stringResource(
+            R.string.render_effect_summary_more, modified.size - 2))
+        return labels.joinToString(" · ")
+    }
+    val adjustable = legacy?.settings?.count { it != null && it.max > it.min } ?: 0
+    if (adjustable > 0) return stringResource(R.string.render_effect_adjustments_count, adjustable)
+    val author = entry.user?.author?.takeIf { it.isNotBlank() && !it.equals("unknown", true) }
+    if (author != null) return stringResource(R.string.render_effect_legacy_author, author)
+    return entry.user?.fragment ?: stringResource(R.string.render_effect_user)
+}
+
+@Composable
+private fun legacyCatalogSubtitle(shader: ShaderInfo): String {
+    val author = ShaderSelection.fromInfo(shader)?.author
+        ?.takeIf { it.isNotBlank() && !it.equals("unknown", true) }
+    return if (author != null) stringResource(R.string.render_effect_legacy_author, author)
+    else stringResource(R.string.render_effect_legacy_source, shader.fragment ?: "")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RenderingSettingsPage(
@@ -99,6 +152,9 @@ internal fun RenderingSettingsPage(
     val root = state.shaderDirectory
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    val removedMessage = stringResource(R.string.render_effect_removed)
+    val undoLabel = stringResource(R.string.render_effect_undo)
     var page by rememberSaveable { mutableStateOf(EffectPage.STACK) }
     var selectedKey by rememberSaveable { mutableStateOf<String?>(null) }
     var catalogTab by rememberSaveable { mutableStateOf(0) }
@@ -113,6 +169,24 @@ internal fun RenderingSettingsPage(
 
     fun apply(effects: List<EffectEntry>) {
         onFormChanged(form.toBuilder().effects(effects).build())
+    }
+
+    fun remove(key: String) {
+        val index = form.effects.indexOfFirst { it.key == key }
+        if (index < 0) return
+        val removed = form.effects[index]
+        apply(form.effects.filterNot { it.key == key })
+        snackbar.currentSnackbarData?.dismiss()
+        scope.launch {
+            val outcome = snackbar.showSnackbar(removedMessage, undoLabel,
+                withDismissAction = true, duration = SnackbarDuration.Short)
+            if (outcome == SnackbarResult.ActionPerformed &&
+                    form.effects.none { it.key == key }) {
+                val restored = form.effects.toMutableList()
+                restored.add(index.coerceIn(0, restored.size), removed)
+                apply(restored)
+            }
+        }
     }
 
     fun add(entry: EffectEntry) {
@@ -162,6 +236,7 @@ internal fun RenderingSettingsPage(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.safeDrawing,
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = {
@@ -195,9 +270,7 @@ internal fun RenderingSettingsPage(
                         selectedKey = key
                         page = EffectPage.PARAMETERS
                     },
-                    onRemove = { key ->
-                        apply(form.effects.filterNot { it.key == key })
-                    },
+                    onRemove = ::remove,
                     onMove = { from, to ->
                         val effects = form.effects
                         if (from in effects.indices && to in effects.indices && from != to) {
@@ -224,9 +297,7 @@ internal fun RenderingSettingsPage(
                         entry = selected,
                         definition = definition,
                         knownLegacy = selected.user?.let { user ->
-                            state.shaders.firstOrNull {
-                                it.vertex == user.vertex && it.fragment == user.fragment
-                            }
+                            ShaderCatalog.matchSelection(state.shaders, user)
                         },
                         onChange = { changed ->
                             apply(form.effects.map { if (it.key == changed.key) changed else it })
@@ -295,11 +366,12 @@ private fun EffectStackContent(
         itemsIndexed(effects, key = { _, entry -> "effect:" + entry.key }) { index, entry ->
             val definition = entry.builtinId?.let(EffectCatalog::get)
             val legacy = entry.user?.let { user ->
-                shaders.firstOrNull { it.vertex == user.vertex && it.fragment == user.fragment }
+                ShaderCatalog.matchSelection(shaders, user)
             }
             val title = definition?.let { stringResource(it.title) }
                 ?: entry.user?.name ?: entry.builtinId.orEmpty()
-            val missing = definition == null && (entry.user == null || legacy == null)
+            val missing = entry.builtinId != null && definition == null
+            val summary = effectStackSummary(entry, definition, legacy)
             val rowKey = "effect:" + entry.key
             Surface(
                 modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp)
@@ -375,49 +447,40 @@ private fun EffectStackContent(
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
-                Column(Modifier.padding(start = 14.dp, top = 10.dp, end = 6.dp, bottom = 4.dp)) {
+                Column(Modifier.padding(start = 14.dp, top = 8.dp, end = 6.dp, bottom = 6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Text(title, style = MaterialTheme.typography.bodyLarge,
-                                maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(
-                                if (definition != null) stringResource(definition.description)
-                                else stringResource(R.string.render_effect_user),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2, overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                        Text(title, modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Icon(painterResource(R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         IconButton(onClick = { onRemove(entry.key) }) {
                             Icon(painterResource(R.drawable.ic_delete),
                                 contentDescription = removeLabel,
                                 tint = MaterialTheme.colorScheme.error)
                         }
                     }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(summary, modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        IconButton(onClick = { onMove(index, index - 1) },
+                            enabled = index > 0) {
+                            Icon(painterResource(R.drawable.ic_arrow_upward),
+                                contentDescription = upLabel)
+                        }
+                        IconButton(onClick = { onMove(index, index + 1) },
+                            enabled = index < effects.lastIndex) {
+                            Icon(painterResource(R.drawable.ic_arrow_downward),
+                                contentDescription = downLabel)
+                        }
+                    }
                     if (missing) {
                         Text(stringResource(R.string.render_effect_missing, title),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        IconButton(
-                            onClick = { onMove(index, index - 1) },
-                            enabled = index > 0,
-                        ) {
-                            Icon(painterResource(R.drawable.ic_arrow_upward),
-                                contentDescription = upLabel)
-                        }
-                        IconButton(
-                            onClick = { onMove(index, index + 1) },
-                            enabled = index < effects.lastIndex,
-                        ) {
-                            Icon(painterResource(R.drawable.ic_arrow_downward),
-                                contentDescription = downLabel)
-                        }
                     }
                 }
             }
@@ -460,6 +523,12 @@ private fun EffectCatalogContent(
                 }
             }
             if (tab == 0) {
+                item(key = "catalog-hint") {
+                    Text(stringResource(R.string.render_effect_catalog_hint),
+                        modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 items(builtInEffects, key = { it.id }) { effect ->
                     EffectCatalogRow(
                         title = stringResource(effect.title),
@@ -469,11 +538,17 @@ private fun EffectCatalogContent(
                 }
             } else {
                 item(key = "user-file") {
-                    FilledTonalButton(onClick = onPickUserFile,
-                        modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp)) {
-                        Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.render_effect_user_add))
+                    Column(Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilledTonalButton(onClick = onPickUserFile,
+                            modifier = Modifier.fillMaxWidth()) {
+                            Icon(painterResource(R.drawable.ic_add), contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.render_effect_user_add))
+                        }
+                        Text(stringResource(R.string.render_effect_user_folder_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 if (legacyVariants.isNotEmpty()) {
@@ -485,7 +560,7 @@ private fun EffectCatalogContent(
                     items(legacyVariants) { variant ->
                         EffectCatalogRow(
                             title = variant.toString(),
-                            description = stringResource(R.string.render_effect_user),
+                            description = legacyCatalogSubtitle(variant),
                             onClick = {
                                 ShaderSelection.fromInfo(variant)?.let {
                                     onAdd(EffectEntry.legacy(it))
@@ -506,7 +581,7 @@ private fun EffectCatalogContent(
                         items(available) { shader ->
                             EffectCatalogRow(
                                 title = shader.toString(),
-                                description = stringResource(R.string.render_effect_user),
+                                description = legacyCatalogSubtitle(shader),
                                 onClick = {
                                     ShaderSelection.fromInfo(shader)?.let {
                                         onAdd(EffectEntry.legacy(it))
@@ -533,10 +608,15 @@ private fun EffectCatalogRow(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(description, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge)
+                Text(description, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(painterResource(R.drawable.ic_add), contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -616,8 +696,26 @@ private fun EffectParametersContent(
                         Text(stringResource(R.string.render_effect_restore))
                     }
                 }
-            } else if (entry.user != null && knownLegacy != null) {
+            } else if (entry.user != null) {
                 val user = entry.user
+                val author = user.author?.takeIf { it.isNotBlank() && !it.equals("unknown", true) }
+                if (author != null) {
+                    Text(stringResource(R.string.render_effect_legacy_author, author),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text(stringResource(R.string.render_effect_legacy_source, user.fragment ?: ""),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (user.upscaling || user.outputResolution) {
+                    Text(stringResource(R.string.render_effect_legacy_scale_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (knownLegacy == null) {
+                    Text(stringResource(R.string.render_effect_legacy_metadata_missing),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
                 val adjustable = knownLegacy.settings.withIndex().filter { (_, setting) ->
                     setting != null && setting.max > setting.min
                 }
@@ -648,6 +746,7 @@ private fun EffectParametersContent(
                     }) {
                         Text(stringResource(R.string.render_effect_restore))
                     }
+                }
                 }
             } else {
                 Text(stringResource(R.string.render_effect_missing,

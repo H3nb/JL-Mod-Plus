@@ -27,6 +27,26 @@ public final class ShaderCatalog {
         return result;
     }
 
+    /**
+     * INI sections may share GLSL source files but expose different sliders.
+     * Avoid borrowing settings from a different section.
+     */
+    public static ShaderInfo matchSelection(List<ShaderInfo> shaders, ShaderSelection selection) {
+        if (selection == null) return null;
+        ArrayList<ShaderInfo> candidates = new ArrayList<>();
+        for (ShaderInfo shader : shaders) {
+            if (java.util.Objects.equals(shader.vertex, selection.vertex)
+                    && java.util.Objects.equals(shader.fragment, selection.fragment)) {
+                candidates.add(shader);
+            }
+        }
+        for (ShaderInfo shader : candidates) {
+            if (java.util.Objects.equals(shader.name, selection.name)
+                    && java.util.Objects.equals(shader.author, selection.author)) return shader;
+        }
+        return candidates.size() == 1 ? candidates.get(0) : null;
+    }
+
     /** Legacy profile paths remain relative to shaders/. */
     public static File resolveLegacySource(File root, String path) {
         if (root == null || path == null || path.isEmpty()) return null;
