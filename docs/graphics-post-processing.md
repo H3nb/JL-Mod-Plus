@@ -38,7 +38,10 @@ Renderer programs share the host GLES
 context but own no MIDlet frame or Android overlay. Built-in effects use a
 shared fullscreen vertex shader; user effects use their own original
 `.vsh`/`.fsh` program, with `sampler0`, `u_texelDelta`,
-`u_pixelDelta` and `u_setting` legacy uniforms.
+`u_pixelDelta` and `u_setting` legacy uniforms. As in the released GLES
+presenter, user INI shaders execute at the game viewport resolution and honor
+the selected screen texture filter. Historical `OutputResolution` and
+`Upscaling` flags did not override these presentation rules.
 
 An effect may expand to more than one sequential pass. The first pass of each
 effect captures that effect's incoming texture; Bloom retains this texture
