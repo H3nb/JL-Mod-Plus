@@ -97,8 +97,9 @@ public final class MethodRenamer {
     }
 
     private Object mapConstant(Object value) {
-        if (value instanceof Handle handle) return mapHandle(handle);
-        if (value instanceof ConstantDynamic dynamic) {
+        if (value instanceof Handle) return mapHandle((Handle) value);
+        if (value instanceof ConstantDynamic) {
+            ConstantDynamic dynamic = (ConstantDynamic) value;
             Object[] arguments = new Object[dynamic.getBootstrapMethodArgumentCount()];
             for (int i = 0; i < arguments.length; i++) {
                 arguments[i] = mapConstant(dynamic.getBootstrapMethodArgument(i));
