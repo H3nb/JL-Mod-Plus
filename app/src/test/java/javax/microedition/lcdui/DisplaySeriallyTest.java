@@ -93,6 +93,41 @@ public class DisplaySeriallyTest {
 		assertFalse(barrierInCallback.get());
 	}
 
+
+	@Test
+	public void dismissedAlertCannotOverrideNewerScreenOrReusedAlertPresentation() throws Exception {
+		Display.initDisplay();
+		try {
+			Display display = Display.getDisplay(new TestMidlet());
+			Displayable initial = new Displayable() {};
+			Displayable newer = new Displayable() {};
+			Alert alert = new Alert("message");
+			display.setCurrent(initial);
+			display.setCurrent(alert);
+			long oldPresentation = requestGeneration(display);
+			display.setCurrent(newer);
+			// This used to behave like setCurrent(initial), undoing the newer request.
+			display.completeAlertDismissal(alert, oldPresentation, initial);
+			assertSame(newer, display.getCurrent());
+
+			// Reusing the same Alert object must not revive a callback from its old dialog.
+			display.setCurrent(alert);
+			long newPresentation = requestGeneration(display);
+			display.completeAlertDismissal(alert, oldPresentation, initial);
+			assertSame(alert, display.getCurrent());
+			display.completeAlertDismissal(alert, newPresentation, newer);
+			assertSame(newer, display.getCurrent());
+
+			// An ordinary default-listener dismissal still returns to its target.
+			display.setCurrent(alert);
+			long thirdPresentation = requestGeneration(display);
+			display.completeAlertDismissal(alert, thirdPresentation, initial);
+			assertSame(initial, display.getCurrent());
+		} finally {
+			Display.initDisplay();
+		}
+	}
+
 	private static long requestGeneration(Display display) throws Exception {
 		Field field = Display.class.getDeclaredField("currentRequestGeneration");
 		field.setAccessible(true);
