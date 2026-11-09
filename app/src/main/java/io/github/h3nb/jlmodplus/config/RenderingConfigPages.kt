@@ -52,7 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -432,9 +432,9 @@ private fun EffectCatalogContent(
     onAdd: (EffectEntry) -> Unit,
     onPickUserFile: () -> Unit,
 ) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val builtInEffects = EffectCatalog.all().sortedWith(
-        compareBy(String.CASE_INSENSITIVE_ORDER) { context.getString(it.title) },
+        compareBy(String.CASE_INSENSITIVE_ORDER) { resources.getString(it.title) },
     )
     Column(Modifier.fillMaxSize()) {
         TabRow(selectedTabIndex = tab) {
