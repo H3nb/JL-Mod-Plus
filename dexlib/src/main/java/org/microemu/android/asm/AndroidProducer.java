@@ -47,6 +47,11 @@ public class AndroidProducer {
 	private static final Map<Integer, Integer> patches = initPatchFixes();
 
 	public static byte[] instrument(byte[] classData, String classFileName, long crc) {
+		return instrument(classData, classFileName, crc, null);
+	}
+
+	public static byte[] instrument(byte[] classData, String classFileName,
+			long crc, MethodRenamer renamer) {
 		Integer patch = patches.get((int) crc);
 		if (patch != null) {
 			classData = patchClass(classData, patch);
@@ -97,6 +102,7 @@ public class AndroidProducer {
 			// Pass the original guest class token to reflection rewrites. The token carries the
 			// AppClassLoader that owns classes present only in the MIDlet archive.
 			ClassVisitor cv = new AndroidClassVisitor(cw, sourceClassName);
+			if (renamer != null) cv = renamer.wrap(cv);
 			cr.accept(cv, ClassReader.SKIP_DEBUG);
 			return cw.toByteArray();
 		} catch (RuntimeException transformFailure) {
