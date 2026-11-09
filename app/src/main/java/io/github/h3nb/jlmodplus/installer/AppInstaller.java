@@ -760,7 +760,7 @@ public class AppInstaller {
         return manifest.equals(newDesc);
     }
 
-    private boolean checkContentUriJar(Uri jarUri) throws IOException {
+    private boolean checkContentUriJar(Uri jarUri) throws IOException, ConverterException {
         File jar = scratch.materialize(jarUri);
         if (!jar.exists()) throw new ConverterException("Jar-file not found for uri: " + jarUri);
         srcJar = scratch.copy(jar, "reviewed.jar");
