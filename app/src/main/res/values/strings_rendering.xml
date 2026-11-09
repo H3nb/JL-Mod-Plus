@@ -122,7 +122,7 @@
     <string name="effect_sharpen">Sharpen</string>
     <string name="effect_sharpen_desc">Enhances blurry edges and fine details; high strength can emphasize jagged pixels.</string>
     <string name="effect_cartoon">Cartoon Soft</string>
-    <string name="effect_cartoon_desc">Simplifies shading into color bands and adds soft outlines, especially for 3D game scenes.</string>
+    <string name="effect_cartoon_desc">Softly simplifies shading and adds gentle outlines without harsh posterization seams, for both 2D and 3D games.</string>
     <string name="effect_bloom">Bloom</string>
     <string name="effect_bloom_desc">Adds a soft glow around lamps, reflections and other bright parts of a game.</string>
     <string name="effect_crt_classic">CRT Classic</string>

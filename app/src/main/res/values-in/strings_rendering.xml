@@ -121,7 +121,7 @@
     <string name="effect_sharpen">Pertajam</string>
     <string name="effect_sharpen_desc">Mempertegas tepi dan detail gambar kabur; intensitas tinggi dapat menonjolkan gerigi piksel.</string>
     <string name="effect_cartoon">Kartun Lembut</string>
-    <string name="effect_cartoon_desc">Menyederhanakan gradasi menjadi bidang warna dan menambah garis tepi lembut, terutama pada game 3D.</string>
+    <string name="effect_cartoon_desc">Menyederhanakan gradasi secara halus dan menambahkan garis tepi lembut tanpa batas warna mendadak, untuk game 2D maupun 3D.</string>
     <string name="effect_bloom">Bloom</string>
     <string name="effect_bloom_desc">Menambahkan cahaya lembut di sekitar lampu, pantulan, dan bagian gambar yang terang.</string>
     <string name="effect_crt_classic">CRT Klasik</string>

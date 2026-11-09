@@ -88,8 +88,11 @@ minimum supported device configuration.
 
 The bundled catalogue consists of CRT Classic, LCD, Scanlines Lite, Color
 Adjustment, Vignette, Sharpen, Cartoon Soft, Bloom, Color Depth & Dithering
-and Monochrome Display. The legacy `cartoon` ID
-is retained while its luminance-preserving algorithm improves. CRT Classic
+and Monochrome Display. The legacy `cartoon` ID is retained while its
+luminance remapping uses continuous smooth transitions rather than hard
+round-to-nearest posterization. This avoids artificial 1/levels jumps
+across smooth 2D backgrounds, while leaving the existing outline strength
+contract unchanged; output RGB gamut clipping can still affect saturated colors. CRT Classic
 is independently authored under Apache-2.0 as a one-sample CRT-inspired
 presentation effect with guest-grid scanlines and an RGB triad. It is not
 derived from the former GPL EasyMode shader. The unreleased prototype ID
@@ -168,6 +171,7 @@ CRT Classic is a self-authored Apache-2.0 shader for JL-Mod Plus, using
 elementary trigonometry and per-channel modulation; it does not copy
 upstream CRT shader source. The GPL-marked EasyMode adaptation has been
 removed from the APK assets. LCD was informed conceptually by Gigaherz's
-public-domain LCD3x shader (no source copied). All bundled post-processing
-shaders are project-authored under Apache-2.0. This does not certify
+public-domain LCD3x shader (no source copied). The GPL-marked PPSSPP Cartoon
+shader was inspected for behavioral comparison only, without adapting its
+source. All bundled post-processing shaders are project-authored under Apache-2.0. This does not certify
 licensing of other dependencies.

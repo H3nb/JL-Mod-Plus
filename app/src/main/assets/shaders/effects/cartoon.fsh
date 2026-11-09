@@ -25,9 +25,13 @@ void main() {
     vec3 dy = readColor(v_texcoord0 + vec2(0.0, d.y)) -
               readColor(v_texcoord0 - vec2(0.0, d.y));
     float luma = dot(source.rgb, vec3(0.2126, 0.7152, 0.0722));
-    float stepped = floor(luma * uLevels + 0.5) / uLevels;
-    // Quantize luminance, retaining the pixel's hue and most texture color detail.
-    vec3 bands = source.rgb * (stepped + 0.05) / (luma + 0.05);
+    // Continuous, softly terraced luminance: a hard round-to-nearest step
+    // creates 1/uLevels jumps and artificial seams across broad gradients.
+    float scaled = luma * uLevels;
+    float phase = fract(scaled);
+    float softened = (floor(scaled) + smoothstep(0.18, 0.82, phase)) / uLevels;
+    // Scale all channels together to retain their ratios where in gamut.
+    vec3 bands = source.rgb * (softened + 0.05) / (luma + 0.05);
     // Edge strength is an upper bound on darkening, not a multiplier
     // that can saturate an entire high-contrast boundary to black.
     float edge = uEdge * smoothstep(0.08, 0.75, length(dx) + length(dy));
