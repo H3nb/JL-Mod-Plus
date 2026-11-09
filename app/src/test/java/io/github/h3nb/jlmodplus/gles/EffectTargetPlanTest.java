@@ -86,7 +86,8 @@ class EffectTargetPlanTest {
                 EffectCatalog.Pass pass = PostProcessRenderer.legacyPass(selection);
                 assertEquals("legacy.fsh", pass.fragment);
                 assertEquals(EffectCatalog.Size.VIEWPORT, pass.size);
-                assertFalse(pass.sampleNearest, "Legacy shader must follow ScreenFilter");
+                assertEquals(EffectCatalog.Sampling.DISPLAY, pass.sampling,
+                        "Legacy shader must follow ScreenFilter");
                 assertFalse(pass.composite);
                 EffectTargetPlan plan = EffectTargetPlan.create(
                     List.of(first(pass.size), first(EffectCatalog.Size.VIEWPORT)),
