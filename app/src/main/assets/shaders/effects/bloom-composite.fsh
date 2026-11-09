@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
+#endif
 varying vec2 v_texcoord0;
 uniform sampler2D sampler0;
 uniform sampler2D uBase;

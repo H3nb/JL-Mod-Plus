@@ -150,7 +150,8 @@ public final class PostProcessRenderer {
      * OutputResolution/Upscaling flags did not affect GLES sizing or sampling.
      */
     static EffectCatalog.Pass legacyPass(ShaderSelection user) {
-        return new EffectCatalog.Pass(user.fragment, EffectCatalog.Size.VIEWPORT, false, false);
+        return new EffectCatalog.Pass(user.fragment, EffectCatalog.Size.VIEWPORT,
+                EffectCatalog.Sampling.DISPLAY, false);
     }
 
     private Program program(String key, String vertex, String fragment) throws IOException {
@@ -337,7 +338,11 @@ public final class PostProcessRenderer {
         }
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        int sample = stage != null && stage.pass.sampleNearest ? GL_NEAREST : filter;
+        int sample = filter;
+        if (stage != null) {
+            if (stage.pass.sampling == EffectCatalog.Sampling.NEAREST) sample = GL_NEAREST;
+            else if (stage.pass.sampling == EffectCatalog.Sampling.LINEAR) sample = GL_LINEAR;
+        }
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sample);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sample);
         if (p.input >= 0) glUniform1i(p.input, 0);

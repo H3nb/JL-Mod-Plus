@@ -83,8 +83,26 @@ is retained while its luminance-preserving algorithm improves. CRT has
 primary controls and separately accessible advanced parameters; color
 correction includes gamma, temperature/tint and monochrome.
 LCD and Scanlines Lite intentionally depend on logical game resolution rather
-than the texture resolution of the preceding pass. Phosphor/subpixel masks are
-suppressed when GLES2 fragment high precision is unavailable.
+than the texture resolution of the preceding pass. Their phase-shifted patterns
+are attenuated by the output-pixel footprint and suppressed where a logical
+pixel is no longer resolvable; this avoids flat stripes at 2x and aliasing
+below 1x. Physical LCD RGB subpixel masks are suppressed when GLES2 fragment
+high precision is unavailable.
+
+Bloom extracts highlight contributions from four source samples before the
+half-viewport reduction, then uses bilinear five-fetch/nine-tap Gaussian
+blurs and a bilinearly sampled composite. These Bloom passes explicitly
+choose nearest/linear sampling independent of the user's display texture
+filter; the original image in the composite still uses the user's filter.
+The blur radius scales the fixed Gaussian kernel offsets (exact optimized
+nine-tap Gaussian at 1x radius, an approximate widened kernel otherwise).
+Four extraction samples preserve small highlights at ordinary 2:1 reductions,
+but are not a general-purpose anti-aliasing filter for arbitrarily extreme
+minification. CRT EasyMode protects the Lanczos denominator within the
+minimum mediump range on GLES2 devices without fragment highp. Sharpen and
+Cartoon clamp center and neighbor samples to the valid source rectangle.
+Vignette's strength now reaches its full requested amount at image corners;
+Cartoon Soft bounds edge darkening to its configured strength.
 
 Pixel-art reconstruction (xBRZ, MMPX, HQ-style), bitmap/texture filters,
 internal resolution and final display scaling have separate responsibilities.

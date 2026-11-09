@@ -9,6 +9,7 @@ import java.util.List;
 /** APK-owned effect definitions. Neither profile state nor GL resources live here. */
 public final class EffectCatalog {
     public enum Size { INPUT, VIEWPORT, HALF_VIEWPORT }
+    public enum Sampling { DISPLAY, NEAREST, LINEAR }
 
     public static final class Parameter {
         public final String id;
@@ -28,13 +29,13 @@ public final class EffectCatalog {
     public static final class Pass {
         public final String fragment;
         public final Size size;
-        public final boolean sampleNearest;
+        public final Sampling sampling;
         public final boolean composite;
 
-        Pass(String fragment, Size size, boolean sampleNearest, boolean composite) {
+        Pass(String fragment, Size size, Sampling sampling, boolean composite) {
             this.fragment = fragment;
             this.size = size;
-            this.sampleNearest = sampleNearest;
+            this.sampling = sampling;
             this.composite = composite;
         }
     }
@@ -59,11 +60,15 @@ public final class EffectCatalog {
     }
 
     private static Pass pass(String name, Size size) {
-        return new Pass(name, size, false, false);
+        return new Pass(name, size, Sampling.DISPLAY, false);
     }
 
     private static Pass nearest(String name) {
-        return new Pass(name, Size.VIEWPORT, true, false);
+        return new Pass(name, Size.VIEWPORT, Sampling.NEAREST, false);
+    }
+
+    private static Pass linear(String name, Size size) {
+        return new Pass(name, size, Sampling.LINEAR, false);
     }
 
     private static final List<Effect> ALL = Collections.unmodifiableList(Arrays.asList(
@@ -106,20 +111,20 @@ public final class EffectCatalog {
                 param("uMonochrome", R.string.effect_monochrome, 0f, 0f, 1f, 1f)}),
         new Effect("vignette", R.string.effect_vignette, R.string.effect_vignette_desc,
             new Pass[]{pass("vignette.fsh", Size.VIEWPORT)}, new Parameter[]{
-                param("uStrength", R.string.effect_strength, 0.35f, 0f, 1f, 0.05f)}),
+                param("uStrength", R.string.effect_strength, 0.2f, 0f, 1f, 0.05f)}),
         new Effect("sharpen", R.string.effect_sharpen, R.string.effect_sharpen_desc,
             new Pass[]{pass("sharpen.fsh", Size.VIEWPORT)}, new Parameter[]{
                 param("uSharpness", R.string.effect_strength, 0.3f, 0f, 1f, 0.05f)}),
         new Effect("cartoon", R.string.effect_cartoon, R.string.effect_cartoon_desc,
             new Pass[]{pass("cartoon.fsh", Size.VIEWPORT)}, new Parameter[]{
-                param("uLevels", R.string.effect_color_levels, 5f, 2f, 12f, 1f),
-                param("uEdge", R.string.effect_edge, 0.35f, 0f, 1f, 0.05f)}),
+                param("uLevels", R.string.effect_color_levels, 8f, 2f, 12f, 1f),
+                param("uEdge", R.string.effect_edge, 0.25f, 0f, 1f, 0.05f)}),
         new Effect("bloom", R.string.effect_bloom, R.string.effect_bloom_desc,
             new Pass[]{
-                pass("bloom-threshold.fsh", Size.HALF_VIEWPORT),
-                pass("bloom-blur-h.fsh", Size.HALF_VIEWPORT),
-                pass("bloom-blur-v.fsh", Size.HALF_VIEWPORT),
-                new Pass("bloom-composite.fsh", Size.VIEWPORT, false, true)
+                new Pass("bloom-threshold.fsh", Size.HALF_VIEWPORT, Sampling.NEAREST, false),
+                linear("bloom-blur-h.fsh", Size.HALF_VIEWPORT),
+                linear("bloom-blur-v.fsh", Size.HALF_VIEWPORT),
+                new Pass("bloom-composite.fsh", Size.VIEWPORT, Sampling.LINEAR, true)
             }, new Parameter[]{
                 param("uThreshold", R.string.effect_threshold, 0.72f, 0.1f, 0.98f, 0.02f),
                 param("uRadius", R.string.effect_radius, 1f, 0.5f, 3f, 0.1f),

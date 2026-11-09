@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
+#endif
 varying vec2 v_texcoord0;
 uniform sampler2D sampler0;
 uniform vec2 uInputSize, uContentUvMax;
@@ -12,7 +16,10 @@ vec3 readColor(vec2 uv) {
 }
 void main() {
     vec2 texel = 1.0 / uInputSize;
-    vec4 center = texture2D(sampler0, v_texcoord0);
+    vec2 halfTexel = 0.5 / uInputSize;
+    vec2 centerUv = clamp(v_texcoord0, halfTexel,
+        max(halfTexel, uContentUvMax - halfTexel));
+    vec4 center = texture2D(sampler0, centerUv);
     vec3 n = readColor(v_texcoord0 + vec2(0.0, texel.y));
     vec3 s = readColor(v_texcoord0 - vec2(0.0, texel.y));
     vec3 e = readColor(v_texcoord0 + vec2(texel.x, 0.0));

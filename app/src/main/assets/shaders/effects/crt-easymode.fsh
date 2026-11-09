@@ -41,7 +41,12 @@ uniform COMPAT_PRECISION vec2 uContentUvMax;
 uniform sampler2D sampler0;
 COMPAT_VARYING vec2 v_texcoord0;
 
-#define FIX(c) max(abs(c), 1e-5)
+// Keep the squared denominator representable even on minimum mediump GLES2.
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+#define FIX(c) max(abs(c), 0.0001)
+#else
+#define FIX(c) max(abs(c), 0.02)
+#endif
 #define PI 3.141592653589
 
 // Clamp to the valid guest image, not the padded backing texture.
