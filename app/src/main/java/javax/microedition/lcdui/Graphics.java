@@ -290,7 +290,7 @@ public class Graphics implements
 	}
 
 	public void setClip(int x, int y, int width, int height) {
-		clip.set(x, y, x + width, y + height);
+		clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
 		resetCanvasState();
 		canvas.translate(translateX, translateY);
 		canvas.clipRect(clip);
@@ -298,7 +298,7 @@ public class Graphics implements
 	}
 
 	public void clipRect(int x, int y, int width, int height) {
-		clip.set(x, y, x + width, y + height);
+		clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
 		canvas.clipRect(clip);
 		canvas.getClipBounds(clip);
 	}
