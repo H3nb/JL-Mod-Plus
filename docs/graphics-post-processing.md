@@ -66,14 +66,23 @@ renderer reports the failure and falls back to the stock presentation.
 
 The present renderer supports at most 16 active GPU passes. `EffectTargetPlan`
 computes full-chain FBO slot sizes and source/composite lifetime protection
-before allocating textures, reusing same-size slots where safe. The current
-temporary framebuffer budget is 64 MiB (a project policy, **not a device
-hardware limit**); the limit excludes source textures and other application
-GPU memory. The final viewport-sized pass writes directly to the display,
-so a single-pass effect requires no intermediate FBO. Planning and texture
-creation are repeated only when the source content size or viewport changes,
-not for every steady-state frame. The stock GLES2 context remains the minimum
-supported device configuration.
+before allocating textures, reusing same-size slots where safe. The temporary
+RGBA8 target budget is chosen once per GLES renderer session from Android's
+reported total system RAM: below 3 GiB -> 32 MiB, 3-5 GiB -> 64 MiB,
+5-10 GiB -> 128 MiB, and at least 10 GiB -> 256 MiB. Android low-RAM
+devices or an active system low-memory signal are capped at 32 MiB; missing
+memory information defaults to 64 MiB. These values are conservative **project
+policies**, not measurements of GPU VRAM, free memory or rendering performance.
+The budget limits only planned temporary FBO textures, excluding the source
+texture, Android UI, drivers and other GPU allocations. The GLES maximum
+texture size independently constrains each target. Allocation/attachment
+errors release partial targets and fall back to stock presentation, without
+changing the stored shader configuration. The final viewport-sized pass writes
+directly to the display, so a single-pass effect requires no intermediate FBO.
+Planning and texture creation repeat only when source content size or viewport
+changes, not for every steady-state frame. The budget is not dynamically
+resampled during a running GL session. The stock GLES2 context remains the
+minimum supported device configuration.
 
 ## Built-in effects and separation of responsibilities
 
