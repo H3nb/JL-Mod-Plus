@@ -2,6 +2,8 @@
 package io.github.h3nb.jlmodplus.gles;
 
 import org.junit.jupiter.api.Test;
+import io.github.h3nb.jlmodplus.config.ShaderInfo;
+import io.github.h3nb.jlmodplus.config.ShaderSelection;
 import java.util.Arrays;
 import java.util.List;
 
@@ -72,7 +74,33 @@ class EffectTargetPlanTest {
     }
 
     @Test
-    void inputSizedLegacyPassUsesGuestContentSize() {
+    void legacyUserShadersKeepViewportSizeAndConfiguredSampling() {
+        ShaderInfo info = new ShaderInfo("Legacy", "User");
+        info.vertex = "legacy.vsh";
+        info.fragment = "legacy.fsh";
+        for (boolean outputResolution : new boolean[]{false, true}) {
+            for (boolean upscaling : new boolean[]{false, true}) {
+                info.set("OutputResolution=" + outputResolution);
+                info.set("Upscaling=" + upscaling);
+                ShaderSelection selection = ShaderSelection.fromInfo(info);
+                EffectCatalog.Pass pass = PostProcessRenderer.legacyPass(selection);
+                assertEquals("legacy.fsh", pass.fragment);
+                assertEquals(EffectCatalog.Size.VIEWPORT, pass.size);
+                assertFalse(pass.sampleNearest, "Legacy shader must follow ScreenFilter");
+                assertFalse(pass.composite);
+                EffectTargetPlan plan = EffectTargetPlan.create(
+                    List.of(first(pass.size), first(EffectCatalog.Size.VIEWPORT)),
+                    240, 320, 1080, 1920, 4096, BUDGET);
+                assertEquals(1, plan.slots.size());
+                assertEquals(1080, plan.slots.get(0).width);
+                assertEquals(1920, plan.slots.get(0).height);
+                assertEquals(EffectTargetPlan.DISPLAY, plan.destination(1));
+            }
+        }
+    }
+
+    @Test
+    void inputSizedPassUsesGuestContentSize() {
         EffectTargetPlan plan = EffectTargetPlan.create(List.of(
             first(EffectCatalog.Size.INPUT), first(EffectCatalog.Size.VIEWPORT)),
             240, 320, 1080, 1920, 4096, BUDGET);
