@@ -112,6 +112,7 @@
     <string name="render_effect_restore">Reset parameters</string>
     <string name="render_effect_missing">Unavailable: %1$s. Restore the shader files to use this effect.</string>
     <string name="render_effect_limit">The stack supports up to 16 shader passes.</string>
+    <string name="render_effect_unavailable">Display effects could not run with this GPU or memory configuration. Showing the original game image.</string>
     <string name="render_effect_gles">Effects are saved but only rendered with OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Unable to read the selected legacy shader.</string>
     <string name="effect_color">Color adjustment</string>
@@ -124,8 +125,9 @@
     <string name="effect_cartoon_desc">Simplifies shading into color bands and adds soft outlines, especially for 3D game scenes.</string>
     <string name="effect_bloom">Bloom</string>
     <string name="effect_bloom_desc">Adds a soft glow around lamps, reflections and other bright parts of a game.</string>
-    <string name="effect_crt_easy">CRT EasyMode</string>
-    <string name="effect_crt_easy_desc">Recreates CRT scanlines and RGB phosphor masks for a retro TV look, not a phone LCD.</string>
+    <string name="effect_crt_classic">CRT Classic</string>
+    <string name="effect_crt_classic_desc">Adds lightweight scanlines and a soft RGB triad pattern for an old-TV look; no screen curvature.</string>
+    <string name="effect_crt_beam">Beam narrowness</string>
     <string name="effect_brightness">Brightness</string>
     <string name="effect_contrast">Contrast</string>
     <string name="effect_saturation">Saturation</string>
@@ -134,23 +136,9 @@
     <string name="effect_edge">Edge intensity</string>
     <string name="effect_threshold">Brightness threshold</string>
     <string name="effect_radius">Blur radius</string>
-    <string name="effect_sharp_h">Horizontal sharpness</string>
-    <string name="effect_sharp_v">Vertical sharpness</string>
     <string name="effect_mask_strength">Mask strength</string>
-    <string name="effect_mask_width">Mask dot width</string>
-    <string name="effect_mask_height">Mask dot height</string>
-    <string name="effect_mask_stagger">Mask stagger</string>
-    <string name="effect_mask_size">Mask size</string>
     <string name="effect_scan_strength">Scanline strength</string>
-    <string name="effect_beam_min">Minimum beam width</string>
-    <string name="effect_beam_max">Maximum beam width</string>
-    <string name="effect_scan_bright_min">Minimum scanline brightness</string>
-    <string name="effect_scan_bright_max">Maximum scanline brightness</string>
-    <string name="effect_scan_cutoff">Scanline cutoff</string>
-    <string name="effect_gamma_in">Input gamma</string>
-    <string name="effect_gamma_out">Output gamma</string>
     <string name="effect_bright_boost">Brightness boost</string>
-    <string name="effect_dilation">Dilation</string>
     <string name="effect_lcd">LCD</string>
     <string name="effect_lcd_desc">Adds a visible pixel grid and RGB subpixels like older color phone LCD screens.</string>
     <string name="effect_lcd_grid">Grid strength</string>
@@ -183,6 +171,4 @@
     <string name="effect_mono_tones">Number of tones</string>
     <string name="effect_mono_two">2 tones</string>
     <string name="effect_mono_four">4 tones</string>
-    <string name="render_effect_advanced">More parameters</string>
-    <string name="render_effect_basic">Fewer parameters</string>
 </resources>

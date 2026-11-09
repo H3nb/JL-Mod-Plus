@@ -75,9 +75,9 @@ memory information defaults to 64 MiB. These values are conservative **project
 policies**, not measurements of GPU VRAM, free memory or rendering performance.
 The budget limits only planned temporary FBO textures, excluding the source
 texture, Android UI, drivers and other GPU allocations. The GLES maximum
-texture size independently constrains each target. Allocation/attachment
-errors release partial targets and fall back to stock presentation, without
-changing the stored shader configuration. The final viewport-sized pass writes
+texture size independently constrains each target. Allocation/attachment errors release partial targets and fall back to stock
+presentation, without changing the stored shader configuration. The user
+is notified once per renderer instance when the effect stack cannot run. The final viewport-sized pass writes
 directly to the display, so a single-pass effect requires no intermediate FBO.
 Planning and texture creation repeat only when source content size or viewport
 changes, not for every steady-state frame. The budget is not dynamically
@@ -86,34 +86,44 @@ minimum supported device configuration.
 
 ## Built-in effects and separation of responsibilities
 
-The bundled catalogue consists of CRT EasyMode, LCD, Scanlines Lite, Color
+The bundled catalogue consists of CRT Classic, LCD, Scanlines Lite, Color
 Adjustment, Vignette, Sharpen, Cartoon Soft, Bloom, Color Depth & Dithering
 and Monochrome Display. The legacy `cartoon` ID
-is retained while its luminance-preserving algorithm improves. CRT has
-primary controls and separately accessible advanced parameters; color
-correction includes gamma, temperature/tint and monochrome.
+is retained while its luminance-preserving algorithm improves. CRT Classic
+is independently authored under Apache-2.0 as a one-sample CRT-inspired
+presentation effect with guest-grid scanlines and an RGB triad. It is not
+derived from the former GPL EasyMode shader. The unreleased prototype ID
+`crt-easymode` maps to CRT Classic at lookup time to preserve local test
+profiles; old unsupported advanced settings are ignored.
+Color correction includes gamma, temperature/tint and monochrome.
 LCD and Scanlines Lite intentionally depend on logical game resolution rather
 than the texture resolution of the preceding pass. LCD uses first-harmonic
 footprint attenuation; Scanlines Lite approximates the integral of its
 raised-cosine profile with two samples per output pixel and fades out at 1x
 or smaller, so narrowness affects the filtered result. Both remain
-approximations rather than exact area reconstruction at every scale. Physical LCD RGB subpixel masks are suppressed when GLES2 fragment
-high precision is unavailable.
+approximations rather than exact area reconstruction at every scale. On GLES2 devices without fragment highp, LCD RGB triads use the smaller
+logical-pixel coordinate space to keep the mask functional, with coarser
+spatial detail than on highp devices.
 
 Bloom extracts highlights before downsampling with a 2x2 sampling footprint
-up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. A
-4x4 grid covers source texel centers in aligned 4:1 reductions, but greater
-or fractional ratios are approximations, not lossless highlight preservation.
+up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. The Bloom intermediate size grows beyond half the viewport when the
+incoming effect image would otherwise exceed a 4:1 reduction (up to
+the full viewport size). A 4x4 grid covers source texel centers in aligned
+4:1 reductions, but greater or fractional ratios are approximations,
+not lossless highlight preservation. The larger targets remain subject
+to the GPU memory budget.
 Both separable blur passes use a normalized 17-tap discrete Gaussian (nine
 bilinear texture fetches per direction). Radius adjusts Gaussian sigma; CPU
 precomputation of paired weights and offsets per configured effect avoids
 per-fragment exponentials and gaps caused by scaling fixed sample offsets.
+The +/-8-texel blur support limits effective spread at extreme radius;
+a wider kernel would substantially raise GPU bandwidth on low-end devices.
 Bloom blur uses GL_LINEAR independently of ScreenFilter; its base composite
 still uses the user's filter but clamps samples to the valid image rectangle.
 Other bundled effects also clamp reads against input padding, including
 the final identity pass. Legacy user INI shaders retain their released
-sampling semantics. CRT EasyMode protects the Lanczos denominator within
-the minimum mediump range on GLES2 devices without fragment highp.
+sampling semantics. CRT Classic needs no precision-sensitive Lanczos
+reconstruction; it uses logical-grid RGB triads on mediump-only GLES2.
 Vignette's strength now reaches its full requested amount at image corners;
 Cartoon Soft bounds edge darkening to its configured strength.
 
@@ -154,12 +164,10 @@ No source or performance claim is qualified until corresponding evidence exists.
 
 ## Provenance
 
-Built-in CRT EasyMode is adapted from
-`libretro/glsl-shaders/crt/shaders/crt-easymode.glsl` by EasyMode
-(upstream header states GPL). The project keeps an explicit provenance record
-in `THIRD_PARTY_NOTICES.md`; release compliance is a separate review gate.
-LCD is original project code informed by the public-domain LCD3x approach of
-Gigaherz (no LCD3x source copied); Scanlines Lite, Color Adjustment, Vignette,
-Sharpen, Cartoon Soft, Bloom, Color Depth & Dithering and Monochrome Display
-are project-written Apache-2.0 shader sources.
-The CRT GPL release compliance review remains mandatory before redistribution.
+CRT Classic is a self-authored Apache-2.0 shader for JL-Mod Plus, using
+elementary trigonometry and per-channel modulation; it does not copy
+upstream CRT shader source. The GPL-marked EasyMode adaptation has been
+removed from the APK assets. LCD was informed conceptually by Gigaherz's
+public-domain LCD3x shader (no source copied). All bundled post-processing
+shaders are project-authored under Apache-2.0. This does not certify
+licensing of other dependencies.

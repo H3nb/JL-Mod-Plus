@@ -84,25 +84,12 @@ public final class EffectCatalog {
     }
 
     private static final List<Effect> ALL = Collections.unmodifiableList(Arrays.asList(
-        new Effect("crt-easymode", R.string.effect_crt_easy, R.string.effect_crt_easy_desc,
-            new Pass[]{nearest("crt-easymode.fsh")}, new Parameter[]{
-                param("SHARPNESS_H", R.string.effect_sharp_h, 0.5f, 0f, 1f, 0.05f),
-                param("SHARPNESS_V", R.string.effect_sharp_v, 1f, 0f, 1f, 0.05f),
-                param("MASK_STRENGTH", R.string.effect_mask_strength, 0.3f, 0f, 1f, 0.01f),
-                param("MASK_DOT_WIDTH", R.string.effect_mask_width, 1f, 1f, 100f, 1f),
-                param("MASK_DOT_HEIGHT", R.string.effect_mask_height, 1f, 1f, 100f, 1f),
-                param("MASK_STAGGER", R.string.effect_mask_stagger, 0f, 0f, 100f, 1f),
-                param("MASK_SIZE", R.string.effect_mask_size, 1f, 1f, 100f, 1f),
-                param("SCANLINE_STRENGTH", R.string.effect_scan_strength, 1f, 0f, 1f, 0.05f),
-                param("SCANLINE_BEAM_WIDTH_MIN", R.string.effect_beam_min, 1.5f, 0.5f, 5f, 0.5f),
-                param("SCANLINE_BEAM_WIDTH_MAX", R.string.effect_beam_max, 1.5f, 0.5f, 5f, 0.5f),
-                param("SCANLINE_BRIGHT_MIN", R.string.effect_scan_bright_min, 0.35f, 0f, 1f, 0.05f),
-                param("SCANLINE_BRIGHT_MAX", R.string.effect_scan_bright_max, 0.65f, 0f, 1f, 0.05f),
-                param("SCANLINE_CUTOFF", R.string.effect_scan_cutoff, 400f, 1f, 1000f, 1f),
-                param("GAMMA_INPUT", R.string.effect_gamma_in, 2f, 0.1f, 5f, 0.1f),
-                param("GAMMA_OUTPUT", R.string.effect_gamma_out, 1.8f, 0.1f, 5f, 0.1f),
-                param("BRIGHT_BOOST", R.string.effect_bright_boost, 1.2f, 1f, 2f, 0.01f),
-                param("DILATION", R.string.effect_dilation, 1f, 0f, 1f, 1f)}),
+        new Effect("crt-classic", R.string.effect_crt_classic, R.string.effect_crt_classic_desc,
+            new Pass[]{pass("crt-classic.fsh", Size.VIEWPORT)}, new Parameter[]{
+                param("SCANLINE_STRENGTH", R.string.effect_scan_strength, 0.35f, 0f, 1f, 0.05f),
+                param("MASK_STRENGTH", R.string.effect_mask_strength, 0.2f, 0f, 1f, 0.05f),
+                param("BEAM_NARROWNESS", R.string.effect_crt_beam, 2f, 0.5f, 6f, 0.25f),
+                param("BRIGHT_BOOST", R.string.effect_bright_boost, 1.05f, 0.75f, 1.5f, 0.05f)}),
         new Effect("lcd", R.string.effect_lcd, R.string.effect_lcd_desc,
             new Pass[]{pass("lcd.fsh", Size.VIEWPORT)}, new Parameter[]{
                 param("uGridStrength", R.string.effect_lcd_grid, 0.3f, 0f, 1f, 0.05f),
@@ -165,6 +152,8 @@ public final class EffectCatalog {
 
     public static Effect get(String id) {
         if (id == null) return null;
+        // Prototype profiles may contain the former CRT ID; use the new, original effect.
+        if ("crt-easymode".equals(id)) id = "crt-classic";
         for (Effect effect : ALL) if (effect.id.equals(id)) return effect;
         return null;
     }

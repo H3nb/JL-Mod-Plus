@@ -10,6 +10,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EffectCatalogAssetsTest {
     @Test
+    void prototypeCrtIdResolvesToOriginalCrtClassic() {
+        assertSame(EffectCatalog.get("crt-classic"), EffectCatalog.get("crt-easymode"));
+        assertNotNull(EffectCatalog.get("crt-classic"));
+    }
+
+    @Test
     void builtInEffectsHaveBundledSourcesAndValidDefaultRanges() {
         Path assets = Path.of("src/main/assets/shaders/effects");
         assertTrue(Files.isRegularFile(assets.resolve("fullscreen.vsh")));

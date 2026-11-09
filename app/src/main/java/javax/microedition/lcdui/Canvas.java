@@ -47,6 +47,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import android.widget.FrameLayout;
 import io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1705,6 +1706,20 @@ public abstract class Canvas extends Displayable {
 		private final int[] bgTextureId = new int[1];
 		private ShaderProgram program;
 		private PostProcessRenderer effectRenderer;
+		private boolean effectFailureReported;
+
+		private void reportEffectFailure() {
+			if (effectFailureReported) return;
+			effectFailureReported = true;
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity == null) return;
+			activity.runOnUiThread(() -> {
+				if (!activity.isFinishing() && !activity.isDestroyed()) {
+					Toast.makeText(activity, R.string.render_effect_unavailable,
+							Toast.LENGTH_LONG).show();
+				}
+			});
+		}
 		private int hostGlWidth, hostGlHeight;
 		private AmbientGlRenderer ambientRenderer;
 		private long lastUploadedSequence = Long.MIN_VALUE;
@@ -1730,6 +1745,7 @@ public abstract class Canvas extends Displayable {
 					effectRenderer = new PostProcessRenderer(settings.effects, shaderDirectory);
 				} catch (Exception e) {
 					Log.w(TAG, "Post-processing effects unavailable; using identity renderer", e);
+					reportEffectFailure();
 				}
 				program.use();
 			}
@@ -1828,6 +1844,7 @@ public abstract class Canvas extends Displayable {
 									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
 						} catch (RuntimeException e) {
 							Log.w(TAG, "Post-processing failed; using identity renderer", e);
+							reportEffectFailure();
 							effectRenderer.release();
 							effectRenderer = null;
 						}

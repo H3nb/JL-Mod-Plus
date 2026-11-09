@@ -40,6 +40,12 @@ final class EffectTargetPlan {
 
     int destination(int pass) { return destinations[pass]; }
 
+    /** Avoid losing single bright texels when a high-resolution guest is reduced for Bloom. */
+    static int bloomSize(int viewport, int effectInput) {
+        return Math.max(1, Math.max(viewport / 2,
+                Math.min(viewport, ((effectInput - 1) / 4) + 1)));
+    }
+
     static EffectTargetPlan create(List<Pass> passes, int contentW, int contentH,
                                    int viewportW, int viewportH, int maxTextureSize,
                                    long budgetBytes) {
@@ -50,14 +56,19 @@ final class EffectTargetPlan {
         int[] destinations = new int[passes.size()];
         int current = DISPLAY, effectBase = DISPLAY;
         int visibleW = contentW, visibleH = contentH;
+        int effectInputW = contentW, effectInputH = contentH;
         long allocatedBytes = 0L;
         for (int i = 0; i < passes.size(); i++) {
             Pass pass = passes.get(i);
-            if (pass.first) effectBase = current;
+            if (pass.first) {
+                effectBase = current;
+                effectInputW = visibleW;
+                effectInputH = visibleH;
+            }
             int outW = viewportW, outH = viewportH;
             if (pass.size == EffectCatalog.Size.HALF_VIEWPORT) {
-                outW = Math.max(1, viewportW / 2);
-                outH = Math.max(1, viewportH / 2);
+                outW = bloomSize(viewportW, effectInputW);
+                outH = bloomSize(viewportH, effectInputH);
             } else if (pass.size == EffectCatalog.Size.INPUT) {
                 outW = visibleW;
                 outH = visibleH;

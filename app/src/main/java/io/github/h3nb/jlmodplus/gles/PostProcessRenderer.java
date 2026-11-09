@@ -302,6 +302,7 @@ public final class PostProcessRenderer {
 
         int current = sourceTexture, inW = textureW, inH = textureH;
         int visibleW = contentW, visibleH = contentH;
+        int effectInputW = contentW, effectInputH = contentH;
         float uMax = (float) contentW / textureW;
         float vMax = (float) contentH / textureH;
         boolean flipped = false;
@@ -316,6 +317,8 @@ public final class PostProcessRenderer {
             for (int i = 0; i < stages.size(); i++) {
                 Stage stage = stages.get(i);
                 if (stage.first) {
+                    effectInputW = visibleW;
+                    effectInputH = visibleH;
                     base = current;
                     baseU = uMax;
                     baseV = vMax;
@@ -325,8 +328,8 @@ public final class PostProcessRenderer {
                 }
                 int outW = width, outH = height;
                 if (stage.pass.size == EffectCatalog.Size.HALF_VIEWPORT) {
-                    outW = Math.max(1, width / 2);
-                    outH = Math.max(1, height / 2);
+                    outW = EffectTargetPlan.bloomSize(width, effectInputW);
+                    outH = EffectTargetPlan.bloomSize(height, effectInputH);
                 } else if (stage.pass.size == EffectCatalog.Size.INPUT) {
                     outW = visibleW;
                     outH = visibleH;

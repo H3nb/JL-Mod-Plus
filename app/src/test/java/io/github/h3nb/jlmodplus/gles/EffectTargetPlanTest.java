@@ -52,6 +52,22 @@ class EffectTargetPlanTest {
     }
 
     @Test
+    void bloomKeepsReductionAtMostFourToOneWhenViewportAllows() {
+        EffectTargetPlan plan = EffectTargetPlan.create(List.of(
+            first(EffectCatalog.Size.HALF_VIEWPORT),
+            next(EffectCatalog.Size.HALF_VIEWPORT),
+            next(EffectCatalog.Size.HALF_VIEWPORT),
+            next(EffectCatalog.Size.VIEWPORT)),
+            2400, 3200, 1080, 1920, 4096, BUDGET);
+        assertEquals(2, plan.slots.size());
+        assertEquals(600, plan.slots.get(0).width);
+        assertEquals(960, plan.slots.get(0).height);
+        assertEquals(600, plan.slots.get(1).width);
+        assertEquals(960, plan.slots.get(1).height);
+        assertEquals(EffectTargetPlan.DISPLAY, plan.destination(3));
+    }
+
+    @Test
     void threeFullScreenEffectsNeedTwoTargetsRatherThanThree() {
         EffectTargetPlan plan = EffectTargetPlan.create(List.of(
             first(EffectCatalog.Size.VIEWPORT),

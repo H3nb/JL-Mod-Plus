@@ -111,6 +111,7 @@
     <string name="render_effect_restore">Atur ulang parameter</string>
     <string name="render_effect_missing">Tidak tersedia: %1$s. Pulihkan file shader agar efek ini dapat digunakan.</string>
     <string name="render_effect_limit">Rangkaian mendukung hingga 16 pass shader.</string>
+    <string name="render_effect_unavailable">Efek tampilan tidak dapat dijalankan dengan konfigurasi GPU atau memori ini. Gambar game asli ditampilkan.</string>
     <string name="render_effect_gles">Efek tetap tersimpan, tetapi hanya ditampilkan dengan OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Tidak dapat membaca shader legacy yang dipilih.</string>
     <string name="effect_color">Penyesuaian warna</string>
@@ -123,8 +124,9 @@
     <string name="effect_cartoon_desc">Menyederhanakan gradasi menjadi bidang warna dan menambah garis tepi lembut, terutama pada game 3D.</string>
     <string name="effect_bloom">Bloom</string>
     <string name="effect_bloom_desc">Menambahkan cahaya lembut di sekitar lampu, pantulan, dan bagian gambar yang terang.</string>
-    <string name="effect_crt_easy">CRT EasyMode</string>
-    <string name="effect_crt_easy_desc">Meniru garis pindai dan pola fosfor RGB televisi CRT, bukan layar LCD ponsel.</string>
+    <string name="effect_crt_classic">CRT Klasik</string>
+    <string name="effect_crt_classic_desc">Menambahkan garis pindai dan pola triad RGB ringan untuk tampilan televisi tabung, tanpa lengkungan layar.</string>
+    <string name="effect_crt_beam">Kerampingan berkas</string>
     <string name="effect_brightness">Kecerahan</string>
     <string name="effect_contrast">Kontras</string>
     <string name="effect_saturation">Saturasi</string>
@@ -133,23 +135,9 @@
     <string name="effect_edge">Intensitas tepi</string>
     <string name="effect_threshold">Ambang kecerahan</string>
     <string name="effect_radius">Radius blur</string>
-    <string name="effect_sharp_h">Ketajaman horizontal</string>
-    <string name="effect_sharp_v">Ketajaman vertikal</string>
     <string name="effect_mask_strength">Intensitas mask</string>
-    <string name="effect_mask_width">Lebar titik mask</string>
-    <string name="effect_mask_height">Tinggi titik mask</string>
-    <string name="effect_mask_stagger">Pergeseran mask</string>
-    <string name="effect_mask_size">Ukuran mask</string>
     <string name="effect_scan_strength">Intensitas scanline</string>
-    <string name="effect_beam_min">Lebar berkas minimum</string>
-    <string name="effect_beam_max">Lebar berkas maksimum</string>
-    <string name="effect_scan_bright_min">Kecerahan scanline minimum</string>
-    <string name="effect_scan_bright_max">Kecerahan scanline maksimum</string>
-    <string name="effect_scan_cutoff">Batas scanline</string>
-    <string name="effect_gamma_in">Gamma input</string>
-    <string name="effect_gamma_out">Gamma output</string>
     <string name="effect_bright_boost">Penguat kecerahan</string>
-    <string name="effect_dilation">Dilasi</string>
     <string name="effect_lcd">LCD</string>
     <string name="effect_lcd_desc">Menampilkan kisi piksel dan subpiksel RGB seperti layar LCD ponsel berwarna klasik.</string>
     <string name="effect_lcd_grid">Intensitas kisi</string>
@@ -182,6 +170,4 @@
     <string name="effect_mono_tones">Jumlah tingkat warna</string>
     <string name="effect_mono_two">2 tingkat</string>
     <string name="effect_mono_four">4 tingkat</string>
-    <string name="render_effect_advanced">Parameter lainnya</string>
-    <string name="render_effect_basic">Lebih sedikit parameter</string>
 </resources>
