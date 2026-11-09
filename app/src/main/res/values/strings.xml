@@ -1317,4 +1317,6 @@
     <string name="library_bundle_layout_skin" tools:ignore="MissingTranslation">Screen layout skin</string>
     <string name="library_bundle_control_skin" tools:ignore="MissingTranslation">Virtual control skin</string>
     <string name="date_field_not_set">Not set</string>
+    <string name="installer_select_companion_jar">This JAD refers to a separate JAR file. Select the matching JAR to continue. The external file provider does not grant access to neighboring documents.</string>
+    <string name="installer_select_jar">Select JAR</string>
 </resources>
