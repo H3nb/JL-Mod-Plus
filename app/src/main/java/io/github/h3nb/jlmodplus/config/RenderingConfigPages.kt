@@ -134,7 +134,7 @@ private fun effectStackSummary(
 
 @Composable
 private fun legacyCatalogSubtitle(shader: ShaderInfo): String {
-    val author = ShaderSelection.fromInfo(shader)?.author
+    val author = shader.getAuthor()
         ?.takeIf { it.isNotBlank() && !it.equals("unknown", true) }
     return if (author != null) stringResource(R.string.render_effect_legacy_author, author)
     else stringResource(R.string.render_effect_legacy_source, shader.fragment ?: "")
@@ -716,37 +716,37 @@ private fun EffectParametersContent(
                     Text(stringResource(R.string.render_effect_legacy_metadata_missing),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                val adjustable = knownLegacy.settings.withIndex().filter { (_, setting) ->
-                    setting != null && setting.max > setting.min
-                }
-                if (adjustable.isEmpty()) {
-                    Text(stringResource(R.string.render_effect_no_parameters))
-                } else {
-                    adjustable.forEach { (slot, setting) ->
-                        val settingInfo = requireNotNull(setting)
-                        EffectParameterSlider(
-                            label = settingInfo.name ?: stringResource(R.string.render_effect_parameter_number, slot + 1),
-                            value = user.values?.getOrNull(slot) ?: settingInfo.def,
-                            minimum = settingInfo.min,
-                            maximum = settingInfo.max,
-                            step = settingInfo.step,
-                        ) { value ->
-                            val values = MutableList(4) { i ->
-                                user.values?.getOrNull(i)
-                                    ?: knownLegacy.settings.getOrNull(i)?.def ?: 0f
+                    val adjustable = knownLegacy.settings.withIndex().filter { (_, setting) ->
+                        setting != null && setting.max > setting.min
+                    }
+                    if (adjustable.isEmpty()) {
+                        Text(stringResource(R.string.render_effect_no_parameters))
+                    } else {
+                        adjustable.forEach { (slot, setting) ->
+                            val settingInfo = requireNotNull(setting)
+                            EffectParameterSlider(
+                                label = settingInfo.name ?: stringResource(R.string.render_effect_parameter_number, slot + 1),
+                                value = user.values?.getOrNull(slot) ?: settingInfo.def,
+                                minimum = settingInfo.min,
+                                maximum = settingInfo.max,
+                                step = settingInfo.step,
+                            ) { value ->
+                                val values = MutableList(4) { i ->
+                                    user.values?.getOrNull(i)
+                                        ?: knownLegacy.settings.getOrNull(i)?.def ?: 0f
+                                }
+                                values[slot] = value
+                                onChange(entry.copy(user = user.copy(values = values)))
                             }
-                            values[slot] = value
-                            onChange(entry.copy(user = user.copy(values = values)))
+                        }
+                        TextButton(onClick = {
+                            onChange(entry.copy(user = user.copy(
+                                values = List(4) { i -> knownLegacy.settings.getOrNull(i)?.def ?: 0f }
+                            )))
+                        }) {
+                            Text(stringResource(R.string.render_effect_restore))
                         }
                     }
-                    TextButton(onClick = {
-                        onChange(entry.copy(user = user.copy(
-                            values = List(4) { i -> knownLegacy.settings.getOrNull(i)?.def ?: 0f }
-                        )))
-                    }) {
-                        Text(stringResource(R.string.render_effect_restore))
-                    }
-                }
                 }
             } else {
                 Text(stringResource(R.string.render_effect_missing,

@@ -45,6 +45,11 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		this.author = author;
 	}
 
+	/** Author is optional metadata declared by the user's INI file. */
+	public String getAuthor() {
+		return author;
+	}
+
 	/** Dialog/form parameters are drafts; catalog metadata is read-only after loading. */
 	public ShaderInfo copyForDialog() {
 		ShaderInfo copy = new ShaderInfo(name, author);
