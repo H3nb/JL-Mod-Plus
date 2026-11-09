@@ -155,7 +155,7 @@ public class AndroidProducerDexTest {
 		Path dexFile = root.resolve("unsupported.dex");
 		byte[] unsupported = createSimpleClass("sample/Newer");
 		unsupported[6] = 0;
-		unsupported[7] = (byte) (Opcodes.V27 + 1);
+		unsupported[7] = (byte) (Opcodes.V28 + 1);
 		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
 			output.putNextEntry(new JarEntry("sample/Newer.class"));
 			output.write(unsupported);
