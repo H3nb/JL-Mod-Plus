@@ -52,7 +52,7 @@ class ExternalContentJadImportTest {
             instrumentation.runOnMainSync {
                 preferences.edit().putString(Constants.PREF_EMULATOR_DIR, workdir.path).commit()
                 library = ViewModelProvider(store, ViewModelProvider.AndroidViewModelFactory(app))
-                    [LibraryViewModel::class.java]
+                    .get(LibraryViewModel::class.java)
                 library.setEmulatorDirectory(workdir.path)
             }
             withTimeout(15_000) {
