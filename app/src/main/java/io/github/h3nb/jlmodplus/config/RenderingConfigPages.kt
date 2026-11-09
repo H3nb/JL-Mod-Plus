@@ -126,7 +126,7 @@ private fun effectStackSummary(
         return labels.joinToString(" · ")
     }
     val adjustable = legacy?.settings?.count { it != null && it.max > it.min } ?: 0
-    if (adjustable > 0) return stringResource(R.string.render_effect_adjustments_count, adjustable)
+    if (adjustable > 0) return stringResource(R.string.render_adjustable_count, adjustable)
     val author = entry.user?.author?.takeIf { it.isNotBlank() && !it.equals("unknown", true) }
     if (author != null) return stringResource(R.string.render_effect_legacy_author, author)
     return entry.user?.fragment ?: stringResource(R.string.render_effect_user)
