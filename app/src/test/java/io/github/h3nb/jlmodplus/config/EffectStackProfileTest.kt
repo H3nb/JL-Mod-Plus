@@ -24,6 +24,15 @@ class EffectStackProfileTest {
     }
 
     @Test
+    fun doesNotActivateIncompleteHistoricalShaderMetadata() {
+        val input = """{"Version":9,"Shader":{"name":"Missing sources","Settings":[1.25]}}"""
+        val migrated = ProfileJson.decode(input, false)
+        assertNull(migrated.model.shader)
+        assertTrue(migrated.model.effects.isEmpty())
+        assertTrue(migrated.needsPublication)
+    }
+
+    @Test
     fun preservesOrderRepeatedInstancesAndTheirIndependentParameters() {
         val a = EffectEntry("a", builtinId = "color", parameters = mapOf("uContrast" to 1.5f))
         val legacy = ShaderSelection.fromInfo(ShaderInfo("User", "Author").apply {
