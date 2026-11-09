@@ -110,11 +110,7 @@ public final class PostProcessRenderer {
                     String vert = local(shaderDirectory, user.vertex);
                     String frag = local(shaderDirectory, user.fragment);
                     Program p = program("user/" + user.vertex + "|" + user.fragment, vert, frag);
-                    EffectCatalog.Pass pass = new EffectCatalog.Pass(
-                            user.fragment,
-                            (user.outputResolution || user.upscaling)
-                                ? EffectCatalog.Size.VIEWPORT : EffectCatalog.Size.INPUT,
-                            user.upscaling, false);
+                    EffectCatalog.Pass pass = legacyPass(user);
                     stages.add(new Stage(p, entry, pass, null, true));
                 }
                 if (stages.size() > MAX_PASSES) throw new IOException("Too many shader passes");
@@ -147,6 +143,14 @@ public final class PostProcessRenderer {
             throw new IOException("Unreadable user shader: " + name);
         }
         return source;
+    }
+
+    /**
+     * Released legacy INI shaders drew directly to the display. Their historical
+     * OutputResolution/Upscaling flags did not affect GLES sizing or sampling.
+     */
+    static EffectCatalog.Pass legacyPass(ShaderSelection user) {
+        return new EffectCatalog.Pass(user.fragment, EffectCatalog.Size.VIEWPORT, false, false);
     }
 
     private Program program(String key, String vertex, String fragment) throws IOException {
