@@ -67,31 +67,6 @@ public final class EffectCatalog {
     }
 
     private static final List<Effect> ALL = Collections.unmodifiableList(Arrays.asList(
-        new Effect("color", R.string.effect_color, R.string.effect_color_desc,
-            new Pass[]{pass("color.fsh", Size.VIEWPORT)}, new Parameter[]{
-                param("uBrightness", R.string.effect_brightness, 0f, -0.5f, 0.5f, 0.01f),
-                param("uContrast", R.string.effect_contrast, 1f, 0.2f, 2f, 0.05f),
-                param("uSaturation", R.string.effect_saturation, 1f, 0f, 2f, 0.05f)}),
-        new Effect("vignette", R.string.effect_vignette, R.string.effect_vignette_desc,
-            new Pass[]{pass("vignette.fsh", Size.VIEWPORT)}, new Parameter[]{
-                param("uStrength", R.string.effect_strength, 0.35f, 0f, 1f, 0.05f)}),
-        new Effect("sharpen", R.string.effect_sharpen, R.string.effect_sharpen_desc,
-            new Pass[]{pass("sharpen.fsh", Size.VIEWPORT)}, new Parameter[]{
-                param("uSharpness", R.string.effect_strength, 0.3f, 0f, 1f, 0.05f)}),
-        new Effect("cartoon", R.string.effect_cartoon, R.string.effect_cartoon_desc,
-            new Pass[]{pass("cartoon.fsh", Size.VIEWPORT)}, new Parameter[]{
-                param("uLevels", R.string.effect_color_levels, 5f, 2f, 12f, 1f),
-                param("uEdge", R.string.effect_edge, 0.35f, 0f, 1f, 0.05f)}),
-        new Effect("bloom", R.string.effect_bloom, R.string.effect_bloom_desc,
-            new Pass[]{
-                pass("bloom-threshold.fsh", Size.HALF_VIEWPORT),
-                pass("bloom-blur-h.fsh", Size.HALF_VIEWPORT),
-                pass("bloom-blur-v.fsh", Size.HALF_VIEWPORT),
-                new Pass("bloom-composite.fsh", Size.VIEWPORT, false, true)
-            }, new Parameter[]{
-                param("uThreshold", R.string.effect_threshold, 0.72f, 0.1f, 1f, 0.02f),
-                param("uRadius", R.string.effect_radius, 1f, 0.5f, 3f, 0.1f),
-                param("uIntensity", R.string.effect_strength, 0.4f, 0f, 2f, 0.05f)}),
         new Effect("crt-easymode", R.string.effect_crt_easy, R.string.effect_crt_easy_desc,
             new Pass[]{nearest("crt-easymode.fsh")}, new Parameter[]{
                 param("SHARPNESS_H", R.string.effect_sharp_h, 0.5f, 0f, 1f, 0.05f),
@@ -110,7 +85,45 @@ public final class EffectCatalog {
                 param("GAMMA_INPUT", R.string.effect_gamma_in, 2f, 0.1f, 5f, 0.1f),
                 param("GAMMA_OUTPUT", R.string.effect_gamma_out, 1.8f, 0.1f, 5f, 0.1f),
                 param("BRIGHT_BOOST", R.string.effect_bright_boost, 1.2f, 1f, 2f, 0.01f),
-                param("DILATION", R.string.effect_dilation, 1f, 0f, 1f, 1f)})
+                param("DILATION", R.string.effect_dilation, 1f, 0f, 1f, 1f)}),
+        new Effect("lcd", R.string.effect_lcd, R.string.effect_lcd_desc,
+            new Pass[]{pass("lcd.fsh", Size.VIEWPORT)}, new Parameter[]{
+                param("uGridStrength", R.string.effect_lcd_grid, 0.3f, 0f, 1f, 0.05f),
+                param("uSubpixelStrength", R.string.effect_lcd_subpixel, 0.2f, 0f, 1f, 0.05f),
+                param("uLcdBrightness", R.string.effect_lcd_brightness, 1.05f, 0.6f, 1.5f, 0.05f)}),
+        new Effect("scanlines", R.string.effect_scanlines, R.string.effect_scanlines_desc,
+            new Pass[]{pass("scanlines.fsh", Size.VIEWPORT)}, new Parameter[]{
+                param("uLineStrength", R.string.effect_scan_strength, 0.4f, 0f, 1f, 0.05f),
+                param("uLineWidth", R.string.effect_line_width, 2f, 0.5f, 6f, 0.25f)}),
+        new Effect("color", R.string.effect_color, R.string.effect_color_desc,
+            new Pass[]{pass("color.fsh", Size.VIEWPORT)}, new Parameter[]{
+                param("uBrightness", R.string.effect_brightness, 0f, -0.5f, 0.5f, 0.01f),
+                param("uContrast", R.string.effect_contrast, 1f, 0.2f, 2f, 0.05f),
+                param("uSaturation", R.string.effect_saturation, 1f, 0f, 2f, 0.05f),
+                param("uGamma", R.string.effect_gamma, 1f, 0.5f, 2.5f, 0.05f),
+                param("uTemperature", R.string.effect_temperature, 0f, -1f, 1f, 0.05f),
+                param("uTint", R.string.effect_tint, 0f, -1f, 1f, 0.05f),
+                param("uMonochrome", R.string.effect_monochrome, 0f, 0f, 1f, 1f)}),
+        new Effect("vignette", R.string.effect_vignette, R.string.effect_vignette_desc,
+            new Pass[]{pass("vignette.fsh", Size.VIEWPORT)}, new Parameter[]{
+                param("uStrength", R.string.effect_strength, 0.35f, 0f, 1f, 0.05f)}),
+        new Effect("sharpen", R.string.effect_sharpen, R.string.effect_sharpen_desc,
+            new Pass[]{pass("sharpen.fsh", Size.VIEWPORT)}, new Parameter[]{
+                param("uSharpness", R.string.effect_strength, 0.3f, 0f, 1f, 0.05f)}),
+        new Effect("cartoon", R.string.effect_cartoon, R.string.effect_cartoon_desc,
+            new Pass[]{pass("cartoon.fsh", Size.VIEWPORT)}, new Parameter[]{
+                param("uLevels", R.string.effect_color_levels, 5f, 2f, 12f, 1f),
+                param("uEdge", R.string.effect_edge, 0.35f, 0f, 1f, 0.05f)}),
+        new Effect("bloom", R.string.effect_bloom, R.string.effect_bloom_desc,
+            new Pass[]{
+                pass("bloom-threshold.fsh", Size.HALF_VIEWPORT),
+                pass("bloom-blur-h.fsh", Size.HALF_VIEWPORT),
+                pass("bloom-blur-v.fsh", Size.HALF_VIEWPORT),
+                new Pass("bloom-composite.fsh", Size.VIEWPORT, false, true)
+            }, new Parameter[]{
+                param("uThreshold", R.string.effect_threshold, 0.72f, 0.1f, 0.98f, 0.02f),
+                param("uRadius", R.string.effect_radius, 1f, 0.5f, 3f, 0.1f),
+                param("uIntensity", R.string.effect_strength, 0.4f, 0f, 2f, 0.05f)})
     ));
 
     private EffectCatalog() {}

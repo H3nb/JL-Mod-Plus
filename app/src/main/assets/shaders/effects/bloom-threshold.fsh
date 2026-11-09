@@ -3,8 +3,11 @@ precision mediump float;
 varying vec2 v_texcoord0;
 uniform sampler2D sampler0;
 uniform float uThreshold;
+
 void main() {
-    vec3 c = texture2D(sampler0, v_texcoord0).rgb;
-    float strength = smoothstep(uThreshold, 1.0, max(c.r, max(c.g, c.b)));
-    gl_FragColor = vec4(c * strength, 1.0);
+    vec3 rgb = texture2D(sampler0, v_texcoord0).rgb;
+    float threshold = clamp(uThreshold, 0.0, 0.98);
+    float intensity = smoothstep(threshold, 1.0,
+        max(rgb.r, max(rgb.g, rgb.b)));
+    gl_FragColor = vec4(rgb * intensity, 1.0);
 }

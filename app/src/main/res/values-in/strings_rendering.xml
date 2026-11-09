@@ -114,13 +114,13 @@
     <string name="render_effect_gles">Efek tetap tersimpan, tetapi hanya ditampilkan dengan OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Tidak dapat membaca shader legacy yang dipilih.</string>
     <string name="effect_color">Penyesuaian warna</string>
-    <string name="effect_color_desc">Kecerahan, kontras, dan saturasi.</string>
+    <string name="effect_color_desc">Kecerahan, kontras, gamma, keseimbangan warna, dan monokrom.</string>
     <string name="effect_vignette">Vignette</string>
     <string name="effect_vignette_desc">Menggelapkan area tepi gambar.</string>
     <string name="effect_sharpen">Pertajam</string>
     <string name="effect_sharpen_desc">Memperjelas tepi dan detail halus.</string>
-    <string name="effect_cartoon">Kartun</string>
-    <string name="effect_cartoon_desc">Gradasi warna bertahap dan garis tepi lebih tegas.</string>
+    <string name="effect_cartoon">Kartun Lembut</string>
+    <string name="effect_cartoon_desc">Warna bertahap dan garis tepi lembut tanpa menghilangkan detail gelap.</string>
     <string name="effect_bloom">Bloom</string>
     <string name="effect_bloom_desc">Cahaya lembut di sekitar area terang.</string>
     <string name="effect_crt_easy">CRT EasyMode</string>
@@ -150,4 +150,18 @@
     <string name="effect_gamma_out">Gamma output</string>
     <string name="effect_bright_boost">Penguat kecerahan</string>
     <string name="effect_dilation">Dilasi</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Pola kisi LCD dan subpiksel RGB khas layar ponsel klasik.</string>
+    <string name="effect_lcd_grid">Intensitas kisi</string>
+    <string name="effect_lcd_subpixel">Subpiksel RGB</string>
+    <string name="effect_lcd_brightness">Kecerahan LCD</string>
+    <string name="effect_scanlines">Scanlines Lite</string>
+    <string name="effect_scanlines_desc">Garis layar ringan mengikuti kisi piksel asli game.</string>
+    <string name="effect_line_width">Ketebalan garis</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Temperatur warna</string>
+    <string name="effect_tint">Rona warna</string>
+    <string name="effect_monochrome">Monokrom</string>
+    <string name="render_effect_advanced">Parameter lainnya</string>
+    <string name="render_effect_basic">Lebih sedikit parameter</string>
 </resources>

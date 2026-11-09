@@ -1824,7 +1824,7 @@ public abstract class Canvas extends Displayable {
 						try {
 							effectDrawn = effectRenderer.draw(bgTextureId[0], vbo,
 									lastUploadedWidth, lastUploadedHeight, contentWidth, contentHeight,
-									hostGlWidth, hostGlHeight,
+									Canvas.this.width, Canvas.this.height, hostGlWidth, hostGlHeight,
 									settings.screenFilter ? GL_LINEAR : GL_NEAREST);
 						} catch (RuntimeException e) {
 							Log.w(TAG, "Post-processing failed; using identity renderer", e);

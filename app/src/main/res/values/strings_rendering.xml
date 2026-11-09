@@ -115,13 +115,13 @@
     <string name="render_effect_gles">Effects are saved but only rendered with OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Unable to read the selected legacy shader.</string>
     <string name="effect_color">Color adjustment</string>
-    <string name="effect_color_desc">Brightness, contrast, and saturation.</string>
+    <string name="effect_color_desc">Brightness, contrast, gamma, color balance and monochrome.</string>
     <string name="effect_vignette">Vignette</string>
     <string name="effect_vignette_desc">Darken the image toward its corners.</string>
     <string name="effect_sharpen">Sharpen</string>
     <string name="effect_sharpen_desc">Accentuate edges and fine details.</string>
-    <string name="effect_cartoon">Cartoon</string>
-    <string name="effect_cartoon_desc">Flat color bands and stronger outlines.</string>
+    <string name="effect_cartoon">Cartoon Soft</string>
+    <string name="effect_cartoon_desc">Soft color bands and outlines that preserve dark details.</string>
     <string name="effect_bloom">Bloom</string>
     <string name="effect_bloom_desc">A soft glow around bright areas.</string>
     <string name="effect_crt_easy">CRT EasyMode</string>
@@ -151,4 +151,18 @@
     <string name="effect_gamma_out">Output gamma</string>
     <string name="effect_bright_boost">Brightness boost</string>
     <string name="effect_dilation">Dilation</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Handheld LCD grid and RGB subpixel pattern.</string>
+    <string name="effect_lcd_grid">Grid strength</string>
+    <string name="effect_lcd_subpixel">RGB subpixels</string>
+    <string name="effect_lcd_brightness">LCD brightness</string>
+    <string name="effect_scanlines">Scanlines Lite</string>
+    <string name="effect_scanlines_desc">Lightweight scanlines tied to the game pixel grid.</string>
+    <string name="effect_line_width">Line thickness</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Temperature</string>
+    <string name="effect_tint">Tint</string>
+    <string name="effect_monochrome">Monochrome</string>
+    <string name="render_effect_advanced">More parameters</string>
+    <string name="render_effect_basic">Fewer parameters</string>
 </resources>

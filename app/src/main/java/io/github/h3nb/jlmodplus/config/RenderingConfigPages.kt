@@ -556,7 +556,14 @@ private fun EffectParametersContent(
                 if (definition.parameters.isEmpty()) {
                     Text(stringResource(R.string.render_effect_no_parameters))
                 } else {
-                    definition.parameters.forEach { parameter ->
+                    var advanced by rememberSaveable(entry.key) { mutableStateOf(false) }
+                    val isCrt = definition.id == "crt-easymode"
+                    val primary = listOf("SCANLINE_STRENGTH", "MASK_STRENGTH",
+                        "BRIGHT_BOOST", "SHARPNESS_H", "SHARPNESS_V")
+                    val visible = if (isCrt && !advanced) primary.mapNotNull { id ->
+                        definition.parameters.firstOrNull { it.id == id }
+                    } else definition.parameters
+                    visible.forEach { parameter ->
                         EffectParameterSlider(
                             label = stringResource(parameter.label),
                             value = entry.parameters[parameter.id] ?: parameter.initial,
@@ -566,6 +573,12 @@ private fun EffectParametersContent(
                         ) { value ->
                             onChange(entry.copy(parameters =
                                 entry.parameters + (parameter.id to value)))
+                        }
+                    }
+                    if (isCrt) {
+                        TextButton(onClick = { advanced = !advanced }) {
+                            Text(stringResource(if (advanced) R.string.render_effect_basic
+                                else R.string.render_effect_advanced))
                         }
                     }
                     TextButton(onClick = { onChange(entry.copy(parameters = emptyMap())) }) {

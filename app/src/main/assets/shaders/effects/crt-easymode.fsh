@@ -19,11 +19,12 @@ out vec4 FragColor;
 #ifdef GL_ES
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
+#define COMPAT_PRECISION highp
 #else
 precision mediump float;
 precision mediump int;
-#endif
 #define COMPAT_PRECISION mediump
+#endif
 #else
 #define COMPAT_PRECISION
 #endif
@@ -33,13 +34,18 @@ uniform COMPAT_PRECISION int FrameCount;
 uniform COMPAT_PRECISION vec2 uOutputSize;
 uniform COMPAT_PRECISION vec2 uInputSize;
 uniform COMPAT_PRECISION vec2 uContentSize;
+uniform COMPAT_PRECISION vec2 uGameSize;
+uniform COMPAT_PRECISION vec2 uDisplayUvScale;
+uniform COMPAT_PRECISION vec2 uDisplayUvOffset;
+uniform COMPAT_PRECISION vec2 uContentUvMax;
 uniform sampler2D sampler0;
 COMPAT_VARYING vec2 v_texcoord0;
 
 #define FIX(c) max(abs(c), 1e-5)
 #define PI 3.141592653589
 
-#define TEX2D(c) dilate(texture2D(sampler0, c))
+// Clamp to the valid guest image, not the padded backing texture.
+#define TEX2D(c) dilate(texture2D(sampler0, clamp((c), vec2(0.5) / uInputSize, max(vec2(0.5) / uInputSize, uContentUvMax - vec2(0.5) / uInputSize))))
 
 // compatibility #defines
 #define Source Texture
@@ -135,6 +141,7 @@ void main()
     vec2 pix_co = vTexCoord * SourceSize.xy - vec2(0.5, 0.5);
     vec2 tex_co = (floor(pix_co) + vec2(0.5, 0.5)) * SourceSize.zw;
     vec2 dist   = fract(pix_co);
+    vec2 display_uv = v_texcoord0 * uDisplayUvScale + uDisplayUvOffset;
     float curve_x;
     vec3 col, col2;
 
@@ -161,20 +168,29 @@ void main()
 
     float luma        = dot(vec3(0.2126, 0.7152, 0.0722), col);
     float bright      = (max(col.r, max(col.g, col.b)) + luma) * 0.5;
-    float scan_bright = clamp(bright, SCANLINE_BRIGHT_MIN, SCANLINE_BRIGHT_MAX);
-    float scan_beam   = clamp(bright * SCANLINE_BEAM_WIDTH_MAX, SCANLINE_BEAM_WIDTH_MIN, SCANLINE_BEAM_WIDTH_MAX);
-    float scan_weight = 1.0 - pow(cos(vTexCoord.y * 2.0 * PI * SourceSize.y) * 0.5 + 0.5, scan_beam) * SCANLINE_STRENGTH;
+    float min_bright = min(SCANLINE_BRIGHT_MIN, SCANLINE_BRIGHT_MAX);
+    float max_bright = max(SCANLINE_BRIGHT_MIN, SCANLINE_BRIGHT_MAX);
+    float min_beam = min(SCANLINE_BEAM_WIDTH_MIN, SCANLINE_BEAM_WIDTH_MAX);
+    float max_beam = max(SCANLINE_BEAM_WIDTH_MIN, SCANLINE_BEAM_WIDTH_MAX);
+    float scan_bright = clamp(bright, min_bright, max_bright);
+    float scan_beam = clamp(bright * max_beam, min_beam, max_beam);
+    // Use the guest's logical resolution, independent of the previous pass.
+    float scan_weight = 1.0 - pow(cos(display_uv.y * 2.0 * PI * uGameSize.y) * 0.5 + 0.5, scan_beam) * SCANLINE_STRENGTH;
 
-    float mask   = 1.0 - MASK_STRENGTH;    
-    vec2 mod_fac = floor(vTexCoord * outsize.xy * SourceSize.xy / (uContentSize.xy * vec2(MASK_SIZE, MASK_DOT_HEIGHT * MASK_SIZE)));
-    int dot_no   = int(mod((mod_fac.x + mod(mod_fac.y, 2.0) * MASK_STAGGER) / MASK_DOT_WIDTH, 3.0));
-    vec3 mask_weight;
-
-    if      (dot_no == 0) mask_weight = vec3(1.0,  mask, mask);
-    else if (dot_no == 1) mask_weight = vec3(mask, 1.0,  mask);
+    vec3 mask_weight = vec3(1.0);
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+    // RGB mask is screen-pixel aligned and requires highp on wide displays.
+    float mask = 1.0 - MASK_STRENGTH;
+    vec2 mod_fac = floor(display_uv * uOutputSize /
+        vec2(MASK_SIZE, MASK_DOT_HEIGHT * MASK_SIZE));
+    int dot_no = int(mod((mod_fac.x + mod(mod_fac.y, 2.0) * MASK_STAGGER) /
+        MASK_DOT_WIDTH, 3.0));
+    if      (dot_no == 0) mask_weight = vec3(1.0, mask, mask);
+    else if (dot_no == 1) mask_weight = vec3(mask, 1.0, mask);
     else                  mask_weight = vec3(mask, mask, 1.0);
+#endif
 
-    if (uContentSize.y >= SCANLINE_CUTOFF) 
+    if (uGameSize.y >= SCANLINE_CUTOFF) 
         scan_weight = 1.0;
 
     col2 = col.rgb;

@@ -3,8 +3,6 @@ package io.github.h3nb.jlmodplus.gles;
 
 import static android.opengl.GLES20.*;
 
-import android.util.Log;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,19 +33,22 @@ public final class PostProcessRenderer {
     private static final int MAX_SOURCE_CHARS = 256 * 1024;
 
     private final ArrayList<Stage> stages = new ArrayList<>();
+    private final ArrayList<EffectTargetPlan.Pass> planPasses = new ArrayList<>();
     private final ArrayList<Target> targets = new ArrayList<>();
     private final Map<String, Program> programs = new HashMap<>();
     private final FloatBuffer quad = ByteBuffer.allocateDirect(16 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private final int maxTextureSize;
-    private long targetBytes;
+    private EffectTargetPlan framePlan;
     private int lastViewportWidth, lastViewportHeight;
+    private int lastContentWidth, lastContentHeight;
     private final Program stock;
 
     private static final class Program {
         int id;
         int position, uv, input, base, inputSize, contentSize, outputSize;
         int texelDelta, pixelDelta, setting, baseScale, baseOffset;
+        int gameSize, displayUvScale, displayUvOffset, contentUvMax;
         final Map<String, Integer> parameters = new HashMap<>();
     }
 
@@ -56,17 +57,16 @@ public final class PostProcessRenderer {
         final EffectEntry entry;
         final EffectCatalog.Pass pass;
         final EffectCatalog.Effect definition;
-        final boolean first, last;
+        final boolean first;
         final float[] legacyValues;
 
         Stage(Program program, EffectEntry entry, EffectCatalog.Pass pass,
-              EffectCatalog.Effect definition, boolean first, boolean last) {
+              EffectCatalog.Effect definition, boolean first) {
             this.program = program;
             this.entry = entry;
             this.pass = pass;
             this.definition = definition;
             this.first = first;
-            this.last = last;
             this.legacyValues = new float[4];
             if (entry.user != null && entry.user.values != null) {
                 for (int i = 0; i < Math.min(4, entry.user.values.size()); i++) {
@@ -78,7 +78,7 @@ public final class PostProcessRenderer {
     }
 
     private static final class Target {
-        int texture, framebuffer, width, height;
+        int texture, framebuffer;
     }
 
     public PostProcessRenderer(List<EffectEntry> configured, File shaderDirectory) throws IOException {
@@ -100,7 +100,7 @@ public final class PostProcessRenderer {
                         Program p = program("builtin/" + pass.fragment, sharedVertex,
                                 asset(pass.fragment));
                         stages.add(new Stage(p, entry, pass, definition,
-                                index == 0, index == definition.passes.size() - 1));
+                                index == 0));
                         index++;
                     }
                 } else {
@@ -115,9 +115,12 @@ public final class PostProcessRenderer {
                             (user.outputResolution || user.upscaling)
                                 ? EffectCatalog.Size.VIEWPORT : EffectCatalog.Size.INPUT,
                             user.upscaling, false);
-                    stages.add(new Stage(p, entry, pass, null, true, true));
+                    stages.add(new Stage(p, entry, pass, null, true));
                 }
                 if (stages.size() > MAX_PASSES) throw new IOException("Too many shader passes");
+            }
+            for (Stage stage : stages) {
+                planPasses.add(new EffectTargetPlan.Pass(stage.pass.size, stage.first));
             }
         } catch (IOException | RuntimeException e) {
             release();
@@ -175,6 +178,10 @@ public final class PostProcessRenderer {
             p.setting = glGetUniformLocation(id, "u_setting");
             p.baseScale = glGetUniformLocation(id, "uBaseUvScale");
             p.baseOffset = glGetUniformLocation(id, "uBaseUvOffset");
+            p.gameSize = glGetUniformLocation(id, "uGameSize");
+            p.displayUvScale = glGetUniformLocation(id, "uDisplayUvScale");
+            p.displayUvOffset = glGetUniformLocation(id, "uDisplayUvOffset");
+            p.contentUvMax = glGetUniformLocation(id, "uContentUvMax");
             programs.put(key, p);
             return p;
         } catch (IOException | RuntimeException e) {
@@ -205,23 +212,33 @@ public final class PostProcessRenderer {
 
     /**
      * @param displayQuad guest screen geometry in NDC, including the cropped original UVs.
+     * @param logicalW guest width before any internal-resolution multiplier
+     * @param logicalH guest height before any internal-resolution multiplier
      * @return true when a post-processing program presented the game image.
      */
     public boolean draw(int sourceTexture, FloatBuffer displayQuad,
                         int textureW, int textureH, int contentW, int contentH,
-                        int hostW, int hostH, int filter) {
+                        int logicalW, int logicalH, int hostW, int hostH, int filter) {
         if (stages.isEmpty() || hostW <= 0 || hostH <= 0) return false;
+        if (textureW <= 0 || textureH <= 0 || contentW <= 0 || contentH <= 0
+                || logicalW <= 0 || logicalH <= 0) return false;
         float left = displayQuad.get(0), right = displayQuad.get(8);
         float top = displayQuad.get(1), bottom = displayQuad.get(5);
         int width = Math.max(1, Math.round(Math.abs(right - left) * hostW * 0.5f));
         int height = Math.max(1, Math.round(Math.abs(top - bottom) * hostH * 0.5f));
-        if (width > maxTextureSize || height > maxTextureSize) {
-            throw new IllegalStateException("Post-processing target exceeds texture size limit");
-        }
-        if (width != lastViewportWidth || height != lastViewportHeight) {
+        if (framePlan == null || width != lastViewportWidth || height != lastViewportHeight
+                || contentW != lastContentWidth || contentH != lastContentHeight) {
+            EffectTargetPlan next = EffectTargetPlan.create(planPasses, contentW, contentH,
+                    width, height, maxTextureSize, MAX_TEMP_BYTES);
             clearTargets();
+            framePlan = next;
+            for (EffectTargetPlan.Slot slot : next.slots) {
+                targets.add(createTarget(slot.width, slot.height));
+            }
             lastViewportWidth = width;
             lastViewportHeight = height;
+            lastContentWidth = contentW;
+            lastContentHeight = contentH;
         }
 
         int current = sourceTexture, inW = textureW, inH = textureH;
@@ -229,7 +246,7 @@ public final class PostProcessRenderer {
         float uMax = (float) contentW / textureW;
         float vMax = (float) contentH / textureH;
         boolean flipped = false;
-        int base = sourceTexture, baseW = textureW, baseH = textureH;
+        int base = sourceTexture;
         float baseU = uMax, baseV = vMax;
         boolean baseFlip = false;
         try {
@@ -240,8 +257,6 @@ public final class PostProcessRenderer {
                 Stage stage = stages.get(i);
                 if (stage.first) {
                     base = current;
-                    baseW = inW;
-                    baseH = inH;
                     baseU = uMax;
                     baseV = vMax;
                     baseFlip = flipped;
@@ -254,8 +269,9 @@ public final class PostProcessRenderer {
                     outW = visibleW;
                     outH = visibleH;
                 }
-                boolean direct = i == stages.size() - 1 && outW == width && outH == height;
-                Target target = direct ? null : target(outW, outH, current, base);
+                int destination = framePlan.destination(i);
+                boolean direct = destination == EffectTargetPlan.DISPLAY;
+                Target target = direct ? null : targets.get(destination);
                 if (direct) {
                     glBindFramebuffer(GL_FRAMEBUFFER, 0);
                     glViewport(0, 0, hostW, hostH);
@@ -267,7 +283,7 @@ public final class PostProcessRenderer {
                 }
                 drawPass(stage.program, stage, current, inW, inH, visibleW, visibleH,
                         uMax, vMax, flipped, base, baseU, baseV, baseFlip,
-                        outW, outH, hostW, hostH, filter,
+                        outW, outH, logicalW, logicalH, hostW, hostH, filter,
                         direct ? left : -1f, direct ? right : 1f,
                         direct ? top : 1f, direct ? bottom : -1f);
                 if (direct) return true;
@@ -284,7 +300,7 @@ public final class PostProcessRenderer {
             glEnable(GL_SCISSOR_TEST);
             drawPass(stock, null, current, inW, inH, visibleW, visibleH,
                     uMax, vMax, flipped, 0, 1f, 1f, true, width, height,
-                    hostW, hostH, filter, left, right, top, bottom);
+                    logicalW, logicalH, hostW, hostH, filter, left, right, top, bottom);
             return true;
         } finally {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -297,7 +313,8 @@ public final class PostProcessRenderer {
     private void drawPass(Program p, Stage stage, int texture, int inputW, int inputH,
                           int visibleW, int visibleH, float uMax, float vMax, boolean flipped,
                           int base, float baseU, float baseV, boolean baseFlip,
-                          int outW, int outH, int hostW, int hostH, int filter,
+                          int outW, int outH, int logicalW, int logicalH,
+                          int hostW, int hostH, int filter,
                           float left, float right, float top, float bottom) {
         glUseProgram(p.id);
         float topUv = flipped ? vMax : 0f, bottomUv = flipped ? 0f : vMax;
@@ -325,6 +342,12 @@ public final class PostProcessRenderer {
         if (p.outputSize >= 0) glUniform2f(p.outputSize, outW, outH);
         if (p.texelDelta >= 0) glUniform2f(p.texelDelta, 1f / inputW, 1f / inputH);
         if (p.pixelDelta >= 0) glUniform2f(p.pixelDelta, 1f / hostW, 1f / hostH);
+        if (p.gameSize >= 0) glUniform2f(p.gameSize, logicalW, logicalH);
+        if (p.displayUvScale >= 0) glUniform2f(p.displayUvScale,
+                1f / uMax, flipped ? -1f / vMax : 1f / vMax);
+        if (p.displayUvOffset >= 0) glUniform2f(p.displayUvOffset,
+                0f, flipped ? 1f : 0f);
+        if (p.contentUvMax >= 0) glUniform2f(p.contentUvMax, uMax, vMax);
         if (stage != null) {
             if (p.setting >= 0) glUniform4fv(p.setting, 1, stage.legacyValues, 0);
             if (stage.definition != null) for (EffectCatalog.Parameter parameter : stage.definition.parameters) {
@@ -355,15 +378,7 @@ public final class PostProcessRenderer {
         glActiveTexture(GL_TEXTURE0);
     }
 
-    private Target target(int w, int h, int current, int original) {
-        for (Target candidate : targets) {
-            if (candidate.width == w && candidate.height == h
-                    && candidate.texture != current && candidate.texture != original)
-                return candidate;
-        }
-        long bytes = 4L * w * h;
-        if (w > maxTextureSize || h > maxTextureSize || targetBytes + bytes > MAX_TEMP_BYTES)
-            throw new IllegalStateException("Post-processing texture budget exceeded");
+    private Target createTarget(int w, int h) {
         Target result = new Target();
         int[] id = new int[1];
         glGenTextures(1, id, 0);
@@ -384,10 +399,6 @@ public final class PostProcessRenderer {
             glDeleteTextures(1, new int[]{result.texture}, 0);
             throw new IllegalStateException("Incomplete post-processing framebuffer");
         }
-        result.width = w;
-        result.height = h;
-        targetBytes += bytes;
-        targets.add(result);
         return result;
     }
 
@@ -397,7 +408,7 @@ public final class PostProcessRenderer {
             glDeleteFramebuffers(1, new int[]{t.framebuffer}, 0);
         }
         targets.clear();
-        targetBytes = 0L;
+        framePlan = null;
     }
 
     public void release() {
@@ -405,5 +416,6 @@ public final class PostProcessRenderer {
         for (Program p : programs.values()) if (p.id != 0) glDeleteProgram(p.id);
         programs.clear();
         stages.clear();
+        planPasses.clear();
     }
 }
