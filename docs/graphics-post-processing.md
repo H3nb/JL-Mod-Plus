@@ -78,7 +78,8 @@ supported device configuration.
 ## Built-in effects and separation of responsibilities
 
 The bundled catalogue consists of CRT EasyMode, LCD, Scanlines Lite, Color
-Adjustment, Vignette, Sharpen, Cartoon Soft and Bloom. The legacy `cartoon` ID
+Adjustment, Vignette, Sharpen, Cartoon Soft, Bloom, Color Depth & Dithering
+and Monochrome Display. The legacy `cartoon` ID
 is retained while its luminance-preserving algorithm improves. CRT has
 primary controls and separately accessible advanced parameters; color
 correction includes gamma, temperature/tint and monochrome.
@@ -103,6 +104,19 @@ minimum mediump range on GLES2 devices without fragment highp. Sharpen and
 Cartoon clamp center and neighbor samples to the valid source rectangle.
 Vignette's strength now reaches its full requested amount at image corners;
 Cartoon Soft bounds edge darkening to its configured strength.
+
+Color Depth & Dithering applies RGB444/RGB565/RGB666 channel quantization,
+optionally using deterministic Bayer 4x4/8x8 ordered dithering. The matrix
+is anchored to logical guest pixels rather than physical display pixels;
+its viewport-stage placement makes it a visual approximation rather than a
+change to the MIDlet's reported display capabilities. Monochrome Display
+offers two/four-tone black-and-white, green and amber LCD-inspired palettes.
+Both are stateless GLES2 passes and preserve the source alpha. Enum-like
+parameters are selected using localized named options, not numeric sliders.
+Catalog descriptions explain the appearance and typical use of every effect.
+Temporal LCD response-time simulation is deliberately not included: it
+requires history textures, explicit timing and surface/context lifecycle
+handling beyond the current stateless pass contract.
 
 Pixel-art reconstruction (xBRZ, MMPX, HQ-style), bitmap/texture filters,
 internal resolution and final display scaling have separate responsibilities.
@@ -134,5 +148,6 @@ Built-in CRT EasyMode is adapted from
 in `THIRD_PARTY_NOTICES.md`; release compliance is a separate review gate.
 LCD is original project code informed by the public-domain LCD3x approach of
 Gigaherz (no LCD3x source copied); Scanlines Lite, Color Adjustment, Vignette,
-Sharpen, Cartoon Soft and Bloom are project-written Apache-2.0 shader sources.
+Sharpen, Cartoon Soft, Bloom, Color Depth & Dithering and Monochrome Display
+are project-written Apache-2.0 shader sources.
 The CRT GPL release compliance review remains mandatory before redistribution.

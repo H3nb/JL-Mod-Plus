@@ -25,11 +25,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -569,15 +572,51 @@ private fun EffectParametersContent(
                         definition.parameters.firstOrNull { it.id == id }
                     } else definition.parameters
                     visible.forEach { parameter ->
-                        EffectParameterSlider(
-                            label = stringResource(parameter.label),
-                            value = entry.parameters[parameter.id] ?: parameter.initial,
-                            minimum = parameter.minimum,
-                            maximum = parameter.maximum,
-                            step = parameter.step,
-                        ) { value ->
-                            onChange(entry.copy(parameters =
-                                entry.parameters + (parameter.id to value)))
+                        val value = entry.parameters[parameter.id] ?: parameter.initial
+                        if (parameter.options.isNotEmpty()) {
+                            val selected = round(value).toInt().coerceIn(
+                                0, parameter.options.lastIndex)
+                            var expanded by remember(entry.key, parameter.id) {
+                                mutableStateOf(false)
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(stringResource(parameter.label),
+                                    style = MaterialTheme.typography.bodyMedium)
+                                Box {
+                                    OutlinedButton(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { expanded = true },
+                                    ) {
+                                        Text(stringResource(parameter.options[selected]))
+                                    }
+                                    DropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false },
+                                    ) {
+                                        parameter.options.forEachIndexed { index, label ->
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(label)) },
+                                                onClick = {
+                                                    expanded = false
+                                                    onChange(entry.copy(parameters =
+                                                        entry.parameters + (parameter.id to index.toFloat())))
+                                                },
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            EffectParameterSlider(
+                                label = stringResource(parameter.label),
+                                value = value,
+                                minimum = parameter.minimum,
+                                maximum = parameter.maximum,
+                                step = parameter.step,
+                            ) { changed ->
+                                onChange(entry.copy(parameters =
+                                    entry.parameters + (parameter.id to changed)))
+                            }
                         }
                     }
                     if (isCrt) {

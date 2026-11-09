@@ -2,6 +2,7 @@
 package io.github.h3nb.jlmodplus.gles;
 
 import io.github.h3nb.jlmodplus.R;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -15,14 +16,18 @@ public final class EffectCatalog {
         public final String id;
         public final int label;
         public final float initial, minimum, maximum, step;
+        /** Discrete values use localized labels instead of an arbitrary numeric slider. */
+        public final List<Integer> options;
 
-        private Parameter(String id, int label, float initial, float minimum, float maximum, float step) {
+        private Parameter(String id, int label, float initial, float minimum, float maximum,
+                          float step, List<Integer> options) {
             this.id = id;
             this.label = label;
             this.initial = initial;
             this.minimum = minimum;
             this.maximum = maximum;
             this.step = step;
+            this.options = options;
         }
     }
 
@@ -56,7 +61,14 @@ public final class EffectCatalog {
     }
 
     private static Parameter param(String id, int label, float def, float min, float max, float step) {
-        return new Parameter(id, label, def, min, max, step);
+        return new Parameter(id, label, def, min, max, step, Collections.emptyList());
+    }
+
+    private static Parameter choice(String id, int label, int selected, int... labels) {
+        ArrayList<Integer> options = new ArrayList<>(labels.length);
+        for (int option : labels) options.add(option);
+        return new Parameter(id, label, selected, 0f, labels.length - 1f, 1f,
+                Collections.unmodifiableList(options));
     }
 
     private static Pass pass(String name, Size size) {
@@ -119,6 +131,22 @@ public final class EffectCatalog {
             new Pass[]{pass("cartoon.fsh", Size.VIEWPORT)}, new Parameter[]{
                 param("uLevels", R.string.effect_color_levels, 8f, 2f, 12f, 1f),
                 param("uEdge", R.string.effect_edge, 0.25f, 0f, 1f, 0.05f)}),
+        new Effect("color-depth", R.string.effect_depth, R.string.effect_depth_desc,
+            new Pass[]{pass("color-depth.fsh", Size.VIEWPORT)}, new Parameter[]{
+                choice("uColorMode", R.string.effect_depth_format, 1,
+                    R.string.effect_depth_rgb444, R.string.effect_depth_rgb565,
+                    R.string.effect_depth_rgb666),
+                choice("uDitherMode", R.string.effect_dither_mode, 1,
+                    R.string.effect_dither_none, R.string.effect_dither_bayer4,
+                    R.string.effect_dither_bayer8),
+                param("uDitherStrength", R.string.effect_dither_strength, 1f, 0f, 1f, 0.05f)}),
+        new Effect("mono-display", R.string.effect_mono_display, R.string.effect_mono_display_desc,
+            new Pass[]{pass("mono-display.fsh", Size.VIEWPORT)}, new Parameter[]{
+                choice("uMonoPalette", R.string.effect_mono_palette, 1,
+                    R.string.effect_mono_bw, R.string.effect_mono_green,
+                    R.string.effect_mono_amber),
+                choice("uToneSteps", R.string.effect_mono_tones, 0,
+                    R.string.effect_mono_two, R.string.effect_mono_four)}),
         new Effect("bloom", R.string.effect_bloom, R.string.effect_bloom_desc,
             new Pass[]{
                 new Pass("bloom-threshold.fsh", Size.HALF_VIEWPORT, Sampling.NEAREST, false),
