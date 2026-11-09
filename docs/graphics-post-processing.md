@@ -84,24 +84,27 @@ is retained while its luminance-preserving algorithm improves. CRT has
 primary controls and separately accessible advanced parameters; color
 correction includes gamma, temperature/tint and monochrome.
 LCD and Scanlines Lite intentionally depend on logical game resolution rather
-than the texture resolution of the preceding pass. Their phase-shifted patterns
-are attenuated by the output-pixel footprint and suppressed where a logical
-pixel is no longer resolvable; this avoids flat stripes at 2x and aliasing
-below 1x. Physical LCD RGB subpixel masks are suppressed when GLES2 fragment
+than the texture resolution of the preceding pass. LCD uses first-harmonic
+footprint attenuation; Scanlines Lite approximates the integral of its
+raised-cosine profile with two samples per output pixel and fades out at 1x
+or smaller, so narrowness affects the filtered result. Both remain
+approximations rather than exact area reconstruction at every scale. Physical LCD RGB subpixel masks are suppressed when GLES2 fragment
 high precision is unavailable.
 
-Bloom extracts highlight contributions from four source samples before the
-half-viewport reduction, then uses bilinear five-fetch/nine-tap Gaussian
-blurs and a bilinearly sampled composite. These Bloom passes explicitly
-choose nearest/linear sampling independent of the user's display texture
-filter; the original image in the composite still uses the user's filter.
-The blur radius scales the fixed Gaussian kernel offsets (exact optimized
-nine-tap Gaussian at 1x radius, an approximate widened kernel otherwise).
-Four extraction samples preserve small highlights at ordinary 2:1 reductions,
-but are not a general-purpose anti-aliasing filter for arbitrarily extreme
-minification. CRT EasyMode protects the Lanczos denominator within the
-minimum mediump range on GLES2 devices without fragment highp. Sharpen and
-Cartoon clamp center and neighbor samples to the valid source rectangle.
+Bloom extracts highlights before downsampling with a 2x2 sampling footprint
+up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. A
+4x4 grid covers source texel centers in aligned 4:1 reductions, but greater
+or fractional ratios are approximations, not lossless highlight preservation.
+Both separable blur passes use a normalized 17-tap discrete Gaussian (nine
+bilinear texture fetches per direction). Radius adjusts Gaussian sigma; CPU
+precomputation of paired weights and offsets per configured effect avoids
+per-fragment exponentials and gaps caused by scaling fixed sample offsets.
+Bloom blur uses GL_LINEAR independently of ScreenFilter; its base composite
+still uses the user's filter but clamps samples to the valid image rectangle.
+Other bundled effects also clamp reads against input padding, including
+the final identity pass. Legacy user INI shaders retain their released
+sampling semantics. CRT EasyMode protects the Lanczos denominator within
+the minimum mediump range on GLES2 devices without fragment highp.
 Vignette's strength now reaches its full requested amount at image corners;
 Cartoon Soft bounds edge darkening to its configured strength.
 

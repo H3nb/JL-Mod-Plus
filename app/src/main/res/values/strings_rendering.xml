@@ -158,7 +158,7 @@
     <string name="effect_lcd_brightness">LCD brightness</string>
     <string name="effect_scanlines">Scanlines Lite</string>
     <string name="effect_scanlines_desc">Adds subtle horizontal dark lines for a classic CRT or arcade-style appearance.</string>
-    <string name="effect_line_width">Line thickness</string>
+    <string name="effect_line_width">Line narrowness</string>
     <string name="effect_gamma">Gamma</string>
     <string name="effect_temperature">Temperature</string>
     <string name="effect_tint">Tint</string>

@@ -7,10 +7,14 @@ precision mediump float;
 #endif
 varying vec2 v_texcoord0;
 uniform sampler2D sampler0;
+uniform vec2 uInputSize, uContentUvMax;
 uniform float uMonoPalette, uToneSteps;
 
 void main() {
-    vec4 source = texture2D(sampler0, v_texcoord0);
+    vec2 halfTexel = vec2(0.5) / uInputSize;
+    vec2 sampleUv = clamp(v_texcoord0, halfTexel,
+        max(halfTexel, uContentUvMax - halfTexel));
+    vec4 source = texture2D(sampler0, sampleUv);
     vec3 ink = vec3(0.035);
     vec3 paper = vec3(0.96);
     if (uMonoPalette > 0.5 && uMonoPalette < 1.5) {

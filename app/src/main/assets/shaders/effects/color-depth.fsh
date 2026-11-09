@@ -7,6 +7,7 @@ precision mediump float;
 #endif
 varying vec2 v_texcoord0;
 uniform sampler2D sampler0;
+uniform vec2 uInputSize, uContentUvMax;
 uniform vec2 uDisplayUvScale, uDisplayUvOffset, uGameSize;
 uniform float uColorMode, uDitherMode, uDitherStrength;
 
@@ -32,7 +33,10 @@ float ditherOffset(vec2 pixel) {
 }
 
 void main() {
-    vec4 source = texture2D(sampler0, v_texcoord0);
+    vec2 halfTexel = vec2(0.5) / uInputSize;
+    vec2 sampleUv = clamp(v_texcoord0, halfTexel,
+        max(halfTexel, uContentUvMax - halfTexel));
+    vec4 source = texture2D(sampler0, sampleUv);
     vec2 displayUv = v_texcoord0 * uDisplayUvScale + uDisplayUvOffset;
     vec3 maxCode = uColorMode < 0.5 ? vec3(15.0) :
                    (uColorMode < 1.5 ? vec3(31.0, 63.0, 31.0) : vec3(63.0));

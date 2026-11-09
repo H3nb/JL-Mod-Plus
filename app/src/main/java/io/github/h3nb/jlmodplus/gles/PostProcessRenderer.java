@@ -49,6 +49,7 @@ public final class PostProcessRenderer {
         int position, uv, input, base, inputSize, contentSize, outputSize;
         int texelDelta, pixelDelta, setting, baseScale, baseOffset;
         int gameSize, displayUvScale, displayUvOffset, contentUvMax;
+        int baseSize, baseUvMax, blurCenter, blurWeights, blurOffsets;
         final Map<String, Integer> parameters = new HashMap<>();
     }
 
@@ -59,6 +60,7 @@ public final class PostProcessRenderer {
         final EffectCatalog.Effect definition;
         final boolean first;
         final float[] legacyValues;
+        final BlurKernel blurKernel;
 
         Stage(Program program, EffectEntry entry, EffectCatalog.Pass pass,
               EffectCatalog.Effect definition, boolean first) {
@@ -68,6 +70,18 @@ public final class PostProcessRenderer {
             this.definition = definition;
             this.first = first;
             this.legacyValues = new float[4];
+            BlurKernel kernel = null;
+            if (definition != null && pass.fragment.startsWith("bloom-blur-")) {
+                float radius = 1f;
+                for (EffectCatalog.Parameter parameter : definition.parameters) {
+                    if ("uRadius".equals(parameter.id)) {
+                        radius = effectiveParameter(entry, parameter);
+                        break;
+                    }
+                }
+                kernel = new BlurKernel(radius);
+            }
+            this.blurKernel = kernel;
             if (entry.user != null && entry.user.values != null) {
                 for (int i = 0; i < Math.min(4, entry.user.values.size()); i++) {
                     Float value = entry.user.values.get(i);
@@ -75,6 +89,40 @@ public final class PostProcessRenderer {
                 }
             }
         }
+    }
+
+    /** CPU-side Gaussian weights: computed once, then uploaded as uniforms each frame. */
+    private static final class BlurKernel {
+        final float center;
+        final float[] weights = new float[4];
+        final float[] offsets = new float[4];
+
+        BlurKernel(float radius) {
+            // sigma=1.8 at Radius 1 approximates the previous default blur.
+            // Fixed +/-8 texel support avoids gaps when the radius grows.
+            double sigma = 1.8 * radius;
+            double[] samples = new double[9];
+            double sum = 0.0;
+            for (int i = 0; i < samples.length; i++) {
+                samples[i] = Math.exp(-0.5 * i * i / (sigma * sigma));
+                sum += i == 0 ? samples[i] : 2.0 * samples[i];
+            }
+            center = (float) (samples[0] / sum);
+            for (int i = 0; i < 4; i++) {
+                int near = 2 * i + 1;
+                int far = near + 1;
+                double pair = samples[near] + samples[far];
+                weights[i] = (float) (pair / sum);
+                offsets[i] = (float) ((samples[near] * near + samples[far] * far) / pair);
+            }
+        }
+    }
+
+    private static float effectiveParameter(EffectEntry entry, EffectCatalog.Parameter parameter) {
+        Float override = entry.parameters.get(parameter.id);
+        float value = override != null && !Float.isNaN(override) && !Float.isInfinite(override)
+                ? override : parameter.initial;
+        return Math.max(parameter.minimum, Math.min(parameter.maximum, value));
     }
 
     private static final class Target {
@@ -187,6 +235,11 @@ public final class PostProcessRenderer {
             p.displayUvScale = glGetUniformLocation(id, "uDisplayUvScale");
             p.displayUvOffset = glGetUniformLocation(id, "uDisplayUvOffset");
             p.contentUvMax = glGetUniformLocation(id, "uContentUvMax");
+            p.baseSize = glGetUniformLocation(id, "uBaseSize");
+            p.baseUvMax = glGetUniformLocation(id, "uBaseUvMax");
+            p.blurCenter = glGetUniformLocation(id, "uBlurCenter");
+            p.blurWeights = glGetUniformLocation(id, "uBlurWeights");
+            p.blurOffsets = glGetUniformLocation(id, "uBlurOffsets");
             programs.put(key, p);
             return p;
         } catch (IOException | RuntimeException e) {
@@ -253,6 +306,7 @@ public final class PostProcessRenderer {
         boolean flipped = false;
         int base = sourceTexture;
         float baseU = uMax, baseV = vMax;
+        int baseW = inW, baseH = inH;
         boolean baseFlip = false;
         try {
             glDisable(GL_BLEND);
@@ -264,6 +318,8 @@ public final class PostProcessRenderer {
                     base = current;
                     baseU = uMax;
                     baseV = vMax;
+                    baseW = inW;
+                    baseH = inH;
                     baseFlip = flipped;
                 }
                 int outW = width, outH = height;
@@ -287,7 +343,7 @@ public final class PostProcessRenderer {
                     glDisable(GL_SCISSOR_TEST);
                 }
                 drawPass(stage.program, stage, current, inW, inH, visibleW, visibleH,
-                        uMax, vMax, flipped, base, baseU, baseV, baseFlip,
+                        uMax, vMax, flipped, base, baseU, baseV, baseW, baseH, baseFlip,
                         outW, outH, logicalW, logicalH, hostW, hostH, filter,
                         direct ? left : -1f, direct ? right : 1f,
                         direct ? top : 1f, direct ? bottom : -1f);
@@ -304,7 +360,7 @@ public final class PostProcessRenderer {
             glViewport(0, 0, hostW, hostH);
             glEnable(GL_SCISSOR_TEST);
             drawPass(stock, null, current, inW, inH, visibleW, visibleH,
-                    uMax, vMax, flipped, 0, 1f, 1f, true, width, height,
+                    uMax, vMax, flipped, 0, 1f, 1f, 1, 1, true, width, height,
                     logicalW, logicalH, hostW, hostH, filter, left, right, top, bottom);
             return true;
         } finally {
@@ -317,7 +373,8 @@ public final class PostProcessRenderer {
 
     private void drawPass(Program p, Stage stage, int texture, int inputW, int inputH,
                           int visibleW, int visibleH, float uMax, float vMax, boolean flipped,
-                          int base, float baseU, float baseV, boolean baseFlip,
+                          int base, float baseU, float baseV, int baseW, int baseH,
+                          boolean baseFlip,
                           int outW, int outH, int logicalW, int logicalH,
                           int hostW, int hostH, int filter,
                           float left, float right, float top, float bottom) {
@@ -357,12 +414,16 @@ public final class PostProcessRenderer {
         if (p.displayUvOffset >= 0) glUniform2f(p.displayUvOffset,
                 0f, flipped ? 1f : 0f);
         if (p.contentUvMax >= 0) glUniform2f(p.contentUvMax, uMax, vMax);
+        if (stage != null && stage.blurKernel != null) {
+            BlurKernel kernel = stage.blurKernel;
+            if (p.blurCenter >= 0) glUniform1f(p.blurCenter, kernel.center);
+            if (p.blurWeights >= 0) glUniform4fv(p.blurWeights, 1, kernel.weights, 0);
+            if (p.blurOffsets >= 0) glUniform4fv(p.blurOffsets, 1, kernel.offsets, 0);
+        }
         if (stage != null) {
             if (p.setting >= 0) glUniform4fv(p.setting, 1, stage.legacyValues, 0);
             if (stage.definition != null) for (EffectCatalog.Parameter parameter : stage.definition.parameters) {
-                Float override = stage.entry.parameters.get(parameter.id);
-                float value = override != null && !Float.isNaN(override) && !Float.isInfinite(override) ? override : parameter.initial;
-                value = Math.max(parameter.minimum, Math.min(parameter.maximum, value));
+                float value = effectiveParameter(stage.entry, parameter);
                 Integer location = p.parameters.get(parameter.id);
                 if (location == null) {
                     location = glGetUniformLocation(p.id, parameter.id);
@@ -376,6 +437,8 @@ public final class PostProcessRenderer {
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
                 if (p.base >= 0) glUniform1i(p.base, 1);
+                if (p.baseSize >= 0) glUniform2f(p.baseSize, baseW, baseH);
+                if (p.baseUvMax >= 0) glUniform2f(p.baseUvMax, baseU, baseV);
                 // The blurred input is a top-left-aligned framebuffer texture.
                 if (p.baseScale >= 0) glUniform2f(p.baseScale, baseU, baseFlip ? baseV : -baseV);
                 if (p.baseOffset >= 0) glUniform2f(p.baseOffset, 0f, baseFlip ? 0f : baseV);

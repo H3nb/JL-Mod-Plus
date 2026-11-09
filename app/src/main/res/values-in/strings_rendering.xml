@@ -157,7 +157,7 @@
     <string name="effect_lcd_brightness">Kecerahan LCD</string>
     <string name="effect_scanlines">Scanlines Lite</string>
     <string name="effect_scanlines_desc">Menambahkan garis gelap horizontal yang halus untuk tampilan retro CRT atau arcade.</string>
-    <string name="effect_line_width">Ketebalan garis</string>
+    <string name="effect_line_width">Kerampingan garis</string>
     <string name="effect_gamma">Gamma</string>
     <string name="effect_temperature">Temperatur warna</string>
     <string name="effect_tint">Rona warna</string>

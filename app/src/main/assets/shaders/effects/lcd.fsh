@@ -8,6 +8,7 @@ precision mediump float;
 #endif
 varying vec2 v_texcoord0;
 uniform sampler2D sampler0;
+uniform vec2 uInputSize, uContentUvMax;
 uniform vec2 uDisplayUvScale, uDisplayUvOffset;
 uniform vec2 uGameSize, uOutputSize;
 uniform float uGridStrength, uSubpixelStrength, uLcdBrightness;
@@ -23,7 +24,10 @@ float resolvedPattern(float guestPixelsPerOutputPixel) {
 
 void main() {
     vec2 screenUv = v_texcoord0 * uDisplayUvScale + uDisplayUvOffset;
-    vec4 source = texture2D(sampler0, v_texcoord0);
+    vec2 halfTexel = vec2(0.5) / uInputSize;
+    vec2 sampleUv = clamp(v_texcoord0, halfTexel,
+        max(halfTexel, uContentUvMax - halfTexel));
+    vec4 source = texture2D(sampler0, sampleUv);
     vec2 logicalPixel = screenUv * uGameSize;
     vec2 coverage = vec2(resolvedPattern(uGameSize.x / uOutputSize.x),
                          resolvedPattern(uGameSize.y / uOutputSize.y));
