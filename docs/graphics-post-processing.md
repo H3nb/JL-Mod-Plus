@@ -100,27 +100,27 @@ derived from the former GPL EasyMode shader. The unreleased prototype ID
 profiles; old unsupported advanced settings are ignored.
 Color correction includes gamma, temperature/tint and monochrome.
 LCD and Scanlines Lite intentionally depend on logical game resolution rather
-than the texture resolution of the preceding pass. LCD uses first-harmonic
-footprint attenuation; Scanlines Lite approximates the integral of its
-raised-cosine profile with two samples per output pixel and fades out at 1x
-or smaller, so narrowness affects the filtered result. Both remain
-approximations rather than exact area reconstruction at every scale. On GLES2 devices without fragment highp, LCD RGB triads use the smaller
+than the texture resolution of the preceding pass. LCD integrates both harmonics of its squared-cosine grid analytically over
+each output pixel. Grid visibility deliberately fades to zero near 1x.
+Scanlines Lite uses three-point Gauss-Legendre quadrature on its raised-cosine
+profile and also fades at 1x; very narrow lines remain approximations. On GLES2 devices without fragment highp, LCD RGB triads use the smaller
 logical-pixel coordinate space to keep the mask functional, with coarser
 spatial detail than on highp devices.
 
 Bloom extracts highlights before downsampling with a 2x2 sampling footprint
-up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. The Bloom intermediate size grows beyond half the viewport when the
-incoming effect image would otherwise exceed a 4:1 reduction (up to
-the full viewport size). A 4x4 grid covers source texel centers in aligned
-4:1 reductions, but greater or fractional ratios are approximations,
-not lossless highlight preservation. The larger targets remain subject
-to the GPU memory budget.
+up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. Bloom intermediates use one shared scale on both axes: one-third of the
+viewport for low-resolution J2ME sources, increasing toward full viewport
+where required to limit bright-pass minification to 4:1. A 4x4 sampling
+grid covers aligned 4:1 reductions; fractional or more extreme ratios
+remain approximations. The target budget still applies to every FBO.
 Both separable blur passes use a normalized 17-tap discrete Gaussian (nine
-bilinear texture fetches per direction). Radius adjusts Gaussian sigma; CPU
-precomputation of paired weights and offsets per configured effect avoids
-per-fragment exponentials and gaps caused by scaling fixed sample offsets.
-The +/-8-texel blur support limits effective spread at extreme radius;
-a wider kernel would substantially raise GPU bandwidth on low-end devices.
+bilinear texture fetches per direction). Radius controls Gaussian sigma corrected for the intermediate-to-output
+resolution ratio, preserving approximately the same screen-space blur width
+as the former half-viewport implementation. Paired weights/offsets are
+recomputed on the CPU only when the relevant target scale changes, never
+per GPU pixel. The +/-8-texel support still limits radius at the upper
+extreme for high-resolution sources that need larger intermediates;
+a wider kernel would increase GPU bandwidth on low-end devices.
 Bloom blur uses GL_LINEAR independently of ScreenFilter; its base composite
 still uses the user's filter but clamps samples to the valid image rectangle.
 Other bundled effects also clamp reads against input padding, including

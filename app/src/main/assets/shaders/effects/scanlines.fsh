@@ -23,12 +23,14 @@ void main() {
     vec4 source = texture2D(sampler0, safeUv);
     vec2 uv = v_texcoord0 * uDisplayUvScale + uDisplayUvOffset;
     float pixelFootprint = uGameSize.y / uOutputSize.y;
-    // Two-point subpixel integration filters the raised scanline profile,
-    // not just its first cosine harmonic. Fade away when unresolvable at 1x.
+    // Three-point Gauss-Legendre sampling reduces aliasing from narrow lines
+    // without any additional texture reads.
     float visibility = clamp(2.0 * (1.0 - pixelFootprint), 0.0, 1.0);
     float row = uv.y * uGameSize.y;
-    float coverage = 0.5 * (lineCoverage(row - 0.25 * pixelFootprint) +
-                            lineCoverage(row + 0.25 * pixelFootprint));
+    float offset = 0.3872983346 * pixelFootprint;
+    float coverage = (5.0 / 18.0) *
+        (lineCoverage(row - offset) + lineCoverage(row + offset))
+        + (4.0 / 9.0) * lineCoverage(row);
     float darkness = uLineStrength * visibility * coverage;
     gl_FragColor = vec4(source.rgb * (1.0 - darkness), source.a);
 }

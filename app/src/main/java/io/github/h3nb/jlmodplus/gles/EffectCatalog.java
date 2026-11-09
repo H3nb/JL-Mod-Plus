@@ -9,7 +9,7 @@ import java.util.List;
 
 /** APK-owned effect definitions. Neither profile state nor GL resources live here. */
 public final class EffectCatalog {
-    public enum Size { INPUT, VIEWPORT, HALF_VIEWPORT }
+    public enum Size { INPUT, VIEWPORT, REDUCED_VIEWPORT }
     public enum Sampling { DISPLAY, NEAREST, LINEAR }
 
     public static final class Parameter {
@@ -136,9 +136,9 @@ public final class EffectCatalog {
                     R.string.effect_mono_two, R.string.effect_mono_four)}),
         new Effect("bloom", R.string.effect_bloom, R.string.effect_bloom_desc,
             new Pass[]{
-                new Pass("bloom-threshold.fsh", Size.HALF_VIEWPORT, Sampling.NEAREST, false),
-                linear("bloom-blur-h.fsh", Size.HALF_VIEWPORT),
-                linear("bloom-blur-v.fsh", Size.HALF_VIEWPORT),
+                new Pass("bloom-threshold.fsh", Size.REDUCED_VIEWPORT, Sampling.NEAREST, false),
+                linear("bloom-blur-h.fsh", Size.REDUCED_VIEWPORT),
+                linear("bloom-blur-v.fsh", Size.REDUCED_VIEWPORT),
                 new Pass("bloom-composite.fsh", Size.VIEWPORT, Sampling.LINEAR, true)
             }, new Parameter[]{
                 param("uThreshold", R.string.effect_threshold, 0.72f, 0.1f, 0.98f, 0.02f),

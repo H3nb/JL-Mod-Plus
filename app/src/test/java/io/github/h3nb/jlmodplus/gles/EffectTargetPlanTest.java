@@ -30,18 +30,18 @@ class EffectTargetPlanTest {
     }
 
     @Test
-    void bloomPreservesOriginalInputAndReusesHalfResolutionTargets() {
+    void bloomPreservesOriginalInputAndReusesReducedResolutionTargets() {
         List<EffectTargetPlan.Pass> bloomAndColor = Arrays.asList(
-            first(EffectCatalog.Size.HALF_VIEWPORT),
-            next(EffectCatalog.Size.HALF_VIEWPORT),
-            next(EffectCatalog.Size.HALF_VIEWPORT),
+            first(EffectCatalog.Size.REDUCED_VIEWPORT),
+            next(EffectCatalog.Size.REDUCED_VIEWPORT),
+            next(EffectCatalog.Size.REDUCED_VIEWPORT),
             next(EffectCatalog.Size.VIEWPORT),
             first(EffectCatalog.Size.VIEWPORT));
         EffectTargetPlan plan = EffectTargetPlan.create(
             bloomAndColor, 240, 320, 1080, 1920, 4096, BUDGET);
         assertEquals(3, plan.slots.size());
-        assertEquals(540, plan.slots.get(0).width);
-        assertEquals(960, plan.slots.get(0).height);
+        assertEquals(360, plan.slots.get(0).width);
+        assertEquals(640, plan.slots.get(0).height);
         assertEquals(1080, plan.slots.get(2).width);
         assertEquals(1920, plan.slots.get(2).height);
         assertEquals(0, plan.destination(0));
@@ -54,17 +54,28 @@ class EffectTargetPlanTest {
     @Test
     void bloomKeepsReductionAtMostFourToOneWhenViewportAllows() {
         EffectTargetPlan plan = EffectTargetPlan.create(List.of(
-            first(EffectCatalog.Size.HALF_VIEWPORT),
-            next(EffectCatalog.Size.HALF_VIEWPORT),
-            next(EffectCatalog.Size.HALF_VIEWPORT),
+            first(EffectCatalog.Size.REDUCED_VIEWPORT),
+            next(EffectCatalog.Size.REDUCED_VIEWPORT),
+            next(EffectCatalog.Size.REDUCED_VIEWPORT),
             next(EffectCatalog.Size.VIEWPORT)),
             2400, 3200, 1080, 1920, 4096, BUDGET);
         assertEquals(2, plan.slots.size());
         assertEquals(600, plan.slots.get(0).width);
-        assertEquals(960, plan.slots.get(0).height);
+        assertEquals(1067, plan.slots.get(0).height);
         assertEquals(600, plan.slots.get(1).width);
-        assertEquals(960, plan.slots.get(1).height);
+        assertEquals(1067, plan.slots.get(1).height);
         assertEquals(EffectTargetPlan.DISPLAY, plan.destination(3));
+    }
+
+    @Test
+    void bloomKeepsIsotropicScaleAndLimitsMinification() {
+        assertEquals(1.0 / 3.0,
+                EffectTargetPlan.bloomScale(1080, 1920, 240, 320), 1e-12);
+        assertEquals(1.0,
+                EffectTargetPlan.bloomScale(1080, 1920, 6000, 8000), 1e-12);
+        double scale = EffectTargetPlan.bloomScale(1080, 1920, 2400, 3200);
+        assertEquals(600, EffectTargetPlan.bloomSize(1080, scale));
+        assertEquals(1067, EffectTargetPlan.bloomSize(1920, scale));
     }
 
     @Test

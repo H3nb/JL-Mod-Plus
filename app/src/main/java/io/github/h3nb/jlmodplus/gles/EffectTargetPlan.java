@@ -40,10 +40,19 @@ final class EffectTargetPlan {
 
     int destination(int pass) { return destinations[pass]; }
 
-    /** Avoid losing single bright texels when a high-resolution guest is reduced for Bloom. */
-    static int bloomSize(int viewport, int effectInput) {
-        return Math.max(1, Math.max(viewport / 2,
-                Math.min(viewport, ((effectInput - 1) / 4) + 1)));
+    /**
+     * Keep the reduced Bloom target isotropic. One-third of the viewport is
+     * sufficient for small-radius blur, while high-resolution inputs may
+     * require more texels to stay within 4:1 bright-pass minification.
+     */
+    static double bloomScale(int viewportW, int viewportH, int inputW, int inputH) {
+        double needed = Math.max(inputW / (4.0 * viewportW),
+                inputH / (4.0 * viewportH));
+        return Math.min(1.0, Math.max(1.0 / 3.0, needed));
+    }
+
+    static int bloomSize(int viewport, double scale) {
+        return Math.max(1, Math.min(viewport, (int) Math.ceil(viewport * scale)));
     }
 
     static EffectTargetPlan create(List<Pass> passes, int contentW, int contentH,
@@ -56,19 +65,18 @@ final class EffectTargetPlan {
         int[] destinations = new int[passes.size()];
         int current = DISPLAY, effectBase = DISPLAY;
         int visibleW = contentW, visibleH = contentH;
-        int effectInputW = contentW, effectInputH = contentH;
+        double reducedScale = bloomScale(viewportW, viewportH, contentW, contentH);
         long allocatedBytes = 0L;
         for (int i = 0; i < passes.size(); i++) {
             Pass pass = passes.get(i);
             if (pass.first) {
                 effectBase = current;
-                effectInputW = visibleW;
-                effectInputH = visibleH;
+                reducedScale = bloomScale(viewportW, viewportH, visibleW, visibleH);
             }
             int outW = viewportW, outH = viewportH;
-            if (pass.size == EffectCatalog.Size.HALF_VIEWPORT) {
-                outW = bloomSize(viewportW, effectInputW);
-                outH = bloomSize(viewportH, effectInputH);
+            if (pass.size == EffectCatalog.Size.REDUCED_VIEWPORT) {
+                outW = bloomSize(viewportW, reducedScale);
+                outH = bloomSize(viewportH, reducedScale);
             } else if (pass.size == EffectCatalog.Size.INPUT) {
                 outW = visibleW;
                 outH = visibleH;

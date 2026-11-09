@@ -15,11 +15,17 @@ uniform float uGridStrength, uSubpixelStrength, uLcdBrightness;
 const float PI = 3.14159265359;
 const float TWO_PI = 6.28318530718;
 
-float resolvedPattern(float guestPixelsPerOutputPixel) {
-    // A pixel-integrated first harmonic: do not alias a subpixel grid at 1x.
-    float x = PI * guestPixelsPerOutputPixel;
-    return guestPixelsPerOutputPixel >= 1.0 ? 0.0 :
-        clamp(x < 0.001 ? 1.0 : sin(x) / x, 0.0, 1.0);
+float filteredGridBorder(float guestPixel, float footprint) {
+    if (footprint >= 1.0) return 0.0;
+    // (0.5 + 0.5*cos(t))^2 = 3/8 + cos(t)/2 + cos(2*t)/8.
+    // Integrate both harmonics over one output pixel.
+    float x = PI * footprint;
+    float first = x < 0.001 ? 1.0 : sin(x) / x;
+    float phase = cos(TWO_PI * (guestPixel - 0.75));
+    float average = 0.375 + 0.5 * first * phase
+        + 0.125 * first * cos(x) * (2.0 * phase * phase - 1.0);
+    float visibility = clamp(2.0 * (1.0 - footprint), 0.0, 1.0);
+    return clamp(average * visibility, 0.0, 1.0);
 }
 
 void main() {
@@ -29,12 +35,9 @@ void main() {
         max(halfTexel, uContentUvMax - halfTexel));
     vec4 source = texture2D(sampler0, sampleUv);
     vec2 logicalPixel = screenUv * uGameSize;
-    vec2 coverage = vec2(resolvedPattern(uGameSize.x / uOutputSize.x),
-                         resolvedPattern(uGameSize.y / uOutputSize.y));
-    // Place the dark border on the final subpixel row/column. A symmetric
-    // boundary-centered cosine samples as flat gray at an integer 2x scale.
-    vec2 border = 0.5 + 0.5 * cos(TWO_PI * (logicalPixel - vec2(0.75)));
-    border = coverage * border * border;
+    vec2 border = vec2(
+        filteredGridBorder(logicalPixel.x, uGameSize.x / uOutputSize.x),
+        filteredGridBorder(logicalPixel.y, uGameSize.y / uOutputSize.y));
     float grid = 1.0 - uGridStrength *
         (1.0 - (1.0 - border.x) * (1.0 - border.y));
     // On mediump-only GLES2, a logical-pixel triad avoids large coordinates

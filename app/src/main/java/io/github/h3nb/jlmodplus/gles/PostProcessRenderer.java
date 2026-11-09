@@ -60,7 +60,9 @@ public final class PostProcessRenderer {
         final EffectCatalog.Effect definition;
         final boolean first;
         final float[] legacyValues;
-        final BlurKernel blurKernel;
+        final float blurRadius;
+        BlurKernel blurKernel;
+        float cachedBlurScale = Float.NaN;
 
         Stage(Program program, EffectEntry entry, EffectCatalog.Pass pass,
               EffectCatalog.Effect definition, boolean first) {
@@ -70,18 +72,17 @@ public final class PostProcessRenderer {
             this.definition = definition;
             this.first = first;
             this.legacyValues = new float[4];
-            BlurKernel kernel = null;
+            float radius = 0f;
             if (definition != null && pass.fragment.startsWith("bloom-blur-")) {
-                float radius = 1f;
+                radius = 1f;
                 for (EffectCatalog.Parameter parameter : definition.parameters) {
                     if ("uRadius".equals(parameter.id)) {
                         radius = effectiveParameter(entry, parameter);
                         break;
                     }
                 }
-                kernel = new BlurKernel(radius);
             }
-            this.blurKernel = kernel;
+            this.blurRadius = radius;
             if (entry.user != null && entry.user.values != null) {
                 for (int i = 0; i < Math.min(4, entry.user.values.size()); i++) {
                     Float value = entry.user.values.get(i);
@@ -302,7 +303,8 @@ public final class PostProcessRenderer {
 
         int current = sourceTexture, inW = textureW, inH = textureH;
         int visibleW = contentW, visibleH = contentH;
-        int effectInputW = contentW, effectInputH = contentH;
+        double reducedScale = EffectTargetPlan.bloomScale(
+                width, height, contentW, contentH);
         float uMax = (float) contentW / textureW;
         float vMax = (float) contentH / textureH;
         boolean flipped = false;
@@ -317,8 +319,8 @@ public final class PostProcessRenderer {
             for (int i = 0; i < stages.size(); i++) {
                 Stage stage = stages.get(i);
                 if (stage.first) {
-                    effectInputW = visibleW;
-                    effectInputH = visibleH;
+                    reducedScale = EffectTargetPlan.bloomScale(
+                            width, height, visibleW, visibleH);
                     base = current;
                     baseU = uMax;
                     baseV = vMax;
@@ -327,12 +329,22 @@ public final class PostProcessRenderer {
                     baseFlip = flipped;
                 }
                 int outW = width, outH = height;
-                if (stage.pass.size == EffectCatalog.Size.HALF_VIEWPORT) {
-                    outW = EffectTargetPlan.bloomSize(width, effectInputW);
-                    outH = EffectTargetPlan.bloomSize(height, effectInputH);
+                if (stage.pass.size == EffectCatalog.Size.REDUCED_VIEWPORT) {
+                    outW = EffectTargetPlan.bloomSize(width, reducedScale);
+                    outH = EffectTargetPlan.bloomSize(height, reducedScale);
                 } else if (stage.pass.size == EffectCatalog.Size.INPUT) {
                     outW = visibleW;
                     outH = visibleH;
+                }
+                if (stage.blurRadius > 0f) {
+                    // Keep the output-space blur width stable as the FBO resolution changes.
+                    float footprint = stage.pass.fragment.equals("bloom-blur-h.fsh")
+                            ? (float) outW / width : (float) outH / height;
+                    float blurScale = 2f * footprint;
+                    if (stage.blurKernel == null || stage.cachedBlurScale != blurScale) {
+                        stage.blurKernel = new BlurKernel(stage.blurRadius * blurScale);
+                        stage.cachedBlurScale = blurScale;
+                    }
                 }
                 int destination = framePlan.destination(i);
                 boolean direct = destination == EffectTargetPlan.DISPLAY;
