@@ -2,7 +2,7 @@
   "ffmpeg": {
     "version": "8.1.3",
     "archive": "ffmpeg-8.1.3.tar.xz",
-    "url": "https://ffmpeg.org/releases/ffmpeg-8.1.3.tar.xz",
+    "url": "https://mirror.math.princeton.edu/pub/macports/distfiles/ffmpeg/ffmpeg-8.1.3.tar.xz",
     "sha256": "7138D28C96D9D3E3AF4EE3D8CAD72741F8FFB40DA90C1112235DEA3ECD3178A3"
   },
   "opencore": {

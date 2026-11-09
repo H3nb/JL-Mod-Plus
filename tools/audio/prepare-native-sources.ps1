@@ -23,7 +23,29 @@ function FetchPinned($entry){
  $temporary="$archive.download-$PID"
  if(Test-Path -LiteralPath $temporary){Remove-Item -Force -LiteralPath $temporary}
  try{
-  Invoke-WebRequest -Uri $entry.url -OutFile $temporary
+  # Invoke-WebRequest's built-in retries handle HTTP responses, not every
+  # interrupted transport (for example, a connection reset mid-download).
+  for($attempt=1;$attempt -le 3;$attempt++){
+   if(Test-Path -LiteralPath $temporary){Remove-Item -Force -LiteralPath $temporary}
+   try{
+    Invoke-WebRequest -Uri $entry.url -OutFile $temporary
+    break
+   }catch{
+    $status=$null
+    if($_.Exception.Response -and $_.Exception.Response.StatusCode){
+     $status=[int]$_.Exception.Response.StatusCode
+    }elseif($_.Exception.StatusCode){
+     $status=[int]$_.Exception.StatusCode
+    }
+    # Retry transport errors, timeout/rate-limit responses, and server errors;
+    # fail immediately for other HTTP responses (e.g. 404/403).
+    $retryable=($null -eq $status -or $status -eq 408 -or $status -eq 429 -or ($status -ge 500 -and $status -le 599))
+    if(!$retryable -or $attempt -eq 3){throw}
+    $delay=2*$attempt
+    Write-Warning ("Download from {0} interrupted (attempt {1}/3); retrying in {2}s: {3}" -f ([uri]$entry.url).Host,$attempt,$delay,$_.Exception.Message)
+    Start-Sleep -Seconds $delay
+   }
+  }
   $actual=(Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash.ToUpperInvariant()
   if($actual -ne $expected){throw "Checksum mismatch: $temporary"}
   Move-Item -LiteralPath $temporary -Destination $archive
