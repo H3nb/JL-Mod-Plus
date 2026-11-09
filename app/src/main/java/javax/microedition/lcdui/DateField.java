@@ -225,7 +225,8 @@ public class DateField extends Item {
                     snapshot = (Calendar) calendar.clone();
                 }
                 datePicker.init(snapshot.get(Calendar.YEAR), snapshot.get(Calendar.MONTH),
-                        snapshot.get(Calendar.DAY_OF_MONTH), this::onUserDate);
+                        snapshot.get(Calendar.DAY_OF_MONTH), (picker, year, month, day) ->
+                                onUserDate(year, month, day));
                 timePicker.setCurrentHour(snapshot.get(Calendar.HOUR_OF_DAY));
                 timePicker.setCurrentMinute(snapshot.get(Calendar.MINUTE));
                 timePicker.setOnTimeChangedListener((picker, hour, minute) ->
