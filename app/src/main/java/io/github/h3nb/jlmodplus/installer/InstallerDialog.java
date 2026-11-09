@@ -62,17 +62,6 @@ public class InstallerDialog extends DialogFragment {
 	private static final String ARG_STORAGE_KEY = "InstallerDialog.storageKey";
 	private static final long NO_GENERATION = Long.MIN_VALUE;
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
-	/** Android picker is used only when another provider supplied a JAD without JAR access. */
-	private final ActivityResultLauncher<String> companionJarPicker = registerForActivityResult(
-			new ActivityResultContracts.GetContent(), selected -> {
-				if (selected == null || !isAdded() || installer == null
-						|| cancelRequested || operationRunning || destroyed) return;
-				AppInstaller active = installer;
-				composeController.showLoading(installerTitle, getString(R.string.loading_info));
-				runInstaller(emitter -> active.loadSelectedExternalJar(selected, emitter));
-			});
-
-
 	private LibraryViewModel libraryViewModel;
 	private AppInstaller installer;
 	private InstallerComposeController composeController;
@@ -87,6 +76,18 @@ public class InstallerDialog extends DialogFragment {
 	private boolean cancelRequested;
 	private volatile boolean destroyed;
 	private volatile boolean workerExecuting;
+
+	/** Android picker is used only when another provider supplied a JAD without JAR access. */
+	private final ActivityResultLauncher<String> companionJarPicker = registerForActivityResult(
+			new ActivityResultContracts.GetContent(), selected -> {
+				if (selected == null || !isAdded() || composeController == null || installer == null
+						|| cancelRequested || operationRunning || destroyed) return;
+				AppInstaller active = installer;
+				composeController.showLoading(installerTitle, getString(R.string.loading_info));
+				runInstaller(emitter -> active.loadSelectedExternalJar(selected, emitter));
+			});
+
+
 
 	public static InstallerDialog newExternalRequest(@Nullable String requestId, Uri uri) {
 		return newExternalRequest(requestId, uri, false);
