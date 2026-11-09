@@ -28,6 +28,8 @@ import android.text.SpannableStringBuilder;
 import android.util.Log;
 import android.view.Window;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.compose.ui.platform.ComposeView;
@@ -60,6 +62,16 @@ public class InstallerDialog extends DialogFragment {
 	private static final String ARG_STORAGE_KEY = "InstallerDialog.storageKey";
 	private static final long NO_GENERATION = Long.MIN_VALUE;
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
+	/** Android picker is used only when another provider supplied a JAD without JAR access. */
+	private final ActivityResultLauncher<String> companionJarPicker = registerForActivityResult(
+			new ActivityResultContracts.GetContent(), selected -> {
+				if (selected == null || !isAdded() || installer == null
+						|| cancelRequested || operationRunning || destroyed) return;
+				AppInstaller active = installer;
+				composeController.showLoading(installerTitle, getString(R.string.loading_info));
+				runInstaller(emitter -> active.loadSelectedExternalJar(selected, emitter));
+			});
+
 
 	private LibraryViewModel libraryViewModel;
 	private AppInstaller installer;
@@ -364,6 +376,14 @@ public class InstallerDialog extends DialogFragment {
 		String message;
 		String runLabel = null;
 		switch (status) {
+			case AppInstaller.STATUS_NEED_JAR -> {
+				primaryAction = () -> companionJarPicker.launch("*/*");
+				composeController.showConfirmation(installerTitle,
+						getString(R.string.installer_select_companion_jar),
+						getString(R.string.installer_select_jar),
+						getString(android.R.string.cancel), null, null);
+				return;
+			}
 			case AppInstaller.STATUS_AMBIGUOUS -> {
 				currentTitle = nd.getName();
 				primaryAction = this::convert;
