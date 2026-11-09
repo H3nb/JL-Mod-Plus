@@ -13,6 +13,7 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,9 +26,9 @@ import java.util.Set;
 public final class MethodRenamer {
     private static final String THREAD = "java/lang/Thread";
     private static final String SUFFIX = "$j2me";
-    private static final Set<String> CONFLICTS = Set.of(
+    private static final Set<String> CONFLICTS = new HashSet<>(Arrays.asList(
             "resume()V", "suspend()V", "stop()V",
-            "stop(Ljava/lang/Throwable;)V", "destroy()V");
+            "stop(Ljava/lang/Throwable;)V", "destroy()V"));
 
     private final Map<String, Map<String, String>> names;
 
@@ -179,9 +180,9 @@ public final class MethodRenamer {
                         current = parents.get(current);
                     }
                 }
-                if (!methods.isEmpty()) result.put(type, Map.copyOf(methods));
+                if (!methods.isEmpty()) result.put(type, methods);
             }
-            return new MethodRenamer(Map.copyOf(result));
+            return new MethodRenamer(result);
         }
     }
 }
