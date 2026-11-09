@@ -489,6 +489,7 @@ jobs:
           api-level: 35
           target: google_apis_ps16k
           arch: x86_64
+          ram-size: 4096M
           disable-animations: true
           script: bash scripts/release-smoke.sh
 
