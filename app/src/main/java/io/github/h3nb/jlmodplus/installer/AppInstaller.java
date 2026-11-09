@@ -86,6 +86,8 @@ public class AppInstaller {
     static final int STATUS_SUCCESS = 4;
     static final int STATUS_SAME = 5;
     static final int STATUS_AMBIGUOUS = 6;
+    /** A content-URI JAD cannot grant access to a relative companion document. */
+    static final int STATUS_NEED_JAR = 7;
 
     private final long id;
     private final LibraryViewModel libraryViewModel;
@@ -293,15 +295,18 @@ public class AppInstaller {
                     return;
                 }
             } else if (isLocal && scheme == null && host == null) {
-                boolean matches = this.uri != null && "content".equals(this.uri.getScheme())
-                        ? checkContentUriJar(this.uri, srcFile)
-                        : checkJarFile(srcFile);
-                if (!matches) {
+                if (this.uri != null && "content".equals(this.uri.getScheme())) {
+                    // ContentProvider grants apply to individual documents, not URI path siblings.
+                    // The matching JAR must be chosen explicitly by the user.
+                    emitLoadedStatus(emitter, STATUS_NEED_JAR);
+                    return;
+                }
+                if (!checkJarFile(srcFile)) {
                     emitLoadedStatus(emitter, STATUS_UNMATCHED);
                     return;
                 }
             } else if (isLocal && "content".equals(scheme)) {
-                if (!checkContentUriJar(this.uri, srcFile)) {
+                if (!checkContentUriJar(jarUri)) {
                     emitLoadedStatus(emitter, STATUS_UNMATCHED);
                     return;
                 }
@@ -755,15 +760,33 @@ public class AppInstaller {
         return manifest.equals(newDesc);
     }
 
-    private boolean checkContentUriJar(Uri jadUri, File jadFile) throws IOException, ConverterException {
-        Uri jarUri = Uri.parse(newDesc.getJarUrl());
-        if (jarUri.getScheme() == null) jarUri = FileUtils.resolveSiblingUri(jadUri, jarUri);
-        if (jarUri == null || !"content".equals(jarUri.getScheme())) return checkJarFile(jadFile);
+    private boolean checkContentUriJar(Uri jarUri) throws IOException {
         File jar = scratch.materialize(jarUri);
         if (!jar.exists()) throw new ConverterException("Jar-file not found for uri: " + jarUri);
         srcJar = scratch.copy(jar, "reviewed.jar");
         manifest = loadManifest(srcJar);
         return manifest.equals(newDesc);
+    }
+
+    /**
+     * Resume the same reviewed JAD request after an external content provider has supplied an
+     * explicit JAR URI. Never install metadata from an unmatched JAR.
+     */
+    void loadSelectedExternalJar(Uri jarUri, SingleEmitter<Integer> emitter)
+            throws IOException, ConverterException {
+        checkCancelled();
+        if (loadedStatus != STATUS_NEED_JAR || newDesc == null || srcJad == null) {
+            throw new IOException("There is no pending JAD companion selection");
+        }
+        stage(Stage.READING);
+        File source = scratch.materialize(jarUri);
+        srcJar = scratch.copy(source, "reviewed.jar");
+        manifest = loadManifest(srcJar);
+        if (!manifest.equals(newDesc)) {
+            emitLoadedStatus(emitter, STATUS_UNMATCHED);
+            return;
+        }
+        emitLoadedStatus(emitter, checkDescriptor());
     }
 
     private int checkDescriptor() throws IOException {
