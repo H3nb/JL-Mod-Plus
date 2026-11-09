@@ -16,7 +16,7 @@ both legacy source files. Obsolete pre-release GLSLP selections are not activate
 
 The Compose editor has three surfaces: an ordered stack, a two-tab built-in/user
 catalog, and per-effect parameters. A row opens its parameters; separate compact
-controls delete, move one position, or long-press-drag the reorder handle. An
+controls delete, move one position, or long-press-drag the card itself. An
 empty parameter list is displayed read-only. Returning from the catalog or
 parameters does not mutate the draft unless the user selected an effect,
 changed a parameter, deleted, or reordered an entry.

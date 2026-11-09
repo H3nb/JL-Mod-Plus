@@ -102,11 +102,10 @@
     <string name="render_effect_user_empty">Tidak ada shader legacy di folder shaders.</string>
     <string name="render_effect_user_file">Pilih file .ini legacy</string>
     <string name="render_effect_empty">Belum ada efek. Tambahkan efek untuk mengubah tampilan game.</string>
-    <string name="render_effect_hint">Efek dijalankan berurutan dari atas ke bawah.</string>
+    <string name="render_effect_hint">Efek diproses dari atas ke bawah. Tahan lalu geser kartu untuk mengubah urutan.</string>
     <string name="render_effect_move_up">Pindahkan ke atas</string>
     <string name="render_effect_move_down">Pindahkan ke bawah</string>
     <string name="render_effect_remove">Hapus efek</string>
-    <string name="render_effect_drag">Tekan lama lalu geser untuk mengubah urutan</string>
     <string name="render_effect_no_parameters">Efek ini tidak memiliki parameter yang dapat diubah.</string>
     <string name="render_effect_parameter_number">Parameter %1$d</string>
     <string name="render_effect_restore">Atur ulang parameter</string>

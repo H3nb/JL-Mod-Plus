@@ -46,6 +46,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.DpSize
@@ -387,6 +388,51 @@ class ConfigComposeTest {
         composeRule.runOnIdle {
             assertEquals(listOf("first"), state.value.form.effects.map { it.key })
         }
+    }
+
+    @Test
+    fun longPressingEffectCardReordersWithoutOpeningParameters() {
+        val base = sampleState()
+        val effects = listOf(
+            EffectEntry("first", builtinId = "color"),
+            EffectEntry("second", builtinId = "vignette"),
+        )
+        val initial = base.form.toBuilder().effects(effects).build()
+        val state = mutableStateOf(
+            ConfigUiState(initial, base.screenPresets, base.fontPresets,
+                base.skins, base.soundBanks, base.shaders, base.removableScreenPresets)
+        )
+        val events = object : ConfigFormEvents by RecordingConfigEvents() {
+            override fun onFormChanged(updated: ConfigFormState) {
+                state.value = ConfigUiState(updated, base.screenPresets, base.fontPresets,
+                    base.skins, base.soundBanks, base.shaders, base.removableScreenPresets)
+            }
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Display)
+            }
+        }
+        scrollTo(uiString(R.string.render_shader_effects))
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        val first = composeRule.onNodeWithText(uiString(R.string.effect_color))
+        val second = composeRule.onNodeWithText(uiString(R.string.effect_vignette))
+        // Cross the next card's midpoint, not just its text baseline.
+        val travel = second.fetchSemanticsNode().boundsInRoot.center.y -
+            first.fetchSemanticsNode().boundsInRoot.center.y +
+            second.fetchSemanticsNode().boundsInRoot.height / 3f
+        first.performTouchInput {
+            down(center)
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 150L)
+            move()
+            moveBy(Offset(0f, travel))
+            up()
+        }
+        composeRule.runOnIdle {
+            assertEquals(listOf("second", "first"), state.value.form.effects.map { it.key })
+        }
+        composeRule.onNodeWithText(uiString(R.string.effect_color)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.effect_brightness)).assertExists()
     }
 
     @Test

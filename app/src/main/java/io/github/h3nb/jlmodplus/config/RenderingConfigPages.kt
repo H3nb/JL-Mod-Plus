@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -55,8 +54,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -252,7 +249,6 @@ private fun EffectStackContent(
     val latestMove by rememberUpdatedState(onMove)
     var draggingKey by remember { mutableStateOf<String?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
-    val dragLabel = stringResource(R.string.render_effect_drag)
     val upLabel = stringResource(R.string.render_effect_move_up)
     val downLabel = stringResource(R.string.render_effect_move_down)
     val removeLabel = stringResource(R.string.render_effect_remove)
@@ -306,6 +302,70 @@ private fun EffectStackContent(
                     .zIndex(if (draggingKey == entry.key) 1f else 0f)
                     .graphicsLayer {
                         translationY = if (draggingKey == entry.key) dragOffset else 0f
+                    }
+                    .pointerInput(entry.key) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = {
+                                draggingKey = entry.key
+                                dragOffset = 0f
+                            },
+                            onDragEnd = {
+                                draggingKey = null
+                                dragOffset = 0f
+                            },
+                            onDragCancel = {
+                                draggingKey = null
+                                dragOffset = 0f
+                            },
+                            onDrag = drag@{ change, amount ->
+                                change.consume()
+                                if (draggingKey != entry.key) return@drag
+                                dragOffset += amount.y
+                                val layout = listState.layoutInfo
+                                val current = layout.visibleItemsInfo.firstOrNull {
+                                    it.key == rowKey
+                                } ?: return@drag
+                                val center = current.offset + current.size / 2f + dragOffset
+                                val other = if (dragOffset > 0f) {
+                                    layout.visibleItemsInfo.lastOrNull {
+                                        it.index > current.index &&
+                                            (it.key as? String)?.startsWith("effect:") == true &&
+                                            center > it.offset + it.size / 2f
+                                    }
+                                } else {
+                                    layout.visibleItemsInfo.firstOrNull {
+                                        it.index < current.index &&
+                                            (it.key as? String)?.startsWith("effect:") == true &&
+                                            center < it.offset + it.size / 2f
+                                    }
+                                }
+                                if (other != null) {
+                                    val from = latestEffects.indexOfFirst {
+                                        it.key == entry.key
+                                    }
+                                    val targetKey = (other.key as String).removePrefix("effect:")
+                                    val to = latestEffects.indexOfFirst { it.key == targetKey }
+                                    if (from >= 0 && to >= 0 && from != to) {
+                                        val shift = if (to > from) {
+                                            other.offset + other.size - current.offset - current.size
+                                        } else other.offset - current.offset
+                                        dragOffset -= shift.toFloat()
+                                        latestMove(from, to)
+                                    }
+                                }
+                                val direction = when {
+                                    center < layout.viewportStartOffset + edge -> -step
+                                    center > layout.viewportEndOffset - edge -> step
+                                    else -> 0f
+                                }
+                                if (direction != 0f) {
+                                    scope.launch {
+                                        val scrolled = listState.scrollBy(direction)
+                                        if (draggingKey == entry.key) dragOffset += scrolled
+                                    }
+                                }
+                            },
+                        )
                     },
                 onClick = { onSelect(entry.key) },
                 shape = MaterialTheme.shapes.large,
@@ -353,79 +413,6 @@ private fun EffectStackContent(
                         ) {
                             Icon(painterResource(R.drawable.ic_arrow_downward),
                                 contentDescription = downLabel)
-                        }
-                        Box(
-                            modifier = Modifier.size(48.dp)
-                                .semantics { contentDescription = dragLabel }
-                                .pointerInput(entry.key) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            draggingKey = entry.key
-                                            dragOffset = 0f
-                                        },
-                                        onDragEnd = {
-                                            draggingKey = null
-                                            dragOffset = 0f
-                                        },
-                                        onDragCancel = {
-                                            draggingKey = null
-                                            dragOffset = 0f
-                                        },
-                                        onDrag = drag@{ change, amount ->
-                                            change.consume()
-                                            if (draggingKey != entry.key) return@drag
-                                            dragOffset += amount.y
-                                            val layout = listState.layoutInfo
-                                            val current = layout.visibleItemsInfo.firstOrNull {
-                                                it.key == rowKey
-                                            } ?: return@drag
-                                            val center = current.offset + current.size / 2f + dragOffset
-                                            val other = if (dragOffset > 0f) {
-                                                layout.visibleItemsInfo.lastOrNull {
-                                                    it.index > current.index &&
-                                                        (it.key as? String)?.startsWith("effect:") == true &&
-                                                        center > it.offset + it.size / 2f
-                                                }
-                                            } else {
-                                                layout.visibleItemsInfo.firstOrNull {
-                                                    it.index < current.index &&
-                                                        (it.key as? String)?.startsWith("effect:") == true &&
-                                                        center < it.offset + it.size / 2f
-                                                }
-                                            }
-                                            if (other != null) {
-                                                val from = latestEffects.indexOfFirst {
-                                                    it.key == entry.key
-                                                }
-                                                val targetKey = (other.key as String).removePrefix("effect:")
-                                                val to = latestEffects.indexOfFirst { it.key == targetKey }
-                                                if (from >= 0 && to >= 0 && from != to) {
-                                                    val shift = if (to > from) {
-                                                        other.offset + other.size - current.offset - current.size
-                                                    } else other.offset - current.offset
-                                                    dragOffset -= shift.toFloat()
-                                                    latestMove(from, to)
-                                                }
-                                            }
-                                            val direction = when {
-                                                center < layout.viewportStartOffset + edge -> -step
-                                                center > layout.viewportEndOffset - edge -> step
-                                                else -> 0f
-                                            }
-                                            if (direction != 0f) {
-                                                scope.launch {
-                                                    val scrolled = listState.scrollBy(direction)
-                                                    if (draggingKey == entry.key) dragOffset += scrolled
-                                                }
-                                            }
-                                        },
-                                    )
-                                },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(painterResource(R.drawable.ic_drag_handle),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }

@@ -103,11 +103,10 @@
     <string name="render_effect_user_empty">No legacy shader found in the shaders folder.</string>
     <string name="render_effect_user_file">Choose a legacy .ini file</string>
     <string name="render_effect_empty">No effects. Add one to customize the game\'s appearance.</string>
-    <string name="render_effect_hint">Effects run in order, from top to bottom.</string>
+    <string name="render_effect_hint">Effects run from top to bottom. Hold and drag a card to reorder.</string>
     <string name="render_effect_move_up">Move up</string>
     <string name="render_effect_move_down">Move down</string>
     <string name="render_effect_remove">Remove effect</string>
-    <string name="render_effect_drag">Hold and drag to reorder</string>
     <string name="render_effect_no_parameters">This effect has no adjustable parameters.</string>
     <string name="render_effect_parameter_number">Parameter %1$d</string>
     <string name="render_effect_restore">Reset parameters</string>
