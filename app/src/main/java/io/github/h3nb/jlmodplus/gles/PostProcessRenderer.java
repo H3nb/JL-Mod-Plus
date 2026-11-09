@@ -29,7 +29,6 @@ public final class PostProcessRenderer {
     private static final String TAG = "PostProcessRenderer";
     private static final String ASSETS = "shaders/effects/";
     private static final int MAX_PASSES = 16;
-    private static final long MAX_TEMP_BYTES = 64L * 1024 * 1024;
     private static final int MAX_SOURCE_CHARS = 256 * 1024;
 
     private final ArrayList<Stage> stages = new ArrayList<>();
@@ -39,6 +38,7 @@ public final class PostProcessRenderer {
     private final FloatBuffer quad = ByteBuffer.allocateDirect(16 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private final int maxTextureSize;
+    private final long maxTempBytes;
     private EffectTargetPlan framePlan;
     private int lastViewportWidth, lastViewportHeight;
     private int lastContentWidth, lastContentHeight;
@@ -133,6 +133,7 @@ public final class PostProcessRenderer {
         int[] limit = new int[1];
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, limit, 0);
         maxTextureSize = limit[0];
+        maxTempBytes = EffectGpuBudget.forCurrentDevice();
         Program identity = null;
         try {
             String sharedVertex = asset("fullscreen.vsh");
@@ -287,7 +288,7 @@ public final class PostProcessRenderer {
         if (framePlan == null || width != lastViewportWidth || height != lastViewportHeight
                 || contentW != lastContentWidth || contentH != lastContentHeight) {
             EffectTargetPlan next = EffectTargetPlan.create(planPasses, contentW, contentH,
-                    width, height, maxTextureSize, MAX_TEMP_BYTES);
+                    width, height, maxTextureSize, maxTempBytes);
             clearTargets();
             framePlan = next;
             for (EffectTargetPlan.Slot slot : next.slots) {
@@ -453,25 +454,47 @@ public final class PostProcessRenderer {
     private Target createTarget(int w, int h) {
         Target result = new Target();
         int[] id = new int[1];
-        glGenTextures(1, id, 0);
-        result.texture = id[0];
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, result.texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
-        glGenFramebuffers(1, id, 0);
-        result.framebuffer = id[0];
-        glBindFramebuffer(GL_FRAMEBUFFER, result.framebuffer);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result.texture, 0);
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            glDeleteFramebuffers(1, new int[]{result.framebuffer}, 0);
-            glDeleteTextures(1, new int[]{result.texture}, 0);
-            throw new IllegalStateException("Incomplete post-processing framebuffer");
+        try {
+            glGenTextures(1, id, 0);
+            result.texture = id[0];
+            if (result.texture == 0) throw new IllegalStateException("Cannot create effect texture");
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, result.texture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
+            int error = glGetError();
+            if (error != GL_NO_ERROR) {
+                throw new IllegalStateException("Effect texture allocation failed: GL error 0x"
+                        + Integer.toHexString(error));
+            }
+            glGenFramebuffers(1, id, 0);
+            result.framebuffer = id[0];
+            if (result.framebuffer == 0) throw new IllegalStateException("Cannot create effect framebuffer");
+            glBindFramebuffer(GL_FRAMEBUFFER, result.framebuffer);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result.texture, 0);
+            int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            if (status != GL_FRAMEBUFFER_COMPLETE) {
+                throw new IllegalStateException("Incomplete post-processing framebuffer: 0x"
+                        + Integer.toHexString(status));
+            }
+            error = glGetError();
+            if (error != GL_NO_ERROR) {
+                throw new IllegalStateException("Effect framebuffer creation failed: GL error 0x"
+                        + Integer.toHexString(error));
+            }
+            return result;
+        } catch (RuntimeException e) {
+            if (result.framebuffer != 0) glDeleteFramebuffers(1, new int[]{result.framebuffer}, 0);
+            if (result.texture != 0) glDeleteTextures(1, new int[]{result.texture}, 0);
+            throw e;
+        } finally {
+            // A failed allocation must not leave Canvas's stock fallback drawing offscreen.
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
-        return result;
     }
 
     private void clearTargets() {
