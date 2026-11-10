@@ -1117,7 +1117,6 @@ private fun RuntimeVariablesTab(
             onDismiss = { watchDraft = null },
             onApply = { value, type, freeze, _, _ ->
                 actions.editTargetsWithOptions(targets, 0L, value, type, false, freeze)
-                watchDraft = null
             },
         )
     }

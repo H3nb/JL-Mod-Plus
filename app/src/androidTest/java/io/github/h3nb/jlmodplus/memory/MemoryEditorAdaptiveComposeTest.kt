@@ -611,7 +611,10 @@ class MemoryEditorAdaptiveComposeTest {
         }
         rule.onNodeWithText("Session health").performClick()
         rule.onNode(hasSetTextAction()).performTextReplacement("99")
-        rule.onNodeWithText("Apply").performClick()
+        rule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation().targetContext
+                .getString(R.string.memory_editor_save),
+        ).performClick()
         rule.onNodeWithText("Cancel").assertDoesNotExist()
         rule.runOnIdle { assertEquals("99", appliedValue) }
     }
