@@ -187,16 +187,21 @@ internal fun MemoryEditorRuntimeRoot(
             ?.takeIf { listSelection.size == 1 }
         val canInspect = if (state.variablesTab) {
             selectedListEntry != null && !state.busy &&
-                (selectedListEntry.saved == null ||
-                    state.savedValues[selectedListEntry.saved.id]?.resolved == true)
+                (selectedListEntry.saved?.let {
+                    state.savedValues[it.id]?.resolved == true
+                } == true || selectedListEntry.watch?.state != null &&
+                    selectedListEntry.watch.state != MemoryEngineContract.CANDIDATE_LOST)
         } else state.selected.size == 1 && !state.busy
         val inspectSelected = {
             if (state.variablesTab) {
                 selectedListEntry?.let { entry ->
-                    entry.saved?.let { actions.inspectSavedVariable(it.id) }
-                        ?: entry.watch?.let {
-                            actions.inspectCandidate(it.id, watchAnchor = true)
-                        }
+                    val saved = entry.saved?.takeIf {
+                        state.savedValues[it.id]?.resolved == true
+                    }
+                    if (saved != null) actions.inspectSavedVariable(saved.id)
+                    else entry.watch?.takeIf {
+                        it.state != MemoryEngineContract.CANDIDATE_LOST
+                    }?.let { actions.inspectCandidate(it.id, watchAnchor = true) }
                 }
             } else {
                 state.selected.singleOrNull()?.let {
@@ -827,10 +832,9 @@ private fun RuntimeVariablesTab(
             else selectedKeys + entry.key)
     }
     fun edit(entry: MemoryListEntry) {
-        val saved = entry.saved
         if (!state.writeSupported || state.busy) return
+        val saved = entry.saved?.takeIf { state.savedValues[it.id]?.resolved == true }
         if (saved != null) {
-            if (state.savedValues[saved.id]?.resolved != true) return
             actions.beginSavedEdit(saved.id) { current ->
                 if (current != null) savedDraft = SavedEditDraft(
                     saved, listOf(MemoryEditTarget(
@@ -839,15 +843,20 @@ private fun RuntimeVariablesTab(
                 )
             }
         } else {
-            val watch = entry.watch ?: return
+            val watch = entry.watch?.takeIf {
+                it.state != MemoryEngineContract.CANDIDATE_LOST
+            } ?: return
             watchDraft = listOf(MemoryEditTarget(
                 watch.id, watch.type, watch.valueText, listOf(watch.type), watch = true,
             ))
         }
     }
     fun inspect(entry: MemoryListEntry) {
-        entry.saved?.let { actions.inspectSavedVariable(it.id) }
-            ?: entry.watch?.let { actions.inspectCandidate(it.id, watchAnchor = true) }
+        val saved = entry.saved?.takeIf { state.savedValues[it.id]?.resolved == true }
+        if (saved != null) actions.inspectSavedVariable(saved.id)
+        else entry.watch?.takeIf {
+            it.state != MemoryEngineContract.CANDIDATE_LOST
+        }?.let { actions.inspectCandidate(it.id, watchAnchor = true) }
     }
     fun toggleFreeze(entry: MemoryListEntry) {
         val saved = entry.saved
@@ -867,16 +876,18 @@ private fun RuntimeVariablesTab(
     val removal = entries.filter { it.key in removeKeys }
 
     val single = selectedEntries.singleOrNull()
-    val singleReady = single != null && (single.saved == null ||
-        state.savedValues[single.saved.id]?.resolved == true)
+    val singleReady = single != null &&
+        (single.saved?.let { state.savedValues[it.id]?.resolved == true } == true ||
+            single.watch?.let { it.state != MemoryEngineContract.CANDIDATE_LOST } == true)
+    val savedReady = single?.saved?.let { state.savedValues[it.id]?.resolved == true } == true
     val canBatchEdit = selectedEntries.size > 1 &&
         selectedEntries.all { it.saved == null && it.watch != null }
     val editEnabled = state.writeSupported && !state.busy && (singleReady || canBatchEdit)
     val freezeEnabled = single != null && !state.busy &&
         ((single.watch?.freezeMode ?: -1) >= 0 ||
-            (singleReady && state.writeSupported &&
-                (single.saved?.let { state.savedValues[it.id]?.value }
-                    ?: single.watch?.valueText)?.isNotBlank() == true))
+            (state.writeSupported && (single?.saved == null || savedReady) &&
+                (single?.saved?.let { state.savedValues[it.id]?.value }
+                    ?: single?.watch?.valueText)?.isNotBlank() == true))
     fun editSelection() {
         if (single != null) edit(single)
         else if (canBatchEdit && editEnabled) {
@@ -1008,7 +1019,8 @@ private fun RuntimeVariablesTab(
             items(entries, key = MemoryListEntry::key) { entry ->
                 val current = entry.saved?.let { state.savedValues[it.id] }
                 val editable = !state.busy && state.writeSupported &&
-                    (entry.saved == null || current?.resolved == true)
+                    (current?.resolved == true ||
+                        entry.watch?.let { it.state != MemoryEngineContract.CANDIDATE_LOST } == true)
                 RuntimeListRow(
                     entry = entry,
                     value = current,
@@ -1028,7 +1040,9 @@ private fun RuntimeVariablesTab(
     if (menuEntry != null) {
         val saved = menuEntry.saved
         val watch = menuEntry.watch
-        val ready = saved == null || state.savedValues[saved.id]?.resolved == true
+        val savedReady = saved != null && state.savedValues[saved.id]?.resolved == true
+        val ready = savedReady || watch?.state != null &&
+            watch.state != MemoryEngineContract.CANDIDATE_LOST
         val keepName = watch?.let {
             menuEntry.label.ifBlank { runtimeTypeShort(it.type) }
         }.orEmpty()
@@ -1043,7 +1057,7 @@ private fun RuntimeVariablesTab(
                 if ((watch?.freezeMode ?: -1) >= 0) R.string.memory_editor_unfreeze
                 else R.string.memory_editor_freeze,
                 !state.busy && ((watch?.freezeMode ?: -1) >= 0 ||
-                    (ready && state.writeSupported)),
+                    (state.writeSupported && (saved == null || savedReady) && ready)),
             ) { toggleFreeze(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_save,
                 if (saved != null) R.string.memory_list_stop_keeping else R.string.memory_list_keep,
@@ -1148,7 +1162,9 @@ private fun RuntimeListRow(
 ) {
     val watch = entry.watch
     val currentValue = if (entry.saved == null) watch?.valueText.orEmpty()
-        else value?.takeIf { it.resolved }?.value ?: "—"
+        else value?.takeIf { it.resolved }?.value
+            ?: watch?.takeIf { it.state != MemoryEngineContract.CANDIDATE_LOST }?.valueText
+            ?: "—"
     val name = entry.label.ifBlank {
         watch?.source?.takeIf { it.kind != MemoryEngineContract.SOURCE_UNKNOWN }
             ?.shortFieldName ?: entry.saved?.path ?: watch?.let {

@@ -103,7 +103,9 @@ selection is active, tapping other rows extends that selection. The toolbar
 provides select-all, context-specific Edit, Inspect, Keep, Freeze, Rename and
 Remove actions. Freeze is also available from the row's action menu; it never
 starts merely because a kept reference resolves. A missing or incompatible
-target cannot be edited.
+target cannot be edited. If a kept Saved locator is temporarily unresolved,
+a still-valid, explicitly linked Watch can remain inspectable and editable
+through its session identity; this never authorizes rebinding or restarting Freeze.
 
 Keep is opt-in and requires a verified rooted locator; the existing Saved authority
 persists it. Stopping Keep requires a valid session Watch or a safely resolved
