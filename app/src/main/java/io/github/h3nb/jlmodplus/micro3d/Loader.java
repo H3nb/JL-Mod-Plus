@@ -38,8 +38,14 @@ class Loader {
 	private int cache;
 
 	private Loader(byte[] data, int offset, int length) {
+		if (data == null) {
+			throw new NullPointerException();
+		}
+		if (offset < 0 || length < 0 || offset > data.length || length > data.length - offset) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
 		this.data = data;
-		this.length = length;
+		this.length = offset + length; // Exclusive absolute end of the resource slice.
 		pos = offset;
 	}
 
@@ -288,6 +294,10 @@ class Loader {
 	}
 
 	static TextureData loadBmpData(byte[] data, int offset, int length) throws IOException {
+		return loadBmpData(data, offset, length, false);
+	}
+
+	static TextureData loadBmpData(byte[] data, int offset, int length, boolean environmentMap) throws IOException {
 		Loader loader = new Loader(data, offset, length);
 		if (loader.readUByte() != 'B' || loader.readUByte() != 'M') {
 			throw new RuntimeException("Not a BMP!");
@@ -325,7 +335,7 @@ class Loader {
 			}
 			loader.skip(12);
 			numColors = loader.readInt();
-			if (numColors == 0 || numColors > 256) {
+			if (numColors < 1 || numColors > 256) {
 				numColors = 256;
 			}
 			colorSize = 4;
@@ -334,34 +344,67 @@ class Loader {
 			throw new RuntimeException("Unsupported BMP version = " + dibHeaderSize);
 		}
 
-		int paletteStart = BMP_FILE_HEADER_SIZE + dibHeaderSize;
-		int paletteEnd = paletteStart + numColors * colorSize;
-		if (rasterOffset < paletteEnd) {
-			rasterOffset = paletteEnd;
+		if (width <= 0 || height == 0 || height == Integer.MIN_VALUE || rasterOffset < 0) {
+			throw new IOException("Invalid BMP dimensions or offset");
+		}
+		int imageHeight = Math.abs(height);
+		long pixelCount = (long) width * imageHeight;
+		if (pixelCount > Integer.MAX_VALUE / 4L) {
+			throw new IOException("BMP dimensions are too large");
+		}
+		if (dibHeaderSize == BMP_VERSION_CORE) {
+			// BITMAPCOREINFO may contain fewer than 256 RGBTRIPLE palette entries.
+			long entriesBeforePixels = ((long) rasterOffset - BMP_FILE_HEADER_SIZE - dibHeaderSize) / colorSize;
+			if (entriesBeforePixels < 1) {
+				throw new IOException("Missing BMP palette");
+			}
+			numColors = (int) Math.min(numColors, entriesBeforePixels);
 		}
 
-		int stride = (width + 3) / 4 * 4;
-		if (height < 0) {
-			height = -height;
-		} else {
-			rasterOffset += (height - 1) * stride;
-			stride = -stride;
+		// BMP offsets are relative to the supplied resource, not the surrounding byte array.
+		long paletteStart = (long) offset + BMP_FILE_HEADER_SIZE + dibHeaderSize;
+		long paletteEnd = paletteStart + (long) numColors * colorSize;
+		long rasterStart = Math.max((long) offset + rasterOffset, paletteEnd);
+		long stride = ((long) width + 3L) & ~3L;
+		if (paletteEnd > loader.length || rasterStart + stride * imageHeight > loader.length) {
+			throw new EOFException("Truncated BMP");
 		}
 
-		TextureData textureData = new TextureData(width, height);
+		// K800 native decoder pads small environment textures to 64x64.
+		// Model/Motorola textures and larger host textures retain their existing dimensions.
+		boolean padEnvironment = environmentMap && width <= 64 && imageHeight <= 64;
+		int storageWidth = padEnvironment ? 64 : width;
+		int storageHeight = padEnvironment ? 64 : imageHeight;
+		TextureData textureData = new TextureData(storageWidth, storageHeight);
 		ByteBuffer raster = textureData.getRaster();
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++) {
-				int colorIdx = data[rasterOffset + j] & 0xff;
-				int p = paletteStart + colorIdx * colorSize;
+		for (int y = 0; y < imageHeight; y++) {
+			int sourceY = height < 0 ? y : imageHeight - 1 - y;
+			int rowStart = (int) (rasterStart + sourceY * stride);
+			for (int x = 0; x < width; x++) {
+				int colorIdx = data[rowStart + x] & 0xff;
+				if (colorIdx >= numColors) {
+					throw new IOException("BMP palette index out of range");
+				}
+				int p = (int) paletteStart + colorIdx * colorSize;
 				byte b = data[p++];
 				byte g = data[p++];
 				byte r = data[p];
-				raster.put(r).put(g).put(b).put((byte) (colorIdx == 0 ? 0 : 0xff));
+				if (environmentMap && colorIdx == 0) {
+					// Native environment color zero contributes no RGB, even if palette[0] is red.
+					raster.putInt(0);
+				} else {
+					raster.put(r).put(g).put(b).put((byte) (colorIdx == 0 ? 0 : 0xff));
+				}
 			}
-			rasterOffset += stride;
+			for (int x = width; x < storageWidth; x++) {
+				raster.putInt(0);
+			}
 		}
-
+		for (int y = imageHeight; y < storageHeight; y++) {
+			for (int x = 0; x < storageWidth; x++) {
+				raster.putInt(0);
+			}
+		}
 		return textureData;
 	}
 
@@ -904,17 +947,17 @@ class Loader {
 	}
 
 	private short readShort() throws IOException {
-		if (pos + 2 > length) throw new EOFException();
+		if (available() < 2) throw new EOFException();
 		return (short) (data[pos++] & 0xff | data[pos++] << 8);
 	}
 
 	private int readUShort() throws IOException {
-		if (pos + 2 > length) throw new EOFException();
+		if (available() < 2) throw new EOFException();
 		return data[pos++] & 0xff | (data[pos++] & 0xff) << 8;
 	}
 
 	private int readInt() throws IOException {
-		if (pos + 4 > length) throw new EOFException();
+		if (available() < 4) throw new EOFException();
 		return data[pos++] & 0xff | (data[pos++] & 0xff) << 8
 				| (data[pos++] & 0xff) << 16 | data[pos++] << 24;
 	}
@@ -950,7 +993,7 @@ class Loader {
 	}
 
 	private void skip(int n) throws EOFException {
-		if (pos + n > length) throw new EOFException();
+		if (n < 0 || n > available()) throw new EOFException();
 		pos += n;
 	}
 }
