@@ -117,7 +117,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithText("Hit points").assertIsDisplayed()
     }
 
-    @Test fun inspectorIsContextualDetailWithBackInsteadOfPrimaryTab() {
+    @Test fun inspectorTabRemainsVisibleAndReturnsToItsOriginOnBack() {
         val state = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true, variablesTab = true,
         ))
@@ -128,10 +128,11 @@ class MemoryEditorAdaptiveComposeTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val inspector = context.getString(R.string.memory_editor_inspector)
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) } }
-        rule.onNodeWithText(inspector).assertDoesNotExist()
+        rule.onNodeWithContentDescription(inspector).assertIsDisplayed().assertIsNotEnabled()
         rule.runOnIdle { state.value = state.value.copy(inspectorLoading = true) }
-        rule.onNodeWithText(inspector).assertIsDisplayed()
-        rule.onNodeWithContentDescription(context.getString(R.string.memory_editor_back)).performClick()
+        rule.onNodeWithContentDescription(inspector).assertIsDisplayed()
+            .assertIsEnabled().assertIsSelected()
+        pressBack()
         rule.runOnIdle { assertEquals(1, backCount) }
     }
 
@@ -459,7 +460,43 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
-    @Test fun longPressListEntryStartsMultiSelectionWithoutPermanentCheckboxes() {
+    @Test fun listCheckboxSelectsDirectlyAndInspectorTabOpensSelectedWatch() {
+        val watch = MemoryWatchRow(
+            1L, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
+            "2", "2", "2", "player.coins", "Coins",
+        )
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            variablesTab = true, watches = listOf(watch),
+        )
+        var inspectedId: Long? = null
+        var inspectedAsWatch = false
+        val actions = object : TestMemoryEditorActions() {
+            override fun inspectCandidate(candidateId: Long, radius: Int, watchAnchor: Boolean) {
+                inspectedId = candidateId
+                inspectedAsWatch = watchAnchor
+            }
+        }
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val inspector = context.getString(R.string.memory_editor_inspector)
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
+        rule.onNodeWithContentDescription(inspector).assertIsNotEnabled()
+        rule.onNodeWithContentDescription(
+            context.getString(R.string.memory_editor_select_result_value)
+        ).assertIsDisplayed().performClick()
+        rule.onNodeWithText(context.resources.getQuantityString(
+            R.plurals.memory_editor_selected, 1, 1)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(
+            context.getString(R.string.memory_editor_edit)
+        ).assertIsDisplayed().assertIsEnabled()
+        rule.onNodeWithContentDescription(inspector).assertIsEnabled().performClick()
+        rule.runOnIdle {
+            assertEquals(1L, inspectedId)
+            assertTrue(inspectedAsWatch)
+        }
+    }
+
+    @Test fun longPressStillSelectsListEntryAndBackClearsSelection() {
         val watch = MemoryWatchRow(
             1L, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
             "2", "2", "2", "player.coins", "Coins",
@@ -471,8 +508,13 @@ class MemoryEditorAdaptiveComposeTest {
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, TestMemoryEditorActions()) } }
         rule.onNodeWithText("Coins").performTouchInput { longClick() }
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        rule.onNodeWithText(context.resources.getQuantityString(
-            R.plurals.memory_editor_selected, 1, 1)).assertIsDisplayed()
+        val selected = context.resources.getQuantityString(R.plurals.memory_editor_selected, 1, 1)
+        rule.onNodeWithText(selected).assertIsDisplayed()
+        pressBack()
+        rule.onNodeWithText(selected).assertDoesNotExist()
+        rule.onNodeWithContentDescription(
+            context.getString(R.string.memory_editor_select_visible)
+        ).assertIsDisplayed()
     }
 
     @Test fun spaciousLandscapeShowsExtraActionsDirectlyWithoutMore() {
