@@ -124,11 +124,15 @@ run_selector_batch() {
 
 }
 
-run_selector_batch main "${selectors[@]}"
-run_selector_batch gles-isolated "${gles_selectors[@]}"
-run_selector_batch locale-isolated "${isolated_selectors[@]}"
-
-expected_selector_count=$((${#selectors[@]} + ${#gles_selectors[@]} + ${#isolated_selectors[@]}))
+if [[ "${1:-}" == '--gles-only' ]]; then
+  run_selector_batch gles-isolated "${gles_selectors[@]}"
+  expected_selector_count=${#gles_selectors[@]}
+else
+  run_selector_batch main "${selectors[@]}"
+  run_selector_batch gles-isolated "${gles_selectors[@]}"
+  run_selector_batch locale-isolated "${isolated_selectors[@]}"
+  expected_selector_count=$((${#selectors[@]} + ${#gles_selectors[@]} + ${#isolated_selectors[@]}))
+fi
 if (( $(wc -l < "$verified_selectors") != expected_selector_count )); then
   echo "Runtime-smoke selector evidence is incomplete." >&2
   exit 1
