@@ -1,7 +1,8 @@
 # Memory Editor UI
 
 The editor is a fullscreen inspection workspace hosted in `MemoryEditorActivity`.
-Search and List share a full-bleed surface; Inspector opens as a contextual detail; short search/edit operations use
+Search, List and Inspector share a full-bleed surface; Inspector remains a tab with
+checked, target-specific content; short search/edit operations use
 `MemoryEditorDialog`, which reuses the shared adaptive dialog body and sizing.
 A bottom sheet would reduce the data viewport in short
 landscape windows without simplifying these workflows.
@@ -47,8 +48,10 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   opening the editor (non-Canvas forms show both; Canvas follows its status-bar setting
   and hides navigation). Keep that same policy in nested dialogs and on focus changes;
   no editor window may independently force fullscreen.
-- The two primary tabs are Search and List. Inspector opens from an explicit
-  result/entry action and has its own Back button; it never occupies a third tab.
+- Show three labeled tabs: Search, List, and Inspector. Inspector remains visible
+  but disabled until exactly one eligible Search result or List entry is selected.
+  An already-open Inspector stays enabled, including while loading. Opening it
+  never bypasses the checked target identity and revision rules.
 - Keep the editor title and labeled navigation visible. Place them in one row when
   width permits; stack them otherwise. In short windows with large text, retain the
   labeled tabs and omit the redundant app title to protect the data viewport.
@@ -69,8 +72,15 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   columns when its actual dialog width and font scale permit, otherwise a
   scrolling single column. Inspector still requires exactly one selected candidate.
 - Search retains its select-page checkbox, limited to the current result page
-  (up to 100 candidates). List has no permanent checkboxes or Saved/Watch sections:
-  long-press selects an entry, revealing a single multi-select toolbar.
+  (up to 100 candidates). List also has a persistent select-all checkbox in
+  its toolbar and a checkbox on every row; long-press remains an optional
+  selection shortcut. List stays one combined Saved/Watch collection.
+- List toolbar keeps Edit and Refresh in a stable order, followed by enabled
+  Inspector, Keep/Stop keeping, Freeze/Unfreeze, Rename and Remove actions
+  when a selection makes them relevant. Available width determines which
+  actions fit directly and which move to More. Batch Edit is available for
+  session-only Watch entries; mixed or kept selections support Remove.
+  The toolbar retains its selection/count area at all times.
 - Put result counts/selection and Inspector provenance in the scrolling list, so
   growing text does not reserve the entire viewport. Keep full numeric values
   readable; source summaries may truncate, with provenance available in Inspector.
@@ -86,11 +96,14 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 ## List interaction contract
 
 List is one alphabetically ordered collection of entries, not two Saved/Watch
-sections. A row shows its name, current value, compact location/type, a Freeze
-button, an optional Keep marker, and a contextual actions menu. Tap the row to
-edit. Long-press to select and batch-remove, with selection controls shown only
-in that mode. The direct Freeze control does not start merely because a kept
-reference resolves. A missing or incompatible target cannot be edited.
+sections. A row shows a persistent selection checkbox, its name, current value,
+compact location/type, an optional Keep marker, and a contextual actions menu.
+Tap the row to edit, or tap its checkbox to select without a long-press; while
+selection is active, tapping other rows extends that selection. The toolbar
+provides select-all, context-specific Edit, Inspect, Keep, Freeze, Rename and
+Remove actions. Freeze is also available from the row's action menu; it never
+starts merely because a kept reference resolves. A missing or incompatible
+target cannot be edited.
 
 Keep is opt-in and requires a verified rooted locator; the existing Saved authority
 persists it. Stopping Keep requires a valid session Watch or a safely resolved
@@ -109,8 +122,11 @@ The existing foreground refresh coordinator updates the List without a new
 idle traversal or polling worker.
 
 Boolean remains explicit true/false; numeric Auto excludes it. Inspector
-remains a checked snapshot with Back returning to the previous List or Search
-scroll position.
+remains a checked snapshot within its persistent tab, with Back returning to
+the previous List or Search scroll position. A single workspace-level Back
+owner prioritizes Peek recovery, then Inspector, then clearing List selection.
+Tab transitions use the same ordered horizontal page motion as other app-owned
+pages, while state refreshes do not restart a page animation.
 
 ## Overlay visibility and modal ownership
 

@@ -10,7 +10,7 @@ A MIDlet can run from a converted DEX without the JL-Mod Plus bytecode transform
 
 ## Start with an observation
 
-Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The primary areas are **Search** and **List**. **Inspector** opens as a contextual detail from a result or a List entry. The List shows editable values regardless of whether their underlying reference is session-only or kept across launches. Wide workspaces show values and locations together, while narrower ones stack the details. When results span multiple pages, the bottom pager moves between result ranges alongside the **Peek** control.
+Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The tabs are **Search**, **List**, and **Inspector**. Inspector is always visible but becomes available when one inspectable result or List entry is selected; it can also be opened from a row's action menu. The List shows editable values regardless of whether their underlying reference is session-only or kept across launches. Wide workspaces show values and locations together, while narrower ones stack the details. When results span multiple pages, the bottom pager moves between result ranges alongside the **Peek** control.
 
 Closing and reopening the bubble editor during the same running MIDlet returns to the last area. Inspector rechecks its last target rather than displaying an old memory snapshot; if the target is unavailable, the editor returns to its source tab. A new MIDlet session starts at Search.
 
@@ -44,7 +44,7 @@ The editor reports **candidates**, not confirmed game variables. Treat them as h
 
 ## Edit, List, Freeze, and Inspector
 
-Select a result and choose **Add to List** to track it while playing. Tap a List row to edit its value, or its lock icon to turn Freeze on or off. The row menu provides **Inspect**, **Rename**, **Keep for next launch**, and **Remove**. Long-press a List row to select multiple entries. Inspector is a detail view with a Back action, not a third tab.
+Select a result and choose **Add to List** to track it while playing. Tap a List row to edit its value. Use its always-visible checkbox to select it, or the checkbox in the List toolbar to select all entries. Long-press remains a selection shortcut. The contextual toolbar and row menu provide **Inspect**, **Freeze/Unfreeze**, **Rename**, **Keep for next launch**, and **Remove** when applicable. Inspector is the third tab; Back returns to the Search or List location from which it opened.
 
 Editing applies a value to the selected supported candidate or candidates. Batch actions can affect several values at once; verify the selection before using them. **Freeze** attempts to keep a value at the chosen level as the game runs. It may be inappropriate when the game expects to update that value itself.
 
