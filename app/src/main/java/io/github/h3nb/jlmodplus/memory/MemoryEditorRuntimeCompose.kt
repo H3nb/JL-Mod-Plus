@@ -870,8 +870,8 @@ private fun RuntimeVariablesTab(
                     ready != null && state.writeSupported && !state.busy) { ready?.let(::openSavedEdit) },
                 RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                     ready != null && !state.busy) { ready?.let { actions.inspectSavedVariable(it.id) } },
-                RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
-                    one != null && !state.busy) { renameRow = one },
+                RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
+                    !state.busy) { deleteIds = selected.map { it.id } },
                 RuntimeToolbarAction(R.drawable.ic_unlock, R.string.memory_editor_unfreeze,
                     one?.let { (linkedWatches[it.id]?.freezeMode ?: -1) >= 0 } == true &&
                         !state.busy) { one?.let { actions.clearSavedWatchFreeze(it.id) } },
@@ -879,8 +879,8 @@ private fun RuntimeVariablesTab(
                     one?.let { linkedWatches[it.id] != null } == true && !state.busy) {
                     one?.let { actions.stopSavedWatch(it.id) }
                 },
-                RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
-                    !state.busy) { deleteIds = selected.map { it.id } },
+                RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
+                    one != null && !state.busy) { renameRow = one },
             )
             selectedWatches.isNotEmpty() -> listOf(
                 RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit,
@@ -888,18 +888,6 @@ private fun RuntimeVariablesTab(
                     watchDraft = selectedWatches.map {
                         MemoryEditTarget(it.id, it.type, it.valueText, listOf(it.type), watch = true)
                     }
-                },
-                RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
-                    selectedWatches.size == 1 && !state.busy) {
-                    selectedWatches.singleOrNull()?.let {
-                        actions.inspectCandidate(it.id, watchAnchor = true)
-                    }
-                },
-                RuntimeToolbarAction(R.drawable.ic_save, R.string.memory_saved_save,
-                    selectedWatches.size == 1 && !state.busy) { saveWatch = true },
-                RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
-                    selectedWatches.size == 1 && !state.busy) {
-                    renameWatch = selectedWatches.singleOrNull()
                 },
                 RuntimeToolbarAction(
                     if ((selectedWatches.singleOrNull()?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
@@ -915,10 +903,22 @@ private fun RuntimeVariablesTab(
                         MemoryEngineContract.FREEZE_LOCK, watch.valueText, "",
                     )
                 },
-                RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
-                    !state.busy) { actions.refresh() },
+                RuntimeToolbarAction(R.drawable.ic_save, R.string.memory_saved_save,
+                    selectedWatches.size == 1 && !state.busy) { saveWatch = true },
                 RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                     !state.busy) { actions.watchSelected(false) },
+                RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
+                    selectedWatches.size == 1 && !state.busy) {
+                    selectedWatches.singleOrNull()?.let {
+                        actions.inspectCandidate(it.id, watchAnchor = true)
+                    }
+                },
+                RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
+                    selectedWatches.size == 1 && !state.busy) {
+                    renameWatch = selectedWatches.singleOrNull()
+                },
+                RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
+                    !state.busy) { actions.refresh() },
             )
             else -> listOf(RuntimeToolbarAction(
                 R.drawable.ic_refresh, R.string.memory_editor_refresh, !state.busy,
@@ -930,7 +930,8 @@ private fun RuntimeVariablesTab(
         BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
         )) {
-            val slotCount = ((maxWidth - 160.dp).value / 48f).toInt().coerceAtLeast(1)
+            val reservedTitleWidth = 112.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.5f)
+            val slotCount = ((maxWidth - reservedTitleWidth).value / 48f).toInt().coerceAtLeast(1)
             val available = actionsForSelection.filter { it.enabled }
             val directCount = if (available.size > slotCount) (slotCount - 1).coerceAtLeast(0)
                 else slotCount
