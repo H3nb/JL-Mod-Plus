@@ -1996,6 +1996,21 @@ final class ManagedJavaMemoryEngine {
                         break;
                     }
                 }
+                // Keeping an existing session Watch must not create a second row or
+                // restart its Freeze. Only the exact live owner and slot may be linked.
+                if (existing < 0 && relativeOffset == 0) {
+                    for (int i = 0; i < watches.count; i++) {
+                        OwnerBucket watching = watches.owners[i];
+                        if (watches.savedSourceIds[i] == null && watching != null
+                                && watching.kind == proof.kind && watches.slots[i] == slot
+                                && watching.strongOwner() == actual
+                                && inspectPath(token, watching, actual, slot).status
+                                    == MemoryEngineContract.PATH_VERIFIED) {
+                            existing = i;
+                            break;
+                        }
+                    }
+                }
             }
             boolean needsFreezeSlot = freeze && (existing < 0 || !watches.freeze[existing]);
             if ((existing < 0 && watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
@@ -2024,7 +2039,12 @@ final class ManagedJavaMemoryEngine {
                 if (watches.owners[existing] == null) return failureLocked(
                         MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Inspector Watch owner is unavailable");
-                boolean moved = retargetSavedWatch(existing, proof, actual, slot, current[0]);
+                boolean moved = false;
+                if (watches.savedSourceIds[existing] == null) {
+                    watches.savedSourceIds[existing] = sourceKey;
+                } else {
+                    moved = retargetSavedWatch(existing, proof, actual, slot, current[0]);
+                }
                 // An explicit Watch action may retarget, but must not revive an old Freeze.
                 if (moved && !freeze) {
                     watches.freeze[existing] = false;
