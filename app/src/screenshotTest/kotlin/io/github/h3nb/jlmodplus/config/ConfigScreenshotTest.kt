@@ -31,7 +31,6 @@ private val NoOpConfigEvents = object : ConfigFormEvents {
     override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
     override fun onKeyMappings() = Unit
     override fun onEncodingPicker() = Unit
-    override fun onShaderTuning() = Unit
 }
 
 @PreviewTest

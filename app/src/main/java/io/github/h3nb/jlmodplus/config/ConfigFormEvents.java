@@ -50,12 +50,6 @@ public interface ConfigFormEvents {
 	/** Child shader-file picker must not reload the old persisted form on return. */
 	default void onShaderPickerOpened() {}
 
-	void onShaderTuning();
-
-	/** Called after the Compose shader editor confirms its four-slot value array. */
-	default void onShaderTuningComplete(float[] values) {
-	}
-
     /** Installation-owned access decisions, never profile/preset edits. */
     default void onStorageModeChanged(StorageMode mode) {}
 

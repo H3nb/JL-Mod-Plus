@@ -6,6 +6,18 @@ The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **Abo
 
 This ledger is a provenance/notice inventory for the current project state, not a legal certification. Release packaging should be re-audited when a bundled source component, runtime coordinate, or native binary package changes.
 
+## GLES post-processing shaders
+
+| Source | Local path | Provenance | Upstream license |
+| --- | --- | --- | --- |
+| CRT Classic | `app/src/main/assets/shaders/effects/crt-classic.fsh` | Independently authored for JL-Mod Plus using scanline and RGB-triad mathematics | Apache-2.0 project source |
+| LCD-style effect | `app/src/main/assets/shaders/effects/lcd.fsh` (original GLES2 implementation) | Concept informed by Gigaherz's LCD3x: `https://github.com/libretro/glsl-shaders/blob/master/handheld/shaders/lcd3x.glsl`; upstream source not copied | LCD3x explicitly declares public domain; JL-Mod Plus shader authored under Apache-2.0 |
+
+The formerly bundled GPL-marked CRT EasyMode adaptation has been removed,
+not relicensed. All bundled post-processing shaders are authored by the
+project under Apache-2.0. PPSSPP and Eden were consulted only for renderer
+design and UI architecture; no corresponding source was copied.
+
 ## Bundled and inherited source
 
 | Component | Local evidence / path | Traceable origin | License / redistribution note |

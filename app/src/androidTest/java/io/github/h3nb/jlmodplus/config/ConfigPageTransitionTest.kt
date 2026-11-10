@@ -32,7 +32,6 @@ class ConfigPageTransitionTest {
         override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
         override fun onKeyMappings() = Unit
         override fun onEncodingPicker() = Unit
-        override fun onShaderTuning() = Unit
     }
 
     @Test

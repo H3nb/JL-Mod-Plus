@@ -55,6 +55,15 @@ object ProfileJson {
         } else backgroundMode(tree["ScreenBackgroundMode"]))
         normalized["KeyMappings"] = format.encodeToJsonElement(decodeMappings(tree["KeyMappings"]))
         val model = format.decodeFromJsonElement<ProfileModel>(JsonObject(normalized))
+        if (version < 10) {
+            // One released INI/VSH/FSH shader becomes one effect. Unreleased
+            // GLSLP/custom formats are not activated by the new renderer.
+            val legacy = model.shader
+            if (model.effects.isEmpty() && legacy?.vertex != null && legacy.fragment != null) {
+                model.effects = listOf(EffectEntry("legacy-0", user = legacy))
+            }
+            model.shader = null
+        }
         if (!tree.containsKey("SystemPropertyOverrides")) {
             val oldProperties = tree["SystemProperties"]?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
             model.systemProperties = oldProperties
@@ -94,16 +103,17 @@ object ProfileJson {
     ))
 
     /** Copy value collections on entry; never retain an externally mutable tree backing map. */
-    @JvmStatic fun ownedCopy(source: ProfileModel): ProfileModel = source.copy(
-        shader = source.shader?.let {
-            it.copy(
-                values = it.values?.ownedList(),
-                glslParameters = it.glslParameters?.ownedMap(),
-                customStages = it.customStages?.map { stage ->
-                    stage.copy(legacyValues = stage.legacyValues?.ownedList())
-                }?.ownedList(),
+    @JvmStatic fun ownedEffects(source: List<EffectEntry>): List<EffectEntry> =
+        source.map { effect ->
+            effect.copy(
+                parameters = effect.parameters.ownedMap(),
+                user = effect.user?.copy(values = effect.user.values?.ownedList()),
             )
-        },
+        }.ownedList()
+
+    @JvmStatic fun ownedCopy(source: ProfileModel): ProfileModel = source.copy(
+        effects = ownedEffects(source.effects),
+        shader = source.shader?.let { it.copy(values = it.values?.ownedList()) },
         customKeys = source.customKeys?.ownedList(),
         keyMappings = source.keyMappings.ownedMap(),
         controller = source.controller?.let(::ownedJson),

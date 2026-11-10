@@ -13,18 +13,7 @@ import java.util.Collections
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** One standalone GLSL source in a linear custom chain. */
-@Serializable
-data class CustomShaderStage @JvmOverloads constructor(
-    @JvmField val path: String,
-    @JvmField val sourceScale: Int = 1,
-    @JvmField val filterLinear: Boolean? = null,
-    @JvmField val legacyVertex: String? = null,
-    @JvmField val legacyValues: List<Float>? = null,
-    @JvmField val legacyName: String? = null,
-)
-
-/** The persisted selection is independent of catalog metadata and mutable tuning dialogs. */
+/** Only the released legacy INI/VSH/FSH format is accepted from user storage. */
 @Serializable
 @ConsistentCopyVisibility
 data class ShaderSelection internal constructor(
@@ -33,33 +22,24 @@ data class ShaderSelection internal constructor(
     @JvmField val name: String? = null,
     @JvmField val author: String? = null,
     @SerialName("Settings") @JvmField val values: List<Float>? = null,
-    @SerialName("Preset") @JvmField val preset: String? = null,
-    @SerialName("GLSLParameters") @JvmField val glslParameters: Map<String, Float>? = null,
-    @SerialName("CustomStages") @JvmField val customStages: List<CustomShaderStage>? = null,
-    @SerialName("CustomMode") @JvmField val customMode: String? = null,
+    @SerialName("OutputResolution") @JvmField val outputResolution: Boolean = false,
+    @SerialName("Upscaling") @JvmField val upscaling: Boolean = false,
 ) {
     fun valuesArray(): FloatArray? = values?.toFloatArray()
 
     fun toInfo(): ShaderInfo = ShaderInfo(name, author).also {
         it.fragment = fragment
         it.vertex = vertex
-        it.preset = preset
         it.values = values?.toFloatArray()
-        it.glslParameters = glslParameters?.toMutableMap()
-        it.customStages = customStages?.map { stage ->
-            stage.copy(legacyValues = stage.legacyValues?.toList())
-        }
-        it.customMode = customMode
+        it.outputResolution = outputResolution
+        it.upscaling = upscaling
     }
 
     companion object {
         @JvmStatic fun fromInfo(info: ShaderInfo?): ShaderSelection? = info?.let {
             ShaderSelection(it.fragment, it.vertex, it.name, it.author,
-                it.values?.toList()?.let(Collections::unmodifiableList), it.preset,
-                it.glslParameters?.let { values -> Collections.unmodifiableMap(LinkedHashMap(values)) },
-                it.customStages?.map { stage ->
-                    stage.copy(legacyValues = stage.legacyValues?.toList()?.let(Collections::unmodifiableList))
-                }?.let(Collections::unmodifiableList), it.customMode)
+                (it.values ?: it.defaultValues()).toList().let(Collections::unmodifiableList),
+                it.outputResolution, it.upscaling)
         }
     }
 }

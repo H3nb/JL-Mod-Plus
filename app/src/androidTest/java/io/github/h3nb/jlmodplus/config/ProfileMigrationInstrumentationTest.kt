@@ -58,58 +58,35 @@ class ProfileMigrationInstrumentationTest {
         }
     }
 
-    @Test fun openingAndCancellingShaderTuningDoesNotMaterializeDefaultParameters() {
+    @Test fun reopeningUnchangedEffectProfileDoesNotPublishDefaultParameters() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val root = File(context.cacheDir, "gson-shader-cancel-${UUID.randomUUID()}")
-        val source = File(root, "templates/CRT").apply { mkdirs() }
-        File(root, "shaders").apply { mkdirs() }.resolve("crt.ini").writeText("""
-            [CRT]
-            Name=CRT
-            Author=tester
-            Fragment=crt.fsh
-            Vertex=crt.vsh
-            SettingName1=Amount
-            SettingDefaultValue1=1
-            SettingMinValue1=0
-            SettingMaxValue1=2
-            SettingStep1=0.25
-        """.trimIndent())
-        val model = ProfileModel.fresh("").apply {
-            shader = ShaderSelection.fromInfo(ShaderInfo("CRT", "tester").apply {
-                fragment = "crt.fsh"; vertex = "crt.vsh"
-            })
-        }
+        val root = File(context.cacheDir, "effect-editor-${UUID.randomUUID()}")
+        val source = File(root, "templates/Color").apply { mkdirs() }
+        val entry = EffectEntry("color-0", builtinId = "color")
+        val model = ProfileModel.fresh("").apply { effects = listOf(entry) }
         try {
             assertTrue(ProfilesManager.saveConfig(source, model))
             val before = File(source, "config.json").readBytes()
-            val intent = Intent(Constants.ACTION_EDIT_PROFILE, Uri.fromFile(source), context, ConfigActivity::class.java)
+            val intent = Intent(Constants.ACTION_EDIT_PROFILE, Uri.fromFile(source),
+                context, ConfigActivity::class.java)
             ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
-                scenario.onActivity { activity ->
-                    val params = ConfigActivity::class.java.getDeclaredField("params").apply { isAccessible = true }
-                    val loaded = params.get(activity) as ProfileModel
-                    assertNull(loaded.shader!!.values)
-                    ConfigActivity::class.java.getDeclaredMethod("showShaderSettings").apply {
-                        isAccessible = true
-                    }.invoke(activity)
-                    activity.supportFragmentManager.executePendingTransactions()
-                    assertNotNull(activity.supportFragmentManager.findFragmentByTag("ShaderTuning"))
+                repeat(2) { iteration ->
+                    scenario.onActivity { activity ->
+                        val params = ConfigActivity::class.java.getDeclaredField("params")
+                            .apply { isAccessible = true }
+                        val form = ConfigActivity::class.java.getDeclaredField("currentForm")
+                            .apply { isAccessible = true }
+                        val loaded = params.get(activity) as ProfileModel
+                        val draft = form.get(activity) as ConfigFormState
+                        assertEquals(listOf(entry), loaded.effects)
+                        assertEquals(listOf(entry), draft.effects)
+                        assertTrue(draft.effects.single().parameters.isEmpty())
+                        assertNull(loaded.shader)
+                    }
+                    if (iteration == 0) scenario.recreate()
                 }
-                // Keep the actual dialog open across recreation, exercising fragment arguments.
-                scenario.recreate()
-                scenario.onActivity { activity ->
-                    val params = ConfigActivity::class.java.getDeclaredField("params").apply { isAccessible = true }
-                    val dialog = activity.supportFragmentManager.findFragmentByTag("ShaderTuning") as ShaderTuneAlert
-                    val restored = dialog.requireArguments().getParcelable<ShaderInfo>("shader")!!
-                    assertTrue(restored.hasTunableSettings())
-                    assertEquals(1f, restored.values[0], 0f)
-                    dialog.dismiss()
-                    activity.supportFragmentManager.executePendingTransactions()
-                    assertNull((params.get(activity) as ProfileModel).shader!!.values)
-                    val form = ConfigActivity::class.java.getDeclaredField("currentForm").apply { isAccessible = true }
-                    assertNull((form.get(activity) as ConfigFormState).shader!!.values)
-                }
-                scenario.recreate()
             }
+            // Navigating/recreating the editor must not publish default slider values.
             assertArrayEquals(before, File(source, "config.json").readBytes())
         } finally {
             root.deleteRecursively()
@@ -154,6 +131,8 @@ class ProfileMigrationInstrumentationTest {
                   <boolean-array name="IgnoredFlags" num="2"><item value="true" /><item value="false" /></boolean-array>
                   <map name="Shader">
                     <string name="name">CRT</string>
+                    <string name="vertex">crt.vsh</string>
+                    <string name="fragment">crt.fsh</string>
                     <double-array name="Settings" num="2"><item value="1.25" /><item value="2.5" /></double-array>
                   </map>
                 </map>""")
@@ -162,7 +141,10 @@ class ProfileMigrationInstrumentationTest {
             assertEquals(128, model.screenWidth)
             assertEquals(3, model.graphicsMode)
             assertEquals(2, model.screenScaleType)
-            assertEquals(listOf(1.25f, 2.5f), model.shader!!.values)
+            assertNull(model.shader)
+            assertEquals("crt.vsh", model.effects.single().user!!.vertex)
+            assertEquals("crt.fsh", model.effects.single().user!!.fragment)
+            assertEquals(listOf(1.25f, 2.5f), model.effects.single().user!!.values)
             assertFalse(model.fontAA)
             assertTrue(model.systemProperties!!.contains("custom: Ω"))
             assertTrue(model.systemProperties!!.contains("microedition."))
@@ -170,7 +152,8 @@ class ProfileMigrationInstrumentationTest {
             val reopened = checkNotNull(ProfilesManager.loadConfig(dir))
             assertEquals(ProfileModel.VERSION, reopened.version)
             assertEquals(128, reopened.screenWidth)
-            assertEquals(listOf(1.25f, 2.5f), reopened.shader!!.values)
+            assertNull(reopened.shader)
+            assertEquals(listOf(1.25f, 2.5f), reopened.effects.single().user!!.values)
 
             val sparse = ProfileKeyMappings.toSparse(model.keyMappings)
             assertEquals(0, sparse.get(131, 123))
@@ -220,7 +203,7 @@ class ProfileMigrationInstrumentationTest {
             assertTrue(preferences.edit().putString(Constants.PREF_EMULATOR_DIR, root.path).commit())
             File(source, "VirtualKeyboardLayout").writeBytes(byteArrayOf(1, 2, 3))
             File(source, "save").writeText("save")
-            for (payload in listOf("broken", """{"Version":8,"ScreenWidth":999}""")) {
+            for (payload in listOf("broken", """{"Version":${ProfileModel.VERSION + 1},"ScreenWidth":999}""")) {
                 File(source, "config.json").writeText(payload)
                 val before = source.listFiles()!!.associate { it.name to it.readBytes().toList() }
                 val intent = Intent(Constants.ACTION_EDIT_PROFILE, Uri.fromFile(source), context, ConfigActivity::class.java)
@@ -308,7 +291,7 @@ class ProfileMigrationInstrumentationTest {
             assertTrue(ProfilesManager.saveConfig(source, ProfileModel.fresh("")))
             File(source, "save").writeText("save data")
             val sourceBefore = source.listFiles()!!.associate { it.name to it.readBytes().toList() }
-            for (payload in listOf("broken", """{"Version":8,"ScreenWidth":999}""")) {
+            for (payload in listOf("broken", """{"Version":${ProfileModel.VERSION + 1},"ScreenWidth":999}""")) {
                 val intent = Intent(Constants.ACTION_EDIT_PROFILE, Uri.fromFile(source), context, ConfigActivity::class.java)
                 ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
                     lateinit var draft: File
@@ -340,7 +323,7 @@ class ProfileMigrationInstrumentationTest {
             val appId = AudioFixtureCatalog.install(context, root)
             assertTrue(preferences.edit().putString(Constants.PREF_EMULATOR_DIR, root.path).commit())
             File(dir, "save").writeText("user data")
-            for (payload in listOf("broken", """{"Version":8,"ScreenWidth":999}""")) {
+            for (payload in listOf("broken", """{"Version":${ProfileModel.VERSION + 1},"ScreenWidth":999}""")) {
                 assertTrue(ProfilesManager.saveConfig(dir, ProfileModel.fresh("")))
                 val intent = Intent(Constants.ACTION_EDIT, Uri.fromFile(app), context, ConfigActivity::class.java)
                     .putExtra(Constants.KEY_LIBRARY_APP_ID, appId)

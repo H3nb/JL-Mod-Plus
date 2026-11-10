@@ -50,8 +50,6 @@ public final class ConfigUiState {
 	public final List<String> soundBanks;
 	@NonNull
 	public final List<ShaderInfo> shaders;
-	/** Resolved preset metadata for the configuration screen, never GPU state. */
-	@Nullable public ShaderPipelineSummary shaderPipeline;
 	/** Read-only location used for off-main-thread custom source validation. */
 	@Nullable public File shaderDirectory;
 	@NonNull
