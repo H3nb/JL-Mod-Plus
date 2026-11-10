@@ -407,6 +407,7 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.RESULT_OK,
                     engine.freezeSaved(FIRST, savedId, "HP", "700", 0L).code);
             assertEquals(1, engine.watchPage(FIRST).ids.length);
+            assertEquals(savedId, engine.watchPage(FIRST).savedSourceIds[0]);
             root.player.coins = 123;
             assertEquals(MemoryEngineContract.RESULT_OK,
                     engine.freezeTick(FIRST, 0L).code);
@@ -567,6 +568,8 @@ public class SavedVariableLocatorTest {
                 engine.watchInspector(FIRST, "watched-inspector-owner", 0L, 0L,
                     false, offset, MemoryEngineContract.TYPE_INT, 272727L, false, 0L).code);
             assertEquals(1, engine.watchPage(FIRST).ids.length);
+            assertTrue(engine.watchPage(FIRST).savedSourceIds[0]
+                .startsWith("watched-inspector-owner#"));
             assertEquals(-1, engine.watchPage(FIRST).freezeModes[0]);
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.editInspectorAndFreeze(FIRST, "watched-inspector-owner", 0L, 0L,

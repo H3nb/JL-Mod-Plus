@@ -66,11 +66,13 @@ class MemoryEditorModelsTest {
             types = intArrayOf(MemoryEngineContract.TYPE_INT),
             states = intArrayOf(MemoryEngineContract.CANDIDATE_STABLE), relocations = intArrayOf(3),
             labels = arrayOf("HP"), freezeModes = intArrayOf(-1), freezePaused = booleanArrayOf(false),
+            savedSourceIds = arrayOf("saved-hp"),
         )
         assertEquals(42L, parsed.single().id)
         assertEquals("30", parsed.single().valueText)
         assertEquals("0x1234", parsed.single().locationText)
         assertEquals("HP", parsed.single().label)
+        assertEquals("saved-hp", parsed.single().savedSourceId)
     }
 
     @Test fun engineSessionMetadataMapsWithoutCountHeuristics() {

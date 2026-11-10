@@ -964,14 +964,16 @@ private fun RuntimeVariablesTab(
             item(key = "saved-heading") {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically) {
-                    RuntimePageSelectionCheckbox(
-                        checked = allSelected,
-                        enabled = state.savedVariables.isNotEmpty() && !state.busy,
-                        description = stringResource(R.string.memory_saved_tab) + " · " + selectionDescription,
-                        onToggle = {
-                            if (it) actions.selectAllSaved() else actions.clearSavedSelection()
-                        },
-                    )
+                    if (state.savedVariables.isNotEmpty()) {
+                        RuntimePageSelectionCheckbox(
+                            checked = allSelected,
+                            enabled = !state.busy,
+                            description = stringResource(R.string.memory_saved_tab) + " · " + selectionDescription,
+                            onToggle = {
+                                if (it) actions.selectAllSaved() else actions.clearSavedSelection()
+                            },
+                        )
+                    }
                     Text(stringResource(R.string.memory_saved_tab) + " · " +
                         state.savedVariables.size, style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1066,17 +1068,18 @@ private fun RuntimeVariablesTab(
             item(key = "watch-heading") {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically) {
-                    RuntimePageSelectionCheckbox(
-                        checked = sessionWatches.isNotEmpty() &&
-                            sessionWatches.all { it.id in state.selected },
-                        enabled = sessionWatches.isNotEmpty() && !state.busy,
-                        description = stringResource(R.string.memory_editor_watch) + " · " +
-                            stringResource(R.string.memory_editor_select_visible),
-                        onToggle = {
-                            if (it) actions.selectWatchIds(sessionWatches.map { row -> row.id })
-                            else actions.clearSelection()
-                        },
-                    )
+                    if (sessionWatches.isNotEmpty()) {
+                        RuntimePageSelectionCheckbox(
+                            checked = sessionWatches.all { it.id in state.selected },
+                            enabled = !state.busy,
+                            description = stringResource(R.string.memory_editor_watch) + " · " +
+                                stringResource(R.string.memory_editor_select_visible),
+                            onToggle = {
+                                if (it) actions.selectWatchIds(sessionWatches.map { row -> row.id })
+                                else actions.clearSelection()
+                            },
+                        )
+                    }
                     Text(stringResource(R.string.memory_editor_watch) + " · " +
                         sessionWatches.size, style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
