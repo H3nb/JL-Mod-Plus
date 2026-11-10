@@ -352,6 +352,14 @@ class Loader {
 		if (pixelCount > Integer.MAX_VALUE / 4L) {
 			throw new IOException("BMP dimensions are too large");
 		}
+		if (dibHeaderSize == BMP_VERSION_CORE) {
+			// BITMAPCOREINFO may contain fewer than 256 RGBTRIPLE palette entries.
+			long entriesBeforePixels = ((long) rasterOffset - BMP_FILE_HEADER_SIZE - dibHeaderSize) / colorSize;
+			if (entriesBeforePixels < 1) {
+				throw new IOException("Missing BMP palette");
+			}
+			numColors = (int) Math.min(numColors, entriesBeforePixels);
+		}
 
 		// BMP offsets are relative to the supplied resource, not the surrounding byte array.
 		long paletteStart = (long) offset + BMP_FILE_HEADER_SIZE + dibHeaderSize;
