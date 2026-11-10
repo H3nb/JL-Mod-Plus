@@ -129,7 +129,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug
+          mkdir -p ci-artifacts
+          ./gradlew --daemon --stacktrace --profile --console=plain --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug 2>&1 | tee ci-artifacts/assemble-gradle.log
 
       - name: Stage APK for early device testing
         id: stage_apk
@@ -169,7 +170,8 @@ jobs:
             :dexlib:testDebugUnitTest
             :app:assembleEmulatorDebugAndroidTest
           )
-          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}"
+          mkdir -p ci-artifacts
+          ./gradlew --daemon --stacktrace --profile --console=plain --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}" 2>&1 | tee ci-artifacts/tests-gradle.log
 
       - name: Generate screenshot candidates on manual request
         id: update_candidates
@@ -246,6 +248,16 @@ jobs:
           --tests 'dexlib=dexlib/build/test-results/testDebugUnitTest/TEST-*.xml'
           --output ci-artifacts/unit-results.json
 
+      - name: Summarize Gradle work
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: >-
+          python3 scripts/ci-gradle-summary.py
+          --label 'Build and tests'
+          --log 'APK assembly=ci-artifacts/assemble-gradle.log'
+          --log 'Tests and instrumentation=ci-artifacts/tests-gradle.log'
+          --output ci-artifacts/gradle-summary.md
+
       - name: Upload CI diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -262,6 +274,7 @@ jobs:
             build/reports/profile/**
             ci-artifacts/validation.txt
             ci-artifacts/unit-results.*
+            ci-artifacts/gradle-summary.md
             ci-artifacts/runtime-smoke/**
             runtime-logcat.txt
           if-no-files-found: warn
@@ -307,7 +320,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:testEmulatorDebugScreenshotTestDefaultTestSuite
+          mkdir -p ci-artifacts
+          ./gradlew --daemon --stacktrace --profile --console=plain --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:testEmulatorDebugScreenshotTestDefaultTestSuite 2>&1 | tee ci-artifacts/screenshots-gradle.log
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
@@ -336,6 +350,15 @@ jobs:
           --tests 'screenshots=app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results/TEST-*.xml'
           --output ci-artifacts/screenshot-results.json
 
+      - name: Summarize Gradle work
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: >-
+          python3 scripts/ci-gradle-summary.py
+          --label 'Screenshot validation'
+          --log 'Screenshot tests=ci-artifacts/screenshots-gradle.log'
+          --output ci-artifacts/gradle-summary.md
+
       - name: Upload screenshot diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -343,6 +366,7 @@ jobs:
           name: JL-Mod-Plus-screenshot-diagnostics
           path: |
             ci-artifacts/screenshot-results.*
+            ci-artifacts/gradle-summary.md
             app/build/reports/tests/testEmulatorDebugScreenshotTestDefaultTestSuite/**
             app/build/intermediates/emulatorDebug/testEmulatorDebugScreenshotTestDefaultTestSuite/results/**
             build/reports/problems/**
@@ -388,7 +412,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:lintEmulatorDebug
+          mkdir -p ci-artifacts
+          ./gradlew --daemon --stacktrace --profile --console=plain --continue --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:lintEmulatorDebug 2>&1 | tee ci-artifacts/lint-gradle.log
 
       - name: Summarize required lint results
         if: always()
@@ -399,6 +424,15 @@ jobs:
           --lint 'app-and-dependencies=app/build/reports/lint-results-emulatorDebug.xml'
           --output ci-artifacts/lint-results.json
 
+      - name: Summarize Gradle work
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: >-
+          python3 scripts/ci-gradle-summary.py
+          --label 'Lint'
+          --log 'App and dependencies=ci-artifacts/lint-gradle.log'
+          --output ci-artifacts/gradle-summary.md
+
       - name: Upload lint diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -406,6 +440,7 @@ jobs:
           name: JL-Mod-Plus-lint-diagnostics
           path: |
             ci-artifacts/lint-results.*
+            ci-artifacts/gradle-summary.md
             app/build/reports/lint-results-*.html
             app/build/reports/lint-results-*.xml
             app/build/reports/lint-results-*.sarif

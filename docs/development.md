@@ -348,15 +348,20 @@ Cross-run Configuration Cache storage uses the optional repository secret
 but encrypted configuration entries are not persisted across runners. Fork PRs
 have no secret and remain cache read-only. Supplying the secret is an administrator
 operation; workflow configuration alone is not evidence of cache reuse.
-Lint runs independently with the normal native-enabled Android model so it validates
-production-equivalent configuration. Screenshot-only validation may use
-`-PjlmodNativeBuild=false` because it does not consume native outputs and can avoid
-NDK provisioning without weakening app lint coverage.
+Lint and screenshot validation run without native dependency compilation or NDK
+provisioning. Full app-and-dependency lint coverage was compared with native-enabled
+lint before adopting this setting; native ARM64 compilation and packaging remain
+required in the Build and tests job.
 
 Each invocation writes an HTML timing profile under
-`build/reports/profile/`, included in diagnostic artifacts. Compare equivalent task
-sets and cache conditions before attributing timing differences to an optimization;
-measure time to APK separately from time to completed validation.
+`build/reports/profile/`, included in diagnostic artifacts. The PR jobs also
+publish a small Gradle work summary (`ci-artifacts/gradle-summary.md`) showing
+invocation outcomes and task cache/up-to-date counts. The summary is
+best-effort diagnostic output: generation failures remain visible in step logs
+but cannot fail otherwise-passing validation jobs or required checks.
+Compare equivalent task sets and cache conditions before attributing timing
+differences to an optimization; measure time to APK separately from time to
+completed validation.
 
 Do not run `clean` routinely, discard relevant checks to improve timings, or
 suppress Configuration Cache problems as warnings.
