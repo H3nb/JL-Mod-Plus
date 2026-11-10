@@ -520,6 +520,7 @@ private fun RuntimeSearchResultsTab(
 ) {
     var knownDialog by remember { mutableStateOf(false) }
     var unknownDialog by remember { mutableStateOf(false) }
+    var saveDialog by remember { mutableStateOf(false) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
     var deleteSnapshot by remember { mutableStateOf<Pair<Long, List<Long>>?>(null) }
@@ -554,6 +555,10 @@ private fun RuntimeSearchResultsTab(
         val extraActions = listOf(
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 selectedRows.size == 1 && !state.busy, onInspectSelected),
+            RuntimeToolbarAction(R.drawable.ic_save, R.string.memory_saved_save,
+                selectedRows.size == 1 && !state.busy && state.supported) {
+                saveDialog = true
+            },
             RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
                 state.canUndo && !state.busy, actions::undo),
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
@@ -766,6 +771,31 @@ private fun RuntimeSearchResultsTab(
                     )
                 }
                 editTargets = null
+            },
+        )
+    }
+    if (saveDialog) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { saveDialog = false },
+            title = { Text(stringResource(R.string.memory_saved_save)) },
+            text = {
+                OutlinedTextField(
+                    value = name, onValueChange = { if (it.length <= 64) name = it },
+                    label = { Text(stringResource(R.string.memory_saved_name)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(enabled = name.isNotBlank() && !state.busy, onClick = {
+                    actions.saveSelectedVariable(name.trim())
+                    saveDialog = false
+                }) { Text(stringResource(R.string.memory_saved_save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { saveDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             },
         )
     }
