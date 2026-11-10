@@ -88,7 +88,7 @@ internal fun MemoryInputSpec.acceptsPartial(text: String): Boolean {
  * allowed while the user is typing the next value; leading and repeated separators are rejected.
  */
 private fun MemoryInputSpec.acceptsPartialGroup(text: String): Boolean {
-    if (text.length > 96) return false
+    if (kind == MemoryInputKind.BOOLEAN || text.length > 96) return false
     val terms = text.split(';')
     if (terms.size > MemoryEngineContract.MAX_GROUP_VALUES || terms.firstOrNull().isNullOrEmpty()) {
         return false
