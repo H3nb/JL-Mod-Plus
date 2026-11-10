@@ -252,4 +252,17 @@ class MemoryEditorModelsTest {
             MemoryEditorNavigationState(MemoryEditorTab.VARIABLES).underlyingTab)
     }
 
+    @Test fun listCombinesOnlyVerifiedSavedWatchRelationships() {
+        val saved = listOf(SavedVariableRow("kept", "Coins", "player.coins"))
+        fun watch(id: Long, sourceId: String?) = MemoryWatchRow(
+            id, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
+            "50", "50", "50", "player.coins", "Coins", savedSourceId = sourceId,
+        )
+        val rows = memoryListEntries(saved, listOf(watch(1L, "kept"), watch(2L, null)))
+        assertEquals(2, rows.size)
+        assertEquals(1L, rows.single { it.saved != null }.watch?.id)
+        assertEquals(2L, rows.single { it.saved == null }.watch?.id)
+        assertEquals(listOf("saved:kept", "watch:2"), rows.map { it.key })
+    }
+
 }

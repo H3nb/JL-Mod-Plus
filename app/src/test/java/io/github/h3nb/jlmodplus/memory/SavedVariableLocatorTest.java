@@ -641,4 +641,46 @@ public class SavedVariableLocatorTest {
             MemoryDiscoveryBridge.close(FIRST);
         }
     }
+    @Test public void keepingVerifiedWatchRetainsItsIdentityAndExistingFreeze() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine editor = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        MemoryDiscoveryBridge.tailSeen(GuestPlayer.class);
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult search = editor.startExact(
+                    FIRST, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+                    585858L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+            long id = 0L;
+            ManagedJavaMemoryEngine.ManagedPage page = editor.resultPage(
+                    FIRST, search.revision, 0, 100);
+            for (long candidate : page.ids) {
+                ManagedJavaMemoryEngine.SavedLocator path =
+                        editor.captureSavedLocator(FIRST, search.revision, candidate);
+                if (path != null && path.steps.length == 2 &&
+                        path.steps[1].kind == ManagedJavaMemoryEngine.SavedStep.FIELD &&
+                        "coins".equals(path.steps[1].field.name)) id = candidate;
+            }
+            assertNotEquals(0L, id);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.addWatch(
+                    FIRST, search.revision, new long[]{id}, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.setFreezeLockTyped(
+                    FIRST, search.revision, new long[]{id}, "585858", true, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "kept", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.watchInspector(
+                    FIRST, "kept", 0L, 0L, false, 0,
+                    MemoryEngineContract.TYPE_INT, 585858L, false, 0L).code);
+            ManagedJavaMemoryEngine.ManagedPage linked = editor.watchPage(FIRST);
+            assertEquals(1, linked.ids.length);
+            assertEquals(id, linked.ids[0]);
+            assertEquals("kept", linked.savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.FREEZE_LOCK, linked.freezeModes[0]);
+        } finally {
+            editor.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
 }

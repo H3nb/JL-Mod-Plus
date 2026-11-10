@@ -116,18 +116,22 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithText("Hit points").assertIsDisplayed()
     }
 
-    @Test fun inspectorTabOnlyEnablesForOneSelectedCandidate() {
+    @Test fun inspectorIsContextualDetailWithBackInsteadOfPrimaryTab() {
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true, variablesTab = true,
+        ))
+        var backCount = 0
+        val actions = object : TestMemoryEditorActions() {
+            override fun closeInspector() { backCount++ }
+        }
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val state = mutableStateOf(MemoryEditorUiState(visible = true, connected = true, supported = true))
-        val label = context.getString(R.string.memory_editor_inspector)
-        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) } }
-        rule.onNodeWithContentDescription(label).assertIsNotEnabled()
-        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L)) }
-        rule.onNodeWithContentDescription(label).assertIsEnabled()
-        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L, 2L)) }
-        rule.onNodeWithContentDescription(label).assertIsNotEnabled()
-        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L), busy = true) }
-        rule.onNodeWithContentDescription(label).assertIsNotEnabled()
+        val inspector = context.getString(R.string.memory_editor_inspector)
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) } }
+        rule.onNodeWithText(inspector).assertDoesNotExist()
+        rule.runOnIdle { state.value = state.value.copy(inspectorLoading = true) }
+        rule.onNodeWithText(inspector).assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.memory_editor_back)).performClick()
+        rule.runOnIdle { assertEquals(1, backCount) }
     }
 
     @Test fun shortInspectorWithLargeTextScrollsToTheLastEditableValue() {
@@ -454,35 +458,20 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
-    @Test fun variablesWatchSectionKeepsSelectPageAccessible() {
-        val watches = listOf(1L, 2L).map { id ->
-            MemoryWatchRow(
-                id = id, type = MemoryEngineContract.TYPE_INT,
-                valueText = "2", initialValueText = "2", previousValueText = "2",
-                label = "watch", locationText = "test",
-                state = MemoryEngineContract.CANDIDATE_STABLE,
-                relocations = 0,
-            )
-        }
-        val state = mutableStateOf(MemoryEditorUiState(
+    @Test fun longPressListEntryStartsMultiSelectionWithoutPermanentCheckboxes() {
+        val watch = MemoryWatchRow(
+            1L, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
+            "2", "2", "2", "player.coins", "Coins",
+        )
+        val state = MemoryEditorUiState(
             visible = true, connected = true, supported = true,
-            variablesTab = true, watches = watches,
-        ))
-        val actions = object : TestMemoryEditorActions() {
-            override fun selectWatchIds(ids: List<Long>) {
-                state.value = state.value.copy(selected = ids.toSet(), savedSelection = emptySet())
-            }
-        }
+            variablesTab = true, watches = listOf(watch),
+        )
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, TestMemoryEditorActions()) } }
+        rule.onNodeWithText("Coins").performTouchInput { longClick() }
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val label = context.getString(R.string.memory_editor_watch) + " · " +
-            context.getString(R.string.memory_editor_select_visible)
-        rule.setContent {
-            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp))) {
-                JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) }
-            }
-        }
-        rule.onNodeWithContentDescription(label).assertIsDisplayed().performClick()
-        rule.runOnIdle { assertEquals(setOf(1L, 2L), state.value.selected) }
+        rule.onNodeWithText(context.resources.getQuantityString(
+            R.plurals.memory_editor_selected, 1, 1)).assertIsDisplayed()
     }
 
     @Test fun spaciousLandscapeShowsExtraActionsDirectlyWithoutMore() {
