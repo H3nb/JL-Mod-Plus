@@ -223,6 +223,7 @@ public class DateField extends Item {
     View getItemContentView() {
         if (layout == null) {
             Context context = ContextHolder.getActivity();
+            if (context == null) context = ContextHolder.getAppContext();
             layout = new LinearLayout(context);
             layout.setOrientation(LinearLayout.VERTICAL);
 
