@@ -846,8 +846,7 @@
     <string name="memory_editor_undo">前の検索に戻す</string>
     <string name="memory_editor_unfreeze">固定を解除</string>
     <string name="memory_editor_unsupported">このランタイムではメモリエディターを利用できません。</string>
-    <string name="memory_variables_tab">変数</string>
-    <string name="memory_variables_stop_watching">監視を停止</string>
+    <string name="memory_variables_tab">リスト</string>
     <string name="memory_editor_watch">監視</string>
     <string name="memory_editor_working">操作を適用中…</string>
     <string name="memory_editor_write_confirmed">メモリの再読み取りで %1$d 個の値を確認しました。</string>

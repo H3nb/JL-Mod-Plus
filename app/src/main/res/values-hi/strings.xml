@@ -909,8 +909,7 @@
     <string name="memory_editor_undo">पिछली खोज वापस लाएँ</string>
     <string name="memory_editor_unfreeze">फ़्रीज़ रोकें</string>
     <string name="memory_editor_unsupported">इस रनटाइम के लिए मेमोरी एडिटर उपलब्ध नहीं है।</string>
-    <string name="memory_variables_tab">वेरिएबल</string>
-    <string name="memory_variables_stop_watching">निगरानी बंद करें</string>
+    <string name="memory_variables_tab">सूची</string>
     <string name="memory_editor_watch">निगरानी</string>
     <string name="memory_editor_working">कार्रवाई लागू की जा रही है…</string>
     <string name="memory_editor_write_confirmed">मेमोरी को दोबारा पढ़कर पुष्टि किए गए मानों की संख्या: %1$d।</string>

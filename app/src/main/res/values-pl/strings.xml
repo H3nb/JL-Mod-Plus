@@ -912,8 +912,7 @@
     <string name="memory_editor_undo">Cofnij wyszukiwanie</string>
     <string name="memory_editor_unfreeze">Odmroź</string>
     <string name="memory_editor_unsupported">Edytor pamięci jest niedostępny dla tego środowiska uruchomieniowego.</string>
-    <string name="memory_variables_tab">Zmienne</string>
-    <string name="memory_variables_stop_watching">Zatrzymaj obserwację</string>
+    <string name="memory_variables_tab">Lista</string>
     <string name="memory_editor_watch">Obserwacja</string>
     <string name="memory_editor_working">Stosowanie operacji…</string>
     <string name="memory_editor_write_confirmed">Liczba wartości potwierdzonych ponownym odczytem pamięci: %1$d.</string>

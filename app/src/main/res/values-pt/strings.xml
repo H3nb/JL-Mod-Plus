@@ -465,8 +465,7 @@
     <string name="memory_editor_engine_reconnecting">O Editor de memória está a restabelecer a ligação…</string>
     <string name="memory_editor_refresh">Atualizar</string>
     <string name="memory_editor_undo">Anular</string>
-    <string name="memory_variables_tab">Variáveis</string>
-    <string name="memory_variables_stop_watching">Parar de monitorizar</string>
+    <string name="memory_variables_tab">Lista</string>
     <string name="memory_editor_watch">Monitorizar</string>
     <string name="memory_editor_search_tab">Pesquisar</string>
     <string name="memory_editor_search_known_values">Pesquisar valores conhecidos</string>
