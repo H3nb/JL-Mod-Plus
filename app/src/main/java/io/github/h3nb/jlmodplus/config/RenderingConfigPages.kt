@@ -244,7 +244,7 @@ internal fun RenderingSettingsPage(
         snackbarHost = {
             SnackbarHost(snackbar) { data ->
                 Snackbar(
-                    data = data,
+                    snackbarData = data,
                     shape = MaterialTheme.shapes.medium,
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurface,
