@@ -173,21 +173,19 @@ internal fun MemoryEditorRuntimeRoot(
         val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
         val resultsListState = rememberLazyListState()
-        val watchListState = rememberLazyListState()
-        val savedListState = rememberLazyListState()
+        val variablesListState = rememberLazyListState()
         val inspectSelected = {
-            if (state.savedTab) {
+            if (state.variablesTab && state.savedSelection.isNotEmpty()) {
                 state.savedSelection.singleOrNull()?.let { actions.inspectSavedVariable(it) }
             } else {
-                state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.watchTab) }
+                state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.variablesTab) }
             }
             Unit
         }
         val selectTab: (MemoryEditorTab) -> Unit = {
             when (it) {
-                MemoryEditorTab.RESULTS -> actions.setWatchTab(false)
-                MemoryEditorTab.WATCH -> actions.setWatchTab(true)
-                MemoryEditorTab.SAVED -> actions.setSavedTab()
+                MemoryEditorTab.RESULTS -> actions.setVariablesTab(false)
+                MemoryEditorTab.VARIABLES -> actions.setVariablesTab(true)
                 MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
             }
         }
@@ -263,12 +261,9 @@ internal fun MemoryEditorRuntimeRoot(
                                         shownState, actions, inspectSelected, resultsListState,
                                         compactResults, Modifier.fillMaxSize(),
                                     )
-                                    MemoryEditorTab.WATCH -> RuntimeWatchTab(
-                                        shownState, actions, watchListState, compactResults,
+                                    MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
+                                        shownState, actions, variablesListState, compactResults,
                                         Modifier.fillMaxSize(),
-                                    )
-                                    MemoryEditorTab.SAVED -> RuntimeSavedVariablesTab(
-                                        shownState, actions, savedListState, Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
                                         shownState, actions, Modifier.fillMaxSize(),
@@ -370,8 +365,7 @@ private fun RuntimeMemoryTabs(
     modifier: Modifier = Modifier,
 ) {
     val searchLabel = stringResource(R.string.memory_editor_search_tab)
-    val watchLabel = stringResource(R.string.memory_editor_watch)
-    val savedLabel = stringResource(R.string.memory_saved_tab)
+    val variablesLabel = stringResource(R.string.memory_variables_tab)
     val inspectorLabel = stringResource(R.string.memory_editor_inspector)
     SecondaryScrollableTabRow(
         selectedTabIndex = state.activeTab.ordinal,
@@ -383,7 +377,7 @@ private fun RuntimeMemoryTabs(
             val enabled = tab != MemoryEditorTab.INSPECTOR ||
                 state.activeTab == tab || (!state.busy && (
                     state.selected.size == 1 ||
-                    state.savedTab && state.savedSelection.size == 1 &&
+                    state.variablesTab && state.savedSelection.size == 1 &&
                         state.savedValues[state.savedSelection.first()]?.resolved == true
                 ))
             Tab(
@@ -392,16 +386,14 @@ private fun RuntimeMemoryTabs(
                 enabled = enabled,
                 modifier = Modifier.semantics { contentDescription = when (tab) {
                     MemoryEditorTab.RESULTS -> searchLabel
-                    MemoryEditorTab.WATCH -> watchLabel
-                    MemoryEditorTab.SAVED -> savedLabel
+                    MemoryEditorTab.VARIABLES -> variablesLabel
                     MemoryEditorTab.INSPECTOR -> inspectorLabel
                 } },
                 text = {
                     Text(
                         stringResource(when (tab) {
                             MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
-                            MemoryEditorTab.WATCH -> R.string.memory_editor_watch
-                            MemoryEditorTab.SAVED -> R.string.memory_saved_tab
+                            MemoryEditorTab.VARIABLES -> R.string.memory_variables_tab
                             MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
                         }),
                         color = if (enabled) Color.Unspecified
