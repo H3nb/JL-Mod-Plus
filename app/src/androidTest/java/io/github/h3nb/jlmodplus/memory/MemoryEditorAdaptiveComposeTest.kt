@@ -582,6 +582,33 @@ class MemoryEditorAdaptiveComposeTest {
         rule.runOnIdle { assertEquals(2, nextCalls) }
     }
 
+    @Test fun linkedSavedWatchIsShownOnceAndReturnsWhenSavedDefinitionDisappears() {
+        val saved = SavedVariableRow("hp", "Hit points", "guest.Game.hp")
+        val watch = MemoryWatchRow(
+            id = 1L, type = MemoryEngineContract.TYPE_INT,
+            valueText = "42", initialValueText = "42", previousValueText = "42",
+            label = "Session health", locationText = "guest.Game.hp",
+            state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+            savedSourceId = "hp",
+        )
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true,
+            variablesTab = true, savedVariables = listOf(saved),
+            savedValues = mapOf("hp" to SavedVariableRuntimeValue(
+                MemoryEngineContract.RESULT_OK, MemoryEngineContract.TYPE_INT, "42")),
+            watches = listOf(watch),
+        ))
+        rule.setContent {
+            JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
+        }
+        rule.onNodeWithText("Hit points").assertIsDisplayed()
+        rule.onNodeWithText("Session health").assertDoesNotExist()
+        rule.runOnIdle { state.value = state.value.copy(
+            savedVariables = emptyList(), savedValues = emptyMap(),
+        ) }
+        rule.onNodeWithText("Session health").assertIsDisplayed()
+    }
+
     @Test fun booleanKnownSearchUsesChoicesInsteadOfNumericKeypad() {
         var submittedValue: String? = null
         var submittedType = -1

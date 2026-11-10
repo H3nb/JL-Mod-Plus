@@ -958,13 +958,6 @@ private fun RuntimeVariablesTab(
             }
         }
         HorizontalDivider()
-        state.savedError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
-        }
-        if (state.savedVariables.isEmpty() && state.savedError == null) {
-            Text(stringResource(R.string.memory_saved_empty), modifier = Modifier.padding(16.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().weight(1f)) {
             item(key = "saved-heading") {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -981,6 +974,15 @@ private fun RuntimeVariablesTab(
                         state.savedVariables.size, style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+            if (state.savedError != null) item(key = "saved-error") {
+                Text(state.savedError, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+            } else if (state.savedVariables.isEmpty()) item(key = "saved-empty") {
+                Text(stringResource(R.string.memory_saved_empty),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
             }
             items(state.savedVariables, key = { "saved:" + it.id }) { item ->
                 val value = state.savedValues[item.id]
