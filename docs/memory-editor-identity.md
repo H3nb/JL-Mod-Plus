@@ -1,6 +1,6 @@
 # Managed Memory Editor candidate identity
 
-This document records runtime candidate identity and the separately supported Saved Variables contract. Saved definitions are not Watch entries.
+This document records runtime candidate identity and the separately supported Saved Variables contract. Saved definitions are not Watch entries. The Variables UI groups both, but does not unify their identity or storage.
 
 ## Runtime target identity
 
@@ -23,6 +23,20 @@ only its target identity and origin tab; reopening fetches a fresh, checked
 snapshot. Missing or changed Inspector targets fall back to Search, Watch or
 Saved, never to an old snapshot. A new MIDlet token starts at Search. No tab
 preference, Inspector value, or guest object is written to persistent storage.
+
+## Unified presentation linkage
+
+Watch records created by Saved-origin Freeze/Inspector operations carry a
+`savedSourceId` linked to a persistent Saved definition. The engine publishes
+that association as optional Watch-page metadata. Variables can fold only that
+verified link into the Saved row; independent Watch and Saved targets remain
+separate even when their labels or values match. Stop watching removes Watch
+without deleting Saved, while deleting Saved does not stop Watch/Freeze.
+
+Explicit Boolean candidates use a distinct primitive type, including Boolean
+fields and `boolean[]` elements. Numeric Auto search remains numeric-only;
+Boolean supports exact true/false and changed/unchanged comparisons. Saved's
+typed field/index path contract includes `boolean` and `[Z` terminals.
 
 ## Direct-reference observation
 

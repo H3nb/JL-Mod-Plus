@@ -1,7 +1,7 @@
 # Memory Editor UI
 
 The editor is a fullscreen inspection workspace hosted in `MemoryEditorActivity`.
-Search, Watch and Inspector share a full-bleed surface; short search/edit operations use
+Search, Variables and Inspector share a full-bleed surface; short search/edit operations use
 `MemoryEditorDialog`, which reuses the shared adaptive dialog body and sizing.
 A bottom sheet would reduce the data viewport in short
 landscape windows without simplifying these workflows.
@@ -58,7 +58,7 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   dialog; keep undo/menu access after a scan returns no results.
 - Frequent icon actions retain localized accessibility descriptions and long-press
   tooltips; do not shrink text to fit.
-- Keep Search and Watch list states in the workspace. Returning from Inspector or
+- Keep Search and Variables list states in the workspace. Returning from Inspector or
   changing window width should not reset their positions. Back from Inspector
   returns to its origin tab; the close action still closes the editor.
 - Pack toolbar actions according to the available width in 48 dp touch slots,
@@ -70,7 +70,7 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   columns when its actual dialog width and font scale permit, otherwise a
   scrolling single column. Inspector still requires exactly one selected candidate.
 - The results' select-page checkbox is visible in portrait summary and landscape
-  toolbar; Watch also provides select-page. Selection is limited to the currently
+  toolbar; Variables has independent Saved and Watch group selections. Selection is limited to the currently
   loaded result page (up to 100 candidates), not every matching memory location.
 - Put result counts/selection and Inspector provenance in the scrolling list, so
   growing text does not reserve the entire viewport. Keep full numeric values
@@ -83,6 +83,26 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   IME without replacing text-editing semantics. Existing value validation still applies.
 - Inspector is a snapshot. Initial positioning uses actual row size; passive changes
   must not repeatedly move the reader back to the anchor. Refresh remains explicit.
+
+## Unified Variables contract
+
+Variables is one scrolling workspace with Saved and Watch groups. The underlying
+Saved authority and session Watch engine retain independent identity, persistence,
+selection and mutation semantics. Only an explicit engine-provided Saved-origin
+Watch ID may be collapsed into its Saved row. Do not combine rows by class,
+field name, path or value equality. Users can unfreeze or stop watching a linked
+Saved entry independently from deleting its persistent definition.
+
+Saving from Watch uses the same verified rooted locator capture as saving from
+Search; no session handle is written to persistent storage. A Saved definition
+never starts Freeze or restores a previous game value on load. Saved edit dialogs
+still pin the original binding, while passive rebound remains read-only. The
+existing foreground coordinator updates both groups when Variables is visible;
+this is not a second polling loop.
+
+Boolean uses explicit true/false controls and logical predicates. Numeric Auto
+does not expand to Boolean; unknown Boolean scans must be explicitly requested.
+The normal search/edit/Inspector/Saved and Freeze contracts still apply.
 
 ## Overlay visibility and modal ownership
 
