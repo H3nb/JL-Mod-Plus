@@ -55,13 +55,22 @@ public class LoaderResourceSliceTest {
 
 	@Test
 	public void coreHeaderBmpUsesThreeBytePaletteWithSamePixelOutput() throws IOException {
-		byte[] coreBmp = coreBmp3x5();
+		byte[] coreBmp = coreBmp3x5(256);
 		byte[] windowsBmp = bmp3x5(false, false);
 		byte[] wrapped = withPrefixAndSuffix(coreBmp, 32, 16);
 
 		byte[] expected = pixels(Loader.loadBmpData(windowsBmp, 0, windowsBmp.length));
 		assertArrayEquals(expected, pixels(Loader.loadBmpData(coreBmp, 0, coreBmp.length)));
 		assertArrayEquals(expected, pixels(Loader.loadBmpData(wrapped, 32, coreBmp.length)));
+	}
+
+	@Test
+	public void coreHeaderBmpAllowsAValidShortRgbTriplePalette() throws IOException {
+		byte[] bmp = coreBmp3x5(16);
+		byte[] wrapped = withPrefixAndSuffix(bmp, 32, 16);
+		byte[] expected = pixels(Loader.loadBmpData(bmp3x5(false, false), 0, bmp3x5(false, false).length));
+		assertArrayEquals(expected, pixels(Loader.loadBmpData(bmp, 0, bmp.length)));
+		assertArrayEquals(expected, pixels(Loader.loadBmpData(wrapped, 32, bmp.length)));
 	}
 
 	@Test
@@ -160,11 +169,11 @@ public class LoaderResourceSliceTest {
 		return data;
 	}
 
-	private static byte[] coreBmp3x5() {
+	private static byte[] coreBmp3x5(int paletteEntries) {
 		final int width = 3;
 		final int height = 5;
 		final int stride = 4;
-		final int rasterOffset = 14 + 12 + 256 * 3;
+		final int rasterOffset = 14 + 12 + paletteEntries * 3;
 		byte[] bytes = new byte[rasterOffset + height * stride];
 		ByteBuffer bmp = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
 		bmp.putShort((short) 0x4D42);
@@ -176,7 +185,7 @@ public class LoaderResourceSliceTest {
 		bmp.putShort((short) height);
 		bmp.putShort((short) 1);
 		bmp.putShort((short) 8);
-		for (int index = 0; index < 256; index++) {
+		for (int index = 0; index < paletteEntries; index++) {
 			int value = index == 0 || index == 1 ? 255 : index;
 			bmp.put((byte) (index == 0 ? 0 : value));
 			bmp.put((byte) (index == 0 ? 0 : value));
