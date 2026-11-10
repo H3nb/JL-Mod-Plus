@@ -496,7 +496,6 @@
     <string name="memory_list_empty_hint">Pilih hasil pencarian, lalu tambahkan ke Daftar.</string>
     <string name="memory_list_remove_confirm">Hapus entri terpilih? Freeze yang aktif akan dihentikan dan definisi tersimpan akan dihapus.</string>
     <string name="memory_list_add">Tambah ke Daftar</string>
-    <string name="memory_variables_stop_watching">Hentikan pemantauan</string>
     <string name="memory_editor_watch">Pantauan</string>
     <string name="memory_editor_search_tab">Cari</string>
     <string name="memory_editor_search_known_values">Cari nilai yang diketahui</string>

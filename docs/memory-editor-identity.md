@@ -1,6 +1,6 @@
 # Managed Memory Editor candidate identity
 
-This document records runtime candidate identity and the separately supported Saved Variables contract. Saved definitions are not Watch entries. The Variables UI groups both, but does not unify their identity or storage.
+This document records runtime candidate identity and the separately supported Saved Variables contract. Saved definitions are not Watch entries. The List presents both through one entry model while preserving their separate identity, lifecycle and storage.
 
 ## Runtime target identity
 
@@ -20,18 +20,19 @@ runtime ID rather than a field-path string. Provenance never authorizes a write.
 Closing the bubble editor remembers its last tab and Search page only in the
 `:memory_engine` process for the current MIDlet runtime token. Inspector remembers
 only its target identity and origin tab; reopening fetches a fresh, checked
-snapshot. Missing or changed Inspector targets fall back to Search, Watch or
-Saved, never to an old snapshot. A new MIDlet token starts at Search. No tab
+snapshot. Missing or changed Inspector targets return to Search or List, never to an old snapshot. A new MIDlet token starts at Search. No tab
 preference, Inspector value, or guest object is written to persistent storage.
 
 ## Unified presentation linkage
 
-Watch records created by Saved-origin Freeze/Inspector operations carry a
-`savedSourceId` linked to a persistent Saved definition. The engine publishes
-that association as optional Watch-page metadata. Variables can fold only that
-verified link into the Saved row; independent Watch and Saved targets remain
-separate even when their labels or values match. Stop watching removes Watch
-without deleting Saved, while deleting Saved does not stop Watch/Freeze.
+Watch records created by Saved-origin actions carry a `savedSourceId` linked to
+a persistent Saved definition. The engine publishes that association as
+optional Watch-page metadata. List can fold only this verified link into one
+entry; independent targets remain separate even when labels or values match.
+Keeping an already active Watch adopts its exact verified owner/slot and
+preserves any existing Freeze. Stopping Keep keeps a valid Watch in the
+current session. Removing a List entry requests both the Saved deletion and
+the session Watch/Freeze removal; backend failures are surfaced independently.
 
 Explicit Boolean candidates use a distinct primitive type, including Boolean
 fields and `boolean[]` elements. Numeric Auto search remains numeric-only;
@@ -96,7 +97,7 @@ is persisted. Search/Watch runtime candidate IDs remain independent.
 Capture requires a current verified ancestry from the MIDlet, Displayable or an
 already-initialized static class; resolving never initializes guest classes. It
 checks every field signature and array bound and retains weak, pinned runtime
-ancestry. The Saved tab may release and resolve a changed binding again while no
+ancestry. The List may release and resolve a changed binding again while no
 Saved edit is open, displaying a nonblocking **Target updated** hint for a few seconds during foreground polling. An open edit
 pins its original binding: replacement during the dialog rejects the write, and
 the user can reopen the editor. Rebinding never writes or activates Watch/Freeze.
@@ -116,8 +117,7 @@ uses `InstalledAppWriteGuard`. The R&D prototype format is not migrated.
 Definitions can be listed and renamed/deleted without a running guest; resolving,
 reading, editing and Inspector require a live MIDlet. A committed delete removes
 the definition from the active polling catalog and releases its runtime Saved
-binding; it does not remove or reactivate a separate Watch/Freeze. Saved selection is separate
-from Search/Watch selection. Foreground Saved polling reads active values and
+binding; it does not remove or reactivate a separate Watch/Freeze. Saved and Watch remain separate backend records. List selection is presentation-local. Foreground Saved polling reads active values and
 retries unresolved paths without reloading the document on every frame. Opening
 an edit drains preceding IPC, snapshots the bound value and pauses automatic Saved
 rebind until dismissal. Normal guest value changes during a manual edit are not

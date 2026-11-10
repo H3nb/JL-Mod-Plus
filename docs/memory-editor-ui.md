@@ -1,7 +1,7 @@
 # Memory Editor UI
 
 The editor is a fullscreen inspection workspace hosted in `MemoryEditorActivity`.
-Search, Variables and Inspector share a full-bleed surface; short search/edit operations use
+Search and List share a full-bleed surface; Inspector opens as a contextual detail; short search/edit operations use
 `MemoryEditorDialog`, which reuses the shared adaptive dialog body and sizing.
 A bottom sheet would reduce the data viewport in short
 landscape windows without simplifying these workflows.
@@ -47,9 +47,8 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   opening the editor (non-Canvas forms show both; Canvas follows its status-bar setting
   and hides navigation). Keep that same policy in nested dialogs and on focus changes;
   no editor window may independently force fullscreen.
-- The Inspector tab is visually disabled using Material 3 disabled emphasis when no
-  candidate or multiple candidates are selected, or while busy. Enable it for exactly
-  one selection; retain access to an Inspector already open.
+- The two primary tabs are Search and List. Inspector opens from an explicit
+  result/entry action and has its own Back button; it never occupies a third tab.
 - Keep the editor title and labeled navigation visible. Place them in one row when
   width permits; stack them otherwise. In short windows with large text, retain the
   labeled tabs and omit the redundant app title to protect the data viewport.
@@ -69,9 +68,9 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   availability, not the relative order of the frequent actions. More uses two
   columns when its actual dialog width and font scale permit, otherwise a
   scrolling single column. Inspector still requires exactly one selected candidate.
-- The results' select-page checkbox is visible in portrait summary and landscape
-  toolbar; Variables has independent Saved and Watch group selections. Selection is limited to the currently
-  loaded result page (up to 100 candidates), not every matching memory location.
+- Search retains its select-page checkbox, limited to the current result page
+  (up to 100 candidates). List has no permanent checkboxes or Saved/Watch sections:
+  long-press selects an entry, revealing a single multi-select toolbar.
 - Put result counts/selection and Inspector provenance in the scrolling list, so
   growing text does not reserve the entire viewport. Keep full numeric values
   readable; source summaries may truncate, with provenance available in Inspector.
@@ -84,25 +83,34 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 - Inspector is a snapshot. Initial positioning uses actual row size; passive changes
   must not repeatedly move the reader back to the anchor. Refresh remains explicit.
 
-## Unified Variables contract
+## List interaction contract
 
-Variables is one scrolling workspace with Saved and Watch groups. The underlying
-Saved authority and session Watch engine retain independent identity, persistence,
-selection and mutation semantics. Only an explicit engine-provided Saved-origin
-Watch ID may be collapsed into its Saved row. Do not combine rows by class,
-field name, path or value equality. Users can unfreeze or stop watching a linked
-Saved entry independently from deleting its persistent definition.
+List is one alphabetically ordered collection of entries, not two Saved/Watch
+sections. A row shows its name, current value, compact location/type, a Freeze
+button, an optional Keep marker, and a contextual actions menu. Tap the row to
+edit. Long-press to select and batch-remove, with selection controls shown only
+in that mode. The direct Freeze control does not start merely because a kept
+reference resolves. A missing or incompatible target cannot be edited.
 
-Saving from Watch uses the same verified rooted locator capture as saving from
-Search; no session handle is written to persistent storage. A Saved definition
-never starts Freeze or restores a previous game value on load. Saved edit dialogs
-still pin the original binding, while passive rebound remains read-only. The
-existing foreground coordinator updates both groups when Variables is visible;
-this is not a second polling loop.
+Keep is opt-in and requires a verified rooted locator; the existing Saved authority
+persists it. Stopping Keep requires a valid session Watch or a safely resolved
+target that can become one. Remove is one user-facing operation that deletes
+the kept definition and requests Watch/Freeze removal, reporting partial
+failures rather than treating an asynchronous operation ID as success.
 
-Boolean uses explicit true/false controls and logical predicates. Numeric Auto
-does not expand to Boolean; unknown Boolean scans must be explicitly requested.
-The normal search/edit/Inspector/Saved and Freeze contracts still apply.
+The underlying Saved authority and session Watch engine keep separate
+identity, storage, lifecycle and mutation contracts. A List entry folds a
+Saved definition and a Watch only when the engine provides their explicit
+Saved-origin association. Never infer identity from equal names, paths or
+values. Keeping an already-watched target attaches the verified association
+without duplicating Watch or restarting Freeze. Saved editing still pins its
+binding, and background resolution never restores values or activates Freeze.
+The existing foreground refresh coordinator updates the List without a new
+idle traversal or polling worker.
+
+Boolean remains explicit true/false; numeric Auto excludes it. Inspector
+remains a checked snapshot with Back returning to the previous List or Search
+scroll position.
 
 ## Overlay visibility and modal ownership
 
