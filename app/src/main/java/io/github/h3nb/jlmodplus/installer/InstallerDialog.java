@@ -377,11 +377,15 @@ public class InstallerDialog extends DialogFragment {
 		String message;
 		String runLabel = null;
 		switch (status) {
-			case AppInstaller.STATUS_NEED_JAR -> {
+			case AppInstaller.STATUS_NEED_JAR, AppInstaller.STATUS_WRONG_COMPANION_JAR -> {
 				primaryAction = () -> companionJarPicker.launch("*/*");
 				composeController.showConfirmation(installerTitle,
-						getString(R.string.installer_select_companion_jar),
-						getString(R.string.installer_select_jar),
+						getString(status == AppInstaller.STATUS_NEED_JAR
+								? R.string.installer_select_companion_jar
+								: R.string.installer_wrong_companion_jar),
+						getString(status == AppInstaller.STATUS_NEED_JAR
+								? R.string.installer_select_jar
+								: R.string.installer_choose_another_jar),
 						getString(android.R.string.cancel), null, null);
 				return;
 			}

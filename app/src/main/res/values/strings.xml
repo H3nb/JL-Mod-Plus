@@ -1319,4 +1319,6 @@
     <string name="date_field_not_set" tools:ignore="MissingTranslation">Not set</string>
     <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">This JAD refers to a separate JAR file. Select the matching JAR to continue. The external file provider does not grant access to neighboring documents.</string>
     <string name="installer_select_jar" tools:ignore="MissingTranslation">Select JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">This JAR does not match the selected JAD. Choose the matching JAR to preserve the JAD settings.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Choose another JAR</string>
 </resources>

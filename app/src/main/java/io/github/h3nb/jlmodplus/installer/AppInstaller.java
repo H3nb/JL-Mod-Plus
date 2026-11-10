@@ -88,6 +88,8 @@ public class AppInstaller {
     static final int STATUS_AMBIGUOUS = 6;
     /** A content-URI JAD cannot grant access to a relative companion document. */
     static final int STATUS_NEED_JAR = 7;
+    /** The chosen external JAR does not match the reviewed JAD; retry without discarding it. */
+    static final int STATUS_WRONG_COMPANION_JAR = 8;
 
     private final long id;
     private final LibraryViewModel libraryViewModel;
@@ -775,7 +777,8 @@ public class AppInstaller {
     void loadSelectedExternalJar(Uri jarUri, SingleEmitter<Integer> emitter)
             throws IOException, ConverterException {
         checkCancelled();
-        if (loadedStatus != STATUS_NEED_JAR || newDesc == null || srcJad == null) {
+        if ((loadedStatus != STATUS_NEED_JAR && loadedStatus != STATUS_WRONG_COMPANION_JAR)
+                || newDesc == null || srcJad == null) {
             throw new IOException("There is no pending JAD companion selection");
         }
         stage(Stage.READING);
@@ -783,7 +786,7 @@ public class AppInstaller {
         srcJar = scratch.copy(source, "reviewed.jar");
         manifest = loadManifest(srcJar);
         if (!manifest.equals(newDesc)) {
-            emitLoadedStatus(emitter, STATUS_UNMATCHED);
+            emitLoadedStatus(emitter, STATUS_WRONG_COMPANION_JAR);
             return;
         }
         emitLoadedStatus(emitter, checkDescriptor());

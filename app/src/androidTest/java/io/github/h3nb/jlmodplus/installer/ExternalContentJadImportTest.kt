@@ -72,9 +72,15 @@ class ExternalContentJadImportTest {
             val wrong = AppInstaller(null as File?, uri, library)
             assertEquals(AppInstaller.STATUS_NEED_JAR,
                 Single.create<Int>(wrong::loadInfo).blockingGet())
-            assertEquals(AppInstaller.STATUS_UNMATCHED, Single.create<Int> { emitter ->
+            val reviewedDescriptor = wrong.newDescriptor
+            assertEquals(AppInstaller.STATUS_WRONG_COMPANION_JAR, Single.create<Int> { emitter ->
                 wrong.loadSelectedExternalJar(wrongJarUri, emitter)
             }.blockingGet())
+            assertEquals(AppInstaller.STATUS_NEW, Single.create<Int> { emitter ->
+                wrong.loadSelectedExternalJar(jarUri, emitter)
+            }.blockingGet())
+            assertEquals(reviewedDescriptor, wrong.newDescriptor)
+            assertEquals("Fixture", wrong.manifest.name)
             installer.clearCache()
             wrong.clearCache()
         } finally {
