@@ -7,6 +7,7 @@ package io.github.h3nb.jlmodplus.memory
 import java.math.BigInteger
 
 internal enum class MemoryInputKind {
+    BOOLEAN,
     SIGNED_INTEGER,
     UNSIGNED_INTEGER,
     FLOATING,
@@ -30,6 +31,7 @@ internal data class MemoryInputSpec(
 
     companion object {
         fun forType(type: Int): MemoryInputSpec = when (type) {
+            MemoryEngineContract.TYPE_BOOLEAN -> MemoryInputSpec(MemoryInputKind.BOOLEAN, maxChars = 5)
             MemoryEngineContract.TYPE_BYTE -> MemoryInputSpec(
                 MemoryInputKind.SIGNED_INTEGER, Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong(), maxChars = 4,
             )
@@ -106,6 +108,8 @@ private fun MemoryInputSpec.acceptsPartialSingle(text: String): Boolean {
     if (text.length > maxChars) return false
     if (text.isEmpty()) return true
     return when (kind) {
+        MemoryInputKind.BOOLEAN -> "true".startsWith(text, ignoreCase = true) ||
+            "false".startsWith(text, ignoreCase = true)
         MemoryInputKind.SIGNED_INTEGER -> text.indices.all { index ->
             val char = text[index]
             char.isDigit() || (char == '-' && index == 0)
@@ -143,6 +147,8 @@ private fun acceptsPartialFloating(text: String, nonNegative: Boolean): Boolean 
 internal fun MemoryInputSpec.isComplete(text: String): Boolean {
     if (text.isBlank() || !acceptsPartial(text)) return false
     return when (kind) {
+        MemoryInputKind.BOOLEAN -> text.equals("true", ignoreCase = true) ||
+            text.equals("false", ignoreCase = true)
         MemoryInputKind.SIGNED_INTEGER, MemoryInputKind.UNSIGNED_INTEGER, MemoryInputKind.POSITIVE_INTEGER -> {
             if (unsignedBits != null) {
                 val value = runCatching { BigInteger(text) }.getOrNull() ?: return false

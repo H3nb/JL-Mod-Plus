@@ -140,6 +140,7 @@ private val RuntimeMemoryValueTypes = intArrayOf(
     MemoryEngineContract.TYPE_LONG,
     MemoryEngineContract.TYPE_FLOAT,
     MemoryEngineContract.TYPE_DOUBLE,
+    MemoryEngineContract.TYPE_BOOLEAN,
 )
 
 @Composable
@@ -1538,6 +1539,15 @@ internal fun RuntimeKnownSearchDialog(
     LaunchedEffect(groupExpression) {
         if (groupExpression) predicate = MemoryEngineContract.PREDICATE_EQUAL
     }
+    val isBoolean = type == MemoryEngineContract.TYPE_BOOLEAN
+    LaunchedEffect(type) {
+        if (isBoolean && predicate !in MemoryEngineContract.PREDICATE_EQUAL..
+            MemoryEngineContract.PREDICATE_NOT_EQUAL) predicate = MemoryEngineContract.PREDICATE_EQUAL
+        if ((isBoolean && !MemoryInputSpec.forType(type).isComplete(query.text)) ||
+            (!isBoolean && query.text.equals("true", true) || !isBoolean && query.text.equals("false", true))) {
+            query = TextFieldValue("", TextRange(0))
+        }
+    }
     val spec = remember(type) { MemoryInputSpec.forType(type) }
     LaunchedEffect(expression, type) {
         if (expression is MemorySearchExpression.Group && type == MemoryEngineContract.TYPE_AUTO) {
@@ -1555,7 +1565,7 @@ internal fun RuntimeKnownSearchDialog(
         MemoryEngineContract.isValueType(type) &&
         effectivePredicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
     val nextScanValid = state.sessionStage != MemorySessionStage.EMPTY &&
-        type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_DOUBLE) &&
+        type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_BOOLEAN) &&
         expression is MemorySearchExpression.Single && firstValid && secondValid
 
     AlertDialog(
@@ -1567,15 +1577,23 @@ internal fun RuntimeKnownSearchDialog(
                         title = stringResource(R.string.memory_editor_search_known_values),
                     )
                 },
-                showKeypad = true,
+                showKeypad = !isBoolean,
                 controls = { sideDock ->
                     RuntimeSearchControlRow {
                         RuntimePredicateMenu(
                             predicate = effectivePredicate,
                             onPredicate = { predicate = it },
                             enabled = !groupExpression,
+                            booleanOnly = isBoolean,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
+                        if (isBoolean) {
+                            RuntimeBooleanChoice(
+                                value = query.text,
+                                onSelect = { query = TextFieldValue(it, TextRange(it.length)) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
                         RuntimeSearchField(
                             label = stringResource(memorySearchFieldLabel(effectivePredicate, second = false)),
                             value = query,
@@ -1585,6 +1603,7 @@ internal fun RuntimeKnownSearchDialog(
                             modifier = Modifier.weight(1f),
                             initialFocus = true,
                         )
+                        }
                     }
                     if (needsSecond) {
                         RuntimeSearchField(
@@ -1717,6 +1736,14 @@ private fun RuntimeUnknownSearchDialog(
     var first by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var second by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var activeField by remember { mutableStateOf(RuntimeInputField.FIRST) }
+    val isBoolean = type == MemoryEngineContract.TYPE_BOOLEAN
+    LaunchedEffect(type) {
+        if (isBoolean && predicate != MemoryEngineContract.PREDICATE_CHANGED &&
+            predicate != MemoryEngineContract.PREDICATE_UNCHANGED) {
+            predicate = MemoryEngineContract.PREDICATE_CHANGED
+            actions.setUnknownSearchPredicate(predicate)
+        }
+    }
     val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
     val needsValue = if (relative) memoryRelativePredicateNeedsValue(predicate) else true
     val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN ||
@@ -1739,7 +1766,7 @@ private fun RuntimeUnknownSearchDialog(
                         title = stringResource(R.string.memory_editor_search_unknown_values),
                     )
                 },
-                showKeypad = needsValue,
+                showKeypad = needsValue && !isBoolean,
                 controls = { sideDock ->
                     if (!activeSession) {
                         if (sideDock) {
@@ -1762,6 +1789,7 @@ private fun RuntimeUnknownSearchDialog(
                             RuntimeSearchControlRow {
                                 RuntimeRelativeMenu(
                                     predicate = predicate,
+                                    booleanOnly = isBoolean,
                                     onPredicate = {
                                         predicate = it
                                         actions.setUnknownSearchPredicate(it)
@@ -1777,6 +1805,7 @@ private fun RuntimeUnknownSearchDialog(
                         } else {
                             RuntimeRelativeMenu(
                                 predicate = predicate,
+                                booleanOnly = isBoolean,
                                 onPredicate = {
                                     predicate = it
                                     actions.setUnknownSearchPredicate(it)
@@ -1982,7 +2011,7 @@ private fun RuntimeEditDialog(
                         } else title ?: stringResource(R.string.memory_editor_edit),
                     )
                 },
-                showKeypad = true,
+                showKeypad = type != MemoryEngineContract.TYPE_BOOLEAN,
                 controls = { _ ->
                     if (incrementalAvailable) {
                         Row(
@@ -2011,6 +2040,13 @@ private fun RuntimeEditDialog(
                             onType = selectType,
                             modifier = Modifier.weight(0.42f),
                         )
+                        if (type == MemoryEngineContract.TYPE_BOOLEAN) {
+                            RuntimeBooleanChoice(
+                                value = replacement.text,
+                                onSelect = { replacement = TextFieldValue(it, TextRange(it.length)) },
+                                modifier = Modifier.weight(0.58f),
+                            )
+                        } else {
                         RuntimeSearchField(
                             label = stringResource(
                                 if (incremental) R.string.memory_editor_increment_start
@@ -2023,6 +2059,7 @@ private fun RuntimeEditDialog(
                             modifier = Modifier.weight(0.58f),
                             initialFocus = true,
                         )
+                        }
                     }
                     if (incremental) {
                         RuntimeSearchField(
@@ -2557,10 +2594,12 @@ private fun RuntimePredicateMenu(
     onPredicate: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    booleanOnly: Boolean = false,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = memoryKnownSearchPredicates(),
+        values = if (booleanOnly) intArrayOf(MemoryEngineContract.PREDICATE_EQUAL,
+            MemoryEngineContract.PREDICATE_NOT_EQUAL) else memoryKnownSearchPredicates(),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
@@ -2574,15 +2613,35 @@ private fun RuntimeRelativeMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    booleanOnly: Boolean = false,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = memoryUnknownSearchPredicates(),
+        values = if (booleanOnly) intArrayOf(MemoryEngineContract.PREDICATE_CHANGED,
+            MemoryEngineContract.PREDICATE_UNCHANGED) else memoryUnknownSearchPredicates(),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
         centerContent = true,
     )
+}
+
+@Composable
+private fun RuntimeBooleanChoice(
+    value: String,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf("false", "true").forEach { option ->
+            FilterChip(
+                selected = value.equals(option, ignoreCase = true),
+                onClick = { onSelect(option) },
+                label = { Text(option) },
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+            )
+        }
+    }
 }
 
 @Composable
@@ -2878,6 +2937,7 @@ private fun runtimeTypeName(type: Int): String = when (type) {
     MemoryEngineContract.TYPE_LONG -> "Int64"
     MemoryEngineContract.TYPE_FLOAT -> "Float32"
     MemoryEngineContract.TYPE_DOUBLE -> "Float64"
+    MemoryEngineContract.TYPE_BOOLEAN -> "Boolean"
     else -> "?"
 }
 

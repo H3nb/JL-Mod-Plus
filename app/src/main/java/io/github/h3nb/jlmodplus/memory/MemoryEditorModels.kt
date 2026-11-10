@@ -207,7 +207,7 @@ internal data class MemoryResultRow(
     val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
 ) {
     val aliasTypes: List<Int>
-        get() = (MemoryEngineContract.TYPE_BYTE..MemoryEngineContract.TYPE_DOUBLE)
+        get() = (MemoryEngineContract.TYPE_BYTE..MemoryEngineContract.TYPE_BOOLEAN)
             .filter { aliasMask and (1 shl it) != 0 }
 }
 
