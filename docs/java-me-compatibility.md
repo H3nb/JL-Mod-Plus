@@ -23,7 +23,9 @@ MC-TEX-001 and MC-TEX-002) establish that small Mascot Capsule v3 environment
 textures are decoded onto a zero-padded 64x64 canvas, and palette index zero
 does not contribute RGB regardless of the first palette entry. Only Mascot
 `Texture(..., false)` selects this behavior. Model and Motorola textures
-preserve their previous representation and colorkey behavior.
+preserve their previous representation and colorkey behavior. The byte-exact
+[K800 native palette-index-zero probe](k800-mascot-texture-native-probe-2026-11-10.md)
+records the red/white/black controls, SHA-256 fixtures, and the bounds of this evidence.
 
 The firmware also stores model textures in fixed 256x256 memory, but its GPU
 sampling semantics were not measured. Do not impose that storage detail on
