@@ -803,28 +803,24 @@ private data class SavedEditDraft(
 private fun RuntimeVariablesTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
+    entries: List<MemoryListEntry>,
+    selectedKeys: Set<String>,
+    onSelectionChange: (Set<String>) -> Unit,
     listState: LazyListState,
     compactRows: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val entries = remember(state.savedVariables, state.watches) {
-        memoryListEntries(state.savedVariables, state.watches)
-    }
-    var selectedKeys by remember { mutableStateOf(emptySet<String>()) }
     var menuKey by remember { mutableStateOf<String?>(null) }
     var renameKey by remember { mutableStateOf<String?>(null) }
     var removeKeys by remember { mutableStateOf(emptySet<String>()) }
     var savedDraft by remember { mutableStateOf<SavedEditDraft?>(null) }
     var watchDraft by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
 
-    LaunchedEffect(entries.map(MemoryListEntry::key)) {
-        selectedKeys = selectedKeys.intersect(entries.mapTo(HashSet()) { it.key })
-    }
-    BackHandler(enabled = selectedKeys.isNotEmpty()) { selectedKeys = emptySet() }
+    BackHandler(enabled = selectedKeys.isNotEmpty()) { onSelectionChange(emptySet()) }
     val selectedEntries = entries.filter { it.key in selectedKeys }
     fun select(entry: MemoryListEntry) {
-        selectedKeys = if (entry.key in selectedKeys) selectedKeys - entry.key
-        else selectedKeys + entry.key
+        onSelectionChange(if (entry.key in selectedKeys) selectedKeys - entry.key
+            else selectedKeys + entry.key)
     }
     fun edit(entry: MemoryListEntry) {
         val saved = entry.saved
@@ -926,19 +922,15 @@ private fun RuntimeVariablesTab(
                 val current = entry.saved?.let { state.savedValues[it.id] }
                 val editable = !state.busy && state.writeSupported &&
                     (entry.saved == null || current?.resolved == true)
-                val freezeEnabled = !state.busy &&
-                    ((entry.watch?.freezeMode ?: -1) >= 0 || editable)
                 RuntimeListRow(
                     entry = entry,
                     value = current,
                     selected = entry.key in selectedKeys,
-                    selectionMode = selectedKeys.isNotEmpty(),
+                    selectEnabled = !state.busy,
                     compact = compactRows,
                     editable = editable,
-                    freezeEnabled = freezeEnabled,
                     onSelect = { select(entry) },
                     onEdit = { edit(entry) },
-                    onFreeze = { toggleFreeze(entry) },
                     onMore = { menuKey = entry.key },
                 )
             }
@@ -957,6 +949,14 @@ private fun RuntimeVariablesTab(
                 state.writeSupported && ready && !state.busy) { edit(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready && !state.busy) { inspect(menuEntry) },
+            RuntimeToolbarAction(
+                if ((watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
+                else R.drawable.ic_lock,
+                if ((watch?.freezeMode ?: -1) >= 0) R.string.memory_editor_unfreeze
+                else R.string.memory_editor_freeze,
+                !state.busy && ((watch?.freezeMode ?: -1) >= 0 ||
+                    (ready && state.writeSupported)),
+            ) { toggleFreeze(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_save,
                 if (saved != null) R.string.memory_list_stop_keeping else R.string.memory_list_keep,
                 !state.busy && (saved == null || watch != null || ready)) {
@@ -1033,7 +1033,7 @@ private fun RuntimeVariablesTab(
                         removal.mapNotNull { it.watch?.id },
                     )
                     removeKeys = emptySet()
-                    selectedKeys = emptySet()
+                    onSelectionChange(emptySet())
                 }) { Text(stringResource(R.string.memory_editor_remove)) }
             },
             dismissButton = {
@@ -1050,17 +1050,14 @@ private fun RuntimeListRow(
     entry: MemoryListEntry,
     value: SavedVariableRuntimeValue?,
     selected: Boolean,
-    selectionMode: Boolean,
+    selectEnabled: Boolean,
     compact: Boolean,
     editable: Boolean,
-    freezeEnabled: Boolean,
     onSelect: () -> Unit,
     onEdit: () -> Unit,
-    onFreeze: () -> Unit,
     onMore: () -> Unit,
 ) {
     val watch = entry.watch
-    val activeFreeze = (watch?.freezeMode ?: -1) >= 0
     val currentValue = if (entry.saved == null) watch?.valueText.orEmpty()
         else value?.takeIf { it.resolved }?.value ?: "—"
     val name = entry.label.ifBlank {
@@ -1074,23 +1071,20 @@ private fun RuntimeListRow(
         Row(
             Modifier.fillMaxWidth()
                 .combinedClickable(
-                    onClick = { if (selectionMode) onSelect() else onEdit() },
+                    onClick = { if (selected) onSelect() else onEdit() },
                     onLongClick = onSelect,
                 )
                 .padding(horizontal = 8.dp, vertical = if (compact) 4.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (selectionMode) {
-                Checkbox(checked = selected, onCheckedChange = { onSelect() })
-            } else {
-                IconButton(onClick = onFreeze, enabled = freezeEnabled) {
-                    Icon(
-                        painterResource(if (activeFreeze) R.drawable.ic_lock else R.drawable.ic_unlock),
-                        stringResource(if (activeFreeze) R.string.memory_editor_unfreeze
-                            else R.string.memory_editor_freeze),
-                    )
-                }
-            }
+            Checkbox(
+                checked = selected,
+                enabled = selectEnabled,
+                onCheckedChange = { onSelect() },
+                modifier = Modifier.semantics {
+                    contentDescription = stringResource(R.string.memory_editor_select_result_value)
+                },
+            )
             Column(Modifier.weight(1f).padding(start = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1133,11 +1127,9 @@ private fun RuntimeListRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (!selectionMode) {
-                IconButton(onClick = onMore) {
-                    Icon(painterResource(R.drawable.ic_more_vert),
-                        stringResource(R.string.more))
-                }
+            IconButton(onClick = onMore, enabled = selectEnabled) {
+                Icon(painterResource(R.drawable.ic_more_vert),
+                    stringResource(R.string.more))
             }
         }
     }
