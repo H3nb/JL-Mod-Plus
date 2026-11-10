@@ -345,6 +345,9 @@ class ConfigComposeTest {
             assertEquals(1, state.value.form.effects.size)
             assertEquals("color", state.value.form.effects.single().builtinId)
         }
+        composeRule.onNodeWithText(uiString(R.string.render_effect_default_settings)).assertExists()
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_move_up))
+            .assertCountEquals(0)
         composeRule.onNodeWithText(uiString(R.string.effect_color)).performClick()
         composeRule.onNodeWithText(uiString(R.string.effect_brightness)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_effect_restore)).performClick()

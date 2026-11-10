@@ -466,15 +466,17 @@ private fun EffectStackContent(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        IconButton(onClick = { onMove(index, index - 1) },
-                            enabled = index > 0) {
-                            Icon(painterResource(R.drawable.ic_arrow_upward),
-                                contentDescription = upLabel)
-                        }
-                        IconButton(onClick = { onMove(index, index + 1) },
-                            enabled = index < effects.lastIndex) {
-                            Icon(painterResource(R.drawable.ic_arrow_downward),
-                                contentDescription = downLabel)
+                        if (effects.size > 1) {
+                            IconButton(onClick = { onMove(index, index - 1) },
+                                enabled = index > 0) {
+                                Icon(painterResource(R.drawable.ic_arrow_upward),
+                                    contentDescription = upLabel)
+                            }
+                            IconButton(onClick = { onMove(index, index + 1) },
+                                enabled = index < effects.lastIndex) {
+                                Icon(painterResource(R.drawable.ic_arrow_downward),
+                                    contentDescription = downLabel)
+                            }
                         }
                     }
                     if (missing) {
@@ -611,9 +613,11 @@ private fun EffectCatalogRow(
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.bodyLarge)
+                Text(title, style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(description, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Icon(painterResource(R.drawable.ic_add), contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary)
