@@ -104,6 +104,8 @@
     <string name="render_effect_user_folder_hint">File INI, VSH, dan FSH harus berada di folder shaders.</string>
     <string name="render_effect_legacy_scale_note">Shader legacy diproses pada resolusi tampilan game; opsi pembesaran dalam .ini tidak mengubah skala.</string>
     <string name="render_effect_legacy_metadata_missing">Pengaturan dari file .ini tidak ditemukan. Shader mungkin tetap berjalan jika file sumbernya tersedia.</string>
+    <string name="render_effect_empty_title">Belum ada efek</string>
+    <string name="render_effect_more_actions">Opsi efek</string>
     <string name="render_effect_count">%1$d efek</string>
     <string name="render_effect_add">Tambahkan efek</string>
     <string name="render_effect_builtin">Efek bawaan</string>
@@ -111,8 +113,8 @@
     <string name="render_effect_user_add">Telusuri file .ini</string>
     <string name="render_effect_user_empty">Tidak ada shader legacy di folder shaders.</string>
     <string name="render_effect_user_file">Pilih file .ini legacy</string>
-    <string name="render_effect_empty">Belum ada efek. Tambahkan efek untuk mengubah tampilan game.</string>
-    <string name="render_effect_hint">Efek dijalankan dari atas ke bawah. Ketuk untuk mengatur; tahan lalu geser untuk mengurutkan.</string>
+    <string name="render_effect_empty">Tambahkan efek untuk mengubah tampilan game.</string>
+    <string name="render_effect_hint">Efek diproses dari atas ke bawah. Tahan lalu geser untuk mengurutkan.</string>
     <string name="render_effect_move_up">Pindahkan ke atas</string>
     <string name="render_effect_move_down">Pindahkan ke bawah</string>
     <string name="render_effect_remove">Hapus efek</string>
