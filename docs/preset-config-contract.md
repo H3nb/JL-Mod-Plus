@@ -34,6 +34,25 @@ rear/automatic without requiring publication or a configuration-version change.
 They participate in form drafts, preset copies and effective-change comparison.
 Runtime swaps never persist those temporary lens overrides to config or preset.
 
+## Internal resolution profile setting
+
+`InternalResolutionScale` is an additive per-MIDlet profile property that defaults
+to 1 (existing 1x rendering). A value of 0 selects Auto; 1–10 requests a manual
+integer factor. Editor drafts, preset copies, and runtime configuration preserve
+the choice without changing the guest-visible logical dimensions. The runtime
+resolves and bounds the effective factor at Canvas creation; the selected
+factor takes effect on MIDlet restart, not during an active frame.
+
+## Bitmap upscaling profile setting
+
+`BitmapUpscalingMode` is an additive per-MIDlet profile value: 0 = nearest
+(default), 1 = bilinear, 2 = MMPX, 3 = experimental xBRZ Freescale
+(GPL-2.0-or-later Azahar CPU translation). Form edits and
+presets preserve the value. It applies only to immutable 2D sprites drawn
+to a scaled runtime target, without altering guest-visible image pixels,
+dimensions or post-processing shaders. At 1x the mode has no effect.
+Changes take effect on MIDlet restart.
+
 ## Persistence and recovery
 
 - Preset source and installed-snapshot publication must not expose a partially written state as committed. Recover interrupted publication before consuming, replacing, renaming, deleting, or synchronizing the affected snapshot.

@@ -57,11 +57,24 @@ public class Graphics implements
 
 	private final Canvas canvas;
 	private final Image image;
+	private final Matrix pixelScaleMatrix;
 	private Bitmap boundBitmap;
 
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
 	private final Paint polygonPaint = new Paint();
+
+	private static volatile BitmapUpscaling activeBitmapUpscaling =
+			new BitmapUpscaling(BitmapUpscaling.NEAREST);
+	private final BitmapUpscaling bitmapUpscaling;
+
+	static void configureBitmapUpscaling(int mode) {
+		activeBitmapUpscaling = new BitmapUpscaling(mode);
+	}
+
+	private void drawSourceBitmap(Image source, Rect src, RectF dst) {
+		bitmapUpscaling.draw(canvas, source, src, dst, image.getPixelScale());
+	}
 
 	private int translateX;
 	private int translateY;
@@ -83,12 +96,21 @@ public class Graphics implements
 
 	Graphics(Image image) {
 		this.image = image;
+		bitmapUpscaling = activeBitmapUpscaling;
 		boundBitmap = image.getBitmap();
 		canvas = new Canvas(boundBitmap);
+		pixelScaleMatrix = image.getPixelScale() == 1 ? null : new Matrix();
+		if (pixelScaleMatrix != null) {
+			pixelScaleMatrix.setScale(image.getPixelScale(), image.getPixelScale());
+			canvas.concat(pixelScaleMatrix);
+		}
 		canvas.save();
 		canvas.clipRect(image.getBounds());
 		canvas.getClipBounds(clip);
 		drawPaint.setStyle(Paint.Style.STROKE);
+		// Android's zero-width stroke is a one-device-pixel hairline, so
+		// it must not be used for one-logical-pixel lines in an HD target.
+		if (image.getPixelScale() > 1) drawPaint.setStrokeWidth(1f);
 		fillPaint.setStyle(Paint.Style.FILL);
 		drawPaint.setAntiAlias(false);
 		fillPaint.setAntiAlias(false);
@@ -108,6 +130,7 @@ public class Graphics implements
 				canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
 			}
 		}
+		if (pixelScaleMatrix != null) canvas.setMatrix(pixelScaleMatrix);
 		canvas.save();
 	}
 
@@ -336,6 +359,21 @@ public class Graphics implements
 	}
 
 	public void drawLine(int x1, int y1, int x2, int y2) {
+		if (pixelScaleMatrix != null && stroke == SOLID) {
+			// MIDP endpoints are inclusive. Draw a full logical-pixel
+			// rectangle instead of a hardware hairline for axis-aligned
+			// strokes (loading bars often use adjacent drawLine calls).
+			if (y1 == y2) {
+				canvas.drawRect(Math.min(x1, x2), y1,
+						(float) Math.max(x1, x2) + 1, (float) y1 + 1, fillPaint);
+				return;
+			}
+			if (x1 == x2) {
+				canvas.drawRect(x1, Math.min(y1, y2),
+						(float) x1 + 1, (float) Math.max(y1, y2) + 1, fillPaint);
+				return;
+			}
+		}
 		if (x2 >= x1) {
 			x2++;
 		} else {
@@ -507,7 +545,14 @@ public class Graphics implements
 			ly = y;
 		}
 
-		canvas.drawBitmap(image.getBitmap(), lx, ly, null);
+		if (this.image.getPixelScale() == 1 && image.getPixelScale() == 1) {
+			canvas.drawBitmap(image.getBitmap(), lx, ly, null);
+		} else {
+			rectF.set(lx, ly, lx + image.getWidth(), ly + image.getHeight());
+			int sourceScale = image.getPixelScale();
+			rect.set(0, 0, image.getWidth() * sourceScale, image.getHeight() * sourceScale);
+			drawSourceBitmap(image, rect, rectF);
+		}
 	}
 
 	public void drawSubstring(String str, int offset, int len, int x, int y, int anchor) {
@@ -543,7 +588,9 @@ public class Graphics implements
 		RectF dstR = rectF;
 		float dx;
 		float dy;
-		srcR.set(x_src, y_src, x_src + width, y_src + height);
+		int sourceScale = image.getPixelScale();
+		srcR.set(x_src * sourceScale, y_src * sourceScale,
+				(x_src + width) * sourceScale, (y_src + height) * sourceScale);
 
 		Matrix matrix = new Matrix();
 		switch (transform) {
@@ -564,7 +611,7 @@ public class Graphics implements
 				}
 
 				dstR.set(dx, dy, dx + width, dy + height);
-				canvas.drawBitmap(image.getBitmap(), srcR, dstR, null);
+				drawSourceBitmap(image, srcR, dstR);
 				return;
 			}
 			case TRANS_ROT90:
@@ -619,7 +666,7 @@ public class Graphics implements
 		canvas.save();
 		canvas.concat(matrix);
 		try {
-			canvas.drawBitmap(image.getBitmap(), srcR, dstR, null);
+			drawSourceBitmap(image, srcR, dstR);
 		} finally {
 			canvas.restore();
 		}
@@ -668,8 +715,11 @@ public class Graphics implements
 	public void copyArea(int x_src, int y_src, int width, int height,
 						 int x_dest, int y_dest, int anchor) {
 		if (width <= 0 || height <= 0) return;
-		final int[] pixels = new int[width * height];
-		image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
+		final int scale = image.getPixelScale();
+		final int[] pixels = scale == 1 ? new int[width * height] : null;
+		if (scale == 1) {
+			image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
+		}
 		float dx;
 		if ((anchor & Graphics.RIGHT) != 0) {
 			dx = x_dest - width;
@@ -686,24 +736,54 @@ public class Graphics implements
 		} else {
 			dy = y_dest;
 		}
-		canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
+		if (scale == 1) {
+			canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
+		} else {
+			// Snapshot before writing: source/destination may overlap on the same Bitmap.
+			Bitmap snapshot = Bitmap.createBitmap(image.getBitmap(),
+					x_src * scale, y_src * scale, width * scale, height * scale);
+			try {
+				rectF.set(dx, dy, dx + width, dy + height);
+				canvas.drawBitmap(snapshot, null, rectF, null);
+			} finally {
+				if (snapshot != image.getBitmap()) snapshot.recycle();
+			}
+		}
 	}
 
 	public void getPixels(int[] pixels, int offset, int stride,
 						  int x, int y, int width, int height) {
 		Bitmap b = image.getBitmap();
-		int w = Math.min(width, b.getWidth() - x);
-		int h = Math.min(height, b.getHeight() - y);
-		b.getPixels(pixels, offset, stride, x, y, w, h);
+		if (image.getPixelScale() == 1) {
+			int w = Math.min(width, b.getWidth() - x);
+			int h = Math.min(height, b.getHeight() - y);
+			b.getPixels(pixels, offset, stride, x, y, w, h);
+		} else {
+			int w = Math.min(width, image.getWidth() - x);
+			int h = Math.min(height, image.getHeight() - y);
+			image.getRGB(pixels, offset, stride, x, y, w, h);
+		}
 	}
 
 	public Bitmap getBitmap() {
 		return image.getBitmap();
 	}
 
+	/** Host renderer bridge; MIDlet coordinates remain logical. */
+	public int getPixelScale() {
+		return image.getPixelScale();
+	}
+
 	void flush(Image image, int x, int y, int width, int height) {
 		rect.set(x, y, x + width, y + height);
-		canvas.drawBitmap(image.getBitmap(), rect, rect, null);
+		int sourceScale = image.getPixelScale();
+		if (sourceScale == 1) {
+			canvas.drawBitmap(image.getBitmap(), rect, rect, null);
+		} else {
+			Rect physicalSource = new Rect(x * sourceScale, y * sourceScale,
+					(x + width) * sourceScale, (y + height) * sourceScale);
+			canvas.drawBitmap(image.getBitmap(), physicalSource, rect, null);
+		}
 	}
 
 	@Override

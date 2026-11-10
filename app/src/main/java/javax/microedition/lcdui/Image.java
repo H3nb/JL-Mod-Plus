@@ -36,15 +36,42 @@ public class Image {
 	private Bitmap bitmap;
 	private Graphics graphics;
 	private final Rect bounds;
+	private final int pixelScale;
 	private boolean isBlackWhiteAlpha;
 
 	public Image(Bitmap bitmap, boolean mutable) {
-		if (bitmap == null) {
-			throw new NullPointerException();
-		}
+		this(bitmap, mutable, 1);
+	}
+
+	private Image(Bitmap bitmap, boolean mutable, int pixelScale) {
+		if (bitmap == null) throw new NullPointerException();
+		if (pixelScale < 1) throw new IllegalArgumentException("pixelScale");
 		this.mutable = mutable;
 		this.bitmap = bitmap;
-		bounds = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+		this.pixelScale = pixelScale;
+		bounds = new Rect(0, 0, bitmap.getWidth() / pixelScale, bitmap.getHeight() / pixelScale);
+	}
+
+	/** Runtime-owned 2D surface; ordinary MIDlet images remain at their logical size. */
+	public static Image createDisplayTarget(int width, int height, int scale) {
+		// Do not add any new size restriction to the existing 1x behavior.
+		if (scale == 1) return createImage(width, height);
+		if (scale < 1 || scale > InternalResolution.MAX_SCALE || width <= 0 || height <= 0
+				|| (long) width * scale > InternalResolution.MAX_TARGET_SIDE
+				|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE) {
+			throw new IllegalArgumentException("Invalid display target size");
+		}
+		Bitmap bitmap = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
+		bitmap.eraseColor(Color.WHITE);
+		return new Image(bitmap, true, scale);
+	}
+
+	public int getPixelScale() {
+		return pixelScale;
+	}
+
+	public Rect getPhysicalContentRect() {
+		return new Rect(0, 0, bounds.right * pixelScale, bounds.bottom * pixelScale);
 	}
 
 	public Bitmap getBitmap() {
@@ -132,16 +159,36 @@ public class Image {
 	}
 
 	public void getRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height) {
-		bitmap.getPixels(rgbData, offset, scanlength, x, y, width, height);
+		if (pixelScale == 1) {
+			bitmap.getPixels(rgbData, offset, scanlength, x, y, width, height);
+			return;
+		}
+		if (x < 0 || y < 0 || width < 0 || height < 0
+				|| (long) x + width > getWidth() || (long) y + height > getHeight()) {
+			throw new IllegalArgumentException("Logical image read outside bounds");
+		}
+		if (width == 0 || height == 0) return;
+		// Centre samples preserve guest-sized reads without exposing physical coordinates.
+		// Antialiased edges are not guaranteed pixel-identical to a separate 1x render.
+		int[] row = new int[width * pixelScale];
+		for (int j = 0; j < height; j++) {
+			bitmap.getPixels(row, 0, row.length, x * pixelScale,
+					(y + j) * pixelScale + pixelScale / 2, row.length, 1);
+			for (int i = 0; i < width; i++) {
+				rgbData[offset + j * scanlength + i] = row[i * pixelScale + pixelScale / 2];
+			}
+		}
 	}
 
 	void copyTo(Image dst) {
-		dst.getSingleGraphics().getCanvas().drawBitmap(bitmap, bounds, bounds, null);
+		dst.getSingleGraphics().getCanvas().drawBitmap(
+				bitmap, getPhysicalContentRect(), bounds, null);
 	}
 
 	void copyTo(Image dst, int x, int y) {
 		Rect r = new Rect(x, y, x + bounds.right, y + bounds.bottom);
-		dst.getSingleGraphics().getCanvas().drawBitmap(bitmap, bounds, r, null);
+		dst.getSingleGraphics().getCanvas().drawBitmap(
+				bitmap, getPhysicalContentRect(), r, null);
 	}
 
 	public Graphics getSingleGraphics() {
@@ -152,21 +199,31 @@ public class Image {
 	}
 
 	void setSize(int width, int height) {
-		if (width > bitmap.getWidth() || height > bitmap.getHeight()) {
-			Bitmap b = bitmap;
-			bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+		if ((long) width * pixelScale > bitmap.getWidth()
+				|| (long) height * pixelScale > bitmap.getHeight()) {
+			Bitmap previous = bitmap;
+			int previousWidth = bounds.right;
+			int previousHeight = bounds.bottom;
+			bitmap = Bitmap.createBitmap(width * pixelScale, height * pixelScale,
+					Bitmap.Config.ARGB_8888);
+			if (pixelScale > 1) bitmap.eraseColor(Color.WHITE);
 			bounds.right = width;
 			bounds.bottom = height;
 			if (graphics != null) {
 				graphics.reset(0, 0, width, height);
-				graphics.getCanvas().drawBitmap(b, 0, 0, null);
+				if (pixelScale == 1) {
+					graphics.getCanvas().drawBitmap(previous, 0, 0, null);
+				} else {
+					graphics.getCanvas().drawBitmap(previous,
+							new Rect(0, 0, previousWidth * pixelScale,
+									previousHeight * pixelScale),
+							new Rect(0, 0, previousWidth, previousHeight), null);
+				}
 			}
 		} else {
 			bounds.right = width;
 			bounds.bottom = height;
-			if (graphics != null) {
-				graphics.reset(0, 0, width, height);
-			}
+			if (graphics != null) graphics.reset(0, 0, width, height);
 		}
 	}
 

@@ -54,6 +54,8 @@ public class Graphics3D {
 
 	private java.lang.Object currentTarget = null;
 	private int offsetX, offsetY, hints = 0;
+	// Native memory targets use physical pixels; the JSR-184 API uses logical pixels.
+	private int targetPixelScale = 1;
 	private boolean depthEnabled = true;
 	private Destroyer destroyer;
 	private Interface iInterface;
@@ -154,6 +156,7 @@ public class Graphics3D {
 			buffer = finalG.getBitmap();
 			final int width = buffer.getWidth();
 			final int height = buffer.getHeight();
+			final int scale = finalG.getPixelScale();
 			if (width > Defs.MAX_VIEWPORT_WIDTH ||
 					height > Defs.MAX_VIEWPORT_HEIGHT) {
 				throw new IllegalArgumentException();
@@ -168,6 +171,12 @@ public class Graphics3D {
 			final int clipY = finalG.getClipY() + offsetY;
 			final int clipW = finalG.getClipWidth();
 			final int clipH = finalG.getClipHeight();
+			// The target Bitmap is physically scaled, but guest clip and
+			// translation coordinates remain unchanged.
+			final int physicalClipX = clipX * scale;
+			final int physicalClipY = clipY * scale;
+			final int physicalClipW = clipW * scale;
+			final int physicalClipH = clipH * scale;
 
 			// TODO: draw on background? Probably should fix alpha
 			/*
@@ -189,12 +198,13 @@ public class Graphics3D {
 						public void doRun() {
 							iIsImageTarget = _bindGraphics(
 									handle, 0, width, height,
-									clipX, clipY, clipW, clipH,
+									physicalClipX, physicalClipY, physicalClipW, physicalClipH,
 									finalDepth, finalFlags, iIsProperRenderer,
 									buffer);
 						}
 					});
 			currentTarget = finalG;
+			targetPixelScale = scale;
 			cur_width = width;
 			cur_height = height;
 		} else if (target instanceof Image2D) {
@@ -220,6 +230,7 @@ public class Graphics3D {
 						}
 					});
 			currentTarget = img;
+			targetPixelScale = 1;
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -270,7 +281,13 @@ public class Graphics3D {
 				|| height > Defs.MAX_VIEWPORT_HEIGHT) {
 			throw new IllegalArgumentException();
 		}
-		_setViewport(handle, x + offsetX, y + offsetY, width, height);
+		final int scale = targetPixelScale;
+		if ((long) width * scale > Defs.MAX_VIEWPORT_WIDTH
+				|| (long) height * scale > Defs.MAX_VIEWPORT_HEIGHT) {
+			throw new IllegalArgumentException();
+		}
+		_setViewport(handle, (x + offsetX) * scale, (y + offsetY) * scale,
+				width * scale, height * scale);
 	}
 
 	/**
@@ -495,22 +512,22 @@ public class Graphics3D {
 
 	public int getViewportHeight() {
 		integrityCheck();
-		return _getViewportHeight(handle);
+		return _getViewportHeight(handle) / targetPixelScale;
 	}
 
 	public int getViewportWidth() {
 		integrityCheck();
-		return _getViewportWidth(handle);
+		return _getViewportWidth(handle) / targetPixelScale;
 	}
 
 	public int getViewportX() {
 		integrityCheck();
-		return _getViewportX(handle) - offsetX;
+		return _getViewportX(handle) / targetPixelScale - offsetX;
 	}
 
 	public int getViewportY() {
 		integrityCheck();
-		return _getViewportY(handle) - offsetY;
+		return _getViewportY(handle) / targetPixelScale - offsetY;
 	}
 
 	public int getHints() {

@@ -93,6 +93,16 @@ public class EnvironmentTextureGlesTest {
             assertRgb(0, 0, 0, sample(environmentId, uv, 32.5f * TEXEL, 32.5f * TEXEL, GLES20.GL_NEAREST));
             assertRgb(255, 0, 0, sample(modelId, uv, 0.25f, 0.25f, GLES20.GL_NEAREST));
 
+            // Exercise optional source enhancement on the same immutable GLES texture.
+            // UV coordinates still use the original 64×64 logical texture dimensions.
+            TextureImpl.configureEnhancement(2);
+            TextureImpl.setScreenTargetScale(2);
+            assertEquals(modelId, model.impl.getId());
+            assertRgb(255, 0, 0, sample(modelId, uv,
+                    0.25f, 0.25f, GLES20.GL_NEAREST));
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
+
             // Linear filtering must not blend hidden palette[0] RGB into the highlight.
             int[] midpoint = sample(environmentId, uv, TEXEL, 0.5f * TEXEL, GLES20.GL_LINEAR);
             for (int color : midpoint) {
@@ -101,6 +111,8 @@ public class EnvironmentTextureGlesTest {
             GLES20.glDisableVertexAttribArray(position);
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
             if (program != 0) GLES20.glDeleteProgram(program);
             if (environmentId != 0) GLES20.glDeleteTextures(1, new int[] {environmentId}, 0);
             if (modelId != 0) GLES20.glDeleteTextures(1, new int[] {modelId}, 0);

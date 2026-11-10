@@ -48,8 +48,10 @@ class ProfileJsonTest {
         assertEquals(JsonPrimitive(true), newTree["AllowDisplayCutout"])
         assertEquals(JsonPrimitive(1), newTree["CameraDefaultFacing"])
         assertEquals(JsonPrimitive(0), newTree["CameraResolution"])
+        assertEquals(JsonPrimitive(1), newTree["InternalResolutionScale"])
+        assertEquals(JsonPrimitive(0), newTree["BitmapUpscalingMode"])
         assertTrue(ProfileJson.sameValue(JsonObject(comparableOld),
-            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides", "PostEffects"))))
+            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides", "PostEffects", "InternalResolutionScale", "BitmapUpscalingMode"))))
     }
 
     @Test fun cameraDefaultsMigrateV7SnapshotAndRoundTripExplicitChoices() {

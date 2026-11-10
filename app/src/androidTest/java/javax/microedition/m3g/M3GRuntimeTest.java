@@ -198,6 +198,54 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
+	public void highResolutionGraphicsTargetKeepsLogicalViewportAndPhysicalRaster() {
+		final int factor = 3;
+		Image hd = Image.createDisplayTarget(48, 40, factor);
+		Graphics graphics = hd.getGraphics();
+		graphics.setClip(4, 5, 20, 17);
+		Background first = createBackground(0xff163047);
+		Background second = createBackground(0xff78293a);
+
+		g3d.bindTarget(graphics, true, Graphics3D.TRUE_COLOR);
+		try {
+			assertEquals(4, g3d.getViewportX());
+			assertEquals(5, g3d.getViewportY());
+			assertEquals(20, g3d.getViewportWidth());
+			assertEquals(17, g3d.getViewportHeight());
+			g3d.clear(first);
+
+			g3d.setViewport(7, 8, 10, 9);
+			assertEquals(7, g3d.getViewportX());
+			assertEquals(8, g3d.getViewportY());
+			assertEquals(10, g3d.getViewportWidth());
+			assertEquals(9, g3d.getViewportHeight());
+			g3d.clear(second);
+		} finally {
+			g3d.releaseTarget();
+		}
+
+		assertEquals(0xff78293a & RGB_MASK,
+				hd.getBitmap().getPixel(10 * factor, 11 * factor) & RGB_MASK);
+		assertEquals(0xff163047 & RGB_MASK,
+				hd.getBitmap().getPixel(5 * factor, 6 * factor) & RGB_MASK);
+		assertEquals(0x00ffffff,
+				hd.getBitmap().getPixel(0, 0) & RGB_MASK);
+
+		// Rebinding an ordinary MIDlet image must not retain the HD scale.
+		Image normal = Image.createImage(32, 24);
+		g3d.bindTarget(normal.getGraphics(), true, Graphics3D.TRUE_COLOR);
+		try {
+			g3d.setViewport(2, 3, 8, 9);
+			assertEquals(2, g3d.getViewportX());
+			assertEquals(3, g3d.getViewportY());
+			assertEquals(8, g3d.getViewportWidth());
+			assertEquals(9, g3d.getViewportHeight());
+		} finally {
+			g3d.releaseTarget();
+		}
+	}
+
+	@Test
 	public void image2DTargetClearRoundTripsThroughBackgroundRendering() {
 		Image2D target = new Image2D(Image2D.RGB, SIZE, SIZE);
 		Background clearBackground = createBackground(BACKGROUND_ARGB);

@@ -173,6 +173,12 @@ public abstract class Canvas extends Displayable {
 
 	protected int width, height;
 	protected int maxHeight;
+	/** Resolved once per Canvas; profile changes apply at MIDlet restart. */
+	private int internalResolutionScale = 1;
+
+	protected final int getInternalResolutionScale() {
+		return internalResolutionScale;
+	}
 	private LinearLayout layout;
 	private SurfaceView innerView;
 	private FrameLayout videoHost;
@@ -309,12 +315,13 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public String getPerformanceRenderer() {
-		return switch (settings.graphicsMode) {
+		String backend = switch (settings.graphicsMode) {
 			case 1 -> "GLES";
 			case 2 -> "VIEW";
 			case 3 -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? "HW" : "SOFT";
 			default -> "SOFT";
 		};
+		return internalResolutionScale == 1 ? backend : backend + " " + internalResolutionScale + "x HD";
 	}
 
 	public static void setScreenshotRawMode(boolean enable) {
@@ -330,6 +337,8 @@ public abstract class Canvas extends Displayable {
 	public static void setSettings(ProfileModel settings, java.io.File shaderDirectory) {
 		Canvas.shaderDirectory = shaderDirectory;
 		Canvas.settings = settings;
+		Graphics.configureBitmapUpscaling(settings.bitmapUpscalingMode);
+		io.github.h3nb.jlmodplus.micro3d.TextureImpl.configureEnhancement(settings.bitmapUpscalingMode);
 		fpsLimit = settings.fpsLimit;
 		int mode = settings.graphicsMode;
 		parallelRedraw = (mode == 0 || mode == 3) && settings.parallelRedrawScreen;
@@ -481,7 +490,7 @@ public abstract class Canvas extends Displayable {
 			if (offscreenCopy != null) {
 				long sequence = publishedFrameSequence;
 				if (sequence != 0L && (ambientGeometryDirty || sequence != lastAmbientSampleSequence)) {
-					Rect bounds = offscreenCopy.getBounds();
+					Rect bounds = offscreenCopy.getPhysicalContentRect();
 					sampled = ambientSampler.captureGrid(offscreenCopy.getBitmap(), bounds.right,
 							bounds.bottom);
 					if (sampled) sampledSequence = sequence;
@@ -968,7 +977,8 @@ public abstract class Canvas extends Displayable {
 			if (screenshotRawMode) {
 				synchronized (bufferLock) {
 					bitmap = Bitmap.createBitmap(offscreenCopy.getBitmap(), 0, 0,
-							offscreenCopy.getWidth(), offscreenCopy.getHeight());
+							offscreenCopy.getWidth() * offscreenCopy.getPixelScale(),
+							offscreenCopy.getHeight() * offscreenCopy.getPixelScale());
 				}
 			} else {
 				bitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
@@ -1120,8 +1130,32 @@ public abstract class Canvas extends Displayable {
 		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
 
 		synchronized (bufferLock) {
-			if (offscreenCopy == null) offscreenCopy = Image.createImage(width, maxHeight);
-			if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
+			if (offscreenCopy == null) {
+				internalResolutionScale = InternalResolution.resolve(
+						settings.internalResolutionScale, width, height, maxHeight, onWidth, onHeight);
+			}
+			// HD targets and effects consume a tight content bitmap, without softbar padding.
+			boolean tight = internalResolutionScale > 1
+					|| (settings.effects != null && !settings.effects.isEmpty());
+			if (offscreenCopy == null) {
+				offscreenCopy = Image.createDisplayTarget(width,
+						tight ? height : maxHeight, internalResolutionScale);
+			} else if (tight && (offscreenCopy.getWidth() != width
+					|| offscreenCopy.getHeight() != height
+					|| offscreenCopy.getPixelScale() != internalResolutionScale)) {
+				Image next = Image.createDisplayTarget(width, height, internalResolutionScale);
+				int overlapWidth = Math.min(width, offscreenCopy.getWidth());
+				int overlapHeight = Math.min(height, offscreenCopy.getHeight());
+				if (overlapWidth > 0 && overlapHeight > 0) {
+					int oldScale = offscreenCopy.getPixelScale();
+					int newScale = next.getPixelScale();
+					new android.graphics.Canvas(next.getBitmap()).drawBitmap(
+							offscreenCopy.getBitmap(),
+							new Rect(0, 0, overlapWidth * oldScale, overlapHeight * oldScale),
+							new Rect(0, 0, overlapWidth * newScale, overlapHeight * newScale), null);
+				}
+				offscreenCopy = next;
+			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
 				offscreenCopy.setSize(width, height);
 			}
 		}
@@ -1139,8 +1173,10 @@ public abstract class Canvas extends Displayable {
 			float gt = 1.0f - 2.0f * virtualScreen.top / displayHeight;
 			float gr = 2.0f * virtualScreen.right / displayWidth - 1.0f;
 			float gb = 1.0f - 2.0f * virtualScreen.bottom / displayHeight;
-			float th = (float) height / offscreenCopy.getBitmap().getHeight();
-			float tw = (float) width / offscreenCopy.getBitmap().getWidth();
+			float th = (float) (height * internalResolutionScale)
+					/ offscreenCopy.getBitmap().getHeight();
+			float tw = (float) (width * internalResolutionScale)
+					/ offscreenCopy.getBitmap().getWidth();
 			renderer.updateSize(gl, gt, gr, gb, th, tw);
 		}
 		repaintInternal();
@@ -1814,8 +1850,8 @@ public abstract class Canvas extends Displayable {
 				synchronized (bufferLock) {
 					Image source = offscreenCopy;
 					Bitmap bitmap = source.getBitmap();
-					contentWidth = source.getWidth();
-					contentHeight = source.getHeight();
+					contentWidth = source.getWidth() * source.getPixelScale();
+					contentHeight = source.getHeight() * source.getPixelScale();
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
@@ -1991,8 +2027,8 @@ public abstract class Canvas extends Displayable {
 			if (l >= r || t >= b) {
 				return;
 			}
-			if (offscreen == null) {
-				offscreen = Image.createImage(width, maxHeight);
+			if (offscreen == null || offscreen.getPixelScale() != internalResolutionScale) {
+				offscreen = Image.createDisplayTarget(width, maxHeight, internalResolutionScale);
 			}
 			if (offscreen.getWidth() != width || offscreen.getHeight() != height) {
 				offscreen.setSize(width, height);

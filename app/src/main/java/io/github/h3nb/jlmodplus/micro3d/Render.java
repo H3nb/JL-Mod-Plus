@@ -67,6 +67,10 @@ public class Render {
 	private final float[] MVP_TMP = new float[16];
 
 	private Graphics targetGraphics;
+	// The EGL surface and readback are physical; projections remain logical.
+	private int surfaceWidth;
+	private int surfaceHeight;
+	private int targetPixelScale = 1;
 	private final Rect gClip = new Rect();
 	private final Rect clip = new Rect();
 	private boolean backCopied;
@@ -135,11 +139,16 @@ public class Render {
 		Canvas canvas = graphics.getCanvas();
 		int width = canvas.getWidth();
 		int height = canvas.getHeight();
+		int scale = graphics.getPixelScale();
+		TextureImpl.setScreenTargetScale(scale);
+		targetPixelScale = scale;
+		env.width = width / scale;
+		env.height = height / scale;
 		if (eglContext == null) {
 			init();
 		}
 		EGL10 egl = (EGL10) EGLContext.getEGL();
-		if (env.width != width || env.height != height) {
+		if (surfaceWidth != width || surfaceHeight != height) {
 
 			if (eglWindowSurface != null) {
 				releaseEglContext();
@@ -155,8 +164,8 @@ public class Render {
 
 			glViewport(0, 0, width, height);
 			Program.create();
-			env.width = width;
-			env.height = height;
+			surfaceWidth = width;
+			surfaceHeight = height;
 			glClearColor(0, 0, 0, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
@@ -167,12 +176,12 @@ public class Render {
 		int t = clip.top;
 		int r = clip.right;
 		int b = clip.bottom;
-		gClip.set(l, t, r, b);
+		gClip.set(l * scale, t * scale, r * scale, b * scale);
 		if (l == 0 && t == 0 && r == env.width && b == env.height) {
 			glDisable(GL_SCISSOR_TEST);
 		} else {
 			glEnable(GL_SCISSOR_TEST);
-			glScissor(l, t, r - l, b - t);
+			glScissor(l * scale, t * scale, (r - l) * scale, (b - t) * scale);
 		}
 		glClear(GL_DEPTH_BUFFER_BIT);
 		backCopied = false;
@@ -181,13 +190,16 @@ public class Render {
 
 	public synchronized void bind(TextureImpl tex) {
 		targetTexture = tex;
+		targetPixelScale = 1;
 		int width = tex.getWidth();
 		int height = tex.getHeight();
+		env.width = width;
+		env.height = height;
 		if (eglContext == null) {
 			init();
 		}
 		EGL10 egl = (EGL10) EGLContext.getEGL();
-		if (env.width != width || env.height != height) {
+		if (surfaceWidth != width || surfaceHeight != height) {
 
 			if (eglWindowSurface != null) {
 				releaseEglContext();
@@ -203,8 +215,8 @@ public class Render {
 
 			glViewport(0, 0, width, height);
 			Program.create();
-			env.width = width;
-			env.height = height;
+			surfaceWidth = width;
+			surfaceHeight = height;
 		}
 		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
 		Rect clip = this.clip;
@@ -773,7 +785,8 @@ public class Render {
 			glDisable(GL_SCISSOR_TEST);
 		} else {
 			glEnable(GL_SCISSOR_TEST);
-			glScissor(l, t, r - l, b - t);
+			int scale = targetPixelScale;
+			glScissor(l * scale, t * scale, (r - l) * scale, (b - t) * scale);
 		}
 		releaseEglContext();
 	}

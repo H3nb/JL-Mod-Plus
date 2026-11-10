@@ -22,6 +22,10 @@ import static android.opengl.GLES20.*;
 import android.util.Log;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
+import io.github.h3nb.jlmodplus.graphics.RgbaTextureEnhancer;
 import java.nio.IntBuffer;
 
 import javax.microedition.lcdui.Image;
@@ -29,11 +33,24 @@ import javax.microedition.shell.AppClassLoader;
 
 public final class TextureImpl {
 	static int sLastId;
+	private static volatile int enhancementMode;
+	private static volatile int screenTargetScale = 1;
+
+	/** Optional host enhancement, never applied to guest-visible texture storage. */
+	public static void configureEnhancement(int mode) {
+		enhancementMode = mode == 2 || mode == 3 ? mode : 0;
+	}
+
+	static void setScreenTargetScale(int scale) {
+		screenTargetScale = Math.max(1, Math.min(10, scale));
+	}
 
 	final TextureData image;
 	private final boolean isMutable;
 
 	int mTexId = -1;
+	private int uploadedMode = -1;
+	private int uploadedScale = -1;
 
 	public TextureImpl() {
 		image = new TextureData(256, 256);
@@ -121,12 +138,16 @@ public final class TextureImpl {
 	}
 
 	int getId() {
+		int mode = enhancementMode;
+		int targetScale = screenTargetScale;
 		if (!glIsTexture(mTexId)) {
 			generateId();
-		} else if (!isMutable) {
+		} else if (!isMutable && uploadedMode == mode && uploadedScale == targetScale) {
 			return mTexId;
 		}
-		loadToGL();
+		loadToGL(mode, targetScale);
+		uploadedMode = mode;
+		uploadedScale = targetScale;
 		return mTexId;
 	}
 
@@ -151,17 +172,35 @@ public final class TextureImpl {
 		Render.checkGlError("glGenTextures");
 	}
 
-	private void loadToGL() {
+	private void loadToGL(int mode, int targetScale) {
+		int width = image.width;
+		int height = image.height;
+		ByteBuffer source = image.getRaster();
+		if (!isMutable && mode >= 2 && targetScale > 1) {
+			int[] maxTexture = new int[1];
+			glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTexture, 0);
+			int factor = ImageEnhancementPolicy.chooseFactor(
+					width, height, targetScale, maxTexture[0]);
+			if (factor > 1) {
+				try {
+					source = RgbaTextureEnhancer.reconstruct(source, width, height, factor, mode);
+					width *= factor;
+					height *= factor;
+				} catch (OutOfMemoryError error) {
+					// Enhancement is optional; retain the original native texture upload.
+					source = image.getRaster();
+				}
+			}
+		}
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mTexId);
-
 		boolean filter = Boolean.getBoolean("micro3d.v3.texture.filter");
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter ? GL_LINEAR : GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter ? GL_LINEAR : GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getRaster());
-
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+				GL_RGBA, GL_UNSIGNED_BYTE, source);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
