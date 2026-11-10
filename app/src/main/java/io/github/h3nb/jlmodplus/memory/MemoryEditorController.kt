@@ -1581,46 +1581,19 @@ internal class MemoryEditorComposeController(
         val saved = savedIds.distinct()
         val watches = (watchIds + state.watches.filter { it.savedSourceId in saved }.map { it.id })
             .distinct()
-        if (state.busy || saved.size > 64 || watches.size > MemoryEngineContract.MAX_WATCH_RECORDS ||
+        if (!state.variablesTab || state.busy ||
+            saved.size > 64 || watches.size > MemoryEngineContract.MAX_WATCH_RECORDS ||
             saved.any { id -> state.savedVariables.none { it.id == id } } ||
             watches.any { id -> state.watches.none { it.id == id } } ||
             (saved.isEmpty() && watches.isEmpty())) return
-        val engine = service
-        val authority = savedAuthority
-        val token = state.runtimeToken
-        if (watches.isNotEmpty() && (engine == null || token == 0L) ||
-            saved.isNotEmpty() && authority == null) return
-        val generation = ++savedGeneration
-        savedRefreshPending = false
-        runIpc {
-            var watchRemoved = false
-            val outcome = runCatching {
-                if (watches.isNotEmpty()) {
-                    val result = engine!!.removeWatch(token, watches.toLongArray())
-                    if (result.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) !=
-                        MemoryEngineContract.RESULT_OK) error(
-                        result.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                            ?: "Unable to remove session entries")
-                    watchRemoved = true
-                }
-                if (saved.isNotEmpty()) {
-                    val (path, appId, entry) = savedTarget()
-                    savedRows(authority!!.removeMany(path, appId, entry, saved.toTypedArray()))
-                    saved.forEach { engine?.releaseSaved(token, it) }
-                }
-            }
-            post {
-                if (destroyed || !state.visible || state.runtimeToken != token) return@post
-                state = state.copy(
-                    message = if (outcome.isSuccess) "Removed from List"
-                        else if (watchRemoved) "Session entries removed, but kept entries could not be removed: " +
-                            outcome.exceptionOrNull()?.message
-                        else outcome.exceptionOrNull()?.message,
-                    messageIsError = outcome.isFailure,
-                )
-                if (generation == savedGeneration) refreshSavedVariables()
-                reloadState()
-            }
+        if (saved.isNotEmpty() && savedAuthority == null ||
+            watches.isNotEmpty() && (service == null || state.runtimeToken == 0L)) return
+
+        // The engine's removeWatch is asynchronous. Keep its established completion
+        // feedback rather than treating its returned operation ID as a result code.
+        if (saved.isNotEmpty()) deleteSavedVariables(saved)
+        if (watches.isNotEmpty()) {
+            launchOperation { engine, token -> engine.removeWatch(token, watches.toLongArray()) }
         }
     }
 
