@@ -397,6 +397,34 @@ internal object MemoryEditorSessionNavigation {
 
 internal data class SavedVariableRow(val id: String, val label: String, val path: String)
 
+/**
+ * One visible List entry. A Saved definition and its session Watch remain independent
+ * backend records. Fold them only when the engine explicitly supplies their relation.
+ */
+internal data class MemoryListEntry(
+    val saved: SavedVariableRow? = null,
+    val watch: MemoryWatchRow? = null,
+) {
+    init { require(saved != null || watch != null) }
+    val key: String get() = saved?.let { "saved:${it.id}" } ?: "watch:${watch!!.id}"
+    val label: String get() = saved?.label ?: watch?.label.orEmpty()
+}
+
+/** Never infer a shared target from matching names, values or diagnostic paths. */
+internal fun memoryListEntries(
+    saved: List<SavedVariableRow>,
+    watches: List<MemoryWatchRow>,
+): List<MemoryListEntry> {
+    val savedIds = saved.mapTo(HashSet()) { it.id }
+    val linked = watches.filter { it.savedSourceId in savedIds }
+        .associateBy { it.savedSourceId }
+    return (saved.map { MemoryListEntry(saved = it, watch = linked[it.id]) } +
+        watches.filterNot { it.savedSourceId in savedIds }
+            .map { MemoryListEntry(watch = it) })
+        .sortedWith(compareBy({ it.label.lowercase() }, { it.key }))
+}
+
+
 internal enum class SavedVariableStatus { RESOLVED, REBOUND, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
 
 internal data class SavedVariableRuntimeValue(
