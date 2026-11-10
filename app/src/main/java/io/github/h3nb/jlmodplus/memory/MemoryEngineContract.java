@@ -178,6 +178,7 @@ public final class MemoryEngineContract {
 	public static final String KEY_WATCH_LABELS = "watchLabels";
 	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";
 	public static final String KEY_WATCH_FREEZE_PAUSED = "watchFreezePaused";
+	public static final String KEY_WATCH_SAVED_SOURCE_IDS = "watchSavedSourceIds";
 
 	private MemoryEngineContract() {
 	}

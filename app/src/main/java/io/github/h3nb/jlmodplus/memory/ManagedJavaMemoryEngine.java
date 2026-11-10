@@ -1081,6 +1081,7 @@ final class ManagedJavaMemoryEngine {
 			page.relocations[index] = 0;
 			page.labels[index] = snapshot.labels[index] == null ? "" : snapshot.labels[index];
 			page.freezeModes[index] = snapshot.freeze[index] ? MemoryEngineContract.FREEZE_LOCK : -1;
+			page.savedSourceIds[index] = snapshot.savedSourceIds[index];
 			page.freezePaused[index] = snapshot.freezePaused[index]
 					|| page.states[index] == MemoryEngineContract.CANDIDATE_LOST;
 			if (page.freezePaused[index] && snapshot.freeze[index]) markFreezePaused(snapshot.ids[index]);
@@ -3308,6 +3309,7 @@ final class ManagedJavaMemoryEngine {
 		final int[] relocations;
 		final int[] freezeModes;
 		final boolean[] freezePaused;
+		final String[] savedSourceIds;
 
 		private ManagedPage(int count, long revision, boolean watch) {
 			this.revision = revision;
@@ -3327,6 +3329,7 @@ final class ManagedJavaMemoryEngine {
 			labels = watch ? new String[count] : null;
 			freezeModes = watch ? new int[count] : null;
 			freezePaused = watch ? new boolean[count] : null;
+			savedSourceIds = watch ? new String[count] : null;
 		}
 
 		void setSource(int index, CandidateSource source) {
@@ -4670,6 +4673,7 @@ final class ManagedJavaMemoryEngine {
 				result.freeze[index] = freeze[index];
 				result.freezeValues[index] = freezeValues[index];
 				result.freezePaused[index] = freezePaused[index];
+				result.savedSourceIds[index] = savedSourceIds[index];
 			}
 			result.revision = 0L;
 			return result;
@@ -4715,6 +4719,7 @@ final class ManagedJavaMemoryEngine {
 		final boolean[] freeze;
 		final long[] freezeValues;
 		final boolean[] freezePaused;
+		final String[] savedSourceIds;
 		long revision;
 
 		WatchSnapshot(int count) {
@@ -4728,6 +4733,7 @@ final class ManagedJavaMemoryEngine {
 			freeze = new boolean[count];
 			freezeValues = new long[count];
 			freezePaused = new boolean[count];
+			savedSourceIds = new String[count];
 		}
 	}
 
