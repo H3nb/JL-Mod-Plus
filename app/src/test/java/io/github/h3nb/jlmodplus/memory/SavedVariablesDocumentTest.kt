@@ -84,7 +84,7 @@ class SavedVariablesDocumentTest {
         SavedVariablesDocument.validate(document.toByteArray())
         assertThrows(IOException::class.java) {
             SavedVariablesDocument.validate(
-                document.replace("\\"arrayType\\":\\"[Z\\"", "\\"arrayType\\":\\"[I\\"")
+                document.replace(""""arrayType":"[Z"""", """"arrayType":"[I"""")
                     .toByteArray(),
             )
         }
