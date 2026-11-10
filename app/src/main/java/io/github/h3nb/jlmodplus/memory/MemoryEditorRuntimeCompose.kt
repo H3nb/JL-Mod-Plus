@@ -956,7 +956,7 @@ private fun RuntimeVariablesTab(
                     enabled = entries.isNotEmpty() && !state.busy,
                     description = stringResource(if (allSelected)
                         R.string.memory_editor_clear_selection
-                        else R.string.memory_editor_select_visible),
+                        else R.string.library_selection_select_all),
                     onToggle = { checked ->
                         onSelectionChange(if (checked) entries.mapTo(HashSet()) { it.key }
                             else emptySet())
@@ -1185,6 +1185,14 @@ private fun RuntimeListRow(
                             contentDescription = stringResource(R.string.memory_list_kept),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary)
+                    }
+                    if ((watch?.freezeMode ?: -1) >= 0) {
+                        Spacer(Modifier.width(6.dp))
+                        Icon(painterResource(R.drawable.ic_lock),
+                            contentDescription = stringResource(R.string.memory_editor_freeze),
+                            modifier = Modifier.size(16.dp),
+                            tint = if (watch?.freezePaused == true) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.primary)
                     }
                 }
                 val location = entry.saved?.path ?: watch?.let {

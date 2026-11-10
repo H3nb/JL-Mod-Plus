@@ -513,7 +513,7 @@ class MemoryEditorAdaptiveComposeTest {
         pressBack()
         rule.onNodeWithText(selected).assertDoesNotExist()
         rule.onNodeWithContentDescription(
-            context.getString(R.string.memory_editor_select_visible)
+            context.getString(R.string.library_selection_select_all)
         ).assertIsDisplayed()
     }
 
