@@ -589,6 +589,11 @@ internal interface MemoryEditorActions {
     fun clearFreezeSelected()
     fun clearSavedWatchFreeze(savedId: String) = Unit
     fun stopSavedWatch(savedId: String) = Unit
+    fun keepListWatch(id: Long, name: String) = Unit
+    fun unkeepListSaved(id: String) = Unit
+    fun freezeListSaved(id: String, expectedValue: String) = Unit
+    fun setListWatchFreeze(id: Long, expectedValue: String, freeze: Boolean) = Unit
+    fun removeListEntries(savedIds: List<String>, watchIds: List<Long>) = Unit
     fun copySelected(locations: Boolean)
     fun previousPage()
     fun nextPage()

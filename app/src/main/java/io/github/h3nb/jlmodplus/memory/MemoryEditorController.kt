@@ -1480,6 +1480,150 @@ internal class MemoryEditorComposeController(
         launchOperation { engine, token -> engine.removeWatch(token, longArrayOf(row.id)) }
     }
 
+    override fun freezeListSaved(id: String, expectedValue: String) {
+        val row = state.savedVariables.firstOrNull { it.id == id } ?: return
+        if (!state.writeSupported || state.savedValues[id]?.resolved != true) return
+        launchOperation { engine, token -> engine.freezeSaved(token, id, row.label, expectedValue) }
+    }
+
+    override fun setListWatchFreeze(id: Long, expectedValue: String, freeze: Boolean) {
+        if (!state.watches.any { it.id == id }) return
+        if (!freeze) {
+            launchOperation { engine, token -> engine.clearFreeze(token, longArrayOf(id)) }
+        } else if (state.writeSupported) {
+            launchOperation { engine, token ->
+                engine.setFreeze(token, longArrayOf(id),
+                    MemoryEngineContract.FREEZE_LOCK, expectedValue, "")
+            }
+        }
+    }
+
+    override fun keepListWatch(id: Long, name: String) {
+        val watched = state.watches.firstOrNull { it.id == id } ?: return
+        val authority = savedAuthority ?: return
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (token == 0L || state.busy || name.isBlank()) return
+        val existingIds = state.savedVariables.mapTo(HashSet()) { it.id }
+        val expected = LongArray(1)
+        if (!ManagedJavaValue.parse(watched.valueText, watched.type, expected)) return
+        val connection = connectionGeneration
+        val generation = savedGeneration
+        runIpc {
+            val outcome = runCatching {
+                val locator = engine.captureSavedLocator(token, 0L, id)
+                if (locator.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) !=
+                    MemoryEngineContract.RESULT_OK) error("A verified path is needed to keep this value")
+                val (path, appId, entry) = savedTarget()
+                val rows = savedRows(authority.save(path, appId, entry, name.take(64), locator))
+                val keptId = rows.singleOrNull { it.first.id !in existingIds }?.first?.id
+                    ?: error("Saved catalog changed; refresh List before keeping this value")
+                val resolved = engine.resolveSavedLocator(token, locator, keptId)
+                val link = if (resolved.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                    MemoryEngineContract.RESULT_OK) {
+                    engine.watchInspector(token, keptId, 0L, 0L, false, 0, watched.type, expected[0])
+                } else resolved
+                link.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                    MemoryEngineContract.RESULT_OK
+            }
+            post {
+                if (destroyed || !state.visible || state.runtimeToken != token ||
+                    connection != connectionGeneration || service !== engine) return@post
+                state = state.copy(
+                    message = when {
+                        outcome.isFailure -> outcome.exceptionOrNull()?.message
+                        outcome.getOrNull() == true -> "Kept for next launch"
+                        else -> "Kept, but its current Watch could not be linked"
+                    },
+                    messageIsError = outcome.isFailure || outcome.getOrNull() != true,
+                )
+                if (generation == savedGeneration) refreshSavedVariables()
+                reloadState()
+            }
+        }
+    }
+
+    override fun unkeepListSaved(id: String) {
+        val saved = state.savedVariables.firstOrNull { it.id == id } ?: return
+        val linked = state.watches.any { it.savedSourceId == id }
+        if (linked) {
+            val watch = state.watches.firstOrNull { it.savedSourceId == id }
+            if (watch != null && watch.label.isBlank()) labelWatch(watch.id, saved.label)
+            deleteSavedVariable(id)
+            return
+        }
+        val current = state.savedValues[id] ?: return
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (!current.resolved || token == 0L || state.busy) return
+        val bits = LongArray(1)
+        if (!ManagedJavaValue.parse(current.value, current.type, bits)) return
+        runIpc {
+            val result = runCatching {
+                engine.watchInspector(token, id, 0L, 0L, false, 0, current.type, bits[0])
+            }
+            post {
+                if (destroyed || !state.visible || state.runtimeToken != token ||
+                    state.savedVariables.none { it.id == id }) return@post
+                val success = result.getOrNull()?.getInt(
+                    MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                    MemoryEngineContract.RESULT_OK
+                if (success) deleteSavedVariable(id)
+                else state = state.copy(
+                    message = "Cannot make a session-only entry from this target",
+                    messageIsError = true,
+                )
+            }
+        }
+    }
+
+    override fun removeListEntries(savedIds: List<String>, watchIds: List<Long>) {
+        val saved = savedIds.distinct()
+        val watches = (watchIds + state.watches.filter { it.savedSourceId in saved }.map { it.id })
+            .distinct()
+        if (state.busy || saved.size > 64 || watches.size > MemoryEngineContract.MAX_WATCH_RECORDS ||
+            saved.any { id -> state.savedVariables.none { it.id == id } } ||
+            watches.any { id -> state.watches.none { it.id == id } } ||
+            (saved.isEmpty() && watches.isEmpty())) return
+        val engine = service
+        val authority = savedAuthority
+        val token = state.runtimeToken
+        if (watches.isNotEmpty() && (engine == null || token == 0L) ||
+            saved.isNotEmpty() && authority == null) return
+        val generation = ++savedGeneration
+        savedRefreshPending = false
+        runIpc {
+            var watchRemoved = false
+            val outcome = runCatching {
+                if (watches.isNotEmpty()) {
+                    val result = engine!!.removeWatch(token, watches.toLongArray())
+                    if (result.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) !=
+                        MemoryEngineContract.RESULT_OK) error(
+                        result.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                            ?: "Unable to remove session entries")
+                    watchRemoved = true
+                }
+                if (saved.isNotEmpty()) {
+                    val (path, appId, entry) = savedTarget()
+                    savedRows(authority!!.removeMany(path, appId, entry, saved.toTypedArray()))
+                    saved.forEach { engine?.releaseSaved(token, it) }
+                }
+            }
+            post {
+                if (destroyed || !state.visible || state.runtimeToken != token) return@post
+                state = state.copy(
+                    message = if (outcome.isSuccess) "Removed from List"
+                        else if (watchRemoved) "Session entries removed, but kept entries could not be removed: " +
+                            outcome.exceptionOrNull()?.message
+                        else outcome.exceptionOrNull()?.message,
+                    messageIsError = outcome.isFailure,
+                )
+                if (generation == savedGeneration) refreshSavedVariables()
+                reloadState()
+            }
+        }
+    }
+
     override fun copySelected(locations: Boolean) {
         val selected = state.selected
         val rows = if (state.variablesTab) {
