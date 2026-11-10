@@ -846,6 +846,7 @@
     <string name="memory_editor_undo">ביטול החיפוש האחרון</string>
     <string name="memory_editor_unfreeze">ביטול הקפאה</string>
     <string name="memory_editor_unsupported">עורך הזיכרון אינו זמין לסביבת ריצה זו.</string>
+    <string name="memory_variables_tab">משתנים</string>
     <string name="memory_editor_watch">מעקב</string>
     <string name="memory_editor_working">מחיל את הפעולה…</string>
     <string name="memory_editor_write_confirmed">ערכים שאומתו בקריאה חוזרת מהזיכרון: %1$d.</string>
