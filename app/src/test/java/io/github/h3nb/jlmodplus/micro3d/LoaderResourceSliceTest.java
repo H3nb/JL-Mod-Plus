@@ -117,7 +117,8 @@ public class LoaderResourceSliceTest {
 				Arrays.copyOfRange(pixels(model.impl.image), 0, 4));
 		byte[] envPixels = pixels(environment.impl.image);
 		assertArrayEquals(new byte[] {0, 0, 0, 0}, Arrays.copyOfRange(envPixels, 0, 4));
-		assertArrayEquals(new byte[] {(byte) 255, (byte) 255, (byte) 255, (byte) 255},
+		// The second pixel has palette index 2: RGB(2, 2, 2), not index 1.
+		assertArrayEquals(new byte[] {2, 2, 2, (byte) 255},
 				Arrays.copyOfRange(envPixels, 4, 8));
 		assertArrayEquals(new byte[] {0, 0, 0, 0},
 				Arrays.copyOfRange(envPixels, (63 * 64 + 63) * 4, 64 * 64 * 4));
