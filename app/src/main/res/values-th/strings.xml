@@ -828,8 +828,7 @@
     <string name="memory_editor_undo">ย้อนกลับไปการค้นหาก่อนหน้า</string>
     <string name="memory_editor_unfreeze">เลิกตรึงค่า</string>
     <string name="memory_editor_unsupported">ไม่สามารถใช้ตัวแก้ไขหน่วยความจำกับรันไทม์นี้ได้</string>
-    <string name="memory_variables_tab">ตัวแปร</string>
-    <string name="memory_variables_stop_watching">หยุดติดตาม</string>
+    <string name="memory_variables_tab">รายการ</string>
     <string name="memory_editor_watch">เฝ้าดู</string>
     <string name="memory_editor_working">กำลังดำเนินการ…</string>
     <string name="memory_editor_write_confirmed">ยืนยัน %1$d ค่าด้วยการอ่านหน่วยความจำกลับแล้ว</string>

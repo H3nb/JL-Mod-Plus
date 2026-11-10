@@ -878,8 +878,7 @@
     <string name="memory_editor_undo">Hoàn tác lần tìm kiếm trước</string>
     <string name="memory_editor_unfreeze">Bỏ cố định</string>
     <string name="memory_editor_unsupported">Không thể sử dụng trình sửa bộ nhớ trong môi trường chạy này.</string>
-    <string name="memory_variables_tab">Biến</string>
-    <string name="memory_variables_stop_watching">Ngừng theo dõi</string>
+    <string name="memory_variables_tab">Danh sách</string>
     <string name="memory_editor_watch">Theo dõi</string>
     <string name="memory_editor_working">Đang áp dụng thao tác…</string>
     <string name="memory_editor_write_confirmed">Đã xác nhận %1$d giá trị bằng cách đọc lại bộ nhớ.</string>

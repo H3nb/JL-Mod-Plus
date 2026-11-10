@@ -955,8 +955,7 @@
     <string name="memory_editor_undo">Скасувати пошук</string>
     <string name="memory_editor_unfreeze">Розморозити</string>
     <string name="memory_editor_unsupported">Редактор пам’яті недоступний для цього середовища виконання.</string>
-    <string name="memory_variables_tab">Змінні</string>
-    <string name="memory_variables_stop_watching">Припинити спостереження</string>
+    <string name="memory_variables_tab">Список</string>
     <string name="memory_editor_watch">Спостереження</string>
     <string name="memory_editor_working">Застосування операції…</string>
     <string name="memory_editor_write_confirmed">Кількість значень, підтверджених повторним читанням пам’яті: %1$d.</string>
