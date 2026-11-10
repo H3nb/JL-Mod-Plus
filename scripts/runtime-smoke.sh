@@ -128,8 +128,8 @@ if [[ "${1:-}" == '--gles-only' ]]; then
   run_selector_batch gles-isolated "${gles_selectors[@]}"
   expected_selector_count=${#gles_selectors[@]}
 else
-  run_selector_batch main "${selectors[@]}"
   run_selector_batch gles-isolated "${gles_selectors[@]}"
+  run_selector_batch main "${selectors[@]}"
   run_selector_batch locale-isolated "${isolated_selectors[@]}"
   expected_selector_count=$((${#selectors[@]} + ${#gles_selectors[@]} + ${#isolated_selectors[@]}))
 fi
