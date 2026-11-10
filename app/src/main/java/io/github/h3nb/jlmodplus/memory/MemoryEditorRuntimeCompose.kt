@@ -1149,12 +1149,15 @@ private fun RuntimeListRow(
                 runtimeTypeShort(it.type)
             }.orEmpty()
     }
+    val selectDescription = stringResource(R.string.memory_editor_select_result_value)
     Surface(color = if (selected) MaterialTheme.colorScheme.primaryContainer
         else Color.Transparent) {
         Row(
             Modifier.fillMaxWidth()
                 .combinedClickable(
-                    onClick = { if (selectionActive) onSelect() else onEdit() },
+                    onClick = {
+                        if (selectionActive) onSelect() else if (editable) onEdit()
+                    },
                     onLongClick = onSelect,
                 )
                 .padding(horizontal = 8.dp, vertical = if (compact) 4.dp else 8.dp),
@@ -1164,9 +1167,7 @@ private fun RuntimeListRow(
                 checked = selected,
                 enabled = selectEnabled,
                 onCheckedChange = { onSelect() },
-                modifier = Modifier.semantics {
-                    contentDescription = stringResource(R.string.memory_editor_select_result_value)
-                },
+                modifier = Modifier.semantics { contentDescription = selectDescription },
             )
             Column(Modifier.weight(1f).padding(start = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
