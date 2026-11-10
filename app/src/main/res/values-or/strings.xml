@@ -597,6 +597,7 @@
     <string name="memory_editor_select_result_value">ଏହି ଫଳାଫଳ ବାଛନ୍ତୁ</string>
     <string name="memory_editor_select_visible">ଦୃଶ୍ୟମାନ ଫଳାଫଳ ବାଛନ୍ତୁ</string>
     <string name="memory_editor_type_auto">ସ୍ୱୟଂଚାଳିତ</string>
+    <string name="memory_variables_tab">ଚଳକ</string>
     <string name="memory_editor_watch">ନିରୀକ୍ଷଣ</string>
     <string name="memory_editor_candidate_static">%1$s · %2$s</string>
     <string name="memory_editor_candidate_instance">%1$s · %2$s · ଲକ୍ଷ୍ୟ #%3$d</string>
