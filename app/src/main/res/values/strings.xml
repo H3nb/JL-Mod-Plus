@@ -546,7 +546,15 @@
     <string name="memory_editor_engine_reconnecting">Memory Editor is reconnecting…</string>
     <string name="memory_editor_refresh">Refresh</string>
     <string name="memory_editor_undo">Undo</string>
-    <string name="memory_variables_tab">Variables</string>
+    <string name="memory_variables_tab">List</string>
+    <string name="memory_editor_back">Back</string>
+    <string name="memory_list_keep">Keep for next launch</string>
+    <string name="memory_list_stop_keeping">Stop keeping</string>
+    <string name="memory_list_kept">Kept for next launch</string>
+    <string name="memory_list_empty">Your list is empty</string>
+    <string name="memory_list_empty_hint">Select results in Search and add them to List.</string>
+    <string name="memory_list_remove_confirm">Remove selected entries? Any active Freeze will stop, and kept definitions will be deleted.</string>
+    <string name="memory_list_add">Add to List</string>
     <string name="memory_variables_stop_watching">Stop watching</string>
     <string name="memory_editor_watch">Watch</string>
     <string name="memory_editor_search_tab">Search</string>

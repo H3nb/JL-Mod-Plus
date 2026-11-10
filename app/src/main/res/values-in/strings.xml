@@ -487,7 +487,15 @@
     <string name="memory_editor_engine_reconnecting">Editor memori sedang menyambung ulang…</string>
     <string name="memory_editor_refresh">Segarkan</string>
     <string name="memory_editor_undo">Urungkan</string>
-    <string name="memory_variables_tab">Variabel</string>
+    <string name="memory_variables_tab">Daftar</string>
+    <string name="memory_editor_back">Kembali</string>
+    <string name="memory_list_keep">Simpan untuk sesi berikutnya</string>
+    <string name="memory_list_stop_keeping">Berhenti menyimpan</string>
+    <string name="memory_list_kept">Disimpan untuk sesi berikutnya</string>
+    <string name="memory_list_empty">Daftar masih kosong</string>
+    <string name="memory_list_empty_hint">Pilih hasil pencarian, lalu tambahkan ke Daftar.</string>
+    <string name="memory_list_remove_confirm">Hapus entri terpilih? Freeze yang aktif akan dihentikan dan definisi tersimpan akan dihapus.</string>
+    <string name="memory_list_add">Tambah ke Daftar</string>
     <string name="memory_variables_stop_watching">Hentikan pemantauan</string>
     <string name="memory_editor_watch">Pantauan</string>
     <string name="memory_editor_search_tab">Cari</string>
