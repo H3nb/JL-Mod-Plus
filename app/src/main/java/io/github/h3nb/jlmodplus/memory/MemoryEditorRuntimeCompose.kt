@@ -915,6 +915,8 @@ private fun RuntimeVariablesTab(
                         MemoryEngineContract.FREEZE_LOCK, watch.valueText, "",
                     )
                 },
+                RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
+                    !state.busy) { actions.refresh() },
                 RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                     !state.busy) { actions.watchSelected(false) },
             )
@@ -1129,7 +1131,10 @@ private fun RuntimeVariablesTab(
     }
 
     if (saveWatch) {
-        var name by remember { mutableStateOf("") }
+        val watchToSave = selectedWatches.singleOrNull()
+        var name by remember(watchToSave?.id) {
+            mutableStateOf(watchToSave?.label.orEmpty().take(64))
+        }
         AlertDialog(
             onDismissRequest = { saveWatch = false },
             title = { Text(stringResource(R.string.memory_saved_save)) },
