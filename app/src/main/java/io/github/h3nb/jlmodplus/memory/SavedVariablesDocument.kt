@@ -21,8 +21,8 @@ import kotlinx.serialization.json.int
 object SavedVariablesDocument {
     const val MAX_BYTES = 65_536
     private const val SCHEMA = 3
-    private val PRIMITIVE_FIELDS = setOf("byte", "short", "char", "int", "long", "float", "double")
-    private val PRIMITIVE_ARRAYS = setOf("[B", "[S", "[C", "[I", "[J", "[F", "[D")
+    private val PRIMITIVE_FIELDS = setOf("byte", "short", "char", "int", "long", "float", "double", "boolean")
+    private val PRIMITIVE_ARRAYS = setOf("[B", "[S", "[C", "[I", "[J", "[F", "[D", "[Z")
 
     @JvmStatic
     @Throws(IOException::class)

@@ -63,7 +63,7 @@ final class ManagedJavaMemoryEngine {
 	private static final long RESULT_SLOT_BYTES = Integer.SIZE / Byte.SIZE + 2L * (Long.SIZE / Byte.SIZE);
 	private static final int INITIAL_OWNER_CAPACITY = 16;
 	private static final int FIRST_SUPPORTED_TYPE = MemoryEngineContract.TYPE_BYTE;
-	private static final int LAST_SUPPORTED_TYPE = MemoryEngineContract.TYPE_DOUBLE;
+	private static final int LAST_SUPPORTED_TYPE = MemoryEngineContract.TYPE_BOOLEAN;
 	private static final long STAGED_OWNER_BYTES = 64L;
 	private static final long FINISHED_BUCKET_BYTES = 64L;
 	private static final long TRAVERSAL_ENTRY_BYTES = 64L;
@@ -3421,7 +3421,7 @@ final class ManagedJavaMemoryEngine {
 			if (!MemoryEngineContract.isValueType(selector)) return null;
 			QueryPlan plan = new QueryPlan(selector, MemoryEngineContract.PREDICATE_EQUAL, false);
 			if (selector == MemoryEngineContract.TYPE_AUTO) {
-				for (int type = FIRST_SUPPORTED_TYPE; type <= LAST_SUPPORTED_TYPE; type++) {
+				for (int type = FIRST_SUPPORTED_TYPE; type <= MemoryEngineContract.TYPE_DOUBLE; type++) {
 					plan.valid[type] = true;
 				}
 			} else {
@@ -3436,6 +3436,7 @@ final class ManagedJavaMemoryEngine {
 					|| predicate > MemoryEngineContract.PREDICATE_BETWEEN) return null;
 			QueryPlan plan = new QueryPlan(selector, predicate, false);
 			for (int type = FIRST_SUPPORTED_TYPE; type <= LAST_SUPPORTED_TYPE; type++) {
+				if (selector == MemoryEngineContract.TYPE_AUTO && type == MemoryEngineContract.TYPE_BOOLEAN) continue;
 				if (selector != MemoryEngineContract.TYPE_AUTO && selector != type) continue;
 				if (ManagedJavaValue.validKnownQuery(type, predicate, first, second)) {
 					plan.valid[type] = true;
@@ -3505,6 +3506,7 @@ final class ManagedJavaMemoryEngine {
 					|| predicate > MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE) return null;
 			QueryPlan plan = new QueryPlan(selector, predicate, true);
 			for (int type = FIRST_SUPPORTED_TYPE; type <= LAST_SUPPORTED_TYPE; type++) {
+				if (selector == MemoryEngineContract.TYPE_AUTO && type == MemoryEngineContract.TYPE_BOOLEAN) continue;
 				if (selector != MemoryEngineContract.TYPE_AUTO && selector != type) continue;
 				if (ManagedJavaValue.validRelativeQuery(type, predicate, first, second)) {
 					plan.valid[type] = true;
@@ -3529,6 +3531,7 @@ final class ManagedJavaMemoryEngine {
 			long[] firstBits = new long[1];
 			long[] secondBits = new long[1];
 			for (int type = FIRST_SUPPORTED_TYPE; type <= LAST_SUPPORTED_TYPE; type++) {
+				if (selector == MemoryEngineContract.TYPE_AUTO && type == MemoryEngineContract.TYPE_BOOLEAN) continue;
 				if (selector != MemoryEngineContract.TYPE_AUTO && selector != type) continue;
 				long first = 0L;
 				long second = 0L;
