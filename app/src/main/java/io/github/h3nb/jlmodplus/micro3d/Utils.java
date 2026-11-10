@@ -97,9 +97,12 @@ public class Utils {
 
 	static {
 		MicroActivity microActivity = ContextHolder.getActivity();
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(microActivity);
-		if (sp.getBoolean("micro3d_using_message", false)) {
-			microActivity.toast(R.string.msg_mascot_capsule);
+		// Native processing can run without the host Activity (e.g. test or offscreen render).
+		if (microActivity != null) {
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(microActivity);
+			if (sp.getBoolean("micro3d_using_message", false)) {
+				microActivity.toast(R.string.msg_mascot_capsule);
+			}
 		}
 		System.loadLibrary("c++_shared");
 		System.loadLibrary("micro3d");
