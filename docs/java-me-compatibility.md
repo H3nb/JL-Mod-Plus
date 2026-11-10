@@ -12,6 +12,24 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 - Do not silently "correct" known-compatible behavior just because Android or desktop Java behaves differently.
 - If documentation is incomplete or ambiguous, prefer preserving known behavior and add a focused characterization/regression test instead of guessing.
 
+## Mascot Capsule and Motorola 3D resource slices
+
+MBAC, MTRA and BMP readers treat `offset` and `length` as an exclusive,
+bounded window in a byte array. BMP file-header offsets are relative to
+the beginning of that window, not the containing array.
+
+K800 R8BF003 native firmware probes (the Firmware-Reference research packet,
+MC-TEX-001 and MC-TEX-002) establish that small Mascot Capsule v3 environment
+textures are decoded onto a zero-padded 64x64 canvas, and palette index zero
+does not contribute RGB regardless of the first palette entry. Only Mascot
+`Texture(..., false)` selects this behavior. Model and Motorola textures
+preserve their previous representation and colorkey behavior.
+
+The firmware also stores model textures in fixed 256x256 memory, but its GPU
+sampling semantics were not measured. Do not impose that storage detail on
+model textures without render evidence. Native rejection values do not
+establish Java exception types or a global host texture-size limit.
+
 ## Timer callback failures
 
 Guest `TimerTask.run()` callbacks preserve the J2ME-Loader/JL-Mod compatibility
