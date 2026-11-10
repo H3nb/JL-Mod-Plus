@@ -678,6 +678,44 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithText("Session health").assertIsDisplayed()
     }
 
+    @Test fun linkedWatchStaysInspectableWhenSavedLocatorIsNotReady() {
+        val saved = SavedVariableRow("hp", "Health", "guest.Game.hp")
+        val watch = MemoryWatchRow(
+            id = 1L, type = MemoryEngineContract.TYPE_INT,
+            valueText = "42", initialValueText = "42", previousValueText = "42",
+            label = "Session health", locationText = "guest.Game.hp",
+            state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+            savedSourceId = "hp",
+        )
+        var inspectedId: Long? = null
+        val actions = object : TestMemoryEditorActions() {
+            override fun inspectCandidate(candidateId: Long, radius: Int, watchAnchor: Boolean) {
+                if (watchAnchor) inspectedId = candidateId
+            }
+        }
+        rule.setContent {
+            JLModPlusTheme {
+                MemoryEditorRuntimeRoot(
+                    MemoryEditorUiState(
+                        visible = true, connected = true, supported = true,
+                        variablesTab = true, savedVariables = listOf(saved),
+                        watches = listOf(watch),
+                    ),
+                    actions,
+                )
+            }
+        }
+        rule.onNodeWithText("42").assertIsDisplayed()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        rule.onNodeWithContentDescription(
+            context.getString(R.string.memory_editor_select_result_value)
+        ).performClick()
+        rule.onNodeWithContentDescription(
+            context.getString(R.string.memory_editor_inspector)
+        ).assertIsEnabled().performClick()
+        rule.runOnIdle { assertEquals(1L, inspectedId) }
+    }
+
     @Test fun booleanKnownSearchUsesChoicesInsteadOfNumericKeypad() {
         var submittedValue: String? = null
         var submittedType = -1

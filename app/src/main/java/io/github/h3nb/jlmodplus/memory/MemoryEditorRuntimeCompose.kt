@@ -189,8 +189,9 @@ internal fun MemoryEditorRuntimeRoot(
             selectedListEntry != null && !state.busy &&
                 (selectedListEntry.saved?.let {
                     state.savedValues[it.id]?.resolved == true
-                } == true || selectedListEntry.watch?.state != null &&
-                    selectedListEntry.watch.state != MemoryEngineContract.CANDIDATE_LOST)
+                } == true || selectedListEntry.watch?.let {
+                    it.state != MemoryEngineContract.CANDIDATE_LOST
+                } == true)
         } else state.selected.size == 1 && !state.busy
         val inspectSelected = {
             if (state.variablesTab) {
@@ -899,8 +900,10 @@ private fun RuntimeVariablesTab(
             }
         }
     }
-    val keepName = single?.watch?.let { watch ->
-        single.label.ifBlank { runtimeTypeShort(watch.type) }
+    val keepName = single?.let { entry ->
+        entry.watch?.let { watch ->
+            entry.label.ifBlank { runtimeTypeShort(watch.type) }
+        }
     }.orEmpty()
     var moreActions by remember { mutableStateOf(false) }
     val primaryActions = listOf(
@@ -1041,8 +1044,8 @@ private fun RuntimeVariablesTab(
         val saved = menuEntry.saved
         val watch = menuEntry.watch
         val savedReady = saved != null && state.savedValues[saved.id]?.resolved == true
-        val ready = savedReady || watch?.state != null &&
-            watch.state != MemoryEngineContract.CANDIDATE_LOST
+        val ready = savedReady ||
+            watch?.let { it.state != MemoryEngineContract.CANDIDATE_LOST } == true
         val keepName = watch?.let {
             menuEntry.label.ifBlank { runtimeTypeShort(it.type) }
         }.orEmpty()
@@ -1051,6 +1054,12 @@ private fun RuntimeVariablesTab(
                 state.writeSupported && ready && !state.busy) { edit(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready && !state.busy) { inspect(menuEntry) },
+            RuntimeToolbarAction(R.drawable.ic_save,
+                if (saved != null) R.string.memory_list_stop_keeping else R.string.memory_list_keep,
+                !state.busy && (saved == null || watch != null || ready)) {
+                if (saved != null) actions.unkeepListSaved(saved.id)
+                else if (watch != null) actions.keepListWatch(watch.id, keepName)
+            },
             RuntimeToolbarAction(
                 if ((watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
                 else R.drawable.ic_lock,
@@ -1059,12 +1068,6 @@ private fun RuntimeVariablesTab(
                 !state.busy && ((watch?.freezeMode ?: -1) >= 0 ||
                     (state.writeSupported && (saved == null || savedReady) && ready)),
             ) { toggleFreeze(menuEntry) },
-            RuntimeToolbarAction(R.drawable.ic_save,
-                if (saved != null) R.string.memory_list_stop_keeping else R.string.memory_list_keep,
-                !state.busy && (saved == null || watch != null || ready)) {
-                if (saved != null) actions.unkeepListSaved(saved.id)
-                else if (watch != null) actions.keepListWatch(watch.id, keepName)
-            },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
                 !state.busy) { renameKey = menuEntry.key },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
