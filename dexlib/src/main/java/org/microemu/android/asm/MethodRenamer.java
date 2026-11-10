@@ -111,8 +111,22 @@ public final class MethodRenamer {
     }
 
     public static final class Builder {
-        private final Map<String, String> parents = new HashMap<>();
-        private final Map<String, Set<String>> declarations = new HashMap<>();
+        private static final class ClassInfo {
+            final String superName;
+            final String[] interfaces;
+            final boolean isInterface;
+            final Set<String> methods;
+
+            ClassInfo(ClassReader reader, Set<String> methods) {
+                superName = reader.getSuperName();
+                interfaces = reader.getInterfaces();
+                isInterface = (reader.getAccess() & Opcodes.ACC_INTERFACE) != 0;
+                this.methods = methods;
+            }
+        }
+
+        /** Conversion-local metadata: the actual source bytes remain owned by the DX pipeline. */
+        private final Map<String, ClassInfo> classes = new HashMap<>();
 
         public void addClass(byte[] bytes) {
             ClassReader reader = new ClassReader(bytes);
@@ -125,65 +139,115 @@ public final class MethodRenamer {
                     return null;
                 }
             }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-            parents.put(reader.getClassName(), reader.getSuperName());
-            declarations.put(reader.getClassName(), methods);
+            classes.put(reader.getClassName(), new ClassInfo(reader, methods));
         }
 
         public MethodRenamer build() {
-            Set<String> descendants = new HashSet<>();
-            boolean grew;
+            Set<String> threadTypes = new HashSet<>();
+            boolean changed;
             do {
-                grew = false;
-                for (Map.Entry<String, String> entry : parents.entrySet()) {
-                    if ((THREAD.equals(entry.getValue()) || descendants.contains(entry.getValue()))
-                            && descendants.add(entry.getKey())) grew = true;
+                changed = false;
+                for (Map.Entry<String, ClassInfo> entry : classes.entrySet()) {
+                    String parent = entry.getValue().superName;
+                    if ((THREAD.equals(parent) || threadTypes.contains(parent))
+                            && threadTypes.add(entry.getKey())) changed = true;
                 }
-            } while (grew);
+            } while (changed);
 
-            Map<String, String> renamedSignatures = new HashMap<>();
+            Map<String, Map<String, String>> result = new HashMap<>();
             for (String signature : CONFLICTS) {
-                boolean declared = false;
-                for (String type : descendants) {
-                    if (declarations.get(type).contains(signature)) {
-                        declared = true;
-                        break;
+                Set<String> relevantInterfaces = interfacesDefining(signature);
+                Map<String, Set<String>> edges = new HashMap<>();
+                for (Map.Entry<String, ClassInfo> entry : classes.entrySet()) {
+                    String owner = entry.getKey();
+                    ClassInfo info = entry.getValue();
+                    if (classes.containsKey(info.superName)) connect(edges, owner, info.superName);
+                    // Do not connect via unrelated shared interfaces such as Runnable.
+                    for (String iface : info.interfaces) {
+                        if (relevantInterfaces.contains(iface)) connect(edges, owner, iface);
                     }
                 }
-                if (!declared) continue;
+
+                Set<String> affected = new HashSet<>();
+                java.util.ArrayList<String> queue = new java.util.ArrayList<>();
+                for (String type : threadTypes) {
+                    if (classes.get(type).methods.contains(signature) && affected.add(type)) {
+                        queue.add(type);
+                    }
+                }
+                for (int index = 0; index < queue.size(); index++) {
+                    for (String adjacent : edges.getOrDefault(
+                            queue.get(index), java.util.Collections.emptySet())) {
+                        if (affected.add(adjacent)) queue.add(adjacent);
+                    }
+                }
+                if (affected.isEmpty()) continue;
+
                 String method = signature.substring(0, signature.indexOf('('));
                 String descriptor = signature.substring(signature.indexOf('('));
                 String candidate = method + SUFFIX;
                 boolean collision;
                 do {
                     collision = false;
-                    for (String type : descendants) {
-                        if (declarations.get(type).contains(candidate + descriptor)) {
-                            collision = true;
+                    for (String type : affected) {
+                        if (classes.get(type).methods.contains(candidate + descriptor)) {
                             candidate += '$';
+                            collision = true;
                             break;
                         }
                     }
                 } while (collision);
-                renamedSignatures.put(signature, candidate);
-            }
 
-            Map<String, Map<String, String>> result = new HashMap<>();
-            for (String type : descendants) {
-                Map<String, String> methods = new HashMap<>();
-                for (Map.Entry<String, String> entry : renamedSignatures.entrySet()) {
-                    String current = type;
-                    while (current != null && !THREAD.equals(current)) {
-                        Set<String> declared = declarations.get(current);
-                        if (declared != null && declared.contains(entry.getKey())) {
-                            methods.put(entry.getKey(), entry.getValue());
-                            break;
-                        }
-                        current = parents.get(current);
+                for (String type : affected) {
+                    ClassInfo info = classes.get(type);
+                    if ((info.isInterface && relevantInterfaces.contains(type))
+                            || hasGuestClassDeclaration(type, signature)) {
+                        result.computeIfAbsent(type, unused -> new HashMap<>())
+                                .put(signature, candidate);
                     }
                 }
-                if (!methods.isEmpty()) result.put(type, methods);
             }
             return new MethodRenamer(result);
+        }
+
+        /** Interfaces declaring or inheriting the relevant method, but no unrelated interfaces. */
+        private Set<String> interfacesDefining(String signature) {
+            Set<String> relevant = new HashSet<>();
+            for (Map.Entry<String, ClassInfo> entry : classes.entrySet()) {
+                ClassInfo info = entry.getValue();
+                if (info.isInterface && info.methods.contains(signature)) relevant.add(entry.getKey());
+            }
+            boolean changed;
+            do {
+                changed = false;
+                for (Map.Entry<String, ClassInfo> entry : classes.entrySet()) {
+                    ClassInfo info = entry.getValue();
+                    if (!info.isInterface || relevant.contains(entry.getKey())) continue;
+                    for (String parent : info.interfaces) {
+                        if (relevant.contains(parent)) {
+                            changed |= relevant.add(entry.getKey());
+                            break;
+                        }
+                    }
+                }
+            } while (changed);
+            return relevant;
+        }
+
+        private boolean hasGuestClassDeclaration(String type, String signature) {
+            Set<String> visited = new HashSet<>();
+            while (type != null && visited.add(type)) {
+                ClassInfo info = classes.get(type);
+                if (info == null) break;
+                if (!info.isInterface && info.methods.contains(signature)) return true;
+                type = info.superName;
+            }
+            return false;
+        }
+
+        private static void connect(Map<String, Set<String>> edges, String first, String second) {
+            edges.computeIfAbsent(first, unused -> new HashSet<>()).add(second);
+            edges.computeIfAbsent(second, unused -> new HashSet<>()).add(first);
         }
     }
 }
