@@ -44,7 +44,7 @@ The editor reports **candidates**, not confirmed game variables. Treat them as h
 
 ## Edit, List, Freeze, and Inspector
 
-Select a result and choose **Add to List** to track it while playing. Tap a List row to edit its value. Use its always-visible checkbox to select it, or the checkbox in the List toolbar to select all entries. Long-press remains a selection shortcut. The contextual toolbar and row menu provide **Inspect**, **Freeze/Unfreeze**, **Rename**, **Keep for next launch**, and **Remove** when applicable. Inspector is the third tab; Back returns to the Search or List location from which it opened.
+Select a result and choose **Add to List** to track it while playing, or **Save variable** to keep a verified target directly without first adding it to List. Tap a List row to edit its value. Use its always-visible checkbox to select it, or the checkbox in the List toolbar to select all entries. Long-press remains a selection shortcut. The contextual toolbar and row menu provide **Inspect**, **Freeze/Unfreeze**, **Rename**, **Keep for next launch**, and **Remove** when applicable. Inspector is the third tab; Back returns to the Search or List location from which it opened.
 
 Editing applies a value to the selected supported candidate or candidates. Batch actions can affect several values at once; verify the selection before using them. **Freeze** attempts to keep a value at the chosen level as the game runs. It may be inappropriate when the game expects to update that value itself.
 

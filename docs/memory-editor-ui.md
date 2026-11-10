@@ -65,7 +65,7 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   returns to its origin tab; the close action still closes the editor.
 - Pack toolbar actions according to the available width in 48 dp touch slots,
   reserving room for result counts in wide layouts. Show all five frequent
-  actions and enabled Inspector/Undo/Remove actions directly whenever they fit;
+  actions and enabled Inspector/Save/Undo/Remove actions directly whenever they fit;
   use More only for genuine overflow. On especially narrow windows prioritize
   search/edit/refresh and keep the remaining actions in More. Selection changes
   availability, not the relative order of the frequent actions. More uses two

@@ -460,6 +460,37 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
+    @Test fun searchRetainsDirectSaveActionForSingleCandidate() {
+        val candidate = MemoryResultRow(
+            id = 1L, valueText = "42", locationText = "guest.Game.hp",
+            aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+            primaryType = MemoryEngineContract.TYPE_INT,
+            state = MemoryEngineContract.CANDIDATE_STABLE,
+            relocations = 0,
+        )
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        rule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(720.dp, 360.dp))
+            ) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(
+                        MemoryEditorUiState(
+                            visible = true, connected = true, supported = true,
+                            writeSupported = true, selected = setOf(1L),
+                            results = listOf(candidate), resultCount = 1,
+                            sessionStage = MemorySessionStage.CANDIDATES,
+                        ),
+                        TestMemoryEditorActions(),
+                    )
+                }
+            }
+        }
+        rule.onNodeWithContentDescription(context.getString(R.string.memory_saved_save))
+            .assertIsDisplayed().assertIsEnabled().performClick()
+        rule.onNodeWithText(context.getString(R.string.memory_saved_name)).assertIsDisplayed()
+    }
+
     @Test fun listCheckboxSelectsDirectlyAndInspectorTabOpensSelectedWatch() {
         val watch = MemoryWatchRow(
             1L, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
