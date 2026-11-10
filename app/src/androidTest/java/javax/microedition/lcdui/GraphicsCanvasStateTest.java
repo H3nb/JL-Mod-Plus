@@ -80,6 +80,46 @@ public class GraphicsCanvasStateTest {
 		assertEquals(WHITE, getPixel(image, 13, 13));
 	}
 
+
+	@Test
+	public void negativeAndZeroSetClipSuppressAllDrawingUntilReplaced() {
+		Image image = Image.createImage(12, 12);
+		Graphics graphics = image.getGraphics();
+		graphics.setColor(RED);
+
+		graphics.setClip(2, 2, -4, 5);
+		graphics.fillRect(0, 0, 12, 12);
+		graphics.setClip(2, 2, 5, -4);
+		graphics.fillRect(0, 0, 12, 12);
+		graphics.setClip(2, 2, 0, 5);
+		graphics.fillRect(0, 0, 12, 12);
+
+		assertEquals(WHITE, getPixel(image, 2, 2));
+		assertEquals(WHITE, getPixel(image, 0, 0));
+
+		graphics.setClip(2, 2, 3, 3);
+		graphics.fillRect(0, 0, 12, 12);
+		assertEquals(RED, getPixel(image, 2, 2));
+		assertEquals(WHITE, getPixel(image, 5, 5));
+	}
+
+	@Test
+	public void negativeClipRectEmptiesIntersectionEvenAfterTranslation() {
+		Image image = Image.createImage(12, 12);
+		Graphics graphics = image.getGraphics();
+		graphics.setColor(BLUE);
+		graphics.translate(3, 4);
+		graphics.setClip(0, 0, 8, 8);
+		graphics.clipRect(1, 1, 4, -1);
+		graphics.fillRect(0, 0, 12, 12);
+		assertEquals(WHITE, getPixel(image, 4, 5));
+
+		graphics.setClip(0, 0, 4, 4);
+		graphics.fillRect(0, 0, 12, 12);
+		assertEquals(BLUE, getPixel(image, 3, 4));
+		assertEquals(WHITE, getPixel(image, 7, 8));
+	}
+
 	private int getPixel(Image image, int x, int y) {
 		return image.getBitmap().getPixel(x, y) & RGB_MASK;
 	}

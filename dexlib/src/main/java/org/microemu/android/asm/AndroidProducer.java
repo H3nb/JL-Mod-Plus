@@ -43,10 +43,15 @@ import java.util.Map;
 public class AndroidProducer {
 	// Keep this aligned with the highest class-file version supported by the bundled ASM.
 	// AndroidProducerDexTest intentionally fails when a future ASM adds a newer Vxx constant.
-	static final int MAX_SUPPORTED_CLASS_VERSION = Opcodes.V27;
+	static final int MAX_SUPPORTED_CLASS_VERSION = Opcodes.V28;
 	private static final Map<Integer, Integer> patches = initPatchFixes();
 
 	public static byte[] instrument(byte[] classData, String classFileName, long crc) {
+		return instrument(classData, classFileName, crc, null);
+	}
+
+	public static byte[] instrument(byte[] classData, String classFileName,
+			long crc, MethodRenamer renamer) {
 		Integer patch = patches.get((int) crc);
 		if (patch != null) {
 			classData = patchClass(classData, patch);
@@ -97,6 +102,7 @@ public class AndroidProducer {
 			// Pass the original guest class token to reflection rewrites. The token carries the
 			// AppClassLoader that owns classes present only in the MIDlet archive.
 			ClassVisitor cv = new AndroidClassVisitor(cw, sourceClassName);
+			if (renamer != null) cv = renamer.wrap(cv);
 			cr.accept(cv, ClassReader.SKIP_DEBUG);
 			return cw.toByteArray();
 		} catch (RuntimeException transformFailure) {

@@ -1218,4 +1218,10 @@
     <string name="memory_saved_incompatible">Tidak kompatibel</string>
     <string name="memory_saved_failed">Gagal</string>
     <string name="memory_saved_delete_many_confirm">Hapus %1$d definisi tersimpan? Nilai dalam game tidak berubah.</string>
+    <string name="date_field_not_set">Belum diatur</string>
+    <string name="installer_select_companion_jar">JAD ini merujuk ke file JAR terpisah. Pilih JAR yang sesuai untuk melanjutkan. Penyedia file eksternal tidak memberikan akses ke dokumen di sebelahnya.</string>
+    <string name="installer_select_jar">Pilih JAR</string>
+    <string name="installer_wrong_companion_jar">JAR ini tidak cocok dengan JAD yang dipilih. Pilih JAR yang sesuai untuk mempertahankan pengaturan JAD.</string>
+    <string name="installer_choose_another_jar">Pilih JAR lain</string>
+    <string name="date_field_use_displayed_value">Gunakan nilai ini</string>
 </resources>

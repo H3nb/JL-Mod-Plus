@@ -61,6 +61,8 @@ public class Alert extends Screen {
 	private volatile Runnable timeoutRunnable;
 	private volatile long timeoutGeneration;
 	private volatile Displayable nextDisplayable;
+	/** Display request that owns the current Android dialog instance. */
+	private volatile long dialogRequestGeneration;
 	private volatile boolean contentModal;
 	/** True when the visible dialog uses a ListView for an Alert with more than three commands. */
 	private volatile boolean commandListDialog;
@@ -197,7 +199,8 @@ public class Alert extends Screen {
 		return timeout > 0 && !contentModal && commandSnapshot.size() <= 1;
 	}
 
-	AlertDialog prepareDialog() {
+	AlertDialog prepareDialog(long requestGeneration) {
+		dialogRequestGeneration = requestGeneration;
 		Context context = ContextHolder.getActivity();
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		ArrayList<Command> commandSnapshot = snapshotCommands();
@@ -665,6 +668,7 @@ public class Alert extends Screen {
 		if (dialog != dialogInterface) {
 			return;
 		}
+		long dismissedGeneration = dialogRequestGeneration;
 		Display ownerDisplay = Display.getDisplay(null);
 		if (ownerDisplay != null) ownerDisplay.onHostPresentationEnded(this);
 		cancelTimeout();
@@ -681,16 +685,9 @@ public class Alert extends Screen {
 		if (listener == null) {
 			Displayable displayable = nextDisplayable;
 			nextDisplayable = null;
-			if (displayable != null) {
-				Display display = Display.getDisplay(null);
-				if (display != null) {
-					display.setCurrent(displayable);
-				}
-			} else {
-				Display display = Display.getDisplay(null);
-				if (display != null) {
-					display.restoreAfterAlert(this);
-				}
+			Display display = Display.getDisplay(null);
+			if (display != null) {
+				display.completeAlertDismissal(this, dismissedGeneration, displayable);
 			}
 		} else if (commands.isEmpty()) {
 			dispatchCommandOnce(dismissedCommandState, DISMISS_COMMAND);
@@ -734,7 +731,7 @@ public class Alert extends Screen {
 		dialogCommandState = null;
 		cancelTimeout(true);
 		expectedDialog.dismiss();
-		AlertDialog replacement = prepareDialog();
+		AlertDialog replacement = prepareDialog(dialogRequestGeneration);
 		replacement.show();
 		Display.styleAlertDialog(replacement);
 		onDialogShown(replacement);

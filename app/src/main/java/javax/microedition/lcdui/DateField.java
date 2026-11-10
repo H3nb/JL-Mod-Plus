@@ -19,142 +19,253 @@ package javax.microedition.lcdui;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import io.github.h3nb.jlmodplus.R;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.util.ContextHolder;
 
+/**
+ * MIDP 2.0 DateField: a nullable logical value, independent of the Android picker preview.
+ * Programmatic changes update the widgets without producing guest ItemStateListener events.
+ */
 public class DateField extends Item {
-	public static final int DATE = 1;
-	public static final int DATE_TIME = 3;
-	public static final int TIME = 2;
+    public static final int DATE = 1;
+    public static final int TIME = 2;
+    public static final int DATE_TIME = 3;
+    private static final long DAY_MILLIS = 86_400_000L;
 
-	private int mode;
-	private final Calendar calendar = Calendar.getInstance();
+    private final Object valueLock = new Object();
+    private final Calendar calendar;
+    private int mode;
+    private boolean initialized;
 
-	private LinearLayout layout;
-	private DatePicker datePicker;
-	private TimePicker timePicker;
+    private volatile LinearLayout layout;
+    private DatePicker datePicker;
+    private TimePicker timePicker;
+    private TextView unsetLabel;
+    private Button initializeButton;
+    /** Accessed only on the Android UI thread. */
+    private boolean syncingWidgets;
 
-	private final SimpleEvent msgUpdateDate = new SimpleEvent() {
-		@Override
-		public void process() {
-			datePicker.updateDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
-					calendar.get(Calendar.DAY_OF_MONTH));
-			timePicker.setCurrentHour(calendar.get(Calendar.HOUR_OF_DAY));
-			timePicker.setCurrentMinute(calendar.get(Calendar.MINUTE));
-		}
-	};
+    private final SimpleEvent syncWidgetsEvent = new SimpleEvent() {
+        @Override
+        public void process() {
+            syncWidgets();
+        }
+    };
 
-	private final SimpleEvent msgSetVisibility = new SimpleEvent() {
-		@Override
-		public void process() {
-			if (mode == DATE) {
-				datePicker.setVisibility(View.VISIBLE);
-				timePicker.setVisibility(View.GONE);
-			} else if (mode == TIME) {
-				datePicker.setVisibility(View.GONE);
-				timePicker.setVisibility(View.VISIBLE);
-			} else if (mode == DATE_TIME) {
-				datePicker.setVisibility(View.VISIBLE);
-				timePicker.setVisibility(View.VISIBLE);
-			}
-		}
-	};
+    public DateField(String label, int mode) {
+        this(label, mode, null);
+    }
 
-	private class DateChangedListener implements DatePicker.OnDateChangedListener {
-		@Override
-		public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-			calendar.set(year, monthOfYear, dayOfMonth);
-		}
-	}
+    public DateField(String label, int mode, TimeZone timeZone) {
+        validateMode(mode);
+        TimeZone zone = timeZone == null ? TimeZone.getDefault() : (TimeZone) timeZone.clone();
+        calendar = Calendar.getInstance(zone);
+        // A picker needs preview coordinates; this does not initialize the MIDP value.
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        this.mode = mode;
+        setLabel(label);
+    }
 
-	private class TimeChangedListener implements TimePicker.OnTimeChangedListener {
-		@Override
-		public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
-			calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-			calendar.set(Calendar.MINUTE, minute);
-		}
-	}
+    public Date getDate() {
+        synchronized (valueLock) {
+            if (!initialized) return null;
+            long millis = calendar.getTimeInMillis();
+            if (mode == TIME) {
+                // MIDP TIME values are anchored in the first epoch day; the picker uses
+                // the requested time zone to interpret the clock fields.
+                millis %= DAY_MILLIS;
+                if (millis < 0) millis += DAY_MILLIS;
+            }
+            return new Date(millis);
+        }
+    }
 
-	private final DateChangedListener dateChangedListener = new DateChangedListener();
-	private final TimeChangedListener timeChangedListener = new TimeChangedListener();
+    public int getInputMode() {
+        synchronized (valueLock) {
+            return mode;
+        }
+    }
 
-	public DateField(String label, int mode) {
-		this(label, mode, TimeZone.getDefault());
-	}
+    public void setDate(Date date) {
+        synchronized (valueLock) {
+            if (date == null || (mode == TIME
+                    && (date.getTime() < 0L || date.getTime() >= DAY_MILLIS))) {
+                initialized = false;
+            } else {
+                calendar.setTime(date);
+                normalizeLocked();
+                initialized = true;
+            }
+        }
+        postWidgetSync();
+    }
 
-	public DateField(String label, int mode, TimeZone timeZone) {
-		setDate(Calendar.getInstance(timeZone).getTime());
-		setInputMode(mode);
-		setLabel(label);
-	}
+    public void setInputMode(int mode) {
+        validateMode(mode);
+        synchronized (valueLock) {
+            this.mode = mode;
+            if (initialized) normalizeLocked();
+        }
+        postWidgetSync();
+    }
 
-	public Date getDate() {
-		return calendar.getTime();
-	}
+    private static void validateMode(int mode) {
+        if (mode != DATE && mode != TIME && mode != DATE_TIME) {
+            throw new IllegalArgumentException("Invalid DateField mode: " + mode);
+        }
+    }
 
-	public int getInputMode() {
-		return mode;
-	}
+    /** Called under valueLock; only the fields relevant to the selected MIDP mode survive. */
+    private void normalizeLocked() {
+        if (mode == TIME) {
+            calendar.set(Calendar.YEAR, 1970);
+            calendar.set(Calendar.MONTH, Calendar.JANUARY);
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+        } else if (mode == DATE) {
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+        }
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+    }
 
-	public void setDate(Date date) {
-		calendar.setTime(date);
-		if (layout != null) {
-			ViewHandler.postEvent(msgUpdateDate);
-		}
-	}
+    private void postWidgetSync() {
+        if (layout != null) ViewHandler.postEvent(syncWidgetsEvent);
+    }
 
-	public void setInputMode(int mode) {
-		this.mode = mode;
-		if (layout != null) {
-			ViewHandler.postEvent(msgSetVisibility);
-		}
-	}
+    private void syncWidgets() {
+        if (layout == null || datePicker == null || timePicker == null) return;
+        final Calendar snapshot;
+        final int activeMode;
+        final boolean hasValue;
+        synchronized (valueLock) {
+            snapshot = (Calendar) calendar.clone();
+            activeMode = mode;
+            hasValue = initialized;
+        }
 
-	@Override
-	View getItemContentView() {
-		if (layout == null) {
-			Context context = ContextHolder.getActivity();
+        syncingWidgets = true;
+        try {
+            datePicker.updateDate(snapshot.get(Calendar.YEAR), snapshot.get(Calendar.MONTH),
+                    snapshot.get(Calendar.DAY_OF_MONTH));
+            timePicker.setCurrentHour(snapshot.get(Calendar.HOUR_OF_DAY));
+            timePicker.setCurrentMinute(snapshot.get(Calendar.MINUTE));
+            datePicker.setVisibility(activeMode == TIME ? View.GONE : View.VISIBLE);
+            timePicker.setVisibility(activeMode == DATE ? View.GONE : View.VISIBLE);
+            unsetLabel.setVisibility(hasValue ? View.GONE : View.VISIBLE);
+            initializeButton.setVisibility(hasValue ? View.GONE : View.VISIBLE);
+        } finally {
+            syncingWidgets = false;
+        }
+    }
 
-			layout = new LinearLayout(context);
-			layout.setOrientation(LinearLayout.VERTICAL);
+    private void onUserDate(int year, int month, int day) {
+        if (syncingWidgets) return;
+        boolean changed;
+        synchronized (valueLock) {
+            if (mode == TIME) return;
+            boolean wasInitialized = initialized;
+            long previous = calendar.getTimeInMillis();
+            calendar.set(year, month, day);
+            normalizeLocked();
+            initialized = true;
+            changed = !wasInitialized || previous != calendar.getTimeInMillis();
+        }
+        onUserChange(changed);
+    }
 
-			datePicker = new DatePicker(context);
-			timePicker = new TimePicker(context);
+    private void onUserTime(int hour, int minute) {
+        if (syncingWidgets) return;
+        boolean changed;
+        synchronized (valueLock) {
+            if (mode == DATE) return;
+            boolean wasInitialized = initialized;
+            long previous = calendar.getTimeInMillis();
+            calendar.set(Calendar.HOUR_OF_DAY, hour);
+            calendar.set(Calendar.MINUTE, minute);
+            normalizeLocked();
+            initialized = true;
+            changed = !wasInitialized || previous != calendar.getTimeInMillis();
+        }
+        onUserChange(changed);
+    }
 
-			datePicker.init(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
-					calendar.get(Calendar.DAY_OF_MONTH), dateChangedListener);
-			timePicker.setCurrentHour(calendar.get(Calendar.HOUR_OF_DAY));
-			timePicker.setCurrentMinute(calendar.get(Calendar.MINUTE));
-			timePicker.setOnTimeChangedListener(timeChangedListener);
+    /** Accept the preview when the user has no reason to adjust its date/time fields. */
+    private void acceptDisplayedValue() {
+        synchronized (valueLock) {
+            if (initialized) return;
+            normalizeLocked();
+            initialized = true;
+        }
+        onUserChange(true);
+    }
 
-			layout.addView(datePicker);
-			layout.addView(timePicker);
+    private void onUserChange(boolean changed) {
+        if (!changed) return;
+        if (unsetLabel != null) unsetLabel.setVisibility(View.GONE);
+        if (initializeButton != null) initializeButton.setVisibility(View.GONE);
+        // Existing Item/Form event ownership sends this on the serialized LCDUI guest queue.
+        postStateChanged();
+    }
 
-			if (mode == DATE) {
-				datePicker.setVisibility(View.VISIBLE);
-				timePicker.setVisibility(View.GONE);
-			} else if (mode == TIME) {
-				datePicker.setVisibility(View.GONE);
-				timePicker.setVisibility(View.VISIBLE);
-			} else if (mode == DATE_TIME) {
-				datePicker.setVisibility(View.VISIBLE);
-				timePicker.setVisibility(View.VISIBLE);
-			}
-		}
+    @Override
+    View getItemContentView() {
+        if (layout == null) {
+            Context context = ContextHolder.getActivity();
+            if (context == null) context = ContextHolder.getAppContext();
+            layout = new LinearLayout(context);
+            layout.setOrientation(LinearLayout.VERTICAL);
 
-		return layout;
-	}
+            unsetLabel = new TextView(context);
+            unsetLabel.setText(R.string.date_field_not_set);
+            layout.addView(unsetLabel);
 
-	@Override
-	void clearItemContentView() {
-		layout = null;
-	}
+            datePicker = new DatePicker(context);
+            timePicker = new TimePicker(context);
+            syncingWidgets = true;
+            try {
+                Calendar snapshot;
+                synchronized (valueLock) {
+                    snapshot = (Calendar) calendar.clone();
+                }
+                datePicker.init(snapshot.get(Calendar.YEAR), snapshot.get(Calendar.MONTH),
+                        snapshot.get(Calendar.DAY_OF_MONTH), (picker, year, month, day) ->
+                                onUserDate(year, month, day));
+                timePicker.setCurrentHour(snapshot.get(Calendar.HOUR_OF_DAY));
+                timePicker.setCurrentMinute(snapshot.get(Calendar.MINUTE));
+                timePicker.setOnTimeChangedListener((picker, hour, minute) ->
+                        onUserTime(hour, minute));
+            } finally {
+                syncingWidgets = false;
+            }
+            layout.addView(datePicker);
+            layout.addView(timePicker);
+            initializeButton = new Button(context);
+            initializeButton.setText(R.string.date_field_use_displayed_value);
+            initializeButton.setOnClickListener(view -> acceptDisplayedValue());
+            layout.addView(initializeButton);
+            syncWidgets();
+        }
+        return layout;
+    }
+
+    @Override
+    void clearItemContentView() {
+        layout = null;
+        datePicker = null;
+        timePicker = null;
+        unsetLabel = null;
+        initializeButton = null;
+    }
 }

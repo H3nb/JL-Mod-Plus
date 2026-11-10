@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import android.net.Uri;
 
@@ -50,25 +49,4 @@ public class UriImportContractTest {
 				"application/java-archive", new byte[]{'M'}, 1));
 	}
 
-	@Test
-	public void relativeJarResolvesAgainstPathBearingContentUri() {
-		assertEquals(Uri.parse("content://provider/tree/opaque/app.jar"),
-				FileUtils.resolveSiblingUri(
-						Uri.parse("content://provider/tree/opaque/app.jad"),
-						Uri.parse("app.jar")));
-	}
-
-	@Test
-	public void rootLevelContentJadCanResolveSiblingJar() {
-		assertEquals(Uri.parse("content://provider/app.jar"),
-				FileUtils.resolveSiblingUri(
-						Uri.parse("content://provider/app.jad"),
-						Uri.parse("app.jar")));
-	}
-
-	@Test
-	public void opaqueContentUriCannotInventSiblingPath() {
-		assertNull(FileUtils.resolveSiblingUri(
-				Uri.parse("content://provider/opaque-id"), Uri.parse("app.jar")));
-	}
 }

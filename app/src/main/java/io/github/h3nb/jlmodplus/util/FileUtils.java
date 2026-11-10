@@ -31,8 +31,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.Locale;
@@ -186,23 +184,6 @@ public class FileUtils {
 			return TEMP_JAR_NAME;
 		}
 		return TEMP_JAD_NAME;
-	}
-
-	/** Resolves a relative JAD jar URL against a path-bearing content JAD URI. */
-	public static Uri resolveSiblingUri(Uri baseUri, Uri relativeUri) {
-		String basePath = baseUri == null ? null : baseUri.getPath();
-		if (baseUri == null || relativeUri == null || basePath == null
-				|| !basePath.toLowerCase(Locale.ROOT).endsWith(".jad")
-				|| relativeUri.getScheme() != null) {
-			return null;
-		}
-		try {
-			URI base = new URI(baseUri.toString());
-			URI resolved = base.resolve(new URI(relativeUri.toString()));
-			return Uri.parse(resolved.toString());
-		} catch (URISyntaxException e) {
-			return null;
-		}
 	}
 
 	public static byte[] getBytes(File file) throws IOException {
