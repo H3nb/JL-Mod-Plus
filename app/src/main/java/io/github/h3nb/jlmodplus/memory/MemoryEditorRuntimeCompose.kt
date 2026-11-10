@@ -1070,11 +1070,15 @@ private fun RuntimeVariablesTab(
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     if (sessionWatches.isNotEmpty()) {
+                        val allSessionWatchesSelected = sessionWatches.all { it.id in state.selected }
                         RuntimePageSelectionCheckbox(
-                            checked = sessionWatches.all { it.id in state.selected },
+                            checked = allSessionWatchesSelected,
                             enabled = !state.busy,
                             description = stringResource(R.string.memory_editor_watch) + " · " +
-                                stringResource(R.string.memory_editor_select_visible),
+                                stringResource(
+                                    if (allSessionWatchesSelected) R.string.memory_editor_clear_selection
+                                    else R.string.memory_editor_select_visible,
+                                ),
                             onToggle = {
                                 if (it) actions.selectWatchIds(sessionWatches.map { row -> row.id })
                                 else actions.clearSelection()
