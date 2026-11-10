@@ -190,7 +190,8 @@ public class MethodRenamerTest {
             @Override
             public MethodVisitor visitMethod(int access, String name, String desc,
                                              String signature, String[] exceptions) {
-                if (!"runCalls".equals(name)) return null;
+                if (!"runCalls".equals(name) && !"call".equals(name)
+                        && !"callInherited".equals(name)) return null;
                 return new MethodVisitor(Opcodes.ASM9) {
                     @Override
                     public void visitMethodInsn(int opcode, String owner, String name,
