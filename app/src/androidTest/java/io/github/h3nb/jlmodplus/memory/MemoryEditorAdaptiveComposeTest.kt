@@ -582,6 +582,40 @@ class MemoryEditorAdaptiveComposeTest {
         rule.runOnIdle { assertEquals(2, nextCalls) }
     }
 
+    @Test fun watchEditAppliesValueAndClosesItsDialog() {
+        var appliedValue: String? = null
+        val watch = MemoryWatchRow(
+            id = 1L, type = MemoryEngineContract.TYPE_INT,
+            valueText = "42", initialValueText = "42", previousValueText = "42",
+            label = "Session health", locationText = "guest.Game.hp",
+            state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+        )
+        val actions = object : TestMemoryEditorActions() {
+            override fun editTargetsWithOptions(
+                targets: List<MemoryEditTarget>, expectedRevision: Long,
+                value: String, type: Int, addToWatch: Boolean, freezeAfter: Boolean,
+            ) {
+                appliedValue = value
+            }
+        }
+        rule.setContent {
+            JLModPlusTheme {
+                MemoryEditorRuntimeRoot(
+                    MemoryEditorUiState(
+                        visible = true, connected = true, supported = true,
+                        writeSupported = true, variablesTab = true, watches = listOf(watch),
+                    ),
+                    actions,
+                )
+            }
+        }
+        rule.onNodeWithText("Session health").performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("99")
+        rule.onNodeWithText("Apply").performClick()
+        rule.onNodeWithText("Cancel").assertDoesNotExist()
+        rule.runOnIdle { assertEquals("99", appliedValue) }
+    }
+
     @Test fun linkedSavedWatchIsShownOnceAndReturnsWhenSavedDefinitionDisappears() {
         val saved = SavedVariableRow("hp", "Hit points", "guest.Game.hp")
         val watch = MemoryWatchRow(
