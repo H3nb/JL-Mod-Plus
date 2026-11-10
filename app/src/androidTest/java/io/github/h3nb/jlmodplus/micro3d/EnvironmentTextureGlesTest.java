@@ -88,13 +88,13 @@ public class EnvironmentTextureGlesTest {
 
             // Palette entry 0 is red with alpha zero. The environment path
             // suppresses its RGB contribution; model texture semantics remain unchanged.
-            assertRgb(0, 0, 0, sample(program, environmentId, uv, 0.5f * TEXEL, 0.5f * TEXEL, GLES20.GL_NEAREST));
-            assertRgb(255, 255, 255, sample(program, environmentId, uv, 1.5f * TEXEL, 0.5f * TEXEL, GLES20.GL_NEAREST));
-            assertRgb(0, 0, 0, sample(program, environmentId, uv, 32.5f * TEXEL, 32.5f * TEXEL, GLES20.GL_NEAREST));
-            assertRgb(255, 0, 0, sample(program, modelId, uv, 0.25f, 0.25f, GLES20.GL_NEAREST));
+            assertRgb(0, 0, 0, sample(environmentId, uv, 0.5f * TEXEL, 0.5f * TEXEL, GLES20.GL_NEAREST));
+            assertRgb(255, 255, 255, sample(environmentId, uv, 1.5f * TEXEL, 0.5f * TEXEL, GLES20.GL_NEAREST));
+            assertRgb(0, 0, 0, sample(environmentId, uv, 32.5f * TEXEL, 32.5f * TEXEL, GLES20.GL_NEAREST));
+            assertRgb(255, 0, 0, sample(modelId, uv, 0.25f, 0.25f, GLES20.GL_NEAREST));
 
             // Linear filtering must not blend hidden palette[0] RGB into the highlight.
-            int[] midpoint = sample(program, environmentId, uv, TEXEL, 0.5f * TEXEL, GLES20.GL_LINEAR);
+            int[] midpoint = sample(environmentId, uv, TEXEL, 0.5f * TEXEL, GLES20.GL_LINEAR);
             for (int color : midpoint) {
                 assertTrue("Interpolated grayscale channel: " + color, color >= 123 && color <= 132);
             }
@@ -111,7 +111,7 @@ public class EnvironmentTextureGlesTest {
         }
     }
 
-    private static int[] sample(int program, int textureId, int uvLocation,
+    private static int[] sample(int textureId, int uvLocation,
                                 float u, float v, int filter) {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
