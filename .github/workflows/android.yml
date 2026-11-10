@@ -250,6 +250,7 @@ jobs:
 
       - name: Summarize Gradle work
         if: ${{ !cancelled() }}
+        continue-on-error: true
         run: >-
           python3 scripts/ci-gradle-summary.py
           --label 'Build and tests'
@@ -351,6 +352,7 @@ jobs:
 
       - name: Summarize Gradle work
         if: ${{ !cancelled() }}
+        continue-on-error: true
         run: >-
           python3 scripts/ci-gradle-summary.py
           --label 'Screenshot validation'
@@ -424,6 +426,7 @@ jobs:
 
       - name: Summarize Gradle work
         if: ${{ !cancelled() }}
+        continue-on-error: true
         run: >-
           python3 scripts/ci-gradle-summary.py
           --label 'Lint'

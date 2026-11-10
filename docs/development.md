@@ -356,8 +356,9 @@ required in the Build and tests job.
 Each invocation writes an HTML timing profile under
 `build/reports/profile/`, included in diagnostic artifacts. The PR jobs also
 publish a small Gradle work summary (`ci-artifacts/gradle-summary.md`) showing
-invocation outcomes and task cache/up-to-date counts. The summary is diagnostic
-only: it never replaces required tests or changes their pass/fail status.
+invocation outcomes and task cache/up-to-date counts. The summary is
+best-effort diagnostic output: generation failures remain visible in step logs
+but cannot fail otherwise-passing validation jobs or required checks.
 Compare equivalent task sets and cache conditions before attributing timing
 differences to an optimization; measure time to APK separately from time to
 completed validation.
