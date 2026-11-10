@@ -888,6 +888,9 @@ private fun RuntimeVariablesTab(
             }
         }
     }
+    val keepName = single?.watch?.let { watch ->
+        single.label.ifBlank { runtimeTypeShort(watch.type) }
+    }.orEmpty()
     var moreActions by remember { mutableStateOf(false) }
     val primaryActions = listOf(
         RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value,
@@ -911,8 +914,7 @@ private fun RuntimeVariablesTab(
             single?.let { entry ->
                 entry.saved?.let { actions.unkeepListSaved(it.id) }
                     ?: entry.watch?.let {
-                        actions.keepListWatch(it.id,
-                            entry.label.ifBlank { runtimeTypeShort(it.type) })
+                        actions.keepListWatch(it.id, keepName)
                     }
             }
         },
@@ -1160,9 +1162,11 @@ private fun RuntimeListRow(
             Modifier.fillMaxWidth()
                 .combinedClickable(
                     onClick = {
-                        if (selectionActive) onSelect() else if (editable) onEdit()
+                        if (selectEnabled) {
+                            if (selectionActive) onSelect() else if (editable) onEdit()
+                        }
                     },
-                    onLongClick = onSelect,
+                    onLongClick = { if (selectEnabled) onSelect() },
                 )
                 .padding(horizontal = 8.dp, vertical = if (compact) 4.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically,
