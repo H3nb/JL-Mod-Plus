@@ -63,6 +63,40 @@ class LibraryIconNormalizationTest {
     }
 
     @Test
+    fun quantizedColorDiversityPreservesPixelArtThresholds() {
+        val lowDiversity = normalizeLibraryIcon(
+            colorPattern(64, 64, distinctColors = 48),
+            enhanceIcon = true,
+        )
+        val aboveThreshold = normalizeLibraryIcon(
+            colorPattern(64, 64, distinctColors = 49),
+            enhanceIcon = true,
+        )
+        val aboveAnalysisCap = normalizeLibraryIcon(
+            colorPattern(64, 64, distinctColors = 65),
+            enhanceIcon = true,
+        )
+        assertEquals(FilterQuality.None, requireNotNull(lowDiversity).filterQuality)
+        assertEquals(FilterQuality.Medium, requireNotNull(aboveThreshold).filterQuality)
+        assertEquals(FilterQuality.Medium, requireNotNull(aboveAnalysisCap).filterQuality)
+    }
+
+    @Test
+    fun aFramedIconRetainsItsOpaqueMatteAndForegroundPixels() {
+        val source = makeBitmap(96, 96) { x, y ->
+            if (x in 28 until 68 && y in 28 until 68) Color.RED else Color.BLUE
+        }
+        val icon = requireNotNull(normalizeLibraryIcon(source, enhanceIcon = true))
+        val result = icon.bitmap.asAndroidBitmap()
+        assertEquals(LibraryIconPresentationMode.Backed, icon.presentationMode)
+        assertEquals(Color.BLUE, requireNotNull(icon.tileColor).toArgb())
+        assertEquals(96, result.width)
+        assertEquals(96, result.height)
+        assertEquals(Color.BLUE, result.getPixel(0, 0))
+        assertEquals(Color.RED, result.getPixel(48, 48))
+    }
+
+    @Test
     fun explicitPortraitArtworkIsNeverCroppedOrRescaled() {
         val source = makeBitmap(60, 80) { x, y ->
             if (x in 10 until 50 && y in 10 until 70) Color.GREEN else Color.WHITE
@@ -94,6 +128,12 @@ class LibraryIconNormalizationTest {
         assertEquals(Color.TRANSPARENT, pixels.getPixel(0, 0))
         assertEquals(Color.RED, pixels.getPixel(32, 32))
     }
+
+    private fun colorPattern(width: Int, height: Int, distinctColors: Int): Bitmap =
+        makeBitmap(width, height) { x, y ->
+            val index = (y * width + x) % distinctColors
+            Color.rgb(((index ushr 8) and 15) * 17, ((index ushr 4) and 15) * 17, (index and 15) * 17)
+        }
 
     private fun makeBitmap(
         width: Int,

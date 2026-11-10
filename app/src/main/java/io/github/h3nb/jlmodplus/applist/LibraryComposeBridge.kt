@@ -3749,7 +3749,8 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
     var semiTransparentPixels = 0L
     var luminanceSum = 0.0
     var visibleWeight = 0.0
-    val quantizedColors = HashSet<Int>(LIBRARY_COLOR_SAMPLE_MAX_BINS + 1)
+    val seenColors = BooleanArray(4096)
+    var distinctColorCount = 0
 
     for (y in 0 until height) {
         getPixels(row, 0, width, 0, y, width, 1)
@@ -3768,8 +3769,12 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
             val alphaWeight = alpha / 255.0
             luminanceSum += pixelLibraryLuminance(pixel) * alphaWeight
             visibleWeight += alphaWeight
-            if (quantizedColors.size <= LIBRARY_COLOR_SAMPLE_MAX_BINS) {
-                quantizedColors += quantizeLibraryColor(pixel)
+            if (distinctColorCount <= LIBRARY_COLOR_SAMPLE_MAX_BINS) {
+                val colorBin = quantizeLibraryColor(pixel)
+                if (!seenColors[colorBin]) {
+                    seenColors[colorBin] = true
+                    distinctColorCount++
+                }
             }
         }
     }
@@ -3811,13 +3816,13 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
             aspectFill = aspectFill,
             hasFramedCrop = framedCropBounds != null,
             hasBackingColor = backingColor != null,
-            highColorDiversity = quantizedColors.size > LIBRARY_PIXEL_ART_MAX_COLORS,
+            highColorDiversity = distinctColorCount > LIBRARY_PIXEL_ART_MAX_COLORS,
             sourceAspectRatio = width.toFloat() / height.toFloat(),
         ),
     )
     val semiTransparentRatio = semiTransparentPixels.toFloat() / visiblePixels.toFloat()
     val pixelArt = maxOf(width, height) <= LIBRARY_PIXEL_ART_MAX_DIMENSION &&
-        quantizedColors.size <= LIBRARY_PIXEL_ART_MAX_COLORS &&
+        distinctColorCount <= LIBRARY_PIXEL_ART_MAX_COLORS &&
         semiTransparentRatio <= LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO
     val foregroundLuminance = (luminanceSum / visibleWeight).toFloat().coerceIn(0f, 1f)
 
@@ -3895,12 +3900,14 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
     )
     val cornerSamples = Array(cornerRects.size) { ArrayList<Int>() }
     val bins = IntArray(4096)
+    val row = IntArray(patchSize)
     var totalSamples = 0
 
     cornerRects.forEachIndexed { index, rect ->
         for (y in rect.top until rect.bottom step step) {
-            for (x in rect.left until rect.right step step) {
-                val pixel = this[x, y]
+            getPixels(row, 0, patchSize, rect.left, y, patchSize, 1)
+            for (x in 0 until patchSize step step) {
+                val pixel = row[x]
                 val alpha = (pixel ushr 24) and 0xff
                 if (alpha < LIBRARY_BACKGROUND_SAMPLE_ALPHA) continue
                 cornerSamples[index].add(pixel)
