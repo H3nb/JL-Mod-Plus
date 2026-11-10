@@ -112,7 +112,7 @@ jobs:
             # Gradle version or its pinned SHA-256 distribution checksum.
             sed -i 's/^networkTimeout=.*/networkTimeout=60000/' gradle/wrapper/gradle-wrapper.properties
             printf '\nretries=2\nretryBackOffMs=1500\n' >> gradle/wrapper/gradle-wrapper.properties
-            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=true -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest#highResolutionGraphicsTargetKeepsLogicalViewportAndPhysicalRaster,io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest :app:connectedEmulatorDebugAndroidTest
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=true -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest#highResolutionGraphicsTargetKeepsLogicalViewportAndPhysicalRaster,io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest,io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest :app:connectedEmulatorDebugAndroidTest
       - name: Preserve native M3G and Micro3D runtime reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
