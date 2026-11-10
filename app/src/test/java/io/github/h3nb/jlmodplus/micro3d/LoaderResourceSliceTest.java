@@ -72,6 +72,25 @@ public class LoaderResourceSliceTest {
 	}
 
 	@Test
+	public void emptyValidMbacAndMtraParseIdenticallyInsideASlice() throws IOException {
+		byte[] mbac = new byte[12];
+		mbac[0] = 'M';
+		mbac[1] = 'B';
+		mbac[2] = 2;
+		byte[] mtra = new byte[28];
+		mtra[0] = 'M';
+		mtra[1] = 'T';
+		mtra[2] = 2;
+		// Version 2 permits zero vertices, polygons, bones and actions.
+		byte[] wrappedMbac = withPrefixAndSuffix(mbac, 32, 16);
+		byte[] wrappedMtra = withPrefixAndSuffix(mtra, 32, 16);
+		assertEquals(Loader.loadMbacData(mbac, 0, mbac.length).numVerticesPolyT,
+				Loader.loadMbacData(wrappedMbac, 32, mbac.length).numVerticesPolyT);
+		assertEquals(Loader.loadMtraData(mtra, 0, mtra.length).length,
+				Loader.loadMtraData(wrappedMtra, 32, mtra.length).length);
+	}
+
+	@Test
 	public void publicSliceConstructorsRejectNegativeAndOverflowingLengths() {
 		byte[] bmp = bmp3x5(true, false);
 		assertThrows(ArrayIndexOutOfBoundsException.class, () -> new TextureImpl(bmp, 10, -1));
