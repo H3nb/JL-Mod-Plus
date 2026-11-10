@@ -972,7 +972,7 @@ private fun RuntimeVariablesTab(
                     RuntimePageSelectionCheckbox(
                         checked = allSelected,
                         enabled = state.savedVariables.isNotEmpty() && !state.busy,
-                        description = selectionDescription,
+                        description = stringResource(R.string.memory_saved_tab) + " · " + selectionDescription,
                         onToggle = {
                             if (it) actions.selectAllSaved() else actions.clearSavedSelection()
                         },
@@ -1066,7 +1066,8 @@ private fun RuntimeVariablesTab(
                         checked = sessionWatches.isNotEmpty() &&
                             sessionWatches.all { it.id in state.selected },
                         enabled = sessionWatches.isNotEmpty() && !state.busy,
-                        description = stringResource(R.string.memory_editor_select_visible),
+                        description = stringResource(R.string.memory_editor_watch) + " · " +
+                            stringResource(R.string.memory_editor_select_visible),
                         onToggle = {
                             if (it) actions.selectWatchIds(sessionWatches.map { row -> row.id })
                             else actions.clearSelection()

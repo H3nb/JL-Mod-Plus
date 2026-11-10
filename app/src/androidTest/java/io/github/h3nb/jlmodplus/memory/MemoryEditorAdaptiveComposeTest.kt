@@ -454,7 +454,7 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
-    @Test fun watchTabKeepsSelectPageAccessible() {
+    @Test fun variablesWatchSectionKeepsSelectPageAccessible() {
         val watches = listOf(1L, 2L).map { id ->
             MemoryWatchRow(
                 id = id, type = MemoryEngineContract.TYPE_INT,
@@ -469,12 +469,13 @@ class MemoryEditorAdaptiveComposeTest {
             variablesTab = true, watches = watches,
         ))
         val actions = object : TestMemoryEditorActions() {
-            override fun selectVisible() {
-                state.value = state.value.copy(selected = watches.map { it.id }.toSet())
+            override fun selectWatchIds(ids: List<Long>) {
+                state.value = state.value.copy(selected = ids.toSet(), savedSelection = emptySet())
             }
         }
-        val label = InstrumentationRegistry.getInstrumentation().targetContext
-            .getString(R.string.memory_editor_select_visible)
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val label = context.getString(R.string.memory_editor_watch) + " · " +
+            context.getString(R.string.memory_editor_select_visible)
         rule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp))) {
                 JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) }
@@ -580,6 +581,36 @@ class MemoryEditorAdaptiveComposeTest {
         }
         rule.runOnIdle { assertEquals(2, nextCalls) }
     }
+
+    @Test fun booleanKnownSearchUsesChoicesInsteadOfNumericKeypad() {
+        var submittedValue: String? = null
+        var submittedType = -1
+        val actions = object : TestMemoryEditorActions() {
+            override fun startSearch(value: String, secondValue: String, type: Int,
+                                     predicate: Int, unknown: Boolean) {
+                submittedValue = value
+                submittedType = type
+            }
+        }
+        rule.setContent {
+            JLModPlusTheme {
+                RuntimeKnownSearchDialog(
+                    state = MemoryEditorUiState(
+                        connected = true, supported = true,
+                        requestedType = MemoryEngineContract.TYPE_BOOLEAN,
+                    ),
+                    actions = actions, onDismiss = {},
+                )
+            }
+        }
+        rule.onNodeWithText("true").performClick()
+        rule.onNodeWithText("New search").assertIsEnabled().performClick()
+        rule.runOnIdle {
+            assertEquals("true", submittedValue)
+            assertEquals(MemoryEngineContract.TYPE_BOOLEAN, submittedType)
+        }
+    }
+
 
     private fun inspectorSnapshot() = MemoryInspectorSnapshot(
         candidateId = 1L, type = MemoryEngineContract.TYPE_INT, label = "Values",
