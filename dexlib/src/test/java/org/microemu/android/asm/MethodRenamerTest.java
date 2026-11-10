@@ -23,7 +23,9 @@ import org.objectweb.asm.Opcodes;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -93,6 +95,62 @@ public class MethodRenamerTest {
             Files.deleteIfExists(archive);
             Files.deleteIfExists(root);
         }
+    }
+
+    @Test
+    public void interfaceAndInheritedInterfaceCallsRunGuestMethods() throws Exception {
+        String iface = "sample/ResumeControl";
+        String subIface = "sample/SubControl";
+        String threaded = "sample/InterfaceThread";
+        String ordinary = "sample/InterfaceOther";
+        String caller = "sample/InterfaceCaller";
+
+        Map<String, byte[]> original = new HashMap<>();
+        original.put(iface, createInterface(iface, null));
+        original.put(subIface, createInterface(subIface, iface));
+        original.put(threaded, createInterfaceImplementer(threaded, "java/lang/Thread", subIface));
+        original.put(ordinary, createInterfaceImplementer(ordinary, "java/lang/Object", iface));
+        original.put(caller, createInterfaceCaller(iface, subIface, caller));
+        original.put(OTHER, createClass(OTHER, "java/lang/Object", true, false));
+
+        MethodRenamer.Builder builder = new MethodRenamer.Builder();
+        for (byte[] bytes : original.values()) builder.addClass(bytes);
+        MethodRenamer renamer = builder.build();
+        String renamed = renamer.renamed(threaded, "resume", "()V");
+        assertEquals(renamed, renamer.renamed(iface, "resume", "()V"));
+        assertEquals(renamed, renamer.renamed(subIface, "resume", "()V"));
+        assertEquals(renamed, renamer.renamed(ordinary, "resume", "()V"));
+        assertEquals(null, renamer.renamed(OTHER, "resume", "()V"));
+
+        Map<String, byte[]> patched = new HashMap<>();
+        for (Map.Entry<String, byte[]> entry : original.entrySet()) {
+            patched.put(entry.getKey(), transform(entry.getValue(), entry.getKey(), renamer));
+        }
+        assertTrue(calls(patched.get(caller)).contains(iface + "." + renamed));
+        assertTrue(calls(patched.get(caller)).contains(subIface + "." + renamed));
+
+        ClassLoader loader = new ClassLoader(getClass().getClassLoader()) {
+            @Override
+            protected Class<?> findClass(String name) throws ClassNotFoundException {
+                byte[] bytes = patched.get(name.replace('.', '/'));
+                if (bytes == null) throw new ClassNotFoundException(name);
+                return defineClass(name, bytes, 0, bytes.length);
+            }
+        };
+        Class<?> baseInterface = loader.loadClass("sample.ResumeControl");
+        Class<?> inheritedInterface = loader.loadClass("sample.SubControl");
+        Class<?> dispatcher = loader.loadClass("sample.InterfaceCaller");
+        Object guestThread = loader.loadClass("sample.InterfaceThread")
+                .getDeclaredConstructor().newInstance();
+        Object otherImplementation = loader.loadClass("sample.InterfaceOther")
+                .getDeclaredConstructor().newInstance();
+
+        dispatcher.getMethod("call", baseInterface).invoke(null, guestThread);
+        dispatcher.getMethod("call", baseInterface).invoke(null, otherImplementation);
+        dispatcher.getMethod("callInherited", inheritedInterface).invoke(null, guestThread);
+        assertEquals(2, guestThread.getClass().getField("calls").getInt(guestThread));
+        assertEquals(1, otherImplementation.getClass().getField("calls")
+                .getInt(otherImplementation));
     }
 
     private static byte[] transform(byte[] bytes, String name, MethodRenamer renamer) {
@@ -168,6 +226,71 @@ public class MethodRenamerTest {
         method.visitInsn(Opcodes.RETURN);
         method.visitMaxs(0, 1);
         method.visitEnd();
+    }
+
+    private static byte[] createInterface(String name, String parent) {
+        ClassWriter writer = new ClassWriter(0);
+        String[] interfaces = parent == null ? new String[0] : new String[]{parent};
+        writer.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT,
+                name, null, "java/lang/Object", interfaces);
+        if (parent == null) {
+            writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                    "resume", "()V", null, null).visitEnd();
+        }
+        writer.visitEnd();
+        return writer.toByteArray();
+    }
+
+    private static byte[] createInterfaceImplementer(
+            String name, String parent, String iface) {
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        writer.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC, name, null, parent, new String[]{iface});
+        writer.visitField(Opcodes.ACC_PUBLIC, "calls", "I", null, null).visitEnd();
+        MethodVisitor init = writer.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+        init.visitCode();
+        init.visitVarInsn(Opcodes.ALOAD, 0);
+        init.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "<init>", "()V", false);
+        init.visitInsn(Opcodes.RETURN);
+        init.visitMaxs(1, 1);
+        init.visitEnd();
+
+        MethodVisitor resume = writer.visitMethod(Opcodes.ACC_PUBLIC, "resume", "()V", null, null);
+        resume.visitCode();
+        resume.visitVarInsn(Opcodes.ALOAD, 0);
+        resume.visitInsn(Opcodes.DUP);
+        resume.visitFieldInsn(Opcodes.GETFIELD, name, "calls", "I");
+        resume.visitInsn(Opcodes.ICONST_1);
+        resume.visitInsn(Opcodes.IADD);
+        resume.visitFieldInsn(Opcodes.PUTFIELD, name, "calls", "I");
+        resume.visitInsn(Opcodes.RETURN);
+        resume.visitMaxs(3, 1);
+        resume.visitEnd();
+        writer.visitEnd();
+        return writer.toByteArray();
+    }
+
+    private static byte[] createInterfaceCaller(
+            String iface, String subIface, String name) {
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        writer.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
+        MethodVisitor call = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                "call", "(L" + iface + ";)V", null, null);
+        call.visitCode();
+        call.visitVarInsn(Opcodes.ALOAD, 0);
+        call.visitMethodInsn(Opcodes.INVOKEINTERFACE, iface, "resume", "()V", true);
+        call.visitInsn(Opcodes.RETURN);
+        call.visitMaxs(1, 1);
+        call.visitEnd();
+        MethodVisitor inherited = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                "callInherited", "(L" + subIface + ";)V", null, null);
+        inherited.visitCode();
+        inherited.visitVarInsn(Opcodes.ALOAD, 0);
+        inherited.visitMethodInsn(Opcodes.INVOKEINTERFACE, subIface, "resume", "()V", true);
+        inherited.visitInsn(Opcodes.RETURN);
+        inherited.visitMaxs(1, 1);
+        inherited.visitEnd();
+        writer.visitEnd();
+        return writer.toByteArray();
     }
 
     private static byte[] createCaller() {
