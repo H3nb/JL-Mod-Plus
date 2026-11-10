@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -36,7 +35,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -65,7 +63,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -342,56 +339,32 @@ private fun EffectStackContent(
     val upLabel = stringResource(R.string.render_effect_move_up)
     val downLabel = stringResource(R.string.render_effect_move_down)
     val removeLabel = stringResource(R.string.render_effect_remove)
-    val moreLabel = stringResource(R.string.render_effect_more_actions)
     val scope = rememberCoroutineScope()
     val density = androidx.compose.ui.platform.LocalDensity.current
     val edge = with(density) { 56.dp.toPx() }
     val step = with(density) { 20.dp.toPx() }
 
-    if (effects.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                painterResource(R.drawable.ic_add), contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(stringResource(R.string.render_effect_empty_title),
-                style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                stringResource(R.string.render_effect_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(16.dp))
-            FilledTonalButton(onClick = onAdd, modifier = Modifier.widthIn(min = 200.dp)) {
-                Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.render_effect_add))
-            }
-        }
-        return
-    }
-
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         item(key = "intro") {
-            Column(Modifier.fillMaxWidth().widthIn(max = 640.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.render_effect_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = stringResource(
+                        if (effects.isEmpty()) R.string.render_effect_empty
+                        else R.string.render_effect_hint
+                    ),
+                    style = if (effects.isEmpty()) MaterialTheme.typography.bodyMedium
+                        else MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 if (graphicsMode != 1) {
                     Text(stringResource(R.string.render_effect_gles),
                         style = MaterialTheme.typography.bodySmall,
@@ -414,7 +387,6 @@ private fun EffectStackContent(
             val missing = entry.builtinId != null && definition == null
             val summary = effectStackSummary(entry, definition, legacy)
             val rowKey = "effect:" + entry.key
-            var menuExpanded by remember(entry.key) { mutableStateOf(false) }
             Surface(
                 modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp)
                     .zIndex(if (draggingKey == entry.key) 1f else 0f)
@@ -490,70 +462,91 @@ private fun EffectStackContent(
                 color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
                 Row(
-                    modifier = Modifier.padding(start = 16.dp, top = 10.dp, end = 4.dp, bottom = 10.dp),
+                    modifier = Modifier.padding(
+                        start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp
+                    ),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(title, style = MaterialTheme.typography.titleMedium,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text(summary, style = MaterialTheme.typography.bodySmall,
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            summary,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                         if (missing) {
-                            Text(stringResource(R.string.render_effect_missing, title),
+                            Text(
+                                stringResource(R.string.render_effect_missing, title),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error)
+                                color = MaterialTheme.colorScheme.error,
+                            )
                         }
                     }
-                    Icon(
-                        painterResource(R.drawable.ic_chevron_right),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(painterResource(R.drawable.ic_more_vert),
-                                contentDescription = moreLabel)
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false },
-                        ) {
-                            if (index > 0) {
-                                DropdownMenuItem(
-                                    text = { Text(upLabel) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.ic_arrow_upward),
-                                        contentDescription = null) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onMove(index, index - 1)
-                                    },
-                                )
-                            }
-                            if (index < effects.lastIndex) {
-                                DropdownMenuItem(
-                                    text = { Text(downLabel) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.ic_arrow_downward),
-                                        contentDescription = null) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onMove(index, index + 1)
-                                    },
-                                )
-                            }
-                            if (effects.size > 1) HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text(removeLabel) },
-                                leadingIcon = { Icon(painterResource(R.drawable.ic_delete),
+                    Column(horizontalAlignment = Alignment.End) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier.size(40.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.ic_chevron_right),
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onRemove(entry.key)
-                                },
-                            )
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            IconButton(
+                                onClick = { onRemove(entry.key) },
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.ic_delete),
+                                    contentDescription = removeLabel,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { onMove(index, index - 1) },
+                                enabled = index > 0,
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.ic_arrow_upward),
+                                    contentDescription = upLabel,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                        alpha = if (index > 0) 1f else 0.38f
+                                    ),
+                                )
+                            }
+                            IconButton(
+                                onClick = { onMove(index, index + 1) },
+                                enabled = index < effects.lastIndex,
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.ic_arrow_downward),
+                                    contentDescription = downLabel,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                        alpha = if (index < effects.lastIndex) 1f else 0.38f
+                                    ),
+                                )
+                            }
                         }
                     }
                 }

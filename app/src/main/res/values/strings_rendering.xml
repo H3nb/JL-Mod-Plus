@@ -105,8 +105,6 @@
     <string name="render_effect_user_folder_hint">INI, VSH and FSH files must be in the shaders folder.</string>
     <string name="render_effect_legacy_scale_note">Legacy shaders use the game display resolution; .ini upscale flags do not change it.</string>
     <string name="render_effect_legacy_metadata_missing">Settings from this shader\'s .ini file were not found. Its source files may still render.</string>
-    <string name="render_effect_empty_title">No effects yet</string>
-    <string name="render_effect_more_actions">Effect options</string>
     <string name="render_effect_count">%1$d effects</string>
     <string name="render_effect_add">Add effect</string>
     <string name="render_effect_builtin">Built-in effects</string>

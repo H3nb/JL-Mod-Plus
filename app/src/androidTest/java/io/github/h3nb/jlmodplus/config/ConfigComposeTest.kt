@@ -346,13 +346,12 @@ class ConfigComposeTest {
             assertEquals("color", state.value.form.effects.single().builtinId)
         }
         composeRule.onNodeWithText(uiString(R.string.render_effect_default_settings)).assertExists()
-        composeRule.onNodeWithContentDescription(uiString(R.string.render_effect_more_actions))
-            .performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_effect_move_up)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.render_effect_move_down)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.render_effect_remove)).assertExists()
-        composeRule.onNodeWithContentDescription(uiString(R.string.render_effect_more_actions))
-            .performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.render_effect_move_up))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.render_effect_move_down))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(uiString(R.string.render_effect_remove))
+            .assertExists()
         composeRule.onNodeWithText(uiString(R.string.effect_color)).performClick()
         composeRule.onNodeWithText(uiString(R.string.effect_brightness)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.render_effect_restore)).performClick()
@@ -386,15 +385,15 @@ class ConfigComposeTest {
         }
         scrollTo(uiString(R.string.render_shader_effects))
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
-        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_more_actions))[0]
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_move_up))[0]
+            .assertIsNotEnabled()
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_move_down))[0]
             .performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_effect_move_down)).performClick()
         composeRule.runOnIdle {
             assertEquals(listOf("second", "first"), state.value.form.effects.map { it.key })
         }
-        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_more_actions))[0]
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.render_effect_remove))[0]
             .performClick()
-        composeRule.onNodeWithText(uiString(R.string.render_effect_remove)).performClick()
         composeRule.runOnIdle {
             assertEquals(listOf("first"), state.value.form.effects.map { it.key })
         }

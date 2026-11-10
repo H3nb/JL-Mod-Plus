@@ -17,9 +17,12 @@ both legacy source files. Obsolete pre-release GLSLP selections are not activate
 The Compose editor has three surfaces: an ordered stack, a two-tab built-in/user
 catalog, and per-effect details/parameters. The catalog briefly describes an
 effect's appearance; a stack card instead summarizes its effective settings.
-A card opens details. Its overflow menu provides remove and accessible
-move-up/down actions, while a long-press and drag on the card reorders directly. Removing an effect offers Undo, restoring the same instance,
-parameters and former index. An empty parameter list is read-only. Legacy catalog
+A card opens details, marked by a chevron. Delete, move-up and move-down
+actions are always visible; unavailable moves remain visible but disabled.
+Long-press and drag on the card also reorders the stack. Removing an effect
+offers Undo, restoring the same instance, parameters and former index. An empty parameter list is read-only. The empty stack remains top-aligned
+with its Add action, like other configuration pages. Standard preference titles
+use Material 3 bodyLarge, with bodySmall for supporting summaries. Legacy catalog
 rows show available INI author metadata or the fragment filename instead of a
 generic subtitle. Shared GLSL files do not imply shared tuning: the selected INI
 variant must be matched by name, author and source pair. Missing INI metadata
