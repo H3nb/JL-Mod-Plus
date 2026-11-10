@@ -560,6 +560,7 @@ internal interface MemoryEditorActions {
     fun freezeSelected(mode: Int, first: String, second: String)
     fun clearFreezeSelected()
     fun clearSavedWatchFreeze(savedId: String) = Unit
+    fun stopSavedWatch(savedId: String) = Unit
     fun copySelected(locations: Boolean)
     fun previousPage()
     fun nextPage()

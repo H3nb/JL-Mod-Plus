@@ -875,6 +875,10 @@ private fun RuntimeVariablesTab(
                 RuntimeToolbarAction(R.drawable.ic_unlock, R.string.memory_editor_unfreeze,
                     one?.let { (linkedWatches[it.id]?.freezeMode ?: -1) >= 0 } == true &&
                         !state.busy) { one?.let { actions.clearSavedWatchFreeze(it.id) } },
+                RuntimeToolbarAction(R.drawable.ic_visibility_off, R.string.memory_variables_stop_watching,
+                    one?.let { linkedWatches[it.id] != null } == true && !state.busy) {
+                    one?.let { actions.stopSavedWatch(it.id) }
+                },
                 RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                     !state.busy) { deleteIds = selected.map { it.id } },
             )

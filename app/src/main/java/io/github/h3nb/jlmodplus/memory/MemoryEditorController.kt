@@ -1475,6 +1475,11 @@ internal class MemoryEditorComposeController(
         launchOperation { engine, token -> engine.clearFreeze(token, longArrayOf(row.id)) }
     }
 
+    override fun stopSavedWatch(savedId: String) {
+        val row = state.watches.singleOrNull { it.savedSourceId == savedId } ?: return
+        launchOperation { engine, token -> engine.removeWatch(token, longArrayOf(row.id)) }
+    }
+
     override fun copySelected(locations: Boolean) {
         val selected = state.selected
         val rows = if (state.variablesTab) {
