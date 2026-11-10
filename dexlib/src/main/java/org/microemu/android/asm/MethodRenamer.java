@@ -176,8 +176,9 @@ public final class MethodRenamer {
                     }
                 }
                 for (int index = 0; index < queue.size(); index++) {
-                    for (String adjacent : edges.getOrDefault(
-                            queue.get(index), java.util.Collections.emptySet())) {
+                    Set<String> neighbors = edges.get(queue.get(index));
+                    if (neighbors == null) continue;
+                    for (String adjacent : neighbors) {
                         if (affected.add(adjacent)) queue.add(adjacent);
                     }
                 }
@@ -202,8 +203,12 @@ public final class MethodRenamer {
                     ClassInfo info = classes.get(type);
                     if ((info.isInterface && relevantInterfaces.contains(type))
                             || hasGuestClassDeclaration(type, signature)) {
-                        result.computeIfAbsent(type, unused -> new HashMap<>())
-                                .put(signature, candidate);
+                        Map<String, String> methods = result.get(type);
+                        if (methods == null) {
+                            methods = new HashMap<>();
+                            result.put(type, methods);
+                        }
+                        methods.put(signature, candidate);
                     }
                 }
             }
@@ -246,8 +251,18 @@ public final class MethodRenamer {
         }
 
         private static void connect(Map<String, Set<String>> edges, String first, String second) {
-            edges.computeIfAbsent(first, unused -> new HashSet<>()).add(second);
-            edges.computeIfAbsent(second, unused -> new HashSet<>()).add(first);
+            Set<String> fromFirst = edges.get(first);
+            if (fromFirst == null) {
+                fromFirst = new HashSet<>();
+                edges.put(first, fromFirst);
+            }
+            fromFirst.add(second);
+            Set<String> fromSecond = edges.get(second);
+            if (fromSecond == null) {
+                fromSecond = new HashSet<>();
+                edges.put(second, fromSecond);
+            }
+            fromSecond.add(first);
         }
     }
 }
