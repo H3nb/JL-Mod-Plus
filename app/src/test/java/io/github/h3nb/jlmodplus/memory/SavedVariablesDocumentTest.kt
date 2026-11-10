@@ -73,4 +73,21 @@ class SavedVariablesDocumentTest {
         )
     }
 
+    @Test fun schemaThreeAcceptsBooleanFieldAndArrayButRejectsWrongArrayType() {
+        val document = """{"schema":3,"items":[
+            {"id":"flag","label":"Flag","locator":{"rootKind":1,"rootClass":"guest.Game",
+                "steps":[{"kind":1,"owner":"guest.Game","name":"enabled","type":"boolean"}]}},
+            {"id":"array","label":"Flags","locator":{"rootKind":1,"rootClass":"guest.Game",
+                "steps":[{"kind":1,"owner":"guest.Game","name":"flags","type":"[Z"},
+                {"kind":2,"arrayType":"[Z","index":2}]}}
+        ]}"""
+        SavedVariablesDocument.validate(document.toByteArray())
+        assertThrows(IOException::class.java) {
+            SavedVariablesDocument.validate(
+                document.replace("\\"arrayType\\":\\"[Z\\"", "\\"arrayType\\":\\"[I\\"")
+                    .toByteArray(),
+            )
+        }
+    }
+
 }
