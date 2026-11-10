@@ -212,8 +212,13 @@ internal fun MemoryEditorRuntimeRoot(
                 MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
             }
         }
-        BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking) {
-            if (overlay.peeking) overlay.peeking = false else actions.closeInspector()
+        BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
+            (state.variablesTab && listSelection.isNotEmpty())) {
+            when {
+                overlay.peeking -> overlay.peeking = false
+                tab == MemoryEditorTab.INSPECTOR -> actions.closeInspector()
+                else -> listSelection = emptySet()
+            }
         }
         // The workspace is full-bleed; only interactive content is inset.
         // Its bounds are the Activity window, never the (possibly letterboxed) MIDlet viewport.
@@ -816,7 +821,6 @@ private fun RuntimeVariablesTab(
     var savedDraft by remember { mutableStateOf<SavedEditDraft?>(null) }
     var watchDraft by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
 
-    BackHandler(enabled = selectedKeys.isNotEmpty()) { onSelectionChange(emptySet()) }
     val selectedEntries = entries.filter { it.key in selectedKeys }
     fun select(entry: MemoryListEntry) {
         onSelectionChange(if (entry.key in selectedKeys) selectedKeys - entry.key
