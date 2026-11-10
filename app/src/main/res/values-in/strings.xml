@@ -487,6 +487,7 @@
     <string name="memory_editor_engine_reconnecting">Editor memori sedang menyambung ulang…</string>
     <string name="memory_editor_refresh">Segarkan</string>
     <string name="memory_editor_undo">Urungkan</string>
+    <string name="memory_variables_tab">Variabel</string>
     <string name="memory_editor_watch">Pantauan</string>
     <string name="memory_editor_search_tab">Cari</string>
     <string name="memory_editor_search_known_values">Cari nilai yang diketahui</string>
