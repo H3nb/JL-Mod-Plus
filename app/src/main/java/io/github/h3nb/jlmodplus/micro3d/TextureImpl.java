@@ -41,11 +41,15 @@ public final class TextureImpl {
 	}
 
 	public TextureImpl(byte[] b) {
+		this(b, true);
+	}
+
+	public TextureImpl(byte[] b, boolean isForModel) {
 		if (b == null) {
 			throw new NullPointerException();
 		}
 		try {
-			image = Loader.loadBmpData(b, 0, b.length);
+			image = Loader.loadBmpData(b, 0, b.length, !isForModel);
 		} catch (IOException e) {
 			Log.e(Utils.TAG, "Error loading data", e);
 			throw new RuntimeException(e);
@@ -57,7 +61,7 @@ public final class TextureImpl {
 		if (b == null) {
 			throw new NullPointerException();
 		}
-		if (offset < 0 || offset + length > b.length) {
+		if (offset < 0 || length < 0 || offset > b.length || length > b.length - offset) {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 		try {
@@ -70,6 +74,10 @@ public final class TextureImpl {
 	}
 
 	public TextureImpl(String name) throws IOException {
+		this(name, true);
+	}
+
+	public TextureImpl(String name, boolean isForModel) throws IOException {
 		if (name == null) {
 			throw new NullPointerException();
 		}
@@ -78,7 +86,7 @@ public final class TextureImpl {
 			throw new IOException();
 		}
 		try {
-			image = Loader.loadBmpData(b, 0, b.length);
+			image = Loader.loadBmpData(b, 0, b.length, !isForModel);
 		} catch (IOException e) {
 			Log.e(Utils.TAG, "Error loading data from [" + name + "]", e);
 			throw new RuntimeException(e);

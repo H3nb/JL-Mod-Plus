@@ -20,6 +20,7 @@ on:
           - validate
           - update-screenshots
           - runtime-smoke
+          - runtime-gles
           - release-check
       pr_number:
         description: 'Open same-repository PR number (required for update-screenshots; select its branch)'
@@ -40,7 +41,7 @@ jobs:
       pull-requests: read
     if: inputs.mode != 'release-check'
     # Maintenance runs must not report the same check name as PR validation.
-    name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || 'Build and tests' }}
+    name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || inputs.mode == 'runtime-gles' && 'runtime-gles' || 'Build and tests' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
 
@@ -106,7 +107,7 @@ jobs:
         run: |
           set -euo pipefail
           case "$MODE" in
-            validate|update-screenshots|runtime-smoke) ;;
+            validate|update-screenshots|runtime-smoke|runtime-gles) ;;
             *) echo "Unsupported CI mode: $MODE" >&2; exit 1 ;;
           esac
           chmod +x gradlew
@@ -195,7 +196,7 @@ jobs:
           retention-days: 7
 
       - name: Enable emulator acceleration
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles') }}
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
@@ -203,14 +204,14 @@ jobs:
 
       - name: Run selected Android runtime contracts
         id: runtime
-        if: ${{ success() && github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
+        if: ${{ success() && github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles') }}
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash scripts/runtime-smoke.sh
+          script: bash scripts/runtime-smoke.sh ${{ inputs.mode == 'runtime-gles' && '--gles-only' || '' }}
 
       - name: Record validation results
         if: always()

@@ -49,7 +49,7 @@ public class FigureImpl {
 		if (b == null) {
 			throw new NullPointerException();
 		}
-		if (offset < 0 || offset + length > b.length) {
+		if (offset < 0 || length < 0 || offset > b.length || length > b.length - offset) {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 		try {

@@ -56,6 +56,12 @@ selectors=(
   'io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#failedPreferenceRestorationPreservesOwnedFixtureForRetry'
 )
 
+# EGL display/context ownership needs its own instrumentation process: EGL teardown
+# must not affect Canvas/Compose tests running in the main batch.
+gles_selectors=(
+  'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
+)
+
 # Tests that mutate process-global/application-global state run in their own instrumentation
 # session so their lifecycle side effects cannot contaminate unrelated runtime contracts.
 isolated_selectors=(
@@ -118,10 +124,15 @@ run_selector_batch() {
 
 }
 
-run_selector_batch main "${selectors[@]}"
-run_selector_batch locale-isolated "${isolated_selectors[@]}"
-
-expected_selector_count=$((${#selectors[@]} + ${#isolated_selectors[@]}))
+if [[ "${1:-}" == '--gles-only' ]]; then
+  run_selector_batch gles-isolated "${gles_selectors[@]}"
+  expected_selector_count=${#gles_selectors[@]}
+else
+  run_selector_batch main "${selectors[@]}"
+  run_selector_batch gles-isolated "${gles_selectors[@]}"
+  run_selector_batch locale-isolated "${isolated_selectors[@]}"
+  expected_selector_count=$((${#selectors[@]} + ${#gles_selectors[@]} + ${#isolated_selectors[@]}))
+fi
 if (( $(wc -l < "$verified_selectors") != expected_selector_count )); then
   echo "Runtime-smoke selector evidence is incomplete." >&2
   exit 1
