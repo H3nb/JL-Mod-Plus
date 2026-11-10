@@ -191,6 +191,7 @@ internal data class MemoryWatchRow(
     val label: String = "",
     val freezeMode: Int = -1,
     val freezePaused: Boolean = false,
+    val savedSourceId: String? = null,
     val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
 )
 
@@ -297,9 +298,11 @@ internal object MemoryWatchPageParser {
         val labels = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_LABELS) ?: return emptyList()
         val freezeModes = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES) ?: return emptyList()
         val freezePaused = bundle.getBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED) ?: return emptyList()
+        val savedSourceIds = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_SAVED_SOURCE_IDS)
+            ?: arrayOfNulls(ids.size)
         return parse(
             ids, values, initialValues, previousValues, addresses, types, states, relocations,
-            labels, freezeModes, freezePaused, parseCandidateSources(bundle, ids.size),
+            labels, freezeModes, freezePaused, parseCandidateSources(bundle, ids.size), savedSourceIds,
         )
     }
 
@@ -316,11 +319,12 @@ internal object MemoryWatchPageParser {
         freezeModes: IntArray,
         freezePaused: BooleanArray,
         sources: List<MemoryCandidateSource> = List(ids.size) { MemoryCandidateSource.UNKNOWN },
+        savedSourceIds: Array<String?> = arrayOfNulls(ids.size),
     ): List<MemoryWatchRow> {
         if (listOf(
                 values.size, initialValues.size, previousValues.size, addresses.size, types.size,
                 states.size, relocations.size, labels.size, freezeModes.size, freezePaused.size,
-                sources.size,
+                sources.size, savedSourceIds.size,
             ).any { it != ids.size }) {
             return emptyList()
         }
@@ -341,6 +345,7 @@ internal object MemoryWatchPageParser {
                     label = labels[index],
                     freezeMode = freezeModes[index],
                     freezePaused = freezePaused[index],
+                    savedSourceId = savedSourceIds[index]?.takeIf(String::isNotBlank),
                     source = sources[index],
                 )
             }
@@ -348,7 +353,7 @@ internal object MemoryWatchPageParser {
     }
 }
 
-internal enum class MemoryEditorTab { RESULTS, WATCH, SAVED, INSPECTOR }
+internal enum class MemoryEditorTab { RESULTS, VARIABLES, INSPECTOR }
 
 /** Session-only navigation; Inspector always re-reads a checked target after reopening. */
 internal data class MemoryEditorInspectorTarget(
@@ -365,8 +370,7 @@ internal data class MemoryEditorNavigationState(
 ) {
     val underlyingTab: MemoryEditorTab
         get() = if (tab != MemoryEditorTab.INSPECTOR) tab else when {
-            inspectorTarget?.savedId != null -> MemoryEditorTab.SAVED
-            inspectorTarget?.watchAnchor == true -> MemoryEditorTab.WATCH
+            inspectorTarget?.savedId != null || inspectorTarget?.watchAnchor == true -> MemoryEditorTab.VARIABLES
             else -> MemoryEditorTab.RESULTS
         }
 }
@@ -456,8 +460,7 @@ internal data class MemoryEditorUiState(
     val savedSelection: Set<String> = emptySet(),
     val savedError: String? = null,
     val selected: Set<Long> = emptySet(),
-    val watchTab: Boolean = false,
-    val savedTab: Boolean = false,
+    val variablesTab: Boolean = false,
     val message: String? = null,
     val messageIsError: Boolean = false,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
@@ -475,8 +478,7 @@ internal data class MemoryEditorUiState(
     val activeTab: MemoryEditorTab
         get() = when {
             inspectorLoading || inspector != null -> MemoryEditorTab.INSPECTOR
-            savedTab -> MemoryEditorTab.SAVED
-            watchTab -> MemoryEditorTab.WATCH
+            variablesTab -> MemoryEditorTab.VARIABLES
             else -> MemoryEditorTab.RESULTS
         }
 }
@@ -496,8 +498,7 @@ internal interface MemoryEditorActions {
     fun groupSearch(type: Int, values: Array<String>)
     fun undo()
     fun refresh()
-    fun setWatchTab(watch: Boolean)
-    fun setSavedTab() = Unit
+    fun setVariablesTab(variables: Boolean)
     fun refreshSavedVariables() = Unit
     fun saveSelectedVariable(name: String) = Unit
     fun beginSavedEdit(id: String, onReady: (SavedVariableRuntimeValue?) -> Unit) = Unit
@@ -557,6 +558,7 @@ internal interface MemoryEditorActions {
     fun labelWatch(id: Long, label: String)
     fun freezeSelected(mode: Int, first: String, second: String)
     fun clearFreezeSelected()
+    fun clearSavedWatchFreeze(savedId: String) = Unit
     fun copySelected(locations: Boolean)
     fun previousPage()
     fun nextPage()
