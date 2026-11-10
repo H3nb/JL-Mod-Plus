@@ -1482,8 +1482,27 @@ internal class MemoryEditorComposeController(
 
     override fun freezeListSaved(id: String, expectedValue: String) {
         val row = state.savedVariables.firstOrNull { it.id == id } ?: return
-        if (!state.writeSupported || state.savedValues[id]?.resolved != true) return
-        launchOperation { engine, token -> engine.freezeSaved(token, id, row.label, expectedValue) }
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (state.busy || !state.writeSupported ||
+            state.savedValues[id]?.resolved != true || token == 0L) return
+        runIpc {
+            val result = runCatching { engine.freezeSaved(token, id, row.label, expectedValue) }
+            post {
+                if (destroyed || !state.visible || state.runtimeToken != token ||
+                    state.savedVariables.none { it.id == id } || service !== engine) return@post
+                val response = result.getOrNull()
+                val success = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                    MemoryEngineContract.RESULT_OK
+                state = state.copy(
+                    message = if (success) "Freeze enabled"
+                        else response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                            ?: result.exceptionOrNull()?.message ?: "Freeze unavailable",
+                    messageIsError = !success,
+                )
+                if (success) reloadState()
+            }
+        }
     }
 
     override fun setListWatchFreeze(id: Long, expectedValue: String, freeze: Boolean) {

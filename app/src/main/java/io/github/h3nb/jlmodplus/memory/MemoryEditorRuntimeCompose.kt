@@ -929,6 +929,9 @@ private fun RuntimeVariablesTab(
         val saved = menuEntry.saved
         val watch = menuEntry.watch
         val ready = saved == null || state.savedValues[saved.id]?.resolved == true
+        val keepName = watch?.let {
+            menuEntry.label.ifBlank { runtimeTypeShort(it.type) }
+        }.orEmpty()
         val actionsInMenu = listOf(
             RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit,
                 state.writeSupported && ready && !state.busy) { edit(menuEntry) },
@@ -938,9 +941,7 @@ private fun RuntimeVariablesTab(
                 if (saved != null) R.string.memory_list_stop_keeping else R.string.memory_list_keep,
                 !state.busy && (saved == null || watch != null || ready)) {
                 if (saved != null) actions.unkeepListSaved(saved.id)
-                else if (watch != null) actions.keepListWatch(
-                    watch.id, menuEntry.label.ifBlank { runtimeTypeShort(watch.type) },
-                )
+                else if (watch != null) actions.keepListWatch(watch.id, keepName)
             },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
                 !state.busy) { renameKey = menuEntry.key },
