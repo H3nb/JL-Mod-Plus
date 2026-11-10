@@ -28,12 +28,12 @@ public class Texture {
 
 	public Texture(byte[] b, boolean isForModel) {
 		this.isForModel = isForModel;
-		impl = new TextureImpl(b);
+		impl = new TextureImpl(b, isForModel);
 	}
 
 	public Texture(String name, boolean isForModel) throws IOException {
 		this.isForModel = isForModel;
-		impl = new TextureImpl(name);
+		impl = new TextureImpl(name, isForModel);
 	}
 
 	public final void dispose() {
