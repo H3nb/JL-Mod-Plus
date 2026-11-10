@@ -6,7 +6,6 @@ trap 'adb logcat -d -v threadtime > runtime-logcat.txt 2>&1 || true' EXIT
 
 selectors=(
   'javax.microedition.lcdui.graphics.AmbientColorSamplerTest'
-  'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
   'javax.microedition.lcdui.overlay.PerformanceOverlayRenderingTest'
   'io.github.h3nb.jlmodplus.config.PerformanceOverlayOptionsComposeTest'
   'javax.microedition.media.MediaBoundaryRuntimeTest'
@@ -55,6 +54,12 @@ selectors=(
   'io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#cleanupWithoutCommittedOwnershipDoesNotTouchState'
   'io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#earlySetupCleanupRestoresPreferenceAndPreservesUnrelatedRuntime'
   'io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#failedPreferenceRestorationPreservesOwnedFixtureForRetry'
+)
+
+# EGL display/context ownership needs its own instrumentation process: EGL teardown
+# must not affect Canvas/Compose tests running in the main batch.
+gles_selectors=(
+  'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
 )
 
 # Tests that mutate process-global/application-global state run in their own instrumentation
@@ -120,9 +125,10 @@ run_selector_batch() {
 }
 
 run_selector_batch main "${selectors[@]}"
+run_selector_batch gles-isolated "${gles_selectors[@]}"
 run_selector_batch locale-isolated "${isolated_selectors[@]}"
 
-expected_selector_count=$((${#selectors[@]} + ${#isolated_selectors[@]}))
+expected_selector_count=$((${#selectors[@]} + ${#gles_selectors[@]} + ${#isolated_selectors[@]}))
 if (( $(wc -l < "$verified_selectors") != expected_selector_count )); then
   echo "Runtime-smoke selector evidence is incomplete." >&2
   exit 1
