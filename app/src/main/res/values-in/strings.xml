@@ -488,6 +488,7 @@
     <string name="memory_editor_refresh">Segarkan</string>
     <string name="memory_editor_undo">Urungkan</string>
     <string name="memory_variables_tab">Variabel</string>
+    <string name="memory_variables_stop_watching">Hentikan pemantauan</string>
     <string name="memory_editor_watch">Pantauan</string>
     <string name="memory_editor_search_tab">Cari</string>
     <string name="memory_editor_search_known_values">Cari nilai yang diketahui</string>

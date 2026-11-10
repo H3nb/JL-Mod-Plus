@@ -958,6 +958,7 @@
     <string name="memory_editor_unfreeze">Zrušit zmrazení</string>
     <string name="memory_editor_unsupported">Editor paměti není pro toto běhové prostředí dostupný.</string>
     <string name="memory_variables_tab">Proměnné</string>
+    <string name="memory_variables_stop_watching">Přestat sledovat</string>
     <string name="memory_editor_watch">Sledování</string>
     <string name="memory_editor_working">Provádění operace…</string>
     <string name="memory_editor_write_confirmed">Počet hodnot potvrzených zpětným čtením paměti: %1$d.</string>
