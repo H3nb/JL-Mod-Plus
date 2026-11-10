@@ -95,7 +95,7 @@ class LibraryIconNormalizationTest {
         assertEquals(Color.RED, pixels.getPixel(32, 32))
     }
 
-    private inline fun makeBitmap(
+    private fun makeBitmap(
         width: Int,
         height: Int,
         colorAt: (x: Int, y: Int) -> Int,
