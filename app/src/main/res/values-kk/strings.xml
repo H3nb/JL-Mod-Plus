@@ -632,6 +632,7 @@
     <string name="memory_editor_select_visible">Көрінетіндерді таңдау</string>
     <string name="memory_editor_type_auto">Автоматты</string>
     <string name="memory_variables_tab">Айнымалылар</string>
+    <string name="memory_variables_stop_watching">Бақылауды тоқтату</string>
     <string name="memory_editor_watch">Бақылау</string>
     <string name="memory_editor_candidate_static">%1$s · %2$s</string>
     <string name="memory_editor_candidate_instance">%1$s · %2$s · нысана #%3$d</string>
