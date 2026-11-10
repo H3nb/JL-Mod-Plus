@@ -897,9 +897,9 @@ private fun RuntimeVariablesTab(
                     renameWatch = selectedWatches.singleOrNull()
                 },
                 RuntimeToolbarAction(
-                    if (selectedWatches.singleOrNull()?.freezeMode ?: -1 >= 0) R.drawable.ic_unlock
+                    if ((selectedWatches.singleOrNull()?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
                         else R.drawable.ic_lock,
-                    if (selectedWatches.singleOrNull()?.freezeMode ?: -1 >= 0)
+                    if ((selectedWatches.singleOrNull()?.freezeMode ?: -1) >= 0)
                         R.string.memory_editor_unfreeze else R.string.memory_editor_freeze,
                     selectedWatches.size == 1 && !state.busy &&
                         (state.writeSupported || selectedWatches.single().freezeMode >= 0),
@@ -1032,9 +1032,22 @@ private fun RuntimeVariablesTab(
                                 Text(value.value, style = runtimeMemoryDataTextStyle(),
                                     textAlign = TextAlign.End,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(runtimeTypeShort(value.type),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(runtimeTypeShort(value.type),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary)
+                                    val linked = linkedWatches[item.id]
+                                    if (linked?.freezePaused == true) {
+                                        Text(" · " + stringResource(R.string.memory_editor_freeze_paused),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error)
+                                    } else if (linked != null && linked.freezeMode >= 0) {
+                                        Spacer(Modifier.width(4.dp))
+                                        Icon(painterResource(R.drawable.ic_lock),
+                                            contentDescription = stringResource(R.string.memory_editor_freeze),
+                                            modifier = Modifier.size(16.dp))
+                                    }
+                                }
                             }
                         }
                     }
@@ -1090,7 +1103,7 @@ private fun RuntimeVariablesTab(
         )
     }
     editDraft?.let { draft ->
-        // Also release the pause if the whole Saved tab is removed by navigation.
+        // Release the pinned Saved edit if Variables is left or the dialog closes.
         DisposableEffect(draft.row.id) {
             onDispose { actions.endSavedEdit() }
         }

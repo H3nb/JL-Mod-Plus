@@ -1262,6 +1262,13 @@ internal class MemoryEditorComposeController(
         state = state.copy(selected = ids.toSet(), savedSelection = emptySet())
     }
 
+    override fun selectWatchIds(ids: List<Long>) {
+        if (!state.variablesTab || state.busy || ids.size > MemoryEngineContract.MAX_WATCH_RECORDS) return
+        val available = state.watches.mapTo(HashSet()) { it.id }
+        if (ids.any { it !in available }) return
+        state = state.copy(selected = ids.toSet(), savedSelection = emptySet())
+    }
+
     override fun invertVisible() {
         val ids = if (state.variablesTab) state.watches.map(MemoryWatchRow::id)
         else state.results.map(MemoryResultRow::id)

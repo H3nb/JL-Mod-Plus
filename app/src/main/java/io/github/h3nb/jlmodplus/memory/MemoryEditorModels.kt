@@ -518,6 +518,7 @@ internal interface MemoryEditorActions {
                                 freezeAfter: Boolean = false) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
+    fun selectWatchIds(ids: List<Long>) = Unit
     fun invertVisible()
     fun clearSelection()
     fun editSelected(value: String, type: Int)
