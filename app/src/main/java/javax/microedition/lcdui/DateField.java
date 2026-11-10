@@ -19,6 +19,7 @@ package javax.microedition.lcdui;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -51,6 +52,7 @@ public class DateField extends Item {
     private DatePicker datePicker;
     private TimePicker timePicker;
     private TextView unsetLabel;
+    private Button initializeButton;
     /** Accessed only on the Android UI thread. */
     private boolean syncingWidgets;
 
@@ -162,6 +164,7 @@ public class DateField extends Item {
             datePicker.setVisibility(activeMode == TIME ? View.GONE : View.VISIBLE);
             timePicker.setVisibility(activeMode == DATE ? View.GONE : View.VISIBLE);
             unsetLabel.setVisibility(hasValue ? View.GONE : View.VISIBLE);
+            initializeButton.setVisibility(hasValue ? View.GONE : View.VISIBLE);
         } finally {
             syncingWidgets = false;
         }
@@ -198,9 +201,20 @@ public class DateField extends Item {
         onUserChange(changed);
     }
 
+    /** Accept the preview when the user has no reason to adjust its date/time fields. */
+    private void acceptDisplayedValue() {
+        synchronized (valueLock) {
+            if (initialized) return;
+            normalizeLocked();
+            initialized = true;
+        }
+        onUserChange(true);
+    }
+
     private void onUserChange(boolean changed) {
         if (!changed) return;
         if (unsetLabel != null) unsetLabel.setVisibility(View.GONE);
+        if (initializeButton != null) initializeButton.setVisibility(View.GONE);
         // Existing Item/Form event ownership sends this on the serialized LCDUI guest queue.
         postStateChanged();
     }
@@ -236,6 +250,10 @@ public class DateField extends Item {
             }
             layout.addView(datePicker);
             layout.addView(timePicker);
+            initializeButton = new Button(context);
+            initializeButton.setText(R.string.date_field_use_displayed_value);
+            initializeButton.setOnClickListener(view -> acceptDisplayedValue());
+            layout.addView(initializeButton);
             syncWidgets();
         }
         return layout;
@@ -247,5 +265,6 @@ public class DateField extends Item {
         datePicker = null;
         timePicker = null;
         unsetLabel = null;
+        initializeButton = null;
     }
 }

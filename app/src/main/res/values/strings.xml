@@ -1321,4 +1321,5 @@
     <string name="installer_select_jar" tools:ignore="MissingTranslation">Select JAR</string>
     <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">This JAR does not match the selected JAD. Choose the matching JAR to preserve the JAD settings.</string>
     <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Choose another JAR</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Use this value</string>
 </resources>
