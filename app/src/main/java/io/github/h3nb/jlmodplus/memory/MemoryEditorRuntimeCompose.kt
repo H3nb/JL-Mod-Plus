@@ -176,11 +176,32 @@ internal fun MemoryEditorRuntimeRoot(
         var opacityDialog by remember { mutableStateOf(false) }
         val resultsListState = rememberLazyListState()
         val variablesListState = rememberLazyListState()
+        val listEntries = remember(state.savedVariables, state.watches) {
+            memoryListEntries(state.savedVariables, state.watches)
+        }
+        var listSelection by remember { mutableStateOf(emptySet<String>()) }
+        LaunchedEffect(listEntries.map(MemoryListEntry::key)) {
+            listSelection = listSelection.intersect(listEntries.mapTo(HashSet()) { it.key })
+        }
+        val selectedListEntry = listEntries.singleOrNull { it.key in listSelection }
+            ?.takeIf { listSelection.size == 1 }
+        val canInspect = if (state.variablesTab) {
+            selectedListEntry != null && !state.busy &&
+                (selectedListEntry.saved == null ||
+                    state.savedValues[selectedListEntry.saved.id]?.resolved == true)
+        } else state.selected.size == 1 && !state.busy
         val inspectSelected = {
-            if (state.variablesTab && state.savedSelection.isNotEmpty()) {
-                state.savedSelection.singleOrNull()?.let { actions.inspectSavedVariable(it) }
+            if (state.variablesTab) {
+                selectedListEntry?.let { entry ->
+                    entry.saved?.let { actions.inspectSavedVariable(it.id) }
+                        ?: entry.watch?.let {
+                            actions.inspectCandidate(it.id, watchAnchor = true)
+                        }
+                }
             } else {
-                state.selected.singleOrNull()?.let { actions.inspectCandidate(it, watchAnchor = state.variablesTab) }
+                state.selected.singleOrNull()?.let {
+                    actions.inspectCandidate(it, watchAnchor = false)
+                }
             }
             Unit
         }
@@ -227,8 +248,8 @@ internal fun MemoryEditorRuntimeRoot(
                         Column(Modifier.fillMaxWidth().windowInsetsPadding(
                             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
                         )) {
-                            RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, actions::close,
-                                actions::closeInspector, showTitle)
+                            RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, canInspect,
+                                actions::close, showTitle)
                         }
                         if (state.busy) RuntimeOperationStrip(state, actions)
                         state.message?.takeIf(String::isNotBlank)?.let {
@@ -242,13 +263,9 @@ internal fun MemoryEditorRuntimeRoot(
                             contentKey = { it.activeTab },
                             modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
                             transitionSpec = {
-                                val direction = when {
-                                    targetState.activeTab == MemoryEditorTab.INSPECTOR -> 1
-                                    initialState.activeTab == MemoryEditorTab.INSPECTOR -> -1
-                                    else -> pageMotionDirection(
-                                        0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
-                                    )
-                                }
+                                val direction = pageMotionDirection(
+                                    0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
+                                )
                                 tabEnter(direction, tabTravelPx).togetherWith(tabExit(direction, tabTravelPx))
                             },
                             label = "Memory editor tab",
@@ -265,7 +282,8 @@ internal fun MemoryEditorRuntimeRoot(
                                         compactResults, Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
-                                        shownState, actions, variablesListState, compactResults,
+                                        shownState, actions, listEntries, listSelection,
+                                        { listSelection = it }, variablesListState, compactResults,
                                         Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
@@ -325,8 +343,8 @@ private fun RuntimeMemoryHeader(
     state: MemoryEditorUiState,
     inlineNavigation: Boolean,
     onTab: (MemoryEditorTab) -> Unit,
+    canInspect: Boolean,
     onClose: () -> Unit,
-    onBack: () -> Unit,
     showTitle: Boolean = true,
 ) {
     val density = LocalDensity.current
@@ -334,22 +352,12 @@ private fun RuntimeMemoryHeader(
         with(density) { WindowInsets.safeDrawing.getTop(density).toDp() }
     } else memoryEditorTitleTopPadding()
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        // Stacked title/close are at opposite edges, leaving the top-center
-        // camera strip free. Long localized titles ellipsize before reaching it.
         val stackedTitleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = topPadding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (state.activeTab == MemoryEditorTab.INSPECTOR) {
-                IconButton(onClick = onBack) {
-                    Icon(painterResource(R.drawable.ic_arrow_back),
-                        stringResource(R.string.memory_editor_back))
-                }
-                Text(stringResource(R.string.memory_editor_inspector),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f))
-            } else if (showTitle) Text(
+            if (showTitle) Text(
                 stringResource(R.string.memory_editor),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
@@ -357,38 +365,50 @@ private fun RuntimeMemoryHeader(
                 modifier = if (inlineNavigation) Modifier.padding(end = 16.dp)
                     else Modifier.widthIn(max = stackedTitleMaxWidth),
             )
-            if (state.activeTab != MemoryEditorTab.INSPECTOR) {
-                if (inlineNavigation) RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
-                else Spacer(Modifier.weight(1f))
+            if (inlineNavigation) {
+                RuntimeMemoryTabs(state, onTab, canInspect, Modifier.weight(1f))
+            } else {
+                Spacer(Modifier.weight(1f))
             }
             IconButton(onClick = onClose) {
                 Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
             }
         }
     }
-    if (!inlineNavigation && state.activeTab != MemoryEditorTab.INSPECTOR) RuntimeMemoryTabs(state, onTab)
+    if (!inlineNavigation) RuntimeMemoryTabs(state, onTab, canInspect)
 }
 
 @Composable
 private fun RuntimeMemoryTabs(
     state: MemoryEditorUiState,
     onTab: (MemoryEditorTab) -> Unit,
+    canInspect: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val tabs = listOf(MemoryEditorTab.RESULTS, MemoryEditorTab.VARIABLES)
     SecondaryScrollableTabRow(
-        selectedTabIndex = if (state.variablesTab) 1 else 0,
+        selectedTabIndex = state.activeTab.ordinal,
         modifier = modifier.fillMaxWidth(),
         edgePadding = 0.dp,
         containerColor = Color.Transparent,
     ) {
-        tabs.forEach { tab ->
-            val label = if (tab == MemoryEditorTab.RESULTS) R.string.memory_editor_search_tab
-                else R.string.memory_variables_tab
+        MemoryEditorTab.entries.forEach { tab ->
+            val label = when (tab) {
+                MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
+                MemoryEditorTab.VARIABLES -> R.string.memory_variables_tab
+                MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
+            }
+            val enabled = tab != MemoryEditorTab.INSPECTOR ||
+                state.activeTab == tab || canInspect
+            val description = stringResource(label)
             Tab(
-                selected = (tab == MemoryEditorTab.VARIABLES) == state.variablesTab,
+                selected = state.activeTab == tab,
+                enabled = enabled,
                 onClick = { onTab(tab) },
-                text = { Text(stringResource(label)) },
+                modifier = Modifier.semantics { contentDescription = description },
+                text = {
+                    Text(description, color = if (enabled) Color.Unspecified
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f))
+                },
             )
         }
     }
