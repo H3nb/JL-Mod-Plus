@@ -43,6 +43,28 @@ public class LoaderResourceSliceTest {
 	}
 
 	@Test
+	public void environmentTextureRespectsScanlineOrientationAndResourceSlice() throws IOException {
+		byte[] topDown = bmp3x5(true, true);
+		byte[] bottomUp = bmp3x5(false, true);
+		byte[] wrapped = withPrefixAndSuffix(bottomUp, 32, 16);
+
+		byte[] expected = pixels(Loader.loadBmpData(topDown, 0, topDown.length, true));
+		assertArrayEquals(expected, pixels(Loader.loadBmpData(bottomUp, 0, bottomUp.length, true)));
+		assertArrayEquals(expected, pixels(Loader.loadBmpData(wrapped, 32, bottomUp.length, true)));
+	}
+
+	@Test
+	public void coreHeaderBmpUsesThreeBytePaletteWithSamePixelOutput() throws IOException {
+		byte[] coreBmp = coreBmp3x5();
+		byte[] windowsBmp = bmp3x5(false, false);
+		byte[] wrapped = withPrefixAndSuffix(coreBmp, 32, 16);
+
+		byte[] expected = pixels(Loader.loadBmpData(windowsBmp, 0, windowsBmp.length));
+		assertArrayEquals(expected, pixels(Loader.loadBmpData(coreBmp, 0, coreBmp.length)));
+		assertArrayEquals(expected, pixels(Loader.loadBmpData(wrapped, 32, coreBmp.length)));
+	}
+
+	@Test
 	public void bmpCannotReadIntoPrefixOrSuffixOutsideItsSlice() {
 		byte[] bmp = bmp3x5(true, false);
 		byte[] wrapped = withPrefixAndSuffix(bmp, 32, 16);
@@ -136,6 +158,36 @@ public class LoaderResourceSliceTest {
 		Arrays.fill(data, (byte) 0xFC);
 		System.arraycopy(resource, 0, data, prefix, resource.length);
 		return data;
+	}
+
+	private static byte[] coreBmp3x5() {
+		final int width = 3;
+		final int height = 5;
+		final int stride = 4;
+		final int rasterOffset = 14 + 12 + 256 * 3;
+		byte[] bytes = new byte[rasterOffset + height * stride];
+		ByteBuffer bmp = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+		bmp.putShort((short) 0x4D42);
+		bmp.putInt(bytes.length);
+		bmp.putInt(0);
+		bmp.putInt(rasterOffset);
+		bmp.putInt(12); // BITMAPCOREHEADER
+		bmp.putShort((short) width);
+		bmp.putShort((short) height);
+		bmp.putShort((short) 1);
+		bmp.putShort((short) 8);
+		for (int index = 0; index < 256; index++) {
+			int value = index == 0 || index == 1 ? 255 : index;
+			bmp.put((byte) (index == 0 ? 0 : value));
+			bmp.put((byte) (index == 0 ? 0 : value));
+			bmp.put((byte) value);
+		}
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				bytes[rasterOffset + (height - 1 - y) * stride + x] = (byte) (1 + y * width + x);
+			}
+		}
+		return bytes;
 	}
 
 	private static byte[] bmp3x5(boolean topDown, boolean firstPixelTransparent) {
