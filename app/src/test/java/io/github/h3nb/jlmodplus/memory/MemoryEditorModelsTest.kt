@@ -220,7 +220,7 @@ class MemoryEditorModelsTest {
         val nextToken = 91_002L
         assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(firstToken).tab)
 
-        val saved = MemoryEditorNavigationState(MemoryEditorTab.SAVED, pageOffset = 100)
+        val saved = MemoryEditorNavigationState(MemoryEditorTab.VARIABLES, pageOffset = 100)
         MemoryEditorSessionNavigation.remember(firstToken, saved)
         assertEquals(saved, MemoryEditorSessionNavigation.read(firstToken))
 
@@ -229,7 +229,7 @@ class MemoryEditorModelsTest {
             MemoryEditorTab.INSPECTOR, pageOffset = 100, inspectorTarget = inspector,
         )
         MemoryEditorSessionNavigation.remember(firstToken, opened)
-        assertEquals(MemoryEditorTab.SAVED, opened.underlyingTab)
+        assertEquals(MemoryEditorTab.VARIABLES, opened.underlyingTab)
         assertEquals(opened, MemoryEditorSessionNavigation.read(firstToken))
 
         assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(nextToken).tab)
@@ -245,9 +245,9 @@ class MemoryEditorModelsTest {
         )
         val watch = result.copy(inspectorTarget = result.inspectorTarget?.copy(watchAnchor = true))
         assertEquals(MemoryEditorTab.RESULTS, result.underlyingTab)
-        assertEquals(MemoryEditorTab.WATCH, watch.underlyingTab)
-        assertEquals(MemoryEditorTab.WATCH,
-            MemoryEditorNavigationState(MemoryEditorTab.WATCH).underlyingTab)
+        assertEquals(MemoryEditorTab.VARIABLES, watch.underlyingTab)
+        assertEquals(MemoryEditorTab.VARIABLES,
+            MemoryEditorNavigationState(MemoryEditorTab.VARIABLES).underlyingTab)
     }
 
 }

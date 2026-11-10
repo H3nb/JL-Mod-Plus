@@ -57,7 +57,7 @@ class MemoryEditorAdaptiveComposeTest {
     @Test fun savedEditKeepsDraftWhenLiveValueChangesAndPausesRebindingUntilDismissed() {
         val state = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,
-            runtimeToken = 1L, savedTab = true,
+            runtimeToken = 1L, variablesTab = true,
             savedVariables = listOf(SavedVariableRow("hp", "Hit points", "guest.Game.hp")),
             savedValues = mapOf("hp" to SavedVariableRuntimeValue(
                 MemoryEngineContract.RESULT_OK, MemoryEngineContract.TYPE_INT, "42",
@@ -103,16 +103,16 @@ class MemoryEditorAdaptiveComposeTest {
 
     @Test fun changingTabsRestoresSavedContentWithoutRetainingOutgoingSemantics() {
         val state = mutableStateOf(MemoryEditorUiState(
-            visible = true, connected = true, supported = true, savedTab = true,
+            visible = true, connected = true, supported = true, variablesTab = true,
             savedVariables = listOf(SavedVariableRow("hp", "Hit points", "guest.Game.hp")),
         ))
         rule.setContent {
             JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
         }
         rule.onNodeWithText("Hit points").assertIsDisplayed()
-        rule.runOnIdle { state.value = state.value.copy(savedTab = false, watchTab = true) }
+        rule.runOnIdle { state.value = state.value.copy(variablesTab = false) }
         rule.onNodeWithText("Hit points").assertDoesNotExist()
-        rule.runOnIdle { state.value = state.value.copy(savedTab = true, watchTab = false) }
+        rule.runOnIdle { state.value = state.value.copy(variablesTab = true) }
         rule.onNodeWithText("Hit points").assertIsDisplayed()
     }
 
@@ -203,16 +203,16 @@ class MemoryEditorAdaptiveComposeTest {
                 for (watch in listOf(false, true)) {
                     for (loading in listOf(false, true)) {
                         setter.invoke(controller, MemoryEditorUiState(
-                            watchTab = watch,
+                            variablesTab = watch,
                             inspector = if (loading) null else inspectorSnapshot(),
                             inspectorLoading = loading,
                             selected = setOf(1L),
                         ))
-                        controller.setWatchTab(watch)
+                        controller.setVariablesTab(watch)
                         val state = getter.invoke(controller) as MemoryEditorUiState
                         assertNull(state.inspector)
                         assertFalse(state.inspectorLoading)
-                        assertEquals(if (watch) MemoryEditorTab.WATCH else MemoryEditorTab.RESULTS, state.activeTab)
+                        assertEquals(if (watch) MemoryEditorTab.VARIABLES else MemoryEditorTab.RESULTS, state.activeTab)
                         assertEquals(setOf(1L), state.selected)
                     }
                 }
@@ -466,7 +466,7 @@ class MemoryEditorAdaptiveComposeTest {
         }
         val state = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true,
-            watchTab = true, watches = watches,
+            variablesTab = true, watches = watches,
         ))
         val actions = object : TestMemoryEditorActions() {
             override fun selectVisible() {
