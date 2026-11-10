@@ -41,7 +41,8 @@ class ExternalContentJadImportTest {
         val differentJar = createJar(File(root, "Other.jar"), manifest.replace("Fixture", "Other"))
         val jad = File(root, "Fixture.jad").apply {
             writeText("MIDlet-Name: Fixture\r\nMIDlet-Vendor: Tests\r\nMIDlet-Version: 1.0\r\n" +
-                    "MIDlet-Jar-URL: Fixture.jar\r\nMIDlet-Jar-Size: ${jar.length()}\r\n")
+                    "MIDlet-Jar-URL: Fixture.jar\r\nMIDlet-Jar-Size: ${jar.length()}\r\n" +
+                    "X-JL-Import-Property: retained\r\n")
         }
         val uri = contentUri(app, jad)
         val jarUri = contentUri(app, jar)
@@ -81,6 +82,7 @@ class ExternalContentJadImportTest {
             }.blockingGet())
             assertEquals(reviewedDescriptor, wrong.newDescriptor)
             assertEquals("Fixture", wrong.manifest.name)
+            assertEquals("retained", wrong.newDescriptor.attrs["X-JL-Import-Property"])
             installer.clearCache()
             wrong.clearCache()
         } finally {
