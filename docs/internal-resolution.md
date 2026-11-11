@@ -79,6 +79,9 @@ dimension of 4096 pixels and a conservative 160 MiB four-plane allocation
 estimate. These limits do **not** guarantee enough device memory.
 Large-source reconstruction is limited separately from frame target density.
 
+GameCanvas retains its buffer and previously obtained Graphics objects across
+host resizes, including when a constrained HD density must decrease.
+
 The retained regression suites protect partial GameCanvas flush, negative-stride
 readback, all sprite transforms, atlas isolation, high-density M3G
 viewports, and Micro3D GLES texture upload/alpha semantics. Passing

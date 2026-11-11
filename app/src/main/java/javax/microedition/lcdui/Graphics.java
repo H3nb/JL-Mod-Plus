@@ -57,8 +57,9 @@ public class Graphics implements
 
 	private final Canvas canvas;
 	private final Image image;
-	private final Matrix pixelScaleMatrix;
+	private Matrix pixelScaleMatrix;
 	private Bitmap boundBitmap;
+	private int boundPixelScale;
 
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
@@ -98,6 +99,7 @@ public class Graphics implements
 	Graphics(Image image) {
 		this.image = image;
 		boundBitmap = image.getBitmap();
+		boundPixelScale = image.getPixelScale();
 		canvas = new Canvas(boundBitmap);
 		pixelScaleMatrix = image.getPixelScale() == 1 ? null : new Matrix();
 		if (pixelScaleMatrix != null) {
@@ -119,19 +121,34 @@ public class Graphics implements
 	@SuppressWarnings("deprecation")
 	private void resetCanvasState() {
 		Bitmap bitmap = image.getBitmap();
-
+		int scale = image.getPixelScale();
 		canvas.restoreToCount(1);
-		if (bitmap != boundBitmap) {
+		boolean newBitmap = bitmap != boundBitmap;
+		if (newBitmap) {
 			canvas.setBitmap(bitmap);
 			boundBitmap = bitmap;
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-				// Before Android O setBitmap() preserves the previous clip, so replace it
-				// only when the backing store actually changes.
-				canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
-			}
 		}
-		if (pixelScaleMatrix != null) canvas.setMatrix(pixelScaleMatrix);
+		if (scale != boundPixelScale) {
+			boundPixelScale = scale;
+			pixelScaleMatrix = scale == 1 ? null : new Matrix();
+			if (pixelScaleMatrix != null) pixelScaleMatrix.setScale(scale, scale);
+			drawPaint.setStrokeWidth(scale == 1 ? 0f : 1f);
+		}
+		canvas.setMatrix(pixelScaleMatrix);
+		if (newBitmap && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			// Before O, setBitmap may retain the old clip.
+			canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
+		}
 		canvas.save();
+	}
+
+	void onDisplayTargetResized() {
+		Rect previousClip = new Rect(clip);
+		resetCanvasState();
+		canvas.clipRect(image.getBounds());
+		canvas.translate(translateX, translateY);
+		canvas.clipRect(previousClip);
+		canvas.getClipBounds(clip);
 	}
 
 	public void reset(float cl, float ct, float cr, float cb) {

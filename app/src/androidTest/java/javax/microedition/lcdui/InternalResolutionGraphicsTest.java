@@ -222,4 +222,27 @@ public class InternalResolutionGraphicsTest {
         }
     }
 
+    @Test public void resizableGameBufferRetainsGraphicsObjectsAndExistingPixels() {
+        Image frame = Image.createDisplayTarget(12, 10, 4);
+        frame.enableResizableDisplayTarget();
+        Graphics retained = frame.getGraphics();
+        try {
+            retained.setColor(RED);
+            retained.fillRect(2, 2, 2, 2);
+            frame.resizeDisplayTarget(16, 14, 2);
+            assertEquals(2, frame.getPixelScale());
+            assertEquals(16, frame.getWidth());
+            assertEquals(14, frame.getHeight());
+            assertEquals(RED, frame.getBitmap().getPixel(5, 5) & RGB);
+            retained.setColor(BLUE);
+            retained.fillRect(14, 12, 2, 2);
+            assertEquals(BLUE, frame.getBitmap().getPixel(29, 25) & RGB);
+            frame.resizeDisplayTarget(12, 10, 4);
+            retained.setColor(GREEN);
+            retained.fillRect(10, 8, 2, 2);
+            assertEquals(GREEN, frame.getBitmap().getPixel(43, 35) & RGB);
+        } finally {
+            frame.getBitmap().recycle();
+        }
+    }
 }

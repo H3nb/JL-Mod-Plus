@@ -25,6 +25,7 @@ import android.graphics.Rect;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.WeakHashMap;
 
 import javax.microedition.lcdui.game.Sprite;
 import javax.microedition.shell.AppClassLoader;
@@ -36,7 +37,8 @@ public class Image {
 	private Bitmap bitmap;
 	private Graphics graphics;
 	private final Rect bounds;
-	private final int pixelScale;
+	private volatile int pixelScale;
+	private WeakHashMap<Graphics, Boolean> retainedGraphics;
 	private boolean isBlackWhiteAlpha;
 
 	public Image(Bitmap bitmap, boolean mutable) {
@@ -142,8 +144,10 @@ public class Image {
 		return new Image(Bitmap.createBitmap(rgb, width, height, Bitmap.Config.ARGB_8888), false);
 	}
 
-	public Graphics getGraphics() {
-		return new Graphics(this);
+	public synchronized Graphics getGraphics() {
+		Graphics next = new Graphics(this);
+		if (retainedGraphics != null) retainedGraphics.put(next, Boolean.TRUE);
+		return next;
 	}
 
 	public boolean isMutable() {
@@ -196,6 +200,38 @@ public class Image {
 			graphics = getGraphics();
 		}
 		return graphics;
+	}
+
+	/** Tracks retained graphics only for GameCanvas' reconfigurable backing store. */
+	public synchronized void enableResizableDisplayTarget() {
+		if (retainedGraphics == null) retainedGraphics = new WeakHashMap<>();
+		if (graphics != null) retainedGraphics.put(graphics, Boolean.TRUE);
+	}
+
+	/** Host-only resize that preserves previously returned Graphics objects. */
+	public synchronized void resizeDisplayTarget(int width, int height, int scale) {
+		if (width == bounds.right && height == bounds.bottom && scale == pixelScale) return;
+		if (width <= 0 || height <= 0 || scale < 1 || scale > InternalResolution.MAX_SCALE
+				|| (scale > 1 && ((long) width * scale > InternalResolution.MAX_TARGET_SIDE
+						|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE))) {
+			throw new IllegalArgumentException("Invalid display target size");
+		}
+		int copyWidth = Math.min(width, bounds.right);
+		int copyHeight = Math.min(height, bounds.bottom);
+		Bitmap next = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
+		next.eraseColor(Color.WHITE);
+		if (copyWidth > 0 && copyHeight > 0) {
+			new android.graphics.Canvas(next).drawBitmap(bitmap,
+					new Rect(0, 0, copyWidth * pixelScale, copyHeight * pixelScale),
+					new Rect(0, 0, copyWidth * scale, copyHeight * scale), null);
+		}
+		bitmap = next;
+		pixelScale = scale;
+		bounds.right = width;
+		bounds.bottom = height;
+		if (retainedGraphics != null) {
+			for (Graphics retained : retainedGraphics.keySet()) retained.onDisplayTargetResized();
+		}
 	}
 
 	void setSize(int width, int height) {

@@ -42,6 +42,12 @@ public class GameCanvas extends Canvas {
 		super();
 		this.suppressCommands = suppressCommands;
 		image = Image.createDisplayTarget(width, maxHeight, getInternalResolutionScale());
+		image.enableResizableDisplayTarget();
+	}
+
+	@Override
+	protected void onDisplayTargetResized() {
+		if (image != null) image.resizeDisplayTarget(width, maxHeight, getInternalResolutionScale());
 	}
 
 	@Override

@@ -1163,6 +1163,7 @@ public abstract class Canvas extends Displayable {
 			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
 				offscreenCopy.setSize(width, height);
 			}
+			onDisplayTargetResized();
 		}
 		configureAmbientGeometry();
 		ViewHandler.postEvent(this::updateVideoDisplays);
@@ -1193,6 +1194,10 @@ public abstract class Canvas extends Displayable {
 	 * @param x the pointer coordinate on the real screen
 	 * @return the corresponding pointer coordinate on the virtual screen
 	 */
+	/** Called after the host-owned display target geometry changes. */
+	protected void onDisplayTargetResized() {
+	}
+
 	private int convertPointerX(float x) {
 		return (int) ((x - onX) * width / onWidth);
 	}
