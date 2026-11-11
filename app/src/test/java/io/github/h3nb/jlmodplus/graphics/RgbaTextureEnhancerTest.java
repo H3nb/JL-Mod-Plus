@@ -35,6 +35,21 @@ class RgbaTextureEnhancerTest {
         assertFalse(RgbaTextureEnhancer.isOpaque(pixels, 0, 1));
     }
 
+    @Test void argbToRgbaConversionIsIndependentOfNativeByteOrder() {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(16)
+                .order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        RgbaTextureEnhancer.putArgbPixels(buffer, new int[] {
+                0xffff0000, 0xff00ff00, 0xff0000ff, 0x80010203
+        });
+        assertEquals(16, buffer.position());
+        buffer.flip();
+        int[] expected = {255, 0, 0, 255, 0, 255, 0, 255,
+                0, 0, 255, 255, 1, 2, 3, 128};
+        for (int byteValue : expected) assertEquals(byteValue, buffer.get() & 255);
+        assertThrows(IllegalArgumentException.class, () ->
+                RgbaTextureEnhancer.putArgbPixels(ByteBuffer.allocate(3), new int[] {0xff000000}));
+    }
+
     @Test void alphaAwareXbrzNeverCreatesInvisibleSourceColorFringesOnUniformInput() {
         ByteBuffer src = ByteBuffer.allocate(2 * 2 * 4);
         for (int i = 0; i < 4; i++) src.put(new byte[] {0, 0, (byte) 255, (byte) 255});

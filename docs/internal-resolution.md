@@ -61,6 +61,8 @@ the reported `GL_MAX_TEXTURE_SIZE`. Environment maps and textures containing
 any non-opaque alpha are deliberately bypassed: their palette and alpha-test
 semantics must not be silently changed by source reconstruction. Support for
 safe alpha coverage reconstruction requires separate visual/GLES qualification.
+Android Image-derived textures are packed into RGBA bytes explicitly so the
+upload is independent of CPU endianness. Their guest Image pixels are not modified.
 Source data and logical UV coordinates are unchanged;
 the shader's `uTexSize` remains the logical source size. Mutable render
 textures remain unenhanced at 1×. GPU resource loss can cause a re-upload.

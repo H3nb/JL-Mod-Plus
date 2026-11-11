@@ -129,11 +129,7 @@ public final class TextureImpl {
 		int len = width * height;
 		int[] pixels = new int[len];
 		image.getRGB(pixels, 0, width, x, y, width, height);
-		for (int i = 0; i < len; i++) {
-			int pixel = pixels[i];
-			pixels[i] = pixel << 8 | pixel >>> 24;
-		}
-		this.image.getRaster().asIntBuffer().put(pixels);
+		RgbaTextureEnhancer.putArgbPixels(this.image.getRaster(), pixels);
 	}
 
 	public void dispose() {

@@ -56,6 +56,7 @@ public class EnvironmentTextureGlesTest {
         int environmentId = 0;
         int modelId = 0;
         int opaqueId = 0;
+        int imageId = 0;
         try {
             assertTrue(EGL14.eglChooseConfig(display, configAttrs, 0, configs, 0, 1, numConfigs, 0));
             assertTrue(numConfigs[0] > 0);
@@ -131,6 +132,15 @@ public class EnvironmentTextureGlesTest {
             TextureImpl.configureEnhancement(0);
             TextureImpl.setScreenTargetScale(1);
 
+            // Image-backed texture data must be packed as RGBA bytes on
+            // little-endian Android, not as rotated ARGB native-order ints.
+            javax.microedition.lcdui.Image hostImage = javax.microedition.lcdui.Image.createRGBImage(
+                    new int[] {0xff00ff00, 0xff0000ff}, 2, 1, true);
+            TextureImpl imageTexture = new TextureImpl(hostImage, 0, 0, 2, 1);
+            imageId = imageTexture.getId();
+            assertRgb(0, 255, 0, sample(imageId, uv, 0.25f, 0.5f, GLES20.GL_NEAREST));
+            assertRgb(0, 0, 255, sample(imageId, uv, 0.75f, 0.5f, GLES20.GL_NEAREST));
+
             // Linear filtering must not blend hidden palette[0] RGB into the highlight.
             int[] midpoint = sample(environmentId, uv, TEXEL, 0.5f * TEXEL, GLES20.GL_LINEAR);
             for (int color : midpoint) {
@@ -145,6 +155,7 @@ public class EnvironmentTextureGlesTest {
             if (environmentId != 0) GLES20.glDeleteTextures(1, new int[] {environmentId}, 0);
             if (modelId != 0) GLES20.glDeleteTextures(1, new int[] {modelId}, 0);
             if (opaqueId != 0) GLES20.glDeleteTextures(1, new int[] {opaqueId}, 0);
+            if (imageId != 0) GLES20.glDeleteTextures(1, new int[] {imageId}, 0);
             EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
             if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface);
             if (context != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, context);

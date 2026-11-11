@@ -24,6 +24,22 @@ public final class RgbaTextureEnhancer {
         return true;
     }
 
+    /**
+     * Android Image.getRGB supplies ARGB integers; GPU texture memory expects
+     * RGBA bytes regardless of the device's native ByteBuffer byte order.
+     */
+    public static void putArgbPixels(ByteBuffer rgba, int[] argb) {
+        if (rgba == null || argb == null || (long) argb.length * 4 > rgba.remaining()) {
+            throw new IllegalArgumentException("Insufficient RGBA output");
+        }
+        for (int color : argb) {
+            rgba.put((byte) (color >>> 16));
+            rgba.put((byte) (color >>> 8));
+            rgba.put((byte) color);
+            rgba.put((byte) (color >>> 24));
+        }
+    }
+
     public static ByteBuffer reconstruct(ByteBuffer rgba, int width, int height,
             int factor, int mode) {
         if (rgba == null || width < 1 || height < 1 || factor < 2
