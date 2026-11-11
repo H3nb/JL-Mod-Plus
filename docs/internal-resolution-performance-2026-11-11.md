@@ -42,6 +42,74 @@ Sources are synthetic; palette, atlas and animation working sets vary
 between games. No claims of a fixed device FPS or universal speedup
 follow from this table.
 
+## Phase-split profiling and working-set experiment
+
+[Run #43010892989](https://github.com/H3nb/JL-Mod-Plus/actions/runs/43010892989)
+measured 12 runs after three warm-ups per image/mode. A 240x320 source
+reconstructed at 3x produced the following median **phase times** (ms):
+
+| Android emulator | Mode | Read/allocate input | Scaler | Create Bitmap | Draw |
+| --- | --- | ---: | ---: | ---: | ---: |
+| API 23 | MMPX | 0.278 | 18.181 | 1.784 | 0.502 |
+| API 23 | xBRZ | 0.281 | 39.206 | 1.945 | 0.513 |
+| API 35 | MMPX | 0.218 | 12.387 | 1.117 | 0.801 |
+| API 35 | xBRZ | 0.216 | 20.645 | 1.225 | 0.786 |
+
+The scaler, not `getPixels` or Bitmap creation, dominates cold source
+work. The read phase includes the input `int[]` allocation; the measured
+draw uses the experimental host canvas target, not a physical-device
+GPU presentation pipeline.
+
+An independent nine-image alternating-source experiment (same 240x320
+source and 16 MiB LRU budget) captured first draw, immediate cache hit
+and subsequent revisit after the other eight sources:
+
+| Emulator | Mode | 3x first / warm / revisit (ms) | 2x first / warm / revisit (ms) |
+| --- | --- | --- | --- |
+| API 23 | MMPX | 20.547 / 0.758 / 20.883 | 24.450 / 0.109 / 0.230 |
+| API 23 | xBRZ | 44.021 / 2.436 / 43.677 | 52.013 / 0.091 / 0.167 |
+| API 35 | MMPX | 19.274 / 0.780 / 14.990 | 17.113 / 0.157 / 0.279 |
+| API 35 | xBRZ | 26.346 / 2.814 / 26.322 | 29.824 / 0.166 / 0.328 |
+
+At 3x, each result requires 2,764,800 bytes (about 2.64 MiB), so a
+16 MiB cache fits at most six such results. Nine require about 23.73 MiB;
+the first source is evicted and is reconstructed upon revisit. At 2x,
+each result requires 1,228,800 bytes (about 1.17 MiB), so all nine fit.
+The 2x run uses a **2x internal target** versus a **4x target** for the
+3x run; its cached draw timings also reflect target size and sampling
+differences. They are not a direct 2x→4x visual-quality comparison.
+
+[Run #43013480213](https://github.com/H3nb/JL-Mod-Plus/actions/runs/43013480213)
+also compared direct scaler costs at 2x and 3x within the same test run:
+
+| Emulator | Mode | 2x scaler median (ms) | 3x scaler median (ms) |
+| --- | --- | ---: | ---: |
+| API 23 | MMPX | 19.419 | 21.736 |
+| API 23 | xBRZ | 46.096 | 50.762 |
+| API 35 | MMPX | 14.325 | 15.989 |
+| API 35 | xBRZ | 24.868 | 27.588 |
+
+Reducing result size by 56% saves roughly 9–11% of direct scaler time
+on these synthetic test sources; neighborhood analysis dominates cost.
+The more material gain for a nine-image working set is fewer evictions.
+This does **not** justify silently reducing enhancement quality for all
+games: 2x→4x and 3x→4x image composition need separately reviewed
+pixel/visual fixtures. For MMPX with Nearest, 2x→4x provides an exact
+integer presentation ratio whereas 3x→4x does not; this is a hypothesis
+about edge uniformity, not yet an accepted production policy.
+
+### Negative micro-optimization result
+
+Commit `8365745e` tested squared color-distance comparisons to avoid
+some square roots in CPU xBRZ. A seeded Java comparison of 2 million
+color pairs detected no predicate differences, and existing unit/native
+tests passed. However [A/B run #43012245687](https://github.com/H3nb/JL-Mod-Plus/actions/runs/43012245687)
+showed **no gain**: xBRZ 240x320/3x median was 42.820 versus 39.206 ms
+on API 23 and 21.388 versus 20.645 ms on API 35; these are separate
+emulator runs, not isolated hardware benchmarks. MMPX control timings
+also varied. The change was **reverted** in `84d37340`; no speculative
+speedup was retained.
+
 ## Working-set implications
 
 An output image of 240x320 at 3x occupies roughly 2.64 MiB in ARGB_8888.
@@ -65,11 +133,11 @@ committed to the project.
    queue merely because one uncalibrated emulator cold sample exceeds
    16.7 ms: deferred fallback needs a repaint/invalidation policy for
    static frames and consistent first-frame appearance.
-3. Next, measure repeated **independent cold sources** after warmup,
-   split `getPixels`, scaler, Bitmap creation and Canvas draw timing,
-   and collect p50/p95/p99 and allocations on physical ARM64.
-   Capture cache hit/eviction rates under representative source
-   reuse rather than raising the budget without working-set evidence.
+3. Phase-split emulator measurements and a nine-source eviction fixture
+   now exist. Next, collect repeated warmups, p50/p95/p99 frame times,
+   allocations and cache hit rates on physical ARM64 with representative
+   MIDlet working sets. Do not increase cache capacity solely from
+   these emulator results.
 4. Compare a capped reconstruction policy against any deferred
    alternative using pixel-output fixtures and actual MIDlet scene
    recordings, then decide whether the quality/runtime tradeoff is worth

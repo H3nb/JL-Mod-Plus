@@ -31,7 +31,12 @@ Immutable LCDUI images and isolated `Graphics.drawRegion` sprite rectangles
 use per-region cache entries, keyed by source identity, generation, rectangle
 and reconstruction factor. Filtering subrectangles cannot sample neighboring
 sprite-atlas tiles. Mutable Image and `Graphics.drawRGB` remain unenhanced
-rather than silently changing guest drawing semantics.
+rather than silently changing guest drawing semantics. Class references
+in the user's private original `Bounce-Tales.jar` and `Le_Mans.jar` show
+that dynamic `drawRGB` content is a real compatibility use case;
+the call frequency/size has not yet been measured at runtime. Caching
+a mutable `int[]` by identity without rechecking its pixels would be
+incorrect; unconditional reconstruction could add per-frame stalls.
 
 A source's reconstruction factor is **not** the internal render target factor.
 The current CPU policy chooses the highest factor from 2× up to min(4×, target
@@ -59,6 +64,15 @@ converted to physical pixels, while getters and guest coordinates remain
 logical. Mutable `Image2D` targets still render at logical resolution.
 **M3G source texture enhancement is not implemented.** Never rescale its
 guest-accessible `Image2D` data merely to force enhancement.
+The native GLES 1.x upload path `m3g_image.inl::m3gBindTextureObject`
+owns one GL texture object per image and handles palette compression,
+dirty updates, generated mip levels and optional source-data release.
+Separate `Texture2D` objects referring to that image may specify
+different `CLAMP`/`REPEAT` wrapping and filtering. Source-border
+reconstruction cannot assume one fixed sampler mode. The OpenGL ES
+texture-size/power-of-two constraints must also remain satisfied.
+A first experimental native path should be limited to unchanged immutable
+source semantics and explicitly qualified sampler/mipmap cases.
 
 Mascot Capsule/Micro3D uses a physical-size EGL pbuffer, with logical camera
 and projection coordinates. Its scissor and readback bounds are physical.
