@@ -163,6 +163,94 @@ public class EnvironmentTextureGlesTest {
         }
     }
 
+    @Test
+    public void textureReuploadsWhenUnsharedContextReusesOldNumericTextureId() {
+        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        int[] version = new int[2];
+        assertTrue(EGL14.eglInitialize(display, version, 0, version, 1));
+        EGLConfig[] configs = new EGLConfig[1];
+        int[] num = new int[1];
+        int[] attrs = {
+                EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                EGL14.EGL_RENDERABLE_TYPE, 4,
+                EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
+                EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_NONE
+        };
+        EGLContext first = EGL14.EGL_NO_CONTEXT;
+        EGLContext second = EGL14.EGL_NO_CONTEXT;
+        EGLSurface surface = EGL14.EGL_NO_SURFACE;
+        int textureId = 0;
+        int restoredId = 0;
+        int program = 0;
+        try {
+            assertTrue(EGL14.eglChooseConfig(display, attrs, 0, configs, 0, 1, num, 0));
+            assertTrue(num[0] > 0);
+            int[] contextAttrs = {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE};
+            first = EGL14.eglCreateContext(display, configs[0],
+                    EGL14.EGL_NO_CONTEXT, contextAttrs, 0);
+            second = EGL14.eglCreateContext(display, configs[0],
+                    EGL14.EGL_NO_CONTEXT, contextAttrs, 0);
+            surface = EGL14.eglCreatePbufferSurface(display, configs[0],
+                    new int[] {EGL14.EGL_WIDTH, SURFACE_SIZE, EGL14.EGL_HEIGHT,
+                            SURFACE_SIZE, EGL14.EGL_NONE}, 0);
+            assertTrue(first != EGL14.EGL_NO_CONTEXT);
+            assertTrue(second != EGL14.EGL_NO_CONTEXT);
+            assertTrue(surface != EGL14.EGL_NO_SURFACE);
+            assertTrue(EGL14.eglMakeCurrent(display, surface, surface, first));
+
+            TextureImpl texture = new TextureImpl(opaqueBmp3x3());
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
+            textureId = texture.getId();
+            assertTrue(GLES20.glIsTexture(textureId));
+
+            assertTrue(EGL14.eglMakeCurrent(display, surface, surface, second));
+            // This is a different, unshared context. Make the old numeric name
+            // valid for a *different* texture so glIsTexture(oldId) is misleading.
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+            ByteBuffer impostor = ByteBuffer.allocateDirect(3 * 3 * 4);
+            for (int i = 0; i < 9; i++) {
+                impostor.put((byte) 0xff).put((byte) 0xff)
+                        .put((byte) 0xff).put((byte) 0xff);
+            }
+            impostor.flip();
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+                    3, 3, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, impostor);
+            assertTrue(GLES20.glIsTexture(textureId));
+
+            restoredId = texture.getId();
+            assertNotEquals("Texture must be recreated for the new EGL context",
+                    textureId, restoredId);
+            program = createProgram();
+            GLES20.glUseProgram(program);
+            GLES20.glViewport(0, 0, SURFACE_SIZE, SURFACE_SIZE);
+            int position = GLES20.glGetAttribLocation(program, "aPosition");
+            FloatBuffer triangle = ByteBuffer.allocateDirect(6 * Float.BYTES)
+                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
+            triangle.put(new float[]{-1, -1, 3, -1, -1, 3}).rewind();
+            GLES20.glVertexAttribPointer(position, 2, GLES20.GL_FLOAT, false, 0, triangle);
+            GLES20.glEnableVertexAttribArray(position);
+            GLES20.glUniform1i(GLES20.glGetUniformLocation(program, "uTexture"), 0);
+            int uv = GLES20.glGetUniformLocation(program, "uUv");
+            assertRgb(0, 0, 0, sample(restoredId, uv, 0.5f, 0.5f,
+                    GLES20.GL_NEAREST));
+            GLES20.glDisableVertexAttribArray(position);
+        } finally {
+            if (program != 0) GLES20.glDeleteProgram(program);
+            if (restoredId != 0) GLES20.glDeleteTextures(1, new int[]{restoredId}, 0);
+            if (textureId != 0) GLES20.glDeleteTextures(1, new int[]{textureId}, 0);
+            EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+            if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface);
+            if (first != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, first);
+            if (second != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, second);
+            EGL14.eglTerminate(display);
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
+        }
+    }
+
     private static int[] sample(int textureId, int uvLocation,
                                 float u, float v, int filter) {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);

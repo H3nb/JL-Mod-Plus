@@ -62,6 +62,8 @@ result limit. Translucent/alpha-cutout model textures, environment maps and
 mutable render targets retain their original texture pixels. Source
 dimensions, palette data and logical UV coordinates remain unchanged.
 Android `Image` textures are explicitly encoded as RGBA bytes before upload.
+Uploaded texture names are scoped to their EGL context, so context loss or
+recreation cannot accidentally reuse another texture with the same numeric GL ID.
 
 ## Memory and compatibility
 

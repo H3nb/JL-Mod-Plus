@@ -28,11 +28,14 @@ import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
 import io.github.h3nb.jlmodplus.graphics.RgbaTextureEnhancer;
 import java.nio.IntBuffer;
 
+import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLContext;
+
 import javax.microedition.lcdui.Image;
 import javax.microedition.shell.AppClassLoader;
 
 public final class TextureImpl {
-	static int sLastId;
+	private EGLContext uploadedContext;
 	private static volatile int enhancementMode;
 	private static volatile int screenTargetScale = 1;
 
@@ -140,14 +143,21 @@ public final class TextureImpl {
 	}
 
 	int getId() {
+		EGLContext currentContext = ((EGL10) EGLContext.getEGL()).eglGetCurrentContext();
+		if (currentContext == null || currentContext.equals(EGL10.EGL_NO_CONTEXT)) {
+			throw new IllegalStateException("Micro3D texture upload requires an EGL context");
+		}
 		int mode = enhancementMode;
 		int targetScale = screenTargetScale;
-		if (!glIsTexture(mTexId)) {
+		// GL names can be reused by unrelated textures in an unshared new context.
+		if (uploadedContext == null || !uploadedContext.equals(currentContext)
+				|| !glIsTexture(mTexId)) {
 			generateId();
 		} else if (!isMutable && uploadedMode == mode && uploadedScale == targetScale) {
 			return mTexId;
 		}
 		loadToGL(mode, targetScale);
+		uploadedContext = currentContext;
 		uploadedMode = mode;
 		uploadedScale = targetScale;
 		return mTexId;
@@ -162,16 +172,13 @@ public final class TextureImpl {
 	}
 
 	private void generateId() {
-		final IntBuffer textureIds = BufferUtils.createIntBuffer(1);
-		synchronized (TextureImpl.class) {
-			while (textureIds.get(0) <= sLastId) {
-				textureIds.rewind();
-				glGenTextures(1, textureIds);
-			}
-			sLastId = textureIds.get(0);
-			mTexId = textureIds.get(0);
-		}
+		IntBuffer textureIds = BufferUtils.createIntBuffer(1);
+		glGenTextures(1, textureIds);
 		Render.checkGlError("glGenTextures");
+		mTexId = textureIds.get(0);
+		if (mTexId == 0) {
+			throw new IllegalStateException("Unable to allocate Micro3D texture");
+		}
 	}
 
 	private void loadToGL(int mode, int targetScale) {
