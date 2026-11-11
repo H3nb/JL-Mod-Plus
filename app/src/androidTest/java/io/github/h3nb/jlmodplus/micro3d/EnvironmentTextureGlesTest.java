@@ -18,6 +18,9 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -52,6 +55,7 @@ public class EnvironmentTextureGlesTest {
         int program = 0;
         int environmentId = 0;
         int modelId = 0;
+        int opaqueId = 0;
         try {
             assertTrue(EGL14.eglChooseConfig(display, configAttrs, 0, configs, 0, 1, numConfigs, 0));
             assertTrue(numConfigs[0] > 0);
@@ -100,6 +104,30 @@ public class EnvironmentTextureGlesTest {
             assertEquals(modelId, model.impl.getId());
             assertRgb(255, 0, 0, sample(modelId, uv,
                     0.25f, 0.25f, GLES20.GL_NEAREST));
+            // Transparent palette[0] must retain its original red RGB and alpha
+            // contract. MMPX is intentionally bypassed for alpha-masked models.
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
+
+            // Prove that reconstruction really reaches GLES for eligible opaque
+            // model textures: MMPX changes the upper-left corner of the center
+            // source texel in this fixture from black to white.
+            TextureImpl opaque = new TextureImpl(opaqueBmp3x3());
+            opaqueId = opaque.getId();
+            assertRgb(0, 0, 0, sample(opaqueId, uv, 0.5f, 0.5f, GLES20.GL_NEAREST));
+            TextureImpl.configureEnhancement(2);
+            TextureImpl.setScreenTargetScale(2);
+            assertEquals(opaqueId, opaque.getId());
+            int[] sourceColors = {
+                    0xff000000, 0xffffffff, 0xff000000,
+                    0xffffffff, 0xff000000, 0xff000000,
+                    0xff000000, 0xff000000, 0xff000000,
+            };
+            int reconstructed = MmpxScaler.scale(sourceColors, 3, 3, 2)[2 * 6 + 2];
+            assertNotEquals(0xff000000, reconstructed);
+            assertRgb((reconstructed >>> 16) & 255, (reconstructed >>> 8) & 255,
+                    reconstructed & 255,
+                    sample(opaqueId, uv, 2.5f / 6f, 2.5f / 6f, GLES20.GL_NEAREST));
             TextureImpl.configureEnhancement(0);
             TextureImpl.setScreenTargetScale(1);
 
@@ -116,6 +144,7 @@ public class EnvironmentTextureGlesTest {
             if (program != 0) GLES20.glDeleteProgram(program);
             if (environmentId != 0) GLES20.glDeleteTextures(1, new int[] {environmentId}, 0);
             if (modelId != 0) GLES20.glDeleteTextures(1, new int[] {modelId}, 0);
+            if (opaqueId != 0) GLES20.glDeleteTextures(1, new int[] {opaqueId}, 0);
             EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
             if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface);
             if (context != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, context);
@@ -172,6 +201,36 @@ public class EnvironmentTextureGlesTest {
         GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
         assertEquals(GLES20.glGetShaderInfoLog(shader), GLES20.GL_TRUE, compiled[0]);
         return shader;
+    }
+
+    private static byte[] opaqueBmp3x3() {
+        final int pixelOffset = 14 + 40 + 256 * 4;
+        byte[] bytes = new byte[pixelOffset + 3 * 4];
+        ByteBuffer header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        header.putShort((short) 0x4d42);
+        header.putInt(bytes.length);
+        header.putInt(0);
+        header.putInt(pixelOffset);
+        header.putInt(40);
+        header.putInt(3);
+        header.putInt(-3); // top-down RGB palette image
+        header.putShort((short) 1);
+        header.putShort((short) 8);
+        header.putInt(0);
+        header.putInt(12);
+        header.putInt(0);
+        header.putInt(0);
+        header.putInt(256);
+        header.putInt(0);
+        for (int i = 0; i < 256; i++) {
+            byte color = (byte) (i == 2 ? 255 : 0);
+            header.put(color).put(color).put(color).put((byte) 0);
+        }
+        byte[] colors = {1, 2, 1, 2, 1, 1, 1, 1, 1};
+        for (int y = 0; y < 3; y++) {
+            System.arraycopy(colors, y * 3, bytes, pixelOffset + y * 4, 3);
+        }
+        return bytes;
     }
 
     private static byte[] indexedBmp2x2() {

@@ -55,9 +55,13 @@ guest-accessible `Image2D` data merely to force enhancement.
 
 Mascot Capsule/Micro3D uses a physical-size EGL pbuffer, with logical camera
 and projection coordinates. Its scissor and readback bounds are physical.
-When an immutable RGBA source texture is first uploaded to GLES, experimental
-MMPX/xBRZ can reconstruct it using the same 2×–4× policy and the reported
-`GL_MAX_TEXTURE_SIZE`. Source data and logical UV coordinates are unchanged;
+When an opaque, immutable **model** source texture is uploaded to GLES,
+experimental MMPX/xBRZ can reconstruct it using the same 2×–4× policy and
+the reported `GL_MAX_TEXTURE_SIZE`. Environment maps and textures containing
+any non-opaque alpha are deliberately bypassed: their palette and alpha-test
+semantics must not be silently changed by source reconstruction. Support for
+safe alpha coverage reconstruction requires separate visual/GLES qualification.
+Source data and logical UV coordinates are unchanged;
 the shader's `uTexSize` remains the logical source size. Mutable render
 textures remain unenhanced at 1×. GPU resource loss can cause a re-upload.
 GPU uploads still require source-to-GPU copies, and Micro3D still performs its
@@ -90,7 +94,8 @@ JVM tests alone do **not** qualify M3G, GLES, alpha, EGL pbuffer use, or
 real MIDlet performance.
 
 Still required before merge: representative ARM64 2D/3D MIDlet tests
-(including the reported Bomberman Atomic viewport and loading-bar cases);
+(the Bomberman 3D loading-bar issue is reported fixed; protect it against
+regression and investigate remaining viewport cases independently);
 API 23/35 instrumented GLES and native M3G coverage; CPU cold-cache latency,
 frame pacing and GPU/RAM measurements; inspection of screenshot mismatches;
 removal of the temporary PR-scoped workflow; and GPL redistribution/license

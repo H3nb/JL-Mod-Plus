@@ -47,6 +47,7 @@ public final class TextureImpl {
 
 	final TextureData image;
 	private final boolean isMutable;
+	private final boolean modelTexture;
 
 	int mTexId = -1;
 	private int uploadedMode = -1;
@@ -55,6 +56,7 @@ public final class TextureImpl {
 	public TextureImpl() {
 		image = new TextureData(256, 256);
 		isMutable = true;
+		modelTexture = false;
 	}
 
 	public TextureImpl(byte[] b) {
@@ -72,6 +74,7 @@ public final class TextureImpl {
 			throw new RuntimeException(e);
 		}
 		isMutable = false;
+		modelTexture = isForModel;
 	}
 
 	public TextureImpl(byte[] b, int offset, int length) throws IOException {
@@ -88,6 +91,7 @@ public final class TextureImpl {
 			throw e;
 		}
 		isMutable = false;
+		modelTexture = true;
 	}
 
 	public TextureImpl(String name) throws IOException {
@@ -109,6 +113,7 @@ public final class TextureImpl {
 			throw new RuntimeException(e);
 		}
 		isMutable = false;
+		modelTexture = isForModel;
 	}
 
 	public TextureImpl(Image image, int x, int y, int width, int height) {
@@ -119,6 +124,7 @@ public final class TextureImpl {
 			throw new IllegalArgumentException();
 		}
 		isMutable = false;
+		modelTexture = true;
 		this.image = new TextureData(width, height);
 		int len = width * height;
 		int[] pixels = new int[len];
@@ -176,12 +182,12 @@ public final class TextureImpl {
 		int width = image.width;
 		int height = image.height;
 		ByteBuffer source = image.getRaster();
-		if (!isMutable && mode >= 2 && targetScale > 1) {
+		if (!isMutable && modelTexture && mode >= 2 && targetScale > 1) {
 			int[] maxTexture = new int[1];
 			glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTexture, 0);
 			int factor = ImageEnhancementPolicy.chooseFactor(
 					width, height, targetScale, maxTexture[0]);
-			if (factor > 1) {
+			if (factor > 1 && RgbaTextureEnhancer.isOpaque(source, width, height)) {
 				try {
 					source = RgbaTextureEnhancer.reconstruct(source, width, height, factor, mode);
 					width *= factor;

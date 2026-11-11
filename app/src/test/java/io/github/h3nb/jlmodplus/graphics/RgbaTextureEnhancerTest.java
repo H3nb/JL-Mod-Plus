@@ -21,6 +21,20 @@ class RgbaTextureEnhancerTest {
         }
     }
 
+    @Test void opaqueEligibilityProtectsBinaryAlphaAndDoesNotMutateBuffer() {
+        ByteBuffer pixels = ByteBuffer.allocateDirect(12);
+        pixels.put(new byte[] {(byte) 255, 0, 0, (byte) 255,
+                0, (byte) 255, 0, (byte) 255,
+                0, 0, (byte) 255, (byte) 255});
+        pixels.position(7);
+        assertTrue(RgbaTextureEnhancer.isOpaque(pixels, 3, 1));
+        assertEquals(7, pixels.position());
+        pixels.put(11, (byte) 0);
+        assertFalse(RgbaTextureEnhancer.isOpaque(pixels, 3, 1));
+        assertFalse(RgbaTextureEnhancer.isOpaque(pixels, 4, 1));
+        assertFalse(RgbaTextureEnhancer.isOpaque(pixels, 0, 1));
+    }
+
     @Test void alphaAwareXbrzNeverCreatesInvisibleSourceColorFringesOnUniformInput() {
         ByteBuffer src = ByteBuffer.allocate(2 * 2 * 4);
         for (int i = 0; i < 4; i++) src.put(new byte[] {0, 0, (byte) 255, (byte) 255});

@@ -7,6 +7,23 @@ import java.nio.ByteBuffer;
 public final class RgbaTextureEnhancer {
     private RgbaTextureEnhancer() {}
 
+    /**
+     * Model texture cutouts depend on exact alpha-test boundaries. Until the
+     * reconstructed alpha coverage is qualified, enhance only opaque sources.
+     * Absolute reads leave the guest's source buffer position unchanged.
+     */
+    public static boolean isOpaque(ByteBuffer rgba, int width, int height) {
+        long count = (long) width * height;
+        if (rgba == null || width < 1 || height < 1
+                || count > Integer.MAX_VALUE / 4L || count * 4L > rgba.limit()) {
+            return false;
+        }
+        for (int i = 0; i < (int) count; i++) {
+            if ((rgba.get(i * 4 + 3) & 0xff) != 255) return false;
+        }
+        return true;
+    }
+
     public static ByteBuffer reconstruct(ByteBuffer rgba, int width, int height,
             int factor, int mode) {
         if (rgba == null || width < 1 || height < 1 || factor < 2
