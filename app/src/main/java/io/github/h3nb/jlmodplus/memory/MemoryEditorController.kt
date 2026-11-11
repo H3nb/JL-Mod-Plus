@@ -1624,6 +1624,8 @@ internal class MemoryEditorComposeController(
             activeOperationId = -1L // No engine operation yet; reject unrelated late completions.
             state = state.copy(busy = true, message = null)
             deleteSavedEntries(saved) { savedError ->
+                // A delayed main-process reply must not affect a newer MIDlet session.
+                if (state.runtimeToken != token) return@deleteSavedEntries
                 activeOperationId = 0L
                 state = state.copy(busy = false)
                 if (state.runtimeToken != token || !canLaunchOperation()) {
