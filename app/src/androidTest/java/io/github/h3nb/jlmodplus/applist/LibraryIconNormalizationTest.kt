@@ -63,7 +63,26 @@ class LibraryIconNormalizationTest {
     }
 
     @Test
-    fun coverUsesEdgeColorToFillLetterboxWithoutChangingArtwork() {
+    fun coverUsesUniformBorderColorToFillLetterboxWithoutChangingArtwork() {
+        val source = makeBitmap(96, 128) { x, y ->
+            val inBorder = x < 12 || x >= 84 || y == 0 || y == 127
+            if (inBorder) {
+                Color.rgb(12, 99, 172)
+            } else {
+                Color.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
+            }
+        }
+        val icon = requireNotNull(normalizeLibraryIcon(source, enhanceIcon = true))
+        assertEquals(LibraryIconPresentationMode.Cover, icon.presentationMode)
+        assertEquals(Color.rgb(12, 99, 172), requireNotNull(icon.tileColor).toArgb())
+        assertEquals(96, icon.bitmap.width)
+        assertEquals(128, icon.bitmap.height)
+        assertEquals(Color.rgb(12, 99, 172), icon.bitmap.asAndroidBitmap().getPixel(0, 0))
+        assertEquals(source.getPixel(48, 64), icon.bitmap.asAndroidBitmap().getPixel(48, 64))
+    }
+
+    @Test
+    fun coverWithMatchingCornersButVariedEdgesKeepsThemeBackground() {
         val source = makeBitmap(96, 128) { x, y ->
             val inCorner = (x < 12 || x >= 84) && (y < 12 || y >= 116)
             if (inCorner) {
@@ -73,13 +92,10 @@ class LibraryIconNormalizationTest {
             }
         }
         val icon = requireNotNull(normalizeLibraryIcon(source, enhanceIcon = true))
-
         assertEquals(LibraryIconPresentationMode.Cover, icon.presentationMode)
-        assertEquals(Color.rgb(12, 99, 172), requireNotNull(icon.tileColor).toArgb())
+        assertNull(icon.tileColor)
         assertEquals(96, icon.bitmap.width)
         assertEquals(128, icon.bitmap.height)
-        assertEquals(Color.rgb(12, 99, 172), icon.bitmap.asAndroidBitmap().getPixel(0, 0))
-        assertEquals(source.getPixel(48, 64), icon.bitmap.asAndroidBitmap().getPixel(48, 64))
     }
 
     @Test

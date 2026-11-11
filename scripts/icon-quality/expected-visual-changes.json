@@ -13,7 +13,14 @@
     ],
     "slotPreviewSha256": "changed"
   },
-  "uniform-corner-cover-poster": {
+  "matching-corners-only-poster": {
+    "slotContentScale": [
+      "Crop",
+      "Fit"
+    ],
+    "slotPreviewSha256": "changed"
+  },
+  "uniform-border-cover-poster": {
     "slotContentScale": [
       "Crop",
       "Fit"

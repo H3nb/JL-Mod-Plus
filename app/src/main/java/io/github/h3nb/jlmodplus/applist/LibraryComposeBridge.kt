@@ -3661,7 +3661,9 @@ internal fun normalizeLibraryIcon(
         fileSource
     }
     val tileColor = when (analysis.presentation.mode) {
-        LibraryIconPresentationMode.Cover -> analysis.edgeFillColor?.toComposeLibraryColor()
+        LibraryIconPresentationMode.Cover -> analysis.edgeFillColor
+            ?.takeIf { fileSource.hasUniformLibraryBorderColor(it) }
+            ?.toComposeLibraryColor()
         LibraryIconPresentationMode.Fallback -> null
         LibraryIconPresentationMode.Backed,
         LibraryIconPresentationMode.Subject,
@@ -3942,7 +3944,7 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
     cornerStarts[cornerRects.size] = totalSamples
     if (totalSamples < LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES) return null
 
-    // There are at most ~100 corner samples. Sorting just those bins avoids a full
+    // At most 196 corner samples are stored. Sorting only these avoids a full
     // 4096-entry histogram and keeps the original lowest-bin tie-breaking behavior.
     quantizedBins.sort(0, totalSamples)
     var dominantBin = quantizedBins[0]
@@ -3997,6 +3999,36 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
         (green / closeSamples).toInt().coerceIn(0, 255),
         (blue / closeSamples).toInt().coerceIn(0, 255),
     )
+}
+
+private fun Bitmap.hasUniformLibraryBorderColor(backgroundColor: Int): Boolean {
+    if (width <= 0 || height <= 0) return false
+    val distanceLimit = LIBRARY_BACKGROUND_EDGE_DISTANCE *
+        LIBRARY_BACKGROUND_EDGE_DISTANCE * 3
+    fun isMatching(pixel: Int): Boolean {
+        return ((pixel ushr 24) and 0xff) >= LIBRARY_BACKGROUND_SAMPLE_ALPHA &&
+            libraryColorDistanceSquared(pixel, backgroundColor) <= distanceLimit
+    }
+
+    // A corner match is not sufficient to fill letterbox bars: sample the complete border
+    // in both orientations so a varied edge falls back to the normal themed container.
+    val row = IntArray(width)
+    val xStep = maxOf(1, width / 16)
+    for (y in intArrayOf(0, height - 1)) {
+        getPixels(row, 0, width, 0, y, width, 1)
+        for (x in 0 until width step xStep) {
+            if (!isMatching(row[x])) return false
+        }
+        if (!isMatching(row[width - 1])) return false
+    }
+    val yStep = maxOf(1, height / 16)
+    for (y in 0 until height step yStep) {
+        if (!isMatching(getPixel(0, y)) || !isMatching(getPixel(width - 1, y))) {
+            return false
+        }
+    }
+    return isMatching(getPixel(0, height - 1)) &&
+        isMatching(getPixel(width - 1, height - 1))
 }
 
 private fun Bitmap.findDominantVisibleColor(): LibraryDominantColorSample? {

@@ -250,9 +250,17 @@ class LibraryIconBenchmarkProbeTest {
         Fixture("poster-cover-96x128", 96, 128) { x, y ->
             AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
         },
-        Fixture("uniform-corner-cover-poster", 96, 128) { x, y ->
+        Fixture("matching-corners-only-poster", 96, 128) { x, y ->
             val inCorner = (x < 12 || x >= 84) && (y < 12 || y >= 116)
             if (inCorner) {
+                AndroidColor.rgb(12, 99, 172)
+            } else {
+                AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
+            }
+        },
+        Fixture("uniform-border-cover-poster", 96, 128) { x, y ->
+            val inBorder = x < 12 || x >= 84 || y == 0 || y == 127
+            if (inBorder) {
                 AndroidColor.rgb(12, 99, 172)
             } else {
                 AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
