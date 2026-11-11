@@ -9,6 +9,8 @@
  */
 package io.github.h3nb.jlmodplus.graphics;
 
+import java.util.Arrays;
+
 /**
  * Style-preserving MMPX pixel-art magnification.
  * The 2x quadrant decisions are preserved at every integer target scale;
@@ -144,6 +146,14 @@ public final class MmpxScaler {
                     }
                 }
                 int at = (y * factor) * stride + x * factor;
+                // No edge changed this cell: skip per-subpixel decisions.
+                if (j == e && k == e && l == e && m == e) {
+                    for (int oy = 0; oy < factor; oy++) {
+                        int offset = at + oy * stride;
+                        Arrays.fill(dst, offset, offset + factor, e);
+                    }
+                    continue;
+                }
                 for (int oy = 0; oy < factor; oy++) {
                     int offset = at + oy * stride;
                     for (int ox = 0; ox < factor; ox++) {

@@ -13,6 +13,8 @@
  */
 package io.github.h3nb.jlmodplus.graphics;
 
+import java.util.Arrays;
+
 /**
  * xBRZ Freescale pixel-art texture reconstruction at integer 2x–10x.
  * Source and destination use unpremultiplied 32-bit ARGB.
@@ -87,6 +89,17 @@ public final class XbrzFreescaleScaler {
                     modes[corner] = along < across && e != f && e != h
                             ? (DOMINANT_THRESHOLD * along < across ? DOMINANT : NORMAL)
                             : NONE;
+                }
+
+                // Pixel art usually has broad non-edge regions. Their exact
+                // shader-equivalent result is the unmodified source color.
+                if (modes[0] == NONE && modes[1] == NONE
+                        && modes[2] == NONE && modes[3] == NONE) {
+                    for (int oy = 0; oy < factor; oy++) {
+                        int offset = (y * factor + oy) * stride + x * factor;
+                        Arrays.fill(output, offset, offset + factor, e);
+                    }
+                    continue;
                 }
 
                 for (int corner = 0; corner < 4; corner++) {

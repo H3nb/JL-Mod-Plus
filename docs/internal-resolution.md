@@ -37,8 +37,9 @@ A source's reconstruction factor is **not** the internal render target factor.
 The current CPU policy chooses the highest factor from 2× up to min(4×, target
 scale) within a 4 MiB RGBA output limit. E.g. 240×320 at a 4× target uses
 3× reconstruction followed by presentation to the 4× destination. If no
-factor qualifies, use Nearest. The existing 16 MiB LRU cache is per
-`BitmapUpscaling` session. Bilinear crops are stored separately at 1×.
+factor qualifies, use Nearest. The LRU cache is per `BitmapUpscaling` session and currently budgets
+4–16 MiB based on one-sixteenth of the maximum Java heap (a conservative
+heuristic, not a native/GPU memory measurement). Bilinear crops are stored separately at 1×.
 Cold-cache CPU reconstruction may still stall the guest; asynchronous work
 and a device-adaptive memory budget remain research topics.
 

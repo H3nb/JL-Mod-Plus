@@ -173,4 +173,18 @@ public class BitmapUpscalingScalersTest {
         assertThrows(IllegalArgumentException.class, () -> XbrzFreescaleScaler.scale(new int[3], 2, 2, 5));
     }
 
+    @Test public void uniformCellsDoNotChangeAcrossEnhancementScales() {
+        for (int color : new int[]{0xff112233, 0x804488cc, 0x00000000}) {
+            int[] pixels = new int[25];
+            java.util.Arrays.fill(pixels, color);
+            for (int factor : new int[]{2, 3, 4, 10}) {
+                for (int output : MmpxScaler.scale(pixels, 5, 5, factor)) {
+                    assertEquals(color, output);
+                }
+                for (int output : XbrzFreescaleScaler.scale(pixels, 5, 5, factor)) {
+                    assertEquals(color, output);
+                }
+            }
+        }
+    }
 }

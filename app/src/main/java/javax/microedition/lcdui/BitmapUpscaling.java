@@ -24,16 +24,23 @@ final class BitmapUpscaling {
     static final int MMPX = 2;
     static final int XBRZ = 3;
 
-    private static final int CACHE_BYTES = 16 * 1024 * 1024;
+    private static final int MAX_CACHE_BYTES = 16 * 1024 * 1024;
+    private static final long MIN_CACHE_BYTES = 4L * 1024L * 1024L;
+
+    // A bounded heap-based heuristic, not a measurement of native/GPU memory.
+    static int cacheBudgetBytes(long heapLimitBytes) {
+        return (int) Math.max(MIN_CACHE_BYTES,
+                Math.min(MAX_CACHE_BYTES, heapLimitBytes / 16L));
+    }
     private static final Paint NEAREST_PAINT = createPaint(false);
     private static final Paint BILINEAR_PAINT = createPaint(true);
 
     private final int mode;
     private final LruCache<RegionKey, Bitmap> cache =
-            new LruCache<RegionKey, Bitmap>(CACHE_BYTES) {
+            new LruCache<RegionKey, Bitmap>(cacheBudgetBytes(Runtime.getRuntime().maxMemory())) {
                 @Override
                 protected int sizeOf(RegionKey key, Bitmap bitmap) {
-                    return bitmap.getByteCount();
+                    return bitmap.getAllocationByteCount();
                 }
             };
     private volatile boolean allocationFailed;
