@@ -3,6 +3,8 @@ package io.github.h3nb.jlmodplus.micro3d;
 
 import static org.junit.Assert.assertEquals;
 
+import java.lang.reflect.Field;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
@@ -51,6 +53,29 @@ public class Micro3dInternalResolutionTest {
             assertEquals(0f, render.env.projMatrix[13], 0.0001f);
         } finally {
             render.release();
+        }
+    }
+    @Test
+    public void offscreenTextureTargetResetsThePreviousHdReconstructionScale() throws Exception {
+        Render render = Render.getRender();
+        Field selectedScale = TextureImpl.class.getDeclaredField("screenTargetScale");
+        selectedScale.setAccessible(true);
+        Image hd = Image.createDisplayTarget(24, 20, 3);
+        try {
+            render.bind(hd.getGraphics());
+            try {
+                assertEquals(3, selectedScale.getInt(null));
+            } finally {
+                render.release();
+            }
+            render.bind(new TextureImpl());
+            try {
+                assertEquals(1, selectedScale.getInt(null));
+            } finally {
+                render.release();
+            }
+        } finally {
+            hd.getBitmap().recycle();
         }
     }
 }

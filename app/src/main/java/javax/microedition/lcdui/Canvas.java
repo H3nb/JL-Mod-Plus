@@ -174,7 +174,7 @@ public abstract class Canvas extends Displayable {
 	protected int width, height;
 	protected int maxHeight;
 	/** Resolved once per Canvas; profile changes apply at MIDlet restart. */
-	private int internalResolutionScale = 1;
+	private volatile int internalResolutionScale = 1;
 
 	protected final int getInternalResolutionScale() {
 		return internalResolutionScale;
@@ -1130,29 +1130,34 @@ public abstract class Canvas extends Displayable {
 		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
 
 		synchronized (bufferLock) {
-			if (offscreenCopy == null) {
-				internalResolutionScale = InternalResolution.resolve(
-						settings.internalResolutionScale, width, height, maxHeight, onWidth, onHeight);
-			}
+			// Keep the session density unless a logical resize would exceed its
+			// physical target limits. Never increase it again before restart.
+			int requestedScale = offscreenCopy == null
+					? settings.internalResolutionScale : internalResolutionScale;
+			internalResolutionScale = InternalResolution.resolve(
+					requestedScale, width, height, maxHeight, onWidth, onHeight);
 			// HD targets and effects consume a tight content bitmap, without softbar padding.
 			boolean tight = internalResolutionScale > 1
 					|| (settings.effects != null && !settings.effects.isEmpty());
-			if (offscreenCopy == null) {
-				offscreenCopy = Image.createDisplayTarget(width,
+			boolean replace = offscreenCopy == null
+					|| offscreenCopy.getPixelScale() != internalResolutionScale
+					|| (tight && (offscreenCopy.getWidth() != width
+							|| offscreenCopy.getHeight() != height));
+			if (replace) {
+				Image previous = offscreenCopy;
+				Image next = Image.createDisplayTarget(width,
 						tight ? height : maxHeight, internalResolutionScale);
-			} else if (tight && (offscreenCopy.getWidth() != width
-					|| offscreenCopy.getHeight() != height
-					|| offscreenCopy.getPixelScale() != internalResolutionScale)) {
-				Image next = Image.createDisplayTarget(width, height, internalResolutionScale);
-				int overlapWidth = Math.min(width, offscreenCopy.getWidth());
-				int overlapHeight = Math.min(height, offscreenCopy.getHeight());
-				if (overlapWidth > 0 && overlapHeight > 0) {
-					int oldScale = offscreenCopy.getPixelScale();
-					int newScale = next.getPixelScale();
-					new android.graphics.Canvas(next.getBitmap()).drawBitmap(
-							offscreenCopy.getBitmap(),
-							new Rect(0, 0, overlapWidth * oldScale, overlapHeight * oldScale),
-							new Rect(0, 0, overlapWidth * newScale, overlapHeight * newScale), null);
+				if (previous != null) {
+					int overlapWidth = Math.min(width, previous.getWidth());
+					int overlapHeight = Math.min(height, previous.getHeight());
+					if (overlapWidth > 0 && overlapHeight > 0) {
+						int oldScale = previous.getPixelScale();
+						int newScale = next.getPixelScale();
+						new android.graphics.Canvas(next.getBitmap()).drawBitmap(
+								previous.getBitmap(),
+								new Rect(0, 0, overlapWidth * oldScale, overlapHeight * oldScale),
+								new Rect(0, 0, overlapWidth * newScale, overlapHeight * newScale), null);
+					}
 				}
 				offscreenCopy = next;
 			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {

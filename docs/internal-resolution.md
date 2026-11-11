@@ -8,7 +8,9 @@ input coordinates, fonts or Java ME graphics API contracts.
 
 - **Internal resolution:** Auto (default), or 1–10×. Auto selects an
   integer factor based on the visible game viewport. The selected factor
-  remains fixed for the Canvas session; restarting applies profile changes.
+  remains fixed for the Canvas session unless a logical resize would exceed
+  the allocation limits; then it is reduced for the remainder of the session.
+  Restarting applies profile changes.
   Built-in profiles use the OpenGL ES graphics backend and Auto density,
   including existing MIDlets still owned by Built-in. This refresh preserves
   Built-in ownership. Custom profiles and named presets keep their saved
@@ -63,7 +65,8 @@ physical pixels back to the LCDUI target; camera and projection coordinates
 remain logical. Opaque immutable **model** textures can be reconstructed for
 GLES upload at 2–4×, bounded by `GL_MAX_TEXTURE_SIZE` and the same 4 MiB
 result limit. Translucent/alpha-cutout model textures, environment maps and
-mutable render targets retain their original texture pixels. Source
+mutable render targets retain their original texture pixels. Offscreen
+render-to-texture targets operate at 1× regardless of the previous HD target. Source
 dimensions, palette data and logical UV coordinates remain unchanged.
 Android `Image` textures are explicitly encoded as RGBA bytes before upload.
 Uploaded texture names are scoped to their EGL context, so context loss or

@@ -191,6 +191,8 @@ public class Render {
 	public synchronized void bind(TextureImpl tex) {
 		targetTexture = tex;
 		targetPixelScale = 1;
+		// Render-to-texture is 1x even after an HD screen target.
+		TextureImpl.setScreenTargetScale(1);
 		int width = tex.getWidth();
 		int height = tex.getHeight();
 		env.width = width;
