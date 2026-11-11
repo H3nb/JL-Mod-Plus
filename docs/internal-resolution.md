@@ -15,7 +15,7 @@ input coordinates, fonts or Java ME graphics API contracts.
   including existing MIDlets still owned by Built-in. This refresh preserves
   Built-in ownership. Custom profiles and named presets keep their saved
   choices; missing fields in those historical profiles retain legacy defaults.
-- **Bitmap upscaling:** Nearest (default), Bilinear, MMPX or xBRZ Freescale.
+- **Bitmap upscaling:** Nearest (default), Bilinear, MMPX or Edge-aware (smooth).
   The selected image reconstruction works on supported immutable sources,
   only when the destination has a physical scale above 1×.
 - **Screen scaling filter and shader effects:** independent presentation
@@ -38,11 +38,11 @@ reconstruction factor. Existing `Graphics` objects consult the active
 session cache at draw time, so retained framebuffers cannot use a previous
 profile's enhancement mode.
 
-Reconstruction is independent of the render target factor. MMPX and xBRZ
+Reconstruction is independent of the render target factor. MMPX and Edge-aware
 use factors from 2× through 4× where the result does not exceed 4 MiB;
 otherwise the original source is drawn using Nearest. For example,
 a 240×320 image with a 4× target is reconstructed at 3× and then composed
-at the target density. MMPX preserves source palette colors; xBRZ
+at the target density. MMPX preserves source palette colors; Edge-aware
 antialiases reconstructed edges with alpha-aware interpolation.
 
 Mutable `Image`, `drawRGB` and ordinary guest off-screen surfaces are not
@@ -93,12 +93,9 @@ archives are retained in
 
 ## Redistribution
 
-MMPX is MIT licensed. The Azahar-derived CPU implementation of xBRZ
-Freescale retains GPL-2.0-or-later licensing, with its source notice and
-license included in the app. Combined APK redistribution requires a compatibility and corresponding-source
-review. In particular, the bundled Nokia M3G code is EPL-1.0 licensed;
-the Eclipse Foundation's [EPL FAQ](https://www.eclipse.org/legal/epl/faq/)
-identifies EPL-1.0/GPL linking combinations as incompatible. No conclusion
-that bundling these components is compliant should be drawn from the
-root Apache-2.0 license or the presence of attribution alone. See
-`THIRD_PARTY_NOTICES.md`.
+MMPX retains its MIT license. The Azahar-derived GPL xBRZ CPU port was
+removed from the distributable source and replaced by a locally authored
+Apache-2.0 edge-aware smoothing mode, which does not implement xBRZ and does
+not reproduce identical pixels. Historical selection value 3 now selects
+the replacement filter. Nokia M3G retains its EPL-1.0 license; this specific
+GPL/EPL combination is no longer bundled. See `THIRD_PARTY_NOTICES.md`.

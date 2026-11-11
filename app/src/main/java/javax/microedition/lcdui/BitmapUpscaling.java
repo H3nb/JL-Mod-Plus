@@ -12,7 +12,7 @@ import java.lang.ref.WeakReference;
 
 import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
 import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
-import io.github.h3nb.jlmodplus.graphics.XbrzFreescaleScaler;
+import io.github.h3nb.jlmodplus.graphics.EdgeAwareScaler;
 
 /**
  * Immutable source-region enhancement for LCDUI's HD screen target.
@@ -22,7 +22,7 @@ final class BitmapUpscaling {
     static final int NEAREST = 0;
     static final int BILINEAR = 1;
     static final int MMPX = 2;
-    static final int XBRZ = 3;
+    static final int EDGE_AWARE = 3;
 
     private static final int MAX_CACHE_BYTES = 16 * 1024 * 1024;
     private static final long MIN_CACHE_BYTES = 4L * 1024L * 1024L;
@@ -52,7 +52,7 @@ final class BitmapUpscaling {
     }
 
     BitmapUpscaling(int mode) {
-        this.mode = mode >= NEAREST && mode <= XBRZ ? mode : NEAREST;
+        this.mode = mode >= NEAREST && mode <= EDGE_AWARE ? mode : NEAREST;
     }
 
     void draw(Canvas canvas, Image source, Rect sourceRect, RectF destination, int targetScale) {
@@ -79,9 +79,9 @@ final class BitmapUpscaling {
         int factor = source.isMutable() ? 1 : ImageEnhancementPolicy.chooseFactor(
                 sourceRect.width(), sourceRect.height(), targetScale, Integer.MAX_VALUE);
         Bitmap enhanced = factor == 1 ? null : prepare(bitmap, sourceRect, factor);
-        // xBRZ already reconstructed its edges; smooth only the remaining
+        // Edge-aware reconstruction is already antialiased; smooth only the remaining
         // non-integer resampling. MMPX retains hard source-palette transitions.
-        Paint paint = mode == XBRZ && factor != targetScale && enhanced != null
+        Paint paint = mode == EDGE_AWARE && factor != targetScale && enhanced != null
                 ? BILINEAR_PAINT : NEAREST_PAINT;
         canvas.drawBitmap(enhanced == null ? bitmap : enhanced,
                 enhanced == null ? sourceRect : null, destination,
@@ -107,7 +107,7 @@ final class BitmapUpscaling {
             bitmap.getPixels(pixels, 0, width, rect.left, rect.top, width, height);
             int[] reconstructed = scale == 1 ? pixels
                     : mode == MMPX ? MmpxScaler.scale(pixels, width, height, scale)
-                    : XbrzFreescaleScaler.scale(pixels, width, height, scale);
+                    : EdgeAwareScaler.scale(pixels, width, height, scale);
             output = Bitmap.createBitmap(reconstructed, width * scale, height * scale,
                     Bitmap.Config.ARGB_8888);
         } catch (OutOfMemoryError error) {

@@ -1,3 +1,8 @@
+> **Historical benchmark.** Results below measured the former GPL-licensed
+> Azahar-derived xBRZ port, which was removed from the production source.
+> The replacement Edge-aware smoothing mode is a different algorithm; no
+> current performance or pixel-equivalence claim follows from these samples.
+
 # Internal-resolution image reconstruction performance — 2026-11-11
 
 This dated study documents temporary PR-only performance instrumentation,
@@ -132,7 +137,7 @@ committed to the project.
 
 1. Preserve the independent Internal Resolution and source
    reconstruction factors. Do not collapse enhancement into
-   whole-frame post-processing or force MMPX/xBRZ to match 10x targets.
+   whole-frame post-processing or force MMPX/Edge-aware to match 10x targets.
 2. Preserve current guest-pixel contracts and the simple synchronous
    cache while gathering stronger data. Do not introduce a background
    queue merely because one uncalibrated emulator cold sample exceeds

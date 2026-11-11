@@ -64,7 +64,7 @@ public final class RgbaTextureEnhancer {
             pixels[i] = a << 24 | r << 16 | g << 8 | b;
         }
         int[] output = mode == 2 ? MmpxScaler.scale(pixels, width, height, factor)
-                : XbrzFreescaleScaler.scale(pixels, width, height, factor);
+                : EdgeAwareScaler.scale(pixels, width, height, factor);
         ByteBuffer packed = ByteBuffer.allocateDirect(output.length * 4);
         putArgbPixels(packed, output);
         packed.flip();

@@ -50,7 +50,7 @@ class RgbaTextureEnhancerTest {
                 RgbaTextureEnhancer.putArgbPixels(ByteBuffer.allocate(3), new int[] {0xff000000}));
     }
 
-    @Test void alphaAwareXbrzNeverCreatesInvisibleSourceColorFringesOnUniformInput() {
+    @Test void alphaAwareReconstructionNeverCreatesInvisibleSourceColorFringesOnUniformInput() {
         ByteBuffer src = ByteBuffer.allocate(2 * 2 * 4);
         for (int i = 0; i < 4; i++) src.put(new byte[] {0, 0, (byte) 255, (byte) 255});
         ByteBuffer result = RgbaTextureEnhancer.reconstruct(src, 2, 2, 3, 3);

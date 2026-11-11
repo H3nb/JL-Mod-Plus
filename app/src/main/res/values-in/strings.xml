@@ -1232,5 +1232,5 @@
     <string name="bitmap_upscaling_nearest">Nearest Neighbor</string>
     <string name="bitmap_upscaling_bilinear">Bilinear</string>
     <string name="bitmap_upscaling_mmpx">MMPX (pixel art)</string>
-    <string name="bitmap_upscaling_xbrz">xBRZ Freescale</string>
+    <string name="bitmap_upscaling_edge_aware">Tepi halus (edge-aware)</string>
 </resources>

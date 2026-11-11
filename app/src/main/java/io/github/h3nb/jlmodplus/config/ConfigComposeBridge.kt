@@ -1077,7 +1077,7 @@ private fun ScreenSection(
                 stringResource(R.string.bitmap_upscaling_nearest),
                 stringResource(R.string.bitmap_upscaling_bilinear),
                 stringResource(R.string.bitmap_upscaling_mmpx),
-                stringResource(R.string.bitmap_upscaling_xbrz),
+                stringResource(R.string.bitmap_upscaling_edge_aware),
             )
             ConfigChoicePreference(
                 title = stringResource(R.string.bitmap_upscaling_title),

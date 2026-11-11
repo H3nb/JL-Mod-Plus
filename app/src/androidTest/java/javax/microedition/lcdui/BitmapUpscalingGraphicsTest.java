@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import javax.microedition.lcdui.game.Sprite;
 import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
 import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
-import io.github.h3nb.jlmodplus.graphics.XbrzFreescaleScaler;
+import io.github.h3nb.jlmodplus.graphics.EdgeAwareScaler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -27,7 +27,7 @@ public class BitmapUpscalingGraphicsTest {
         try {
             for(int factor: new int[]{2,3,5,10}) {
                 for(int mode: new int[]{BitmapUpscaling.NEAREST,BitmapUpscaling.BILINEAR,
-                        BitmapUpscaling.MMPX,BitmapUpscaling.XBRZ}) {
+                        BitmapUpscaling.MMPX,BitmapUpscaling.EDGE_AWARE}) {
                     Graphics.configureBitmapUpscaling(mode);
                     Image target=Image.createDisplayTarget(8,6,factor);
                     try {
@@ -53,10 +53,10 @@ public class BitmapUpscalingGraphicsTest {
         Image source=Image.createRGBImage(raw,2,2,true);
         try {
             for(int factor: new int[]{2,3,4}) {
-                for(int mode: new int[]{BitmapUpscaling.MMPX,BitmapUpscaling.XBRZ}) {
+                for(int mode: new int[]{BitmapUpscaling.MMPX,BitmapUpscaling.EDGE_AWARE}) {
                     int[] expected=mode==BitmapUpscaling.MMPX
                             ?MmpxScaler.scale(raw,2,2,factor)
-                            :XbrzFreescaleScaler.scale(raw,2,2,factor);
+                            :EdgeAwareScaler.scale(raw,2,2,factor);
                     Graphics.configureBitmapUpscaling(mode);
                     Image target=Image.createDisplayTarget(2,2,factor);
                     try {
@@ -75,7 +75,7 @@ public class BitmapUpscalingGraphicsTest {
     }
 
     @Test public void bitmapModesLeaveMutableImageUnmodified() {
-        Graphics.configureBitmapUpscaling(BitmapUpscaling.XBRZ);
+        Graphics.configureBitmapUpscaling(BitmapUpscaling.EDGE_AWARE);
         Image source=Image.createImage(2,2);
         Image target=Image.createDisplayTarget(6,6,4);
         try {

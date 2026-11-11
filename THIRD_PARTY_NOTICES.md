@@ -35,17 +35,10 @@ design and UI architecture; no corresponding source was copied.
   [ITotalJustice/mmpx](https://github.com/ITotalJustice/mmpx/tree/cce39009dbccfab8b70cb1c3bdcbf30a38ea351b)
   (Morgan McGuire and Mara Gagiu, copyright 2020).
   License: `app/src/main/assets/bitmap-scaler-licenses/MMPX-MIT.txt`.
-- `app/src/main/java/io/github/h3nb/jlmodplus/graphics/XbrzFreescaleScaler.java` is a CPU translation of Azahar's
-  [xBRZ Freescale shader](https://github.com/azahar-emu/azahar/blob/6b4e7f2e694514fdf2f72dc20368609b7cd4912e/src/video_core/host_shaders/texture_filtering/xbrz_freescale.frag)
-  (copyright 2023–2026 Citra Emulator Project / Azahar Emulator Project,
-  licensed under **GPL-2.0-or-later**, modified for JL-Mod Plus).
-  It retains the four rotated gradient/edge and line-blending decisions and
-  adapts only the straight-alpha GLSL interpolation to Android-safe
-  alpha-weighted RGB. See
-  `app/src/main/assets/bitmap-scaler-licenses/XBRZ-GPL-2.0.txt`.
-  This adapted implementation retains GPL-2.0-or-later licensing. A combined
-  APK distribution requires a GPL compatibility and source-distribution review;
-  the root Apache-2.0 license does not replace this component's GPL obligations.
+- `app/src/main/java/io/github/h3nb/jlmodplus/graphics/EdgeAwareScaler.java` implements
+  a locally authored corner-aware filter, under Apache-2.0. It replaces the
+  Azahar-derived GPL xBRZ port, is not xBRZ and does not promise matching
+  output. Historical commits retain the previous source attribution.
 - Nearest-neighbor and bilinear use Android Canvas filtering. No external
   interpolation code is bundled for those choices.
 

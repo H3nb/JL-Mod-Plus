@@ -54,7 +54,7 @@ at Canvas creation and changes require a MIDlet restart.
 ## Bitmap upscaling profile setting
 
 `BitmapUpscalingMode` is an additive per-MIDlet profile value: 0 = nearest
-(default), 1 = bilinear, 2 = MMPX, 3 = xBRZ Freescale
+(default), 1 = bilinear, 2 = MMPX, 3 = Edge-aware (smooth)
 (GPL-2.0-or-later Azahar CPU translation). Form edits and
 presets preserve the value. At an internal resolution above 1× it
 reconstructs supported immutable 2D sprites and opaque immutable Micro3D
