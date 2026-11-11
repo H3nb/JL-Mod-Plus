@@ -56,3 +56,15 @@ Cover lifecycle separately: toggling enhancement, switching list/grid sizes and 
 5. **Qualify:** run the targeted tests, Android UI verification and appropriate CI on the final effective diff; perform independent pre-merge review before proposing squash merge to `alpha`.
 
 Do not silently change the icon enhancement default, add new UI controls, introduce a generic image framework, or alter persistent artwork. If the optimization does not improve real workloads without harm, keep the existing implementation rather than add complexity.
+
+## Dedicated A/B quality and normalization benchmark
+
+The experiment adds a focused workflow: [Enhanced Icon Quality Benchmark](../.github/workflows/icon-quality-benchmark.yml). It is automatically triggered by relevant icon/benchmark changes in pull requests targeting alpha; manual dispatch becomes available when the workflow exists on the GitHub default branch. It is **not** part of the normal Android CI or its required checks.
+
+- The workflow checks out exact PR base and head SHAs and compiles the **same** instrumentation probe into two disposable worktrees, including the unmodified baseline production algorithm. It runs both on one API 35 x86_64 emulator. Never infer execution from AndroidTest compilation.
+- Synthetic fixtures cover transparent sprites, solid mattes, photographic gradients, 48-color pixel art, antialiased subjects, sparse artwork, portrait overrides, disabled enhancement, and fully transparent images.
+- The test captures original/normalized PNG, bitmap ARGB hash, classification mode, visual scale, filter, synthetic tile color, and normalization thread-CPU and thread-allocation samples. The companion Python comparator emits JSON/Markdown tables, a local HTML A/B gallery and full raw artifacts.
+- PR runs use **strict pixel and presentation parity**. The comparator fails on differences, missing fixtures, missing images, or malformed measurements. Review mode (for intentional future visual changes) can report differences without treating them as a pass on quality; review the PNGs and intended artwork presentation manually.
+- CPU changes are **descriptive**, not performance gates: emulator scheduling, thermal state, order (baseline first), JIT, and reflection overhead can bias results. These samples exclude decode, Compose frame rendering, interaction FPS, GPU time, PSS, and real device behavior. Use equivalent physical-device trials before claiming product-level performance gains.
+- Download the **enhanced-icon-quality** artifact from the workflow run; inspect **index.html**, **report.json**, **report.md**, **environment.txt**, raw samples, test logs, and source/normalized PNGs. The GitHub step summary also shows median CPU and allocations per fixture.
+- The workflow is an experiment-specific qualification path. Reassess its CI cost and continued usefulness once Enhanced Icons v2 is integrated; do not silently turn noisy emulator timing into a required long-term performance check.

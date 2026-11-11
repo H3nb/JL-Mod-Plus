@@ -1,0 +1,220 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+package io.github.h3nb.jlmodplus.applist
+
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
+import android.os.Debug
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.toArgb
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
+import java.io.FileOutputStream
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.security.MessageDigest
+import org.json.JSONArray
+import org.json.JSONObject
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * Experiment-only probe. Reflection lets the *same* source run against both the original
+ * private normalizer and a refactored internal one without changing baseline production code.
+ * It measures normalization CPU time, not decode, Compose drawing, or whole-app frame timing.
+ */
+@RunWith(AndroidJUnit4::class)
+class LibraryIconBenchmarkProbeTest {
+    private data class Fixture(
+        val id: String,
+        val width: Int,
+        val height: Int,
+        val enhance: Boolean = true,
+        val portrait: Boolean = false,
+        val colorAt: (Int, Int) -> Int,
+    ) {
+        fun pixels() = IntArray(width * height) { i -> colorAt(i % width, i / width) }
+    }
+
+    private class Normalizer {
+        private val owner = Class.forName("io.github.h3nb.jlmodplus.applist.LibraryComposeBridgeKt")
+        private val invoke: Method = owner.declaredMethods.single {
+            it.name.startsWith("normalizeLibraryIcon") &&
+                it.parameterTypes.size == 3 &&
+                it.parameterTypes[0] == Bitmap::class.java &&
+                it.parameterTypes[1] == java.lang.Boolean.TYPE &&
+                it.parameterTypes[2] == java.lang.Boolean.TYPE
+        }.apply { isAccessible = true }
+        private val model = Class.forName("io.github.h3nb.jlmodplus.applist.LibraryNormalizedIcon")
+        private val bitmap = field("bitmap")
+        private val mode = field("presentationMode")
+        private val scale = field("visualScale")
+        private val filter = field("filterQuality")
+        private val tile = field("tileColor")
+
+        private fun field(name: String): Field =
+            model.getDeclaredField(name).apply { isAccessible = true }
+
+        fun run(source: Bitmap, fixture: Fixture): Any =
+            requireNotNull(invoke.invoke(null, source, fixture.enhance, fixture.portrait))
+
+        fun output(result: Any): Bitmap =
+            (bitmap.get(result) as ImageBitmap).asAndroidBitmap()
+
+        fun properties(result: Any, rendered: Bitmap): JSONObject {
+            val tileValue = tile.get(result)
+            val tileArgb: Any = when (tileValue) {
+                null -> JSONObject.NULL
+                is Color -> Integer.toHexString(tileValue.toArgb())
+                else -> error("Unexpected Compose Color representation: " + tileValue.javaClass.name)
+            }
+            return JSONObject()
+                .put("mode", mode.get(result).toString())
+                .put("filter", filter.get(result).toString())
+                .put("scale", (scale.get(result) as Number).toFloat().toDouble())
+                .put("tileArgb", tileArgb)
+                .put("width", rendered.width)
+                .put("height", rendered.height)
+                .put("argbSha256", pixelHash(rendered))
+        }
+    }
+
+    @Test
+    fun collectComparativeArtworkAndTiming() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val outputDir = File(requireNotNull(context.getExternalFilesDir(null)), "icon-benchmark")
+        if (outputDir.exists()) assertTrue("Cannot delete stale probe output", outputDir.deleteRecursively())
+        assertTrue("Cannot create probe output", outputDir.mkdirs())
+        val imageDir = File(outputDir, "images")
+        assertTrue(imageDir.mkdirs())
+
+        val normalizer = Normalizer()
+        val cases = JSONArray()
+        Debug.startAllocCounting()
+        try {
+            for (fixture in fixtures()) {
+                val pixels = fixture.pixels()
+                val source = Bitmap.createBitmap(pixels, fixture.width, fixture.height, Bitmap.Config.ARGB_8888)
+                savePng(source, File(imageDir, fixture.id + "-source.png"))
+                val first = normalizer.run(source, fixture)
+                val normalized = normalizer.output(first)
+                val visual = normalizer.properties(first, normalized)
+                savePng(normalized, File(imageDir, fixture.id + "-normalized.png"))
+                release(source, normalized)
+
+                repeat(WARMUPS) {
+                    val input = Bitmap.createBitmap(pixels, fixture.width, fixture.height, Bitmap.Config.ARGB_8888)
+                    val item = normalizer.run(input, fixture)
+                    release(input, normalizer.output(item))
+                }
+
+                // Explicit stabilization outside the measured interval, not per invocation.
+                Runtime.getRuntime().gc()
+                Thread.sleep(40)
+
+                val cpu = JSONArray()
+                val allocated = JSONArray()
+                repeat(MEASUREMENTS) {
+                    val input = Bitmap.createBitmap(pixels, fixture.width, fixture.height, Bitmap.Config.ARGB_8888)
+                    val allocationBefore = Debug.getThreadAllocSize()
+                    val cpuBefore = Debug.threadCpuTimeNanos()
+                    val item = normalizer.run(input, fixture)
+                    val elapsed = Debug.threadCpuTimeNanos() - cpuBefore
+                    val allocationAfter = Debug.getThreadAllocSize()
+                    require(elapsed > 0L) { "Invalid CPU clock result for " + fixture.id }
+                    cpu.put(elapsed)
+                    if (allocationBefore >= 0 && allocationAfter >= allocationBefore) {
+                        allocated.put(allocationAfter - allocationBefore)
+                    }
+                    release(input, normalizer.output(item))
+                }
+
+                cases.put(
+                    JSONObject()
+                        .put("id", fixture.id)
+                        .put("inputWidth", fixture.width)
+                        .put("inputHeight", fixture.height)
+                        .put("enhance", fixture.enhance)
+                        .put("preserveArtwork", fixture.portrait)
+                        .put("visual", visual)
+                        .put("cpuNs", cpu)
+                        .put("allocatedBytes", allocated)
+                )
+            }
+        } finally {
+            Debug.stopAllocCounting()
+        }
+        File(outputDir, "metrics.json").writeText(
+            JSONObject().put("schema", 1).put("warmups", WARMUPS)
+                .put("measurements", MEASUREMENTS).put("cases", cases).toString(2)
+        )
+    }
+
+    private fun release(input: Bitmap, result: Bitmap) {
+        if (!result.isRecycled) result.recycle()
+        if (input !== result && !input.isRecycled) input.recycle()
+    }
+
+    private fun savePng(source: Bitmap, destination: File) {
+        FileOutputStream(destination).use { check(source.compress(Bitmap.CompressFormat.PNG, 100, it)) }
+    }
+
+    private fun fixtures(): List<Fixture> = listOf(
+        Fixture("transparent-sprite-64", 64, 64) { x, y ->
+            if (x in 21..42 && y in 20..43) AndroidColor.RED else AndroidColor.TRANSPARENT
+        },
+        Fixture("opaque-matte-96", 96, 96) { x, y ->
+            if (x in 28..67 && y in 28..67) AndroidColor.RED else AndroidColor.BLUE
+        },
+        Fixture("colorful-cover-128", 128, 128) { x, y ->
+            AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
+        },
+        Fixture("pixel-art-48-colors", 64, 64) { x, y ->
+            val i = (y * 64 + x) % 48
+            AndroidColor.rgb(((i shr 8) and 15) * 17, ((i shr 4) and 15) * 17, (i and 15) * 17)
+        },
+        Fixture("anti-aliased-128", 128, 128) { x, y ->
+            val radius = kotlin.math.sqrt(((x - 64) * (x - 64) + (y - 64) * (y - 64)).toDouble())
+            val alpha = ((45.0 - radius) * 255.0).toInt().coerceIn(0, 255)
+            AndroidColor.argb(alpha, 241, 157, 36)
+        },
+        Fixture("sparse-horizontal-256", 256, 256) { x, y ->
+            if (x in 17..236 && y in 110..125) AndroidColor.YELLOW else AndroidColor.TRANSPARENT
+        },
+        Fixture("gradient-photo-like-256", 256, 256) { x, y ->
+            AndroidColor.rgb(x, y, ((x + y) / 2).coerceIn(0, 255))
+        },
+        Fixture("portrait-override-60x80", 60, 80, portrait = true) { x, y ->
+            if (x in 10..49 && y in 10..69) AndroidColor.GREEN else AndroidColor.WHITE
+        },
+        Fixture("enhancement-disabled", 64, 64, enhance = false) { x, y ->
+            if (x in 20..43 && y in 20..43) AndroidColor.CYAN else AndroidColor.TRANSPARENT
+        },
+        Fixture("fully-transparent", 64, 64) { _, _ -> AndroidColor.TRANSPARENT },
+    )
+
+    companion object {
+        private const val WARMUPS = 12
+        private const val MEASUREMENTS = 45
+
+        private fun pixelHash(bitmap: Bitmap): String {
+            val row = IntArray(bitmap.width)
+            val digest = MessageDigest.getInstance("SHA-256")
+            val argb = ByteArray(4)
+            for (y in 0 until bitmap.height) {
+                bitmap.getPixels(row, 0, bitmap.width, 0, y, bitmap.width, 1)
+                for (pixel in row) {
+                    argb[0] = (pixel ushr 24).toByte()
+                    argb[1] = (pixel ushr 16).toByte()
+                    argb[2] = (pixel ushr 8).toByte()
+                    argb[3] = pixel.toByte()
+                    digest.update(argb)
+                }
+            }
+            return digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+        }
+    }
+}
