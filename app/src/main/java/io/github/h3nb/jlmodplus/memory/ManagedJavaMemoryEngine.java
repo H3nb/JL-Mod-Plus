@@ -2177,15 +2177,22 @@ final class ManagedJavaMemoryEngine {
         return true;
     }
 
-    /** Release a definition after Delete; it must not consume a bounded runtime slot. */
+    /** Invalidate one runtime binding for a retry without dropping Watch provenance. */
     void releaseSaved(long token, String id) {
+        synchronized (stateLock) {
+            if (isCurrentLocked(token) && id != null) savedBindings.remove(id);
+        }
+    }
+
+    /** Run only after the persistent Saved definition has been deleted. */
+    void forgetSaved(long token, String id) {
         synchronized (stateLock) {
             if (!isCurrentLocked(token) || id == null) return;
             savedBindings.remove(id);
             for (int i = 0; i < watches.count; i++) {
                 String sourceId = watches.savedSourceIds[i];
                 if (id.equals(sourceId) || (sourceId != null && sourceId.startsWith(id + "#"))) {
-                    // Drop only the presentation link; retain the rooted write-safety invariant.
+                    // Keep rooted mutation checks while removing the Saved association.
                     watches.savedSourceIds[i] = null;
                 }
             }

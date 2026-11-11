@@ -1132,7 +1132,7 @@ internal class MemoryEditorComposeController(
                 if (engine != null && token != 0L) {
                     unique.forEach { id ->
                         try {
-                            engine.releaseSaved(token, id)
+                            engine.forgetSaved(token, id)
                         } catch (_: RemoteException) {
                             // Persistent deletion already committed; runtime teardown clears bindings.
                         }

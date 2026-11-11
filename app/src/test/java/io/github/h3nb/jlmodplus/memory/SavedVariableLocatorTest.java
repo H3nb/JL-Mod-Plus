@@ -679,6 +679,12 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.FREEZE_LOCK, linked.freezeModes[0]);
 
             editor.releaseSaved(FIRST, "kept");
+            assertEquals("kept", editor.watchPage(FIRST).savedSourceIds[0],
+                    "A transient resolve retry must not unlink a kept Watch");
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "kept", 0L).code);
+
+            editor.forgetSaved(FIRST, "kept");
             ManagedJavaMemoryEngine.ManagedPage detached = editor.watchPage(FIRST);
             assertEquals(1, detached.ids.length);
             assertEquals(id, detached.ids[0]);
@@ -711,7 +717,7 @@ public class SavedVariableLocatorTest {
                     FIRST, savedCoinsLocator(), "original", 0L).code);
             assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeSaved(
                     FIRST, "original", "Coins", "585858", 0L).code);
-            engine.releaseSaved(FIRST, "original");
+            engine.forgetSaved(FIRST, "original");
             assertNull(engine.watchPage(FIRST).savedSourceIds[0]);
             GuestPlayer previous = root.player;
             root.player = new GuestPlayer();
