@@ -3914,7 +3914,7 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
     val cornerRects = arrayOf(
         Rect(0, 0, patchSize, patchSize),
         Rect(width - patchSize, 0, width, patchSize),
-        Rect(0, height - patchSize, patchSize),
+        Rect(0, height - patchSize, patchSize, height),
         Rect(width - patchSize, height - patchSize, width, height),
     )
     val samplesPerSide = (patchSize - 1) / step + 1
