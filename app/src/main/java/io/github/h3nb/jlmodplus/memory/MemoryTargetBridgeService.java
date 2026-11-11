@@ -312,6 +312,11 @@ public final class MemoryTargetBridgeService extends Service {
             managedEngine.releaseSaved(runtimeToken, savedId);
         }
 
+        @Override
+        public void forgetSaved(long runtimeToken, String savedId) {
+            managedEngine.forgetSaved(runtimeToken, savedId);
+        }
+
 		@Override
 		public void cancelManaged(long runtimeToken, long cancellationEpoch) {
 			managedEngine.cancel(runtimeToken, cancellationEpoch);

@@ -2037,6 +2037,7 @@ final class ManagedJavaMemoryEngine {
                 if (sourceKey != null) {
                     watches.savedSourceIds[existing] = sourceKey;
                     watches.requiresVerifiedPath[existing] = true;
+                    watches.savedLinkVerified[existing] = true;
                 }
             } else if (savedId != null) {
                 if (watches.owners[existing] == null) return failureLocked(
@@ -2046,9 +2047,11 @@ final class ManagedJavaMemoryEngine {
                 if (watches.savedSourceIds[existing] == null) {
                     watches.savedSourceIds[existing] = sourceKey;
                     watches.requiresVerifiedPath[existing] = true;
+                    watches.savedLinkVerified[existing] = true;
                 } else {
                     moved = retargetSavedWatch(existing, proof, actual, slot, current[0]);
                 }
+                watches.savedLinkVerified[existing] = true;
                 // An explicit Watch action may retarget, but must not revive an old Freeze.
                 if (moved && !freeze) {
                     watches.freeze[existing] = false;
@@ -2137,6 +2140,7 @@ final class ManagedJavaMemoryEngine {
                         "Saved Watch owner is unavailable");
                 retargetSavedWatch(existing, proof, actual, binding.slot, expected[0]);
                 watches.requiresVerifiedPath[existing] = true;
+                watches.savedLinkVerified[existing] = true;
                 watches.freeze[existing] = true;
                 watches.freezeValues[existing] = expected[0];
                 watches.freezePaused[existing] = false;
@@ -2151,6 +2155,7 @@ final class ManagedJavaMemoryEngine {
             int index = watches.count - 1;
             watches.savedSourceIds[index] = id;
             watches.requiresVerifiedPath[index] = true;
+            watches.savedLinkVerified[index] = true;
             watches.freeze[index] = true;
             watches.freezeValues[index] = expected[0];
             watches.freezePaused[index] = false;
@@ -2178,8 +2183,8 @@ final class ManagedJavaMemoryEngine {
     }
 
     /**
-     * Release a deleted or invalid Saved binding. A retry must not present a stale Watch
-     * as linked to a newly resolved owner; the session Watch and its guarded Freeze remain.
+     * An invalid binding cannot publicly claim a Watch during passive Saved re-resolve.
+     * Keep its private origin so an explicit Watch/Freeze action can retarget the same row.
      */
     void releaseSaved(long token, String id) {
         synchronized (stateLock) {
@@ -2188,7 +2193,22 @@ final class ManagedJavaMemoryEngine {
             for (int i = 0; i < watches.count; i++) {
                 String sourceId = watches.savedSourceIds[i];
                 if (id.equals(sourceId) || (sourceId != null && sourceId.startsWith(id + "#"))) {
+                    watches.savedLinkVerified[i] = false;
+                }
+            }
+        }
+    }
+
+    /** Clear the origin after permanent Saved deletion, retaining a guarded session Watch. */
+    void forgetSaved(long token, String id) {
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || id == null) return;
+            savedBindings.remove(id);
+            for (int i = 0; i < watches.count; i++) {
+                String sourceId = watches.savedSourceIds[i];
+                if (id.equals(sourceId) || (sourceId != null && sourceId.startsWith(id + "#"))) {
                     watches.savedSourceIds[i] = null;
+                    watches.savedLinkVerified[i] = false;
                 }
             }
         }
@@ -4649,6 +4669,7 @@ final class ManagedJavaMemoryEngine {
 		final long[] freezeValues = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freezePaused = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
         final String[] savedSourceIds = new String[MemoryEngineContract.MAX_WATCH_RECORDS];
+        final boolean[] savedLinkVerified = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
         final boolean[] requiresVerifiedPath = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		int count;
 
@@ -4666,6 +4687,7 @@ final class ManagedJavaMemoryEngine {
 			labels[count] = label;
 			freeze[count] = false;
             savedSourceIds[count] = null;
+            savedLinkVerified[count] = false;
             requiresVerifiedPath[count] = false;
 			freezePaused[count] = false;
 			count++;
@@ -4686,6 +4708,7 @@ final class ManagedJavaMemoryEngine {
 				freezeValues[index] = freezeValues[last];
 				freezePaused[index] = freezePaused[last];
                 savedSourceIds[index] = savedSourceIds[last];
+                savedLinkVerified[index] = savedLinkVerified[last];
                 requiresVerifiedPath[index] = requiresVerifiedPath[last];
 			}
 			ids[last] = 0L;
@@ -4694,6 +4717,7 @@ final class ManagedJavaMemoryEngine {
 			freeze[last] = false;
 			freezePaused[last] = false;
             savedSourceIds[last] = null;
+            savedLinkVerified[last] = false;
             requiresVerifiedPath[last] = false;
 			count = last;
 		}
@@ -4716,7 +4740,8 @@ final class ManagedJavaMemoryEngine {
 				result.freeze[index] = freeze[index];
 				result.freezeValues[index] = freezeValues[index];
 				result.freezePaused[index] = freezePaused[index];
-				result.savedSourceIds[index] = savedSourceIds[index];
+				result.savedSourceIds[index] =
+                        savedLinkVerified[index] ? savedSourceIds[index] : null;
 			}
 			result.revision = 0L;
 			return result;
@@ -4747,6 +4772,7 @@ final class ManagedJavaMemoryEngine {
 			Arrays.fill(freeze, false);
 			Arrays.fill(freezePaused, false);
             Arrays.fill(savedSourceIds, null);
+            Arrays.fill(savedLinkVerified, false);
             Arrays.fill(requiresVerifiedPath, false);
 			count = 0;
 		}

@@ -688,7 +688,7 @@ public class SavedVariableLocatorTest {
                     FIRST, savedCoinsLocator(), "kept", 0L).code);
             assertNull(editor.watchPage(FIRST).savedSourceIds[0],
                     "Resolving Saved must not silently reattach the old session Watch");
-            editor.releaseSaved(FIRST, "kept");
+            editor.forgetSaved(FIRST, "kept");
 
             assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
                     FIRST, savedCoinsLocator(), "kept-again", 0L).code);
