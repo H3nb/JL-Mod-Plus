@@ -139,7 +139,7 @@ public final class XbrzFreescaleScaler {
                     inverseEdgeLength[corner] = factor
                             / (float) Math.sqrt(dx * dx + dy * dy);
                     // GLSL: mix(H, F, step(ColorDist(E,F), ColorDist(E,H))).
-                    neighbors[corner] = distance(e, h) >= distance(e, f) ? f : h;
+                    neighbors[corner] = distanceSquared(e, h) >= distanceSquared(e, f) ? f : h;
                 }
 
                 for (int oy = 0; oy < factor; oy++) {
@@ -208,7 +208,7 @@ public final class XbrzFreescaleScaler {
      * expression keeps RGB/alpha in byte units, with tolerance 30 instead
      * of dividing every component by 255.
      */
-    private static float distance(int a, int b) {
+    private static float distanceSquared(int a, int b) {
         int ar = (a >>> 24) & 255, br = (b >>> 24) & 255;
         float dr = ((a >>> 16) & 255) - ((b >>> 16) & 255);
         float dg = ((a >>> 8) & 255) - ((b >>> 8) & 255);
@@ -217,12 +217,16 @@ public final class XbrzFreescaleScaler {
         float cb = (db - y) * (0.5f / (1f - 0.0593f));
         float cr = (dr - y) * (0.5f / (1f - 0.2627f));
         float alphaDiff = ar - br;
-        return (float) Math.sqrt((ar * br / (255f * 255f))
-                * (y * y + cb * cb + cr * cr) + alphaDiff * alphaDiff);
+        return (ar * br / (255f * 255f))
+                * (y * y + cb * cb + cr * cr) + alphaDiff * alphaDiff;
+    }
+
+    private static float distance(int a, int b) {
+        return (float) Math.sqrt(distanceSquared(a, b));
     }
 
     private static boolean pixelEqual(int a, int b) {
-        return distance(a, b) < PIXEL_EQUAL_TOLERANCE;
+        return distanceSquared(a, b) < PIXEL_EQUAL_TOLERANCE * PIXEL_EQUAL_TOLERANCE;
     }
 
     private static float smoothStep(float start, float end, float value) {
