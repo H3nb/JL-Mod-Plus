@@ -16,6 +16,10 @@ Both settings are per-MIDlet and are intentionally **independent of post-process
 - Host controls, screen scaling, built-in post-processing effects and physical
   screenshot destinations remain separate. Raw screenshots contain HD pixels.
 
+The display's "Screen scaling filter" controls Nearest/Linear sampling of the
+final game image and unspecified shader passes. It is independent of both
+source-image reconstruction and internal render target density.
+
 The internal render target is the output of composition, **not** the source of
 bitmap reconstruction. Scalable text and primitives rasterize directly at
 higher density. For source images, the runtime may reconstruct a cached

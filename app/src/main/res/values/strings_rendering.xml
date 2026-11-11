@@ -23,8 +23,8 @@
     <string name="render_shader_processing">Shader processing</string>
     <string name="render_display_scaling">Display scaling</string>
     <string name="render_display_viewport">Game viewport</string>
-    <string name="render_texture_filtering">Texture filtering</string>
-    <string name="render_texture_filtering_help">Default sampling for the game image and unspecified shader passes.</string>
+    <string name="render_texture_filtering">Screen scaling filter</string>
+    <string name="render_texture_filtering_help">Chooses Nearest or Linear for the finished game image. Effects may override it.</string>
     <string name="render_viewport_note">The viewport size is resolved from the screen layout before shader passes are planned. The arrows show image flow, not the order of layout calculations.</string>
     <string name="render_pipeline_help">See how the game frame reaches the display, and edit each stage.</string>
     <string name="render_no_shader">Choose a preset to change how the game looks.</string>
