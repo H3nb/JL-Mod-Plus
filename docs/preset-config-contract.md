@@ -36,12 +36,17 @@ Runtime swaps never persist those temporary lens overrides to config or preset.
 
 ## Internal resolution profile setting
 
-`InternalResolutionScale` is an additive per-MIDlet profile property that defaults
-to 1 (existing 1x rendering). A value of 0 selects Auto; 1–10 requests a manual
-integer factor. Editor drafts, preset copies, and runtime configuration preserve
-the choice without changing the guest-visible logical dimensions. The runtime
-resolves and bounds the effective factor at Canvas creation; the selected
-factor takes effect on MIDlet restart, not during an active frame.
+New MIDlet profiles created by `ProfileModel.fresh()` (including built-in
+profiles) default to `GraphicsMode = 1` (OpenGL ES) and
+`InternalResolutionScale = 0` (Auto). Auto selects an integer rendering factor
+from the viewport and current allocation limits; values 1–10 request manual
+factors. These are **new-profile defaults**, not migration rules: historical
+serialized profiles missing `GraphicsMode` still decode with the legacy 0
+fallback, and profiles missing `InternalResolutionScale` use the legacy fixed
+1× fallback. Explicit settings and named presets are preserved. Editor drafts,
+preset copies and runtime configuration retain the saved choices without
+changing guest-visible logical dimensions. The effective resolution is fixed
+at Canvas creation and changes require a MIDlet restart.
 
 ## Bitmap upscaling profile setting
 

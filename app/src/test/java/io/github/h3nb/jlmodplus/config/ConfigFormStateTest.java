@@ -24,6 +24,19 @@ import org.junit.jupiter.api.Test;
 import javax.microedition.shell.timing.TimingMode;
 
 public class ConfigFormStateTest {
+
+    @Test
+    public void newProfileGraphicsDefaultsSurviveConfigFormEdits() {
+        ProfileModel fresh = ProfileModel.fresh("factory: value\\n");
+        ConfigFormState form = ConfigFormState.fromProfile(fresh, "")
+                .toBuilder().screenWidth("320").build();
+        assertEquals(1, form.graphicsMode);
+        assertEquals(0, form.internalResolutionScale);
+        ProfileModel saved = form.applyTo(new ProfileModel());
+        assertEquals(1, saved.graphicsMode);
+        assertEquals(0, saved.internalResolutionScale);
+    }
+
 	@Test
 	public void internalResolutionChoiceRoundTripsThroughUnrelatedDraftEdits() {
 		ProfileModel original = new ProfileModel();
