@@ -9,9 +9,10 @@ input coordinates, fonts or Java ME graphics API contracts.
 - **Internal resolution:** Auto (default), or 1–10×. Auto selects an
   integer factor based on the visible game viewport. The selected factor
   remains fixed for the Canvas session; restarting applies profile changes.
-  Newly created MIDlet profiles default to the OpenGL ES graphics backend.
-  Existing saved profiles retain their chosen graphics backend and density;
-  older profiles missing the density field continue to use 1×.
+  Built-in profiles use the OpenGL ES graphics backend and Auto density,
+  including existing MIDlets still owned by Built-in. This refresh preserves
+  Built-in ownership. Custom profiles and named presets keep their saved
+  choices; missing fields in those historical profiles retain legacy defaults.
 - **Bitmap upscaling:** Nearest (default), Bilinear, MMPX or xBRZ Freescale.
   The selected image reconstruction works on supported immutable sources,
   only when the destination has a physical scale above 1×.

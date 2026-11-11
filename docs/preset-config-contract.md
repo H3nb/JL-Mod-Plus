@@ -40,10 +40,13 @@ New MIDlet profiles created by `ProfileModel.fresh()` (including built-in
 profiles) default to `GraphicsMode = 1` (OpenGL ES) and
 `InternalResolutionScale = 0` (Auto). Auto selects an integer rendering factor
 from the viewport and current allocation limits; values 1–10 request manual
-factors. These are **new-profile defaults**, not migration rules: historical
-serialized profiles missing `GraphicsMode` still decode with the legacy 0
-fallback, and profiles missing `InternalResolutionScale` use the legacy fixed
-1× fallback. Explicit settings and named presets are preserved. Editor drafts,
+factors. Existing profiles with verified **Built-in ownership** receive these updated
+rendering defaults on their next configuration preparation. The Built-in marker
+is retained and the two values are saved atomically; this is not a Custom edit.
+Existing Custom profiles and named presets retain their explicit settings.
+Historical serialized profiles without Built-in ownership still decode missing
+`GraphicsMode` as 0 and missing `InternalResolutionScale` as fixed 1×. No global
+schema migration changes those values indiscriminately. Editor drafts,
 preset copies and runtime configuration retain the saved choices without
 changing guest-visible logical dimensions. The effective resolution is fixed
 at Canvas creation and changes require a MIDlet restart.

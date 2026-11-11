@@ -88,11 +88,19 @@ public final class MidletConfigLoadBoundary {
 		if (ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir)) {
 			return preferences.edit().remove(builtInKey).commit();
 		}
-		if (config.vkType == VirtualKeyboard.TYPE_NUMBERS_ARROWS) return true;
-		if (config.vkType != VirtualKeyboard.TYPE_CUSTOM) {
+		if (config.vkType != VirtualKeyboard.TYPE_NUMBERS_ARROWS
+				&& config.vkType != VirtualKeyboard.TYPE_CUSTOM) {
 			return preferences.edit().remove(builtInKey).commit();
 		}
+		// Built-in is explicit ownership, not a one-time copy of factory settings.
+		// Refresh only the two revised rendering defaults. Custom and named presets
+		// have no Built-in marker here and retain their saved choices.
+		boolean changed = config.vkType != VirtualKeyboard.TYPE_NUMBERS_ARROWS
+				|| config.graphicsMode != 1 || config.internalResolutionScale != 0;
+		if (!changed) return true;
 		config.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
+		config.graphicsMode = 1;
+		config.internalResolutionScale = 0;
 		return ProfilesManager.saveConfig(configDir, config);
 	}
 
