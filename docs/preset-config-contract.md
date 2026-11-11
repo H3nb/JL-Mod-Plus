@@ -46,12 +46,13 @@ factor takes effect on MIDlet restart, not during an active frame.
 ## Bitmap upscaling profile setting
 
 `BitmapUpscalingMode` is an additive per-MIDlet profile value: 0 = nearest
-(default), 1 = bilinear, 2 = MMPX, 3 = experimental xBRZ Freescale
+(default), 1 = bilinear, 2 = MMPX, 3 = xBRZ Freescale
 (GPL-2.0-or-later Azahar CPU translation). Form edits and
-presets preserve the value. It applies only to immutable 2D sprites drawn
-to a scaled runtime target, without altering guest-visible image pixels,
-dimensions or post-processing shaders. At 1x the mode has no effect.
-Changes take effect on MIDlet restart.
+presets preserve the value. At an internal resolution above 1× it
+reconstructs supported immutable 2D sprites and opaque immutable Micro3D
+model textures; source pixels, dimensions and post-processing are unchanged.
+Mutable textures, alpha-cutouts and native M3G source textures are not
+reconstructed. Restarting the MIDlet applies profile changes consistently.
 
 ## Persistence and recovery
 

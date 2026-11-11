@@ -72,7 +72,7 @@ dimension of 4096 pixels and a conservative 160 MiB four-plane allocation
 estimate. These limits do **not** guarantee enough device memory.
 Large-source reconstruction is limited separately from frame target density.
 
-The regression suites protect partial GameCanvas flush, negative-stride
+The retained regression suites protect partial GameCanvas flush, negative-stride
 readback, all sprite transforms, atlas isolation, high-density M3G
 viewports, and Micro3D GLES texture upload/alpha semantics. Passing
 instrumentation on Android API 23 and 35 does not replace physical
@@ -85,7 +85,10 @@ archives are retained in
 
 MMPX is MIT licensed. The Azahar-derived CPU implementation of xBRZ
 Freescale retains GPL-2.0-or-later licensing, with its source notice and
-license included in the app. Combined APK redistribution requires review
-of the GPL version, compatible licensing, corresponding-source access,
-and distribution obligations. See `THIRD_PARTY_NOTICES.md`. Do not assume
-that the application's Apache-2.0 root license alone clears this requirement.
+license included in the app. Combined APK redistribution requires a compatibility and corresponding-source
+review. In particular, the bundled Nokia M3G code is EPL-1.0 licensed;
+the Eclipse Foundation's [EPL FAQ](https://www.eclipse.org/legal/epl/faq/)
+identifies EPL-1.0/GPL linking combinations as incompatible. No conclusion
+that bundling these components is compliant should be drawn from the
+root Apache-2.0 license or the presence of attribution alone. See
+`THIRD_PARTY_NOTICES.md`.

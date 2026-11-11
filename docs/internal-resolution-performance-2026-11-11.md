@@ -1,5 +1,10 @@
 # Internal-resolution image reconstruction performance — 2026-11-11
 
+This dated study documents temporary PR-only performance instrumentation,
+removed from the production source after qualification. Original raw results
+remain in the linked GitHub Actions artifacts and source commits; they are
+not part of the permanent Android instrumentation suite.
+
 ## Scope and evidence
 
 PR #230, source commit `9fd8863fafd1411790b44e649ef959cb7d7d7f5e`,
