@@ -94,6 +94,30 @@ Transparent edges and guest `getRGB` readback can still differ from a
 separate 1× rasterization; high-density sampling does not guarantee
 pixel-identical guest reads.
 
+## JSR contracts and private MIDlet corpus
+
+The reference standard set was inspected from the user's ChatGPT Library
+`/J2ME Dev Kit/Documentation/J2ME_Docs.zip`, specifically the MIDP 2.0
+`Graphics`, `Image`, `GameCanvas` and `Sprite` Javadocs and JSR-184
+`Graphics3D`, `Image2D`, `Texture2D`. MIDP partial flush/clip coordinates
+remain logical; JSR-184 viewport geometry is relative to the `Graphics`
+origin when the target is bound. Mutating `Image2D` pixels or changing
+`Texture2D` sampling/wrapping would change the guest API contract.
+
+Static inventory of original user-owned JARs (2026-11-11):
+
+| Library artifact | Inspected resources and API references | Qualification scenario |
+| --- | --- | --- |
+| `Speed_Racer_3D.jar` | 36 M3G assets, 181 PNGs, JSR-184 calls | 3D viewport, sprite/HUD composition |
+| `Le_Mans.jar` | Mascot Capsule v3 calls, six raw data assets | 3D texture sampling and EGL pbuffer |
+| `Bounce-Tales.jar` | 47 PNGs, Nokia UI and game API calls | Sprite atlas clipping, texture-heavy 2D |
+| `Nature-Park.jar` | 105 predominantly small PNGs | Small-pixel-art caching and resizing |
+
+These are **static archive observations**, not proof of execution or
+compatibility. The original MIDlets and firmware stay in private Library;
+no third-party binaries/images are committed to the project. Android tests
+use synthetic pixel arrays to model the same classes of operations.
+
 ## Validation and release gates
 
 The JVM tests check factor selection and CPU RGBA reconstruction. Android
