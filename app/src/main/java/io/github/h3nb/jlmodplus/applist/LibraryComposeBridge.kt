@@ -3661,7 +3661,8 @@ internal fun normalizeLibraryIcon(
         fileSource
     }
     val tileColor = when (analysis.presentation.mode) {
-        LibraryIconPresentationMode.Cover, LibraryIconPresentationMode.Fallback -> null
+        LibraryIconPresentationMode.Cover -> analysis.edgeFillColor?.toComposeLibraryColor()
+        LibraryIconPresentationMode.Fallback -> null
         LibraryIconPresentationMode.Backed,
         LibraryIconPresentationMode.Subject,
         LibraryIconPresentationMode.SafeFit -> {
@@ -3913,36 +3914,50 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
     val cornerRects = arrayOf(
         Rect(0, 0, patchSize, patchSize),
         Rect(width - patchSize, 0, width, patchSize),
-        Rect(0, height - patchSize, patchSize, height),
+        Rect(0, height - patchSize, patchSize),
         Rect(width - patchSize, height - patchSize, width, height),
     )
-    val cornerSamples = Array(cornerRects.size) { ArrayList<Int>() }
-    val bins = IntArray(4096)
+    val samplesPerSide = (patchSize - 1) / step + 1
+    val maxSamples = cornerRects.size * samplesPerSide * samplesPerSide
+    val sampledPixels = IntArray(maxSamples)
+    val quantizedBins = IntArray(maxSamples)
+    val cornerStarts = IntArray(cornerRects.size + 1)
     val row = IntArray(patchSize)
     var totalSamples = 0
 
     cornerRects.forEachIndexed { index, rect ->
+        cornerStarts[index] = totalSamples
         for (y in rect.top until rect.bottom step step) {
             getPixels(row, 0, patchSize, rect.left, y, patchSize, 1)
             for (x in 0 until patchSize step step) {
                 val pixel = row[x]
                 val alpha = (pixel ushr 24) and 0xff
                 if (alpha < LIBRARY_BACKGROUND_SAMPLE_ALPHA) continue
-                cornerSamples[index].add(pixel)
-                bins[quantizeLibraryColor(pixel)]++
+                sampledPixels[totalSamples] = pixel
+                quantizedBins[totalSamples] = quantizeLibraryColor(pixel)
                 totalSamples++
             }
         }
     }
+    cornerStarts[cornerRects.size] = totalSamples
     if (totalSamples < LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES) return null
 
-    var dominantBin = 0
+    // There are at most ~100 corner samples. Sorting just those bins avoids a full
+    // 4096-entry histogram and keeps the original lowest-bin tie-breaking behavior.
+    quantizedBins.sort(0, totalSamples)
+    var dominantBin = quantizedBins[0]
     var dominantCount = 0
-    for (index in bins.indices) {
-        if (bins[index] > dominantCount) {
-            dominantBin = index
-            dominantCount = bins[index]
+    var start = 0
+    while (start < totalSamples) {
+        val bin = quantizedBins[start]
+        var end = start + 1
+        while (end < totalSamples && quantizedBins[end] == bin) end++
+        val count = end - start
+        if (count > dominantCount) {
+            dominantBin = bin
+            dominantCount = count
         }
+        start = end
     }
     if (dominantCount.toFloat() / totalSamples < LIBRARY_BACKGROUND_MIN_DOMINANT_BIN_RATIO) {
         return null
@@ -3956,10 +3971,12 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
     var green = 0L
     var blue = 0L
 
-    for (samples in cornerSamples) {
-        if (samples.size < 2) return null
+    for (index in cornerRects.indices) {
+        val sampleCount = cornerStarts[index + 1] - cornerStarts[index]
+        if (sampleCount < 2) return null
         var cornerClose = 0
-        for (pixel in samples) {
+        for (sampleIndex in cornerStarts[index] until cornerStarts[index + 1]) {
+            val pixel = sampledPixels[sampleIndex]
             if (libraryColorDistanceSquared(pixel, candidate) > distanceLimit) continue
             cornerClose++
             closeSamples++
@@ -3967,7 +3984,7 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
             green += AndroidColor.green(pixel)
             blue += AndroidColor.blue(pixel)
         }
-        if (cornerClose.toFloat() / samples.size < LIBRARY_BACKGROUND_MIN_PER_CORNER_RATIO) {
+        if (cornerClose.toFloat() / sampleCount < LIBRARY_BACKGROUND_MIN_PER_CORNER_RATIO) {
             return null
         }
     }
@@ -4389,7 +4406,6 @@ private fun LibraryIconSlotContent(
     val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
     val containerColor = when {
         isFallback -> colorResource(R.color.library_default_icon_background)
-        icon.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
         else -> icon.tileColor ?: baseContainerColor
     }
 

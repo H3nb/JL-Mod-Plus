@@ -12,5 +12,13 @@
       "Fit"
     ],
     "slotPreviewSha256": "changed"
+  },
+  "uniform-corner-cover-poster": {
+    "slotContentScale": [
+      "Crop",
+      "Fit"
+    ],
+    "tileArgb": "changed",
+    "slotPreviewSha256": "changed"
   }
 }

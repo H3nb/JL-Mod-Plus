@@ -78,3 +78,11 @@ Strict A/B parity now accepts only the precisely declared intentional difference
 ### CPU clock resolution qualification
 
 After the two-pass histogram was skipped for high-confidence Cover images and colored-matte backing, an individual CPU-time observation could be reported as zero by the Android emulator's thread CPU clock, even though a valid normalization completed. The A/B probe now times multiple source-equivalent normalizations in a batch (with all input Bitmap allocations outside the measured CPU interval), divides CPU time and thread-allocation delta by batch size, and records the size per fixture. This prevents zero-duration single calls from invalidating otherwise successful instrumentation. Do not directly compare per-invocation medians across probe versions with different batching; use results produced by the same probe on the same run.
+
+## Real-MIDlet sample inspection and letterbox fill
+
+A local, non-committed inspection of five user-owned JARs identified very small MIDlet icons: Nature Park 12×12 transparent sprite, Townsmen 16×16 opaque pixel art, Age of Empires II Mobile 15×15 opaque icon, Paris Nights 32×32 full image, and Bounce Tales 46×48 partly transparent art. These binaries and extracted icons are **not** added to the public repository. This inspection is evidence of source diversity, not proof of how each game looks after Compose rendering.
+
+For an uncropped `Cover` fit in a differently shaped slot, a neutral theme-colored letterbox may clash with a solid source border. When the existing strict uniform-corner detector provides an edge color, the candidate uses that color as the tile background; otherwise it preserves the theme container color. The normalized bitmap remains unchanged. A synthetic 96×128 varied-cover fixture with four matching corner patches protects this targeted behavior in strict A/B checks.
+
+The corner sampler now stores the small number of visible sampled colors in contiguous primitive arrays, sorts only their quantized bins, and preserves the original smallest-bin tie break. This avoids a 4096-entry histogram and boxed per-corner samples, without changing the sample coordinates, color thresholds, or matte rejection rules. Benchmark CPU and thread allocations are compared against the same alpha baseline.

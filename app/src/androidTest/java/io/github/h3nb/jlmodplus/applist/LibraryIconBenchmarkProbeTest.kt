@@ -75,6 +75,9 @@ class LibraryIconBenchmarkProbeTest {
         fun output(result: Any): Bitmap =
             (bitmap.get(result) as ImageBitmap).asAndroidBitmap()
 
+        fun tileBackgroundArgb(result: Any): Int =
+            (tile.get(result) as? Color)?.toArgb() ?: AndroidColor.rgb(235, 235, 235)
+
         fun slotContentScale(result: Any, rendered: Bitmap, fixture: Fixture): String {
             if (mode.get(result).toString() != "Cover") return "Fit"
             val crop = cropPolicy?.invoke(
@@ -128,7 +131,9 @@ class LibraryIconBenchmarkProbeTest {
                 val first = normalizer.run(source, fixture)
                 val normalized = normalizer.output(first)
                 val slotContentScale = normalizer.slotContentScale(first, normalized, fixture)
-                val slot = renderSlotPreview(normalized, fixture.slotAspectRatio, slotContentScale)
+                val slot = renderSlotPreview(
+                    normalized, fixture.slotAspectRatio, slotContentScale, normalizer.tileBackgroundArgb(first),
+                )
                 val visual = normalizer.properties(first, normalized, slotContentScale, slot)
                 savePng(normalized, File(imageDir, fixture.id + "-normalized.png"))
                 savePng(slot, File(imageDir, fixture.id + "-slot.png"))
@@ -199,6 +204,7 @@ class LibraryIconBenchmarkProbeTest {
         image: Bitmap,
         slotAspectRatio: Float,
         contentScale: String,
+        backgroundArgb: Int,
     ): Bitmap {
         // A deterministic representation of Fit/Crop geometry; the live Compose
         // Card shape, background and GPU resampling still need device visual review.
@@ -206,7 +212,7 @@ class LibraryIconBenchmarkProbeTest {
         val height = (width / slotAspectRatio).roundToInt().coerceAtLeast(1)
         val preview = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(preview)
-        canvas.drawColor(AndroidColor.rgb(235, 235, 235))
+        canvas.drawColor(backgroundArgb)
         val xRatio = width.toFloat() / image.width
         val yRatio = height.toFloat() / image.height
         val scale = if (contentScale == "Crop") maxOf(xRatio, yRatio) else minOf(xRatio, yRatio)
@@ -243,6 +249,14 @@ class LibraryIconBenchmarkProbeTest {
         },
         Fixture("poster-cover-96x128", 96, 128) { x, y ->
             AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
+        },
+        Fixture("uniform-corner-cover-poster", 96, 128) { x, y ->
+            val inCorner = (x < 12 || x >= 84) && (y < 12 || y >= 116)
+            if (inCorner) {
+                AndroidColor.rgb(12, 99, 172)
+            } else {
+                AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
+            }
         },
         Fixture("square-cover-portrait-slot", 128, 128, slotAspectRatio = 0.75f) { x, y ->
             AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
