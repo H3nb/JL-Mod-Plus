@@ -102,6 +102,75 @@ public class BitmapUpscalingPhaseProbeTest {
         }
     }
 
+
+    @Test public void compareReconstructionFactorTwoAndThree() {
+        final int width = 240, height = 320;
+        int[] source = pixels(width, height, 17);
+        for (int mode : new int[] {BitmapUpscaling.MMPX, BitmapUpscaling.XBRZ}) {
+            for (int factor : new int[] {2, 3}) {
+                long[] durations = new long[SAMPLES];
+                for (int iteration = -WARMUP; iteration < SAMPLES; iteration++) {
+                    long start = System.nanoTime();
+                    int[] output = mode == BitmapUpscaling.MMPX
+                            ? MmpxScaler.scale(source, width, height, factor)
+                            : XbrzFreescaleScaler.scale(source, width, height, factor);
+                    long duration = System.nanoTime() - start;
+                    assertEquals(width * height * factor * factor, output.length);
+                    if (iteration >= 0) durations[iteration] = duration;
+                }
+                String result = "factor mode="
+                        + (mode == BitmapUpscaling.MMPX ? "MMPX" : "xBRZ")
+                        + " source=240x320 factor=" + factor
+                        + " result_bytes=" + ((long) width * height * factor * factor * 4)
+                        + " median_us=" + percentile(durations, 50)
+                        + " p90_us=" + percentile(durations, 90);
+                Log.i(TAG, result);
+                System.out.println(TAG + " " + result);
+            }
+        }
+    }
+
+    @Test public void characterizeTwoXCacheWorkingSet() {
+        final int width = 240, height = 320;
+        ArrayList<Image> sources = new ArrayList<>();
+        Image target = Image.createDisplayTarget(width, height, 2);
+        int budget = BitmapUpscaling.cacheBudgetBytes(Runtime.getRuntime().maxMemory());
+        try {
+            for (int i = 0; i < 9; i++) {
+                sources.add(Image.createRGBImage(pixels(width, height, i * 31),
+                        width, height, true));
+            }
+            for (int mode : new int[] {BitmapUpscaling.MMPX, BitmapUpscaling.XBRZ}) {
+                Graphics.configureBitmapUpscaling(mode);
+                Graphics graphics = target.getGraphics();
+                long started = System.nanoTime();
+                graphics.drawImage(sources.get(0), 0, 0, Graphics.TOP | Graphics.LEFT);
+                long firstNs = System.nanoTime() - started;
+                started = System.nanoTime();
+                graphics.drawImage(sources.get(0), 0, 0, Graphics.TOP | Graphics.LEFT);
+                long warmNs = System.nanoTime() - started;
+                for (int i = 1; i < sources.size(); i++) {
+                    graphics.drawImage(sources.get(i), 0, 0, Graphics.TOP | Graphics.LEFT);
+                }
+                started = System.nanoTime();
+                graphics.drawImage(sources.get(0), 0, 0, Graphics.TOP | Graphics.LEFT);
+                long revisitNs = System.nanoTime() - started;
+                String result = "churn2 mode="
+                        + (mode == BitmapUpscaling.MMPX ? "MMPX" : "xBRZ")
+                        + " source=240x320 factor=2 sources=9 budget_bytes=" + budget
+                        + " first_us=" + firstNs / 1000
+                        + " warm_us=" + warmNs / 1000
+                        + " revisit_us=" + revisitNs / 1000;
+                Log.i(TAG, result);
+                System.out.println(TAG + " " + result);
+            }
+        } finally {
+            Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+            for (Image source : sources) source.getBitmap().recycle();
+            target.getBitmap().recycle();
+        }
+    }
+
     @Test public void characterizeEvictionUnderLargeImageWorkingSet() {
         final int width = 240, height = 320, factor = 3;
         final long outputBytes = (long) width * height * factor * factor * 4;
