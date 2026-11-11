@@ -26,6 +26,7 @@ class IconQualityCompareTest(unittest.TestCase):
                 "enhance": True,
                 "preserveArtwork": False,
                 "slotAspectRatio": 1.0,
+                "batchSize": 8,
                 "visual": {
                     "mode": "Subject",
                     "filter": "0",

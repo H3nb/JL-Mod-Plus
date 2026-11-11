@@ -147,19 +147,29 @@ class LibraryIconBenchmarkProbeTest {
 
                 val cpu = JSONArray()
                 val allocated = JSONArray()
+                // Individual icon calls may fall below the emulator's CPU-clock granularity.
+                // Precreate each batch, then measure only normalization and divide per icon.
+                val batchSize = if (!fixture.enhance) 512 else if (fixture.id == "fully-transparent") 128 else 8
                 repeat(MEASUREMENTS) {
-                    val input = Bitmap.createBitmap(pixels, fixture.width, fixture.height, Bitmap.Config.ARGB_8888)
+                    val inputs = Array(batchSize) {
+                        Bitmap.createBitmap(pixels, fixture.width, fixture.height, Bitmap.Config.ARGB_8888)
+                    }
+                    val outputs = arrayOfNulls<Any>(batchSize)
                     val allocationBefore = Debug.getThreadAllocSize()
                     val cpuBefore = Debug.threadCpuTimeNanos()
-                    val item = normalizer.run(input, fixture)
+                    for (index in inputs.indices) {
+                        outputs[index] = normalizer.run(inputs[index], fixture)
+                    }
                     val elapsed = Debug.threadCpuTimeNanos() - cpuBefore
                     val allocationAfter = Debug.getThreadAllocSize()
-                    require(elapsed > 0L) { "Invalid CPU clock result for " + fixture.id }
-                    cpu.put(elapsed)
+                    require(elapsed > 0L) { "CPU clock did not advance over a batch for " + fixture.id }
+                    cpu.put(elapsed / batchSize)
                     if (allocationBefore >= 0 && allocationAfter >= allocationBefore) {
-                        allocated.put(allocationAfter - allocationBefore)
+                        allocated.put((allocationAfter - allocationBefore) / batchSize)
                     }
-                    release(input, normalizer.output(item))
+                    for (index in inputs.indices) {
+                        release(inputs[index], normalizer.output(requireNotNull(outputs[index])))
+                    }
                 }
 
                 cases.put(
@@ -170,6 +180,7 @@ class LibraryIconBenchmarkProbeTest {
                         .put("enhance", fixture.enhance)
                         .put("preserveArtwork", fixture.portrait)
                         .put("slotAspectRatio", fixture.slotAspectRatio.toDouble())
+                        .put("batchSize", batchSize)
                         .put("visual", visual)
                         .put("cpuNs", cpu)
                         .put("allocatedBytes", allocated)

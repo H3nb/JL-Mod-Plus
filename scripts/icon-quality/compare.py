@@ -38,6 +38,8 @@ def load(root, name):
         for k in VISUAL:
             if k not in case["visual"]:
                 raise ValueError("Missing visual property " + k + " for " + ident)
+        if not isinstance(case.get("batchSize"), int) or not 1 <= case["batchSize"] <= 1024:
+            raise ValueError("Invalid batchSize for " + ident)
         for key in ("cpuNs", "allocatedBytes"):
             values = case[key]
             if not isinstance(values, list) or any(type(v) is not int or v < 0 for v in values):
@@ -94,7 +96,7 @@ def compare(root, mode, baseline_sha, candidate_sha, expected_changes=None):
     ]
     for ident in base:
         a, b = base[ident], head[ident]
-        for key in ("inputWidth", "inputHeight", "enhance", "preserveArtwork", "slotAspectRatio"):
+        for key in ("inputWidth", "inputHeight", "enhance", "preserveArtwork", "slotAspectRatio", "batchSize"):
             if a[key] != b[key]:
                 raise ValueError("Input mismatch: " + ident + " / " + key)
         source_paths = [root / v / "images" / (ident + "-source.png") for v in ("baseline", "candidate")]
