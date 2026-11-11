@@ -882,14 +882,13 @@ internal class MemoryEditorComposeController(
                     nextSavedResolveAt = 0L
                     state = state.copy(
                         savedVariables = rows.map { it.first },
-                        savedSelection = state.savedSelection.intersect(rows.map { it.first.id }.toSet()),
                         savedValues = emptyMap(),
                         savedError = null,
                     )
                     refreshSavedLive()
                 } else {
                     state = state.copy(
-                        savedVariables = emptyList(), savedSelection = emptySet(),
+                        savedVariables = emptyList(),
                         savedValues = emptyMap(),
                         savedError = records.exceptionOrNull()?.message ?: "Unable to load Saved definitions",
                     )
@@ -1122,7 +1121,6 @@ internal class MemoryEditorComposeController(
         savedLocators = savedLocators.filterKeys { it !in removed }
         state = state.copy(
             savedVariables = state.savedVariables.filterNot { it.id in removed },
-            savedSelection = state.savedSelection - removed,
             savedValues = state.savedValues.filterKeys { it !in removed },
         )
         runIpc {
@@ -1155,7 +1153,6 @@ internal class MemoryEditorComposeController(
                             savedCatalogDirty = false
                             state = state.copy(
                                 savedVariables = rows.map { it.first },
-                                savedSelection = state.savedSelection.intersect(retained),
                                 savedValues = state.savedValues.filterKeys { it in retained },
                                 message = if (unique.size == 1) "Saved variable removed"
                                     else "Saved variables removed",
@@ -1173,20 +1170,6 @@ internal class MemoryEditorComposeController(
                     ?: if (result.isFailure) "Unknown Saved removal error" else null)
             }
         }
-    }
-
-    override fun toggleSavedSelection(id: String) {
-        if (!state.variablesTab || state.savedVariables.none { it.id == id }) return
-        state = state.copy(selected = emptySet(), savedSelection = if (id in state.savedSelection)
-            state.savedSelection - id else state.savedSelection + id)
-    }
-
-    override fun selectAllSaved() {
-        state = state.copy(selected = emptySet(), savedSelection = state.savedVariables.map { it.id }.toSet())
-    }
-
-    override fun clearSavedSelection() {
-        state = state.copy(savedSelection = emptySet())
     }
 
     private fun renameSaved(id: String, name: String) {
@@ -1217,7 +1200,6 @@ internal class MemoryEditorComposeController(
                     savedCatalogDirty = false
                     state = state.copy(
                         savedVariables = rows.map { it.first },
-                        savedSelection = state.savedSelection.intersect(retained),
                         savedValues = state.savedValues.filterKeys { it in retained },
                         message = "Saved variable renamed", messageIsError = false,
                     )
@@ -1238,7 +1220,7 @@ internal class MemoryEditorComposeController(
         savedRefreshPending = false
         savedEditId = null
         savedEditReady = false
-        state = state.copy(variablesTab = variables, savedSelection = emptySet(), selected = emptySet())
+        state = state.copy(variablesTab = variables, selected = emptySet())
         if (variables) refreshSavedVariables()
     }
 
@@ -1257,7 +1239,6 @@ internal class MemoryEditorComposeController(
             return
         }
         state = state.copy(
-            savedSelection = if (state.variablesTab) emptySet() else state.savedSelection,
             selected = state.selected.toMutableSet().also { selected ->
                 if (!selected.add(id)) selected.remove(id)
             },
@@ -1267,14 +1248,7 @@ internal class MemoryEditorComposeController(
     override fun selectVisible() {
         val ids = if (state.variablesTab) state.watches.map(MemoryWatchRow::id)
         else state.results.map(MemoryResultRow::id)
-        state = state.copy(selected = ids.toSet(), savedSelection = emptySet())
-    }
-
-    override fun selectWatchIds(ids: List<Long>) {
-        if (!state.variablesTab || state.busy || ids.size > MemoryEngineContract.MAX_WATCH_RECORDS) return
-        val available = state.watches.mapTo(HashSet()) { it.id }
-        if (ids.any { it !in available }) return
-        state = state.copy(selected = ids.toSet(), savedSelection = emptySet())
+        state = state.copy(selected = ids.toSet())
     }
 
     override fun invertVisible() {
@@ -1481,11 +1455,6 @@ internal class MemoryEditorComposeController(
         val row = state.watches.singleOrNull { it.savedSourceId == savedId } ?: return
         if (row.freezeMode < 0) return
         launchOperation { engine, token -> engine.clearFreeze(token, longArrayOf(row.id)) }
-    }
-
-    override fun stopSavedWatch(savedId: String) {
-        val row = state.watches.singleOrNull { it.savedSourceId == savedId } ?: return
-        launchOperation { engine, token -> engine.removeWatch(token, longArrayOf(row.id)) }
     }
 
     override fun freezeListSaved(id: String, expectedValue: String) {

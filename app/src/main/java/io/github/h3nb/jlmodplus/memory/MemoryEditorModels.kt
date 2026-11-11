@@ -494,7 +494,6 @@ internal data class MemoryEditorUiState(
     val watches: List<MemoryWatchRow> = emptyList(),
     val savedVariables: List<SavedVariableRow> = emptyList(),
     val savedValues: Map<String, SavedVariableRuntimeValue> = emptyMap(),
-    val savedSelection: Set<String> = emptySet(),
     val savedError: String? = null,
     val selected: Set<Long> = emptySet(),
     val variablesTab: Boolean = false,
@@ -544,9 +543,6 @@ internal interface MemoryEditorActions {
     fun renameSavedVariable(id: String, name: String) = Unit
     fun deleteSavedVariable(id: String) = Unit
     fun deleteSavedVariables(ids: List<String>) = Unit
-    fun toggleSavedSelection(id: String) = Unit
-    fun selectAllSaved() = Unit
-    fun clearSavedSelection() = Unit
     fun inspectSavedVariable(id: String) = Unit
     fun saveInspectorVariable(name: String, relativeOffset: Int) = Unit
     fun watchInspectorVariable(relativeOffset: Int) = Unit
@@ -555,7 +551,6 @@ internal interface MemoryEditorActions {
                                 freezeAfter: Boolean = false) = Unit
     fun toggleSelection(id: Long)
     fun selectVisible()
-    fun selectWatchIds(ids: List<Long>) = Unit
     fun invertVisible()
     fun clearSelection()
     fun editSelected(value: String, type: Int)
@@ -597,7 +592,6 @@ internal interface MemoryEditorActions {
     fun freezeSelected(mode: Int, first: String, second: String)
     fun clearFreezeSelected()
     fun clearSavedWatchFreeze(savedId: String) = Unit
-    fun stopSavedWatch(savedId: String) = Unit
     fun keepListWatch(id: Long, name: String) = Unit
     fun unkeepListSaved(id: String) = Unit
     fun freezeListSaved(id: String, expectedValue: String) = Unit
