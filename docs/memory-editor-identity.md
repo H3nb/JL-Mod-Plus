@@ -31,11 +31,13 @@ optional Watch-page metadata. List can fold only this verified link into one
 entry; independent targets remain separate even when labels or values match.
 Keeping an already active Watch adopts its exact verified owner/slot and
 preserves any existing Freeze. Stopping Keep keeps a valid Watch in the
-current session. Temporary Saved binding invalidation for a retry keeps the association intact.
-After Saved deletion commits, the engine removes its association
-from retained session Watches (including Saved-origin Inspector siblings), while
-retaining rooted ancestry checks on future edits and Freeze ticks. Keeping the same
-Watch again can reuse its runtime identity without restarting Freeze. Removing a
+current session. When a Saved binding becomes invalid or its definition is
+deleted, the engine detaches its association from retained session Watches
+(including Saved-origin Inspector siblings). A later Saved locator resolution
+must not automatically claim an old Watch for a different runtime owner.
+The Watches retain rooted ancestry checks on future edits and Freeze ticks;
+an explicit Keep on the same verified owner can reuse Watch identity without
+restarting Freeze. Removing a
 List entry requests both the Saved deletion and the session Watch/Freeze removal;
 backend failures are surfaced independently after both operations settle.
 

@@ -679,17 +679,16 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.FREEZE_LOCK, linked.freezeModes[0]);
 
             editor.releaseSaved(FIRST, "kept");
-            assertEquals("kept", editor.watchPage(FIRST).savedSourceIds[0],
-                    "A transient resolve retry must not unlink a kept Watch");
-            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
-                    FIRST, savedCoinsLocator(), "kept", 0L).code);
-
-            editor.forgetSaved(FIRST, "kept");
             ManagedJavaMemoryEngine.ManagedPage detached = editor.watchPage(FIRST);
             assertEquals(1, detached.ids.length);
             assertEquals(id, detached.ids[0]);
             assertNull(detached.savedSourceIds[0]);
             assertEquals(MemoryEngineContract.FREEZE_LOCK, detached.freezeModes[0]);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "kept", 0L).code);
+            assertNull(editor.watchPage(FIRST).savedSourceIds[0],
+                    "Resolving Saved must not silently reattach the old session Watch");
+            editor.releaseSaved(FIRST, "kept");
 
             assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
                     FIRST, savedCoinsLocator(), "kept-again", 0L).code);
@@ -717,11 +716,18 @@ public class SavedVariableLocatorTest {
                     FIRST, savedCoinsLocator(), "original", 0L).code);
             assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeSaved(
                     FIRST, "original", "Coins", "585858", 0L).code);
-            engine.forgetSaved(FIRST, "original");
-            assertNull(engine.watchPage(FIRST).savedSourceIds[0]);
             GuestPlayer previous = root.player;
             root.player = new GuestPlayer();
             previous.coins = 42;
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.readSaved(FIRST, "original").code);
+            engine.releaseSaved(FIRST, "original");
+            assertNull(engine.watchPage(FIRST).savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "original", 0L).code);
+            assertEquals("585858", engine.readSaved(FIRST, "original").value);
+            assertNull(engine.watchPage(FIRST).savedSourceIds[0],
+                    "Rebinding Saved to the replacement root cannot claim the old Watch");
             assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                     engine.freezeTick(FIRST, 0L).code);
             assertEquals(42, previous.coins);

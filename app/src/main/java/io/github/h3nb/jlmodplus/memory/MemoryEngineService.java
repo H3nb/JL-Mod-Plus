@@ -294,13 +294,6 @@ public final class MemoryEngineService extends Service {
             catch (RemoteException ignored) { /* Runtime teardown also discards bindings. */ }
         }
 
-        @Override public void forgetSaved(long token, String savedId) {
-            IMemoryTargetBridge bridge = target;
-            if (bridge == null || !isTargetToken(token)) return;
-            try { bridge.forgetSaved(token, savedId); }
-            catch (RemoteException ignored) { /* Runtime teardown also discards bindings. */ }
-        }
-
 		@Override
 		public Bundle getCapabilities() {
 			Bundle result = new Bundle();

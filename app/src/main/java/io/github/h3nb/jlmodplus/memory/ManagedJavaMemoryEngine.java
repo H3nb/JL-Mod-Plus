@@ -2177,22 +2177,17 @@ final class ManagedJavaMemoryEngine {
         return true;
     }
 
-    /** Invalidate one runtime binding for a retry without dropping Watch provenance. */
+    /**
+     * Release a deleted or invalid Saved binding. A retry must not present a stale Watch
+     * as linked to a newly resolved owner; the session Watch and its guarded Freeze remain.
+     */
     void releaseSaved(long token, String id) {
-        synchronized (stateLock) {
-            if (isCurrentLocked(token) && id != null) savedBindings.remove(id);
-        }
-    }
-
-    /** Run only after the persistent Saved definition has been deleted. */
-    void forgetSaved(long token, String id) {
         synchronized (stateLock) {
             if (!isCurrentLocked(token) || id == null) return;
             savedBindings.remove(id);
             for (int i = 0; i < watches.count; i++) {
                 String sourceId = watches.savedSourceIds[i];
                 if (id.equals(sourceId) || (sourceId != null && sourceId.startsWith(id + "#"))) {
-                    // Keep rooted mutation checks while removing the Saved association.
                     watches.savedSourceIds[i] = null;
                 }
             }
