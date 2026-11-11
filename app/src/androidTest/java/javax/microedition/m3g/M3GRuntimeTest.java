@@ -231,6 +231,8 @@ public class M3GRuntimeTest {
 		assertEquals(0x00ffffff,
 				hd.getBitmap().getPixel(0, 0) & RGB_MASK);
 
+		for (int scale : new int[]{2, 5}) verifyTranslatedHdViewport(scale);
+
 		// Rebinding an ordinary MIDlet image must not retain the HD scale.
 		Image normal = Image.createImage(32, 24);
 		g3d.bindTarget(normal.getGraphics(), true, Graphics3D.TRUE_COLOR);
@@ -244,6 +246,41 @@ public class M3GRuntimeTest {
 			g3d.releaseTarget();
 		}
 	}
+
+
+    private void verifyTranslatedHdViewport(int scale) {
+        Image image = Image.createDisplayTarget(40, 36, scale);
+        Graphics graphics = image.getGraphics();
+        graphics.translate(3, 4);
+        graphics.setClip(2, 3, 12, 10);
+        Background color = createBackground(0xff2e4761);
+        try {
+            g3d.bindTarget(graphics, true, Graphics3D.TRUE_COLOR);
+            try {
+                assertEquals(2, g3d.getViewportX());
+                assertEquals(3, g3d.getViewportY());
+                assertEquals(12, g3d.getViewportWidth());
+                assertEquals(10, g3d.getViewportHeight());
+
+                g3d.setViewport(3, 4, 6, 5);
+                assertEquals(3, g3d.getViewportX());
+                assertEquals(4, g3d.getViewportY());
+                graphics.translate(5, 5);
+                assertEquals(3, g3d.getViewportX());
+                assertEquals(4, g3d.getViewportY());
+                g3d.clear(color);
+            } finally {
+                g3d.releaseTarget();
+            }
+            // The target clip and viewport remain in guest coordinates,
+            // while the native backing bitmap uses physical device pixels.
+            assertEquals(0x2e4761, image.getBitmap().getPixel(
+                    9 * scale, 10 * scale) & RGB_MASK);
+            assertEquals(0xffffff, image.getBitmap().getPixel(0, 0) & RGB_MASK);
+        } finally {
+            image.getBitmap().recycle();
+        }
+    }
 
 	@Test
 	public void image2DTargetClearRoundTripsThroughBackgroundRendering() {
