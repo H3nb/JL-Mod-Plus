@@ -31,6 +31,24 @@ mkdir -p "$(dirname "$base/$probe")"
 cp "$head/$probe" "$base/$probe"
 chmod +x "$base/gradlew" "$head/gradlew"
 
+# On a cold dedicated runner Gradle Plugin Portal can publish a POM whose transitive
+# artifacts are absent from its mirror. Resolve Maven coordinates from Maven Central
+# first, identically in both disposable checkouts; never touch committed settings.
+for settings in "$base/settings.gradle.kts" "$head/settings.gradle.kts"; do
+  python3 - "$settings" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+original = p.read_text()
+old = "        gradlePluginPortal()\n        google()\n        mavenCentral()"
+new = "        mavenCentral()\n        google()\n        gradlePluginPortal()"
+if original.count(old) != 1:
+    raise SystemExit("Unexpected plugin repository configuration in " + str(p))
+p.write_text(original.replace(old, new))
+PY
+done
+
+
 for variant in baseline candidate; do
   checkout="$root/$variant"
   directory="$out/$variant"
