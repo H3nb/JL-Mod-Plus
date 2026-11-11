@@ -131,4 +131,95 @@ public class InternalResolutionGraphicsTest {
     }
 
 
+
+    @Test public void partialFlushKeepsUnchangedPixelsAcrossDifferentBackingScales() {
+        Image hd = Image.createDisplayTarget(12, 8, 4);
+        Image ordinary = Image.createImage(12, 8);
+        Image target = Image.createDisplayTarget(12, 8, 4);
+        try {
+            Graphics src = hd.getGraphics();
+            src.setColor(RED);
+            src.fillRect(4, 2, 3, 2);
+            ordinary.getGraphics().flush(hd, 5, 2, 1, 2);
+            assertEquals(RED, ordinary.getBitmap().getPixel(5, 2) & RGB);
+            assertEquals(RED, ordinary.getBitmap().getPixel(5, 3) & RGB);
+            assertEquals(RGB, ordinary.getBitmap().getPixel(4, 2) & RGB);
+            assertEquals(RGB, ordinary.getBitmap().getPixel(6, 2) & RGB);
+
+            Graphics destSource = ordinary.getGraphics();
+            destSource.setColor(GREEN);
+            destSource.fillRect(7, 5, 2, 1);
+            target.getGraphics().flush(ordinary, 7, 5, 2, 1);
+            for (int y = 20; y < 24; y++) {
+                for (int x = 28; x < 36; x++) {
+                    assertEquals(GREEN, target.getBitmap().getPixel(x, y) & RGB);
+                }
+            }
+            assertEquals(RGB, target.getBitmap().getPixel(24, 20) & RGB);
+            assertEquals(RGB, target.getBitmap().getPixel(36, 20) & RGB);
+        } finally {
+            hd.getBitmap().recycle();
+            ordinary.getBitmap().recycle();
+            target.getBitmap().recycle();
+        }
+    }
+
+    @Test public void hdReadbackSupportsNegativeScanlengthInLogicalCoordinates() {
+        Image hd = Image.createDisplayTarget(4, 3, 5);
+        try {
+            Graphics g = hd.getGraphics();
+            g.setColor(RED);
+            g.fillRect(0, 0, 2, 1);
+            g.setColor(BLUE);
+            g.fillRect(0, 1, 2, 1);
+            int[] out = new int[8];
+            hd.getRGB(out, 5, -3, 0, 0, 2, 2);
+            assertEquals(RED, out[5] & RGB);
+            assertEquals(RED, out[6] & RGB);
+            assertEquals(BLUE, out[2] & RGB);
+            assertEquals(BLUE, out[3] & RGB);
+        } finally {
+            hd.getBitmap().recycle();
+        }
+    }
+
+    @Test public void rotatedSourceRegionsPreserveLogicalCoverageAcrossTargetScales() {
+        int[] colors = {
+                0xffff0000, 0xff00ff00,
+                0xff0000ff, 0xffffff00,
+                0xffff00ff, 0xff00ffff
+        };
+        Image spriteSheet = Image.createRGBImage(colors, 2, 3, true);
+        int[] transforms = {Sprite.TRANS_NONE, Sprite.TRANS_MIRROR,
+                Sprite.TRANS_ROT90, Sprite.TRANS_ROT180, Sprite.TRANS_ROT270,
+                Sprite.TRANS_MIRROR_ROT90, Sprite.TRANS_MIRROR_ROT180,
+                Sprite.TRANS_MIRROR_ROT270};
+        Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+        try {
+            for (int transform : transforms) {
+                Image reference = Image.createImage(8, 8);
+                Image hd = Image.createDisplayTarget(8, 8, 4);
+                try {
+                    reference.getGraphics().drawRegion(spriteSheet, 0, 0, 2, 3,
+                            transform, 2, 2, Graphics.TOP | Graphics.LEFT);
+                    hd.getGraphics().drawRegion(spriteSheet, 0, 0, 2, 3,
+                            transform, 2, 2, Graphics.TOP | Graphics.LEFT);
+                    int[] a = new int[64], b = new int[64];
+                    reference.getRGB(a, 0, 8, 0, 0, 8, 8);
+                    hd.getRGB(b, 0, 8, 0, 0, 8, 8);
+                    for (int i = 0; i < 64; i++) {
+                        assertEquals("Sprite transform " + transform + ", pixel " + i,
+                                a[i], b[i]);
+                    }
+                } finally {
+                    reference.getBitmap().recycle();
+                    hd.getBitmap().recycle();
+                }
+            }
+        } finally {
+            spriteSheet.getBitmap().recycle();
+            Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+        }
+    }
+
 }
