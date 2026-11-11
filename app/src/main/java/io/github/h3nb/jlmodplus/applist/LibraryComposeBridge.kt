@@ -3798,31 +3798,46 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
         maxContentDimension.toFloat()
     val cornerBackgroundColor = findUniformCornerBackgroundColor()
     val framedCropBounds = cornerBackgroundColor?.let(::findFramedArtworkCropBounds)
-    val dominantColor = findDominantVisibleColor()
+    val cornerBackingColor = cornerBackgroundColor?.takeUnless { it.isLibraryNeutralMatte() }
+    val preliminaryInput = LibraryIconPresentationInput(
+        transparentRatio = transparentRatio,
+        boundsCoverage = boundsCoverage,
+        occupancy = occupancy,
+        aspectFill = aspectFill,
+        hasFramedCrop = framedCropBounds != null,
+        hasBackingColor = cornerBackingColor != null,
+        highColorDiversity = distinctColorCount > LIBRARY_PIXEL_ART_MAX_COLORS,
+        sourceAspectRatio = width.toFloat() / height.toFloat(),
+    )
+    val preliminaryPresentation = decideLibraryIconPresentation(preliminaryInput)
+
+    // Cover never consumes the dominant color. A colored corner already establishes both
+    // backing classification and tile color, so the two-pass histogram is also redundant.
+    val dominantColor = if (
+        preliminaryPresentation.mode == LibraryIconPresentationMode.Cover ||
+        cornerBackingColor != null
+    ) {
+        null
+    } else {
+        findDominantVisibleColor()
+    }
     val dominantBackingColor = dominantColor?.takeIf { sample ->
         sample.populationRatio >= LIBRARY_BACKING_MIN_DOMINANT_RATIO &&
             boundsCoverage >= LIBRARY_BACKING_MIN_BOUNDS_COVERAGE &&
             occupancy >= LIBRARY_BACKING_MIN_OCCUPANCY &&
             transparentRatio <= LIBRARY_BACKING_MAX_TRANSPARENT_RATIO
     }?.color
-    val backingColor = when {
-        cornerBackgroundColor != null && !cornerBackgroundColor.isLibraryNeutralMatte() ->
-            cornerBackgroundColor
-        dominantBackingColor != null -> dominantBackingColor
-        else -> null
+    val backingColor = cornerBackingColor ?: dominantBackingColor
+    val presentation = if (
+        preliminaryPresentation.mode == LibraryIconPresentationMode.Cover ||
+        cornerBackingColor != null
+    ) {
+        preliminaryPresentation
+    } else {
+        decideLibraryIconPresentation(
+            preliminaryInput.copy(hasBackingColor = backingColor != null),
+        )
     }
-    val presentation = decideLibraryIconPresentation(
-        LibraryIconPresentationInput(
-            transparentRatio = transparentRatio,
-            boundsCoverage = boundsCoverage,
-            occupancy = occupancy,
-            aspectFill = aspectFill,
-            hasFramedCrop = framedCropBounds != null,
-            hasBackingColor = backingColor != null,
-            highColorDiversity = distinctColorCount > LIBRARY_PIXEL_ART_MAX_COLORS,
-            sourceAspectRatio = width.toFloat() / height.toFloat(),
-        ),
-    )
     val semiTransparentRatio = semiTransparentPixels.toFloat() / visiblePixels.toFloat()
     val pixelArt = maxOf(width, height) <= LIBRARY_PIXEL_ART_MAX_DIMENSION &&
         distinctColorCount <= LIBRARY_PIXEL_ART_MAX_COLORS &&
