@@ -216,8 +216,10 @@ public class Image {
 						|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE))) {
 			throw new IllegalArgumentException("Invalid display target size");
 		}
-		int copyWidth = Math.min(width, bounds.right);
-		int copyHeight = Math.min(height, bounds.bottom);
+		int previousWidth = bounds.right;
+		int previousHeight = bounds.bottom;
+		int copyWidth = Math.min(width, previousWidth);
+		int copyHeight = Math.min(height, previousHeight);
 		Bitmap next = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
 		next.eraseColor(Color.WHITE);
 		if (copyWidth > 0 && copyHeight > 0) {
@@ -230,7 +232,9 @@ public class Image {
 		bounds.right = width;
 		bounds.bottom = height;
 		if (retainedGraphics != null) {
-			for (Graphics retained : retainedGraphics.keySet()) retained.onDisplayTargetResized();
+			for (Graphics retained : retainedGraphics.keySet()) {
+				retained.onDisplayTargetResized(previousWidth, previousHeight);
+			}
 		}
 	}
 

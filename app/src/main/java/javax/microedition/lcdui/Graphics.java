@@ -142,11 +142,19 @@ public class Graphics implements
 		canvas.save();
 	}
 
-	void onDisplayTargetResized() {
+	void onDisplayTargetResized(int previousWidth, int previousHeight) {
 		Rect previousClip = new Rect(clip);
+		boolean fullCanvasClip = previousClip.left + translateX == 0
+				&& previousClip.top + translateY == 0
+				&& previousClip.right + translateX == previousWidth
+				&& previousClip.bottom + translateY == previousHeight;
 		resetCanvasState();
 		canvas.clipRect(image.getBounds());
 		canvas.translate(translateX, translateY);
+		if (fullCanvasClip) {
+			previousClip.set(-translateX, -translateY,
+					image.getWidth() - translateX, image.getHeight() - translateY);
+		}
 		canvas.clipRect(previousClip);
 		canvas.getClipBounds(clip);
 	}
