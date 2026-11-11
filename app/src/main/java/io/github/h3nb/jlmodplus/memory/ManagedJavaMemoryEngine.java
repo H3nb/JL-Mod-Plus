@@ -2034,7 +2034,10 @@ final class ManagedJavaMemoryEngine {
                 }
                 watches.append(id, owner, slot, current[0], "");
                 existing = watches.count - 1;
-                if (sourceKey != null) watches.savedSourceIds[existing] = sourceKey;
+                if (sourceKey != null) {
+                    watches.savedSourceIds[existing] = sourceKey;
+                    watches.requiresVerifiedPath[existing] = true;
+                }
             } else if (savedId != null) {
                 if (watches.owners[existing] == null) return failureLocked(
                         MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
@@ -2042,6 +2045,7 @@ final class ManagedJavaMemoryEngine {
                 boolean moved = false;
                 if (watches.savedSourceIds[existing] == null) {
                     watches.savedSourceIds[existing] = sourceKey;
+                    watches.requiresVerifiedPath[existing] = true;
                 } else {
                     moved = retargetSavedWatch(existing, proof, actual, slot, current[0]);
                 }
@@ -2132,6 +2136,7 @@ final class ManagedJavaMemoryEngine {
                         MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Saved Watch owner is unavailable");
                 retargetSavedWatch(existing, proof, actual, binding.slot, expected[0]);
+                watches.requiresVerifiedPath[existing] = true;
                 watches.freeze[existing] = true;
                 watches.freezeValues[existing] = expected[0];
                 watches.freezePaused[existing] = false;
@@ -2145,6 +2150,7 @@ final class ManagedJavaMemoryEngine {
             watches.append(candidateId, owner, binding.slot, expected[0], label == null ? "" : label);
             int index = watches.count - 1;
             watches.savedSourceIds[index] = id;
+            watches.requiresVerifiedPath[index] = true;
             watches.freeze[index] = true;
             watches.freezeValues[index] = expected[0];
             watches.freezePaused[index] = false;
@@ -2174,7 +2180,15 @@ final class ManagedJavaMemoryEngine {
     /** Release a definition after Delete; it must not consume a bounded runtime slot. */
     void releaseSaved(long token, String id) {
         synchronized (stateLock) {
-            if (isCurrentLocked(token) && id != null) savedBindings.remove(id);
+            if (!isCurrentLocked(token) || id == null) return;
+            savedBindings.remove(id);
+            for (int i = 0; i < watches.count; i++) {
+                String sourceId = watches.savedSourceIds[i];
+                if (id.equals(sourceId) || (sourceId != null && sourceId.startsWith(id + "#"))) {
+                    // Drop only the presentation link; retain the rooted write-safety invariant.
+                    watches.savedSourceIds[i] = null;
+                }
+            }
         }
     }
 
@@ -2426,7 +2440,7 @@ final class ManagedJavaMemoryEngine {
 				eligible++;
 				Object strongOwner = owner == null ? null : owner.strongOwner();
 				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)
-                        || (watches.savedSourceIds[watchIndex] != null &&
+                        || (watches.requiresVerifiedPath[watchIndex] &&
                             inspectPath(token, owner, strongOwner, slot).status !=
                             MemoryEngineContract.PATH_VERIFIED)) {
 					watches.freezePaused[watchIndex] = true;
@@ -2880,7 +2894,7 @@ final class ManagedJavaMemoryEngine {
 				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"The managed owner was collected or rebound before the mutation could commit");
 			}
-			if (watchIndex >= 0 && watches.savedSourceIds[watchIndex] != null
+			if (watchIndex >= 0 && watches.requiresVerifiedPath[watchIndex]
 					&& inspectPath(token, owner, batch.strongOwners[index],
 						batch.slots[index]).status != MemoryEngineContract.PATH_VERIFIED) {
 				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
@@ -4633,6 +4647,7 @@ final class ManagedJavaMemoryEngine {
 		final long[] freezeValues = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freezePaused = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
         final String[] savedSourceIds = new String[MemoryEngineContract.MAX_WATCH_RECORDS];
+        final boolean[] requiresVerifiedPath = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		int count;
 
 		int indexOf(long id) {
@@ -4649,6 +4664,7 @@ final class ManagedJavaMemoryEngine {
 			labels[count] = label;
 			freeze[count] = false;
             savedSourceIds[count] = null;
+            requiresVerifiedPath[count] = false;
 			freezePaused[count] = false;
 			count++;
 		}
@@ -4668,6 +4684,7 @@ final class ManagedJavaMemoryEngine {
 				freezeValues[index] = freezeValues[last];
 				freezePaused[index] = freezePaused[last];
                 savedSourceIds[index] = savedSourceIds[last];
+                requiresVerifiedPath[index] = requiresVerifiedPath[last];
 			}
 			ids[last] = 0L;
 			owners[last] = null;
@@ -4675,6 +4692,7 @@ final class ManagedJavaMemoryEngine {
 			freeze[last] = false;
 			freezePaused[last] = false;
             savedSourceIds[last] = null;
+            requiresVerifiedPath[last] = false;
 			count = last;
 		}
 
@@ -4727,6 +4745,7 @@ final class ManagedJavaMemoryEngine {
 			Arrays.fill(freeze, false);
 			Arrays.fill(freezePaused, false);
             Arrays.fill(savedSourceIds, null);
+            Arrays.fill(requiresVerifiedPath, false);
 			count = 0;
 		}
 	}

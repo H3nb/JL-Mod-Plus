@@ -115,8 +115,9 @@ internal class MemoryEditorComposeController(
     private data class PendingOperationFeedback(
         val kind: OperationFeedbackKind,
         val resultCountBefore: Long,
+        val savedRemovalError: String? = null,
     )
-    private enum class OperationFeedbackKind { NEXT_SCAN, REVERT_REMOVE }
+    private enum class OperationFeedbackKind { NEXT_SCAN, REVERT_REMOVE, LIST_REMOVE }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationProgress(
@@ -193,6 +194,10 @@ internal class MemoryEditorComposeController(
                 pendingInspectorRefresh = null
                 activeOperationId = 0L
                 val operationFeedbackMessage = operationMessage(resultCode, details)
+                val listRemoval = if (feedback?.kind == OperationFeedbackKind.LIST_REMOVE) {
+                    memoryListRemovalOutcome(feedback.savedRemovalError,
+                        if (succeeded) null else operationFeedbackMessage ?: "Unknown Watch removal error")
+                } else null
                 val uiSuccessMessage = when {
                     succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN ->
                         context.getString(
@@ -215,6 +220,7 @@ internal class MemoryEditorComposeController(
                     else -> null
                 }
                 val displayMessage = when {
+                    listRemoval != null -> listRemoval.message
                     feedback?.kind == OperationFeedbackKind.REVERT_REMOVE && uiSuccessMessage != null ->
                         uiSuccessMessage
                     !succeeded -> operationFeedbackMessage
@@ -229,7 +235,7 @@ internal class MemoryEditorComposeController(
                     scanBytesTotal = 0L,
                     resultCount = resultCount,
                     message = displayMessage,
-                    messageIsError = !succeeded && displayMessage != null,
+                    messageIsError = listRemoval?.isError ?: (!succeeded && displayMessage != null),
                 )
 
                 when {
@@ -1097,19 +1103,18 @@ internal class MemoryEditorComposeController(
 
     override fun renameSavedVariable(id: String, name: String) = renameSaved(id, name)
     override fun deleteSavedVariable(id: String) = deleteSavedVariables(listOf(id))
-    override fun deleteSavedVariables(ids: List<String>) {
+    override fun deleteSavedVariables(ids: List<String>) = deleteSavedEntries(ids)
+
+    private fun deleteSavedEntries(ids: List<String>, onComplete: ((String?) -> Unit)? = null) {
         val authority = savedAuthority ?: return
         val token = state.runtimeToken
         val engine = service
         val current = state.savedVariables.map { it.id }.toSet()
         val unique = ids.distinct()
-        // The authority deletes by record ID; the locator catalog can be empty during reload.
         if (!state.variablesTab || unique.isEmpty() || unique.size > 64 ||
             unique.any { it !in current }) return
 
-        // Invalidate queued polling *before* the delete enters the serial IPC worker.
-        // Otherwise a queued retry can rebind an ID after releaseSaved has run but
-        // before the authority's response reaches the UI thread.
+        // Prevent queued polling from rebinding IDs while deletion is in flight.
         val removed = unique.toSet()
         val generation = ++savedGeneration
         savedRefreshPending = false
@@ -1129,40 +1134,43 @@ internal class MemoryEditorComposeController(
                         try {
                             engine.releaseSaved(token, id)
                         } catch (_: RemoteException) {
-                            // Persistent delete already committed; runtime teardown clears bindings.
+                            // Persistent deletion already committed; runtime teardown clears bindings.
                         }
                     }
                 }
                 rows
             }
             post {
-                if (destroyed || !state.variablesTab || state.runtimeToken != token) return@post
-                if (generation != savedGeneration) {
-                    if (result.isFailure) {
-                        state = state.copy(message = result.exceptionOrNull()?.message,
-                            messageIsError = true)
+                if (state.variablesTab && state.runtimeToken == token) {
+                    if (generation != savedGeneration) {
+                        if (result.isFailure) {
+                            state = state.copy(message = result.exceptionOrNull()?.message,
+                                messageIsError = true)
+                        }
+                    } else {
+                        val rows = result.getOrNull()
+                        if (rows != null) {
+                            val retained = rows.mapTo(HashSet()) { it.first.id }
+                            savedLocators = rows.associate { it.first.id to it.second }
+                            savedCatalogDirty = false
+                            state = state.copy(
+                                savedVariables = rows.map { it.first },
+                                savedSelection = state.savedSelection.intersect(retained),
+                                savedValues = state.savedValues.filterKeys { it in retained },
+                                message = if (unique.size == 1) "Saved variable removed"
+                                    else "Saved variables removed",
+                                messageIsError = false,
+                            )
+                        } else {
+                            state = state.copy(
+                                message = result.exceptionOrNull()?.message, messageIsError = true,
+                            )
+                            refreshSavedVariables()
+                        }
                     }
-                    return@post // A newer mutation or reload owns the final catalog.
                 }
-                val rows = result.getOrNull()
-                if (rows != null) {
-                    val retained = rows.mapTo(HashSet()) { it.first.id }
-                    savedLocators = rows.associate { it.first.id to it.second }
-                    savedCatalogDirty = false
-                    state = state.copy(
-                        savedVariables = rows.map { it.first },
-                        savedSelection = state.savedSelection.intersect(retained),
-                        savedValues = state.savedValues.filterKeys { it in retained },
-                        message = if (unique.size == 1) "Saved variable removed" else "Saved variables removed",
-                        messageIsError = false,
-                    )
-                } else {
-                    state = state.copy(
-                        message = result.exceptionOrNull()?.message, messageIsError = true,
-                    )
-                    // The optimistic exclusion is only valid if the authority committed.
-                    refreshSavedVariables()
-                }
+                onComplete?.invoke(result.exceptionOrNull()?.message
+                    ?: if (result.isFailure) "Unknown Saved removal error" else null)
             }
         }
     }
@@ -1606,10 +1614,33 @@ internal class MemoryEditorComposeController(
             watches.any { id -> state.watches.none { it.id == id } } ||
             (saved.isEmpty() && watches.isEmpty())) return
         if (saved.isNotEmpty() && savedAuthority == null ||
-            watches.isNotEmpty() && (service == null || state.runtimeToken == 0L)) return
+            watches.isNotEmpty() && (service == null || state.runtimeToken == 0L)) {
+            state = state.copy(message = "Removal unavailable: backend disconnected", messageIsError = true)
+            return
+        }
 
-        // The engine's removeWatch is asynchronous. Keep its established completion
-        // feedback rather than treating its returned operation ID as a result code.
+        if (saved.isNotEmpty() && watches.isNotEmpty()) {
+            val token = state.runtimeToken
+            activeOperationId = -1L // No engine operation yet; reject unrelated late completions.
+            state = state.copy(busy = true, message = null)
+            deleteSavedEntries(saved) { savedError ->
+                activeOperationId = 0L
+                state = state.copy(busy = false)
+                if (state.runtimeToken != token || !canLaunchOperation()) {
+                    val outcome = memoryListRemovalOutcome(savedError, "Session unavailable")
+                    state = state.copy(message = outcome.message, messageIsError = true)
+                } else {
+                    launchOperation(
+                        feedback = PendingOperationFeedback(
+                            OperationFeedbackKind.LIST_REMOVE, state.resultCount, savedError,
+                        ),
+                    ) { engine, currentToken ->
+                        engine.removeWatch(currentToken, watches.toLongArray())
+                    }
+                }
+            }
+            return
+        }
         if (saved.isNotEmpty()) deleteSavedVariables(saved)
         if (watches.isNotEmpty()) {
             launchOperation { engine, token -> engine.removeWatch(token, watches.toLongArray()) }

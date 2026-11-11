@@ -31,8 +31,12 @@ optional Watch-page metadata. List can fold only this verified link into one
 entry; independent targets remain separate even when labels or values match.
 Keeping an already active Watch adopts its exact verified owner/slot and
 preserves any existing Freeze. Stopping Keep keeps a valid Watch in the
-current session. Removing a List entry requests both the Saved deletion and
-the session Watch/Freeze removal; backend failures are surfaced independently.
+current session. After Saved deletion commits, the engine removes its association
+from retained session Watches (including Saved-origin Inspector siblings), while
+retaining rooted ancestry checks on future edits and Freeze ticks. Keeping the same
+Watch again can reuse its runtime identity without restarting Freeze. Removing a
+List entry requests both the Saved deletion and the session Watch/Freeze removal;
+backend failures are surfaced independently after both operations settle.
 
 Explicit Boolean candidates use a distinct primitive type, including Boolean
 fields and `boolean[]` elements. Numeric Auto search remains numeric-only;

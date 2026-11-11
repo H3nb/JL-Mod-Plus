@@ -265,4 +265,21 @@ class MemoryEditorModelsTest {
         assertEquals(listOf("saved:kept", "watch:2"), rows.map { it.key })
     }
 
+    @Test fun mixedRemovalFeedbackPreservesIndependentBackendFailures() {
+        val success = memoryListRemovalOutcome(null, null)
+        assertFalse(success.isError)
+        assertEquals("Saved removed; Watch removed", success.message)
+        val savedFailed = memoryListRemovalOutcome("Storage refused", null)
+        assertTrue(savedFailed.isError)
+        assertTrue(savedFailed.message.contains("Saved removal failed: Storage refused"))
+        assertTrue(savedFailed.message.contains("Watch removed"))
+        val watchFailed = memoryListRemovalOutcome(null, "Owner missing")
+        assertTrue(watchFailed.isError)
+        assertTrue(watchFailed.message.contains("Saved removed"))
+        assertTrue(watchFailed.message.contains("Watch removal failed: Owner missing"))
+        val bothFailed = memoryListRemovalOutcome("I/O", "Session ended")
+        assertTrue(bothFailed.isError)
+        assertTrue(bothFailed.message.contains("Saved removal failed: I/O"))
+        assertTrue(bothFailed.message.contains("Watch removal failed: Session ended"))
+    }
 }

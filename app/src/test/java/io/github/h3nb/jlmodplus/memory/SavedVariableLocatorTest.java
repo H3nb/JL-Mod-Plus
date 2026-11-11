@@ -677,10 +677,53 @@ public class SavedVariableLocatorTest {
             assertEquals(id, linked.ids[0]);
             assertEquals("kept", linked.savedSourceIds[0]);
             assertEquals(MemoryEngineContract.FREEZE_LOCK, linked.freezeModes[0]);
+
+            editor.releaseSaved(FIRST, "kept");
+            ManagedJavaMemoryEngine.ManagedPage detached = editor.watchPage(FIRST);
+            assertEquals(1, detached.ids.length);
+            assertEquals(id, detached.ids[0]);
+            assertNull(detached.savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.FREEZE_LOCK, detached.freezeModes[0]);
+
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "kept-again", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.watchInspector(
+                    FIRST, "kept-again", 0L, 0L, false, 0,
+                    MemoryEngineContract.TYPE_INT, 585858L, false, 0L).code);
+            ManagedJavaMemoryEngine.ManagedPage relinked = editor.watchPage(FIRST);
+            assertEquals(1, relinked.ids.length);
+            assertEquals(id, relinked.ids[0]);
+            assertEquals("kept-again", relinked.savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.FREEZE_LOCK, relinked.freezeModes[0]);
         } finally {
             editor.runtimeClosed(FIRST);
             MemoryDiscoveryBridge.close(FIRST);
         }
     }
 
+    @Test public void detachedSavedWatchStillRejectsStaleRootDuringFreeze() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "original", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeSaved(
+                    FIRST, "original", "Coins", "585858", 0L).code);
+            engine.releaseSaved(FIRST, "original");
+            assertNull(engine.watchPage(FIRST).savedSourceIds[0]);
+            GuestPlayer previous = root.player;
+            root.player = new GuestPlayer();
+            previous.coins = 42;
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.freezeTick(FIRST, 0L).code);
+            assertEquals(42, previous.coins);
+            assertEquals(585858, root.player.coins);
+            assertTrue(engine.watchPage(FIRST).freezePaused[0]);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
 }

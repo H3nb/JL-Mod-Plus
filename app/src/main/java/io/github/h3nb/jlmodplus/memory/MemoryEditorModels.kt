@@ -425,6 +425,15 @@ internal fun memoryListEntries(
 }
 
 
+internal data class MemoryListRemovalOutcome(val message: String, val isError: Boolean)
+
+/** Saved and Watch commit independently, but a mixed Remove has one reported outcome. */
+internal fun memoryListRemovalOutcome(savedError: String?, watchError: String?): MemoryListRemovalOutcome {
+    val saved = if (savedError == null) "Saved removed" else "Saved removal failed: $savedError"
+    val watch = if (watchError == null) "Watch removed" else "Watch removal failed: $watchError"
+    return MemoryListRemovalOutcome("$saved; $watch", savedError != null || watchError != null)
+}
+
 internal enum class SavedVariableStatus { RESOLVED, REBOUND, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }
 
 internal data class SavedVariableRuntimeValue(
