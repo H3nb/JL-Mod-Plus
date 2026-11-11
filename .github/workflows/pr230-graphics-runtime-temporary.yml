@@ -44,3 +44,17 @@ jobs:
             chmod +x gradlew
             ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.lcdui.InternalResolutionGraphicsTest :app:connectedEmulatorDebugAndroidTest
             ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest :app:connectedEmulatorDebugAndroidTest
+      - name: Diagnose Android instrumentation failures
+        if: failure()
+        shell: bash
+        run: |
+          find app/build/outputs/androidTest-results/connected -type f -name '*.xml' -print -exec sed -n '1,160p' {} \; || true
+      - name: Upload temporary instrumentation reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr230-graphics-instrumentation-reports
+          path: |
+            app/build/outputs/androidTest-results/connected/**
+            app/build/reports/androidTests/connected/**
+          if-no-files-found: warn
