@@ -2,6 +2,9 @@
 package io.github.h3nb.jlmodplus.applist
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Color as AndroidColor
 import android.os.Debug
 import androidx.compose.ui.graphics.Color
@@ -15,6 +18,7 @@ import java.io.FileOutputStream
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.security.MessageDigest
+import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertTrue
@@ -34,6 +38,7 @@ class LibraryIconBenchmarkProbeTest {
         val height: Int,
         val enhance: Boolean = true,
         val portrait: Boolean = false,
+        val slotAspectRatio: Float = 1f,
         val colorAt: (Int, Int) -> Int,
     ) {
         fun pixels() = IntArray(width * height) { i -> colorAt(i % width, i / width) }
@@ -54,6 +59,12 @@ class LibraryIconBenchmarkProbeTest {
         private val scale = field("visualScale")
         private val filter = field("filterQuality")
         private val tile = field("tileColor")
+        // Alpha does not have this helper. On that exact baseline Cover always means Crop.
+        private val cropPolicy: Method? =
+            Class.forName("io.github.h3nb.jlmodplus.applist.LibraryIconPresentationKt")
+                .declaredMethods.singleOrNull {
+                    it.name == "shouldCropLibraryCover" && it.parameterTypes.size == 3
+                }?.apply { isAccessible = true }
 
         private fun field(name: String): Field =
             model.getDeclaredField(name).apply { isAccessible = true }
@@ -64,7 +75,20 @@ class LibraryIconBenchmarkProbeTest {
         fun output(result: Any): Bitmap =
             (bitmap.get(result) as ImageBitmap).asAndroidBitmap()
 
-        fun properties(result: Any, rendered: Bitmap): JSONObject {
+        fun slotContentScale(result: Any, rendered: Bitmap, fixture: Fixture): String {
+            if (mode.get(result).toString() != "Cover") return "Fit"
+            val crop = cropPolicy?.invoke(
+                null, rendered.width, rendered.height, fixture.slotAspectRatio
+            ) as? Boolean ?: true
+            return if (crop) "Crop" else "Fit"
+        }
+
+        fun properties(
+            result: Any,
+            rendered: Bitmap,
+            slotContentScale: String,
+            slotPreview: Bitmap,
+        ): JSONObject {
             val tileValue = tile.get(result)
             val tileArgb: Any = when (tileValue) {
                 null -> JSONObject.NULL
@@ -76,6 +100,8 @@ class LibraryIconBenchmarkProbeTest {
                 .put("filter", filter.get(result).toString())
                 .put("scale", (scale.get(result) as Number).toFloat().toDouble())
                 .put("tileArgb", tileArgb)
+                .put("slotContentScale", slotContentScale)
+                .put("slotPreviewSha256", pixelHash(slotPreview))
                 .put("width", rendered.width)
                 .put("height", rendered.height)
                 .put("argbSha256", pixelHash(rendered))
@@ -101,8 +127,12 @@ class LibraryIconBenchmarkProbeTest {
                 savePng(source, File(imageDir, fixture.id + "-source.png"))
                 val first = normalizer.run(source, fixture)
                 val normalized = normalizer.output(first)
-                val visual = normalizer.properties(first, normalized)
+                val slotContentScale = normalizer.slotContentScale(first, normalized, fixture)
+                val slot = renderSlotPreview(normalized, fixture.slotAspectRatio, slotContentScale)
+                val visual = normalizer.properties(first, normalized, slotContentScale, slot)
                 savePng(normalized, File(imageDir, fixture.id + "-normalized.png"))
+                savePng(slot, File(imageDir, fixture.id + "-slot.png"))
+                slot.recycle()
                 release(source, normalized)
 
                 repeat(WARMUPS) {
@@ -139,6 +169,7 @@ class LibraryIconBenchmarkProbeTest {
                         .put("inputHeight", fixture.height)
                         .put("enhance", fixture.enhance)
                         .put("preserveArtwork", fixture.portrait)
+                        .put("slotAspectRatio", fixture.slotAspectRatio.toDouble())
                         .put("visual", visual)
                         .put("cpuNs", cpu)
                         .put("allocatedBytes", allocated)
@@ -151,6 +182,33 @@ class LibraryIconBenchmarkProbeTest {
             JSONObject().put("schema", 1).put("warmups", WARMUPS)
                 .put("measurements", MEASUREMENTS).put("cases", cases).toString(2)
         )
+    }
+
+    private fun renderSlotPreview(
+        image: Bitmap,
+        slotAspectRatio: Float,
+        contentScale: String,
+    ): Bitmap {
+        // A deterministic representation of Fit/Crop geometry; the live Compose
+        // Card shape, background and GPU resampling still need device visual review.
+        val width = 128
+        val height = (width / slotAspectRatio).roundToInt().coerceAtLeast(1)
+        val preview = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(preview)
+        canvas.drawColor(AndroidColor.rgb(235, 235, 235))
+        val xRatio = width.toFloat() / image.width
+        val yRatio = height.toFloat() / image.height
+        val scale = if (contentScale == "Crop") maxOf(xRatio, yRatio) else minOf(xRatio, yRatio)
+        val drawnWidth = image.width * scale
+        val drawnHeight = image.height * scale
+        val target = RectF(
+            (width - drawnWidth) / 2f,
+            (height - drawnHeight) / 2f,
+            (width + drawnWidth) / 2f,
+            (height + drawnHeight) / 2f,
+        )
+        canvas.drawBitmap(image, null, target, Paint(Paint.FILTER_BITMAP_FLAG))
+        return preview
     }
 
     private fun release(input: Bitmap, result: Bitmap) {
@@ -170,6 +228,12 @@ class LibraryIconBenchmarkProbeTest {
             if (x in 28..67 && y in 28..67) AndroidColor.RED else AndroidColor.BLUE
         },
         Fixture("colorful-cover-128", 128, 128) { x, y ->
+            AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
+        },
+        Fixture("poster-cover-96x128", 96, 128) { x, y ->
+            AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
+        },
+        Fixture("square-cover-portrait-slot", 128, 128, slotAspectRatio = 0.75f) { x, y ->
             AndroidColor.rgb((x * 11 + y * 3) and 255, (x * 13 + y * 7) and 255, (x * 17 + y * 23) and 255)
         },
         Fixture("pixel-art-48-colors", 64, 64) { x, y ->

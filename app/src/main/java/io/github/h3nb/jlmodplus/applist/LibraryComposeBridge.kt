@@ -3749,7 +3749,7 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
     var semiTransparentPixels = 0L
     var luminanceSum = 0.0
     var visibleWeight = 0.0
-    val seenColors = BooleanArray(4096)
+    var seenColors: LongArray? = null
     var distinctColorCount = 0
 
     for (y in 0 until height) {
@@ -3771,8 +3771,11 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
             visibleWeight += alphaWeight
             if (distinctColorCount <= LIBRARY_COLOR_SAMPLE_MAX_BINS) {
                 val colorBin = quantizeLibraryColor(pixel)
-                if (!seenColors[colorBin]) {
-                    seenColors[colorBin] = true
+                val bins = seenColors ?: LongArray(64).also { seenColors = it }
+                val word = colorBin ushr 6
+                val mask = 1L shl (colorBin and 63)
+                if ((bins[word] and mask) == 0L) {
+                    bins[word] = bins[word] or mask
                     distinctColorCount++
                 }
             }
@@ -4394,6 +4397,7 @@ private fun LibraryIconSlotContent(
                 LibraryIconArtwork(
                     icon = icon,
                     contentSize = artworkSize,
+                    slotAspectRatio = iconRatio.widthToHeight,
                 )
             }
         }
@@ -4423,6 +4427,7 @@ private const val LIBRARY_FALLBACK_VECTOR_PORTRAIT_SCALE = 0.62f
 private fun LibraryIconArtwork(
     icon: LibraryNormalizedIcon?,
     contentSize: Dp,
+    slotAspectRatio: Float,
 ) {
     if (icon == null) return
 
@@ -4436,7 +4441,10 @@ private fun LibraryIconArtwork(
                 .clip(MaterialTheme.shapes.small)
         else -> Modifier.fillMaxSize()
     }
-    val contentScale = if (icon.presentationMode == LibraryIconPresentationMode.Cover) {
+    val contentScale = if (
+        icon.presentationMode == LibraryIconPresentationMode.Cover &&
+        shouldCropLibraryCover(icon.bitmap.width, icon.bitmap.height, slotAspectRatio)
+    ) {
         ContentScale.Crop
     } else {
         ContentScale.Fit

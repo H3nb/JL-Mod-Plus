@@ -11,7 +11,8 @@ from pathlib import Path
 import statistics
 import sys
 
-VISUAL = ("width", "height", "mode", "filter", "scale", "tileArgb", "argbSha256")
+VISUAL = ("width", "height", "mode", "filter", "scale", "tileArgb", "argbSha256",
+          "slotContentScale", "slotPreviewSha256")
 
 
 def median(values):
@@ -43,7 +44,7 @@ def load(root, name):
                 raise ValueError("Malformed " + key + " for " + ident)
             if key == "cpuNs" and (len(values) < 20 or any(v == 0 for v in values)):
                 raise ValueError("Missing CPU samples for " + ident)
-        for suffix in ("source", "normalized"):
+        for suffix in ("source", "normalized", "slot"):
             png = folder / "images" / (ident + "-" + suffix + ".png")
             if not png.is_file() or png.stat().st_size <= 40:
                 raise ValueError("Missing image " + str(png))
@@ -63,11 +64,14 @@ def diff(before, after):
     return (after / before - 1) * 100 if before else None
 
 
-def compare(root, mode, baseline_sha, candidate_sha):
+def compare(root, mode, baseline_sha, candidate_sha, expected_changes=None):
+    expected_changes = expected_changes or {}
     base = load(root, "baseline")
     head = load(root, "candidate")
     if base.keys() != head.keys():
         raise ValueError("Fixture identifiers/order differ")
+    if not expected_changes.keys() <= base.keys():
+        raise ValueError("Expected visual change references absent fixtures")
     records = []
     md = [
         "## Enhanced Icons A/B benchmark",
@@ -90,13 +94,26 @@ def compare(root, mode, baseline_sha, candidate_sha):
     ]
     for ident in base:
         a, b = base[ident], head[ident]
-        for key in ("inputWidth", "inputHeight", "enhance", "preserveArtwork"):
+        for key in ("inputWidth", "inputHeight", "enhance", "preserveArtwork", "slotAspectRatio"):
             if a[key] != b[key]:
                 raise ValueError("Input mismatch: " + ident + " / " + key)
         source_paths = [root / v / "images" / (ident + "-source.png") for v in ("baseline", "candidate")]
         if hashlib.sha256(source_paths[0].read_bytes()).digest() != hashlib.sha256(source_paths[1].read_bytes()).digest():
             raise ValueError("Source fixture differs: " + ident)
         changed = [k for k in VISUAL if a["visual"][k] != b["visual"][k]]
+        approved = expected_changes.get(ident, {})
+        unexpected = [k for k in changed if k not in approved]
+        for key, values in approved.items():
+            if key not in VISUAL:
+                raise ValueError("Unknown expected visual property " + key)
+            if values == "changed":
+                if key not in changed:
+                    unexpected.append(key)
+            elif isinstance(values, list) and len(values) == 2 and values[0] != values[1]:
+                if [a["visual"][key], b["visual"][key]] != values:
+                    unexpected.append(key)
+            else:
+                raise ValueError("Invalid expected visual change rule for " + ident + "/" + key)
         cpu_a, cpu_b = stats(a["cpuNs"], 1_000_000), stats(b["cpuNs"], 1_000_000)
         alloc_a, alloc_b = stats(a["allocatedBytes"]), stats(b["allocatedBytes"])
         delta = diff(cpu_a["p50"], cpu_b["p50"])
@@ -105,7 +122,7 @@ def compare(root, mode, baseline_sha, candidate_sha):
             if alloc_a and alloc_b else "n/a"
         )
         records.append({
-            "id": ident, "visualDifferences": changed,
+            "id": ident, "visualDifferences": changed, "unexpectedDifferences": sorted(set(unexpected)),
             "baselineVisual": a["visual"], "candidateVisual": b["visual"],
             "cpuMs": {"baseline": cpu_a, "candidate": cpu_b, "deltaP50Percent": delta},
             "threadAllocBytes": {"baseline": alloc_a, "candidate": alloc_b},
@@ -121,6 +138,8 @@ def compare(root, mode, baseline_sha, candidate_sha):
             ("baseline", "source", "Original input"),
             ("baseline", "normalized", "Baseline"),
             ("candidate", "normalized", "Candidate"),
+            ("baseline", "slot", "Baseline Fit/Crop preview"),
+            ("candidate", "slot", "Candidate Fit/Crop preview"),
         ):
             path = variant + "/images/" + ident + "-" + suffix + ".png"
             gallery.append("<figure><img src='" + html.escape(path) +
@@ -128,9 +147,11 @@ def compare(root, mode, baseline_sha, candidate_sha):
                            html.escape(title) + "</figcaption></figure>")
         gallery.append("</section>")
     visual_count = sum(bool(x["visualDifferences"]) for x in records)
+    unexpected_count = sum(bool(x["unexpectedDifferences"]) for x in records)
     md.extend([
         "",
         "Visual differences: " + str(visual_count) + "/" + str(len(records)) +
+        " · Unapproved changes: " + str(unexpected_count) +
         " · Parity mode: " + mode,
         "P95 and full samples, PNGs, and metadata are in the enhanced-icon-quality artifact.",
         "Performance is normalization thread CPU only (including reflection overhead), not FPS or PSS.",
@@ -140,14 +161,15 @@ def compare(root, mode, baseline_sha, candidate_sha):
     ])
     (root / "report.json").write_text(json.dumps({
         "schema": 1, "mode": mode, "baselineSha": baseline_sha,
-        "candidateSha": candidate_sha, "visualChanges": visual_count, "cases": records
+        "candidateSha": candidate_sha, "visualChanges": visual_count,
+        "unexpectedChanges": unexpected_count, "cases": records
     }, indent=2) + "\n", encoding="utf-8")
     (root / "report.md").write_text("\n".join(md), encoding="utf-8")
     (root / "index.html").write_text("\n".join(gallery) + "</html>\n", encoding="utf-8")
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as output:
             output.write("\n".join(md))
-    return 1 if mode == "strict" and visual_count else 0
+    return 1 if mode == "strict" and unexpected_count else 0
 
 
 def main():
@@ -156,15 +178,19 @@ def main():
     p.add_argument("--mode", choices=("strict", "review"), default="strict")
     p.add_argument("--baseline-sha", required=True)
     p.add_argument("--candidate-sha", required=True)
+    p.add_argument("--expected-changes", type=Path)
     args = p.parse_args()
     try:
-        code = compare(args.root, args.mode, args.baseline_sha, args.candidate_sha)
+        rules = json.loads(args.expected_changes.read_text(encoding="utf-8")) if args.expected_changes else {}
+        if not isinstance(rules, dict):
+            raise ValueError("Expected visual change rules must be an object")
+        code = compare(args.root, args.mode, args.baseline_sha, args.candidate_sha, rules)
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
         print("Invalid icon benchmark evidence: " + str(error), file=sys.stderr)
         return 2
     print((args.root / "report.md").read_text(encoding="utf-8"))
     if code:
-        print("Strict pixel/presentation parity failed. Review the gallery.", file=sys.stderr)
+        print("Unapproved pixel/presentation difference. Review the gallery.", file=sys.stderr)
     return code
 
 

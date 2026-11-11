@@ -1,0 +1,16 @@
+{
+  "poster-cover-96x128": {
+    "slotContentScale": [
+      "Crop",
+      "Fit"
+    ],
+    "slotPreviewSha256": "changed"
+  },
+  "square-cover-portrait-slot": {
+    "slotContentScale": [
+      "Crop",
+      "Fit"
+    ],
+    "slotPreviewSha256": "changed"
+  }
+}

@@ -96,5 +96,6 @@ done
 python3 "$head/scripts/icon-quality/compare.py" \
   --root "$out" \
   --mode "${ICON_PARITY_MODE:-strict}" \
+  --expected-changes "$head/scripts/icon-quality/expected-visual-changes.json" \
   --baseline-sha "$baseline_sha" \
   --candidate-sha "$candidate_sha"

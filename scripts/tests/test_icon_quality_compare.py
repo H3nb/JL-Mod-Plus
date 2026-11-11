@@ -25,6 +25,7 @@ class IconQualityCompareTest(unittest.TestCase):
                 "inputHeight": 64,
                 "enhance": True,
                 "preserveArtwork": False,
+                "slotAspectRatio": 1.0,
                 "visual": {
                     "mode": "Subject",
                     "filter": "0",
@@ -33,6 +34,8 @@ class IconQualityCompareTest(unittest.TestCase):
                     "height": 32,
                     "tileArgb": "ff123456",
                     "argbSha256": "a" * 64,
+                    "slotContentScale": "Fit",
+                    "slotPreviewSha256": "b" * 64,
                 },
                 "cpuNs": [1000000] * 45,
                 "allocatedBytes": [80] * 45,
@@ -40,16 +43,18 @@ class IconQualityCompareTest(unittest.TestCase):
             (directory / "metrics.json").write_text(
                 json.dumps({"schema": 1, "cases": [record]}), encoding="utf-8"
             )
-            for kind in ("source", "normalized"):
+            for kind in ("source", "normalized", "slot"):
                 (directory / "images" / ("fixture-1-" + kind + ".png")).write_bytes(PNG)
 
-    def invoke(self, mode="strict"):
-        return subprocess.run(
-            [sys.executable, str(SCRIPT), "--root", str(self.root),
-             "--mode", mode, "--baseline-sha", "a" * 40,
-             "--candidate-sha", "b" * 40],
-            text=True, capture_output=True, check=False,
-        )
+    def invoke(self, mode="strict", expected=None):
+        command = [sys.executable, str(SCRIPT), "--root", str(self.root),
+                   "--mode", mode, "--baseline-sha", "a" * 40,
+                   "--candidate-sha", "b" * 40]
+        if expected is not None:
+            file = self.root / "expected.json"
+            file.write_text(json.dumps(expected), encoding="utf-8")
+            command.extend(["--expected-changes", str(file)])
+        return subprocess.run(command, text=True, capture_output=True, check=False)
 
     def change_candidate_scale(self):
         name = self.root / "candidate" / "metrics.json"
@@ -74,6 +79,23 @@ class IconQualityCompareTest(unittest.TestCase):
     def test_review_reports_change_without_failure(self):
         self.change_candidate_scale()
         self.assertEqual(0, self.invoke(mode="review").returncode)
+
+    def test_expected_visual_difference_is_accepted_exactly(self):
+        self.change_candidate_scale()
+        result = self.invoke(expected={"fixture-1": {"scale": [0.8, 0.7]}})
+        self.assertEqual(0, result.returncode, result.stderr)
+        report = json.loads((self.root / "report.json").read_text(encoding="utf-8"))
+        self.assertEqual(1, report["visualChanges"])
+        self.assertEqual(0, report["unexpectedChanges"])
+
+    def test_unlisted_visual_difference_still_fails_with_expected_policy(self):
+        self.change_candidate_scale()
+        result = self.invoke(expected={"fixture-1": {"slotPreviewSha256": "changed"}})
+        self.assertEqual(1, result.returncode)
+
+    def test_expected_visual_difference_must_really_exist(self):
+        result = self.invoke(expected={"fixture-1": {"scale": [0.8, 0.7]}})
+        self.assertEqual(1, result.returncode)
 
     def test_missing_data_is_an_error_even_in_review_mode(self):
         (self.root / "candidate" / "metrics.json").unlink()

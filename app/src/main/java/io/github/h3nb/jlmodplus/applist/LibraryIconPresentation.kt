@@ -158,3 +158,22 @@ private const val LIBRARY_PRESENTATION_COVER_MIN_BOUNDS_COVERAGE = 0.985f
 private const val LIBRARY_PRESENTATION_COVER_MIN_OCCUPANCY = 0.94f
 private const val LIBRARY_PRESENTATION_COVER_MIN_ASPECT = 0.62f
 private const val LIBRARY_PRESENTATION_COVER_MAX_ASPECT = 1.62f
+
+/**
+ * Keep complete cover artwork visible when the slot's aspect ratio would otherwise discard
+ * more than 5% of either image dimension. The outer Card still owns its clipping shape.
+ */
+internal fun shouldCropLibraryCover(
+    sourceWidth: Int,
+    sourceHeight: Int,
+    slotAspectRatio: Float,
+): Boolean {
+    if (sourceWidth <= 0 || sourceHeight <= 0 ||
+        !slotAspectRatio.isFinite() || slotAspectRatio <= 0f
+    ) return false
+    val sourceToSlotAspect = (sourceWidth.toFloat() / sourceHeight) / slotAspectRatio
+    return sourceToSlotAspect in LIBRARY_COVER_MIN_VISIBLE_FRACTION..
+        (1f / LIBRARY_COVER_MIN_VISIBLE_FRACTION)
+}
+
+private const val LIBRARY_COVER_MIN_VISIBLE_FRACTION = 0.95f
