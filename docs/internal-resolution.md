@@ -47,7 +47,9 @@ MMPX inherits the reference 2× color/quadrant decisions, with a documented
 palette-preserving extension for other integer factors. xBRZ Freescale ports
 the Citra/Azahar GPL-2.0-or-later shader's gradient/line rules to CPU.
 Alpha-weighted interpolation differs deliberately from the straight-alpha
-GLSL implementation to avoid fringes in Android bitmap compositing.
+GLSL implementation to avoid fringes in Android bitmap compositing. Blended
+colors remain in premultiplied floating-point form until the final output
+pixel is packed, avoiding intermediate 8-bit rounding across corners.
 
 ## 3D: rasterization and source textures
 

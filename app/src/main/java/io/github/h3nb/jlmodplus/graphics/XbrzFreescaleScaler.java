@@ -147,7 +147,12 @@ public final class XbrzFreescaleScaler {
                     int out = (y * factor + oy) * stride + x * factor;
                     for (int ox = 0; ox < factor; ox++) {
                         float px = (ox + 0.5f) / factor - 0.5f;
-                        int result = e;
+                        // Keep intermediate colors in premultiplied precision;
+                        // quantize only after all four corner contributions.
+                        float alpha = e >>> 24;
+                        float red = ((e >>> 16) & 255) * alpha;
+                        float green = ((e >>> 8) & 255) * alpha;
+                        float blue = (e & 255) * alpha;
                         for (int corner = 0; corner < 4; corner++) {
                             if (modes[corner] == NONE) continue;
 
@@ -167,9 +172,19 @@ public final class XbrzFreescaleScaler {
                                     * inverseEdgeLength[corner];
                             float ratio = smoothStep(-HALF_DIAGONAL, HALF_DIAGONAL,
                                     signedDistance);
-                            result = blend(result, neighbors[corner], ratio);
+                            int color = neighbors[corner];
+                            float weight = ratio * (color >>> 24);
+                            float keep = 1f - ratio;
+                            red = red * keep + ((color >>> 16) & 255) * weight;
+                            green = green * keep + ((color >>> 8) & 255) * weight;
+                            blue = blue * keep + (color & 255) * weight;
+                            alpha = alpha * keep + weight;
                         }
-                        output[out + ox] = result;
+                        output[out + ox] = alpha < 0.5f ? 0
+                                : (Math.min(255, Math.round(alpha)) << 24)
+                                | (Math.min(255, Math.round(red / alpha)) << 16)
+                                | (Math.min(255, Math.round(green / alpha)) << 8)
+                                | Math.min(255, Math.round(blue / alpha));
                     }
                 }
             }
@@ -215,25 +230,4 @@ public final class XbrzFreescaleScaler {
         return t * t * (3f - 2f * t);
     }
 
-    // Preserve color at transparent edges when the destination is premultiplied
-    // for Android Canvas. Opaque pixels match GLSL mix apart from rounding.
-    public static int blend(int a, int b, float weight) {
-        if (weight <= 0f) return a;
-        if (weight >= 1f) return b;
-
-        int aa = a >>> 24, ba = b >>> 24;
-        float alpha = aa * (1f - weight) + ba * weight;
-        if (alpha < 0.5f) return 0;
-        float wa = (aa * (1f - weight)) / alpha;
-        float wb = (ba * weight) / alpha;
-        int r = channel(a >>> 16 & 255, b >>> 16 & 255, wa, wb);
-        int g = channel(a >>> 8 & 255, b >>> 8 & 255, wa, wb);
-        int blue = channel(a & 255, b & 255, wa, wb);
-        return (Math.min(255, Math.round(alpha)) << 24)
-                | (r << 16) | (g << 8) | blue;
-    }
-
-    private static int channel(int a, int b, float wa, float wb) {
-        return Math.max(0, Math.min(255, Math.round(a * wa + b * wb)));
-    }
 }
