@@ -1005,6 +1005,7 @@
     <string name="memory_editor_undo">تراجع عن البحث</string>
     <string name="memory_editor_unfreeze">إلغاء التجميد</string>
     <string name="memory_editor_unsupported">محرر الذاكرة غير متاح لبيئة التشغيل هذه.</string>
+    <string name="memory_variables_tab">القائمة</string>
     <string name="memory_editor_watch">المراقبة</string>
     <string name="memory_editor_working">جارٍ تطبيق العملية…</string>
     <string name="memory_editor_write_confirmed">عدد القيم المؤكدة بإعادة قراءتها من الذاكرة: %1$d.</string>

@@ -486,6 +486,7 @@
     <string name="memory_editor_engine_reconnecting">Memory Editor maakt opnieuw verbinding…</string>
     <string name="memory_editor_refresh">Vernieuwen</string>
     <string name="memory_editor_undo">Ongedaan maken</string>
+    <string name="memory_variables_tab">Lijst</string>
     <string name="memory_editor_watch">Volgen</string>
     <string name="memory_editor_search_tab">Zoeken</string>
     <string name="memory_editor_search_known_values">Bekende waarden zoeken</string>

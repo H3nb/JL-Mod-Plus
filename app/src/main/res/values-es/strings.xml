@@ -465,6 +465,7 @@
     <string name="memory_editor_engine_reconnecting">El Editor de memoria se está reconectando…</string>
     <string name="memory_editor_refresh">Actualizar</string>
     <string name="memory_editor_undo">Deshacer</string>
+    <string name="memory_variables_tab">Lista</string>
     <string name="memory_editor_watch">Seguir</string>
     <string name="memory_editor_search_tab">Buscar</string>
     <string name="memory_editor_search_known_values">Buscar valores conocidos</string>
