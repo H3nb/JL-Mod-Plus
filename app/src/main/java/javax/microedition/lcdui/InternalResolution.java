@@ -4,7 +4,7 @@ package javax.microedition.lcdui;
 /** Selects the physical density for runtime-owned 2D render targets. */
 final class InternalResolution {
     static final int MAX_SCALE = 10;
-    // Conservative prototype allocation limits, not detected GPU capabilities.
+    // Conservative target limits; actual GPU/heap headroom is device-dependent.
     static final int MAX_TARGET_SIDE = 4096;
     static final long MAX_ESTIMATED_BYTES = 160L * 1024L * 1024L;
 

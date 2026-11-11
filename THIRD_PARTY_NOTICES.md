@@ -43,9 +43,9 @@ design and UI architecture; no corresponding source was copied.
   adapts only the straight-alpha GLSL interpolation to Android-safe
   alpha-weighted RGB. See
   `app/src/main/assets/bitmap-scaler-licenses/XBRZ-GPL-2.0.txt`.
-  This is an **experimental PR-only integration**; shipping a combined APK
-  requires a separate GPL compatibility and distribution review. The root
-  Apache-2.0 license is not a substitute for the adapted source's GPL notice.
+  This adapted implementation retains GPL-2.0-or-later licensing. A combined
+  APK distribution requires a GPL compatibility and source-distribution review;
+  the root Apache-2.0 license does not replace this component's GPL obligations.
 - Nearest-neighbor and bilinear use Android Canvas filtering. No external
   interpolation code is bundled for those choices.
 

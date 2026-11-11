@@ -1,153 +1,89 @@
-# Internal resolution and source image enhancement (research)
+# Internal resolution and bitmap enhancement
 
-This draft PR #230 is based on the current `alpha` rendering architecture.
-Both settings are per-MIDlet and are intentionally **independent of post-processing**.
+Internal resolution and source-image enhancement are separate per-MIDlet
+rendering settings. Neither changes the guest's logical image dimensions,
+input coordinates, fonts or Java ME graphics API contracts.
 
-## Contract and defaults
+## Settings
 
-- `InternalResolutionScale`: Auto (0) or 1–10, default 1. Auto chooses an
-  integer target density based on the visible game viewport. The chosen
-  density is frozen for the Canvas session; restart to apply changes.
-- `BitmapUpscalingMode`: Nearest (0, default), Bilinear (1), MMPX (2), and
-  experimental xBRZ Freescale (3). It affects supported immutable image
-  sources only when the internal target is larger than 1×.
-- Java ME image sizes, clip/translation, font metrics, pointer coordinates,
-  getRGB dimensions, and guest-visible texture data stay logical.
-- Host controls, screen scaling, built-in post-processing effects and physical
-  screenshot destinations remain separate. Raw screenshots contain HD pixels.
+- **Internal resolution:** 1–10×, or Auto (default 1×). Auto selects an
+  integer factor based on the visible game viewport. The selected factor
+  remains fixed for the Canvas session; restarting applies profile changes.
+- **Bitmap upscaling:** Nearest (default), Bilinear, MMPX or xBRZ Freescale.
+  The selected image reconstruction works on supported immutable sources,
+  only when the destination has a physical scale above 1×.
+- **Screen scaling filter and shader effects:** independent presentation
+  stages applied to the completed game image. Neither changes source pixels.
 
-The display's "Screen scaling filter" controls Nearest/Linear sampling of the
-final game image and unspecified shader passes. It is independent of both
-source-image reconstruction and internal render target density.
+Native 2D text and primitives are rasterized into the enlarged backing
+surface. The display presenter consumes the corresponding physical content
+rectangle. MIDlet-visible geometry, pointer positions, clipping, translations
+and `getRGB` sizes stay logical; raw screenshots may contain HD pixels.
+Readback of antialiased HD raster edges can differ from a separate 1× render.
 
-The internal render target is the output of composition, **not** the source of
-bitmap reconstruction. Scalable text and primitives rasterize directly at
-higher density. For source images, the runtime may reconstruct a cached
-higher-resolution copy before compositing it into that HD target.
+## Immutable source enhancement
 
-## 2D bitmap reconstruction
+The runtime reconstructs immutable LCDUI image regions before composing
+them into an HD target. `drawRegion` isolates the source rectangle to prevent
+filtering across neighboring tiles in a sprite atlas. The cache is shared
+within the currently selected graphics profile, bounded to 4–16 MiB based
+on Java heap tier, and keyed by bitmap identity, generation, region and
+reconstruction factor. Existing `Graphics` objects consult the active
+session cache at draw time, so retained framebuffers cannot use a previous
+profile's enhancement mode.
 
-Immutable LCDUI images and isolated `Graphics.drawRegion` sprite rectangles
-use per-region cache entries, keyed by source identity, generation, rectangle
-and reconstruction factor. Filtering subrectangles cannot sample neighboring
-sprite-atlas tiles. Mutable Image and `Graphics.drawRGB` remain unenhanced
-rather than silently changing guest drawing semantics. Class references
-in the user's private original `Bounce-Tales.jar` and `Le_Mans.jar` show
-that dynamic `drawRGB` content is a real compatibility use case;
-the call frequency/size has not yet been measured at runtime. Caching
-a mutable `int[]` by identity without rechecking its pixels would be
-incorrect; unconditional reconstruction could add per-frame stalls.
+Reconstruction is independent of the render target factor. MMPX and xBRZ
+use factors from 2× through 4× where the result does not exceed 4 MiB;
+otherwise the original source is drawn using Nearest. For example,
+a 240×320 image with a 4× target is reconstructed at 3× and then composed
+at the target density. MMPX preserves source palette colors; xBRZ
+antialiases reconstructed edges with alpha-aware interpolation.
 
-A source's reconstruction factor is **not** the internal render target factor.
-The current CPU policy chooses the highest factor from 2× up to min(4×, target
-scale) within a 4 MiB RGBA output limit. E.g. 240×320 at a 4× target uses
-3× reconstruction followed by presentation to the 4× destination. If no
-factor qualifies, use Nearest. The LRU cache is per `BitmapUpscaling` session and currently budgets
-4–16 MiB based on one-sixteenth of the maximum Java heap (a conservative
-heuristic, not a native/GPU memory measurement). Bilinear crops are stored separately at 1×.
-Cold-cache CPU reconstruction may still stall the guest; asynchronous work
-and a device-adaptive memory budget remain research topics.
+Mutable `Image`, `drawRGB` and ordinary guest off-screen surfaces are not
+source-enhanced; their contents may change on every frame. An unsuccessful
+optional reconstruction falls back to the original bitmap rather than
+changing guest data. Cold-cache reconstruction is synchronous and can
+cause occasional longer frames, especially with many large sprite sources.
 
-MMPX inherits the reference 2× color/quadrant decisions, with a documented
-palette-preserving extension for other integer factors. xBRZ Freescale ports
-the Citra/Azahar GPL-2.0-or-later shader's gradient/line rules to CPU.
-Alpha-weighted interpolation differs deliberately from the straight-alpha
-GLSL implementation to avoid fringes in Android bitmap compositing. Blended
-colors remain in premultiplied floating-point form until the final output
-pixel is packed, avoiding intermediate 8-bit rounding across corners.
+## Three-dimensional rendering
 
-## 3D: rasterization and source textures
+**JSR-184 / M3G:** supports HD target rasterization with physical native
+viewport and clip dimensions. `Graphics3D` keeps guest coordinates and
+viewport getters logical. Mutable `Image2D` render targets remain at their
+specified resolution. **M3G source textures are not enhanced**: altering
+`Image2D` data, `Texture2D` wrapping/filtering or mipmap ownership would
+change the Java ME API contract.
 
-JSR-184 M3G renders into a high-density bitmap/native memory target when
-bound to an HD LCDUI Graphics. Native viewport and clip dimensions are
-converted to physical pixels, while getters and guest coordinates remain
-logical. Mutable `Image2D` targets still render at logical resolution.
-**M3G source texture enhancement is not implemented.** Never rescale its
-guest-accessible `Image2D` data merely to force enhancement.
-The native GLES 1.x upload path `m3g_image.inl::m3gBindTextureObject`
-owns one GL texture object per image and handles palette compression,
-dirty updates, generated mip levels and optional source-data release.
-Separate `Texture2D` objects referring to that image may specify
-different `CLAMP`/`REPEAT` wrapping and filtering. Source-border
-reconstruction cannot assume one fixed sampler mode. The OpenGL ES
-texture-size/power-of-two constraints must also remain satisfied.
-A first experimental native path should be limited to unchanged immutable
-source semantics and explicitly qualified sampler/mipmap cases.
+**Mascot Capsule / Micro3D:** renders to an HD-size EGL pbuffer and copies
+physical pixels back to the LCDUI target; camera and projection coordinates
+remain logical. Opaque immutable **model** textures can be reconstructed for
+GLES upload at 2–4×, bounded by `GL_MAX_TEXTURE_SIZE` and the same 4 MiB
+result limit. Translucent/alpha-cutout model textures, environment maps and
+mutable render targets retain their original texture pixels. Source
+dimensions, palette data and logical UV coordinates remain unchanged.
+Android `Image` textures are explicitly encoded as RGBA bytes before upload.
 
-Mascot Capsule/Micro3D uses a physical-size EGL pbuffer, with logical camera
-and projection coordinates. Its scissor and readback bounds are physical.
-When an opaque, immutable **model** source texture is uploaded to GLES,
-experimental MMPX/xBRZ can reconstruct it using the same 2×–4× policy and
-the reported `GL_MAX_TEXTURE_SIZE`. Environment maps and textures containing
-any non-opaque alpha are deliberately bypassed: their palette and alpha-test
-semantics must not be silently changed by source reconstruction. Support for
-safe alpha coverage reconstruction requires separate visual/GLES qualification.
-Android Image-derived textures are packed into RGBA bytes explicitly so the
-upload is independent of CPU endianness. Their guest Image pixels are not modified.
-Source data and logical UV coordinates are unchanged;
-the shader's `uTexSize` remains the logical source size. Mutable render
-textures remain unenhanced at 1×. GPU resource loss can cause a re-upload.
-GPU uploads still require source-to-GPU copies, and Micro3D still performs its
-existing CPU–GPU background/readback transfers.
+## Memory and compatibility
 
-Current texture enhancement is not an automatic, per-texture style detector.
-Nearest/Bilinear retain native sampling semantics. No Vulkan migration or
-whole-frame texture enhancement is planned for this prototype.
+The requested internal scale is capped at 10× with a maximum backing
+dimension of 4096 pixels and a conservative 160 MiB four-plane allocation
+estimate. These limits do **not** guarantee enough device memory.
+Large-source reconstruction is limited separately from frame target density.
 
-## Budget and compatibility boundaries
+The regression suites protect partial GameCanvas flush, negative-stride
+readback, all sprite transforms, atlas isolation, high-density M3G
+viewports, and Micro3D GLES texture upload/alpha semantics. Passing
+instrumentation on Android API 23 and 35 does not replace physical
+ARM64 performance, GPU-loss or representative game testing. Measured
+emulator costs and static observations from private MIDlet reference
+archives are retained in
+[the dated performance investigation](internal-resolution-performance-2026-11-11.md).
 
-The Internal Resolution target has a factor cap of 10×, a 4096-pixel side
-limit, and a conservative 160 MiB four-plane estimate. This is a heuristic,
-**not** a hardware memory query and not an allocation guarantee.
-M3G native physical viewports retain a separate 4096-pixel cap.
+## Redistribution
 
-A logical 1-pixel horizontal/vertical `Graphics.drawLine` is rasterized as a
-full logical-pixel row/column on HD-backed Canvas targets. This avoids gaps
-between adjacent progress-bar strokes; default 1× behavior is retained.
-Transparent edges and guest `getRGB` readback can still differ from a
-separate 1× rasterization; high-density sampling does not guarantee
-pixel-identical guest reads.
-
-## JSR contracts and private MIDlet corpus
-
-The reference standard set was inspected from the user's ChatGPT Library
-`/J2ME Dev Kit/Documentation/J2ME_Docs.zip`, specifically the MIDP 2.0
-`Graphics`, `Image`, `GameCanvas` and `Sprite` Javadocs and JSR-184
-`Graphics3D`, `Image2D`, `Texture2D`. MIDP partial flush/clip coordinates
-remain logical; JSR-184 viewport geometry is relative to the `Graphics`
-origin when the target is bound. Mutating `Image2D` pixels or changing
-`Texture2D` sampling/wrapping would change the guest API contract.
-
-Static inventory of original user-owned JARs (2026-11-11):
-
-| Library artifact | Inspected resources and API references | Qualification scenario |
-| --- | --- | --- |
-| `Speed_Racer_3D.jar` | 36 M3G assets, 181 PNGs, JSR-184 calls | 3D viewport, sprite/HUD composition |
-| `Le_Mans.jar` | Mascot Capsule v3 calls, six raw data assets | 3D texture sampling and EGL pbuffer |
-| `Bounce-Tales.jar` | 47 PNGs, Nokia UI and game API calls | Sprite atlas clipping, texture-heavy 2D |
-| `Nature-Park.jar` | 105 predominantly small PNGs | Small-pixel-art caching and resizing |
-
-These are **static archive observations**, not proof of execution or
-compatibility. The original MIDlets and firmware stay in private Library;
-no third-party binaries/images are committed to the project. Android tests
-use synthetic pixel arrays to model the same classes of operations.
-
-The first emulator-side cold/cache timing experiment (synthetic assets and
-its limitations) is recorded in [the 2026-11-11 performance investigation](internal-resolution-performance-2026-11-11.md).
-
-## Validation and release gates
-
-The JVM tests check factor selection and CPU RGBA reconstruction. Android
-instrumentation covers atlas isolation, 2D HD surfaces, logical geometry,
-sprite transformations and preliminary 3D/native behavior. Compilation or
-JVM tests alone do **not** qualify M3G, GLES, alpha, EGL pbuffer use, or
-real MIDlet performance.
-
-Still required before merge: representative ARM64 2D/3D MIDlet tests
-(the Bomberman 3D loading-bar issue is reported fixed; protect it against
-regression and investigate remaining viewport cases independently);
-API 23/35 instrumented GLES and native M3G coverage; CPU cold-cache latency,
-frame pacing and GPU/RAM measurements; inspection of screenshot mismatches;
-removal of the temporary PR-scoped workflow; and GPL redistribution/license
-compatibility assessment. Do not promote screenshot baselines without
-reviewing the renderer-produced candidates. Keep PR #230 Draft.
+MMPX is MIT licensed. The Azahar-derived CPU implementation of xBRZ
+Freescale retains GPL-2.0-or-later licensing, with its source notice and
+license included in the app. Combined APK redistribution requires review
+of the GPL version, compatible licensing, corresponding-source access,
+and distribution obligations. See `THIRD_PARTY_NOTICES.md`. Do not assume
+that the application's Apache-2.0 root license alone clears this requirement.

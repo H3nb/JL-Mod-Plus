@@ -108,4 +108,37 @@ public class BitmapUpscalingGraphicsTest {
             target.getBitmap().recycle();
         }
     }
+    @Test public void retainedGraphicsUsesActiveUpscalingModeAfterProfileSwitch() {
+        int black = 0xff000000, white = 0xffffffff;
+        int[] pixels = {
+                black, white, black,
+                white, black, black,
+                black, black, black
+        };
+        Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+        Image source = Image.createRGBImage(pixels, 3, 3, true);
+        Image target = Image.createDisplayTarget(3, 3, 2);
+        try {
+            // Games may retain Graphics (including runtime-owned framebuffers)
+            // across a profile change; the renderer must not pin an old cache.
+            Graphics retained = target.getGraphics();
+            retained.drawImage(source, 0, 0, Graphics.TOP | Graphics.LEFT);
+            assertEquals(black, target.getBitmap().getPixel(2, 2));
+
+            int[] mmpx = MmpxScaler.scale(pixels, 3, 3, 2);
+            assertNotEquals(black, mmpx[2 * 6 + 2]);
+            Graphics.configureBitmapUpscaling(BitmapUpscaling.MMPX);
+            retained.drawImage(source, 0, 0, Graphics.TOP | Graphics.LEFT);
+            assertEquals(mmpx[2 * 6 + 2], target.getBitmap().getPixel(2, 2));
+
+            Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+            retained.drawImage(source, 0, 0, Graphics.TOP | Graphics.LEFT);
+            assertEquals(black, target.getBitmap().getPixel(2, 2));
+        } finally {
+            Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+            source.getBitmap().recycle();
+            target.getBitmap().recycle();
+        }
+    }
+
 }

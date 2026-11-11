@@ -64,16 +64,17 @@ public class Graphics implements
 	private final Paint fillPaint = new Paint();
 	private final Paint polygonPaint = new Paint();
 
+	// Cached Graphics instances outlive profile changes; choose the active session at draw time.
 	private static volatile BitmapUpscaling activeBitmapUpscaling =
 			new BitmapUpscaling(BitmapUpscaling.NEAREST);
-	private final BitmapUpscaling bitmapUpscaling;
+
 
 	static void configureBitmapUpscaling(int mode) {
 		activeBitmapUpscaling = new BitmapUpscaling(mode);
 	}
 
 	private void drawSourceBitmap(Image source, Rect src, RectF dst) {
-		bitmapUpscaling.draw(canvas, source, src, dst, image.getPixelScale());
+		activeBitmapUpscaling.draw(canvas, source, src, dst, image.getPixelScale());
 	}
 
 	private int translateX;
@@ -96,7 +97,6 @@ public class Graphics implements
 
 	Graphics(Image image) {
 		this.image = image;
-		bitmapUpscaling = activeBitmapUpscaling;
 		boundBitmap = image.getBitmap();
 		canvas = new Canvas(boundBitmap);
 		pixelScaleMatrix = image.getPixelScale() == 1 ? null : new Matrix();

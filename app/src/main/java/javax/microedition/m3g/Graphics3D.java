@@ -6,6 +6,8 @@
  * which accompanies this distribution, and is available
  * at the URL "http://www.eclipse.org/legal/epl-v10.html".
  *
+ * Modified for JL-Mod Plus.
+ *
  * Initial Contributors:
  * Nokia Corporation - initial contribution.
  *
