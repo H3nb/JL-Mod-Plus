@@ -118,6 +118,9 @@ compatibility. The original MIDlets and firmware stay in private Library;
 no third-party binaries/images are committed to the project. Android tests
 use synthetic pixel arrays to model the same classes of operations.
 
+The first emulator-side cold/cache timing experiment (synthetic assets and
+its limitations) is recorded in [the 2026-11-11 performance investigation](internal-resolution-performance-2026-11-11.md).
+
 ## Validation and release gates
 
 The JVM tests check factor selection and CPU RGBA reconstruction. Android
