@@ -1976,7 +1976,7 @@ internal class MemoryEditorComposeController(
                 } else {
                     onReady(names.indices.map { index ->
                         MemoryRecipeReadValue(
-                            names[index], values[index], reply.getString("recipeReadTicket"),
+                            names[index], values[index], reply?.getString("recipeReadTicket"),
                         )
                     }, null)
                 }

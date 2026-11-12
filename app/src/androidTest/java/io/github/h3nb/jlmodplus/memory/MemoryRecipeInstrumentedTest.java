@@ -541,6 +541,7 @@ public class MemoryRecipeInstrumentedTest {
         Bundle edit = new Bundle();
         edit.putString("coins", "500");
         edit.putStringArray("recipeExpectedValues", snapshot.getStringArray("recipeReadValues"));
+        edit.putString("recipeReadTicket", snapshot.getString("recipeReadTicket"));
         root.coins = 11;
         assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
             status(runner.run(TOKEN, recipe, edit, false, false)));
@@ -554,6 +555,31 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(500, root.coins);
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
+    }
+
+
+    @Test public void formRejectsReplacedOwnerEvenWhenValuesMatch() {
+        String partyArray = "[L" + HERO + ";";
+        String path = field(ROOT, "party", partyArray)
+            + ",{\"kind\":\"index\",\"descriptor\":\"" + partyArray
+            + "\",\"indexInput\":\"slot\"}," + field(HERO, "hp", "S");
+        String action = "{\"kind\":\"set\",\"path\":[" + path + "],\"valueInput\":\"hp\"}";
+        String recipe = typedRecipe("form",
+            "{\"slot\":{\"min\":0,\"max\":1},\"hp\":{\"min\":0,\"max\":999}}", action);
+        Bundle selector = new Bundle();
+        selector.putString("slot", "1");
+        Bundle read = runner.run(TOKEN, recipe, selector, false, true);
+        assertEquals(MemoryEngineContract.RESULT_OK, status(read));
+        assertArrayEquals(new String[]{"100"}, read.getStringArray("recipeReadValues"));
+        Bundle edit = new Bundle();
+        edit.putString("slot", "1");
+        edit.putString("hp", "777");
+        edit.putStringArray("recipeExpectedValues", read.getStringArray("recipeReadValues"));
+        edit.putString("recipeReadTicket", read.getString("recipeReadTicket"));
+        root.party[1] = new Hero();
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+            status(runner.run(TOKEN, recipe, edit, false, false)));
+        assertEquals(100, root.party[1].hp);
     }
 
     @Test public void toggleUsesExistingFreezeAndStopsWithoutRestoring() {

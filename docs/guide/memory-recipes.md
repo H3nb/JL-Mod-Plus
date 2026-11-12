@@ -189,7 +189,10 @@ and keep the original Run/optional Freeze interface.
   human-readable input `label` metadata. The form automatically reads current
   values when first opened, and again when a selector changes. Refresh is
   always available. Apply requires the last successfully read, consistent
-  snapshot and refuses to write if it changed since the read.
+  snapshot and refuses to write if it changed since the read. Refresh also issues a
+session-local ticket tied to weak references to the exact target owners;
+Apply rejects replaced objects even if their numeric values still match.
+Only the latest form read ticket remains valid in the target process.
 - **One-shot**: Run applies the actions once and never starts Freeze.
   `"operation":"add"` may be used on an action to add a signed integer to its
   **decoded logical value**. It works for `set`, `bitfield`, and `encoded32le`

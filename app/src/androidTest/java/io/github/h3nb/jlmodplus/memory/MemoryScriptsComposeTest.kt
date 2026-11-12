@@ -168,6 +168,7 @@ class MemoryScriptsComposeTest {
                 onComplete: (Boolean) -> Unit,
             ) {
                 assertFalse(freeze)
+                assertEquals("test-receipt", snapshotTicket)
                 applied += inputs to expectedValues
                 onComplete(true)
             }
