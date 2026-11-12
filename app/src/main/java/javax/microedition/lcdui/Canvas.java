@@ -1798,7 +1798,8 @@ public abstract class Canvas extends Displayable {
 		private int lastUploadFailureNotice;
 
 		private void requestGpuRecovery(int textureWidth, int textureHeight,
-				int scale, int supportedScale, boolean exceedsTextureLimit, long nowNanos) {
+				int scale, int supportedScale, boolean exceedsTextureLimit,
+				long nowNanos, long expectedGeneration) {
 			boolean canReduce = supportedScale >= 1 && supportedScale < scale;
 			uploadRetry.recordFailure(textureWidth, textureHeight, scale,
 					!canReduce && !exceedsTextureLimit, nowNanos);
@@ -1816,8 +1817,7 @@ public abstract class Canvas extends Displayable {
 			if (!exceedsTextureLimit) {
 				mView.postDelayed(() -> {
 					if (innerView != mView || !visible) return;
-					long generation = presentationMailbox.generation();
-					if (presentationMailbox.invalidateHost(generation) != 0L) {
+					if (presentationMailbox.invalidateHost(expectedGeneration) != 0L) {
 						requestFlushToScreen();
 					}
 				}, TextureUploadRetry.RETRY_DELAY_MILLIS);
@@ -1951,7 +1951,8 @@ public abstract class Canvas extends Displayable {
 					if (bitmapWidth > maxSourceTextureSide || bitmapHeight > maxSourceTextureSide) {
 						int supported = Math.min(maxSourceTextureSide / Math.max(1, Canvas.this.width),
 								maxSourceTextureSide / Math.max(1, Canvas.this.maxHeight));
-						requestGpuRecovery(bitmapWidth, bitmapHeight, scale, supported, true, nowNs);
+						requestGpuRecovery(bitmapWidth, bitmapHeight, scale, supported, true,
+								nowNs, presentationGeneration);
 						presented = true;
 						return;
 					}
@@ -1963,13 +1964,15 @@ public abstract class Canvas extends Displayable {
 							int error = glGetError();
 							if (error != GL_NO_ERROR) {
 								Log.w(TAG, "Game texture upload failed: GL error " + error);
-								requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1, false, nowNs);
+								requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1, false,
+										nowNs, presentationGeneration);
 								presented = true;
 								return;
 							}
 						} catch (RuntimeException | OutOfMemoryError error) {
 							Log.w(TAG, "Game texture upload failed", error);
-							requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1, false, nowNs);
+							requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1, false,
+										nowNs, presentationGeneration);
 							presented = true;
 							return;
 						}
