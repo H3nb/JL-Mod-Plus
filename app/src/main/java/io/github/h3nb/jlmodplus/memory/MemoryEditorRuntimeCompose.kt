@@ -627,6 +627,17 @@ private fun RuntimeSearchResultsTab(
     )
     Column(modifier = modifier.fillMaxWidth()) {
         var moreMenu by remember { mutableStateOf(false) }
+        if (relinkingBookmarkId != null) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.memory_bookmark_relink_hint),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = onRelinkComplete) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        }
         val quickActions = listOf(
             RuntimeToolbarAction(R.drawable.ic_search, R.string.memory_editor_search_known_values, state.canSearch) {
                 knownDialog = true
@@ -1337,9 +1348,9 @@ private fun RuntimeListRow(
                                 else MaterialTheme.colorScheme.primary)
                     }
                 }
-                val location = entry.saved?.path ?: watch?.let {
-                    runtimeCandidateLocation(it.id, it.source, it.locationText)
-                }.orEmpty()
+                val location = entry.saved?.path?.takeUnless { it == "Needs relink" }
+                    ?: watch?.let { runtimeCandidateLocation(it.id, it.source, it.locationText) }
+                    ?: entry.saved?.path.orEmpty()
                 Text(location, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     style = runtimeMemoryMetaTextStyle(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)

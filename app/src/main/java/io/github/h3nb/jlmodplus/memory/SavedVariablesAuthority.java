@@ -317,8 +317,10 @@ public final class SavedVariablesAuthority extends Service {
             JSONArray entries = data.getJSONArray("items");
             for (int i = 0; i < entries.length(); i++) {
                 JSONObject record = entries.getJSONObject(i);
-                record.put("locator", encodeLocator(decodeLocator(
-                        record.getJSONObject("locator"))));
+                if (!record.isNull("locator")) {
+                    record.put("locator", encodeLocator(decodeLocator(
+                            record.getJSONObject("locator"))));
+                }
             }
             data.put("schema", SCHEMA);
         }

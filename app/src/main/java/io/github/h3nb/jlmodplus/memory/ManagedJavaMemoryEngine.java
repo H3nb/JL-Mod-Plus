@@ -2028,6 +2028,14 @@ final class ManagedJavaMemoryEngine {
                 return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Inspector target already belongs to a different Bookmark");
             }
+            if (bookmarkId != null) {
+                for (int i = 0; i < watches.count; i++) {
+                    if (i != existing && bookmarkId.equals(watches.savedSourceIds[i])) {
+                        return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                                "Bookmark is linked to another session target");
+                    }
+                }
+            }
             boolean needsFreezeSlot = freeze && (existing < 0 || !watches.freeze[existing]);
             if ((existing < 0 && watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS)
                     || (needsFreezeSlot
