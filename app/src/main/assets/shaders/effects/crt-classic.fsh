@@ -34,7 +34,8 @@ void main() {
     float row = displayUv.y * uGameSize.y;
     float beam = 0.5 * (beamShade(row - 0.25 * guestFootprint, exponent)
                       + beamShade(row + 0.25 * guestFootprint, exponent));
-    float scan = 1.0 - SCANLINE_STRENGTH * visibleLine * (1.0 - beam);
+    float beamShadow = mix(0.65, 0.05, beam);
+    float scan = 1.0 - SCANLINE_STRENGTH * visibleLine * beamShadow;
 
     // A RGB triad approximation, attenuated if output cannot resolve the pattern.
     float maskVisibility = clamp((scale.x - 1.0) * 0.5, 0.0, 1.0);
