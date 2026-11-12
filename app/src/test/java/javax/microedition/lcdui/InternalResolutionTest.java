@@ -36,4 +36,24 @@ public class InternalResolutionTest {
         // Memory cap can be more restrictive than width and height independently.
         assertEquals(5, InternalResolution.resolve(10, 800, 500, 500, 1920, 1080));
     }
+    @Test public void allocationFailureDowngradesToTheFirstUsableDensity() {
+        java.util.ArrayList<Integer> attempts = new java.util.ArrayList<>();
+        int resolved = InternalResolution.allocateWithFallback(5, scale -> {
+            attempts.add(scale);
+            if (scale > 2) throw new OutOfMemoryError("simulated allocation failure");
+        });
+        assertEquals(2, resolved);
+        assertEquals(java.util.List.of(5, 4, 3, 2), attempts);
+    }
+
+    @Test public void fatalOneTimesAllocationFailurePropagates() {
+        java.util.ArrayList<Integer> attempts = new java.util.ArrayList<>();
+        org.junit.jupiter.api.Assertions.assertThrows(OutOfMemoryError.class,
+                () -> InternalResolution.allocateWithFallback(3, scale -> {
+                    attempts.add(scale);
+                    throw new OutOfMemoryError("all buffers unavailable");
+                }));
+        assertEquals(java.util.List.of(3, 2, 1), attempts);
+    }
+
 }

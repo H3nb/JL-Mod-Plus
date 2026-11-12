@@ -41,8 +41,20 @@ public class GameCanvas extends Canvas {
 	public GameCanvas(boolean suppressCommands) {
 		super();
 		this.suppressCommands = suppressCommands;
-		image = Image.createDisplayTarget(width, maxHeight, getInternalResolutionScale());
+
+		Image backing = null;
+		int scale = getInternalResolutionScale();
+		for (; scale >= 1; scale--) {
+			try {
+				backing = Image.createDisplayTarget(width, maxHeight, scale);
+				break;
+			} catch (OutOfMemoryError error) {
+				if (scale == 1) throw error;
+			}
+		}
+		image = backing;
 		image.enableResizableDisplayTarget();
+		capInternalResolution(scale);
 	}
 
 	@Override

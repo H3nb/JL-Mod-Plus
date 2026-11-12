@@ -173,7 +173,7 @@ public abstract class Canvas extends Displayable {
 
 	protected int width, height;
 	protected int maxHeight;
-	/** Resolved once per Canvas; profile changes apply at MIDlet restart. */
+	/** Session density only decreases on resize or allocation failure; restart resets it. */
 	private volatile int internalResolutionScale = 1;
 
 	protected final int getInternalResolutionScale() {
@@ -203,7 +203,7 @@ public abstract class Canvas extends Displayable {
 	private long notifiedShowGeneration;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
-	private static Image offscreen;
+	private Image offscreen;
 	private Image offscreenCopy;
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics frameMetrics;
@@ -1002,202 +1002,226 @@ public abstract class Canvas extends Displayable {
 	 * Update the size and position of the virtual screen relative to the real one.
 	 */
 	public void updateSize() {
-		// We turn the sizes of the virtual screen into the sizes of the visible canvas.
-		// At the same time, we take into account that one or both virtual sizes can be less
-		// than zero, which means auto-selection of this size so that the resulting canvas
-		// has the same aspect ratio as the actual screen of the device.
-		int scaledDisplayWidth;
-		int scaledDisplayHeight;
+		synchronized (paintEvent) {
+			// We turn the sizes of the virtual screen into the sizes of the visible canvas.
+			// At the same time, we take into account that one or both virtual sizes can be less
+			// than zero, which means auto-selection of this size so that the resulting canvas
+			// has the same aspect ratio as the actual screen of the device.
+			int scaledDisplayWidth;
+			int scaledDisplayHeight;
 
-		SkinLayer skinLayer = SkinLayer.getInstance();
-		if (skinLayer != null && skinLayer.hasDisplayFrame()) {
-			skinLayer.resize(virtualScreen, 0, 0, displayWidth, displayHeight);
-			scaledDisplayWidth = (int) virtualScreen.width();
-			scaledDisplayHeight = (int) virtualScreen.height();
-		} else {
-			scaledDisplayWidth = displayWidth - settings.screenPadding * 2;
-			VirtualKeyboard vk = ContextHolder.getVk();
-			boolean isPhoneSkin = vk != null && vk.isPhone();
-
-			// if phone keyboard layout is active, then scale down the virtual screen
-			if (isPhoneSkin) {
-				float vkHeight = vk.getPhoneKeyboardHeight(displayWidth, displayHeight);
-				scaledDisplayHeight = (int) (displayHeight - vkHeight - 1) - settings.screenPadding;
+			SkinLayer skinLayer = SkinLayer.getInstance();
+			if (skinLayer != null && skinLayer.hasDisplayFrame()) {
+				skinLayer.resize(virtualScreen, 0, 0, displayWidth, displayHeight);
+				scaledDisplayWidth = (int) virtualScreen.width();
+				scaledDisplayHeight = (int) virtualScreen.height();
 			} else {
-				scaledDisplayHeight = displayHeight - settings.screenPadding * 2;
-			}
-		}
+				scaledDisplayWidth = displayWidth - settings.screenPadding * 2;
+				VirtualKeyboard vk = ContextHolder.getVk();
+				boolean isPhoneSkin = vk != null && vk.isPhone();
 
-		if (settings.screenWidth > 0) {
-			if (settings.screenHeight > 0) {
-				// the width and height of the canvas are strictly set
-				width = settings.screenWidth;
-				height = settings.screenHeight;
-			} else {
-				// only the canvas width is set
-				// height is selected by the ratio of the real screen
-				width = settings.screenWidth;
-				height = scaledDisplayHeight * settings.screenWidth / scaledDisplayWidth;
-			}
-		} else {
-			if (settings.screenHeight > 0) {
-				// only the canvas height is set
-				// width is selected by the ratio of the real screen
-				width = scaledDisplayWidth * settings.screenHeight / scaledDisplayHeight;
-				height = settings.screenHeight;
-			} else {
-				// nothing is set - screen-sized canvas
-				width = scaledDisplayWidth;
-				height = scaledDisplayHeight;
-			}
-		}
-
-		// We turn the size of the canvas into the size of the image
-		// that will be displayed on the screen of the device.
-		int scaleRatio = ProfileModel.effectiveScreenScaleRatio(
-				settings.screenScaleType, settings.screenScaleRatio);
-		switch (settings.screenScaleType) {
-			case 0 -> {
-				// without scaling
-				onWidth = width;
-				onHeight = height;
-			}
-			case 1 -> {
-				// try to fit in width
-				onWidth = scaledDisplayWidth;
-				onHeight = height * scaledDisplayWidth / width;
-				if (onHeight > scaledDisplayHeight) {
-					// if height is too big, then fit in height
-					onHeight = scaledDisplayHeight;
-					onWidth = width * scaledDisplayHeight / height;
+				// if phone keyboard layout is active, then scale down the virtual screen
+				if (isPhoneSkin) {
+					float vkHeight = vk.getPhoneKeyboardHeight(displayWidth, displayHeight);
+					scaledDisplayHeight = (int) (displayHeight - vkHeight - 1) - settings.screenPadding;
+				} else {
+					scaledDisplayHeight = displayHeight - settings.screenPadding * 2;
 				}
 			}
-			case 2 -> {
-				// scaling without preserving the aspect ratio:
-				// just stretch the picture to full screen
-				onWidth = scaledDisplayWidth;
-				onHeight = scaledDisplayHeight;
+
+			if (settings.screenWidth > 0) {
+				if (settings.screenHeight > 0) {
+					// the width and height of the canvas are strictly set
+					width = settings.screenWidth;
+					height = settings.screenHeight;
+				} else {
+					// only the canvas width is set
+					// height is selected by the ratio of the real screen
+					width = settings.screenWidth;
+					height = scaledDisplayHeight * settings.screenWidth / scaledDisplayWidth;
+				}
+			} else {
+				if (settings.screenHeight > 0) {
+					// only the canvas height is set
+					// width is selected by the ratio of the real screen
+					width = scaledDisplayWidth * settings.screenHeight / scaledDisplayHeight;
+					height = settings.screenHeight;
+				} else {
+					// nothing is set - screen-sized canvas
+					width = scaledDisplayWidth;
+					height = scaledDisplayHeight;
+				}
 			}
-		}
 
-		onWidth = Math.max(1, onWidth * scaleRatio / 100);
-		onHeight = Math.max(1, onHeight * scaleRatio / 100);
-
-		switch (settings.screenGravity) {
-			case 0 -> { // left
-				onX = 0;
-				onY = (scaledDisplayHeight - onHeight) / 2;
-			}
-			case 1 -> { // top
-				onX = (scaledDisplayWidth - onWidth) / 2;
-				onY = 0;
-			}
-			case 2 -> { // center
-				onX = (scaledDisplayWidth - onWidth) / 2;
-				onY = (scaledDisplayHeight - onHeight) / 2;
-			}
-			case 3 -> { // right
-				onX = scaledDisplayWidth - onWidth;
-				onY = (scaledDisplayHeight - onHeight) / 2;
-			}
-			case 4 -> { // bottom
-				onX = (scaledDisplayWidth - onWidth) / 2;
-				onY = scaledDisplayHeight - onHeight;
-			}
-		}
-
-		if (skinLayer != null && skinLayer.hasDisplayFrame()) {
-			onX += virtualScreen.left;
-			onY += virtualScreen.top;
-		} else {
-			onX += settings.screenPadding;
-			onY += settings.screenPadding;
-		}
-
-		// calculate the maximum height
-		maxHeight = height;
-
-		// calculate the current height
-		softBar.resize();
-		float softBarHeight = softBar.bounds.height();
-		if (softBarHeight > 0) {
-			float scaleY = (float) onHeight / height;
-			height = (int) (height - softBarHeight / scaleY);
-			onHeight -= softBarHeight;
-		}
-
-		RectF screen = new RectF(0, 0, displayWidth, displayHeight);
-		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
-
-		synchronized (bufferLock) {
-			// Keep the session density unless a logical resize would exceed its
-			// physical target limits. Never increase it again before restart.
-			int requestedScale = offscreenCopy == null
-					? settings.internalResolutionScale : internalResolutionScale;
-			internalResolutionScale = InternalResolution.resolve(
-					requestedScale, width, height, maxHeight, onWidth, onHeight);
-			// HD targets and effects consume a tight content bitmap, without softbar padding.
-			boolean tight = internalResolutionScale > 1
-					|| (settings.effects != null && !settings.effects.isEmpty());
-			boolean replace = offscreenCopy == null
-					|| offscreenCopy.getPixelScale() != internalResolutionScale
-					|| (tight && (offscreenCopy.getWidth() != width
-							|| offscreenCopy.getHeight() != height));
-			if (replace) {
-				Image previous = offscreenCopy;
-				Image next = Image.createDisplayTarget(width,
-						tight ? height : maxHeight, internalResolutionScale);
-				if (previous != null) {
-					int overlapWidth = Math.min(width, previous.getWidth());
-					int overlapHeight = Math.min(height, previous.getHeight());
-					if (overlapWidth > 0 && overlapHeight > 0) {
-						int oldScale = previous.getPixelScale();
-						int newScale = next.getPixelScale();
-						new android.graphics.Canvas(next.getBitmap()).drawBitmap(
-								previous.getBitmap(),
-								new Rect(0, 0, overlapWidth * oldScale, overlapHeight * oldScale),
-								new Rect(0, 0, overlapWidth * newScale, overlapHeight * newScale), null);
+			// We turn the size of the canvas into the size of the image
+			// that will be displayed on the screen of the device.
+			int scaleRatio = ProfileModel.effectiveScreenScaleRatio(
+					settings.screenScaleType, settings.screenScaleRatio);
+			switch (settings.screenScaleType) {
+				case 0 -> {
+					// without scaling
+					onWidth = width;
+					onHeight = height;
+				}
+				case 1 -> {
+					// try to fit in width
+					onWidth = scaledDisplayWidth;
+					onHeight = height * scaledDisplayWidth / width;
+					if (onHeight > scaledDisplayHeight) {
+						// if height is too big, then fit in height
+						onHeight = scaledDisplayHeight;
+						onWidth = width * scaledDisplayHeight / height;
 					}
 				}
-				offscreenCopy = next;
-			} else if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
-				offscreenCopy.setSize(width, height);
+				case 2 -> {
+					// scaling without preserving the aspect ratio:
+					// just stretch the picture to full screen
+					onWidth = scaledDisplayWidth;
+					onHeight = scaledDisplayHeight;
+				}
 			}
-			onDisplayTargetResized();
-		}
-		configureAmbientGeometry();
-		ViewHandler.postEvent(this::updateVideoDisplays);
-		if (overlay != null) {
-			overlay.resize(screen, onX, onY, onX + onWidth, onY + onHeight + softBarHeight);
-		}
-		if (skinLayer != null && !skinLayer.hasDisplayFrame()) {
-			skinLayer.resize(virtualScreen, 0, 0, displayWidth, displayHeight);
-		}
 
-		if (settings.graphicsMode == 1) {
-			float gl = 2.0f * virtualScreen.left / displayWidth - 1.0f;
-			float gt = 1.0f - 2.0f * virtualScreen.top / displayHeight;
-			float gr = 2.0f * virtualScreen.right / displayWidth - 1.0f;
-			float gb = 1.0f - 2.0f * virtualScreen.bottom / displayHeight;
-			float th = (float) (height * internalResolutionScale)
-					/ offscreenCopy.getBitmap().getHeight();
-			float tw = (float) (width * internalResolutionScale)
-					/ offscreenCopy.getBitmap().getWidth();
-			renderer.updateSize(gl, gt, gr, gb, th, tw);
+			onWidth = Math.max(1, onWidth * scaleRatio / 100);
+			onHeight = Math.max(1, onHeight * scaleRatio / 100);
+
+			switch (settings.screenGravity) {
+				case 0 -> { // left
+					onX = 0;
+					onY = (scaledDisplayHeight - onHeight) / 2;
+				}
+				case 1 -> { // top
+					onX = (scaledDisplayWidth - onWidth) / 2;
+					onY = 0;
+				}
+				case 2 -> { // center
+					onX = (scaledDisplayWidth - onWidth) / 2;
+					onY = (scaledDisplayHeight - onHeight) / 2;
+				}
+				case 3 -> { // right
+					onX = scaledDisplayWidth - onWidth;
+					onY = (scaledDisplayHeight - onHeight) / 2;
+				}
+				case 4 -> { // bottom
+					onX = (scaledDisplayWidth - onWidth) / 2;
+					onY = scaledDisplayHeight - onHeight;
+				}
+			}
+
+			if (skinLayer != null && skinLayer.hasDisplayFrame()) {
+				onX += virtualScreen.left;
+				onY += virtualScreen.top;
+			} else {
+				onX += settings.screenPadding;
+				onY += settings.screenPadding;
+			}
+
+			// calculate the maximum height
+			maxHeight = height;
+
+			// calculate the current height
+			softBar.resize();
+			float softBarHeight = softBar.bounds.height();
+			if (softBarHeight > 0) {
+				float scaleY = (float) onHeight / height;
+				height = (int) (height - softBarHeight / scaleY);
+				onHeight -= softBarHeight;
+			}
+
+			RectF screen = new RectF(0, 0, displayWidth, displayHeight);
+			virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
+
+	        synchronized (bufferLock) {
+	            int requested = offscreenCopy == null
+	                    ? settings.internalResolutionScale : internalResolutionScale;
+	            int maximum = InternalResolution.resolve(
+	                    requested, width, height, maxHeight, onWidth, onHeight);
+	            int previousScale = internalResolutionScale;
+	            InternalResolution.allocateWithFallback(maximum, scale -> {
+	                boolean tight = scale > 1
+	                        || (settings.effects != null && !settings.effects.isEmpty());
+	                int physicalWidth = width * scale;
+	                int physicalHeight = (tight ? height : maxHeight) * scale;
+	                Image previous = offscreenCopy;
+	                boolean replace = previous == null || previous.getPixelScale() != scale
+	                        || previous.getBitmap().getWidth() < physicalWidth
+	                        || previous.getBitmap().getHeight() < physicalHeight
+	                        || (tight && (previous.getBitmap().getWidth() != physicalWidth
+	                                || previous.getBitmap().getHeight() != physicalHeight));
+	                Image next = replace
+	                        ? Image.createDisplayTarget(width, tight ? height : maxHeight, scale)
+	                        : previous;
+	                if (replace && previous != null) {
+	                    int overlapWidth = Math.min(width, previous.getWidth());
+	                    int overlapHeight = Math.min(height, previous.getHeight());
+	                    if (overlapWidth > 0 && overlapHeight > 0) {
+	                        new android.graphics.Canvas(next.getBitmap()).drawBitmap(
+	                                previous.getBitmap(),
+	                                new Rect(0, 0, overlapWidth * previous.getPixelScale(),
+	                                        overlapHeight * previous.getPixelScale()),
+	                                new Rect(0, 0, overlapWidth * scale, overlapHeight * scale), null);
+	                    }
+	                }
+	                Image nextPaint = offscreen;
+	                if (nextPaint == null || nextPaint.getPixelScale() != scale
+	                        || nextPaint.getBitmap().getWidth() < physicalWidth
+	                        || nextPaint.getBitmap().getHeight() < maxHeight * scale) {
+	                    nextPaint = Image.createDisplayTarget(width, maxHeight, scale);
+	                }
+
+	                // All allocations precede the GameCanvas rebind. On failure
+	                // the previous published and paint buffers remain available.
+	                internalResolutionScale = scale;
+	                try {
+	                    onDisplayTargetResized();
+	                    offscreenCopy = next;
+	                    offscreen = nextPaint;
+	                    if (next.getWidth() != width || next.getHeight() != height) {
+	                        next.setSize(width, height);
+	                    }
+	                } catch (OutOfMemoryError error) {
+	                    internalResolutionScale = previousScale;
+	                    throw error;
+	                }
+	            });
+	        }
+
+			configureAmbientGeometry();
+			ViewHandler.postEvent(this::updateVideoDisplays);
+			if (overlay != null) {
+				overlay.resize(screen, onX, onY, onX + onWidth, onY + onHeight + softBarHeight);
+			}
+			if (skinLayer != null && !skinLayer.hasDisplayFrame()) {
+				skinLayer.resize(virtualScreen, 0, 0, displayWidth, displayHeight);
+			}
+
+			if (settings.graphicsMode == 1) {
+				float gl = 2.0f * virtualScreen.left / displayWidth - 1.0f;
+				float gt = 1.0f - 2.0f * virtualScreen.top / displayHeight;
+				float gr = 2.0f * virtualScreen.right / displayWidth - 1.0f;
+				float gb = 1.0f - 2.0f * virtualScreen.bottom / displayHeight;
+				float th = (float) (height * internalResolutionScale)
+						/ offscreenCopy.getBitmap().getHeight();
+				float tw = (float) (width * internalResolutionScale)
+						/ offscreenCopy.getBitmap().getWidth();
+				renderer.updateSize(gl, gt, gr, gb, th, tw);
+			}
+			repaintInternal();
 		}
-		repaintInternal();
 	}
 
-	/**
-	 * Convert the screen coordinates of the pointer into the virtual ones.
-	 *
-	 * @param x the pointer coordinate on the real screen
-	 * @return the corresponding pointer coordinate on the virtual screen
-	 */
+	/** Cap a session after a subclass fails to allocate its initial HD backing. */
+	protected final void capInternalResolution(int scale) {
+		if (scale < internalResolutionScale) {
+			internalResolutionScale = scale;
+			updateSize();
+		}
+	}
+
 	/** Called after the host-owned display target geometry changes. */
 	protected void onDisplayTargetResized() {
 	}
 
+	/** Convert the host pointer X coordinate into MIDlet units. */
 	private int convertPointerX(float x) {
 		return (int) ((x - onX) * width / onWidth);
 	}

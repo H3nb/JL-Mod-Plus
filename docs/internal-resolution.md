@@ -8,8 +8,9 @@ input coordinates, fonts or Java ME graphics API contracts.
 
 - **Internal resolution:** Auto (default), or 1–10×. Auto selects an
   integer factor based on the visible game viewport. The selected factor
-  remains fixed for the Canvas session unless a logical resize would exceed
-  the allocation limits; then it is reduced for the remainder of the session.
+  remains fixed for the Canvas session unless a logical resize exceeds
+  target limits or a physical buffer allocation fails. The density then
+  decreases for the remainder of that session, down to 1× if necessary.
   Restarting applies profile changes.
   Built-in profiles use the OpenGL ES graphics backend and Auto density,
   including existing MIDlets still owned by Built-in. This refresh preserves
@@ -81,6 +82,15 @@ Large-source reconstruction is limited separately from frame target density.
 
 GameCanvas retains its buffer and previously obtained Graphics objects across
 host resizes, including when a constrained HD density must decrease.
+Operations through retained Java ME Graphics objects share the buffer Image
+monitor with its resize/rebind operation. A per-Canvas paint surface cannot
+be replaced while a guest paint event is active.
+
+The published frame, scratch surface and GameCanvas buffer are allocated
+before the new density is published. If a high-density allocation fails,
+the host tries the next smaller density while preserving the previous frame;
+a failure to allocate even a 1× buffer still propagates. This recovery is
+best-effort, not a guarantee against complete process memory exhaustion.
 
 The retained regression suites protect partial GameCanvas flush, negative-stride
 readback, all sprite transforms, atlas isolation, high-density M3G

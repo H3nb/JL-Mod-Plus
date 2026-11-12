@@ -245,4 +245,78 @@ public class InternalResolutionGraphicsTest {
             frame.getBitmap().recycle();
         }
     }
+    @Test public void retainedGraphicsSharesTheResizeMonitor() throws Exception {
+        Image frame = Image.createDisplayTarget(24, 20, 3);
+        frame.enableResizableDisplayTarget();
+        Graphics retained = frame.getGraphics();
+        java.util.concurrent.CountDownLatch started = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch finished = new java.util.concurrent.CountDownLatch(1);
+        Thread draw = new Thread(() -> {
+            started.countDown();
+            retained.setColor(RED);
+            retained.fillRect(1, 1, 3, 3);
+            finished.countDown();
+        }, "guest-resize-lock-test");
+        draw.setDaemon(true);
+        try {
+            synchronized (frame) {
+                draw.start();
+                assertTrue(started.await(5, java.util.concurrent.TimeUnit.SECONDS));
+                assertTrue("Drawing must not mutate the backing during a resize",
+                        !finished.await(100, java.util.concurrent.TimeUnit.MILLISECONDS));
+            }
+            assertTrue(finished.await(5, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(RED, frame.getBitmap().getPixel(4, 4) & RGB);
+        } finally {
+            draw.join(5000);
+            frame.getBitmap().recycle();
+        }
+    }
+
+    @Test public void concurrentDrawsAndResizesKeepRetainedGraphicsUsable() throws Exception {
+        Image frame = Image.createDisplayTarget(30, 24, 3);
+        frame.enableResizableDisplayTarget();
+        Graphics retained = frame.getGraphics();
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        Thread draw = new Thread(() -> {
+            try {
+                for (int i = 0; i < 200; i++) {
+                    retained.setColor(RED);
+                    retained.fillRect(0, 0, 8, 8);
+                }
+            } catch (Throwable problem) {
+                failure.compareAndSet(null, problem);
+            }
+        }, "guest-draw");
+        Thread resize = new Thread(() -> {
+            try {
+                for (int i = 0; i < 60; i++) {
+                    frame.resizeDisplayTarget(30 + i % 2, 24 + i % 2, i % 2 == 0 ? 3 : 2);
+                }
+            } catch (Throwable problem) {
+                failure.compareAndSet(null, problem);
+            }
+        }, "host-resize");
+        draw.setDaemon(true);
+        resize.setDaemon(true);
+        try {
+            draw.start();
+            resize.start();
+            draw.join(15000);
+            resize.join(15000);
+            assertTrue("Draw should finish without deadlock", !draw.isAlive());
+            assertTrue("Resize should finish without deadlock", !resize.isAlive());
+            assertTrue("Concurrent rebind failed: " + failure.get(), failure.get() == null);
+            retained.setColor(BLUE);
+            retained.fillRect(2, 2, 2, 2);
+            int scale = frame.getPixelScale();
+            assertEquals(BLUE, frame.getBitmap().getPixel(2 * scale, 2 * scale) & RGB);
+        } finally {
+            draw.join(15000);
+            resize.join(15000);
+            frame.getBitmap().recycle();
+        }
+    }
+
 }

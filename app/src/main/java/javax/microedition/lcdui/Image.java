@@ -34,11 +34,11 @@ import io.github.h3nb.jlmodplus.util.PNGUtils;
 
 public class Image {
 	private final boolean mutable;
-	private Bitmap bitmap;
+	private volatile Bitmap bitmap;
 	private Graphics graphics;
 	private final Rect bounds;
 	private volatile int pixelScale;
-	private WeakHashMap<Graphics, Boolean> retainedGraphics;
+	private volatile WeakHashMap<Graphics, Boolean> retainedGraphics;
 	private boolean isBlackWhiteAlpha;
 
 	public Image(Bitmap bitmap, boolean mutable) {
@@ -162,7 +162,7 @@ public class Image {
 		return bounds.bottom;
 	}
 
-	public void getRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height) {
+	public synchronized void getRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height) {
 		if (pixelScale == 1) {
 			bitmap.getPixels(rgbData, offset, scanlength, x, y, width, height);
 			return;
@@ -195,7 +195,7 @@ public class Image {
 				bitmap, getPhysicalContentRect(), r, null);
 	}
 
-	public Graphics getSingleGraphics() {
+	public synchronized Graphics getSingleGraphics() {
 		if (graphics == null) {
 			graphics = getGraphics();
 		}
@@ -206,6 +206,10 @@ public class Image {
 	public synchronized void enableResizableDisplayTarget() {
 		if (retainedGraphics == null) retainedGraphics = new WeakHashMap<>();
 		if (graphics != null) retainedGraphics.put(graphics, Boolean.TRUE);
+	}
+
+	boolean isResizableDisplayTarget() {
+		return retainedGraphics != null;
 	}
 
 	/** Host-only resize that preserves previously returned Graphics objects. */
@@ -238,7 +242,7 @@ public class Image {
 		}
 	}
 
-	void setSize(int width, int height) {
+	synchronized void setSize(int width, int height) {
 		if ((long) width * pixelScale > bitmap.getWidth()
 				|| (long) height * pixelScale > bitmap.getHeight()) {
 			Bitmap previous = bitmap;

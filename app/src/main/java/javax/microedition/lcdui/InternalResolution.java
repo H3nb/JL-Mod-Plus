@@ -10,6 +10,23 @@ final class InternalResolution {
 
     private InternalResolution() {}
 
+    @FunctionalInterface
+    interface ScaleAttempt {
+        void allocate(int scale);
+    }
+
+    /** Allocate replacement surfaces before the caller publishes any new state. */
+    static int allocateWithFallback(int desiredScale, ScaleAttempt attempt) {
+        for (int scale = Math.max(1, Math.min(MAX_SCALE, desiredScale)); ; scale--) {
+            try {
+                attempt.allocate(scale);
+                return scale;
+            } catch (OutOfMemoryError error) {
+                if (scale == 1) throw error;
+            }
+        }
+    }
+
     static int resolve(int requested, int logicalWidth, int logicalHeight,
             int viewportWidth, int viewportHeight) {
         return resolve(requested, logicalWidth, logicalHeight, logicalHeight,
