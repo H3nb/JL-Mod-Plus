@@ -544,6 +544,7 @@ internal data class MemoryEditorUiState(
     val scripts: List<MemoryScriptRow> = emptyList(),
     val scriptsLoaded: Boolean = false,
     val scriptsError: String? = null,
+    val scriptActiveFreezes: List<Pair<String, String>> = emptyList(),
     val message: String? = null,
     val messageIsError: Boolean = false,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,

@@ -496,7 +496,8 @@ class MemoryRecipeRuntime {
         if (id.length !in 1..64 || !id.matches(Regex("[A-Za-z0-9_.-]+"))) bad("Invalid recipe ID")
         val name = obj["name"]?.let {
             (it as? JsonPrimitive)?.content?.takeIf { value ->
-                value.length in 1..80 && value.none { char -> Character.isISOControl(char) }
+                value.length in 1..80 && value.isNotBlank() &&
+                    value.none { char -> Character.isISOControl(char) }
             }
                 ?: bad("Invalid recipe name")
         } ?: id
@@ -517,6 +518,8 @@ class MemoryRecipeRuntime {
             val min = s.long("min")
             val max = s.long("max")
             if (max < min) bad("Input range is inverted")
+            if (s["default"] != null && s.long("default") !in min..max)
+                bad("Input default outside declared range")
             min..max
         }
         val defaultRoot = obj["root"]?.let {
@@ -556,6 +559,8 @@ class MemoryRecipeRuntime {
                     else -> bad("Unknown path step")
                 }
             }
+            if (steps.any { it.indexInput != null && it.indexInput !in inputRanges })
+                bad("Undeclared index input")
             val kind = a.string("kind")
             if (kind !in setOf("set", "bitfield", "encoded32le")) bad("Unsupported operation")
             val input = a["valueInput"]?.let { (it as? JsonPrimitive)?.content ?: bad("Bad value input") }
@@ -650,6 +655,14 @@ class MemoryRecipeRuntime {
     }
 
     companion object {
+        /** Validate a recipe without resolving or touching guest memory. */
+        @JvmStatic
+        fun validateDocument(json: String) {
+            if (json.toByteArray(Charsets.UTF_8).size > MAX_JSON_BYTES)
+                bad("Recipe exceeds 24 KiB")
+            MemoryRecipeRuntime().parse(json)
+        }
+
         private fun bad(detail: String): Nothing = throw Problem(
             MemoryEngineContract.RESULT_INVALID_REQUEST, detail
         )

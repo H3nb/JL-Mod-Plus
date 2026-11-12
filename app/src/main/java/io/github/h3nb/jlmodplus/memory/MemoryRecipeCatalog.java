@@ -104,10 +104,8 @@ final class MemoryRecipeCatalog {
         if (!mainClass.equals(gameEntry.replace('.', '/'))) {
             throw new IOException("Recipe targets a different MIDlet entry class");
         }
-        JSONArray actions = recipe.getJSONArray("actions");
-        if (actions.length() == 0 || actions.length() > 32) {
-            throw new IOException("Recipe must contain 1–32 actions");
-        }
+        // Reject malformed recipes before storing them, using the runner's data-only schema.
+        MemoryRecipeRuntime.validateDocument(document);
         return recipe;
     }
 

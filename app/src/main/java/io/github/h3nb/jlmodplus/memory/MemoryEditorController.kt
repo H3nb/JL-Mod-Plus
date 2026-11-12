@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.PersistableBundle
 import android.os.RemoteException
+import android.os.SystemClock
 import android.view.View
 import android.widget.Toast
 import androidx.compose.runtime.CompositionLocalProvider
@@ -70,6 +71,8 @@ internal class MemoryEditorComposeController(
     private var savedRefreshPending = false
     private var savedCatalogDirty = false
     private var scriptsGeneration = 0L
+    private var recipeFreezeRefreshPending = false
+    private var lastRecipeFreezeRefreshMs = 0L
     @Volatile private var savedEditId: String? = null
     private var savedEditReady = false
     private var hostForeground = true
@@ -1237,6 +1240,7 @@ internal class MemoryEditorComposeController(
         invalidateVisiblePageRequest()
         state = state.copy(variablesTab = false, scriptsTab = true, selected = emptySet())
         refreshMemoryScripts()
+        refreshRecipeFreezeState(force = true)
     }
 
     override fun toggleSelection(id: Long) {
@@ -1668,6 +1672,48 @@ internal class MemoryEditorComposeController(
         }
     }
 
+    /**
+     * An edited or deleted recipe must not leave an old Freeze running. Stop it on the same
+     * serialized IPC worker before publishing the catalog change; fail closed if stop is unknown.
+     * A storage error can leave the old recipe saved but its Freeze stopped.
+     */
+    private fun stopRecipeFreezeBeforeMutation(
+        token: Long, engine: IMemoryEngineService?, id: String,
+    ) {
+        if (token == 0L) return
+        val currentEngine = engine ?: error("Cannot verify that the old Freeze has stopped")
+        val reply = currentEngine.clearMemoryRecipeFreeze(token, id)
+        if (reply.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                MemoryEngineContract.RESULT_TARGET_LOST) != MemoryEngineContract.RESULT_OK) {
+            error(reply.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                ?: "Cannot stop the old Freeze")
+        }
+    }
+
+    private fun refreshRecipeFreezeState(force: Boolean = false) {
+        val engine = service ?: return
+        val token = state.runtimeToken
+        if (token == 0L || recipeFreezeRefreshPending) return
+        val now = SystemClock.uptimeMillis()
+        if (!force && now - lastRecipeFreezeRefreshMs < SCRIPT_FREEZE_REFRESH_INTERVAL_MS) return
+        lastRecipeFreezeRefreshMs = now
+        recipeFreezeRefreshPending = true
+        runIpc {
+            val reply = runCatching { engine.getCapabilities() }.getOrNull()
+            post {
+                recipeFreezeRefreshPending = false
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                if (reply != null) {
+                    val ids = reply.getStringArray("recipeFreezeIds").orEmpty()
+                    val names = reply.getStringArray("recipeFreezeNames").orEmpty()
+                    state = state.copy(scriptActiveFreezes = ids.mapIndexed { index, id ->
+                        id to names.getOrNull(index).orEmpty().ifBlank { id }
+                    })
+                }
+            }
+        }
+    }
+
     override fun saveMemoryScript(
         document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
     ) {
@@ -1677,14 +1723,18 @@ internal class MemoryEditorComposeController(
             onComplete(false)
             return
         }
-        val generation = ++scriptsGeneration
+        scriptsGeneration++ // Invalidate old catalog reads, not mutation completion.
+        val token = state.runtimeToken
+        val engine = service
         runIpc {
             val result = runCatching {
+                MemoryRecipeRuntime.validateDocument(document)
                 val (path, appId, entry) = savedTarget()
+                if (replacingId != null) stopRecipeFreezeBeforeMutation(token, engine, replacingId)
                 recipeRows(authority.putRecipe(path, appId, entry, document, replacingId))
             }
             post {
-                if (destroyed || generation != scriptsGeneration) return@post
+                if (destroyed || token != state.runtimeToken) return@post
                 val success = result.isSuccess
                 state = state.copy(
                     scripts = result.getOrNull() ?: state.scripts,
@@ -1693,7 +1743,7 @@ internal class MemoryEditorComposeController(
                         else result.exceptionOrNull()?.message,
                     messageIsError = !success,
                 )
-                if (success && replacingId != null) clearMemoryRecipeFreeze(replacingId)
+                refreshRecipeFreezeState(force = true)
                 onComplete(success)
             }
         }
@@ -1706,14 +1756,17 @@ internal class MemoryEditorComposeController(
             onComplete(false)
             return
         }
-        val generation = ++scriptsGeneration
+        scriptsGeneration++ // A refresh must not invalidate Delete's callback.
+        val token = state.runtimeToken
+        val engine = service
         runIpc {
             val result = runCatching {
                 val (path, appId, entry) = savedTarget()
+                stopRecipeFreezeBeforeMutation(token, engine, id)
                 recipeRows(authority.deleteRecipe(path, appId, entry, id))
             }
             post {
-                if (destroyed || generation != scriptsGeneration) return@post
+                if (destroyed || token != state.runtimeToken) return@post
                 val success = result.isSuccess
                 state = state.copy(
                     scripts = result.getOrNull() ?: state.scripts,
@@ -1722,7 +1775,7 @@ internal class MemoryEditorComposeController(
                         else result.exceptionOrNull()?.message,
                     messageIsError = !success,
                 )
-                if (success) clearMemoryRecipeFreeze(id)
+                refreshRecipeFreezeState(force = true)
                 onComplete(success)
             }
         }
@@ -1809,7 +1862,10 @@ internal class MemoryEditorComposeController(
                         ?: result.exceptionOrNull()?.message ?: "Recipe operation finished",
                     messageIsError = code != MemoryEngineContract.RESULT_OK,
                 )
-                if (code == MemoryEngineContract.RESULT_OK && !preview) refreshSavedVariables()
+                if (code == MemoryEngineContract.RESULT_OK && !preview) {
+                    refreshSavedVariables()
+                    refreshRecipeFreezeState(force = true)
+                }
             }
         }
     }
@@ -1851,6 +1907,7 @@ internal class MemoryEditorComposeController(
                         ?: result.exceptionOrNull()?.message ?: "Recipe Freeze stopped",
                     messageIsError = code != MemoryEngineContract.RESULT_OK,
                 )
+                refreshRecipeFreezeState(force = true)
             }
         }
     }
@@ -2315,7 +2372,8 @@ internal class MemoryEditorComposeController(
                     if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
                     refreshSavedLive()
                 }
-                MemoryEditorTab.SCRIPTS, MemoryEditorTab.INSPECTOR -> Unit
+                MemoryEditorTab.SCRIPTS -> refreshRecipeFreezeState()
+                MemoryEditorTab.INSPECTOR -> Unit
             }
         }
         if (!destroyed && hostForeground && state.visible) {
@@ -2420,6 +2478,7 @@ internal class MemoryEditorComposeController(
         private const val ENGINE_RECONNECT_DELAY_MS = 250L
         private const val LIVE_REFRESH_INITIAL_DELAY_MS = 100L
         private const val LIVE_REFRESH_INTERVAL_MS = 250L
+        private const val SCRIPT_FREEZE_REFRESH_INTERVAL_MS = 1_000L
         private const val SAVED_RESOLVE_INTERVAL_MS = 1_000L
         private const val SAVED_REBOUND_NOTICE_MS = 4_000L
         private const val CAPABILITY_RETRY_IDLE_MS = 1_000L

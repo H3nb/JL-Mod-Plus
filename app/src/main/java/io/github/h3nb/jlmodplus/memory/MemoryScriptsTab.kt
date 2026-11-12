@@ -61,6 +61,7 @@ internal data class MemoryScriptMetadata(
 )
 
 internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
+    MemoryRecipeRuntime.validateDocument(document)
     val obj = Json.parseToJsonElement(document) as? JsonObject ?: error("Expected JSON object")
     if ((obj["formatVersion"] as? JsonPrimitive)?.content != "1")
         error("Only Memory Recipe v1 is supported")
@@ -107,9 +108,6 @@ internal fun RuntimeScriptsTab(
     var freeze by remember(selectedId, state.runtimeToken) {
         mutableStateOf(cachedDetail?.detailFreeze ?: false)
     }
-    var activeFreezes by remember(state.runtimeToken) {
-        mutableStateOf<List<Pair<String, String>>>(emptyList())
-    }
     var deleting by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
@@ -125,9 +123,6 @@ internal fun RuntimeScriptsTab(
     LaunchedEffect(state.scripts, selectedId) {
         if (state.scriptsLoaded && selectedId != null && selected == null && draft == null)
             onSelectedId(null)
-    }
-    LaunchedEffect(state.message) {
-        actions.listActiveMemoryRecipeFreezes { activeFreezes = it }
     }
     LaunchedEffect(selected?.document) {
         val saved = MemoryEditorSessionNavigation.script(state.runtimeToken)
@@ -309,7 +304,7 @@ internal fun RuntimeScriptsTab(
                     Text(stringResource(R.string.memory_recipes_freeze),
                         style = MaterialTheme.typography.bodySmall)
                 }
-                val active = activeFreezes.any { it.first == selected.id }
+                val active = state.scriptActiveFreezes.any { it.first == selected.id }
                 if (active) Text(stringResource(R.string.memory_scripts_freeze_active),
                     color = MaterialTheme.colorScheme.primary)
                 Button(enabled = !state.busy && state.writeSupported && metadata != null,
@@ -322,7 +317,6 @@ internal fun RuntimeScriptsTab(
                     }) { Text(stringResource(R.string.memory_recipes_run)) }
                 if (active) OutlinedButton(onClick = {
                     actions.clearMemoryRecipeFreeze(selected.id)
-                    actions.listActiveMemoryRecipeFreezes { activeFreezes = it }
                 }) { Text(stringResource(R.string.memory_recipes_stop_freeze)) }
                 TextButton(onClick = { deleting = true }) {
                     Text(stringResource(R.string.memory_scripts_delete),
