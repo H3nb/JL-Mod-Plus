@@ -1361,7 +1361,7 @@
 <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script saved</string>
 <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script deleted</string>
 <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Could not save script</string>
-<string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Paste a Memory Recipe v1 JSON document. Saving does not execute it.</string>
+<string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Paste a Memory Recipe v1 or v2 JSON document. Saving does not execute it.</string>
 <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Paste JSON from a guide or an AI agent</string>
 <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Paste</string>
 <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboard is empty or the document exceeds 24 KiB</string>
@@ -1377,6 +1377,13 @@
 <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Refresh</string>
 <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Reading current values…</string>
 <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Tap Refresh to read the value from the running game.</string>
+<string name="memory_scripts_mode_toggle">Toggle</string>
+<string name="memory_scripts_mode_form">Form</string>
+<string name="memory_scripts_mode_once">One-shot</string>
+<string name="memory_scripts_mode_legacy">Recipe</string>
+<string name="memory_scripts_edit_values">Edit values</string>
+<string name="memory_scripts_apply">Apply changes</string>
+<string name="memory_scripts_refresh_required">Refresh to verify the current values before applying.</string>
 <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Inconsistent copies: %1$s</string>
 <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimize Memory Editor</string>
 </resources>

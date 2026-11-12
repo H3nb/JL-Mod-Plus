@@ -54,17 +54,25 @@ internal data class MemoryScriptDraft(
     val dirty: Boolean get() = text != initialText
 }
 
+internal data class MemoryScriptInput(val name: String, val label: String, val selector: Boolean)
+
 internal data class MemoryScriptMetadata(
     val id: String,
     val name: String,
     val parameters: Map<String, String>,
+    val mode: String = "legacy",
+    val fields: List<MemoryScriptInput> = emptyList(),
 )
 
 internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
     MemoryRecipeRuntime.validateDocument(document)
     val obj = Json.parseToJsonElement(document) as? JsonObject ?: error("Expected JSON object")
-    if ((obj["formatVersion"] as? JsonPrimitive)?.content != "1")
-        error("Only Memory Recipe v1 is supported")
+    val version = (obj["formatVersion"] as? JsonPrimitive)?.content
+    val mode = when (version) {
+        "1" -> "legacy"
+        "2" -> (obj["mode"] as? JsonPrimitive)?.content ?: error("Missing recipe mode")
+        else -> error("Unsupported Memory Recipe version")
+    }
     val id = (obj["id"] as? JsonPrimitive)?.content.orEmpty()
     if (!id.matches(Regex("[A-Za-z0-9_.-]{1,64}"))) error("Invalid recipe ID")
     val name = (obj["name"] as? JsonPrimitive)?.content?.takeIf(String::isNotBlank) ?: id
@@ -74,12 +82,22 @@ internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
     val actions = obj["actions"] as? JsonArray ?: error("Actions must be an array")
     if (actions.isEmpty()) error("Recipe has no actions")
     val inputs = obj["inputs"] as? JsonObject ?: JsonObject(emptyMap())
-    if (inputs.size > 8) error("Too many recipe parameters")
+    if (inputs.size > 16) error("Too many recipe parameters")
+    val selectors = actions.asSequence().mapNotNull { it as? JsonObject }
+        .flatMap { (it["path"] as? JsonArray).orEmpty().asSequence() }
+        .mapNotNull { (it as? JsonObject)?.get("indexInput") as? JsonPrimitive }
+        .map(JsonPrimitive::content).toSet()
+    val fields = inputs.map { (key, value) ->
+        val spec = value as? JsonObject ?: error("Invalid parameter")
+        MemoryScriptInput(
+            key, (spec["label"] as? JsonPrimitive)?.content ?: key, key in selectors,
+        )
+    }
     return MemoryScriptMetadata(id, name, inputs.mapValues { (_, entry) ->
         val specification = entry as? JsonObject ?: error("Invalid parameter")
         (specification["default"] as? JsonPrimitive)?.content
             ?: (specification["min"] as? JsonPrimitive)?.content ?: "0"
-    })
+    }, mode, fields)
 }
 
 /** Scripts are JSON recipes: no arbitrary code execution and no auto-run on Save or Import. */
@@ -211,6 +229,17 @@ internal fun RuntimeScriptsTab(
             }
         }
         }
+        return
+    }
+
+    if (selected != null && metadata != null && metadata.mode != "legacy") {
+        TypedMemoryRecipeDetail(
+            script = selected, metadata = metadata, state = state, actions = actions,
+            onBack = { onSelectedId(null) },
+            onEdit = { onDraft(MemoryScriptDraft(selected.id, selected.document, selected.document)) },
+            onDeleted = { onSelectedId(null) },
+            modifier = modifier,
+        )
         return
     }
 
@@ -373,14 +402,47 @@ internal fun RuntimeScriptsTab(
             LazyColumn(Modifier.fillMaxWidth().weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(state.scripts, key = MemoryScriptRow::id) { script ->
+                    val scriptMetadata = remember(script.document) {
+                        runCatching { memoryScriptMetadata(script.document) }.getOrNull()
+                    }
+                    var launching by remember(script.id, state.runtimeToken) { mutableStateOf(false) }
+                    val active = state.scriptActiveFreezes.any { it.first == script.id }
                     Surface(modifier = Modifier.fillMaxWidth().clickable { onSelectedId(script.id) },
                         shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.surfaceContainer) {
-                        Column(Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(script.name, style = MaterialTheme.typography.titleSmall)
-                            Text(script.id, style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(Modifier.fillMaxWidth().padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(script.name, style = MaterialTheme.typography.titleSmall)
+                                Text(scriptMetadata?.mode?.let { recipeModeLabel(it, context) }
+                                    ?: script.id, style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            when (scriptMetadata?.mode) {
+                                "toggle" -> Checkbox(checked = active,
+                                    enabled = !launching && !state.busy &&
+                                        state.writeSupported,
+                                    onCheckedChange = { enabled ->
+                                        if (enabled) {
+                                            launching = true
+                                            actions.runMemoryRecipeChecked(
+                                                script.document, scriptMetadata.parameters, true, null,
+                                            ) { launching = false }
+                                        } else actions.clearMemoryRecipeFreeze(script.id)
+                                    })
+                                "oneShot" -> Button(enabled = !launching && !state.busy &&
+                                        state.writeSupported, onClick = {
+                                    launching = true
+                                    actions.runMemoryRecipeChecked(
+                                        script.document, scriptMetadata.parameters, false, null,
+                                    ) { launching = false }
+                                }) { Text(stringResource(R.string.memory_recipes_run)) }
+                                "form" -> TextButton(onClick = { onSelectedId(script.id) }) {
+                                    Text(stringResource(R.string.memory_scripts_edit_values))
+                                }
+                            }
                         }
                     }
                 }

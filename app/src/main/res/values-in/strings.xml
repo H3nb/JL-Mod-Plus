@@ -1263,7 +1263,7 @@
 <string name="memory_scripts_saved">Skrip disimpan</string>
 <string name="memory_scripts_deleted">Skrip dihapus</string>
 <string name="memory_scripts_save_failed">Gagal menyimpan skrip</string>
-<string name="memory_scripts_editor_hint">Tempel dokumen JSON Memory Recipe v1. Menyimpan tidak akan menjalankannya.</string>
+<string name="memory_scripts_editor_hint">Tempel dokumen JSON Memory Recipe v1 atau v2. Menyimpan tidak akan menjalankannya.</string>
 <string name="memory_scripts_paste_hint">Tempel JSON dari dokumentasi atau agen AI</string>
 <string name="memory_scripts_paste">Tempel</string>
 <string name="memory_scripts_clipboard_invalid">Clipboard kosong atau dokumen melebihi 24 KiB</string>
@@ -1279,6 +1279,13 @@
 <string name="memory_scripts_refresh">Perbarui</string>
 <string name="memory_scripts_reading">Membaca nilai saat ini…</string>
 <string name="memory_scripts_refresh_hint">Tekan Perbarui untuk membaca nilai dari game.</string>
+<string name="memory_scripts_mode_toggle">Sakelar</string>
+<string name="memory_scripts_mode_form">Formulir</string>
+<string name="memory_scripts_mode_once">Sekali jalan</string>
+<string name="memory_scripts_mode_legacy">Recipe</string>
+<string name="memory_scripts_edit_values">Ubah nilai</string>
+<string name="memory_scripts_apply">Terapkan perubahan</string>
+<string name="memory_scripts_refresh_required">Perbarui untuk memeriksa nilai aktual sebelum menerapkan perubahan.</string>
 <string name="memory_scripts_inconsistent">Salinan nilai tidak konsisten: %1$s</string>
 <string name="memory_editor_minimize">Minimalkan Memory Editor</string>
 </resources>
