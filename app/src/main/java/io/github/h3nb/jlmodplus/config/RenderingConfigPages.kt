@@ -42,6 +42,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -88,7 +89,8 @@ internal fun isTextureFilteringApplicable(state: ConfigUiState): Boolean = true
 
 private fun passCount(effects: List<EffectEntry>): Int =
     effects.sumOf { entry ->
-        if (entry.builtinId != null) EffectCatalog.get(entry.builtinId)?.passes?.size ?: 1 else 1
+        if (entry.builtinId != null) EffectCatalog.get(entry.builtinId)?.passes?.size ?: 1
+        else if (entry.nativeInput) 2 else 1
     }
 
 private fun moved(effects: List<EffectEntry>, from: Int, to: Int): List<EffectEntry> =
@@ -127,8 +129,12 @@ private fun effectStackSummary(
             R.string.render_effect_summary_more, modified.size - 2))
         return labels.joinToString(" · ")
     }
+    val nativeLabel = if (entry.nativeInput) stringResource(R.string.render_legacy_native_input) else null
     val adjustable = legacy?.settings?.count { it != null && it.max > it.min } ?: 0
-    if (adjustable > 0) return stringResource(R.string.render_adjustable_count, adjustable)
+    if (adjustable > 0) return listOfNotNull(
+        nativeLabel, stringResource(R.string.render_adjustable_count, adjustable)
+    ).joinToString(" · ")
+    if (nativeLabel != null) return nativeLabel
     val author = entry.user?.author?.takeIf { it.isNotBlank() && !it.equals("unknown", true) }
     if (author != null) return stringResource(R.string.render_effect_legacy_author, author)
     return entry.user?.fragment ?: stringResource(R.string.render_effect_user)
@@ -169,8 +175,14 @@ internal fun RenderingSettingsPage(
     val definition = selected?.builtinId?.let(EffectCatalog::get)
     val selectedTitle = definition?.let { stringResource(it.title) } ?: selected?.user?.name.orEmpty()
 
-    fun apply(effects: List<EffectEntry>) {
+    fun apply(effects: List<EffectEntry>): Boolean {
+        if (passCount(effects) > 16) {
+            error = limitError
+            return false
+        }
         onFormChanged(form.toBuilder().effects(effects).build())
+        error = null
+        return true
     }
 
     fun remove(key: String) {
@@ -192,12 +204,7 @@ internal fun RenderingSettingsPage(
     }
 
     fun add(entry: EffectEntry) {
-        val candidate = form.effects + entry
-        if (passCount(candidate) > 16) {
-            error = limitError
-        } else {
-            apply(candidate)
-            error = null
+        if (apply(form.effects + entry)) {
             legacyVariants = emptyList()
             page = EffectPage.STACK
         }
@@ -776,6 +783,23 @@ private fun EffectParametersContent(
                 Text(stringResource(R.string.render_effect_legacy_source, user.fragment ?: ""),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(stringResource(R.string.render_legacy_native_input),
+                            style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.render_legacy_native_input_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = entry.nativeInput,
+                        onCheckedChange = { onChange(entry.copy(nativeInput = it)) },
+                    )
+                }
                 if (user.upscaling || user.outputResolution) {
                     Text(stringResource(R.string.render_effect_legacy_scale_note),
                         style = MaterialTheme.typography.bodySmall,

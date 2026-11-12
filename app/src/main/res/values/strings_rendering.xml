@@ -104,6 +104,8 @@
     <string name="render_effect_catalog_hint">Tap an effect to add it to the stack.</string>
     <string name="render_effect_user_folder_hint">INI, VSH and FSH files must be in the shaders folder.</string>
     <string name="render_effect_legacy_scale_note">Legacy shaders use the game display resolution; .ini upscale flags do not change it.</string>
+    <string name="render_legacy_native_input">Original game pixels</string>
+    <string name="render_legacy_native_input_desc">Prepare a 1× input for this shader without changing the game\'s internal resolution. May discard HD detail; use for older xBR/LCD-style shaders.</string>
     <string name="render_effect_legacy_metadata_missing">Settings from this shader\'s .ini file were not found. Its source files may still render.</string>
     <string name="render_effect_count">%1$d effects</string>
     <string name="render_effect_add">Add effect</string>

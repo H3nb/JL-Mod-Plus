@@ -51,6 +51,22 @@ class EffectStackProfileTest {
     }
 
     @Test
+    fun preservesLegacyShaderNativeInputWithoutChangingExistingProfiles() {
+        val user = ShaderSelection.fromInfo(ShaderInfo("xBR", "User").apply {
+            vertex = "xbr.vsh"
+            fragment = "xbr.fsh"
+        })!!
+        val original = EffectEntry("legacy", user = user)
+        val old = ProfileJson.decode(ProfileJson.encode(ProfileModel(effects = listOf(original))), false)
+        assertFalse(old.model.effects.single().nativeInput)
+
+        val enabled = original.copy(nativeInput = true)
+        val saved = ProfileJson.decode(ProfileJson.encode(ProfileModel(effects = listOf(enabled))), false)
+        assertTrue(saved.model.effects.single().nativeInput)
+        assertEquals("xbr.fsh", saved.model.effects.single().user!!.fragment)
+    }
+
+    @Test
     fun deepCopiesMutableEffectParametersAcrossProfileAndEditorBoundaries() {
         val mutable = mutableMapOf("uStrength" to 0.45f)
         val src = ProfileModel(effects = listOf(

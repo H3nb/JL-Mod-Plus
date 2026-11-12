@@ -15,9 +15,11 @@ data class EffectEntry(
     @SerialName("Builtin") @JvmField val builtinId: String? = null,
     @SerialName("User") @JvmField val user: ShaderSelection? = null,
     @SerialName("Parameters") @JvmField val parameters: Map<String, Float> = emptyMap(),
+    @SerialName("NativeInput") @JvmField val nativeInput: Boolean = false,
 ) {
     init {
         require((builtinId != null) != (user != null)) { "Exactly one effect source is required" }
+        require(!nativeInput || user != null) { "Native input applies only to user shaders" }
     }
 
     companion object {

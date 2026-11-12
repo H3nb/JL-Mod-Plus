@@ -103,6 +103,8 @@
     <string name="render_effect_catalog_hint">Ketuk efek untuk menambahkannya ke rangkaian.</string>
     <string name="render_effect_user_folder_hint">File INI, VSH, dan FSH harus berada di folder shaders.</string>
     <string name="render_effect_legacy_scale_note">Shader legacy diproses pada resolusi tampilan game; opsi pembesaran dalam .ini tidak mengubah skala.</string>
+    <string name="render_legacy_native_input">Piksel asli game</string>
+    <string name="render_legacy_native_input_desc">Siapkan input 1× untuk shader ini tanpa mengubah resolusi internal game. Detail HD mungkin berkurang; gunakan untuk shader lama seperti xBR/LCD.</string>
     <string name="render_effect_legacy_metadata_missing">Pengaturan dari file .ini tidak ditemukan. Shader mungkin tetap berjalan jika file sumbernya tersedia.</string>
     <string name="render_effect_count">%1$d efek</string>
     <string name="render_effect_add">Tambahkan efek</string>
