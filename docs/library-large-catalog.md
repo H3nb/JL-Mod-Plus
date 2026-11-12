@@ -58,6 +58,9 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   before the first READY state. Profile these independently before considering an
   early browsing snapshot with different mutation-safety semantics.
 
+- Cold display preparation resolves descriptions and icon presence on independent IO
+  coroutines while ordered rows are computed on Default. Structured cancellation
+  still prevents stale query/workdir results from being published.
 - The opt-in emulator runtime CI now includes a prepopulated Room catalog with matching
   converted directories. It records time to repository READY and subsequent display
   projection READY separately, without unstable hard elapsed-time assertions. Results

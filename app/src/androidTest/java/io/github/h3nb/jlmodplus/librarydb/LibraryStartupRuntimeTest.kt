@@ -76,8 +76,24 @@ class LibraryStartupRuntimeTest {
             assertEquals(count, display.apps.size)
             assertEquals(count, display.availableAppIds.size)
             assertEquals(count, display.iconFiles.size)
+            val descriptionsStart = System.nanoTime()
+            LibraryDescriptionCatalog().resolve(root, ready.apps, "en-US")
+            val descriptionsMs = (System.nanoTime() - descriptionsStart) / 1_000_000.0
+
+            val iconsStart = System.nanoTime()
+            assertEquals(count, resolveLibraryIconFiles(root, ready.apps).size)
+            val iconsMs = (System.nanoTime() - iconsStart) / 1_000_000.0
+
+            val orderingStart = System.nanoTime()
+            val ordered = LibraryListProjection.prepare(
+                ready.apps, 0, Locale.US, LibraryQuickView.All,
+            )
+            assertEquals(count, ordered.rows.size)
+            val orderingMs = (System.nanoTime() - orderingStart) / 1_000_000.0
+
             Log.i("LibraryStartupRuntime",
-                "count=$count repositoryMs=$repositoryMs projectionMs=$projectionMs")
+                "count=$count repositoryMs=$repositoryMs projectionMs=$projectionMs " +
+                    "descriptionsMs=$descriptionsMs iconsMs=$iconsMs orderingMs=$orderingMs")
         } finally {
             repository.close()
             scope.coroutineContext[Job]!!.cancelAndJoin()

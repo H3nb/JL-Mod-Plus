@@ -33,6 +33,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -1194,45 +1196,58 @@ internal fun libraryDisplayStates(
                 prepared = null
                 LibraryViewModel.DisplayState.Error(state.emulatorDir, state.message)
             }
-            is LibraryRepository.State.Ready -> {
+            is LibraryRepository.State.Ready -> coroutineScope {
                 val previous = prepared
-                val translated = if (previous != null &&
-                    previous.repositoryState === state &&
-                    previous.descriptionLocale == input.descriptionLocale) {
-                    previous.localizedDescriptions
-                } else withContext(Dispatchers.IO) {
-                    val context = currentCoroutineContext()
-                    descriptionCatalogMutex.withLock {
-                        descriptionCatalog.resolve(
-                            state.emulatorDir, state.apps, input.descriptionLocale.value,
-                            state.descriptionOverrides,
-                        ) { context.ensureActive() }
+                val translatedTask = async(Dispatchers.IO) {
+                    if (previous != null &&
+                        previous.repositoryState === state &&
+                        previous.descriptionLocale == input.descriptionLocale) {
+                        previous.localizedDescriptions
+                    } else {
+                        val context = currentCoroutineContext()
+                        descriptionCatalogMutex.withLock {
+                            descriptionCatalog.resolve(
+                                state.emulatorDir, state.apps, input.descriptionLocale.value,
+                                state.descriptionOverrides,
+                            ) { context.ensureActive() }
+                        }
                     }
                 }
-                val iconFiles = if (previous != null &&
-                    previous.repositoryState.generation == state.generation &&
-                    previous.repositoryState.emulatorDir == state.emulatorDir &&
-                    previous.repositoryState.apps === state.apps) {
-                    previous.iconFiles
-                } else withContext(Dispatchers.IO) {
-                    val context = currentCoroutineContext()
-                    val reusable = previous?.takeIf {
-                        it.repositoryState.generation == state.generation &&
-                            it.repositoryState.emulatorDir == state.emulatorDir
-                    }?.iconFiles.orEmpty()
-                    resolveLibraryIconFiles(state.emulatorDir, state.apps, reusable) {
-                        context.ensureActive()
+                val iconsTask = async(Dispatchers.IO) {
+                    if (previous != null &&
+                        previous.repositoryState.generation == state.generation &&
+                        previous.repositoryState.emulatorDir == state.emulatorDir &&
+                        previous.repositoryState.apps === state.apps) {
+                        previous.iconFiles
+                    } else {
+                        val context = currentCoroutineContext()
+                        val reusable = previous?.takeIf {
+                            it.repositoryState.generation == state.generation &&
+                                it.repositoryState.emulatorDir == state.emulatorDir
+                        }?.iconFiles.orEmpty()
+                        resolveLibraryIconFiles(state.emulatorDir, state.apps, reusable) {
+                            context.ensureActive()
+                        }
                     }
                 }
-                val (source, projected) = withContext(workerDispatcher) {
+                val orderingTask = async(workerDispatcher) {
                     val context = currentCoroutineContext()
-                    val ordered = if (previous != null && previous.matches(input)) previous.ordered
-                    else LibraryListProjection.prepare(state.apps, input.sortVariant,
-                        input.locale, input.quickView) { context.ensureActive() }
-                    val projected = LibraryListProjection.project(ordered, input.filter,
-                        input.quickView, translated) { context.ensureActive() }
-                    LibraryOrderedSource(state, ordered, translated, input.descriptionLocale, iconFiles) to projected
+                    if (previous != null && previous.matches(input)) previous.ordered
+                    else LibraryListProjection.prepare(
+                        state.apps, input.sortVariant, input.locale, input.quickView,
+                    ) { context.ensureActive() }
                 }
+                val translated = translatedTask.await()
+                val iconFiles = iconsTask.await()
+                val ordered = orderingTask.await()
+                val projected = withContext(workerDispatcher) {
+                    val context = currentCoroutineContext()
+                    LibraryListProjection.project(ordered, input.filter, input.quickView,
+                        translated) { context.ensureActive() }
+                }
+                val source = LibraryOrderedSource(
+                    state, ordered, translated, input.descriptionLocale, iconFiles,
+                )
                 // Only completed, still-current work becomes the one retained ordering.
                 prepared = source
                 LibraryViewModel.DisplayState.Ready(
