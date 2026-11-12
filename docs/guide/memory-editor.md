@@ -44,33 +44,54 @@ The editor reports **candidates**, not confirmed game variables. Treat them as h
 
 ## Edit, List, Freeze, and Inspector
 
-Select a result and choose **Add to List** to track it while playing, or **Save variable** to keep a verified target directly without first adding it to List. Tap a List row to edit its value. Use its always-visible checkbox to select it, or the checkbox in the List toolbar to select all entries. Long-press remains a selection shortcut. The contextual toolbar and row menu provide **Inspect**, **Freeze/Unfreeze**, **Rename**, **Keep for next launch**, and **Remove** when applicable. Inspector is the third tab; Back returns to the Search or List location from which it opened.
+Select Search results and choose **Bookmark**, or bookmark a primitive field/array
+element from Inspector. The List contains one persistent Bookmark collection per
+installed MIDlet. Freeze automatically bookmarks its target before activation.
+No separate Watch, Keep or Stop keeping action is required.
 
-Editing applies a value to the selected supported candidate or candidates. Batch actions can affect several values at once; verify the selection before using them. **Freeze** attempts to keep a value at the chosen level as the game runs. It may be inappropriate when the game expects to update that value itself.
+Tap an available Bookmark to edit, or use its menu to Inspect, Freeze/Unfreeze,
+Rename, Relink or Remove. A missing or incompatible target stays in the List
+without being editable. A Bookmark is never removed automatically when a game
+changes scene, an object is collected or a MIDlet restarts.
 
-Where available, **Undo** and revert actions help reverse recent edits. They do not replace the game's save system or guarantee recovery from arbitrary bad writes.
+## Finding the target again
 
-A practical approach is to change **one candidate at a time**, check the game, then decide whether to watch or freeze it. If the game crashes or behaves strangely, restart it and repeat the search more carefully.
+A rooted field/index locator can be resolved again during bounded foreground
+polling. An untraced variable can still be bookmarked and frozen in the current
+session, but after relaunch it needs an explicit **Relink**. From its List row
+choose Relink, select the corresponding Search result, then confirm. The old
+Freeze is stopped before the new association is published. Matching names,
+values, or diagnostic addresses are never proof of identity.
 
-## Keeping values across game launches
+A locator identifies a structural game slot, not necessarily the same character,
+item or game state on the next launch. Recheck the current value before editing.
+No Bookmark automatically restores a memory value or starts a previous Freeze.
 
-List entries are session-only unless you explicitly choose **Keep for next launch** from their row menu. Keep uses the same verified rooted field or array locator as the existing Saved Variables mechanism. Untraced, ambiguous or unsupported references cannot be kept safely; the current List entry remains available for the active session.
+## Storage and transfers
 
-A kept entry appears in the same List, marked with a small save icon. On the next launch of the same installed MIDlet, opening List resolves its structural path and displays the current value without another search. Keep does **not** store or restore a previous game value, enable Freeze, or guarantee that a reused party/array slot still represents the same semantic character.
+Bookmarks use a single bounded AtomicFile catalog. Old Saved Variables schema-2/3
+documents are read without data loss and upgraded on an authorized write to
+schema 4. The file retains its original name for backward compatibility. Each
+record contains an ID, label and optional rooted locator. Session candidate IDs,
+guest object references and Freeze states are never saved. Invalid catalogs are
+not overwritten.
 
-**Stop keeping** converts an available kept entry to a session-only List entry; it preserves an already-linked Watch. A kept target without an active Watch must be currently resolvable before it can be converted safely. **Remove** removes the List entry; for a kept entry, this deletes the definition and also stops its linked session Watch/Freeze. Storage and Watch operations have independent owners, so failures may leave a visible entry and are reported rather than silently discarded.
-
-Inspector can open from a kept entry without repeating Search. Its verified sibling editing, Watch insertion, capture, and optional Freeze-after-edit remain available. An open kept edit pins its original target: owner replacement rejects the write instead of silently rebinding to another object. A **Target updated** hint after passive resolution denotes a structurally matching reference, not necessarily the same game entity.
-
-Kept definitions remain portable typed paths owned by the installed game. The selective bundle exporter includes Saved Variables as a separate underlying component for compatibility, and the existing validated import/restore semantics are unchanged. Unsupported containers and fabricated roots are still not valid persistent locators.
+Library bundle export/import exposes the existing component as **Bookmarks**.
+Bookmark-only imports merge verified locators with local records taking
+precedence. Untraced records carry stable IDs and may require relinking on a
+different device. A configuration restore uses the existing recoverable
+transaction and does not auto-enable Freeze.
 
 ## Why candidates sometimes disappear
 
-A managed-memory candidate identifies a value within the current MIDlet execution. Objects can be collected, arrays can be replaced, and the runtime can restart. The editor deliberately does **not** guess that another object with the same type, field, or value is the one you previously selected.
+A candidate belongs to one MIDlet runtime. Java objects may be collected or
+replaced, and a new search can invalidate result IDs. The editor refuses to
+retarget such an ID by guessing. If a Bookmark cannot verify its current target,
+it remains listed and read-only until resolution or explicit relink.
 
-As a result, a watch entry may become unavailable after a level change, game transition, or relaunch. This is safer than silently editing a different object.
-
-Candidate identities and watches are **session-bound**. Saved definitions separately preserve checked structural locations; they are not save states and do not automatically restore values.
+Editing and Freeze may affect gameplay or crash an incompatible MIDlet. Try one
+candidate at a time and verify its effect. Undo is not a substitute for a game
+save.
 
 **Boolean** can be explicitly selected for true/false field and array scanning. It supports Equal/Not equal known searches and Changed/Unchanged refinement. Boolean is deliberately excluded from numeric **Auto** scans to avoid excessive flag matches.
 

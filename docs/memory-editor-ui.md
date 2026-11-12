@@ -93,42 +93,31 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 - Inspector is a snapshot. Initial positioning uses actual row size; passive changes
   must not repeatedly move the reader back to the anchor. Refresh remains explicit.
 
-## List interaction contract
+## Bookmark List interaction contract
 
-List is one alphabetically ordered collection of entries, not two Saved/Watch
-sections. A row shows a persistent selection checkbox, its name, current value,
-compact location/type, an optional Keep marker, and a contextual actions menu.
-Tap the row to edit, or tap its checkbox to select without a long-press; while
-selection is active, tapping other rows extends that selection. The toolbar
-provides select-all, context-specific Edit, Inspect, Keep, Freeze, Rename and
-Remove actions. Freeze is also available from the row's action menu; it never
-starts merely because a kept reference resolves. A missing or incompatible
-target cannot be edited. If a kept Saved locator is temporarily unresolved,
-a still-valid, explicitly linked Watch can remain inspectable and editable
-through its session identity; this never authorizes rebinding or restarting Freeze.
+The List is one alphabetically sorted persistent collection. Search and Inspector
+can add Bookmarks directly; enabling Freeze first ensures durable Bookmark
+storage. Every row has a selection checkbox, name, current verified value or
+unavailable state, compact source/type and contextual actions. The toolbar and
+row menu provide Edit, Refresh, Inspect, Freeze, Relink, Rename and Remove.
+There are no separate Keep/Stop keeping or Watch actions.
 
-Keep is opt-in and requires a verified rooted locator; the existing Saved authority
-persists it. Stopping Keep requires a valid session Watch or a safely resolved
-target that can become one. Remove is one user-facing operation that deletes
-the kept definition and requests Watch/Freeze removal, reporting partial
-failures rather than treating an asynchronous operation ID as success.
+A Bookmark may have a portable verified rooted locator or a null locator.
+Null locators remain in storage and track only an explicitly selected runtime
+target in the same MIDlet session. After relaunch they require relinking. Rooted
+locators are retried through the existing bounded foreground polling, never
+through a new scanner. Relink detaches the old Freeze before changing the
+persisted locator. No passive action writes a value or starts Freeze.
 
-The underlying Saved authority and session Watch engine keep separate
-identity, storage, lifecycle and mutation contracts. A List entry folds a
-Saved definition and a Watch only when the engine provides their explicit
-Saved-origin association. Never infer identity from equal names, paths or
-values. Keeping an already-watched target attaches the verified association
-without duplicating Watch or restarting Freeze. Saved editing still pins its
-binding, and background resolution never restores values or activates Freeze.
-The existing foreground refresh coordinator updates the List without a new
-idle traversal or polling worker.
+The main-process catalog remains the sole persistent List owner; the managed
+engine's Watch array is an internal session mechanism for tracking and Freeze.
+An in-place upgrade can briefly expose legacy orphan active Freezes solely so
+they can still be stopped. Missing or incompatible targets cannot be edited,
+but their Bookmark can always be renamed or removed.
 
-Boolean remains explicit true/false; numeric Auto excludes it. Inspector
-remains a checked snapshot within its persistent tab, with Back returning to
-the previous List or Search scroll position. A single workspace-level Back
-owner prioritizes Peek recovery, then Inspector, then clearing List selection.
-Tab transitions use the same ordered horizontal page motion as other app-owned
-pages, while state refreshes do not restart a page animation.
+Boolean is explicit true/false; numeric Auto excludes it. Inspector remains a
+checked snapshot within its persistent tab. Scroll state survives tab and width
+changes. Tab animations use the existing ordered horizontal motion.
 
 ## Overlay visibility and modal ownership
 

@@ -493,14 +493,18 @@
     <string name="memory_list_stop_keeping">Berhenti menyimpan</string>
     <string name="memory_list_kept">Disimpan untuk sesi berikutnya</string>
     <string name="memory_list_empty">Daftar masih kosong</string>
-    <string name="memory_list_empty_hint">Pilih hasil pencarian, lalu tambahkan ke Daftar.</string>
-    <string name="memory_list_remove_confirm">Hapus entri terpilih? Freeze yang aktif akan dihentikan dan definisi tersimpan akan dihapus.</string>
-    <string name="memory_list_add">Tambah ke Daftar</string>
+    <string name="memory_list_empty_hint">Bookmark variabel dari Pencarian atau Inspector untuk melacaknya di sini.</string>
+    <string name="memory_list_remove_confirm">Hapus bookmark terpilih? Freeze yang aktif akan dihentikan.</string>
+    <string name="memory_list_add">Bookmark</string>
+    <string name="memory_bookmark_relink">Hubungkan ulang</string>
+    <string name="memory_bookmark_relink_hint">Pilih variabel pengganti di Pencarian, lalu hubungkan ulang.</string>
+    <string name="memory_bookmark_relink_confirm">Hubungkan bookmark ini ke variabel terpilih? Freeze lama akan dihentikan.</string>
+    <string name="memory_bookmark_unavailable">Tidak tersedia — hubungkan ulang untuk memilih target</string>
     <string name="memory_editor_watch">Pantauan</string>
     <string name="memory_editor_search_tab">Cari</string>
     <string name="memory_editor_search_known_values">Cari nilai yang diketahui</string>
     <string name="memory_editor_search_unknown_values">Cari nilai yang tidak diketahui</string>
-    <string name="memory_editor_add_to_watch">Pantau pilihan</string>
+    <string name="memory_editor_add_to_watch">Bookmark pilihan</string>
     <string name="memory_editor_no_candidates">Tidak ada nilai yang dapat dicari</string>
     <string name="memory_editor_edit">Ubah</string>
     <plurals name="memory_editor_edit_batch">
@@ -555,7 +559,7 @@
     <string name="memory_editor_refresh_snapshot">Segarkan snapshot</string>
     <string name="memory_editor_select_result_value">Pilih hasil ini</string>
     <string name="memory_editor_freeze_after_edit">Bekukan setelah diterapkan</string>
-    <string name="memory_editor_freeze_after_edit_help">Mengunci nilai pengganti dan otomatis menambahkan kandidat ke pantauan.</string>
+    <string name="memory_editor_freeze_after_edit_help">Mengunci nilai pengganti dan otomatis membuat bookmark.</string>
 
     <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau pisahkan nilai dalam grup dengan titik koma (;).</string>
     <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk pencarian grup.</string>

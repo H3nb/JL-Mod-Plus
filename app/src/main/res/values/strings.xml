@@ -553,7 +553,7 @@
     <string name="memory_list_kept" tools:ignore="MissingTranslation">Kept for next launch</string>
     <string name="memory_list_empty" tools:ignore="MissingTranslation">Your list is empty</string>
     <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Bookmark a Search or Inspector variable to track it here.</string>
-    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Remove selected entries? Any active Freeze will stop, and kept definitions will be deleted.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Remove selected bookmarks? Their active Freeze will stop.</string>
     <string name="memory_list_add" tools:ignore="MissingTranslation">Bookmark</string>
     <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Relink</string>
     <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Select the replacement variable in Search, then choose Relink.</string>
@@ -563,7 +563,7 @@
     <string name="memory_editor_search_tab">Search</string>
     <string name="memory_editor_search_known_values">Search known values</string>
     <string name="memory_editor_search_unknown_values">Search unknown values</string>
-    <string name="memory_editor_add_to_watch">Add selected values to Watch</string>
+    <string name="memory_editor_add_to_watch">Bookmark selected values</string>
     <string name="memory_editor_no_candidates">No searchable values found</string>
     <string name="memory_editor_edit">Edit</string>
     <plurals name="memory_editor_edit_batch">
@@ -1325,7 +1325,7 @@
     <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">The game is always included. Close it before exporting, then choose the additional data to include.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Configuration</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Save data</string>
-    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Saved variables</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Bookmarks</string>
     <string name="library_bundle_export" tools:ignore="MissingTranslation">Export</string>
     <string name="library_bundle_layout_skin" tools:ignore="MissingTranslation">Screen layout skin</string>
     <string name="library_bundle_control_skin" tools:ignore="MissingTranslation">Virtual control skin</string>
