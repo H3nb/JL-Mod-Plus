@@ -492,7 +492,7 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, invalidType, new Bundle(), false, false)));
         String invalidControl = original.replace("\"game\":",
-            "\"description\":\"Invalid" + "\\\\" + "u0000note\",\"game\":");
+            "\"description\":\"Invalid" + "\\" + "u0000note\",\"game\":");
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, invalidControl, new Bundle(), false, false)));
         String tooLong = original.replace("\"game\":",
