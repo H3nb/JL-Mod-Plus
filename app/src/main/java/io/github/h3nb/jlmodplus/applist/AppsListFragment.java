@@ -974,7 +974,8 @@ public class AppsListFragment extends Fragment {
     }
 
     private LibraryAppRow findRow(int uiId) {
-        return rowsByUiId.get(uiId);
+        LibraryAppRow cached = rowsByUiId.get(uiId);
+        return cached == null ? null : libraryViewModel.getApp(cached.getId());
     }
 
     private void loadCollectionMembers(long collectionId) {

@@ -36,6 +36,20 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   in list and grid, checks a bounded composed window, and jumps to the final app.
   It demonstrates lazy composition, not sustained frame pacing or scrolling FPS.
 
+## Startup and reconciliation
+
+- Main-thread publication no longer enumerates all projected UI items. The first
+  list/grid viewport materializes presentation objects as requested, and direct
+  actions resolve their current Room row to avoid reusing stale cached metadata.
+- Filesystem reconciliation still precedes authoritative READY publication. The
+  key-only directory scan no longer sorts the full converted namespace; the full
+  scanner remains deterministically ordered. Bootstrap and recovery safety are
+  unchanged.
+- This does not promise instant cold startup: Room publication, reconciliation,
+  search ordering, icon presence and localized-description resolution still run
+  before the first READY state. Profile these independently before considering an
+  early browsing snapshot with different mutation-safety semantics.
+
 ## Unresolved scalability boundaries
 
 - Icon file presence is resolved on Dispatchers.IO before publishing the catalog.
