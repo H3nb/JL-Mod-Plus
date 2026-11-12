@@ -19,6 +19,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#missingRuntimeCompletionCarriesStructuredReason'
   'io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest'
   'io.github.h3nb.jlmodplus.applist.LibraryIconRefreshTest'
+  'io.github.h3nb.jlmodplus.applist.LibraryIconNormalizationTest'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#compactHeightAppActionsKeepLastActionReachable'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#selectionSurvivesFilteredProjectionUntilAppLeavesLibrary'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#selectedCollectionRestoresAndBackReturnsToOverview'

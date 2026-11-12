@@ -10,6 +10,7 @@ import io.github.h3nb.jlmodplus.config.ConfigTabNavigationTest
 @Suite.SuiteClasses(
     LibraryViewportNavigationTest::class,
     LibraryIconRefreshTest::class,
+    LibraryIconNormalizationTest::class,
     LibraryCollectionsNavigationTest::class,
     LibraryComposeTest::class,
     ConfigTabNavigationTest::class,
