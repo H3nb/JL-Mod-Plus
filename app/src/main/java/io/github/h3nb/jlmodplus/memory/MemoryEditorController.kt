@@ -1983,28 +1983,51 @@ internal class MemoryEditorComposeController(
 
     override fun runMemoryRecipe(
         document: String, inputs: Map<String, String>, freeze: Boolean, preview: Boolean,
+    ) = executeMemoryRecipe(document, inputs, freeze, preview, null, null)
+
+    override fun runMemoryRecipeChecked(
+        document: String, inputs: Map<String, String>, freeze: Boolean,
+        expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
+    ) = executeMemoryRecipe(document, inputs, freeze, false, expectedValues, onComplete)
+
+    private fun executeMemoryRecipe(
+        document: String, inputs: Map<String, String>, freeze: Boolean, preview: Boolean,
+        expectedValues: List<String>?, onComplete: ((Boolean) -> Unit)?,
     ) {
         val token = state.runtimeToken
-        val engine = service ?: return
-        if (state.busy || token == 0L || !state.writeSupported) return
-        val parameters = Bundle().apply { inputs.forEach { (key, value) -> putString(key, value) } }
+        val engine = service
+        if (engine == null || state.busy || token == 0L || !state.writeSupported) {
+            onComplete?.invoke(false)
+            return
+        }
+        val parameters = Bundle().apply {
+            inputs.forEach { (key, value) -> putString(key, value) }
+            expectedValues?.let { putStringArray("recipeExpectedValues", it.toTypedArray()) }
+        }
         runIpc {
-            val result = runCatching { engine.runMemoryRecipe(token, document, parameters, freeze, preview) }
+            val result = runCatching {
+                engine.runMemoryRecipe(token, document, parameters, freeze, preview)
+            }
             post {
-                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                if (destroyed || state.runtimeToken != token || service !== engine) {
+                    onComplete?.invoke(false)
+                    return@post
+                }
                 val response = result.getOrNull()
                 val code = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
                     MemoryEngineContract.RESULT_TARGET_LOST)
                     ?: MemoryEngineContract.RESULT_TARGET_LOST
+                val success = code == MemoryEngineContract.RESULT_OK
                 state = state.copy(
                     message = response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
                         ?: result.exceptionOrNull()?.message ?: "Recipe operation finished",
-                    messageIsError = code != MemoryEngineContract.RESULT_OK,
+                    messageIsError = !success,
                 )
-                if (code == MemoryEngineContract.RESULT_OK && !preview) {
+                if (success && !preview) {
                     refreshSavedVariables()
                     refreshRecipeFreezeState(force = true)
                 }
+                onComplete?.invoke(success)
             }
         }
     }

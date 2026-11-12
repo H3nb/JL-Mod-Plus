@@ -658,6 +658,10 @@ internal interface MemoryEditorActions {
     /** Recipes share one bounded execution format; advanced structure stays out of the UI. */
     fun runMemoryRecipe(document: String, inputs: Map<String, String>,
                         freeze: Boolean, preview: Boolean) = Unit
+    fun runMemoryRecipeChecked(
+        document: String, inputs: Map<String, String>, freeze: Boolean,
+        expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
+    ) = onComplete(false)
     fun readCurrentMemoryRecipe(
         document: String, inputs: Map<String, String>,
         onReady: (List<MemoryRecipeReadValue>?, String?) -> Unit,
