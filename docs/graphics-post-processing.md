@@ -104,18 +104,19 @@ round-to-nearest posterization. This avoids artificial 1/levels jumps
 across smooth 2D backgrounds, while leaving the existing outline strength
 contract unchanged; output RGB gamut clipping can still affect saturated colors. CRT Classic
 is independently authored under Apache-2.0 as a one-sample CRT-inspired
-presentation effect with guest-grid scanlines and an RGB triad. It is not
+presentation effect. Its luminance-dependent beam is centered on guest
+pixel rows, and the RGB triad remains a separate output-space mask. It is not
 derived from the former GPL EasyMode shader. The unreleased prototype ID
 `crt-easymode` maps to CRT Classic at lookup time to preserve local test
 profiles; old unsupported advanced settings are ignored.
 Color correction includes gamma, temperature/tint and monochrome.
-LCD and Scanlines Lite intentionally depend on logical game resolution rather
-than the texture resolution of the preceding pass. LCD integrates both harmonics of its squared-cosine grid analytically over
+CRT, LCD and Scanlines Lite anchor their display patterns to logical game
+resolution rather than the preceding pass's texture resolution. LCD positions
+its RGB subpixels within guest pixel cells on highp devices and integrates both harmonics of its squared-cosine grid analytically over
 each output pixel. Grid visibility deliberately fades to zero near 1x.
 Scanlines Lite uses three-point Gauss-Legendre quadrature on its raised-cosine
-profile and also fades at 1x; very narrow lines remain approximations. On GLES2 devices without fragment highp, LCD RGB triads use the smaller
-logical-pixel coordinate space to keep the mask functional, with coarser
-spatial detail than on highp devices.
+profile and also fades at 1x; very narrow lines remain approximations. On GLES2 devices without fragment highp, LCD retains a coarse guest-column
+RGB triad instead of unresolved within-pixel subpixels.
 
 Bloom extracts highlights before downsampling with a 2x2 sampling footprint
 up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. Bloom intermediates use one shared scale on both axes: one-third of the
