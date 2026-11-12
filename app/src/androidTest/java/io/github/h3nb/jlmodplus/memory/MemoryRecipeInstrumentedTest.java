@@ -200,6 +200,28 @@ public class MemoryRecipeInstrumentedTest {
         }
     }
 
+    @Test public void catalogCanStoreMoreThanTwelveSmallRecipes() throws Exception {
+        java.io.File folder = new java.io.File(
+                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                        .getTargetContext().getCacheDir(), "recipe-count-" + System.nanoTime());
+        assertTrue(folder.mkdirs());
+        android.util.AtomicFile file = new android.util.AtomicFile(
+                new java.io.File(folder, "memory-recipes.json"));
+        try {
+            String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
+                    + "],\"value\":5}";
+            for (int i = 0; i < 13; i++) {
+                MemoryRecipeCatalog.put(file, Root.class.getName(),
+                        recipe(action).replace("test.memory", "test.memory." + i), null);
+            }
+            assertEquals(13, MemoryRecipeCatalog.list(file, Root.class.getName())
+                    .getParcelableArrayList("items").size());
+        } finally {
+            file.delete();
+            folder.delete();
+        }
+    }
+
     @Test public void catalogRejectsIncompleteRecipeBeforeItCanBeSaved() throws Exception {
         java.io.File folder = new java.io.File(
                 androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
@@ -382,18 +404,18 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(10, root.coins);
     }
 
-    @Test public void freezeLimitRejectsFifthRecipeBeforeMutation() {
+    @Test public void recipeFreezeUsesSharedGlobalCapacity() {
         String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT,"coins","I") + "],"
                 + "\"valueInput\":\"coins\"}";
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < MemoryEngineContract.MAX_FREEZE_RECORDS; i++) {
             String item = recipe(action).replace("test.memory", "test.memory." + i);
             assertEquals(MemoryEngineContract.RESULT_OK,
                 status(runner.run(TOKEN, item, inputs(0, 50, 700), true, false)));
         }
-        assertEquals(4, runner.activeCount(TOKEN));
+        assertEquals(MemoryEngineContract.MAX_FREEZE_RECORDS, runner.activeCount(TOKEN));
         root.coins = 11;
         Bundle denied = runner.run(TOKEN,
-                recipe(action).replace("test.memory", "test.memory.5"),
+                recipe(action).replace("test.memory", "test.memory.overflow"),
                 inputs(0, 50, 900), true, false);
         assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT, status(denied));
         assertEquals(11, root.coins);
@@ -733,7 +755,7 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(2, root.coins);
     }
 
-    @Test public void recipeAcceptsSixteenInputsAndSixtyFourWritesButNotMore() {
+    @Test public void recipeAllowsAdditionalInputsWithinWriteBudget() {
         StringBuilder specs = new StringBuilder("{");
         StringBuilder inputActions = new StringBuilder();
         Bundle values = new Bundle();
@@ -773,7 +795,8 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(0, root.counters[64]);
         String seventeen = specs.substring(0, specs.length() - 1)
             + ",\"input16\":{\"min\":0,\"max\":100}}";
-        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(runner.run(TOKEN,
+        values.putString("input16", "17");
+        assertEquals(MemoryEngineContract.RESULT_OK, status(runner.run(TOKEN,
             typedRecipe("oneShot", seventeen, inputActions.toString()), values, false, false)));
     }
 

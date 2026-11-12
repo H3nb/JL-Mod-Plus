@@ -55,9 +55,11 @@ This is not a stable public API until Android runtime acceptance testing is comp
 
 Scripts are stored in a separate, atomic `configs/<workdir>/memory-recipes.json`
 file in the installed-game configuration directory, using the same installed
-identity validation as the Bookmark catalog. The catalog holds at most 12 scripts
-and 256 KiB; individual documents are limited to 24 KiB. No runtime Java
-object references or session Freeze handles are saved. Corrupt or unsupported
+identity validation as the Bookmark catalog. There is no fixed script-count limit;
+the current single-file catalog is capped at 256 KiB to keep full-list Binder
+responses bounded. Individual documents can be up to 64 KiB. When the catalog
+is full, existing scripts remain unchanged; remove unneeded scripts to free space.
+No runtime Java object references or session Freeze handles are saved. Corrupt or unsupported
 catalog versions are not overwritten. Bookmarks and Search histories
 continue to use their own existing contracts. The script catalog is currently
 local-only; do not assume backup/export of scripts is implemented.
@@ -163,8 +165,10 @@ as decimal string values in the parameter Bundle.
   This is best-effort periodic correction, not atomic interception of the
   game's writes; a purchase/save may observe a changed value between ticks.
   Freezes do not reactivate automatically on a new MIDlet session.
-- At most 64 primitive writes per execution, 4 held recipes per session,
-  16 numeric input declarations and 24 KiB of UTF-8 document per request.
+- At most 64 primitive writes per execution, 64 numeric input declarations
+  and 64 KiB of UTF-8 document per request. Recipe Freezes share the existing
+  32-slot global Freeze budget with ordinary Freeze. Several active Freezes
+  can increase CPU usage; stop those you no longer need.
 - No filesystem/network APIs, native memory accesses, arbitrary method calls,
   generic expression interpreter, or reflection access outside the active
   guest classloader are exposed.
@@ -214,7 +218,7 @@ The runner preflights targets before writing but writes are not atomic against
 other MIDlet threads; partial writes are explicitly reported. Form comparison
 also happens in the target process, so a stale UI snapshot cannot silently
 overwrite a changed value. In either mode, a new deliberate Refresh or Run is
-required after a conflict. The recipe limits are 16 numeric inputs and 64
+required after a conflict. The recipe limits are 64 numeric inputs and 64
 primitive writes, including individual bytes in encoded slices.
 
 The runtime currently accepts `set` on signed integer primitives (and

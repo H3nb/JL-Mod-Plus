@@ -86,7 +86,7 @@ internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
     val actions = obj["actions"] as? JsonArray ?: error("Actions must be an array")
     if (actions.isEmpty()) error("Recipe has no actions")
     val inputs = obj["inputs"] as? JsonObject ?: JsonObject(emptyMap())
-    if (inputs.size > 16) error("Too many recipe parameters")
+    if (inputs.size > 64) error("Too many recipe parameters")
     val selectors = actions.asSequence().mapNotNull { it as? JsonObject }
         .flatMap { (it["path"] as? JsonArray).orEmpty().asSequence() }
         .mapNotNull { (it as? JsonObject)?.get("indexInput") as? JsonPrimitive }
@@ -177,7 +177,7 @@ internal fun RuntimeScriptsTab(
                 )
                 TextButton(
                     enabled = !saving && draft.text.isNotBlank() &&
-                        draft.text.toByteArray(Charsets.UTF_8).size <= 24_576 &&
+                        draft.text.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES &&
                         parsed.isSuccess &&
                         (draft.replacingId == null || parsed.getOrNull()?.id == draft.replacingId),
                     onClick = {
@@ -199,7 +199,7 @@ internal fun RuntimeScriptsTab(
             OutlinedTextField(
                 value = draft.text,
                 onValueChange = {
-                    if (!saving && it.toByteArray(Charsets.UTF_8).size <= 24_576) {
+                    if (!saving && it.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
                         onDraft(draft.copy(text = it))
                         localError = null
                     }
@@ -212,14 +212,14 @@ internal fun RuntimeScriptsTab(
                 minLines = if (compactEditor) 2 else 6,
             )
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text("${draft.text.toByteArray(Charsets.UTF_8).size}/24576 B",
+                Text("${draft.text.toByteArray(Charsets.UTF_8).size}/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
                     style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
                 TextButton(enabled = !saving, onClick = {
                     val clipboard = context.getSystemService(ClipboardManager::class.java)
                     val clip = clipboard?.primaryClip
                     val pasted = if (clip != null && clip.itemCount > 0)
                         clip.getItemAt(0).coerceToText(context)?.toString() else null
-                    if (pasted != null && pasted.toByteArray(Charsets.UTF_8).size <= 24_576) {
+                    if (pasted != null && pasted.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
                         onDraft(draft.copy(text = pasted))
                         localError = null
                     } else localError = clipboardErrorText

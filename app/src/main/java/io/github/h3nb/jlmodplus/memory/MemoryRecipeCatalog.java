@@ -19,8 +19,6 @@ import java.util.ArrayList;
  * Guest object identities, execution results and Freeze state are never persisted.
  */
 final class MemoryRecipeCatalog {
-    static final int MAX_RECIPES = 12;
-    static final int MAX_DOCUMENT_BYTES = 24_576;
     private static final int MAX_CATALOG_BYTES = 262_144;
     private static final int SCHEMA = 1;
     private static final String FILE_NAME = "memory-recipes.json";
@@ -59,7 +57,6 @@ final class MemoryRecipeCatalog {
             throw new IOException("The script being edited no longer exists");
         }
         if (replacingId == null) {
-            if (updated.length() >= MAX_RECIPES) throw new IOException("Script limit reached");
             updated.put(record(recipe, document));
         }
         catalog.put("items", updated);
@@ -86,8 +83,8 @@ final class MemoryRecipeCatalog {
 
     private static JSONObject checkRecipe(String document, String gameEntry) throws Exception {
         if (document == null || document.trim().isEmpty() ||
-                document.getBytes(StandardCharsets.UTF_8).length > MAX_DOCUMENT_BYTES) {
-            throw new IOException("Recipe document must be 1–24576 UTF-8 bytes");
+                document.getBytes(StandardCharsets.UTF_8).length > MemoryEngineContract.MAX_RECIPE_BYTES) {
+            throw new IOException("Recipe document must be 1–65536 UTF-8 bytes");
         }
         JSONObject recipe = new JSONObject(document);
         int version = recipe.getInt("formatVersion");
@@ -133,7 +130,6 @@ final class MemoryRecipeCatalog {
         JSONObject result = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
         if (result.getInt("schema") != SCHEMA) throw new IOException("Unsupported recipe catalog version");
         JSONArray items = result.getJSONArray("items");
-        if (items.length() > MAX_RECIPES) throw new IOException("Recipe catalog has too many entries");
         java.util.HashSet<String> ids = new java.util.HashSet<>();
         for (int i = 0; i < items.length(); i++) {
             JSONObject item = items.getJSONObject(i);

@@ -178,6 +178,7 @@ internal fun MemoryEditorRuntimeRoot(
         var opacityDialog by remember { mutableStateOf(false) }
         // The Activity must finish to return input to the game. These fields survive its
         // destruction in the memory-engine process, scoped to this MIDlet runtime token.
+        // Draft JSON stays here rather than entering the Activity saved-state Bundle.
         val savedScript = remember(state.runtimeToken) {
             MemoryEditorSessionNavigation.script(state.runtimeToken)
         }
@@ -187,10 +188,10 @@ internal fun MemoryEditorRuntimeRoot(
         var scriptReplacingId by rememberSaveable(state.runtimeToken) {
             mutableStateOf(savedScript.replacingId)
         }
-        var scriptInitialText by rememberSaveable(state.runtimeToken) {
+        var scriptInitialText by remember(state.runtimeToken) {
             mutableStateOf(savedScript.initialText)
         }
-        var scriptText by rememberSaveable(state.runtimeToken) {
+        var scriptText by remember(state.runtimeToken) {
             mutableStateOf(savedScript.text)
         }
         var selectedScriptId by rememberSaveable(state.runtimeToken) {

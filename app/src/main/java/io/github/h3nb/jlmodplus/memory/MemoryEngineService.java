@@ -729,7 +729,7 @@ public final class MemoryEngineService extends Service {
         @Override
         public Bundle runMemoryRecipe(long token, String document, Bundle parameters,
                                      boolean freeze, boolean preview) {
-            if (document == null || document.length() > 24_576) return savedFailure(
+            if (document == null || document.length() > MemoryEngineContract.MAX_RECIPE_BYTES) return savedFailure(
                     MemoryEngineContract.RESULT_INVALID_REQUEST, "Recipe exceeds the IPC limit");
             IMemoryTargetBridge bridge = target;
             if (bridge == null || !isTargetToken(token)) return savedFailure(

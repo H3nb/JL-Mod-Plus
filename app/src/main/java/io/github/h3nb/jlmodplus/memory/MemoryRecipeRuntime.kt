@@ -163,7 +163,7 @@ class MemoryRecipeRuntime {
         ordinaryFreezeCount: Int = 0,
     ): Bundle {
         try {
-            if (json == null || json.toByteArray(Charsets.UTF_8).size > MAX_JSON_BYTES) bad("Recipe is missing or too large")
+            if (json == null || json.toByteArray(Charsets.UTF_8).size > MemoryEngineContract.MAX_RECIPE_BYTES) bad("Recipe is missing or too large")
             val recipe = parse(json)
             if (!preview && recipe.mode == "toggle" && !hold)
                 bad("Toggle scripts must be enabled with Freeze")
@@ -212,8 +212,7 @@ class MemoryRecipeRuntime {
             if (hold) {
                 val held = frozenToken == token && frozen.containsKey(recipe.id)
                 val existingCount = if (frozenToken == token) frozen.size else 0
-                if (!held && (existingCount >= MAX_HELD_RECIPES ||
-                        ordinaryFreezeCount + existingCount >= MemoryEngineContract.MAX_FREEZE_RECORDS)) {
+                if (!held && ordinaryFreezeCount + existingCount >= MemoryEngineContract.MAX_FREEZE_RECORDS) {
                     throw Problem(MemoryEngineContract.RESULT_RESOURCE_LIMIT, "Recipe Freeze limit reached")
                 }
             }
@@ -787,8 +786,8 @@ class MemoryRecipeRuntime {
         /** Validate a recipe without resolving or touching guest memory. */
         @JvmStatic
         fun validateDocument(json: String) {
-            if (json.toByteArray(Charsets.UTF_8).size > MAX_JSON_BYTES)
-                bad("Recipe exceeds 24 KiB")
+            if (json.toByteArray(Charsets.UTF_8).size > MemoryEngineContract.MAX_RECIPE_BYTES)
+                bad("Recipe exceeds 64 KiB")
             MemoryRecipeRuntime().parse(json)
         }
 
@@ -800,11 +799,9 @@ class MemoryRecipeRuntime {
             if (value !in minimum..maximum) bad("Value exceeds primitive range")
         }
 
-        private const val MAX_JSON_BYTES = 24_576
         private const val MAX_WRITES = 64
-        private const val MAX_INPUTS = 16
+        private const val MAX_INPUTS = 64
         private const val EXPECTED_VALUES = "recipeExpectedValues"
         private const val READ_TICKET = "recipeReadTicket"
-        private const val MAX_HELD_RECIPES = 4
     }
 }
