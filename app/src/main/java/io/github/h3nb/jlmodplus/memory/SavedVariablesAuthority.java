@@ -168,18 +168,21 @@ public final class SavedVariablesAuthority extends Service {
                                         encodeLocator(decodeLocator(existing.getJSONObject("locator")))
                                                 .toString().equals(descriptor.toString())) {
                                     result[0] = rows(data);
+                                    result[0].putString("bookmarkId", existing.getString("id"));
                                     return true;
                                 }
                             }
                         }
                         if (items.length() >= MAX_ITEMS) return false;
                         JSONObject record = new JSONObject();
-                        record.put("id", UUID.randomUUID().toString());
+                        String id = UUID.randomUUID().toString();
+                        record.put("id", id);
                         record.put("label", name);
                         record.put("locator", descriptor == null ? JSONObject.NULL : descriptor);
                         items.put(record);
                         write(target, data);
                         result[0] = rows(data);
+                        result[0].putString("bookmarkId", id);
                         return true;
                     });
                     return guard == InstalledAppWriteGuard.Result.SUCCESS

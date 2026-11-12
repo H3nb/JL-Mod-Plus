@@ -838,13 +838,13 @@ internal class MemoryEditorComposeController(
     }
 
     @Suppress("DEPRECATION")
-    private fun savedRows(response: Bundle): List<Pair<SavedVariableRow, Bundle>> {
+    private fun savedRows(response: Bundle): List<Pair<SavedVariableRow, Bundle?>> {
         if (!response.getBoolean("ok", false)) {
             throw IllegalStateException(response.getString("error") ?: "Saved storage is unavailable")
         }
         return response.getParcelableArrayList<Bundle>("items").orEmpty().map { record ->
-            val locator = record.getBundle("locator") ?: error("Saved locator is missing")
-            val steps = locator.getParcelableArrayList<Bundle>("savedSteps").orEmpty()
+            val locator = record.getBundle("locator")
+            val steps = locator?.getParcelableArrayList<Bundle>("savedSteps").orEmpty()
             val description = steps.joinToString(" → ") { step ->
                 when (step.getInt("kind")) {
                     1 -> step.getString("name").orEmpty()
@@ -853,7 +853,8 @@ internal class MemoryEditorComposeController(
                 }
             }
             SavedVariableRow(record.getString("id").orEmpty(),
-                record.getString("label").orEmpty(), description) to locator
+                record.getString("label").orEmpty(),
+                description.ifBlank { "Needs relink" }) to locator
         }
     }
 
@@ -887,7 +888,9 @@ internal class MemoryEditorComposeController(
                     generation != savedGeneration || connection != connectionGeneration) return@post
                 if (records.isSuccess) {
                     val rows = records.getOrThrow()
-                    savedLocators = rows.associate { it.first.id to it.second }
+                    savedLocators = rows.mapNotNull { (row, locator) ->
+                        locator?.let { row.id to it }
+                    }.toMap()
                     savedCatalogDirty = false
                     nextSavedResolveAt = 0L
                     state = state.copy(
@@ -969,29 +972,113 @@ internal class MemoryEditorComposeController(
         }
     }
 
+    /**
+     * Bookmark capture is opportunistic: an untraced but valid runtime candidate still receives
+     * a durable record. The target-side link is always checked by exact session CandidateId.
+     */
+    private fun persistBookmarkCandidate(
+        engine: IMemoryEngineService, authority: ISavedVariablesAuthority, token: Long,
+        revision: Long, candidate: Long, name: String,
+    ): String {
+        val captured = engine.captureSavedLocator(token, revision, candidate)
+        val locator = captured.takeIf {
+            it.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                MemoryEngineContract.RESULT_OK
+        }
+        val (path, appId, entry) = savedTarget()
+        val response = authority.bookmark(path, appId, entry, name.take(64), locator)
+        savedRows(response) // The authority must acknowledge its durable commit.
+        val bookmarkId = response.getString("bookmarkId")
+            ?: error("Bookmark was stored without an identity")
+        val linked = engine.attachBookmark(token, revision, candidate, bookmarkId, name.take(64))
+        if (linked.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                MemoryEngineContract.RESULT_TARGET_LOST) != MemoryEngineContract.RESULT_OK) {
+            error("Bookmark saved but its runtime target could not be linked: " +
+                linked.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty())
+        }
+        return bookmarkId
+    }
+
+    private fun bookmarkCandidateLabel(id: Long): String {
+        val watch = state.watches.firstOrNull { it.id == id }
+        val result = state.results.firstOrNull { it.id == id }
+        return watch?.label?.takeIf(String::isNotBlank)
+            ?: watch?.source?.shortFieldName?.takeIf(String::isNotBlank)
+            ?: result?.source?.shortFieldName?.takeIf(String::isNotBlank)
+            ?: "Variable"
+    }
+
+    /**
+     * A user-visible Freeze/Add to List first persists and links every target. This prevents
+     * successful guest writes from continuing invisibly when storage or identity checks fail.
+     * A partial catalog commit is retained and reported; it never starts a partial new Freeze.
+     */
+    private fun bookmarkTargetsBeforeAction(
+        ids: LongArray, revision: Long, afterStored: () -> Unit,
+    ) {
+        val engine = service ?: return
+        val authority = savedAuthority
+        val token = state.runtimeToken
+        if (state.busy || token == 0L || ids.isEmpty() ||
+            ids.size > MemoryEngineContract.MAX_FREEZE_RECORDS) return
+        if (authority == null) {
+            state = state.copy(message = "Bookmark storage unavailable", messageIsError = true)
+            return
+        }
+        val existingIds = state.savedVariables.mapTo(HashSet()) { it.id }
+        val known = state.watches.filter {
+            it.id in ids && it.savedSourceId in existingIds
+        }.mapTo(HashSet()) { it.id }
+        val targets = ids.filterNot { it in known }.map { it to bookmarkCandidateLabel(it) }
+        if (targets.isEmpty()) {
+            afterStored()
+            return
+        }
+        state = state.copy(busy = true)
+        runIpc {
+            val result = runCatching {
+                targets.forEach { (id, label) ->
+                    persistBookmarkCandidate(engine, authority, token, revision, id, label)
+                }
+            }
+            post {
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                state = state.copy(busy = false)
+                if (state.variablesTab) refreshSavedVariables()
+                if (result.isSuccess) afterStored()
+                else {
+                    state = state.copy(
+                        message = result.exceptionOrNull()?.message ?: "Bookmark failed",
+                        messageIsError = true,
+                    )
+                    reloadState()
+                }
+            }
+        }
+    }
+
     override fun saveSelectedVariable(name: String) {
         val candidate = state.selected.singleOrNull() ?: return
         val token = state.runtimeToken
         val revision = if (state.variablesTab) 0L else state.revision
         val engine = service ?: return
         val authority = savedAuthority ?: return
-        val generation = savedGeneration
-        if (state.busy || token == 0L) return
+        if (state.busy || token == 0L || name.isBlank()) return
+        state = state.copy(busy = true)
         runIpc {
             val outcome = runCatching {
-                val locator = engine.captureSavedLocator(token, revision, candidate)
-                if (locator.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) !=
-                    MemoryEngineContract.RESULT_OK) error("No verified Saved path for this value")
-                val (path, appId, entry) = savedTarget()
-                savedRows(authority.save(path, appId, entry, name.trim(), locator))
+                persistBookmarkCandidate(engine, authority, token, revision, candidate, name.trim())
             }
             post {
-                if (destroyed || !state.visible || generation != savedGeneration ||
-                    service !== engine || state.runtimeToken != token) return@post
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
                 state = state.copy(
-                    message = outcome.exceptionOrNull()?.message ?: "Saved variable created",
-                    messageIsError = outcome.isFailure)
-                if (outcome.isSuccess && state.variablesTab) refreshSavedVariables()
+                    busy = false,
+                    message = if (outcome.isSuccess) "Bookmarked"
+                        else outcome.exceptionOrNull()?.message,
+                    messageIsError = outcome.isFailure,
+                )
+                if (state.variablesTab) refreshSavedVariables()
+                reloadState()
             }
         }
     }
@@ -1159,7 +1246,9 @@ internal class MemoryEditorComposeController(
                         val rows = result.getOrNull()
                         if (rows != null) {
                             val retained = rows.mapTo(HashSet()) { it.first.id }
-                            savedLocators = rows.associate { it.first.id to it.second }
+                            savedLocators = rows.mapNotNull { (row, locator) ->
+                        locator?.let { row.id to it }
+                    }.toMap()
                             savedCatalogDirty = false
                             state = state.copy(
                                 savedVariables = rows.map { it.first },
@@ -1206,7 +1295,9 @@ internal class MemoryEditorComposeController(
                 val rows = result.getOrNull()
                 if (rows != null) {
                     val retained = rows.mapTo(HashSet()) { it.first.id }
-                    savedLocators = rows.associate { it.first.id to it.second }
+                    savedLocators = rows.mapNotNull { (row, locator) ->
+                        locator?.let { row.id to it }
+                    }.toMap()
                     savedCatalogDirty = false
                     state = state.copy(
                         savedVariables = rows.map { it.first },
@@ -1357,32 +1448,19 @@ internal class MemoryEditorComposeController(
     }
 
     private fun completeEditFlow(followUp: PendingEditFollowUp) {
-        when {
-            followUp.freezeAfter && followUp.resultGroup -> launchOperation { engine, token ->
-                engine.setFreezeResults(
-                    token,
-                    followUp.expectedRevision,
-                    longArrayOf(followUp.id),
-                    MemoryEngineContract.FREEZE_LOCK,
-                    followUp.value,
-                    "",
-                )
-            }
-            followUp.freezeAfter -> launchOperation { engine, token ->
-                engine.setFreeze(
-                    token,
-                    longArrayOf(followUp.id),
-                    MemoryEngineContract.FREEZE_LOCK,
-                    followUp.value,
-                    "",
-                )
-            }
-            followUp.addToWatch && followUp.resultGroup -> launchOperation { engine, token ->
-                engine.addWatchResults(
-                    token, followUp.expectedRevision, longArrayOf(followUp.id),
-                )
-            }
-            else -> reloadState()
+        if (!followUp.addToWatch && !followUp.freezeAfter) {
+            reloadState()
+            return
+        }
+        val revision = if (followUp.resultGroup) followUp.expectedRevision else 0L
+        val id = longArrayOf(followUp.id)
+        bookmarkTargetsBeforeAction(id, revision) {
+            if (followUp.freezeAfter) launchOperation { engine, token ->
+                if (followUp.resultGroup) engine.setFreezeResults(token, revision, id,
+                    MemoryEngineContract.FREEZE_LOCK, followUp.value, "")
+                else engine.setFreeze(token, id, MemoryEngineContract.FREEZE_LOCK,
+                    followUp.value, "")
+            } else reloadState()
         }
     }
 
@@ -1442,15 +1520,13 @@ internal class MemoryEditorComposeController(
     override fun watchSelected(add: Boolean) {
         val ids = state.selected.toLongArray()
         if (ids.isEmpty()) return
-        val resultGroup = !state.variablesTab
-        val expectedRevision = state.revision
-        launchOperation { engine, token ->
-            if (add) {
-                if (resultGroup) engine.addWatchResults(token, expectedRevision, ids)
-                else engine.addWatch(token, ids)
-            } else {
-                engine.removeWatch(token, ids)
-            }
+        if (add) {
+            bookmarkTargetsBeforeAction(ids,
+                if (state.variablesTab) 0L else state.revision) { reloadState() }
+        } else if (state.variablesTab) {
+            val linked = state.watches.filter { it.id in ids }
+            removeListEntries(linked.mapNotNull { it.savedSourceId },
+                linked.filter { it.savedSourceId == null }.map { it.id })
         }
     }
 
@@ -1461,7 +1537,13 @@ internal class MemoryEditorComposeController(
     override fun freezeSelected(mode: Int, first: String, second: String) {
         val ids = state.selected.toLongArray()
         if (ids.isEmpty()) return
-        launchOperation { engine, token -> engine.setFreeze(token, ids, mode, first, second) }
+        val revision = if (state.variablesTab) 0L else state.revision
+        bookmarkTargetsBeforeAction(ids, revision) {
+            launchOperation { engine, token ->
+                if (revision != 0L) engine.setFreezeResults(token, revision, ids, mode, first, second)
+                else engine.setFreeze(token, ids, mode, first, second)
+            }
+        }
     }
 
     override fun clearFreezeSelected() {
