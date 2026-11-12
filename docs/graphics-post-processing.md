@@ -51,7 +51,13 @@ shared fullscreen vertex shader; user effects use their own original
 `u_pixelDelta` and `u_setting` legacy uniforms. As in the released GLES
 presenter, user INI shaders execute at the game viewport resolution and honor
 the selected screen texture filter. Historical `OutputResolution` and
-`Upscaling` flags did not override these presentation rules.
+`Upscaling` flags did not override these presentation rules. A user shader may
+optionally enable `NativeInput`: the existing identity program first copies
+its incoming image with nearest sampling to a logical-game-sized FBO, then
+runs the unchanged legacy vertex and fragment shaders at the normal game
+viewport. This adds one GPU pass per enabled user effect and preserves the
+old input contract by default. A downsampled HD frame may differ from an
+original 1× render; the option does not change the game's internal resolution.
 
 An effect may expand to more than one sequential pass. The first pass of each
 effect captures that effect's incoming texture; Bloom retains this texture

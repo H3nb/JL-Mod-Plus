@@ -1,6 +1,8 @@
 name: Android CI
 
 on:
+  push:
+    branches: [experiment/legacy-shader-native-input]
   pull_request:
     branches:
       - alpha
@@ -196,7 +198,7 @@ jobs:
           retention-days: 7
 
       - name: Enable emulator acceleration
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles') }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.ref == 'refs/heads/experiment/legacy-shader-native-input' || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles'))) }}
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
@@ -204,14 +206,14 @@ jobs:
 
       - name: Run selected Android runtime contracts
         id: runtime
-        if: ${{ success() && github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles') }}
+        if: ${{ success() && (github.ref == 'refs/heads/experiment/legacy-shader-native-input' || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles'))) }}
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash scripts/runtime-smoke.sh ${{ inputs.mode == 'runtime-gles' && '--gles-only' || '' }}
+          script: bash scripts/runtime-smoke.sh ${{ github.event_name == 'push' || inputs.mode == 'runtime-gles' && '--gles-only' || '' }}
 
       - name: Record validation results
         if: always()

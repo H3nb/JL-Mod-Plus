@@ -60,6 +60,7 @@ selectors=(
 # must not affect Canvas/Compose tests running in the main batch.
 gles_selectors=(
   'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
+  'io.github.h3nb.jlmodplus.gles.LegacyNativeInputGlesTest'
 )
 
 # Tests that mutate process-global/application-global state run in their own instrumentation
