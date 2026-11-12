@@ -270,6 +270,31 @@ class LibraryIconPresentationTest {
         assertEquals(LibraryIconPresentationMode.SafeFit, decision.mode)
     }
 
+    @Test
+    fun coverOnlyCropsNearMatchingSlotAspect() {
+        assertTrue(shouldCropLibraryCover(128, 128, 1f))
+        assertTrue(shouldCropLibraryCover(96, 128, 0.75f))
+        assertTrue(shouldCropLibraryCover(95, 100, 1f))
+        assertTrue(shouldCropLibraryCover(100, 95, 1f))
+    }
+
+    @Test
+    fun fullBleedPosterPreservesTextEdgesOutsideSquareCenterCrop() {
+        // A 3:4 poster in a square slot would lose 25% of its original height.
+        assertEquals(false, shouldCropLibraryCover(96, 128, 1f))
+        assertEquals(false, shouldCropLibraryCover(128, 128, 0.75f))
+        assertEquals(false, shouldCropLibraryCover(224, 64, 1f))
+        assertEquals(false, shouldCropLibraryCover(64, 224, 1f))
+    }
+
+    @Test
+    fun coverCropPolicyRejectsInvalidDimensionsAndSlotRatios() {
+        assertEquals(false, shouldCropLibraryCover(0, 128, 1f))
+        assertEquals(false, shouldCropLibraryCover(128, 0, 1f))
+        assertEquals(false, shouldCropLibraryCover(128, 128, 0f))
+        assertEquals(false, shouldCropLibraryCover(128, 128, Float.NaN))
+    }
+
     private fun input(
         transparentRatio: Float = 0f,
         boundsCoverage: Float = 1f,

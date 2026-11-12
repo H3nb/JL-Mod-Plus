@@ -4,11 +4,17 @@ package javax.microedition.lcdui;
 /** Selects the physical density for runtime-owned 2D render targets. */
 final class InternalResolution {
     static final int MAX_SCALE = 10;
-    // Conservative target limits; actual GPU/heap headroom is device-dependent.
-    static final int MAX_TARGET_SIDE = 4096;
-    static final long MAX_ESTIMATED_BYTES = 160L * 1024L * 1024L;
+    static final long MAX_BITMAP_PIXELS = Integer.MAX_VALUE / 4L;
 
     private InternalResolution() {}
+
+    static boolean fitsBitmap(int width, int height, int scale) {
+        if (width <= 0 || height <= 0 || scale < 1) return false;
+        long pixelsWide = (long) width * scale;
+        long pixelsHigh = (long) height * scale;
+        return pixelsWide <= Integer.MAX_VALUE
+                && pixelsHigh <= MAX_BITMAP_PIXELS / pixelsWide;
+    }
 
     @FunctionalInterface
     interface ScaleAttempt {
@@ -42,11 +48,7 @@ final class InternalResolution {
                 : requested;
         desired = Math.max(1, Math.min(MAX_SCALE, desired));
         for (int factor = desired; factor > 1; factor--) {
-            long w = (long) logicalWidth * factor;
-            long h = (long) Math.max(logicalHeight, backingHeight) * factor;
-            // Guest paint, GameCanvas/other source, published frame, GL upload.
-            long estimated = w * h * 4L * 4L;
-            if (w <= MAX_TARGET_SIDE && h <= MAX_TARGET_SIDE && estimated <= MAX_ESTIMATED_BYTES)
+            if (fitsBitmap(logicalWidth, Math.max(logicalHeight, backingHeight), factor))
                 return factor;
         }
         return 1;

@@ -3612,13 +3612,11 @@ private data class LibraryIconAnalysis(
     val pixelArt: Boolean,
 )
 
-private data class LibraryNormalizedIcon(
+internal data class LibraryNormalizedIcon(
     val bitmap: ImageBitmap,
     val filterQuality: FilterQuality,
-    val representativeColor: Color?,
     val presentationMode: LibraryIconPresentationMode,
     val visualScale: Float,
-    val foregroundLuminance: Float,
     val tileColor: Color? = null,
 )
 
@@ -3639,34 +3637,23 @@ private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(
     }
 }
 
-private fun normalizeLibraryIcon(
+internal fun normalizeLibraryIcon(
     fileSource: Bitmap,
     enhanceIcon: Boolean,
     preserveArtwork: Boolean = false,
-): LibraryNormalizedIcon? {
-    if (preserveArtwork) {
-        // A supplied 3:4 composition is intentional. Keep its pixels/scale intact while
-        // retaining optional background-color adaptation from the existing analysis.
-        val analysis = if (enhanceIcon) fileSource.analyzeLibraryIcon() else null
+): LibraryNormalizedIcon {
+    if (preserveArtwork || !enhanceIcon) {
+        val backgroundColor = if (preserveArtwork && enhanceIcon) {
+            fileSource.analyzeLibraryIcon()?.let { it.edgeFillColor ?: it.backingColor }
+        } else {
+            null
+        }
         return LibraryNormalizedIcon(
             bitmap = fileSource.asImageBitmap(),
             filterQuality = fileSource.libraryFilterQuality(),
-            representativeColor = null,
             presentationMode = LibraryIconPresentationMode.SafeFit,
             visualScale = 1f,
-            foregroundLuminance = analysis?.foregroundLuminance ?: 0.5f,
-            tileColor = analysis?.edgeFillColor?.toComposeLibraryColor()
-                ?: analysis?.backingColor?.toComposeLibraryColor(),
-        )
-    }
-    if (!enhanceIcon) {
-        return LibraryNormalizedIcon(
-            bitmap = fileSource.asImageBitmap(),
-            filterQuality = fileSource.libraryFilterQuality(),
-            representativeColor = null,
-            presentationMode = LibraryIconPresentationMode.SafeFit,
-            visualScale = 1f,
-            foregroundLuminance = 0.5f,
+            tileColor = backgroundColor?.toComposeLibraryColor(),
         )
     }
 
@@ -3674,37 +3661,39 @@ private fun normalizeLibraryIcon(
         ?: return LibraryNormalizedIcon(
             bitmap = fileSource.asImageBitmap(),
             filterQuality = fileSource.libraryFilterQuality(),
-            representativeColor = null,
             presentationMode = LibraryIconPresentationMode.SafeFit,
             visualScale = 1f,
-            foregroundLuminance = 0.5f,
         )
-    val cropBounds = when (analysis.presentation.mode) {
-        LibraryIconPresentationMode.Subject -> analysis.framedCropBounds ?: analysis.contentBounds
-        LibraryIconPresentationMode.Backed -> null
-        else -> null
+    val cropBounds = if (analysis.presentation.mode == LibraryIconPresentationMode.Subject) {
+        analysis.framedCropBounds ?: analysis.contentBounds
+    } else {
+        null
     }
     val normalized = if (cropBounds != null && !cropBounds.isFullBitmap(fileSource)) {
         fileSource.cropLibraryBounds(cropBounds)
     } else {
         fileSource
     }
-    val representativeColor = normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
-    val edgeFillColor = analysis.edgeFillColor?.toComposeLibraryColor()
-    val backingTileColor = analysis.backingColor?.toComposeLibraryColor()
-    val fillSourceColor = analysis.dominantColor?.toComposeLibraryColor() ?: representativeColor
     val tileColor = when (analysis.presentation.mode) {
-        LibraryIconPresentationMode.Cover -> null
-        LibraryIconPresentationMode.Backed ->
-            edgeFillColor ?: backingTileColor ?: fillSourceColor?.let {
-                syntheticLibraryTileColor(it, analysis.foregroundLuminance)
-            }
-        LibraryIconPresentationMode.Subject,
-        LibraryIconPresentationMode.SafeFit ->
-            edgeFillColor ?: fillSourceColor?.let {
-                syntheticLibraryTileColor(it, analysis.foregroundLuminance)
-            }
+        LibraryIconPresentationMode.Cover -> analysis.edgeFillColor
+            ?.takeIf { fileSource.hasUniformLibraryBorderColor(it) }
+            ?.toComposeLibraryColor()
         LibraryIconPresentationMode.Fallback -> null
+        LibraryIconPresentationMode.Backed,
+        LibraryIconPresentationMode.Subject,
+        LibraryIconPresentationMode.SafeFit -> {
+            val sourceBackground = if (analysis.presentation.mode == LibraryIconPresentationMode.Backed) {
+                analysis.edgeFillColor ?: analysis.backingColor
+            } else {
+                analysis.edgeFillColor
+            }
+            sourceBackground?.toComposeLibraryColor() ?: run {
+                val sourceColor = analysis.dominantColor?.toComposeLibraryColor()
+                    ?: normalized.findRepresentativeColor()
+                    ?: normalized.findAverageVisibleColor()
+                sourceColor?.let { syntheticLibraryTileColor(it, analysis.foregroundLuminance) }
+            }
+        }
     }
     val imageBitmap = normalized.asImageBitmap()
     if (normalized !== fileSource) {
@@ -3713,10 +3702,8 @@ private fun normalizeLibraryIcon(
     return LibraryNormalizedIcon(
         bitmap = imageBitmap,
         filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
-        representativeColor = representativeColor,
         presentationMode = analysis.presentation.mode,
         visualScale = analysis.presentation.visualScale,
-        foregroundLuminance = analysis.foregroundLuminance,
         tileColor = tileColor,
     )
 }
@@ -3779,7 +3766,8 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
     var semiTransparentPixels = 0L
     var luminanceSum = 0.0
     var visibleWeight = 0.0
-    val quantizedColors = HashSet<Int>(LIBRARY_COLOR_SAMPLE_MAX_BINS + 1)
+    var seenColors: LongArray? = null
+    var distinctColorCount = 0
 
     for (y in 0 until height) {
         getPixels(row, 0, width, 0, y, width, 1)
@@ -3798,8 +3786,15 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
             val alphaWeight = alpha / 255.0
             luminanceSum += pixelLibraryLuminance(pixel) * alphaWeight
             visibleWeight += alphaWeight
-            if (quantizedColors.size <= LIBRARY_COLOR_SAMPLE_MAX_BINS) {
-                quantizedColors += quantizeLibraryColor(pixel)
+            if (distinctColorCount <= LIBRARY_COLOR_SAMPLE_MAX_BINS) {
+                val colorBin = quantizeLibraryColor(pixel)
+                val bins = seenColors ?: LongArray(64).also { seenColors = it }
+                val word = colorBin ushr 6
+                val mask = 1L shl (colorBin and 63)
+                if ((bins[word] and mask) == 0L) {
+                    bins[word] = bins[word] or mask
+                    distinctColorCount++
+                }
             }
         }
     }
@@ -3820,34 +3815,49 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
         maxContentDimension.toFloat()
     val cornerBackgroundColor = findUniformCornerBackgroundColor()
     val framedCropBounds = cornerBackgroundColor?.let(::findFramedArtworkCropBounds)
-    val dominantColor = findDominantVisibleColor()
+    val cornerBackingColor = cornerBackgroundColor?.takeUnless { it.isLibraryNeutralMatte() }
+    val preliminaryInput = LibraryIconPresentationInput(
+        transparentRatio = transparentRatio,
+        boundsCoverage = boundsCoverage,
+        occupancy = occupancy,
+        aspectFill = aspectFill,
+        hasFramedCrop = framedCropBounds != null,
+        hasBackingColor = cornerBackingColor != null,
+        highColorDiversity = distinctColorCount > LIBRARY_PIXEL_ART_MAX_COLORS,
+        sourceAspectRatio = width.toFloat() / height.toFloat(),
+    )
+    val preliminaryPresentation = decideLibraryIconPresentation(preliminaryInput)
+
+    // Cover never consumes the dominant color. A colored corner already establishes both
+    // backing classification and tile color, so the two-pass histogram is also redundant.
+    val dominantColor = if (
+        preliminaryPresentation.mode == LibraryIconPresentationMode.Cover ||
+        cornerBackingColor != null
+    ) {
+        null
+    } else {
+        findDominantVisibleColor()
+    }
     val dominantBackingColor = dominantColor?.takeIf { sample ->
         sample.populationRatio >= LIBRARY_BACKING_MIN_DOMINANT_RATIO &&
             boundsCoverage >= LIBRARY_BACKING_MIN_BOUNDS_COVERAGE &&
             occupancy >= LIBRARY_BACKING_MIN_OCCUPANCY &&
             transparentRatio <= LIBRARY_BACKING_MAX_TRANSPARENT_RATIO
     }?.color
-    val backingColor = when {
-        cornerBackgroundColor != null && !cornerBackgroundColor.isLibraryNeutralMatte() ->
-            cornerBackgroundColor
-        dominantBackingColor != null -> dominantBackingColor
-        else -> null
+    val backingColor = cornerBackingColor ?: dominantBackingColor
+    val presentation = if (
+        preliminaryPresentation.mode == LibraryIconPresentationMode.Cover ||
+        cornerBackingColor != null
+    ) {
+        preliminaryPresentation
+    } else {
+        decideLibraryIconPresentation(
+            preliminaryInput.copy(hasBackingColor = backingColor != null),
+        )
     }
-    val presentation = decideLibraryIconPresentation(
-        LibraryIconPresentationInput(
-            transparentRatio = transparentRatio,
-            boundsCoverage = boundsCoverage,
-            occupancy = occupancy,
-            aspectFill = aspectFill,
-            hasFramedCrop = framedCropBounds != null,
-            hasBackingColor = backingColor != null,
-            highColorDiversity = quantizedColors.size > LIBRARY_PIXEL_ART_MAX_COLORS,
-            sourceAspectRatio = width.toFloat() / height.toFloat(),
-        ),
-    )
     val semiTransparentRatio = semiTransparentPixels.toFloat() / visiblePixels.toFloat()
     val pixelArt = maxOf(width, height) <= LIBRARY_PIXEL_ART_MAX_DIMENSION &&
-        quantizedColors.size <= LIBRARY_PIXEL_ART_MAX_COLORS &&
+        distinctColorCount <= LIBRARY_PIXEL_ART_MAX_COLORS &&
         semiTransparentRatio <= LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO
     val foregroundLuminance = (luminanceSum / visibleWeight).toFloat().coerceIn(0f, 1f)
 
@@ -3923,31 +3933,47 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
         Rect(0, height - patchSize, patchSize, height),
         Rect(width - patchSize, height - patchSize, width, height),
     )
-    val cornerSamples = Array(cornerRects.size) { ArrayList<Int>() }
-    val bins = IntArray(4096)
+    val samplesPerSide = (patchSize - 1) / step + 1
+    val maxSamples = cornerRects.size * samplesPerSide * samplesPerSide
+    val sampledPixels = IntArray(maxSamples)
+    val quantizedBins = IntArray(maxSamples)
+    val cornerStarts = IntArray(cornerRects.size + 1)
+    val row = IntArray(patchSize)
     var totalSamples = 0
 
     cornerRects.forEachIndexed { index, rect ->
+        cornerStarts[index] = totalSamples
         for (y in rect.top until rect.bottom step step) {
-            for (x in rect.left until rect.right step step) {
-                val pixel = this[x, y]
+            getPixels(row, 0, patchSize, rect.left, y, patchSize, 1)
+            for (x in 0 until patchSize step step) {
+                val pixel = row[x]
                 val alpha = (pixel ushr 24) and 0xff
                 if (alpha < LIBRARY_BACKGROUND_SAMPLE_ALPHA) continue
-                cornerSamples[index].add(pixel)
-                bins[quantizeLibraryColor(pixel)]++
+                sampledPixels[totalSamples] = pixel
+                quantizedBins[totalSamples] = quantizeLibraryColor(pixel)
                 totalSamples++
             }
         }
     }
+    cornerStarts[cornerRects.size] = totalSamples
     if (totalSamples < LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES) return null
 
-    var dominantBin = 0
+    // At most 196 corner samples are stored. Sorting only these avoids a full
+    // 4096-entry histogram and keeps the original lowest-bin tie-breaking behavior.
+    quantizedBins.sort(0, totalSamples)
+    var dominantBin = quantizedBins[0]
     var dominantCount = 0
-    for (index in bins.indices) {
-        if (bins[index] > dominantCount) {
-            dominantBin = index
-            dominantCount = bins[index]
+    var start = 0
+    while (start < totalSamples) {
+        val bin = quantizedBins[start]
+        var end = start + 1
+        while (end < totalSamples && quantizedBins[end] == bin) end++
+        val count = end - start
+        if (count > dominantCount) {
+            dominantBin = bin
+            dominantCount = count
         }
+        start = end
     }
     if (dominantCount.toFloat() / totalSamples < LIBRARY_BACKGROUND_MIN_DOMINANT_BIN_RATIO) {
         return null
@@ -3961,10 +3987,12 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
     var green = 0L
     var blue = 0L
 
-    for (samples in cornerSamples) {
-        if (samples.size < 2) return null
+    for (index in cornerRects.indices) {
+        val sampleCount = cornerStarts[index + 1] - cornerStarts[index]
+        if (sampleCount < 2) return null
         var cornerClose = 0
-        for (pixel in samples) {
+        for (sampleIndex in cornerStarts[index] until cornerStarts[index + 1]) {
+            val pixel = sampledPixels[sampleIndex]
             if (libraryColorDistanceSquared(pixel, candidate) > distanceLimit) continue
             cornerClose++
             closeSamples++
@@ -3972,7 +4000,7 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
             green += AndroidColor.green(pixel)
             blue += AndroidColor.blue(pixel)
         }
-        if (cornerClose.toFloat() / samples.size < LIBRARY_BACKGROUND_MIN_PER_CORNER_RATIO) {
+        if (cornerClose.toFloat() / sampleCount < LIBRARY_BACKGROUND_MIN_PER_CORNER_RATIO) {
             return null
         }
     }
@@ -3985,6 +4013,35 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
         (green / closeSamples).toInt().coerceIn(0, 255),
         (blue / closeSamples).toInt().coerceIn(0, 255),
     )
+}
+
+private fun Bitmap.hasUniformLibraryBorderColor(backgroundColor: Int): Boolean {
+    if (width <= 0 || height <= 0) return false
+    val distanceLimit = LIBRARY_BACKGROUND_EDGE_DISTANCE *
+        LIBRARY_BACKGROUND_EDGE_DISTANCE * 3
+    fun isMatching(pixel: Int): Boolean {
+        return ((pixel ushr 24) and 0xff) >= LIBRARY_BACKGROUND_SAMPLE_ALPHA &&
+            libraryColorDistanceSquared(pixel, backgroundColor) <= distanceLimit
+    }
+
+    // Check all four edges; matching corners alone do not justify a source-colored letterbox.
+    val row = IntArray(width)
+    val xStep = maxOf(1, width / 16)
+    for (y in intArrayOf(0, height - 1)) {
+        getPixels(row, 0, width, 0, y, width, 1)
+        for (x in 0 until width step xStep) {
+            if (!isMatching(row[x])) return false
+        }
+        if (!isMatching(row[width - 1])) return false
+    }
+    val yStep = maxOf(1, height / 16)
+    for (y in 0 until height step yStep) {
+        if (!isMatching(getPixel(0, y)) || !isMatching(getPixel(width - 1, y))) {
+            return false
+        }
+    }
+    return isMatching(getPixel(0, height - 1)) &&
+        isMatching(getPixel(width - 1, height - 1))
 }
 
 private fun Bitmap.findDominantVisibleColor(): LibraryDominantColorSample? {
@@ -4191,24 +4248,6 @@ private fun Bitmap.findAverageVisibleColor(): Color? {
     )
 }
 
-private fun Bitmap.averageVisibleLuminance(): Float {
-    if (width <= 0 || height <= 0) return 0.5f
-    val row = IntArray(width)
-    var luminance = 0.0
-    var weight = 0.0
-    for (y in 0 until height) {
-        getPixels(row, 0, width, 0, y, width, 1)
-        for (pixel in row) {
-            val alpha = (pixel ushr 24) and 0xff
-            if (alpha < MIN_VISIBLE_ALPHA) continue
-            val alphaWeight = alpha / 255.0
-            luminance += pixelLibraryLuminance(pixel) * alphaWeight
-            weight += alphaWeight
-        }
-    }
-    return if (weight == 0.0) 0.5f else (luminance / weight).toFloat().coerceIn(0f, 1f)
-}
-
 private fun pixelLibraryLuminance(pixel: Int): Double {
     val red = AndroidColor.red(pixel) / 255.0
     val green = AndroidColor.green(pixel) / 255.0
@@ -4236,11 +4275,6 @@ private const val LIBRARY_HUE_BUCKETS = 12
 private const val LIBRARY_MIN_COLOR_SATURATION = 0.28f
 private const val LIBRARY_MIN_COLOR_VALUE = 0.16f
 private const val LIBRARY_MIN_DOMINANT_COLOR_RATIO = 0.10
-private const val LIBRARY_LIGHT_SLOT_TINT_AMOUNT = 0.12f
-private const val LIBRARY_DARK_SLOT_TINT_AMOUNT = 0.14f
-private const val LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT = 0.06f
-private const val LIBRARY_FALLBACK_VISUAL_SCALE = 0.86f
-private const val LIBRARY_FALLBACK_TINT_SCALE = 0.60f
 private const val LIBRARY_BACKGROUND_SAMPLE_ALPHA = 240
 private const val LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES = 8
 private const val LIBRARY_BACKGROUND_MIN_DOMINANT_BIN_RATIO = 0.16f
@@ -4259,10 +4293,6 @@ private const val LIBRARY_PIXEL_ART_MAX_COLORS = 48
 private const val LIBRARY_COLOR_SAMPLE_MAX_BINS = 64
 private const val LIBRARY_PIXEL_ART_OPAQUE_ALPHA = 240
 private const val LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO = 0.06f
-private const val LIBRARY_DARK_FOREGROUND_LUMINANCE = 0.20f
-private const val LIBRARY_LIGHT_FOREGROUND_LUMINANCE = 0.82f
-private const val LIBRARY_DARK_CONTRAST_LIFT = 0.18f
-private const val LIBRARY_LIGHT_CONTRAST_DROP = 0.08f
 private const val LIBRARY_BACKING_MIN_DOMINANT_RATIO = 0.24f
 private const val LIBRARY_BACKING_MIN_BOUNDS_COVERAGE = 0.70f
 private const val LIBRARY_BACKING_MIN_OCCUPANCY = 0.72f
@@ -4307,61 +4337,6 @@ private fun syntheticLibraryTileColor(
         } else {
             LIBRARY_SYNTHETIC_FILL_LIGHT_VALUE
         },
-    )
-}
-
-private fun adaptiveLibraryFallbackSlotColor(
-    base: Color,
-    accent: Color,
-    foregroundLuminance: Float,
-): Color {
-    val brightness = base.red * 0.2126f + base.green * 0.7152f + base.blue * 0.0722f
-    val isLightSurface = brightness >= 0.5f
-    val contrastBase = when {
-        isLightSurface && foregroundLuminance >= LIBRARY_LIGHT_FOREGROUND_LUMINANCE ->
-            blendLibrarySlotColor(base, Color.Black, LIBRARY_LIGHT_CONTRAST_DROP)
-        !isLightSurface && foregroundLuminance <= LIBRARY_DARK_FOREGROUND_LUMINANCE ->
-            blendLibrarySlotColor(base, Color.White, LIBRARY_DARK_CONTRAST_LIFT)
-        else -> base
-    }
-    val hsv = FloatArray(3)
-    AndroidColor.RGBToHSV(
-        (accent.red * 255f).toInt(),
-        (accent.green * 255f).toInt(),
-        (accent.blue * 255f).toInt(),
-        hsv,
-    )
-    if (hsv[1] < LIBRARY_MIN_COLOR_SATURATION) {
-        return blendLibrarySlotColor(
-            contrastBase,
-            accent,
-            amount = LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT * LIBRARY_FALLBACK_TINT_SCALE,
-        )
-    }
-
-    val softenedAccent = Color.hsv(
-        hue = hsv[0],
-        saturation = hsv[1].coerceIn(0.28f, 0.58f),
-        value = if (isLightSurface) 0.95f else 0.32f,
-    )
-    return blendLibrarySlotColor(
-        contrastBase,
-        softenedAccent,
-        amount = if (isLightSurface) {
-            LIBRARY_LIGHT_SLOT_TINT_AMOUNT * LIBRARY_FALLBACK_TINT_SCALE
-        } else {
-            LIBRARY_DARK_SLOT_TINT_AMOUNT * LIBRARY_FALLBACK_TINT_SCALE
-        },
-    )
-}
-
-private fun blendLibrarySlotColor(base: Color, accent: Color, amount: Float): Color {
-    val ratio = amount.coerceIn(0f, 1f)
-    return Color(
-        red = base.red + (accent.red - base.red) * ratio,
-        green = base.green + (accent.green - base.green) * ratio,
-        blue = base.blue + (accent.blue - base.blue) * ratio,
-        alpha = base.alpha,
     )
 }
 
@@ -4476,7 +4451,6 @@ private fun LibraryIconSlotContent(
     val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
     val containerColor = when {
         isFallback -> colorResource(R.color.library_default_icon_background)
-        icon.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
         else -> icon.tileColor ?: baseContainerColor
     }
 
@@ -4499,6 +4473,7 @@ private fun LibraryIconSlotContent(
                 LibraryIconArtwork(
                     icon = icon,
                     contentSize = artworkSize,
+                    slotAspectRatio = iconRatio.widthToHeight,
                 )
             }
         }
@@ -4528,6 +4503,7 @@ private const val LIBRARY_FALLBACK_VECTOR_PORTRAIT_SCALE = 0.62f
 private fun LibraryIconArtwork(
     icon: LibraryNormalizedIcon?,
     contentSize: Dp,
+    slotAspectRatio: Float,
 ) {
     if (icon == null) return
 
@@ -4541,7 +4517,10 @@ private fun LibraryIconArtwork(
                 .clip(MaterialTheme.shapes.small)
         else -> Modifier.fillMaxSize()
     }
-    val contentScale = if (icon.presentationMode == LibraryIconPresentationMode.Cover) {
+    val contentScale = if (
+        icon.presentationMode == LibraryIconPresentationMode.Cover &&
+        shouldCropLibraryCover(icon.bitmap.width, icon.bitmap.height, slotAspectRatio)
+    ) {
         ContentScale.Crop
     } else {
         ContentScale.Fit

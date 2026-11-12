@@ -58,9 +58,8 @@ public class Image {
 	public static Image createDisplayTarget(int width, int height, int scale) {
 		// Do not add any new size restriction to the existing 1x behavior.
 		if (scale == 1) return createImage(width, height);
-		if (scale < 1 || scale > InternalResolution.MAX_SCALE || width <= 0 || height <= 0
-				|| (long) width * scale > InternalResolution.MAX_TARGET_SIDE
-				|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE) {
+		if (scale > InternalResolution.MAX_SCALE
+				|| !InternalResolution.fitsBitmap(width, height, scale)) {
 			throw new IllegalArgumentException("Invalid display target size");
 		}
 		Bitmap bitmap = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
@@ -215,9 +214,8 @@ public class Image {
 	/** Host-only resize that preserves previously returned Graphics objects. */
 	public synchronized void resizeDisplayTarget(int width, int height, int scale) {
 		if (width == bounds.right && height == bounds.bottom && scale == pixelScale) return;
-		if (width <= 0 || height <= 0 || scale < 1 || scale > InternalResolution.MAX_SCALE
-				|| (scale > 1 && ((long) width * scale > InternalResolution.MAX_TARGET_SIDE
-						|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE))) {
+		if (scale > InternalResolution.MAX_SCALE
+				|| !InternalResolution.fitsBitmap(width, height, scale)) {
 			throw new IllegalArgumentException("Invalid display target size");
 		}
 		int previousWidth = bounds.right;
