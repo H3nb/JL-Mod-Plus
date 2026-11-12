@@ -354,8 +354,9 @@ class MemoryRecipeRuntime {
             if (!readOnly && (recipe.mode == "form" || action.operation == "add")) {
                 val key = action.field ?: action.input
                 if (key != null) {
-                    val previous = logicalValues.putIfAbsent(key, currentLogical)
-                    if (previous != null && previous != currentLogical) {
+                    val previous = logicalValues[key]
+                    if (previous == null) logicalValues[key] = currentLogical
+                    else if (previous != currentLogical) {
                         throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                             "Inconsistent copies of $key")
                     }

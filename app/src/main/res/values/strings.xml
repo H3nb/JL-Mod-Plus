@@ -1377,13 +1377,13 @@
 <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Refresh</string>
 <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Reading current values…</string>
 <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Tap Refresh to read the value from the running game.</string>
-<string name="memory_scripts_mode_toggle">Toggle</string>
-<string name="memory_scripts_mode_form">Form</string>
-<string name="memory_scripts_mode_once">One-shot</string>
-<string name="memory_scripts_mode_legacy">Recipe</string>
-<string name="memory_scripts_edit_values">Edit values</string>
-<string name="memory_scripts_apply">Apply changes</string>
-<string name="memory_scripts_refresh_required">Refresh to verify the current values before applying.</string>
+<string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Toggle</string>
+<string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Form</string>
+<string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">One-shot</string>
+<string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Recipe</string>
+<string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Edit values</string>
+<string name="memory_scripts_apply" tools:ignore="MissingTranslation">Apply changes</string>
+<string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Refresh to verify the current values before applying.</string>
 <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Inconsistent copies: %1$s</string>
 <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimize Memory Editor</string>
 </resources>
