@@ -2109,19 +2109,18 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	public void showRenderingNotice(@StringRes int message) {
-		showRenderingNotice(getString(message));
+		runOnUiThread(() -> showRenderingNoticeOnMain(getString(message)));
 	}
 
 	public void showRenderingNotice(@StringRes int message, int requestedScale, int actualScale) {
-		showRenderingNotice(getString(message, requestedScale, actualScale));
+		runOnUiThread(() ->
+				showRenderingNoticeOnMain(getString(message, requestedScale, actualScale)));
 	}
 
-	private void showRenderingNotice(String message) {
-		runOnUiThread(() -> {
-			if (!isFinishing() && !isDestroyed() && runtimeNoticeController != null) {
-				runtimeNoticeController.show(message, 7_000L);
-			}
-		});
+	private void showRenderingNoticeOnMain(String message) {
+		if (!isFinishing() && !isDestroyed() && runtimeNoticeController != null) {
+			runtimeNoticeController.show(message, 7_000L);
+		}
 	}
 
 	private void toast(String message) {
