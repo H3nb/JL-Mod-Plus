@@ -8,6 +8,14 @@ final class InternalResolution {
 
     private InternalResolution() {}
 
+    static boolean fitsBitmap(int width, int height, int scale) {
+        if (width <= 0 || height <= 0 || scale < 1) return false;
+        long pixelsWide = (long) width * scale;
+        long pixelsHigh = (long) height * scale;
+        return pixelsWide <= Integer.MAX_VALUE
+                && pixelsHigh <= MAX_BITMAP_PIXELS / pixelsWide;
+    }
+
     @FunctionalInterface
     interface ScaleAttempt {
         void allocate(int scale);
@@ -40,9 +48,8 @@ final class InternalResolution {
                 : requested;
         desired = Math.max(1, Math.min(MAX_SCALE, desired));
         for (int factor = desired; factor > 1; factor--) {
-            long w = (long) logicalWidth * factor;
-            long h = (long) Math.max(logicalHeight, backingHeight) * factor;
-            if (w <= Integer.MAX_VALUE && h <= MAX_BITMAP_PIXELS / w) return factor;
+            if (fitsBitmap(logicalWidth, Math.max(logicalHeight, backingHeight), factor))
+                return factor;
         }
         return 1;
     }

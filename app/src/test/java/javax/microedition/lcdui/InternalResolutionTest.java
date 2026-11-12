@@ -37,6 +37,15 @@ public class InternalResolutionTest {
         assertEquals(1, InternalResolution.resolve(10,
                 Integer.MAX_VALUE, Integer.MAX_VALUE, 1080, 1920));
     }
+    @Test public void validatesBitmapDimensionsWithoutOverflow() {
+        org.junit.jupiter.api.Assertions.assertTrue(
+                InternalResolution.fitsBitmap(240, 320, 10));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                InternalResolution.fitsBitmap(32768, 32768, 10));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                InternalResolution.fitsBitmap(Integer.MAX_VALUE, Integer.MAX_VALUE, 10));
+    }
+
     @Test public void allocationFailureDowngradesToTheFirstUsableDensity() {
         java.util.ArrayList<Integer> attempts = new java.util.ArrayList<>();
         int resolved = InternalResolution.allocateWithFallback(5, scale -> {
