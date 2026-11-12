@@ -14,6 +14,8 @@ import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -85,6 +87,42 @@ class LibraryScaleCharacterizationTest {
                 database.close()
             }
         }
+    }
+
+    @Test fun iconFilePresenceColdAndIncrementalAtFiftyThousandRows() {
+        val count = 50_000
+        val rows = (1L..count.toLong()).map { id ->
+            LibraryAppRow(
+                id = id,
+                storageKey = "game-$id",
+                sourceTitle = "Game $id",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                title = "Game $id",
+                vendor = "Vendor",
+                version = "1.0",
+                description = "",
+                favorite = false,
+                addedAt = null,
+                lastPlayedAt = null,
+                iconRevision = 0,
+            )
+        }
+        val start = System.nanoTime()
+        val first = resolveLibraryIconFiles(temporaryFolder, rows)
+        val coldMs = (System.nanoTime() - start) / 1_000_000.0
+
+        val updatedRows = rows.toMutableList()
+        updatedRows[25_000] = updatedRows[25_000].copy(iconRevision = 1)
+        val updatedAt = System.nanoTime()
+        val next = resolveLibraryIconFiles(temporaryFolder, updatedRows, first)
+        val incrementalMs = (System.nanoTime() - updatedAt) / 1_000_000.0
+
+        assertEquals(count, next.size)
+        assertSame(first.getValue(1), next.getValue(1))
+        assertNotSame(first.getValue(25_001), next.getValue(25_001))
+        println("Library icon presence count=$count coldMs=${"%.3f".format(Locale.US, coldMs)} " +
+            "incrementalMs=${"%.3f".format(Locale.US, incrementalMs)}")
     }
 
     private companion object {
