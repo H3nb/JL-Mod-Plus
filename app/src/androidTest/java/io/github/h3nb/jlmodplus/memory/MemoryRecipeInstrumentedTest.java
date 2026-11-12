@@ -165,7 +165,7 @@ public class MemoryRecipeInstrumentedTest {
             String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
                     + "],\"value\":444}";
             String document = recipe(action).replace("\"game\":",
-                "\"description\":\"Load a save first.\\\\nDo not run during combat.\",\"game\":");
+                "\"description\":\"Load a save first.\\nDo not run during combat.\",\"game\":");
             assertEquals(0, MemoryRecipeCatalog.list(file, Root.class.getName())
                     .getParcelableArrayList("items").size());
             Bundle saved = MemoryRecipeCatalog.put(file, Root.class.getName(), document, null);
@@ -481,7 +481,7 @@ public class MemoryRecipeInstrumentedTest {
                 + "],\"value\":200}";
         String original = recipe(action);
         String documented = original.replace("\"game\":",
-            "\"description\":\"Use on the world map.\\\\nSave beforehand.\",\"game\":");
+            "\"description\":\"Use on the world map.\\nSave beforehand.\",\"game\":");
         assertEquals(MemoryEngineContract.RESULT_OK,
             status(runner.run(TOKEN, documented, new Bundle(), false, true)));
         assertEquals(10, root.coins);
@@ -492,11 +492,11 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, invalidType, new Bundle(), false, false)));
         String invalidControl = original.replace("\"game\":",
-            "\"description\":\"Invalid\\\\u0000note\",\"game\":");
+            "\"description\":\"Invalid" + "\\\\" + "u0000note\",\"game\":");
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, invalidControl, new Bundle(), false, false)));
         String tooLong = original.replace("\"game\":",
-            "\"description\":\"" + new String(new char[2049]).replace('\\0', 'x')
+            "\"description\":\"" + new String(new char[2049]).replace((char) 0, 'x')
                 + "\",\"game\":");
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, tooLong, new Bundle(), false, false)));
