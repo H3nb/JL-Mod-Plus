@@ -30,6 +30,10 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   without flaky wall-time pass/fail thresholds. Room publication still has a focused
   1k/5k local test; benchmark numbers are diagnostic, not device-performance claims.
 
+- A focused runtime-smoke test renders 20,000 items through the real LibraryScreen
+  in list and grid, checks a bounded composed window, and jumps to the final app.
+  It demonstrates lazy composition, not sustained frame pacing or scrolling FPS.
+
 ## Unresolved scalability boundaries
 
 - On a cold full Library projection, `AppsListFragment.toLibraryUiItem` still does
