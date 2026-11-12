@@ -595,6 +595,7 @@ internal interface MemoryEditorActions {
     fun endSavedEdit() = Unit
     fun editSavedVariable(id: String, replacement: String, freezeAfter: Boolean = false) = Unit
     fun renameSavedVariable(id: String, name: String) = Unit
+    fun relinkBookmark(id: String, candidateId: Long, expectedRevision: Long) = Unit
     fun deleteSavedVariable(id: String) = Unit
     fun deleteSavedVariables(ids: List<String>) = Unit
     fun inspectSavedVariable(id: String) = Unit

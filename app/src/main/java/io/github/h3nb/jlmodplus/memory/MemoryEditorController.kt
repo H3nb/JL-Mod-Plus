@@ -1025,9 +1025,8 @@ internal class MemoryEditorComposeController(
             state = state.copy(message = "Bookmark storage unavailable", messageIsError = true)
             return
         }
-        val existingIds = state.savedVariables.mapTo(HashSet()) { it.id }
         val known = state.watches.filter {
-            it.id in ids && it.savedSourceId in existingIds
+            it.id in ids && !it.savedSourceId.isNullOrBlank()
         }.mapTo(HashSet()) { it.id }
         val targets = ids.filterNot { it in known }.map { it to bookmarkCandidateLabel(it) }
         if (targets.isEmpty()) {
@@ -1193,6 +1192,45 @@ internal class MemoryEditorComposeController(
                     messageIsError = error,
                 )
                 if (freezeCode == MemoryEngineContract.RESULT_OK) reloadState()
+            }
+        }
+    }
+
+    override fun relinkBookmark(id: String, candidateId: Long, expectedRevision: Long) {
+        val record = state.savedVariables.firstOrNull { it.id == id } ?: return
+        val engine = service ?: return
+        val authority = savedAuthority ?: return
+        val token = state.runtimeToken
+        if (state.busy || token == 0L || expectedRevision == 0L ||
+            state.results.none { it.id == candidateId }) return
+        state = state.copy(busy = true)
+        runIpc {
+            val outcome = runCatching {
+                val captured = engine.captureSavedLocator(token, expectedRevision, candidateId)
+                val locator = captured.takeIf {
+                    it.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                        MemoryEngineContract.RESULT_OK
+                }
+                val detached = engine.detachBookmark(token, id)
+                if (detached.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                        MemoryEngineContract.RESULT_TARGET_LOST) != MemoryEngineContract.RESULT_OK)
+                    error("Cannot stop the old Bookmark Freeze")
+                val (path, appId, entry) = savedTarget()
+                savedRows(authority.relinkBookmark(path, appId, entry, id, locator))
+                val attached = engine.attachBookmark(token, expectedRevision, candidateId,
+                    id, record.label)
+                if (attached.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                        MemoryEngineContract.RESULT_TARGET_LOST) != MemoryEngineContract.RESULT_OK)
+                    error("Bookmark locator updated; runtime target changed. Try relinking again.")
+            }
+            post {
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                state = state.copy(busy = false,
+                    message = if (outcome.isSuccess) "Bookmark relinked"
+                        else outcome.exceptionOrNull()?.message,
+                    messageIsError = outcome.isFailure)
+                if (state.variablesTab) refreshSavedVariables()
+                reloadState()
             }
         }
     }
@@ -1562,8 +1600,17 @@ internal class MemoryEditorComposeController(
         val row = state.savedVariables.firstOrNull { it.id == id } ?: return
         val engine = service ?: return
         val token = state.runtimeToken
-        if (state.busy || !state.writeSupported ||
-            state.savedValues[id]?.resolved != true || token == 0L) return
+        if (state.busy || !state.writeSupported || token == 0L) return
+        if (state.savedValues[id]?.resolved != true) {
+            val active = state.watches.firstOrNull {
+                it.savedSourceId == id && it.state != MemoryEngineContract.CANDIDATE_LOST
+            } ?: return
+            launchOperation { current, currentToken ->
+                current.setFreeze(currentToken, longArrayOf(active.id),
+                    MemoryEngineContract.FREEZE_LOCK, expectedValue, "")
+            }
+            return
+        }
         runIpc {
             val result = runCatching { engine.freezeSaved(token, id, row.label, expectedValue) }
             post {
