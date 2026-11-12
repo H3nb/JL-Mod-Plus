@@ -28,7 +28,7 @@ import java.util.UUID;
  * definitions themselves are portable and are validated when resolved in the guest runtime.
  */
 public final class SavedVariablesAuthority extends Service {
-    static final int SCHEMA = 3;
+    static final int SCHEMA = 4;
     private static final int LOCATOR_SCHEMA = 2;
     static final int MAX_ITEMS = 64;
     static final int MAX_BYTES = 65_536;
@@ -104,28 +104,86 @@ public final class SavedVariablesAuthority extends Service {
 
         @Override public Bundle save(String path, long appId, String entry, String label,
                                      Bundle locator) {
+            if (locator == null) return failed("A verified locator is required");
+            return createBookmark(path, appId, entry, label, locator);
+        }
+
+        @Override public Bundle bookmark(String path, long appId, String entry, String label,
+                                         Bundle locator) {
+            return createBookmark(path, appId, entry, label, locator);
+        }
+
+        @Override public Bundle relinkBookmark(String path, long appId, String entry,
+                                               String id, Bundle locator) {
+            synchronized (lock) {
+                try {
+                    if (id == null || id.isEmpty() || id.length() > 64 || locator == null)
+                        return failed("Invalid bookmark or locator");
+                    Target target = target(path, appId, entry);
+                    JSONObject descriptor = encodeLocator(locator);
+                    Bundle[] response = new Bundle[1];
+                    InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
+                            getApplicationContext()).run(target.path, target.appId, () -> {
+                        JSONObject data = load(target);
+                        JSONArray items = data.getJSONArray("items");
+                        boolean found = false;
+                        for (int i = 0; i < items.length(); i++) {
+                            JSONObject item = items.getJSONObject(i);
+                            if (id.equals(item.getString("id"))) {
+                                item.put("locator", descriptor);
+                                found = true;
+                            } else if (!item.isNull("locator") &&
+                                    encodeLocator(decodeLocator(item.getJSONObject("locator")))
+                                            .toString().equals(descriptor.toString())) {
+                                return false; // Never alias two Bookmark IDs to one rooted path.
+                            }
+                        }
+                        if (!found) return false;
+                        write(target, data);
+                        response[0] = rows(data);
+                        return true;
+                    });
+                    return guard == InstalledAppWriteGuard.Result.SUCCESS
+                            ? response[0] : failed("Bookmark missing, duplicate or installation changed");
+                } catch (Exception error) { return failed(error); }
+            }
+        }
+
+        private Bundle createBookmark(String path, long appId, String entry, String label,
+                                      @Nullable Bundle locator) {
             synchronized (lock) {
                 try {
                     final Target target = target(path, appId, entry);
                     final String name = checkedName(label);
-                    final JSONObject descriptor = encodeLocator(locator);
+                    final JSONObject descriptor = locator == null ? null : encodeLocator(locator);
                     final Bundle[] result = new Bundle[1];
                     InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
                             getApplicationContext()).run(target.path, target.appId, () -> {
                         JSONObject data = load(target);
                         JSONArray items = data.getJSONArray("items");
+                        if (descriptor != null) {
+                            for (int i = 0; i < items.length(); i++) {
+                                JSONObject existing = items.getJSONObject(i);
+                                if (!existing.isNull("locator") &&
+                                        encodeLocator(decodeLocator(existing.getJSONObject("locator")))
+                                                .toString().equals(descriptor.toString())) {
+                                    result[0] = rows(data);
+                                    return true;
+                                }
+                            }
+                        }
                         if (items.length() >= MAX_ITEMS) return false;
                         JSONObject record = new JSONObject();
                         record.put("id", UUID.randomUUID().toString());
                         record.put("label", name);
-                        record.put("locator", descriptor);
+                        record.put("locator", descriptor == null ? JSONObject.NULL : descriptor);
                         items.put(record);
                         write(target, data);
                         result[0] = rows(data);
                         return true;
                     });
                     return guard == InstalledAppWriteGuard.Result.SUCCESS
-                            ? result[0] : failed("Installation changed or Saved storage is full");
+                            ? result[0] : failed("Installation changed or Bookmark catalog is full");
                 } catch (Exception error) { return failed(error); }
             }
         }
@@ -282,7 +340,8 @@ public final class SavedVariablesAuthority extends Service {
             Bundle row = new Bundle();
             row.putString("id", record.getString("id"));
             row.putString("label", record.getString("label"));
-            row.putBundle("locator", decodeLocator(record.getJSONObject("locator")));
+            row.putBundle("locator", record.isNull("locator") ? null :
+                    decodeLocator(record.getJSONObject("locator")));
             items.add(row);
         }
         response.putBoolean("ok", true);

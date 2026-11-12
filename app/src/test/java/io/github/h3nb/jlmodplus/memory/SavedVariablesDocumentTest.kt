@@ -62,7 +62,7 @@ class SavedVariablesDocumentTest {
         assertEquals(1, merged.skipped)
         SavedVariablesDocument.validate(merged.bytes)
         val doc = Json.parseToJsonElement(merged.bytes.toString(Charsets.UTF_8)).jsonObject
-        assertEquals(3, doc["schema"]!!.jsonPrimitive.content.toInt())
+        assertEquals(4, doc["schema"]!!.jsonPrimitive.content.toInt())
         val rows = doc["items"]!!.jsonArray
         assertEquals(2, rows.size)
         assertEquals("My HP", rows[0].jsonObject["label"]!!.jsonPrimitive.content)
@@ -90,4 +90,33 @@ class SavedVariablesDocumentTest {
         }
     }
 
+    @Test fun schemaFourAllowsUnresolvedBookmarksButNotMissingOrMalformedLocators() {
+        val unresolved = """{"schema":4,"items":[{"id":"bookmark-1","label":"Inventory",
+            "locator":null}]}"""
+        SavedVariablesDocument.validate(unresolved.toByteArray())
+        assertThrows(IOException::class.java) {
+            SavedVariablesDocument.validate(unresolved.replace("\"locator\":null", "")
+                .toByteArray())
+        }
+        assertThrows(IOException::class.java) {
+            SavedVariablesDocument.validate(unresolved.replace("\"locator\":null",
+                "\"locator\":{}").toByteArray())
+        }
+        val merged = SavedVariablesDocument.merge(unresolved.toByteArray(),
+            unresolved.toByteArray())
+        assertEquals(0, merged.added)
+        assertEquals(1, merged.skipped)
+        assertEquals(1, Json.parseToJsonElement(merged.bytes.toString(Charsets.UTF_8))
+            .jsonObject["items"]!!.jsonArray.size)
+    }
+
+    @Test fun unrelatedUntracedBookmarksDoNotCollapseOnImport() {
+        val a = """{"schema":4,"items":[{"id":"a","label":"HP","locator":null}]}"""
+        val b = """{"schema":4,"items":[{"id":"b","label":"Coins","locator":null}]}"""
+        val merged = SavedVariablesDocument.merge(a.toByteArray(), b.toByteArray())
+        assertEquals(1, merged.added)
+        assertEquals(0, merged.skipped)
+        assertEquals(2, Json.parseToJsonElement(merged.bytes.toString(Charsets.UTF_8))
+            .jsonObject["items"]!!.jsonArray.size)
+    }
 }

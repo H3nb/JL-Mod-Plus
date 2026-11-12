@@ -9,6 +9,7 @@ import java.util.UUID
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -20,7 +21,7 @@ import kotlinx.serialization.json.int
  */
 object SavedVariablesDocument {
     const val MAX_BYTES = 65_536
-    private const val SCHEMA = 3
+    private const val SCHEMA = 4
     private val PRIMITIVE_FIELDS = setOf("byte", "short", "char", "int", "long", "float", "double", "boolean")
     private val PRIMITIVE_ARRAYS = setOf("[B", "[S", "[C", "[I", "[J", "[F", "[D", "[Z")
 
@@ -31,7 +32,7 @@ object SavedVariablesDocument {
         try {
             val document = Json.parseToJsonElement(bytes.toString(Charsets.UTF_8)) as JsonObject
             val schema = document.number("schema")
-            if (schema != 2 && schema != SCHEMA) {
+            if (schema !in 2..SCHEMA) {
                 throw IOException("Unsupported Saved definitions version")
             }
             val items = document["items"] as JsonArray
@@ -47,9 +48,14 @@ object SavedVariablesDocument {
                 if (label.isEmpty() || label.length > 64) {
                     throw IOException("Saved variable name must be 1–64 characters")
                 }
-                val locator = record["locator"] as JsonObject
-                if (schema == 2) validateLegacyLocator(locator)
-                else validateTypedLocator(locator)
+                val locator = record["locator"]
+                if (schema == SCHEMA && locator == JsonNull) {
+                    // No verified rooted path exists yet. Never interpret this as a live address.
+                } else {
+                    val rooted = locator as? JsonObject ?: throw IOException("Bookmark locator is missing")
+                    if (schema == 2) validateLegacyLocator(rooted)
+                    else validateTypedLocator(rooted)
+                }
             }
         } catch (error: IOException) {
             throw error
@@ -75,12 +81,17 @@ object SavedVariablesDocument {
         val entries = ArrayList<JsonElement>()
         val seen = HashSet<String>()
         val ids = HashSet<String>()
+        val untracedIds = HashSet<String>()
         fun add(record: JsonObject, schema: Int, imported: Boolean): Boolean {
-            val locator = canonicalLocator(record["locator"] as JsonObject, schema)
-            val signature = locator.toString()
-            if (imported && signature in seen) return false
-            seen.add(signature)
+            val sourceLocator = record["locator"]
+            val locator: JsonElement = if (schema == SCHEMA && sourceLocator == JsonNull) JsonNull
+                else canonicalLocator(sourceLocator as JsonObject, schema)
+            val signature = locator.takeIf { it != JsonNull }?.toString()
+            if (imported && signature != null && signature in seen) return false
+            if (imported && locator == JsonNull && record.string("id") in untracedIds) return false
+            if (signature != null) seen.add(signature)
             var id = record.string("id")
+            if (locator == JsonNull) untracedIds.add(id)
             if (imported && !ids.add(id)) {
                 do { id = UUID.randomUUID().toString() } while (!ids.add(id))
             } else if (!imported) {
