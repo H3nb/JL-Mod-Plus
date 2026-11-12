@@ -62,26 +62,20 @@ jobs:
           script: |
             set -euo pipefail
             chmod +x gradlew
-            ./gradlew --daemon --stacktrace --profile \
-              -PjlmodRuntimeTestAbi=x86_64 \
-              :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+            ./gradlew --daemon --stacktrace --profile -PjlmodRuntimeTestAbi=x86_64 :app:installEmulatorDebug :app:assembleEmulatorDebugAndroidTest
             mkdir -p ci-artifacts/library-scale
             mapfile -t apks < <(find app/build/outputs/apk/androidTest -type f -name '*.apk' -print)
             test "${#apks[@]}" -eq 1
             adb install -r -t "${apks[0]}"
-            runner="$(adb shell pm list instrumentation | tr -d '\r' | \
-              sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p')"
+            runner="$(adb shell pm list instrumentation | tr -d '\r' | sed -n 's/^instrumentation:\([^ ]*\) (target=io\.github\.h3nb\.jlmodplus\.debug)$/\1/p')"
             test -n "$runner"
             selector='io.github.h3nb.jlmodplus.applist.LibraryComposeTest#twentyThousandAppsRemainVirtualizedInListAndGrid'
-            adb shell am instrument -w -r -e class "$selector" "$runner" \
-              > ci-artifacts/library-scale/instrumentation.txt 2>&1 || {
+            adb shell am instrument -w -r -e class "$selector" "$runner" > ci-artifacts/library-scale/instrumentation.txt 2>&1 || {
                 cat ci-artifacts/library-scale/instrumentation.txt
                 exit 1
               }
             cat ci-artifacts/library-scale/instrumentation.txt
-            python3 scripts/runtime-smoke-results.py \
-              --log ci-artifacts/library-scale/instrumentation.txt \
-              --output ci-artifacts/library-scale/verified.txt "$selector"
+            python3 scripts/runtime-smoke-results.py --log ci-artifacts/library-scale/instrumentation.txt --output ci-artifacts/library-scale/verified.txt "$selector"
 
       - name: Save runtime evidence
         if: always()
