@@ -460,7 +460,7 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
-    @Test fun searchRetainsDirectSaveActionForSingleCandidate() {
+    @Test fun searchBookmarksSelectedCandidateWithQuickAction() {
         val candidate = MemoryResultRow(
             id = 1L, valueText = "42", locationText = "guest.Game.hp",
             aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
@@ -468,6 +468,10 @@ class MemoryEditorAdaptiveComposeTest {
             state = MemoryEngineContract.CANDIDATE_STABLE,
             relocations = 0,
         )
+        var bookmarked = false
+        val actions = object : TestMemoryEditorActions() {
+            override fun watchSelected(add: Boolean) { bookmarked = add }
+        }
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         rule.setContent {
             DeviceConfigurationOverride(
@@ -481,24 +485,26 @@ class MemoryEditorAdaptiveComposeTest {
                             results = listOf(candidate), resultCount = 1,
                             sessionStage = MemorySessionStage.CANDIDATES,
                         ),
-                        TestMemoryEditorActions(),
+                        actions,
                     )
                 }
             }
         }
-        rule.onNodeWithContentDescription(context.getString(R.string.memory_saved_save))
+        rule.onNodeWithContentDescription(context.getString(R.string.memory_list_add))
             .assertIsDisplayed().assertIsEnabled().performClick()
-        rule.onNodeWithText(context.getString(R.string.memory_saved_name)).assertIsDisplayed()
+        rule.runOnIdle { assertTrue(bookmarked) }
     }
 
-    @Test fun listCheckboxSelectsDirectlyAndInspectorTabOpensSelectedWatch() {
+    @Test fun listCheckboxSelectsBookmarkedTargetAndOpensInspector() {
         val watch = MemoryWatchRow(
             1L, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
-            "2", "2", "2", "player.coins", "Coins",
+            "2", "2", "2", "player.coins", "Coins", savedSourceId = "coins",
         )
         val state = MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,
-            variablesTab = true, watches = listOf(watch),
+            variablesTab = true, savedVariables = listOf(SavedVariableRow(
+                "coins", "Coins", "player.coins")),
+            watches = listOf(watch),
         )
         var inspectedId: Long? = null
         var inspectedAsWatch = false
@@ -530,11 +536,13 @@ class MemoryEditorAdaptiveComposeTest {
     @Test fun longPressStillSelectsListEntryAndBackClearsSelection() {
         val watch = MemoryWatchRow(
             1L, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
-            "2", "2", "2", "player.coins", "Coins",
+            "2", "2", "2", "player.coins", "Coins", savedSourceId = "coins",
         )
         val state = MemoryEditorUiState(
             visible = true, connected = true, supported = true,
-            variablesTab = true, watches = listOf(watch),
+            variablesTab = true, savedVariables = listOf(
+                SavedVariableRow("coins", "Coins", "player.coins")),
+            watches = listOf(watch),
         )
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, TestMemoryEditorActions()) } }
         rule.onNodeWithText("Coins").performTouchInput { longClick() }
@@ -652,6 +660,7 @@ class MemoryEditorAdaptiveComposeTest {
             valueText = "42", initialValueText = "42", previousValueText = "42",
             label = "Session health", locationText = "guest.Game.hp",
             state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+            savedSourceId = "session-health",
         )
         val actions = object : TestMemoryEditorActions() {
             override fun editTargetsWithOptions(
@@ -666,7 +675,10 @@ class MemoryEditorAdaptiveComposeTest {
                 MemoryEditorRuntimeRoot(
                     MemoryEditorUiState(
                         visible = true, connected = true, supported = true,
-                        writeSupported = true, variablesTab = true, watches = listOf(watch),
+                        writeSupported = true, variablesTab = true,
+                        savedVariables = listOf(SavedVariableRow(
+                            "session-health", "Session health", "guest.Game.hp")),
+                        watches = listOf(watch),
                     ),
                     actions,
                 )
@@ -682,7 +694,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.runOnIdle { assertEquals("99", appliedValue) }
     }
 
-    @Test fun linkedSavedWatchIsShownOnceAndReturnsWhenSavedDefinitionDisappears() {
+    @Test fun linkedRuntimeRowIsNotShownAsASecondBookmarkAfterDeletion() {
         val saved = SavedVariableRow("hp", "Hit points", "guest.Game.hp")
         val watch = MemoryWatchRow(
             id = 1L, type = MemoryEngineContract.TYPE_INT,
@@ -706,7 +718,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.runOnIdle { state.value = state.value.copy(
             savedVariables = emptyList(), savedValues = emptyMap(),
         ) }
-        rule.onNodeWithText("Session health").assertIsDisplayed()
+        rule.onNodeWithText("Session health").assertDoesNotExist()
     }
 
     @Test fun linkedWatchStaysInspectableWhenSavedLocatorIsNotReady() {

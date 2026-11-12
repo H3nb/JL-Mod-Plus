@@ -878,7 +878,8 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
-    if (relinkingBookmarkId != null && relinkCandidate != null) {
+    val bookmarkToRelink = relinkingBookmarkId
+    if (bookmarkToRelink != null && relinkCandidate != null) {
         val candidate = relinkCandidate!!
         AlertDialog(
             onDismissRequest = { relinkCandidate = null },
@@ -886,7 +887,7 @@ private fun RuntimeSearchResultsTab(
             text = { Text(stringResource(R.string.memory_bookmark_relink_confirm)) },
             confirmButton = {
                 TextButton(onClick = {
-                    actions.relinkBookmark(relinkingBookmarkId, candidate, state.revision)
+                    actions.relinkBookmark(bookmarkToRelink, candidate, state.revision)
                     relinkCandidate = null
                     onRelinkComplete()
                 }) { Text(stringResource(R.string.memory_bookmark_relink)) }

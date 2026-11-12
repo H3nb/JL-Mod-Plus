@@ -202,7 +202,7 @@ class MemoryEditorOverlayComposeTest {
                 JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
             }
         }
-        val labels = listOf("Search known values", "Search unknown values", "Edit", "Add selected values to Watch", "Refresh")
+        val labels = listOf("Search known values", "Search unknown values", "Edit", "Bookmark selected values", "Refresh")
         val bounds = labels.map { rule.onNodeWithContentDescription(it).getUnclippedBoundsInRoot() }
         rule.onNodeWithContentDescription("Edit").assertIsNotEnabled()
         rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L)) }

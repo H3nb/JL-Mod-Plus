@@ -104,6 +104,7 @@ private val previewWatch = MemoryWatchRow(
     label = "HP",
     freezeMode = MemoryEngineContract.FREEZE_LOCK,
     freezePaused = false,
+    savedSourceId = "preview-hp",
 )
 
 @PreviewTest
@@ -140,6 +141,8 @@ fun MemoryEditorLandscapeWatchScreenshot() {
                 writeSupported = true,
                 runtimeToken = 1,
                 variablesTab = true,
+                savedVariables = listOf(SavedVariableRow(
+                    "preview-hp", "HP", "player.hp")),
                 watches = listOf(previewWatch),
             ),
             actions = NoOpMemoryEditorActions,
