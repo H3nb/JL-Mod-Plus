@@ -225,6 +225,9 @@ internal fun MemoryEditorRuntimeRoot(
         val closeWorkspace = { actions.close() }
         val resultsListState = rememberLazyListState()
         val variablesListState = rememberLazyListState()
+        var relinkingBookmarkId by rememberSaveable(state.runtimeToken) {
+            mutableStateOf<String?>(null)
+        }
         val listEntries = remember(state.savedVariables, state.watches) {
             memoryListEntries(state.savedVariables, state.watches)
         }
@@ -345,13 +348,18 @@ internal fun MemoryEditorRuntimeRoot(
                             ) {
                                 when (shownState.activeTab) {
                                     MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
-                                        shownState, actions, inspectSelected, resultsListState,
+                                        shownState, actions, inspectSelected, relinkingBookmarkId,
+                                        { relinkingBookmarkId = null }, resultsListState,
                                         compactResults, Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
                                         shownState, actions, listEntries, listSelection,
-                                        { listSelection = it }, variablesListState, compactResults,
-                                        Modifier.fillMaxSize(),
+                                        { listSelection = it },
+                                        { id ->
+                                            relinkingBookmarkId = id
+                                            actions.setVariablesTab(false)
+                                        },
+                                        variablesListState, compactResults, Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
                                         shownState, actions, selectedScriptId,
@@ -596,13 +604,15 @@ private fun RuntimeSearchResultsTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
     onInspectSelected: () -> Unit,
+    relinkingBookmarkId: String?,
+    onRelinkComplete: () -> Unit,
     listState: LazyListState,
     compactRows: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var knownDialog by remember { mutableStateOf(false) }
     var unknownDialog by remember { mutableStateOf(false) }
-    var saveDialog by remember { mutableStateOf(false) }
+    var relinkCandidate by remember { mutableStateOf<Long?>(null) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
     var deleteSnapshot by remember { mutableStateOf<Pair<Long, List<Long>>?>(null) }
@@ -637,9 +647,10 @@ private fun RuntimeSearchResultsTab(
         val extraActions = listOf(
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 selectedRows.size == 1 && !state.busy, onInspectSelected),
-            RuntimeToolbarAction(R.drawable.ic_save, R.string.memory_saved_save,
-                selectedRows.size == 1 && !state.busy && state.supported) {
-                saveDialog = true
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+                R.string.memory_bookmark_relink,
+                relinkingBookmarkId != null && selectedRows.size == 1 && !state.busy) {
+                relinkCandidate = selectedRows.single().id
             },
             RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
                 state.canUndo && !state.busy, actions::undo),
@@ -856,26 +867,21 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
-    if (saveDialog) {
-        var name by remember { mutableStateOf("") }
+    if (relinkingBookmarkId != null && relinkCandidate != null) {
+        val candidate = relinkCandidate!!
         AlertDialog(
-            onDismissRequest = { saveDialog = false },
-            title = { Text(stringResource(R.string.memory_saved_save)) },
-            text = {
-                OutlinedTextField(
-                    value = name, onValueChange = { if (it.length <= 64) name = it },
-                    label = { Text(stringResource(R.string.memory_saved_name)) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth(),
-                )
-            },
+            onDismissRequest = { relinkCandidate = null },
+            title = { Text(stringResource(R.string.memory_bookmark_relink)) },
+            text = { Text(stringResource(R.string.memory_bookmark_relink_confirm)) },
             confirmButton = {
-                TextButton(enabled = name.isNotBlank() && !state.busy, onClick = {
-                    actions.saveSelectedVariable(name.trim())
-                    saveDialog = false
-                }) { Text(stringResource(R.string.memory_saved_save)) }
+                TextButton(onClick = {
+                    actions.relinkBookmark(relinkingBookmarkId, candidate, state.revision)
+                    relinkCandidate = null
+                    onRelinkComplete()
+                }) { Text(stringResource(R.string.memory_bookmark_relink)) }
             },
             dismissButton = {
-                TextButton(onClick = { saveDialog = false }) {
+                TextButton(onClick = { relinkCandidate = null }) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
@@ -929,6 +935,7 @@ private fun RuntimeVariablesTab(
     entries: List<MemoryListEntry>,
     selectedKeys: Set<String>,
     onSelectionChange: (Set<String>) -> Unit,
+    onRelink: (String) -> Unit,
     listState: LazyListState,
     compactRows: Boolean,
     modifier: Modifier = Modifier,
@@ -1034,17 +1041,10 @@ private fun RuntimeVariablesTab(
             R.string.memory_editor_inspect_memory, singleReady && !state.busy) {
             single?.let(::inspect)
         },
-        RuntimeToolbarAction(R.drawable.ic_save,
-            if (single?.saved != null) R.string.memory_list_stop_keeping
-            else R.string.memory_list_keep,
-            single != null && !state.busy &&
-                (single.saved == null || single.watch != null || singleReady)) {
-            single?.let { entry ->
-                entry.saved?.let { actions.unkeepListSaved(it.id) }
-                    ?: entry.watch?.let {
-                        actions.keepListWatch(it.id, keepName)
-                    }
-            }
+        RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+            R.string.memory_bookmark_relink,
+            single?.saved != null && !state.busy) {
+            single?.saved?.let { onRelink(it.id) }
         },
         RuntimeToolbarAction(
             if ((single?.watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
@@ -1183,11 +1183,9 @@ private fun RuntimeVariablesTab(
                 state.writeSupported && ready && !state.busy) { edit(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready && !state.busy) { inspect(menuEntry) },
-            RuntimeToolbarAction(R.drawable.ic_save,
-                if (saved != null) R.string.memory_list_stop_keeping else R.string.memory_list_keep,
-                !state.busy && (saved == null || watch != null || ready)) {
-                if (saved != null) actions.unkeepListSaved(saved.id)
-                else if (watch != null) actions.keepListWatch(watch.id, keepName)
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+                R.string.memory_bookmark_relink, saved != null && !state.busy) {
+                saved?.let { onRelink(it.id) }
             },
             RuntimeToolbarAction(
                 if ((watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
@@ -1338,13 +1336,6 @@ private fun RuntimeListRow(
                     Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.weight(1f, fill = false))
-                    if (entry.saved != null) {
-                        Spacer(Modifier.width(6.dp))
-                        Icon(painterResource(R.drawable.ic_save),
-                            contentDescription = stringResource(R.string.memory_list_kept),
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary)
-                    }
                     if ((watch?.freezeMode ?: -1) >= 0) {
                         Spacer(Modifier.width(6.dp))
                         Icon(painterResource(R.drawable.ic_lock),
@@ -1364,9 +1355,10 @@ private fun RuntimeListRow(
                     stringResource(R.string.memory_editor_freeze_paused),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error)
-                if (entry.saved != null && value?.resolved != true) {
+                if (entry.saved != null && value?.resolved != true &&
+                    watch?.state != MemoryEngineContract.CANDIDATE_LIVE) {
                     Text(value?.detail?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.memory_saved_not_ready),
+                        ?: stringResource(R.string.memory_bookmark_unavailable),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2)
@@ -2412,7 +2404,7 @@ internal fun RuntimeInspectorTab(
                                     onDismissRequest = { rowMenuOpen = false },
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.memory_editor_add_to_watch)) },
+                                        text = { Text(stringResource(R.string.memory_list_add)) },
                                         enabled = row.editable && !state.busy,
                                         leadingIcon = {
                                             Icon(painterResource(R.drawable.ic_memory_editor_watch_add),
@@ -2421,17 +2413,6 @@ internal fun RuntimeInspectorTab(
                                         onClick = {
                                             rowMenuOpen = false
                                             actions.watchInspectorVariable(row.relativeOffset)
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.memory_saved_save)) },
-                                        enabled = row.editable && !state.busy,
-                                        leadingIcon = {
-                                            Icon(painterResource(R.drawable.ic_save), contentDescription = null)
-                                        },
-                                        onClick = {
-                                            rowMenuOpen = false
-                                            saveLogicalRow = row
                                         },
                                     )
                                 }

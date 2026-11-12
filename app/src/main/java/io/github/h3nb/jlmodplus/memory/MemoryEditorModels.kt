@@ -462,7 +462,8 @@ internal fun memoryListEntries(
     val linked = watches.filter { it.savedSourceId in savedIds }
         .associateBy { it.savedSourceId }
     return (saved.map { MemoryListEntry(saved = it, watch = linked[it.id]) } +
-        watches.filterNot { it.savedSourceId in savedIds }
+        // Keep legacy orphan Freezes reachable for manual stopping on an in-place upgrade.
+        watches.filter { it.savedSourceId !in savedIds && it.freezeMode >= 0 }
             .map { MemoryListEntry(watch = it) })
         .sortedWith(compareBy({ it.label.lowercase() }, { it.key }))
 }

@@ -552,9 +552,13 @@
     <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Stop keeping</string>
     <string name="memory_list_kept" tools:ignore="MissingTranslation">Kept for next launch</string>
     <string name="memory_list_empty" tools:ignore="MissingTranslation">Your list is empty</string>
-    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Select results in Search and add them to List.</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Bookmark a Search or Inspector variable to track it here.</string>
     <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Remove selected entries? Any active Freeze will stop, and kept definitions will be deleted.</string>
-    <string name="memory_list_add" tools:ignore="MissingTranslation">Add to List</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Bookmark</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Relink</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Select the replacement variable in Search, then choose Relink.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Link this Bookmark to the selected variable? The previous Freeze will stop.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Unavailable — select Relink to choose a target</string>
     <string name="memory_editor_watch">Watch</string>
     <string name="memory_editor_search_tab">Search</string>
     <string name="memory_editor_search_known_values">Search known values</string>
