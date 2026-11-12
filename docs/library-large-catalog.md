@@ -12,6 +12,9 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   Only composed items request icon decoding, with a bounded three-job semaphore
   and an 8–24 MiB LRU in the Enhanced Icons branch. The icon work is separate
   from filtering and cannot require decoding the entire catalog.
+- Collection ranking and tie-breaking now use stable Room database IDs instead of
+  transient presentation IDs, which can be assigned in a different order under
+  viewport-only item materialization.
 - A live list/grid normally has the same Library source and independent scroll positions.
   Favorites and Collections retain stable database IDs, not transient list indices.
 - Keep quick filters, query order, metadata edits, selected-hidden IDs and icon revision
