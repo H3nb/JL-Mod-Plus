@@ -2319,8 +2319,11 @@ final class ManagedJavaMemoryEngine {
                 return failureLocked(MemoryEngineContract.RESULT_TARGET_LOST,
                         "Bookmark runtime changed");
             for (int i = watches.count - 1; i >= 0; i--) {
-                if (bookmarkId.equals(watches.savedSourceIds[i])) {
-                    watches.remove(watches.ids[i]); // Also stops any Freeze on the old owner.
+                String source = watches.savedSourceIds[i];
+                if (bookmarkId.equals(source) ||
+                        (source != null && source.startsWith(bookmarkId + "#"))) {
+                    // Legacy Inspector siblings used the parent's ID plus a slot suffix.
+                    watches.remove(watches.ids[i]); // Also stops Freeze on the old owner.
                 }
             }
             savedBindings.remove(bookmarkId);
