@@ -74,25 +74,17 @@ effect chain. Normal rendering without active effects goes through the stock
 presenter. Shader compilation failures should not crash the guest; the
 renderer reports the failure and falls back to the stock presentation.
 
-The present renderer supports at most 16 active GPU passes. `EffectTargetPlan`
-computes full-chain FBO slot sizes and source/composite lifetime protection
-before allocating textures, reusing same-size slots where safe. The temporary
-RGBA8 target budget is chosen once per GLES renderer session from Android's
-reported total system RAM: below 3 GiB -> 32 MiB, 3-5 GiB -> 64 MiB,
-5-10 GiB -> 128 MiB, and at least 10 GiB -> 256 MiB. Android low-RAM
-devices or an active system low-memory signal are capped at 32 MiB; missing
-memory information defaults to 64 MiB. These values are conservative **project
-policies**, not measurements of GPU VRAM, free memory or rendering performance.
-The budget limits only planned temporary FBO textures, excluding the source
-texture, Android UI, drivers and other GPU allocations. The GLES maximum
-texture size independently constrains each target. Allocation/attachment errors release partial targets and fall back to stock
-presentation, without changing the stored shader configuration. The user
-is notified once per renderer instance when the effect stack cannot run. The final viewport-sized pass writes
-directly to the display, so a single-pass effect requires no intermediate FBO.
-Planning and texture creation repeat only when source content size or viewport
-changes, not for every steady-state frame. The budget is not dynamically
-resampled during a running GL session. The stock GLES2 context remains the
-minimum supported device configuration.
+The renderer supports at most 16 active GPU passes. `EffectTargetPlan`
+computes full-chain FBO sizes and source/composite lifetimes, reusing
+same-size targets where safe. It does not reject valid plans based on
+estimated total RAM or a fixed intermediate-texture budget. Each target
+must fit `GL_MAX_TEXTURE_SIZE`. OpenGL allocation or attachment failure
+releases partial resources and returns to stock presentation without
+changing the saved effect stack. The user receives an actionable host
+notice, once per renderer instance. The final viewport pass draws directly
+to the display, so a single-pass effect needs no intermediate FBO.
+Targets are replanned only when source content or viewport size changes.
+The stock GLES2 context remains the minimum supported configuration.
 
 ## Built-in effects and separation of responsibilities
 
@@ -158,6 +150,16 @@ handling beyond the current stateless pass contract.
 
 Pixel-art reconstruction (xBRZ, MMPX, HQ-style), bitmap/texture filters,
 internal resolution and final display scaling have separate responsibilities.
+Bitmap enhancement may use the selected internal scale up to the scaler's
+supported 10x factor; Java array and RGBA buffer representation limits still
+apply. A Java allocation failure falls back to the original bitmap/texture
+and reduces subsequent oversized reconstruction attempts for the session.
+Successful large immutable regions may enlarge the bounded LRU cache so
+repeated draws do not reconstruct every frame. Display-target allocation
+tries lower scales after failure; the GLES presenter additionally checks
+the actual GPU texture limit before uploading a game frame. Any runtime
+downgrade is reported through the existing nonmodal host notice with
+suggested action, leaving the saved profile unchanged.
 FXAA/SMAA are future anti-aliasing options, **not** additional entries in this
 effect catalogue. The underlying GPU may reuse the same full-screen pass
 machinery without presenting these controls as user-orderable decorative
@@ -171,7 +173,7 @@ particular test the 2D softbar content crop, portrait and landscape viewport
 alignment, legacy vertex/fragment compatibility, Bloom source preservation,
 sRGB/gamma assumptions and CRT pixel mask visual output.
 
-JVM tests verify FBO slot lifetime/budget planning and bundled resource/parameter
+JVM tests verify FBO slot lifetime and GPU-size planning and bundled resource/parameter
 contracts. GLSL compilation, visual fidelity and frame pacing still require a
 real GLES2+ context or device. Test CRT/LCD/scanlines before and after other
 full-viewport effects with both padded inputs and higher internal resolution;
