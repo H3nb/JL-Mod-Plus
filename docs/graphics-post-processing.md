@@ -112,11 +112,13 @@ profiles; old unsupported advanced settings are ignored.
 Color correction includes gamma, temperature/tint and monochrome.
 CRT, LCD and Scanlines Lite anchor their display patterns to logical game
 resolution rather than the preceding pass's texture resolution. LCD positions
-its RGB subpixels within guest pixel cells on highp devices and integrates both harmonics of its squared-cosine grid analytically over
-each output pixel. Grid visibility deliberately fades to zero near 1x.
-Scanlines Lite uses three-point Gauss-Legendre quadrature on its raised-cosine
-profile and also fades at 1x; very narrow lines remain approximations. On GLES2 devices without fragment highp, LCD retains a coarse guest-column
-RGB triad instead of unresolved within-pixel subpixels.
+its RGB subpixels within guest pixel cells on highp devices. Its squared-cosine
+grid integrates both harmonics analytically over each output pixel, with grid
+visibility fading to zero near 1x. Scanlines Lite uses three-point
+Gauss-Legendre quadrature on its raised-cosine profile and also fades at 1x;
+very narrow lines remain approximations. On GLES2 devices without fragment
+highp, LCD retains a coarse guest-column RGB triad instead of unresolved
+within-pixel subpixels.
 
 Bloom extracts highlights before downsampling with a 2x2 sampling footprint
 up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. Bloom intermediates use one shared scale on both axes: one-third of the
