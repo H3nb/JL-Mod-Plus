@@ -19,6 +19,10 @@ on:
       - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryScanner.kt'
       - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryRepository.kt'
       - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryMappedList.java'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionBrowser.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionsUi.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionProjection.kt'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionsNavigationTest.kt'
   workflow_dispatch:
 
 permissions:

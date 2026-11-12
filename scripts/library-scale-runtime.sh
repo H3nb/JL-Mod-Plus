@@ -7,6 +7,8 @@ selectors=(
   "io.github.h3nb.jlmodplus.applist.LibraryComposeTest#twentyThousandAppsRemainVirtualizedInListAndGrid"
   "io.github.h3nb.jlmodplus.librarydb.LibraryStartupRuntimeTest#existingCatalogLoadsAndProjects"
   "io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest#endOfLibraryViewportSurvivesDifferentFooterPagerRoundTrip"
+  "io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionManageAppsShowsPendingDesiredStateAndSerializesRowMutation"
+  "io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionPickerSearchReturnsToFirstResultAfterDeepScroll"
 )
 selector_arg="$(IFS=,; echo "${selectors[*]}")"
 mkdir -p "$output"
