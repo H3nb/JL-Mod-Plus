@@ -1,6 +1,8 @@
 # Managed Memory Editor candidate identity
 
-This document records runtime candidate identity and the separately supported Saved Variables contract. Saved definitions are not Watch entries. The List presents both through one entry model while preserving their separate identity, lifecycle and storage.
+This contract separates the durable Bookmark catalog from exact session candidate
+identity. The internal Saved and Watch APIs remain compatibility/runtime mechanisms,
+not two user-facing List entry types.
 
 ## Runtime target identity
 
@@ -23,28 +25,26 @@ only its target identity and origin tab; reopening fetches a fresh, checked
 snapshot. Missing or changed Inspector targets return to Search or List, never to an old snapshot. A new MIDlet token starts at Search. No tab
 preference, Inspector value, or guest object is written to persistent storage.
 
-## Unified presentation linkage
+## Bookmark ownership and session linkage
 
-Watch records created by Saved-origin actions carry a `savedSourceId` linked to
-a persistent Saved definition. The engine publishes that association as
-optional Watch-page metadata. List can fold only this verified link into one
-entry; independent targets remain separate even when labels or values match.
-Keeping an already active Watch adopts its exact verified owner/slot and
-preserves any existing Freeze. Stopping Keep keeps a valid Watch in the
-current session. An invalid Saved binding hides the association from List
-but retains its private origin so explicit Watch/Freeze can retarget the same
-row. Passive Saved resolution never retargets Watch or resumes Freeze.
-Permanent Saved deletion clears the origin association (including Inspector
-siblings) and keeps the session Watch with rooted checks on future edits and
-Freeze ticks. A subsequent Keep on the same verified owner can reuse Watch
-identity without restarting Freeze. Removing a
-List entry requests both the Saved deletion and the session Watch/Freeze removal;
-backend failures are surfaced independently after both operations settle.
+A Bookmark has one persistent main-process-owned ID, label and optional typed
+root-relative locator. A verified locator can be resolved during a later MIDlet
+session. An untraced candidate can still be bookmarked, observed and frozen in the
+current session, but requires manual relink after restart; it is never rebound by
+matching values, names or diagnostic locations.
 
-Explicit Boolean candidates use a distinct primitive type, including Boolean
-fields and `boolean[]` elements. Numeric Auto search remains numeric-only;
-Boolean supports exact true/false and changed/unchanged comparisons. Saved's
-typed field/index path contract includes `boolean` and `[Z` terminals.
+The target's bounded Watch records remain an internal way to track a live candidate.
+Their `savedSourceId` records the explicit Bookmark association after the authority
+has durably stored the record and the engine verifies the current owner/slot.
+No Freeze action should start before that step. An unavailable target cannot be
+edited but its persistent Bookmark remains listed and removable. A temporary
+legacy orphan active Freeze may remain visible solely so it can be stopped.
+
+Relink first detaches the old session target (and any Freeze), then updates the
+persistent locator and attaches the selected new candidate. Failure after detach
+can leave the original Bookmark present and unfrozen; this is preferable to
+silently writing through an obsolete reference. Passive re-resolution never
+starts Freeze or restores a previous value.
 
 ## Direct-reference observation
 
@@ -91,65 +91,40 @@ diagnostic location text remains available independently, but must not be parsed
 to construct structural identity. An observation may become stale immediately
 after it is read because the guest is concurrent; refreshing revalidates it.
 
-## Persistent Saved locator contract
+## Persistent Bookmark locator contract
 
-Saved definitions contain a label, stable record ID and versioned root-relative locator.
-The canonical locator is a bounded ordered sequence of **field** steps (exact declaring
-class, name, type and staticness checked at runtime) and **array index** steps (exact
-Java array type and index). Terminal targets are editable numeric primitive fields
-or primitive-array elements, including nested arrays reached from trusted roots.
-No field slot, owner handle, object reference, search revision or last-seen value
-is persisted. Search/Watch runtime candidate IDs remain independent.
+A rooted locator is a bounded ordered sequence of exact declaring-class field
+names/types and array-type/index steps, with a supported primitive terminal.
+Capture checks ancestry from the current MIDlet, Displayable or initialized
+static class. Resolving never initializes guest classes or invents container
+selectors. Reflection enumeration slots, runtime owner IDs, object references,
+search revisions and last-seen values are never serialized.
 
-Capture requires a current verified ancestry from the MIDlet, Displayable or an
-already-initialized static class; resolving never initializes guest classes. It
-checks every field signature and array bound and retains weak, pinned runtime
-ancestry. The List may release and resolve a changed binding again while no
-Saved edit is open, displaying a nonblocking **Target updated** hint for a few seconds during foreground polling. An open edit
-pins its original binding: replacement during the dialog rejects the write, and
-the user can reopen the editor. Rebinding never writes or activates Watch/Freeze.
-An indexed party slot can refer to a different character without any structural
-error, so the displayed current value remains authoritative to the user.
+The existing `configs/<storageKey>/saved-variables.json` name remains for
+backward-compatible bundle transfers. Its schema-4 AtomicFile document permits
+explicit null locators (needs relink). Schemas 2 and 3 remain readable and are
+converted to canonical typed steps on an authorized mutation. The maximum is
+64 records and 64 KiB; corruption and unsupported versions are not overwritten.
+Every authority mutation checks installed identity through
+`InstalledAppWriteGuard`. The R&D prototype format is not migrated.
 
-Saved storage is owned by the main process under
-`configs/<storageKey>/saved-variables.json`, as a schema-3 AtomicFile document
-capped at 64 records/64 KiB. Schema-2 typed field/index locators are accepted and
-converted to the canonical steps model at the read boundary; the next authorized
-mutation publishes schema 3 atomically. Corrupt, unsupported-version or oversized
-documents are not overwritten. The document remains portable: installed Library
-IDs, workdirs, JAR fingerprints and runtime handles are never serialized.
-Every Saved authority mutation still validates active installed identity and
-uses `InstalledAppWriteGuard`. The R&D prototype format is not migrated.
+A bookmarked target can be listed and renamed/removed when unresolved.
+Foreground polling retries rooted locators and reads active values without
+reloading the catalog on each frame. An open edit pins the original checked
+owner; replacement during that edit rejects the write. Rebinding by a structurally
+equal path never writes memory or re-enables a prior Freeze. The same array slot
+may represent a different semantic game entity after a scene change.
 
-Definitions can be listed and renamed/deleted without a running guest; resolving,
-reading, editing and Inspector require a live MIDlet. A committed delete removes
-the definition from the active polling catalog and releases its runtime Saved
-binding; it does not remove or reactivate a separate Watch/Freeze. Saved and Watch remain separate backend records. List selection is presentation-local. Foreground Saved polling reads active values and
-retries unresolved paths without reloading the document on every frame. Opening
-an edit drains preceding IPC, snapshots the bound value and pauses automatic Saved
-rebind until dismissal. Normal guest value changes during a manual edit are not
-a reason to reject the write; the engine checks pinned ancestry/type and readback.
-Saved Inspector sibling edits retain their stronger expected-snapshot comparison.
+The selective Library bundle's existing Saved component is presented as
+**Bookmarks** but retains its wire identity. Bookmark-only import merges by
+canonical rooted locator; local labels win and duplicate paths are skipped.
+Untraced entries merge by persistent ID, not null locator or label. An imported
+ID collision gets a fresh ID when required. Configuration+Bookmark restore
+replaces the catalog within the existing recoverable transaction. Imports do
+not persist guest runtime handles or Freeze states.
 
-A user-initiated Saved **Freeze after edit** promotes the verified current owner
-to Watch. It does not start merely because a bookmark re-resolved. If the owner
-changes, the old Watch Freeze pauses; an explicit new Freeze updates that Watch
-to the current binding rather than reactivating the old owner or creating a
-duplicate. An edit can succeed while a subsequent Freeze promotion fails; report
-the two outcomes separately. Inspector's checked sibling Watch/Freeze behavior
-remains session-bound.
-
-Selective bundle export has a separate Saved component. Saved-only imports
-**merge** bookmarks into an existing collection by canonical locator: local
-records and labels win, duplicate targets are skipped, imported ID collisions
-are assigned fresh local IDs, and size violations reject the entire import.
-A configuration+Saved restore **replaces** Saved as part of the existing
-transactional backup restore. Selected unrelated config and save data remain
-independent. Imports and migrations never partially publish Saved data.
-
-Unsupported routes through arbitrary containers, untraced ancestry or fabricated
-roots remain unavailable. No automatic value restore, VM hook, raw scanner,
-additional idle traversal or persistent Freeze is introduced.
+No automatic state restore, guest VM hook, extra idle traversal or persistent
+Freeze is introduced.
 
 ## Accounting and resource bounds
 

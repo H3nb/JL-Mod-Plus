@@ -55,10 +55,10 @@ This is not a stable public API until Android runtime acceptance testing is comp
 
 Scripts are stored in a separate, atomic `configs/<workdir>/memory-recipes.json`
 file in the installed-game configuration directory, using the same installed
-identity validation as Saved Variables. The catalog holds at most 12 scripts
+identity validation as the Bookmark catalog. The catalog holds at most 12 scripts
 and 256 KiB; individual documents are limited to 24 KiB. No runtime Java
 object references or session Freeze handles are saved. Corrupt or unsupported
-catalog versions are not overwritten. Saved Variables and Search histories
+catalog versions are not overwritten. Bookmarks and Search histories
 continue to use their own existing contracts. The script catalog is currently
 local-only; do not assume backup/export of scripts is implemented.
 
