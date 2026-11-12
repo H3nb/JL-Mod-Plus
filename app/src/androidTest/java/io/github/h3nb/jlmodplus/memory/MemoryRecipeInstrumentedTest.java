@@ -30,6 +30,7 @@ public class MemoryRecipeInstrumentedTest {
         public Hero[] party = {new Hero(), new Hero()};
         public int coins = 10;
         public byte[] encoded = new byte[4];
+        public int[] counters = new int[65];
     }
     public static final class Hero {
         public short hp = 100;
@@ -68,6 +69,26 @@ public class MemoryRecipeInstrumentedTest {
             + "\"coins\":{\"min\":0,\"max\":999999}},"
             + "\"root\":{\"kind\":\"midlet\",\"class\":\"" + ROOT + "\"},"
             + "\"actions\":[" + actions + "]}";
+    }
+
+    private static String typedRecipe(String mode, String inputSpecs, String actions) {
+        return "{\"formatVersion\":2,\"mode\":\"" + mode + "\",\"id\":\"typed.test\","
+            + "\"game\":{\"mainClass\":\"" + ROOT + "\"},"
+            + "\"inputs\":" + inputSpecs + ","
+            + "\"root\":{\"kind\":\"midlet\",\"class\":\"" + ROOT + "\"},"
+            + "\"actions\":[" + actions + "]}";
+    }
+
+    private static String encodedAction(String operation, String operand) {
+        return "{\"kind\":\"encoded32le\",\"field\":\"coins\",\"operation\":\""
+            + operation + "\",\"path\":[" + field(ROOT, "encoded", "[B")
+            + ",{\"kind\":\"slice\",\"descriptor\":\"[B\",\"start\":0,\"length\":4}],"
+            + "\"constant\":\"58279306\"," + operand + "}";
+    }
+
+    private static void storeEncodedCoins(Root target, int value) {
+        int raw = 58279306 - value;
+        for (int i = 0; i < 4; i++) target.encoded[i] = (byte) (raw >>> (i * 8));
     }
 
     private static String inventoryPath() {
@@ -479,6 +500,124 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(MemoryEngineContract.RESULT_OK, status(runner.tick(TOKEN)));
         assertEquals(1, root.coins);
         assertArrayEquals(new String[0], runner.activeIds(TOKEN));
+    }
+
+
+    @Test public void oneShotAddsLogicalValuesAndRejectsInconsistentMirrors() {
+        storeEncodedCoins(root, 10);
+        String primitive = "{\"kind\":\"set\",\"field\":\"coins\",\"operation\":\"add\","
+            + "\"path\":[" + field(ROOT, "coins", "I") + "],\"value\":1000}";
+        String recipe = typedRecipe("oneShot", "{}", encodedAction("add", "\"value\":1000")
+            + "," + primitive);
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
+        assertEquals(1010, root.coins);
+        int actualRaw = (root.encoded[0] & 255) | ((root.encoded[1] & 255) << 8)
+            | ((root.encoded[2] & 255) << 16) | (root.encoded[3] << 24);
+        assertEquals(58279306 - 1010, actualRaw);
+        root.coins = 1;
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+            status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
+        assertEquals(1, root.coins);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            status(runner.run(TOKEN, recipe, new Bundle(), true, false)));
+    }
+
+    @Test public void formRejectsStaleSnapshotWithoutWriting() {
+        storeEncodedCoins(root, 10);
+        String primitive = "{\"kind\":\"set\",\"field\":\"coins\",\"path\":["
+            + field(ROOT, "coins", "I") + "],\"valueInput\":\"coins\"}";
+        String recipe = typedRecipe("form", "{\"coins\":{\"min\":0,\"max\":999999}}",
+            primitive + "," + encodedAction("set", "\"valueInput\":\"coins\""));
+        Bundle snapshot = runner.run(TOKEN, recipe, new Bundle(), false, true);
+        assertEquals(MemoryEngineContract.RESULT_OK, status(snapshot));
+        assertArrayEquals(new String[]{"10", "10"}, snapshot.getStringArray("recipeReadValues"));
+        Bundle edit = new Bundle();
+        edit.putString("coins", "500");
+        edit.putStringArray("recipeExpectedValues", snapshot.getStringArray("recipeReadValues"));
+        root.coins = 11;
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+            status(runner.run(TOKEN, recipe, edit, false, false)));
+        assertEquals(11, root.coins);
+        root.coins = 10;
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(runner.run(TOKEN, recipe, edit, false, false)));
+        assertEquals(500, root.coins);
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+            status(runner.run(TOKEN, recipe, edit, false, false)));
+        assertEquals(500, root.coins);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
+    }
+
+    @Test public void toggleUsesExistingFreezeAndStopsWithoutRestoring() {
+        String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
+            + "],\"value\":999}";
+        String recipe = typedRecipe("toggle", "{}", action);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
+        assertEquals(10, root.coins);
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(runner.run(TOKEN, recipe, new Bundle(), true, false)));
+        root.coins = 1;
+        assertEquals(MemoryEngineContract.RESULT_OK, status(runner.tick(TOKEN)));
+        assertEquals(999, root.coins);
+        assertEquals(MemoryEngineContract.RESULT_OK, status(runner.clear(TOKEN, "typed.test")));
+        root.coins = 2;
+        assertEquals(MemoryEngineContract.RESULT_OK, status(runner.tick(TOKEN)));
+        assertEquals(2, root.coins);
+    }
+
+    @Test public void recipeAcceptsSixteenInputsAndSixtyFourWritesButNotMore() {
+        StringBuilder specs = new StringBuilder("{");
+        StringBuilder inputActions = new StringBuilder();
+        Bundle values = new Bundle();
+        for (int index = 0; index < 16; index++) {
+            if (index > 0) { specs.append(','); inputActions.append(','); }
+            String name = "input" + index;
+            specs.append("\"").append(name).append("\":{\"min\":0,\"max\":100}");
+            values.putString(name, Integer.toString(index + 1));
+            inputActions.append("{\"kind\":\"set\",\"path\":[")
+                .append(field(ROOT, "counters", "[I"))
+                .append(",{\"kind\":\"index\",\"descriptor\":\"[I\",\"index\":")
+                .append(index).append("}],\"valueInput\":\"").append(name).append("\"}");
+        }
+        specs.append('}');
+        assertEquals(MemoryEngineContract.RESULT_OK, status(runner.run(TOKEN,
+            typedRecipe("oneShot", specs.toString(), inputActions.toString()),
+            values, false, false)));
+        assertEquals(1, root.counters[0]);
+        assertEquals(16, root.counters[15]);
+        StringBuilder actions = new StringBuilder();
+        for (int index = 0; index < 65; index++) {
+            if (index > 0) actions.append(',');
+            actions.append("{\"kind\":\"set\",\"path\":[")
+                .append(field(ROOT, "counters", "[I"))
+                .append(",{\"kind\":\"index\",\"descriptor\":\"[I\",\"index\":")
+                .append(index).append("}],\"value\":5}");
+        }
+        String all = actions.toString();
+        String first64 = all.substring(0, all.lastIndexOf(",{\"kind\":"));
+        assertEquals(MemoryEngineContract.RESULT_OK, status(runner.run(TOKEN,
+            typedRecipe("oneShot", "{}", first64), new Bundle(), false, false)));
+        assertEquals(5, root.counters[63]);
+        assertEquals(0, root.counters[64]);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(runner.run(TOKEN,
+            typedRecipe("oneShot", "{}", all), new Bundle(), false, false)));
+        assertEquals(0, root.counters[64]);
+        String seventeen = specs.substring(0, specs.length() - 1)
+            + ",\"input16\":{\"min\":0,\"max\":100}}";
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(runner.run(TOKEN,
+            typedRecipe("oneShot", seventeen, inputActions.toString()), values, false, false)));
+    }
+
+    @Test public void additionOverflowNeverMutatesTheGuest() {
+        root.coins = Integer.MAX_VALUE;
+        String action = "{\"kind\":\"set\",\"operation\":\"add\",\"field\":\"coins\","
+            + "\"path\":[" + field(ROOT, "coins", "I") + "],\"value\":1}";
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(runner.run(TOKEN,
+            typedRecipe("oneShot", "{}", action), new Bundle(), false, false)));
+        assertEquals(Integer.MAX_VALUE, root.coins);
     }
 
     @Test public void rejectsWrongDescriptorAndRuntimeGeneration() {
