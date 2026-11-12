@@ -62,6 +62,7 @@ internal data class MemoryScriptMetadata(
     val parameters: Map<String, String>,
     val mode: String = "legacy",
     val fields: List<MemoryScriptInput> = emptyList(),
+    val quickRun: Boolean = true,
 )
 
 internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
@@ -97,7 +98,9 @@ internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
         val specification = entry as? JsonObject ?: error("Invalid parameter")
         (specification["default"] as? JsonPrimitive)?.content
             ?: (specification["min"] as? JsonPrimitive)?.content ?: "0"
-    }, mode, fields)
+    }, mode, fields, inputs.values.all { value ->
+        (value as JsonObject).containsKey("default")
+    })
 }
 
 /** Scripts are JSON recipes: no arbitrary code execution and no auto-run on Save or Import. */
@@ -424,7 +427,7 @@ internal fun RuntimeScriptsTab(
                                 "toggle" -> Checkbox(checked = active,
                                     modifier = Modifier.testTag("memory-script-toggle-${script.id}"),
                                     enabled = !launching && !state.busy &&
-                                        state.writeSupported,
+                                        (active || state.writeSupported),
                                     onCheckedChange = { enabled ->
                                         if (enabled) {
                                             launching = true
@@ -433,7 +436,7 @@ internal fun RuntimeScriptsTab(
                                             ) { launching = false }
                                         } else actions.clearMemoryRecipeFreeze(script.id)
                                     })
-                                "oneShot" -> Button(
+                                "oneShot" -> if (scriptMetadata.quickRun) Button(
                                     modifier = Modifier.testTag("memory-script-run-${script.id}"),
                                     enabled = !launching && !state.busy &&
                                         state.writeSupported, onClick = {
@@ -442,6 +445,9 @@ internal fun RuntimeScriptsTab(
                                         script.document, scriptMetadata.parameters, false, null,
                                     ) { launching = false }
                                 }) { Text(stringResource(R.string.memory_recipes_run)) }
+                                else TextButton(onClick = { onSelectedId(script.id) }) {
+                                    Text(stringResource(R.string.memory_scripts_edit_values))
+                                }
                                 "form" -> TextButton(onClick = { onSelectedId(script.id) }) {
                                     Text(stringResource(R.string.memory_scripts_edit_values))
                                 }

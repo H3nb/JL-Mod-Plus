@@ -192,12 +192,14 @@ class MemoryScriptsComposeTest {
     @Test fun oneShotQuickRunIsSingleFlightUntilCompletion() {
         val document = sample.replace(
             "\"formatVersion\":1", "\"formatVersion\":2,\"mode\":\"oneShot\"")
+            .replace("\"max\":999}", "\"max\":999,\"default\":100}")
         var calls = 0
         var complete: ((Boolean) -> Unit)? = null
         val actions = object : TestMemoryEditorActions() {
             override fun runMemoryRecipeChecked(
                 document: String, inputs: Map<String, String>, freeze: Boolean,
-                expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
+                expectedValues: List<String>?, snapshotTicket: String?,
+                onComplete: (Boolean) -> Unit,
             ) {
                 assertFalse(freeze)
                 assertEquals(null, expectedValues)

@@ -105,8 +105,8 @@ internal fun TypedMemoryRecipeDetail(
         }
     }
 
-    LaunchedEffect(script.document, script.id, state.runtimeToken) {
-        if (metadata.mode == "form" && restoredInputs.isEmpty()) refresh(inputs)
+    LaunchedEffect(script.document, script.id, state.runtimeToken, state.supported) {
+        if (metadata.mode == "form" && state.supported && restoredInputs.isEmpty()) refresh(inputs)
     }
 
     Column(modifier.fillMaxSize().padding(8.dp),
@@ -174,7 +174,7 @@ internal fun TypedMemoryRecipeDetail(
             when (metadata.mode) {
                 "toggle" -> Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = active, enabled = !busy && !state.busy &&
-                        state.writeSupported, onCheckedChange = { enabled ->
+                        (active || state.writeSupported), onCheckedChange = { enabled ->
                         if (enabled) {
                             busy = true
                             actions.runMemoryRecipeChecked(
