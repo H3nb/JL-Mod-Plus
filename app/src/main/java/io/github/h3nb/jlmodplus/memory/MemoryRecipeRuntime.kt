@@ -342,7 +342,11 @@ class MemoryRecipeRuntime {
                         bad("Expected four bytes")
                     var bits = 0L
                     for (i in 0..3) bits = bits or ((actual[i] and 0xFFL) shl (i * 8))
-                    (action.constant - bits.toInt().toLong()).toString()
+                    try {
+                        Math.subtractExact(action.constant, bits.toInt().toLong()).toString()
+                    } catch (error: ArithmeticException) {
+                        bad("Decoded value exceeds the supported integer range")
+                    }
                 }
                 else -> bad("Unsupported action")
             }

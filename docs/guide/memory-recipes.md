@@ -1,4 +1,4 @@
-# Memory Recipes v1 (experimental)
+# Memory Recipes v1 and v2 (experimental)
 
 Memory Recipes are **data**, not Lua, JavaScript, or executable Java bytecode. The app
 performs a bounded set of typed guest-memory operations. Advanced recipes may be
@@ -154,8 +154,8 @@ as decimal string values in the parameter Bundle.
   This is best-effort periodic correction, not atomic interception of the
   game's writes; a purchase/save may observe a changed value between ticks.
   Freezes do not reactivate automatically on a new MIDlet session.
-- At most 32 primitive writes per execution, 4 held recipes per session,
-  8 numeric input declarations and 24 KiB of UTF-8 document per request.
+- At most 64 primitive writes per execution, 4 held recipes per session,
+  16 numeric input declarations and 24 KiB of UTF-8 document per request.
 - No filesystem/network APIs, native memory accesses, arbitrary method calls,
   generic expression interpreter, or reflection access outside the active
   guest classloader are exposed.
@@ -172,6 +172,37 @@ memory, RMS storage, or non-rooted instance graphs. A path that cannot be proven
 from known roots is unavailable. The same slot can represent a different game
 entity after level changes, even if its structure still matches; use gameplay
 checks and avoid applying destructive writes automatically.
+
+## Typed scripts (v2)
+
+Recipe v2 retains the same bounded memory engine, paths, and codecs as v1.
+Set `"formatVersion":2` and one mode: `"mode":"toggle"`,
+`"mode":"form"`, or `"mode":"oneShot"`. Existing v1 scripts are not migrated
+and keep the original Run/optional Freeze interface.
+
+- **Toggle**: switch On executes the recipe with Freeze, Off stops it without
+  reverting guest memory. The switch reflects the active Freeze, not a stored
+  preference. All input declarations need defaults because a switch has no
+  editable parameters. Toggle is off after the MIDlet session ends.
+- **Form**: `valueInput` identifies editable numeric fields; `indexInput`
+  identifies selectors such as a character slot. Fields can have optional
+  human-readable input `label` metadata. The form automatically reads current
+  values when first opened, and again when a selector changes. Refresh is
+  always available. Apply requires the last successfully read, consistent
+  snapshot and refuses to write if it changed since the read.
+- **One-shot**: Run applies the actions once and never starts Freeze.
+  `"operation":"add"` may be used on an action to add a signed integer to its
+  **decoded logical value**. It works for `set`, `bitfield`, and `encoded32le`
+  codecs. Each relative action must declare a logical `field` string such
+  as `"coins"`. All copies of the same field must agree before any write;
+  inconsistent mirrors, overflow, and out-of-range values reject the operation.
+
+The runner preflights targets before writing but writes are not atomic against
+other MIDlet threads; partial writes are explicitly reported. Form comparison
+also happens in the target process, so a stale UI snapshot cannot silently
+overwrite a changed value. In either mode, a new deliberate Refresh or Run is
+required after a conflict. The recipe limits are 16 numeric inputs and 64
+primitive writes, including individual bytes in encoded slices.
 
 The runtime currently accepts `set` on signed integer primitives (and
 boolean/char), guarded bitfields up to 32 bits, and int32 little-endian encoded

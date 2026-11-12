@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,8 +50,13 @@ internal fun TypedMemoryRecipeDetail(
     onDeleted: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val restoredInputs = remember(script.id, script.document, state.runtimeToken) {
+        MemoryEditorSessionNavigation.script(state.runtimeToken).takeIf {
+            it.detailId == script.id && it.detailInputs.isNotEmpty()
+        }?.detailInputs.orEmpty().filterKeys { it in metadata.parameters }
+    }
     var inputs by remember(script.id, script.document, state.runtimeToken) {
-        mutableStateOf(metadata.parameters)
+        mutableStateOf(metadata.parameters + restoredInputs)
     }
     var currentValues by remember(script.id, state.runtimeToken) {
         mutableStateOf<List<MemoryRecipeReadValue>?>(null)
@@ -86,13 +92,16 @@ internal fun TypedMemoryRecipeDetail(
                         .mapNotNull { field ->
                             grouped[field.name]?.firstOrNull()?.value?.let { field.name to it }
                         }.toMap()
+                    MemoryEditorSessionNavigation.rememberScriptDetail(
+                        state.runtimeToken, script.id, inputs, false,
+                    )
                 }
             }
         }
     }
 
     LaunchedEffect(script.document, script.id, state.runtimeToken) {
-        if (metadata.mode == "form") refresh(metadata.parameters)
+        if (metadata.mode == "form" && restoredInputs.isEmpty()) refresh(inputs)
     }
 
     Column(modifier.fillMaxSize().padding(8.dp),
@@ -145,11 +154,15 @@ internal fun TypedMemoryRecipeDetail(
                         if (!busy && next.length <= 32) {
                             val updated = inputs + (field.name to next)
                             inputs = updated
+                            MemoryEditorSessionNavigation.rememberScriptDetail(
+                                state.runtimeToken, script.id, inputs, false,
+                            )
                             if (field.selector) refresh(updated)
                         }
                     },
                     label = { Text(field.label) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("memory-script-input-${field.name}"),
                     enabled = !busy && !reading,
                 )
             }
@@ -172,7 +185,8 @@ internal fun TypedMemoryRecipeDetail(
                         stringResource(R.string.memory_scripts_refresh_required),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(enabled = expectedValues != null && !busy && !reading &&
+                    Button(modifier = Modifier.testTag("memory-script-apply"),
+                        enabled = expectedValues != null && !busy && !reading &&
                         !state.busy && state.writeSupported, onClick = {
                         val snapshot = expectedValues ?: return@Button
                         busy = true

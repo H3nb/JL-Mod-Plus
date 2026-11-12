@@ -85,7 +85,7 @@ internal fun MemoryRecipeDialog(
                 val parsed = Json.parseToJsonElement(text) as? JsonObject
                     ?: error("Invalid recipe")
                 val fields = parsed["inputs"] as? JsonObject ?: JsonObject(emptyMap())
-                if (fields.size > 8) error("Recipe has too many inputs")
+                if (fields.size > 16) error("Recipe has too many inputs")
                 val values = fields.mapValues { (_, entry) ->
                     val details = entry as? JsonObject ?: error("Invalid recipe input")
                     (details["default"] as? JsonPrimitive)?.content
