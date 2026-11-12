@@ -2193,6 +2193,25 @@ internal class MemoryEditorComposeController(
     }
 
 
+    private fun persistInspectorBookmark(
+        engine: IMemoryEngineService, authority: ISavedVariablesAuthority, token: Long,
+        snapshot: MemoryInspectorSnapshot, relativeOffset: Int, name: String,
+    ): String {
+        if (snapshot.savedId != null && relativeOffset == 0) return snapshot.savedId
+        val captured = if (snapshot.savedId != null) {
+            engine.captureSavedNeighborLocator(token, snapshot.savedId, relativeOffset)
+        } else engine.captureInspectorLocator(token, snapshot.expectedRevision,
+            snapshot.candidateId, snapshot.watchAnchor, relativeOffset)
+        val locator = captured.takeIf {
+            it.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
+                MemoryEngineContract.RESULT_OK
+        }
+        val (path, appId, entry) = savedTarget()
+        val response = authority.bookmark(path, appId, entry, name.take(64), locator)
+        savedRows(response)
+        return response.getString("bookmarkId") ?: error("Bookmark identity missing")
+    }
+
     override fun saveInspectorVariable(name: String, relativeOffset: Int) {
         val snapshot = state.inspector ?: return
         val row = snapshot.logicalRows.firstOrNull { it.relativeOffset == relativeOffset } ?: return
@@ -2200,67 +2219,40 @@ internal class MemoryEditorComposeController(
         val token = state.runtimeToken
         val engine = service ?: return
         val authority = savedAuthority ?: return
-        val generation = inspectorRequestGeneration
+        val request = inspectorRequestGeneration
         val connection = connectionGeneration
+        if (name.isBlank()) return
+        state = state.copy(busy = true)
         runIpc {
             val result = runCatching {
-                val locator = if (snapshot.savedId != null) {
-                    engine.captureSavedNeighborLocator(token, snapshot.savedId, relativeOffset)
-                } else {
-                    engine.captureInspectorLocator(token, snapshot.expectedRevision,
-                        snapshot.candidateId, snapshot.watchAnchor, relativeOffset)
+                val bookmarkId = persistInspectorBookmark(engine, authority, token,
+                    snapshot, relativeOffset, name.trim())
+                val linked = engine.bookmarkInspector(token, snapshot.savedId,
+                    snapshot.expectedRevision, snapshot.candidateId, snapshot.watchAnchor,
+                    relativeOffset, row.type, row.expectedBits, bookmarkId)
+                if (linked.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                        MemoryEngineContract.RESULT_TARGET_LOST) != MemoryEngineContract.RESULT_OK) {
+                    error("Bookmarked, but the Inspector target is unavailable: " +
+                        linked.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty())
                 }
-                if (locator.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) !=
-                    MemoryEngineContract.RESULT_OK) {
-                    error("Inspector cannot verify a persistent path to this field")
-                }
-                val (path, appId, entry) = savedTarget()
-                savedRows(authority.save(path, appId, entry, name.trim(), locator))
             }
             post {
-                if (destroyed || generation != inspectorRequestGeneration ||
-                    connection != connectionGeneration || !state.visible ||
-                    service !== engine || state.runtimeToken != token) return@post
-                state = state.copy(
-                    message = result.exceptionOrNull()?.message ?: "Variable saved",
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                state = state.copy(busy = false,
+                    message = if (result.isSuccess) "Bookmarked"
+                        else result.exceptionOrNull()?.message,
                     messageIsError = result.isFailure)
-                if (result.isSuccess && state.variablesTab) refreshSavedVariables()
+                if (state.variablesTab) refreshSavedVariables()
+                reloadState()
             }
         }
     }
 
-
     override fun watchInspectorVariable(relativeOffset: Int) {
-        val snapshot = state.inspector ?: return
-        val row = snapshot.logicalRows.firstOrNull { it.relativeOffset == relativeOffset } ?: return
-        if (!row.editable || state.busy || !canLaunchOperation()) return
-        val token = state.runtimeToken
-        val engine = service ?: return
-        val request = inspectorRequestGeneration
-        val connection = connectionGeneration
-        runIpc {
-            val result = runCatching {
-                engine.watchInspector(
-                    token, snapshot.savedId, snapshot.expectedRevision, snapshot.candidateId,
-                    snapshot.watchAnchor, relativeOffset, row.type, row.expectedBits,
-                )
-            }
-            post {
-                if (destroyed || !state.visible || request != inspectorRequestGeneration ||
-                    connection != connectionGeneration || service !== engine ||
-                    state.runtimeToken != token || state.inspector != snapshot) return@post
-                val reply = result.getOrNull()
-                val success = reply?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
-                    MemoryEngineContract.RESULT_OK
-                state = state.copy(
-                    message = if (success) "Inspector value added to Watch"
-                    else reply?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                        ?: result.exceptionOrNull()?.message ?: "Unable to watch Inspector value",
-                    messageIsError = !success,
-                )
-                if (success) reloadState()
-            }
-        }
+        val row = state.inspector?.logicalRows?.firstOrNull {
+            it.relativeOffset == relativeOffset
+        } ?: return
+        saveInspectorVariable(row.label, relativeOffset)
     }
 
     override fun editSavedInspectorValue(
@@ -2284,10 +2276,19 @@ internal class MemoryEditorComposeController(
         val connection = connectionGeneration
         runIpc {
             val outcome = runCatching {
-                if (freezeAfter) engine.editInspectorAndFreeze(
-                    token, id, snapshot.expectedRevision, snapshot.candidateId,
-                    snapshot.watchAnchor, relativeOffset, type, expectedBits, replacement.trim(),
-                ) else engine.editSavedInspector(
+                if (freezeAfter) {
+                    val authority = savedAuthority ?: error("Bookmark storage unavailable")
+                    val label = snapshot.logicalRows.first {
+                        it.relativeOffset == relativeOffset
+                    }.label
+                    val bookmarkId = persistInspectorBookmark(engine, authority, token,
+                        snapshot, relativeOffset, label)
+                    engine.editInspectorAndFreezeBookmark(
+                        token, id, snapshot.expectedRevision, snapshot.candidateId,
+                        snapshot.watchAnchor, relativeOffset, type, expectedBits, replacement.trim(),
+                        bookmarkId,
+                    )
+                } else engine.editSavedInspector(
                     token, id, relativeOffset, type, expectedBits, replacement.trim(),
                 )
             }
@@ -2347,9 +2348,16 @@ internal class MemoryEditorComposeController(
             val connection = connectionGeneration
             runIpc {
                 val outcome = runCatching {
-                    engine.editInspectorAndFreeze(
+                    val authority = savedAuthority ?: error("Bookmark storage unavailable")
+                    val label = snapshot.logicalRows.firstOrNull {
+                        it.relativeOffset == relativeOffset
+                    }?.label ?: "Variable"
+                    val bookmarkId = persistInspectorBookmark(engine, authority, token,
+                        snapshot, relativeOffset, label)
+                    engine.editInspectorAndFreezeBookmark(
                         token, null, snapshot.expectedRevision, anchorCandidateId,
                         watchAnchor, relativeOffset, type, expectedBits, replacementValue.trim(),
+                        bookmarkId,
                     )
                 }
                 post {
