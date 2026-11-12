@@ -2266,6 +2266,63 @@ final class ManagedJavaMemoryEngine {
 		return success(token, null);
 	}
 
+    /**
+     * A Bookmark is durable in the main process; this attaches only an exact session target.
+     * No value/class/address heuristic is permitted. A new session must resolve a typed path
+     * again or be explicitly relinked.
+     */
+    ManagedOperationResult attachBookmark(long token, long revision, long candidateId,
+            String bookmarkId, String label, long epoch) {
+        if (bookmarkId == null || bookmarkId.isEmpty() || bookmarkId.length() > 64
+                || label == null || label.length() > 64) {
+            return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+                    "Invalid Bookmark identity or label");
+        }
+        ResolvedBatch selected = resolveBatch(token, revision,
+                new long[]{candidateId}, true);
+        if (selected.error != null) return selected.error;
+        long[] current = new long[1];
+        if (!readTyped(selected.owners[0], selected.slots[0],
+                selected.strongOwners[0], current)) {
+            return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    "Bookmark target is no longer readable");
+        }
+        synchronized (stateLock) {
+            ManagedOperationResult validation = revalidateBatchLocked(token, revision,
+                    selected, true, epoch);
+            if (validation != null) return validation;
+            int index = watches.indexOf(candidateId);
+            for (int i = 0; i < watches.count; i++) {
+                if (bookmarkId.equals(watches.savedSourceIds[i]) && i != index) {
+                    return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            "Bookmark is already attached to another runtime candidate");
+                }
+            }
+            if (index >= 0 && watches.savedSourceIds[index] != null
+                    && !bookmarkId.equals(watches.savedSourceIds[index])) {
+                return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Candidate belongs to a different Bookmark");
+            }
+            if (index < 0) {
+                if (watches.count >= MemoryEngineContract.MAX_WATCH_RECORDS) {
+                    return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+                            "Bookmark runtime tracking capacity reached");
+                }
+                watches.append(candidateId, selected.owners[0], selected.slots[0],
+                        current[0], label);
+                index = watches.count - 1;
+            }
+            watches.savedSourceIds[index] = bookmarkId;
+            watches.savedLinkVerified[index] = true;
+            // Untraced objects are valid during this session, but cannot be rebound by guessing.
+            watches.requiresVerifiedPath[index] = captureSavedOwner(token,
+                    selected.owners[0], selected.strongOwners[0], selected.slots[0]) != null;
+            watches.labels[index] = label;
+            cleanupOwnersLocked();
+            return successLocked("Bookmark attached to verified session candidate");
+        }
+    }
+
 	ManagedOperationResult removeWatch(long token, @Nullable long[] ids, long operationEpoch) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,

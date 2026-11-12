@@ -257,6 +257,14 @@ public final class MemoryTargetBridgeService extends Service {
 
 
         @Override
+        public Bundle attachBookmark(long runtimeToken, long expectedRevision, long candidateId,
+                                     String bookmarkId, String label, long cancellationEpoch) {
+            return managedResult(runtimeToken, managedEngine.attachBookmark(
+                    runtimeToken, expectedRevision, candidateId, bookmarkId, label,
+                    cancellationEpoch));
+        }
+
+        @Override
         public Bundle inspectSaved(long runtimeToken, String savedId, int radius) {
             return managedInspection(runtimeToken, managedEngine.inspectSaved(
                     runtimeToken, savedId, radius));

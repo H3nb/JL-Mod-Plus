@@ -60,6 +60,9 @@ interface IMemoryEngineService {
     void clearSearch(long runtimeToken);
 
     Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
+    /** Attach a persistent Bookmark to the exact current candidate without retargeting. */
+    Bundle attachBookmark(long runtimeToken, long expectedRevision, long candidateId,
+            String bookmarkId, String label);
     Bundle inspectSaved(long runtimeToken, String savedId, int radius);
     Bundle captureInspectorLocator(long runtimeToken, long expectedRevision,
                                   long candidateId, boolean watchAnchor, int relativeOffset);
