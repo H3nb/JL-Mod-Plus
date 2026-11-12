@@ -122,7 +122,11 @@
     <string name="render_effect_restore">Reset parameters</string>
     <string name="render_effect_missing">Unavailable: %1$s. Restore the shader files to use this effect.</string>
     <string name="render_effect_limit">The stack supports up to 16 shader passes.</string>
-    <string name="render_effect_unavailable">Display effects could not run with this GPU or memory configuration. Showing the original game image.</string>
+    <string name="render_effect_unavailable">Display effects could not run. Showing the original game image. Try fewer effects or a lower internal resolution.</string>
+    <string name="render_bitmap_memory_reduced">Bitmap enhancement ran out of memory. Original images or a lower scale will be used. Try a lower internal resolution or free memory and restart.</string>
+    <string name="render_texture_memory_reduced">HD texture enhancement failed. Original textures will be used. Try a lower internal resolution or free memory and restart.</string>
+    <string name="render_resolution_reduced">Internal resolution reduced from %1$d× to %2$d×. Try a lower setting or close other apps to free memory, then restart.</string>
+    <string name="render_gpu_texture_limit">This image is too large for the GPU even at 1×. Try a smaller game resolution or switch graphics mode.</string>
     <string name="render_effect_gles">Effects are saved but only rendered with OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Unable to read the selected legacy shader.</string>
     <string name="effect_color">Color adjustment</string>

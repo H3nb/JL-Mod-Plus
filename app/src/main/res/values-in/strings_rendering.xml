@@ -121,7 +121,11 @@
     <string name="render_effect_restore">Atur ulang parameter</string>
     <string name="render_effect_missing">Tidak tersedia: %1$s. Pulihkan file shader agar efek ini dapat digunakan.</string>
     <string name="render_effect_limit">Rangkaian mendukung hingga 16 pass shader.</string>
-    <string name="render_effect_unavailable">Efek tampilan tidak dapat dijalankan dengan konfigurasi GPU atau memori ini. Gambar game asli ditampilkan.</string>
+    <string name="render_effect_unavailable">Efek tampilan gagal dijalankan. Gambar game asli ditampilkan. Coba kurangi efek atau resolusi internal.</string>
+    <string name="render_bitmap_memory_reduced">Memori tidak cukup untuk peningkatan bitmap. Gambar asli atau skala lebih rendah digunakan. Coba turunkan resolusi internal atau kosongkan memori lalu mulai ulang.</string>
+    <string name="render_texture_memory_reduced">Peningkatan tekstur HD gagal. Tekstur asli digunakan. Coba turunkan resolusi internal atau kosongkan memori lalu mulai ulang.</string>
+    <string name="render_resolution_reduced">Resolusi internal diturunkan dari %1$d× ke %2$d×. Coba pilih resolusi lebih rendah atau tutup aplikasi lain, lalu mulai ulang.</string>
+    <string name="render_gpu_texture_limit">Gambar terlalu besar untuk GPU, bahkan pada 1×. Coba perkecil resolusi game atau ganti mode grafis.</string>
     <string name="render_effect_gles">Efek tetap tersimpan, tetapi hanya ditampilkan dengan OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Tidak dapat membaca shader legacy yang dipilih.</string>
     <string name="effect_color">Penyesuaian warna</string>
