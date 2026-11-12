@@ -2740,8 +2740,8 @@ private fun LibraryAppsHeader(
     interactive: Boolean = true,
 ) {
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
-    val visibleAppIds = remember(state.apps) {
-        state.apps.map(LibraryAppUiItem::databaseId)
+    val visibleAppIds = remember(state.apps, selectionState.isActive) {
+        if (selectionState.isActive) state.apps.map(LibraryAppUiItem::databaseId) else emptyList()
     }
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0

@@ -90,6 +90,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconOverride;
+import io.github.h3nb.jlmodplus.librarydb.LibraryIconFiles;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
 import io.github.h3nb.jlmodplus.input.HostCommand;
@@ -139,6 +140,7 @@ public class AppsListFragment extends Fragment {
     private final Map<Long, LibraryAppRow> cachedRowsByDatabaseId = new HashMap<>();
     private final Map<Long, LibraryAppUiItem> cachedUiItemsByDatabaseId = new HashMap<>();
     private Map<Long, String> localizedDescriptions = Collections.emptyMap();
+    private Map<Long, LibraryIconFiles> iconFiles = Collections.emptyMap();
     private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
     private final CollectionMembersRequestGate collectionMembersRequests =
             new CollectionMembersRequestGate();
@@ -1061,7 +1063,11 @@ public class AppsListFragment extends Fragment {
             cachedAllReadyRows = null;
         }
 
+        if (!generationChanged && activeSourceRevision != state.getSourceRevision()) {
+            pruneUiCaches(state.getAvailableAppIds());
+        }
         localizedDescriptions = state.getLocalizedDescriptions();
+        iconFiles = state.getIconFiles();
         activeSourceRevision = state.getSourceRevision();
         collectionsUiStore.publishCollections(state.getCollections());
         // Keep the complete READY snapshot truly lazy. Normal list/filter/favorite/stat emissions only
@@ -1103,6 +1109,10 @@ public class AppsListFragment extends Fragment {
         for (LibraryAppRow row : rows) {
             liveDatabaseIds.add(row.getId());
         }
+        pruneUiCaches(liveDatabaseIds);
+    }
+
+    private void pruneUiCaches(Set<Long> liveDatabaseIds) {
         cachedRowsByDatabaseId.keySet().retainAll(liveDatabaseIds);
         cachedUiItemsByDatabaseId.keySet().retainAll(liveDatabaseIds);
         uiIdsByDatabaseId.keySet().retainAll(liveDatabaseIds);
@@ -1144,9 +1154,11 @@ public class AppsListFragment extends Fragment {
 
         int uiId = uiIdFor(row.getId());
         rowsByUiId.put(uiId, row);
-        // iconRevision invalidates both artwork sources; it does not establish presence.
+        LibraryIconFiles files = iconFiles.get(row.getId());
+        boolean resolved = files != null && row.equals(files.getRow());
         File primaryIcon = new File(appPath(row) + Config.MIDLET_ICON_FILE);
-        String iconPath = primaryIcon.isFile() ? primaryIcon.getAbsolutePath() : null;
+        String iconPath = (resolved ? files.getMainIconPresent() : primaryIcon.isFile())
+                ? primaryIcon.getAbsolutePath() : null;
         File portraitIcon = LibraryIconOverride.portraitOverrideFile(
                 activeWorkdir, row.getStorageKey());
         File customIcon = LibraryIconOverride.persistedOverrideFile(
@@ -1169,8 +1181,9 @@ public class AppsListFragment extends Fragment {
                 row.getTotalPlayTimeMs(),
                 row.getId(),
                 row.getDescription(),
-                portraitIcon.isFile() ? portraitIcon.getAbsolutePath() : null,
-                customIcon.isFile());
+                (resolved ? files.getPortraitIconPresent() : portraitIcon.isFile())
+                        ? portraitIcon.getAbsolutePath() : null,
+                resolved ? files.getCustomIconPresent() : customIcon.isFile());
         cachedRowsByDatabaseId.put(row.getId(), row);
         cachedUiItemsByDatabaseId.put(row.getId(), item);
         return item;
@@ -1206,6 +1219,7 @@ public class AppsListFragment extends Fragment {
 
     private void clearUiRows() {
         localizedDescriptions = Collections.emptyMap();
+        iconFiles = Collections.emptyMap();
         rowsByUiId.clear();
         activeGeneration = NO_GENERATION;
         activeWorkdir = null;

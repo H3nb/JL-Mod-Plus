@@ -26,6 +26,8 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   selected IDs and projection, rather than recomputed on each header animation frame.
 - Selection reconciliation checks the small selected-ID set directly against an
   authoritative `Set` without copying potentially tens of thousands of IDs.
+- The host prunes only already-cached UI records when the authoritative source revision
+  changes; filter and sort changes no longer retain removed entries indefinitely.
 - JVM characterization exercises projection at 100, 1k, 5k, 20k, and 50k rows
   without flaky wall-time pass/fail thresholds. Room publication still has a focused
   1k/5k local test; benchmark numbers are diagnostic, not device-performance claims.
@@ -36,12 +38,11 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
 
 ## Unresolved scalability boundaries
 
-- On a cold full Library projection, `AppsListFragment.toLibraryUiItem` still does
-  file-presence checks for each newly materialized row on the main thread.
-  A large fresh catalog may stall the UI even though the list/grid itself is lazy.
-  Avoid replacing it with speculative file-presence flags that would break custom
-  portrait artwork, icon reset actions, or revision invalidation. Measure this
-  boundary, then move discovery/materialization off-main if a real stall is observed.
+- Icon file presence is resolved on Dispatchers.IO before publishing the catalog.
+  Unchanged rows reuse the prior result within the same generation and workdir.
+  Rare out-of-snapshot row lookups retain a synchronous fallback for correctness.
+  The fragment still converts every projected row into a UI item on the main thread:
+  this O(N) CPU and allocation boundary needs device profiling before further changes.
 - Room's full catalog snapshot, locale-aware Collator sort and translated description
   resolution still consume O(N) memory and/or work per refresh. They run off the
   UI thread but could delay first presentation or search under a very large catalog.

@@ -90,6 +90,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             /** Changes only when the authoritative Room-backed repository snapshot changes. */
             val sourceRevision: Long = 0L,
             val localizedDescriptions: Map<Long, String> = emptyMap(),
+            val iconFiles: Map<Long, LibraryIconFiles> = emptyMap(),
         ) : DisplayState
         data class Error(val emulatorDir: File, val message: String) : DisplayState
     }
@@ -1142,6 +1143,7 @@ private data class LibraryOrderedSource(
     val ordered: LibraryListProjection.OrderedRows,
     val localizedDescriptions: Map<Long, String>,
     val descriptionLocale: DescriptionLocale,
+    val iconFiles: Map<Long, LibraryIconFiles>,
 ) {
     fun matches(input: LibraryDisplayInputs): Boolean {
         val ready = input.repositoryState as? LibraryRepository.State.Ready ?: return false
@@ -1207,6 +1209,21 @@ internal fun libraryDisplayStates(
                         ) { context.ensureActive() }
                     }
                 }
+                val iconFiles = if (previous != null &&
+                    previous.repositoryState.generation == state.generation &&
+                    previous.repositoryState.emulatorDir == state.emulatorDir &&
+                    previous.repositoryState.apps === state.apps) {
+                    previous.iconFiles
+                } else withContext(Dispatchers.IO) {
+                    val context = currentCoroutineContext()
+                    val reusable = previous?.takeIf {
+                        it.repositoryState.generation == state.generation &&
+                            it.repositoryState.emulatorDir == state.emulatorDir
+                    }?.iconFiles.orEmpty()
+                    resolveLibraryIconFiles(state.emulatorDir, state.apps, reusable) {
+                        context.ensureActive()
+                    }
+                }
                 val (source, projected) = withContext(workerDispatcher) {
                     val context = currentCoroutineContext()
                     val ordered = if (previous != null && previous.matches(input)) previous.ordered
@@ -1214,7 +1231,7 @@ internal fun libraryDisplayStates(
                         input.locale, input.quickView) { context.ensureActive() }
                     val projected = LibraryListProjection.project(ordered, input.filter,
                         input.quickView, translated) { context.ensureActive() }
-                    LibraryOrderedSource(state, ordered, translated, input.descriptionLocale) to projected
+                    LibraryOrderedSource(state, ordered, translated, input.descriptionLocale, iconFiles) to projected
                 }
                 // Only completed, still-current work becomes the one retained ordering.
                 prepared = source
@@ -1223,6 +1240,7 @@ internal fun libraryDisplayStates(
                     emulatorDir = state.emulatorDir,
                     apps = projected,
                     localizedDescriptions = translated,
+                    iconFiles = iconFiles,
                     collections = state.collections,
                     filter = input.filter,
                     sortVariant = input.sortVariant,

@@ -230,8 +230,9 @@ internal fun LibraryCollectionBrowser(
     val openApp: (Int) -> Unit = { if (currentInteractionActive) onOpenApp(it) }
     val openActions: (LibraryAppUiItem) -> Unit = { if (currentInteractionActive) onOpenActions(it) }
     val projected = rememberCollectionAppsProjection(viewportState, members, libraryState.sortVariant)
-    val projectedIds = remember(projected) {
-        projected?.map(LibraryAppUiItem::databaseId).orEmpty()
+    val projectedIds = remember(projected, selectionState.isActive) {
+        if (selectionState.isActive) projected?.map(LibraryAppUiItem::databaseId).orEmpty()
+        else emptyList()
     }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
@@ -484,8 +485,8 @@ private fun LibraryCollectionHeader(
     val selectedSort = sortVariant and Int.MAX_VALUE
     val ascending = sortVariant >= 0
     val selectionMode = selectionState.isActive
-    val allVisibleSelected = remember(visibleAppIds, selectionState.selectedAppIds) {
-        selectionState.isAllVisibleSelected(visibleAppIds)
+    val allVisibleSelected = remember(selectionMode, visibleAppIds, selectionState.selectedAppIds) {
+        selectionMode && selectionState.isAllVisibleSelected(visibleAppIds)
     }
     val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
