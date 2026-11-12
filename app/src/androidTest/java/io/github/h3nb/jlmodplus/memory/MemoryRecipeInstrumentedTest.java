@@ -511,6 +511,63 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(10, root.coins);
     }
 
+    @Test public void recipeFreezeSharesCapacityWithBookmarksAndInspector() throws Exception {
+        MemoryTargetBridgeService target = new MemoryTargetBridgeService();
+        IMemoryTargetBridge bridge = IMemoryTargetBridge.Stub.asInterface(
+            target.onBind(new android.content.Intent()));
+        String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
+            + "],\"value\":200}";
+        assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.runMemoryRecipe(
+            TOKEN, typedRecipe("toggle", "{}", action), new Bundle(), true, false)));
+
+        for (int index = 0; index < 31; index++) {
+            String savedId = "capacity-" + index;
+            assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.resolveSavedLocator(
+                TOKEN, counterLocator(index), savedId, 0L)));
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                status(bridge.freezeSaved(TOKEN, savedId, "", "0", 0L)));
+        }
+        assertEquals(32, bridge.getManagedCapabilities(TOKEN)
+            .getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT));
+
+        assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.resolveSavedLocator(
+            TOKEN, counterLocator(31), "extra", 0L)));
+        assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+            status(bridge.freezeSaved(TOKEN, "extra", "", "0", 0L)));
+        assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+            status(bridge.watchInspector(TOKEN, "extra", 0L, 0L, false, 0,
+                MemoryEngineContract.TYPE_INT, 0L, true, 0L)));
+        assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+            status(bridge.editInspectorAndFreeze(TOKEN, "extra", 0L, 0L, false, 0,
+                MemoryEngineContract.TYPE_INT, 0L, "99", 0L)));
+        assertEquals(0, root.counters[31]);
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(bridge.freezeSaved(TOKEN, "capacity-0", "", "0", 0L)));
+        assertEquals(32, bridge.getManagedCapabilities(TOKEN)
+            .getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT));
+    }
+
+    private static Bundle counterLocator(int index) {
+        Bundle locator = new Bundle();
+        locator.putInt("savedSchema", 2);
+        locator.putInt("savedRootKind", 1);
+        locator.putString("savedRootClass", Root.class.getName());
+        Bundle fieldStep = new Bundle();
+        fieldStep.putInt("kind", 1);
+        fieldStep.putString("owner", Root.class.getName());
+        fieldStep.putString("name", "counters");
+        fieldStep.putString("type", "[I");
+        Bundle indexStep = new Bundle();
+        indexStep.putInt("kind", 2);
+        indexStep.putString("arrayType", "[I");
+        indexStep.putInt("index", index);
+        java.util.ArrayList<Bundle> steps = new java.util.ArrayList<>();
+        steps.add(fieldStep);
+        steps.add(indexStep);
+        locator.putParcelableArrayList("savedSteps", steps);
+        return locator;
+    }
+
     @Test public void globalFreezeBudgetRejectsNewHoldBeforeAnyWrite() {
         String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I") + "],"
                 + "\"valueInput\":\"coins\"}";
