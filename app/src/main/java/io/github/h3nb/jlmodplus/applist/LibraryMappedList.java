@@ -11,17 +11,25 @@ final class LibraryMappedList<S, T> extends AbstractList<T> implements RandomAcc
         T map(S source);
     }
 
+    interface IndexedMapper<S, T> {
+        T map(int index, S source);
+    }
+
     private final List<S> source;
-    private final Mapper<S, T> mapper;
+    private final IndexedMapper<S, T> mapper;
 
     LibraryMappedList(List<S> source, Mapper<S, T> mapper) {
+        this(source, (index, row) -> mapper.map(row));
+    }
+
+    LibraryMappedList(List<S> source, IndexedMapper<S, T> mapper) {
         this.source = source;
         this.mapper = mapper;
     }
 
     @Override
     public T get(int index) {
-        return mapper.map(source.get(index));
+        return mapper.map(index, source.get(index));
     }
 
     @Override

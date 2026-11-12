@@ -46,6 +46,19 @@ class LibraryMappedListTest {
         assertEquals(2, mapped)
     }
 
+    @Test fun indexedMappingOnlyMaterializesRequestedMembers() {
+        var mapped = 0
+        val rows = List(20_000) { it }
+        val items = LibraryMappedList(rows) { index: Int, value: Int ->
+            mapped++
+            index to value
+        }
+        assertEquals(20_000, items.size)
+        assertEquals(0, mapped)
+        assertEquals(12 to 12, items[12])
+        assertEquals(1, mapped)
+    }
+
     @Test fun indexOutOfBoundsPropagatesWithoutMapping() {
         var mapped = 0
         val items = LibraryMappedList(listOf(1)) { value: Int ->

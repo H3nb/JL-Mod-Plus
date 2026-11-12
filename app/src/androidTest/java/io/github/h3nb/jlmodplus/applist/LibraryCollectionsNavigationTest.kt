@@ -686,28 +686,11 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
 
         val target = composeRule.onNodeWithTag(
-            "collection-membership-${SAMPLE_MEMBER_2.id}",
+            "collection-membership-${SAMPLE_MEMBER_2.databaseId}",
         )
-        try {
-            composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithTag("collection-membership-${SAMPLE_MEMBER_2.databaseId}")
-                    .fetchSemanticsNodes().isNotEmpty()
-            }
-        } catch (error: androidx.compose.ui.test.ComposeTimeoutException) {
-            val picker = host.store.state.value
-            val textCount = composeRule.onAllNodesWithText("Second MIDlet")
-                .fetchSemanticsNodes().size
-            val unmergedCount = composeRule.onAllNodesWithTag(
-                "collection-membership-${SAMPLE_MEMBER_2.databaseId}",
-                useUnmergedTree = true,
-            ).fetchSemanticsNodes().size
-            throw AssertionError(
-                "Picker row absent: prepared=${picker.allAppsPrepared}, " +
-                    "revision=${picker.allAppsRevision}, source=${picker.allApps.size}, " +
-                    "textCount=$textCount, unmergedCount=$unmergedCount, " +
-                    "root=${composeRule.onRoot(useUnmergedTree = true).fetchSemanticsNode()}",
-                error,
-            )
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("collection-membership-${SAMPLE_MEMBER_2.databaseId}")
+                .fetchSemanticsNodes().isNotEmpty()
         }
         target.performClick()
         composeRule.waitForIdle()

@@ -158,6 +158,7 @@ public class AppsListFragment extends Fragment {
             };
     private Map<Long, String> localizedDescriptions = Collections.emptyMap();
     private Map<Long, LibraryIconFiles> iconFiles = Collections.emptyMap();
+    private LibraryGenerationToken pickerGeneration;
     private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
     private final CollectionMembersRequestGate collectionMembersRequests =
             new CollectionMembersRequestGate();
@@ -652,11 +653,17 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onPrepareCollectionAppPicker() {
-                publishCollectionAllApps(currentAllReadyRows());
+                pickerGeneration = libraryViewModel.readyGeneration();
+                if (pickerGeneration != null && activeGeneration == pickerGeneration.getGeneration()
+                        && activeWorkdir != null
+                        && activeWorkdir.equals(pickerGeneration.getEmulatorDir())) {
+                    publishCollectionAllApps(currentAllReadyRows());
+                }
             }
 
             @Override
             public void onDismissCollectionMembers() {
+                pickerGeneration = null;
                 collectionMembersRequests.invalidate();
                 collectionsUiStore.dismissMembers();
             }
@@ -725,8 +732,10 @@ public class AppsListFragment extends Fragment {
                     boolean included,
                     @NonNull CollectionMembershipResultCallback callback) {
                 LibraryGenerationToken ready = libraryViewModel.readyGeneration();
-                if (ready == null || activeWorkdir == null ||
+                if (ready == null || pickerGeneration == null || activeWorkdir == null ||
                         activeGeneration != ready.getGeneration() ||
+                        pickerGeneration.getGeneration() != ready.getGeneration() ||
+                        !pickerGeneration.getEmulatorDir().equals(ready.getEmulatorDir()) ||
                         !activeWorkdir.equals(ready.getEmulatorDir()) ||
                         libraryViewModel.getApp(databaseId) == null) {
                     callback.onResult(false);
@@ -1036,11 +1045,20 @@ public class AppsListFragment extends Fragment {
 
             List<LibraryAppRow> rows = libraryViewModel.getApps(appIds);
             if (!collectionMembersRequests.accepts(request, activeGeneration)) return;
-            List<LibraryAppUiItem> members = new ArrayList<>(rows.size());
-            for (LibraryAppRow row : rows) {
-                members.add(toLibraryUiItem(row));
+            int[] uiIds = new int[rows.size()];
+            Set<Long> memberDatabaseIds = new HashSet<>(rows.size());
+            for (int index = 0; index < rows.size(); index++) {
+                LibraryAppRow row = rows.get(index);
+                int uiId = uiIdFor(row.getId());
+                rowsByUiId.put(uiId, row.getId());
+                uiIds[index] = uiId;
+                memberDatabaseIds.add(row.getId());
             }
-            collectionsUiStore.showMembers(collectionId, members);
+            Map<Long, String> descriptions = localizedDescriptions;
+            Map<Long, LibraryIconFiles> icons = iconFiles;
+            List<LibraryAppUiItem> members = new LibraryMappedList<>(rows,
+                    (index, row) -> makeUiItem(row, uiIds[index], workdir, descriptions, icons));
+            collectionsUiStore.showMembers(collectionId, members, memberDatabaseIds);
         });
     }
 
@@ -1090,6 +1108,7 @@ public class AppsListFragment extends Fragment {
             lastCollectionMembersRefreshRevision = NO_GENERATION;
             activeGeneration = generation;
             activeWorkdir = workdir;
+            pickerGeneration = null;
             rowsByUiId.clear();
             uiIdsByDatabaseId.clear();
             cachedUiItemsByDatabaseId.clear();
@@ -1105,9 +1124,8 @@ public class AppsListFragment extends Fragment {
         iconFiles = state.getIconFiles();
         activeSourceRevision = state.getSourceRevision();
         collectionsUiStore.publishCollections(state.getCollections());
-        // Keep the complete READY snapshot truly lazy. Normal list/filter/favorite/stat emissions only
-        // map the already-projected rows below; the O(N) full-library walk happens solely when the user
-        // explicitly opens Collection -> Add apps.
+        // The complete READY snapshot stays indexed; Collection picker preparation also avoids
+        // materializing every presentation item on the UI thread.
         cachedAllReadyRows = null;
 
         Long requestedCollectionId = collectionMembersRequests.targetCollectionId();
@@ -1140,15 +1158,7 @@ public class AppsListFragment extends Fragment {
         }
     }
 
-    private void pruneUiCaches(List<LibraryAppRow> rows) {
-        Set<Long> liveDatabaseIds = new HashSet<>(rows.size());
-        for (LibraryAppRow row : rows) {
-            liveDatabaseIds.add(row.getId());
-        }
-        pruneUiCaches(liveDatabaseIds);
-    }
-
-    private void pruneUiCaches(Set<Long> liveDatabaseIds) {
+     private void pruneUiCaches(Set<Long> liveDatabaseIds) {
         cachedUiItemsByDatabaseId.keySet().retainAll(liveDatabaseIds);
         uiIdsByDatabaseId.keySet().retainAll(liveDatabaseIds);
         Iterator<Map.Entry<Integer, Long>> iterator = rowsByUiId.entrySet().iterator();
@@ -1253,6 +1263,7 @@ public class AppsListFragment extends Fragment {
     private void clearUiRows() {
         localizedDescriptions = Collections.emptyMap();
         iconFiles = Collections.emptyMap();
+        pickerGeneration = null;
         rowsByUiId.clear();
         activeGeneration = NO_GENERATION;
         activeWorkdir = null;

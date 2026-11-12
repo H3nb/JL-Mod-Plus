@@ -94,6 +94,8 @@ data class LibraryCollectionUiItem(
 
 data class LibraryCollectionMembersUi(
     val collectionId: Long,
+    val revision: Long,
+    val memberIds: Set<Long>,
     val members: List<LibraryAppUiItem>,
 )
 
@@ -116,6 +118,7 @@ data class LibraryCollectionsUiState(
 /** Fragment-owned presentation bridge; Compose never reaches Room or filesystem directly. */
 class LibraryCollectionsUiStore {
     private var nextAllAppsRevision = 0L
+    private var nextMembersRevision = 0L
     private val mutableState = MutableStateFlow(LibraryCollectionsUiState())
     val state: StateFlow<LibraryCollectionsUiState> = mutableState.asStateFlow()
 
@@ -150,10 +153,16 @@ class LibraryCollectionsUiStore {
         mutableState.value = LibraryCollectionsUiState()
     }
 
-    fun showMembers(collectionId: Long, members: List<LibraryAppUiItem>) {
+    fun showMembers(
+        collectionId: Long,
+        members: List<LibraryAppUiItem>,
+        memberIds: Set<Long> = members.mapTo(LinkedHashSet()) { it.databaseId },
+    ) {
         if (mutableState.value.collections.none { it.id == collectionId }) return
         mutableState.value = mutableState.value.copy(
-            members = LibraryCollectionMembersUi(collectionId, members),
+            members = LibraryCollectionMembersUi(
+                collectionId, ++nextMembersRevision, memberIds, members,
+            ),
         )
     }
 
@@ -287,7 +296,7 @@ internal fun LibraryCollectionsDestination(
         }
         val retained = selectionState.retainAvailable(
             libraryState.generation,
-            members.members.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+            members.memberIds,
             collectionId = selectedCollectionId,
         )
         if (retained != selectionState) onSelectionStateChanged(retained)
@@ -441,6 +450,7 @@ internal fun LibraryCollectionsDestination(
                             LibraryCollectionBrowser(
                                 collection = collection,
                                 members = members.members,
+                                memberIds = members.memberIds,
                                 allApps = state.allApps,
                                 allAppsPrepared = state.allAppsPrepared,
                                 allAppsRevision = state.allAppsRevision,

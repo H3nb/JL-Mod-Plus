@@ -100,6 +100,7 @@ import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 internal fun LibraryCollectionBrowser(
     collection: LibraryCollectionUiItem,
     members: List<LibraryAppUiItem>,
+    memberIds: Set<Long> = members.mapTo(LinkedHashSet()) { it.databaseId },
     allApps: List<LibraryAppUiItem>,
     allAppsPrepared: Boolean = true,
     allAppsRevision: Long = 0L,
@@ -133,9 +134,7 @@ internal fun LibraryCollectionBrowser(
     var pendingMemberships by remember(collection.id) {
         mutableStateOf<Map<Long, Boolean>>(emptyMap())
     }
-    val committedMemberIds = remember(members) {
-        members.mapTo(LinkedHashSet()) { it.databaseId }
-    }
+    val committedMemberIds = memberIds
     LaunchedEffect(committedMemberIds) {
         val unresolved = pendingMemberships.filter { (appId, desiredIncluded) ->
             (appId in committedMemberIds) != desiredIncluded
