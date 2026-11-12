@@ -157,9 +157,11 @@ and reduces subsequent oversized reconstruction attempts for the session.
 Successful large immutable regions may enlarge the bounded LRU cache so
 repeated draws do not reconstruct every frame. Display-target allocation
 tries lower scales after failure; the GLES presenter additionally checks
-the actual GPU texture limit before uploading a game frame. Any runtime
-downgrade is reported through the existing nonmodal host notice with
-suggested action, leaving the saved profile unchanged.
+the actual GPU texture limit before uploading a game frame. At 1×, temporary
+upload failures retry after 500 ms through a host-only redraw; an image
+exceeding the GPU texture limit waits for a changed surface or GL context.
+Any runtime downgrade is reported through the existing nonmodal host notice
+with suggested action, leaving the saved profile unchanged.
 FXAA/SMAA are future anti-aliasing options, **not** additional entries in this
 effect catalogue. The underlying GPU may reuse the same full-screen pass
 machinery without presenting these controls as user-orderable decorative
