@@ -24,6 +24,47 @@ import org.junit.jupiter.api.Test;
 import javax.microedition.shell.timing.TimingMode;
 
 public class ConfigFormStateTest {
+
+    @Test
+    public void newProfileGraphicsDefaultsSurviveConfigFormEdits() {
+        ProfileModel fresh = ProfileModel.fresh("factory: value\\n");
+        ConfigFormState form = ConfigFormState.fromProfile(fresh, "")
+                .toBuilder().screenWidth("320").build();
+        assertEquals(1, form.graphicsMode);
+        assertEquals(0, form.internalResolutionScale);
+        ProfileModel saved = form.applyTo(new ProfileModel());
+        assertEquals(1, saved.graphicsMode);
+        assertEquals(0, saved.internalResolutionScale);
+    }
+
+	@Test
+	public void internalResolutionChoiceRoundTripsThroughUnrelatedDraftEdits() {
+		ProfileModel original = new ProfileModel();
+		original.internalResolutionScale = 0; // Auto
+		ConfigFormState updated = ConfigFormState.fromProfile(original, "")
+				.toBuilder().screenWidth("240").build();
+		assertEquals(0, updated.internalResolutionScale);
+		assertEquals(0, updated.applyTo(new ProfileModel()).internalResolutionScale);
+
+		ConfigFormState manual = updated.toBuilder().internalResolutionScale(10).build();
+		assertEquals(10, manual.applyTo(new ProfileModel()).internalResolutionScale);
+		assertEquals(1, ConfigFormState.builder().build().internalResolutionScale);
+		assertEquals(10, ConfigFormState.builder()
+				.internalResolutionScale(99).build().internalResolutionScale);
+	}
+
+	@Test
+	public void bitmapUpscalingSelectionRoundTripsAndKeepsNearestDefault() {
+		ProfileModel model = new ProfileModel();
+		assertEquals(0, ConfigFormState.fromProfile(model, "").bitmapUpscalingMode);
+		model.bitmapUpscalingMode = 2;
+		ConfigFormState edited = ConfigFormState.fromProfile(model, "")
+				.toBuilder().screenWidth("240").build();
+		assertEquals(2, edited.applyTo(new ProfileModel()).bitmapUpscalingMode);
+		assertEquals(3, edited.toBuilder().bitmapUpscalingMode(300).build().bitmapUpscalingMode);
+		assertEquals(0, edited.toBuilder().bitmapUpscalingMode(-10).build().bitmapUpscalingMode);
+	}
+
 	@Test
 	public void cameraPreferencesSurviveUnrelatedDraftEditsAndApply() {
 		ProfileModel profile = new ProfileModel();

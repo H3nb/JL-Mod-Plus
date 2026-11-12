@@ -66,11 +66,13 @@ class MemoryEditorModelsTest {
             types = intArrayOf(MemoryEngineContract.TYPE_INT),
             states = intArrayOf(MemoryEngineContract.CANDIDATE_STABLE), relocations = intArrayOf(3),
             labels = arrayOf("HP"), freezeModes = intArrayOf(-1), freezePaused = booleanArrayOf(false),
+            savedSourceIds = arrayOf("saved-hp"),
         )
         assertEquals(42L, parsed.single().id)
         assertEquals("30", parsed.single().valueText)
         assertEquals("0x1234", parsed.single().locationText)
         assertEquals("HP", parsed.single().label)
+        assertEquals("saved-hp", parsed.single().savedSourceId)
     }
 
     @Test fun engineSessionMetadataMapsWithoutCountHeuristics() {
@@ -220,7 +222,7 @@ class MemoryEditorModelsTest {
         val nextToken = 91_002L
         assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(firstToken).tab)
 
-        val saved = MemoryEditorNavigationState(MemoryEditorTab.SAVED, pageOffset = 100)
+        val saved = MemoryEditorNavigationState(MemoryEditorTab.VARIABLES, pageOffset = 100)
         MemoryEditorSessionNavigation.remember(firstToken, saved)
         assertEquals(saved, MemoryEditorSessionNavigation.read(firstToken))
 
@@ -229,7 +231,7 @@ class MemoryEditorModelsTest {
             MemoryEditorTab.INSPECTOR, pageOffset = 100, inspectorTarget = inspector,
         )
         MemoryEditorSessionNavigation.remember(firstToken, opened)
-        assertEquals(MemoryEditorTab.SAVED, opened.underlyingTab)
+        assertEquals(MemoryEditorTab.VARIABLES, opened.underlyingTab)
         assertEquals(opened, MemoryEditorSessionNavigation.read(firstToken))
 
         assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(nextToken).tab)
@@ -245,9 +247,39 @@ class MemoryEditorModelsTest {
         )
         val watch = result.copy(inspectorTarget = result.inspectorTarget?.copy(watchAnchor = true))
         assertEquals(MemoryEditorTab.RESULTS, result.underlyingTab)
-        assertEquals(MemoryEditorTab.WATCH, watch.underlyingTab)
-        assertEquals(MemoryEditorTab.WATCH,
-            MemoryEditorNavigationState(MemoryEditorTab.WATCH).underlyingTab)
+        assertEquals(MemoryEditorTab.VARIABLES, watch.underlyingTab)
+        assertEquals(MemoryEditorTab.VARIABLES,
+            MemoryEditorNavigationState(MemoryEditorTab.VARIABLES).underlyingTab)
     }
 
+    @Test fun listCombinesOnlyVerifiedSavedWatchRelationships() {
+        val saved = listOf(SavedVariableRow("kept", "Coins", "player.coins"))
+        fun watch(id: Long, sourceId: String?) = MemoryWatchRow(
+            id, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
+            "50", "50", "50", "player.coins", "Coins", savedSourceId = sourceId,
+        )
+        val rows = memoryListEntries(saved, listOf(watch(1L, "kept"), watch(2L, null)))
+        assertEquals(2, rows.size)
+        assertEquals(1L, rows.single { it.saved != null }.watch?.id)
+        assertEquals(2L, rows.single { it.saved == null }.watch?.id)
+        assertEquals(listOf("saved:kept", "watch:2"), rows.map { it.key })
+    }
+
+    @Test fun mixedRemovalFeedbackPreservesIndependentBackendFailures() {
+        val success = memoryListRemovalOutcome(null, null)
+        assertFalse(success.isError)
+        assertEquals("Saved removed; Watch removed", success.message)
+        val savedFailed = memoryListRemovalOutcome("Storage refused", null)
+        assertTrue(savedFailed.isError)
+        assertTrue(savedFailed.message.contains("Saved removal failed: Storage refused"))
+        assertTrue(savedFailed.message.contains("Watch removed"))
+        val watchFailed = memoryListRemovalOutcome(null, "Owner missing")
+        assertTrue(watchFailed.isError)
+        assertTrue(watchFailed.message.contains("Saved removed"))
+        assertTrue(watchFailed.message.contains("Watch removal failed: Owner missing"))
+        val bothFailed = memoryListRemovalOutcome("I/O", "Session ended")
+        assertTrue(bothFailed.isError)
+        assertTrue(bothFailed.message.contains("Saved removal failed: I/O"))
+        assertTrue(bothFailed.message.contains("Watch removal failed: Session ended"))
+    }
 }

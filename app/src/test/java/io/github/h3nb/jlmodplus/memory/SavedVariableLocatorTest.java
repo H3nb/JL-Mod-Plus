@@ -407,6 +407,7 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.RESULT_OK,
                     engine.freezeSaved(FIRST, savedId, "HP", "700", 0L).code);
             assertEquals(1, engine.watchPage(FIRST).ids.length);
+            assertEquals(savedId, engine.watchPage(FIRST).savedSourceIds[0]);
             root.player.coins = 123;
             assertEquals(MemoryEngineContract.RESULT_OK,
                     engine.freezeTick(FIRST, 0L).code);
@@ -567,6 +568,8 @@ public class SavedVariableLocatorTest {
                 engine.watchInspector(FIRST, "watched-inspector-owner", 0L, 0L,
                     false, offset, MemoryEngineContract.TYPE_INT, 272727L, false, 0L).code);
             assertEquals(1, engine.watchPage(FIRST).ids.length);
+            assertTrue(engine.watchPage(FIRST).savedSourceIds[0]
+                .startsWith("watched-inspector-owner#"));
             assertEquals(-1, engine.watchPage(FIRST).freezeModes[0]);
             assertEquals(MemoryEngineContract.RESULT_OK,
                 engine.editInspectorAndFreeze(FIRST, "watched-inspector-owner", 0L, 0L,
@@ -633,6 +636,103 @@ public class SavedVariableLocatorTest {
             assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                 engine.watchInspector(FIRST, null, search.revision, selected,
                     false, offset, MemoryEngineContract.TYPE_INT, 272727L, false, 0L).code);
+        } finally {
+            engine.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+    @Test public void keepingVerifiedWatchRetainsItsIdentityAndExistingFreeze() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine editor = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        MemoryDiscoveryBridge.tailSeen(GuestPlayer.class);
+        try {
+            ManagedJavaMemoryEngine.ManagedOperationResult search = editor.startExact(
+                    FIRST, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+                    585858L, 0L, 0L);
+            assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+            long id = 0L;
+            ManagedJavaMemoryEngine.ManagedPage page = editor.resultPage(
+                    FIRST, search.revision, 0, 100);
+            for (long candidate : page.ids) {
+                ManagedJavaMemoryEngine.SavedLocator path =
+                        editor.captureSavedLocator(FIRST, search.revision, candidate);
+                if (path != null && path.steps.length == 2 &&
+                        path.steps[1].kind == ManagedJavaMemoryEngine.SavedStep.FIELD &&
+                        "coins".equals(path.steps[1].field.name)) id = candidate;
+            }
+            assertNotEquals(0L, id);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.addWatch(
+                    FIRST, search.revision, new long[]{id}, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.setFreezeLockTyped(
+                    FIRST, search.revision, new long[]{id}, "585858", true, 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "kept", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.watchInspector(
+                    FIRST, "kept", 0L, 0L, false, 0,
+                    MemoryEngineContract.TYPE_INT, 585858L, false, 0L).code);
+            ManagedJavaMemoryEngine.ManagedPage linked = editor.watchPage(FIRST);
+            assertEquals(1, linked.ids.length);
+            assertEquals(id, linked.ids[0]);
+            assertEquals("kept", linked.savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.FREEZE_LOCK, linked.freezeModes[0]);
+
+            editor.releaseSaved(FIRST, "kept");
+            ManagedJavaMemoryEngine.ManagedPage detached = editor.watchPage(FIRST);
+            assertEquals(1, detached.ids.length);
+            assertEquals(id, detached.ids[0]);
+            assertNull(detached.savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.FREEZE_LOCK, detached.freezeModes[0]);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "kept", 0L).code);
+            assertNull(editor.watchPage(FIRST).savedSourceIds[0],
+                    "Resolving Saved must not silently reattach the old session Watch");
+            editor.forgetSaved(FIRST, "kept");
+
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "kept-again", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, editor.watchInspector(
+                    FIRST, "kept-again", 0L, 0L, false, 0,
+                    MemoryEngineContract.TYPE_INT, 585858L, false, 0L).code);
+            ManagedJavaMemoryEngine.ManagedPage relinked = editor.watchPage(FIRST);
+            assertEquals(1, relinked.ids.length);
+            assertEquals(id, relinked.ids[0]);
+            assertEquals("kept-again", relinked.savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.FREEZE_LOCK, relinked.freezeModes[0]);
+        } finally {
+            editor.runtimeClosed(FIRST);
+            MemoryDiscoveryBridge.close(FIRST);
+        }
+    }
+
+    @Test public void detachedSavedWatchStillRejectsStaleRootDuringFreeze() {
+        GuestRoot root = new GuestRoot();
+        ManagedJavaMemoryEngine engine = new ManagedJavaMemoryEngine();
+        MemoryDiscoveryBridge.install(FIRST, getClass().getClassLoader());
+        MemoryDiscoveryBridge.setMidletRoot(FIRST, root);
+        try {
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "original", 0L).code);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeSaved(
+                    FIRST, "original", "Coins", "585858", 0L).code);
+            GuestPlayer previous = root.player;
+            root.player = new GuestPlayer();
+            previous.coins = 42;
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.readSaved(FIRST, "original").code);
+            engine.releaseSaved(FIRST, "original");
+            assertNull(engine.watchPage(FIRST).savedSourceIds[0]);
+            assertEquals(MemoryEngineContract.RESULT_OK, engine.resolveSavedLocator(
+                    FIRST, savedCoinsLocator(), "original", 0L).code);
+            assertEquals("585858", engine.readSaved(FIRST, "original").value);
+            assertNull(engine.watchPage(FIRST).savedSourceIds[0],
+                    "Rebinding Saved to the replacement root cannot claim the old Watch");
+            assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                    engine.freezeTick(FIRST, 0L).code);
+            assertEquals(42, previous.coins);
+            assertEquals(585858, root.player.coins);
+            assertTrue(engine.watchPage(FIRST).freezePaused[0]);
         } finally {
             engine.runtimeClosed(FIRST);
             MemoryDiscoveryBridge.close(FIRST);

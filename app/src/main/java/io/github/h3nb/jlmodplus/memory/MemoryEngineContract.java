@@ -26,6 +26,7 @@ public final class MemoryEngineContract {
 	public static final int TYPE_LONG = 5;
 	public static final int TYPE_FLOAT = 6;
 	public static final int TYPE_DOUBLE = 7;
+	public static final int TYPE_BOOLEAN = 8;
 
 	public static final int PREDICATE_EQUAL = 0;
 	public static final int PREDICATE_NOT_EQUAL = 1;
@@ -178,16 +179,17 @@ public final class MemoryEngineContract {
 	public static final String KEY_WATCH_LABELS = "watchLabels";
 	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";
 	public static final String KEY_WATCH_FREEZE_PAUSED = "watchFreezePaused";
+	public static final String KEY_WATCH_SAVED_SOURCE_IDS = "watchSavedSourceIds";
 
 	private MemoryEngineContract() {
 	}
 
 	public static boolean isValueType(int type) {
-		return type >= TYPE_AUTO && type <= TYPE_DOUBLE;
+		return type >= TYPE_AUTO && type <= TYPE_BOOLEAN;
 	}
 
 	public static boolean isCandidateType(int type) {
-		return type >= TYPE_BYTE && type <= TYPE_DOUBLE;
+		return type >= TYPE_BYTE && type <= TYPE_BOOLEAN;
 	}
 
 	public static boolean isInspectRadius(int radius) {

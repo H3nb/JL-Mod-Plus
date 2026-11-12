@@ -1,96 +1,76 @@
-# Library enhanced icons v2 — experiment plan (2026-11-10)
+# Enhanced Library Icons — PR #238
 
-Status: **experiment only**. This document scopes work on `experiment/library-enhanced-icons-v2`; it is not an active behavior contract or evidence of completed optimization.
+Status: **Draft experiment**. This describes the candidate implementation and its
+qualification requirements, not an approved release contract.
 
-Baseline: `alpha` at `d0923ba11bf4df4bbdd0febf6388c8b8d62b2a01`.
+## Behavior and ownership
 
-## Goal
+- `LibraryComposeBridge.kt` owns icon decoding, bitmap analysis, normalization, bounded
+  caching, and Compose rendering. `LibraryIconPresentation.kt` owns the pure
+  `Subject`, `Backed`, `Cover`, `SafeFit`, and `Fallback` decisions.
+- The original icon file and metadata remain unchanged. Icon revisions invalidate cached
+  presentation results. Existing decode sampling, bounded LRU (8–24 MiB), and
+  three-worker normalization limit are retained.
+- Disabling enhancement preserves the bitmap and uses `SafeFit`. Explicit portrait
+  artwork retains its original composition and may reuse detected background color.
+  Missing icons retain their vector fallback; a fully transparent source uses the normal SafeFit path.
+- For `Cover`, crop only when at least 95% of each source dimension remains visible
+  at the slot aspect ratio; otherwise use `Fit` to preserve edge content.
+- A `Cover` can use the source's border color for a visible letterbox when a
+  candidate color is confirmed by both corner samples and samples across all four
+  edges. Otherwise use the current theme container color. Do not infer a solid
+  background from four matching corners alone.
+- Keep pixel-art filtering and source pixels unchanged. Do not add universal
+  sharpening, MMPX/xBRZ, synthetic backgrounds, or destructive segmentation.
 
-Improve the visual consistency of legacy MIDlet icons while lowering the CPU and allocation cost of preparing them. Preserve the original files and avoid destructive crops, unpredictable filtering, or regressions in Library scrolling, custom artwork, and icon edits. Make no performance claim until matched A/B measurements exist.
+## Normalization cost
 
-## Current ownership and compatibility boundaries
+- Skip hue/average-color scans when presentation already supplies a background or
+  requires no synthesized background.
+- Track at most 65 distinct quantized colors in a lazily allocated 4,096-bit set,
+  avoiding boxed per-pixel hash-set entries.
+- Sample corners into bounded primitive arrays, retaining the lowest-quantized-bin
+  tie rule. Avoid a 4,096-bin histogram for a small sample set.
+- Skip dominant-color histogram passes when `Cover` classification or a colored
+  corner already determines the relevant result.
+- Keep decode and analysis off the main thread. Avoid adding a new cache, state
+  owner, or image-processing abstraction without evidence of a net benefit.
 
-- `app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryComposeBridge.kt` owns decoding, bitmap analysis, normalization, LRU cache, and Compose rendering.
-- `LibraryIconPresentation.kt` owns the deterministic `Subject`, `Backed`, `Cover`, `SafeFit`, and `Fallback` decisions.
-- A supplied portrait 3:4 composition stays aspect-preserving; missing icons use the vector fallback, not bitmap analysis.
-- The user may disable enhancement. Icon replacements and resets must invalidate the displayed icon through `iconRevision`, even for the same path.
-- Existing decode bounds, worker dispatching, the three-permit semaphore, and the bounded 8–24 MiB LRU remain unchanged until profiling justifies modifications.
-- Do not modify persisted source icons, MIDlet resources, or import/export semantics. Preserve the rendering path on Android versions below API 28.
+## Verification
 
-## Verified optimization candidates
+[Dedicated benchmark workflow](../.github/workflows/icon-quality-benchmark.yml)
+builds the target branch and PR head from exact SHAs and executes the **same**
+Android normalization probe on both revisions, using an API 35 x86_64 emulator.
+It also runs `LibraryIconNormalizationTest` on the candidate. Regular Android
+CI only compiles Android instrumentation tests.
 
-1. `normalizeLibraryIcon()` computes a representative color even when the mode or earlier color evidence makes that result unnecessary. Measure and gate the expensive fallback computation; preserve the selected tile color exactly in this phase.
-2. Bitmap analysis scans the same image repeatedly for global features, framed foreground, corner matte, and dominant/representative colors. Share computed features where the result can be proven identical. Do **not** impose a single pass when later steps depend on earlier classifications.
-3. `LibraryNormalizedIcon` retains fields not read by the current artwork renderer. Remove unused state only after checking all owners; avoid unnecessary cache invalidation.
-4. Pixel-art detection uses decoded dimensions, which can vary with the requested slot size. First construct an actual regression case; then qualify a stable filtering policy with visual output, memory, and compatibility checks.
-5. Physical cropping versus source-rectangle rendering is undecided. Compare peak retained pixels and latency: retaining a full source bitmap can cost more memory than retaining a cropped result.
+[Expected visual changes](../scripts/icon-quality/expected-visual-changes.json)
+enumerates the intentionally changed fitted-cover policies. Strict A/B comparison
+rejects missing evidence and any other changes to normalized pixel hashes,
+presentations, slot previews, or tile colors. Source PNGs, output PNGs,
+JSON/Markdown measurements, raw samples, and an HTML gallery are uploaded as
+`enhanced-icon-quality`.
 
-## Validation before changing production output
+The benchmark reports per-icon batch-averaged normalization thread-CPU P50/P95
+and thread allocations. Input Bitmap allocation is outside the timed interval.
+Measurements are exploratory: fixed-order emulator tests are sensitive to JIT
+and host load, and do **not** measure image decode, scrolling FPS, total
+application memory/PSS, GPU cost, power, or physical-device performance.
 
-First establish a characterization corpus:
+Representative real MIDlet JARs were inspected locally (including 12–16px
+pixel-art/transparent icons and 32–48px photographic/antialiased artwork);
+none of the owned game assets is committed.
 
-- Transparent sprites (dense circular, sparse, elongated, off-center, semitransparent), logos with margins, solid/gradient/photographic backgrounds, text-at-edge cover artwork, transparent and opaque pixel art, antialiased graphics, extreme aspect ratios, and empty/corrupt inputs.
-- Include both 1:1 and 3:4 slots, original 3:4 override, light/dark themes, and multiple slot sizes.
-- Use a small deterministic set of generated test fixtures plus independently reviewed, appropriately reusable real MIDlet icons. Do not silently commit copyrighted game artwork or redraw screenshot references.
+## Pre-merge gate
 
-For a **behavior-preserving optimization**, compare the old and new normalized pixel dimensions/ARGB hashes, presentation mode, visual scale, tile color, and filter quality for the same source, slot size, and enhancement setting. Add a focused rendered-component test where bitmap properties alone cannot detect a crop, shape, or compositing regression. Differences must fail this gate.
-
-For an **intentional visual improvement**, capture baseline and candidate rendered output side by side, classify each difference by a known defect and expected improvement, and review regressions before accepting renderer-produced golden images. Never promote screenshots merely to clear CI.
-
-Cover lifecycle separately: toggling enhancement, switching list/grid sizes and 1:1/3:4, replacing an icon at the same path and revision bump, resetting icons, scrolling rapidly, and cancelling an offscreen load. Existing `LibraryIconPresentationTest` and `LibraryIconRefreshTest` are useful but do not provide comprehensive enhanced-artwork characterization; current Library screenshot previews primarily use missing-icon placeholders.
-
-## Reproducible performance experiment
-
-- Run baseline SHA and candidate SHA on the **same device**, Android build, ABI, build variant, workdir fixture, display settings, and recorded icon corpus. Record actual revision and APK identifiers; do not compare unrelated debug/release builds.
-- Measure cold and warm Library entry plus controlled list/grid scroll with stable item counts, icon sizes and ordering. Separate decode, normalization, cache-hit behavior, Compose rendering, and total interaction/frame cost.
-- Record normalization thread-CPU P50/P95, allocations and GC, cache hit/miss counts, peak heap/PSS, first-image latency, and actual FrameTimeline overrun/P95/P99. Use matched repeats and report variability, not just a best run.
-- Historical evidence in [app UI performance investigation](app-ui-performance-2026-10-08.md) observed significant CPU normalization cost and a prior row-batching improvement. That PR-specific probe and workflow have since been retired; do not describe their measurements as this branch's baseline or assume they can be rerun unchanged.
-- Use official Perfetto/Android tooling and current build/test instructions in [development.md](development.md). Keep profiling instrumentation opt-in and out of shipped paths unless its continued value is demonstrated.
-
-## Experiment phases and decision gates
-
-1. **Characterize:** add targeted bitmap and rendered-icon regression fixtures; record baseline output and reproducible CPU/memory traces without changing production behavior.
-2. **Simplify:** remove redundant color computations and unused state, then consolidate pixel work. Require exact output parity and a measured cost improvement before retaining an optimization.
-3. **Improve presentation:** address proven threshold instability, incorrect optical sizing, or wrong backgrounds one class of icon at a time. Require reviewed visual improvement and no destructive crops or significant memory regression.
-4. **Optional filters:** consider source-aware resampling only when real artwork shows measurable value. Do not revive universal MMPX/xBRZ sharpening or background segmentation by default; the previous global enhancement experiment in PR 77 was rejected after device review.
-5. **Qualify:** run the targeted tests, Android UI verification and appropriate CI on the final effective diff; perform independent pre-merge review before proposing squash merge to `alpha`.
-
-Do not silently change the icon enhancement default, add new UI controls, introduce a generic image framework, or alter persistent artwork. If the optimization does not improve real workloads without harm, keep the existing implementation rather than add complexity.
-
-## Dedicated A/B quality and normalization benchmark
-
-The experiment adds a focused workflow: [Enhanced Icon Quality Benchmark](../.github/workflows/icon-quality-benchmark.yml). It is automatically triggered by relevant icon/benchmark changes in pull requests targeting alpha; manual dispatch becomes available when the workflow exists on the GitHub default branch. It is **not** part of the normal Android CI or its required checks.
-
-- The workflow checks out exact PR base and head SHAs and compiles the **same** instrumentation probe into two disposable worktrees, including the unmodified baseline production algorithm. It runs both on one API 35 x86_64 emulator. Never infer execution from AndroidTest compilation.
-- Synthetic fixtures cover transparent sprites, solid mattes, photographic gradients, 48-color pixel art, antialiased subjects, sparse artwork, portrait overrides, disabled enhancement, and fully transparent images.
-- The test captures original/normalized PNG, bitmap ARGB hash, classification mode, visual scale, filter, synthetic tile color, and normalization thread-CPU and thread-allocation samples. The companion Python comparator emits JSON/Markdown tables, a local HTML A/B gallery and full raw artifacts.
-- PR runs use **strict pixel and presentation parity**. The comparator fails on differences, missing fixtures, missing images, or malformed measurements. Review mode (for intentional future visual changes) can report differences without treating them as a pass on quality; review the PNGs and intended artwork presentation manually.
-- CPU changes are **descriptive**, not performance gates: emulator scheduling, thermal state, order (baseline first), JIT, and reflection overhead can bias results. These samples exclude decode, Compose frame rendering, interaction FPS, GPU time, PSS, and real device behavior. Use equivalent physical-device trials before claiming product-level performance gains.
-- Download the **enhanced-icon-quality** artifact from the workflow run; inspect **index.html**, **report.json**, **report.md**, **environment.txt**, raw samples, test logs, and source/normalized PNGs. The GitHub step summary also shows median CPU and allocations per fixture.
-- The workflow is an experiment-specific qualification path. Reassess its CI cost and continued usefulness once Enhanced Icons v2 is integrated; do not silently turn noisy emulator timing into a required long-term performance check.
-
-## Follow-up: preserve full-bleed artwork across slot aspect ratios
-
-The Cover classifier identifies full-bleed artwork, but the renderer previously applied Crop regardless of slot aspect. For a 3:4 illustration in a square slot, this removes one quarter of the source height. The candidate retains Cover classification but uses Fit when more than 5% of a source dimension would be discarded; portrait artwork explicitly supplied as 3:4 remains unchanged. The test captures this **renderer policy** separately from bitmap normalization and writes approximate slot Fit/Crop previews.
-
-Strict A/B parity now accepts only the precisely declared intentional differences in [expected-visual-changes.json](../scripts/icon-quality/expected-visual-changes.json). Every other bitmap, presentation, slot-preview or policy difference remains an error. Expected exceptions are specific to this experiment's alpha baseline and must be revisited if the base algorithm adopts the behavior. The rendered tile still requires device-level visual review; preview PNGs approximate the geometry, not Compose clipping, GPU filtering or themes.
-
-### CPU clock resolution qualification
-
-After the two-pass histogram was skipped for high-confidence Cover images and colored-matte backing, an individual CPU-time observation could be reported as zero by the Android emulator's thread CPU clock, even though a valid normalization completed. The A/B probe now times multiple source-equivalent normalizations in a batch (with all input Bitmap allocations outside the measured CPU interval), divides CPU time and thread-allocation delta by batch size, and records the size per fixture. This prevents zero-duration single calls from invalidating otherwise successful instrumentation. Do not directly compare per-invocation medians across probe versions with different batching; use results produced by the same probe on the same run.
-
-## Real-MIDlet sample inspection and letterbox fill
-
-A local, non-committed inspection of five user-owned JARs identified very small MIDlet icons: Nature Park 12×12 transparent sprite, Townsmen 16×16 opaque pixel art, Age of Empires II Mobile 15×15 opaque icon, Paris Nights 32×32 full image, and Bounce Tales 46×48 partly transparent art. These binaries and extracted icons are **not** added to the public repository. This inspection is evidence of source diversity, not proof of how each game looks after Compose rendering.
-
-For an uncropped `Cover` fit in a differently shaped slot, a neutral theme-colored letterbox may clash with a solid source border. When the existing strict uniform-corner detector provides an edge color, the candidate uses that color as the tile background; otherwise it preserves the theme container color. The normalized bitmap remains unchanged. A synthetic 96×128 varied-cover fixture with four matching corner patches protects this targeted behavior in strict A/B checks.
-
-The corner sampler now stores the small number of visible sampled colors in contiguous primitive arrays, sorts only their quantized bins, and preserves the original smallest-bin tie break. This avoids a 4096-entry histogram and boxed per-corner samples, without changing the sample coordinates, color thresholds, or matte rejection rules. Benchmark CPU and thread allocations are compared against the same alpha baseline.
-
-### Safety qualification of source-colored letterboxing
-
-Four matching corners alone are not enough to establish a matching letterbox: the rest of the border can contain unrelated colors. Therefore source-colored `Cover` padding now requires additional sparse verification along **all four edges** (same alpha and RGB-distance constraints as the corner detector). Matching corners with varying edge pixels retain the existing theme fill. Two explicit A/B fixtures distinguish corner-only evidence from genuinely uniform border evidence; the strict comparator permits only their documented Fit/Crop and optional tile-color differences.
-
-### Qualification of executable Android contracts
-
-The dedicated A/B run executes the identical normalization probe on both revisions and also runs `LibraryIconNormalizationTest` against the candidate APK. Regular Android CI only compiles instrumentation tests; do not report those assertions as runtime-validated unless the dedicated job executes them. The source-preserving and disabled-enhancement paths now share one return branch, with optional background analysis only for an explicitly preserved artwork variant.
+- Inspect the gallery and compare representative **real** MIDlet icons on a device
+  in square and portrait slots, light and dark themes, and with enhancement
+  both enabled and disabled. Synthetic slot previews do not reproduce final
+  Compose clipping, filtering, or themes.
+- Check Library icon refresh, cancellation, list/grid transitions, and scroll
+  performance on a physical Android device.
+- Compare the final effective PR diff with current `alpha`; remove superseded
+  code and temporary workarounds, run relevant checks, and complete an
+  independent pre-merge review.
+- Keep the PR Draft until these checks are satisfied. Do not merge without
+  explicit authorization.

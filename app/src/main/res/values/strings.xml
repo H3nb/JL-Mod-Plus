@@ -546,6 +546,15 @@
     <string name="memory_editor_engine_reconnecting">Memory Editor is reconnecting…</string>
     <string name="memory_editor_refresh">Refresh</string>
     <string name="memory_editor_undo">Undo</string>
+    <string name="memory_variables_tab">List</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Back</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Keep for next launch</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Stop keeping</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Kept for next launch</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Your list is empty</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Select results in Search and add them to List.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Remove selected entries? Any active Freeze will stop, and kept definitions will be deleted.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Add to List</string>
     <string name="memory_editor_watch">Watch</string>
     <string name="memory_editor_search_tab">Search</string>
     <string name="memory_editor_search_known_values">Search known values</string>
@@ -1322,4 +1331,13 @@
     <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">This JAR does not match the selected JAD. Choose the matching JAR to preserve the JAD settings.</string>
     <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Choose another JAR</string>
     <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Use this value</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Internal resolution</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Auto</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Renders supported 2D and 3D at higher detail. Auto fits the game viewport; restart to apply.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap upscaling</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Enhances immutable 2D sprites and opaque Micro3D model textures. M3G textures are unchanged; restart to apply.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest Neighbor</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX (pixel art)</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">Edge-aware (smooth)</string>
 </resources>

@@ -71,4 +71,14 @@ class MemoryInputModelTest {
         assertTrue(floatSpec.isComplete("1.0"))
         assertTrue(floatSpec.acceptsPartial("1e-3"))
     }
+    @Test fun booleanSpecOnlyAcceptsExplicitLogicalValues() {
+        val spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_BOOLEAN)
+        assertTrue(spec.isComplete("true"))
+        assertTrue(spec.isComplete("FALSE"))
+        assertTrue(spec.acceptsPartial("fal"))
+        assertFalse(spec.isComplete("tr"))
+        assertFalse(spec.isComplete("1"))
+        assertFalse(spec.acceptsPartial("true;false"))
+    }
+
 }

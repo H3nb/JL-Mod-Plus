@@ -27,7 +27,10 @@ public class MemoryEngineContractTest {
 	public void contractRejectsUnknownEnums() {
 		assertTrue(MemoryEngineContract.isValueType(MemoryEngineContract.TYPE_AUTO));
 		assertTrue(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_DOUBLE));
-		assertFalse(MemoryEngineContract.isValueType(8));
+		assertTrue(MemoryEngineContract.isValueType(MemoryEngineContract.TYPE_BOOLEAN));
+		assertTrue(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_BOOLEAN));
+		assertFalse(MemoryEngineContract.isValueType(MemoryEngineContract.TYPE_BOOLEAN + 1));
+		assertFalse(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_BOOLEAN + 1));
 		assertFalse(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_AUTO));
 	}
 

@@ -38,14 +38,21 @@ def load(root, name):
         for k in VISUAL:
             if k not in case["visual"]:
                 raise ValueError("Missing visual property " + k + " for " + ident)
-        if not isinstance(case.get("batchSize"), int) or not 1 <= case["batchSize"] <= 1024:
+        if type(case.get("enhance")) is not bool or type(case.get("batchSize")) is not int:
+            raise ValueError("Invalid workload properties for " + ident)
+        measured = case["enhance"]
+        if (measured and not 1 <= case["batchSize"] <= 1024) or (
+            not measured and case["batchSize"] != 0
+        ):
             raise ValueError("Invalid batchSize for " + ident)
         for key in ("cpuNs", "allocatedBytes"):
             values = case[key]
             if not isinstance(values, list) or any(type(v) is not int or v < 0 for v in values):
                 raise ValueError("Malformed " + key + " for " + ident)
-            if key == "cpuNs" and (len(values) < 20 or any(v == 0 for v in values)):
+            if measured and key == "cpuNs" and (len(values) < 20 or any(v == 0 for v in values)):
                 raise ValueError("Missing CPU samples for " + ident)
+            if not measured and values:
+                raise ValueError("Disabled enhancement should have no performance samples: " + ident)
         for suffix in ("source", "normalized", "slot"):
             png = folder / "images" / (ident + "-" + suffix + ".png")
             if not png.is_file() or png.stat().st_size <= 40:
@@ -118,7 +125,7 @@ def compare(root, mode, baseline_sha, candidate_sha, expected_changes=None):
                 raise ValueError("Invalid expected visual change rule for " + ident + "/" + key)
         cpu_a, cpu_b = stats(a["cpuNs"], 1_000_000), stats(b["cpuNs"], 1_000_000)
         alloc_a, alloc_b = stats(a["allocatedBytes"]), stats(b["allocatedBytes"])
-        delta = diff(cpu_a["p50"], cpu_b["p50"])
+        delta = diff(cpu_a["p50"], cpu_b["p50"]) if cpu_a and cpu_b else None
         alloc_display = (
             str(round(alloc_a["p50"])) + " → " + str(round(alloc_b["p50"]))
             if alloc_a and alloc_b else "n/a"
@@ -129,8 +136,9 @@ def compare(root, mode, baseline_sha, candidate_sha, expected_changes=None):
             "cpuMs": {"baseline": cpu_a, "candidate": cpu_b, "deltaP50Percent": delta},
             "threadAllocBytes": {"baseline": alloc_a, "candidate": alloc_b},
         })
-        md.append("| " + ident + " | " + format(cpu_a["p50"], ".3f") +
-                  " | " + format(cpu_b["p50"], ".3f") + " | " +
+        md.append("| " + ident + " | " +
+                  (format(cpu_a["p50"], ".3f") if cpu_a else "n/a") +
+                  " | " + (format(cpu_b["p50"], ".3f") if cpu_b else "n/a") + " | " +
                   (format(delta, "+.1f") if delta is not None else "n/a") +
                   " | " + alloc_display + " | " +
                   (", ".join(changed) or "identical") + " |")

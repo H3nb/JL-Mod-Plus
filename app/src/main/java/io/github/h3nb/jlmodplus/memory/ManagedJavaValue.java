@@ -25,7 +25,7 @@ final class ManagedJavaValue {
 	}
 
 	static boolean isSupportedType(int type) {
-		return type >= MemoryEngineContract.TYPE_BYTE && type <= MemoryEngineContract.TYPE_DOUBLE;
+		return type >= MemoryEngineContract.TYPE_BYTE && type <= MemoryEngineContract.TYPE_BOOLEAN;
 	}
 
 	static boolean isFloating(int type) {
@@ -33,6 +33,7 @@ final class ManagedJavaValue {
 	}
 
 	static int typeForClass(Class<?> type) {
+		if (type == boolean.class) return MemoryEngineContract.TYPE_BOOLEAN;
 		if (type == byte.class) return MemoryEngineContract.TYPE_BYTE;
 		if (type == short.class) return MemoryEngineContract.TYPE_SHORT;
 		if (type == char.class) return MemoryEngineContract.TYPE_CHAR;
@@ -45,6 +46,7 @@ final class ManagedJavaValue {
 
 	static int byteWidth(int type) {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN:
 			case MemoryEngineContract.TYPE_BYTE: return 1;
 			case MemoryEngineContract.TYPE_SHORT:
 			case MemoryEngineContract.TYPE_CHAR: return 2;
@@ -59,6 +61,7 @@ final class ManagedJavaValue {
 	static long readField(Field field, @Nullable Object owner, int type)
 			throws IllegalAccessException {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN: return field.getBoolean(owner) ? 1L : 0L;
 			case MemoryEngineContract.TYPE_BYTE: return field.getByte(owner);
 			case MemoryEngineContract.TYPE_SHORT: return field.getShort(owner);
 			case MemoryEngineContract.TYPE_CHAR: return field.getChar(owner);
@@ -74,6 +77,7 @@ final class ManagedJavaValue {
 
 	static long readArrayElement(Object array, int index, int type) {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN: return ((boolean[]) array)[index] ? 1L : 0L;
 			case MemoryEngineContract.TYPE_BYTE: return ((byte[]) array)[index];
 			case MemoryEngineContract.TYPE_SHORT: return ((short[]) array)[index];
 			case MemoryEngineContract.TYPE_CHAR: return ((char[]) array)[index];
@@ -90,6 +94,7 @@ final class ManagedJavaValue {
 	static void writeField(Field field, @Nullable Object owner, int type, long bits)
 			throws IllegalAccessException {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN: field.setBoolean(owner, bits != 0L); return;
 			case MemoryEngineContract.TYPE_BYTE: field.setByte(owner, (byte) bits); return;
 			case MemoryEngineContract.TYPE_SHORT: field.setShort(owner, (short) bits); return;
 			case MemoryEngineContract.TYPE_CHAR: field.setChar(owner, (char) bits); return;
@@ -103,6 +108,7 @@ final class ManagedJavaValue {
 
 	static void writeArrayElement(Object array, int index, int type, long bits) {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN: ((boolean[]) array)[index] = bits != 0L; return;
 			case MemoryEngineContract.TYPE_BYTE: ((byte[]) array)[index] = (byte) bits; return;
 			case MemoryEngineContract.TYPE_SHORT: ((short[]) array)[index] = (short) bits; return;
 			case MemoryEngineContract.TYPE_CHAR: ((char[]) array)[index] = (char) bits; return;
@@ -121,6 +127,10 @@ final class ManagedJavaValue {
 		if (value.isEmpty()) return false;
 		try {
 			switch (type) {
+				case MemoryEngineContract.TYPE_BOOLEAN:
+					if (value.equalsIgnoreCase("true")) { output[0] = 1L; return true; }
+					if (value.equalsIgnoreCase("false")) { output[0] = 0L; return true; }
+					return false;
 				case MemoryEngineContract.TYPE_BYTE:
 				case MemoryEngineContract.TYPE_SHORT:
 				case MemoryEngineContract.TYPE_CHAR:
@@ -240,7 +250,10 @@ final class ManagedJavaValue {
 	}
 
 	static boolean validKnownQuery(int type, int predicate, long first, long second) {
-		if (!isSupportedType(type) || predicate < MemoryEngineContract.PREDICATE_EQUAL
+		if (!isSupportedType(type) || type == MemoryEngineContract.TYPE_BOOLEAN &&
+				predicate != MemoryEngineContract.PREDICATE_EQUAL &&
+				predicate != MemoryEngineContract.PREDICATE_NOT_EQUAL ||
+				predicate < MemoryEngineContract.PREDICATE_EQUAL
 				|| predicate > MemoryEngineContract.PREDICATE_BETWEEN) return false;
 		if (predicate != MemoryEngineContract.PREDICATE_BETWEEN && second != 0L) return false;
 		if (!hasCanonicalBits(type, first)
@@ -254,7 +267,10 @@ final class ManagedJavaValue {
 	}
 
 	static boolean validRelativeQuery(int type, int predicate, long first, long second) {
-		if (!isSupportedType(type) || predicate < MemoryEngineContract.PREDICATE_CHANGED
+		if (!isSupportedType(type) || type == MemoryEngineContract.TYPE_BOOLEAN &&
+				predicate != MemoryEngineContract.PREDICATE_CHANGED &&
+				predicate != MemoryEngineContract.PREDICATE_UNCHANGED ||
+				predicate < MemoryEngineContract.PREDICATE_CHANGED
 				|| predicate > MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE) return false;
 		boolean needsMagnitude = predicate >= MemoryEngineContract.PREDICATE_INCREASED_BY;
 		if (!needsMagnitude) return first == 0L && second == 0L;
@@ -327,6 +343,7 @@ final class ManagedJavaValue {
 
 	static String format(int type, long bits) {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN: return bits == 1L ? "true" : "false";
 			case MemoryEngineContract.TYPE_BYTE: return Byte.toString((byte) bits);
 			case MemoryEngineContract.TYPE_SHORT: return Short.toString((short) bits);
 			case MemoryEngineContract.TYPE_CHAR: return Integer.toString((int) bits & 0xffff);
@@ -414,6 +431,7 @@ final class ManagedJavaValue {
 
 	private static int compare(int type, long left, long right) {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN: return Long.compare(left, right);
 			case MemoryEngineContract.TYPE_BYTE: return Byte.compare((byte) left, (byte) right);
 			case MemoryEngineContract.TYPE_SHORT: return Short.compare((short) left, (short) right);
 			case MemoryEngineContract.TYPE_CHAR: return Integer.compare((int) left & 0xffff, (int) right & 0xffff);
@@ -440,6 +458,7 @@ final class ManagedJavaValue {
 
 	private static boolean hasCanonicalBits(int type, long bits) {
 		switch (type) {
+			case MemoryEngineContract.TYPE_BOOLEAN: return bits == 0L || bits == 1L;
 			case MemoryEngineContract.TYPE_BYTE: return bits == (byte) bits;
 			case MemoryEngineContract.TYPE_SHORT: return bits == (short) bits;
 			case MemoryEngineContract.TYPE_CHAR: return bits >= 0L && bits <= 0xffffL;

@@ -45,7 +45,7 @@ private object NoOpMemoryEditorActions : MemoryEditorActions {
     override fun groupSearch(type: Int, values: Array<String>) = Unit
     override fun undo() = Unit
     override fun refresh() = Unit
-    override fun setWatchTab(watch: Boolean) = Unit
+    override fun setVariablesTab(watch: Boolean) = Unit
     override fun toggleSelection(id: Long) = Unit
     override fun selectVisible() = Unit
     override fun invertVisible() = Unit
@@ -139,7 +139,7 @@ fun MemoryEditorLandscapeWatchScreenshot() {
                 supported = true,
                 writeSupported = true,
                 runtimeToken = 1,
-                watchTab = true,
+                variablesTab = true,
                 watches = listOf(previewWatch),
             ),
             actions = NoOpMemoryEditorActions,

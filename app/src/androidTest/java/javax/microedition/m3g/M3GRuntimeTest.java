@@ -198,6 +198,91 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
+	public void highResolutionGraphicsTargetKeepsLogicalViewportAndPhysicalRaster() {
+		final int factor = 3;
+		Image hd = Image.createDisplayTarget(48, 40, factor);
+		Graphics graphics = hd.getGraphics();
+		graphics.setClip(4, 5, 20, 17);
+		Background first = createBackground(0xff163047);
+		Background second = createBackground(0xff78293a);
+
+		g3d.bindTarget(graphics, true, Graphics3D.TRUE_COLOR);
+		try {
+			assertEquals(4, g3d.getViewportX());
+			assertEquals(5, g3d.getViewportY());
+			assertEquals(20, g3d.getViewportWidth());
+			assertEquals(17, g3d.getViewportHeight());
+			g3d.clear(first);
+
+			g3d.setViewport(7, 8, 10, 9);
+			assertEquals(7, g3d.getViewportX());
+			assertEquals(8, g3d.getViewportY());
+			assertEquals(10, g3d.getViewportWidth());
+			assertEquals(9, g3d.getViewportHeight());
+			g3d.clear(second);
+		} finally {
+			g3d.releaseTarget();
+		}
+
+		assertEquals(0xff78293a & RGB_MASK,
+				hd.getBitmap().getPixel(10 * factor, 11 * factor) & RGB_MASK);
+		assertEquals(0xff163047 & RGB_MASK,
+				hd.getBitmap().getPixel(5 * factor, 6 * factor) & RGB_MASK);
+		assertEquals(0x00ffffff,
+				hd.getBitmap().getPixel(0, 0) & RGB_MASK);
+
+		for (int scale : new int[]{2, 5}) verifyTranslatedHdViewport(scale);
+
+		// Rebinding an ordinary MIDlet image must not retain the HD scale.
+		Image normal = Image.createImage(32, 24);
+		g3d.bindTarget(normal.getGraphics(), true, Graphics3D.TRUE_COLOR);
+		try {
+			g3d.setViewport(2, 3, 8, 9);
+			assertEquals(2, g3d.getViewportX());
+			assertEquals(3, g3d.getViewportY());
+			assertEquals(8, g3d.getViewportWidth());
+			assertEquals(9, g3d.getViewportHeight());
+		} finally {
+			g3d.releaseTarget();
+		}
+	}
+
+
+    private void verifyTranslatedHdViewport(int scale) {
+        Image image = Image.createDisplayTarget(40, 36, scale);
+        Graphics graphics = image.getGraphics();
+        graphics.translate(3, 4);
+        graphics.setClip(2, 3, 12, 10);
+        Background color = createBackground(0xff2e4761);
+        try {
+            g3d.bindTarget(graphics, true, Graphics3D.TRUE_COLOR);
+            try {
+                assertEquals(2, g3d.getViewportX());
+                assertEquals(3, g3d.getViewportY());
+                assertEquals(12, g3d.getViewportWidth());
+                assertEquals(10, g3d.getViewportHeight());
+
+                g3d.setViewport(3, 4, 6, 5);
+                assertEquals(3, g3d.getViewportX());
+                assertEquals(4, g3d.getViewportY());
+                graphics.translate(5, 5);
+                assertEquals(3, g3d.getViewportX());
+                assertEquals(4, g3d.getViewportY());
+                g3d.clear(color);
+            } finally {
+                g3d.releaseTarget();
+            }
+            // The target clip and viewport remain in guest coordinates,
+            // while the native backing bitmap uses physical device pixels.
+            assertEquals(0x2e4761, image.getBitmap().getPixel(
+                    9 * scale, 10 * scale) & RGB_MASK);
+            assertEquals(0xffffff, image.getBitmap().getPixel(0, 0) & RGB_MASK);
+        } finally {
+            image.getBitmap().recycle();
+        }
+    }
+
+	@Test
 	public void image2DTargetClearRoundTripsThroughBackgroundRendering() {
 		Image2D target = new Image2D(Image2D.RGB, SIZE, SIZE);
 		Background clearBackground = createBackground(BACKGROUND_ARGB);

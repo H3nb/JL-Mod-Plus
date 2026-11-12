@@ -18,6 +18,9 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -52,6 +55,8 @@ public class EnvironmentTextureGlesTest {
         int program = 0;
         int environmentId = 0;
         int modelId = 0;
+        int opaqueId = 0;
+        int imageId = 0;
         try {
             assertTrue(EGL14.eglChooseConfig(display, configAttrs, 0, configs, 0, 1, numConfigs, 0));
             assertTrue(numConfigs[0] > 0);
@@ -93,6 +98,49 @@ public class EnvironmentTextureGlesTest {
             assertRgb(0, 0, 0, sample(environmentId, uv, 32.5f * TEXEL, 32.5f * TEXEL, GLES20.GL_NEAREST));
             assertRgb(255, 0, 0, sample(modelId, uv, 0.25f, 0.25f, GLES20.GL_NEAREST));
 
+            // Exercise optional source enhancement on the same immutable GLES texture.
+            // UV coordinates still use the original 64×64 logical texture dimensions.
+            TextureImpl.configureEnhancement(2);
+            TextureImpl.setScreenTargetScale(2);
+            assertEquals(modelId, model.impl.getId());
+            assertRgb(255, 0, 0, sample(modelId, uv,
+                    0.25f, 0.25f, GLES20.GL_NEAREST));
+            // Transparent palette[0] must retain its original red RGB and alpha
+            // contract. MMPX is intentionally bypassed for alpha-masked models.
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
+
+            // Prove that reconstruction really reaches GLES for eligible opaque
+            // model textures: MMPX changes the upper-left corner of the center
+            // source texel in this fixture from black to white.
+            TextureImpl opaque = new TextureImpl(opaqueBmp3x3());
+            opaqueId = opaque.getId();
+            assertRgb(0, 0, 0, sample(opaqueId, uv, 0.5f, 0.5f, GLES20.GL_NEAREST));
+            TextureImpl.configureEnhancement(2);
+            TextureImpl.setScreenTargetScale(2);
+            assertEquals(opaqueId, opaque.getId());
+            int[] sourceColors = {
+                    0xff000000, 0xffffffff, 0xff000000,
+                    0xffffffff, 0xff000000, 0xff000000,
+                    0xff000000, 0xff000000, 0xff000000,
+            };
+            int reconstructed = MmpxScaler.scale(sourceColors, 3, 3, 2)[2 * 6 + 2];
+            assertNotEquals(0xff000000, reconstructed);
+            assertRgb((reconstructed >>> 16) & 255, (reconstructed >>> 8) & 255,
+                    reconstructed & 255,
+                    sample(opaqueId, uv, 2.5f / 6f, 2.5f / 6f, GLES20.GL_NEAREST));
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
+
+            // Image-backed texture data must be packed as RGBA bytes on
+            // little-endian Android, not as rotated ARGB native-order ints.
+            javax.microedition.lcdui.Image hostImage = javax.microedition.lcdui.Image.createRGBImage(
+                    new int[] {0xff00ff00, 0xff0000ff}, 2, 1, true);
+            TextureImpl imageTexture = new TextureImpl(hostImage, 0, 0, 2, 1);
+            imageId = imageTexture.getId();
+            assertRgb(0, 255, 0, sample(imageId, uv, 0.25f, 0.5f, GLES20.GL_NEAREST));
+            assertRgb(0, 0, 255, sample(imageId, uv, 0.75f, 0.5f, GLES20.GL_NEAREST));
+
             // Linear filtering must not blend hidden palette[0] RGB into the highlight.
             int[] midpoint = sample(environmentId, uv, TEXEL, 0.5f * TEXEL, GLES20.GL_LINEAR);
             for (int color : midpoint) {
@@ -101,13 +149,105 @@ public class EnvironmentTextureGlesTest {
             GLES20.glDisableVertexAttribArray(position);
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
             if (program != 0) GLES20.glDeleteProgram(program);
             if (environmentId != 0) GLES20.glDeleteTextures(1, new int[] {environmentId}, 0);
             if (modelId != 0) GLES20.glDeleteTextures(1, new int[] {modelId}, 0);
+            if (opaqueId != 0) GLES20.glDeleteTextures(1, new int[] {opaqueId}, 0);
+            if (imageId != 0) GLES20.glDeleteTextures(1, new int[] {imageId}, 0);
             EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
             if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface);
             if (context != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, context);
             EGL14.eglTerminate(display);
+        }
+    }
+
+    @Test
+    public void textureReuploadsWhenUnsharedContextReusesOldNumericTextureId() {
+        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        int[] version = new int[2];
+        assertTrue(EGL14.eglInitialize(display, version, 0, version, 1));
+        EGLConfig[] configs = new EGLConfig[1];
+        int[] num = new int[1];
+        int[] attrs = {
+                EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                EGL14.EGL_RENDERABLE_TYPE, 4,
+                EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
+                EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_NONE
+        };
+        EGLContext first = EGL14.EGL_NO_CONTEXT;
+        EGLContext second = EGL14.EGL_NO_CONTEXT;
+        EGLSurface surface = EGL14.EGL_NO_SURFACE;
+        int textureId = 0;
+        int restoredId = 0;
+        int program = 0;
+        try {
+            assertTrue(EGL14.eglChooseConfig(display, attrs, 0, configs, 0, 1, num, 0));
+            assertTrue(num[0] > 0);
+            int[] contextAttrs = {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE};
+            first = EGL14.eglCreateContext(display, configs[0],
+                    EGL14.EGL_NO_CONTEXT, contextAttrs, 0);
+            second = EGL14.eglCreateContext(display, configs[0],
+                    EGL14.EGL_NO_CONTEXT, contextAttrs, 0);
+            surface = EGL14.eglCreatePbufferSurface(display, configs[0],
+                    new int[] {EGL14.EGL_WIDTH, SURFACE_SIZE, EGL14.EGL_HEIGHT,
+                            SURFACE_SIZE, EGL14.EGL_NONE}, 0);
+            assertTrue(first != EGL14.EGL_NO_CONTEXT);
+            assertTrue(second != EGL14.EGL_NO_CONTEXT);
+            assertTrue(surface != EGL14.EGL_NO_SURFACE);
+            assertTrue(EGL14.eglMakeCurrent(display, surface, surface, first));
+
+            TextureImpl texture = new TextureImpl(opaqueBmp3x3());
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
+            textureId = texture.getId();
+            assertTrue(GLES20.glIsTexture(textureId));
+
+            assertTrue(EGL14.eglMakeCurrent(display, surface, surface, second));
+            // This is a different, unshared context. Make the old numeric name
+            // valid for a *different* texture so glIsTexture(oldId) is misleading.
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+            ByteBuffer impostor = ByteBuffer.allocateDirect(3 * 3 * 4);
+            for (int i = 0; i < 9; i++) {
+                impostor.put((byte) 0xff).put((byte) 0xff)
+                        .put((byte) 0xff).put((byte) 0xff);
+            }
+            impostor.flip();
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+                    3, 3, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, impostor);
+            assertTrue(GLES20.glIsTexture(textureId));
+
+            restoredId = texture.getId();
+            assertNotEquals("Texture must be recreated for the new EGL context",
+                    textureId, restoredId);
+            program = createProgram();
+            GLES20.glUseProgram(program);
+            GLES20.glViewport(0, 0, SURFACE_SIZE, SURFACE_SIZE);
+            int position = GLES20.glGetAttribLocation(program, "aPosition");
+            FloatBuffer triangle = ByteBuffer.allocateDirect(6 * Float.BYTES)
+                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
+            triangle.put(new float[]{-1, -1, 3, -1, -1, 3}).rewind();
+            GLES20.glVertexAttribPointer(position, 2, GLES20.GL_FLOAT, false, 0, triangle);
+            GLES20.glEnableVertexAttribArray(position);
+            GLES20.glUniform1i(GLES20.glGetUniformLocation(program, "uTexture"), 0);
+            int uv = GLES20.glGetUniformLocation(program, "uUv");
+            assertRgb(0, 0, 0, sample(restoredId, uv, 0.5f, 0.5f,
+                    GLES20.GL_NEAREST));
+            GLES20.glDisableVertexAttribArray(position);
+        } finally {
+            if (program != 0) GLES20.glDeleteProgram(program);
+            if (restoredId != 0) GLES20.glDeleteTextures(1, new int[]{restoredId}, 0);
+            if (textureId != 0) GLES20.glDeleteTextures(1, new int[]{textureId}, 0);
+            EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+            if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface);
+            if (first != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, first);
+            if (second != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, second);
+            EGL14.eglTerminate(display);
+            TextureImpl.configureEnhancement(0);
+            TextureImpl.setScreenTargetScale(1);
         }
     }
 
@@ -160,6 +300,36 @@ public class EnvironmentTextureGlesTest {
         GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
         assertEquals(GLES20.glGetShaderInfoLog(shader), GLES20.GL_TRUE, compiled[0]);
         return shader;
+    }
+
+    private static byte[] opaqueBmp3x3() {
+        final int pixelOffset = 14 + 40 + 256 * 4;
+        byte[] bytes = new byte[pixelOffset + 3 * 4];
+        ByteBuffer header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        header.putShort((short) 0x4d42);
+        header.putInt(bytes.length);
+        header.putInt(0);
+        header.putInt(pixelOffset);
+        header.putInt(40);
+        header.putInt(3);
+        header.putInt(-3); // top-down RGB palette image
+        header.putShort((short) 1);
+        header.putShort((short) 8);
+        header.putInt(0);
+        header.putInt(12);
+        header.putInt(0);
+        header.putInt(0);
+        header.putInt(256);
+        header.putInt(0);
+        for (int i = 0; i < 256; i++) {
+            byte color = (byte) (i == 2 ? 255 : 0);
+            header.put(color).put(color).put(color).put((byte) 0);
+        }
+        byte[] colors = {1, 2, 1, 2, 1, 1, 1, 1, 1};
+        for (int y = 0; y < 3; y++) {
+            System.arraycopy(colors, y * 3, bytes, pixelOffset + y * 4, 3);
+        }
+        return bytes;
     }
 
     private static byte[] indexedBmp2x2() {

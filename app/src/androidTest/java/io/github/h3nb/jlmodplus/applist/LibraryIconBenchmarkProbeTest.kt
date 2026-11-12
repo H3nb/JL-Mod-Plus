@@ -152,10 +152,9 @@ class LibraryIconBenchmarkProbeTest {
 
                 val cpu = JSONArray()
                 val allocated = JSONArray()
-                // Individual icon calls may fall below the emulator's CPU-clock granularity.
-                // Precreate each batch, then measure only normalization and divide per icon.
-                val batchSize = if (!fixture.enhance) 512 else if (fixture.id == "fully-transparent") 128 else 8
-                repeat(MEASUREMENTS) {
+                // Time only enhanced normalization; the disabled path is below clock resolution.
+                val batchSize = if (!fixture.enhance) 0 else if (fixture.id == "fully-transparent") 128 else 8
+                if (batchSize > 0) repeat(MEASUREMENTS) {
                     val inputs = Array(batchSize) {
                         Bitmap.createBitmap(pixels, fixture.width, fixture.height, Bitmap.Config.ARGB_8888)
                     }

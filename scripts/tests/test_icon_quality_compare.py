@@ -98,6 +98,18 @@ class IconQualityCompareTest(unittest.TestCase):
         result = self.invoke(expected={"fixture-1": {"scale": [0.8, 0.7]}})
         self.assertEqual(1, result.returncode)
 
+    def test_disabled_enhancement_is_visual_only(self):
+        for variant in ("baseline", "candidate"):
+            path = self.root / variant / "metrics.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            case = data["cases"][0]
+            case.update(enhance=False, batchSize=0, cpuNs=[], allocatedBytes=[])
+            path.write_text(json.dumps(data), encoding="utf-8")
+        result = self.invoke()
+        self.assertEqual(0, result.returncode, result.stderr)
+        report = json.loads((self.root / "report.json").read_text(encoding="utf-8"))
+        self.assertIsNone(report["cases"][0]["cpuMs"]["baseline"])
+
     def test_missing_data_is_an_error_even_in_review_mode(self):
         (self.root / "candidate" / "metrics.json").unlink()
         self.assertEqual(2, self.invoke(mode="review").returncode)

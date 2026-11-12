@@ -33,6 +33,20 @@ JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_micro3d_Utils_glReadPixels
                                 "AndroidBitmap_getInfo() failed!")
         return;
     }
+    // glReadPixels writes RGBA8888 rows into the Bitmap's native storage.
+    // A pinned pointer does not validate the caller's rectangle or format.
+    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888
+            || info.stride < static_cast<uint64_t>(info.width) * 4u
+            || x < 0 || y < 0 || width < 0 || height < 0
+            || static_cast<uint64_t>(x) + static_cast<uint64_t>(width) > info.width
+            || static_cast<uint64_t>(y) + static_cast<uint64_t>(height) > info.height) {
+        MICRO3D_RAISE_EXCEPTION(env, "java/lang/IllegalArgumentException",
+                                "Micro3D readback outside RGBA8888 Bitmap bounds")
+        return;
+    }
+    if (width == 0 || height == 0) {
+        return;
+    }
     void *pixels;
     ret = AndroidBitmap_lockPixels(env, bitmap_buffer, &pixels);
     if (ret < 0) {
@@ -43,7 +57,7 @@ JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_micro3d_Utils_glReadPixels
     }
     const uint32_t bw = info.width;
     const uint32_t bs = info.stride;
-    if (x == 0 && width == bw) {
+    if (x == 0 && width == bw && bs == bw * 4u) {
         pixels = ((uint8_t *) pixels) + bs * y;
         glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     } else {

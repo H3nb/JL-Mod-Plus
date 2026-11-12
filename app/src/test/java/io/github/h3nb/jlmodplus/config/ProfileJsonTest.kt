@@ -48,8 +48,32 @@ class ProfileJsonTest {
         assertEquals(JsonPrimitive(true), newTree["AllowDisplayCutout"])
         assertEquals(JsonPrimitive(1), newTree["CameraDefaultFacing"])
         assertEquals(JsonPrimitive(0), newTree["CameraResolution"])
+        assertEquals(JsonPrimitive(1), newTree["InternalResolutionScale"])
+        assertEquals(JsonPrimitive(0), newTree["BitmapUpscalingMode"])
         assertTrue(ProfileJson.sameValue(JsonObject(comparableOld),
-            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides", "PostEffects"))))
+            JsonObject(newTree - setOf("AllowDisplayCutout", "CameraDefaultFacing", "CameraResolution", "SystemPropertyOverrides", "PostEffects", "InternalResolutionScale", "BitmapUpscalingMode"))))
+    }
+
+
+    @Test fun newProfileDefaultsUseGlesAndAutoWithoutChangingSavedSettings() {
+        val fresh = ProfileModel.fresh("factory: value\\n")
+        assertEquals(1, fresh.graphicsMode)
+        assertEquals(0, fresh.internalResolutionScale)
+
+        val builtIn = ProfileModel.createBuiltIn(false, "factory: value\\n")
+        assertEquals(1, builtIn.graphicsMode)
+        assertEquals(0, builtIn.internalResolutionScale)
+
+        // Older serialized profiles without the new setting remain fixed at 1×.
+        val legacy = ProfileJson.decode("""{"Version":10,"GraphicsMode":0}""", false)
+        assertEquals(0, legacy.model.graphicsMode)
+        assertEquals(1, legacy.model.internalResolutionScale)
+        assertFalse(legacy.needsPublication)
+
+        val customized = fresh.copy(graphicsMode = 3, internalResolutionScale = 1)
+        val reopened = ProfileJson.decode(ProfileJson.encode(customized), false).model
+        assertEquals(3, reopened.graphicsMode)
+        assertEquals(1, reopened.internalResolutionScale)
     }
 
     @Test fun cameraDefaultsMigrateV7SnapshotAndRoundTripExplicitChoices() {

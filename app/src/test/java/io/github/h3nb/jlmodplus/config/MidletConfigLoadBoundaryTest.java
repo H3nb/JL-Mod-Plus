@@ -58,6 +58,66 @@ public class MidletConfigLoadBoundaryTest {
 		assertFalse(layoutFile(target).exists());
 	}
 
+
+	@Test
+	public void existingBuiltInReceivesRenderingDefaultsAndKeepsBuiltInOwnership() throws Exception {
+		File profiles = tempDir("profiles-refresh-built-in");
+		File target = tempDir("target-refresh-built-in");
+		ProfileModel previous = ProfileModel.createBuiltIn(false, "");
+		previous.graphicsMode = 0;
+		previous.internalResolutionScale = 1;
+		assertTrue(ProfilesManager.saveConfig(target, previous));
+		FakePreferences preferences = new FakePreferences();
+		String builtInKey = ProfileModel.builtInThemePreferenceKey(target);
+		preferences.edit().putBoolean(builtInKey, true).commit();
+
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
+
+		ProfileModel refreshed = readConfig(target);
+		assertEquals(1, refreshed.graphicsMode);
+		assertEquals(0, refreshed.internalResolutionScale);
+		assertEquals(previous.screenWidth, refreshed.screenWidth);
+		assertEquals(previous.vkType, refreshed.vkType);
+		assertTrue(preferences.getBoolean(builtInKey, false));
+		assertTrue(ProfileConfigMatcher.sameConfig(
+				ProfilesManager.loadConfig(target, false),
+				ProfileModel.createBuiltIn(false, "")));
+		byte[] saved = Files.readAllBytes(configFile(target).toPath());
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
+		assertArrayEquals(saved, Files.readAllBytes(configFile(target).toPath()));
+	}
+
+	@Test
+	public void customAndNamedProfilesKeepExplicitRenderingPreferences() throws Exception {
+		File profiles = tempDir("profiles-refresh-custom");
+		File custom = tempDir("target-refresh-custom");
+		ProfileModel explicit = ProfileModel.createBuiltIn(false, "");
+		explicit.graphicsMode = 0;
+		explicit.internalResolutionScale = 1;
+		assertTrue(ProfilesManager.saveConfig(custom, explicit));
+		FakePreferences customPrefs = new FakePreferences();
+		assertTrue(MidletConfigLoadBoundary.prepare(customPrefs, custom, profiles));
+		assertEquals(0, readConfig(custom).graphicsMode);
+		assertEquals(1, readConfig(custom).internalResolutionScale);
+		assertFalse(customPrefs.getBoolean(
+				ProfileModel.builtInThemePreferenceKey(custom), false));
+
+		File named = tempDir("target-refresh-named");
+		assertTrue(ProfilesManager.saveConfig(named, explicit));
+		FakePreferences namedPrefs = new FakePreferences();
+		namedPrefs.edit()
+				.putBoolean(ProfileModel.builtInThemePreferenceKey(named), true)
+				.putString(PresetLinkage.originPreferenceKey(named), "UserPreset")
+				.commit();
+		assertTrue(MidletConfigLoadBoundary.prepare(namedPrefs, named, profiles));
+		assertEquals(0, readConfig(named).graphicsMode);
+		assertEquals(1, readConfig(named).internalResolutionScale);
+		assertEquals("UserPreset", namedPrefs.getString(
+				PresetLinkage.originPreferenceKey(named), null));
+		assertFalse(namedPrefs.getBoolean(
+				ProfileModel.builtInThemePreferenceKey(named), false));
+	}
+
 	@Test
 	public void versionSixBuiltInWithRecoverableLayoutKeepsThemeAndLayout() throws Exception {
 		File profiles = tempDir("profiles-legacy-layout");

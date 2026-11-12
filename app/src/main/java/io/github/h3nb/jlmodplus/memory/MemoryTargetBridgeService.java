@@ -312,6 +312,11 @@ public final class MemoryTargetBridgeService extends Service {
             managedEngine.releaseSaved(runtimeToken, savedId);
         }
 
+        @Override
+        public void forgetSaved(long runtimeToken, String savedId) {
+            managedEngine.forgetSaved(runtimeToken, savedId);
+        }
+
 		@Override
 		public void cancelManaged(long runtimeToken, long cancellationEpoch) {
 			managedEngine.cancel(runtimeToken, cancellationEpoch);
@@ -606,6 +611,7 @@ public final class MemoryTargetBridgeService extends Service {
 				MemoryEngineContract.truncateDisplay(page.labels));
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, page.freezeModes);
 		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, page.freezePaused);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_SAVED_SOURCE_IDS, page.savedSourceIds);
 		return result;
 	}
 }
