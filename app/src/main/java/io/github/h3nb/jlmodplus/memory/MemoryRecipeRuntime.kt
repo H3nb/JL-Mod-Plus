@@ -185,12 +185,12 @@ class MemoryRecipeRuntime {
                     throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Form target changed since Refresh; refresh before applying")
                 }
-                formSnapshot = null
                 if (expected.size != prepared.readValues.size ||
                     !expected.contentEquals(prepared.readValues.toTypedArray())) {
                     throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Values changed since Refresh; refresh before applying")
                 }
+                formSnapshot = null
             }
             if (preview) {
                 val result = reply(token, MemoryEngineContract.RESULT_OK, "Read ${recipe.actions.size} logical values")
