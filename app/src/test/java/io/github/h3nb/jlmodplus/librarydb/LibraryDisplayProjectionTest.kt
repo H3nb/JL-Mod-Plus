@@ -116,7 +116,7 @@ class LibraryDisplayProjectionTest {
             val favorites = results.ready()
             assertEquals(listOf(1L), favorites.apps.map { it.id })
             assertSame(initial.availableAppIds, favorites.availableAppIds)
-            assertEquals(collectionUpdate.sourceRevision, favorites.sourceRevision)
+            assertEquals(secondRename.sourceRevision, favorites.sourceRevision)
             quickView.value = LibraryQuickView.All
             assertSame(initial.apps, results.ready().apps)
 

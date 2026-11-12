@@ -819,6 +819,12 @@ class LibraryViewportNavigationTest {
             included: Boolean,
             callback: CollectionMembershipResultCallback,
         ) = callback.onResult(true)
+        override fun onSetCollectionMembershipByDatabaseId(
+            databaseId: Long,
+            collectionId: Long,
+            included: Boolean,
+            callback: CollectionMembershipResultCallback,
+        ) = callback.onResult(true)
         override fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long) = Unit
         override fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long) = Unit
         override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) = Unit
