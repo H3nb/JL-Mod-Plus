@@ -45,8 +45,8 @@ public final class RgbaTextureEnhancer {
         if (rgba == null || width < 1 || height < 1 || factor < 2
                 || factor > ImageEnhancementPolicy.MAX_RECONSTRUCTION_FACTOR
                 || (mode != 2 && mode != 3)
-                || (long) width * height * factor * factor * 4
-                        > ImageEnhancementPolicy.MAX_RESULT_BYTES) {
+                || (long) width * height > ImageEnhancementPolicy.MAX_RESULT_PIXELS
+                        / ((long) factor * factor)) {
             throw new IllegalArgumentException("Invalid texture reconstruction request");
         }
         int count = width * height;

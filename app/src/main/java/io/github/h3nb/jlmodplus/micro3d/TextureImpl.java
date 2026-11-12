@@ -22,6 +22,11 @@ import static android.opengl.GLES20.*;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import io.github.h3nb.jlmodplus.R;
+import javax.microedition.shell.MicroActivity;
+import javax.microedition.util.ContextHolder;
 import java.nio.ByteBuffer;
 
 import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
@@ -38,6 +43,7 @@ public final class TextureImpl {
 	private EGLContext uploadedContext;
 	private static volatile int enhancementMode;
 	private static volatile int screenTargetScale = 1;
+	private static final AtomicBoolean enhancementFailureReported = new AtomicBoolean();
 
 	/** Optional host enhancement, never applied to guest-visible texture storage. */
 	public static void configureEnhancement(int mode) {
@@ -196,8 +202,8 @@ public final class TextureImpl {
 					width *= factor;
 					height *= factor;
 				} catch (OutOfMemoryError error) {
-					// Enhancement is optional; retain the original native texture upload.
 					source = image.getRaster();
+					notifyEnhancementFailure();
 				}
 			}
 		}
@@ -210,7 +216,23 @@ public final class TextureImpl {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
 				GL_RGBA, GL_UNSIGNED_BYTE, source);
+		if (width != image.width || height != image.height) {
+			int error = glGetError();
+			if (error != GL_NO_ERROR) {
+				Log.w("TextureImpl", "Enhanced texture upload failed: GL error " + error);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+						GL_RGBA, GL_UNSIGNED_BYTE, image.getRaster());
+				notifyEnhancementFailure();
+			}
+		}
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	private static void notifyEnhancementFailure() {
+		if (!enhancementFailureReported.compareAndSet(false, true)) return;
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) activity.runOnUiThread(() ->
+				activity.toast(R.string.render_texture_memory_reduced));
 	}
 
 	@Override

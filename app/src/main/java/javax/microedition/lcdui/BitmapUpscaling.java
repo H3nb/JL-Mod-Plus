@@ -9,6 +9,11 @@ import android.graphics.RectF;
 import android.util.LruCache;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import io.github.h3nb.jlmodplus.R;
+import javax.microedition.shell.MicroActivity;
+import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
 import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
@@ -24,13 +29,8 @@ final class BitmapUpscaling {
     static final int MMPX = 2;
     static final int EDGE_AWARE = 3;
 
-    private static final int MAX_CACHE_BYTES = 16 * 1024 * 1024;
-    private static final long MIN_CACHE_BYTES = 4L * 1024L * 1024L;
-
-    // A bounded heap-based heuristic, not a measurement of native/GPU memory.
     static int cacheBudgetBytes(long heapLimitBytes) {
-        return (int) Math.max(MIN_CACHE_BYTES,
-                Math.min(MAX_CACHE_BYTES, heapLimitBytes / 16L));
+        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, heapLimitBytes / 16L));
     }
     private static final Paint NEAREST_PAINT = createPaint(false);
     private static final Paint BILINEAR_PAINT = createPaint(true);
@@ -43,7 +43,8 @@ final class BitmapUpscaling {
                     return bitmap.getAllocationByteCount();
                 }
             };
-    private volatile boolean allocationFailed;
+    private volatile long failedOutputPixels = Long.MAX_VALUE;
+    private final AtomicBoolean failureReported = new AtomicBoolean();
 
     private static Paint createPaint(boolean filtered) {
         Paint paint = new Paint();
@@ -78,6 +79,9 @@ final class BitmapUpscaling {
         }
         int factor = source.isMutable() ? 1 : ImageEnhancementPolicy.chooseFactor(
                 sourceRect.width(), sourceRect.height(), targetScale, Integer.MAX_VALUE);
+        long regionPixels = (long) sourceRect.width() * sourceRect.height();
+        while (factor > 1 && regionPixels > (failedOutputPixels - 1)
+                / ((long) factor * factor)) factor--;
         Bitmap enhanced = factor == 1 ? null : prepare(bitmap, sourceRect, factor);
         // Edge-aware reconstruction is already antialiased; smooth only the remaining
         // non-integer resampling. MMPX retains hard source-palette transitions.
@@ -89,12 +93,14 @@ final class BitmapUpscaling {
     }
 
     private Bitmap prepare(Bitmap bitmap, Rect rect, int scale) {
-        if (allocationFailed || bitmap.isRecycled()) return null;
+        if (bitmap.isRecycled()) return null;
         int width = rect.width();
         int height = rect.height();
         if (scale < 1 || width <= 0 || height <= 0
-                || (long) width * height > ImageEnhancementPolicy.MAX_RESULT_BYTES
-                        / (4L * scale * scale)) return null;
+                || (long) width * height > Math.min(
+                        ImageEnhancementPolicy.MAX_RESULT_PIXELS, failedOutputPixels - 1)
+                        / ((long) scale * scale)) return null;
+        long outputPixels = (long) width * height * scale * scale;
 
         RegionKey key = new RegionKey(bitmap, rect, scale);
         synchronized (cache) {
@@ -111,14 +117,27 @@ final class BitmapUpscaling {
             output = Bitmap.createBitmap(reconstructed, width * scale, height * scale,
                     Bitmap.Config.ARGB_8888);
         } catch (OutOfMemoryError error) {
-            // Optional enhancement cannot be allowed to terminate the MIDlet.
-            allocationFailed = true;
+            failedOutputPixels = Math.min(failedOutputPixels, outputPixels);
+            synchronized (cache) {
+                cache.evictAll();
+            }
+            if (failureReported.compareAndSet(false, true)) {
+                MicroActivity activity = ContextHolder.getActivity();
+                if (activity != null) activity.runOnUiThread(() ->
+                        activity.toast(R.string.render_bitmap_memory_reduced));
+            }
             return null;
         }
         synchronized (cache) {
             Bitmap existing = cache.get(key);
             if (existing != null) return existing;
-            // Evicted bitmaps must not be recycled: a render may still use one.
+            int bytes = output.getAllocationByteCount();
+            if (bytes > cache.maxSize()) {
+                cache.evictAll();
+                cache.resize(bytes);
+            } else if ((long) cache.size() + bytes > Integer.MAX_VALUE) {
+                cache.evictAll();
+            }
             cache.put(key, output);
         }
         return output;
