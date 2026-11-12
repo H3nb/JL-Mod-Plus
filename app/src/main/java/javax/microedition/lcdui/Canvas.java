@@ -1216,9 +1216,9 @@ public abstract class Canvas extends Displayable {
 
 	private void reportInternalResolutionReduction(int requested, int actual) {
 		if (actual >= requested || lastReportedInternalScale == actual) return;
-		lastReportedInternalScale = actual;
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
+			lastReportedInternalScale = actual;
 			activity.showRenderingNotice(R.string.render_resolution_reduced, requested, actual);
 		}
 	}
@@ -1810,14 +1810,11 @@ public abstract class Canvas extends Displayable {
 
 		private void reportEffectFailure() {
 			if (effectFailureReported) return;
-			effectFailureReported = true;
 			MicroActivity activity = ContextHolder.getActivity();
-			if (activity == null) return;
-			activity.runOnUiThread(() -> {
-				if (!activity.isFinishing() && !activity.isDestroyed()) {
-					activity.showRenderingNotice(R.string.render_effect_unavailable);
-				}
-			});
+			if (activity != null) {
+				effectFailureReported = true;
+				activity.showRenderingNotice(R.string.render_effect_unavailable);
+			}
 		}
 		private int hostGlWidth, hostGlHeight;
 		private AmbientGlRenderer ambientRenderer;

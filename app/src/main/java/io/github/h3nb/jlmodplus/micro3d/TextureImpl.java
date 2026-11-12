@@ -229,10 +229,10 @@ public final class TextureImpl {
 	}
 
 	private static void notifyEnhancementFailure() {
-		if (!enhancementFailureReported.compareAndSet(false, true)) return;
 		MicroActivity activity = ContextHolder.getActivity();
-		if (activity != null) activity.runOnUiThread(() ->
-				activity.showRenderingNotice(R.string.render_texture_memory_reduced));
+		if (activity != null && enhancementFailureReported.compareAndSet(false, true)) {
+			activity.showRenderingNotice(R.string.render_texture_memory_reduced);
+		}
 	}
 
 	@Override
