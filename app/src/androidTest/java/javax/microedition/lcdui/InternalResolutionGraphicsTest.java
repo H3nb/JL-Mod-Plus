@@ -319,4 +319,38 @@ public class InternalResolutionGraphicsTest {
         }
     }
 
+    @Test public void drawingFromAResizableImageKeepsSourceDimensionsCoherent() throws Exception {
+        Image source = Image.createDisplayTarget(16, 12, 3);
+        source.enableResizableDisplayTarget();
+        Image destination = Image.createDisplayTarget(24, 20, 2);
+        Graphics drawing = destination.getGraphics();
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        Thread worker = new Thread(() -> {
+            try {
+                for (int i = 0; i < 100; i++) {
+                    source.resizeDisplayTarget(16 + i % 2, 12 + i % 2,
+                            i % 2 == 0 ? 2 : 3);
+                }
+            } catch (Throwable error) {
+                failure.compareAndSet(null, error);
+            }
+        }, "source-resize");
+        worker.setDaemon(true);
+        try {
+            worker.start();
+            for (int i = 0; i < 100; i++) {
+                drawing.drawImage(source, 0, 0, Graphics.TOP | Graphics.LEFT);
+            }
+            worker.join(15000);
+            assertTrue("Resizable source resize should terminate", !worker.isAlive());
+            assertTrue("Unexpected image source failure: " + failure.get(),
+                    failure.get() == null);
+        } finally {
+            worker.join(15000);
+            destination.getBitmap().recycle();
+            source.getBitmap().recycle();
+        }
+    }
+
 }

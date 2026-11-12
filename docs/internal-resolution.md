@@ -83,8 +83,9 @@ Large-source reconstruction is limited separately from frame target density.
 GameCanvas retains its buffer and previously obtained Graphics objects across
 host resizes, including when a constrained HD density must decrease.
 Operations through retained Java ME Graphics objects share the buffer Image
-monitor with its resize/rebind operation. A per-Canvas paint surface cannot
-be replaced while a guest paint event is active.
+monitor with its resize/rebind operation. Each guest paint retains its own
+scratch-buffer reference until the frame is published, so host resizes can
+stage another buffer without waiting for the guest paint event.
 
 The published frame, scratch surface and GameCanvas buffer are allocated
 before the new density is published. If a high-density allocation fails,

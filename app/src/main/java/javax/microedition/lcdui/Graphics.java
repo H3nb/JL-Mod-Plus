@@ -621,38 +621,49 @@ public class Graphics implements
 
 	public void drawImage(Image image, int x, int y, int anchor) {
 		synchronized (this.image) {
-			float lx;
-			if ((anchor & Graphics.RIGHT) != 0) {
-				lx = x - image.getWidth();
-			} else if ((anchor & Graphics.HCENTER) != 0) {
-				lx = x - image.getWidth() / 2.0f;
+			if (image.isResizableDisplayTarget()) {
+				synchronized (image) {
+					drawImageSource(image, x, y, anchor);
+				}
 			} else {
-				lx = x;
+				drawImageSource(image, x, y, anchor);
 			}
+		}
+	}
 
-			float ly;
-			if ((anchor & Graphics.BOTTOM) != 0) {
-				ly = y - image.getHeight();
-			} else if ((anchor & Graphics.VCENTER) != 0) {
-				ly = y - image.getHeight() / 2.0f;
-			} else {
-				ly = y;
-			}
+	/** Caller holds the destination monitor and, for resizable images, the source monitor. */
+	private void drawImageSource(Image image, int x, int y, int anchor) {
+		float lx;
+		if ((anchor & Graphics.RIGHT) != 0) {
+			lx = x - image.getWidth();
+		} else if ((anchor & Graphics.HCENTER) != 0) {
+			lx = x - image.getWidth() / 2.0f;
+		} else {
+			lx = x;
+		}
 
-			if (this.image.getPixelScale() == 1 && image.getPixelScale() == 1) {
-				if (image.isResizableDisplayTarget()) {
-					synchronized (image) {
-						canvas.drawBitmap(image.getBitmap(), lx, ly, null);
-					}
-				} else {
+		float ly;
+		if ((anchor & Graphics.BOTTOM) != 0) {
+			ly = y - image.getHeight();
+		} else if ((anchor & Graphics.VCENTER) != 0) {
+			ly = y - image.getHeight() / 2.0f;
+		} else {
+			ly = y;
+		}
+
+		if (this.image.getPixelScale() == 1 && image.getPixelScale() == 1) {
+			if (image.isResizableDisplayTarget()) {
+				synchronized (image) {
 					canvas.drawBitmap(image.getBitmap(), lx, ly, null);
 				}
 			} else {
-				rectF.set(lx, ly, lx + image.getWidth(), ly + image.getHeight());
-				int sourceScale = image.getPixelScale();
-				rect.set(0, 0, image.getWidth() * sourceScale, image.getHeight() * sourceScale);
-				drawSourceBitmap(image, rect, rectF);
+				canvas.drawBitmap(image.getBitmap(), lx, ly, null);
 			}
+		} else {
+			rectF.set(lx, ly, lx + image.getWidth(), ly + image.getHeight());
+			int sourceScale = image.getPixelScale();
+			rect.set(0, 0, image.getWidth() * sourceScale, image.getHeight() * sourceScale);
+			drawSourceBitmap(image, rect, rectF);
 		}
 	}
 
