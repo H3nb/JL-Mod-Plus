@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -149,6 +150,71 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Freeze active for this script").assertIsDisplayed()
         rule.runOnIdle { ui.value = ui.value.copy(scriptActiveFreezes = emptyList()) }
         rule.onNodeWithText("Freeze active for this script").assertDoesNotExist()
+    }
+
+
+    @Test fun formLoadsActualValueAndSubmitsVerifiedSnapshot() {
+        val document = sample.replace(
+            "\"formatVersion\":1", "\"formatVersion\":2,\"mode\":\"form\"")
+        val applied = mutableListOf<Pair<Map<String, String>, List<String>?>>()
+        val actions = object : TestMemoryEditorActions() {
+            override fun readCurrentMemoryRecipe(
+                document: String, inputs: Map<String, String>,
+                onReady: (List<MemoryRecipeReadValue>?, String?) -> Unit,
+            ) = onReady(listOf(MemoryRecipeReadValue("coins", "10")), null)
+            override fun runMemoryRecipeChecked(
+                document: String, inputs: Map<String, String>, freeze: Boolean,
+                expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
+            ) {
+                assertFalse(freeze)
+                applied += inputs to expectedValues
+                onComplete(true)
+            }
+        }
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            scriptsTab = true, runtimeToken = 92501L, scriptsLoaded = true,
+            scripts = listOf(MemoryScriptRow("sample.coins", "Sample Coins", document)),
+        )
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
+        rule.onNodeWithText("Sample Coins").performClick()
+        rule.onNodeWithTag("memory-script-input-coins").assertTextContains("10")
+        rule.onNodeWithTag("memory-script-input-coins").performTextReplacement("37")
+        rule.onNodeWithTag("memory-script-apply").performClick()
+        rule.runOnIdle {
+            assertEquals("37", applied.single().first["coins"])
+            assertEquals(listOf("10"), applied.single().second)
+        }
+    }
+
+    @Test fun oneShotQuickRunIsSingleFlightUntilCompletion() {
+        val document = sample.replace(
+            "\"formatVersion\":1", "\"formatVersion\":2,\"mode\":\"oneShot\"")
+        var calls = 0
+        var complete: ((Boolean) -> Unit)? = null
+        val actions = object : TestMemoryEditorActions() {
+            override fun runMemoryRecipeChecked(
+                document: String, inputs: Map<String, String>, freeze: Boolean,
+                expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
+            ) {
+                assertFalse(freeze)
+                assertEquals(null, expectedValues)
+                calls++
+                complete = onComplete
+            }
+        }
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            scriptsTab = true, runtimeToken = 92502L, scriptsLoaded = true,
+            scripts = listOf(MemoryScriptRow("sample.coins", "Sample Coins", document)),
+        )
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
+        rule.onNodeWithTag("memory-script-run-sample.coins").performClick()
+        rule.onNodeWithTag("memory-script-run-sample.coins").assertIsNotEnabled()
+        rule.runOnIdle {
+            assertEquals(1, calls)
+            complete?.invoke(true)
+        }
     }
 
     @Test fun failedSaveLeavesTheJsonEditorOpenForCorrection() {

@@ -422,6 +422,7 @@ internal fun RuntimeScriptsTab(
                             }
                             when (scriptMetadata?.mode) {
                                 "toggle" -> Checkbox(checked = active,
+                                    modifier = Modifier.testTag("memory-script-toggle-${script.id}"),
                                     enabled = !launching && !state.busy &&
                                         state.writeSupported,
                                     onCheckedChange = { enabled ->
@@ -432,7 +433,9 @@ internal fun RuntimeScriptsTab(
                                             ) { launching = false }
                                         } else actions.clearMemoryRecipeFreeze(script.id)
                                     })
-                                "oneShot" -> Button(enabled = !launching && !state.busy &&
+                                "oneShot" -> Button(
+                                    modifier = Modifier.testTag("memory-script-run-${script.id}"),
+                                    enabled = !launching && !state.busy &&
                                         state.writeSupported, onClick = {
                                     launching = true
                                     actions.runMemoryRecipeChecked(
