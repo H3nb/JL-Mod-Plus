@@ -6,6 +6,7 @@ output="ci-artifacts/library-scale"
 selectors=(
   "io.github.h3nb.jlmodplus.applist.LibraryComposeTest#twentyThousandAppsRemainVirtualizedInListAndGrid"
   "io.github.h3nb.jlmodplus.librarydb.LibraryStartupRuntimeTest#existingCatalogLoadsAndProjects"
+  "io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest#endOfLibraryViewportSurvivesDifferentFooterPagerRoundTrip"
 )
 selector_arg="$(IFS=,; echo "${selectors[*]}")"
 mkdir -p "$output"
