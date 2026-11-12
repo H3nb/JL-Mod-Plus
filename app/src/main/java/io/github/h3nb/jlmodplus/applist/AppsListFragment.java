@@ -1192,7 +1192,8 @@ public class AppsListFragment extends Fragment {
                 row.getDescription(),
                 (resolved ? files.getPortraitIconPresent() : portraitIcon.isFile())
                         ? portraitIcon.getAbsolutePath() : null,
-                resolved ? files.getCustomIconPresent() : customIcon.isFile());
+                resolved ? files.getCustomIconPresent() : customIcon.isFile(),
+                row.getAddedAt());
         cachedRowsByDatabaseId.put(row.getId(), row);
         cachedUiItemsByDatabaseId.put(row.getId(), item);
         return item;

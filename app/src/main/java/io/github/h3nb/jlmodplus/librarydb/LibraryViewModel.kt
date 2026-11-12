@@ -1200,7 +1200,10 @@ internal fun libraryDisplayStates(
                 val previous = prepared
                 val translatedTask = async(Dispatchers.IO) {
                     if (previous != null &&
-                        previous.repositoryState === state &&
+                        previous.repositoryState.generation == state.generation &&
+                        previous.repositoryState.emulatorDir == state.emulatorDir &&
+                        previous.repositoryState.apps === state.apps &&
+                        previous.repositoryState.descriptionOverrides == state.descriptionOverrides &&
                         previous.descriptionLocale == input.descriptionLocale) {
                         previous.localizedDescriptions
                     } else {

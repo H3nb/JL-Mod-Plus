@@ -9,30 +9,53 @@ internal fun projectCollectionApps(
     filter: String,
     sortVariant: Int,
     locale: Locale = Locale.getDefault(),
+    checkActive: () -> Unit = {},
 ): List<LibraryAppUiItem> {
     val needle = filter.trim().lowercase(Locale.ROOT)
-    val ranked = rows.mapNotNull { row ->
-        val rank = if (needle.isEmpty()) 0 else collectionSearchRank(row, needle) ?: return@mapNotNull null
-        rank to row
+    val ranked = ArrayList<Pair<Int, LibraryAppUiItem>>()
+    for (index in rows.indices) {
+        if (index % 128 == 0) checkActive()
+        val row = rows[index]
+        val rank = if (needle.isEmpty()) 0 else collectionSearchRank(row, needle) ?: continue
+        ranked.add(rank to row)
     }
+    checkActive()
     if (ranked.size < 2) return ranked.map { it.second }
 
     val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
     val sortIndex = sortVariant and Int.MAX_VALUE
     val descending = sortVariant < 0
+    var comparisons = 0
     val fallback = Comparator<LibraryAppUiItem> { left, right ->
+        if (++comparisons % 256 == 0) checkActive()
         val primary = when (sortIndex) {
-            1 -> left.databaseId.compareTo(right.databaseId)
+            1 -> when {
+                left.addedAt == null && right.addedAt == null -> 0
+                left.addedAt == null -> 1
+                right.addedAt == null -> -1
+                descending -> right.addedAt.compareTo(left.addedAt)
+                else -> left.addedAt.compareTo(right.addedAt)
+            }
             2 -> collator.compare(left.author, right.author)
+                .let { if (descending) -it else it }
             else -> collator.compare(left.title, right.title)
+                .let { if (descending) -it else it }
         }
-        val ordered = if (descending) -primary else primary
-        if (ordered != 0) ordered else left.databaseId.compareTo(right.databaseId)
+        if (primary != 0) primary else {
+            val secondary = when (sortIndex) {
+                1 -> 0
+                2 -> collator.compare(left.title, right.title)
+                else -> collator.compare(left.author, right.author)
+            }
+            if (secondary != 0) secondary else left.databaseId.compareTo(right.databaseId)
+        }
     }
-    return ranked.sortedWith { left, right ->
+    val sorted = ranked.sortedWith { left, right ->
         val rankOrder = left.first.compareTo(right.first)
         if (rankOrder != 0) rankOrder else fallback.compare(left.second, right.second)
-    }.map { it.second }
+    }
+    checkActive()
+    return sorted.map { it.second }
 }
 
 private fun collectionSearchRank(row: LibraryAppUiItem, needle: String): Int? {

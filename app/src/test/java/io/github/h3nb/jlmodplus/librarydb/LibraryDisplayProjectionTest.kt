@@ -105,6 +105,11 @@ class LibraryDisplayProjectionTest {
             assertSame(initial.apps, collectionUpdate.apps)
             assertSame(initial.availableAppIds, collectionUpdate.availableAppIds)
             assertEquals(listOf(collection), collectionUpdate.collections)
+            repository.value = source.copy(collections = listOf(collection.copy(name = "Renamed")))
+            val renamedCollection = results.ready()
+            repository.value = source.copy(collections = listOf(collection.copy(name = "Renamed twice")))
+            val secondRename = results.ready()
+            assertSame(renamedCollection.localizedDescriptions, secondRename.localizedDescriptions)
             assertTrue(collectionUpdate.sourceRevision > initial.sourceRevision)
 
             quickView.value = LibraryQuickView.Favorites

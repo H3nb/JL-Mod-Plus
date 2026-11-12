@@ -318,6 +318,7 @@ data class LibraryAppUiItem(
     val defaultDescription: String = description,
     val portraitIconPath: String? = null,
     val hasCustomIcon: Boolean = false,
+    val addedAt: Long? = null,
 )
 
 private data class MetadataRestoreRequest(

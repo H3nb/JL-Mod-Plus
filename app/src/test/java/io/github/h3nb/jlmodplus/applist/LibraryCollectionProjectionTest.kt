@@ -4,6 +4,7 @@ package io.github.h3nb.jlmodplus.applist
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -30,7 +31,30 @@ class LibraryCollectionProjectionTest {
         assertEquals(listOf(10L, 20L, 30L), sorted.map { it.databaseId })
 
         val newest = projectCollectionApps(apps, "", 1 or Int.MIN_VALUE, Locale.US)
-        assertEquals(listOf(30L, 20L, 10L), newest.map { it.databaseId })
+        assertEquals(listOf(10L, 20L, 30L), newest.map { it.databaseId })
+    }
+
+    @Test fun dateSortUsesInstallTimestampWithUnknownDatesLast() {
+        val apps = listOf(
+            app(uiId = 1, databaseId = 50, addedAt = 200L),
+            app(uiId = 2, databaseId = 10, addedAt = null),
+            app(uiId = 3, databaseId = 30, addedAt = 100L),
+            app(uiId = 4, databaseId = 20, addedAt = 200L),
+        )
+        assertEquals(listOf(30L, 20L, 50L, 10L),
+            projectCollectionApps(apps, "", 1, Locale.US).map { it.databaseId })
+        assertEquals(listOf(20L, 50L, 30L, 10L),
+            projectCollectionApps(apps, "", 1 or Int.MIN_VALUE, Locale.US).map { it.databaseId })
+    }
+
+    @Test fun cancellationStopsLargeCollectionSearch() {
+        val apps = (1..10_000).map { app(uiId = it, databaseId = it.toLong()) }
+        var checks = 0
+        assertThrows(IllegalStateException::class.java) {
+            projectCollectionApps(apps, "", 0, Locale.US) {
+                if (++checks == 5) throw IllegalStateException("cancelled")
+            }
+        }
     }
 
     @Test fun searchRanksBeforeStableTieBreak() {
@@ -43,7 +67,7 @@ class LibraryCollectionProjectionTest {
         assertEquals(listOf(1L, 2L, 3L), found.map { it.databaseId })
     }
 
-    private fun app(uiId: Int, databaseId: Long, title: String = "Same") =
+    private fun app(uiId: Int, databaseId: Long, title: String = "Same", addedAt: Long? = null) =
         LibraryAppUiItem(
             id = uiId,
             databaseId = databaseId,
@@ -52,5 +76,6 @@ class LibraryCollectionProjectionTest {
             version = "1.0",
             iconPath = null,
             canReinstall = true,
+            addedAt = addedAt,
         )
 }

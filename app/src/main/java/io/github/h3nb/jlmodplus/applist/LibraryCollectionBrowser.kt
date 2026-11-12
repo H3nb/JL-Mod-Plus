@@ -85,6 +85,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.h3nb.jlmodplus.R
@@ -962,7 +964,8 @@ private fun rememberCollectionAppsProjection(
             return@LaunchedEffect
         }
         val apps = withContext(Dispatchers.Default) {
-            projectCollectionApps(source, query, sortVariant)
+            val context = currentCoroutineContext()
+            projectCollectionApps(source, query, sortVariant) { context.ensureActive() }
         }
         viewportState.collectionProjection = LibraryCollectionProjection(source, query, sortVariant, apps)
     }
