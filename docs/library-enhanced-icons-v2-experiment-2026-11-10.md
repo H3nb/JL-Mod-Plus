@@ -90,3 +90,7 @@ The corner sampler now stores the small number of visible sampled colors in cont
 ### Safety qualification of source-colored letterboxing
 
 Four matching corners alone are not enough to establish a matching letterbox: the rest of the border can contain unrelated colors. Therefore source-colored `Cover` padding now requires additional sparse verification along **all four edges** (same alpha and RGB-distance constraints as the corner detector). Matching corners with varying edge pixels retain the existing theme fill. Two explicit A/B fixtures distinguish corner-only evidence from genuinely uniform border evidence; the strict comparator permits only their documented Fit/Crop and optional tile-color differences.
+
+### Qualification of executable Android contracts
+
+The dedicated A/B run executes the identical normalization probe on both revisions and also runs `LibraryIconNormalizationTest` against the candidate APK. Regular Android CI only compiles instrumentation tests; do not report those assertions as runtime-validated unless the dedicated job executes them. The source-preserving and disabled-enhancement paths now share one return branch, with optional background analysis only for an explicitly preserved artwork variant.

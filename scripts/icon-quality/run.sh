@@ -77,15 +77,22 @@ for variant in baseline candidate; do
     echo "Missing or ambiguous AndroidJUnitRunner for $variant." >&2
     exit 1
   fi
-  adb shell am instrument -w -r -e class "$test_class" "${runners[0]}" \
-    > "$directory/instrumentation.txt" 2>&1 || {
-      cat "$directory/instrumentation.txt"
-      exit 1
-    }
-  cat "$directory/instrumentation.txt"
-  python3 "$head/scripts/runtime-smoke-results.py" \
-    --log "$directory/instrumentation.txt" \
-    --output "$directory/selectors.txt" "$test_class"
+  selectors=("$test_class")
+  if [[ "$variant" == "candidate" ]]; then
+    selectors+=("io.github.h3nb.jlmodplus.applist.LibraryIconNormalizationTest")
+  fi
+  for selector in "${selectors[@]}"; do
+    name="${selector##*.}"
+    log="$directory/$name.txt"
+    adb shell am instrument -w -r -e class "$selector" "${runners[0]}" \
+      > "$log" 2>&1 || {
+        cat "$log"
+        exit 1
+      }
+    cat "$log"
+    python3 "$head/scripts/runtime-smoke-results.py" \
+      --log "$log" --output "$directory/$name-results.txt" "$selector"
+  done
 
   remote="/sdcard/Android/data/$package/files/icon-benchmark"
   adb pull "$remote/metrics.json" "$directory/metrics.json"

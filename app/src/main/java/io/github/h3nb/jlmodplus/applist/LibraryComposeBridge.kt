@@ -3620,26 +3620,19 @@ internal fun normalizeLibraryIcon(
     fileSource: Bitmap,
     enhanceIcon: Boolean,
     preserveArtwork: Boolean = false,
-): LibraryNormalizedIcon? {
-    if (preserveArtwork) {
-        // A supplied 3:4 composition is intentional. Keep its pixels/scale intact while
-        // retaining optional background-color adaptation from the existing analysis.
-        val analysis = if (enhanceIcon) fileSource.analyzeLibraryIcon() else null
+): LibraryNormalizedIcon {
+    if (preserveArtwork || !enhanceIcon) {
+        val backgroundColor = if (preserveArtwork && enhanceIcon) {
+            fileSource.analyzeLibraryIcon()?.let { it.edgeFillColor ?: it.backingColor }
+        } else {
+            null
+        }
         return LibraryNormalizedIcon(
             bitmap = fileSource.asImageBitmap(),
             filterQuality = fileSource.libraryFilterQuality(),
             presentationMode = LibraryIconPresentationMode.SafeFit,
             visualScale = 1f,
-            tileColor = analysis?.edgeFillColor?.toComposeLibraryColor()
-                ?: analysis?.backingColor?.toComposeLibraryColor(),
-        )
-    }
-    if (!enhanceIcon) {
-        return LibraryNormalizedIcon(
-            bitmap = fileSource.asImageBitmap(),
-            filterQuality = fileSource.libraryFilterQuality(),
-            presentationMode = LibraryIconPresentationMode.SafeFit,
-            visualScale = 1f,
+            tileColor = backgroundColor?.toComposeLibraryColor(),
         )
     }
 
@@ -3650,10 +3643,10 @@ internal fun normalizeLibraryIcon(
             presentationMode = LibraryIconPresentationMode.SafeFit,
             visualScale = 1f,
         )
-    val cropBounds = when (analysis.presentation.mode) {
-        LibraryIconPresentationMode.Subject -> analysis.framedCropBounds ?: analysis.contentBounds
-        LibraryIconPresentationMode.Backed -> null
-        else -> null
+    val cropBounds = if (analysis.presentation.mode == LibraryIconPresentationMode.Subject) {
+        analysis.framedCropBounds ?: analysis.contentBounds
+    } else {
+        null
     }
     val normalized = if (cropBounds != null && !cropBounds.isFullBitmap(fileSource)) {
         fileSource.cropLibraryBounds(cropBounds)
@@ -4010,8 +4003,7 @@ private fun Bitmap.hasUniformLibraryBorderColor(backgroundColor: Int): Boolean {
             libraryColorDistanceSquared(pixel, backgroundColor) <= distanceLimit
     }
 
-    // A corner match is not sufficient to fill letterbox bars: sample the complete border
-    // in both orientations so a varied edge falls back to the normal themed container.
+    // Check all four edges; matching corners alone do not justify a source-colored letterbox.
     val row = IntArray(width)
     val xStep = maxOf(1, width / 16)
     for (y in intArrayOf(0, height - 1)) {
