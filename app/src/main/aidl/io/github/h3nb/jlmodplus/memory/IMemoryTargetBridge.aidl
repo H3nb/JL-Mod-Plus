@@ -63,6 +63,7 @@ interface IMemoryTargetBridge {
     Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
     Bundle attachBookmark(long runtimeToken, long expectedRevision, long candidateId,
             String bookmarkId, String label, long cancellationEpoch);
+    Bundle detachBookmark(long runtimeToken, String bookmarkId, long cancellationEpoch);
     Bundle inspectSaved(long runtimeToken, String savedId, int radius);
     Bundle captureInspectorLocator(long runtimeToken, long expectedRevision,
                                   long candidateId, boolean watchAnchor, int relativeOffset);

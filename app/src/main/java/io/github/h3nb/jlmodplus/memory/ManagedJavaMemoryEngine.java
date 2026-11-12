@@ -2302,6 +2302,25 @@ final class ManagedJavaMemoryEngine {
      * No value/class/address heuristic is permitted. A new session must resolve a typed path
      * again or be explicitly relinked.
      */
+    ManagedOperationResult detachBookmark(long token, String bookmarkId, long epoch) {
+        if (bookmarkId == null || bookmarkId.isEmpty() || bookmarkId.length() > 64)
+            return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+                    "Invalid Bookmark ID");
+        synchronized (stateLock) {
+            if (!isCurrentLocked(token) || !isOperationActive(token, epoch))
+                return failureLocked(MemoryEngineContract.RESULT_TARGET_LOST,
+                        "Bookmark runtime changed");
+            for (int i = watches.count - 1; i >= 0; i--) {
+                if (bookmarkId.equals(watches.savedSourceIds[i])) {
+                    watches.remove(watches.ids[i]); // Also stops any Freeze on the old owner.
+                }
+            }
+            savedBindings.remove(bookmarkId);
+            cleanupOwnersLocked();
+            return successLocked("Old Bookmark target detached");
+        }
+    }
+
     ManagedOperationResult attachBookmark(long token, long revision, long candidateId,
             String bookmarkId, String label, long epoch) {
         if (bookmarkId == null || bookmarkId.isEmpty() || bookmarkId.length() > 64

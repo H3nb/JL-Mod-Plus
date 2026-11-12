@@ -265,6 +265,12 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
+        public Bundle detachBookmark(long runtimeToken, String bookmarkId, long epoch) {
+            return managedResult(runtimeToken,
+                    managedEngine.detachBookmark(runtimeToken, bookmarkId, epoch));
+        }
+
+        @Override
         public Bundle inspectSaved(long runtimeToken, String savedId, int radius) {
             return managedInspection(runtimeToken, managedEngine.inspectSaved(
                     runtimeToken, savedId, radius));

@@ -117,10 +117,10 @@ public final class SavedVariablesAuthority extends Service {
                                                String id, Bundle locator) {
             synchronized (lock) {
                 try {
-                    if (id == null || id.isEmpty() || id.length() > 64 || locator == null)
-                        return failed("Invalid bookmark or locator");
+                    if (id == null || id.isEmpty() || id.length() > 64)
+                        return failed("Invalid bookmark ID");
                     Target target = target(path, appId, entry);
-                    JSONObject descriptor = encodeLocator(locator);
+                    JSONObject descriptor = locator == null ? null : encodeLocator(locator);
                     Bundle[] response = new Bundle[1];
                     InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
                             getApplicationContext()).run(target.path, target.appId, () -> {
@@ -130,9 +130,10 @@ public final class SavedVariablesAuthority extends Service {
                         for (int i = 0; i < items.length(); i++) {
                             JSONObject item = items.getJSONObject(i);
                             if (id.equals(item.getString("id"))) {
-                                item.put("locator", descriptor);
+                                item.put("locator", descriptor == null
+                                        ? JSONObject.NULL : descriptor);
                                 found = true;
-                            } else if (!item.isNull("locator") &&
+                            } else if (descriptor != null && !item.isNull("locator") &&
                                     encodeLocator(decodeLocator(item.getJSONObject("locator")))
                                             .toString().equals(descriptor.toString())) {
                                 return false; // Never alias two Bookmark IDs to one rooted path.
