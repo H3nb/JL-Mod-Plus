@@ -4,9 +4,7 @@ package javax.microedition.lcdui;
 /** Selects the physical density for runtime-owned 2D render targets. */
 final class InternalResolution {
     static final int MAX_SCALE = 10;
-    // Conservative target limits; actual GPU/heap headroom is device-dependent.
-    static final int MAX_TARGET_SIDE = 4096;
-    static final long MAX_ESTIMATED_BYTES = 160L * 1024L * 1024L;
+    static final long MAX_BITMAP_PIXELS = Integer.MAX_VALUE / 4L;
 
     private InternalResolution() {}
 
@@ -44,10 +42,7 @@ final class InternalResolution {
         for (int factor = desired; factor > 1; factor--) {
             long w = (long) logicalWidth * factor;
             long h = (long) Math.max(logicalHeight, backingHeight) * factor;
-            // Guest paint, GameCanvas/other source, published frame, GL upload.
-            long estimated = w * h * 4L * 4L;
-            if (w <= MAX_TARGET_SIDE && h <= MAX_TARGET_SIDE && estimated <= MAX_ESTIMATED_BYTES)
-                return factor;
+            if (w <= Integer.MAX_VALUE && h <= MAX_BITMAP_PIXELS / w) return factor;
         }
         return 1;
     }

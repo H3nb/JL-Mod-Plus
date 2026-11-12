@@ -14,10 +14,10 @@ public class InternalResolutionTest {
         assertEquals(5, InternalResolution.resolve(0, 240, 300, 320, 1200, 1650));
     }
 
-    @Test public void manualSupportsSupersamplingWithinBudget() {
+    @Test public void manualSupportsSupersamplingWithinBitmapRepresentationLimits() {
         assertEquals(1, InternalResolution.resolve(1, 240, 320, 1080, 1920));
         assertEquals(10, InternalResolution.resolve(10, 240, 320, 1080, 1920));
-        assertEquals(4, InternalResolution.resolve(10, 800, 600, 1920, 1080));
+        assertEquals(10, InternalResolution.resolve(10, 800, 600, 1920, 1080));
         assertEquals(1, InternalResolution.resolve(8, 0, 320, 1080, 1920));
     }
 
@@ -29,12 +29,13 @@ public class InternalResolutionTest {
         int initial = InternalResolution.resolve(10, 240, 135, 135, 1920, 1080);
         assertEquals(10, initial);
         int resized = InternalResolution.resolve(initial, 240, 426, 426, 1080, 1920);
-        assertEquals(9, resized); // 10x would exceed the 4096-pixel target side.
-        assertEquals(9, InternalResolution.resolve(resized,
-                240, 135, 135, 1920, 1080)); // Do not raise the session density.
+        assertEquals(10, resized);
+        assertEquals(10, InternalResolution.resolve(resized,
+                240, 135, 135, 1920, 1080));
 
-        // Memory cap can be more restrictive than width and height independently.
-        assertEquals(5, InternalResolution.resolve(10, 800, 500, 500, 1920, 1080));
+        assertEquals(10, InternalResolution.resolve(10, 800, 500, 500, 1920, 1080));
+        assertEquals(1, InternalResolution.resolve(10,
+                Integer.MAX_VALUE, Integer.MAX_VALUE, 1080, 1920));
     }
     @Test public void allocationFailureDowngradesToTheFirstUsableDensity() {
         java.util.ArrayList<Integer> attempts = new java.util.ArrayList<>();
