@@ -161,10 +161,11 @@ class MemoryScriptsComposeTest {
             override fun readCurrentMemoryRecipe(
                 document: String, inputs: Map<String, String>,
                 onReady: (List<MemoryRecipeReadValue>?, String?) -> Unit,
-            ) = onReady(listOf(MemoryRecipeReadValue("coins", "10")), null)
+            ) = onReady(listOf(MemoryRecipeReadValue("coins", "10", "test-receipt")), null)
             override fun runMemoryRecipeChecked(
                 document: String, inputs: Map<String, String>, freeze: Boolean,
-                expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
+                expectedValues: List<String>?, snapshotTicket: String?,
+                onComplete: (Boolean) -> Unit,
             ) {
                 assertFalse(freeze)
                 applied += inputs to expectedValues

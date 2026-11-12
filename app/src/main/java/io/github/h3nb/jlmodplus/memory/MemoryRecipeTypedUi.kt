@@ -64,6 +64,9 @@ internal fun TypedMemoryRecipeDetail(
     var expectedValues by remember(script.id, state.runtimeToken) {
         mutableStateOf<List<String>?>(null)
     }
+    var snapshotTicket by remember(script.id, state.runtimeToken) {
+        mutableStateOf<String?>(null)
+    }
     var readError by remember(script.id, state.runtimeToken) { mutableStateOf<String?>(null) }
     var reading by remember(script.id, state.runtimeToken) { mutableStateOf(false) }
     var busy by remember(script.id, state.runtimeToken) { mutableStateOf(false) }
@@ -76,6 +79,7 @@ internal fun TypedMemoryRecipeDetail(
         reading = true
         currentValues = null
         expectedValues = null
+        snapshotTicket = null
         readError = null
         actions.readCurrentMemoryRecipe(script.document, requestInputs) { result, error ->
             if (request == requestId) {
@@ -88,6 +92,7 @@ internal fun TypedMemoryRecipeDetail(
                 }
                 if (metadata.mode == "form" && result != null && consistent) {
                     expectedValues = result.map(MemoryRecipeReadValue::value)
+                    snapshotTicket = result.firstOrNull()?.snapshotTicket
                     inputs = requestInputs + metadata.fields.filterNot(MemoryScriptInput::selector)
                         .mapNotNull { field ->
                             grouped[field.name]?.firstOrNull()?.value?.let { field.name to it }
@@ -186,15 +191,16 @@ internal fun TypedMemoryRecipeDetail(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Button(modifier = Modifier.testTag("memory-script-apply"),
-                        enabled = expectedValues != null && !busy && !reading &&
+                        enabled = expectedValues != null && snapshotTicket != null && !busy && !reading &&
                         !state.busy && state.writeSupported, onClick = {
                         val snapshot = expectedValues ?: return@Button
                         busy = true
                         actions.runMemoryRecipeChecked(
-                            script.document, inputs, false, snapshot,
+                            script.document, inputs, false, snapshot, snapshotTicket,
                         ) { success ->
                             busy = false
                             expectedValues = null
+                            snapshotTicket = null
                             if (success) refresh(inputs)
                         }
                     }) { Text(stringResource(R.string.memory_scripts_apply)) }

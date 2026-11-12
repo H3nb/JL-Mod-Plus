@@ -1975,7 +1975,9 @@ internal class MemoryEditorComposeController(
                     onReady(null, "Recipe returned invalid read results")
                 } else {
                     onReady(names.indices.map { index ->
-                        MemoryRecipeReadValue(names[index], values[index])
+                        MemoryRecipeReadValue(
+                            names[index], values[index], reply.getString("recipeReadTicket"),
+                        )
                     }, null)
                 }
             }
@@ -1984,16 +1986,20 @@ internal class MemoryEditorComposeController(
 
     override fun runMemoryRecipe(
         document: String, inputs: Map<String, String>, freeze: Boolean, preview: Boolean,
-    ) = executeMemoryRecipe(document, inputs, freeze, preview, null, null)
+    ) = executeMemoryRecipe(document, inputs, freeze, preview, null, null, null)
 
     override fun runMemoryRecipeChecked(
         document: String, inputs: Map<String, String>, freeze: Boolean,
-        expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
-    ) = executeMemoryRecipe(document, inputs, freeze, false, expectedValues, onComplete)
+        expectedValues: List<String>?, snapshotTicket: String?,
+        onComplete: (Boolean) -> Unit,
+    ) = executeMemoryRecipe(
+        document, inputs, freeze, false, expectedValues, snapshotTicket, onComplete,
+    )
 
     private fun executeMemoryRecipe(
         document: String, inputs: Map<String, String>, freeze: Boolean, preview: Boolean,
-        expectedValues: List<String>?, onComplete: ((Boolean) -> Unit)?,
+        expectedValues: List<String>?, snapshotTicket: String?,
+        onComplete: ((Boolean) -> Unit)?,
     ) {
         val token = state.runtimeToken
         val engine = service
@@ -2005,6 +2011,7 @@ internal class MemoryEditorComposeController(
         val parameters = Bundle().apply {
             inputs.forEach { (key, value) -> putString(key, value) }
             expectedValues?.let { putStringArray("recipeExpectedValues", it.toTypedArray()) }
+            snapshotTicket?.let { putString("recipeReadTicket", it) }
         }
         runIpc {
             val result = runCatching {

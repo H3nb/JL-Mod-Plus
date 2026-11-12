@@ -438,7 +438,9 @@ internal object MemoryEditorSessionNavigation {
 
 internal data class SavedVariableRow(val id: String, val label: String, val path: String)
 internal data class MemoryScriptRow(val id: String, val name: String, val document: String)
-internal data class MemoryRecipeReadValue(val name: String, val value: String)
+internal data class MemoryRecipeReadValue(
+    val name: String, val value: String, val snapshotTicket: String? = null,
+)
 
 /**
  * One visible List entry. A Saved definition and its session Watch remain independent
@@ -660,7 +662,8 @@ internal interface MemoryEditorActions {
                         freeze: Boolean, preview: Boolean) = Unit
     fun runMemoryRecipeChecked(
         document: String, inputs: Map<String, String>, freeze: Boolean,
-        expectedValues: List<String>?, onComplete: (Boolean) -> Unit,
+        expectedValues: List<String>?, snapshotTicket: String? = null,
+        onComplete: (Boolean) -> Unit,
     ) = onComplete(false)
     fun readCurrentMemoryRecipe(
         document: String, inputs: Map<String, String>,
