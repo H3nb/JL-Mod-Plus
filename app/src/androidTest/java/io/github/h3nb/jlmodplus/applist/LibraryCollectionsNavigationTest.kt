@@ -688,9 +688,19 @@ class LibraryCollectionsNavigationTest {
         val target = composeRule.onNodeWithTag(
             "collection-membership-${SAMPLE_MEMBER_2.id}",
         )
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("collection-membership-${SAMPLE_MEMBER_2.id}")
-                .fetchSemanticsNodes().isNotEmpty()
+        try {
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodesWithTag("collection-membership-${SAMPLE_MEMBER_2.databaseId}")
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+        } catch (error: androidx.compose.ui.test.ComposeTimeoutException) {
+            android.util.Log.e(
+                "CollectionPickerTest",
+                "Picker state=${host.store.state.value}; semantics=" +
+                    composeRule.onRoot(useUnmergedTree = true).printToString(),
+                error,
+            )
+            throw error
         }
         target.performClick()
         composeRule.waitForIdle()
