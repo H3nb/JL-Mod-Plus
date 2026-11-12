@@ -81,6 +81,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -174,6 +176,53 @@ internal fun MemoryEditorRuntimeRoot(
         val tab = state.activeTab
         val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
+        // The Activity must finish to return input to the game. These fields survive its
+        // destruction in the memory-engine process, scoped to this MIDlet runtime token.
+        val savedScript = remember(state.runtimeToken) {
+            MemoryEditorSessionNavigation.script(state.runtimeToken)
+        }
+        var scriptEditing by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.editing)
+        }
+        var scriptReplacingId by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.replacingId)
+        }
+        var scriptInitialText by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.initialText)
+        }
+        var scriptText by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.text)
+        }
+        var selectedScriptId by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.selectedId)
+        }
+        SideEffect {
+            MemoryEditorSessionNavigation.rememberScript(
+                state.runtimeToken,
+                MemoryEditorScriptWorkspace(
+                    selectedId = selectedScriptId,
+                    editing = scriptEditing,
+                    replacingId = scriptReplacingId,
+                    initialText = scriptInitialText,
+                    text = scriptText,
+                ),
+            )
+        }
+        val scriptDraft = if (scriptEditing) {
+            MemoryScriptDraft(scriptReplacingId, scriptInitialText, scriptText)
+        } else null
+        val setScriptDraft: (MemoryScriptDraft?) -> Unit = { draft ->
+            scriptEditing = draft != null
+            scriptReplacingId = draft?.replacingId
+            scriptInitialText = draft?.initialText.orEmpty()
+            scriptText = draft?.text.orEmpty()
+        }
+        var scriptDiscardMode by remember { mutableStateOf<String?>(null) }
+        val backFromScriptEditor = {
+            if (scriptDraft?.dirty == true) scriptDiscardMode = "back"
+            else setScriptDraft(null)
+        }
+        val closeWorkspace = { actions.close() }
         val resultsListState = rememberLazyListState()
         val variablesListState = rememberLazyListState()
         val listEntries = remember(state.savedVariables, state.watches) {
@@ -215,14 +264,21 @@ internal fun MemoryEditorRuntimeRoot(
             when (it) {
                 MemoryEditorTab.RESULTS -> actions.setVariablesTab(false)
                 MemoryEditorTab.VARIABLES -> actions.setVariablesTab(true)
+                MemoryEditorTab.SCRIPTS -> actions.setScriptsTab()
                 MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
             }
         }
         BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
+            scriptDraft?.dirty == true ||
+            (tab == MemoryEditorTab.SCRIPTS &&
+                (scriptDraft != null || selectedScriptId != null)) ||
             (state.variablesTab && listSelection.isNotEmpty())) {
             when {
                 overlay.peeking -> overlay.peeking = false
                 tab == MemoryEditorTab.INSPECTOR -> actions.closeInspector()
+                tab == MemoryEditorTab.SCRIPTS && scriptDraft != null -> backFromScriptEditor()
+                tab == MemoryEditorTab.SCRIPTS -> selectedScriptId = null
+                scriptDraft?.dirty == true -> actions.close()
                 else -> listSelection = emptySet()
             }
         }
@@ -260,7 +316,7 @@ internal fun MemoryEditorRuntimeRoot(
                             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
                         )) {
                             RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, canInspect,
-                                actions::close, showTitle)
+                                closeWorkspace, showTitle)
                         }
                         if (state.busy) RuntimeOperationStrip(state, actions)
                         state.message?.takeIf(String::isNotBlank)?.let {
@@ -295,6 +351,12 @@ internal fun MemoryEditorRuntimeRoot(
                                     MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
                                         shownState, actions, listEntries, listSelection,
                                         { listSelection = it }, variablesListState, compactResults,
+                                        Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
+                                        shownState, actions, selectedScriptId,
+                                        { selectedScriptId = it }, scriptDraft,
+                                        { setScriptDraft(it) }, backFromScriptEditor,
                                         Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
@@ -346,6 +408,24 @@ internal fun MemoryEditorRuntimeRoot(
             }
         }
         if (opacityDialog) MemoryEditorOpacityDialog(overlay) { opacityDialog = false }
+        if (scriptDiscardMode != null) {
+            AlertDialog(
+                onDismissRequest = { scriptDiscardMode = null },
+                title = { Text(stringResource(R.string.memory_scripts_unsaved_title)) },
+                text = { Text(stringResource(R.string.memory_scripts_unsaved_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        scriptDiscardMode = null
+                        setScriptDraft(null)
+                    }) { Text(stringResource(R.string.memory_scripts_discard)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { scriptDiscardMode = null }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -382,7 +462,8 @@ private fun RuntimeMemoryHeader(
                 Spacer(Modifier.weight(1f))
             }
             IconButton(onClick = onClose) {
-                Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
+                Icon(painterResource(R.drawable.ic_close),
+                    stringResource(R.string.memory_editor_minimize))
             }
         }
     }
@@ -406,6 +487,7 @@ private fun RuntimeMemoryTabs(
             val label = when (tab) {
                 MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
                 MemoryEditorTab.VARIABLES -> R.string.memory_variables_tab
+                MemoryEditorTab.SCRIPTS -> R.string.memory_scripts_title
                 MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
             }
             val enabled = tab != MemoryEditorTab.INSPECTOR ||
@@ -936,6 +1018,8 @@ private fun RuntimeVariablesTab(
         }
     }.orEmpty()
     var moreActions by remember { mutableStateOf(false) }
+    var recipeDialog by remember { mutableStateOf(false) }
+    var recipeSourceKey by remember { mutableStateOf<String?>(null) }
     val primaryActions = listOf(
         RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value,
             R.string.memory_editor_edit, editEnabled, ::editSelection),
@@ -1047,6 +1131,10 @@ private fun RuntimeVariablesTab(
                     Text(stringResource(R.string.memory_list_empty_hint),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall)
+                    TextButton(enabled = !state.busy, onClick = {
+                        recipeSourceKey = null
+                        recipeDialog = true
+                    }) { Text(stringResource(R.string.memory_recipes_import)) }
                 }
             }
             items(entries, key = MemoryListEntry::key) { entry ->
@@ -1068,6 +1156,17 @@ private fun RuntimeVariablesTab(
                 )
             }
         }
+    }
+
+    if (recipeDialog) {
+        val saved = entries.firstOrNull { it.key == recipeSourceKey }?.saved
+        MemoryRecipeDialog(
+            saved = saved,
+            savedValue = saved?.let { state.savedValues[it.id]?.value }.orEmpty(),
+            writeSupported = state.writeSupported && !state.busy,
+            actions = actions,
+            onDismiss = { recipeDialog = false },
+        )
     }
 
     if (menuEntry != null) {
@@ -1102,6 +1201,13 @@ private fun RuntimeVariablesTab(
                 !state.busy) { renameKey = menuEntry.key },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                 !state.busy) { removeKeys = setOf(menuEntry.key) },
+            RuntimeToolbarAction(R.drawable.ic_auto_mode,
+                if (saved != null) R.string.memory_recipes_title else R.string.memory_recipes_import,
+                !state.busy) {
+                recipeSourceKey = menuEntry.key
+                recipeDialog = true
+                menuKey = null
+            },
         )
         RuntimeOverflowActionsDialog(actionsInMenu) { menuKey = null }
     }

@@ -80,5 +80,10 @@ interface IMemoryTargetBridge {
     Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
                                   long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                                   int type, long expectedBits, String replacement, long cancellationEpoch);
+ 
+    Bundle runMemoryRecipe(long runtimeToken, String document, in Bundle parameters,
+            boolean freeze, boolean preview);
+    Bundle clearMemoryRecipeFreeze(long runtimeToken, String recipeId);
+
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }

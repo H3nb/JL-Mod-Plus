@@ -36,6 +36,65 @@ public final class SavedVariablesAuthority extends Service {
     private final Object lock = new Object();
 
     private final ISavedVariablesAuthority.Stub binder = new ISavedVariablesAuthority.Stub() {
+        @Override public Bundle listRecipes(String path, long appId, String entry) {
+            synchronized (lock) {
+                try {
+                    Target target = target(path, appId, entry);
+                    return MemoryRecipeCatalog.list(MemoryRecipeCatalog.fileFor(target.file), entry);
+                } catch (Exception error) { return failed(error); }
+            }
+        }
+
+        @Override public Bundle putRecipe(String path, long appId, String entry,
+                                          String document, String replacingId) {
+            synchronized (lock) {
+                try {
+                    Target target = target(path, appId, entry);
+                    Bundle[] result = new Bundle[1];
+                    Exception[] failure = new Exception[1];
+                    InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
+                            getApplicationContext()).run(target.path, target.appId, () -> {
+                        try {
+                            result[0] = MemoryRecipeCatalog.put(
+                                    MemoryRecipeCatalog.fileFor(target.file), entry,
+                                    document, replacingId);
+                            return true;
+                        } catch (Exception error) {
+                            failure[0] = error;
+                            return false;
+                        }
+                    });
+                    return guard == InstalledAppWriteGuard.Result.SUCCESS ? result[0]
+                            : failure[0] == null ? failed("Installed game identity changed")
+                            : failed(failure[0]);
+                } catch (Exception error) { return failed(error); }
+            }
+        }
+
+        @Override public Bundle deleteRecipe(String path, long appId, String entry,
+                                             String recipeId) {
+            synchronized (lock) {
+                try {
+                    Target target = target(path, appId, entry);
+                    Bundle[] result = new Bundle[1];
+                    Exception[] failure = new Exception[1];
+                    InstalledAppWriteGuard.Result guard = InstalledAppWriteGuard.create(
+                            getApplicationContext()).run(target.path, target.appId, () -> {
+                        try {
+                            result[0] = MemoryRecipeCatalog.delete(
+                                    MemoryRecipeCatalog.fileFor(target.file), entry, recipeId);
+                            return true;
+                        } catch (Exception error) {
+                            failure[0] = error;
+                            return false;
+                        }
+                    });
+                    return guard == InstalledAppWriteGuard.Result.SUCCESS ? result[0]
+                            : failure[0] == null ? failed("Installed game identity changed")
+                            : failed(failure[0]);
+                } catch (Exception error) { return failed(error); }
+            }
+        }
         @Override public Bundle list(String path, long appId, String entry) {
             synchronized (lock) {
                 try { return rows(load(target(path, appId, entry))); }

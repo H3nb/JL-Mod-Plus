@@ -1,0 +1,59 @@
+{
+  "formatVersion": 1,
+  "id": "furby.inventory.quantity",
+  "name": "Furby Island inventory slot quantity",
+  "game": {
+    "mainClass": "com/lemonquest/furby/GameMIDlet",
+    "sourceJarSha256": "089fee081e78eb078a63bde72766101544593b57ce482c43408b2f987bd53986"
+  },
+  "inputs": {
+    "slot": {
+      "min": 0,
+      "max": 20
+    },
+    "quantity": {
+      "min": 1,
+      "max": 99
+    }
+  },
+  "root": {
+    "kind": "midlet",
+    "class": "com/lemonquest/furby/GameMIDlet"
+  },
+  "actions": [
+    {
+      "kind": "bitfield",
+      "path": [
+        {
+          "kind": "field",
+          "owner": "com/lemonquest/furby/GameMIDlet",
+          "name": "a__e",
+          "descriptor": "Lcom/lemonquest/furby/e;"
+        },
+        {
+          "kind": "field",
+          "owner": "com/lemonquest/furby/e",
+          "name": "a__l",
+          "descriptor": "Lcom/lemonquest/furby/l;"
+        },
+        {
+          "kind": "field",
+          "owner": "com/lemonquest/furby/l",
+          "name": "a__arrshort",
+          "descriptor": "[S"
+        },
+        {
+          "kind": "index",
+          "descriptor": "[S",
+          "indexInput": "slot"
+        }
+      ],
+      "arrayLength": 21,
+      "nonZeroMask": "0x00FF",
+      "identityMask": "0x00FF",
+      "shift": 8,
+      "width": 8,
+      "valueInput": "quantity"
+    }
+  ]
+}

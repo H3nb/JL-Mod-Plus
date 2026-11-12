@@ -32,6 +32,7 @@ public final class MemoryTargetBridgeService extends Service {
 	private final RemoteCallbackList<IMemoryTargetCallback> callbacks = new RemoteCallbackList<>();
 	private final MemoryRuntimeSession.Listener runtimeListener = this::notifyRuntimeEnded;
 	private final ManagedJavaMemoryEngine managedEngine = new ManagedJavaMemoryEngine();
+	private final MemoryRecipeRuntime recipes = new MemoryRecipeRuntime();
 
 	private final IMemoryTargetBridge.Stub binder = new IMemoryTargetBridge.Stub() {
 		@Override
@@ -209,7 +210,32 @@ public final class MemoryTargetBridgeService extends Service {
 
 		@Override
 		public Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch) {
-			return managedResult(runtimeToken, managedEngine.freezeTick(runtimeToken, cancellationEpoch));
+			ManagedJavaMemoryEngine.ManagedOperationResult watchStatus =
+					managedEngine.freezeTick(runtimeToken, cancellationEpoch);
+			// Recipes have independent rooted targets. In a game that never opened Search,
+			// the ordinary Watch engine can return TARGET_LOST despite a healthy recipe.
+			Bundle recipeStatus = recipes.activeCount(runtimeToken) > 0
+					? recipes.tick(runtimeToken) : null;
+			Bundle result = managedResult(runtimeToken, watchStatus);
+			if (recipeStatus != null) {
+				int recipeCode = recipeStatus.getInt(
+						MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT);
+				int code = watchStatus.code;
+				if (recipeCode == MemoryEngineContract.RESULT_TARGET_LOST ||
+						recipeCode == MemoryEngineContract.RESULT_PARTIAL_WRITE) {
+					code = recipeCode;
+					result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
+							recipeStatus.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL));
+				} else if (recipeCode == MemoryEngineContract.RESULT_OK &&
+						(code == MemoryEngineContract.RESULT_TARGET_LOST ||
+						 code == MemoryEngineContract.RESULT_CANCELLED)) {
+					code = MemoryEngineContract.RESULT_OK;
+				}
+				result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, code);
+				result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT,
+						watchStatus.freezeCount + recipes.activeCount(runtimeToken));
+			}
+			return result;
 		}
 
 		@Override
@@ -316,6 +342,25 @@ public final class MemoryTargetBridgeService extends Service {
         public void forgetSaved(long runtimeToken, String savedId) {
             managedEngine.forgetSaved(runtimeToken, savedId);
         }
+
+		@Override
+		public Bundle runMemoryRecipe(long runtimeToken, String document, Bundle parameters,
+		                             boolean freeze, boolean preview) {
+            int ordinaryFreezeCount = managedEngine.capabilities(runtimeToken).freezeCount;
+			Bundle result = recipes.run(runtimeToken, document, parameters, freeze, preview,
+                    ordinaryFreezeCount);
+			Bundle combined = managedCapabilities(runtimeToken, managedEngine.capabilities(runtimeToken));
+			combined.putAll(result);
+			return combined;
+		}
+
+		@Override
+		public Bundle clearMemoryRecipeFreeze(long runtimeToken, String recipeId) {
+			Bundle result = recipes.clear(runtimeToken, recipeId);
+			Bundle combined = managedCapabilities(runtimeToken, managedEngine.capabilities(runtimeToken));
+			combined.putAll(result);
+			return combined;
+		}
 
 		@Override
 		public void cancelManaged(long runtimeToken, long cancellationEpoch) {
@@ -436,6 +481,7 @@ public final class MemoryTargetBridgeService extends Service {
 
 	private void notifyRuntimeEnded(long token) {
 		managedEngine.runtimeClosed(token);
+		recipes.runtimeClosed(token);
 		int count = callbacks.beginBroadcast();
 		try {
 			for (int index = 0; index < count; index++) {
@@ -450,7 +496,7 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 	}
 
-	private static Bundle managedCapabilities(long runtimeToken,
+	private Bundle managedCapabilities(long runtimeToken,
 	                                          ManagedJavaMemoryEngine.ManagedCapabilities state) {
 		Bundle result = new Bundle();
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
@@ -466,7 +512,9 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, state.historyDepth);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
-		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount + recipes.activeCount(runtimeToken));
+		result.putStringArray("recipeFreezeIds", recipes.activeIds(runtimeToken));
+        result.putStringArray("recipeFreezeNames", recipes.activeNames(runtimeToken));
 		if (state.message != null && !state.message.isBlank()) {
 			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
 					MemoryEngineContract.truncateMessage(state.message));
@@ -474,7 +522,7 @@ public final class MemoryTargetBridgeService extends Service {
 		return result;
 	}
 
-	private static Bundle managedSession(long runtimeToken,
+	private Bundle managedSession(long runtimeToken,
 	                                     ManagedJavaMemoryEngine.ManagedSession state) {
 		Bundle result = new Bundle();
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
@@ -485,7 +533,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, state.historyDepth);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
-		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount + recipes.activeCount(runtimeToken));
 		result.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE, state.stage);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_MODE, state.mode);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE, state.requestedType);
@@ -496,7 +544,7 @@ public final class MemoryTargetBridgeService extends Service {
 		return result;
 	}
 
-	private static Bundle managedResult(long runtimeToken,
+	private Bundle managedResult(long runtimeToken,
 	                                    ManagedJavaMemoryEngine.ManagedOperationResult state) {
 		Bundle result = new Bundle();
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
@@ -520,7 +568,7 @@ public final class MemoryTargetBridgeService extends Service {
 				state.rejectedBeforeWrite);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_SKIPPED_BY_TYPE, state.skippedByType);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
-		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount + recipes.activeCount(runtimeToken));
 		if (state.message != null && !state.message.isBlank()) {
 			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
 					MemoryEngineContract.truncateMessage(state.message));

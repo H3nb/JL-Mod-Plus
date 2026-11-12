@@ -1340,4 +1340,39 @@
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX (pixel art)</string>
     <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">Edge-aware (smooth)</string>
+<string name="memory_recipes_title" tools:ignore="MissingTranslation">Automation</string>
+<string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Generate from %1$s</string>
+<string name="memory_recipes_import" tools:ignore="MissingTranslation">Import recipe (JSON)</string>
+<string name="memory_recipes_preview" tools:ignore="MissingTranslation">Preview targets</string>
+<string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stop recipe Freeze</string>
+<string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Keep value frozen while this game runs</string>
+<string name="memory_recipes_run" tools:ignore="MissingTranslation">Run</string>
+<string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Active recipe Freeze</string>
+<string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Current values: %1$s</string>
+<string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
+<string name="memory_scripts_new" tools:ignore="MissingTranslation">Add script</string>
+<string name="memory_scripts_back" tools:ignore="MissingTranslation">Back</string>
+<string name="memory_scripts_edit" tools:ignore="MissingTranslation">Edit</string>
+<string name="memory_scripts_save" tools:ignore="MissingTranslation">Save</string>
+<string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script saved</string>
+<string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script deleted</string>
+<string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Could not save script</string>
+<string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Paste a Memory Recipe v1 JSON document. Saving does not execute it.</string>
+<string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Paste JSON from a guide or an AI agent</string>
+<string name="memory_scripts_paste" tools:ignore="MissingTranslation">Paste</string>
+<string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboard is empty or the document exceeds 24 KiB</string>
+<string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Recipe format is invalid</string>
+<string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Freeze active for this script</string>
+<string name="memory_scripts_delete" tools:ignore="MissingTranslation">Delete</string>
+<string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Delete %1$s? Its active Freeze will be stopped.</string>
+<string name="memory_scripts_empty" tools:ignore="MissingTranslation">No scripts saved</string>
+<string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Discard unsaved script?</string>
+<string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Your changes to the JSON editor have not been saved.</string>
+<string name="memory_scripts_discard" tools:ignore="MissingTranslation">Discard</string>
+<string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Current value</string>
+<string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Refresh</string>
+<string name="memory_scripts_reading" tools:ignore="MissingTranslation">Reading current values…</string>
+<string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Tap Refresh to read the value from the running game.</string>
+<string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Inconsistent copies: %1$s</string>
+<string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimize Memory Editor</string>
 </resources>

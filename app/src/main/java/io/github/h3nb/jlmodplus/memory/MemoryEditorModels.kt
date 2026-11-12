@@ -353,7 +353,7 @@ internal object MemoryWatchPageParser {
     }
 }
 
-internal enum class MemoryEditorTab { RESULTS, VARIABLES, INSPECTOR }
+internal enum class MemoryEditorTab { RESULTS, VARIABLES, SCRIPTS, INSPECTOR }
 
 /** Session-only navigation; Inspector always re-reads a checked target after reopening. */
 internal data class MemoryEditorInspectorTarget(
@@ -375,16 +375,30 @@ internal data class MemoryEditorNavigationState(
         }
 }
 
+/** Transient per-MIDlet workspace. Minimize must not turn an editable draft into a new session. */
+internal data class MemoryEditorScriptWorkspace(
+    val selectedId: String? = null,
+    val editing: Boolean = false,
+    val replacingId: String? = null,
+    val initialText: String = "",
+    val text: String = "",
+    val detailId: String? = null,
+    val detailInputs: Map<String, String> = emptyMap(),
+    val detailFreeze: Boolean = false,
+)
+
 /** Held only in :memory_engine memory. A different MIDlet token starts with Search. */
 internal object MemoryEditorSessionNavigation {
     private var runtimeToken = 0L
     private var last = MemoryEditorNavigationState()
+    private var scriptWorkspace = MemoryEditorScriptWorkspace()
 
     @Synchronized fun read(token: Long): MemoryEditorNavigationState {
         if (token == 0L) return MemoryEditorNavigationState()
         if (runtimeToken != token) {
             runtimeToken = token
             last = MemoryEditorNavigationState()
+            scriptWorkspace = MemoryEditorScriptWorkspace()
         }
         return last
     }
@@ -393,9 +407,38 @@ internal object MemoryEditorSessionNavigation {
         // Ignore late closes from an older Activity after a new session has opened.
         if (token != 0L && token == runtimeToken) last = navigation
     }
+
+    @Synchronized fun script(token: Long): MemoryEditorScriptWorkspace =
+        if (token != 0L && token == runtimeToken) scriptWorkspace
+        else MemoryEditorScriptWorkspace()
+
+    @Synchronized fun rememberScript(token: Long, update: MemoryEditorScriptWorkspace) {
+        if (token != 0L && token == runtimeToken) {
+            // Script selection/editor changes must not overwrite detail-input changes.
+            scriptWorkspace = scriptWorkspace.copy(
+                selectedId = update.selectedId,
+                editing = update.editing,
+                replacingId = update.replacingId,
+                initialText = update.initialText,
+                text = update.text,
+            )
+        }
+    }
+
+    @Synchronized fun rememberScriptDetail(
+        token: Long, id: String?, values: Map<String, String>, freeze: Boolean,
+    ) {
+        if (token != 0L && token == runtimeToken) {
+            scriptWorkspace = scriptWorkspace.copy(
+                detailId = id, detailInputs = values.toMap(), detailFreeze = freeze,
+            )
+        }
+    }
 }
 
 internal data class SavedVariableRow(val id: String, val label: String, val path: String)
+internal data class MemoryScriptRow(val id: String, val name: String, val document: String)
+internal data class MemoryRecipeReadValue(val name: String, val value: String)
 
 /**
  * One visible List entry. A Saved definition and its session Watch remain independent
@@ -497,6 +540,10 @@ internal data class MemoryEditorUiState(
     val savedError: String? = null,
     val selected: Set<Long> = emptySet(),
     val variablesTab: Boolean = false,
+    val scriptsTab: Boolean = false,
+    val scripts: List<MemoryScriptRow> = emptyList(),
+    val scriptsLoaded: Boolean = false,
+    val scriptsError: String? = null,
     val message: String? = null,
     val messageIsError: Boolean = false,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
@@ -514,6 +561,7 @@ internal data class MemoryEditorUiState(
     val activeTab: MemoryEditorTab
         get() = when {
             inspectorLoading || inspector != null -> MemoryEditorTab.INSPECTOR
+            scriptsTab -> MemoryEditorTab.SCRIPTS
             variablesTab -> MemoryEditorTab.VARIABLES
             else -> MemoryEditorTab.RESULTS
         }
@@ -535,6 +583,11 @@ internal interface MemoryEditorActions {
     fun undo()
     fun refresh()
     fun setVariablesTab(variables: Boolean)
+    fun setScriptsTab() = Unit
+    fun refreshMemoryScripts() = Unit
+    fun saveMemoryScript(document: String, replacingId: String?,
+                         onComplete: (Boolean) -> Unit) = onComplete(false)
+    fun deleteMemoryScript(id: String, onComplete: (Boolean) -> Unit) = onComplete(false)
     fun refreshSavedVariables() = Unit
     fun saveSelectedVariable(name: String) = Unit
     fun beginSavedEdit(id: String, onReady: (SavedVariableRuntimeValue?) -> Unit) = Unit
@@ -597,6 +650,17 @@ internal interface MemoryEditorActions {
     fun freezeListSaved(id: String, expectedValue: String) = Unit
     fun setListWatchFreeze(id: Long, expectedValue: String, freeze: Boolean) = Unit
     fun removeListEntries(savedIds: List<String>, watchIds: List<Long>) = Unit
+    /** Recipes share one bounded execution format; advanced structure stays out of the UI. */
+    fun runMemoryRecipe(document: String, inputs: Map<String, String>,
+                        freeze: Boolean, preview: Boolean) = Unit
+    fun readCurrentMemoryRecipe(
+        document: String, inputs: Map<String, String>,
+        onReady: (List<MemoryRecipeReadValue>?, String?) -> Unit,
+    ) = onReady(null, "Memory Recipe reading unavailable")
+    fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean) = Unit
+    fun clearMemoryRecipeFreeze(recipeId: String) = Unit
+    fun listActiveMemoryRecipeFreezes(onReady: (List<Pair<String, String>>) -> Unit) =
+        onReady(emptyList())
     fun copySelected(locations: Boolean)
     fun previousPage()
     fun nextPage()

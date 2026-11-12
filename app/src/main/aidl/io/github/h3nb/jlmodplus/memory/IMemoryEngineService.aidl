@@ -78,5 +78,11 @@ interface IMemoryEngineService {
     Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
                                   long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                                   int type, long expectedBits, String replacement);
+
+    // Recipe operations never use Search candidate IDs or mutate Search history.
+    Bundle runMemoryRecipe(long runtimeToken, String document, in Bundle parameters,
+            boolean freeze, boolean preview);
+    Bundle clearMemoryRecipeFreeze(long runtimeToken, String recipeId);
+
     void cancelOperation(long runtimeToken);
 }

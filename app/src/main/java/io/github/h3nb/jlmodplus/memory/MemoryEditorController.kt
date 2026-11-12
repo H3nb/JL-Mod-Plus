@@ -58,6 +58,7 @@ internal class MemoryEditorComposeController(
     private var state by mutableStateOf(MemoryEditorUiState(
         pageOffset = previousNavigation.pageOffset,
         variablesTab = previousNavigation.underlyingTab == MemoryEditorTab.VARIABLES,
+        scriptsTab = previousNavigation.underlyingTab == MemoryEditorTab.SCRIPTS,
         inspectorLoading = pendingInspectorRestore != null,
     ))
     private var service: IMemoryEngineService? = null
@@ -68,6 +69,7 @@ internal class MemoryEditorComposeController(
     private var savedLocators: Map<String, Bundle> = emptyMap()
     private var savedRefreshPending = false
     private var savedCatalogDirty = false
+    private var scriptsGeneration = 0L
     @Volatile private var savedEditId: String? = null
     private var savedEditReady = false
     private var hostForeground = true
@@ -76,6 +78,7 @@ internal class MemoryEditorComposeController(
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             savedAuthority = ISavedVariablesAuthority.Stub.asInterface(binder)
             if (state.visible && state.variablesTab) refreshSavedVariables()
+            if (state.visible && state.scriptsTab) refreshMemoryScripts()
         }
         override fun onServiceDisconnected(name: ComponentName) { savedAuthority = null }
         override fun onBindingDied(name: ComponentName) { savedAuthority = null }
@@ -291,6 +294,7 @@ internal class MemoryEditorComposeController(
             // A Saved mutation may have committed while the UI was backgrounded and
             // its callback was discarded. Reconcile from the authority on return.
             if (state.variablesTab && savedAuthority != null) refreshSavedVariables()
+            if (state.scriptsTab && savedAuthority != null) refreshMemoryScripts()
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
         } else {
             // If backgrounding interrupts the queued binding snapshot, no dialog
@@ -321,6 +325,7 @@ internal class MemoryEditorComposeController(
             .takeIf { state.inspectorLoading || state.inspector != null }
         val tab = when {
             inspector != null -> MemoryEditorTab.INSPECTOR
+            state.scriptsTab -> MemoryEditorTab.SCRIPTS
             state.variablesTab -> MemoryEditorTab.VARIABLES
             else -> MemoryEditorTab.RESULTS
         }
@@ -336,6 +341,7 @@ internal class MemoryEditorComposeController(
         liveRefreshPending = false
         stateRequestGeneration.incrementAndGet()
         savedGeneration++
+        scriptsGeneration++
         savedRefreshPending = false
         savedEditId = null
         savedEditReady = false
@@ -352,6 +358,7 @@ internal class MemoryEditorComposeController(
         if (state.visible) rememberNavigation()
         destroyed = true
         savedGeneration++
+        scriptsGeneration++
         savedRefreshPending = false
         savedEditId = null
         savedEditReady = false
@@ -1214,14 +1221,22 @@ internal class MemoryEditorComposeController(
 
     override fun setVariablesTab(variables: Boolean) {
         closeInspector()
-        if (state.variablesTab == variables) return
+        if (state.variablesTab == variables && !state.scriptsTab) return
         invalidateVisiblePageRequest()
         savedGeneration++
         savedRefreshPending = false
         savedEditId = null
         savedEditReady = false
-        state = state.copy(variablesTab = variables, selected = emptySet())
+        state = state.copy(variablesTab = variables, scriptsTab = false, selected = emptySet())
         if (variables) refreshSavedVariables()
+    }
+
+    override fun setScriptsTab() {
+        closeInspector()
+        if (state.scriptsTab) return
+        invalidateVisiblePageRequest()
+        state = state.copy(variablesTab = false, scriptsTab = true, selected = emptySet())
+        refreshMemoryScripts()
     }
 
     override fun toggleSelection(id: Long) {
@@ -1615,6 +1630,228 @@ internal class MemoryEditorComposeController(
         if (saved.isNotEmpty()) deleteSavedVariables(saved)
         if (watches.isNotEmpty()) {
             launchOperation { engine, token -> engine.removeWatch(token, watches.toLongArray()) }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun recipeRows(response: Bundle): List<MemoryScriptRow> {
+        if (!response.getBoolean("ok", false)) {
+            error(response.getString("error") ?: "Script catalog unavailable")
+        }
+        return response.getParcelableArrayList<Bundle>("items").orEmpty().map { row ->
+            MemoryScriptRow(
+                id = row.getString("id").orEmpty(),
+                name = row.getString("name").orEmpty(),
+                document = row.getString("document").orEmpty(),
+            )
+        }
+    }
+
+    override fun refreshMemoryScripts() {
+        val authority = savedAuthority ?: return
+        val generation = ++scriptsGeneration
+        val token = ownedRuntimeToken
+        runIpc {
+            val result = runCatching {
+                val (path, appId, entry) = savedTarget()
+                recipeRows(authority.listRecipes(path, appId, entry))
+            }
+            post {
+                if (destroyed || token != ownedRuntimeToken ||
+                    generation != scriptsGeneration) return@post
+                state = state.copy(
+                    scripts = result.getOrNull() ?: state.scripts,
+                    scriptsLoaded = result.isSuccess || state.scriptsLoaded,
+                    scriptsError = result.exceptionOrNull()?.message,
+                )
+            }
+        }
+    }
+
+    override fun saveMemoryScript(
+        document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
+    ) {
+        val authority = savedAuthority
+        if (authority == null) {
+            state = state.copy(message = "Script storage unavailable", messageIsError = true)
+            onComplete(false)
+            return
+        }
+        val generation = ++scriptsGeneration
+        runIpc {
+            val result = runCatching {
+                val (path, appId, entry) = savedTarget()
+                recipeRows(authority.putRecipe(path, appId, entry, document, replacingId))
+            }
+            post {
+                if (destroyed || generation != scriptsGeneration) return@post
+                val success = result.isSuccess
+                state = state.copy(
+                    scripts = result.getOrNull() ?: state.scripts,
+                    scriptsError = if (success) null else result.exceptionOrNull()?.message,
+                    message = if (success) context.getString(R.string.memory_scripts_saved)
+                        else result.exceptionOrNull()?.message,
+                    messageIsError = !success,
+                )
+                if (success && replacingId != null) clearMemoryRecipeFreeze(replacingId)
+                onComplete(success)
+            }
+        }
+    }
+
+    override fun deleteMemoryScript(id: String, onComplete: (Boolean) -> Unit) {
+        val authority = savedAuthority
+        if (authority == null) {
+            state = state.copy(message = "Script storage unavailable", messageIsError = true)
+            onComplete(false)
+            return
+        }
+        val generation = ++scriptsGeneration
+        runIpc {
+            val result = runCatching {
+                val (path, appId, entry) = savedTarget()
+                recipeRows(authority.deleteRecipe(path, appId, entry, id))
+            }
+            post {
+                if (destroyed || generation != scriptsGeneration) return@post
+                val success = result.isSuccess
+                state = state.copy(
+                    scripts = result.getOrNull() ?: state.scripts,
+                    scriptsError = if (success) null else result.exceptionOrNull()?.message,
+                    message = if (success) context.getString(R.string.memory_scripts_deleted)
+                        else result.exceptionOrNull()?.message,
+                    messageIsError = !success,
+                )
+                if (success) clearMemoryRecipeFreeze(id)
+                onComplete(success)
+            }
+        }
+    }
+
+    override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean) {
+        if (state.busy || !state.writeSupported ||
+            state.savedValues[savedId]?.resolved != true) return
+        val document = runCatching {
+            val locator = savedLocators[savedId] ?: error("Saved locator unavailable")
+            MemoryRecipeGenerator.fromSaved(
+                locator, savedTarget().third, savedId, value.trim(),
+                state.savedVariables.firstOrNull { it.id == savedId }?.label.orEmpty()
+            )
+        }.getOrElse {
+            state = state.copy(message = it.message ?: "Cannot generate automation", messageIsError = true)
+            return
+        }
+        context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(
+            ClipData.newPlainText("Memory Recipe", document)
+        )
+        runMemoryRecipe(document, emptyMap(), freeze, false)
+    }
+
+    override fun readCurrentMemoryRecipe(
+        document: String, inputs: Map<String, String>,
+        onReady: (List<MemoryRecipeReadValue>?, String?) -> Unit,
+    ) {
+        val token = state.runtimeToken
+        val engine = service
+        if (engine == null || state.busy || token == 0L || !state.supported) {
+            onReady(null, "MIDlet memory is not available")
+            return
+        }
+        val parameters = Bundle().apply {
+            inputs.forEach { (key, value) -> putString(key, value) }
+        }
+        runIpc {
+            val outcome = runCatching {
+                engine.runMemoryRecipe(token, document, parameters, false, true)
+            }
+            post {
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                val reply = outcome.getOrNull()
+                val code = reply?.getInt(
+                    MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                    MemoryEngineContract.RESULT_TARGET_LOST,
+                ) ?: MemoryEngineContract.RESULT_TARGET_LOST
+                if (code != MemoryEngineContract.RESULT_OK) {
+                    onReady(null, reply?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                        ?: outcome.exceptionOrNull()?.message ?: "Cannot read current value")
+                    return@post
+                }
+                val names = reply?.getStringArray("recipeReadInputs")
+                val values = reply?.getStringArray("recipeReadValues")
+                if (names == null || values == null || names.size != values.size) {
+                    onReady(null, "Recipe returned invalid read results")
+                } else {
+                    onReady(names.indices.map { index ->
+                        MemoryRecipeReadValue(names[index], values[index])
+                    }, null)
+                }
+            }
+        }
+    }
+
+    override fun runMemoryRecipe(
+        document: String, inputs: Map<String, String>, freeze: Boolean, preview: Boolean,
+    ) {
+        val token = state.runtimeToken
+        val engine = service ?: return
+        if (state.busy || token == 0L || !state.writeSupported) return
+        val parameters = Bundle().apply { inputs.forEach { (key, value) -> putString(key, value) } }
+        runIpc {
+            val result = runCatching { engine.runMemoryRecipe(token, document, parameters, freeze, preview) }
+            post {
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                val response = result.getOrNull()
+                val code = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                    MemoryEngineContract.RESULT_TARGET_LOST)
+                    ?: MemoryEngineContract.RESULT_TARGET_LOST
+                state = state.copy(
+                    message = response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                        ?: result.exceptionOrNull()?.message ?: "Recipe operation finished",
+                    messageIsError = code != MemoryEngineContract.RESULT_OK,
+                )
+                if (code == MemoryEngineContract.RESULT_OK && !preview) refreshSavedVariables()
+            }
+        }
+    }
+
+    override fun listActiveMemoryRecipeFreezes(onReady: (List<Pair<String, String>>) -> Unit) {
+        val engine = service
+        val token = state.runtimeToken
+        if (engine == null || token == 0L) {
+            onReady(emptyList())
+            return
+        }
+        runIpc {
+            val response = runCatching { engine.getCapabilities() }.getOrNull()
+            post {
+                if (destroyed || service !== engine || state.runtimeToken != token) return@post
+                val ids = response?.getStringArray("recipeFreezeIds").orEmpty()
+                val names = response?.getStringArray("recipeFreezeNames").orEmpty()
+                onReady(ids.mapIndexed { index, id ->
+                    id to names.getOrNull(index).orEmpty().ifBlank { id }
+                })
+            }
+        }
+    }
+
+    override fun clearMemoryRecipeFreeze(recipeId: String) {
+        val token = state.runtimeToken
+        val engine = service ?: return
+        if (token == 0L || state.busy) return
+        runIpc {
+            val result = runCatching { engine.clearMemoryRecipeFreeze(token, recipeId) }
+            post {
+                if (destroyed || state.runtimeToken != token || service !== engine) return@post
+                val response = result.getOrNull()
+                val code = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                    MemoryEngineContract.RESULT_TARGET_LOST)
+                    ?: MemoryEngineContract.RESULT_TARGET_LOST
+                state = state.copy(
+                    message = response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                        ?: result.exceptionOrNull()?.message ?: "Recipe Freeze stopped",
+                    messageIsError = code != MemoryEngineContract.RESULT_OK,
+                )
+            }
         }
     }
 
@@ -2078,7 +2315,7 @@ internal class MemoryEditorComposeController(
                     if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
                     refreshSavedLive()
                 }
-                MemoryEditorTab.INSPECTOR -> Unit
+                MemoryEditorTab.SCRIPTS, MemoryEditorTab.INSPECTOR -> Unit
             }
         }
         if (!destroyed && hostForeground && state.visible) {
