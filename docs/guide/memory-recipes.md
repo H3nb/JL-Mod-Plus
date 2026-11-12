@@ -67,6 +67,14 @@ simple generator: it builds a primitive `set` recipe, copies its JSON and
 can run the edit. Advanced authors can paste that JSON into the Scripts editor
 to retain a reusable document. Scripts never auto-run on application startup.
 
+The optional top-level `"description"` field is available in both v1 and v2 recipes
+for instructions, compatibility notes, and warnings. It is plain text (not
+executable code or Markdown), supports multiple lines, and accepts up to 2,048
+characters. The Scripts list shows a two-line preview and the detail page
+shows the full description. A recipe without a description behaves as before.
+Descriptions do not affect target resolution, validation of memory values, or
+execution. The JSON document is persisted unchanged with the recipe.
+
 A Memory Recipe is **not** a Lua program. JSON is a declarative format with
 limited, built-in operators. Unknown functions, Java expressions, JavaScript
 or arbitrary reflection calls are not evaluated. When asking an AI agent to
@@ -84,7 +92,8 @@ Examples:
 {
   "formatVersion": 1,
   "id": "example.recipe",
-  "name": "Description for a person",
+  "name": "Set health",
+  "description": "Use only after loading a save.\\nAvoid applying this during combat.",
   "game": { "mainClass": "com/example/GameMIDlet" },
   "inputs": { "value": { "min": 0, "max": 999 } },
   "root": { "kind": "midlet", "class": "com/example/GameMIDlet" },

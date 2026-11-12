@@ -64,6 +64,7 @@ internal data class MemoryScriptMetadata(
     val mode: String = "legacy",
     val fields: List<MemoryScriptInput> = emptyList(),
     val quickRun: Boolean = true,
+    val description: String = "",
 )
 
 internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
@@ -78,6 +79,7 @@ internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
     val id = (obj["id"] as? JsonPrimitive)?.content.orEmpty()
     if (!id.matches(Regex("[A-Za-z0-9_.-]{1,64}"))) error("Invalid recipe ID")
     val name = (obj["name"] as? JsonPrimitive)?.content?.takeIf(String::isNotBlank) ?: id
+    val description = (obj["description"] as? JsonPrimitive)?.content.orEmpty()
     val game = obj["game"] as? JsonObject ?: error("Missing game")
     if ((game["mainClass"] as? JsonPrimitive)?.content.isNullOrBlank())
         error("Missing game.mainClass")
@@ -101,7 +103,7 @@ internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
             ?: (specification["min"] as? JsonPrimitive)?.content ?: "0"
     }, mode, fields, inputs.values.all { value ->
         (value as JsonObject).containsKey("default")
-    })
+    }, description)
 }
 
 /** Scripts are JSON recipes: no arbitrary code execution and no auto-run on Save or Import. */
@@ -266,6 +268,12 @@ internal fun RuntimeScriptsTab(
             HorizontalDivider()
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                metadata?.description?.takeIf(String::isNotBlank)?.let { description ->
+                    Text(stringResource(R.string.memory_scripts_description),
+                        style = MaterialTheme.typography.titleSmall)
+                    Text(description, style = MaterialTheme.typography.bodyMedium)
+                    HorizontalDivider()
+                }
                 Row(modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.memory_scripts_current_title),
@@ -423,6 +431,11 @@ internal fun RuntimeScriptsTab(
                                 Text(scriptMetadata?.mode?.let { recipeModeLabel(it, context) }
                                     ?: script.id, style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                scriptMetadata?.description?.takeIf(String::isNotBlank)?.let {
+                                    Text(it, style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                }
                             }
                             when (scriptMetadata?.mode) {
                                 "toggle" -> Switch(checked = active,

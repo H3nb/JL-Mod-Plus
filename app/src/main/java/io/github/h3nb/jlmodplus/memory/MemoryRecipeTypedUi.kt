@@ -129,6 +129,12 @@ internal fun TypedMemoryRecipeDetail(
         HorizontalDivider()
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            metadata.description.takeIf(String::isNotBlank)?.let { description ->
+                Text(stringResource(R.string.memory_scripts_description),
+                    style = MaterialTheme.typography.titleSmall)
+                Text(description, style = MaterialTheme.typography.bodyMedium)
+                HorizontalDivider()
+            }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.memory_scripts_current_title),
                     style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))

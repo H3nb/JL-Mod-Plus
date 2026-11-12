@@ -566,7 +566,7 @@ class MemoryRecipeRuntime {
 
     private fun parse(json: String): Recipe {
         val obj = Json.parseToJsonElement(json) as? JsonObject ?: bad("Expected JSON object")
-        obj.expectOnly("formatVersion", "id", "name", "game", "inputs", "root", "actions", "mode")
+        obj.expectOnly("formatVersion", "id", "name", "description", "game", "inputs", "root", "actions", "mode")
         val version = obj.int("formatVersion")
         if (version !in 1..2) bad("Unsupported recipe version")
         val mode = if (version == 1) {
@@ -584,6 +584,13 @@ class MemoryRecipeRuntime {
             }
                 ?: bad("Invalid recipe name")
         } ?: id
+        obj["description"]?.let { value ->
+            val description = (value as? JsonPrimitive)?.takeIf(JsonPrimitive::isString)?.content
+                ?: bad("Recipe description must be text")
+            if (description.length > 2048 || description.any { char ->
+                    Character.isISOControl(char) && char != '\n' && char != '\r' && char != '\t'
+                }) bad("Recipe description must be at most 2048 characters of readable text")
+        }
         val game = obj.objectAt("game")
         game.expectOnly("mainClass", "sourceJarSha256")
         val mainClass = game.string("mainClass")

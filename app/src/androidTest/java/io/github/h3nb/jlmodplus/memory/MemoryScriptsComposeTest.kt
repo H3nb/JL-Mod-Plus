@@ -38,6 +38,38 @@ class MemoryScriptsComposeTest {
         }
     """.trimIndent()
 
+    @Test fun descriptionAppearsInScriptListAndLegacyDetail() {
+        val note = "Check your quest state before running."
+        val document = sample.replace("\"game\":", "\"description\":\"$note\",\"game\":")
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true,
+            scriptsTab = true, runtimeToken = 9207L, scriptsLoaded = true,
+            scripts = listOf(MemoryScriptRow("sample.coins", "Sample Coins", document)),
+        )
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, TestMemoryEditorActions()) } }
+        rule.onNodeWithText(note).assertIsDisplayed()
+        rule.onNodeWithText("Sample Coins").performClick()
+        rule.onNodeWithText("Description").assertIsDisplayed()
+        rule.onNodeWithText(note).assertIsDisplayed()
+    }
+
+    @Test fun descriptionAppearsInTypedScriptDetail() {
+        val note = "Use only after selecting Character 1."
+        val document = sample.replace("\"formatVersion\":1",
+            "\"formatVersion\":2,\"mode\":\"form\"")
+            .replace("\"game\":", "\"description\":\"$note\",\"game\":")
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true,
+            scriptsTab = true, runtimeToken = 9208L, scriptsLoaded = true,
+            scripts = listOf(MemoryScriptRow("sample.coins", "Sample Coins", document)),
+        )
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, TestMemoryEditorActions()) } }
+        rule.onNodeWithText(note).assertIsDisplayed()
+        rule.onNodeWithText("Sample Coins").performClick()
+        rule.onNodeWithText("Description").assertIsDisplayed()
+        rule.onNodeWithText(note).assertIsDisplayed()
+    }
+
     @Test fun pastedScriptSavesWithoutRunningThenExecutesWithExplicitParameter() {
         val ui = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,

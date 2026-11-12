@@ -164,7 +164,8 @@ public class MemoryRecipeInstrumentedTest {
         try {
             String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
                     + "],\"value\":444}";
-            String document = recipe(action);
+            String document = recipe(action).replace("\"game\":",
+                "\"description\":\"Load a save first.\\\\nDo not run during combat.\",\"game\":");
             assertEquals(0, MemoryRecipeCatalog.list(file, Root.class.getName())
                     .getParcelableArrayList("items").size());
             Bundle saved = MemoryRecipeCatalog.put(file, Root.class.getName(), document, null);
@@ -473,6 +474,33 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
                 status(runner.run(TOKEN, document, new Bundle(), false, false)));
         assertEquals(10, root.coins);
+    }
+
+    @Test public void optionalDescriptionDoesNotChangeExecutionAndRejectsInvalidNotes() {
+        String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
+                + "],\"value\":200}";
+        String original = recipe(action);
+        String documented = original.replace("\"game\":",
+            "\"description\":\"Use on the world map.\\\\nSave beforehand.\",\"game\":");
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(runner.run(TOKEN, documented, new Bundle(), false, true)));
+        assertEquals(10, root.coins);
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(runner.run(TOKEN, documented, new Bundle(), false, false)));
+        assertEquals(200, root.coins);
+        String invalidType = original.replace("\"game\":", "\"description\":42,\"game\":");
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            status(runner.run(TOKEN, invalidType, new Bundle(), false, false)));
+        String invalidControl = original.replace("\"game\":",
+            "\"description\":\"Invalid\\\\u0000note\",\"game\":");
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            status(runner.run(TOKEN, invalidControl, new Bundle(), false, false)));
+        String tooLong = original.replace("\"game\":",
+            "\"description\":\"" + new String(new char[2049]).replace('\\0', 'x')
+                + "\",\"game\":");
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            status(runner.run(TOKEN, tooLong, new Bundle(), false, false)));
+        assertEquals(200, root.coins);
     }
 
     @Test public void unknownRecipePropertyRejectsBeforeMutation() {
