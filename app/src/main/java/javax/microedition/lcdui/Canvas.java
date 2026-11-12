@@ -1815,7 +1815,11 @@ public abstract class Canvas extends Displayable {
 			}
 			if (!exceedsTextureLimit) {
 				mView.postDelayed(() -> {
-					if (innerView == mView && visible) requestFlushToScreen();
+					if (innerView != mView || !visible) return;
+					long generation = presentationMailbox.generation();
+					if (presentationMailbox.invalidateHost(generation) != 0L) {
+						requestFlushToScreen();
+					}
 				}, TextureUploadRetry.RETRY_DELAY_MILLIS);
 			}
 		}
