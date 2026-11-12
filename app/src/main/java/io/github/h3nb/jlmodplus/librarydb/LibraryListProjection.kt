@@ -6,6 +6,7 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import java.text.CollationKey
 import java.text.Collator
 import java.util.Collections
 import java.util.Locale
@@ -66,19 +67,22 @@ object LibraryListProjection {
             availableIds.add(row.id)
             if (eligible(row, orderView)) ordered.add(row)
         }
-        val comparator = when (orderView) {
-            LibraryQuickView.RecentlyAdded -> Comparator<LibraryAppRow> { left, right ->
+        checkActive()
+        when (orderView) {
+            LibraryQuickView.RecentlyAdded -> ordered.sortWith { left, right ->
                 val primary = requireNotNull(right.addedAt).compareTo(requireNotNull(left.addedAt))
                 if (primary != 0) primary else right.id.compareTo(left.id)
             }
-            LibraryQuickView.RecentlyPlayed -> Comparator<LibraryAppRow> { left, right ->
+            LibraryQuickView.RecentlyPlayed -> ordered.sortWith { left, right ->
                 val primary = requireNotNull(right.lastPlayedAt).compareTo(requireNotNull(left.lastPlayedAt))
                 if (primary != 0) primary else right.id.compareTo(left.id)
             }
-            else -> sortComparator(sortVariant, locale)
+            else -> if ((sortVariant and Int.MAX_VALUE) == SORT_DATE) {
+                ordered.sortWith(dateComparator(sortVariant))
+            } else {
+                sortWithCollationKeys(ordered, sortVariant, locale, checkActive)
+            }
         }
-        checkActive()
-        ordered.sortWith(comparator)
         checkActive()
         return OrderedRows(source, sortVariant, locale, orderView,
             Collections.unmodifiableList(ordered), Collections.unmodifiableSet(availableIds))
@@ -146,44 +150,60 @@ object LibraryListProjection {
         }
     }
 
-    private fun sortComparator(sortVariant: Int, locale: Locale): Comparator<LibraryAppRow> {
-        val collator = Collator.getInstance(locale).apply {
-            strength = Collator.SECONDARY
-        }
-        val sortIndex = sortVariant and Int.MAX_VALUE
+    private class CollatedRow(
+        val row: LibraryAppRow,
+        val primary: CollationKey,
+        val secondary: CollationKey,
+    )
+
+    private fun sortWithCollationKeys(
+        rows: ArrayList<LibraryAppRow>,
+        sortVariant: Int,
+        locale: Locale,
+        checkActive: () -> Unit,
+    ) {
+        val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
+        val vendorFirst = (sortVariant and Int.MAX_VALUE) == SORT_VENDOR
         val descending = sortVariant < 0
-        val primaryComparator = when (sortIndex) {
-            SORT_DATE -> Comparator<LibraryAppRow> { left, right ->
-                val leftAddedAt = left.addedAt
-                val rightAddedAt = right.addedAt
-                when {
-                    leftAddedAt == null && rightAddedAt == null -> left.id.compareTo(right.id)
-                    leftAddedAt == null -> 1
-                    rightAddedAt == null -> -1
-                    else -> {
-                        val primary = leftAddedAt.compareTo(rightAddedAt)
-                        if (descending) -primary else primary
-                    }
+        val keys = ArrayList<CollatedRow>(rows.size)
+        for (index in rows.indices) {
+            if (index % CANCELLATION_CHUNK == 0) checkActive()
+            val row = rows[index]
+            keys.add(CollatedRow(
+                row,
+                collator.getCollationKey(if (vendorFirst) row.vendor else row.title),
+                collator.getCollationKey(if (vendorFirst) row.title else row.vendor),
+            ))
+        }
+        checkActive()
+        keys.sortWith { left, right ->
+            val primary = if (descending) right.primary.compareTo(left.primary)
+                else left.primary.compareTo(right.primary)
+            if (primary != 0) primary else {
+                val secondary = left.secondary.compareTo(right.secondary)
+                if (secondary != 0) secondary else left.row.id.compareTo(right.row.id)
+            }
+        }
+        checkActive()
+        for (index in rows.indices) rows[index] = keys[index].row
+    }
+
+    private fun dateComparator(sortVariant: Int): Comparator<LibraryAppRow> {
+        val descending = sortVariant < 0
+        return Comparator { left, right ->
+            val first = left.addedAt
+            val second = right.addedAt
+            val ordered = when {
+                first == null && second == null -> 0
+                first == null -> 1
+                second == null -> -1
+                else -> {
+                    val primary = if (descending) second.compareTo(first)
+                        else first.compareTo(second)
+                    primary
                 }
             }
-            SORT_VENDOR -> Comparator { left, right ->
-                val primary = collator.compare(left.vendor, right.vendor)
-                val orderedPrimary = if (descending) -primary else primary
-                if (orderedPrimary != 0) orderedPrimary
-                else collator.compare(left.title, right.title)
-            }
-            else -> Comparator { left, right ->
-                val primary = collator.compare(left.title, right.title)
-                val orderedPrimary = if (descending) -primary else primary
-                if (orderedPrimary != 0) orderedPrimary
-                else collator.compare(left.vendor, right.vendor)
-            }
-        }
-        // Keep the stable database-id tie-breaker API-23-safe instead of using
-        // java.util.Comparator.thenComparingLong(), which was added in API 24.
-        return Comparator { left, right ->
-            val primary = primaryComparator.compare(left, right)
-            if (primary != 0) primary else left.id.compareTo(right.id)
+            if (ordered != 0) ordered else left.id.compareTo(right.id)
         }
     }
 

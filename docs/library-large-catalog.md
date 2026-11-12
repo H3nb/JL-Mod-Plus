@@ -8,6 +8,10 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
 
 - Room publishes a lightweight full catalog projection. Search and locale-aware sort run
   on `Dispatchers.Default`; the latest query cancels obsolete projections.
+- Text ordering prepares locale-specific collation keys once per row instead of
+  performing repeated string collation during comparisons. Date and recent ordering,
+  search relevance, secondary ordering, and stable database-ID ties are unchanged.
+  Keys are transient to each sort, not retained in the repository state.
 - Compose uses `LazyColumn` and `LazyVerticalGrid` with stable database-id keys.
   Only composed items request icon decoding, with a bounded three-job semaphore
   and an 8–24 MiB LRU in the Enhanced Icons branch. The icon work is separate
