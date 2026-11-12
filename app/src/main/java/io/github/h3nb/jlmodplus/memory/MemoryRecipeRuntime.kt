@@ -332,6 +332,7 @@ class MemoryRecipeRuntime {
         val readValues = ArrayList<String>()
         val identities = ArrayList<Long?>()
         val logicalValues = HashMap<String, String>()
+        val desiredValues = HashMap<String, Long>()
         val requestedStatics = recipe.actions.asSequence()
             .filter { it.root.kind == "initializedStatic" }
             .map { it.root.className }
@@ -400,6 +401,13 @@ class MemoryRecipeRuntime {
                     bad("Addition exceeds the supported integer range")
                 }
             } else operand
+            if (recipe.mode != "legacy" && action.field != null) {
+                val previous = desiredValues[action.field]
+                if (previous == null) desiredValues[action.field] = logicalWrite
+                else if (previous != logicalWrite) bad(
+                    "Conflicting final values for ${action.field}"
+                )
+            }
             val expectedWrite = when (action.kind) {
                 "set" -> listOf(logicalWrite)
                 "bitfield" -> {

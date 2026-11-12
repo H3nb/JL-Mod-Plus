@@ -529,6 +529,21 @@ public class MemoryRecipeInstrumentedTest {
             status(runner.run(TOKEN, recipe, new Bundle(), true, false)));
     }
 
+
+    @Test public void oneShotRejectsDifferingMirrorIncrementsBeforeAnyWrite() {
+        storeEncodedCoins(root, 10);
+        String primitive = "{\"kind\":\"set\",\"field\":\"coins\",\"operation\":\"add\","
+            + "\"path\":[" + field(ROOT, "coins", "I") + "],\"value\":2000}";
+        String recipe = typedRecipe("oneShot", "{}", encodedAction("add", "\"value\":1000")
+            + "," + primitive);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
+        assertEquals(10, root.coins);
+        int raw = (root.encoded[0] & 255) | ((root.encoded[1] & 255) << 8)
+            | ((root.encoded[2] & 255) << 16) | (root.encoded[3] << 24);
+        assertEquals(58279306 - 10, raw);
+    }
+
     @Test public void formRejectsStaleSnapshotWithoutWriting() {
         storeEncodedCoins(root, 10);
         String primitive = "{\"kind\":\"set\",\"field\":\"coins\",\"path\":["
