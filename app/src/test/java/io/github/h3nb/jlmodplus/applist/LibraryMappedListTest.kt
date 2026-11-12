@@ -18,6 +18,9 @@ class LibraryMappedListTest {
         }
         assertEquals(50_000, items.size)
         assertEquals(0, mapped)
+        val ids = LibraryMappedList(rows) { index: Int -> index.toLong() + 1 }
+        assertEquals(49_999, ids.indexOf(50_000L))
+        assertEquals(0, mapped)
         assertEquals("Game 0", items[0])
         assertEquals("Game 49999", items[49_999])
         assertEquals(2, mapped)

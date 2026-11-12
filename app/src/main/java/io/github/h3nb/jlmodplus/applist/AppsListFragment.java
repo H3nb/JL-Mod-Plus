@@ -1097,6 +1097,8 @@ public class AppsListFragment extends Fragment {
 
         List<LibraryAppUiItem> uiItems = new LibraryMappedList<>(
                 state.getApps(), this::toLibraryUiItem);
+        List<Long> projectedAppIds = new LibraryMappedList<>(
+                state.getApps(), LibraryAppRow::getId);
         LibraryComposeController controller = composeController;
         if (controller != null) {
             controller.updateSort(state.getSortVariant());
@@ -1106,6 +1108,7 @@ public class AppsListFragment extends Fragment {
                     state.getQuickView(),
                     generation,
                     state.getAvailableAppIds(),
+                    projectedAppIds,
                     workdir.getAbsolutePath());
         }
     }

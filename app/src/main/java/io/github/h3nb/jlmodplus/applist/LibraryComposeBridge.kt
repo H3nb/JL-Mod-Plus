@@ -367,6 +367,7 @@ data class LibraryUiState(
     val errorMessage: String? = null,
     val generation: Long = 0L,
     val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.databaseId },
+    val projectedAppIds: List<Long> = apps.map(LibraryAppUiItem::databaseId),
     /** Stable identity of the active Library workdir; database ids are only meaningful inside it. */
     val libraryScope: String = "",
 )
@@ -511,6 +512,7 @@ class LibraryComposeController(
         quickView: LibraryQuickView,
         generation: Long,
         availableAppIds: Set<Long>,
+        projectedAppIds: List<Long> = items.map(LibraryAppUiItem::databaseId),
         libraryScope: String = state.libraryScope,
     ) {
         state = state.copy(
@@ -518,6 +520,7 @@ class LibraryComposeController(
             projectionRevision = ++nextProjectionRevision,
             apps = items,
             availableAppIds = availableAppIds,
+            projectedAppIds = projectedAppIds,
             appliedFilter = appliedFilter,
             quickView = quickView,
             databaseControlsReady = true,
@@ -1017,20 +1020,24 @@ fun LibraryScreen(
 
 
     val currentEditorIdentity by rememberUpdatedState(state.libraryScope to metadataTarget?.databaseId)
-    val metadataApp = metadataTarget?.let { target ->
-        state.apps.firstOrNull { it.databaseId == target.databaseId } ?: target
+    val metadataApp = remember(projectionKey, metadataTarget) {
+        metadataTarget?.let { target ->
+            state.apps.getOrNull(state.projectedAppIds.indexOf(target.databaseId)) ?: target
+        }
     }
-    val metadataRestoreReady = metadataRestoreRequest?.let { request ->
-        val current = state.apps.firstOrNull { it.databaseId == request.databaseId }
-        // A filtered-out/deleted target cannot be measured, so the stable-id/fallback anchor
-        // is already the best possible restoration. Otherwise wait until the database projection
-        // contains the values submitted by the editor and the row has been remeasured.
-        !state.loading && (current == null || (
-            current.title == request.title &&
-                current.author == request.author &&
-                current.defaultDescription == request.description
-            ))
-    } ?: false
+    val metadataRestoreReady = remember(projectionKey, metadataRestoreRequest, state.loading) {
+        metadataRestoreRequest?.let { request ->
+            val current = state.apps.getOrNull(state.projectedAppIds.indexOf(request.databaseId))
+            // A filtered-out/deleted target cannot be measured, so the stable-id/fallback anchor
+            // is already the best possible restoration. Otherwise wait until the database projection
+            // contains the values submitted by the editor and the row has been remeasured.
+            !state.loading && (current == null || (
+                current.title == request.title &&
+                    current.author == request.author &&
+                    current.defaultDescription == request.description
+                ))
+        } ?: false
+    }
 
     fun captureAppsAnchor(excludedDatabaseId: Long? = null): LibraryScrollAnchor? {
         val visible: Pair<Int, Int>? = if (state.layout == LibraryLayout.List) {
@@ -1546,13 +1553,13 @@ fun LibraryScreen(
                             onSelectAll = {
                                 selectionState = selectionState.selectVisible(
                                     state.generation,
-                                    state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                                    state.projectedAppIds,
                                 )
                             },
                             onUnselectAll = {
                                 selectionState = selectionState.unselectVisible(
                                     state.generation,
-                                    state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                                    state.projectedAppIds,
                                 )
                             },
                             onSort = actions::onSort,
@@ -2306,8 +2313,7 @@ internal fun LibraryAppsDestination(
         // Room projection readiness does not imply that the changed row has completed its
         // final measure. Wait for two bounded frames before taking the viewport snapshot.
         repeat(LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES) { withFrameNanos { } }
-        val availableIds = state.apps.map(LibraryAppUiItem::databaseId)
-        val anchor = resolveLibraryScrollAnchor(returnAnchor, availableIds)
+        val anchor = resolveLibraryScrollAnchor(returnAnchor, state.projectedAppIds)
         // A raw viewport snapshot is the exact visual contract for returning from an overlay.
         // Prefer it over the stable-id resolution because a Room projection can remeasure or
         // reorder rows after the editor closes, before the stable anchor has been consumed.
@@ -2754,9 +2760,7 @@ private fun LibraryAppsHeader(
     val projectionKey = remember(state) {
         LibraryProjectionKey(state.projectionRevision, state.apps)
     }
-    val visibleAppIds = remember(projectionKey, selectionState.isActive) {
-        if (selectionState.isActive) state.apps.map(LibraryAppUiItem::databaseId) else emptyList()
-    }
+    val visibleAppIds = if (selectionState.isActive) state.projectedAppIds else emptyList()
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
     val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
@@ -2840,7 +2844,7 @@ private fun LibraryAppsHeader(
                 }
             }
             if (selectionState.isActive) {
-                val allVisibleSelected = remember(visibleAppIds, selectionState.selectedAppIds) {
+                val allVisibleSelected = remember(projectionKey, selectionState.selectedAppIds) {
                     selectionState.isAllVisibleSelected(visibleAppIds)
                 }
                 val selectionToggleLabel = stringResource(

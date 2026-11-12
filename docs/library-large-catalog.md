@@ -42,7 +42,9 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
 ## Startup and reconciliation
 
 - Main-thread publication no longer enumerates all projected UI items. The first
-  list/grid viewport materializes presentation objects as requested, and direct
+  list/grid viewport materializes presentation objects as requested. A separate
+  indexed database-ID view supports selection, editor reconciliation, and scroll
+  restoration without materializing unrelated presentation items. Direct
   actions resolve their current Room row to avoid reusing stale cached metadata.
 - Fresh database bootstrapping now emits at most one indexing progress update per
   percentage point instead of a UI update per scanned MIDlet. Scanner cancellation

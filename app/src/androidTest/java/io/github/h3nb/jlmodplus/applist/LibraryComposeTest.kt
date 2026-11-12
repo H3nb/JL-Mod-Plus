@@ -484,6 +484,7 @@ class LibraryComposeTest {
                 loading = false,
                 apps = apps,
                 availableAppIds = (1L..20_000L).toSet(),
+                projectedAppIds = (1L..20_000L).toList(),
                 layout = LibraryLayout.List,
             ),
         )
