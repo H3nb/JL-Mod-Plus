@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.applist
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class LibraryControllerNavigationTest {
@@ -40,6 +41,23 @@ class LibraryControllerNavigationTest {
             LibraryControllerFocus(index = 1, databaseId = 30L),
             reconcileLibraryControllerFocus(apps, focusedDatabaseId = 20L, fallbackIndex = 1),
         )
+    }
+
+    @Test
+    fun unchangedFocusInLargeCatalogUsesOnlyIndexedAccess() {
+        var reads = 0
+        val apps = object : AbstractList<LibraryAppUiItem>() {
+            override val size = 50_000
+            override fun get(index: Int): LibraryAppUiItem {
+                reads++
+                return app(index.toLong() + 1, index + 1)
+            }
+        }
+        assertEquals(
+            LibraryControllerFocus(index = 45_000, databaseId = 45_001L),
+            reconcileLibraryControllerFocus(apps, focusedDatabaseId = 45_001L, fallbackIndex = 45_000),
+        )
+        assertTrue(reads <= 2, "Retained focus should not scan 50,000 items")
     }
 
     @Test

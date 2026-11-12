@@ -2826,7 +2826,9 @@ private fun LibraryAppsHeader(
                 }
             }
             if (selectionState.isActive) {
-                val allVisibleSelected = selectionState.isAllVisibleSelected(visibleAppIds)
+                val allVisibleSelected = remember(visibleAppIds, selectionState.selectedAppIds) {
+                    selectionState.isAllVisibleSelected(visibleAppIds)
+                }
                 val selectionToggleLabel = stringResource(
                     if (allVisibleSelected) {
                         R.string.library_selection_unselect_all

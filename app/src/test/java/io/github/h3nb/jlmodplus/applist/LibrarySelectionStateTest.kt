@@ -100,6 +100,17 @@ class LibrarySelectionStateTest {
     }
 
     @Test
+    fun retainAvailableChecksOnlySelectedIdsForAuthoritativeSet() {
+        val available = object : AbstractSet<Long>() {
+            override val size = 50_000
+            override fun contains(element: Long): Boolean = element in 1L..50_000L
+            override fun iterator(): Iterator<Long> = error("Do not enumerate the authoritative ID set")
+        }
+        val state = LibrarySelectionState(9L, setOf(25L, 75_000L))
+        assertEquals(setOf(25L), state.retainAvailable(9L, available).selectedAppIds)
+    }
+
+    @Test
     fun retainAvailableClearsModeWhenEverySelectedRowWasRemoved() {
         val state = LibrarySelectionState(9L, setOf(10L), collectionId = 4L)
         assertEquals(

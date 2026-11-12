@@ -26,10 +26,12 @@ internal fun reconcileLibraryControllerFocus(
     fallbackIndex: Int,
 ): LibraryControllerFocus {
     if (apps.isEmpty()) return LibraryControllerFocus(0, null)
+    val nearestIndex = fallbackIndex.coerceIn(0, apps.lastIndex)
     val retainedIndex = focusedDatabaseId?.let { id ->
-        apps.indexOfFirst { it.databaseId == id }.takeIf { it >= 0 }
+        if (apps[nearestIndex].databaseId == id) nearestIndex
+        else apps.indexOfFirst { it.databaseId == id }.takeIf { it >= 0 }
     }
-    val index = (retainedIndex ?: fallbackIndex).coerceIn(0, apps.lastIndex)
+    val index = retainedIndex ?: nearestIndex
     return LibraryControllerFocus(index, apps[index].databaseId)
 }
 

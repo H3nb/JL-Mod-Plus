@@ -484,7 +484,9 @@ private fun LibraryCollectionHeader(
     val selectedSort = sortVariant and Int.MAX_VALUE
     val ascending = sortVariant >= 0
     val selectionMode = selectionState.isActive
-    val allVisibleSelected = selectionState.isAllVisibleSelected(visibleAppIds)
+    val allVisibleSelected = remember(visibleAppIds, selectionState.selectedAppIds) {
+        selectionState.isAllVisibleSelected(visibleAppIds)
+    }
     val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val titleActionsEnabled = interactive && titleGate.enabled.value

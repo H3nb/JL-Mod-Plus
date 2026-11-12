@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
  * Non-flaky scale characterization for the Library v2 target sizes.
  *
  * These tests intentionally do not assert wall-clock thresholds because shared CI runners are not
- * benchmark hardware. They keep the 100/1k/5k paths executable in normal CI and print elapsed time
+ * benchmark hardware. They exercise 100 through 50k projections and print elapsed time
  * so regressions can be compared between runs without turning transient runner load into failures.
  */
 class LibraryScaleCharacterizationTest {
@@ -88,6 +88,6 @@ class LibraryScaleCharacterizationTest {
     }
 
     private companion object {
-        val TARGET_SIZES = intArrayOf(100, 1_000, 5_000)
+        val TARGET_SIZES = intArrayOf(100, 1_000, 5_000, 20_000, 50_000)
     }
 }
