@@ -27,7 +27,7 @@ class TextureUploadRetryTest {
         TextureUploadRetry retry = new TextureUploadRetry();
         retry.recordFailure(2400, 3200, 10, false, 0L);
 
-        assertTrue(retry.shouldSkip(2400, 3200, 10, Long.MAX_VALUE - 1));
+        assertTrue(retry.shouldSkip(2400, 3200, 10, 30_000_000_000L));
         assertFalse(retry.shouldSkip(2400, 3200, 1, 1L));
         assertFalse(retry.shouldSkip(240, 320, 10, 1L));
     }
