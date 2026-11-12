@@ -127,6 +127,7 @@
     <string name="render_texture_memory_reduced">HD texture enhancement failed. Original textures will be used. Try a lower internal resolution or free memory and restart.</string>
     <string name="render_resolution_reduced">Internal resolution reduced from %1$d× to %2$d×. Try a lower setting or close other apps to free memory, then restart.</string>
     <string name="render_gpu_texture_limit">This image is too large for the GPU even at 1×. Try a smaller game resolution or switch graphics mode.</string>
+    <string name="render_gpu_upload_failed">Could not upload the game image to the GPU. Retrying. Try closing other apps or switching graphics mode.</string>
     <string name="render_effect_gles">Effects are saved but only rendered with OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Unable to read the selected legacy shader.</string>
     <string name="effect_color">Color adjustment</string>
