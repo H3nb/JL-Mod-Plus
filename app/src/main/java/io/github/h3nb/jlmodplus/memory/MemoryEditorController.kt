@@ -71,6 +71,7 @@ internal class MemoryEditorComposeController(
     private var savedRefreshPending = false
     private var savedCatalogDirty = false
     private var scriptsGeneration = 0L
+    private val pendingRecipeDocuments = mutableSetOf<String>()
     private var recipeFreezeRefreshPending = false
     private var lastRecipeFreezeRefreshMs = 0L
     @Volatile private var savedEditId: String? = null
@@ -1996,7 +1997,8 @@ internal class MemoryEditorComposeController(
     ) {
         val token = state.runtimeToken
         val engine = service
-        if (engine == null || state.busy || token == 0L || !state.writeSupported) {
+        if (engine == null || state.busy || token == 0L || !state.writeSupported ||
+            !pendingRecipeDocuments.add(document)) {
             onComplete?.invoke(false)
             return
         }
@@ -2009,6 +2011,7 @@ internal class MemoryEditorComposeController(
                 engine.runMemoryRecipe(token, document, parameters, freeze, preview)
             }
             post {
+                pendingRecipeDocuments.remove(document)
                 if (destroyed || state.runtimeToken != token || service !== engine) {
                     onComplete?.invoke(false)
                     return@post
