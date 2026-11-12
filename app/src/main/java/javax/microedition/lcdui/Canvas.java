@@ -1794,17 +1794,29 @@ public abstract class Canvas extends Displayable {
 		private PostProcessRenderer effectRenderer;
 		private boolean effectFailureReported;
 		private int maxSourceTextureSide = Integer.MAX_VALUE;
-		private int failedUploadWidth = -1, failedUploadHeight = -1;
+		private final TextureUploadRetry uploadRetry = new TextureUploadRetry();
+		private int lastUploadFailureNotice;
 
 		private void requestGpuRecovery(int textureWidth, int textureHeight,
-				int scale, int supportedScale) {
-			failedUploadWidth = textureWidth;
-			failedUploadHeight = textureHeight;
-			if (supportedScale >= 1 && supportedScale < scale) {
+				int scale, int supportedScale, boolean exceedsTextureLimit, long nowNanos) {
+			boolean canReduce = supportedScale >= 1 && supportedScale < scale;
+			uploadRetry.recordFailure(textureWidth, textureHeight, scale,
+					!canReduce && !exceedsTextureLimit, nowNanos);
+			if (canReduce) {
 				mView.post(() -> capInternalResolution(supportedScale));
-			} else {
-				MicroActivity activity = ContextHolder.getActivity();
-				if (activity != null) activity.showRenderingNotice(R.string.render_gpu_texture_limit);
+				return;
+			}
+			int notice = exceedsTextureLimit ? R.string.render_gpu_texture_limit
+					: R.string.render_gpu_upload_failed;
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null && lastUploadFailureNotice != notice) {
+				lastUploadFailureNotice = notice;
+				activity.showRenderingNotice(notice);
+			}
+			if (!exceedsTextureLimit) {
+				mView.postDelayed(() -> {
+					if (innerView == mView && visible) requestFlushToScreen();
+				}, TextureUploadRetry.RETRY_DELAY_MILLIS);
 			}
 		}
 
@@ -1839,7 +1851,8 @@ public abstract class Canvas extends Displayable {
 			glGetIntegerv(GL_MAX_TEXTURE_SIZE, textureLimit, 0);
 			maxSourceTextureSide = textureLimit[0] > 0
 					? textureLimit[0] : Integer.MAX_VALUE;
-			failedUploadWidth = failedUploadHeight = -1;
+			uploadRetry.reset();
+			lastUploadFailureNotice = 0;
 			effectRenderer = null;
 			if (settings.effects != null && !settings.effects.isEmpty()) {
 				try {
@@ -1927,14 +1940,14 @@ public abstract class Canvas extends Displayable {
 					int bitmapWidth = bitmap.getWidth();
 					int bitmapHeight = bitmap.getHeight();
 					int scale = source.getPixelScale();
-					if (bitmapWidth == failedUploadWidth && bitmapHeight == failedUploadHeight) {
+					if (uploadRetry.shouldSkip(bitmapWidth, bitmapHeight, scale, nowNs)) {
 						presented = true;
 						return;
 					}
 					if (bitmapWidth > maxSourceTextureSide || bitmapHeight > maxSourceTextureSide) {
 						int supported = Math.min(maxSourceTextureSide / Math.max(1, Canvas.this.width),
 								maxSourceTextureSide / Math.max(1, Canvas.this.maxHeight));
-						requestGpuRecovery(bitmapWidth, bitmapHeight, scale, supported);
+						requestGpuRecovery(bitmapWidth, bitmapHeight, scale, supported, true, nowNs);
 						presented = true;
 						return;
 					}
@@ -1946,16 +1959,17 @@ public abstract class Canvas extends Displayable {
 							int error = glGetError();
 							if (error != GL_NO_ERROR) {
 								Log.w(TAG, "Game texture upload failed: GL error " + error);
-								requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1);
+								requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1, false, nowNs);
 								presented = true;
 								return;
 							}
 						} catch (RuntimeException | OutOfMemoryError error) {
 							Log.w(TAG, "Game texture upload failed", error);
-							requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1);
+							requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1, false, nowNs);
 							presented = true;
 							return;
 						}
+						uploadRetry.reset();
 						textureValid = true;
 						lastUploadedSequence = frameSequence;
 						lastUploadedWidth = bitmapWidth;
