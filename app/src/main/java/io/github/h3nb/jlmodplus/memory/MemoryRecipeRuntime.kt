@@ -116,8 +116,14 @@ class MemoryRecipeRuntime {
         val recipe: Recipe, val inputs: Map<String, Long>,
         val owners: List<WeakReference<Any>>, val identities: List<Long?>,
     )
+    private data class FormSnapshot(
+        val ticket: String, val token: Long, val recipe: Recipe,
+        val selectors: Map<String, Long>, val owners: List<WeakReference<Any>>,
+    )
     private val frozen = LinkedHashMap<String, Hold>()
     private var frozenToken = 0L
+    private var formSnapshot: FormSnapshot? = null
+    private var formReadSequence = 0L
 
     @Synchronized
     fun activeCount(token: Long): Int = if (token == frozenToken) frozen.size else 0
@@ -133,6 +139,7 @@ class MemoryRecipeRuntime {
 
     @Synchronized
     fun runtimeClosed(token: Long) {
+        if (formSnapshot?.token == token) formSnapshot = null
         if (token == frozenToken) {
             frozen.clear()
             frozenToken = 0L
@@ -168,6 +175,17 @@ class MemoryRecipeRuntime {
             if (!preview && recipe.mode == "form") {
                 val expected = parameters?.getStringArray(EXPECTED_VALUES)
                     ?: bad("Refresh the form before applying changes")
+                val ticket = parameters.getString(READ_TICKET)
+                    ?: bad("Refresh the form before applying changes")
+                val read = formSnapshot
+                if (read == null || read.ticket != ticket || read.token != token ||
+                    read.recipe != recipe || read.selectors.any { (key, value) -> values[key] != value } ||
+                    read.owners.size != prepared.owners.size ||
+                    read.owners.indices.any { read.owners[it].get() !== prepared.owners[it] }) {
+                    throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Form target changed since Refresh; refresh before applying")
+                }
+                formSnapshot = null
                 if (expected.size != prepared.readValues.size ||
                     !expected.contentEquals(prepared.readValues.toTypedArray())) {
                     throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
@@ -181,6 +199,14 @@ class MemoryRecipeRuntime {
                         action.field ?: action.input ?: "value ${index + 1}"
                     }.toTypedArray())
                 result.putStringArray("recipeReadValues", prepared.readValues.toTypedArray())
+                if (recipe.mode == "form") {
+                    val ticket = "$token:${++formReadSequence}"
+                    formSnapshot = FormSnapshot(
+                        ticket, token, recipe, values,
+                        prepared.owners.map { WeakReference(it) },
+                    )
+                    result.putString(READ_TICKET, ticket)
+                }
                 return result
             }
             if (hold) {
@@ -362,7 +388,10 @@ class MemoryRecipeRuntime {
                     }
                 }
             }
-            if (readOnly) continue // Read needs only locator parameters, never the proposed edit.
+            if (readOnly) {
+                cells.forEach { owners.add(it.owner) }
+                continue // Read needs locator parameters, not the proposed edit.
+            }
             val operand = number(action, inputs)
             val logicalWrite = if (action.operation == "add") {
                 try {
@@ -555,7 +584,7 @@ class MemoryRecipeRuntime {
             it as? JsonObject ?: bad("Inputs must be an object")
         } ?: JsonObject(emptyMap())
         if (specs.size > MAX_INPUTS || specs.keys.any { key ->
-                key == EXPECTED_VALUES ||
+                (key == EXPECTED_VALUES || key == READ_TICKET) ||
                 key.isEmpty() || key.length > 64 ||
                     key.any { char -> Character.isISOControl(char) }
             }) bad("Invalid input declarations")
@@ -669,7 +698,9 @@ class MemoryRecipeRuntime {
         recipe: Recipe, bundle: Bundle?, readOnly: Boolean = false,
     ): Map<String, Long> {
         val values = HashMap<String, Long>()
-        if (bundle != null && bundle.keySet().any { it !in recipe.inputs && it != EXPECTED_VALUES })
+        if (bundle != null && bundle.keySet().any {
+                it !in recipe.inputs && it != EXPECTED_VALUES && it != READ_TICKET
+            })
             bad("Unexpected input")
         val needed = if (readOnly) recipe.actions.flatMap { action ->
             action.path.mapNotNull(Step::indexInput)
@@ -754,6 +785,7 @@ class MemoryRecipeRuntime {
         private const val MAX_WRITES = 64
         private const val MAX_INPUTS = 16
         private const val EXPECTED_VALUES = "recipeExpectedValues"
+        private const val READ_TICKET = "recipeReadTicket"
         private const val MAX_HELD_RECIPES = 4
     }
 }
