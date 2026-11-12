@@ -232,7 +232,7 @@ public final class TextureImpl {
 		if (!enhancementFailureReported.compareAndSet(false, true)) return;
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) activity.runOnUiThread(() ->
-				activity.toast(R.string.render_texture_memory_reduced));
+				activity.showRenderingNotice(R.string.render_texture_memory_reduced));
 	}
 
 	@Override

@@ -124,7 +124,7 @@ final class BitmapUpscaling {
             if (failureReported.compareAndSet(false, true)) {
                 MicroActivity activity = ContextHolder.getActivity();
                 if (activity != null) activity.runOnUiThread(() ->
-                        activity.toast(R.string.render_bitmap_memory_reduced));
+                        activity.showRenderingNotice(R.string.render_bitmap_memory_reduced));
             }
             return null;
         }

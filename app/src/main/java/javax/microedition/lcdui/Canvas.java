@@ -1219,7 +1219,7 @@ public abstract class Canvas extends Displayable {
 		lastReportedInternalScale = actual;
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
-			activity.toast(R.string.render_resolution_reduced, requested, actual);
+			activity.showRenderingNotice(R.string.render_resolution_reduced, requested, actual);
 		}
 	}
 
@@ -1804,7 +1804,7 @@ public abstract class Canvas extends Displayable {
 				mView.post(() -> capInternalResolution(supportedScale));
 			} else {
 				MicroActivity activity = ContextHolder.getActivity();
-				if (activity != null) activity.toast(R.string.render_gpu_texture_limit);
+				if (activity != null) activity.showRenderingNotice(R.string.render_gpu_texture_limit);
 			}
 		}
 
@@ -1815,7 +1815,7 @@ public abstract class Canvas extends Displayable {
 			if (activity == null) return;
 			activity.runOnUiThread(() -> {
 				if (!activity.isFinishing() && !activity.isDestroyed()) {
-					activity.toast(R.string.render_effect_unavailable);
+					activity.showRenderingNotice(R.string.render_effect_unavailable);
 				}
 			});
 		}
