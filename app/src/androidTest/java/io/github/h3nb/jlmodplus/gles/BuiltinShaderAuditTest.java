@@ -44,6 +44,8 @@ public class BuiltinShaderAuditTest {
     private static final int GAME_W = 24;
     private static final int GAME_H = 32;
 
+    private enum Pattern { FLAT, CHECKER, MARKERS }
+
     private EGLDisplay display = EGL14.EGL_NO_DISPLAY;
     private EGLContext context = EGL14.EGL_NO_CONTEXT;
     private EGLSurface surface = EGL14.EGL_NO_SURFACE;
@@ -99,8 +101,7 @@ public class BuiltinShaderAuditTest {
             List<EffectEntry> stack = Collections.singletonList(EffectEntry.builtin(effect.id));
             PostProcessRenderer renderer = new PostProcessRenderer(stack, null);
             try {
-                int[] pixels = render(renderer, 1, GAME_W, GAME_H, true, true,
-                        GLES20.GL_NEAREST);
+                int[] pixels = render(renderer, 1, GAME_W, GAME_H, true, Pattern.CHECKER, GLES20.GL_NEAREST);
                 savePng("catalog-" + effect.id + ".png", pixels);
             } finally {
                 renderer.release();
@@ -117,13 +118,11 @@ public class BuiltinShaderAuditTest {
                 PostProcessRenderer renderer = new PostProcessRenderer(
                         Collections.singletonList(EffectEntry.builtin(id)), null);
                 try {
-                    int[] baseline = render(renderer, 1, GAME_W, GAME_H, true,
-                            false, filter);
+                    int[] baseline = render(renderer, 1, GAME_W, GAME_H, true, Pattern.FLAT, filter);
                     String label = filter == GLES20.GL_NEAREST ? "nearest" : "linear";
                     savePng("density-" + id + "-" + label + "-1x.png", baseline);
-                    for (int factor : new int[]{2, 4, 1}) {
-                        int[] actual = render(renderer, factor, GAME_W, GAME_H, true,
-                                false, filter);
+                    for (int factor : new int[]{2, 4}) {
+                        int[] actual = render(renderer, factor, GAME_W, GAME_H, true, Pattern.FLAT, filter);
                         assertPixelsNear(id + " " + label + " " + factor + "x",
                                 baseline, actual, 2);
                         if (factor == 4) {
@@ -141,25 +140,35 @@ public class BuiltinShaderAuditTest {
     }
 
     @Test
-    public void chainsAndNonIntegerScalingPreserveLogicalDisplayGeometry() throws Exception {
-        List<List<EffectEntry>> stacks = Arrays.asList(
-                Arrays.asList(EffectEntry.builtin("color"), EffectEntry.builtin("crt-classic")),
-                Arrays.asList(EffectEntry.builtin("crt-classic"), EffectEntry.builtin("vignette")),
-                Arrays.asList(EffectEntry.builtin("bloom"), EffectEntry.builtin("lcd")),
-                Arrays.asList(EffectEntry.builtin("lcd"), EffectEntry.builtin("scanlines"))
-        );
-        for (int i = 0; i < stacks.size(); i++) {
-            PostProcessRenderer renderer = new PostProcessRenderer(stacks.get(i), null);
-            try {
-                // 27x35 -> 96x128 is intentionally non-integer in both axes.
-                int[] low = render(renderer, 1, 27, 35, true, false, GLES20.GL_NEAREST);
-                int[] high = render(renderer, 4, 27, 35, true, false, GLES20.GL_NEAREST);
-                assertPixelsNear("chain " + i, low, high, 2);
-                savePng("chain-" + i + "-1x.png", low);
-                savePng("chain-" + i + "-4x.png", high);
-            } finally {
-                renderer.release();
-            }
+    public void bloomPreservesSourceAndCreatesVisibleHalo() throws Exception {
+        PostProcessRenderer baseline = stack(EffectEntry.builtin("color"));
+        PostProcessRenderer disabled = stack(new EffectEntry("bloom-zero", "bloom",
+                null, Collections.singletonMap("uIntensity", 0f)));
+        PostProcessRenderer bloom = stack(EffectEntry.builtin("bloom"));
+        PostProcessRenderer chained = stack(EffectEntry.builtin("color"),
+                EffectEntry.builtin("bloom"));
+        try {
+            int[] original = render(baseline, 1, GAME_W, GAME_H, true,
+                    Pattern.MARKERS, GLES20.GL_NEAREST);
+            int[] zero = render(disabled, 1, GAME_W, GAME_H, true,
+                    Pattern.MARKERS, GLES20.GL_NEAREST);
+            assertPixelsNear("Zero-intensity Bloom must preserve the source", original, zero, 2);
+
+            int[] output = render(bloom, 1, GAME_W, GAME_H, true,
+                    Pattern.MARKERS, GLES20.GL_NEAREST);
+            int[] afterFbo = render(chained, 1, GAME_W, GAME_H, true,
+                    Pattern.MARKERS, GLES20.GL_NEAREST);
+            assertCorners(output, 0, 0, VIEW_W - 1, VIEW_H - 1);
+            assertGlow("Bloom", original, output);
+            assertGlow("Color then Bloom", original, afterFbo);
+            savePng("bloom-source.png", original);
+            savePng("bloom-output.png", output);
+            savePng("bloom-after-color.png", afterFbo);
+        } finally {
+            baseline.release();
+            disabled.release();
+            bloom.release();
+            chained.release();
         }
     }
 
@@ -170,19 +179,14 @@ public class BuiltinShaderAuditTest {
             PostProcessRenderer renderer = new PostProcessRenderer(
                     Collections.singletonList(EffectEntry.builtin(id)), null);
             try {
-                int[] nearest1 = render(renderer, 1, GAME_W, GAME_H, true,
-                        true, GLES20.GL_NEAREST);
-                int[] nearest2 = render(renderer, 2, GAME_W, GAME_H, true,
-                        true, GLES20.GL_NEAREST);
-                int[] nearest4 = render(renderer, 4, GAME_W, GAME_H, true,
-                        true, GLES20.GL_NEAREST);
+                int[] nearest1 = render(renderer, 1, GAME_W, GAME_H, true, Pattern.CHECKER, GLES20.GL_NEAREST);
+                int[] nearest2 = render(renderer, 2, GAME_W, GAME_H, true, Pattern.CHECKER, GLES20.GL_NEAREST);
+                int[] nearest4 = render(renderer, 4, GAME_W, GAME_H, true, Pattern.CHECKER, GLES20.GL_NEAREST);
                 assertPixelsNear(id + " patterned nearest 2x", nearest1, nearest2, 2);
                 assertPixelsNear(id + " patterned nearest 4x", nearest1, nearest4, 2);
 
-                int[] linear1 = render(renderer, 1, GAME_W, GAME_H, true,
-                        true, GLES20.GL_LINEAR);
-                int[] linear4 = render(renderer, 4, GAME_W, GAME_H, true,
-                        true, GLES20.GL_LINEAR);
+                int[] linear1 = render(renderer, 1, GAME_W, GAME_H, true, Pattern.CHECKER, GLES20.GL_LINEAR);
+                int[] linear4 = render(renderer, 4, GAME_W, GAME_H, true, Pattern.CHECKER, GLES20.GL_LINEAR);
                 savePng("artwork-" + id + "-nearest-1x.png", nearest1);
                 savePng("artwork-" + id + "-nearest-4x.png", nearest4);
                 savePng("artwork-" + id + "-linear-1x.png", linear1);
@@ -209,27 +213,47 @@ public class BuiltinShaderAuditTest {
     }
 
     @Test
-    public void paddedSourceIsClampedAtGameContentEdges() throws Exception {
-        for (String id : new String[]{"crt-classic", "lcd", "scanlines", "color"}) {
-            PostProcessRenderer renderer = new PostProcessRenderer(
-                    Collections.singletonList(EffectEntry.builtin(id)), null);
-            try {
-                for (int factor : new int[]{1, 4}) {
-                    int[] compact = render(renderer, factor, GAME_W, GAME_H, false,
-                            false, GLES20.GL_LINEAR);
-                    int[] padded = render(renderer, factor, GAME_W, GAME_H, true,
-                            false, GLES20.GL_LINEAR);
-                    assertPixelsNear("padded " + id + " " + factor + "x",
-                            compact, padded, 2);
-                }
-            } finally {
-                renderer.release();
+    public void insetViewportKeepsCornersAndClampsPadding() throws Exception {
+        PostProcessRenderer direct = stack(EffectEntry.builtin("crt-classic"));
+        PostProcessRenderer chained = stack(EffectEntry.builtin("color"),
+                EffectEntry.builtin("crt-classic"));
+        try {
+            for (int scale : new int[]{1, 4}) {
+                int[] expected = render(direct, scale, 27, 35, true,
+                        Pattern.MARKERS, GLES20.GL_NEAREST, -0.75f, 0.75f, 0.75f, -0.75f);
+                int[] actual = render(chained, scale, 27, 35, true,
+                        Pattern.MARKERS, GLES20.GL_NEAREST, -0.75f, 0.75f, 0.75f, -0.75f);
+                assertPixelsNear("Inset direct/offscreen " + scale + "x",
+                        expected, actual, 2);
+                assertCorners(actual, 12, 16, 83, 111);
+                assertEquals("Outside game viewport was modified", 0xff000000, actual[0]);
+                if (scale == 4) savePng("inset-chained-crt.png", actual);
             }
+
+            int[] compact = render(direct, 1, 27, 35, false,
+                    Pattern.FLAT, GLES20.GL_LINEAR, -0.75f, 0.75f, 0.75f, -0.75f);
+            int[] padded = render(direct, 1, 27, 35, true,
+                    Pattern.FLAT, GLES20.GL_LINEAR, -0.75f, 0.75f, 0.75f, -0.75f);
+            assertPixelsNear("Padding must not introduce magenta edges", compact, padded, 2);
+        } finally {
+            direct.release();
+            chained.release();
         }
     }
 
+    private static PostProcessRenderer stack(EffectEntry... entries) throws IOException {
+        return new PostProcessRenderer(Arrays.asList(entries), null);
+    }
+
     private int[] render(PostProcessRenderer renderer, int scale, int guestW, int guestH,
-                         boolean padded, boolean artwork, int filter) {
+                         boolean padded, Pattern pattern, int filter) {
+        return render(renderer, scale, guestW, guestH, padded, pattern, filter,
+                -1f, 1f, 1f, -1f);
+    }
+
+    private int[] render(PostProcessRenderer renderer, int scale, int guestW, int guestH,
+                         boolean padded, Pattern pattern, int filter,
+                         float left, float right, float top, float bottom) {
         int contentW = guestW * scale;
         int contentH = guestH * scale;
         int texW = contentW + (padded ? 7 : 0);
@@ -241,9 +265,29 @@ public class BuiltinShaderAuditTest {
                 int gx = x / scale;
                 int gy = y / scale;
                 boolean light = ((gx / 4 + gy / 4) & 1) == 0;
-                int r = outside ? 255 : artwork ? (light ? 202 : 48) : 185;
-                int g = outside ? 0 : artwork ? (light ? 190 : 83) : 185;
-                int b = outside ? 255 : artwork ? (light ? 152 : 120) : 185;
+                int r = 185, g = 185, b = 185;
+                if (pattern == Pattern.CHECKER) {
+                    r = light ? 202 : 48;
+                    g = light ? 190 : 83;
+                    b = light ? 152 : 120;
+                } else if (pattern == Pattern.MARKERS) {
+                    r = g = b = 12;
+                    if (gx < 2 && gy < 2) {
+                        r = 180; g = 40; b = 40;
+                    } else if (gx >= guestW - 2 && gy < 2) {
+                        r = 40; g = 180; b = 40;
+                    } else if (gx < 2 && gy >= guestH - 2) {
+                        r = 40; g = 40; b = 180;
+                    } else if (gx >= guestW - 2 && gy >= guestH - 2) {
+                        r = 150; g = 120; b = 25;
+                    } else if (gx >= guestW / 3 && gx < guestW / 3 + 2
+                            && gy >= guestH / 3 && gy < guestH / 3 + 2) {
+                        r = g = b = 250;
+                    }
+                }
+                if (outside) {
+                    r = 255; g = 0; b = 255;
+                }
                 source.put((byte) r).put((byte) g).put((byte) b).put((byte) 255);
             }
         }
@@ -265,11 +309,14 @@ public class BuiltinShaderAuditTest {
                     texW, texH, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, source);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
             GLES20.glViewport(0, 0, VIEW_W, VIEW_H);
-            GLES20.glScissor(0, 0, VIEW_W, VIEW_H);
+            GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
             GLES20.glDisable(GLES20.GL_BLEND);
             GLES20.glClearColor(0, 0, 0, 1);
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-            assertTrue("Renderer declined to draw", renderer.draw(name[0], quad(),
+            GLES20.glScissor(0, 0, VIEW_W, VIEW_H);
+            GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+            assertTrue("Renderer declined to draw", renderer.draw(name[0],
+                    quad(left, right, top, bottom),
                     texW, texH, contentW, contentH, guestW, guestH,
                     VIEW_W, VIEW_H, filter));
             ByteBuffer bytes = ByteBuffer.allocateDirect(VIEW_W * VIEW_H * 4);
@@ -292,17 +339,47 @@ public class BuiltinShaderAuditTest {
         }
     }
 
-    private static FloatBuffer quad() {
+    private static FloatBuffer quad(float left, float right, float top, float bottom) {
         FloatBuffer q = ByteBuffer.allocateDirect(16 * Float.BYTES)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         q.put(new float[]{
-                -1f, 1f, 0f, 0f,
-                -1f, -1f, 0f, 1f,
-                 1f, 1f, 1f, 0f,
-                 1f, -1f, 1f, 1f
+                left, top, 0f, 0f,
+                left, bottom, 0f, 1f,
+                right, top, 1f, 0f,
+                right, bottom, 1f, 1f
         });
         q.rewind();
         return q;
+    }
+
+    private static void assertCorners(int[] pixels, int left, int top,
+                                      int right, int bottom) {
+        int tl = pixels[(top + 2) * VIEW_W + left + 2];
+        int tr = pixels[(top + 2) * VIEW_W + right - 2];
+        int bl = pixels[(bottom - 2) * VIEW_W + left + 2];
+        int br = pixels[(bottom - 2) * VIEW_W + right - 2];
+        assertTrue("Top-left red marker", channel(tl, 16) > channel(tl, 8) + 60);
+        assertTrue("Top-right green marker", channel(tr, 8) > channel(tr, 16) + 60);
+        assertTrue("Bottom-left blue marker", channel(bl, 0) > channel(bl, 8) + 60);
+        assertTrue("Bottom-right yellow marker", channel(br, 16) > channel(br, 0) + 60);
+    }
+
+    private static void assertGlow(String name, int[] source, int[] output) {
+        int halo = 0;
+        for (int i = 0; i < source.length; i++) {
+            int base = maxRgb(source[i]);
+            if (base <= 20 && maxRgb(output[i]) >= base + 3) halo++;
+        }
+        assertTrue(name + " produced no visible halo", halo > 5);
+    }
+
+    private static int maxRgb(int color) {
+        return Math.max(channel(color, 16),
+                Math.max(channel(color, 8), channel(color, 0)));
+    }
+
+    private static int channel(int argb, int shift) {
+        return (argb >>> shift) & 255;
     }
 
     private static void assertPixelsNear(String caseName, int[] expected,

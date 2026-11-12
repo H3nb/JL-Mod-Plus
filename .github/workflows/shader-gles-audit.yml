@@ -5,6 +5,12 @@ on:
   push:
     branches:
       - experiment/builtin-shader-gles-audit
+    paths:
+      - '.github/workflows/shader-gles-audit.yml'
+      - 'scripts/shader-gles-audit.sh'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/gles/BuiltinShaderAuditTest.java'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/gles/**'
+      - 'app/src/main/assets/shaders/effects/**'
   workflow_dispatch:
 
 permissions:
