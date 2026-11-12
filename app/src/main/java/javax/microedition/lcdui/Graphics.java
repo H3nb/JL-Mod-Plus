@@ -57,11 +57,32 @@ public class Graphics implements
 
 	private final Canvas canvas;
 	private final Image image;
+	private Matrix pixelScaleMatrix;
 	private Bitmap boundBitmap;
+	private int boundPixelScale;
 
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
 	private final Paint polygonPaint = new Paint();
+
+	// Cached Graphics instances outlive profile changes; choose the active session at draw time.
+	private static volatile BitmapUpscaling activeBitmapUpscaling =
+			new BitmapUpscaling(BitmapUpscaling.NEAREST);
+
+
+	static void configureBitmapUpscaling(int mode) {
+		activeBitmapUpscaling = new BitmapUpscaling(mode);
+	}
+
+	private void drawSourceBitmap(Image source, Rect src, RectF dst) {
+		if (source.isResizableDisplayTarget()) {
+			synchronized (source) {
+				activeBitmapUpscaling.draw(canvas, source, src, dst, image.getPixelScale());
+			}
+		} else {
+			activeBitmapUpscaling.draw(canvas, source, src, dst, image.getPixelScale());
+		}
+	}
 
 	private int translateX;
 	private int translateY;
@@ -84,11 +105,20 @@ public class Graphics implements
 	Graphics(Image image) {
 		this.image = image;
 		boundBitmap = image.getBitmap();
+		boundPixelScale = image.getPixelScale();
 		canvas = new Canvas(boundBitmap);
+		pixelScaleMatrix = image.getPixelScale() == 1 ? null : new Matrix();
+		if (pixelScaleMatrix != null) {
+			pixelScaleMatrix.setScale(image.getPixelScale(), image.getPixelScale());
+			canvas.concat(pixelScaleMatrix);
+		}
 		canvas.save();
 		canvas.clipRect(image.getBounds());
 		canvas.getClipBounds(clip);
 		drawPaint.setStyle(Paint.Style.STROKE);
+		// Android's zero-width stroke is a one-device-pixel hairline, so
+		// it must not be used for one-logical-pixel lines in an HD target.
+		if (image.getPixelScale() > 1) drawPaint.setStrokeWidth(1f);
 		fillPaint.setStyle(Paint.Style.FILL);
 		drawPaint.setAntiAlias(false);
 		fillPaint.setAntiAlias(false);
@@ -97,65 +127,118 @@ public class Graphics implements
 	@SuppressWarnings("deprecation")
 	private void resetCanvasState() {
 		Bitmap bitmap = image.getBitmap();
-
+		int scale = image.getPixelScale();
 		canvas.restoreToCount(1);
-		if (bitmap != boundBitmap) {
+		boolean newBitmap = bitmap != boundBitmap;
+		if (newBitmap) {
 			canvas.setBitmap(bitmap);
 			boundBitmap = bitmap;
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-				// Before Android O setBitmap() preserves the previous clip, so replace it
-				// only when the backing store actually changes.
-				canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
-			}
+		}
+		if (scale != boundPixelScale) {
+			boundPixelScale = scale;
+			pixelScaleMatrix = scale == 1 ? null : new Matrix();
+			if (pixelScaleMatrix != null) pixelScaleMatrix.setScale(scale, scale);
+			drawPaint.setStrokeWidth(scale == 1 ? 0f : 1f);
+		}
+		canvas.setMatrix(pixelScaleMatrix);
+		if (newBitmap && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			// Before O, setBitmap may retain the old clip.
+			canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
 		}
 		canvas.save();
 	}
 
-	public void reset(float cl, float ct, float cr, float cb) {
-		setColor(0);
-		setFont(Font.getDefaultFont());
-		setStrokeStyle(SOLID);
+	void onDisplayTargetResized(int previousWidth, int previousHeight) {
+		Rect previousClip = new Rect(clip);
+		boolean fullCanvasClip = previousClip.left + translateX == 0
+				&& previousClip.top + translateY == 0
+				&& previousClip.right + translateX == previousWidth
+				&& previousClip.bottom + translateY == previousHeight;
 		resetCanvasState();
-		canvas.clipRect(cl, ct, cr, cb);
-		canvas.getClipBounds(this.clip);
-		translateX = 0;
-		translateY = 0;
+		canvas.clipRect(image.getBounds());
+		canvas.translate(translateX, translateY);
+		if (fullCanvasClip) {
+			previousClip.set(-translateX, -translateY,
+					image.getWidth() - translateX, image.getHeight() - translateY);
+		}
+		canvas.clipRect(previousClip);
+		canvas.getClipBounds(clip);
+	}
+
+	public void reset(float cl, float ct, float cr, float cb) {
+		synchronized (this.image) {
+			setColor(0);
+			setFont(Font.getDefaultFont());
+			setStrokeStyle(SOLID);
+			resetCanvasState();
+			canvas.clipRect(cl, ct, cr, cb);
+			canvas.getClipBounds(this.clip);
+			translateX = 0;
+			translateY = 0;
+		}
 	}
 
 	public Canvas getCanvas() {
 		return canvas;
 	}
 
+	/** Immutable host snapshot: resize cannot change bitmap, density or clip mid-capture. */
+	public RenderTarget captureRenderTarget() {
+		synchronized (image) {
+			Rect targetClip = new Rect();
+			canvas.getClipBounds(targetClip);
+			return new RenderTarget(image.getBitmap(), image.getPixelScale(), targetClip);
+		}
+	}
+
+	public static final class RenderTarget {
+		public final Bitmap bitmap;
+		public final int pixelScale;
+		public final Rect clip;
+
+		private RenderTarget(Bitmap bitmap, int pixelScale, Rect clip) {
+			this.bitmap = bitmap;
+			this.pixelScale = pixelScale;
+			this.clip = clip;
+		}
+	}
+
 	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
-		if (nPoints > 0) {
-			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
-			canvas.drawPath(path, fillPaint);
+		synchronized (this.image) {
+			if (nPoints > 0) {
+				Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+				canvas.drawPath(path, fillPaint);
+			}
 		}
 	}
 
 	public void drawPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
-		if (nPoints > 0) {
-			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
-			canvas.drawPath(path, drawPaint);
+		synchronized (this.image) {
+			if (nPoints > 0) {
+				Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+				canvas.drawPath(path, drawPaint);
+			}
 		}
 	}
 
 	/** Nokia polygons include their boundary and use even-odd interior coverage. */
 	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset,
 			int nPoints, int argbColor) {
-		if (nPoints > 0) {
-			computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
-			path.setFillType(Path.FillType.EVEN_ODD);
-			int alpha = argbColor >>> 24;
-			if (alpha == 0 || clip.isEmpty()) return;
-			polygonPaint.set(fillPaint);
-			polygonPaint.setColor(argbColor);
-			polygonPaint.setStrokeWidth(1);
-			if (alpha == 0xFF) {
-				drawOpaqueClosedCoverage(path, path, false, polygonPaint);
-			} else {
-				unionClosedCoverage(path, path, Paint.Style.STROKE);
-				drawClosedCoverage(polygonPaint);
+		synchronized (this.image) {
+			if (nPoints > 0) {
+				computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+				path.setFillType(Path.FillType.EVEN_ODD);
+				int alpha = argbColor >>> 24;
+				if (alpha == 0 || clip.isEmpty()) return;
+				polygonPaint.set(fillPaint);
+				polygonPaint.setColor(argbColor);
+				polygonPaint.setStrokeWidth(1);
+				if (alpha == 0xFF) {
+					drawOpaqueClosedCoverage(path, path, false, polygonPaint);
+				} else {
+					unionClosedCoverage(path, path, Paint.Style.STROKE);
+					drawClosedCoverage(polygonPaint);
+				}
 			}
 		}
 	}
@@ -191,11 +274,13 @@ public class Graphics implements
 	/** Uses the call's ARGB without changing the shared Graphics color. */
 	public void drawPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset,
 			int nPoints, int argbColor) {
-		if (nPoints > 0) {
-			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
-			polygonPaint.set(drawPaint);
-			polygonPaint.setColor(argbColor);
-			canvas.drawPath(path, polygonPaint);
+		synchronized (this.image) {
+			if (nPoints > 0) {
+				Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+				polygonPaint.set(drawPaint);
+				polygonPaint.setColor(argbColor);
+				canvas.drawPath(path, polygonPaint);
+			}
 		}
 	}
 
@@ -211,24 +296,32 @@ public class Graphics implements
 	}
 
 	public void setColor(int color) {
-		setColorAlpha(color | 0xFF000000);
+		synchronized (this.image) {
+			setColorAlpha(color | 0xFF000000);
+		}
 	}
 
 	public void setColorAlpha(int color) {
-		drawPaint.setColor(color);
-		fillPaint.setColor(color);
+		synchronized (this.image) {
+			drawPaint.setColor(color);
+			fillPaint.setColor(color);
+		}
 	}
 
 	public void setColor(int r, int g, int b) {
-		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
-			throw new IllegalArgumentException("RGB components must be in range 0..255");
+		synchronized (this.image) {
+			if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+				throw new IllegalArgumentException("RGB components must be in range 0..255");
+			}
+			drawPaint.setARGB(255, r, g, b);
+			fillPaint.setARGB(255, r, g, b);
 		}
-		drawPaint.setARGB(255, r, g, b);
-		fillPaint.setARGB(255, r, g, b);
 	}
 
 	public void setGrayScale(int value) {
-		setColor(value, value, value);
+		synchronized (this.image) {
+			setColor(value, value, value);
+		}
 	}
 
 	public int getGrayScale() {
@@ -265,15 +358,17 @@ public class Graphics implements
 	}
 
 	public void setStrokeStyle(int stroke) {
-		if (stroke != SOLID && stroke != DOTTED) {
-			throw new IllegalArgumentException("Invalid stroke style: " + stroke);
-		}
-		this.stroke = stroke;
+		synchronized (this.image) {
+			if (stroke != SOLID && stroke != DOTTED) {
+				throw new IllegalArgumentException("Invalid stroke style: " + stroke);
+			}
+			this.stroke = stroke;
 
-		if (stroke == DOTTED) {
-			drawPaint.setPathEffect(dashPathEffect);
-		} else {
-			drawPaint.setPathEffect(null);
+			if (stroke == DOTTED) {
+				drawPaint.setPathEffect(dashPathEffect);
+			} else {
+				drawPaint.setPathEffect(null);
+			}
 		}
 	}
 
@@ -282,7 +377,9 @@ public class Graphics implements
 	}
 
 	public void setFont(Font font) {
-		this.font = font == null ? Font.getDefaultFont() : font;
+		synchronized (this.image) {
+			this.font = font == null ? Font.getDefaultFont() : font;
+		}
 	}
 
 	public Font getFont() {
@@ -290,133 +387,182 @@ public class Graphics implements
 	}
 
 	public void setClip(int x, int y, int width, int height) {
-		clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
-		resetCanvasState();
-		canvas.translate(translateX, translateY);
-		canvas.clipRect(clip);
-		canvas.getClipBounds(clip);
+		synchronized (this.image) {
+			clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
+			resetCanvasState();
+			canvas.translate(translateX, translateY);
+			canvas.clipRect(clip);
+			canvas.getClipBounds(clip);
+		}
 	}
 
 	public void clipRect(int x, int y, int width, int height) {
-		clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
-		canvas.clipRect(clip);
-		canvas.getClipBounds(clip);
+		synchronized (this.image) {
+			clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
+			canvas.clipRect(clip);
+			canvas.getClipBounds(clip);
+		}
 	}
 
 	public int getClipX() {
-		return clip.left;
+		synchronized (this.image) {
+			return clip.left;
+		}
 	}
 
 	public int getClipY() {
-		return clip.top;
+		synchronized (this.image) {
+			return clip.top;
+		}
 	}
 
 	public int getClipWidth() {
-		return clip.width();
+		synchronized (this.image) {
+			return clip.width();
+		}
 	}
 
 	public int getClipHeight() {
-		return clip.height();
+		synchronized (this.image) {
+			return clip.height();
+		}
 	}
 
 	public void translate(int dx, int dy) {
-		translateX += dx;
-		translateY += dy;
+		synchronized (this.image) {
+			translateX += dx;
+			translateY += dy;
 
-		canvas.translate(dx, dy);
-		canvas.getClipBounds(clip);
+			canvas.translate(dx, dy);
+			canvas.getClipBounds(clip);
+		}
 	}
 
 	public int getTranslateX() {
-		return translateX;
+		synchronized (this.image) {
+			return translateX;
+		}
 	}
 
 	public int getTranslateY() {
-		return translateY;
+		synchronized (this.image) {
+			return translateY;
+		}
 	}
 
 	public void drawLine(int x1, int y1, int x2, int y2) {
-		if (x2 >= x1) {
-			x2++;
-		} else {
-			x1++;
-		}
+		synchronized (this.image) {
+			if (pixelScaleMatrix != null && stroke == SOLID) {
+				// MIDP endpoints are inclusive. Draw a full logical-pixel
+				// rectangle instead of a hardware hairline for axis-aligned
+				// strokes (loading bars often use adjacent drawLine calls).
+				if (y1 == y2) {
+					canvas.drawRect(Math.min(x1, x2), y1,
+							(float) Math.max(x1, x2) + 1, (float) y1 + 1, fillPaint);
+					return;
+				}
+				if (x1 == x2) {
+					canvas.drawRect(x1, Math.min(y1, y2),
+							(float) x1 + 1, (float) Math.max(y1, y2) + 1, fillPaint);
+					return;
+				}
+			}
+			if (x2 >= x1) {
+				x2++;
+			} else {
+				x1++;
+			}
 
-		if (y2 >= y1) {
-			y2++;
-		} else {
-			y1++;
-		}
+			if (y2 >= y1) {
+				y2++;
+			} else {
+				y1++;
+			}
 
-		canvas.drawLine(x1, y1, x2, y2, drawPaint);
+			canvas.drawLine(x1, y1, x2, y2, drawPaint);
+		}
 	}
 
 	public void drawArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-		if (width < 0 || height < 0) return;
-		rectF.set(x, y, x + width, y + height);
-		canvas.drawArc(rectF, -startAngle, -arcAngle, false, drawPaint);
+		synchronized (this.image) {
+			if (width < 0 || height < 0) return;
+			rectF.set(x, y, x + width, y + height);
+			canvas.drawArc(rectF, -startAngle, -arcAngle, false, drawPaint);
+		}
 	}
 
 	public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-		if (width <= 0 || height <= 0) return;
-		rectF.set(x, y, x + width, y + height);
-		canvas.drawArc(rectF, -startAngle, -arcAngle, true, fillPaint);
+		synchronized (this.image) {
+			if (width <= 0 || height <= 0) return;
+			rectF.set(x, y, x + width, y + height);
+			canvas.drawArc(rectF, -startAngle, -arcAngle, true, fillPaint);
+		}
 	}
 
 	public void drawRect(int x, int y, int width, int height) {
-		if (width < 0 || height < 0) return;
-		canvas.drawRect(x, y, x + width, y + height, drawPaint);
+		synchronized (this.image) {
+			if (width < 0 || height < 0) return;
+			canvas.drawRect(x, y, x + width, y + height, drawPaint);
+		}
 	}
 
 	public void fillRect(int x, int y, int width, int height) {
-		if (width <= 0 || height <= 0) return;
-		canvas.drawRect(x, y, x + width, y + height, fillPaint);
+		synchronized (this.image) {
+			if (width <= 0 || height <= 0) return;
+			canvas.drawRect(x, y, x + width, y + height, fillPaint);
+		}
 	}
 
 	public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-		if (width < 0 || height < 0) return;
-		rectF.set(x, y, x + width, y + height);
-		canvas.drawRoundRect(rectF, arcWidth * 0.5f, arcHeight * 0.5f, drawPaint);
+		synchronized (this.image) {
+			if (width < 0 || height < 0) return;
+			rectF.set(x, y, x + width, y + height);
+			canvas.drawRoundRect(rectF, arcWidth * 0.5f, arcHeight * 0.5f, drawPaint);
+		}
 	}
 
 	public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-		if (width < 0 || height < 0) return;
-		rectF.set(x, y, x + width, y + height);
-		canvas.drawRoundRect(rectF, arcWidth * 0.5f, arcHeight * 0.5f, fillPaint);
+		synchronized (this.image) {
+			if (width < 0 || height < 0) return;
+			rectF.set(x, y, x + width, y + height);
+			canvas.drawRoundRect(rectF, arcWidth * 0.5f, arcHeight * 0.5f, fillPaint);
+		}
 	}
 
 	public void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-		int alpha = fillPaint.getColor() >>> 24;
-		if (alpha == 0 || clip.isEmpty()) return;
-		path.reset();
-		path.setFillType(Path.FillType.WINDING);
-		path.moveTo(x1, y1);
-		path.lineTo(x2, y2);
-		path.lineTo(x3, y3);
-		path.close();
-		polygonPaint.set(fillPaint);
-		polygonPaint.setStyle(Paint.Style.STROKE);
-		polygonPaint.setStrokeWidth(1);
-		polygonPaint.setStrokeJoin(Paint.Join.BEVEL);
-		// MIDP includes solid connecting lines below/right of integer points.
-		polygonOutline.set(path);
-		polygonOutline.offset(0.5f, 0.5f);
-		// The shifted outline can be separated from the original interior on
-		// diagonal edges. Include its interior so their coverage cannot leave
-		// periodic gaps or detached boundary pixels. Opaque Source Over is
-		// idempotent, so direct constituent draws preserve the same union without
-		// Region reconstruction. Translucent coverage must still composite once.
-		if (alpha == 0xFF) {
-			drawOpaqueClosedCoverage(path, polygonOutline, true, polygonPaint);
-			drawOpaqueTriangleEndpoint(x1, y1);
-			drawOpaqueTriangleEndpoint(x2, y2);
-			drawOpaqueTriangleEndpoint(x3, y3);
-		} else {
-			unionClosedCoverage(path, polygonOutline, Paint.Style.FILL_AND_STROKE);
-			includeTriangleEndpoint(x1, y1);
-			includeTriangleEndpoint(x2, y2);
-			includeTriangleEndpoint(x3, y3);
-			drawClosedCoverage(fillPaint);
+		synchronized (this.image) {
+			int alpha = fillPaint.getColor() >>> 24;
+			if (alpha == 0 || clip.isEmpty()) return;
+			path.reset();
+			path.setFillType(Path.FillType.WINDING);
+			path.moveTo(x1, y1);
+			path.lineTo(x2, y2);
+			path.lineTo(x3, y3);
+			path.close();
+			polygonPaint.set(fillPaint);
+			polygonPaint.setStyle(Paint.Style.STROKE);
+			polygonPaint.setStrokeWidth(1);
+			polygonPaint.setStrokeJoin(Paint.Join.BEVEL);
+			// MIDP includes solid connecting lines below/right of integer points.
+			polygonOutline.set(path);
+			polygonOutline.offset(0.5f, 0.5f);
+			// The shifted outline can be separated from the original interior on
+			// diagonal edges. Include its interior so their coverage cannot leave
+			// periodic gaps or detached boundary pixels. Opaque Source Over is
+			// idempotent, so direct constituent draws preserve the same union without
+			// Region reconstruction. Translucent coverage must still composite once.
+			if (alpha == 0xFF) {
+				drawOpaqueClosedCoverage(path, polygonOutline, true, polygonPaint);
+				drawOpaqueTriangleEndpoint(x1, y1);
+				drawOpaqueTriangleEndpoint(x2, y2);
+				drawOpaqueTriangleEndpoint(x3, y3);
+			} else {
+				unionClosedCoverage(path, polygonOutline, Paint.Style.FILL_AND_STROKE);
+				includeTriangleEndpoint(x1, y1);
+				includeTriangleEndpoint(x2, y2);
+				includeTriangleEndpoint(x3, y3);
+				drawClosedCoverage(fillPaint);
+			}
 		}
 	}
 
@@ -435,60 +581,79 @@ public class Graphics implements
 	}
 
 	public void drawChar(char character, int x, int y, int anchor) {
-		drawChars(new char[]{character}, 0, 1, x, y, anchor);
+		synchronized (this.image) {
+			drawChars(new char[]{character}, 0, 1, x, y, anchor);
+		}
 	}
 
 	public void drawChars(char[] data, int offset, int length, int x, int y, int anchor) {
-		Paint paint = font.paint;
-		if ((anchor & Graphics.RIGHT) != 0) {
-			paint.setTextAlign(Paint.Align.RIGHT);
-		} else if ((anchor & Graphics.HCENTER) != 0) {
-			paint.setTextAlign(Paint.Align.CENTER);
-		} else {
-			paint.setTextAlign(Paint.Align.LEFT);
-		}
+		synchronized (this.image) {
+			Paint paint = font.paint;
+			if ((anchor & Graphics.RIGHT) != 0) {
+				paint.setTextAlign(Paint.Align.RIGHT);
+			} else if ((anchor & Graphics.HCENTER) != 0) {
+				paint.setTextAlign(Paint.Align.CENTER);
+			} else {
+				paint.setTextAlign(Paint.Align.LEFT);
+			}
 
-		float ly;
-		if ((anchor & Graphics.BOTTOM) != 0) {
-			ly = y - font.descent;
-		} else if ((anchor & Graphics.VCENTER) != 0) {
-			ly = y - (font.descent + font.ascent) / 2.0f;
-		} else if ((anchor & Graphics.BASELINE) != 0) {
-			ly = y;
-		} else {
-			ly = y - font.ascent;
-		}
+			float ly;
+			if ((anchor & Graphics.BOTTOM) != 0) {
+				ly = y - font.descent;
+			} else if ((anchor & Graphics.VCENTER) != 0) {
+				ly = y - (font.descent + font.ascent) / 2.0f;
+			} else if ((anchor & Graphics.BASELINE) != 0) {
+				ly = y;
+			} else {
+				ly = y - font.ascent;
+			}
 
-		paint.setColor(fillPaint.getColor());
-		canvas.drawText(data, offset, length, x, ly, paint);
+			paint.setColor(fillPaint.getColor());
+			canvas.drawText(data, offset, length, x, ly, paint);
+		}
 	}
 
 	public void drawString(String text, int x, int y, int anchor) {
-		Paint paint = font.paint;
-		if ((anchor & Graphics.RIGHT) != 0) {
-			paint.setTextAlign(Paint.Align.RIGHT);
-		} else if ((anchor & Graphics.HCENTER) != 0) {
-			paint.setTextAlign(Paint.Align.CENTER);
-		} else {
-			paint.setTextAlign(Paint.Align.LEFT);
-		}
+		synchronized (this.image) {
+			Paint paint = font.paint;
+			if ((anchor & Graphics.RIGHT) != 0) {
+				paint.setTextAlign(Paint.Align.RIGHT);
+			} else if ((anchor & Graphics.HCENTER) != 0) {
+				paint.setTextAlign(Paint.Align.CENTER);
+			} else {
+				paint.setTextAlign(Paint.Align.LEFT);
+			}
 
-		float ly;
-		if ((anchor & Graphics.BOTTOM) != 0) {
-			ly = y - font.descent;
-		} else if ((anchor & Graphics.VCENTER) != 0) {
-			ly = y - (font.descent + font.ascent) / 2.0f;
-		} else if ((anchor & Graphics.BASELINE) != 0) {
-			ly = y;
-		} else {
-			ly = y - font.ascent;
-		}
+			float ly;
+			if ((anchor & Graphics.BOTTOM) != 0) {
+				ly = y - font.descent;
+			} else if ((anchor & Graphics.VCENTER) != 0) {
+				ly = y - (font.descent + font.ascent) / 2.0f;
+			} else if ((anchor & Graphics.BASELINE) != 0) {
+				ly = y;
+			} else {
+				ly = y - font.ascent;
+			}
 
-		paint.setColor(fillPaint.getColor());
-		canvas.drawText(text, x, ly, paint);
+			paint.setColor(fillPaint.getColor());
+			canvas.drawText(text, x, ly, paint);
+		}
 	}
 
 	public void drawImage(Image image, int x, int y, int anchor) {
+		synchronized (this.image) {
+			if (image.isResizableDisplayTarget()) {
+				synchronized (image) {
+					drawImageSource(image, x, y, anchor);
+				}
+			} else {
+				drawImageSource(image, x, y, anchor);
+			}
+		}
+	}
+
+	/** Caller holds the destination monitor and, for resizable images, the source monitor. */
+	private void drawImageSource(Image image, int x, int y, int anchor) {
 		float lx;
 		if ((anchor & Graphics.RIGHT) != 0) {
 			lx = x - image.getWidth();
@@ -507,35 +672,64 @@ public class Graphics implements
 			ly = y;
 		}
 
-		canvas.drawBitmap(image.getBitmap(), lx, ly, null);
+		if (this.image.getPixelScale() == 1 && image.getPixelScale() == 1) {
+			if (image.isResizableDisplayTarget()) {
+				synchronized (image) {
+					canvas.drawBitmap(image.getBitmap(), lx, ly, null);
+				}
+			} else {
+				canvas.drawBitmap(image.getBitmap(), lx, ly, null);
+			}
+		} else {
+			rectF.set(lx, ly, lx + image.getWidth(), ly + image.getHeight());
+			int sourceScale = image.getPixelScale();
+			rect.set(0, 0, image.getWidth() * sourceScale, image.getHeight() * sourceScale);
+			drawSourceBitmap(image, rect, rectF);
+		}
 	}
 
 	public void drawSubstring(String str, int offset, int len, int x, int y, int anchor) {
-		Paint paint = font.paint;
-		if ((anchor & Graphics.RIGHT) != 0) {
-			paint.setTextAlign(Paint.Align.RIGHT);
-		} else if ((anchor & Graphics.HCENTER) != 0) {
-			paint.setTextAlign(Paint.Align.CENTER);
-		} else {
-			paint.setTextAlign(Paint.Align.LEFT);
-		}
+		synchronized (this.image) {
+			Paint paint = font.paint;
+			if ((anchor & Graphics.RIGHT) != 0) {
+				paint.setTextAlign(Paint.Align.RIGHT);
+			} else if ((anchor & Graphics.HCENTER) != 0) {
+				paint.setTextAlign(Paint.Align.CENTER);
+			} else {
+				paint.setTextAlign(Paint.Align.LEFT);
+			}
 
-		float ly;
-		if ((anchor & Graphics.BOTTOM) != 0) {
-			ly = y - font.descent;
-		} else if ((anchor & Graphics.VCENTER) != 0) {
-			ly = y - (font.descent + font.ascent) / 2.0f;
-		} else if ((anchor & Graphics.BASELINE) != 0) {
-			ly = y;
-		} else {
-			ly = y - font.ascent;
-		}
+			float ly;
+			if ((anchor & Graphics.BOTTOM) != 0) {
+				ly = y - font.descent;
+			} else if ((anchor & Graphics.VCENTER) != 0) {
+				ly = y - (font.descent + font.ascent) / 2.0f;
+			} else if ((anchor & Graphics.BASELINE) != 0) {
+				ly = y;
+			} else {
+				ly = y - font.ascent;
+			}
 
-		paint.setColor(fillPaint.getColor());
-		canvas.drawText(str, offset, offset + len, x, ly, paint);
+			paint.setColor(fillPaint.getColor());
+			canvas.drawText(str, offset, offset + len, x, ly, paint);
+		}
 	}
 
 	public void drawRegion(Image image, int x_src, int y_src, int width, int height,
+						   int transform, int x_dst, int y_dst, int anchor) {
+		synchronized (this.image) {
+			if (image.isResizableDisplayTarget()) {
+				synchronized (image) {
+					drawRegionSource(image, x_src, y_src, width, height, transform, x_dst, y_dst, anchor);
+				}
+			} else {
+				drawRegionSource(image, x_src, y_src, width, height, transform, x_dst, y_dst, anchor);
+			}
+		}
+	}
+
+	/** Called with the source lock held when its physical backing is replaceable. */
+	private void drawRegionSource(Image image, int x_src, int y_src, int width, int height,
 						   int transform, int x_dst, int y_dst, int anchor) {
 		if (width <= 0 || height <= 0) return;
 
@@ -543,7 +737,9 @@ public class Graphics implements
 		RectF dstR = rectF;
 		float dx;
 		float dy;
-		srcR.set(x_src, y_src, x_src + width, y_src + height);
+		int sourceScale = image.getPixelScale();
+		srcR.set(x_src * sourceScale, y_src * sourceScale,
+				(x_src + width) * sourceScale, (y_src + height) * sourceScale);
 
 		Matrix matrix = new Matrix();
 		switch (transform) {
@@ -564,7 +760,7 @@ public class Graphics implements
 				}
 
 				dstR.set(dx, dy, dx + width, dy + height);
-				canvas.drawBitmap(image.getBitmap(), srcR, dstR, null);
+				drawSourceBitmap(image, srcR, dstR);
 				return;
 			}
 			case TRANS_ROT90:
@@ -619,91 +815,142 @@ public class Graphics implements
 		canvas.save();
 		canvas.concat(matrix);
 		try {
-			canvas.drawBitmap(image.getBitmap(), srcR, dstR, null);
+			drawSourceBitmap(image, srcR, dstR);
 		} finally {
 			canvas.restore();
 		}
 	}
 
 	public void drawRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height, boolean processAlpha) {
-		if (rgbData == null) {
-			throw new NullPointerException();
-		}
-		if (width == 0 || height == 0) {
-			return;
-		}
-		if (offset < 0 || offset > rgbData.length) {
-			throw new ArrayIndexOutOfBoundsException();
-		}
-		if (width < 0 || height < 0) {
-			// TODO: 21.03.2021 This situation has not been verified and the correctness of such arguments is unknown.
-			Log.w(getClass().getSimpleName(), "drawRGB: width=" + width + ", height=" + height);
-		}
-		if (scanlength > 0) {
-			if (offset + scanlength * (height - 1) + width > rgbData.length) {
+		synchronized (this.image) {
+			if (rgbData == null) {
+				throw new NullPointerException();
+			}
+			if (width == 0 || height == 0) {
+				return;
+			}
+			if (offset < 0 || offset > rgbData.length) {
 				throw new ArrayIndexOutOfBoundsException();
 			}
-		} else {
-			if (offset + width > rgbData.length || offset + scanlength * (height - 1) < 0) {
-				throw new ArrayIndexOutOfBoundsException();
+			if (width < 0 || height < 0) {
+				// TODO: 21.03.2021 This situation has not been verified and the correctness of such arguments is unknown.
+				Log.w(getClass().getSimpleName(), "drawRGB: width=" + width + ", height=" + height);
 			}
-		}
+			if (scanlength > 0) {
+				if (offset + scanlength * (height - 1) + width > rgbData.length) {
+					throw new ArrayIndexOutOfBoundsException();
+				}
+			} else {
+				if (offset + width > rgbData.length || offset + scanlength * (height - 1) < 0) {
+					throw new ArrayIndexOutOfBoundsException();
+				}
+			}
 
-		// copy pixels to a new array and apply processAlpha flag here,
-		// to avoid Android restrictions
-		int[] pixels = new int[height * width];
-		int alphaCorrection = processAlpha ? Color.TRANSPARENT : Color.BLACK;
-		for (int i = 0; i < height; i++) {
-			int s = offset + i * scanlength;
-			int d = i * width;
-			for (int j = 0; j < width; j++) {
-				int pixel = rgbData[s++];
-				pixels[d + j] = alphaCorrection | pixel;
+			// copy pixels to a new array and apply processAlpha flag here,
+			// to avoid Android restrictions
+			int[] pixels = new int[height * width];
+			int alphaCorrection = processAlpha ? Color.TRANSPARENT : Color.BLACK;
+			for (int i = 0; i < height; i++) {
+				int s = offset + i * scanlength;
+				int d = i * width;
+				for (int j = 0; j < width; j++) {
+					int pixel = rgbData[s++];
+					pixels[d + j] = alphaCorrection | pixel;
+				}
 			}
+			// Use deprecated method due to performance issues
+			canvas.drawBitmap(pixels, 0, width, x, y, width, height, true, null);
 		}
-		// Use deprecated method due to performance issues
-		canvas.drawBitmap(pixels, 0, width, x, y, width, height, true, null);
 	}
 
 	public void copyArea(int x_src, int y_src, int width, int height,
 						 int x_dest, int y_dest, int anchor) {
-		if (width <= 0 || height <= 0) return;
-		final int[] pixels = new int[width * height];
-		image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
-		float dx;
-		if ((anchor & Graphics.RIGHT) != 0) {
-			dx = x_dest - width;
-		} else if ((anchor & Graphics.HCENTER) != 0) {
-			dx = x_dest - width / 2.0f;
-		} else {
-			dx = x_dest;
+		synchronized (this.image) {
+			if (width <= 0 || height <= 0) return;
+			final int scale = image.getPixelScale();
+			final int[] pixels = scale == 1 ? new int[width * height] : null;
+			if (scale == 1) {
+				image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
+			}
+			float dx;
+			if ((anchor & Graphics.RIGHT) != 0) {
+				dx = x_dest - width;
+			} else if ((anchor & Graphics.HCENTER) != 0) {
+				dx = x_dest - width / 2.0f;
+			} else {
+				dx = x_dest;
+			}
+			float dy;
+			if ((anchor & Graphics.BOTTOM) != 0) {
+				dy = y_dest - height;
+			} else if ((anchor & Graphics.VCENTER) != 0) {
+				dy = y_dest - height / 2.0f;
+			} else {
+				dy = y_dest;
+			}
+			if (scale == 1) {
+				canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
+			} else {
+				// Snapshot before writing: source/destination may overlap on the same Bitmap.
+				Bitmap snapshot = Bitmap.createBitmap(image.getBitmap(),
+						x_src * scale, y_src * scale, width * scale, height * scale);
+				try {
+					rectF.set(dx, dy, dx + width, dy + height);
+					canvas.drawBitmap(snapshot, null, rectF, null);
+				} finally {
+					if (snapshot != image.getBitmap()) snapshot.recycle();
+				}
+			}
 		}
-		float dy;
-		if ((anchor & Graphics.BOTTOM) != 0) {
-			dy = y_dest - height;
-		} else if ((anchor & Graphics.VCENTER) != 0) {
-			dy = y_dest - height / 2.0f;
-		} else {
-			dy = y_dest;
-		}
-		canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
 	}
 
 	public void getPixels(int[] pixels, int offset, int stride,
 						  int x, int y, int width, int height) {
-		Bitmap b = image.getBitmap();
-		int w = Math.min(width, b.getWidth() - x);
-		int h = Math.min(height, b.getHeight() - y);
-		b.getPixels(pixels, offset, stride, x, y, w, h);
+		synchronized (this.image) {
+			Bitmap b = image.getBitmap();
+			if (image.getPixelScale() == 1) {
+				int w = Math.min(width, b.getWidth() - x);
+				int h = Math.min(height, b.getHeight() - y);
+				b.getPixels(pixels, offset, stride, x, y, w, h);
+			} else {
+				int w = Math.min(width, image.getWidth() - x);
+				int h = Math.min(height, image.getHeight() - y);
+				image.getRGB(pixels, offset, stride, x, y, w, h);
+			}
+		}
 	}
 
 	public Bitmap getBitmap() {
 		return image.getBitmap();
 	}
 
-	void flush(Image image, int x, int y, int width, int height) {
+	/** Host renderer bridge; MIDlet coordinates remain logical. */
+	public int getPixelScale() {
+		return image.getPixelScale();
+	}
+
+	void flush(Image source, int x, int y, int width, int height) {
+		synchronized (this.image) {
+			if (source.isResizableDisplayTarget()) {
+				synchronized (source) {
+					flushImage(source, x, y, width, height);
+				}
+			} else {
+				flushImage(source, x, y, width, height);
+			}
+		}
+	}
+
+	private void flushImage(Image source, int x, int y, int width, int height) {
 		rect.set(x, y, x + width, y + height);
-		canvas.drawBitmap(image.getBitmap(), rect, rect, null);
+		int sourceScale = source.getPixelScale();
+		if (sourceScale == 1) {
+			canvas.drawBitmap(source.getBitmap(), rect, rect, null);
+		} else {
+			Rect physicalSource = new Rect(x * sourceScale, y * sourceScale,
+					(x + width) * sourceScale, (y + height) * sourceScale);
+			canvas.drawBitmap(source.getBitmap(), physicalSource, rect, null);
+		}
 	}
 
 	@Override
@@ -711,7 +958,9 @@ public class Graphics implements
 										int x, int y,
 										com.vodafone.v10.graphics.j3d.FigureLayout layout,
 										com.vodafone.v10.graphics.j3d.Effect3D effect) {
-		com.vodafone.v10.graphics.j3d.RenderProxy.drawFigure(this, figure, x, y, layout, effect);
+		synchronized (this.image) {
+			com.vodafone.v10.graphics.j3d.RenderProxy.drawFigure(this, figure, x, y, layout, effect);
+		}
 	}
 
 	@Override
@@ -719,17 +968,23 @@ public class Graphics implements
 										int x, int y,
 										com.motorola.graphics.j3d.FigureLayout layout,
 										com.motorola.graphics.j3d.Effect3D effect) {
-		com.motorola.graphics.j3d.RenderProxy.drawFigure(this, figure, x, y, layout, effect);
+		synchronized (this.image) {
+			com.motorola.graphics.j3d.RenderProxy.drawFigure(this, figure, x, y, layout, effect);
+		}
 	}
 
 	@Override
 	public void drawCommandList(Texture[] textures, int x, int y, FigureLayout layout, Effect3D effect, int[] commandlist) {
-		com.jblend.graphics.j3d.RenderProxy.drawCommandList(this, textures, x, y, layout, effect, commandlist);
+		synchronized (this.image) {
+			com.jblend.graphics.j3d.RenderProxy.drawCommandList(this, textures, x, y, layout, effect, commandlist);
+		}
 	}
 
 	@Override
 	public void drawCommandList(Texture texture, int x, int y, FigureLayout layout, Effect3D effect, int[] commandlist) {
-		com.jblend.graphics.j3d.RenderProxy.drawCommandList(this, texture, x, y, layout, effect, commandlist);
+		synchronized (this.image) {
+			com.jblend.graphics.j3d.RenderProxy.drawCommandList(this, texture, x, y, layout, effect, commandlist);
+		}
 	}
 
 	@Override
@@ -737,21 +992,29 @@ public class Graphics implements
 										int x, int y,
 										com.jblend.graphics.j3d.FigureLayout layout,
 										com.jblend.graphics.j3d.Effect3D effect) {
-		com.jblend.graphics.j3d.RenderProxy.drawFigure(this, figure, x, y, layout, effect);
+		synchronized (this.image) {
+			com.jblend.graphics.j3d.RenderProxy.drawFigure(this, figure, x, y, layout, effect);
+		}
 	}
 
 	@Override
 	public void flush() {
-		com.jblend.graphics.j3d.RenderProxy.flush(this);
+		synchronized (this.image) {
+			com.jblend.graphics.j3d.RenderProxy.flush(this);
+		}
 	}
 
 	@Override
 	public void renderFigure(Figure figure, int x, int y, FigureLayout layout, Effect3D effect) {
-		com.jblend.graphics.j3d.RenderProxy.renderFigure(this, figure, x, y, layout, effect);
+		synchronized (this.image) {
+			com.jblend.graphics.j3d.RenderProxy.renderFigure(this, figure, x, y, layout, effect);
+		}
 	}
 
 	@Override
 	public void renderPrimitives(Texture texture, int x, int y, FigureLayout layout, Effect3D effect, int command, int numPrimitives, int[] vertexCoords, int[] normals, int[] textureCoords, int[] colors) {
-		com.jblend.graphics.j3d.RenderProxy.renderPrimitives(this, texture, x, y, layout, effect, command, numPrimitives, vertexCoords, normals, textureCoords, colors);
+		synchronized (this.image) {
+			com.jblend.graphics.j3d.RenderProxy.renderPrimitives(this, texture, x, y, layout, effect, command, numPrimitives, vertexCoords, normals, textureCoords, colors);
+		}
 	}
 }

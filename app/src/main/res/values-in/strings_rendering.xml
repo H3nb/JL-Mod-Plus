@@ -22,8 +22,8 @@
     <string name="render_shader_processing">Pemrosesan shader</string>
     <string name="render_display_scaling">Penskalaan tampilan</string>
     <string name="render_display_viewport">Area tampilan game</string>
-    <string name="render_texture_filtering">Filter tekstur</string>
-    <string name="render_texture_filtering_help">Filter default untuk gambar game dan pass yang tidak menentukan filternya sendiri.</string>
+    <string name="render_texture_filtering">Filter pembesaran layar</string>
+    <string name="render_texture_filtering_help">Menentukan Nearest atau Linear untuk gambar akhir game. Efek shader dapat menggantinya.</string>
     <string name="render_viewport_note">Ukuran viewport ditentukan sebelum tahapan shader direncanakan. Panah menunjukkan aliran gambar, bukan urutan perhitungan layout.</string>
     <string name="render_pipeline_help">Lihat perjalanan gambar game ke layar dan pengaturan tiap tahap.</string>
     <string name="render_no_shader">Pilih preset untuk mengubah tampilan game.</string>

@@ -29,6 +29,19 @@ design and UI architecture; no corresponding source was copied.
 | SoniVox EAS | Vendored `app/src/main/cpp/sonivox/**`; local patches in `UPSTREAM.md`, upstream `NOTICE` and license retained | `https://github.com/EmbeddedSynth/sonivox`, v4.0.2 at `bb8668b91118318b0e6017aca59ce34e7bc93bf8`; Sonic Network Inc. / Android lineage | Apache-2.0 |
 | Mascot Capsule Micro3D implementation | `app/src/main/java/com/mascotcapsule/micro3d/**` and `app/src/main/cpp/micro3d/**`; current files identify JL-Mod/Yury Kharchenko/woesss authorship | JL-Mod implementation currently in this tree | Apache-2.0 where stated by the source files |
 
+## Bitmap upscaling algorithms
+
+- `app/src/main/java/io/github/h3nb/jlmodplus/graphics/MmpxScaler.java` adapts the MIT-licensed MMPX reference from
+  [ITotalJustice/mmpx](https://github.com/ITotalJustice/mmpx/tree/cce39009dbccfab8b70cb1c3bdcbf30a38ea351b)
+  (Morgan McGuire and Mara Gagiu, copyright 2020).
+  License: `app/src/main/assets/bitmap-scaler-licenses/MMPX-MIT.txt`.
+- `app/src/main/java/io/github/h3nb/jlmodplus/graphics/EdgeAwareScaler.java` implements
+  a locally authored corner-aware filter, under Apache-2.0. It replaces the
+  Azahar-derived GPL xBRZ port, is not xBRZ and does not promise matching
+  output. Historical commits retain the previous source attribution.
+- Nearest-neighbor and bilinear use Android Canvas filtering. No external
+  interpolation code is bundled for those choices.
+
 ## AndroidSVG
 
 AndroidSVG 1.4 (`com.caverock:androidsvg`) by Paul LeBeau renders imported static SVG artwork into Android bitmaps. Source: https://github.com/BigBadaboom/androidsvg. License: Apache-2.0.

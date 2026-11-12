@@ -67,6 +67,12 @@ public class Render {
 	private final float[] MVP_TMP = new float[16];
 
 	private Graphics targetGraphics;
+	// Bind and readback must refer to the same Bitmap across host resizes.
+	private Bitmap targetBitmap;
+	// The EGL surface and readback are physical; projections remain logical.
+	private int surfaceWidth;
+	private int surfaceHeight;
+	private int targetPixelScale = 1;
 	private final Rect gClip = new Rect();
 	private final Rect clip = new Rect();
 	private boolean backCopied;
@@ -132,14 +138,21 @@ public class Render {
 
 	public synchronized void bind(Graphics graphics) {
 		this.targetGraphics = graphics;
-		Canvas canvas = graphics.getCanvas();
-		int width = canvas.getWidth();
-		int height = canvas.getHeight();
+		// Host resize may rebind Graphics at any point outside this snapshot.
+		Graphics.RenderTarget target = graphics.captureRenderTarget();
+		targetBitmap = target.bitmap;
+		int width = targetBitmap.getWidth();
+		int height = targetBitmap.getHeight();
+		int scale = target.pixelScale;
+		TextureImpl.setScreenTargetScale(scale);
+		targetPixelScale = scale;
+		env.width = width / scale;
+		env.height = height / scale;
 		if (eglContext == null) {
 			init();
 		}
 		EGL10 egl = (EGL10) EGLContext.getEGL();
-		if (env.width != width || env.height != height) {
+		if (surfaceWidth != width || surfaceHeight != height) {
 
 			if (eglWindowSurface != null) {
 				releaseEglContext();
@@ -155,24 +168,24 @@ public class Render {
 
 			glViewport(0, 0, width, height);
 			Program.create();
-			env.width = width;
-			env.height = height;
+			surfaceWidth = width;
+			surfaceHeight = height;
 			glClearColor(0, 0, 0, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
 		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
 		Rect clip = this.clip;
-		canvas.getClipBounds(clip);
+		clip.set(target.clip);
 		int l = clip.left;
 		int t = clip.top;
 		int r = clip.right;
 		int b = clip.bottom;
-		gClip.set(l, t, r, b);
+		gClip.set(l * scale, t * scale, r * scale, b * scale);
 		if (l == 0 && t == 0 && r == env.width && b == env.height) {
 			glDisable(GL_SCISSOR_TEST);
 		} else {
 			glEnable(GL_SCISSOR_TEST);
-			glScissor(l, t, r - l, b - t);
+			glScissor(l * scale, t * scale, (r - l) * scale, (b - t) * scale);
 		}
 		glClear(GL_DEPTH_BUFFER_BIT);
 		backCopied = false;
@@ -180,14 +193,20 @@ public class Render {
 	}
 
 	public synchronized void bind(TextureImpl tex) {
+		targetBitmap = null;
 		targetTexture = tex;
+		targetPixelScale = 1;
+		// Render-to-texture is 1x even after an HD screen target.
+		TextureImpl.setScreenTargetScale(1);
 		int width = tex.getWidth();
 		int height = tex.getHeight();
+		env.width = width;
+		env.height = height;
 		if (eglContext == null) {
 			init();
 		}
 		EGL10 egl = (EGL10) EGLContext.getEGL();
-		if (env.width != width || env.height != height) {
+		if (surfaceWidth != width || surfaceHeight != height) {
 
 			if (eglWindowSurface != null) {
 				releaseEglContext();
@@ -203,8 +222,8 @@ public class Render {
 
 			glViewport(0, 0, width, height);
 			Program.create();
-			env.width = width;
-			env.height = height;
+			surfaceWidth = width;
+			surfaceHeight = height;
 		}
 		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
 		Rect clip = this.clip;
@@ -272,7 +291,7 @@ public class Render {
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, bgTextureId.get(0));
 		}
-		Bitmap targetImage = targetGraphics.getBitmap();
+		Bitmap targetImage = targetBitmap;
 		GLUtils.texImage2D(GL_TEXTURE_2D, 0, targetImage, 0);
 		checkGlError("texImage2D");
 
@@ -534,18 +553,22 @@ public class Render {
 	public synchronized void release() {
 		stack.clear();
 		bindEglContext();
-		if (targetTexture != null) {
-			glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
-			targetTexture = null;
-		} else if (targetGraphics != null) {
-			if (postCopy2D) {
-				copy2d(false);
+		try {
+			if (targetTexture != null) {
+				glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
+			} else if (targetBitmap != null) {
+				if (postCopy2D) {
+					copy2d(false);
+				}
+				Rect clip = this.gClip;
+				Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetBitmap);
 			}
-			Rect clip = this.gClip;
-			Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetGraphics.getBitmap());
+		} finally {
+			targetTexture = null;
 			targetGraphics = null;
+			targetBitmap = null;
+			releaseEglContext();
 		}
-		releaseEglContext();
 	}
 
 	public synchronized void flush() {
@@ -773,7 +796,8 @@ public class Render {
 			glDisable(GL_SCISSOR_TEST);
 		} else {
 			glEnable(GL_SCISSOR_TEST);
-			glScissor(l, t, r - l, b - t);
+			int scale = targetPixelScale;
+			glScissor(l * scale, t * scale, (r - l) * scale, (b - t) * scale);
 		}
 		releaseEglContext();
 	}
@@ -1474,7 +1498,7 @@ public class Render {
 				glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
 			} else if (targetGraphics != null) {
 				Rect clip = this.gClip;
-				Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetGraphics.getBitmap());
+				Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetBitmap);
 			}
 		} finally {
 			stack.clear();

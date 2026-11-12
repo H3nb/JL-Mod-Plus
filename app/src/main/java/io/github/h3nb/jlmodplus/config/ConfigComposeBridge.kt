@@ -1063,6 +1063,32 @@ private fun ScreenSection(
             options = graphicsOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
         )
+        val internalScaleOptions = listOf(stringResource(R.string.internal_resolution_auto)) +
+            (1..10).map { "${it}×" }
+        ConfigChoicePreference(
+            title = stringResource(R.string.internal_resolution_title),
+            description = stringResource(R.string.internal_resolution_description),
+            selected = internalScaleOptions.getOrElse(form.internalResolutionScale) { internalScaleOptions[1] },
+            options = internalScaleOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().internalResolutionScale(index).build()) },
+        )
+        if (form.internalResolutionScale != 1) {
+            val bitmapOptions = listOf(
+                stringResource(R.string.bitmap_upscaling_nearest),
+                stringResource(R.string.bitmap_upscaling_bilinear),
+                stringResource(R.string.bitmap_upscaling_mmpx),
+                stringResource(R.string.bitmap_upscaling_edge_aware),
+            )
+            ConfigChoicePreference(
+                title = stringResource(R.string.bitmap_upscaling_title),
+                description = stringResource(R.string.bitmap_upscaling_description),
+                selected = bitmapOptions.getOrElse(form.bitmapUpscalingMode) { bitmapOptions[0] },
+                options = bitmapOptions,
+                onSelected = { index ->
+                    onFormChanged(form.toBuilder().bitmapUpscalingMode(index).build())
+                },
+            )
+        }
         if (form.graphicsMode == 1) {
             ConfigValuePreference(
                 title = stringResource(R.string.render_shader_effects),

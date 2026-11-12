@@ -173,6 +173,12 @@ public abstract class Canvas extends Displayable {
 
 	protected int width, height;
 	protected int maxHeight;
+	/** Session density only decreases on resize or allocation failure; restart resets it. */
+	private volatile int internalResolutionScale = 1;
+
+	protected final int getInternalResolutionScale() {
+		return internalResolutionScale;
+	}
 	private LinearLayout layout;
 	private SurfaceView innerView;
 	private FrameLayout videoHost;
@@ -197,7 +203,9 @@ public abstract class Canvas extends Displayable {
 	private long notifiedShowGeneration;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
-	private static Image offscreen;
+	// One serialized guest paint runs at a time. A PaintEvent pins its snapshot
+	// while the UI may prepare the next scratch backing.
+	private static volatile Image offscreen;
 	private Image offscreenCopy;
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics frameMetrics;
@@ -309,12 +317,13 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public String getPerformanceRenderer() {
-		return switch (settings.graphicsMode) {
+		String backend = switch (settings.graphicsMode) {
 			case 1 -> "GLES";
 			case 2 -> "VIEW";
 			case 3 -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? "HW" : "SOFT";
 			default -> "SOFT";
 		};
+		return internalResolutionScale == 1 ? backend : backend + " " + internalResolutionScale + "x HD";
 	}
 
 	public static void setScreenshotRawMode(boolean enable) {
@@ -330,6 +339,8 @@ public abstract class Canvas extends Displayable {
 	public static void setSettings(ProfileModel settings, java.io.File shaderDirectory) {
 		Canvas.shaderDirectory = shaderDirectory;
 		Canvas.settings = settings;
+		Graphics.configureBitmapUpscaling(settings.bitmapUpscalingMode);
+		io.github.h3nb.jlmodplus.micro3d.TextureImpl.configureEnhancement(settings.bitmapUpscalingMode);
 		fpsLimit = settings.fpsLimit;
 		int mode = settings.graphicsMode;
 		parallelRedraw = (mode == 0 || mode == 3) && settings.parallelRedrawScreen;
@@ -481,7 +492,7 @@ public abstract class Canvas extends Displayable {
 			if (offscreenCopy != null) {
 				long sequence = publishedFrameSequence;
 				if (sequence != 0L && (ambientGeometryDirty || sequence != lastAmbientSampleSequence)) {
-					Rect bounds = offscreenCopy.getBounds();
+					Rect bounds = offscreenCopy.getPhysicalContentRect();
 					sampled = ambientSampler.captureGrid(offscreenCopy.getBitmap(), bounds.right,
 							bounds.bottom);
 					if (sampled) sampledSequence = sequence;
@@ -968,7 +979,8 @@ public abstract class Canvas extends Displayable {
 			if (screenshotRawMode) {
 				synchronized (bufferLock) {
 					bitmap = Bitmap.createBitmap(offscreenCopy.getBitmap(), 0, 0,
-							offscreenCopy.getWidth(), offscreenCopy.getHeight());
+							offscreenCopy.getWidth() * offscreenCopy.getPixelScale(),
+							offscreenCopy.getHeight() * offscreenCopy.getPixelScale());
 				}
 			} else {
 				bitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
@@ -1120,11 +1132,61 @@ public abstract class Canvas extends Displayable {
 		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
 
 		synchronized (bufferLock) {
-			if (offscreenCopy == null) offscreenCopy = Image.createImage(width, maxHeight);
-			if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
-				offscreenCopy.setSize(width, height);
-			}
+			int requested = offscreenCopy == null
+					? settings.internalResolutionScale : internalResolutionScale;
+			int maximum = InternalResolution.resolve(
+					requested, width, height, maxHeight, onWidth, onHeight);
+			int previousScale = internalResolutionScale;
+			InternalResolution.allocateWithFallback(maximum, scale -> {
+				boolean tight = scale > 1
+						|| (settings.effects != null && !settings.effects.isEmpty());
+				int physicalWidth = width * scale;
+				int physicalHeight = (tight ? height : maxHeight) * scale;
+				Image previous = offscreenCopy;
+				boolean replace = previous == null || previous.getPixelScale() != scale
+						|| previous.getWidth() != width || previous.getHeight() != height
+						|| previous.getBitmap().getWidth() < physicalWidth
+						|| previous.getBitmap().getHeight() < physicalHeight
+						|| (tight && (previous.getBitmap().getWidth() != physicalWidth
+								|| previous.getBitmap().getHeight() != physicalHeight));
+				Image next = replace
+						? Image.createDisplayTarget(width, tight ? height : maxHeight, scale)
+						: previous;
+				if (replace && previous != null) {
+					int overlapWidth = Math.min(width, previous.getWidth());
+					int overlapHeight = Math.min(height, previous.getHeight());
+					if (overlapWidth > 0 && overlapHeight > 0) {
+						new android.graphics.Canvas(next.getBitmap()).drawBitmap(
+								previous.getBitmap(),
+								new Rect(0, 0, overlapWidth * previous.getPixelScale(),
+										overlapHeight * previous.getPixelScale()),
+								new Rect(0, 0, overlapWidth * scale, overlapHeight * scale), null);
+					}
+				}
+				if (next.getWidth() != width || next.getHeight() != height) {
+					next.setSize(width, height);
+				}
+				Image nextPaint = offscreen;
+				if (nextPaint == null || nextPaint.getPixelScale() != scale
+						|| nextPaint.getBitmap().getWidth() < physicalWidth
+						|| nextPaint.getBitmap().getHeight() < maxHeight * scale) {
+					nextPaint = Image.createDisplayTarget(width, maxHeight, scale);
+				}
+
+				// All allocations precede the GameCanvas rebind. On failure
+				// the previous published and paint buffers remain available.
+				internalResolutionScale = scale;
+				try {
+					onDisplayTargetResized();
+					offscreenCopy = next;
+					offscreen = nextPaint;
+				} catch (OutOfMemoryError error) {
+					internalResolutionScale = previousScale;
+					throw error;
+				}
+			});
 		}
+
 		configureAmbientGeometry();
 		ViewHandler.postEvent(this::updateVideoDisplays);
 		if (overlay != null) {
@@ -1139,19 +1201,28 @@ public abstract class Canvas extends Displayable {
 			float gt = 1.0f - 2.0f * virtualScreen.top / displayHeight;
 			float gr = 2.0f * virtualScreen.right / displayWidth - 1.0f;
 			float gb = 1.0f - 2.0f * virtualScreen.bottom / displayHeight;
-			float th = (float) height / offscreenCopy.getBitmap().getHeight();
-			float tw = (float) width / offscreenCopy.getBitmap().getWidth();
+			float th = (float) (height * internalResolutionScale)
+					/ offscreenCopy.getBitmap().getHeight();
+			float tw = (float) (width * internalResolutionScale)
+					/ offscreenCopy.getBitmap().getWidth();
 			renderer.updateSize(gl, gt, gr, gb, th, tw);
 		}
 		repaintInternal();
 	}
 
-	/**
-	 * Convert the screen coordinates of the pointer into the virtual ones.
-	 *
-	 * @param x the pointer coordinate on the real screen
-	 * @return the corresponding pointer coordinate on the virtual screen
-	 */
+	/** Cap a session after a subclass fails to allocate its initial HD backing. */
+	protected final void capInternalResolution(int scale) {
+		if (scale < internalResolutionScale) {
+			internalResolutionScale = scale;
+			updateSize();
+		}
+	}
+
+	/** Called after the host-owned display target geometry changes. */
+	protected void onDisplayTargetResized() {
+	}
+
+	/** Convert the host pointer X coordinate into MIDlet units. */
 	private int convertPointerX(float x) {
 		return (int) ((x - onX) * width / onWidth);
 	}
@@ -1310,7 +1381,7 @@ public abstract class Canvas extends Displayable {
 			long copyStarted = diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.COPY)
 					? System.nanoTime() : 0L;
 			if (Thread.holdsLock(paintEvent)) {
-				offscreen.getSingleGraphics().flush(image, x, y, width, height);
+				paintEvent.paintingTarget.getSingleGraphics().flush(image, x, y, width, height);
 				if (copyStarted != 0L) {
 					diagnostics.recordDuration(PerformanceDiagnostics.COPY, copyStarted, System.nanoTime());
 				}
@@ -1814,8 +1885,8 @@ public abstract class Canvas extends Displayable {
 				synchronized (bufferLock) {
 					Image source = offscreenCopy;
 					Bitmap bitmap = source.getBitmap();
-					contentWidth = source.getWidth();
-					contentHeight = source.getHeight();
+					contentWidth = source.getWidth() * source.getPixelScale();
+					contentHeight = source.getHeight() * source.getPixelScale();
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
@@ -1966,6 +2037,8 @@ public abstract class Canvas extends Displayable {
 	private class PaintEvent extends Event implements EventFilter {
 		final Rect clip = new Rect();
 
+		// Valid only while this thread holds the PaintEvent monitor.
+		Image paintingTarget;
 		boolean isPending;
 
 		private int enqueued = 0;
@@ -1991,44 +2064,57 @@ public abstract class Canvas extends Displayable {
 			if (l >= r || t >= b) {
 				return;
 			}
-			if (offscreen == null) {
-				offscreen = Image.createImage(width, maxHeight);
+			int paintWidth = width;
+			int paintHeight = height;
+			int paintMaxHeight = maxHeight;
+			int paintScale = internalResolutionScale;
+			Image snapshot = offscreen;
+			if (snapshot == null || snapshot.getPixelScale() != paintScale
+					|| snapshot.getBitmap().getWidth() < paintWidth * paintScale
+					|| snapshot.getBitmap().getHeight() < paintMaxHeight * paintScale) {
+				snapshot = Image.createDisplayTarget(paintWidth, paintMaxHeight, paintScale);
+				offscreen = snapshot;
 			}
-			if (offscreen.getWidth() != width || offscreen.getHeight() != height) {
-				offscreen.setSize(width, height);
+			if (snapshot.getWidth() != paintWidth || snapshot.getHeight() != paintHeight) {
+				snapshot.setSize(paintWidth, paintHeight);
 			}
-			Graphics g = offscreen.getSingleGraphics();
-			g.reset(l, t, r, b);
-			boolean enteredGuest = MidletThread.enterGuestExecution();
-			PerformanceDiagnostics diagnostics = performanceDiagnostics;
-			long paintStarted = diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.PAINT)
-					? System.nanoTime() : 0L;
+			paintingTarget = snapshot;
 			try {
-				paint(g);
-			} catch (Exception e) {
-				Log.e(TAG, "Error in paint()", e);
-			} catch (Error fatal) {
-				MidletThread.markEscapingGuestFailure(fatal);
-				throw fatal;
-			} finally {
-				if (paintStarted != 0L) {
-					diagnostics.recordDuration(PerformanceDiagnostics.PAINT, paintStarted, System.nanoTime());
-				}
-				MidletThread.exitGuestExecution(enteredGuest);
-			}
-			synchronized (bufferLock) {
-				long copyStarted = diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.COPY)
+				Graphics g = snapshot.getSingleGraphics();
+				g.reset(l, t, r, b);
+				boolean enteredGuest = MidletThread.enterGuestExecution();
+				PerformanceDiagnostics diagnostics = performanceDiagnostics;
+				long paintStarted = diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.PAINT)
 						? System.nanoTime() : 0L;
-				offscreen.copyTo(offscreenCopy);
-				if (copyStarted != 0L) {
-					diagnostics.recordDuration(PerformanceDiagnostics.COPY, copyStarted, System.nanoTime());
+				try {
+					paint(g);
+				} catch (Exception e) {
+					Log.e(TAG, "Error in paint()", e);
+				} catch (Error fatal) {
+					MidletThread.markEscapingGuestFailure(fatal);
+					throw fatal;
+				} finally {
+					if (paintStarted != 0L) {
+						diagnostics.recordDuration(PerformanceDiagnostics.PAINT, paintStarted, System.nanoTime());
+					}
+					MidletThread.exitGuestExecution(enteredGuest);
 				}
-				publishFrameLocked();
+				synchronized (bufferLock) {
+					long copyStarted = diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.COPY)
+							? System.nanoTime() : 0L;
+					snapshot.copyTo(offscreenCopy);
+					if (copyStarted != 0L) {
+						diagnostics.recordDuration(PerformanceDiagnostics.COPY, copyStarted, System.nanoTime());
+					}
+					publishFrameLocked();
+				}
+				if (surface == null || !surface.isValid()) {
+					return;
+				}
+				requestFlushToScreen();
+			} finally {
+				paintingTarget = null;
 			}
-			if (surface == null || !surface.isValid()) {
-				return;
-			}
-			requestFlushToScreen();
 		}
 
 		@Override

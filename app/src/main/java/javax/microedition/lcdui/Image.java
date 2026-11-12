@@ -25,6 +25,7 @@ import android.graphics.Rect;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.WeakHashMap;
 
 import javax.microedition.lcdui.game.Sprite;
 import javax.microedition.shell.AppClassLoader;
@@ -33,18 +34,46 @@ import io.github.h3nb.jlmodplus.util.PNGUtils;
 
 public class Image {
 	private final boolean mutable;
-	private Bitmap bitmap;
+	private volatile Bitmap bitmap;
 	private Graphics graphics;
 	private final Rect bounds;
+	private volatile int pixelScale;
+	private volatile WeakHashMap<Graphics, Boolean> retainedGraphics;
 	private boolean isBlackWhiteAlpha;
 
 	public Image(Bitmap bitmap, boolean mutable) {
-		if (bitmap == null) {
-			throw new NullPointerException();
-		}
+		this(bitmap, mutable, 1);
+	}
+
+	private Image(Bitmap bitmap, boolean mutable, int pixelScale) {
+		if (bitmap == null) throw new NullPointerException();
+		if (pixelScale < 1) throw new IllegalArgumentException("pixelScale");
 		this.mutable = mutable;
 		this.bitmap = bitmap;
-		bounds = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+		this.pixelScale = pixelScale;
+		bounds = new Rect(0, 0, bitmap.getWidth() / pixelScale, bitmap.getHeight() / pixelScale);
+	}
+
+	/** Runtime-owned 2D surface; ordinary MIDlet images remain at their logical size. */
+	public static Image createDisplayTarget(int width, int height, int scale) {
+		// Do not add any new size restriction to the existing 1x behavior.
+		if (scale == 1) return createImage(width, height);
+		if (scale < 1 || scale > InternalResolution.MAX_SCALE || width <= 0 || height <= 0
+				|| (long) width * scale > InternalResolution.MAX_TARGET_SIDE
+				|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE) {
+			throw new IllegalArgumentException("Invalid display target size");
+		}
+		Bitmap bitmap = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
+		bitmap.eraseColor(Color.WHITE);
+		return new Image(bitmap, true, scale);
+	}
+
+	public int getPixelScale() {
+		return pixelScale;
+	}
+
+	public Rect getPhysicalContentRect() {
+		return new Rect(0, 0, bounds.right * pixelScale, bounds.bottom * pixelScale);
 	}
 
 	public Bitmap getBitmap() {
@@ -115,8 +144,10 @@ public class Image {
 		return new Image(Bitmap.createBitmap(rgb, width, height, Bitmap.Config.ARGB_8888), false);
 	}
 
-	public Graphics getGraphics() {
-		return new Graphics(this);
+	public synchronized Graphics getGraphics() {
+		Graphics next = new Graphics(this);
+		if (retainedGraphics != null) retainedGraphics.put(next, Boolean.TRUE);
+		return next;
 	}
 
 	public boolean isMutable() {
@@ -131,42 +162,112 @@ public class Image {
 		return bounds.bottom;
 	}
 
-	public void getRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height) {
-		bitmap.getPixels(rgbData, offset, scanlength, x, y, width, height);
+	public synchronized void getRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height) {
+		if (pixelScale == 1) {
+			bitmap.getPixels(rgbData, offset, scanlength, x, y, width, height);
+			return;
+		}
+		if (x < 0 || y < 0 || width < 0 || height < 0
+				|| (long) x + width > getWidth() || (long) y + height > getHeight()) {
+			throw new IllegalArgumentException("Logical image read outside bounds");
+		}
+		if (width == 0 || height == 0) return;
+		// Centre samples preserve guest-sized reads without exposing physical coordinates.
+		// Antialiased edges are not guaranteed pixel-identical to a separate 1x render.
+		int[] row = new int[width * pixelScale];
+		for (int j = 0; j < height; j++) {
+			bitmap.getPixels(row, 0, row.length, x * pixelScale,
+					(y + j) * pixelScale + pixelScale / 2, row.length, 1);
+			for (int i = 0; i < width; i++) {
+				rgbData[offset + j * scanlength + i] = row[i * pixelScale + pixelScale / 2];
+			}
+		}
 	}
 
 	void copyTo(Image dst) {
-		dst.getSingleGraphics().getCanvas().drawBitmap(bitmap, bounds, bounds, null);
+		dst.getSingleGraphics().getCanvas().drawBitmap(
+				bitmap, getPhysicalContentRect(), bounds, null);
 	}
 
 	void copyTo(Image dst, int x, int y) {
 		Rect r = new Rect(x, y, x + bounds.right, y + bounds.bottom);
-		dst.getSingleGraphics().getCanvas().drawBitmap(bitmap, bounds, r, null);
+		dst.getSingleGraphics().getCanvas().drawBitmap(
+				bitmap, getPhysicalContentRect(), r, null);
 	}
 
-	public Graphics getSingleGraphics() {
+	public synchronized Graphics getSingleGraphics() {
 		if (graphics == null) {
 			graphics = getGraphics();
 		}
 		return graphics;
 	}
 
-	void setSize(int width, int height) {
-		if (width > bitmap.getWidth() || height > bitmap.getHeight()) {
-			Bitmap b = bitmap;
-			bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+	/** Tracks retained graphics only for GameCanvas' reconfigurable backing store. */
+	public synchronized void enableResizableDisplayTarget() {
+		if (retainedGraphics == null) retainedGraphics = new WeakHashMap<>();
+		if (graphics != null) retainedGraphics.put(graphics, Boolean.TRUE);
+	}
+
+	boolean isResizableDisplayTarget() {
+		return retainedGraphics != null;
+	}
+
+	/** Host-only resize that preserves previously returned Graphics objects. */
+	public synchronized void resizeDisplayTarget(int width, int height, int scale) {
+		if (width == bounds.right && height == bounds.bottom && scale == pixelScale) return;
+		if (width <= 0 || height <= 0 || scale < 1 || scale > InternalResolution.MAX_SCALE
+				|| (scale > 1 && ((long) width * scale > InternalResolution.MAX_TARGET_SIDE
+						|| (long) height * scale > InternalResolution.MAX_TARGET_SIDE))) {
+			throw new IllegalArgumentException("Invalid display target size");
+		}
+		int previousWidth = bounds.right;
+		int previousHeight = bounds.bottom;
+		int copyWidth = Math.min(width, previousWidth);
+		int copyHeight = Math.min(height, previousHeight);
+		Bitmap next = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
+		next.eraseColor(Color.WHITE);
+		if (copyWidth > 0 && copyHeight > 0) {
+			new android.graphics.Canvas(next).drawBitmap(bitmap,
+					new Rect(0, 0, copyWidth * pixelScale, copyHeight * pixelScale),
+					new Rect(0, 0, copyWidth * scale, copyHeight * scale), null);
+		}
+		bitmap = next;
+		pixelScale = scale;
+		bounds.right = width;
+		bounds.bottom = height;
+		if (retainedGraphics != null) {
+			for (Graphics retained : retainedGraphics.keySet()) {
+				retained.onDisplayTargetResized(previousWidth, previousHeight);
+			}
+		}
+	}
+
+	synchronized void setSize(int width, int height) {
+		if ((long) width * pixelScale > bitmap.getWidth()
+				|| (long) height * pixelScale > bitmap.getHeight()) {
+			Bitmap previous = bitmap;
+			int previousWidth = bounds.right;
+			int previousHeight = bounds.bottom;
+			bitmap = Bitmap.createBitmap(width * pixelScale, height * pixelScale,
+					Bitmap.Config.ARGB_8888);
+			if (pixelScale > 1) bitmap.eraseColor(Color.WHITE);
 			bounds.right = width;
 			bounds.bottom = height;
 			if (graphics != null) {
 				graphics.reset(0, 0, width, height);
-				graphics.getCanvas().drawBitmap(b, 0, 0, null);
+				if (pixelScale == 1) {
+					graphics.getCanvas().drawBitmap(previous, 0, 0, null);
+				} else {
+					graphics.getCanvas().drawBitmap(previous,
+							new Rect(0, 0, previousWidth * pixelScale,
+									previousHeight * pixelScale),
+							new Rect(0, 0, previousWidth, previousHeight), null);
+				}
 			}
 		} else {
 			bounds.right = width;
 			bounds.bottom = height;
-			if (graphics != null) {
-				graphics.reset(0, 0, width, height);
-			}
+			if (graphics != null) graphics.reset(0, 0, width, height);
 		}
 	}
 

@@ -1233,4 +1233,13 @@
     <string name="installer_wrong_companion_jar">JAR ini tidak cocok dengan JAD yang dipilih. Pilih JAR yang sesuai untuk mempertahankan pengaturan JAD.</string>
     <string name="installer_choose_another_jar">Pilih JAR lain</string>
     <string name="date_field_use_displayed_value">Gunakan nilai ini</string>
+    <string name="internal_resolution_title">Resolusi internal</string>
+    <string name="internal_resolution_auto">Otomatis</string>
+    <string name="internal_resolution_description">Merender 2D dan 3D yang didukung dengan detail lebih tinggi. Otomatis menyesuaikan area game; mulai ulang untuk menerapkan.</string>
+    <string name="bitmap_upscaling_title">Penskalaan bitmap</string>
+    <string name="bitmap_upscaling_description">Memperhalus sprite 2D immutable dan tekstur model Micro3D opak. Tekstur M3G tidak berubah; mulai ulang untuk menerapkan.</string>
+    <string name="bitmap_upscaling_nearest">Nearest Neighbor</string>
+    <string name="bitmap_upscaling_bilinear">Bilinear</string>
+    <string name="bitmap_upscaling_mmpx">MMPX (pixel art)</string>
+    <string name="bitmap_upscaling_edge_aware">Tepi halus (edge-aware)</string>
 </resources>
