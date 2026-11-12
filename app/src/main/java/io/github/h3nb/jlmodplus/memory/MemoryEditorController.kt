@@ -1014,13 +1014,19 @@ internal class MemoryEditorComposeController(
      * A partial catalog commit is retained and reported; it never starts a partial new Freeze.
      */
     private fun bookmarkTargetsBeforeAction(
-        ids: LongArray, revision: Long, afterStored: () -> Unit,
+        ids: LongArray, revision: Long,
+        maxTargets: Int = SavedVariablesAuthority.MAX_ITEMS,
+        afterStored: () -> Unit,
     ) {
         val engine = service ?: return
         val authority = savedAuthority
         val token = state.runtimeToken
-        if (state.busy || token == 0L || ids.isEmpty() ||
-            ids.size > MemoryEngineContract.MAX_FREEZE_RECORDS) return
+        if (state.busy || token == 0L || ids.isEmpty()) return
+        if (ids.size > maxTargets) {
+            state = state.copy(message = "Select at most $maxTargets Bookmark targets",
+                messageIsError = true)
+            return
+        }
         if (authority == null) {
             state = state.copy(message = "Bookmark storage unavailable", messageIsError = true)
             return
@@ -1260,18 +1266,19 @@ internal class MemoryEditorComposeController(
         )
         runIpc {
             val result = runCatching {
-                val (path, appId, entry) = savedTarget()
-                val rows = savedRows(authority.removeMany(path, appId, entry, unique.toTypedArray()))
-                if (engine != null && token != 0L) {
+                if (token != 0L) {
+                    val current = engine ?: error("Cannot stop Bookmark Freeze while disconnected")
                     unique.forEach { id ->
-                        try {
-                            engine.forgetSaved(token, id)
-                        } catch (_: RemoteException) {
-                            // Persistent deletion already committed; runtime teardown clears bindings.
+                        val detached = current.detachBookmark(token, id)
+                        if (detached.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                                MemoryEngineContract.RESULT_TARGET_LOST) !=
+                            MemoryEngineContract.RESULT_OK) {
+                            error("Could not stop the old Bookmark Freeze")
                         }
                     }
                 }
-                rows
+                val (path, appId, entry) = savedTarget()
+                savedRows(authority.removeMany(path, appId, entry, unique.toTypedArray()))
             }
             post {
                 if (state.variablesTab && state.runtimeToken == token) {
@@ -1291,8 +1298,8 @@ internal class MemoryEditorComposeController(
                             state = state.copy(
                                 savedVariables = rows.map { it.first },
                                 savedValues = state.savedValues.filterKeys { it in retained },
-                                message = if (unique.size == 1) "Saved variable removed"
-                                    else "Saved variables removed",
+                                message = if (unique.size == 1) "Bookmark removed"
+                                    else "Bookmarks removed",
                                 messageIsError = false,
                             )
                         } else {
@@ -1576,7 +1583,8 @@ internal class MemoryEditorComposeController(
         val ids = state.selected.toLongArray()
         if (ids.isEmpty()) return
         val revision = if (state.variablesTab) 0L else state.revision
-        bookmarkTargetsBeforeAction(ids, revision) {
+        bookmarkTargetsBeforeAction(ids, revision,
+            maxTargets = MemoryEngineContract.MAX_FREEZE_RECORDS) {
             launchOperation { engine, token ->
                 if (revision != 0L) engine.setFreezeResults(token, revision, ids, mode, first, second)
                 else engine.setFreeze(token, ids, mode, first, second)
@@ -1723,8 +1731,10 @@ internal class MemoryEditorComposeController(
 
     override fun removeListEntries(savedIds: List<String>, watchIds: List<Long>) {
         val saved = savedIds.distinct()
-        val watches = (watchIds + state.watches.filter { it.savedSourceId in saved }.map { it.id })
-            .distinct()
+        // Persistent removal detaches its own session targets synchronously first.
+        val watches = watchIds.filter { watchId ->
+            state.watches.firstOrNull { it.id == watchId }?.savedSourceId !in saved
+        }.distinct()
         if (!state.variablesTab || state.busy ||
             saved.size > 64 || watches.size > MemoryEngineContract.MAX_WATCH_RECORDS ||
             saved.any { id -> state.savedVariables.none { it.id == id } } ||
