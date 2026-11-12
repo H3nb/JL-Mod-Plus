@@ -113,6 +113,21 @@ public class BitmapUpscalingScalersTest {
         }
     }
 
+    @Test public void smoothHdPreservesIsolatedDetailsAndFlatRegions() {
+        int black = 0xff0b1220;
+        int white = 0xfff0f5fa;
+        int[] source = new int[25];
+        java.util.Arrays.fill(source, white);
+        source[12] = black;
+        for (int factor : new int[]{2, 3, 4, 10}) {
+            int[] enlarged = EdgeAwareScaler.scale(source, 5, 5, factor);
+            int center = 2 * factor + factor / 2;
+            assertEquals(black, enlarged[center * 5 * factor + center]);
+            assertEquals(white, enlarged[0]);
+            assertEquals(white, enlarged[enlarged.length - 1]);
+        }
+    }
+
     @Test public void edgeAwareDirectIntegerScalesStayOpaqueAndRespectSource() {
         int[] source = {
             0xff000000, 0xff000000, 0xffffffff,
