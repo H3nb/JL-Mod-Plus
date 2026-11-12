@@ -172,6 +172,29 @@ public class MemoryRecipeInstrumentedTest {
         }
     }
 
+    @Test public void catalogRejectsIncompleteRecipeBeforeItCanBeSaved() throws Exception {
+        java.io.File folder = new java.io.File(
+                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                        .getTargetContext().getCacheDir(), "recipe-schema-" + System.nanoTime());
+        assertTrue(folder.mkdirs());
+        android.util.AtomicFile file = new android.util.AtomicFile(
+                new java.io.File(folder, "memory-recipes.json"));
+        try {
+            try {
+                MemoryRecipeCatalog.put(file, Root.class.getName(), recipe("{}"), null);
+                fail("An action without a kind or typed path must not be persisted");
+            } catch (RuntimeException expected) {
+                assertTrue(expected.getMessage().contains("Missing"));
+            }
+            assertEquals(0, MemoryRecipeCatalog.list(file, Root.class.getName())
+                    .getParcelableArrayList("items").size());
+            assertEquals(10, root.coins);
+        } finally {
+            file.delete();
+            folder.delete();
+        }
+    }
+
     @Test public void malformedStoredCatalogCannotBeSilentlyReplaced() throws Exception {
         java.io.File folder = new java.io.File(
                 androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()

@@ -44,8 +44,10 @@ This is not a stable public API until Android runtime acceptance testing is comp
    running to keep the target values locked by the existing Memory Editor
    scheduler. When a recipe Freeze is active, **Stop Freeze** is available.
 6. Use **Edit** to modify the JSON and save again. Editing or deleting a saved
-   script stops its existing Freeze so an older recipe cannot keep running
-   invisibly. A draft with unsaved changes prompts before being discarded.
+   script first stops its existing Freeze; if the stop cannot be confirmed,
+   the catalog change is rejected. If a later storage write fails, the old
+   script remains saved but its Freeze may already be stopped. A draft with
+   unsaved changes prompts before being discarded.
    The top X **minimizes** the editor without discarding the script page,
    selected parameters, or an unsaved JSON draft. Reopen the editor during
    the same MIDlet session to continue; Back from the editor still asks

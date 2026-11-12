@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -134,6 +135,21 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Refresh").performClick()
         rule.onNodeWithText("coins: Inconsistent copies: 7828 / 9000").assertIsDisplayed()
         rule.runOnIdle { assertEquals(1, actions.reads) }
+    }
+
+    @Test fun activeFreezeIndicatorFollowsControllerStateAfterAutomaticStop() {
+        val ui = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            scriptsTab = true, runtimeToken = 9204L, scriptsLoaded = true,
+            scripts = listOf(MemoryScriptRow("sample.coins", "Sample Coins", sample)),
+            scriptActiveFreezes = listOf("sample.coins" to "Sample Coins"),
+        ))
+        val actions = object : TestMemoryEditorActions() {}
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
+        rule.onNodeWithText("Sample Coins").performClick()
+        rule.onNodeWithText("Freeze active for this script").assertIsDisplayed()
+        rule.runOnIdle { ui.value = ui.value.copy(scriptActiveFreezes = emptyList()) }
+        rule.onNodeWithText("Freeze active for this script").assertDoesNotExist()
     }
 
     @Test fun failedSaveLeavesTheJsonEditorOpenForCorrection() {
