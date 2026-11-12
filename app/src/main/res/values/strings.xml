@@ -1339,5 +1339,5 @@
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest Neighbor</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX (pixel art)</string>
-    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">Edge-aware (smooth)</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">Smooth HD</string>
 </resources>
