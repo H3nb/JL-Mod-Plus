@@ -203,7 +203,9 @@ public abstract class Canvas extends Displayable {
 	private long notifiedShowGeneration;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
-	private volatile Image offscreen;
+	// One serialized guest paint runs at a time. A PaintEvent pins its snapshot
+	// while the UI may prepare the next scratch backing.
+	private static volatile Image offscreen;
 	private Image offscreenCopy;
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics frameMetrics;

@@ -28,6 +28,8 @@ jobs:
         with:
           cmdline-tools-version: '14742923'
           packages: 'platform-tools platforms;android-37.0'
+      - name: Provision NDK r30 for the Micro3D JNI pass
+        run: sdkmanager 'ndk;30.0.16248370' >/dev/null
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -43,7 +45,7 @@ jobs:
           script: |
             chmod +x gradlew
             ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.lcdui.InternalResolutionGraphicsTest,javax.microedition.lcdui.BitmapUpscalingGraphicsTest,javax.microedition.lcdui.GraphicsBitmapRebindTest,javax.microedition.lcdui.GraphicsCanvasStateTest :app:connectedEmulatorDebugAndroidTest
-            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest :app:connectedEmulatorDebugAndroidTest
+            ./gradlew --daemon --stacktrace -PjlmodNativeBuild=true -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest :app:connectedEmulatorDebugAndroidTest
       - name: Diagnose Android instrumentation failures
         if: failure()
         shell: bash
