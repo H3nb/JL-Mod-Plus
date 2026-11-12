@@ -113,7 +113,7 @@ internal fun LibraryCollectionBrowser(
     onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
     manageApps: Boolean,
     onManageAppsChanged: (Boolean) -> Unit,
-    onSetMembership: (Int, Boolean, CollectionMembershipResultCallback) -> Unit,
+    onSetMembership: (Long, Boolean, CollectionMembershipResultCallback) -> Unit,
     onPrepareAppPicker: () -> Unit,
     onSort: (Int) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
@@ -130,10 +130,10 @@ internal fun LibraryCollectionBrowser(
         }
     }
     var pendingMemberships by remember(collection.id) {
-        mutableStateOf<Map<Int, Boolean>>(emptyMap())
+        mutableStateOf<Map<Long, Boolean>>(emptyMap())
     }
     val committedMemberIds = remember(members) {
-        members.mapTo(LinkedHashSet()) { it.id }
+        members.mapTo(LinkedHashSet()) { it.databaseId }
     }
     LaunchedEffect(committedMemberIds) {
         val unresolved = pendingMemberships.filter { (appId, desiredIncluded) ->
@@ -802,8 +802,8 @@ private fun LibraryCollectionGridItem(
 internal fun LibraryCollectionAppPicker(
     collection: LibraryCollectionUiItem,
     allApps: List<LibraryAppUiItem>,
-    memberIds: Set<Int>,
-    pendingMemberships: Map<Int, Boolean> = emptyMap(),
+    memberIds: Set<Long>,
+    pendingMemberships: Map<Long, Boolean> = emptyMap(),
     sortVariant: Int,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
@@ -813,7 +813,7 @@ internal fun LibraryCollectionAppPicker(
     loading: Boolean = false,
     active: Boolean = true,
     onBack: () -> Unit,
-    onSetMembership: (Int, Boolean) -> Unit,
+    onSetMembership: (Long, Boolean) -> Unit,
 ) {
     var query by viewportState.queryState
     val searchScope = rememberCoroutineScope()
@@ -894,18 +894,18 @@ internal fun LibraryCollectionAppPicker(
         }
         LazyColumn(modifier = Modifier.fillMaxSize(), state = viewportState.listState) {
             items(visibleApps, key = { it.databaseId }) { app ->
-                val pending = pendingMemberships[app.id]
-                val checked = pending ?: (app.id in memberIds)
+                val pending = pendingMemberships[app.databaseId]
+                val checked = pending ?: (app.databaseId in memberIds)
                 val enabled = pending == null
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("collection-membership-${app.id}")
+                        .testTag("collection-membership-${app.databaseId}")
                         .toggleable(
                             value = checked,
                             enabled = enabled,
                             role = Role.Checkbox,
-                            onValueChange = { next -> onSetMembership(app.id, next) },
+                            onValueChange = { next -> onSetMembership(app.databaseId, next) },
                         )
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,

@@ -698,17 +698,28 @@ public class AppsListFragment extends Fragment {
                     callback.onResult(false);
                     return;
                 }
+                onSetCollectionMembershipByDatabaseId(app.getId(), collectionId, included, callback);
+            }
+
+            @Override
+            public void onSetCollectionMembershipByDatabaseId(
+                    long databaseId,
+                    long collectionId,
+                    boolean included,
+                    @NonNull CollectionMembershipResultCallback callback) {
+                LibraryGenerationToken ready = libraryViewModel.readyGeneration();
+                if (ready == null || activeWorkdir == null ||
+                        activeGeneration != ready.getGeneration() ||
+                        !activeWorkdir.equals(ready.getEmulatorDir()) ||
+                        libraryViewModel.getApp(databaseId) == null) {
+                    callback.onResult(false);
+                    return;
+                }
                 libraryViewModel.setCollectionMembership(
-                        collectionId,
-                        app.getId(),
-                        included,
+                        collectionId, databaseId, included,
                         (ignored, error) -> {
-                            if (error != null) {
-                                showError(error);
-                                callback.onResult(false);
-                                return;
-                            }
-                            callback.onResult(true);
+                            if (error != null) showError(error);
+                            callback.onResult(error == null);
                         });
             }
 
@@ -1137,17 +1148,44 @@ public class AppsListFragment extends Fragment {
         List<LibraryAppRow> rows = cachedAllReadyRows;
         if (rows != null) return rows;
         rows = libraryViewModel.getAllApps();
-        pruneUiCaches(rows);
         cachedAllReadyRows = rows;
         return rows;
     }
 
     private void publishCollectionAllApps(List<LibraryAppRow> rows) {
-        List<LibraryAppUiItem> allUiItems = new ArrayList<>(rows.size());
-        for (LibraryAppRow row : rows) {
-            allUiItems.add(toLibraryUiItem(row));
-        }
-        collectionsUiStore.publishAllApps(allUiItems);
+        File workdir = activeWorkdir;
+        if (workdir == null) return;
+        Map<Long, String> descriptions = localizedDescriptions;
+        Map<Long, LibraryIconFiles> availableIcons = iconFiles;
+        collectionsUiStore.publishAllApps(new LibraryMappedList<>(rows, row ->
+                toCollectionPickerItem(row, workdir, descriptions, availableIcons)));
+    }
+
+    private static LibraryAppUiItem toCollectionPickerItem(
+            LibraryAppRow row,
+            File workdir,
+            Map<Long, String> descriptions,
+            Map<Long, LibraryIconFiles> availableIcons) {
+        LibraryIconFiles files = availableIcons.get(row.getId());
+        boolean resolved = files != null && row.equals(files.getRow());
+        File primary = new File(
+                new File(new File(workdir, "converted"), row.getStorageKey()).getAbsolutePath()
+                        + Config.MIDLET_ICON_FILE);
+        File portrait = LibraryIconOverride.portraitOverrideFile(workdir, row.getStorageKey());
+        File custom = LibraryIconOverride.persistedOverrideFile(workdir, row.getStorageKey());
+        String description = descriptions.get(row.getId());
+        if (description == null) description = row.getDescription();
+        return new LibraryAppUiItem(
+                0, row.getTitle(), row.getVendor(), row.getVersion(),
+                (resolved ? files.getMainIconPresent() : primary.isFile())
+                        ? primary.getAbsolutePath() : null,
+                true, description, row.getIconRevision(), row.getFavorite(),
+                row.getSourceTitle(), row.getSourceVendor(), row.getSourceVersion(),
+                row.getSourceDescription(), row.getPlayCount(), row.getTotalPlayTimeMs(),
+                row.getId(), row.getDescription(),
+                (resolved ? files.getPortraitIconPresent() : portrait.isFile())
+                        ? portrait.getAbsolutePath() : null,
+                resolved ? files.getCustomIconPresent() : custom.isFile(), row.getAddedAt());
     }
 
     private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {

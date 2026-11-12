@@ -70,6 +70,12 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   projection READY separately, without unstable hard elapsed-time assertions. Results
   describe a controlled emulator filesystem, not real handset startup latency.
 
+- Collection Add Apps uses an indexed presentation source. Projection maps and sorts
+  immutable picker items on Default without touching Fragment-owned UI-ID maps;
+  membership updates use stable database IDs. Closing the picker releases the
+  prepared list. This avoids the previous synchronous full-catalog conversion
+  on opening, though large searches still require O(N) temporary allocations.
+
 ## Unresolved scalability boundaries
 
 - Icon file presence is resolved on Dispatchers.IO before publishing the catalog.

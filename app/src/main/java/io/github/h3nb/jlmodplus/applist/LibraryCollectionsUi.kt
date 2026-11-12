@@ -136,6 +136,13 @@ class LibraryCollectionsUiStore {
         )
     }
 
+    fun dismissPicker() {
+        mutableState.value = mutableState.value.copy(
+            allApps = emptyList(),
+            allAppsPrepared = false,
+        )
+    }
+
     fun clear() {
         mutableState.value = LibraryCollectionsUiState()
     }
@@ -210,6 +217,12 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onAddAppToCollection(appId: Int, collectionId: Long)
     fun onSetCollectionMembership(
         appId: Int,
+        collectionId: Long,
+        included: Boolean,
+        callback: CollectionMembershipResultCallback,
+    )
+    fun onSetCollectionMembershipByDatabaseId(
+        databaseId: Long,
         collectionId: Long,
         included: Boolean,
         callback: CollectionMembershipResultCallback,
@@ -440,12 +453,16 @@ internal fun LibraryCollectionsDestination(
                                 onSelectionStateChanged = onSelectionStateChanged,
                                 manageApps = navigationState.collectionManageApps,
                                 onManageAppsChanged = { visible ->
+                                    if (!visible) {
+                                        host.collectionsStore().dismissPicker()
+                                        pickerViewport.collectionProjection = null
+                                    }
                                     onNavigationStateChanged(
                                         navigationState.copy(collectionManageApps = visible),
                                     )
                                 },
                                 onSetMembership = { appId, included, callback ->
-                                    host.onSetCollectionMembership(
+                                    host.onSetCollectionMembershipByDatabaseId(
                                         appId,
                                         collection.id,
                                         included,

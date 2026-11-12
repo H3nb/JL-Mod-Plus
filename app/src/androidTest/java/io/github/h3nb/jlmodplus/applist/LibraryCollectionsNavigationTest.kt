@@ -696,7 +696,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         assertEquals(
-            listOf(Triple(SAMPLE_MEMBER_2.id, COLLECTION_ID, true)),
+            listOf(Triple(SAMPLE_MEMBER_2.databaseId, COLLECTION_ID, true)),
             host.membershipRequests,
         )
         target.assertIsOn().assertIsNotEnabled()
@@ -744,7 +744,7 @@ class LibraryCollectionsNavigationTest {
         openCollection()
         composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("collection-membership-1000")
+            composeRule.onAllNodesWithTag("collection-membership-10000")
                 .fetchSemanticsNodes().isNotEmpty()
         }
         // The pager is scrollable too; select the picker LazyColumn by its visible row.
@@ -755,11 +755,11 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
         composeRule.onNode(hasSetTextAction()).performTextInput("Picker app 00")
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("collection-membership-1000")
+            composeRule.onAllNodesWithTag("collection-membership-10000")
                 .fetchSemanticsNodes().isNotEmpty()
         }
         // InputText contains the query too; assert the unique result row, not matching text.
-        composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
+        composeRule.onNodeWithTag("collection-membership-10000").assertIsDisplayed()
         composeRule.onNode(hasSetTextAction()).assertIsFocused()
         // One Back must dismiss editing without navigating away from Add apps.
         pressBack()
@@ -768,7 +768,7 @@ class LibraryCollectionsNavigationTest {
                 .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
         }
         composeRule.onNode(hasSetTextAction()).assertTextEquals("Picker app 00")
-        composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
+        composeRule.onNodeWithTag("collection-membership-10000").assertIsDisplayed()
     }
 
     @Test
@@ -831,7 +831,7 @@ class LibraryCollectionsNavigationTest {
         val openedCollectionIds = mutableListOf<Long>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
-        val membershipRequests = mutableListOf<Triple<Int, Long, Boolean>>()
+        val membershipRequests = mutableListOf<Triple<Long, Long, Boolean>>()
         var deferMembershipResult = false
         var pickerApps: List<LibraryAppUiItem> = listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2)
         private var pendingMembershipResult: CollectionMembershipResultCallback? = null
@@ -862,7 +862,16 @@ class LibraryCollectionsNavigationTest {
             included: Boolean,
             callback: CollectionMembershipResultCallback,
         ) {
-            membershipRequests += Triple(appId, collectionId, included)
+            onSetCollectionMembershipByDatabaseId(appId.toLong(), collectionId, included, callback)
+        }
+
+        override fun onSetCollectionMembershipByDatabaseId(
+            databaseId: Long,
+            collectionId: Long,
+            included: Boolean,
+            callback: CollectionMembershipResultCallback,
+        ) {
+            membershipRequests += Triple(databaseId, collectionId, included)
             if (deferMembershipResult) {
                 pendingMembershipResult = callback
             } else {
