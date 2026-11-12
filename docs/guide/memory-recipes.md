@@ -187,8 +187,9 @@ and keep the original Run/optional Freeze interface.
 - **Form**: `valueInput` identifies editable numeric fields; `indexInput`
   identifies selectors such as a character slot. Fields can have optional
   human-readable input `label` metadata. The form automatically reads current
-  values when first opened, and again when a selector changes. Refresh is
-  always available. Apply requires the last successfully read, consistent
+  values when first opened, and again when a selector changes. Refresh reads
+  updated actual values without discarding proposed edits; changing a selector
+  loads the newly selected target values. Apply requires the last successfully read, consistent
   snapshot and refuses to write if it changed since the read. Refresh also issues a
 session-local ticket tied to weak references to the exact target owners;
 Apply rejects replaced objects even if their numeric values still match.

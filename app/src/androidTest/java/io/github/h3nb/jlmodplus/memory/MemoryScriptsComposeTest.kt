@@ -182,6 +182,8 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Sample Coins").performClick()
         rule.onNodeWithTag("memory-script-input-coins").assertTextContains("10")
         rule.onNodeWithTag("memory-script-input-coins").performTextReplacement("37")
+        rule.onNodeWithText("Refresh").performClick()
+        rule.onNodeWithTag("memory-script-input-coins").assertTextContains("37")
         rule.onNodeWithTag("memory-script-apply").performClick()
         rule.runOnIdle {
             assertEquals("37", applied.single().first["coins"])

@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Switch
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -74,7 +74,7 @@ internal fun TypedMemoryRecipeDetail(
     var requestId by remember(script.id, state.runtimeToken) { mutableStateOf(0L) }
     val active = state.scriptActiveFreezes.any { it.first == script.id }
 
-    fun refresh(requestInputs: Map<String, String>) {
+    fun refresh(requestInputs: Map<String, String>, useActualValues: Boolean = false) {
         val request = ++requestId
         reading = true
         currentValues = null
@@ -93,20 +93,23 @@ internal fun TypedMemoryRecipeDetail(
                 if (metadata.mode == "form" && result != null && consistent) {
                     expectedValues = result.map(MemoryRecipeReadValue::value)
                     snapshotTicket = result.firstOrNull()?.snapshotTicket
-                    inputs = requestInputs + metadata.fields.filterNot(MemoryScriptInput::selector)
-                        .mapNotNull { field ->
-                            grouped[field.name]?.firstOrNull()?.value?.let { field.name to it }
-                        }.toMap()
-                    MemoryEditorSessionNavigation.rememberScriptDetail(
-                        state.runtimeToken, script.id, inputs, false,
-                    )
+                    if (useActualValues) {
+                        inputs = requestInputs + metadata.fields.filterNot(MemoryScriptInput::selector)
+                            .mapNotNull { field ->
+                                grouped[field.name]?.firstOrNull()?.value?.let { field.name to it }
+                            }.toMap()
+                        MemoryEditorSessionNavigation.rememberScriptDetail(
+                            state.runtimeToken, script.id, inputs, false,
+                        )
+                    }
                 }
             }
         }
     }
 
     LaunchedEffect(script.document, script.id, state.runtimeToken, state.supported) {
-        if (metadata.mode == "form" && state.supported && restoredInputs.isEmpty()) refresh(inputs)
+        if (metadata.mode == "form" && state.supported && restoredInputs.isEmpty())
+            refresh(inputs, useActualValues = true)
     }
 
     Column(modifier.fillMaxSize().padding(8.dp),
@@ -141,7 +144,8 @@ internal fun TypedMemoryRecipeDetail(
                 currentValues != null -> currentValues.orEmpty()
                     .groupBy(MemoryRecipeReadValue::name).forEach { (field, copies) ->
                         val distinct = copies.map(MemoryRecipeReadValue::value).distinct()
-                        Text("$field: " + if (distinct.size == 1) distinct.first()
+                        val label = metadata.fields.firstOrNull { it.name == field }?.label ?: field
+                        Text("$label: " + if (distinct.size == 1) distinct.first()
                             else stringResource(R.string.memory_scripts_inconsistent,
                                 distinct.joinToString(" / ")),
                             color = if (distinct.size == 1) MaterialTheme.colorScheme.onSurface
@@ -162,7 +166,7 @@ internal fun TypedMemoryRecipeDetail(
                             MemoryEditorSessionNavigation.rememberScriptDetail(
                                 state.runtimeToken, script.id, inputs, false,
                             )
-                            if (field.selector) refresh(updated)
+                            if (field.selector) refresh(updated, useActualValues = true)
                         }
                     },
                     label = { Text(field.label) },
@@ -173,7 +177,7 @@ internal fun TypedMemoryRecipeDetail(
             }
             when (metadata.mode) {
                 "toggle" -> Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = active, enabled = !busy && !state.busy &&
+                    Switch(checked = active, enabled = !busy && !state.busy &&
                         (active || state.writeSupported), onCheckedChange = { enabled ->
                         if (enabled) {
                             busy = true
@@ -201,7 +205,7 @@ internal fun TypedMemoryRecipeDetail(
                             busy = false
                             expectedValues = null
                             snapshotTicket = null
-                            if (success) refresh(inputs)
+                            if (success) refresh(inputs, useActualValues = true)
                         }
                     }) { Text(stringResource(R.string.memory_scripts_apply)) }
                 }

@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -424,7 +425,7 @@ internal fun RuntimeScriptsTab(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             when (scriptMetadata?.mode) {
-                                "toggle" -> Checkbox(checked = active,
+                                "toggle" -> Switch(checked = active,
                                     modifier = Modifier.testTag("memory-script-toggle-${script.id}"),
                                     enabled = !launching && !state.busy &&
                                         (active || state.writeSupported),

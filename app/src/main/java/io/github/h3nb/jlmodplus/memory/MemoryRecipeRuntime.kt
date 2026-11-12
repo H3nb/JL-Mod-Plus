@@ -669,6 +669,10 @@ class MemoryRecipeRuntime {
                 a["identityMask"]?.let { parseNumber(a.string("identityMask")) } ?: 0L,
                 operation, field)
         }
+        val relativeFields = parsed.filter { it.operation == "add" }
+            .mapNotNull(Action::field).toSet()
+        if (parsed.any { it.field in relativeFields && it.operation != "add" })
+            bad("A logical field cannot mix addition with replacement")
         if (mode == "form") {
             val selectors = parsed.flatMap { action ->
                 action.path.mapNotNull(Step::indexInput)
