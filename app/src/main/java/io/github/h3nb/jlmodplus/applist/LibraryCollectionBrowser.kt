@@ -102,6 +102,7 @@ internal fun LibraryCollectionBrowser(
     members: List<LibraryAppUiItem>,
     allApps: List<LibraryAppUiItem>,
     allAppsPrepared: Boolean = true,
+    allAppsRevision: Long = 0L,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
     viewportState: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, collection.id),
@@ -171,6 +172,7 @@ internal fun LibraryCollectionBrowser(
         LibraryCollectionAppPicker(
             collection = collection,
             allApps = allApps,
+            sourceRevision = allAppsRevision,
             memberIds = committedMemberIds,
             pendingMemberships = pendingMemberships,
             sortVariant = libraryState.sortVariant,
@@ -802,6 +804,7 @@ private fun LibraryCollectionGridItem(
 internal fun LibraryCollectionAppPicker(
     collection: LibraryCollectionUiItem,
     allApps: List<LibraryAppUiItem>,
+    sourceRevision: Long = 0L,
     memberIds: Set<Long>,
     pendingMemberships: Map<Long, Boolean> = emptyMap(),
     sortVariant: Int,
@@ -817,7 +820,10 @@ internal fun LibraryCollectionAppPicker(
 ) {
     var query by viewportState.queryState
     val searchScope = rememberCoroutineScope()
-    val visibleApps = rememberCollectionAppsProjection(viewportState, allApps, sortVariant, ready = !loading)
+    val visibleApps = rememberCollectionAppsProjection(
+        viewportState, allApps, sortVariant, ready = !loading,
+        sourceRevision = sourceRevision.takeIf { it != 0L },
+    )
     val searchDismissFocus = remember { FocusRequester() }
     Column(
         modifier = Modifier
@@ -956,9 +962,10 @@ private fun rememberCollectionAppsProjection(
     source: List<LibraryAppUiItem>,
     sortVariant: Int,
     ready: Boolean = true,
+    sourceRevision: Long? = null,
 ): List<LibraryAppUiItem>? {
     val query = viewportState.query
-    LaunchedEffect(viewportState, source, query, sortVariant, ready) {
+    LaunchedEffect(viewportState, sourceRevision ?: source, query, sortVariant, ready) {
         if (!ready) return@LaunchedEffect
         if (viewportState.collectionProjection?.matches(source, query, sortVariant) == true) {
             return@LaunchedEffect

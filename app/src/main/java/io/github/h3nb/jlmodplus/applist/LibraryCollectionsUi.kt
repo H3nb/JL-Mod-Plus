@@ -105,6 +105,7 @@ data class LibraryCollectionAppTargetUi(
 data class LibraryCollectionsUiState(
     val ready: Boolean = false,
     val collections: List<LibraryCollectionUiItem> = emptyList(),
+    val allAppsRevision: Long = 0L,
     val allApps: List<LibraryAppUiItem> = emptyList(),
     val allAppsPrepared: Boolean = false,
     val members: LibraryCollectionMembersUi? = null,
@@ -114,6 +115,7 @@ data class LibraryCollectionsUiState(
 
 /** Fragment-owned presentation bridge; Compose never reaches Room or filesystem directly. */
 class LibraryCollectionsUiStore {
+    private var nextAllAppsRevision = 0L
     private val mutableState = MutableStateFlow(LibraryCollectionsUiState())
     val state: StateFlow<LibraryCollectionsUiState> = mutableState.asStateFlow()
 
@@ -131,6 +133,7 @@ class LibraryCollectionsUiStore {
 
     fun publishAllApps(items: List<LibraryAppUiItem>) {
         mutableState.value = mutableState.value.copy(
+            allAppsRevision = ++nextAllAppsRevision,
             allApps = items,
             allAppsPrepared = true,
         )
@@ -440,6 +443,7 @@ internal fun LibraryCollectionsDestination(
                                 members = members.members,
                                 allApps = state.allApps,
                                 allAppsPrepared = state.allAppsPrepared,
+                                allAppsRevision = state.allAppsRevision,
                                 libraryState = libraryState,
                                 scaffoldPadding = collectionScaffoldPadding,
                                 viewportState = collectionViewport,

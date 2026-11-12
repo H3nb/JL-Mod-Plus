@@ -2,10 +2,30 @@
 package io.github.h3nb.jlmodplus.applist
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 class LibraryMappedListTest {
+    @Test fun replacementPickerSnapshotDoesNotMaterializeOldCatalogForEquality() {
+        var materialized = 0
+        val ids = object : AbstractList<Int>() {
+            override val size = 50_000
+            override fun get(index: Int) = index
+        }
+        val store = LibraryCollectionsUiStore()
+        fun source() = LibraryMappedList(ids) { index: Int ->
+            materialized++
+            LibraryAppUiItem(index, "Game $index", "Vendor", "1.0", null, true)
+        }
+        store.publishAllApps(source())
+        val firstRevision = store.state.value.allAppsRevision
+        store.publishAllApps(source())
+        assertEquals(0, materialized)
+        assertTrue(store.state.value.allAppsRevision > firstRevision)
+    }
+
+
     @Test fun largeCatalogMapsOnlyIndexedItems() {
         var mapped = 0
         val rows = object : AbstractList<Int>() {
