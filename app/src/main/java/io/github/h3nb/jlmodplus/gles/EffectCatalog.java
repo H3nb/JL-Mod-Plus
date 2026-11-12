@@ -9,7 +9,7 @@ import java.util.List;
 
 /** APK-owned effect definitions. Neither profile state nor GL resources live here. */
 public final class EffectCatalog {
-    public enum Size { INPUT, VIEWPORT, REDUCED_VIEWPORT }
+    public enum Size { INPUT, GAME, VIEWPORT, REDUCED_VIEWPORT }
     public enum Sampling { DISPLAY, NEAREST, LINEAR }
 
     public static final class Parameter {

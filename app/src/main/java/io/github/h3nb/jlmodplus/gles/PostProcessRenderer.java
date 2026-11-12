@@ -41,6 +41,7 @@ public final class PostProcessRenderer {
     private EffectTargetPlan framePlan;
     private int lastViewportWidth, lastViewportHeight;
     private int lastContentWidth, lastContentHeight;
+    private int lastLogicalWidth, lastLogicalHeight;
     private final Program stock;
 
     private static final class Program {
@@ -158,8 +159,12 @@ public final class PostProcessRenderer {
                     String vert = local(shaderDirectory, user.vertex);
                     String frag = local(shaderDirectory, user.fragment);
                     Program p = program("user/" + user.vertex + "|" + user.fragment, vert, frag);
-                    EffectCatalog.Pass pass = legacyPass(user);
-                    stages.add(new Stage(p, entry, pass, null, true));
+                    if (entry.nativeInput) {
+                        EffectCatalog.Pass proxy = new EffectCatalog.Pass("identity.fsh",
+                                EffectCatalog.Size.GAME, EffectCatalog.Sampling.NEAREST, false);
+                        stages.add(new Stage(identity, entry, proxy, null, true));
+                    }
+                    stages.add(new Stage(p, entry, legacyPass(user), null, true));
                 }
                 if (stages.size() > MAX_PASSES) throw new IOException("Too many shader passes");
             }
@@ -285,9 +290,10 @@ public final class PostProcessRenderer {
         int width = Math.max(1, Math.round(Math.abs(right - left) * hostW * 0.5f));
         int height = Math.max(1, Math.round(Math.abs(top - bottom) * hostH * 0.5f));
         if (framePlan == null || width != lastViewportWidth || height != lastViewportHeight
-                || contentW != lastContentWidth || contentH != lastContentHeight) {
+                || contentW != lastContentWidth || contentH != lastContentHeight
+                || logicalW != lastLogicalWidth || logicalH != lastLogicalHeight) {
             EffectTargetPlan next = EffectTargetPlan.create(planPasses, contentW, contentH,
-                    width, height, maxTextureSize);
+                    logicalW, logicalH, width, height, maxTextureSize);
             clearTargets();
             framePlan = next;
             for (EffectTargetPlan.Slot slot : next.slots) {
@@ -297,6 +303,8 @@ public final class PostProcessRenderer {
             lastViewportHeight = height;
             lastContentWidth = contentW;
             lastContentHeight = contentH;
+            lastLogicalWidth = logicalW;
+            lastLogicalHeight = logicalH;
         }
 
         int current = sourceTexture, inW = textureW, inH = textureH;
@@ -333,6 +341,9 @@ public final class PostProcessRenderer {
                 } else if (stage.pass.size == EffectCatalog.Size.INPUT) {
                     outW = visibleW;
                     outH = visibleH;
+                } else if (stage.pass.size == EffectCatalog.Size.GAME) {
+                    outW = logicalW;
+                    outH = logicalH;
                 }
                 if (stage.blurRadius > 0f) {
                     // Keep the output-space blur width stable as the FBO resolution changes.

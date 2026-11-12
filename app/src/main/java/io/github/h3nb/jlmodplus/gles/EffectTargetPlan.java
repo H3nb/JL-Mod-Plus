@@ -56,8 +56,10 @@ final class EffectTargetPlan {
     }
 
     static EffectTargetPlan create(List<Pass> passes, int contentW, int contentH,
-                                   int viewportW, int viewportH, int maxTextureSize) {
-        if (contentW <= 0 || contentH <= 0 || viewportW <= 0 || viewportH <= 0) {
+                                   int gameW, int gameH, int viewportW, int viewportH,
+                                   int maxTextureSize) {
+        if (contentW <= 0 || contentH <= 0 || gameW <= 0 || gameH <= 0
+                || viewportW <= 0 || viewportH <= 0) {
             throw new IllegalArgumentException("Invalid effect render dimensions");
         }
         ArrayList<Slot> slots = new ArrayList<>();
@@ -78,6 +80,9 @@ final class EffectTargetPlan {
             } else if (pass.size == EffectCatalog.Size.INPUT) {
                 outW = visibleW;
                 outH = visibleH;
+            } else if (pass.size == EffectCatalog.Size.GAME) {
+                outW = gameW;
+                outH = gameH;
             }
 
             // Writing straight to the default framebuffer needs no GPU texture.

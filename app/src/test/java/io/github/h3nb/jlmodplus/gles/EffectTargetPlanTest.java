@@ -22,7 +22,7 @@ class EffectTargetPlanTest {
     void singleScreenEffectWritesDirectlyToDisplayWithoutFbo() {
         EffectTargetPlan plan = EffectTargetPlan.create(
             List.of(first(EffectCatalog.Size.VIEWPORT)),
-            240, 320, 1920, 3200, 1024);
+            240, 320, 240, 320, 1920, 3200, 1024);
         assertTrue(plan.slots.isEmpty());
         assertEquals(EffectTargetPlan.DISPLAY, plan.destination(0));
     }
@@ -36,7 +36,7 @@ class EffectTargetPlanTest {
             next(EffectCatalog.Size.VIEWPORT),
             first(EffectCatalog.Size.VIEWPORT));
         EffectTargetPlan plan = EffectTargetPlan.create(
-            bloomAndColor, 240, 320, 1080, 1920, 4096);
+            bloomAndColor, 240, 320, 240, 320, 1080, 1920, 4096);
         assertEquals(3, plan.slots.size());
         assertEquals(360, plan.slots.get(0).width);
         assertEquals(640, plan.slots.get(0).height);
@@ -56,7 +56,7 @@ class EffectTargetPlanTest {
             next(EffectCatalog.Size.REDUCED_VIEWPORT),
             next(EffectCatalog.Size.REDUCED_VIEWPORT),
             next(EffectCatalog.Size.VIEWPORT)),
-            2400, 3200, 1080, 1920, 4096);
+            2400, 3200, 240, 320, 1080, 1920, 4096);
         assertEquals(2, plan.slots.size());
         assertEquals(600, plan.slots.get(0).width);
         assertEquals(1067, plan.slots.get(0).height);
@@ -82,7 +82,7 @@ class EffectTargetPlanTest {
             first(EffectCatalog.Size.VIEWPORT),
             first(EffectCatalog.Size.VIEWPORT),
             first(EffectCatalog.Size.VIEWPORT)),
-            240, 320, 1080, 1920, 4096);
+            240, 320, 240, 320, 1080, 1920, 4096);
         assertEquals(2, plan.slots.size());
         assertEquals(0, plan.destination(0));
         assertEquals(1, plan.destination(1));
@@ -96,10 +96,10 @@ class EffectTargetPlanTest {
                 first(EffectCatalog.Size.VIEWPORT),
                 first(EffectCatalog.Size.VIEWPORT));
         EffectTargetPlan plan = EffectTargetPlan.create(
-                passes, 240, 320, 2300, 3700, 4096);
+                passes, 240, 320, 240, 320, 2300, 3700, 4096);
         assertEquals(2, plan.slots.size());
         assertThrows(IllegalStateException.class, () -> EffectTargetPlan.create(
-                passes, 240, 320, 5000, 3700, 4096));
+                passes, 240, 320, 240, 320, 5000, 3700, 4096));
     }
 
     @Test
@@ -120,7 +120,7 @@ class EffectTargetPlanTest {
                 assertFalse(pass.composite);
                 EffectTargetPlan plan = EffectTargetPlan.create(
                     List.of(first(pass.size), first(EffectCatalog.Size.VIEWPORT)),
-                    240, 320, 1080, 1920, 4096);
+                    240, 320, 240, 320, 1080, 1920, 4096);
                 assertEquals(1, plan.slots.size());
                 assertEquals(1080, plan.slots.get(0).width);
                 assertEquals(1920, plan.slots.get(0).height);
@@ -130,10 +130,37 @@ class EffectTargetPlanTest {
     }
 
     @Test
+    void nativeInputProxyUsesLogicalSizeAndReusesOffscreenTargets() {
+        List<EffectTargetPlan.Pass> passes = List.of(
+            first(EffectCatalog.Size.GAME),
+            first(EffectCatalog.Size.VIEWPORT),
+            first(EffectCatalog.Size.GAME),
+            first(EffectCatalog.Size.VIEWPORT));
+        EffectTargetPlan plan = EffectTargetPlan.create(
+            passes, 960, 1280, 240, 320, 1080, 1440, 4096);
+        assertEquals(2, plan.slots.size());
+        assertEquals(240, plan.slots.get(0).width);
+        assertEquals(320, plan.slots.get(0).height);
+        assertEquals(1080, plan.slots.get(1).width);
+        assertEquals(1440, plan.slots.get(1).height);
+        assertEquals(0, plan.destination(0));
+        assertEquals(1, plan.destination(1));
+        assertEquals(0, plan.destination(2));
+        assertEquals(EffectTargetPlan.DISPLAY, plan.destination(3));
+    }
+
+    @Test
+    void nativeProxyChecksTheGpuTextureLimit() {
+        assertThrows(IllegalStateException.class, () -> EffectTargetPlan.create(
+            List.of(first(EffectCatalog.Size.GAME), first(EffectCatalog.Size.VIEWPORT)),
+            4800, 6400, 1200, 1600, 1080, 1440, 1024));
+    }
+
+    @Test
     void inputSizedPassUsesGuestContentSize() {
         EffectTargetPlan plan = EffectTargetPlan.create(List.of(
             first(EffectCatalog.Size.INPUT), first(EffectCatalog.Size.VIEWPORT)),
-            240, 320, 1080, 1920, 4096);
+            240, 320, 240, 320, 1080, 1920, 4096);
         assertEquals(1, plan.slots.size());
         assertEquals(240, plan.slots.get(0).width);
         assertEquals(320, plan.slots.get(0).height);
