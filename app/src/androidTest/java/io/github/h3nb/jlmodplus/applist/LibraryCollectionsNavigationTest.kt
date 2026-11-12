@@ -694,13 +694,20 @@ class LibraryCollectionsNavigationTest {
                     .fetchSemanticsNodes().isNotEmpty()
             }
         } catch (error: androidx.compose.ui.test.ComposeTimeoutException) {
-            android.util.Log.e(
-                "CollectionPickerTest",
-                "Picker state=${host.store.state.value}; semantics=" +
-                    composeRule.onRoot(useUnmergedTree = true).printToString(),
+            val picker = host.store.state.value
+            val textCount = composeRule.onAllNodesWithText("Second MIDlet")
+                .fetchSemanticsNodes().size
+            val unmergedCount = composeRule.onAllNodesWithTag(
+                "collection-membership-${SAMPLE_MEMBER_2.databaseId}",
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes().size
+            throw AssertionError(
+                "Picker row absent: prepared=${picker.allAppsPrepared}, " +
+                    "revision=${picker.allAppsRevision}, source=${picker.allApps.size}, " +
+                    "textCount=$textCount, unmergedCount=$unmergedCount, " +
+                    "root=${composeRule.onRoot(useUnmergedTree = true).fetchSemanticsNode()}",
                 error,
             )
-            throw error
         }
         target.performClick()
         composeRule.waitForIdle()
