@@ -47,7 +47,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 import android.widget.FrameLayout;
 import io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -175,6 +174,7 @@ public abstract class Canvas extends Displayable {
 	protected int maxHeight;
 	/** Session density only decreases on resize or allocation failure; restart resets it. */
 	private volatile int internalResolutionScale = 1;
+	private int lastReportedInternalScale;
 
 	protected final int getInternalResolutionScale() {
 		return internalResolutionScale;
@@ -1137,7 +1137,7 @@ public abstract class Canvas extends Displayable {
 			int maximum = InternalResolution.resolve(
 					requested, width, height, maxHeight, onWidth, onHeight);
 			int previousScale = internalResolutionScale;
-			InternalResolution.allocateWithFallback(maximum, scale -> {
+			int resolvedScale = InternalResolution.allocateWithFallback(maximum, scale -> {
 				boolean tight = scale > 1
 						|| (settings.effects != null && !settings.effects.isEmpty());
 				int physicalWidth = width * scale;
@@ -1185,6 +1185,10 @@ public abstract class Canvas extends Displayable {
 					throw error;
 				}
 			});
+			int target = requested == 0 ? maximum : requested;
+			if (resolvedScale < target) {
+				reportInternalResolutionReduction(target, resolvedScale);
+			}
 		}
 
 		configureAmbientGeometry();
@@ -1210,11 +1214,22 @@ public abstract class Canvas extends Displayable {
 		repaintInternal();
 	}
 
+	private void reportInternalResolutionReduction(int requested, int actual) {
+		if (actual >= requested || lastReportedInternalScale == actual) return;
+		lastReportedInternalScale = actual;
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) {
+			activity.toast(R.string.render_resolution_reduced, requested, actual);
+		}
+	}
+
 	/** Cap a session after a subclass fails to allocate its initial HD backing. */
 	protected final void capInternalResolution(int scale) {
-		if (scale < internalResolutionScale) {
+		int previous = internalResolutionScale;
+		if (scale < previous) {
 			internalResolutionScale = scale;
 			updateSize();
+			reportInternalResolutionReduction(previous, internalResolutionScale);
 		}
 	}
 
@@ -1778,6 +1793,20 @@ public abstract class Canvas extends Displayable {
 		private ShaderProgram program;
 		private PostProcessRenderer effectRenderer;
 		private boolean effectFailureReported;
+		private int maxSourceTextureSide = Integer.MAX_VALUE;
+		private int failedUploadWidth = -1, failedUploadHeight = -1;
+
+		private void requestGpuRecovery(int textureWidth, int textureHeight,
+				int scale, int supportedScale) {
+			failedUploadWidth = textureWidth;
+			failedUploadHeight = textureHeight;
+			if (supportedScale >= 1 && supportedScale < scale) {
+				mView.post(() -> capInternalResolution(supportedScale));
+			} else {
+				MicroActivity activity = ContextHolder.getActivity();
+				if (activity != null) activity.toast(R.string.render_gpu_texture_limit);
+			}
+		}
 
 		private void reportEffectFailure() {
 			if (effectFailureReported) return;
@@ -1786,8 +1815,7 @@ public abstract class Canvas extends Displayable {
 			if (activity == null) return;
 			activity.runOnUiThread(() -> {
 				if (!activity.isFinishing() && !activity.isDestroyed()) {
-					Toast.makeText(activity, R.string.render_effect_unavailable,
-							Toast.LENGTH_LONG).show();
+					activity.toast(R.string.render_effect_unavailable);
 				}
 			});
 		}
@@ -1810,6 +1838,11 @@ public abstract class Canvas extends Displayable {
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(false);
 			initTex();
+			int[] textureLimit = new int[1];
+			glGetIntegerv(GL_MAX_TEXTURE_SIZE, textureLimit, 0);
+			maxSourceTextureSide = textureLimit[0] > 0
+					? textureLimit[0] : Integer.MAX_VALUE;
+			failedUploadWidth = failedUploadHeight = -1;
 			effectRenderer = null;
 			if (settings.effects != null && !settings.effects.isEmpty()) {
 				try {
@@ -1894,14 +1927,42 @@ public abstract class Canvas extends Displayable {
 							| PerformanceDiagnostics.RENDER_CADENCE)) {
 						consumptionNanos = System.nanoTime();
 					}
+					int bitmapWidth = bitmap.getWidth();
+					int bitmapHeight = bitmap.getHeight();
+					int scale = source.getPixelScale();
+					if (bitmapWidth == failedUploadWidth && bitmapHeight == failedUploadHeight) {
+						presented = true;
+						return;
+					}
+					if (bitmapWidth > maxSourceTextureSide || bitmapHeight > maxSourceTextureSide) {
+						int supported = Math.min(maxSourceTextureSide / Math.max(1, Canvas.this.width),
+								maxSourceTextureSide / Math.max(1, Canvas.this.maxHeight));
+						requestGpuRecovery(bitmapWidth, bitmapHeight, scale, supported);
+						presented = true;
+						return;
+					}
 					if (!textureValid || frameSequence != lastUploadedSequence
-							|| bitmap.getWidth() != lastUploadedWidth
-							|| bitmap.getHeight() != lastUploadedHeight) {
-						GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
+							|| bitmapWidth != lastUploadedWidth
+							|| bitmapHeight != lastUploadedHeight) {
+						try {
+							GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
+							int error = glGetError();
+							if (error != GL_NO_ERROR) {
+								Log.w(TAG, "Game texture upload failed: GL error " + error);
+								requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1);
+								presented = true;
+								return;
+							}
+						} catch (RuntimeException | OutOfMemoryError error) {
+							Log.w(TAG, "Game texture upload failed", error);
+							requestGpuRecovery(bitmapWidth, bitmapHeight, scale, scale - 1);
+							presented = true;
+							return;
+						}
 						textureValid = true;
 						lastUploadedSequence = frameSequence;
-						lastUploadedWidth = bitmap.getWidth();
-						lastUploadedHeight = bitmap.getHeight();
+						lastUploadedWidth = bitmapWidth;
+						lastUploadedHeight = bitmapHeight;
 					}
 				}
 				boolean effectDrawn = false;
