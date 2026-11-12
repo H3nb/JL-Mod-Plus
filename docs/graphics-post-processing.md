@@ -153,8 +153,14 @@ Temporal LCD response-time simulation is deliberately not included: it
 requires history textures, explicit timing and surface/context lifecycle
 handling beyond the current stateless pass contract.
 
-Pixel-art reconstruction (xBRZ, MMPX, HQ-style), bitmap/texture filters,
-internal resolution and final display scaling have separate responsibilities.
+Pixel-art reconstruction, bitmap/texture filters, internal resolution and
+final display scaling have separate responsibilities. Bitmap upscaling mode 3
+retains its saved `EDGE_AWARE` identity but appears as Smooth HD. The
+project-authored edge reconstruction rounds corners with alpha-aware blending
+while preserving flat areas and isolated details; it is not an xBRZ port.
+Immutable LCDUI image regions and opaque Micro3D textures share the scaler
+before composition. Mutable guest images, M3G textures and guest-visible
+pixels are not changed.
 FXAA/SMAA are future anti-aliasing options, **not** additional entries in this
 effect catalogue. The underlying GPU may reuse the same full-screen pass
 machinery without presenting these controls as user-orderable decorative
