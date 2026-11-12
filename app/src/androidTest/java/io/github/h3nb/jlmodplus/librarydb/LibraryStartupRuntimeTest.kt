@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class LibraryStartupRuntimeTest {
     @Test
-    fun existingCatalogLoadsAndProjects() = runBlocking {
+    fun existingCatalogLoadsAndProjects() = runBlocking<Unit> {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val root = File(context.cacheDir, "library-startup-${System.nanoTime()}").apply { mkdirs() }
         val converted = File(root, "converted").apply { mkdirs() }

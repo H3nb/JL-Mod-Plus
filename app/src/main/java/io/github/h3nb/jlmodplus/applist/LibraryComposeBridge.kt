@@ -340,6 +340,11 @@ internal data class LibraryViewportSnapshot(
     val firstVisibleItemOffsetPx: Int,
 )
 
+private data class LibraryProjectionKey(
+    val revision: Long,
+    val apps: List<LibraryAppUiItem>,
+)
+
 data class LibraryUiState(
     val loading: Boolean = true,
     val projectionRevision: Long = 0L,
@@ -907,9 +912,12 @@ fun LibraryScreen(
         if (retained != selectionState) selectionState = retained
     }
 
+    val projectionKey = remember(state) {
+        LibraryProjectionKey(state.projectionRevision, state.apps)
+    }
     LaunchedEffect(
         state.generation,
-        state.projectionRevision,
+        projectionKey,
         state.appliedFilter,
         state.sortVariant,
         state.layout,
@@ -2743,7 +2751,10 @@ private fun LibraryAppsHeader(
     interactive: Boolean = true,
 ) {
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
-    val visibleAppIds = remember(state.projectionRevision, selectionState.isActive) {
+    val projectionKey = remember(state) {
+        LibraryProjectionKey(state.projectionRevision, state.apps)
+    }
+    val visibleAppIds = remember(projectionKey, selectionState.isActive) {
         if (selectionState.isActive) state.apps.map(LibraryAppUiItem::databaseId) else emptyList()
     }
     val selectedSort = state.sortVariant and Int.MAX_VALUE

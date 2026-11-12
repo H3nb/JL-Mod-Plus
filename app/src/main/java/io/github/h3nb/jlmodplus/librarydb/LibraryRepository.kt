@@ -385,8 +385,13 @@ class LibraryRepository(
             database = openedDatabase
             currentCoroutineContext().ensureActive()
             ensureCurrent(request)
+            var lastPublishedPercent = -1
             val bootstrap = withContext(Dispatchers.Default) {
                 bootstrapper.ensureReady(openedDatabase, emulatorDir) { progress ->
+                    val percent = (progress.completed.toLong() * 100L /
+                        progress.total.coerceAtLeast(1)).toInt()
+                    if (percent == lastPublishedPercent) return@ensureReady
+                    lastPublishedPercent = percent
                     publishIfCurrent(
                         request,
                         State.Indexing(

@@ -41,6 +41,9 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
 - Main-thread publication no longer enumerates all projected UI items. The first
   list/grid viewport materializes presentation objects as requested, and direct
   actions resolve their current Room row to avoid reusing stale cached metadata.
+- Fresh database bootstrapping now emits at most one indexing progress update per
+  percentage point instead of a UI update per scanned MIDlet. Scanner cancellation
+  and final atomic READY publication are unchanged.
 - Filesystem reconciliation still precedes authoritative READY publication. The
   key-only directory scan no longer sorts the full converted namespace; the full
   scanner remains deterministically ordered. Bootstrap and recovery safety are
