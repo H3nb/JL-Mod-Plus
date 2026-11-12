@@ -486,7 +486,7 @@ public class MemoryRecipeInstrumentedTest {
             status(runner.run(TOKEN, documented, new Bundle(), false, true)));
         assertEquals(10, root.coins);
         assertEquals(MemoryEngineContract.RESULT_OK,
-            status(runner.run(TOKEN, documented, new Bundle(), false, false)));
+            status(runner.run(TOKEN, documented, inputs(0, 1, 200), false, false)));
         assertEquals(200, root.coins);
         String invalidType = original.replace("\"game\":", "\"description\":42,\"game\":");
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
@@ -625,6 +625,39 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(100, root.party[1].hp);
     }
 
+    @Test public void formUpdatesMultipleFieldsOnlyForTheSelectedCharacter() {
+        String arrayType = "[L" + HERO + ";";
+        String selector = field(ROOT, "party", arrayType)
+            + ",{\"kind\":\"index\",\"descriptor\":\"" + arrayType
+            + "\",\"indexInput\":\"slot\"},";
+        String hp = "{\"kind\":\"set\",\"field\":\"hp\",\"path\":["
+            + selector + field(HERO, "hp", "S") + "],\"valueInput\":\"hp\"}";
+        String mp = "{\"kind\":\"set\",\"field\":\"mp\",\"path\":["
+            + selector + field(HERO, "mp", "S") + "],\"valueInput\":\"mp\"}";
+        String document = typedRecipe("form",
+            "{\"slot\":{\"min\":0,\"max\":1},\"hp\":{\"min\":0,\"max\":999},"
+                + "\"mp\":{\"min\":0,\"max\":999}}", hp + "," + mp);
+        Bundle selectorInput = new Bundle();
+        selectorInput.putString("slot", "1");
+        Bundle snapshot = runner.run(TOKEN, document, selectorInput, false, true);
+        assertEquals(MemoryEngineContract.RESULT_OK, status(snapshot));
+        assertArrayEquals(new String[]{"100", "50"},
+            snapshot.getStringArray("recipeReadValues"));
+
+        Bundle edit = new Bundle();
+        edit.putString("slot", "1");
+        edit.putString("hp", "175");
+        edit.putString("mp", "80");
+        edit.putStringArray("recipeExpectedValues", snapshot.getStringArray("recipeReadValues"));
+        edit.putString("recipeReadTicket", snapshot.getString("recipeReadTicket"));
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(runner.run(TOKEN, document, edit, false, false)));
+        assertEquals(175, root.party[1].hp);
+        assertEquals(80, root.party[1].mp);
+        assertEquals(100, root.party[0].hp);
+        assertEquals(50, root.party[0].mp);
+    }
+
     @Test public void toggleUsesExistingFreezeAndStopsWithoutRestoring() {
         String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
             + "],\"value\":999}";
@@ -664,15 +697,16 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(1, root.counters[0]);
         assertEquals(16, root.counters[15]);
         StringBuilder actions = new StringBuilder();
+        String first64 = null;
         for (int index = 0; index < 65; index++) {
             if (index > 0) actions.append(',');
             actions.append("{\"kind\":\"set\",\"path\":[")
                 .append(field(ROOT, "counters", "[I"))
                 .append(",{\"kind\":\"index\",\"descriptor\":\"[I\",\"index\":")
                 .append(index).append("}],\"value\":5}");
+            if (index == 63) first64 = actions.toString();
         }
         String all = actions.toString();
-        String first64 = all.substring(0, all.lastIndexOf(",{\"kind\":"));
         assertEquals(MemoryEngineContract.RESULT_OK, status(runner.run(TOKEN,
             typedRecipe("oneShot", "{}", first64), new Bundle(), false, false)));
         assertEquals(5, root.counters[63]);

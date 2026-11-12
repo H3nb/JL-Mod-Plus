@@ -95,8 +95,8 @@ class SavedVariablesDocumentTest {
             "locator":null}]}"""
         SavedVariablesDocument.validate(unresolved.toByteArray())
         assertThrows(IOException::class.java) {
-            SavedVariablesDocument.validate(unresolved.replace("\"locator\":null", "")
-                .toByteArray())
+            SavedVariablesDocument.validate("""{"schema":4,"items":[
+                    {"id":"bookmark-1","label":"Inventory"}]}""".toByteArray())
         }
         assertThrows(IOException::class.java) {
             SavedVariablesDocument.validate(unresolved.replace("\"locator\":null",
@@ -107,6 +107,22 @@ class SavedVariablesDocumentTest {
         assertEquals(0, merged.added)
         assertEquals(1, merged.skipped)
         assertEquals(1, Json.parseToJsonElement(merged.bytes.toString(Charsets.UTF_8))
+            .jsonObject["items"]!!.jsonArray.size)
+    }
+
+    @Test fun importingAnUntracedBookmarkWithAnExistingIdDoesNotCreateDuplicates() {
+        val local = """{"schema":4,"items":[{"id":"shared","label":"Local health",
+            "locator":{"rootKind":1,"rootClass":"guest.Game","steps":[
+            {"kind":1,"owner":"guest.Game","name":"hp","type":"int"}]}}]}"""
+        val incoming = """{"schema":4,"items":[{"id":"shared","label":"Old health",
+            "locator":null}]}"""
+        val first = SavedVariablesDocument.merge(local.toByteArray(), incoming.toByteArray())
+        val repeated = SavedVariablesDocument.merge(first.bytes, incoming.toByteArray())
+        assertEquals(0, first.added)
+        assertEquals(1, first.skipped)
+        assertEquals(0, repeated.added)
+        assertEquals(1, repeated.skipped)
+        assertEquals(1, Json.parseToJsonElement(repeated.bytes.toString(Charsets.UTF_8))
             .jsonObject["items"]!!.jsonArray.size)
     }
 

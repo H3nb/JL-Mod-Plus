@@ -253,6 +253,8 @@ class MemoryScriptsComposeTest {
             assertEquals(1, calls)
             complete?.invoke(true)
         }
+        rule.onNodeWithTag("memory-script-run-sample.coins").assertIsEnabled().performClick()
+        rule.runOnIdle { assertEquals(2, calls) }
     }
 
     @Test fun failedSaveLeavesTheJsonEditorOpenForCorrection() {
