@@ -127,6 +127,13 @@ public class BuiltinShaderAuditTest {
                                 baseline, actual, 2);
                         if (factor == 4) {
                             savePng("density-" + id + "-" + label + "-4x.png", actual);
+                            if ("lcd".equals(id) && filter == GLES20.GL_NEAREST) {
+                                int y = 64 * VIEW_W;
+                                assertTrue("LCD red subpixel", channel(actual[y], 16) > channel(actual[y], 8) + 2);
+                                assertTrue("LCD green subpixel", channel(actual[y + 1], 8) > channel(actual[y + 1], 16) + 2);
+                                assertTrue("LCD blue subpixel", channel(actual[y + 3], 0) > channel(actual[y + 3], 16) + 2);
+                                assertTrue("LCD next cell begins red", channel(actual[y + 4], 16) > channel(actual[y + 4], 8) + 2);
+                            }
                         }
                     }
                     diagnostic.append(id).append(" ").append(label)

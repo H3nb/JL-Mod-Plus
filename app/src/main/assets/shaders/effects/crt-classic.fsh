@@ -14,9 +14,9 @@ uniform float SCANLINE_STRENGTH, MASK_STRENGTH, BRIGHT_BOOST, BEAM_NARROWNESS;
 
 const float TWO_PI = 6.28318530718;
 
-float beamShade(float row) {
-    float wave = 0.5 + 0.5 * cos(TWO_PI * (row - 0.75));
-    return pow(wave, BEAM_NARROWNESS);
+float beamShade(float row, float exponent) {
+    float wave = 0.5 + 0.5 * cos(TWO_PI * (row - 0.5));
+    return pow(wave, exponent);
 }
 
 void main() {
@@ -27,13 +27,14 @@ void main() {
     vec2 displayUv = v_texcoord0 * uDisplayUvScale + uDisplayUvOffset;
     vec2 scale = uOutputSize / uGameSize;
 
-    // Subpixel averaging prevents an unresolved scanline from aliasing at 1x.
     float guestFootprint = uGameSize.y / uOutputSize.y;
     float visibleLine = clamp(2.0 * (1.0 - guestFootprint), 0.0, 1.0);
+    float luma = dot(source.rgb, vec3(0.2126, 0.7152, 0.0722));
+    float exponent = BEAM_NARROWNESS * mix(1.4, 0.6, luma);
     float row = displayUv.y * uGameSize.y;
-    float shading = 0.5 * (beamShade(row - 0.25 * guestFootprint)
-                         + beamShade(row + 0.25 * guestFootprint));
-    float scan = 1.0 - SCANLINE_STRENGTH * visibleLine * shading;
+    float beam = 0.5 * (beamShade(row - 0.25 * guestFootprint, exponent)
+                      + beamShade(row + 0.25 * guestFootprint, exponent));
+    float scan = 1.0 - SCANLINE_STRENGTH * visibleLine * (1.0 - beam);
 
     // A RGB triad approximation, attenuated if output cannot resolve the pattern.
     float maskVisibility = clamp((scale.x - 1.0) * 0.5, 0.0, 1.0);
