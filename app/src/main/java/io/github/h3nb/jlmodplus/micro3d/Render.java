@@ -138,12 +138,12 @@ public class Render {
 
 	public synchronized void bind(Graphics graphics) {
 		this.targetGraphics = graphics;
-		// Host resize may rebind Graphics to a new bitmap before release().
-		targetBitmap = graphics.getBitmap();
-		Canvas canvas = graphics.getCanvas();
+		// Host resize may rebind Graphics at any point outside this snapshot.
+		Graphics.RenderTarget target = graphics.captureRenderTarget();
+		targetBitmap = target.bitmap;
 		int width = targetBitmap.getWidth();
 		int height = targetBitmap.getHeight();
-		int scale = graphics.getPixelScale();
+		int scale = target.pixelScale;
 		TextureImpl.setScreenTargetScale(scale);
 		targetPixelScale = scale;
 		env.width = width / scale;
@@ -175,7 +175,7 @@ public class Render {
 		}
 		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
 		Rect clip = this.clip;
-		canvas.getClipBounds(clip);
+		clip.set(target.clip);
 		int l = clip.left;
 		int t = clip.top;
 		int r = clip.right;

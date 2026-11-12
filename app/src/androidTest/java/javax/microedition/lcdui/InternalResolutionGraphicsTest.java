@@ -395,4 +395,39 @@ public class InternalResolutionGraphicsTest {
         }
     }
 
+    @Test public void renderTargetSnapshotMatchesDimensionsAcrossResizes() throws Exception {
+        Image frame = Image.createDisplayTarget(16, 14, 3);
+        frame.enableResizableDisplayTarget();
+        Graphics retained = frame.getGraphics();
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        Thread resize = new Thread(() -> {
+            try {
+                for (int i = 0; i < 100; i++) {
+                    frame.resizeDisplayTarget(16 + i % 2, 14 + i % 2,
+                            i % 2 == 0 ? 2 : 3);
+                }
+            } catch (Throwable problem) {
+                failure.compareAndSet(null, problem);
+            }
+        }, "render-target-snapshot-resize");
+        resize.setDaemon(true);
+        try {
+            resize.start();
+            for (int i = 0; i < 200; i++) {
+                Graphics.RenderTarget target = retained.captureRenderTarget();
+                assertEquals("Atomic width at " + i, target.bitmap.getWidth(),
+                        target.clip.width() * target.pixelScale);
+                assertEquals("Atomic height at " + i, target.bitmap.getHeight(),
+                        target.clip.height() * target.pixelScale);
+            }
+            resize.join(15000);
+            assertTrue("Resize should finish", !resize.isAlive());
+            assertTrue("Resize failed: " + failure.get(), failure.get() == null);
+        } finally {
+            resize.join(15000);
+            frame.getBitmap().recycle();
+        }
+    }
+
 }

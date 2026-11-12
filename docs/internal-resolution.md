@@ -84,8 +84,8 @@ GameCanvas retains its buffer and previously obtained Graphics objects across
 host resizes, including when a constrained HD density must decrease.
 Resizable image-region drawing holds the source image monitor while resolving
 its physical scale and sampling rectangle, including transformed sprites.
-Micro3D retains the same host Bitmap from bind through background composition
-and readback. If the host replaces that Bitmap during a bound 3D operation,
+Micro3D snapshots the target bitmap, density and clip under one image lock
+at bind, and retains that bitmap through background composition and readback. If the host replaces that Bitmap during a bound 3D operation,
 the old frame is not written into the new backing buffer; the next MIDlet
 repaint supplies the new frame. Native RGBA8888 readback rejects invalid
 destination rectangles and unsupported Bitmap formats before accessing pixels.

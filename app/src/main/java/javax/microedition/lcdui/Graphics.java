@@ -182,6 +182,27 @@ public class Graphics implements
 		return canvas;
 	}
 
+	/** Immutable host snapshot: resize cannot change bitmap, density or clip mid-capture. */
+	public RenderTarget captureRenderTarget() {
+		synchronized (image) {
+			Rect targetClip = new Rect();
+			canvas.getClipBounds(targetClip);
+			return new RenderTarget(image.getBitmap(), image.getPixelScale(), targetClip);
+		}
+	}
+
+	public static final class RenderTarget {
+		public final Bitmap bitmap;
+		public final int pixelScale;
+		public final Rect clip;
+
+		private RenderTarget(Bitmap bitmap, int pixelScale, Rect clip) {
+			this.bitmap = bitmap;
+			this.pixelScale = pixelScale;
+			this.clip = clip;
+		}
+	}
+
 	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
 		synchronized (this.image) {
 			if (nPoints > 0) {
