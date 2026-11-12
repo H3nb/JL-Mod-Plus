@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.graphics;
 
+import java.util.Arrays;
+
 /** Reconstructs smooth pixel-art outlines without filtering uniform regions. */
 public final class EdgeAwareScaler {
     private static final int MIN_EDGE_CONTRAST = 48;
@@ -30,6 +32,7 @@ public final class EdgeAwareScaler {
                     int dy = (corner & 2) == 0 ? -1 : 1;
                     int horizontal = sample(source, width, height, x + dx, y);
                     int vertical = sample(source, width, height, x, y + dy);
+                    if (horizontal == center || vertical == center) continue;
                     int diagonal = sample(source, width, height, x + dx, y + dy);
                     int contrast = Math.min(distance(center, horizontal),
                             distance(center, vertical));
@@ -45,6 +48,13 @@ public final class EdgeAwareScaler {
 
                 // Leave isolated one-pixel features intact.
                 if (corners == 15) corners = 0;
+                if (corners == 0) {
+                    for (int py = 0; py < factor; py++) {
+                        int row = (y * factor + py) * stride + x * factor;
+                        Arrays.fill(output, row, row + factor, center);
+                    }
+                    continue;
+                }
 
                 for (int py = 0; py < factor; py++) {
                     int bottom = py * 2 >= factor ? 2 : 0;
