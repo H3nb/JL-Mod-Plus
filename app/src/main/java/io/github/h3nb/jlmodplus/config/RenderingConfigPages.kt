@@ -178,6 +178,7 @@ internal fun RenderingSettingsPage(
     fun apply(effects: List<EffectEntry>): Boolean {
         if (passCount(effects) > 16) {
             error = limitError
+            scope.launch { snackbar.showSnackbar(limitError) }
             return false
         }
         onFormChanged(form.toBuilder().effects(effects).build())
