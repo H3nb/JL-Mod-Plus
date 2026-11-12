@@ -994,7 +994,8 @@ private fun RuntimeVariablesTab(
         val saved = entry.saved
         val watch = entry.watch
         val active = (watch?.freezeMode ?: -1) >= 0
-        val value = saved?.let { state.savedValues[it.id]?.value } ?: watch?.valueText
+        val value = saved?.let { state.savedValues[it.id]?.takeIf { value -> value.resolved }?.value }
+            ?: watch?.takeIf { it.state != MemoryEngineContract.CANDIDATE_LOST }?.valueText
         if (active) {
             if (saved != null) actions.clearSavedWatchFreeze(saved.id)
             else watch?.let { actions.setListWatchFreeze(it.id, "", false) }
@@ -1017,9 +1018,10 @@ private fun RuntimeVariablesTab(
     val editEnabled = state.writeSupported && !state.busy && (singleReady || canBatchEdit)
     val freezeEnabled = single != null && !state.busy &&
         ((single.watch?.freezeMode ?: -1) >= 0 ||
-            (state.writeSupported && (single?.saved == null || savedReady) &&
-                (single?.saved?.let { state.savedValues[it.id]?.value }
-                    ?: single?.watch?.valueText)?.isNotBlank() == true))
+            (state.writeSupported && singleReady &&
+                (single.saved?.let { state.savedValues[it.id]?.takeIf { value ->
+                    value.resolved
+                }?.value } ?: single.watch?.valueText)?.isNotBlank() == true))
     fun editSelection() {
         if (single != null) edit(single)
         else if (canBatchEdit && editEnabled) {
@@ -1197,7 +1199,7 @@ private fun RuntimeVariablesTab(
                 if ((watch?.freezeMode ?: -1) >= 0) R.string.memory_editor_unfreeze
                 else R.string.memory_editor_freeze,
                 !state.busy && ((watch?.freezeMode ?: -1) >= 0 ||
-                    (state.writeSupported && (saved == null || savedReady) && ready)),
+                    (state.writeSupported && ready)),
             ) { toggleFreeze(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
                 !state.busy) { renameKey = menuEntry.key },
