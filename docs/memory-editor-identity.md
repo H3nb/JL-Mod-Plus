@@ -119,7 +119,8 @@ The selective Library bundle's existing Saved component is presented as
 **Bookmarks** but retains its wire identity. Bookmark-only import merges by
 canonical rooted locator; local labels win and duplicate paths are skipped.
 Untraced entries merge by persistent ID, not null locator or label. An imported
-ID collision gets a fresh ID when required. Configuration+Bookmark restore
+untraced record with an existing ID is skipped; a traced record with a different
+locator receives a fresh ID when required. Configuration+Bookmark restore
 replaces the catalog within the existing recoverable transaction. Imports do
 not persist guest runtime handles or Freeze states.
 

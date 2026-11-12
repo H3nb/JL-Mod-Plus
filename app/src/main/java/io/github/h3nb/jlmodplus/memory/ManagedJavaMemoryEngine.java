@@ -2134,7 +2134,8 @@ final class ManagedJavaMemoryEngine {
         if (!ManagedJavaValue.parse(replacement, type, parsed)) return failure(token,
                 MemoryEngineContract.RESULT_INVALID_REQUEST, "Inspector replacement is invalid");
         synchronized (stateLock) {
-            if (watches.freezeCount() + recipeFreezes >= MemoryEngineContract.MAX_FREEZE_RECORDS
+            if (isCurrentLocked(token)
+                    && watches.freezeCount() + recipeFreezes >= MemoryEngineContract.MAX_FREEZE_RECORDS
                     && !isInspectorFreezeActive(savedId, anchorId, relativeOffset, bookmarkId)) {
                 return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
                         "Freeze capacity reached before Inspector edit");
