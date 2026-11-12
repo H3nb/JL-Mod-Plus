@@ -254,15 +254,19 @@ class MemoryEditorModelsTest {
 
     @Test fun listCombinesOnlyVerifiedSavedWatchRelationships() {
         val saved = listOf(SavedVariableRow("kept", "Coins", "player.coins"))
-        fun watch(id: Long, sourceId: String?) = MemoryWatchRow(
+        fun watch(id: Long, sourceId: String?, frozen: Boolean = false) = MemoryWatchRow(
             id, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
-            "50", "50", "50", "player.coins", "Coins", savedSourceId = sourceId,
+            "50", "50", "50", "player.coins", "Coins",
+            freezeMode = if (frozen) MemoryEngineContract.FREEZE_LOCK else -1,
+            savedSourceId = sourceId,
         )
-        val rows = memoryListEntries(saved, listOf(watch(1L, "kept"), watch(2L, null)))
+        val rows = memoryListEntries(saved,
+            listOf(watch(1L, "kept"), watch(2L, null), watch(3L, null, frozen = true)))
         assertEquals(2, rows.size)
         assertEquals(1L, rows.single { it.saved != null }.watch?.id)
-        assertEquals(2L, rows.single { it.saved == null }.watch?.id)
-        assertEquals(listOf("saved:kept", "watch:2"), rows.map { it.key })
+        // Orphan session tracking is hidden; legacy Freeze remains reachable to stop.
+        assertEquals(3L, rows.single { it.saved == null }.watch?.id)
+        assertEquals(listOf("saved:kept", "watch:3"), rows.map { it.key })
     }
 
     @Test fun mixedRemovalFeedbackPreservesIndependentBackendFailures() {

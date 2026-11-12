@@ -1019,11 +1019,6 @@ private fun RuntimeVariablesTab(
             }
         }
     }
-    val keepName = single?.let { entry ->
-        entry.watch?.let { watch ->
-            entry.label.ifBlank { runtimeTypeShort(watch.type) }
-        }
-    }.orEmpty()
     var moreActions by remember { mutableStateOf(false) }
     var recipeDialog by remember { mutableStateOf(false) }
     var recipeSourceKey by remember { mutableStateOf<String?>(null) }
@@ -1175,9 +1170,6 @@ private fun RuntimeVariablesTab(
         val savedReady = saved != null && state.savedValues[saved.id]?.resolved == true
         val ready = savedReady ||
             watch?.let { it.state != MemoryEngineContract.CANDIDATE_LOST } == true
-        val keepName = watch?.let {
-            menuEntry.label.ifBlank { runtimeTypeShort(it.type) }
-        }.orEmpty()
         val actionsInMenu = listOf(
             RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit,
                 state.writeSupported && ready && !state.busy) { edit(menuEntry) },
@@ -1356,7 +1348,7 @@ private fun RuntimeListRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error)
                 if (entry.saved != null && value?.resolved != true &&
-                    watch?.state != MemoryEngineContract.CANDIDATE_LIVE) {
+                    (watch == null || watch.state == MemoryEngineContract.CANDIDATE_LOST)) {
                     Text(value?.detail?.takeIf { it.isNotBlank() }
                         ?: stringResource(R.string.memory_bookmark_unavailable),
                         style = MaterialTheme.typography.labelSmall,
@@ -2237,7 +2229,7 @@ internal fun RuntimeInspectorTab(
     modifier: Modifier = Modifier,
 ) {
     var editLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
-    var saveLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
+
     when {
         state.inspectorLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -2434,36 +2426,7 @@ internal fun RuntimeInspectorTab(
                     },
                 )
             }
-            saveLogicalRow?.let { row ->
-                var name by remember(row.id) { mutableStateOf("") }
-                AlertDialog(
-                    onDismissRequest = { saveLogicalRow = null },
-                    title = { Text(stringResource(R.string.memory_saved_save)) },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.memory_saved_explanation))
-                            Text(row.label, style = MaterialTheme.typography.bodySmall)
-                            OutlinedTextField(
-                                value = name,
-                                onValueChange = { if (it.length <= 64) name = it },
-                                label = { Text(stringResource(R.string.memory_saved_name)) },
-                                singleLine = true, modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(enabled = name.isNotBlank(), onClick = {
-                            actions.saveInspectorVariable(name.trim(), row.relativeOffset)
-                            saveLogicalRow = null
-                        }) { Text(stringResource(R.string.memory_saved_save)) }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { saveLogicalRow = null }) {
-                            Text(stringResource(android.R.string.cancel))
-                        }
-                    },
-                )
-            }
+
         }
     }
 }
