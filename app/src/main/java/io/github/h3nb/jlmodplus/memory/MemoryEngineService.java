@@ -286,6 +286,46 @@ public final class MemoryEngineService extends Service {
             }
         }
 
+        @Override public Bundle bookmarkInspector(long token, String savedId,
+                                                  long expectedRevision, long anchorId,
+                                                  boolean watchAnchor, int offset, int type,
+                                                  long expectedBits, String bookmarkId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.bookmarkInspector(token, savedId, expectedRevision,
+                        anchorId, watchAnchor, offset, type, expectedBits, false,
+                        bookmarkId, epoch);
+                consumeManagedResult(token, bridge, result);
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle editInspectorAndFreezeBookmark(long token, String savedId,
+                long expectedRevision, long anchorId, boolean watchAnchor, int offset,
+                int type, long expectedBits, String replacement, String bookmarkId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.editInspectorAndFreezeBookmark(token, savedId,
+                        expectedRevision, anchorId, watchAnchor, offset, type, expectedBits,
+                        replacement, bookmarkId, epoch);
+                if (consumeManagedResult(token, bridge, result) == MemoryEngineContract.RESULT_OK)
+                    startFreezeTaskIfNeeded();
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
         @Override public Bundle editInspectorAndFreeze(long token, String savedId,
                                                        long expectedRevision, long anchorId,
                                                        boolean watchAnchor, int offset, int type,

@@ -78,9 +78,15 @@ interface IMemoryEngineService {
     Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
                           long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                           int type, long expectedBits);
+    Bundle bookmarkInspector(long runtimeToken, String savedId, long expectedRevision,
+                          long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                          int type, long expectedBits, String bookmarkId);
     Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
                                   long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                                   int type, long expectedBits, String replacement);
+    Bundle editInspectorAndFreezeBookmark(long runtimeToken, String savedId, long expectedRevision,
+                                  long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                                  int type, long expectedBits, String replacement, String bookmarkId);
 
     // Recipe operations never use Search candidate IDs or mutate Search history.
     Bundle runMemoryRecipe(long runtimeToken, String document, in Bundle parameters,

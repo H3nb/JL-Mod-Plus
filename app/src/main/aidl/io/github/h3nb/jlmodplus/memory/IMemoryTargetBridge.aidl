@@ -79,9 +79,17 @@ interface IMemoryTargetBridge {
     Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
                           long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                           int type, long expectedBits, boolean freeze, long cancellationEpoch);
+    Bundle bookmarkInspector(long runtimeToken, String savedId, long expectedRevision,
+                          long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                          int type, long expectedBits, boolean freeze, String bookmarkId,
+                          long cancellationEpoch);
     Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
                                   long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                                   int type, long expectedBits, String replacement, long cancellationEpoch);
+    Bundle editInspectorAndFreezeBookmark(long runtimeToken, String savedId, long expectedRevision,
+                                  long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                                  int type, long expectedBits, String replacement, String bookmarkId,
+                                  long cancellationEpoch);
  
     Bundle runMemoryRecipe(long runtimeToken, String document, in Bundle parameters,
             boolean freeze, boolean preview);
