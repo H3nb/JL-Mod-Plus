@@ -27,13 +27,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 class LibraryDisplayProjectionTest {
     @field:TempDir lateinit var workdir: File
@@ -77,7 +77,6 @@ class LibraryDisplayProjectionTest {
         }
     }
 
-class LibraryDisplayProjectionTest {
     @Test fun queriesAndCollectionUpdatesReuseOrderWithoutNarrowingAuthoritativeIds() = runBlocking {
         val source = LibraryRepository.State.Ready(1, File("first"), listOf(
             row(1, "Zulu", favorite = true), row(2, "Alpha")))
