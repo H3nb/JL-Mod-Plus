@@ -187,6 +187,12 @@ public class MemoryRecipeInstrumentedTest {
             MemoryRecipeCatalog.delete(file, Root.class.getName(), "test.memory");
             assertEquals(0, MemoryRecipeCatalog.list(file, Root.class.getName())
                     .getParcelableArrayList("items").size());
+            String typed = typedRecipe("oneShot", "{}", action);
+            assertEquals(1, MemoryRecipeCatalog.put(file, Root.class.getName(), typed, null)
+                .getParcelableArrayList("items").size());
+            assertEquals(typed, ((Bundle) MemoryRecipeCatalog.list(file, Root.class.getName())
+                .getParcelableArrayList("items").get(0)).getString("document"));
+            assertEquals(10, root.coins);
         } finally {
             file.delete();
             folder.delete();

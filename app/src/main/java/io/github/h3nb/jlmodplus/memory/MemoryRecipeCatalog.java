@@ -90,7 +90,8 @@ final class MemoryRecipeCatalog {
             throw new IOException("Recipe document must be 1–24576 UTF-8 bytes");
         }
         JSONObject recipe = new JSONObject(document);
-        if (recipe.getInt("formatVersion") != 1) throw new IOException("Unsupported recipe version");
+        int version = recipe.getInt("formatVersion");
+        if (version != 1 && version != 2) throw new IOException("Unsupported recipe version");
         String id = recipe.getString("id");
         if (id.length() < 1 || id.length() > 64 || !id.matches("[A-Za-z0-9_.-]+")) {
             throw new IOException("Recipe ID must use 1–64 ASCII letters, digits, dot, underscore or dash");
