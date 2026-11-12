@@ -353,4 +353,46 @@ public class InternalResolutionGraphicsTest {
         }
     }
 
+    @Test public void concurrentSourceResizePreservesTransformedRegionCoordinates() throws Exception {
+        Image source = Image.createDisplayTarget(16, 14, 3);
+        source.enableResizableDisplayTarget();
+        Graphics sourceGraphics = source.getGraphics();
+        sourceGraphics.setColor(RED);
+        sourceGraphics.fillRect(10, 2, 2, 4);
+
+        Image target = Image.createDisplayTarget(20, 18, 2);
+        Graphics drawing = target.getGraphics();
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        Thread resizer = new Thread(() -> {
+            try {
+                for (int i = 0; i < 100; i++) {
+                    source.resizeDisplayTarget(16 + i % 2, 14 + i % 2,
+                            i % 2 == 0 ? 2 : 3);
+                }
+            } catch (Throwable problem) {
+                failure.compareAndSet(null, problem);
+            }
+        }, "region-source-resize");
+        resizer.setDaemon(true);
+        try {
+            resizer.start();
+            for (int i = 0; i < 100; i++) {
+                drawing.setColor(0xFFFFFF);
+                drawing.fillRect(0, 0, 20, 18);
+                drawing.drawRegion(source, 10, 2, 2, 4, Sprite.TRANS_ROT90,
+                        3, 3, Graphics.LEFT | Graphics.TOP);
+                assertEquals("Resizable source region " + i, RED,
+                        target.getBitmap().getPixel(9, 7) & RGB);
+            }
+            resizer.join(15000);
+            assertTrue("Resize must finish", !resizer.isAlive());
+            assertTrue("Source resize failed: " + failure.get(), failure.get() == null);
+        } finally {
+            resizer.join(15000);
+            source.getBitmap().recycle();
+            target.getBitmap().recycle();
+        }
+    }
+
 }

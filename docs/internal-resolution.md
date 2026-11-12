@@ -82,6 +82,13 @@ Large-source reconstruction is limited separately from frame target density.
 
 GameCanvas retains its buffer and previously obtained Graphics objects across
 host resizes, including when a constrained HD density must decrease.
+Resizable image-region drawing holds the source image monitor while resolving
+its physical scale and sampling rectangle, including transformed sprites.
+Micro3D retains the same host Bitmap from bind through background composition
+and readback. If the host replaces that Bitmap during a bound 3D operation,
+the old frame is not written into the new backing buffer; the next MIDlet
+repaint supplies the new frame. Native RGBA8888 readback rejects invalid
+destination rectangles and unsupported Bitmap formats before accessing pixels.
 Operations through retained Java ME Graphics objects share the buffer Image
 monitor with its resize/rebind operation. Each guest paint retains its own
 scratch-buffer reference until the frame is published, so host resizes can

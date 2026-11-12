@@ -697,94 +697,106 @@ public class Graphics implements
 	public void drawRegion(Image image, int x_src, int y_src, int width, int height,
 						   int transform, int x_dst, int y_dst, int anchor) {
 		synchronized (this.image) {
-			if (width <= 0 || height <= 0) return;
-
-			Rect srcR = rect;
-			RectF dstR = rectF;
-			float dx;
-			float dy;
-			int sourceScale = image.getPixelScale();
-			srcR.set(x_src * sourceScale, y_src * sourceScale,
-					(x_src + width) * sourceScale, (y_src + height) * sourceScale);
-
-			Matrix matrix = new Matrix();
-			switch (transform) {
-				case TRANS_NONE: {
-					if ((anchor & Graphics.RIGHT) != 0) {
-						dx = x_dst - width;
-					} else if ((anchor & Graphics.HCENTER) != 0) {
-						dx = x_dst - width / 2.0f;
-					} else {
-						dx = x_dst;
-					}
-					if ((anchor & Graphics.BOTTOM) != 0) {
-						dy = y_dst - height;
-					} else if ((anchor & Graphics.VCENTER) != 0) {
-						dy = y_dst - height / 2.0f;
-					} else {
-						dy = y_dst;
-					}
-
-					dstR.set(dx, dy, dx + width, dy + height);
-					drawSourceBitmap(image, srcR, dstR);
-					return;
+			if (image.isResizableDisplayTarget()) {
+				synchronized (image) {
+					drawRegionSource(image, x_src, y_src, width, height, transform, x_dst, y_dst, anchor);
 				}
-				case TRANS_ROT90:
-					matrix.preRotate(90);
-					break;
-				case TRANS_ROT180:
-					matrix.preRotate(180);
-					break;
-				case TRANS_ROT270:
-					matrix.preRotate(270);
-					break;
-				case TRANS_MIRROR:
-					matrix.preScale(-1, 1);
-					break;
-				case TRANS_MIRROR_ROT90:
-					matrix.preRotate(90);
-					matrix.preScale(-1, 1);
-					break;
-				case TRANS_MIRROR_ROT180:
-					matrix.preRotate(180);
-					matrix.preScale(-1, 1);
-					break;
-				case TRANS_MIRROR_ROT270:
-					matrix.preRotate(270);
-					matrix.preScale(-1, 1);
-					break;
-				default:
-					throw new IllegalArgumentException("Illegal transform=" + transform);
-			}
-
-			dstR.set(0, 0, width, height);
-			matrix.mapRect(dstR);
-
-			if ((anchor & Graphics.RIGHT) != 0) {
-				dx = x_dst - dstR.width();
-			} else if ((anchor & Graphics.HCENTER) != 0) {
-				dx = x_dst - dstR.width() / 2.0f;
 			} else {
-				dx = x_dst;
+				drawRegionSource(image, x_src, y_src, width, height, transform, x_dst, y_dst, anchor);
 			}
-			if ((anchor & Graphics.BOTTOM) != 0) {
-				dy = y_dst - dstR.height();
-			} else if ((anchor & Graphics.VCENTER) != 0) {
-				dy = y_dst - dstR.height() / 2.0f;
-			} else {
-				dy = y_dst;
-			}
+		}
+	}
 
-			matrix.postTranslate(Math.round(dx - dstR.left), Math.round(dy - dstR.top));
-			dstR.set(0, 0, width, height);
+	/** Called with the source lock held when its physical backing is replaceable. */
+	private void drawRegionSource(Image image, int x_src, int y_src, int width, int height,
+						   int transform, int x_dst, int y_dst, int anchor) {
+		if (width <= 0 || height <= 0) return;
 
-			canvas.save();
-			canvas.concat(matrix);
-			try {
+		Rect srcR = rect;
+		RectF dstR = rectF;
+		float dx;
+		float dy;
+		int sourceScale = image.getPixelScale();
+		srcR.set(x_src * sourceScale, y_src * sourceScale,
+				(x_src + width) * sourceScale, (y_src + height) * sourceScale);
+
+		Matrix matrix = new Matrix();
+		switch (transform) {
+			case TRANS_NONE: {
+				if ((anchor & Graphics.RIGHT) != 0) {
+					dx = x_dst - width;
+				} else if ((anchor & Graphics.HCENTER) != 0) {
+					dx = x_dst - width / 2.0f;
+				} else {
+					dx = x_dst;
+				}
+				if ((anchor & Graphics.BOTTOM) != 0) {
+					dy = y_dst - height;
+				} else if ((anchor & Graphics.VCENTER) != 0) {
+					dy = y_dst - height / 2.0f;
+				} else {
+					dy = y_dst;
+				}
+
+				dstR.set(dx, dy, dx + width, dy + height);
 				drawSourceBitmap(image, srcR, dstR);
-			} finally {
-				canvas.restore();
+				return;
 			}
+			case TRANS_ROT90:
+				matrix.preRotate(90);
+				break;
+			case TRANS_ROT180:
+				matrix.preRotate(180);
+				break;
+			case TRANS_ROT270:
+				matrix.preRotate(270);
+				break;
+			case TRANS_MIRROR:
+				matrix.preScale(-1, 1);
+				break;
+			case TRANS_MIRROR_ROT90:
+				matrix.preRotate(90);
+				matrix.preScale(-1, 1);
+				break;
+			case TRANS_MIRROR_ROT180:
+				matrix.preRotate(180);
+				matrix.preScale(-1, 1);
+				break;
+			case TRANS_MIRROR_ROT270:
+				matrix.preRotate(270);
+				matrix.preScale(-1, 1);
+				break;
+			default:
+				throw new IllegalArgumentException("Illegal transform=" + transform);
+		}
+
+		dstR.set(0, 0, width, height);
+		matrix.mapRect(dstR);
+
+		if ((anchor & Graphics.RIGHT) != 0) {
+			dx = x_dst - dstR.width();
+		} else if ((anchor & Graphics.HCENTER) != 0) {
+			dx = x_dst - dstR.width() / 2.0f;
+		} else {
+			dx = x_dst;
+		}
+		if ((anchor & Graphics.BOTTOM) != 0) {
+			dy = y_dst - dstR.height();
+		} else if ((anchor & Graphics.VCENTER) != 0) {
+			dy = y_dst - dstR.height() / 2.0f;
+		} else {
+			dy = y_dst;
+		}
+
+		matrix.postTranslate(Math.round(dx - dstR.left), Math.round(dy - dstR.top));
+		dstR.set(0, 0, width, height);
+
+		canvas.save();
+		canvas.concat(matrix);
+		try {
+			drawSourceBitmap(image, srcR, dstR);
+		} finally {
+			canvas.restore();
 		}
 	}
 

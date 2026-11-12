@@ -2,8 +2,13 @@
 package io.github.h3nb.jlmodplus.micro3d;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
 
 import java.lang.reflect.Field;
+
+import android.graphics.Bitmap;
+import android.graphics.Color;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -78,4 +83,59 @@ public class Micro3dInternalResolutionTest {
             hd.getBitmap().recycle();
         }
     }
+    @Test
+    public void resizeDuringMicro3dBindingDoesNotWriteIntoTheReplacementBitmap() {
+        Render render = Render.getRender();
+        Image frame = Image.createDisplayTarget(48, 36, 3);
+        frame.enableResizableDisplayTarget();
+        Graphics drawing = frame.getGraphics();
+        drawing.setColor(Color.RED);
+        drawing.fillRect(0, 0, 48, 36);
+        Bitmap oldBitmap = frame.getBitmap();
+        Bitmap nextBitmap = null;
+        try {
+            render.bind(drawing);
+            try {
+                frame.resizeDisplayTarget(24, 20, 2);
+                nextBitmap = frame.getBitmap();
+                assertNotSame(oldBitmap, nextBitmap);
+                drawing.setColor(Color.BLUE);
+                drawing.fillRect(0, 0, 24, 20);
+            } finally {
+                render.release();
+            }
+            assertEquals("Readback must not overwrite the new backing store",
+                    Color.BLUE, nextBitmap.getPixel(8, 8));
+        } finally {
+            oldBitmap.recycle();
+            if (nextBitmap != null) nextBitmap.recycle();
+        }
+    }
+
+    @Test
+    public void nativeReadbackRejectsOutOfBoundsAndUnsupportedBitmapFormats() {
+        Bitmap argb = Bitmap.createBitmap(8, 6, Bitmap.Config.ARGB_8888);
+        Bitmap rgb565 = Bitmap.createBitmap(8, 6, Bitmap.Config.RGB_565);
+        try {
+            assertInvalidReadback(-1, 0, 2, 2, argb);
+            assertInvalidReadback(0, -1, 2, 2, argb);
+            assertInvalidReadback(7, 0, 2, 2, argb);
+            assertInvalidReadback(0, 5, 2, 2, argb);
+            assertInvalidReadback(0, 0, -1, 2, argb);
+            assertInvalidReadback(0, 0, 8, 6, rgb565);
+        } finally {
+            argb.recycle();
+            rgb565.recycle();
+        }
+    }
+
+    private static void assertInvalidReadback(int x, int y, int width, int height, Bitmap target) {
+        try {
+            Utils.glReadPixels(x, y, width, height, target);
+            fail("Expected readback validation to reject " + x + "," + y + " " + width + "x" + height);
+        } catch (IllegalArgumentException expected) {
+            // Out-of-bounds native writes must be rejected before locking pixels.
+        }
+    }
+
 }

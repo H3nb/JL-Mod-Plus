@@ -67,6 +67,8 @@ public class Render {
 	private final float[] MVP_TMP = new float[16];
 
 	private Graphics targetGraphics;
+	// Bind and readback must refer to the same Bitmap across host resizes.
+	private Bitmap targetBitmap;
 	// The EGL surface and readback are physical; projections remain logical.
 	private int surfaceWidth;
 	private int surfaceHeight;
@@ -136,9 +138,11 @@ public class Render {
 
 	public synchronized void bind(Graphics graphics) {
 		this.targetGraphics = graphics;
+		// Host resize may rebind Graphics to a new bitmap before release().
+		targetBitmap = graphics.getBitmap();
 		Canvas canvas = graphics.getCanvas();
-		int width = canvas.getWidth();
-		int height = canvas.getHeight();
+		int width = targetBitmap.getWidth();
+		int height = targetBitmap.getHeight();
 		int scale = graphics.getPixelScale();
 		TextureImpl.setScreenTargetScale(scale);
 		targetPixelScale = scale;
@@ -189,6 +193,7 @@ public class Render {
 	}
 
 	public synchronized void bind(TextureImpl tex) {
+		targetBitmap = null;
 		targetTexture = tex;
 		targetPixelScale = 1;
 		// Render-to-texture is 1x even after an HD screen target.
@@ -286,7 +291,7 @@ public class Render {
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, bgTextureId.get(0));
 		}
-		Bitmap targetImage = targetGraphics.getBitmap();
+		Bitmap targetImage = targetBitmap;
 		GLUtils.texImage2D(GL_TEXTURE_2D, 0, targetImage, 0);
 		checkGlError("texImage2D");
 
@@ -548,18 +553,22 @@ public class Render {
 	public synchronized void release() {
 		stack.clear();
 		bindEglContext();
-		if (targetTexture != null) {
-			glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
-			targetTexture = null;
-		} else if (targetGraphics != null) {
-			if (postCopy2D) {
-				copy2d(false);
+		try {
+			if (targetTexture != null) {
+				glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
+			} else if (targetBitmap != null) {
+				if (postCopy2D) {
+					copy2d(false);
+				}
+				Rect clip = this.gClip;
+				Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetBitmap);
 			}
-			Rect clip = this.gClip;
-			Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetGraphics.getBitmap());
+		} finally {
+			targetTexture = null;
 			targetGraphics = null;
+			targetBitmap = null;
+			releaseEglContext();
 		}
-		releaseEglContext();
 	}
 
 	public synchronized void flush() {
@@ -1489,7 +1498,7 @@ public class Render {
 				glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
 			} else if (targetGraphics != null) {
 				Rect clip = this.gClip;
-				Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetGraphics.getBitmap());
+				Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetBitmap);
 			}
 		} finally {
 			stack.clear();
