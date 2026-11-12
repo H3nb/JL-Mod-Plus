@@ -43,6 +43,9 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   Rare out-of-snapshot row lookups retain a synchronous fallback for correctness.
   The fragment still converts every projected row into a UI item on the main thread:
   this O(N) CPU and allocation boundary needs device profiling before further changes.
+- The localized-description cache checks descriptor stamps on refresh, but skips two
+  configuration-file probes for apps without source or user translations. Enabling a
+  translation restores guest-locale config resolution.
 - Room's full catalog snapshot, locale-aware Collator sort and translated description
   resolution still consume O(N) memory and/or work per refresh. They run off the
   UI thread but could delay first presentation or search under a very large catalog.
