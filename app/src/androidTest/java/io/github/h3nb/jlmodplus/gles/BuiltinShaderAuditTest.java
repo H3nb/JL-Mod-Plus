@@ -164,6 +164,51 @@ public class BuiltinShaderAuditTest {
     }
 
     @Test
+    public void patternedSourceSeparatesDisplayPhaseFromResampling() throws Exception {
+        StringBuilder report = new StringBuilder();
+        for (String id : new String[]{"color", "crt-classic", "lcd", "scanlines"}) {
+            PostProcessRenderer renderer = new PostProcessRenderer(
+                    Collections.singletonList(EffectEntry.builtin(id)), null);
+            try {
+                int[] nearest1 = render(renderer, 1, GAME_W, GAME_H, true,
+                        true, GLES20.GL_NEAREST);
+                int[] nearest2 = render(renderer, 2, GAME_W, GAME_H, true,
+                        true, GLES20.GL_NEAREST);
+                int[] nearest4 = render(renderer, 4, GAME_W, GAME_H, true,
+                        true, GLES20.GL_NEAREST);
+                assertPixelsNear(id + " patterned nearest 2x", nearest1, nearest2, 2);
+                assertPixelsNear(id + " patterned nearest 4x", nearest1, nearest4, 2);
+
+                int[] linear1 = render(renderer, 1, GAME_W, GAME_H, true,
+                        true, GLES20.GL_LINEAR);
+                int[] linear4 = render(renderer, 4, GAME_W, GAME_H, true,
+                        true, GLES20.GL_LINEAR);
+                savePng("artwork-" + id + "-nearest-1x.png", nearest1);
+                savePng("artwork-" + id + "-nearest-4x.png", nearest4);
+                savePng("artwork-" + id + "-linear-1x.png", linear1);
+                savePng("artwork-" + id + "-linear-4x.png", linear4);
+                report.append(id).append(" linear source delta (mean RGB /255): ")
+                        .append(meanRgbDelta(linear1, linear4)).append("\n");
+            } finally {
+                renderer.release();
+            }
+        }
+        writeText("sampling-results.txt", report.toString());
+    }
+
+    private static double meanRgbDelta(int[] first, int[] second) {
+        assertEquals(first.length, second.length);
+        long sum = 0;
+        for (int i = 0; i < first.length; i++) {
+            for (int shift : new int[]{0, 8, 16}) {
+                sum += Math.abs(((first[i] >>> shift) & 255)
+                        - ((second[i] >>> shift) & 255));
+            }
+        }
+        return (double) sum / (first.length * 3);
+    }
+
+    @Test
     public void paddedSourceIsClampedAtGameContentEdges() throws Exception {
         for (String id : new String[]{"crt-classic", "lcd", "scanlines", "color"}) {
             PostProcessRenderer renderer = new PostProcessRenderer(
