@@ -41,8 +41,10 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
 - Icon file presence is resolved on Dispatchers.IO before publishing the catalog.
   Unchanged rows reuse the prior result within the same generation and workdir.
   Rare out-of-snapshot row lookups retain a synchronous fallback for correctness.
-  The fragment still converts every projected row into a UI item on the main thread:
-  this O(N) CPU and allocation boundary needs device profiling before further changes.
+  The fragment now exposes an indexed, lazily materialized view of the sorted rows.
+  Only requested items construct presentation models and bridge IDs; stable Room IDs
+  remain Compose keys. A projection revision avoids structural List equality on the
+  main thread when the catalog changes. This does not eliminate other startup work.
 - The localized-description cache checks descriptor stamps on refresh, but skips two
   configuration-file probes for apps without source or user translations. Enabling a
   translation restores guest-locale config resolution.

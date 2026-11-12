@@ -1087,10 +1087,8 @@ public class AppsListFragment extends Fragment {
             }
         }
 
-        List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
-        for (LibraryAppRow row : state.getApps()) {
-            uiItems.add(toLibraryUiItem(row));
-        }
+        List<LibraryAppUiItem> uiItems = new LibraryMappedList<>(
+                state.getApps(), this::toLibraryUiItem);
         LibraryComposeController controller = composeController;
         if (controller != null) {
             controller.updateSort(state.getSortVariant());

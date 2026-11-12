@@ -342,6 +342,7 @@ internal data class LibraryViewportSnapshot(
 
 data class LibraryUiState(
     val loading: Boolean = true,
+    val projectionRevision: Long = 0L,
     val apps: List<LibraryAppUiItem> = emptyList(),
     val appliedFilter: String = "",
     val layout: LibraryLayout = LibraryLayout.List,
@@ -445,6 +446,7 @@ class LibraryComposeController(
     @Volatile
     private var controllerBackAvailable = false
     private var controllerEventSequence = 0L
+    private var nextProjectionRevision = 0L
     private var pendingBundleExport by mutableStateOf<LibraryBundleExportHandler?>(null)
     private var state by mutableStateOf(
         LibraryUiState(
@@ -508,6 +510,7 @@ class LibraryComposeController(
     ) {
         state = state.copy(
             loading = false,
+            projectionRevision = ++nextProjectionRevision,
             apps = items,
             availableAppIds = availableAppIds,
             appliedFilter = appliedFilter,
@@ -906,7 +909,7 @@ fun LibraryScreen(
 
     LaunchedEffect(
         state.generation,
-        state.apps,
+        state.projectionRevision,
         state.appliedFilter,
         state.sortVariant,
         state.layout,
@@ -2740,7 +2743,7 @@ private fun LibraryAppsHeader(
     interactive: Boolean = true,
 ) {
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
-    val visibleAppIds = remember(state.apps, selectionState.isActive) {
+    val visibleAppIds = remember(state.projectionRevision, selectionState.isActive) {
         if (selectionState.isActive) state.apps.map(LibraryAppUiItem::databaseId) else emptyList()
     }
     val selectedSort = state.sortVariant and Int.MAX_VALUE
