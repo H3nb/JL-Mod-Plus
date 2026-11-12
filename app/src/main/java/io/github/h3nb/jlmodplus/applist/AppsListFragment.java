@@ -74,6 +74,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -106,6 +107,7 @@ import io.github.h3nb.jlmodplus.installer.InstallerDialog;
 /** Room 3 Library host. AppItem remains only a temporary DTO for explicit shortcut creation. */
 public class AppsListFragment extends Fragment {
     private static final String TAG = AppsListFragment.class.getSimpleName();
+    private static final int UI_ITEM_CACHE_LIMIT = 512;
     private static final int NO_UI_ID = Integer.MIN_VALUE;
     private static final long NO_GENERATION = Long.MIN_VALUE;
     private static final String STATE_PENDING_ICON_DATABASE_ID =
@@ -135,10 +137,25 @@ public class AppsListFragment extends Fragment {
             new FilePickerResultContract(),
             uris -> onIconPicked(uris.isEmpty() ? null : uris.get(0)));
 
-    private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
+    private static final class CachedUiItem {
+        final LibraryAppRow row;
+        final LibraryAppUiItem item;
+
+        CachedUiItem(LibraryAppRow row, LibraryAppUiItem item) {
+            this.row = row;
+            this.item = item;
+        }
+    }
+
+    private final Map<Integer, Long> rowsByUiId = new HashMap<>();
     private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
-    private final Map<Long, LibraryAppRow> cachedRowsByDatabaseId = new HashMap<>();
-    private final Map<Long, LibraryAppUiItem> cachedUiItemsByDatabaseId = new HashMap<>();
+    private final LinkedHashMap<Long, CachedUiItem> cachedUiItemsByDatabaseId =
+            new LinkedHashMap<>(32, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<Long, CachedUiItem> eldest) {
+                    return size() > UI_ITEM_CACHE_LIMIT;
+                }
+            };
     private Map<Long, String> localizedDescriptions = Collections.emptyMap();
     private Map<Long, LibraryIconFiles> iconFiles = Collections.emptyMap();
     private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
@@ -985,15 +1002,15 @@ public class AppsListFragment extends Fragment {
     }
 
     private LibraryAppRow findRow(int uiId) {
-        LibraryAppRow cached = rowsByUiId.get(uiId);
-        if (cached == null) return null;
+        Long databaseId = rowsByUiId.get(uiId);
+        if (databaseId == null) return null;
         LibraryGenerationToken ready = libraryViewModel.readyGeneration();
         if (ready == null || activeWorkdir == null ||
                 activeGeneration != ready.getGeneration() ||
                 !activeWorkdir.equals(ready.getEmulatorDir())) {
             return null;
         }
-        return libraryViewModel.getApp(cached.getId());
+        return libraryViewModel.getApp(databaseId);
     }
 
     private void loadCollectionMembers(long collectionId) {
@@ -1075,7 +1092,6 @@ public class AppsListFragment extends Fragment {
             activeWorkdir = workdir;
             rowsByUiId.clear();
             uiIdsByDatabaseId.clear();
-            cachedRowsByDatabaseId.clear();
             cachedUiItemsByDatabaseId.clear();
             collectionsUiStore.clear();
             nextUiId = 1;
@@ -1133,12 +1149,11 @@ public class AppsListFragment extends Fragment {
     }
 
     private void pruneUiCaches(Set<Long> liveDatabaseIds) {
-        cachedRowsByDatabaseId.keySet().retainAll(liveDatabaseIds);
         cachedUiItemsByDatabaseId.keySet().retainAll(liveDatabaseIds);
         uiIdsByDatabaseId.keySet().retainAll(liveDatabaseIds);
-        Iterator<Map.Entry<Integer, LibraryAppRow>> iterator = rowsByUiId.entrySet().iterator();
+        Iterator<Map.Entry<Integer, Long>> iterator = rowsByUiId.entrySet().iterator();
         while (iterator.hasNext()) {
-            if (!liveDatabaseIds.contains(iterator.next().getValue().getId())) {
+            if (!liveDatabaseIds.contains(iterator.next().getValue())) {
                 iterator.remove();
             }
         }
@@ -1158,11 +1173,12 @@ public class AppsListFragment extends Fragment {
         Map<Long, String> descriptions = localizedDescriptions;
         Map<Long, LibraryIconFiles> availableIcons = iconFiles;
         collectionsUiStore.publishAllApps(new LibraryMappedList<>(rows, row ->
-                toCollectionPickerItem(row, workdir, descriptions, availableIcons)));
+                makeUiItem(row, 0, workdir, descriptions, availableIcons)));
     }
 
-    private static LibraryAppUiItem toCollectionPickerItem(
+    private static LibraryAppUiItem makeUiItem(
             LibraryAppRow row,
+            int uiId,
             File workdir,
             Map<Long, String> descriptions,
             Map<Long, LibraryIconFiles> availableIcons) {
@@ -1176,7 +1192,7 @@ public class AppsListFragment extends Fragment {
         String description = descriptions.get(row.getId());
         if (description == null) description = row.getDescription();
         return new LibraryAppUiItem(
-                0, row.getTitle(), row.getVendor(), row.getVersion(),
+                uiId, row.getTitle(), row.getVendor(), row.getVersion(),
                 (resolved ? files.getMainIconPresent() : primary.isFile())
                         ? primary.getAbsolutePath() : null,
                 true, description, row.getIconRevision(), row.getFavorite(),
@@ -1189,51 +1205,20 @@ public class AppsListFragment extends Fragment {
     }
 
     private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {
-        LibraryAppRow cachedRow = cachedRowsByDatabaseId.get(row.getId());
-        LibraryAppUiItem cachedItem = cachedUiItemsByDatabaseId.get(row.getId());
-        String displayDescription = localizedDescriptions.get(row.getId());
-        if (displayDescription == null) displayDescription = row.getDescription();
-        if (cachedItem != null && row.equals(cachedRow)
-                && displayDescription.equals(cachedItem.getDescription())) {
-            rowsByUiId.put(cachedItem.getId(), row);
-            return cachedItem;
+        CachedUiItem cached = cachedUiItemsByDatabaseId.get(row.getId());
+        String description = localizedDescriptions.get(row.getId());
+        if (description == null) description = row.getDescription();
+        if (cached != null && row.equals(cached.row)
+                && description.equals(cached.item.getDescription())) {
+            rowsByUiId.put(cached.item.getId(), row.getId());
+            return cached.item;
         }
 
         int uiId = uiIdFor(row.getId());
-        rowsByUiId.put(uiId, row);
-        LibraryIconFiles files = iconFiles.get(row.getId());
-        boolean resolved = files != null && row.equals(files.getRow());
-        File primaryIcon = new File(appPath(row) + Config.MIDLET_ICON_FILE);
-        String iconPath = (resolved ? files.getMainIconPresent() : primaryIcon.isFile())
-                ? primaryIcon.getAbsolutePath() : null;
-        File portraitIcon = LibraryIconOverride.portraitOverrideFile(
-                activeWorkdir, row.getStorageKey());
-        File customIcon = LibraryIconOverride.persistedOverrideFile(
-                activeWorkdir, row.getStorageKey());
-        LibraryAppUiItem item = new LibraryAppUiItem(
-                uiId,
-                row.getTitle(),
-                row.getVendor(),
-                row.getVersion(),
-                iconPath,
-                true,
-                displayDescription,
-                row.getIconRevision(),
-                row.getFavorite(),
-                row.getSourceTitle(),
-                row.getSourceVendor(),
-                row.getSourceVersion(),
-                row.getSourceDescription(),
-                row.getPlayCount(),
-                row.getTotalPlayTimeMs(),
-                row.getId(),
-                row.getDescription(),
-                (resolved ? files.getPortraitIconPresent() : portraitIcon.isFile())
-                        ? portraitIcon.getAbsolutePath() : null,
-                resolved ? files.getCustomIconPresent() : customIcon.isFile(),
-                row.getAddedAt());
-        cachedRowsByDatabaseId.put(row.getId(), row);
-        cachedUiItemsByDatabaseId.put(row.getId(), item);
+        rowsByUiId.put(uiId, row.getId());
+        LibraryAppUiItem item = makeUiItem(
+                row, uiId, activeWorkdir, localizedDescriptions, iconFiles);
+        cachedUiItemsByDatabaseId.put(row.getId(), new CachedUiItem(row, item));
         return item;
     }
 
@@ -1272,7 +1257,6 @@ public class AppsListFragment extends Fragment {
         activeGeneration = NO_GENERATION;
         activeWorkdir = null;
         uiIdsByDatabaseId.clear();
-        cachedRowsByDatabaseId.clear();
         cachedUiItemsByDatabaseId.clear();
         nextUiId = 1;
         cachedAllReadyRows = null;
