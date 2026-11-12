@@ -36,10 +36,11 @@ class MemoryRecipeRuntime {
         val kind: String, val root: Root, val path: List<Step>, val input: String?,
         val literal: Long?, val shift: Int, val width: Int, val arrayLength: Int?,
         val nonZeroMask: Long, val constant: Long, val identityMask: Long,
+        val operation: String, val field: String?,
     )
     private data class Recipe(
         val id: String, val name: String, val mainClass: String, val actions: List<Action>,
-        val inputs: Map<String, LongRange>,
+        val inputs: Map<String, LongRange>, val mode: String,
     )
     private data class Cell(
         val owner: Any, val field: Field?, val index: Int,
@@ -157,13 +158,28 @@ class MemoryRecipeRuntime {
         try {
             if (json == null || json.toByteArray(Charsets.UTF_8).size > MAX_JSON_BYTES) bad("Recipe is missing or too large")
             val recipe = parse(json)
+            if (!preview && recipe.mode == "toggle" && !hold)
+                bad("Toggle scripts must be enabled with Freeze")
+            if (!preview && hold && recipe.mode != "toggle" && recipe.mode != "legacy")
+                bad("Only Toggle scripts can hold a recipe")
             val values = readParameters(recipe, parameters, readOnly = preview)
             val snapshot = currentSnapshot(token, recipe.mainClass)
             val prepared = prepare(snapshot, recipe, values, readOnly = preview)
+            if (!preview && recipe.mode == "form") {
+                val expected = parameters?.getStringArray(EXPECTED_VALUES)
+                    ?: bad("Refresh the form before applying changes")
+                if (expected.size != prepared.readValues.size ||
+                    !expected.contentEquals(prepared.readValues.toTypedArray())) {
+                    throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                        "Values changed since Refresh; refresh before applying")
+                }
+            }
             if (preview) {
                 val result = reply(token, MemoryEngineContract.RESULT_OK, "Read ${recipe.actions.size} logical values")
                 result.putStringArray("recipeReadInputs",
-                    recipe.actions.mapIndexed { index, action -> action.input ?: "value ${index + 1}" }.toTypedArray())
+                    recipe.actions.mapIndexed { index, action ->
+                        action.field ?: action.input ?: "value ${index + 1}"
+                    }.toTypedArray())
                 result.putStringArray("recipeReadValues", prepared.readValues.toTypedArray())
                 return result
             }
@@ -289,6 +305,7 @@ class MemoryRecipeRuntime {
         val owners = ArrayList<Any>()
         val readValues = ArrayList<String>()
         val identities = ArrayList<Long?>()
+        val logicalValues = HashMap<String, String>()
         val requestedStatics = recipe.actions.asSequence()
             .filter { it.root.kind == "initializedStatic" }
             .map { it.root.className }
@@ -330,9 +347,27 @@ class MemoryRecipeRuntime {
                 else -> bad("Unsupported action")
             }
             readValues.add(currentLogical)
+            if (!readOnly && (recipe.mode == "form" || action.operation == "add")) {
+                val key = action.field ?: action.input
+                if (key != null) {
+                    val previous = logicalValues.putIfAbsent(key, currentLogical)
+                    if (previous != null && previous != currentLogical) {
+                        throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                            "Inconsistent copies of $key")
+                    }
+                }
+            }
             if (readOnly) continue // Read needs only locator parameters, never the proposed edit.
+            val operand = number(action, inputs)
+            val logicalWrite = if (action.operation == "add") {
+                try {
+                    Math.addExact(currentLogical.toLong(), operand)
+                } catch (error: ArithmeticException) {
+                    bad("Addition exceeds the supported integer range")
+                }
+            } else operand
             val expectedWrite = when (action.kind) {
-                "set" -> listOf(number(action, inputs))
+                "set" -> listOf(logicalWrite)
                 "bitfield" -> {
                     val bits = when (cells[0].type) {
                         java.lang.Byte.TYPE -> 8
@@ -349,7 +384,7 @@ class MemoryRecipeRuntime {
                     if (action.nonZeroMask != 0L && raw and action.nonZeroMask == 0L) {
                         throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Empty or nonmatching slot")
                     }
-                    val newValue = number(action, inputs)
+                    val newValue = logicalWrite
                     val fieldMask = ((1L shl action.width) - 1L) shl action.shift
                     if (newValue < 0 || newValue >= (1L shl action.width)) bad("Bitfield value out of range")
                     val masked = (raw and fieldMask.inv()) or (newValue shl action.shift)
@@ -363,7 +398,7 @@ class MemoryRecipeRuntime {
                 "encoded32le" -> {
                     if (cells.size != 4 || cells.any { it.type != java.lang.Byte.TYPE }) bad("Expected four bytes")
                     val value = try {
-                        Math.subtractExact(action.constant, number(action, inputs))
+                        Math.subtractExact(action.constant, logicalWrite)
                     } catch (error: ArithmeticException) {
                         bad("Encoded value overflow")
                     }
@@ -489,9 +524,15 @@ class MemoryRecipeRuntime {
 
     private fun parse(json: String): Recipe {
         val obj = Json.parseToJsonElement(json) as? JsonObject ?: bad("Expected JSON object")
-        obj.expectOnly("formatVersion", "id", "name", "game", "inputs", "root", "actions")
+        obj.expectOnly("formatVersion", "id", "name", "game", "inputs", "root", "actions", "mode")
         val version = obj.int("formatVersion")
-        if (version != 1) bad("Unsupported recipe version")
+        if (version !in 1..2) bad("Unsupported recipe version")
+        val mode = if (version == 1) {
+            if (obj.containsKey("mode")) bad("Mode requires recipe v2")
+            "legacy"
+        } else obj.string("mode").also {
+            if (it !in setOf("toggle", "form", "oneShot")) bad("Unsupported recipe mode")
+        }
         val id = obj.string("id")
         if (id.length !in 1..64 || !id.matches(Regex("[A-Za-z0-9_.-]+"))) bad("Invalid recipe ID")
         val name = obj["name"]?.let {
@@ -508,13 +549,19 @@ class MemoryRecipeRuntime {
         val specs = obj["inputs"]?.let {
             it as? JsonObject ?: bad("Inputs must be an object")
         } ?: JsonObject(emptyMap())
-        if (specs.size > 8 || specs.keys.any { key ->
+        if (specs.size > MAX_INPUTS || specs.keys.any { key ->
+                key == EXPECTED_VALUES ||
                 key.isEmpty() || key.length > 64 ||
                     key.any { char -> Character.isISOControl(char) }
             }) bad("Invalid input declarations")
         val inputRanges = specs.mapValues { (_, v) ->
             val s = v as? JsonObject ?: bad("Invalid input")
-            s.expectOnly("min", "max", "default")
+            s.expectOnly("min", "max", "default", "label")
+            s["label"]?.let {
+                val label = (it as? JsonPrimitive)?.content ?: bad("Invalid input label")
+                if (label.length !in 1..80 || label.any(Character::isISOControl))
+                    bad("Invalid input label")
+            }
             val min = s.long("min")
             val max = s.long("max")
             if (max < min) bad("Input range is inverted")
@@ -530,7 +577,8 @@ class MemoryRecipeRuntime {
         val parsed = actions.map { element ->
             val a = element as? JsonObject ?: bad("Invalid action")
             a.expectOnly("kind", "root", "path", "valueInput", "value",
-                "shift", "width", "arrayLength", "nonZeroMask", "constant", "identityMask")
+                "shift", "width", "arrayLength", "nonZeroMask", "constant", "identityMask",
+                "operation", "field")
             val root = a["root"]?.let {
                 parseRoot(it as? JsonObject ?: bad("Action root must be an object"))
             } ?: defaultRoot
@@ -567,15 +615,40 @@ class MemoryRecipeRuntime {
             val literal = a["value"]?.let { parseNumber((it as? JsonPrimitive)?.content ?: bad("Bad literal")) }
             if ((input == null) == (literal == null)) bad("Exactly one value source is required")
             if (input != null && input !in inputRanges) bad("Undeclared input")
+            val operation = a["operation"]?.let { a.string("operation") } ?: "set"
+            if (operation !in setOf("set", "add") || (operation == "add" && mode != "oneShot"))
+                bad("Addition is only supported in a one-shot v2 recipe")
+            if (version == 1 && (a.containsKey("operation") || a.containsKey("field")))
+                bad("Action extensions require recipe v2")
+            val field = a["field"]?.let { a.string("field") }
+            if (field != null && !field.matches(Regex("[A-Za-z0-9_.-]{1,64}")))
+                bad("Invalid logical field")
+            if (operation == "add" && field == null) bad("Addition requires a logical field")
+            if (mode == "form" && input != null && field != null && field != input)
+                bad("Form field must match its value input")
             Action(kind, root, steps, input, literal,
                 a["shift"]?.let { a.int("shift") } ?: 0,
                 a["width"]?.let { a.int("width") } ?: 0,
                 a["arrayLength"]?.let { a.int("arrayLength") },
                 a["nonZeroMask"]?.let { parseNumber(a.string("nonZeroMask")) } ?: 0L,
                 a["constant"]?.let { parseNumber(a.string("constant")) } ?: 0L,
-                a["identityMask"]?.let { parseNumber(a.string("identityMask")) } ?: 0L)
+                a["identityMask"]?.let { parseNumber(a.string("identityMask")) } ?: 0L,
+                operation, field)
         }
-        return Recipe(id, name, mainClass, parsed, inputRanges)
+        if (mode == "form") {
+            val selectors = parsed.flatMap { action ->
+                action.path.mapNotNull(Step::indexInput)
+            }.toSet()
+            val editable = parsed.mapNotNull(Action::input).toSet()
+            if (editable.isEmpty() || (selectors intersect editable).isNotEmpty() ||
+                (selectors + editable) != inputRanges.keys) {
+                bad("Form requires distinct selector and editable inputs")
+            }
+        }
+        if (mode == "toggle" && specs.values.any { value ->
+                !(value as JsonObject).containsKey("default")
+            }) bad("Toggle inputs require default values")
+        return Recipe(id, name, mainClass, parsed, inputRanges, mode)
     }
 
     private fun parseRoot(obj: JsonObject): Root {
@@ -591,7 +664,8 @@ class MemoryRecipeRuntime {
         recipe: Recipe, bundle: Bundle?, readOnly: Boolean = false,
     ): Map<String, Long> {
         val values = HashMap<String, Long>()
-        if (bundle != null && bundle.keySet().any { it !in recipe.inputs }) bad("Unexpected input")
+        if (bundle != null && bundle.keySet().any { it !in recipe.inputs && it != EXPECTED_VALUES })
+            bad("Unexpected input")
         val needed = if (readOnly) recipe.actions.flatMap { action ->
             action.path.mapNotNull(Step::indexInput)
         }.toSet() else recipe.inputs.keys
@@ -672,7 +746,9 @@ class MemoryRecipeRuntime {
         }
 
         private const val MAX_JSON_BYTES = 24_576
-        private const val MAX_WRITES = 32
+        private const val MAX_WRITES = 64
+        private const val MAX_INPUTS = 16
+        private const val EXPECTED_VALUES = "recipeExpectedValues"
         private const val MAX_HELD_RECIPES = 4
     }
 }
