@@ -53,6 +53,49 @@ public class ManagedJavaMemoryEngineTest {
 		MemoryDiscoveryBridge.close(TOKEN);
 	}
 
+    @Test
+    public void bookmarkedCandidateStopsWritingWhenExplicitlyDetached() {
+        ManagedJavaMemoryEngine.ManagedOperationResult result = startExact();
+        assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+        ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(
+                TOKEN, result.revision, 0, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+        long id = 0L;
+        for (int i = 0; i < page.ids.length; i++) {
+            if (page.addresses[i].contains("rootMatch")) { id = page.ids[i]; break; }
+        }
+        assertTrue(id != 0L);
+        assertEquals(MemoryEngineContract.RESULT_OK, engine.attachBookmark(
+                TOKEN, result.revision, id, "root-bookmark", "Root", 0L).code);
+        assertEquals(1, engine.watchPage(TOKEN).ids.length);
+        assertEquals("root-bookmark", engine.watchPage(TOKEN).savedSourceIds[0]);
+
+        assertEquals(MemoryEngineContract.RESULT_OK, engine.setFreezeLockTyped(
+                TOKEN, result.revision, new long[]{id}, "7", false, 0L).code);
+        root.rootMatch = 33;
+        assertEquals(MemoryEngineContract.RESULT_OK,
+                engine.detachBookmark(TOKEN, "root-bookmark", 0L).code);
+        assertEquals(0, engine.watchPage(TOKEN).ids.length);
+        engine.freezeTick(TOKEN, 0L);
+        assertEquals(33, root.rootMatch);
+    }
+
+    @Test
+    public void untracedCandidateCanBeBookmarkedWithoutInventingARootedPath() {
+        ManagedJavaMemoryEngine.ManagedOperationResult result = startExact();
+        ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(
+                TOKEN, result.revision, 0, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+        long id = 0L;
+        for (int i = 0; i < page.ids.length; i++) {
+            if (page.addresses[i].contains("vectorOnly")) { id = page.ids[i]; break; }
+        }
+        assertTrue(id != 0L);
+        assertEquals(null, engine.captureSavedLocator(TOKEN, result.revision, id));
+        assertEquals(MemoryEngineContract.RESULT_OK, engine.attachBookmark(
+                TOKEN, result.revision, id, "untraced", "Untraced", 0L).code);
+        assertEquals("untraced", engine.watchPage(TOKEN).savedSourceIds[0]);
+        assertEquals(1, engine.watchPage(TOKEN).ids.length);
+    }
+
 	@Test
 	public void exactScanFindsIntFieldsArraysAndExactContainersButStopsSubclasses() {
 		ManagedJavaMemoryEngine.ManagedOperationResult result = startExact();
