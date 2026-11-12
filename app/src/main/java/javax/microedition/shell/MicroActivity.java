@@ -2108,6 +2108,10 @@ public class MicroActivity extends AppCompatActivity {
 		toast(getString(message));
 	}
 
+	public void toast(@StringRes int message, int requestedScale, int actualScale) {
+		toast(getString(message, requestedScale, actualScale));
+	}
+
 	private void toast(String message) {
 		runOnUiThread(() -> {
 			if (runtimeNoticeController != null) {
