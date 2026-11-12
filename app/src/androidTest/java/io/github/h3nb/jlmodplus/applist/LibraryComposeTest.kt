@@ -462,7 +462,13 @@ class LibraryComposeTest {
 
     @Test
     fun twentyThousandAppsRemainVirtualizedInListAndGrid() {
-        val apps = (0 until 20_000).map { index ->
+        val materialized = java.util.concurrent.atomic.AtomicInteger()
+        val source = object : AbstractList<Int>() {
+            override val size = 20_000
+            override fun get(index: Int) = index
+        }
+        val apps = LibraryMappedList(source) { index: Int ->
+            materialized.incrementAndGet()
             LibraryAppUiItem(
                 id = index + 1,
                 title = "Scale Game $index",
@@ -474,7 +480,12 @@ class LibraryComposeTest {
             )
         }
         val libraryState = mutableStateOf(
-            LibraryUiState(loading = false, apps = apps, layout = LibraryLayout.List),
+            LibraryUiState(
+                loading = false,
+                apps = apps,
+                availableAppIds = (1L..20_000L).toSet(),
+                layout = LibraryLayout.List,
+            ),
         )
         val actions = RecordingLibraryActions()
         composeRule.setContent {
@@ -495,9 +506,14 @@ class LibraryComposeTest {
             composeRule.onNodeWithText("Scale Game 19999").assertIsDisplayed()
         }
 
+        composeRule.waitForIdle()
+        assertTrue("Catalog items were mapped before scrolling: ${materialized.get()}",
+            materialized.get() < 1_000)
         verifyVisibleWindowAndLastItem()
         composeRule.runOnIdle { libraryState.value = libraryState.value.copy(layout = LibraryLayout.Grid) }
         verifyVisibleWindowAndLastItem()
+        assertTrue("Too many mapped Library items: ${materialized.get()}",
+            materialized.get() < 5_000)
     }
 
     @Test
