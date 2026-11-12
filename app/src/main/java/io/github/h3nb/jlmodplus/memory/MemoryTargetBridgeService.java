@@ -191,15 +191,17 @@ public final class MemoryTargetBridgeService extends Service {
 		@Override
 		public Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, long[] ids,
 				int replacement, boolean allowWatchOnly, long cancellationEpoch) {
-			return managedResult(runtimeToken, managedEngine.setFreezeLock(runtimeToken, expectedRevision,
-					ids, replacement, allowWatchOnly, cancellationEpoch));
+			return managedResult(runtimeToken, managedEngine.setFreezeLockTyped(runtimeToken,
+                    expectedRevision, ids, Integer.toString(replacement), allowWatchOnly,
+                    cancellationEpoch, recipes.activeCount(runtimeToken)));
 		}
 
 		@Override
 		public Bundle managedSetFreezeLockTyped(long runtimeToken, long expectedRevision, long[] ids,
 				String replacement, boolean allowWatchOnly, long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.setFreezeLockTyped(runtimeToken,
-					expectedRevision, ids, replacement, allowWatchOnly, cancellationEpoch));
+					expectedRevision, ids, replacement, allowWatchOnly, cancellationEpoch,
+                    recipes.activeCount(runtimeToken)));
 		}
 
 		@Override
@@ -325,7 +327,8 @@ public final class MemoryTargetBridgeService extends Service {
         public Bundle freezeSaved(long runtimeToken, String savedId, String label,
                                   String expectedValue, long cancellationEpoch) {
             return managedResult(runtimeToken, managedEngine.freezeSaved(
-                    runtimeToken, savedId, label, expectedValue, cancellationEpoch));
+                    runtimeToken, savedId, label, expectedValue, cancellationEpoch,
+                    recipes.activeCount(runtimeToken)));
         }
 
         @Override
@@ -334,7 +337,7 @@ public final class MemoryTargetBridgeService extends Service {
                                      int type, long expectedBits, boolean freeze, long epoch) {
             return managedResult(runtimeToken, managedEngine.watchInspector(runtimeToken,
                     savedId, expectedRevision, anchorId, watchAnchor, offset, type,
-                    expectedBits, freeze, epoch));
+                    expectedBits, freeze, epoch, null, recipes.activeCount(runtimeToken)));
         }
 
         @Override
@@ -343,7 +346,8 @@ public final class MemoryTargetBridgeService extends Service {
                 long expectedBits, boolean freeze, String bookmarkId, long epoch) {
             return managedResult(runtimeToken, managedEngine.watchInspector(runtimeToken,
                     savedId, expectedRevision, anchorCandidateId, watchAnchor, offset, type,
-                    expectedBits, freeze, epoch, bookmarkId));
+                    expectedBits, freeze, epoch, bookmarkId,
+                    recipes.activeCount(runtimeToken)));
         }
 
         @Override
@@ -353,7 +357,8 @@ public final class MemoryTargetBridgeService extends Service {
                 String bookmarkId, long epoch) {
             return managedResult(runtimeToken, managedEngine.editInspectorAndFreeze(runtimeToken,
                     savedId, expectedRevision, anchorCandidateId, watchAnchor, offset, type,
-                    expectedBits, replacement, epoch, bookmarkId));
+                    expectedBits, replacement, epoch, bookmarkId,
+                    recipes.activeCount(runtimeToken)));
         }
 
         @Override
@@ -363,7 +368,8 @@ public final class MemoryTargetBridgeService extends Service {
                                              long expectedBits, String replacement, long epoch) {
             return managedResult(runtimeToken, managedEngine.editInspectorAndFreeze(runtimeToken,
                     savedId, expectedRevision, anchorId, watchAnchor, offset, type,
-                    expectedBits, replacement, epoch));
+                    expectedBits, replacement, epoch, null,
+                    recipes.activeCount(runtimeToken)));
         }
 
         @Override
