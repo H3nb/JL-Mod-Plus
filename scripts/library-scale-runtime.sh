@@ -3,7 +3,11 @@
 set -euo pipefail
 
 output="ci-artifacts/library-scale"
-selector="io.github.h3nb.jlmodplus.applist.LibraryComposeTest#twentyThousandAppsRemainVirtualizedInListAndGrid"
+selectors=(
+  "io.github.h3nb.jlmodplus.applist.LibraryComposeTest#twentyThousandAppsRemainVirtualizedInListAndGrid"
+  "io.github.h3nb.jlmodplus.librarydb.LibraryStartupRuntimeTest#existingCatalogLoadsAndProjects"
+)
+selector_arg="$(IFS=,; echo "${selectors[*]}")"
 mkdir -p "$output"
 chmod +x gradlew
 ./gradlew --daemon --stacktrace --profile -PjlmodRuntimeTestAbi=x86_64 \
@@ -25,12 +29,13 @@ if (( ${#runners[@]} != 1 )); then
     exit 1
 fi
 
-if ! adb shell am instrument -w -r -e class "$selector" "${runners[0]}" \
+if ! adb shell am instrument -w -r -e class "$selector_arg" "${runners[0]}" \
     > "$output/instrumentation.txt" 2>&1; then
     cat "$output/instrumentation.txt"
     exit 1
 fi
 cat "$output/instrumentation.txt"
+adb logcat -d -s LibraryStartupRuntime:I > "$output/startup-logcat.txt"
 python3 scripts/runtime-smoke-results.py \
   --log "$output/instrumentation.txt" \
-  --output "$output/verified.txt" "$selector"
+  --output "$output/verified.txt" "${selectors[@]}"

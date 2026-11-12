@@ -50,6 +50,11 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   before the first READY state. Profile these independently before considering an
   early browsing snapshot with different mutation-safety semantics.
 
+- The opt-in emulator runtime CI now includes a prepopulated Room catalog with matching
+  converted directories. It records time to repository READY and subsequent display
+  projection READY separately, without unstable hard elapsed-time assertions. Results
+  describe a controlled emulator filesystem, not real handset startup latency.
+
 ## Unresolved scalability boundaries
 
 - Icon file presence is resolved on Dispatchers.IO before publishing the catalog.
