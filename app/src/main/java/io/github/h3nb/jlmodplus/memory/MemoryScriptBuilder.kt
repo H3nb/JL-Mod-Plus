@@ -3,7 +3,6 @@
  */
 package io.github.h3nb.jlmodplus.memory
 
-import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -156,7 +155,7 @@ internal fun MemoryScriptBuilderScreen(
                 runCatching {
                     context.contentResolver.openOutputStream(uri)?.use {
                         it.write(document.toByteArray(Charsets.UTF_8))
-                    } ?: error("Cannot write the selected file")
+                    } ?: kotlin.error("Cannot write the selected file")
                 }
             }
             result.exceptionOrNull()?.let { error = it.message ?: "Could not export JSON" }
