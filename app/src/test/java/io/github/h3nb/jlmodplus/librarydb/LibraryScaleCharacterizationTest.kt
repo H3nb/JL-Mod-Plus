@@ -14,6 +14,8 @@ import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -21,7 +23,7 @@ import org.junit.jupiter.api.Test
  * Non-flaky scale characterization for the Library v2 target sizes.
  *
  * These tests intentionally do not assert wall-clock thresholds because shared CI runners are not
- * benchmark hardware. They keep the 100/1k/5k paths executable in normal CI and print elapsed time
+ * benchmark hardware. They exercise 100 through 50k projections and print elapsed time
  * so regressions can be compared between runs without turning transient runner load into failures.
  */
 class LibraryScaleCharacterizationTest {
@@ -87,7 +89,43 @@ class LibraryScaleCharacterizationTest {
         }
     }
 
+    @Test fun iconFilePresenceColdAndIncrementalAtFiftyThousandRows() {
+        val count = 50_000
+        val rows = (1L..count.toLong()).map { id ->
+            LibraryAppRow(
+                id = id,
+                storageKey = "game-$id",
+                sourceTitle = "Game $id",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                title = "Game $id",
+                vendor = "Vendor",
+                version = "1.0",
+                description = "",
+                favorite = false,
+                addedAt = null,
+                lastPlayedAt = null,
+                iconRevision = 0,
+            )
+        }
+        val start = System.nanoTime()
+        val first = resolveLibraryIconFiles(temporaryFolder, rows)
+        val coldMs = (System.nanoTime() - start) / 1_000_000.0
+
+        val updatedRows = rows.toMutableList()
+        updatedRows[25_000] = updatedRows[25_000].copy(iconRevision = 1)
+        val updatedAt = System.nanoTime()
+        val next = resolveLibraryIconFiles(temporaryFolder, updatedRows, first)
+        val incrementalMs = (System.nanoTime() - updatedAt) / 1_000_000.0
+
+        assertEquals(count, next.size)
+        assertSame(first.getValue(1), next.getValue(1))
+        assertNotSame(first.getValue(25_001), next.getValue(25_001))
+        println("Library icon presence count=$count coldMs=${"%.3f".format(Locale.US, coldMs)} " +
+            "incrementalMs=${"%.3f".format(Locale.US, incrementalMs)}")
+    }
+
     private companion object {
-        val TARGET_SIZES = intArrayOf(100, 1_000, 5_000)
+        val TARGET_SIZES = intArrayOf(100, 1_000, 5_000, 20_000, 50_000)
     }
 }

@@ -38,7 +38,6 @@ public final class PostProcessRenderer {
     private final FloatBuffer quad = ByteBuffer.allocateDirect(16 * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer();
     private final int maxTextureSize;
-    private final long maxTempBytes;
     private EffectTargetPlan framePlan;
     private int lastViewportWidth, lastViewportHeight;
     private int lastContentWidth, lastContentHeight;
@@ -134,7 +133,6 @@ public final class PostProcessRenderer {
         int[] limit = new int[1];
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, limit, 0);
         maxTextureSize = limit[0];
-        maxTempBytes = EffectGpuBudget.forCurrentDevice();
         Program identity = null;
         try {
             String sharedVertex = asset("fullscreen.vsh");
@@ -289,7 +287,7 @@ public final class PostProcessRenderer {
         if (framePlan == null || width != lastViewportWidth || height != lastViewportHeight
                 || contentW != lastContentWidth || contentH != lastContentHeight) {
             EffectTargetPlan next = EffectTargetPlan.create(planPasses, contentW, contentH,
-                    width, height, maxTextureSize, maxTempBytes);
+                    width, height, maxTextureSize);
             clearTargets();
             framePlan = next;
             for (EffectTargetPlan.Slot slot : next.slots) {

@@ -227,6 +227,30 @@ class LibraryListProjectionTest {
         assertEquals(snapshot, input)
     }
 
+    @Test fun collationKeysPreserveLegacyOrderingAcrossLocalesAndDirection() {
+        val words = listOf(
+            "Ångström", "İSTANBUL", "Istanbul", "éclair", "Eclair", "alpha",
+            "Alpha", "Zulu", "東京", "Çafé", "Café", "straße", "STRASSE",
+        )
+        val input = (0 until 390).map { index ->
+            row(index.toLong() + 1, words[(index * 7) % words.size],
+                words[(index * 3) % words.size])
+        }.reversed()
+        for (locale in listOf(Locale.US, Locale.forLanguageTag("sv-SE"),
+            Locale.forLanguageTag("tr-TR"), Locale.GERMAN)) {
+            for (sort in listOf(LibraryListProjection.SORT_TITLE, LibraryListProjection.SORT_VENDOR,
+                LibraryListProjection.SORT_TITLE or Int.MIN_VALUE,
+                LibraryListProjection.SORT_VENDOR or Int.MIN_VALUE)) {
+                val expected = legacyProject(input, "", sort, locale, LibraryQuickView.All)
+                    .map { it.id }
+                val actual = LibraryListProjection.prepare(
+                    input, sort, locale, LibraryQuickView.All,
+                ).rows.map { it.id }
+                assertEquals(expected, actual, "$locale / $sort")
+            }
+        }
+    }
+
     @Test fun stableBucketsMatchRankThenSortWithLocaleTiesAndQuickViews() {
         val input = listOf(
             row(10, "Quest", "Same", true, 100, 300),

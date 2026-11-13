@@ -461,6 +461,63 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun twentyThousandAppsRemainVirtualizedInListAndGrid() {
+        val materialized = java.util.concurrent.atomic.AtomicInteger()
+        val source = object : AbstractList<Int>() {
+            override val size = 20_000
+            override fun get(index: Int) = index
+        }
+        val apps = LibraryMappedList(source) { index: Int ->
+            materialized.incrementAndGet()
+            LibraryAppUiItem(
+                id = index + 1,
+                title = "Scale Game $index",
+                author = "Vendor",
+                version = "1.0",
+                iconPath = null,
+                canReinstall = true,
+                databaseId = index.toLong() + 1,
+            )
+        }
+        val libraryState = mutableStateOf(
+            LibraryUiState(
+                loading = false,
+                apps = apps,
+                availableAppIds = (1L..20_000L).toSet(),
+                projectedAppIds = (1L..20_000L).toList(),
+                layout = LibraryLayout.List,
+            ),
+        )
+        val actions = RecordingLibraryActions()
+        composeRule.setContent {
+            JLModPlusTheme { LibraryScreen(state = libraryState.value, actions = actions) }
+        }
+
+        fun verifyVisibleWindowAndLastItem() {
+            composeRule.waitForIdle()
+            val composed = composeRule.onAllNodes(
+                hasText("Scale Game ", substring = true), useUnmergedTree = true,
+            ).fetchSemanticsNodes().size
+            assertTrue("Too many composed rows: $composed", composed in 1..120)
+            val viewport = composeRule.onAllNodes(
+                hasScrollAction() and hasAnyDescendant(hasText("Scale Game ", substring = true)),
+                useUnmergedTree = true,
+            ).onLast()
+            viewport.performScrollToIndex(20_000)
+            composeRule.onNodeWithText("Scale Game 19999").assertIsDisplayed()
+        }
+
+        composeRule.waitForIdle()
+        assertTrue("Catalog items were mapped before scrolling: ${materialized.get()}",
+            materialized.get() < 1_000)
+        verifyVisibleWindowAndLastItem()
+        composeRule.runOnIdle { libraryState.value = libraryState.value.copy(layout = LibraryLayout.Grid) }
+        verifyVisibleWindowAndLastItem()
+        assertTrue("Too many mapped Library items: ${materialized.get()}",
+            materialized.get() < 5_000)
+    }
+
+    @Test
     fun controllerNavigationStillScrollsFocusedAppIntoView() {
         val actions = RecordingLibraryActions()
         val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 32)
