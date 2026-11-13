@@ -281,9 +281,9 @@ internal fun MemoryEditorRuntimeRoot(
             }
         }
         BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
-            scriptDraft?.dirty == true || scriptBuilder != null ||
+            scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true ||
             (tab == MemoryEditorTab.SCRIPTS &&
-                (scriptDraft != null || selectedScriptId != null)) ||
+                (scriptDraft != null || scriptBuilder != null || selectedScriptId != null)) ||
             (state.variablesTab && listSelection.isNotEmpty())) {
             when {
                 overlay.peeking -> overlay.peeking = false
@@ -291,7 +291,7 @@ internal fun MemoryEditorRuntimeRoot(
                 tab == MemoryEditorTab.SCRIPTS && scriptDraft != null -> backFromScriptEditor()
                 tab == MemoryEditorTab.SCRIPTS && scriptBuilder != null -> backFromScriptBuilder()
                 tab == MemoryEditorTab.SCRIPTS -> selectedScriptId = null
-                scriptDraft?.dirty == true -> actions.close()
+                scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true -> actions.close()
                 else -> listSelection = emptySet()
             }
         }
