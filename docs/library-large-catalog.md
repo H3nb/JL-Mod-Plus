@@ -39,8 +39,9 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   without flaky wall-time pass/fail thresholds. Room publication still has a focused
   1k/5k local test; benchmark numbers are diagnostic, not device-performance claims.
 
-- A focused runtime-smoke test renders 20,000 items through the real LibraryScreen
+- A manual emulator runtime workflow renders 20,000 items through the real LibraryScreen
   in list and grid, checks a bounded composed window, and jumps to the final app.
+  It also exercises Room cold-start projection, Collection membership, and search.
   It demonstrates lazy composition, not sustained frame pacing or scrolling FPS.
 
 ## Startup and reconciliation
@@ -65,7 +66,7 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
 - Cold display preparation resolves descriptions and icon presence on independent IO
   coroutines while ordered rows are computed on Default. Structured cancellation
   still prevents stale query/workdir results from being published.
-- The opt-in emulator runtime CI now includes a prepopulated Room catalog with matching
+- The manually dispatched emulator runtime workflow includes a prepopulated Room catalog with matching
   converted directories. It records time to repository READY and subsequent display
   projection READY separately, without unstable hard elapsed-time assertions. Results
   describe a controlled emulator filesystem, not real handset startup latency.

@@ -1,35 +1,13 @@
 name: Library Large Catalog Runtime
 
 on:
-  pull_request:
-    branches: [alpha]
-    paths:
-      - '.github/workflows/library-large-catalog.yml'
-      - 'scripts/library-scale-runtime.sh'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryComposeBridge.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryControllerNavigation.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibrarySelectionState.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/AppsListFragment.java'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryViewModel.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryIconFiles.kt'
-      - 'app/src/test/java/io/github/h3nb/jlmodplus/librarydb/LibraryIconFilesTest.kt'
-      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryComposeTest.kt'
-      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/librarydb/LibraryStartupRuntimeTest.kt'
-      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryViewportNavigationTest.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryScanner.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryRepository.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryMappedList.java'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionBrowser.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionsUi.kt'
-      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionProjection.kt'
-      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryCollectionsNavigationTest.kt'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: library-scale-${{ github.event.pull_request.number || github.ref }}
+  group: library-scale-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
