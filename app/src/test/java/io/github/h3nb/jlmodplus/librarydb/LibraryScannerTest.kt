@@ -138,9 +138,10 @@ class LibraryScannerTest {
         File(converted, "One").mkdir()
         File(converted, "Two").mkdir()
         File(converted, ".TmP").mkdir()
+        File(converted, "NotADirectory").writeText("not an installed game")
         LibraryInstallRecovery.stagingDirectory(root).mkdir()
 
-        assertEquals(linkedSetOf("One", "Two"), scanner.storageKeys(root))
+        assertEquals(setOf("One", "Two"), scanner.storageKeys(root))
     }
 
     @Test

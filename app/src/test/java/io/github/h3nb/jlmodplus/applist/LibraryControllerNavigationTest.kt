@@ -15,30 +15,56 @@
 package io.github.h3nb.jlmodplus.applist
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class LibraryControllerNavigationTest {
     @Test
     fun stableDatabaseIdSurvivesSortChanges() {
-        val apps = listOf(
-            app(30L, 3),
-            app(10L, 1),
-            app(20L, 2),
-        )
+        val ids = listOf(30L, 10L, 20L)
 
         assertEquals(
             LibraryControllerFocus(index = 1, databaseId = 10L),
-            reconcileLibraryControllerFocus(apps, focusedDatabaseId = 10L, fallbackIndex = 0),
+            reconcileLibraryControllerFocus(ids, focusedDatabaseId = 10L, fallbackIndex = 0),
         )
     }
 
     @Test
     fun removedFocusFallsBackToNearestVisibleIndex() {
-        val apps = listOf(app(10L, 1), app(30L, 3))
+        val ids = listOf(10L, 30L)
 
         assertEquals(
             LibraryControllerFocus(index = 1, databaseId = 30L),
-            reconcileLibraryControllerFocus(apps, focusedDatabaseId = 20L, fallbackIndex = 1),
+            reconcileLibraryControllerFocus(ids, focusedDatabaseId = 20L, fallbackIndex = 1),
+        )
+    }
+
+    @Test
+    fun unchangedFocusInLargeCatalogUsesOnlyIndexedAccess() {
+        var reads = 0
+        val ids = object : AbstractList<Long>() {
+            override val size = 50_000
+            override fun get(index: Int): Long {
+                reads++
+                return index.toLong() + 1
+            }
+        }
+        assertEquals(
+            LibraryControllerFocus(index = 45_000, databaseId = 45_001L),
+            reconcileLibraryControllerFocus(ids, focusedDatabaseId = 45_001L, fallbackIndex = 45_000),
+        )
+        assertTrue(reads <= 2, "Retained focus should not scan 50,000 items")
+    }
+
+    @Test
+    fun relocatedFocusSearchesDatabaseIdsAfterSort() {
+        val ids = (1L..50_000L).toMutableList()
+        ids[9] = 45_001L
+        ids[45_000] = 10L
+
+        assertEquals(
+            LibraryControllerFocus(index = 9, databaseId = 45_001L),
+            reconcileLibraryControllerFocus(ids, focusedDatabaseId = 45_001L, fallbackIndex = 45_000),
         )
     }
 
@@ -144,13 +170,4 @@ class LibraryControllerNavigationTest {
         )
     }
 
-    private fun app(databaseId: Long, id: Int): LibraryAppUiItem = LibraryAppUiItem(
-        id = id,
-        title = "App $id",
-        author = "Author",
-        version = "1",
-        iconPath = null,
-        canReinstall = false,
-        databaseId = databaseId,
-    )
 }

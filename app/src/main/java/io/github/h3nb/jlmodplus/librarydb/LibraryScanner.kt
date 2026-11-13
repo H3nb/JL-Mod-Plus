@@ -51,7 +51,7 @@ class LibraryScanner {
 
     @Throws(IOException::class)
     fun storageKeys(emulatorDir: File): Set<String> =
-        installedDirectories(emulatorDir).mapTo(LinkedHashSet()) { it.name }
+        convertedDirectories(emulatorDir).mapTo(HashSet()) { it.name }
 
     private fun scanDirectories(
         directories: List<File>,
@@ -91,22 +91,21 @@ class LibraryScanner {
     }
 
     @Throws(IOException::class)
-    private fun installedDirectories(emulatorDir: File): List<File> {
+    private fun installedDirectories(emulatorDir: File): List<File> =
+        convertedDirectories(emulatorDir).sortedBy { it.name }.toList()
+
+    private fun convertedDirectories(emulatorDir: File): Sequence<File> {
         val convertedDir = File(emulatorDir, CONVERTED_DIR)
-        if (!convertedDir.exists()) return emptyList()
+        if (!convertedDir.exists()) return emptySequence()
         if (!convertedDir.isDirectory) {
             throw IOException("Converted path is not a directory: ${convertedDir.absolutePath}")
         }
         val entries = convertedDir.listFiles()
             ?: throw IOException("Unable to list converted directory: ${convertedDir.absolutePath}")
-        return entries.asSequence()
-            // Current staging lives outside converted/. Filter every case-variant of the historical
-            // .tmp key so case-insensitive removable storage cannot alias it with a real app.
-            .filter {
-                it.isDirectory && !LibraryInstallRecovery.isReservedStorageKey(it.name)
-            }
-            .sortedBy { it.name }
-            .toList()
+        // Full scans retain deterministic ordering; key-only reconciliation needs no sort.
+        return entries.asSequence().filter {
+            it.isDirectory && !LibraryInstallRecovery.isReservedStorageKey(it.name)
+        }
     }
 
     @Throws(IOException::class)

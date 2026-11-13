@@ -30,6 +30,7 @@ internal class LibraryDescriptionCatalog {
 
     private var root: File? = null
     private val entries = HashMap<String, Cached>()
+    private val ignoredStamp = Stamp(0L, 0L)
 
     fun resolve(
         emulatorDir: File,
@@ -52,18 +53,22 @@ internal class LibraryDescriptionCatalog {
             val configFile = File(configDir, "config.json")
             val legacyConfigFile = File(configDir, "config.xml")
             val descriptorStamp = descriptorFile.stamp()
-            val configStamp = configFile.stamp()
-            val legacyConfigStamp = legacyConfigFile.stamp()
             val prior = entries[app.storageKey]
-            val hasOverrides = !overridesByApp[app.id].isNullOrEmpty()
+            val descriptions = if (prior?.descriptorStamp == descriptorStamp) {
+                prior.descriptions
+            } else {
+                readSourceDescriptions(descriptorFile)
+            }
+            val hasLocalizedContent = descriptions.isNotEmpty() ||
+                !overridesByApp[app.id].isNullOrEmpty()
+            val configStamp = if (hasLocalizedContent) configFile.stamp() else ignoredStamp
+            val legacyConfigStamp = if (hasLocalizedContent) legacyConfigFile.stamp() else ignoredStamp
             val entry = if (prior != null && prior.descriptorStamp == descriptorStamp
                 && prior.configStamp == configStamp
                 && prior.legacyConfigStamp == legacyConfigStamp
-                && prior.hasLocalizedContent == (prior.descriptions.isNotEmpty() || hasOverrides)) {
+                && prior.hasLocalizedContent == hasLocalizedContent) {
                 prior
             } else {
-                val descriptions = readSourceDescriptions(descriptorFile)
-                val hasLocalizedContent = descriptions.isNotEmpty() || hasOverrides
                 val systemProperties = try {
                     if (hasLocalizedContent && (configFile.isFile || legacyConfigFile.isFile)) {
                         ProfilesManager.loadPreparedMidletConfig(configDir, false)?.systemProperties

@@ -116,7 +116,8 @@ data class LibrarySelectionState(
         collectionId: Long? = null,
     ): LibrarySelectionState {
         if (!matchesScope(activeGeneration, collectionId)) return LibrarySelectionState()
-        val retained = selectedAppIds.intersect(availableAppIds.toSet())
+        val available = if (availableAppIds is Set<*>) availableAppIds else availableAppIds.toSet()
+        val retained = selectedAppIds.filterTo(LinkedHashSet()) { it in available }
         return if (selectedAppIds.isNotEmpty() && retained.isEmpty()) {
             LibrarySelectionState()
         } else {
