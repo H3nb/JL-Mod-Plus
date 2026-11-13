@@ -139,6 +139,7 @@ internal fun MemoryScriptBuilderScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val saveFailedText = stringResource(R.string.memory_scripts_save_failed)
     val scope = rememberCoroutineScope()
     var picking by remember { mutableStateOf(false) }
     var preview by remember(draft) { mutableStateOf<String?>(null) }
@@ -189,7 +190,7 @@ internal fun MemoryScriptBuilderScreen(
                         actions.saveMemoryScript(document, null) { saved ->
                             saving = false
                             if (saved) onSaved(draft.id)
-                            else error = context.getString(R.string.memory_scripts_save_failed)
+                            else error = saveFailedText
                         }
                     }
                 },
