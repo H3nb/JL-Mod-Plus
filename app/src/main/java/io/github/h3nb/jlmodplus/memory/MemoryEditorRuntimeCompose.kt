@@ -197,6 +197,9 @@ internal fun MemoryEditorRuntimeRoot(
         var selectedScriptId by rememberSaveable(state.runtimeToken) {
             mutableStateOf(savedScript.selectedId)
         }
+        var scriptBuilder by remember(state.runtimeToken) {
+            mutableStateOf(savedScript.builder)
+        }
         SideEffect {
             MemoryEditorSessionNavigation.rememberScript(
                 state.runtimeToken,
@@ -206,6 +209,7 @@ internal fun MemoryEditorRuntimeRoot(
                     replacingId = scriptReplacingId,
                     initialText = scriptInitialText,
                     text = scriptText,
+                    builder = scriptBuilder,
                 ),
             )
         }
@@ -220,8 +224,12 @@ internal fun MemoryEditorRuntimeRoot(
         }
         var scriptDiscardMode by remember { mutableStateOf<String?>(null) }
         val backFromScriptEditor = {
-            if (scriptDraft?.dirty == true) scriptDiscardMode = "back"
+            if (scriptDraft?.dirty == true) scriptDiscardMode = "json"
             else setScriptDraft(null)
+        }
+        val backFromScriptBuilder = {
+            if (scriptBuilder?.hasChanges == true) scriptDiscardMode = "builder"
+            else scriptBuilder = null
         }
         val closeWorkspace = { actions.close() }
         val resultsListState = rememberLazyListState()
@@ -273,7 +281,7 @@ internal fun MemoryEditorRuntimeRoot(
             }
         }
         BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
-            scriptDraft?.dirty == true ||
+            scriptDraft?.dirty == true || scriptBuilder != null ||
             (tab == MemoryEditorTab.SCRIPTS &&
                 (scriptDraft != null || selectedScriptId != null)) ||
             (state.variablesTab && listSelection.isNotEmpty())) {
@@ -281,6 +289,7 @@ internal fun MemoryEditorRuntimeRoot(
                 overlay.peeking -> overlay.peeking = false
                 tab == MemoryEditorTab.INSPECTOR -> actions.closeInspector()
                 tab == MemoryEditorTab.SCRIPTS && scriptDraft != null -> backFromScriptEditor()
+                tab == MemoryEditorTab.SCRIPTS && scriptBuilder != null -> backFromScriptBuilder()
                 tab == MemoryEditorTab.SCRIPTS -> selectedScriptId = null
                 scriptDraft?.dirty == true -> actions.close()
                 else -> listSelection = emptySet()
@@ -366,6 +375,7 @@ internal fun MemoryEditorRuntimeRoot(
                                         shownState, actions, selectedScriptId,
                                         { selectedScriptId = it }, scriptDraft,
                                         { setScriptDraft(it) }, backFromScriptEditor,
+                                        scriptBuilder, { scriptBuilder = it }, backFromScriptBuilder,
                                         Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
@@ -424,8 +434,9 @@ internal fun MemoryEditorRuntimeRoot(
                 text = { Text(stringResource(R.string.memory_scripts_unsaved_message)) },
                 confirmButton = {
                     TextButton(onClick = {
+                        if (scriptDiscardMode == "builder") scriptBuilder = null
+                        else setScriptDraft(null)
                         scriptDiscardMode = null
-                        setScriptDraft(null)
                     }) { Text(stringResource(R.string.memory_scripts_discard)) }
                 },
                 dismissButton = {

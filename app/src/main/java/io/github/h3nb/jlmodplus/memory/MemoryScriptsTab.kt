@@ -4,6 +4,7 @@
 package io.github.h3nb.jlmodplus.memory
 
 import android.content.ClipboardManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -116,6 +117,9 @@ internal fun RuntimeScriptsTab(
     draft: MemoryScriptDraft?,
     onDraft: (MemoryScriptDraft?) -> Unit,
     onBackFromEditor: () -> Unit,
+    builder: MemoryScriptBuilderDraft?,
+    onBuilder: (MemoryScriptBuilderDraft?) -> Unit,
+    onBackFromBuilder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -133,6 +137,7 @@ internal fun RuntimeScriptsTab(
         mutableStateOf(cachedDetail?.detailFreeze ?: false)
     }
     var deleting by remember { mutableStateOf(false) }
+    var choosingType by remember(state.runtimeToken) { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
     var currentValues by remember(selectedId, state.runtimeToken) {
@@ -157,6 +162,43 @@ internal fun RuntimeScriptsTab(
         currentValues = null
         currentError = null
         readGeneration++
+    }
+
+    if (builder != null) {
+        MemoryScriptBuilderScreen(
+            draft = builder, state = state, actions = actions,
+            onDraft = { onBuilder(it) },
+            onBack = onBackFromBuilder,
+            onSaved = {
+                onSelectedId(it)
+                onBuilder(null)
+            },
+            onEditJson = {
+                onDraft(MemoryScriptDraft(null, "", it))
+                onBuilder(null)
+            },
+            modifier = modifier,
+        )
+        return
+    }
+
+    BackHandler(enabled = choosingType) { choosingType = false }
+    if (choosingType) {
+        MemoryScriptTypeChooser(
+            onChoose = {
+                choosingType = false
+                onSelectedId(null)
+                onBuilder(MemoryScriptBuilderDraft.create(it))
+            },
+            onJson = {
+                choosingType = false
+                onSelectedId(null)
+                onDraft(MemoryScriptDraft(null, "", ""))
+            },
+            onBack = { choosingType = false },
+            modifier = modifier,
+        )
+        return
     }
 
     if (draft != null) {
@@ -390,7 +432,7 @@ internal fun RuntimeScriptsTab(
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.memory_scripts_title),
                 style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Button(onClick = { onDraft(MemoryScriptDraft(null, "", "")) }) {
+            Button(onClick = { choosingType = true }) {
                 Text(stringResource(R.string.memory_scripts_new))
             }
         }
@@ -406,7 +448,7 @@ internal fun RuntimeScriptsTab(
                 Text(stringResource(R.string.memory_scripts_paste_hint),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall)
-                OutlinedButton(onClick = { onDraft(MemoryScriptDraft(null, "", "")) }) {
+                OutlinedButton(onClick = { choosingType = true }) {
                     Text(stringResource(R.string.memory_scripts_new))
                 }
             }

@@ -1365,26 +1365,51 @@
 <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Paste a Memory Recipe v1 or v2 JSON document. Saving does not execute it.</string>
 <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Paste JSON from a guide or an AI agent</string>
 <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Paste</string>
-<string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboard is empty or the document exceeds 24 KiB</string>
+<string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboard is empty or the document exceeds 64 KiB</string>
 <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Recipe format is invalid</string>
 <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Freeze active for this script</string>
 <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Delete</string>
 <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Delete %1$s? Its active Freeze will be stopped.</string>
 <string name="memory_scripts_empty" tools:ignore="MissingTranslation">No scripts saved</string>
 <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Discard unsaved script?</string>
-<string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Your changes to the JSON editor have not been saved.</string>
+<string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Your script changes have not been saved.</string>
 <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Discard</string>
 <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Current value</string>
 <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Refresh</string>
 <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Reading current values…</string>
 <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Tap Refresh to read the value from the running game.</string>
-<string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Toggle</string>
-<string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Form</string>
-<string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">One-shot</string>
+<string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Freeze Values</string>
+<string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Value Editor</string>
+<string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Quick Actions</string>
 <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Recipe</string>
 <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Edit values</string>
 <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Apply changes</string>
 <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Refresh to verify the current values before applying.</string>
 <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Inconsistent copies: %1$s</string>
 <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimize Memory Editor</string>
+    <string name="memory_scripts_choose_type">New script</string>
+    <string name="memory_scripts_choose_hint">Choose how this script should work.</string>
+    <string name="memory_builder_json_editor">JSON Editor</string>
+    <string name="memory_builder_freeze_hint">Maintain selected values while enabled. Turning off Freeze does not restore their previous values.</string>
+    <string name="memory_builder_form_hint">Build a form that reads current values before applying edits.</string>
+    <string name="memory_builder_actions_hint">Apply changes whenever you press Run. Each run is independent.</string>
+    <string name="memory_builder_name">Script name</string>
+    <string name="memory_builder_frozen_values">Frozen values</string>
+    <string name="memory_builder_fields">Fields</string>
+    <string name="memory_builder_actions">Actions</string>
+    <string name="memory_builder_add_bookmarks">Add from Bookmarks</string>
+    <string name="memory_builder_empty">Add at least one Bookmark with a verified locator.</string>
+    <string name="memory_builder_field_label">Field label</string>
+    <string name="memory_builder_keep_at">Keep at</string>
+    <string name="memory_builder_amount">Value / amount</string>
+    <string name="memory_builder_set">Set</string>
+    <string name="memory_builder_add">Add</string>
+    <string name="memory_builder_subtract">Subtract</string>
+    <string name="memory_builder_view_json">View JSON</string>
+    <string name="memory_builder_edit_json">Edit JSON</string>
+    <string name="memory_builder_export_json">Export JSON</string>
+    <string name="memory_builder_search_bookmarks">Search Bookmarks</string>
+    <string name="memory_builder_no_bookmarks">No available Bookmarks. Add or relink one in the List tab.</string>
+    <string name="memory_builder_needs_relink">Needs relink</string>
+    <string name="memory_builder_add_selected">Add selected</string>
 </resources>
