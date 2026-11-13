@@ -88,6 +88,40 @@ Examples:
 - [Furby Island: packed inventory slot](../examples/memory-recipes/furby-inventory.json)
 - [Kingdoms & Lords: encoded coins](../examples/memory-recipes/kingdoms-coins.json)
 
+## Build scripts from Bookmarks
+
+In **Memory Editor → Scripts → Add script**, choose **Freeze Values**, **Value
+Editor**, **Quick Actions**, or **JSON Editor**.
+
+The visual builder supports multiple verified Bookmarks in one script:
+
+- **Freeze Values** stores a fixed target value for each Bookmark. Enable or
+  disable the resulting script using its Freeze switch. Disabling does not undo
+  the last value written.
+- **Value Editor** creates editable numeric fields. Opening the saved script
+  reads the current values; **Apply changes** checks the read snapshot again
+  before writing.
+- **Quick Actions** offers **Set**, **Add**, and **Subtract** for each Bookmark.
+  Press **Run** whenever the changes are needed. A Run does not keep Freeze
+  active; Subtract compiles to a signed addition.
+
+The builder uses the Bookmark's verified root-relative locator, not its current
+value, session candidate ID, or label as an execution target. A Bookmark without
+a locator must be relinked in the List tab before it can be added. Once generated,
+the script contains its own locator snapshot: renaming or relinking the Bookmark
+does not silently change an existing script's target.
+
+**View JSON** shows the generated v2 document; **Edit JSON** opens the regular
+JSON editor. **Export JSON** saves a file using the Android document picker.
+**Save** adds the script to the current MIDlet's catalog without running it.
+The builder retains its unsaved draft while the editor is minimized in the same
+MIDlet session. Existing and advanced JSON recipes remain editable in JSON,
+without an unreliable automatic conversion back to the visual builder.
+
+The builder deliberately covers ordinary primitive operations. Bitfields,
+encoded values, dynamic array selectors, and mirrored data layouts still
+require the JSON editor.
+
 ## v1 document
 
 ```json
