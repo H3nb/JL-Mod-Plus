@@ -81,7 +81,7 @@ internal class MemoryEditorComposeController(
     private val savedConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             savedAuthority = ISavedVariablesAuthority.Stub.asInterface(binder)
-            if (state.visible && state.variablesTab) refreshSavedVariables()
+            if (state.visible && (state.variablesTab || state.scriptsTab)) refreshSavedVariables()
             if (state.visible && state.scriptsTab) refreshMemoryScripts()
         }
         override fun onServiceDisconnected(name: ComponentName) { savedAuthority = null }
@@ -855,7 +855,7 @@ internal class MemoryEditorComposeController(
             }
             SavedVariableRow(record.getString("id").orEmpty(),
                 record.getString("label").orEmpty(),
-                description.ifBlank { "Needs relink" }) to locator
+                description.ifBlank { "Needs relink" }, locator != null) to locator
         }
     }
 
@@ -885,7 +885,8 @@ internal class MemoryEditorComposeController(
                 savedRows(authority.list(path, appId, entry))
             }
             post {
-                if (destroyed || !state.visible || !state.variablesTab ||
+                if (destroyed || !state.visible ||
+                    (!state.variablesTab && !state.scriptsTab) ||
                     generation != savedGeneration || connection != connectionGeneration) return@post
                 if (records.isSuccess) {
                     val rows = records.getOrThrow()
@@ -1377,6 +1378,7 @@ internal class MemoryEditorComposeController(
         invalidateVisiblePageRequest()
         state = state.copy(variablesTab = false, scriptsTab = true, selected = emptySet())
         refreshMemoryScripts()
+        refreshSavedVariables()
         refreshRecipeFreezeState(force = true)
     }
 
@@ -1919,6 +1921,15 @@ internal class MemoryEditorComposeController(
                 onComplete(success)
             }
         }
+    }
+
+    override fun generateMemoryScript(
+        draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
+    ) {
+        val generated = runCatching {
+            MemoryRecipeGenerator.fromBuilder(draft, savedTarget().third, savedLocators)
+        }
+        onReady(generated.getOrNull(), generated.exceptionOrNull()?.message)
     }
 
     override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean) {

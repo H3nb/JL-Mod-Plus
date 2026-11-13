@@ -4,6 +4,7 @@
 package io.github.h3nb.jlmodplus.memory
 
 import android.os.Bundle
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -100,6 +101,100 @@ internal object MemoryRecipeGenerator {
             "root" to root,
             "actions" to JsonArray(listOf(action)),
         )).toString()
+    }
+
+
+    fun fromBuilder(
+        draft: MemoryScriptBuilderDraft,
+        midletClass: String,
+        locators: Map<String, Bundle>,
+    ): String {
+        require(draft.name.isNotBlank()) { "Enter a script name" }
+        require(draft.actions.isNotEmpty()) { "Add at least one Bookmark" }
+        require(draft.actions.map { it.bookmarkId }.distinct().size == draft.actions.size) {
+            "Each Bookmark can appear only once"
+        }
+        val inputs = linkedMapOf<String, kotlinx.serialization.json.JsonElement>()
+        val actions = draft.actions.mapIndexed { index, item ->
+            val locator = locators[item.bookmarkId]
+                ?: error("Bookmark " + item.label + " has no verified locator")
+            val source = Json.parseToJsonElement(
+                fromSaved(locator, midletClass, item.bookmarkId, "0")
+            ) as JsonObject
+            val original = (source["actions"] as JsonArray).single() as JsonObject
+            val path = original["path"] as JsonArray
+            val terminal = path.last() as JsonObject
+            val descriptor = (terminal["descriptor"] as JsonPrimitive).content
+                .let { if (terminal["kind"] == JsonPrimitive("index")) it.removePrefix("[") else it }
+            val (min, max) = when (descriptor) {
+                "B" -> Byte.MIN_VALUE.toLong() to Byte.MAX_VALUE.toLong()
+                "S" -> Short.MIN_VALUE.toLong() to Short.MAX_VALUE.toLong()
+                "I" -> Int.MIN_VALUE.toLong() to Int.MAX_VALUE.toLong()
+                "J" -> Long.MIN_VALUE to Long.MAX_VALUE
+                "C" -> 0L to 65535L
+                "Z" -> 0L to 1L
+                else -> error("Bookmark " + item.label + " does not contain an editable integer")
+            }
+            val key = "value" + (index + 1)
+            val fields = linkedMapOf<String, kotlinx.serialization.json.JsonElement>(
+                "kind" to JsonPrimitive("set"),
+                "root" to (source["root"] ?: error("Missing Bookmark root")),
+                "path" to path,
+            )
+            when (draft.mode) {
+                MemoryScriptBuilderMode.FREEZE -> {
+                    val value = item.value.trim().toLongOrNull()
+                        ?: error("Enter a numeric value for " + item.label)
+                    require(value in min..max) { "Value is out of range for " + item.label }
+                    fields["value"] = JsonPrimitive(value)
+                }
+                MemoryScriptBuilderMode.FORM -> {
+                    fields["field"] = JsonPrimitive(key)
+                    fields["valueInput"] = JsonPrimitive(key)
+                    inputs[key] = JsonObject(mapOf(
+                        "min" to JsonPrimitive(min),
+                        "max" to JsonPrimitive(max),
+                        "default" to JsonPrimitive(0),
+                        "label" to JsonPrimitive(item.label),
+                    ))
+                }
+                MemoryScriptBuilderMode.ACTIONS -> {
+                    val amount = item.value.trim().toLongOrNull()
+                        ?: error("Enter a numeric amount for " + item.label)
+                    val value = when (item.operation) {
+                        "set" -> amount.also {
+                            require(it in min..max) { "Value is out of range for " + item.label }
+                        }
+                        "add" -> amount
+                        "subtract" -> {
+                            require(amount >= 0) { "Subtract needs a nonnegative amount" }
+                            -amount
+                        }
+                        else -> error("Unsupported action")
+                    }
+                    fields["value"] = JsonPrimitive(value)
+                    if (item.operation != "set") {
+                        fields["operation"] = JsonPrimitive("add")
+                        fields["field"] = JsonPrimitive(key)
+                    }
+                }
+            }
+            JsonObject(fields)
+        }
+        val document = JsonObject(buildMap {
+            put("formatVersion", JsonPrimitive(2))
+            put("mode", JsonPrimitive(draft.mode.recipeMode))
+            put("id", JsonPrimitive(draft.id))
+            put("name", JsonPrimitive(draft.name.trim()))
+            if (draft.description.isNotBlank()) put("description", JsonPrimitive(draft.description.trim()))
+            put("game", JsonObject(mapOf(
+                "mainClass" to JsonPrimitive(midletClass.replace('.', '/')),
+            )))
+            put("inputs", JsonObject(inputs))
+            put("actions", JsonArray(actions))
+        }).toString()
+        MemoryRecipeRuntime.validateDocument(document)
+        return document
     }
 
     private fun descriptor(type: String): String = when (type) {

@@ -385,6 +385,7 @@ internal data class MemoryEditorScriptWorkspace(
     val detailId: String? = null,
     val detailInputs: Map<String, String> = emptyMap(),
     val detailFreeze: Boolean = false,
+    val builder: MemoryScriptBuilderDraft? = null,
 )
 
 /** Held only in :memory_engine memory. A different MIDlet token starts with Search. */
@@ -421,6 +422,7 @@ internal object MemoryEditorSessionNavigation {
                 replacingId = update.replacingId,
                 initialText = update.initialText,
                 text = update.text,
+                builder = update.builder,
             )
         }
     }
@@ -436,7 +438,9 @@ internal object MemoryEditorSessionNavigation {
     }
 }
 
-internal data class SavedVariableRow(val id: String, val label: String, val path: String)
+internal data class SavedVariableRow(
+    val id: String, val label: String, val path: String, val hasLocator: Boolean = false,
+)
 internal data class MemoryScriptRow(val id: String, val name: String, val document: String)
 internal data class MemoryRecipeReadValue(
     val name: String, val value: String, val snapshotTicket: String? = null,
@@ -591,6 +595,9 @@ internal interface MemoryEditorActions {
     fun setVariablesTab(variables: Boolean)
     fun setScriptsTab() = Unit
     fun refreshMemoryScripts() = Unit
+    fun generateMemoryScript(
+        draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
+    ) = onReady(null, "Script Builder unavailable")
     fun saveMemoryScript(document: String, replacingId: String?,
                          onComplete: (Boolean) -> Unit) = onComplete(false)
     fun deleteMemoryScript(id: String, onComplete: (Boolean) -> Unit) = onComplete(false)

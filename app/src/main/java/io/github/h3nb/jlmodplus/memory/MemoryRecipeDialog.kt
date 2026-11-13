@@ -75,7 +75,8 @@ internal fun MemoryRecipeDialog(
                         while (true) {
                             val length = stream.read(buffer)
                             if (length < 0) break
-                            if (output.size() + length > 24_576) error("Recipe exceeds 24 KiB")
+                            if (output.size() + length > MemoryEngineContract.MAX_RECIPE_BYTES)
+                                error("Recipe exceeds 64 KiB")
                             output.write(buffer, 0, length)
                         }
                         output.toByteArray()
@@ -85,7 +86,7 @@ internal fun MemoryRecipeDialog(
                 val parsed = Json.parseToJsonElement(text) as? JsonObject
                     ?: error("Invalid recipe")
                 val fields = parsed["inputs"] as? JsonObject ?: JsonObject(emptyMap())
-                if (fields.size > 16) error("Recipe has too many inputs")
+                if (fields.size > 64) error("Recipe has too many inputs")
                 val values = fields.mapValues { (_, entry) ->
                     val details = entry as? JsonObject ?: error("Invalid recipe input")
                     (details["default"] as? JsonPrimitive)?.content
