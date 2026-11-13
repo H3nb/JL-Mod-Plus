@@ -688,9 +688,27 @@ class LibraryCollectionsNavigationTest {
         val target = composeRule.onNodeWithTag(
             "collection-membership-${SAMPLE_MEMBER_2.databaseId}",
         )
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("collection-membership-${SAMPLE_MEMBER_2.databaseId}")
-                .fetchSemanticsNodes().isNotEmpty()
+        try {
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodesWithTag("collection-membership-${SAMPLE_MEMBER_2.databaseId}")
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+        } catch (error: androidx.compose.ui.test.ComposeTimeoutException) {
+            val state = host.store.state.value
+            val root = composeRule.onRoot(useUnmergedTree = true).fetchSemanticsNode()
+            val description = buildList {
+                fun visit(node: androidx.compose.ui.semantics.SemanticsNode, depth: Int) {
+                    add("  ".repeat(depth) + node.config.toString().take(240))
+                    if (size < 60) node.children.forEach { visit(it, depth + 1) }
+                }
+                visit(root, 0)
+            }
+            throw AssertionError(
+                "Picker: prepared=${state.allAppsPrepared}, revision=${state.allAppsRevision}, " +
+                    "source=${state.allApps.map { it.databaseId }}, " +
+                    "members=${state.members?.memberIds}, semantics=\n${description.joinToString("\n")}",
+                error,
+            )
         }
         target.performClick()
         composeRule.waitForIdle()
