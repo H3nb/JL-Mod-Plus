@@ -93,6 +93,7 @@ class MemoryScriptsComposeTest {
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
         rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         rule.onNodeWithText("Save").performClick()
         rule.runOnIdle {
@@ -127,6 +128,7 @@ class MemoryScriptsComposeTest {
             }
         }
         rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         rule.onNodeWithContentDescription("Minimize Memory Editor").performClick()
         rule.runOnIdle { showing.value = true }
@@ -258,6 +260,50 @@ class MemoryScriptsComposeTest {
         rule.runOnIdle { assertEquals(2, calls) }
     }
 
+
+    @Test fun builderCreatesQuickActionFromBookmarkWithoutExecutingOnSave() {
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            scriptsTab = true, runtimeToken = 92503L, scriptsLoaded = true,
+            savedVariables = listOf(SavedVariableRow("coin-id", "Coins", "coins", true)),
+        )
+        var generated: MemoryScriptBuilderDraft? = null
+        var saved: String? = null
+        val actions = object : TestMemoryEditorActions() {
+            override fun generateMemoryScript(
+                draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
+            ) {
+                generated = draft
+                onReady(sample, null)
+            }
+            override fun saveMemoryScript(
+                document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
+            ) {
+                saved = document
+                onComplete(true)
+            }
+            override fun runMemoryRecipe(
+                document: String, inputs: Map<String, String>,
+                freeze: Boolean, preview: Boolean,
+            ) = throw AssertionError("Saving a builder script must not execute it")
+        }
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
+        rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onNodeWithText("Quick Actions").performClick()
+        rule.onNodeWithTag("memory-builder-name").performTextReplacement("Add coins")
+        rule.onNodeWithText("Add from Bookmarks").performClick()
+        rule.onNodeWithText("Coins").performClick()
+        rule.onNodeWithText("Add selected").performClick()
+        rule.onNodeWithText("Add").performClick()
+        rule.onNodeWithText("Save").performClick()
+        rule.runOnIdle {
+            assertEquals(MemoryScriptBuilderMode.ACTIONS, generated?.mode)
+            assertEquals("add", generated?.actions?.single()?.operation)
+            assertEquals("coin-id", generated?.actions?.single()?.bookmarkId)
+            assertEquals(sample, saved)
+        }
+    }
+
     @Test fun failedSaveLeavesTheJsonEditorOpenForCorrection() {
         val actions = object : TestMemoryEditorActions() {
             override fun saveMemoryScript(document: String, replacingId: String?,
@@ -272,6 +318,7 @@ class MemoryScriptsComposeTest {
             }
         }
         rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         rule.onNodeWithText("Save").performClick()
         val editor = rule.onNodeWithTag("memory-script-editor").assertIsDisplayed()
