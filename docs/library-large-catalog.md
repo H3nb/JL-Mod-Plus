@@ -1,6 +1,6 @@
 # Library large-catalog performance
 
-This note scopes the Library scaling work in `perf/library-large-catalog`.
+This note documents the Library scaling work.
 The target is usable list/grid interaction with a few through tens of thousands of installed games.
 No fixed count can guarantee smoothness without on-device frame and memory measurements.
 
@@ -39,10 +39,10 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   without flaky wall-time pass/fail thresholds. Room publication still has a focused
   1k/5k local test; benchmark numbers are diagnostic, not device-performance claims.
 
-- A manual emulator runtime workflow renders 20,000 items through the real LibraryScreen
-  in list and grid, checks a bounded composed window, and jumps to the final app.
-  It also exercises Room cold-start projection, Collection membership, and search.
-  It demonstrates lazy composition, not sustained frame pacing or scrolling FPS.
+- Android instrumentation renders 20,000 items through the real LibraryScreen in list
+  and grid, verifies a bounded composed window, and jumps to the final app.
+  Other runtime tests exercise Room cold-start projection, Collection membership, and
+  search. These establish lazy composition, not sustained frame pacing or scrolling FPS.
 
 ## Startup and reconciliation
 
@@ -66,7 +66,7 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
 - Cold display preparation resolves descriptions and icon presence on independent IO
   coroutines while ordered rows are computed on Default. Structured cancellation
   still prevents stale query/workdir results from being published.
-- The manually dispatched emulator runtime workflow includes a prepopulated Room catalog with matching
+- `LibraryStartupRuntimeTest` exercises a prepopulated Room catalog with matching
   converted directories. It records time to repository READY and subsequent display
   projection READY separately, without unstable hard elapsed-time assertions. Results
   describe a controlled emulator filesystem, not real handset startup latency.
@@ -76,10 +76,9 @@ No fixed count can guarantee smoothness without on-device frame and memory measu
   presentation models on main; member models materialize during off-main projection.
   A Collection revision precedes lazy member data in state comparisons, and a picker
   generation token prevents stale membership actions after switching workdirs.
-- Collection Add Apps uses an indexed presentation source. The dedicated emulator
-  workflow now exercises picker membership retries and deep-scroll search restoration.
-  Projection maps and sorts
-  immutable picker items on Default without touching Fragment-owned UI-ID maps;
+- Collection Add Apps uses an indexed presentation source. Android instrumentation
+  covers picker membership retries and deep-scroll search restoration. Projection
+  maps and sorts immutable picker items on Default without touching Fragment-owned UI-ID maps;
   membership updates use stable database IDs. Closing the picker releases the
   prepared list. This avoids the previous synchronous full-catalog conversion
   on opening, though large searches still require O(N) temporary allocations.
